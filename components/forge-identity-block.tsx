@@ -19,7 +19,7 @@ export function ForgeIdentityBlock({ compact = false }: { compact?: boolean }) {
       <p className="mt-3 text-sm leading-relaxed text-zinc-400">
         Forgeでは、開発中のゲームを見つけ、
         遊び、
-        フィードバックし、
+        反応を届け、
         成長を見届けることができます。
       </p>
     </div>

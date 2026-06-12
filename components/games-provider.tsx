@@ -218,6 +218,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     setBookmarkedGameIds(loadBookmarks());
     setDevlogs(loadDevlogs());
     setNotifications(loadNotifications());
+    setHydrated(true);
   }, []);
 
   useEffect(() => {
@@ -225,24 +226,10 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    let active = true;
-
-    void reloadFromStorage()
-      .catch(() => {
-        if (active) {
-          setSubmittedGames([]);
-          setDeveloperProfiles([]);
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setHydrated(true);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
+    void reloadFromStorage().catch(() => {
+      setSubmittedGames([]);
+      setDeveloperProfiles([]);
+    });
   }, [authHydrated, user?.id, reloadFromStorage]);
 
   useEffect(() => {
