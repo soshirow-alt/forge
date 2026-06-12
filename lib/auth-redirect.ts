@@ -5,3 +5,13 @@ export function getSafeRedirectPath(redirect: string | null | undefined): string
 
   return redirect;
 }
+
+export function getRedirectFromCurrentUrl(): string {
+  if (typeof window === "undefined") {
+    return "/";
+  }
+
+  return getSafeRedirectPath(
+    new URLSearchParams(window.location.search).get("redirect"),
+  );
+}

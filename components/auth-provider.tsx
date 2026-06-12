@@ -63,8 +63,15 @@ export function AuthProvider({
         return;
       }
 
-      setUser(session?.user ? mapSupabaseUser(session.user) : null);
-      setHydrated(true);
+      // Defer to avoid blocking signInWithPassword on the auth lock.
+      setTimeout(() => {
+        if (!active) {
+          return;
+        }
+
+        setUser(session?.user ? mapSupabaseUser(session.user) : null);
+        setHydrated(true);
+      }, 0);
     });
 
     return () => {

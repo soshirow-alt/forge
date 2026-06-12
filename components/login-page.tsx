@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { getAuthErrorMessage } from "@/lib/auth";
-import { getSafeRedirectPath } from "@/lib/auth-redirect";
+import { getRedirectFromCurrentUrl } from "@/lib/auth-redirect";
 
 const inputClassName =
   "mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
@@ -16,7 +16,6 @@ export function LoginPage({
   supabaseConfigured: boolean;
 }) {
   const searchParams = useSearchParams();
-  const redirectTo = getSafeRedirectPath(searchParams.get("redirect"));
   const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
 
   const { user, hydrated, signIn, signUp } = useAuth();
@@ -30,13 +29,9 @@ export function LoginPage({
 
   useEffect(() => {
     if (hydrated && user) {
-      window.location.assign(redirectTo);
+      window.location.href = getRedirectFromCurrentUrl();
     }
-  }, [hydrated, user, redirectTo]);
-
-  function navigateAfterAuth() {
-    window.location.assign(redirectTo);
-  }
+  }, [hydrated, user]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -44,17 +39,25 @@ export function LoginPage({
     setMessage(null);
     setSubmitting(true);
 
-    try {
-      if (mode === "login") {
+    if (mode === "login") {
+      try {
         await signIn(email, password);
-        navigateAfterAuth();
+      } catch (caught) {
+        const authError = caught as { message?: string };
+        setError(getAuthErrorMessage(authError.message ?? "認証に失敗しました。"));
+        setSubmitting(false);
         return;
       }
 
+      window.location.href = getRedirectFromCurrentUrl();
+      return;
+    }
+
+    try {
       const hasSession = await signUp(email, password, displayName);
 
       if (hasSession) {
-        navigateAfterAuth();
+        window.location.href = getRedirectFromCurrentUrl();
         return;
       }
 
