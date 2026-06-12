@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#44403c"/>
+      <stop offset="100%" stop-color="#0c0a09"/>
+    </linearGradient>
+    <radialGradient id="ember" cx="50%" cy="70%" r="40%">
+      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#7f1d1d" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#sky)"/>
+  <!-- torii gate -->
+  <g fill="#7f1d1d" stroke="#991b1b" stroke-width="2">
+    <rect x="200" y="140" width="12" height="140"/><rect x="428" y="140" width="12" height="140"/>
+    <rect x="180" y="140" width="280" height="14"/><rect x="190" y="175" width="260" height="10"/>
+  </g>
+  <rect width="640" height="360" fill="url(#ember)"/>
+  <!-- samurai silhouette -->
+  <g fill="#0c0a09">
+    <ellipse cx="320" cy="280" rx="35" ry="10"/>
+    <path d="M295 240 L305 200 L335 200 L345 240 L340 275 L300 275Z"/>
+    <circle cx="320" cy="188" r="18"/>
+    <!-- topknot -->
+    <circle cx="320" cy="168" r="6" fill="#292524"/>
+  </g>
+  <!-- katana with ash trail -->
+  <path d="M350 210 L480 140" stroke="#d6d3d1" stroke-width="4" stroke-linecap="round"/>
+  <path d="M480 140 L500 130" stroke="#fbbf24" stroke-width="2"/>
+  <g fill="#78716c" opacity="0.6">
+    <circle cx="400" cy="175" r="4"/><circle cx="430" cy="160" r="3"/><circle cx="460" cy="145" r="5"/>
+  </g>
+  <!-- falling ash -->
+  <g fill="#a8a29e" opacity="0.5">
+    <circle cx="150" cy="100" r="2"/><circle cx="200" cy="130" r="1.5"/><circle cx="500" cy="90" r="2"/>
+    <circle cx="550" cy="150" r="1.5"/>
+  </g>
+  <text x="24" y="42" fill="#e7e5e4" font-family="serif" font-size="30" font-weight="bold">灰の刃</text>
+  <text x="24" y="66" fill="#f87171" font-family="sans-serif" font-size="11" letter-spacing="4">FANTASY · SAMURAI ACTION</text>
+</svg>

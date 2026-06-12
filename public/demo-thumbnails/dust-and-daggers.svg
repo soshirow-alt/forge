@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="dusk" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#78350f"/>
+      <stop offset="100%" stop-color="#1c1917"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#dusk)"/>
+  <circle cx="520" cy="80" r="35" fill="#fdba74" opacity="0.35"/>
+  <!-- desert -->
+  <path d="M0 280 Q160 240 320 260 T640 250 L640 360 L0 360Z" fill="#a16207" opacity="0.4"/>
+  <path d="M0 300 Q200 270 400 285 T640 275 L640 360 L0 360Z" fill="#78350f" opacity="0.5"/>
+  <!-- steam locomotive -->
+  <g fill="#44403c" stroke="#78716c" stroke-width="2">
+    <rect x="180" y="220" width="200" height="50" rx="4"/>
+    <rect x="140" y="235" width="50" height="35"/>
+    <circle cx="210" cy="275" r="18" fill="#292524"/><circle cx="280" cy="275" r="18" fill="#292524"/>
+    <circle cx="350" cy="275" r="18" fill="#292524"/>
+    <rect x="380" y="200" width="80" height="70" rx="2"/>
+    <rect x="400" y="180" width="20" height="30"/>
+  </g>
+  <!-- smoke -->
+  <ellipse cx="420" cy="160" rx="25" ry="15" fill="#57534e" opacity="0.5"/>
+  <ellipse cx="440" cy="130" rx="20" ry="12" fill="#78716c" opacity="0.4"/>
+  <!-- outlaw on horse silhouette -->
+  <g fill="#0c0a09">
+    <ellipse cx="520" cy="268" rx="40" ry="12"/>
+    <path d="M500 240 Q530 220 560 240 L565 265 Q530 255 495 265Z"/>
+    <circle cx="535" cy="225" r="10"/>
+    <path d="M555 235 L575 225" stroke="#292524" stroke-width="3"/>
+  </g>
+  <!-- dagger in ground -->
+  <path d="M80 280 L85 230 L90 280" fill="#a8a29e"/>
+  <rect x="82" y="225" width="6" height="12" fill="#78716c"/>
+  <text x="24" y="42" fill="#fde68a" font-family="serif" font-size="28" font-weight="bold">????</text>
+  <text x="24" y="66" fill="#a8a29e" font-family="sans-serif" font-size="11" letter-spacing="4">HORROR · WESTERN STEALTH</text>
+</svg>

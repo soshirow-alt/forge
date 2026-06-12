@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="55%" stop-color="#4a1c04"/>
+      <stop offset="100%" stop-color="#0c0a09"/>
+    </linearGradient>
+    <radialGradient id="fire" cx="50%" cy="85%" r="45%">
+      <stop offset="0%" stop-color="#fb923c" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#7c2d12" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="castle" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#44403c"/>
+      <stop offset="100%" stop-color="#1c1917"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#sky)"/>
+  <circle cx="520" cy="70" r="28" fill="#fdba74" opacity="0.25"/>
+  <!-- distant mountains -->
+  <path d="M0 220 L120 140 L220 200 L340 110 L480 190 L640 150 L640 360 L0 360Z" fill="#292524" opacity="0.7"/>
+  <!-- castle -->
+  <g fill="url(#castle)">
+    <rect x="180" y="120" width="280" height="160"/>
+    <rect x="210" y="90" width="40" height="50"/>
+    <rect x="390" y="90" width="40" height="50"/>
+    <rect x="300" y="70" width="50" height="70"/>
+    <polygon points="325,40 350,70 300,70" fill="#57534e"/>
+    <rect x="295" y="155" width="50" height="80" fill="#0c0a09"/>
+  </g>
+  <!-- burning throne -->
+  <rect x="295" y="175" width="50" height="35" fill="#78350f" stroke="#92400e" stroke-width="2"/>
+  <path d="M290 175 L350 175 L360 195 L280 195Z" fill="#451a03"/>
+  <rect width="640" height="360" fill="url(#fire)"/>
+  <g fill="#ea580c" opacity="0.9">
+    <ellipse cx="320" cy="200" rx="18" ry="28"/>
+    <ellipse cx="305" cy="210" rx="8" ry="14" opacity="0.8"/>
+    <ellipse cx="335" cy="208" rx="8" ry="14" opacity="0.8"/>
+  </g>
+  <!-- knight silhouette -->
+  <g fill="#0c0a09">
+    <ellipse cx="420" cy="248" rx="22" ry="8"/>
+    <rect x="408" y="195" width="24" height="55" rx="4"/>
+    <circle cx="420" cy="182" r="14"/>
+    <path d="M395 210 L385 260 L398 260 L405 220 L420 250 L435 220 L442 260 L455 260 L445 210Z" fill="#1c1917"/>
+    <rect x="452" y="200" width="6" height="70" fill="#292524"/>
+    <path d="M458 200 L478 185 L458 210Z" fill="#78716c"/>
+  </g>
+  <rect y="280" width="640" height="80" fill="#0c0a09" opacity="0.5"/>
+  <text x="24" y="42" fill="#fde68a" font-family="Georgia,serif" font-size="30" font-weight="bold">?????</text>
+  <text x="24" y="66" fill="#fb923c" font-family="sans-serif" font-size="11" letter-spacing="4">FANTASY · ACTION RPG</text>
+</svg>

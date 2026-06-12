@@ -1,3 +1,5 @@
+import { getBuiltInThumbnailUrl } from "@/lib/demo-thumbnails";
+
 export type Game = {
   id: string;
   title: string;
@@ -336,6 +338,10 @@ export const games: Game[] = [
     officialUrl: "https://titansedge.moba",
   },
 ];
+
+for (const game of games) {
+  game.thumbnailUrl = getBuiltInThumbnailUrl(game.id);
+}
 
 export function getGameById(id: string): Game | undefined {
   return games.find((game) => game.id === id);

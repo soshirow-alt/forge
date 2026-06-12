@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <rect width="640" height="360" fill="#042f2e"/>
+  <!-- cave entrance arch -->
+  <path d="M160 320 Q160 120 320 100 Q480 120 480 320Z" fill="#064e3b"/>
+  <path d="M200 320 Q200 160 320 145 Q440 160 440 320Z" fill="#022c22"/>
+  <!-- bioluminescent mushrooms -->
+  <g>
+    <ellipse cx="220" cy="280" rx="18" ry="10" fill="#10b981"/>
+    <rect x="216" y="280" width="8" height="20" fill="#d6d3d1" opacity="0.5"/>
+    <ellipse cx="400" cy="290" rx="22" ry="12" fill="#34d399"/>
+    <rect x="395" y="290" width="10" height="18" fill="#d6d3d1" opacity="0.5"/>
+    <ellipse cx="320" cy="250" rx="14" ry="8" fill="#6ee7b7"/>
+  </g>
+  <!-- glowing crystals -->
+  <path d="M280 220 L290 180 L300 220Z" fill="#a7f3d0" opacity="0.9"/>
+  <path d="M350 230 L362 190 L374 230Z" fill="#fde68a" opacity="0.8"/>
+  <!-- explorer pixel hero -->
+  <g fill="#134e4a">
+    <rect x="305" y="240" width="20" height="28"/>
+    <rect x="310" y="225" width="10" height="16" fill="#fef9c3"/>
+    <rect x="328" y="250" width="14" height="4" fill="#78716c"/>
+  </g>
+  <!-- light beam from above -->
+  <path d="M300 100 L340 100 L360 320 L280 320Z" fill="#ecfdf5" opacity="0.08"/>
+  <text x="24" y="42" fill="#a7f3d0" font-family="monospace" font-size="24" font-weight="bold">????????</text>
+  <text x="24" y="66" fill="#34d399" font-family="monospace" font-size="11" letter-spacing="3">PIXEL ? METROIDVANIA</text>
+</svg>
