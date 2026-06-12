@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
+import { displayGameStatus } from "@/lib/user-labels";
 
 type GameThumbnailProps = {
   thumbnailUrl?: string;
@@ -63,7 +64,7 @@ export function GameThumbnail({
       )}
       {overlayClassName ? <div className={overlayClassName} /> : null}
       {showStatus && showImage && (
-        <div className={statusClassName}>{status}</div>
+        <div className={statusClassName}>{displayGameStatus(status)}</div>
       )}
     </div>
   );

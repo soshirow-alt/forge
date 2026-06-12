@@ -1,38 +1,48 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
-  <defs>
-    <linearGradient id="night" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#1e293b"/>
-      <stop offset="100%" stop-color="#0f172a"/>
-    </linearGradient>
-  </defs>
-  <rect width="640" height="360" fill="url(#night)"/>
-  <!-- barricade ring -->
-  <ellipse cx="320" cy="200" rx="150" ry="40" fill="none" stroke="#64748b" stroke-width="3"/>
-  <g fill="#475569" stroke="#94a3b8" stroke-width="1">
-    <rect x="170" y="185" width="20" height="30" transform="rotate(-30 180 200)"/>
-    <rect x="450" y="185" width="20" height="30" transform="rotate(30 460 200)"/>
-    <rect x="310" y="155" width="20" height="30"/>
-    <rect x="310" y="225" width="20" height="30"/>
+  <rect width="640" height="360" fill="#1c1917"/>
+  <!-- night sky -->
+  <rect width="640" height="180" fill="#0f172a"/>
+  <circle cx="560" cy="50" r="25" fill="#fef9c3" opacity="0.5"/>
+  <!-- castle walls -->
+  <rect x="0" y="120" width="640" height="80" fill="#44403c"/>
+  <rect x="0" y="110" width="640" height="20" fill="#57534e"/>
+  <!-- battlements -->
+  <g fill="#57534e">
+    <rect x="40" y="95" width="20" height="25"/><rect x="80" y="95" width="20" height="25"/>
+    <rect x="540" y="95" width="20" height="25"/><rect x="580" y="95" width="20" height="25"/>
   </g>
-  <!-- wolves / enemies approaching -->
-  <g fill="#1c1917">
-    <path d="M80 250 L100 235 L120 250 L105 258Z"/>
-    <path d="M520 245 L545 228 L565 245 L548 255Z"/>
-    <path d="M300 120 L320 105 L340 120 L325 128Z"/>
+  <!-- defenders on wall -->
+  <g transform="translate(200,155)">
+    <rect x="5" y="10" width="18" height="30" fill="#78350f"/>
+    <circle cx="14" cy="2" r="8" fill="#fcd34d"/>
+    <rect x="22" y="15" width="4" height="25" fill="#78716c"/>
   </g>
-  <g fill="#ef4444" opacity="0.6">
-    <circle cx="100" cy="238" r="3"/><circle cx="545" cy="233" r="3"/><circle cx="325" cy="110" r="3"/>
+  <g transform="translate(400,155)">
+    <rect x="5" y="10" width="18" height="30" fill="#78350f"/>
+    <circle cx="14" cy="2" r="8" fill="#fcd34d"/>
+    <rect x="-2" y="12" width="20" height="4" fill="#57534e"/>
   </g>
-  <!-- four defenders -->
-  <g fill="#334155">
-    <circle cx="250" cy="195" r="10"/><rect x="244" y="205" width="12" height="22"/>
-    <circle cx="290" cy="190" r="10"/><rect x="284" y="200" width="12" height="22"/>
-    <circle cx="330" cy="190" r="10"/><rect x="324" y="200" width="12" height="22"/>
-    <circle cx="370" cy="195" r="10"/><rect x="364" y="205" width="12" height="22"/>
+  <!-- wolves below -->
+  <g fill="#27272a">
+    <ellipse cx="120" cy="280" rx="35" ry="18"/>
+    <circle cx="95" cy="265" r="14"/><circle cx="145" cy="265" r="14"/>
+    <path d="M90 255 L75 245 L85 260Z" fill="#44403c"/>
+    <path d="M150 255 L165 245 L155 260Z" fill="#44403c"/>
+    <ellipse cx="320" cy="300" rx="40" ry="20"/>
+    <circle cx="290" cy="282" r="16"/><circle cx="350" cy="282" r="16"/>
+    <ellipse cx="520" cy="290" rx="38" ry="18"/>
+    <circle cx="495" cy="273" r="14"/><circle cx="545" cy="273" r="14"/>
   </g>
-  <!-- campfire center -->
-  <ellipse cx="320" cy="210" rx="15" ry="8" fill="#ea580c" opacity="0.8"/>
-  <ellipse cx="320" cy="205" rx="8" ry="12" fill="#fbbf24" opacity="0.9"/>
-  <text x="24" y="42" fill="#e2e8f0" font-family="sans-serif" font-size="26" font-weight="bold">?????</text>
-  <text x="24" y="66" fill="#f97316" font-family="sans-serif" font-size="11" letter-spacing="4">CO-OP · TOWER DEFENSE</text>
+  <!-- wolf eyes -->
+  <g fill="#ef4444">
+    <circle cx="92" cy="263" r="2"/><circle cx="102" cy="263" r="2"/>
+    <circle cx="287" cy="280" r="2"/><circle cx="297" cy="280" r="2"/>
+    <circle cx="492" cy="271" r="2"/><circle cx="502" cy="271" r="2"/>
+  </g>
+  <!-- ground -->
+  <rect y="200" width="640" height="160" fill="#292524"/>
+  <!-- torch fire -->
+  <g fill="#f97316" opacity="0.8">
+    <ellipse cx="60" cy="170" rx="6" ry="12"/><ellipse cx="580" cy="170" rx="6" ry="12"/>
+  </g>
 </svg>

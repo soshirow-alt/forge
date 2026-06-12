@@ -14,6 +14,7 @@ import { GameTags } from "@/components/game-tags";
 import { GameTesterApply } from "@/components/game-tester-apply";
 import { GameThumbnail } from "@/components/game-thumbnail";
 import { useGames } from "@/components/games-provider";
+import { LABEL_TEST_PLAY_OPEN } from "@/lib/user-labels";
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString("ja-JP", {
@@ -139,7 +140,7 @@ export function GameDetailPageClient({ id }: { id: string }) {
               </div>
               <div>
                 <dt className="text-sm font-medium text-zinc-500">
-                  テスター募集
+                  {LABEL_TEST_PLAY_OPEN}
                 </dt>
                 <dd className="mt-1">
                   <span

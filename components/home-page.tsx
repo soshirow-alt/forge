@@ -8,11 +8,19 @@ import { CreatorLink } from "@/components/creator-link";
 import { GameTags } from "@/components/game-tags";
 import { GameThumbnail } from "@/components/game-thumbnail";
 import { useGames } from "@/components/games-provider";
-import { filterGames, sortGames, type SortOption } from "@/lib/game-filters";
+import {
+  filterGames,
+  getDefaultSortForTab,
+  getGamesForDiscoveryTab,
+  sortGames,
+  type DiscoveryTab,
+  type SortOption,
+} from "@/lib/game-filters";
 import { HeroGameShowcase } from "@/components/hero-game-showcase";
-import { pickFeaturedGames, type FeaturedGameMeta } from "@/lib/featured-games";
+import { pickFeaturedGames } from "@/lib/featured-games";
 import { getPlayTypeLabel } from "@/lib/game-links";
 import { games as mockGames, type Game } from "@/lib/mock-games";
+import { LABEL_TEST_PLAY_OPEN } from "@/lib/user-labels";
 
 const HERO_SHOWCASE_FALLBACK_IDS = [
   "emberfall",
@@ -22,11 +30,29 @@ const HERO_SHOWCASE_FALLBACK_IDS = [
   "wolfpack-siege",
 ] as const;
 
+const discoveryTabs: { id: DiscoveryTab; label: string; subtitle: string }[] = [
+  {
+    id: "new",
+    label: "新着作品",
+    subtitle: "完成前の作品をいち早くチェック",
+  },
+  {
+    id: "testers",
+    label: "テストプレイ受付中",
+    subtitle: "開発者が感想や不具合報告を求めている作品",
+  },
+  {
+    id: "trending",
+    label: "急上昇",
+    subtitle: "いま応援が集まっている作品",
+  },
+];
+
 const sortOptions: { value: SortOption; label: string }[] = [
   { value: "newest", label: "新着順" },
   { value: "support", label: "応援数順" },
   { value: "updated", label: "更新日順" },
-  { value: "testers", label: "テスター募集中" },
+  { value: "testers", label: "テストプレイ受付中" },
 ];
 
 const inputClassName =
@@ -62,9 +88,11 @@ function DiscoveryBadge({
 function DiscoveryGameCard({
   game,
   showNewBadge = false,
+  showTrendingBadge = false,
 }: {
   game: Game;
   showNewBadge?: boolean;
+  showTrendingBadge?: boolean;
 }) {
   const { hasDevlogs } = useGames();
   const playLabel = getPlayTypeLabel(game.playUrl);
@@ -90,8 +118,11 @@ function DiscoveryGameCard({
           />
           <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
             {showNewBadge && <DiscoveryBadge variant="new">新着</DiscoveryBadge>}
+            {showTrendingBadge && (
+              <DiscoveryBadge variant="trending">急上昇</DiscoveryBadge>
+            )}
             {game.lookingForTesters && (
-              <DiscoveryBadge variant="tester">テスター募集中</DiscoveryBadge>
+              <DiscoveryBadge variant="tester">{LABEL_TEST_PLAY_OPEN}</DiscoveryBadge>
             )}
           </div>
           <div className="absolute bottom-3 left-3">
@@ -118,7 +149,7 @@ function DiscoveryGameCard({
 
           {game.lookingForTesters && game.testerSlots !== undefined && (
             <p className="mt-3 text-sm text-violet-300/90">
-              テスター募集 {game.testerSlots}人
+              受付 {game.testerSlots}人
             </p>
           )}
 
@@ -133,106 +164,6 @@ function DiscoveryGameCard({
         <BookmarkButton gameId={game.id} compact />
       </div>
     </article>
-  );
-}
-
-function FeaturedGameCard({ meta }: { meta: FeaturedGameMeta }) {
-  const { game, showTrending, showTester, showUpdate } = meta;
-
-  return (
-    <article className="group relative overflow-hidden rounded-2xl border border-zinc-800/90 bg-zinc-900/50 shadow-xl shadow-black/25 transition-all duration-300 hover:-translate-y-1 hover:border-orange-500/35 hover:shadow-2xl hover:shadow-orange-500/10">
-      <Link
-        href={`/games/${game.id}`}
-        className="relative block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
-      >
-        <div className="relative">
-          <GameThumbnail
-            thumbnailUrl={game.thumbnailUrl}
-            status={game.status}
-            projectId={game.id}
-            title={game.title}
-            genre={game.genre}
-            phase={game.phase}
-            aspectClassName="aspect-[16/10] sm:aspect-[5/3]"
-            showStatus={false}
-            featured
-          />
-          <div className="absolute left-4 top-4 flex flex-wrap gap-2">
-            {showTrending && (
-              <DiscoveryBadge variant="trending">急上昇中</DiscoveryBadge>
-            )}
-            {showTester && (
-              <DiscoveryBadge variant="tester">テスター募集中</DiscoveryBadge>
-            )}
-            {showUpdate && (
-              <DiscoveryBadge variant="update">更新あり</DiscoveryBadge>
-            )}
-          </div>
-        </div>
-
-        <div className="p-5 sm:p-6">
-          <p className="text-sm text-zinc-500">{game.genre}</p>
-          <h3 className="mt-1 text-xl font-bold leading-snug text-zinc-50 transition-colors group-hover:text-orange-300 sm:text-2xl">
-            {game.title}
-          </h3>
-          <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-zinc-400">
-            {game.description}
-          </p>
-          <p className="mt-4 text-sm font-medium text-zinc-500 transition-colors group-hover:text-orange-400/90">
-            詳細を見る →
-          </p>
-        </div>
-      </Link>
-    </article>
-  );
-}
-
-function FeaturedSection({
-  items,
-  loading,
-}: {
-  items: FeaturedGameMeta[];
-  loading: boolean;
-}) {
-  if (!loading && items.length === 0) {
-    return null;
-  }
-
-  return (
-    <section className="mx-auto w-full max-w-7xl px-6 pb-4 pt-10 sm:pt-14">
-      <div className="mb-8 max-w-2xl">
-        <div className="mb-3 h-1 w-12 rounded-full bg-gradient-to-r from-rose-500 to-orange-500" />
-        <h2 className="text-2xl font-bold tracking-tight text-zinc-50 sm:text-3xl">
-          今注目の開発中ゲーム
-        </h2>
-        <p className="mt-3 text-base leading-relaxed text-zinc-500">
-          応援やテスター応募が集まっている作品をピックアップ
-        </p>
-      </div>
-
-      {loading ? (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <div
-              key={index}
-              className="overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/40"
-            >
-              <div className="aspect-[16/10] animate-pulse bg-zinc-800/80 sm:aspect-[5/3]" />
-              <div className="space-y-3 p-6">
-                <div className="h-4 w-1/4 animate-pulse rounded bg-zinc-800/60" />
-                <div className="h-7 w-3/4 animate-pulse rounded bg-zinc-800/80" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {items.map((meta) => (
-            <FeaturedGameCard key={meta.game.id} meta={meta} />
-          ))}
-        </div>
-      )}
-    </section>
   );
 }
 
@@ -257,6 +188,7 @@ function GameSection({
   subtitle,
   games,
   showNewBadge = false,
+  showTrendingBadge = false,
   loading = false,
   emptyMessage,
 }: {
@@ -264,6 +196,7 @@ function GameSection({
   subtitle: string;
   games: Game[];
   showNewBadge?: boolean;
+  showTrendingBadge?: boolean;
   loading?: boolean;
   emptyMessage?: string;
 }) {
@@ -301,6 +234,7 @@ function GameSection({
               key={game.id}
               game={game}
               showNewBadge={showNewBadge}
+              showTrendingBadge={showTrendingBadge}
             />
           ))}
         </div>
@@ -318,18 +252,8 @@ export function HomePage() {
     hasDevlogs,
   } = useGames();
   const [searchQuery, setSearchQuery] = useState("");
+  const [discoveryTab, setDiscoveryTab] = useState<DiscoveryTab>("new");
   const [sortOption, setSortOption] = useState<SortOption>("newest");
-
-  const processGames = useMemo(
-    () => (games: Game[]) =>
-      sortGames(
-        filterGames(games, searchQuery),
-        sortOption,
-        getSupportCount,
-        isSubmittedGame,
-      ),
-    [searchQuery, sortOption, getSupportCount, isSubmittedGame],
-  );
 
   const newGamesRaw = useMemo(
     () => getGamesBySection("new"),
@@ -355,18 +279,6 @@ export function HomePage() {
     }
     return combined;
   }, [newGamesRaw, testerGamesRaw, betaGamesRaw]);
-
-  const featuredGames = useMemo(
-    () =>
-      pickFeaturedGames(
-        allListableGames,
-        getSupportCount,
-        isSubmittedGame,
-        hasDevlogs,
-        3,
-      ),
-    [allListableGames, getSupportCount, isSubmittedGame, hasDevlogs],
-  );
 
   const heroShowcaseGames = useMemo(() => {
     const featured = pickFeaturedGames(
@@ -396,23 +308,39 @@ export function HomePage() {
     return combined.slice(0, 5);
   }, [allListableGames, getSupportCount, isSubmittedGame, hasDevlogs]);
 
-  const newGames = useMemo(
-    () => processGames(newGamesRaw),
-    [processGames, newGamesRaw],
+  const activeTabConfig =
+    discoveryTabs.find((tab) => tab.id === discoveryTab) ?? discoveryTabs[0];
+
+  const tabGamesRaw = useMemo(
+    () =>
+      getGamesForDiscoveryTab(
+        discoveryTab,
+        newGamesRaw,
+        testerGamesRaw,
+        allListableGames,
+      ),
+    [discoveryTab, newGamesRaw, testerGamesRaw, allListableGames],
   );
-  const testerGames = useMemo(
-    () => processGames(testerGamesRaw),
-    [processGames, testerGamesRaw],
-  );
-  const betaGames = useMemo(
-    () => processGames(betaGamesRaw),
-    [processGames, betaGamesRaw],
+
+  const displayedGames = useMemo(
+    () =>
+      sortGames(
+        filterGames(tabGamesRaw, searchQuery),
+        sortOption,
+        getSupportCount,
+        isSubmittedGame,
+      ),
+    [tabGamesRaw, searchQuery, sortOption, getSupportCount, isSubmittedGame],
   );
 
   const hasActiveFilter = searchQuery.trim().length > 0;
-  const totalVisible = newGames.length + testerGames.length + betaGames.length;
-  const totalAvailable =
-    newGamesRaw.length + testerGamesRaw.length + betaGamesRaw.length;
+  const totalVisible = displayedGames.length;
+  const totalAvailable = tabGamesRaw.length;
+
+  function handleDiscoveryTabChange(tab: DiscoveryTab) {
+    setDiscoveryTab(tab);
+    setSortOption(getDefaultSortForTab(tab));
+  }
 
   function scrollToDiscover() {
     document.getElementById("discover")?.scrollIntoView({ behavior: "smooth" });
@@ -430,8 +358,8 @@ export function HomePage() {
           <div className="forge-hero-grid absolute inset-0 opacity-[0.35]" />
 
           <div className="relative mx-auto max-w-7xl px-6 pb-16 pt-14 sm:pb-20 sm:pt-16 lg:pb-24 lg:pt-20">
-            <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-12 xl:gap-16">
-              <div className="mx-auto max-w-xl text-center lg:mx-0 lg:max-w-none lg:text-left">
+            <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.45fr)] lg:gap-10 xl:gap-12">
+              <div className="mx-auto max-w-lg text-center lg:mx-0 lg:max-w-none lg:text-left">
                 <Link
                   href="/"
                   className="inline-flex items-center gap-2 rounded-full border border-zinc-800/80 bg-zinc-900/50 px-4 py-1.5 text-sm font-semibold backdrop-blur-sm"
@@ -443,7 +371,7 @@ export function HomePage() {
                   <span className="text-zinc-400">Indie Discovery</span>
                 </Link>
 
-                <h1 className="mt-8 text-4xl font-bold leading-[1.15] tracking-tight text-zinc-50 sm:text-5xl lg:text-[3.25rem] lg:leading-[1.12]">
+                <h1 className="mt-8 text-4xl font-bold leading-[1.15] tracking-tight text-zinc-50 sm:text-5xl lg:text-[2.75rem] lg:leading-[1.12] xl:text-5xl">
                   次にハマるゲームは、
                   <span className="bg-gradient-to-r from-orange-300 via-amber-200 to-orange-400 bg-clip-text text-transparent">
                     完成前に
@@ -472,7 +400,7 @@ export function HomePage() {
                 </div>
               </div>
 
-              <div className="mx-auto w-full max-w-xl lg:max-w-none">
+              <div className="mx-auto w-full lg:max-w-none">
                 <HeroGameShowcase
                   games={heroShowcaseGames}
                   loading={!dataReady}
@@ -482,14 +410,35 @@ export function HomePage() {
           </div>
         </section>
 
-        <FeaturedSection items={featuredGames} loading={!dataReady} />
-
-        <div className="mx-auto h-px max-w-7xl bg-gradient-to-r from-transparent via-zinc-800/80 to-transparent" />
-
         <div
           id="discover"
-          className="mx-auto max-w-7xl scroll-mt-24 px-6 pt-12 sm:pt-16"
+          className="mx-auto max-w-7xl scroll-mt-24 px-6 pt-8 sm:pt-10"
         >
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex flex-wrap gap-2">
+              {discoveryTabs.map((tab) => {
+                const isActive = discoveryTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => handleDiscoveryTabChange(tab.id)}
+                    className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${
+                      isActive
+                        ? "bg-gradient-to-r from-orange-500 to-amber-500 text-zinc-950 shadow-lg shadow-orange-500/20"
+                        : "border border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+            {!dataReady ? null : (
+              <p className="text-sm text-zinc-600">{displayedGames.length}件</p>
+            )}
+          </div>
+
           <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/30 p-5 backdrop-blur-sm sm:p-6">
             <div className="mb-4">
               <h2 className="text-lg font-semibold text-zinc-100">作品を探す</h2>
@@ -529,50 +478,20 @@ export function HomePage() {
         </div>
 
         <GameSection
-          title="新着作品"
-          subtitle="公開されたばかりのインディーゲーム。完成前の作品だからこそ、最初の応援者になれる。"
-          games={newGames}
-          showNewBadge
+          title={activeTabConfig.label}
+          subtitle={activeTabConfig.subtitle}
+          games={displayedGames}
+          showNewBadge={discoveryTab === "new"}
+          showTrendingBadge={discoveryTab === "trending"}
           loading={!dataReady}
           emptyMessage={
             hasActiveFilter
-              ? "検索条件に一致する新着作品がありません。"
-              : "新着作品はまだありません。最初の作品を投稿してみましょう。"
-          }
-        />
-
-        {(newGames.length > 0 ||
-          testerGames.length > 0 ||
-          betaGames.length > 0 ||
-          !dataReady) && (
-          <div className="mx-auto h-px max-w-7xl bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
-        )}
-
-        <GameSection
-          title="テスター募集中"
-          subtitle="プレイフィードバックで開発を支える。リリース前のビルドを試して、クリエイターに届けよう。"
-          games={testerGames}
-          loading={!dataReady}
-          emptyMessage={
-            hasActiveFilter
-              ? "検索条件に一致する募集作品がありません。"
-              : "現在テスター募集中的な作品はありません。"
-          }
-        />
-
-        {(testerGames.length > 0 || betaGames.length > 0 || !dataReady) && (
-          <div className="mx-auto h-px max-w-7xl bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
-        )}
-
-        <GameSection
-          title="β版の作品"
-          subtitle="より多くのプレイヤー向けに整えられたビルド。公開に近い段階の作品をチェック。"
-          games={betaGames}
-          loading={!dataReady}
-          emptyMessage={
-            hasActiveFilter
-              ? "検索条件に一致するβ版作品がありません。"
-              : "現在表示できるβ版作品はありません。"
+              ? "検索条件に一致する作品がありません。"
+              : discoveryTab === "testers"
+                ? "現在テストプレイ受付中の作品はありません。"
+                : discoveryTab === "trending"
+                  ? "急上昇作品はまだありません。"
+                  : "新着作品はまだありません。"
           }
         />
       </main>

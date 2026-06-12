@@ -2,6 +2,37 @@ import type { Game } from "@/lib/mock-games";
 
 export type SortOption = "newest" | "support" | "updated" | "testers";
 
+export type DiscoveryTab = "new" | "testers" | "trending";
+
+export function getGamesForDiscoveryTab(
+  tab: DiscoveryTab,
+  newGames: Game[],
+  testerGames: Game[],
+  allGames: Game[],
+): Game[] {
+  switch (tab) {
+    case "testers":
+      return testerGames;
+    case "trending":
+      return allGames;
+    case "new":
+    default:
+      return newGames;
+  }
+}
+
+export function getDefaultSortForTab(tab: DiscoveryTab): SortOption {
+  switch (tab) {
+    case "trending":
+      return "support";
+    case "testers":
+      return "updated";
+    case "new":
+    default:
+      return "newest";
+  }
+}
+
 function getNewestTimestamp(game: Game): number {
   if (game.id.startsWith("user-")) {
     const timestamp = Number(game.id.replace("user-", ""));

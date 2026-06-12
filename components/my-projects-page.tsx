@@ -7,6 +7,7 @@ import { useAuth } from "@/components/auth-provider";
 import { ForgeHeader } from "@/components/forge-header";
 import { useGames } from "@/components/games-provider";
 import type { Game } from "@/lib/mock-games";
+import { LABEL_TEST_PLAY_JOIN, displayGameStatus } from "@/lib/user-labels";
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString("ja-JP", {
@@ -155,7 +156,7 @@ export function MyProjectsPage() {
                       <th className="px-5 py-4 font-medium">ステータス</th>
                       <th className="px-5 py-4 font-medium">投稿日</th>
                       <th className="px-5 py-4 font-medium">応援数</th>
-                      <th className="px-5 py-4 font-medium">テスター応募</th>
+                      <th className="px-5 py-4 font-medium">{LABEL_TEST_PLAY_JOIN}</th>
                       <th className="px-5 py-4 font-medium">操作</th>
                     </tr>
                   </thead>
@@ -168,7 +169,7 @@ export function MyProjectsPage() {
                         <td className="px-5 py-4 font-medium text-zinc-100">
                           {game.title}
                         </td>
-                        <td className="px-5 py-4 text-zinc-300">{game.status}</td>
+                        <td className="px-5 py-4 text-zinc-300">{displayGameStatus(game.status)}</td>
                         <td className="px-5 py-4 text-zinc-400">
                           {formatDate(getCreatedDate(game))}
                         </td>
@@ -216,7 +217,7 @@ export function MyProjectsPage() {
                     <dl className="mt-3 space-y-2 text-sm">
                       <div className="flex justify-between gap-4">
                         <dt className="text-zinc-500">ステータス</dt>
-                        <dd className="text-zinc-300">{game.status}</dd>
+                        <dd className="text-zinc-300">{displayGameStatus(game.status)}</dd>
                       </div>
                       <div className="flex justify-between gap-4">
                         <dt className="text-zinc-500">投稿日</dt>
@@ -231,7 +232,7 @@ export function MyProjectsPage() {
                         </dd>
                       </div>
                       <div className="flex justify-between gap-4">
-                        <dt className="text-zinc-500">テスター応募</dt>
+                        <dt className="text-zinc-500">{LABEL_TEST_PLAY_JOIN}</dt>
                         <dd className="text-zinc-300">
                           {game.lookingForTesters
                             ? getApplicantCount(game.id, 0)
@@ -281,7 +282,7 @@ export function MyProjectsPage() {
               hint="現在の合計"
             />
             <AnalyticsCard
-              label="テスター応募"
+              label={LABEL_TEST_PLAY_JOIN}
               value={String(totalTesterApplications)}
               hint="現在の合計"
             />

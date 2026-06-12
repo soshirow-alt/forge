@@ -15,7 +15,7 @@ export function getNotificationTypeLabel(type: NotificationType): string {
     case "support":
       return "応援";
     case "tester_apply":
-      return "テスター応募";
+      return "テストプレイ参加";
     case "feedback":
       return "フィードバック";
     case "devlog":
@@ -31,7 +31,7 @@ export function createNotificationMessage(
     case "support":
       return `「${projectTitle}」に応援が届きました`;
     case "tester_apply":
-      return `「${projectTitle}」にテスター応募がありました`;
+      return `「${projectTitle}」にテストプレイの参加がありました`;
     case "feedback":
       return `「${projectTitle}」にフィードバックが投稿されました`;
     case "devlog":

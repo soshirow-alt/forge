@@ -1,36 +1,31 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
-  <rect width="640" height="360" fill="#050505"/>
-  <rect width="640" height="360" filter="url(#n)" opacity="0.12"/>
-  <defs><filter id="n"><feTurbulence baseFrequency="0.85" numOctaves="2"/></filter></defs>
-  <!-- dead trees -->
-  <path d="M80 360 L95 220 L110 360" fill="none" stroke="#292524" stroke-width="4"/>
-  <path d="M560 360 L545 200 L530 360" fill="none" stroke="#292524" stroke-width="4"/>
-  <!-- abandoned house -->
-  <path d="M220 360 L220 180 L320 120 L420 180 L420 360Z" fill="#1c1917" stroke="#44403c" stroke-width="2"/>
-  <rect x="290" y="240" width="60" height="120" fill="#0a0a0a"/>
-  <!-- TV static screen -->
-  <rect x="250" y="200" width="140" height="90" fill="#171717" stroke="#525252" stroke-width="3"/>
-  <g opacity="0.5">
-    <rect x="255" y="205" width="130" height="80" fill="#262626"/>
-    <line x1="255" y1="220" x2="385" y2="220" stroke="#404040" stroke-width="1"/>
-    <line x1="255" y1="240" x2="385" y2="240" stroke="#525252" stroke-width="1"/>
-    <line x1="255" y1="260" x2="385" y2="260" stroke="#404040" stroke-width="1"/>
+  <rect width="640" height="360" fill="#0a0a0f"/>
+  <!-- abandoned lab corridor -->
+  <path d="M0 360 L200 180 L440 180 L640 360Z" fill="#18181b"/>
+  <path d="M220 180 L420 180 L640 360 L0 360Z" fill="#27272a"/>
+  <rect x="180" y="40" width="280" height="140" fill="#1c1917"/>
+  <!-- flickering monitors -->
+  <rect x="200" y="60" width="70" height="50" fill="#0c0a09" stroke="#334155" stroke-width="2"/>
+  <rect x="290" y="60" width="70" height="50" fill="#0f172a" stroke="#06b6d4" stroke-width="2"/>
+  <rect x="380" y="60" width="60" height="50" fill="#0c0a09" stroke="#334155" stroke-width="2"/>
+  <text x="298" y="92" fill="#22d3ee" font-family="monospace" font-size="10">SIGNAL LOST</text>
+  <!-- survivor with flashlight -->
+  <g transform="translate(300,210)">
+    <ellipse cx="20" cy="85" rx="25" ry="8" fill="#000" opacity="0.6"/>
+    <rect x="8" y="35" width="24" height="50" rx="4" fill="#292524"/>
+    <circle cx="20" cy="22" r="13" fill="#44403c"/>
+    <rect x="28" y="50" width="30" height="8" rx="2" fill="#57534e" transform="rotate(-20 28 50)"/>
+    <circle cx="55" cy="42" r="18" fill="#fef3c7" opacity="0.15"/>
+    <circle cx="55" cy="42" r="10" fill="#fef9c3" opacity="0.35"/>
   </g>
-  <!-- radio tower -->
-  <g stroke="#57534e" stroke-width="2" fill="none">
-    <line x1="480" y1="360" x2="480" y2="100"/>
-    <line x1="460" y1="130" x2="500" y2="130"/>
-    <line x1="450" y1="160" x2="510" y2="160"/>
-    <line x1="455" y1="190" x2="505" y2="190"/>
+  <!-- cone of light -->
+  <path d="M330 240 L480 360 L180 360Z" fill="#fef3c7" opacity="0.06"/>
+  <!-- static overlay -->
+  <g opacity="0.08">
+    <rect x="0" y="0" width="640" height="360" fill="url(#noise)"/>
   </g>
-  <circle cx="480" cy="95" r="6" fill="#ef4444" opacity="0.8"/>
-  <!-- ghost figure silhouette -->
-  <g fill="#0a0a0a" opacity="0.9">
-    <ellipse cx="320" cy="310" rx="30" ry="10"/>
-    <path d="M305 250 Q320 230 335 250 L340 300 Q320 290 300 300Z"/>
-    <circle cx="320" cy="245" r="16"/>
-  </g>
-  <text x="24" y="42" fill="#d6d3d1" font-family="sans-serif" font-size="28" font-weight="bold">?????</text>
-  <text x="24" y="66" fill="#78716c" font-family="sans-serif" font-size="11" letter-spacing="4">HORROR · ADVENTURE</text>
-  <text x="260" y="320" fill="#ef4444" font-family="monospace" font-size="10" opacity="0.6">? SIGNAL LOST ?</text>
+  <!-- HUD heartbeat -->
+  <polyline points="16,40 28,40 32,28 36,52 40,40 80,40" fill="none" stroke="#ef4444" stroke-width="2"/>
+  <rect x="16" y="52" width="100" height="8" rx="2" fill="#1c1917"/>
+  <rect x="16" y="52" width="35" height="8" rx="2" fill="#ef4444" opacity="0.8"/>
 </svg>

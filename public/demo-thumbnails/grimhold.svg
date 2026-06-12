@@ -1,34 +1,36 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
-  <defs>
-    <linearGradient id="blizzard" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#334155"/>
-      <stop offset="100%" stop-color="#0f172a"/>
-    </linearGradient>
-  </defs>
-  <rect width="640" height="360" fill="url(#blizzard)"/>
-  <!-- snow -->
-  <g fill="#fff" opacity="0.7">
-    <circle cx="80" cy="60" r="2"/><circle cx="150" cy="100" r="1.5"/><circle cx="500" cy="70" r="2"/>
-    <circle cx="580" cy="130" r="1.5"/><circle cx="250" cy="50" r="1"/><circle cx="400" cy="90" r="1.5"/>
+  <rect width="640" height="360" fill="#0c0a09"/>
+  <!-- dungeon corridor perspective -->
+  <path d="M0 360 L200 120 L440 120 L640 360Z" fill="#1c1917"/>
+  <path d="M220 120 L420 120 L640 360 L0 360Z" fill="#292524"/>
+  <!-- stone arches -->
+  <path d="M220 120 Q320 60 420 120" fill="none" stroke="#44403c" stroke-width="6"/>
+  <path d="M240 120 Q320 80 400 120" fill="none" stroke="#57534e" stroke-width="3"/>
+  <!-- torch left -->
+  <rect x="230" y="140" width="8" height="30" fill="#78350f"/>
+  <g fill="#f97316" opacity="0.9">
+    <ellipse cx="234" cy="135" rx="10" ry="16"/>
+    <ellipse cx="234" cy="130" rx="6" ry="10" fill="#fbbf24"/>
   </g>
-  <!-- fortress on cliff -->
-  <path d="M180 280 L180 140 L320 80 L460 140 L460 280Z" fill="#475569" stroke="#64748b" stroke-width="2"/>
-  <polygon points="320,50 360,90 280,90" fill="#64748b"/>
-  <rect x="290" y="180" width="60" height="100" fill="#1e293b"/>
-  <!-- icicles -->
-  <path d="M200 140 L205 160 L210 140" fill="#94a3b8" opacity="0.6"/>
-  <path d="M430 140 L435 165 L440 140" fill="#94a3b8" opacity="0.6"/>
-  <!-- survivor silhouette at wall -->
-  <g fill="#0f172a">
-    <ellipse cx="520" cy="270" rx="16" ry="6"/>
-    <rect x="510" y="235" width="20" height="38"/>
-    <circle cx="520" cy="222" r="12"/>
-    <rect x="530" y="245" width="25" height="6" fill="#57534e"/>
+  <!-- torch right -->
+  <rect x="402" y="140" width="8" height="30" fill="#78350f"/>
+  <g fill="#f97316" opacity="0.9">
+    <ellipse cx="406" cy="135" rx="10" ry="16"/>
   </g>
-  <!-- torch light -->
-  <ellipse cx="310" cy="200" rx="40" ry="25" fill="#f97316" opacity="0.15"/>
-  <rect x="305" y="175" width="10" height="20" fill="#78350f"/>
-  <ellipse cx="310" cy="170" rx="8" ry="12" fill="#fb923c" opacity="0.8"/>
-  <text x="24" y="42" fill="#cbd5e1" font-family="serif" font-size="28" font-weight="bold">???????</text>
-  <text x="24" y="66" fill="#64748b" font-family="sans-serif" font-size="11" letter-spacing="4">HORROR ? SURVIVAL</text>
+  <!-- monster eyes in darkness -->
+  <g fill="#ef4444">
+    <circle cx="320" cy="200" r="5"/><circle cx="340" cy="200" r="5"/>
+    <circle cx="300" cy="230" r="3" opacity="0.6"/><circle cx="360" cy="228" r="3" opacity="0.6"/>
+  </g>
+  <!-- adventurer with sword -->
+  <g transform="translate(290,260)">
+    <ellipse cx="20" cy="55" rx="22" ry="7" fill="#000" opacity="0.5"/>
+    <rect x="8" y="10" width="24" height="45" rx="3" fill="#44403c"/>
+    <circle cx="20" cy="0" r="10" fill="#78716c"/>
+    <rect x="30" y="15" width="5" height="45" fill="#57534e"/>
+    <path d="M35 15 L50 5 L35 22Z" fill="#a8a29e"/>
+  </g>
+  <!-- light pool from torch -->
+  <ellipse cx="234" cy="280" rx="80" ry="30" fill="#f97316" opacity="0.08"/>
+  <ellipse cx="406" cy="280" rx="80" ry="30" fill="#f97316" opacity="0.08"/>
 </svg>

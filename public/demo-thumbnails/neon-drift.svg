@@ -1,55 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
   <defs>
-    <linearGradient id="night" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="tunnel" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#0f172a"/>
       <stop offset="100%" stop-color="#312e81"/>
     </linearGradient>
-    <linearGradient id="road" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#18181b"/>
-      <stop offset="100%" stop-color="#09090b"/>
-    </linearGradient>
   </defs>
-  <rect width="640" height="360" fill="url(#night)"/>
-  <!-- cyberpunk skyline -->
-  <g fill="#1e1b4b" stroke-width="1">
-    <rect x="20" y="100" width="35" height="140" stroke="#06b6d4" stroke-opacity="0.5"/>
-    <rect x="65" y="70" width="45" height="170" stroke="#ec4899" stroke-opacity="0.5"/>
-    <rect x="120" y="110" width="30" height="130" stroke="#a855f7" stroke-opacity="0.4"/>
-    <rect x="490" y="80" width="50" height="160" stroke="#06b6d4" stroke-opacity="0.5"/>
-    <rect x="550" y="100" width="40" height="140" stroke="#f472b6" stroke-opacity="0.5"/>
-    <rect x="600" y="120" width="30" height="120" stroke="#22d3ee" stroke-opacity="0.4"/>
+  <rect width="640" height="360" fill="url(#tunnel)"/>
+  <!-- neon city walls -->
+  <path d="M0 120 L280 200 L360 200 L640 120 L640 360 L0 360Z" fill="#18181b"/>
+  <path d="M300 200 L340 200 L640 360 L0 360Z" fill="#27272a"/>
+  <g stroke-width="2">
+    <line x1="320" y1="200" x2="320" y2="360" stroke="#06b6d4" opacity="0.9"/>
+    <line x1="305" y1="210" x2="285" y2="360" stroke="#ec4899" opacity="0.5"/>
+    <line x1="335" y1="210" x2="355" y2="360" stroke="#a855f7" opacity="0.5"/>
   </g>
-  <!-- neon windows -->
-  <g opacity="0.85">
-    <rect x="75" y="90" width="8" height="12" fill="#06b6d4"/><rect x="88" y="105" width="8" height="12" fill="#ec4899"/>
-    <rect x="75" y="130" width="8" height="12" fill="#a855f7"/><rect x="500" y="100" width="10" height="14" fill="#22d3ee"/>
-    <rect x="515" y="120" width="10" height="14" fill="#f472b6"/>
+  <!-- buildings -->
+  <rect x="40" y="60" width="50" height="140" fill="#1e1b4b" stroke="#06b6d4" stroke-width="1" opacity="0.8"/>
+  <rect x="550" y="40" width="60" height="160" fill="#1e1b4b" stroke="#f472b6" stroke-width="1" opacity="0.8"/>
+  <g fill="#22d3ee" opacity="0.7"><rect x="55" y="80" width="8" height="10"/><rect x="70" y="100" width="8" height="10"/><rect x="565" y="70" width="10" height="12"/></g>
+  <!-- cockpit dash -->
+  <path d="M0 280 Q320 220 640 280 L640 360 L0 360Z" fill="#09090b" opacity="0.95"/>
+  <rect x="80" y="295" width="180" height="50" rx="8" fill="#18181b" stroke="#06b6d4" stroke-width="1"/>
+  <text x="95" y="325" fill="#67e8f9" font-family="monospace" font-size="22">287 KM/H</text>
+  <!-- car ahead -->
+  <g transform="translate(250,230)">
+    <path d="M0 30 L20 10 L90 5 L115 18 L120 35 L105 42 L25 42 Z" fill="#18181b" stroke="#ec4899" stroke-width="2"/>
+    <circle cx="30" cy="42" r="11" fill="#0a0a0a" stroke="#f472b6" stroke-width="2"/>
+    <circle cx="90" cy="42" r="11" fill="#0a0a0a" stroke="#f472b6" stroke-width="2"/>
+    <rect x="45" y="14" width="35" height="10" fill="#06b6d4" opacity="0.7"/>
   </g>
-  <!-- perspective road -->
-  <path d="M0 360 L280 240 L360 240 L640 360Z" fill="url(#road)"/>
-  <path d="M300 240 L340 240 L640 360 L0 360Z" fill="#27272a"/>
-  <!-- neon lane lines -->
-  <g stroke="#06b6d4" stroke-width="3" opacity="0.8">
-    <line x1="320" y1="240" x2="320" y2="360"/>
-    <line x1="300" y1="250" x2="280" y2="360" opacity="0.5"/>
-    <line x1="340" y1="250" x2="360" y2="360" opacity="0.5"/>
+  <ellipse cx="400" cy="250" rx="60" ry="15" fill="#67e8f9" opacity="0.2"/>
+  <!-- speed lines -->
+  <g stroke-linecap="round" opacity="0.6">
+    <line x1="0" y1="250" x2="80" y2="250" stroke="#ec4899" stroke-width="2"/>
+    <line x1="560" y1="265" x2="640" y2="265" stroke="#22d3ee" stroke-width="2"/>
   </g>
-  <!-- motion streaks -->
-  <g stroke-linecap="round" opacity="0.7">
-    <line x1="100" y1="280" x2="200" y2="280" stroke="#ec4899" stroke-width="2"/>
-    <line x1="420" y1="300" x2="520" y2="300" stroke="#22d3ee" stroke-width="2"/>
-    <line x1="80" y1="310" x2="160" y2="310" stroke="#a855f7" stroke-width="2"/>
-  </g>
-  <!-- racing car silhouette -->
-  <g transform="translate(260,255)">
-    <path d="M0 25 L15 10 L75 5 L95 15 L100 30 L90 38 L20 38 L0 30Z" fill="#18181b" stroke="#06b6d4" stroke-width="2"/>
-    <path d="M20 10 L35 0 L55 0 L70 10" fill="none" stroke="#ec4899" stroke-width="2"/>
-    <circle cx="25" cy="38" r="10" fill="#0a0a0a" stroke="#f472b6" stroke-width="2"/>
-    <circle cx="75" cy="38" r="10" fill="#0a0a0a" stroke="#f472b6" stroke-width="2"/>
-    <rect x="40" y="12" width="30" height="8" fill="#06b6d4" opacity="0.6"/>
-  </g>
-  <!-- headlight glow -->
-  <ellipse cx="365" cy="275" rx="40" ry="12" fill="#67e8f9" opacity="0.25"/>
-  <text x="24" y="42" fill="#67e8f9" font-family="sans-serif" font-size="30" font-weight="bold">???????</text>
-  <text x="24" y="66" fill="#f472b6" font-family="sans-serif" font-size="11" letter-spacing="4">CYBERPUNK ? RACING</text>
 </svg>
