@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { getAuthErrorMessage } from "@/lib/auth";
-import { getRedirectFromCurrentUrl } from "@/lib/auth-redirect";
 
 const inputClassName =
   "mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
@@ -29,7 +28,7 @@ export function LoginPage({
 
   useEffect(() => {
     if (hydrated && user) {
-      window.location.href = getRedirectFromCurrentUrl();
+      window.location.href = "/";
     }
   }, [hydrated, user]);
 
@@ -49,7 +48,7 @@ export function LoginPage({
         return;
       }
 
-      window.location.href = getRedirectFromCurrentUrl();
+      window.location.href = "/";
       return;
     }
 
@@ -57,7 +56,7 @@ export function LoginPage({
       const hasSession = await signUp(email, password, displayName);
 
       if (hasSession) {
-        window.location.href = getRedirectFromCurrentUrl();
+        window.location.href = "/";
         return;
       }
 
