@@ -46,18 +46,52 @@ const featureTags = [
   "PvE",
 ] as const;
 
-const developerInterestOptions = [
-  "UIが分かりやすいか",
-  "難易度が適切か",
-  "戦闘バランス",
-  "チュートリアル",
-] as const;
-
-const distributionOptions: { value: DistributionType; label: string }[] = [
-  { value: "browser", label: "ブラウザプレイ" },
-  { value: "download", label: "ダウンロード" },
-  { value: "external", label: "外部リンク" },
+const distributionOptions: {
+  value: DistributionType;
+  label: string;
+  hint: string;
+}[] = [
+  {
+    value: "browser",
+    label: "ブラウザプレイ",
+    hint: "URLを開くとブラウザでそのまま遊べる",
+  },
+  {
+    value: "download",
+    label: "ダウンロード",
+    hint: "ファイルを落としてプレイする",
+  },
+  {
+    value: "external",
+    label: "外部サイト",
+    hint: "Steam・itch.io など別サイトでプレイ",
+  },
 ];
+
+function getAccessUrlField(distribution: DistributionType) {
+  switch (distribution) {
+    case "browser":
+      return {
+        label: "プレイURL",
+        placeholder: "https://example.com/play",
+        hint: "テスターがブラウザで開いて遊べるURL",
+      };
+    case "download":
+      return {
+        label: "ダウンロードURL",
+        placeholder: "https://example.com/game.zip",
+        hint: "zip など配布ファイルのURL",
+      };
+    case "external":
+      return {
+        label: "ゲームページURL",
+        placeholder: "https://store.steampowered.com/...",
+        hint: "Steam・itch.io 等、テスターがゲームにアクセスするURL",
+      };
+    default:
+      return null;
+  }
+}
 
 type ExternalLinkKey = "steam" | "itch" | "discord" | "github" | "official";
 
@@ -112,11 +146,8 @@ export function SubmitPage() {
   const [distribution, setDistribution] = useState<DistributionType>("");
   const [lookingForTesters, setLookingForTesters] = useState(false);
   const [testerSlots, setTesterSlots] = useState(10);
-  const [developerInterests, setDeveloperInterests] = useState<string[]>([]);
-  const [developerInterestNotes, setDeveloperInterestNotes] = useState("");
-  const [currentChallenge, setCurrentChallenge] = useState("");
+  const [testerNotes, setTesterNotes] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [showExternalLinks, setShowExternalLinks] = useState(false);
   const [enabledExternalLinks, setEnabledExternalLinks] = useState<
     ExternalLinkKey[]
   >([]);
@@ -176,14 +207,6 @@ export function SubmitPage() {
   function toggleTag(tag: string) {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((item) => item !== tag) : [...prev, tag],
-    );
-  }
-
-  function toggleDeveloperInterest(option: string) {
-    setDeveloperInterests((prev) =>
-      prev.includes(option)
-        ? prev.filter((item) => item !== option)
-        : [...prev, option],
     );
   }
 
@@ -315,11 +338,8 @@ export function SubmitPage() {
     setDistribution("");
     setLookingForTesters(false);
     setTesterSlots(10);
-    setDeveloperInterests([]);
-    setDeveloperInterestNotes("");
-    setCurrentChallenge("");
+    setTesterNotes("");
     setSelectedTags([]);
-    setShowExternalLinks(false);
     setEnabledExternalLinks([]);
     setSteamUrl("");
     setItchUrl("");
@@ -446,27 +466,32 @@ export function SubmitPage() {
             />
           </div>
 
-          <div>
-            <label htmlFor="genre" className="text-sm font-medium text-zinc-400">
-              ジャンル
-            </label>
-            <select
-              id="genre"
-              required
-              value={genre}
-              onChange={(event) => setGenre(event.target.value)}
-              className={inputClassName}
-            >
-              <option value="" disabled>
-                選択してください
-              </option>
+          <fieldset>
+            <legend className="text-sm font-medium text-zinc-400">ジャンル</legend>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {genreOptions.map((option) => (
-                <option key={option} value={option}>
+                <label
+                  key={option}
+                  className={`flex cursor-pointer items-center justify-center rounded-lg border px-3 py-2 text-sm transition-colors ${
+                    genre === option
+                      ? "border-orange-500/50 bg-orange-500/10 text-orange-300"
+                      : "border-zinc-800 bg-zinc-950/50 text-zinc-300 hover:border-zinc-700"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="genre"
+                    required
+                    value={option}
+                    checked={genre === option}
+                    onChange={() => setGenre(option)}
+                    className="sr-only"
+                  />
                   {option}
-                </option>
+                </label>
               ))}
-            </select>
-          </div>
+            </div>
+          </fieldset>
 
           <div>
             <label
@@ -505,28 +530,24 @@ export function SubmitPage() {
             </select>
           </div>
 
-          <div>
-            <label htmlFor="playUrl" className="text-sm font-medium text-zinc-400">
-              プレイURL
-            </label>
-            <input
-              id="playUrl"
-              type="url"
-              required
-              value={playUrl}
-              onChange={(event) => setPlayUrl(event.target.value)}
-              className={inputClassName}
-              placeholder="https://example.com"
-            />
-          </div>
-
-          <div>
-            <p className="text-sm font-medium text-zinc-400">配布形式</p>
-            <div className="mt-3 space-y-2">
+          <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
+            <div>
+              <p className="text-sm font-medium text-zinc-400">
+                テスターのアクセス方法
+              </p>
+              <p className="mt-1 text-xs text-zinc-600">
+                テスターがゲームに触れる方法を選んでください
+              </p>
+            </div>
+            <div className="space-y-2">
               {distributionOptions.map((option) => (
                 <label
                   key={option.value}
-                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2"
+                  className={`flex cursor-pointer gap-3 rounded-lg border px-3 py-3 transition-colors ${
+                    distribution === option.value
+                      ? "border-orange-500/40 bg-orange-500/5"
+                      : "border-zinc-800 bg-zinc-900/60"
+                  }`}
                 >
                   <input
                     type="radio"
@@ -534,12 +555,38 @@ export function SubmitPage() {
                     required
                     checked={distribution === option.value}
                     onChange={() => setDistribution(option.value)}
-                    className="h-4 w-4 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+                    className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
                   />
-                  <span className="text-sm text-zinc-300">{option.label}</span>
+                  <span>
+                    <span className="block text-sm font-medium text-zinc-300">
+                      {option.label}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-zinc-600">
+                      {option.hint}
+                    </span>
+                  </span>
                 </label>
               ))}
             </div>
+            {getAccessUrlField(distribution) && (
+              <div>
+                <label htmlFor="playUrl" className="text-sm font-medium text-zinc-400">
+                  {getAccessUrlField(distribution)!.label}
+                </label>
+                <p className="mt-1 text-xs text-zinc-600">
+                  {getAccessUrlField(distribution)!.hint}
+                </p>
+                <input
+                  id="playUrl"
+                  type="url"
+                  required
+                  value={playUrl}
+                  onChange={(event) => setPlayUrl(event.target.value)}
+                  className={inputClassName}
+                  placeholder={getAccessUrlField(distribution)!.placeholder}
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
@@ -557,87 +604,48 @@ export function SubmitPage() {
             </label>
 
             {lookingForTesters && (
-              <div>
-                <label
-                  htmlFor="testerSlots"
-                  className="text-sm font-medium text-zinc-400"
-                >
-                  募集人数
-                </label>
-                <input
-                  id="testerSlots"
-                  type="number"
-                  min={1}
-                  required
-                  value={testerSlots}
-                  onChange={(event) =>
-                    setTesterSlots(Number(event.target.value))
-                  }
-                  className={inputClassName}
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
-            <p className="text-sm font-medium text-zinc-400">
-              開発者が知りたいこと
-            </p>
-            <p className="text-xs text-zinc-600">
-              テスターに重点的にフィードバックしてほしい点を選んでください
-            </p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {developerInterestOptions.map((option) => (
-                <label
-                  key={option}
-                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2"
-                >
+              <>
+                <div>
+                  <label
+                    htmlFor="testerSlots"
+                    className="text-sm font-medium text-zinc-400"
+                  >
+                    募集人数
+                  </label>
                   <input
-                    type="checkbox"
-                    checked={developerInterests.includes(option)}
-                    onChange={() => toggleDeveloperInterest(option)}
-                    className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+                    id="testerSlots"
+                    type="number"
+                    min={1}
+                    required
+                    value={testerSlots}
+                    onChange={(event) =>
+                      setTesterSlots(Number(event.target.value))
+                    }
+                    className={inputClassName}
                   />
-                  <span className="text-sm text-zinc-300">{option}</span>
-                </label>
-              ))}
-            </div>
-            <div>
-              <label
-                htmlFor="developerInterestNotes"
-                className="text-sm text-zinc-500"
-              >
-                自由記述
-              </label>
-              <textarea
-                id="developerInterestNotes"
-                rows={3}
-                value={developerInterestNotes}
-                onChange={(event) =>
-                  setDeveloperInterestNotes(event.target.value)
-                }
-                className={`${inputClassName} resize-y`}
-                placeholder="例：ボス戦の手応え、UIの視認性 など"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="currentChallenge"
-              className="text-sm font-medium text-zinc-400"
-            >
-              現在の課題{" "}
-              <span className="font-normal text-zinc-600">（任意）</span>
-            </label>
-            <textarea
-              id="currentChallenge"
-              rows={3}
-              value={currentChallenge}
-              onChange={(event) => setCurrentChallenge(event.target.value)}
-              className={`${inputClassName} resize-y`}
-              placeholder="例：序盤離脱が多いため最初の10分の感想が欲しい。チュートリアルが分かりづらくないか確認したい。"
-            />
+                </div>
+                <div>
+                  <label
+                    htmlFor="testerNotes"
+                    className="text-sm font-medium text-zinc-400"
+                  >
+                    テスターへのお願い{" "}
+                    <span className="font-normal text-zinc-600">（任意）</span>
+                  </label>
+                  <p className="mt-1 text-xs text-zinc-600">
+                    重点的に見てほしい点や、今困っていることを書いてください
+                  </p>
+                  <textarea
+                    id="testerNotes"
+                    rows={3}
+                    value={testerNotes}
+                    onChange={(event) => setTesterNotes(event.target.value)}
+                    className={`${inputClassName} resize-y`}
+                    placeholder="例：序盤離脱が多いので最初の10分の感想が欲しい。UIの分かりやすさも見てほしい。"
+                  />
+                </div>
+              </>
+            )}
           </div>
 
           <div>
@@ -660,63 +668,62 @@ export function SubmitPage() {
             </div>
           </div>
 
-          <div className="space-y-4">
-            {!showExternalLinks ? (
-              <button
-                type="button"
-                onClick={() => setShowExternalLinks(true)}
-                className="rounded-lg border border-dashed border-zinc-700 bg-zinc-950/40 px-4 py-3 text-sm font-medium text-zinc-400 transition-colors hover:border-orange-500/40 hover:text-orange-400"
-              >
-                外部リンクを追加
-              </button>
-            ) : (
-              <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
-                <p className="text-sm font-medium text-zinc-400">外部リンク</p>
-                <div className="flex flex-wrap gap-3">
-                  {externalLinkOptions.map((option) => (
-                    <label
-                      key={option.key}
-                      className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={enabledExternalLinks.includes(option.key)}
-                        onChange={() => toggleExternalLink(option.key)}
-                        className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
-                      />
-                      <span className="text-sm text-zinc-300">
-                        {option.label}
-                      </span>
-                    </label>
-                  ))}
+          <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
+            <div>
+              <p className="text-sm font-medium text-zinc-400">
+                関連リンク{" "}
+                <span className="font-normal text-zinc-600">（任意）</span>
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-zinc-600">
+                上のアクセスURLとは別に、作品ページに載せたいリンクです。Discord（フィードバック用）や
+                GitHub（開発リポジトリ）など、テスター向けの補助情報に使います。
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {externalLinkOptions.map((option) => (
+                <label
+                  key={option.key}
+                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
+                    enabledExternalLinks.includes(option.key)
+                      ? "border-orange-500/40 bg-orange-500/5 text-orange-300"
+                      : "border-zinc-800 bg-zinc-900/60 text-zinc-300"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={enabledExternalLinks.includes(option.key)}
+                    onChange={() => toggleExternalLink(option.key)}
+                    className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </div>
+            {enabledExternalLinks.map((key) => {
+              const label =
+                externalLinkOptions.find((option) => option.key === key)
+                  ?.label ?? key;
+              return (
+                <div key={key}>
+                  <label
+                    htmlFor={`external-${key}`}
+                    className="text-sm text-zinc-500"
+                  >
+                    {label} URL
+                  </label>
+                  <input
+                    id={`external-${key}`}
+                    type="url"
+                    value={getExternalLinkUrl(key)}
+                    onChange={(event) =>
+                      setExternalLinkUrl(key, event.target.value)
+                    }
+                    className={inputClassName}
+                    placeholder={externalLinkPlaceholders[key]}
+                  />
                 </div>
-                {enabledExternalLinks.map((key) => {
-                  const label =
-                    externalLinkOptions.find((option) => option.key === key)
-                      ?.label ?? key;
-                  return (
-                    <div key={key}>
-                      <label
-                        htmlFor={`external-${key}`}
-                        className="text-sm text-zinc-500"
-                      >
-                        {label} URL
-                      </label>
-                      <input
-                        id={`external-${key}`}
-                        type="url"
-                        value={getExternalLinkUrl(key)}
-                        onChange={(event) =>
-                          setExternalLinkUrl(key, event.target.value)
-                        }
-                        className={inputClassName}
-                        placeholder={externalLinkPlaceholders[key]}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+              );
+            })}
           </div>
 
           <div>
