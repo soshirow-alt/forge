@@ -11,10 +11,9 @@ type PlayEnvironmentFormFieldsProps = {
 };
 
 const distributionOptions: { value: DistributionType; label: string }[] = [
-  { value: "", label: "指定しない（URLから自動判定）" },
   { value: "browser", label: "ブラウザプレイ" },
-  { value: "external", label: "外部リンク" },
   { value: "download", label: "ダウンロード" },
+  { value: "external", label: "外部リンク" },
 ];
 
 export function PlayEnvironmentFormFields({
@@ -78,9 +77,6 @@ export function PlayEnvironmentFormFields({
         </div>
       </div>
 
-      <p className="text-xs leading-relaxed text-zinc-600">
-        未設定の場合、プレイURLやリンクから表示ラベルを推定します。
-      </p>
     </div>
   );
 }

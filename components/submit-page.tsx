@@ -8,12 +8,11 @@ import { DeveloperProfileSetup } from "@/components/developer-profile-setup";
 import { ForgeHeader } from "@/components/forge-header";
 import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
 import { ForgeSdkNote } from "@/components/forge-sdk-note";
-import { PlayEnvironmentFormFields } from "@/components/play-environment-form-fields";
 import { useGames } from "@/components/games-provider";
-import { AVAILABLE_TAGS } from "@/lib/game-tags";
 import {
   EMPTY_PLAY_ENVIRONMENT_FORM,
   mergePlayEnvironmentIntoTags,
+  type DistributionType,
 } from "@/lib/play-environment";
 
 const phaseOptions = [
@@ -24,6 +23,59 @@ const phaseOptions = [
   "α版",
   "β版",
 ];
+
+const genreOptions = [
+  "アクション",
+  "RPG",
+  "ADV",
+  "シミュレーション",
+  "パズル",
+  "ホラー",
+  "シューティング",
+  "ノベル",
+  "その他",
+] as const;
+
+const featureTags = [
+  "協力プレイ",
+  "ソロ向け",
+  "短時間プレイ",
+  "高難度",
+  "ストーリー重視",
+  "PvP",
+  "PvE",
+] as const;
+
+const developerInterestOptions = [
+  "UIが分かりやすいか",
+  "難易度が適切か",
+  "戦闘バランス",
+  "チュートリアル",
+] as const;
+
+const distributionOptions: { value: DistributionType; label: string }[] = [
+  { value: "browser", label: "ブラウザプレイ" },
+  { value: "download", label: "ダウンロード" },
+  { value: "external", label: "外部リンク" },
+];
+
+type ExternalLinkKey = "steam" | "itch" | "discord" | "github" | "official";
+
+const externalLinkOptions: { key: ExternalLinkKey; label: string }[] = [
+  { key: "steam", label: "Steam" },
+  { key: "itch", label: "itch.io" },
+  { key: "discord", label: "Discord" },
+  { key: "github", label: "GitHub" },
+  { key: "official", label: "公式サイト" },
+];
+
+const externalLinkPlaceholders: Record<ExternalLinkKey, string> = {
+  steam: "https://store.steampowered.com/...",
+  itch: "https://example.itch.io/...",
+  discord: "https://discord.gg/...",
+  github: "https://github.com/...",
+  official: "https://example.com",
+};
 
 const inputClassName =
   "mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
@@ -56,10 +108,18 @@ export function SubmitPage() {
   const [genre, setGenre] = useState("");
   const [description, setDescription] = useState("");
   const [phase, setPhase] = useState(phaseOptions[0]);
+  const [playUrl, setPlayUrl] = useState("");
+  const [distribution, setDistribution] = useState<DistributionType>("");
   const [lookingForTesters, setLookingForTesters] = useState(false);
   const [testerSlots, setTesterSlots] = useState(10);
+  const [developerInterests, setDeveloperInterests] = useState<string[]>([]);
+  const [developerInterestNotes, setDeveloperInterestNotes] = useState("");
+  const [currentChallenge, setCurrentChallenge] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [playUrl, setPlayUrl] = useState("");
+  const [showExternalLinks, setShowExternalLinks] = useState(false);
+  const [enabledExternalLinks, setEnabledExternalLinks] = useState<
+    ExternalLinkKey[]
+  >([]);
   const [steamUrl, setSteamUrl] = useState("");
   const [itchUrl, setItchUrl] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
@@ -68,7 +128,6 @@ export function SubmitPage() {
   const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>();
   const [thumbnailPreview, setThumbnailPreview] = useState<string | undefined>();
   const [fileInputKey, setFileInputKey] = useState(0);
-  const [playEnvironment, setPlayEnvironment] = useState(EMPTY_PLAY_ENVIRONMENT_FORM);
 
   useEffect(() => {
     if (editId) {
@@ -120,6 +179,75 @@ export function SubmitPage() {
     );
   }
 
+  function toggleDeveloperInterest(option: string) {
+    setDeveloperInterests((prev) =>
+      prev.includes(option)
+        ? prev.filter((item) => item !== option)
+        : [...prev, option],
+    );
+  }
+
+  function toggleExternalLink(key: ExternalLinkKey) {
+    setEnabledExternalLinks((prev) => {
+      if (prev.includes(key)) {
+        switch (key) {
+          case "steam":
+            setSteamUrl("");
+            break;
+          case "itch":
+            setItchUrl("");
+            break;
+          case "discord":
+            setDiscordUrl("");
+            break;
+          case "github":
+            setGithubUrl("");
+            break;
+          case "official":
+            setOfficialUrl("");
+            break;
+        }
+        return prev.filter((item) => item !== key);
+      }
+      return [...prev, key];
+    });
+  }
+
+  function getExternalLinkUrl(key: ExternalLinkKey): string {
+    switch (key) {
+      case "steam":
+        return steamUrl;
+      case "itch":
+        return itchUrl;
+      case "discord":
+        return discordUrl;
+      case "github":
+        return githubUrl;
+      case "official":
+        return officialUrl;
+    }
+  }
+
+  function setExternalLinkUrl(key: ExternalLinkKey, value: string) {
+    switch (key) {
+      case "steam":
+        setSteamUrl(value);
+        break;
+      case "itch":
+        setItchUrl(value);
+        break;
+      case "discord":
+        setDiscordUrl(value);
+        break;
+      case "github":
+        setGithubUrl(value);
+        break;
+      case "official":
+        setOfficialUrl(value);
+        break;
+    }
+  }
+
   function handleDeveloperProfileComplete(input: {
     publicName: string;
     profile: string;
@@ -148,6 +276,11 @@ export function SubmitPage() {
       setShowProjectForm(false);
       return;
     }
+
+    const playEnvironment = {
+      ...EMPTY_PLAY_ENVIRONMENT_FORM,
+      distribution,
+    };
 
     const data = {
       title,
@@ -178,11 +311,16 @@ export function SubmitPage() {
     setGenre("");
     setDescription("");
     setPhase(phaseOptions[0]);
+    setPlayUrl("");
+    setDistribution("");
     setLookingForTesters(false);
     setTesterSlots(10);
+    setDeveloperInterests([]);
+    setDeveloperInterestNotes("");
+    setCurrentChallenge("");
     setSelectedTags([]);
-    setPlayEnvironment(EMPTY_PLAY_ENVIRONMENT_FORM);
-    setPlayUrl("");
+    setShowExternalLinks(false);
+    setEnabledExternalLinks([]);
     setSteamUrl("");
     setItchUrl("");
     setGithubUrl("");
@@ -312,15 +450,22 @@ export function SubmitPage() {
             <label htmlFor="genre" className="text-sm font-medium text-zinc-400">
               ジャンル
             </label>
-            <input
+            <select
               id="genre"
-              type="text"
               required
               value={genre}
               onChange={(event) => setGenre(event.target.value)}
               className={inputClassName}
-              placeholder="例：アクションRPG"
-            />
+            >
+              <option value="" disabled>
+                選択してください
+              </option>
+              {genreOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -328,7 +473,7 @@ export function SubmitPage() {
               htmlFor="description"
               className="text-sm font-medium text-zinc-400"
             >
-              説明
+              ゲーム説明
             </label>
             <textarea
               id="description"
@@ -360,7 +505,45 @@ export function SubmitPage() {
             </select>
           </div>
 
+          <div>
+            <label htmlFor="playUrl" className="text-sm font-medium text-zinc-400">
+              プレイURL
+            </label>
+            <input
+              id="playUrl"
+              type="url"
+              required
+              value={playUrl}
+              onChange={(event) => setPlayUrl(event.target.value)}
+              className={inputClassName}
+              placeholder="https://example.com"
+            />
+          </div>
+
+          <div>
+            <p className="text-sm font-medium text-zinc-400">配布形式</p>
+            <div className="mt-3 space-y-2">
+              {distributionOptions.map((option) => (
+                <label
+                  key={option.value}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2"
+                >
+                  <input
+                    type="radio"
+                    name="distribution"
+                    required
+                    checked={distribution === option.value}
+                    onChange={() => setDistribution(option.value)}
+                    className="h-4 w-4 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+                  />
+                  <span className="text-sm text-zinc-300">{option.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
+            <p className="text-sm font-medium text-zinc-400">募集状況</p>
             <label className="flex cursor-pointer items-center gap-3">
               <input
                 type="checkbox"
@@ -369,7 +552,7 @@ export function SubmitPage() {
                 className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
               />
               <span className="text-sm font-medium text-zinc-300">
-                テスターを募集する
+                テスター募集中
               </span>
             </label>
 
@@ -396,99 +579,71 @@ export function SubmitPage() {
             )}
           </div>
 
+          <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
+            <p className="text-sm font-medium text-zinc-400">
+              開発者が知りたいこと
+            </p>
+            <p className="text-xs text-zinc-600">
+              テスターに重点的にフィードバックしてほしい点を選んでください
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {developerInterestOptions.map((option) => (
+                <label
+                  key={option}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2"
+                >
+                  <input
+                    type="checkbox"
+                    checked={developerInterests.includes(option)}
+                    onChange={() => toggleDeveloperInterest(option)}
+                    className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+                  />
+                  <span className="text-sm text-zinc-300">{option}</span>
+                </label>
+              ))}
+            </div>
+            <div>
+              <label
+                htmlFor="developerInterestNotes"
+                className="text-sm text-zinc-500"
+              >
+                自由記述
+              </label>
+              <textarea
+                id="developerInterestNotes"
+                rows={3}
+                value={developerInterestNotes}
+                onChange={(event) =>
+                  setDeveloperInterestNotes(event.target.value)
+                }
+                className={`${inputClassName} resize-y`}
+                placeholder="例：ボス戦の手応え、UIの視認性 など"
+              />
+            </div>
+          </div>
+
           <div>
-            <label htmlFor="playUrl" className="text-sm font-medium text-zinc-400">
-              プレイURL
+            <label
+              htmlFor="currentChallenge"
+              className="text-sm font-medium text-zinc-400"
+            >
+              現在の課題{" "}
+              <span className="font-normal text-zinc-600">（任意）</span>
             </label>
-            <input
-              id="playUrl"
-              type="url"
-              required
-              value={playUrl}
-              onChange={(event) => setPlayUrl(event.target.value)}
-              className={inputClassName}
-              placeholder="https://example.com"
+            <textarea
+              id="currentChallenge"
+              rows={3}
+              value={currentChallenge}
+              onChange={(event) => setCurrentChallenge(event.target.value)}
+              className={`${inputClassName} resize-y`}
+              placeholder="例：序盤離脱が多いため最初の10分の感想が欲しい。チュートリアルが分かりづらくないか確認したい。"
             />
           </div>
 
-          <PlayEnvironmentFormFields
-            value={playEnvironment}
-            onChange={setPlayEnvironment}
-          />
-
-          <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
-            <p className="text-sm font-medium text-zinc-400">外部リンク（任意）</p>
-            <div>
-              <label htmlFor="steamUrl" className="text-sm text-zinc-500">
-                Steam URL
-              </label>
-              <input
-                id="steamUrl"
-                type="url"
-                value={steamUrl}
-                onChange={(event) => setSteamUrl(event.target.value)}
-                className={inputClassName}
-                placeholder="https://store.steampowered.com/..."
-              />
-            </div>
-            <div>
-              <label htmlFor="itchUrl" className="text-sm text-zinc-500">
-                itch.io URL
-              </label>
-              <input
-                id="itchUrl"
-                type="url"
-                value={itchUrl}
-                onChange={(event) => setItchUrl(event.target.value)}
-                className={inputClassName}
-                placeholder="https://example.itch.io/..."
-              />
-            </div>
-            <div>
-              <label htmlFor="githubUrl" className="text-sm text-zinc-500">
-                GitHub URL
-              </label>
-              <input
-                id="githubUrl"
-                type="url"
-                value={githubUrl}
-                onChange={(event) => setGithubUrl(event.target.value)}
-                className={inputClassName}
-                placeholder="https://github.com/..."
-              />
-            </div>
-            <div>
-              <label htmlFor="discordUrl" className="text-sm text-zinc-500">
-                Discord URL
-              </label>
-              <input
-                id="discordUrl"
-                type="url"
-                value={discordUrl}
-                onChange={(event) => setDiscordUrl(event.target.value)}
-                className={inputClassName}
-                placeholder="https://discord.gg/..."
-              />
-            </div>
-            <div>
-              <label htmlFor="officialUrl" className="text-sm text-zinc-500">
-                公式サイトURL
-              </label>
-              <input
-                id="officialUrl"
-                type="url"
-                value={officialUrl}
-                onChange={(event) => setOfficialUrl(event.target.value)}
-                className={inputClassName}
-                placeholder="https://example.com"
-              />
-            </div>
-          </div>
-
           <div>
-            <p className="text-sm font-medium text-zinc-400">タグ</p>
-            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {AVAILABLE_TAGS.map((tag) => (
+            <p className="text-sm font-medium text-zinc-400">特徴タグ</p>
+            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {featureTags.map((tag) => (
                 <label
                   key={tag}
                   className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2"
@@ -503,6 +658,65 @@ export function SubmitPage() {
                 </label>
               ))}
             </div>
+          </div>
+
+          <div className="space-y-4">
+            {!showExternalLinks ? (
+              <button
+                type="button"
+                onClick={() => setShowExternalLinks(true)}
+                className="rounded-lg border border-dashed border-zinc-700 bg-zinc-950/40 px-4 py-3 text-sm font-medium text-zinc-400 transition-colors hover:border-orange-500/40 hover:text-orange-400"
+              >
+                外部リンクを追加
+              </button>
+            ) : (
+              <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
+                <p className="text-sm font-medium text-zinc-400">外部リンク</p>
+                <div className="flex flex-wrap gap-3">
+                  {externalLinkOptions.map((option) => (
+                    <label
+                      key={option.key}
+                      className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={enabledExternalLinks.includes(option.key)}
+                        onChange={() => toggleExternalLink(option.key)}
+                        className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+                      />
+                      <span className="text-sm text-zinc-300">
+                        {option.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                {enabledExternalLinks.map((key) => {
+                  const label =
+                    externalLinkOptions.find((option) => option.key === key)
+                      ?.label ?? key;
+                  return (
+                    <div key={key}>
+                      <label
+                        htmlFor={`external-${key}`}
+                        className="text-sm text-zinc-500"
+                      >
+                        {label} URL
+                      </label>
+                      <input
+                        id={`external-${key}`}
+                        type="url"
+                        value={getExternalLinkUrl(key)}
+                        onChange={(event) =>
+                          setExternalLinkUrl(key, event.target.value)
+                        }
+                        className={inputClassName}
+                        placeholder={externalLinkPlaceholders[key]}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div>
