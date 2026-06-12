@@ -37,8 +37,8 @@ export function LoginPage({
     try {
       if (mode === "login") {
         await signIn(email, password);
-        router.push(redirectTo);
         router.refresh();
+        router.push(redirectTo);
         return;
       }
 

@@ -22,8 +22,16 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+type AuthProviderProps = {
+  children: ReactNode;
+  initialUser?: User | null;
+};
+
+export function AuthProvider({
+  children,
+  initialUser = null,
+}: AuthProviderProps) {
+  const [user, setUser] = useState<User | null>(initialUser);
   const [hydrated, setHydrated] = useState(false);
   const supabase = useMemo(() => {
     if (
@@ -42,19 +50,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ? mapSupabaseUser(session.user) : null);
+    let active = true;
+
+    supabase.auth.getUser().then(({ data: { user: supabaseUser } }) => {
+      if (!active) {
+        return;
+      }
+
+      setUser(supabaseUser ? mapSupabaseUser(supabaseUser) : null);
       setHydrated(true);
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) {
+        return;
+      }
+
       setUser(session?.user ? mapSupabaseUser(session.user) : null);
       setHydrated(true);
     });
 
     return () => {
+      active = false;
       subscription.unsubscribe();
     };
   }, [supabase]);
@@ -65,13 +84,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error("Supabase is not configured.");
       }
 
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
         throw error;
+      }
+
+      if (data.user) {
+        setUser(mapSupabaseUser(data.user));
       }
     },
     [supabase],
@@ -83,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error("Supabase is not configured.");
       }
 
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -95,6 +118,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         throw error;
+      }
+
+      if (data.user) {
+        setUser(mapSupabaseUser(data.user));
       }
     },
     [supabase],

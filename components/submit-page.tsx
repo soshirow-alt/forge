@@ -43,19 +43,6 @@ export function SubmitPage() {
     ? getDeveloperProfileByUserId(user.id)
     : undefined;
   const [showProjectForm, setShowProjectForm] = useState(false);
-
-  useEffect(() => {
-    if (editId) {
-      router.replace(`/projects/${editId}/edit`);
-    }
-  }, [editId, router]);
-
-  useEffect(() => {
-    if (hydrated && !user) {
-      router.replace("/login?redirect=/submit");
-    }
-  }, [hydrated, user, router]);
-
   const [success, setSuccess] = useState(false);
   const [title, setTitle] = useState("");
   const [genre, setGenre] = useState("");
@@ -75,10 +62,37 @@ export function SubmitPage() {
   const [fileInputKey, setFileInputKey] = useState(0);
 
   useEffect(() => {
+    if (editId) {
+      router.replace(`/projects/${editId}/edit`);
+    }
+  }, [editId, router]);
+
+  useEffect(() => {
+    if (hydrated && !user) {
+      router.replace("/login?redirect=/submit");
+    }
+  }, [hydrated, user, router]);
+
+  useEffect(() => {
     if (developerProfile) {
       setShowProjectForm(true);
     }
   }, [developerProfile]);
+
+  if (!hydrated) {
+    return (
+      <div className="min-h-full bg-zinc-950 text-zinc-100">
+        <ForgeHeader />
+        <main className="mx-auto max-w-2xl px-6 py-12">
+          <p className="text-zinc-500">読み込み中...</p>
+        </main>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   async function handleThumbnailChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
