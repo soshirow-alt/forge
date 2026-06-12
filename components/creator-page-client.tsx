@@ -6,7 +6,6 @@ import { ForgeHeader } from "@/components/forge-header";
 import { GameTags } from "@/components/game-tags";
 import { GameThumbnail } from "@/components/game-thumbnail";
 import { useGames } from "@/components/games-provider";
-import { getCreatorById } from "@/lib/creators";
 
 function CreatorGameCard({
   id,
@@ -41,8 +40,8 @@ function CreatorGameCard({
 }
 
 export function CreatorPageClient({ id }: { id: string }) {
-  const creator = getCreatorById(id);
-  const { getGamesByCreator } = useGames();
+  const { getGamesByCreator, resolveCreatorById } = useGames();
+  const creator = resolveCreatorById(id);
   const games = getGamesByCreator(creator.name);
 
   return (
@@ -60,6 +59,34 @@ export function CreatorPageClient({ id }: { id: string }) {
         <div className="mt-8 rounded-xl border border-zinc-800 bg-zinc-900/80 p-8">
           <h1 className="text-3xl font-bold tracking-tight">{creator.name}</h1>
           <p className="mt-4 leading-relaxed text-zinc-300">{creator.profile}</p>
+          {(creator.xAccount || creator.website) && (
+            <div className="mt-4 flex flex-wrap gap-4 text-sm">
+              {creator.xAccount && (
+                <a
+                  href={
+                    creator.xAccount.startsWith("http")
+                      ? creator.xAccount
+                      : `https://x.com/${creator.xAccount.replace(/^@/, "")}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-orange-400 transition-colors hover:text-orange-300"
+                >
+                  X: {creator.xAccount}
+                </a>
+              )}
+              {creator.website && (
+                <a
+                  href={creator.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-orange-400 transition-colors hover:text-orange-300"
+                >
+                  Webサイト
+                </a>
+              )}
+            </div>
+          )}
           <CreatorFollowButton creatorId={creator.id} />
         </div>
 

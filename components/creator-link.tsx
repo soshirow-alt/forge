@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import { getCreatorId } from "@/lib/creators";
+import { useGames } from "@/components/games-provider";
 
 export function CreatorLink({
   name,
@@ -8,8 +10,11 @@ export function CreatorLink({
   name: string;
   className?: string;
 }) {
+  const { getCreatorIdForName } = useGames();
+  const creatorId = getCreatorIdForName(name);
+
   return (
-    <Link href={`/creators/${getCreatorId(name)}`} className={className}>
+    <Link href={`/creators/${creatorId}`} className={className}>
       {name}
     </Link>
   );

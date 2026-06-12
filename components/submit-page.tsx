@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { DeveloperProfileSetup } from "@/components/developer-profile-setup";
 import { ForgeHeader } from "@/components/forge-header";
 import { useGames } from "@/components/games-provider";
 import { AVAILABLE_TAGS } from "@/lib/game-tags";
@@ -35,7 +36,13 @@ export function SubmitPage() {
   const editId = searchParams.get("edit");
   const { user, hydrated } = useAuth();
 
-  const { addSubmittedGame } = useGames();
+  const { addSubmittedGame, getDeveloperProfileByUserId, saveDeveloperProfile } =
+    useGames();
+
+  const developerProfile = user
+    ? getDeveloperProfileByUserId(user.id)
+    : undefined;
+  const [showProjectForm, setShowProjectForm] = useState(false);
 
   useEffect(() => {
     if (editId) {
@@ -51,7 +58,6 @@ export function SubmitPage() {
 
   const [success, setSuccess] = useState(false);
   const [title, setTitle] = useState("");
-  const [creator, setCreator] = useState("");
   const [genre, setGenre] = useState("");
   const [description, setDescription] = useState("");
   const [phase, setPhase] = useState(phaseOptions[0]);
@@ -67,6 +73,12 @@ export function SubmitPage() {
   const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>();
   const [thumbnailPreview, setThumbnailPreview] = useState<string | undefined>();
   const [fileInputKey, setFileInputKey] = useState(0);
+
+  useEffect(() => {
+    if (developerProfile) {
+      setShowProjectForm(true);
+    }
+  }, [developerProfile]);
 
   async function handleThumbnailChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -85,12 +97,37 @@ export function SubmitPage() {
     );
   }
 
+  function handleDeveloperProfileComplete(input: {
+    publicName: string;
+    profile: string;
+    xAccount?: string;
+    website?: string;
+  }) {
+    if (!user) {
+      return;
+    }
+
+    saveDeveloperProfile(user.id, input);
+    setShowProjectForm(true);
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    if (!user) {
+      router.push("/login?redirect=/submit");
+      return;
+    }
+
+    const profile = getDeveloperProfileByUserId(user.id);
+    if (!profile) {
+      setShowProjectForm(false);
+      return;
+    }
+
     const data = {
       title,
-      creator,
+      creator: profile.publicName,
       genre,
       description,
       phase,
@@ -106,11 +143,6 @@ export function SubmitPage() {
       officialUrl: officialUrl || undefined,
     };
 
-    if (!user) {
-      router.push("/login?redirect=/submit");
-      return;
-    }
-
     addSubmittedGame(data, {
       ownerId: user.id,
       ownerName: user.name,
@@ -118,7 +150,6 @@ export function SubmitPage() {
 
     setSuccess(true);
     setTitle("");
-    setCreator("");
     setGenre("");
     setDescription("");
     setPhase(phaseOptions[0]);
@@ -148,9 +179,13 @@ export function SubmitPage() {
           ← 作品一覧に戻る
         </Link>
 
-        <h1 className="mt-8 text-3xl font-bold tracking-tight">作品を投稿する</h1>
+        <h1 className="mt-8 text-3xl font-bold tracking-tight">
+          {showProjectForm ? "作品を投稿する" : "開発者プロフィールを作成"}
+        </h1>
         <p className="mt-2 text-zinc-500">
-          開発中のゲーム情報を入力して、Forgeに掲載しましょう。
+          {showProjectForm
+            ? "開発中のゲーム情報を入力して、Forgeに掲載しましょう。"
+            : "初めて作品を投稿する前に、開発者として公開される情報を設定してください。"}
         </p>
 
         {success && (
@@ -159,10 +194,22 @@ export function SubmitPage() {
           </div>
         )}
 
+        {!showProjectForm ? (
+          <DeveloperProfileSetup onComplete={handleDeveloperProfileComplete} />
+        ) : (
         <form
           onSubmit={handleSubmit}
           className="mt-8 space-y-6 rounded-xl border border-zinc-800 bg-zinc-900/80 p-8"
         >
+          {developerProfile && (
+            <div className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
+              <p className="text-sm text-zinc-500">開発者名（公開）</p>
+              <p className="mt-1 font-medium text-zinc-100">
+                {developerProfile.publicName}
+              </p>
+            </div>
+          )}
+
           <div>
             <label htmlFor="title" className="text-sm font-medium text-zinc-400">
               タイトル
@@ -175,21 +222,6 @@ export function SubmitPage() {
               onChange={(event) => setTitle(event.target.value)}
               className={inputClassName}
               placeholder="ゲームのタイトル"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="creator" className="text-sm font-medium text-zinc-400">
-              作者名
-            </label>
-            <input
-              id="creator"
-              type="text"
-              required
-              value={creator}
-              onChange={(event) => setCreator(event.target.value)}
-              className={inputClassName}
-              placeholder="作者名またはスタジオ名"
             />
           </div>
 
@@ -415,6 +447,7 @@ export function SubmitPage() {
             投稿する
           </button>
         </form>
+        )}
       </main>
     </div>
   );

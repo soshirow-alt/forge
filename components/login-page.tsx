@@ -84,7 +84,7 @@ export function LoginPage({
           {mode === "signup" && (
             <div>
               <label htmlFor="displayName" className="text-sm font-medium text-zinc-400">
-                表示名
+                ニックネーム
               </label>
               <input
                 id="displayName"
@@ -93,8 +93,9 @@ export function LoginPage({
                 value={displayName}
                 onChange={(event) => setDisplayName(event.target.value)}
                 className={inputClassName}
-                placeholder="開発者名"
+                placeholder="ニックネーム"
               />
+              <p className="mt-2 text-sm text-zinc-500">サイト内で表示される名前</p>
             </div>
           )}
 

@@ -10,7 +10,7 @@ import { setupDemoEnvironment } from "@/lib/demo-setup";
 export function DemoPage() {
   const router = useRouter();
   const { user, hydrated } = useAuth();
-  const { reloadFromStorage } = useGames();
+  const { reloadFromStorage, saveDeveloperProfile } = useGames();
 
   function handleSetup() {
     if (!user) {
@@ -18,7 +18,15 @@ export function DemoPage() {
       return;
     }
 
-    setupDemoEnvironment(user.id, user.name);
+    const profile = saveDeveloperProfile(user.id, {
+      publicName: "デモ開発スタジオ",
+      profile:
+        "Forgeデモ環境用の開発者プロフィールです。試作品の公開とテスター募集のデモを行います。",
+      xAccount: "@forge_demo",
+      website: "https://example.com",
+    });
+
+    setupDemoEnvironment(user.id, profile.publicName);
     reloadFromStorage();
     router.push("/my-projects");
   }

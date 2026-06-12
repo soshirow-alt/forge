@@ -2,6 +2,8 @@ export type Creator = {
   id: string;
   name: string;
   profile: string;
+  xAccount?: string;
+  website?: string;
 };
 
 export const creatorProfiles: Creator[] = [

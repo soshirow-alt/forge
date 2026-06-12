@@ -28,6 +28,21 @@ import {
   type Notification,
   type NotificationType,
 } from "@/lib/notifications";
+import {
+  createDeveloperProfile,
+  loadDeveloperProfiles,
+  findDeveloperProfileByUserId,
+  findDeveloperProfileByCreatorId,
+  findDeveloperProfileByPublicName,
+  type DeveloperProfile,
+  type DeveloperProfileInput,
+  DEVELOPER_PROFILES_STORAGE_KEY,
+} from "@/lib/developer-profiles";
+import {
+  getCreatorById as getMockCreatorById,
+  getCreatorId as getMockCreatorId,
+  type Creator,
+} from "@/lib/creators";
 
 const GAMES_STORAGE_KEY = "forge-submitted-games";
 const SUPPORT_STORAGE_KEY = "forge-support-counts";
@@ -109,6 +124,13 @@ type GamesContextValue = {
   markAllNotificationsAsRead: () => void;
   addNotification: (type: NotificationType, projectId: string) => void;
   reloadFromStorage: () => void;
+  getDeveloperProfileByUserId: (userId: string) => DeveloperProfile | undefined;
+  saveDeveloperProfile: (
+    userId: string,
+    input: DeveloperProfileInput,
+  ) => DeveloperProfile;
+  getCreatorIdForName: (name: string) => string;
+  resolveCreatorById: (id: string) => Creator;
 };
 
 const GamesContext = createContext<GamesContextValue | null>(null);
@@ -210,6 +232,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   const [bookmarkedGameIds, setBookmarkedGameIds] = useState<string[]>([]);
   const [devlogs, setDevlogs] = useState<DevlogEntry[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [developerProfiles, setDeveloperProfiles] = useState<DeveloperProfile[]>(
+    [],
+  );
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -221,6 +246,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     setBookmarkedGameIds(loadBookmarks());
     setDevlogs(loadDevlogs());
     setNotifications(loadNotifications());
+    setDeveloperProfiles(loadDeveloperProfiles());
     setHydrated(true);
   }, []);
 
@@ -290,6 +316,17 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       JSON.stringify(notifications),
     );
   }, [notifications, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
+    localStorage.setItem(
+      DEVELOPER_PROFILES_STORAGE_KEY,
+      JSON.stringify(developerProfiles),
+    );
+  }, [developerProfiles, hydrated]);
 
   const addSubmittedGame = useCallback(
     (
@@ -637,7 +674,56 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     setBookmarkedGameIds(loadBookmarks());
     setDevlogs(loadDevlogs());
     setNotifications(loadNotifications());
+    setDeveloperProfiles(loadDeveloperProfiles());
   }, []);
+
+  const getDeveloperProfileByUserId = useCallback(
+    (userId: string) =>
+      findDeveloperProfileByUserId(developerProfiles, userId),
+    [developerProfiles],
+  );
+
+  const saveDeveloperProfile = useCallback(
+    (userId: string, input: DeveloperProfileInput) => {
+      const profile = createDeveloperProfile(userId, input);
+      setDeveloperProfiles((prev) => [
+        ...prev.filter((item) => item.userId !== userId),
+        profile,
+      ]);
+      return profile;
+    },
+    [],
+  );
+
+  const getCreatorIdForName = useCallback(
+    (name: string) => {
+      const stored = findDeveloperProfileByPublicName(developerProfiles, name);
+      if (stored) {
+        return stored.creatorId;
+      }
+
+      return getMockCreatorId(name);
+    },
+    [developerProfiles],
+  );
+
+  const resolveCreatorById = useCallback(
+    (id: string) => {
+      const stored = findDeveloperProfileByCreatorId(developerProfiles, id);
+      if (stored) {
+        return {
+          id: stored.creatorId,
+          name: stored.publicName,
+          profile: stored.profile,
+          xAccount: stored.xAccount,
+          website: stored.website,
+        };
+      }
+
+      return getMockCreatorById(id);
+    },
+    [developerProfiles],
+  );
 
   const value = useMemo(
     () => ({
@@ -672,6 +758,10 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       markAllNotificationsAsRead,
       addNotification,
       reloadFromStorage,
+      getDeveloperProfileByUserId,
+      saveDeveloperProfile,
+      getCreatorIdForName,
+      resolveCreatorById,
     }),
     [
       submittedGames,
@@ -705,6 +795,10 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       markAllNotificationsAsRead,
       addNotification,
       reloadFromStorage,
+      getDeveloperProfileByUserId,
+      saveDeveloperProfile,
+      getCreatorIdForName,
+      resolveCreatorById,
     ],
   );
 
