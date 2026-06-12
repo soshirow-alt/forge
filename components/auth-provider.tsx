@@ -11,7 +11,6 @@ import {
 } from "react";
 import { mapSupabaseUser, type User } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/client";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
 
 type AuthContextValue = {
   user: User | null;
@@ -26,7 +25,16 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [hydrated, setHydrated] = useState(false);
-  const supabase = useMemo(() => (hasSupabaseEnv() ? createClient() : null), []);
+  const supabase = useMemo(() => {
+    if (
+      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    ) {
+      return null;
+    }
+
+    return createClient();
+  }, []);
 
   useEffect(() => {
     if (!supabase) {

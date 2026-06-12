@@ -5,12 +5,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { getAuthErrorMessage } from "@/lib/auth";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
 
 const inputClassName =
   "mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
 
-export function LoginPage() {
+export function LoginPage({
+  supabaseConfigured,
+}: {
+  supabaseConfigured: boolean;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") || "/";
@@ -71,7 +74,7 @@ export function LoginPage() {
           </p>
         </div>
 
-        {!hasSupabaseEnv() && (
+        {!supabaseConfigured && (
           <div className="mt-8 rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
             Supabaseの環境変数が設定されていません。
           </div>
@@ -142,7 +145,7 @@ export function LoginPage() {
 
           <button
             type="submit"
-            disabled={submitting || !hasSupabaseEnv()}
+            disabled={submitting || !supabaseConfigured}
             className="w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-4 text-base font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting
