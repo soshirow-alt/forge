@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { getAuthErrorMessage } from "@/lib/auth";
@@ -15,7 +15,6 @@ export function LoginPage({
 }: {
   supabaseConfigured: boolean;
 }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = getSafeRedirectPath(searchParams.get("redirect"));
   const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
@@ -31,12 +30,11 @@ export function LoginPage({
 
   useEffect(() => {
     if (hydrated && user) {
-      router.replace(redirectTo);
+      window.location.assign(redirectTo);
     }
-  }, [hydrated, user, router, redirectTo]);
+  }, [hydrated, user, redirectTo]);
 
-  async function completeAuthRedirect() {
-    await router.refresh();
+  function navigateAfterAuth() {
     window.location.assign(redirectTo);
   }
 
@@ -49,14 +47,14 @@ export function LoginPage({
     try {
       if (mode === "login") {
         await signIn(email, password);
-        await completeAuthRedirect();
+        navigateAfterAuth();
         return;
       }
 
       const hasSession = await signUp(email, password, displayName);
 
       if (hasSession) {
-        await completeAuthRedirect();
+        navigateAfterAuth();
         return;
       }
 
