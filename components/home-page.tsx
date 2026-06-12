@@ -9,6 +9,7 @@ import { GameTags } from "@/components/game-tags";
 import { GameThumbnail } from "@/components/game-thumbnail";
 import { useGames } from "@/components/games-provider";
 import { filterGames, sortGames, type SortOption } from "@/lib/game-filters";
+import { pickFeaturedGames, type FeaturedGameMeta } from "@/lib/featured-games";
 import { getPlayTypeLabel } from "@/lib/game-links";
 import type { Game } from "@/lib/mock-games";
 
@@ -22,7 +23,7 @@ const sortOptions: { value: SortOption; label: string }[] = [
 const inputClassName =
   "w-full rounded-xl border border-zinc-700/80 bg-zinc-900/80 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 backdrop-blur-sm focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
 
-type BadgeVariant = "new" | "tester" | "play" | "update" | "phase";
+type BadgeVariant = "new" | "tester" | "play" | "update" | "phase" | "trending";
 
 const badgeStyles: Record<BadgeVariant, string> = {
   new: "border-orange-500/35 bg-orange-500/10 text-orange-300",
@@ -30,6 +31,7 @@ const badgeStyles: Record<BadgeVariant, string> = {
   play: "border-sky-500/35 bg-sky-500/10 text-sky-300",
   update: "border-amber-500/35 bg-amber-500/10 text-amber-300",
   phase: "border-zinc-600/50 bg-zinc-950/70 text-zinc-300",
+  trending: "border-rose-500/35 bg-rose-500/10 text-rose-300",
 };
 
 function DiscoveryBadge({
@@ -71,6 +73,10 @@ function DiscoveryGameCard({
           <GameThumbnail
             thumbnailUrl={game.thumbnailUrl}
             status={game.status}
+            projectId={game.id}
+            title={game.title}
+            genre={game.genre}
+            phase={game.phase}
             showStatus={false}
           />
           <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
@@ -118,6 +124,106 @@ function DiscoveryGameCard({
         <BookmarkButton gameId={game.id} compact />
       </div>
     </article>
+  );
+}
+
+function FeaturedGameCard({ meta }: { meta: FeaturedGameMeta }) {
+  const { game, showTrending, showTester, showUpdate } = meta;
+
+  return (
+    <article className="group relative overflow-hidden rounded-2xl border border-zinc-800/90 bg-zinc-900/50 shadow-xl shadow-black/25 transition-all duration-300 hover:-translate-y-1 hover:border-orange-500/35 hover:shadow-2xl hover:shadow-orange-500/10">
+      <Link
+        href={`/games/${game.id}`}
+        className="relative block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+      >
+        <div className="relative">
+          <GameThumbnail
+            thumbnailUrl={game.thumbnailUrl}
+            status={game.status}
+            projectId={game.id}
+            title={game.title}
+            genre={game.genre}
+            phase={game.phase}
+            aspectClassName="aspect-[16/10] sm:aspect-[5/3]"
+            showStatus={false}
+            featured
+          />
+          <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+            {showTrending && (
+              <DiscoveryBadge variant="trending">急上昇中</DiscoveryBadge>
+            )}
+            {showTester && (
+              <DiscoveryBadge variant="tester">テスター募集中</DiscoveryBadge>
+            )}
+            {showUpdate && (
+              <DiscoveryBadge variant="update">更新あり</DiscoveryBadge>
+            )}
+          </div>
+        </div>
+
+        <div className="p-5 sm:p-6">
+          <p className="text-sm text-zinc-500">{game.genre}</p>
+          <h3 className="mt-1 text-xl font-bold leading-snug text-zinc-50 transition-colors group-hover:text-orange-300 sm:text-2xl">
+            {game.title}
+          </h3>
+          <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-zinc-400">
+            {game.description}
+          </p>
+          <p className="mt-4 text-sm font-medium text-zinc-500 transition-colors group-hover:text-orange-400/90">
+            詳細を見る →
+          </p>
+        </div>
+      </Link>
+    </article>
+  );
+}
+
+function FeaturedSection({
+  items,
+  loading,
+}: {
+  items: FeaturedGameMeta[];
+  loading: boolean;
+}) {
+  if (!loading && items.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="mx-auto w-full max-w-7xl px-6 pb-4 pt-10 sm:pt-14">
+      <div className="mb-8 max-w-2xl">
+        <div className="mb-3 h-1 w-12 rounded-full bg-gradient-to-r from-rose-500 to-orange-500" />
+        <h2 className="text-2xl font-bold tracking-tight text-zinc-50 sm:text-3xl">
+          今注目の開発中ゲーム
+        </h2>
+        <p className="mt-3 text-base leading-relaxed text-zinc-500">
+          応援やテスター応募が集まっている作品をピックアップ
+        </p>
+      </div>
+
+      {loading ? (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div
+              key={index}
+              className="overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/40"
+            >
+              <div className="aspect-[16/10] animate-pulse bg-zinc-800/80 sm:aspect-[5/3]" />
+              <div className="space-y-3 p-6">
+                <div className="h-4 w-1/4 animate-pulse rounded bg-zinc-800/60" />
+                <div className="h-7 w-3/4 animate-pulse rounded bg-zinc-800/80" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {items.map((meta) => (
+            <FeaturedGameCard key={meta.game.id} meta={meta} />
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -195,8 +301,13 @@ function GameSection({
 }
 
 export function HomePage() {
-  const { getGamesBySection, getSupportCount, isSubmittedGame, dataReady } =
-    useGames();
+  const {
+    getGamesBySection,
+    getSupportCount,
+    isSubmittedGame,
+    dataReady,
+    hasDevlogs,
+  } = useGames();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState<SortOption>("newest");
 
@@ -222,6 +333,30 @@ export function HomePage() {
   const betaGamesRaw = useMemo(
     () => getGamesBySection("beta"),
     [getGamesBySection],
+  );
+
+  const allListableGames = useMemo(() => {
+    const seen = new Set<string>();
+    const combined: Game[] = [];
+    for (const game of [...newGamesRaw, ...testerGamesRaw, ...betaGamesRaw]) {
+      if (!seen.has(game.id)) {
+        seen.add(game.id);
+        combined.push(game);
+      }
+    }
+    return combined;
+  }, [newGamesRaw, testerGamesRaw, betaGamesRaw]);
+
+  const featuredGames = useMemo(
+    () =>
+      pickFeaturedGames(
+        allListableGames,
+        getSupportCount,
+        isSubmittedGame,
+        hasDevlogs,
+        3,
+      ),
+    [allListableGames, getSupportCount, isSubmittedGame, hasDevlogs],
   );
 
   const newGames = useMemo(
@@ -299,6 +434,10 @@ export function HomePage() {
             </div>
           </div>
         </section>
+
+        <FeaturedSection items={featuredGames} loading={!dataReady} />
+
+        <div className="mx-auto h-px max-w-7xl bg-gradient-to-r from-transparent via-zinc-800/80 to-transparent" />
 
         <div
           id="discover"

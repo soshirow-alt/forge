@@ -84,8 +84,14 @@ export function GameDetailPageClient({ id }: { id: string }) {
           <GameThumbnail
             thumbnailUrl={game.thumbnailUrl}
             status={game.status}
+            projectId={game.id}
+            title={game.title}
+            genre={game.genre}
+            phase={game.phase}
             aspectClassName="aspect-[21/9]"
             statusClassName="absolute bottom-4 left-4 rounded-md bg-black/60 px-3 py-1.5 text-sm font-medium text-orange-400 backdrop-blur-sm"
+            showStatus={Boolean(game.thumbnailUrl)}
+            featured
           />
 
           <div className="p-8">

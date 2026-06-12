@@ -12,6 +12,7 @@ function CreatorGameCard({
   title,
   genre,
   status,
+  phase,
   thumbnailUrl,
   tags,
 }: {
@@ -19,6 +20,7 @@ function CreatorGameCard({
   title: string;
   genre: string;
   status: string;
+  phase: string;
   thumbnailUrl?: string;
   tags: string[];
 }) {
@@ -27,7 +29,14 @@ function CreatorGameCard({
       href={`/games/${id}`}
       className="group block overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/80 transition-all hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/10"
     >
-      <GameThumbnail thumbnailUrl={thumbnailUrl} status={status} />
+      <GameThumbnail
+        thumbnailUrl={thumbnailUrl}
+        status={status}
+        projectId={id}
+        title={title}
+        genre={genre}
+        phase={phase}
+      />
       <div className="p-4">
         <h3 className="font-semibold text-zinc-100 transition-colors group-hover:text-orange-400">
           {title}

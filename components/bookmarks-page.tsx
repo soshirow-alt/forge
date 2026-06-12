@@ -43,6 +43,10 @@ export function BookmarksPage() {
                   <GameThumbnail
                     thumbnailUrl={game.thumbnailUrl}
                     status={game.status}
+                    projectId={game.id}
+                    title={game.title}
+                    genre={game.genre}
+                    phase={game.phase}
                   />
                   <div className="p-4">
                     <h2 className="font-semibold text-zinc-100 transition-colors group-hover:text-orange-400">

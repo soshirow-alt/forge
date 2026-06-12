@@ -6,6 +6,7 @@ import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { DeveloperProfileSetup } from "@/components/developer-profile-setup";
 import { ForgeHeader } from "@/components/forge-header";
+import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
 import { useGames } from "@/components/games-provider";
 import { AVAILABLE_TAGS } from "@/lib/game-tags";
 
@@ -493,17 +494,23 @@ export function SubmitPage() {
 
           <div>
             <label htmlFor="thumbnail" className="text-sm font-medium text-zinc-400">
-              サムネイル画像
+              サムネイル画像（推奨）
             </label>
+            <p className="mt-1 text-sm text-zinc-500">
+              作品一覧で目立ちやすくなります。未設定でもForgeが仮サムネイルを自動生成します。
+            </p>
             <input
               id="thumbnail"
               key={fileInputKey}
               type="file"
               accept="image/*"
               onChange={handleThumbnailChange}
-              className="mt-2 block w-full text-sm text-zinc-400 file:mr-4 file:rounded-lg file:border-0 file:bg-zinc-800 file:px-4 file:py-2 file:text-sm file:font-medium file:text-zinc-200 hover:file:bg-zinc-700"
+              className="mt-3 block w-full text-sm text-zinc-400 file:mr-4 file:rounded-lg file:border-0 file:bg-zinc-800 file:px-4 file:py-2 file:text-sm file:font-medium file:text-zinc-200 hover:file:bg-zinc-700"
             />
-            {thumbnailPreview && (
+            <p className="mt-3 inline-flex items-center rounded-lg border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-xs text-zinc-500">
+              AIで仮サムネ生成（Coming Soon）
+            </p>
+            {thumbnailPreview ? (
               <div className="mt-4 overflow-hidden rounded-lg border border-zinc-700">
                 <img
                   src={thumbnailPreview}
@@ -511,7 +518,21 @@ export function SubmitPage() {
                   className="aspect-video w-full object-cover"
                 />
               </div>
-            )}
+            ) : title.trim() ? (
+              <div className="mt-4 overflow-hidden rounded-lg border border-zinc-700">
+                <div className="aspect-video">
+                  <GeneratedThumbnailPoster
+                    projectId="submit-preview"
+                    title={title}
+                    genre={genre || "Indie"}
+                    phase={phase}
+                  />
+                </div>
+                <p className="border-t border-zinc-800 bg-zinc-950/50 px-3 py-2 text-xs text-zinc-500">
+                  自動生成プレビュー（投稿後も同様の仮サムネイルが表示されます）
+                </p>
+              </div>
+            ) : null}
           </div>
 
           <button
