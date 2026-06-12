@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { getAuthErrorMessage } from "@/lib/auth";
+import { getSafeRedirectPath } from "@/lib/auth-redirect";
 
 const inputClassName =
   "mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
@@ -16,10 +17,10 @@ export function LoginPage({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/";
+  const redirectTo = getSafeRedirectPath(searchParams.get("redirect"));
   const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
 
-  const { signIn, signUp } = useAuth();
+  const { user, hydrated, signIn, signUp } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,6 +28,17 @@ export function LoginPage({
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (hydrated && user) {
+      router.replace(redirectTo);
+    }
+  }, [hydrated, user, router, redirectTo]);
+
+  async function completeAuthRedirect() {
+    await router.refresh();
+    window.location.assign(redirectTo);
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -37,12 +49,17 @@ export function LoginPage({
     try {
       if (mode === "login") {
         await signIn(email, password);
-        router.refresh();
-        router.push(redirectTo);
+        await completeAuthRedirect();
         return;
       }
 
-      await signUp(email, password, displayName);
+      const hasSession = await signUp(email, password, displayName);
+
+      if (hasSession) {
+        await completeAuthRedirect();
+        return;
+      }
+
       setMessage(
         "アカウントを作成しました。確認メールが有効な場合はメールを確認してください。",
       );

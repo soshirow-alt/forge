@@ -16,7 +16,11 @@ type AuthContextValue = {
   user: User | null;
   hydrated: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, displayName: string) => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+    displayName: string,
+  ) => Promise<boolean>;
   logout: () => Promise<void>;
 };
 
@@ -114,6 +118,8 @@ export function AuthProvider({
       if (data.user) {
         setUser(mapSupabaseUser(data.user));
       }
+
+      return Boolean(data.session);
     },
     [supabase],
   );
