@@ -14,15 +14,9 @@ import {
   mergePlayEnvironmentIntoTags,
   type DistributionType,
 } from "@/lib/play-environment";
+import { DEVELOPMENT_PHASE_OPTIONS } from "@/lib/development-phases";
 
-const phaseOptions = [
-  "企画段階",
-  "プロトタイプ",
-  "試作版",
-  "初期開発",
-  "α版",
-  "β版",
-];
+const phaseOptions = DEVELOPMENT_PHASE_OPTIONS;
 
 const genreOptions = [
   "アクション",
@@ -141,11 +135,12 @@ export function SubmitPage() {
   const [title, setTitle] = useState("");
   const [genre, setGenre] = useState("");
   const [description, setDescription] = useState("");
-  const [phase, setPhase] = useState(phaseOptions[0]);
+  const [phase, setPhase] = useState("");
   const [playUrl, setPlayUrl] = useState("");
   const [distribution, setDistribution] = useState<DistributionType>("");
-  const [lookingForTesters, setLookingForTesters] = useState(false);
-  const [testerSlots, setTesterSlots] = useState(10);
+  const [testerNotesMode, setTesterNotesMode] = useState<"none" | "custom">(
+    "none",
+  );
   const [testerNotes, setTesterNotes] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [enabledExternalLinks, setEnabledExternalLinks] = useState<
@@ -312,8 +307,7 @@ export function SubmitPage() {
       description,
       phase,
       thumbnailUrl,
-      lookingForTesters,
-      testerSlots: lookingForTesters ? testerSlots : undefined,
+      lookingForTesters: true,
       tags: mergePlayEnvironmentIntoTags(selectedTags, playEnvironment),
       playUrl,
       steamUrl: steamUrl || undefined,
@@ -333,11 +327,10 @@ export function SubmitPage() {
     setTitle("");
     setGenre("");
     setDescription("");
-    setPhase(phaseOptions[0]);
+    setPhase("");
     setPlayUrl("");
     setDistribution("");
-    setLookingForTesters(false);
-    setTesterSlots(10);
+    setTesterNotesMode("none");
     setTesterNotes("");
     setSelectedTags([]);
     setEnabledExternalLinks([]);
@@ -511,24 +504,44 @@ export function SubmitPage() {
             />
           </div>
 
-          <div>
-            <label htmlFor="phase" className="text-sm font-medium text-zinc-400">
+          <fieldset className="space-y-3">
+            <legend className="text-sm font-medium text-zinc-400">
               開発フェーズ
-            </label>
-            <select
-              id="phase"
-              required
-              value={phase}
-              onChange={(event) => setPhase(event.target.value)}
-              className={inputClassName}
-            >
+            </legend>
+            <p className="text-xs text-zinc-600">
+              今の完成度を選んでください。テスターがどこまで遊べるかの目安になります
+            </p>
+            <div className="space-y-2">
               {phaseOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
+                <label
+                  key={option.value}
+                  className={`flex cursor-pointer gap-3 rounded-lg border px-3 py-3 transition-colors ${
+                    phase === option.value
+                      ? "border-orange-500/40 bg-orange-500/5"
+                      : "border-zinc-800 bg-zinc-950/50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="phase"
+                    required
+                    value={option.value}
+                    checked={phase === option.value}
+                    onChange={() => setPhase(option.value)}
+                    className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+                  />
+                  <span>
+                    <span className="block text-sm font-medium text-zinc-300">
+                      {option.value}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-zinc-600">
+                      {option.hint}
+                    </span>
+                  </span>
+                </label>
               ))}
-            </select>
-          </div>
+            </div>
+          </fieldset>
 
           <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
             <div>
@@ -590,61 +603,61 @@ export function SubmitPage() {
           </div>
 
           <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
-            <p className="text-sm font-medium text-zinc-400">募集状況</p>
-            <label className="flex cursor-pointer items-center gap-3">
-              <input
-                type="checkbox"
-                checked={lookingForTesters}
-                onChange={(event) => setLookingForTesters(event.target.checked)}
-                className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+            <div>
+              <p className="text-sm font-medium text-zinc-400">
+                特に見てほしい観点{" "}
+                <span className="font-normal text-zinc-600">（任意）</span>
+              </p>
+              <p className="mt-1 text-xs text-zinc-600">
+                重点的にフィードバックしてほしい点があれば記載してください
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <label
+                className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
+                  testerNotesMode === "none"
+                    ? "border-orange-500/40 bg-orange-500/5 text-orange-300"
+                    : "border-zinc-800 bg-zinc-900/60 text-zinc-300"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="testerNotesMode"
+                  checked={testerNotesMode === "none"}
+                  onChange={() => {
+                    setTesterNotesMode("none");
+                    setTesterNotes("");
+                  }}
+                  className="h-4 w-4 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+                />
+                特になし
+              </label>
+              <label
+                className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
+                  testerNotesMode === "custom"
+                    ? "border-orange-500/40 bg-orange-500/5 text-orange-300"
+                    : "border-zinc-800 bg-zinc-900/60 text-zinc-300"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="testerNotesMode"
+                  checked={testerNotesMode === "custom"}
+                  onChange={() => setTesterNotesMode("custom")}
+                  className="h-4 w-4 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+                />
+                記載する
+              </label>
+            </div>
+            {testerNotesMode === "custom" && (
+              <textarea
+                id="testerNotes"
+                rows={3}
+                value={testerNotes}
+                onChange={(event) => setTesterNotes(event.target.value)}
+                className={`${inputClassName} mt-0 resize-y`}
+                placeholder="例：序盤離脱が多いので最初の10分の感想が欲しい。UIの分かりやすさも見てほしい。"
               />
-              <span className="text-sm font-medium text-zinc-300">
-                テスター募集中
-              </span>
-            </label>
-
-            {lookingForTesters && (
-              <>
-                <div>
-                  <label
-                    htmlFor="testerSlots"
-                    className="text-sm font-medium text-zinc-400"
-                  >
-                    募集人数
-                  </label>
-                  <input
-                    id="testerSlots"
-                    type="number"
-                    min={1}
-                    required
-                    value={testerSlots}
-                    onChange={(event) =>
-                      setTesterSlots(Number(event.target.value))
-                    }
-                    className={inputClassName}
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="testerNotes"
-                    className="text-sm font-medium text-zinc-400"
-                  >
-                    テスターへのお願い{" "}
-                    <span className="font-normal text-zinc-600">（任意）</span>
-                  </label>
-                  <p className="mt-1 text-xs text-zinc-600">
-                    重点的に見てほしい点や、今困っていることを書いてください
-                  </p>
-                  <textarea
-                    id="testerNotes"
-                    rows={3}
-                    value={testerNotes}
-                    onChange={(event) => setTesterNotes(event.target.value)}
-                    className={`${inputClassName} resize-y`}
-                    placeholder="例：序盤離脱が多いので最初の10分の感想が欲しい。UIの分かりやすさも見てほしい。"
-                  />
-                </div>
-              </>
             )}
           </div>
 
