@@ -12,6 +12,7 @@ import type { Game } from "@/lib/mock-games";
 
 type GameRecentActivitySectionProps = {
   game: Pick<Game, "id" | "lastUpdated" | "lookingForTesters" | "testerSlots">;
+  compact?: boolean;
 };
 
 const eventToneStyles = {
@@ -21,7 +22,10 @@ const eventToneStyles = {
   feedback_applied: "text-emerald-400",
 } as const;
 
-export function GameRecentActivitySection({ game }: GameRecentActivitySectionProps) {
+export function GameRecentActivitySection({
+  game,
+  compact = false,
+}: GameRecentActivitySectionProps) {
   const { getSupportCount, getApplicantCount, isSubmittedGame } = useGames();
   const isSubmitted = isSubmittedGame(game.id);
   const snapshot = getGameActivitySnapshot(game, {
@@ -38,7 +42,13 @@ export function GameRecentActivitySection({ game }: GameRecentActivitySectionPro
 
   if (!snapshot) {
     return (
-      <section className="mt-5 border-t border-zinc-800/80 pt-5 lg:mt-6">
+      <section
+        className={
+          compact
+            ? "mt-5 border-t border-zinc-800/80 pt-5"
+            : "mt-5 border-t border-zinc-800/80 pt-5 lg:mt-6"
+        }
+      >
         <h2 className="text-xs font-medium uppercase tracking-wide text-zinc-600">
           最近の活動
         </h2>
@@ -51,7 +61,13 @@ export function GameRecentActivitySection({ game }: GameRecentActivitySectionPro
 
   if (snapshot.recentEvents.length === 0) {
     return (
-      <section className="mt-5 border-t border-zinc-800/80 pt-5 lg:mt-6">
+      <section
+        className={
+          compact
+            ? "mt-5 border-t border-zinc-800/80 pt-5"
+            : "mt-5 border-t border-zinc-800/80 pt-5 lg:mt-6"
+        }
+      >
         <h2 className="text-xs font-medium uppercase tracking-wide text-zinc-600">
           最近の活動
         </h2>
@@ -76,18 +92,24 @@ export function GameRecentActivitySection({ game }: GameRecentActivitySectionPro
   }
 
   return (
-    <section className="mt-5 border-t border-zinc-800/80 pt-5 lg:mt-6">
+    <section
+      className={
+        compact
+          ? "mt-5 border-t border-zinc-800/80 pt-5"
+          : "mt-5 border-t border-zinc-800/80 pt-5 lg:mt-6"
+      }
+    >
       <div className="flex flex-wrap items-end justify-between gap-2">
         <h2 className="text-xs font-medium uppercase tracking-wide text-zinc-600">
           最近の活動
         </h2>
-        {snapshot.recentActivityLabel && (
+        {snapshot.recentActivityLabel && !compact && (
           <p className="text-xs text-zinc-600">{snapshot.recentActivityLabel}</p>
         )}
       </div>
 
-      <ul className="mt-3 space-y-2.5">
-        {snapshot.recentEvents.map((event) => (
+      <ul className="mt-3 space-y-2">
+        {snapshot.recentEvents.slice(0, compact ? 3 : undefined).map((event) => (
           <li
             key={event.id}
             className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm"
@@ -108,38 +130,40 @@ export function GameRecentActivitySection({ game }: GameRecentActivitySectionPro
         ))}
       </ul>
 
-      <dl className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-600">
-        <div>
-          <dt className="inline">応援 </dt>
-          <dd className="inline tabular-nums text-zinc-500">
-            {snapshot.supportCount}
-          </dd>
-        </div>
-        {game.lookingForTesters && snapshot.testerSlots > 0 && (
+      {!compact && (
+        <dl className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-600">
           <div>
-            <dt className="inline">テスト参加 </dt>
+            <dt className="inline">応援 </dt>
             <dd className="inline tabular-nums text-zinc-500">
-              {snapshot.testerAppliedCount}/{snapshot.testerSlots}
+              {snapshot.supportCount}
             </dd>
           </div>
-        )}
-        {snapshot.devlogCount > 0 && (
-          <div>
-            <dt className="inline">開発ログ </dt>
-            <dd className="inline tabular-nums text-zinc-500">
-              {snapshot.devlogCount}件
-            </dd>
-          </div>
-        )}
-        {snapshot.feedbackAppliedCount > 0 && (
-          <div>
-            <dt className="inline">反映済み提案 </dt>
-            <dd className="inline tabular-nums text-zinc-500">
-              {snapshot.feedbackAppliedCount}件
-            </dd>
-          </div>
-        )}
-      </dl>
+          {game.lookingForTesters && snapshot.testerSlots > 0 && (
+            <div>
+              <dt className="inline">テスト参加 </dt>
+              <dd className="inline tabular-nums text-zinc-500">
+                {snapshot.testerAppliedCount}/{snapshot.testerSlots}
+              </dd>
+            </div>
+          )}
+          {snapshot.devlogCount > 0 && (
+            <div>
+              <dt className="inline">開発ログ </dt>
+              <dd className="inline tabular-nums text-zinc-500">
+                {snapshot.devlogCount}件
+              </dd>
+            </div>
+          )}
+          {snapshot.feedbackAppliedCount > 0 && (
+            <div>
+              <dt className="inline">反映済み提案 </dt>
+              <dd className="inline tabular-nums text-zinc-500">
+                {snapshot.feedbackAppliedCount}件
+              </dd>
+            </div>
+          )}
+        </dl>
+      )}
     </section>
   );
 }

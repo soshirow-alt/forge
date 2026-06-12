@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { ForgeHeader } from "@/components/forge-header";
 import { ForgeIdentityBlock } from "@/components/forge-identity-block";
+import { GameCommunityVoicesSection } from "@/components/game-community-voices-section";
 import { GameDetailSidebar } from "@/components/game-detail-sidebar";
-import { GameFeedback } from "@/components/game-feedback";
+import { GameFeedbackForm } from "@/components/game-feedback";
 import { GameProjectHistorySection } from "@/components/game-project-history-section";
 import { GameTags } from "@/components/game-tags";
 import { GameThumbnail } from "@/components/game-thumbnail";
@@ -15,6 +17,8 @@ import { GameActivityBadges } from "@/components/game-activity-badges";
 import { GameRecentActivitySection } from "@/components/game-recent-activity-section";
 import { TrustSafetyBadge } from "@/components/trust-safety-badge";
 import { useGames } from "@/components/games-provider";
+import { hasUserSubmittedFeedback } from "@/lib/game-feedback-storage";
+import { hasUserPlayedGame } from "@/lib/play-session";
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString("ja-JP", {
@@ -24,16 +28,25 @@ function formatDate(date: string) {
   });
 }
 
+function userCanSubmitFeedback(gameId: string): boolean {
+  return hasUserPlayedGame(gameId) || hasUserSubmittedFeedback(gameId);
+}
+
 export function GameDetailPageClient({ id }: { id: string }) {
   const { user } = useAuth();
   const { getGameById, isSubmittedGame, isProjectOwner, dataReady } = useGames();
   const game = getGameById(id);
+  const [canSubmitFeedback, setCanSubmitFeedback] = useState(false);
+
+  useEffect(() => {
+    setCanSubmitFeedback(userCanSubmitFeedback(id));
+  }, [id]);
 
   if (!dataReady) {
     return (
       <div className="min-h-full bg-zinc-950 text-zinc-100">
         <ForgeHeader />
-        <main className="mx-auto max-w-6xl px-6 py-8">
+        <main className="mx-auto max-w-7xl px-6 py-8">
           <p className="text-zinc-500">読み込み中...</p>
         </main>
       </div>
@@ -53,7 +66,7 @@ export function GameDetailPageClient({ id }: { id: string }) {
       <div className="min-h-full bg-zinc-950 text-zinc-100">
         <ForgeHeader />
 
-        <main className="mx-auto max-w-6xl px-6 py-8">
+        <main className="mx-auto max-w-7xl px-6 py-8">
           <Link
             href="/"
             className="text-sm text-zinc-500 transition-colors hover:text-orange-400"
@@ -73,7 +86,7 @@ export function GameDetailPageClient({ id }: { id: string }) {
     <div className="min-h-full bg-zinc-950 text-zinc-100">
       <ForgeHeader />
 
-      <main className="mx-auto max-w-6xl px-6 py-8">
+      <main className="mx-auto max-w-7xl px-6 py-8">
         <Link
           href="/"
           className="text-sm text-zinc-500 transition-colors hover:text-orange-400"
@@ -95,7 +108,7 @@ export function GameDetailPageClient({ id }: { id: string }) {
             featured
           />
 
-          <div className="p-5 sm:p-6 lg:p-8">
+          <div className="p-5 sm:p-6 lg:p-7">
             <header>
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
                 {game.title}
@@ -111,30 +124,35 @@ export function GameDetailPageClient({ id }: { id: string }) {
               <GameTags tags={game.tags} />
             </header>
 
-            <div className="mt-5 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,1fr)_300px]">
-              <section className="min-w-0">
-                <h2 className="text-sm font-medium text-zinc-500">説明</h2>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-300">
-                  {game.description}
-                </p>
-                <div className="mt-4">
-                  <ForgeIdentityBlock compact />
-                </div>
-              </section>
+            <div className="mt-5 lg:grid lg:grid-cols-[minmax(0,1fr)_232px] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1.12fr)_248px] xl:gap-7">
+              <div className="min-w-0 space-y-0">
+                <section>
+                  <h2 className="text-sm font-medium text-zinc-500">説明</h2>
+                  <p className="mt-2 text-sm leading-relaxed text-zinc-300">
+                    {game.description}
+                  </p>
+                  <div className="mt-3">
+                    <ForgeIdentityBlock compact />
+                  </div>
+                </section>
+
+                <GameCommunityVoicesSection gameId={game.id} />
+
+                <GameRecentActivitySection game={game} compact />
+
+                <GameProjectHistorySection game={game} secondary />
+
+                {canSubmitFeedback && <GameFeedbackForm gameId={game.id} />}
+              </div>
 
               <GameDetailSidebar
                 game={game}
                 userSubmitted={userSubmitted}
                 canEdit={canEdit}
                 formatDate={formatDate}
+                onPlay={() => setCanSubmitFeedback(true)}
               />
             </div>
-
-            <GameRecentActivitySection game={game} />
-
-            <GameProjectHistorySection game={game} secondary />
-
-            <GameFeedback gameId={game.id} deferred />
           </div>
         </div>
       </main>

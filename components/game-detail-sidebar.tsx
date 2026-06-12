@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { BookmarkButton } from "@/components/bookmark-button";
 import { CreatorLink } from "@/components/creator-link";
+import { DeveloperResponsivenessPanel } from "@/components/developer-responsiveness-panel";
 import { GameExternalLinks } from "@/components/game-external-links";
 import { GameSupport } from "@/components/game-support";
 import { GameTesterApply } from "@/components/game-tester-apply";
 import { PlaySafetyNote } from "@/components/play-safety-note";
 import { getDistributionType } from "@/lib/play-environment";
+import { markGameAsPlayed } from "@/lib/play-session";
 import { LABEL_TEST_PLAY_OPEN } from "@/lib/user-labels";
 import type { Game } from "@/lib/mock-games";
 
@@ -16,6 +18,7 @@ type GameDetailSidebarProps = {
   userSubmitted: boolean;
   canEdit: boolean;
   formatDate: (date: string) => string;
+  onPlay?: () => void;
 };
 
 export function GameDetailSidebar({
@@ -23,14 +26,21 @@ export function GameDetailSidebar({
   userSubmitted,
   canEdit,
   formatDate,
+  onPlay,
 }: GameDetailSidebarProps) {
+  function handlePlayClick() {
+    markGameAsPlayed(game.id);
+    onPlay?.();
+  }
+
   return (
-    <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
-      <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
+    <aside className="space-y-3 lg:sticky lg:top-20 lg:self-start">
+      <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3.5">
         <a
           href={game.playUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={handlePlayClick}
           className="block w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 text-center text-base font-semibold text-zinc-950 transition-opacity hover:opacity-90"
         >
           プレイする
@@ -43,12 +53,12 @@ export function GameDetailSidebar({
           className="mt-2 px-0.5 text-xs"
         />
 
-        <div className="mt-3 flex flex-col gap-2">
+        <div className="mt-2.5 flex flex-col gap-2">
           <BookmarkButton gameId={game.id} compact className="w-full" />
           {canEdit && (
             <Link
               href={`/projects/${game.id}/edit`}
-              className="block w-full rounded-lg border border-zinc-700 px-4 py-2.5 text-center text-sm font-semibold text-zinc-200 transition-colors hover:border-orange-500/50 hover:bg-zinc-900"
+              className="block w-full rounded-lg border border-zinc-700 px-4 py-2 text-center text-sm font-semibold text-zinc-200 transition-colors hover:border-orange-500/50 hover:bg-zinc-900"
             >
               編集する
             </Link>
@@ -56,7 +66,7 @@ export function GameDetailSidebar({
         </div>
       </div>
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4 space-y-4">
+      <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3.5 space-y-3.5">
         <GameSupport gameId={game.id} isUserSubmitted={userSubmitted} compact />
 
         {game.lookingForTesters && game.testerSlots !== undefined && (
@@ -68,7 +78,9 @@ export function GameDetailSidebar({
           />
         )}
 
-        <dl className="grid gap-3 border-t border-zinc-800 pt-4 text-sm">
+        <DeveloperResponsivenessPanel gameId={game.id} />
+
+        <dl className="grid gap-2.5 border-t border-zinc-800 pt-3.5 text-sm">
           <div>
             <dt className="text-xs text-zinc-500">開発フェーズ</dt>
             <dd className="mt-0.5 font-medium text-zinc-100">{game.phase}</dd>
