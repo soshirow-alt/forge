@@ -15,7 +15,9 @@ type GameExternalLinksProps = Pick<
   | "discordUrl"
   | "officialUrl"
   | "tags"
->;
+> & {
+  compact?: boolean;
+};
 
 export function GameExternalLinks({
   playUrl,
@@ -25,6 +27,7 @@ export function GameExternalLinks({
   discordUrl,
   officialUrl,
   tags = [],
+  compact = false,
 }: GameExternalLinksProps) {
   const links = getExternalLinks({
     steamUrl,
@@ -44,21 +47,39 @@ export function GameExternalLinks({
   } as Game);
 
   return (
-    <div className="mt-8 border-t border-zinc-800 pt-8">
-      <h2 className="text-sm font-medium text-zinc-500">外部リンク</h2>
+    <div
+      className={
+        compact
+          ? "border-t border-zinc-800 pt-4"
+          : "mt-8 border-t border-zinc-800 pt-8"
+      }
+    >
+      <h2
+        className={
+          compact
+            ? "text-xs font-medium text-zinc-500"
+            : "text-sm font-medium text-zinc-500"
+        }
+      >
+        外部リンク
+      </h2>
       {showDownloadNote ? (
-        <DownloadSafetyNote className="mt-2" />
+        <DownloadSafetyNote className={compact ? "mt-1.5 text-xs" : "mt-2"} />
       ) : (
-        <ExternalLinkSafetyNote className="mt-2" />
+        <ExternalLinkSafetyNote className={compact ? "mt-1.5 text-xs" : "mt-2"} />
       )}
-      <div className="mt-4 flex flex-wrap gap-3">
+      <div className={compact ? "mt-2 flex flex-wrap gap-2" : "mt-4 flex flex-wrap gap-3"}>
         {links.map((link) => (
           <a
             key={link.label}
             href={link.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-orange-500/50 hover:bg-zinc-900 hover:text-orange-400"
+            className={
+              compact
+                ? "rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-orange-500/50 hover:bg-zinc-900 hover:text-orange-400"
+                : "rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-orange-500/50 hover:bg-zinc-900 hover:text-orange-400"
+            }
           >
             {link.label}
           </a>

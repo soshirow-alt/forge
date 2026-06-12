@@ -104,15 +104,25 @@ function RatingInput({
   label,
   value,
   onChange,
+  muted = false,
 }: {
   label: string;
   value: number;
   onChange: (value: number) => void;
+  muted?: boolean;
 }) {
   return (
     <div>
-      <p className="text-sm font-medium text-zinc-400">{label}</p>
-      <div className="mt-2 flex gap-2">
+      <p
+        className={
+          muted
+            ? "text-xs font-medium text-zinc-500"
+            : "text-sm font-medium text-zinc-400"
+        }
+      >
+        {label}
+      </p>
+      <div className="mt-1.5 flex gap-1.5">
         {[1, 2, 3, 4, 5].map((rating) => (
           <button
             key={rating}
@@ -120,8 +130,12 @@ function RatingInput({
             onClick={() => onChange(rating)}
             className={
               value === rating
-                ? "h-9 w-9 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 text-sm font-semibold text-zinc-950"
-                : "h-9 w-9 rounded-lg border border-zinc-700 text-sm text-zinc-300 transition-colors hover:border-orange-500/50 hover:text-orange-400"
+                ? muted
+                  ? "h-8 w-8 rounded-md border border-orange-500/40 bg-orange-500/10 text-xs font-medium text-orange-400"
+                  : "h-9 w-9 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 text-sm font-semibold text-zinc-950"
+                : muted
+                  ? "h-8 w-8 rounded-md border border-zinc-800 text-xs text-zinc-500 transition-colors hover:border-zinc-600 hover:text-zinc-400"
+                  : "h-9 w-9 rounded-lg border border-zinc-700 text-sm text-zinc-300 transition-colors hover:border-orange-500/50 hover:text-orange-400"
             }
           >
             {rating}
@@ -132,7 +146,15 @@ function RatingInput({
   );
 }
 
-export function GameFeedback({ gameId }: { gameId: string }) {
+export function GameFeedback({
+  gameId,
+  compact = false,
+  deferred = false,
+}: {
+  gameId: string;
+  compact?: boolean;
+  deferred?: boolean;
+}) {
   const { addNotification } = useGames();
   const [feedbackByGame, setFeedbackByGame] = useState<FeedbackByGame>({});
   const [text, setText] = useState("");
@@ -206,41 +228,148 @@ export function GameFeedback({ gameId }: { gameId: string }) {
     setSelectedOptions([]);
   }
 
+  const sectionClass = deferred
+    ? "mt-6 border-t border-zinc-800/80 pt-6"
+    : compact
+      ? undefined
+      : "mt-8 border-t border-zinc-800 pt-8";
+
+  const panelClass = deferred
+    ? "mt-4 rounded-xl border border-zinc-800/60 bg-zinc-950/30 p-4 sm:p-5"
+    : compact
+      ? "mt-3 rounded-lg border border-zinc-800 bg-zinc-950/50 p-3"
+      : "mt-6 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4";
+
   return (
-    <div className="mt-8 border-t border-zinc-800 pt-8">
-      <h2 className="text-sm font-medium text-zinc-500">フィードバック</h2>
+    <section className={sectionClass}>
+      <h2
+        className={
+          deferred
+            ? "text-xs font-medium uppercase tracking-wide text-zinc-600"
+            : "text-sm font-medium text-zinc-500"
+        }
+      >
+        {deferred ? "プレイ後のフィードバック" : "フィードバック"}
+      </h2>
+      {deferred && (
+        <p className="mt-1.5 text-sm text-zinc-500">
+          ゲームを体験してから、評価やコメントを残せます。
+        </p>
+      )}
+
+      <div className={deferred ? panelClass : undefined}>
+        <form
+          onSubmit={handleSubmit}
+          className={deferred ? "space-y-4" : compact ? "mt-4 space-y-4" : "mt-6 space-y-6"}
+        >
+          <div className={`grid gap-4 ${deferred ? "sm:grid-cols-3" : "sm:grid-cols-3"}`}>
+            <RatingInput
+              label="面白さ"
+              value={funRating}
+              onChange={setFunRating}
+              muted={deferred}
+            />
+            <RatingInput
+              label="操作性"
+              value={controlsRating}
+              onChange={setControlsRating}
+              muted={deferred}
+            />
+            <RatingInput
+              label="続きを遊びたい度"
+              value={replayRating}
+              onChange={setReplayRating}
+              muted={deferred}
+            />
+          </div>
+
+          <div>
+            <p
+              className={
+                deferred
+                  ? "text-xs font-medium text-zinc-500"
+                  : "text-sm font-medium text-zinc-400"
+              }
+            >
+              チェック項目
+            </p>
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {checkboxOptions.map((option) => (
+                <label
+                  key={option}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3 py-2"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedOptions.includes(option)}
+                    onChange={() => toggleOption(option)}
+                    className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+                  />
+                  <span className="text-sm text-zinc-400">{option}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <textarea
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            rows={deferred ? 3 : 4}
+            placeholder="感想や改善点、バグ報告など"
+            className="w-full resize-y rounded-lg border border-zinc-800 bg-zinc-900/80 px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/40 focus:outline-none focus:ring-1 focus:ring-orange-500/30"
+          />
+          <button
+            type="submit"
+            className={
+              deferred
+                ? "rounded-lg border border-zinc-700 px-5 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-orange-500/40 hover:text-orange-400"
+                : "rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+            }
+          >
+            フィードバックを送る
+          </button>
+        </form>
+      </div>
 
       {feedbackItems.length > 0 && (
-        <div className="mt-6 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
-          <h3 className="text-sm font-medium text-zinc-400">フィードバック概要</h3>
-          <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div
+          className={
+            deferred
+              ? "mt-5 rounded-lg border border-zinc-800/60 bg-zinc-950/20 p-4"
+              : compact
+                ? "mt-3 rounded-lg border border-zinc-800 bg-zinc-950/50 p-3"
+                : "mt-6 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4"
+          }
+        >
+          <h3 className="text-xs font-medium text-zinc-500">コミュニティの声</h3>
+          <dl className="mt-3 grid gap-3 sm:grid-cols-3">
             <div>
-              <dt className="text-sm text-zinc-500">平均面白さ</dt>
-              <dd className="mt-1 text-lg font-semibold text-orange-400">
+              <dt className="text-xs text-zinc-600">平均面白さ</dt>
+              <dd className="mt-0.5 text-sm font-medium text-zinc-400">
                 {formatAverage(summary.fun)}
               </dd>
             </div>
             <div>
-              <dt className="text-sm text-zinc-500">平均操作性</dt>
-              <dd className="mt-1 text-lg font-semibold text-orange-400">
+              <dt className="text-xs text-zinc-600">平均操作性</dt>
+              <dd className="mt-0.5 text-sm font-medium text-zinc-400">
                 {formatAverage(summary.controls)}
               </dd>
             </div>
             <div>
-              <dt className="text-sm text-zinc-500">平均続きを遊びたい度</dt>
-              <dd className="mt-1 text-lg font-semibold text-orange-400">
+              <dt className="text-xs text-zinc-600">平均続きを遊びたい度</dt>
+              <dd className="mt-0.5 text-sm font-medium text-zinc-400">
                 {formatAverage(summary.replay)}
               </dd>
             </div>
           </dl>
           {summary.topOptions.length > 0 && (
-            <div className="mt-4">
-              <p className="text-sm text-zinc-500">よく選ばれた意見 top 3</p>
-              <ul className="mt-2 space-y-1">
+            <div className="mt-3">
+              <p className="text-xs text-zinc-600">よく選ばれた意見</p>
+              <ul className="mt-1.5 space-y-1">
                 {summary.topOptions.map(([option, count]) => (
-                  <li key={option} className="text-sm text-zinc-300">
+                  <li key={option} className="text-sm text-zinc-500">
                     {option}
-                    <span className="ml-2 text-zinc-500">({count}件)</span>
+                    <span className="ml-2 text-zinc-600">({count}件)</span>
                   </li>
                 ))}
               </ul>
@@ -250,11 +379,15 @@ export function GameFeedback({ gameId }: { gameId: string }) {
       )}
 
       {feedbackItems.length > 0 ? (
-        <ul className="mt-6 space-y-4">
+        <ul className={deferred ? "mt-4 space-y-3" : compact ? "mt-3 space-y-3" : "mt-6 space-y-4"}>
           {feedbackItems.map((item) => (
             <li
               key={item.id}
-              className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4"
+              className={
+                deferred
+                  ? "rounded-lg border border-zinc-800/60 bg-zinc-950/20 p-3"
+                  : "rounded-lg border border-zinc-800 bg-zinc-950/50 p-4"
+              }
             >
               <p className="text-sm text-zinc-500">
                 {formatFeedbackDate(item.createdAt)}
@@ -290,62 +423,12 @@ export function GameFeedback({ gameId }: { gameId: string }) {
           ))}
         </ul>
       ) : (
-        <p className="mt-4 text-sm text-zinc-600">まだコメントはありません。</p>
+        !deferred && (
+          <p className={compact ? "mt-2 text-sm text-zinc-600" : "mt-4 text-sm text-zinc-600"}>
+            まだコメントはありません。
+          </p>
+        )
       )}
-
-      <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-        <div className="grid gap-5 sm:grid-cols-3">
-          <RatingInput
-            label="面白さ"
-            value={funRating}
-            onChange={setFunRating}
-          />
-          <RatingInput
-            label="操作性"
-            value={controlsRating}
-            onChange={setControlsRating}
-          />
-          <RatingInput
-            label="続きを遊びたい度"
-            value={replayRating}
-            onChange={setReplayRating}
-          />
-        </div>
-
-        <div>
-          <p className="text-sm font-medium text-zinc-400">チェック項目</p>
-          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {checkboxOptions.map((option) => (
-              <label
-                key={option}
-                className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedOptions.includes(option)}
-                  onChange={() => toggleOption(option)}
-                  className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
-                />
-                <span className="text-sm text-zinc-300">{option}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <textarea
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          rows={4}
-          placeholder="感想や改善点を書いてください"
-          className="w-full resize-y rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50"
-        />
-        <button
-          type="submit"
-          className="rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
-        >
-          コメントする
-        </button>
-      </form>
-    </div>
+    </section>
   );
 }

@@ -5,6 +5,15 @@ import type { Game } from "@/lib/mock-games";
 export type CommunityImpactItem = {
   id: string;
   label: string;
+  date?: string;
+};
+
+export type ProjectHistoryEntry = {
+  id: string;
+  date: string;
+  title: string;
+  content?: string;
+  kind: "development" | "community";
 };
 
 type GameActivitySeed = Pick<Game, "id" | "lastUpdated" | "createdAt">;
@@ -316,30 +325,30 @@ const PLACEHOLDER_DEVLOGS: Record<string, DevlogEntry[]> = {
 
 const PLACEHOLDER_COMMUNITY_IMPACT: Record<string, CommunityImpactItem[]> = {
   emberfall: [
-    { id: "impact-emberfall-1", label: "UI改善" },
-    { id: "impact-emberfall-2", label: "難易度調整" },
-    { id: "impact-emberfall-3", label: "チュートリアル追加" },
+    { id: "impact-emberfall-1", label: "UI改善", date: "2026-06-08" },
+    { id: "impact-emberfall-2", label: "難易度調整", date: "2026-06-05" },
+    { id: "impact-emberfall-3", label: "チュートリアル追加", date: "2026-05-30" },
   ],
   "neon-drift": [
-    { id: "impact-neon-1", label: "キーコンフィグ追加" },
-    { id: "impact-neon-2", label: "カメラ視点の改善" },
+    { id: "impact-neon-1", label: "キーコンフィグ追加", date: "2026-05-28" },
+    { id: "impact-neon-2", label: "カメラ視点の改善", date: "2026-05-24" },
   ],
   "rift-runner": [
-    { id: "impact-rift-1", label: "操作説明の改善" },
-    { id: "impact-rift-2", label: "難易度調整" },
-    { id: "impact-rift-3", label: "UI改善" },
+    { id: "impact-rift-1", label: "操作説明の改善", date: "2026-06-04" },
+    { id: "impact-rift-2", label: "難易度調整", date: "2026-05-25" },
+    { id: "impact-rift-3", label: "UI改善", date: "2026-05-20" },
   ],
   "crimson-vault": [
-    { id: "impact-crimson-1", label: "ステルスUI改善" },
-    { id: "impact-crimson-2", label: "チュートリアル追加" },
+    { id: "impact-crimson-1", label: "ステルスUI改善", date: "2026-06-01" },
+    { id: "impact-crimson-2", label: "チュートリアル追加", date: "2026-05-18" },
   ],
   "wolfpack-siege": [
-    { id: "impact-wolf-1", label: "協力プレイの同期改善" },
-    { id: "impact-wolf-2", label: "難易度調整" },
+    { id: "impact-wolf-1", label: "協力プレイの同期改善", date: "2026-05-30" },
+    { id: "impact-wolf-2", label: "難易度調整", date: "2026-05-22" },
   ],
   "pulse-circuit": [
-    { id: "impact-pulse-1", label: "ヒントUI追加" },
-    { id: "impact-pulse-2", label: "UI改善" },
+    { id: "impact-pulse-1", label: "ヒントUI追加", date: "2026-05-20" },
+    { id: "impact-pulse-2", label: "UI改善", date: "2026-05-16" },
   ],
 };
 
@@ -397,6 +406,49 @@ export function getDevelopmentLogEntries(
 
 export function getCommunityImpactItems(projectId: string): CommunityImpactItem[] {
   return PLACEHOLDER_COMMUNITY_IMPACT[projectId] ?? DEFAULT_COMMUNITY_IMPACT;
+}
+
+function resolveCommunityImpactDate(
+  item: CommunityImpactItem,
+  game: GameActivitySeed,
+  index: number,
+): string {
+  if (item.date) {
+    return item.date;
+  }
+
+  return shiftDate(game.lastUpdated, 2 + index * 4);
+}
+
+export function getUnifiedProjectHistory(
+  game: GameActivitySeed,
+  realDevlogs: DevlogEntry[],
+): { entries: ProjectHistoryEntry[]; usingPlaceholderDevlogs: boolean } {
+  const usingPlaceholderDevlogs = realDevlogs.length === 0;
+  const devlogs = getDevelopmentLogEntries(game, realDevlogs);
+
+  const developmentEntries: ProjectHistoryEntry[] = devlogs.map((entry) => ({
+    id: entry.id,
+    date: entry.date,
+    title: entry.title,
+    content: entry.content,
+    kind: "development",
+  }));
+
+  const communityEntries: ProjectHistoryEntry[] = getCommunityImpactItems(
+    game.id,
+  ).map((item, index) => ({
+    id: item.id,
+    date: resolveCommunityImpactDate(item, game, index),
+    title: item.label,
+    kind: "community",
+  }));
+
+  const entries = [...developmentEntries, ...communityEntries].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  );
+
+  return { entries, usingPlaceholderDevlogs };
 }
 
 export function getProjectLaunchDate(game: GameActivitySeed): Date {

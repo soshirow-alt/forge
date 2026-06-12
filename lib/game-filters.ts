@@ -1,4 +1,5 @@
 import type { Game } from "@/lib/mock-games";
+import { getDefaultSupportCount } from "@/lib/demo-activity";
 
 export type SortOption = "newest" | "support" | "updated" | "testers";
 
@@ -72,8 +73,8 @@ export function sortGames(
   switch (sort) {
     case "support":
       return sorted.sort((a, b) => {
-        const defaultA = isSubmittedGame(a.id) ? 0 : 124;
-        const defaultB = isSubmittedGame(b.id) ? 0 : 124;
+        const defaultA = getDefaultSupportCount(a.id, isSubmittedGame(a.id));
+        const defaultB = getDefaultSupportCount(b.id, isSubmittedGame(b.id));
         return (
           getSupportCount(b.id, defaultB) - getSupportCount(a.id, defaultA)
         );

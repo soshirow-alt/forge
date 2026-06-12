@@ -17,7 +17,7 @@ import {
   type SortOption,
 } from "@/lib/game-filters";
 import { DiscoveryFilterChips } from "@/components/discovery-filter-chips";
-import { ProjectStatusBadge } from "@/components/project-status-badge";
+import { GameActivityBadges } from "@/components/game-activity-badges";
 import { PlayEnvironmentBadges } from "@/components/play-environment-badges";
 import { TrustSafetyBadge } from "@/components/trust-safety-badge";
 import { HeroGameShowcase } from "@/components/hero-game-showcase";
@@ -135,9 +135,6 @@ function DiscoveryGameCard({
               <DiscoveryBadge variant="tester">{LABEL_TEST_PLAY_OPEN}</DiscoveryBadge>
             )}
           </div>
-          <div className="absolute bottom-3 right-3">
-            <ProjectStatusBadge game={game} compact />
-          </div>
           <div className="absolute bottom-3 left-3">
             <DiscoveryBadge variant="phase">{game.phase}</DiscoveryBadge>
           </div>
@@ -153,6 +150,10 @@ function DiscoveryGameCard({
             </div>
           </div>
 
+          <div className="mt-2.5">
+            <GameActivityBadges game={game} compact />
+          </div>
+
           <div className="mt-3 flex flex-wrap items-center gap-1.5">
             <DiscoveryBadge variant="play">{playLabel}</DiscoveryBadge>
             {hasUpdate && <DiscoveryBadge variant="update">更新あり</DiscoveryBadge>}
@@ -161,12 +162,6 @@ function DiscoveryGameCard({
 
           <GameTags tags={game.tags} />
           <PlayEnvironmentBadges game={game} compact />
-
-          {game.lookingForTesters && game.testerSlots !== undefined && (
-            <p className="mt-3 text-sm text-violet-300/90">
-              受付 {game.testerSlots}人
-            </p>
-          )}
 
           <p className="mt-4 text-sm font-medium text-zinc-500 transition-colors group-hover:text-orange-400/90">
             詳細を見る →

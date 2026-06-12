@@ -1,4 +1,5 @@
 import type { Game } from "@/lib/mock-games";
+import { getDefaultSupportCount } from "@/lib/demo-activity";
 
 export type FeaturedGameMeta = {
   game: Game;
@@ -29,7 +30,10 @@ function scoreGame(
   isSubmittedGame: (id: string) => boolean,
   hasDevlogs: (id: string) => boolean,
 ): number {
-  const defaultSupport = isSubmittedGame(game.id) ? 0 : 124;
+  const defaultSupport = getDefaultSupportCount(
+    game.id,
+    isSubmittedGame(game.id),
+  );
   const support = getSupportCount(game.id, defaultSupport);
   const ageDays = Math.max(
     0,
@@ -75,7 +79,10 @@ export function pickFeaturedGames(
 
   const topScore = scored[0]?.score ?? 0;
   const supportValues = scored.map((item) =>
-    getSupportCount(item.game.id, isSubmittedGame(item.game.id) ? 0 : 124),
+    getSupportCount(
+      item.game.id,
+      getDefaultSupportCount(item.game.id, isSubmittedGame(item.game.id)),
+    ),
   );
   const maxSupport = Math.max(...supportValues, 0);
 
@@ -97,7 +104,7 @@ export function pickFeaturedGames(
   return featured.map((item, index) => {
     const support = getSupportCount(
       item.game.id,
-      isSubmittedGame(item.game.id) ? 0 : 124,
+      getDefaultSupportCount(item.game.id, isSubmittedGame(item.game.id)),
     );
 
     return {
