@@ -25,7 +25,7 @@ function readImageAsDataUrl(file: File): Promise<string> {
 export function ProjectEditPage({ projectId }: { projectId: string }) {
   const router = useRouter();
   const { user, hydrated: authHydrated } = useAuth();
-  const { getSubmittedGameById, isProjectOwner, updateProjectDetails } =
+  const { getSubmittedGameById, isProjectOwner, updateProjectDetails, dataReady } =
     useGames();
 
   const game = getSubmittedGameById(projectId);
@@ -71,6 +71,17 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
     setFormLoaded(true);
   }, [game, formLoaded]);
 
+  if (!dataReady) {
+    return (
+      <div className="min-h-full bg-zinc-950 text-zinc-100">
+        <ForgeHeader />
+        <main className="mx-auto max-w-2xl px-6 py-12">
+          <p className="text-zinc-500">読み込み中...</p>
+        </main>
+      </div>
+    );
+  }
+
   if (!game) {
     notFound();
   }
@@ -113,10 +124,10 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
     );
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    updateProjectDetails(projectId, {
+    await updateProjectDetails(projectId, {
       title,
       genre,
       description,

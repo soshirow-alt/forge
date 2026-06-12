@@ -25,8 +25,19 @@ function formatDate(date: string) {
 
 export function GameDetailPageClient({ id }: { id: string }) {
   const { user } = useAuth();
-  const { getGameById, isSubmittedGame, isProjectOwner } = useGames();
+  const { getGameById, isSubmittedGame, isProjectOwner, dataReady } = useGames();
   const game = getGameById(id);
+
+  if (!dataReady) {
+    return (
+      <div className="min-h-full bg-zinc-950 text-zinc-100">
+        <ForgeHeader />
+        <main className="mx-auto max-w-4xl px-6 py-12">
+          <p className="text-zinc-500">読み込み中...</p>
+        </main>
+      </div>
+    );
+  }
 
   if (!game) {
     notFound();

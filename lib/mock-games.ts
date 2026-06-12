@@ -21,6 +21,7 @@ export type Game = {
   ownerId?: string;
   ownerName?: string;
   visibility?: "public" | "private";
+  createdAt?: string;
 };
 
 export const games: Game[] = [

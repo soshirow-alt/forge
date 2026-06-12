@@ -9,14 +9,16 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useAuth } from "@/components/auth-provider";
 import {
   getGameById as getMockGameById,
   getGamesBySection as getMockGamesBySection,
   games as mockGames,
   type Game,
 } from "@/lib/mock-games";
-import { mergeTagsWithRecruitment } from "@/lib/game-tags";
 import { isGamePublic } from "@/lib/project-visibility";
+import type { ProjectEditFormData, SubmitFormData } from "@/lib/project-form";
+export type { ProjectEditFormData, SubmitFormData } from "@/lib/project-form";
 import {
   mockDevlogs,
   sortDevlogsNewestFirst,
@@ -29,22 +31,27 @@ import {
   type NotificationType,
 } from "@/lib/notifications";
 import {
-  createDeveloperProfile,
-  loadDeveloperProfiles,
   findDeveloperProfileByUserId,
   findDeveloperProfileByCreatorId,
   findDeveloperProfileByPublicName,
   type DeveloperProfile,
   type DeveloperProfileInput,
-  DEVELOPER_PROFILES_STORAGE_KEY,
 } from "@/lib/developer-profiles";
 import {
   getCreatorById as getMockCreatorById,
   getCreatorId as getMockCreatorId,
   type Creator,
 } from "@/lib/creators";
+import { getOptionalSupabaseClient } from "@/lib/supabase/client";
+import { upsertDeveloperProfile, fetchDeveloperProfiles } from "@/lib/supabase/developer-profiles-db";
+import {
+  deleteProjectInDb,
+  fetchProjects,
+  insertProject,
+  updateProjectDetailsInDb,
+  updateProjectFromSubmitForm,
+} from "@/lib/supabase/projects";
 
-const GAMES_STORAGE_KEY = "forge-submitted-games";
 const SUPPORT_STORAGE_KEY = "forge-support-counts";
 const APPLICANT_STORAGE_KEY = "forge-applicant-counts";
 const FOLLOWERS_STORAGE_KEY = "forge-follower-counts";
@@ -53,51 +60,18 @@ const BOOKMARKS_STORAGE_KEY = "forge-bookmarks";
 const DEVLOGS_STORAGE_KEY = "forge-devlogs";
 const NOTIFICATIONS_STORAGE_KEY = "forge-notifications";
 
-export type SubmitFormData = {
-  title: string;
-  creator: string;
-  genre: string;
-  description: string;
-  phase: string;
-  thumbnailUrl?: string;
-  lookingForTesters: boolean;
-  testerSlots?: number;
-  tags: string[];
-  playUrl: string;
-  steamUrl?: string;
-  itchUrl?: string;
-  githubUrl?: string;
-  discordUrl?: string;
-  officialUrl?: string;
-};
-
-export type ProjectEditFormData = {
-  title: string;
-  genre: string;
-  description: string;
-  tags: string[];
-  lookingForTesters: boolean;
-  testerSlots?: number;
-  thumbnailUrl?: string;
-  steamUrl?: string;
-  itchUrl?: string;
-  githubUrl?: string;
-  discordUrl?: string;
-  officialUrl?: string;
-  visibility: "public" | "private";
-};
-
 type Counts = Record<string, number>;
 
 type GamesContextValue = {
   submittedGames: Game[];
+  dataReady: boolean;
   addSubmittedGame: (
     data: SubmitFormData,
     owner: { ownerId: string; ownerName: string },
-  ) => Game;
-  updateSubmittedGame: (id: string, data: SubmitFormData) => void;
-  updateProjectDetails: (id: string, data: ProjectEditFormData) => void;
-  deleteSubmittedGame: (id: string) => void;
+  ) => Promise<Game>;
+  updateSubmittedGame: (id: string, data: SubmitFormData) => Promise<void>;
+  updateProjectDetails: (id: string, data: ProjectEditFormData) => Promise<void>;
+  deleteSubmittedGame: (id: string) => Promise<void>;
   getSubmittedGameById: (id: string) => Game | undefined;
   getGameById: (id: string) => Game | undefined;
   getGamesBySection: (section: Game["section"]) => Game[];
@@ -123,36 +97,17 @@ type GamesContextValue = {
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
   addNotification: (type: NotificationType, projectId: string) => void;
-  reloadFromStorage: () => void;
+  reloadFromStorage: () => Promise<void>;
   getDeveloperProfileByUserId: (userId: string) => DeveloperProfile | undefined;
   saveDeveloperProfile: (
     userId: string,
     input: DeveloperProfileInput,
-  ) => DeveloperProfile;
+  ) => Promise<DeveloperProfile>;
   getCreatorIdForName: (name: string) => string;
   resolveCreatorById: (id: string) => Creator;
 };
 
 const GamesContext = createContext<GamesContextValue | null>(null);
-
-function loadSubmittedGames(): Game[] {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  try {
-    const stored = localStorage.getItem(GAMES_STORAGE_KEY);
-    const games = stored ? (JSON.parse(stored) as Game[]) : [];
-    return games.map((game) => ({
-      ...game,
-      tags: game.tags ?? [],
-      playUrl: game.playUrl ?? "https://example.com",
-      visibility: game.visibility ?? "public",
-    }));
-  } catch {
-    return [];
-  }
-}
 
 function loadCounts(key: string): Counts {
   if (typeof window === "undefined") {
@@ -224,6 +179,7 @@ function loadNotifications(): Notification[] {
 }
 
 export function GamesProvider({ children }: { children: ReactNode }) {
+  const { user, hydrated: authHydrated } = useAuth();
   const [submittedGames, setSubmittedGames] = useState<Game[]>([]);
   const [supportCounts, setSupportCounts] = useState<Counts>({});
   const [applicantCounts, setApplicantCounts] = useState<Counts>({});
@@ -237,8 +193,24 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   );
   const [hydrated, setHydrated] = useState(false);
 
+  const reloadFromStorage = useCallback(async () => {
+    const supabase = getOptionalSupabaseClient();
+    if (!supabase) {
+      setSubmittedGames([]);
+      setDeveloperProfiles([]);
+      return;
+    }
+
+    const [projects, profiles] = await Promise.all([
+      fetchProjects(supabase),
+      fetchDeveloperProfiles(supabase),
+    ]);
+
+    setSubmittedGames(projects);
+    setDeveloperProfiles(profiles);
+  }, []);
+
   useEffect(() => {
-    setSubmittedGames(loadSubmittedGames());
     setSupportCounts(loadCounts(SUPPORT_STORAGE_KEY));
     setApplicantCounts(loadCounts(APPLICANT_STORAGE_KEY));
     setFollowerCounts(loadCounts(FOLLOWERS_STORAGE_KEY));
@@ -246,17 +218,32 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     setBookmarkedGameIds(loadBookmarks());
     setDevlogs(loadDevlogs());
     setNotifications(loadNotifications());
-    setDeveloperProfiles(loadDeveloperProfiles());
-    setHydrated(true);
   }, []);
 
   useEffect(() => {
-    if (!hydrated) {
+    if (!authHydrated) {
       return;
     }
 
-    localStorage.setItem(GAMES_STORAGE_KEY, JSON.stringify(submittedGames));
-  }, [submittedGames, hydrated]);
+    let active = true;
+
+    void reloadFromStorage()
+      .catch(() => {
+        if (active) {
+          setSubmittedGames([]);
+          setDeveloperProfiles([]);
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setHydrated(true);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [authHydrated, user?.id, reloadFromStorage]);
 
   useEffect(() => {
     if (!hydrated) {
@@ -317,113 +304,66 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     );
   }, [notifications, hydrated]);
 
-  useEffect(() => {
-    if (!hydrated) {
-      return;
-    }
-
-    localStorage.setItem(
-      DEVELOPER_PROFILES_STORAGE_KEY,
-      JSON.stringify(developerProfiles),
-    );
-  }, [developerProfiles, hydrated]);
-
   const addSubmittedGame = useCallback(
-    (
+    async (
       data: SubmitFormData,
       owner: { ownerId: string; ownerName: string },
     ) => {
-      const game: Game = {
-        id: `user-${Date.now()}`,
-        title: data.title,
-        creator: data.creator,
-        genre: data.genre,
-        description: data.description,
-        phase: data.phase,
-        status: data.lookingForTesters ? "テスター募集中" : data.phase,
-        lookingForTesters: data.lookingForTesters,
-        testerSlots: data.lookingForTesters ? data.testerSlots : undefined,
-        lastUpdated: new Date().toISOString().split("T")[0],
-        section: "new",
-        thumbnailUrl: data.thumbnailUrl,
-        tags: mergeTagsWithRecruitment(data.tags, data.lookingForTesters),
-        playUrl: data.playUrl,
-        steamUrl: data.steamUrl || undefined,
-        itchUrl: data.itchUrl || undefined,
-        githubUrl: data.githubUrl || undefined,
-        discordUrl: data.discordUrl || undefined,
-        officialUrl: data.officialUrl || undefined,
-        ownerId: owner.ownerId,
-        ownerName: owner.ownerName,
-        visibility: "public",
-      };
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
 
-      setSubmittedGames((prev) => [game, ...prev]);
+      const game = await insertProject(supabase, data, owner);
+      setSubmittedGames((prev) => [game, ...prev.filter((item) => item.id !== game.id)]);
       return game;
     },
     [],
   );
 
-  const updateSubmittedGame = useCallback((id: string, data: SubmitFormData) => {
-    setSubmittedGames((prev) =>
-      prev.map((game) =>
-        game.id === id
-          ? {
-              ...game,
-              title: data.title,
-              creator: data.creator,
-              genre: data.genre,
-              description: data.description,
-              phase: data.phase,
-              status: data.lookingForTesters ? "テスター募集中" : data.phase,
-              lookingForTesters: data.lookingForTesters,
-              testerSlots: data.lookingForTesters ? data.testerSlots : undefined,
-              thumbnailUrl: data.thumbnailUrl ?? game.thumbnailUrl,
-              lastUpdated: new Date().toISOString().split("T")[0],
-              tags: mergeTagsWithRecruitment(data.tags, data.lookingForTesters),
-              playUrl: data.playUrl,
-              steamUrl: data.steamUrl || undefined,
-              itchUrl: data.itchUrl || undefined,
-              githubUrl: data.githubUrl || undefined,
-              discordUrl: data.discordUrl || undefined,
-              officialUrl: data.officialUrl || undefined,
-            }
-          : game,
-      ),
-    );
-  }, []);
+  const updateSubmittedGame = useCallback(
+    async (id: string, data: SubmitFormData) => {
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
 
-  const updateProjectDetails = useCallback(
-    (id: string, data: ProjectEditFormData) => {
+      const game = await updateProjectFromSubmitForm(supabase, id, data);
       setSubmittedGames((prev) =>
-        prev.map((game) =>
-          game.id === id
-            ? {
-                ...game,
-                title: data.title,
-                genre: data.genre,
-                description: data.description,
-                status: data.lookingForTesters ? "テスター募集中" : game.phase,
-                lookingForTesters: data.lookingForTesters,
-                testerSlots: data.lookingForTesters ? data.testerSlots : undefined,
-                thumbnailUrl: data.thumbnailUrl ?? game.thumbnailUrl,
-                lastUpdated: new Date().toISOString().split("T")[0],
-                tags: mergeTagsWithRecruitment(data.tags, data.lookingForTesters),
-                steamUrl: data.steamUrl || undefined,
-                itchUrl: data.itchUrl || undefined,
-                githubUrl: data.githubUrl || undefined,
-                discordUrl: data.discordUrl || undefined,
-                officialUrl: data.officialUrl || undefined,
-                visibility: data.visibility,
-              }
-            : game,
-        ),
+        prev.map((item) => (item.id === id ? game : item)),
       );
     },
     [],
   );
 
-  const deleteSubmittedGame = useCallback((id: string) => {
+  const updateProjectDetails = useCallback(
+    async (id: string, data: ProjectEditFormData) => {
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      const current = submittedGames.find((item) => item.id === id);
+      const game = await updateProjectDetailsInDb(
+        supabase,
+        id,
+        data,
+        current?.phase ?? "",
+      );
+      setSubmittedGames((prev) =>
+        prev.map((item) => (item.id === id ? game : item)),
+      );
+    },
+    [submittedGames],
+  );
+
+  const deleteSubmittedGame = useCallback(async (id: string) => {
+    const supabase = getOptionalSupabaseClient();
+    if (!supabase) {
+      throw new Error("Supabase is not configured.");
+    }
+
+    await deleteProjectInDb(supabase, id);
     setSubmittedGames((prev) => prev.filter((game) => game.id !== id));
     setSupportCounts((prev) => {
       const next = { ...prev };
@@ -665,18 +605,6 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     [addNotification],
   );
 
-  const reloadFromStorage = useCallback(() => {
-    setSubmittedGames(loadSubmittedGames());
-    setSupportCounts(loadCounts(SUPPORT_STORAGE_KEY));
-    setApplicantCounts(loadCounts(APPLICANT_STORAGE_KEY));
-    setFollowerCounts(loadCounts(FOLLOWERS_STORAGE_KEY));
-    setFollowedCreators(loadFollowing());
-    setBookmarkedGameIds(loadBookmarks());
-    setDevlogs(loadDevlogs());
-    setNotifications(loadNotifications());
-    setDeveloperProfiles(loadDeveloperProfiles());
-  }, []);
-
   const getDeveloperProfileByUserId = useCallback(
     (userId: string) =>
       findDeveloperProfileByUserId(developerProfiles, userId),
@@ -684,8 +612,13 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   );
 
   const saveDeveloperProfile = useCallback(
-    (userId: string, input: DeveloperProfileInput) => {
-      const profile = createDeveloperProfile(userId, input);
+    async (userId: string, input: DeveloperProfileInput) => {
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      const profile = await upsertDeveloperProfile(supabase, userId, input);
       setDeveloperProfiles((prev) => [
         ...prev.filter((item) => item.userId !== userId),
         profile,
@@ -728,6 +661,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       submittedGames,
+      dataReady: hydrated,
       addSubmittedGame,
       updateSubmittedGame,
       updateProjectDetails,
@@ -765,6 +699,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     }),
     [
       submittedGames,
+      hydrated,
       addSubmittedGame,
       updateSubmittedGame,
       updateProjectDetails,

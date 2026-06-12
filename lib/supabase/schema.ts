@@ -1,0 +1,36 @@
+export type ProjectRow = {
+  id: string;
+  owner_id: string;
+  owner_name: string;
+  title: string;
+  creator: string;
+  genre: string;
+  description: string;
+  phase: string;
+  status: string;
+  looking_for_testers: boolean;
+  tester_slots: number | null;
+  section: "new" | "testers" | "beta";
+  thumbnail_url: string | null;
+  tags: string[];
+  play_url: string;
+  steam_url: string | null;
+  itch_url: string | null;
+  github_url: string | null;
+  discord_url: string | null;
+  official_url: string | null;
+  visibility: "public" | "private";
+  created_at: string;
+  updated_at: string;
+};
+
+export type DeveloperProfileRow = {
+  user_id: string;
+  creator_id: string;
+  public_name: string;
+  profile: string;
+  x_account: string | null;
+  website: string | null;
+  created_at: string;
+  updated_at: string;
+};

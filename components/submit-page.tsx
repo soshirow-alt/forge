@@ -44,6 +44,7 @@ export function SubmitPage() {
     : undefined;
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [submittedGameId, setSubmittedGameId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [genre, setGenre] = useState("");
   const [description, setDescription] = useState("");
@@ -121,11 +122,12 @@ export function SubmitPage() {
       return;
     }
 
-    saveDeveloperProfile(user.id, input);
-    setShowProjectForm(true);
+    void saveDeveloperProfile(user.id, input).then(() => {
+      setShowProjectForm(true);
+    });
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!user) {
@@ -157,11 +159,12 @@ export function SubmitPage() {
       officialUrl: officialUrl || undefined,
     };
 
-    addSubmittedGame(data, {
+    const game = await addSubmittedGame(data, {
       ownerId: user.id,
       ownerName: user.name,
     });
 
+    setSubmittedGameId(game.id);
     setSuccess(true);
     setTitle("");
     setGenre("");
@@ -181,6 +184,11 @@ export function SubmitPage() {
     setFileInputKey((key) => key + 1);
   }
 
+  function handleSubmitAnother() {
+    setSuccess(false);
+    setSubmittedGameId(null);
+  }
+
   return (
     <div className="min-h-full bg-zinc-950 text-zinc-100">
       <ForgeHeader />
@@ -193,22 +201,74 @@ export function SubmitPage() {
           ← 作品一覧に戻る
         </Link>
 
-        <h1 className="mt-8 text-3xl font-bold tracking-tight">
-          {showProjectForm ? "作品を投稿する" : "開発者プロフィールを作成"}
-        </h1>
-        <p className="mt-2 text-zinc-500">
-          {showProjectForm
-            ? "開発中のゲーム情報を入力して、Forgeに掲載しましょう。"
-            : "初めて作品を投稿する前に、開発者として公開される情報を設定してください。"}
-        </p>
-
-        {success && (
-          <div className="mt-8 rounded-lg border border-orange-500/30 bg-orange-500/10 px-4 py-3 text-orange-300">
-            投稿が完了しました。作品一覧の「新着作品」に表示されます。
-          </div>
+        {!success && (
+          <>
+            <h1 className="mt-8 text-3xl font-bold tracking-tight">
+              {showProjectForm ? "作品を投稿する" : "開発者プロフィールを作成"}
+            </h1>
+            <p className="mt-2 text-zinc-500">
+              {showProjectForm
+                ? "開発中のゲーム情報を入力して、Forgeに掲載しましょう。"
+                : "初めて作品を投稿する前に、開発者として公開される情報を設定してください。"}
+            </p>
+          </>
         )}
 
-        {!showProjectForm ? (
+        {success ? (
+          <div className="mt-12 rounded-xl border border-zinc-800 bg-zinc-900/80 px-6 py-16 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-orange-500/30 bg-orange-500/10">
+              <svg
+                className="h-8 w-8 text-orange-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+                aria-hidden
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
+            <h1 className="mt-6 text-2xl font-bold tracking-tight text-zinc-100">
+              投稿が完了しました
+            </h1>
+            <p className="mt-2 text-zinc-500">
+              作品一覧の「新着作品」に表示されます
+            </p>
+            <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <Link
+                href="/"
+                className="rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+              >
+                ホームへ戻る
+              </Link>
+              {submittedGameId && (
+                <Link
+                  href={`/games/${submittedGameId}`}
+                  className="rounded-lg border border-zinc-700 bg-zinc-900 px-6 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-orange-500/50 hover:text-orange-400"
+                >
+                  投稿した作品を見る
+                </Link>
+              )}
+              <Link
+                href="/my-projects"
+                className="rounded-lg border border-zinc-700 bg-zinc-900 px-6 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-orange-500/50 hover:text-orange-400"
+              >
+                ダッシュボードを見る
+              </Link>
+              <button
+                type="button"
+                onClick={handleSubmitAnother}
+                className="rounded-lg border border-zinc-700 bg-zinc-900 px-6 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-orange-500/50 hover:text-orange-400"
+              >
+                もう1件投稿する
+              </button>
+            </div>
+          </div>
+        ) : !showProjectForm ? (
           <DeveloperProfileSetup onComplete={handleDeveloperProfileComplete} />
         ) : (
         <form

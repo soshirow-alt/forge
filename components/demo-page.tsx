@@ -2,33 +2,52 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { ForgeHeader } from "@/components/forge-header";
 import { useGames } from "@/components/games-provider";
 import { setupDemoEnvironment } from "@/lib/demo-setup";
+import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 
 export function DemoPage() {
   const router = useRouter();
   const { user, hydrated } = useAuth();
   const { reloadFromStorage, saveDeveloperProfile } = useGames();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSetup() {
+  async function handleSetup() {
     if (!user) {
       router.push("/login?redirect=/demo");
       return;
     }
 
-    const profile = saveDeveloperProfile(user.id, {
-      publicName: "デモ開発スタジオ",
-      profile:
-        "Forgeデモ環境用の開発者プロフィールです。試作品の公開とテスター募集のデモを行います。",
-      xAccount: "@forge_demo",
-      website: "https://example.com",
-    });
+    const supabase = getOptionalSupabaseClient();
+    if (!supabase) {
+      setError("Supabaseの環境変数が設定されていません。");
+      return;
+    }
 
-    setupDemoEnvironment(user.id, profile.publicName);
-    reloadFromStorage();
-    router.push("/my-projects");
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const profile = await saveDeveloperProfile(user.id, {
+        publicName: "デモ開発スタジオ",
+        profile:
+          "Forgeデモ環境用の開発者プロフィールです。試作品の公開とテスター募集のデモを行います。",
+        xAccount: "@forge_demo",
+        website: "https://example.com",
+      });
+
+      await setupDemoEnvironment(supabase, user.id, profile.publicName);
+      await reloadFromStorage();
+      router.push("/my-projects");
+    } catch {
+      setError("デモ環境の作成に失敗しました。");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -55,6 +74,12 @@ export function DemoPage() {
           </p>
         </div>
 
+        {error && (
+          <div className="mt-8 rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+            {error}
+          </div>
+        )}
+
         {hydrated && !user ? (
           <div className="mt-12 space-y-4 text-center">
             <p className="text-zinc-400">デモ環境を作成するにはログインが必要です。</p>
@@ -68,10 +93,11 @@ export function DemoPage() {
         ) : (
           <button
             type="button"
-            onClick={handleSetup}
-            className="mt-12 w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-6 text-xl font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+            onClick={() => void handleSetup()}
+            disabled={submitting}
+            className="mt-12 w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-6 text-xl font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:opacity-60"
           >
-            デモ環境を作成する
+            {submitting ? "作成中..." : "デモ環境を作成する"}
           </button>
         )}
       </main>

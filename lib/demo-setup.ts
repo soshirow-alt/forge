@@ -1,14 +1,20 @@
 import { mergeTagsWithRecruitment } from "@/lib/game-tags";
 import type { DevlogEntry } from "@/lib/devlogs";
+import type { SubmitFormData } from "@/lib/project-form";
+import { insertDemoProjects } from "@/lib/supabase/projects";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Game } from "@/lib/mock-games";
 
-const GAMES_STORAGE_KEY = "forge-submitted-games";
 const SUPPORT_STORAGE_KEY = "forge-support-counts";
 const APPLICANT_STORAGE_KEY = "forge-applicant-counts";
 const DEVLOGS_STORAGE_KEY = "forge-devlogs";
 const FEEDBACK_STORAGE_KEY = "forge-game-feedback";
 
-const DEMO_PROJECT_IDS = ["demo-project-1", "demo-project-2", "demo-project-3"] as const;
+const DEMO_PROJECT_TITLES = [
+  "星詠みの廃都",
+  "ネオン・アーカイブ",
+  "群青の境界",
+] as const;
 
 type DemoFeedbackItem = {
   id: string;
@@ -37,79 +43,60 @@ function createDemoThumbnail(label: string, accent: string): string {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
-function createDemoProjects(ownerId: string, ownerName: string): Game[] {
+function createDemoProjectForms(ownerName: string): SubmitFormData[] {
   return [
     {
-      id: "demo-project-1",
       title: "星詠みの廃都",
       genre: "アクションRPG",
-      status: "テスター募集中",
       creator: ownerName,
       phase: "試作版",
       description:
         "星の欠片で魔法を紡ぐ探索アクションRPG。廃都を巡り、失われた詠唱を集めて世界の均衡を取り戻すデモ版です。",
       lookingForTesters: true,
       testerSlots: 12,
-      lastUpdated: "2026-06-10",
-      section: "new",
       thumbnailUrl: createDemoThumbnail("星詠みの廃都", "#ea580c"),
       tags: mergeTagsWithRecruitment(["RPG", "アクション"], true),
       playUrl: "https://example.com/demo/stellar-ruins",
       itchUrl: "https://example.itch.io/stellar-ruins-demo",
       githubUrl: "https://github.com/demo-forge/stellar-ruins",
-      ownerId,
-      ownerName,
-      visibility: "public",
     },
     {
-      id: "demo-project-2",
       title: "ネオン・アーカイブ",
       genre: "パズル",
-      status: "テスター募集中",
       creator: ownerName,
       phase: "プロトタイプ",
       description:
         "ネオンに彩られたデータ迷宮を解き明かすローグライク・パズル。記憶の断片を組み合わせ、失われた都市の真実に迫ります。",
       lookingForTesters: true,
       testerSlots: 8,
-      lastUpdated: "2026-06-08",
-      section: "new",
       thumbnailUrl: createDemoThumbnail("ネオン・アーカイブ", "#7c3aed"),
       tags: mergeTagsWithRecruitment(["パズル", "ローグライク"], true),
       playUrl: "https://example.com/demo/neon-archive",
       discordUrl: "https://discord.gg/demo-neon-archive",
-      ownerId,
-      ownerName,
-      visibility: "public",
     },
     {
-      id: "demo-project-3",
       title: "群青の境界",
       genre: "ホラー",
-      status: "テスター募集中",
       creator: ownerName,
       phase: "α版",
       description:
         "霧に包まれた離島で起きる協力型ホラー体験。仲間と連携しながら、境界の向こうから迫る存在から逃げ延びるサバイバルデモ。",
       lookingForTesters: true,
       testerSlots: 15,
-      lastUpdated: "2026-06-05",
-      section: "new",
       thumbnailUrl: createDemoThumbnail("群青の境界", "#0369a1"),
       tags: mergeTagsWithRecruitment(["ホラー", "協力プレイ"], true),
       playUrl: "https://example.com/demo/azure-border",
       steamUrl: "https://store.steampowered.com/app/demo-azure-border",
       officialUrl: "https://demo-forge.example/azure-border",
-      ownerId,
-      ownerName,
-      visibility: "public",
     },
   ];
 }
 
-function createDemoFeedback(): Record<string, DemoFeedbackItem[]> {
+function createDemoFeedback(projectIds: string[]): Record<string, DemoFeedbackItem[]> {
+  const [project1, project2, project3] = projectIds;
+
   return {
-    "demo-project-1": [
+    [project1]: [
       {
         id: "demo-feedback-1-1",
         text: "戦闘の手応えが良く、探索のテンポも快適でした。ボス戦の演出が特に印象的です。",
@@ -129,7 +116,7 @@ function createDemoFeedback(): Record<string, DemoFeedbackItem[]> {
         selectedOptions: ["チュートリアルが必要", "世界観が良い"],
       },
     ],
-    "demo-project-2": [
+    [project2]: [
       {
         id: "demo-feedback-2-1",
         text: "パズルの難易度曲線が良いです。ネオンの演出と相まって没入感があります。",
@@ -140,7 +127,7 @@ function createDemoFeedback(): Record<string, DemoFeedbackItem[]> {
         selectedOptions: ["世界観が良い", "もっと遊びたい"],
       },
     ],
-    "demo-project-3": [
+    [project3]: [
       {
         id: "demo-feedback-3-1",
         text: "協力プレイの緊張感が素晴らしい。音声チャット必須の雰囲気がホラーとして機能しています。",
@@ -163,11 +150,13 @@ function createDemoFeedback(): Record<string, DemoFeedbackItem[]> {
   };
 }
 
-function createDemoDevlogs(): DevlogEntry[] {
+function createDemoDevlogs(projectIds: string[]): DevlogEntry[] {
+  const [project1, project2, project3] = projectIds;
+
   return [
     {
       id: "demo-devlog-1-1",
-      projectId: "demo-project-1",
+      projectId: project1,
       title: "試作版デモを公開しました",
       content:
         "星詠みの廃都の試作版を公開しました。テスターの皆さんからのフィードバックをお待ちしています。",
@@ -175,14 +164,14 @@ function createDemoDevlogs(): DevlogEntry[] {
     },
     {
       id: "demo-devlog-1-2",
-      projectId: "demo-project-1",
+      projectId: project1,
       title: "ボス戦プロトタイプを追加",
       content: "廃都最深部のボス戦プロトタイプを実装しました。難易度調整中です。",
       date: "2026-06-07",
     },
     {
       id: "demo-devlog-2-1",
-      projectId: "demo-project-2",
+      projectId: project2,
       title: "パズルステージを10面追加",
       content:
         "ネオン・アーカイブに新ステージを追加しました。記憶の断片パズルのバリエーションを拡充しています。",
@@ -190,7 +179,7 @@ function createDemoDevlogs(): DevlogEntry[] {
     },
     {
       id: "demo-devlog-3-1",
-      projectId: "demo-project-3",
+      projectId: project3,
       title: "α版テスト開始のお知らせ",
       content:
         "群青の境界のα版テストを開始しました。3人協力プレイでのフィードバックを募集しています。",
@@ -198,7 +187,7 @@ function createDemoDevlogs(): DevlogEntry[] {
     },
     {
       id: "demo-devlog-3-2",
-      projectId: "demo-project-3",
+      projectId: project3,
       title: "霧エフェクトと音響を改善",
       content: "離島の霧表現と環境音を調整し、ホラー演出を強化しました。",
       date: "2026-06-03",
@@ -206,72 +195,91 @@ function createDemoDevlogs(): DevlogEntry[] {
   ];
 }
 
-export function setupDemoEnvironment(ownerId: string, ownerName: string): void {
-  if (typeof window === "undefined") {
-    return;
+function removeDemoLocalData(existingProjectIds: string[]) {
+  const supportCounts = JSON.parse(
+    localStorage.getItem(SUPPORT_STORAGE_KEY) || "{}",
+  ) as Record<string, number>;
+  for (const id of existingProjectIds) {
+    delete supportCounts[id];
   }
 
-  const demoProjects = createDemoProjects(ownerId, ownerName);
+  const applicantCounts = JSON.parse(
+    localStorage.getItem(APPLICANT_STORAGE_KEY) || "{}",
+  ) as Record<string, number>;
+  for (const id of existingProjectIds) {
+    delete applicantCounts[id];
+  }
+
+  const feedback = JSON.parse(
+    localStorage.getItem(FEEDBACK_STORAGE_KEY) || "{}",
+  ) as Record<string, DemoFeedbackItem[]>;
+  for (const id of existingProjectIds) {
+    delete feedback[id];
+  }
+
+  const storedDevlogs = localStorage.getItem(DEVLOGS_STORAGE_KEY);
+  const existingDevlogs = storedDevlogs
+    ? (JSON.parse(storedDevlogs) as DevlogEntry[])
+    : [];
+
+  return { supportCounts, applicantCounts, feedback, existingDevlogs };
+}
+
+export async function setupDemoEnvironment(
+  supabase: SupabaseClient,
+  ownerId: string,
+  ownerName: string,
+): Promise<Game[]> {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  const demoProjects = await insertDemoProjects(
+    supabase,
+    ownerId,
+    ownerName,
+    createDemoProjectForms(ownerName),
+  );
+
+  const projectIds = demoProjects.map((project) => project.id);
+  const supportTotals = [47, 32, 19];
+  const applicantTotals = [5, 3, 7];
 
   try {
-    const existingGames = JSON.parse(
-      localStorage.getItem(GAMES_STORAGE_KEY) || "[]",
-    ) as Game[];
-    const filteredGames = existingGames.filter(
-      (game) => !(DEMO_PROJECT_IDS as readonly string[]).includes(game.id),
-    );
-    localStorage.setItem(
-      GAMES_STORAGE_KEY,
-      JSON.stringify([...demoProjects, ...filteredGames]),
-    );
+    const previousIds = JSON.parse(
+      localStorage.getItem("forge-demo-project-ids") || "[]",
+    ) as string[];
 
-    const supportCounts = JSON.parse(
-      localStorage.getItem(SUPPORT_STORAGE_KEY) || "{}",
-    ) as Record<string, number>;
-    for (const id of DEMO_PROJECT_IDS) {
-      delete supportCounts[id];
-    }
-    Object.assign(supportCounts, {
-      "demo-project-1": 47,
-      "demo-project-2": 32,
-      "demo-project-3": 19,
+    const { supportCounts, applicantCounts, feedback, existingDevlogs } =
+      removeDemoLocalData(previousIds);
+
+    projectIds.forEach((id, index) => {
+      supportCounts[id] = supportTotals[index] ?? 0;
+      applicantCounts[id] = applicantTotals[index] ?? 0;
     });
-    localStorage.setItem(SUPPORT_STORAGE_KEY, JSON.stringify(supportCounts));
 
-    const applicantCounts = JSON.parse(
-      localStorage.getItem(APPLICANT_STORAGE_KEY) || "{}",
-    ) as Record<string, number>;
-    for (const id of DEMO_PROJECT_IDS) {
-      delete applicantCounts[id];
-    }
-    Object.assign(applicantCounts, {
-      "demo-project-1": 5,
-      "demo-project-2": 3,
-      "demo-project-3": 7,
-    });
-    localStorage.setItem(APPLICANT_STORAGE_KEY, JSON.stringify(applicantCounts));
+    Object.assign(feedback, createDemoFeedback(projectIds));
 
-    const feedback = JSON.parse(
-      localStorage.getItem(FEEDBACK_STORAGE_KEY) || "{}",
-    ) as Record<string, DemoFeedbackItem[]>;
-    for (const id of DEMO_PROJECT_IDS) {
-      delete feedback[id];
-    }
-    Object.assign(feedback, createDemoFeedback());
-    localStorage.setItem(FEEDBACK_STORAGE_KEY, JSON.stringify(feedback));
-
-    const storedDevlogs = localStorage.getItem(DEVLOGS_STORAGE_KEY);
-    const existingDevlogs = storedDevlogs
-      ? (JSON.parse(storedDevlogs) as DevlogEntry[])
-      : [];
     const filteredDevlogs = existingDevlogs.filter(
-      (entry) => !(DEMO_PROJECT_IDS as readonly string[]).includes(entry.projectId),
+      (entry) => !previousIds.includes(entry.projectId),
     );
+
+    localStorage.setItem(SUPPORT_STORAGE_KEY, JSON.stringify(supportCounts));
+    localStorage.setItem(APPLICANT_STORAGE_KEY, JSON.stringify(applicantCounts));
+    localStorage.setItem(FEEDBACK_STORAGE_KEY, JSON.stringify(feedback));
     localStorage.setItem(
       DEVLOGS_STORAGE_KEY,
-      JSON.stringify([...createDemoDevlogs(), ...filteredDevlogs]),
+      JSON.stringify([...createDemoDevlogs(projectIds), ...filteredDevlogs]),
+    );
+    localStorage.setItem(
+      "forge-demo-project-ids",
+      JSON.stringify(projectIds),
     );
   } catch {
     // ignore storage errors
   }
+
+  return demoProjects;
 }
+
+export { DEMO_PROJECT_TITLES };
