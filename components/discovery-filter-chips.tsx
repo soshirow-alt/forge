@@ -105,7 +105,7 @@ export function DiscoveryFilterChips({
           onToggle={toggleGenre}
         />
         <FilterGroup
-          title="遊べる場所"
+          title="プレイ環境"
           options={PLATFORM_FILTER_OPTIONS}
           selected={filters.platforms}
           onToggle={togglePlatform}

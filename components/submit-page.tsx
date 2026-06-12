@@ -8,8 +8,13 @@ import { DeveloperProfileSetup } from "@/components/developer-profile-setup";
 import { ForgeHeader } from "@/components/forge-header";
 import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
 import { ForgeSdkNote } from "@/components/forge-sdk-note";
+import { PlayEnvironmentFormFields } from "@/components/play-environment-form-fields";
 import { useGames } from "@/components/games-provider";
 import { AVAILABLE_TAGS } from "@/lib/game-tags";
+import {
+  EMPTY_PLAY_ENVIRONMENT_FORM,
+  mergePlayEnvironmentIntoTags,
+} from "@/lib/play-environment";
 
 const phaseOptions = [
   "企画段階",
@@ -63,6 +68,7 @@ export function SubmitPage() {
   const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>();
   const [thumbnailPreview, setThumbnailPreview] = useState<string | undefined>();
   const [fileInputKey, setFileInputKey] = useState(0);
+  const [playEnvironment, setPlayEnvironment] = useState(EMPTY_PLAY_ENVIRONMENT_FORM);
 
   useEffect(() => {
     if (editId) {
@@ -152,7 +158,7 @@ export function SubmitPage() {
       thumbnailUrl,
       lookingForTesters,
       testerSlots: lookingForTesters ? testerSlots : undefined,
-      tags: selectedTags,
+      tags: mergePlayEnvironmentIntoTags(selectedTags, playEnvironment),
       playUrl,
       steamUrl: steamUrl || undefined,
       itchUrl: itchUrl || undefined,
@@ -175,6 +181,7 @@ export function SubmitPage() {
     setLookingForTesters(false);
     setTesterSlots(10);
     setSelectedTags([]);
+    setPlayEnvironment(EMPTY_PLAY_ENVIRONMENT_FORM);
     setPlayUrl("");
     setSteamUrl("");
     setItchUrl("");
@@ -403,6 +410,11 @@ export function SubmitPage() {
               placeholder="https://example.com"
             />
           </div>
+
+          <PlayEnvironmentFormFields
+            value={playEnvironment}
+            onChange={setPlayEnvironment}
+          />
 
           <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
             <p className="text-sm font-medium text-zinc-400">外部リンク（任意）</p>

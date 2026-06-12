@@ -1,8 +1,9 @@
-import { getGameTags } from "@/lib/game-tags";
+import { getPublicGameTags } from "@/lib/play-environment";
 import { displayGameTag } from "@/lib/user-labels";
+import { getGameTags } from "@/lib/game-tags";
 
 export function GameTags({ tags }: { tags?: string[] }) {
-  const displayTags = getGameTags(tags);
+  const displayTags = getPublicGameTags(getGameTags(tags));
 
   if (displayTags.length === 0) {
     return null;

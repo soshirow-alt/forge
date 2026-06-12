@@ -1,4 +1,5 @@
 import type { Game } from "@/lib/mock-games";
+import { matchesPlayEnvironmentFilter } from "@/lib/play-environment";
 
 export const GENRE_FILTER_OPTIONS = [
   "RPG",
@@ -11,7 +12,9 @@ export const GENRE_FILTER_OPTIONS = [
 ] as const;
 
 export const PLATFORM_FILTER_OPTIONS = [
-  "ブラウザで遊べる",
+  "PC",
+  "スマホ",
+  "ブラウザ",
   "Steam",
   "itch.io",
   "Epic",
@@ -43,83 +46,21 @@ export const EMPTY_DISCOVERY_FILTERS: DiscoveryChipFilters = {
   phases: [],
 };
 
-function collectUrls(game: Game): string[] {
-  return [
-    game.playUrl,
-    game.steamUrl,
-    game.itchUrl,
-    game.githubUrl,
-    game.discordUrl,
-    game.officialUrl,
-  ].filter((url): url is string => Boolean(url?.trim()));
-}
-
-function urlMatches(game: Game, matcher: (url: string) => boolean): boolean {
-  return collectUrls(game).some((url) => matcher(url.toLowerCase()));
-}
-
-export function isBrowserPlayable(game: Game): boolean {
-  const check = (url: string) => {
-    const lower = url.toLowerCase();
-    return (
-      lower.includes("github.io") ||
-      lower.includes("vercel.app") ||
-      lower.includes("netlify.app") ||
-      lower.endsWith(".html")
-    );
-  };
-
-  if (game.playUrl && check(game.playUrl)) {
-    return true;
-  }
-
-  return Boolean(game.githubUrl && check(game.githubUrl));
-}
-
-export function hasSteamLink(game: Game): boolean {
-  return Boolean(game.steamUrl) || urlMatches(game, (url) => url.includes("steampowered.com"));
-}
-
-export function hasItchLink(game: Game): boolean {
-  return Boolean(game.itchUrl) || urlMatches(game, (url) => url.includes("itch.io"));
-}
-
-export function hasEpicLink(game: Game): boolean {
-  return urlMatches(
-    game,
-    (url) => url.includes("epicgames.com") || url.includes("store.epicgames.com"),
-  );
-}
-
-export function hasGitHubLink(game: Game): boolean {
-  return Boolean(game.githubUrl) || urlMatches(game, (url) => url.includes("github.com"));
-}
-
-export function hasOfficialSite(game: Game): boolean {
-  return Boolean(game.officialUrl?.trim());
-}
-
-export function matchesPlatformFilter(game: Game, platform: PlatformFilter): boolean {
-  switch (platform) {
-    case "ブラウザで遊べる":
-      return isBrowserPlayable(game);
-    case "Steam":
-      return hasSteamLink(game);
-    case "itch.io":
-      return hasItchLink(game);
-    case "Epic":
-      return hasEpicLink(game);
-    case "GitHub":
-      return hasGitHubLink(game);
-    case "公式サイト":
-      return hasOfficialSite(game);
-    default:
-      return false;
-  }
-}
+export {
+  hasEpicLink,
+  hasGitHubLink,
+  hasItchLink,
+  hasOfficialSite,
+  hasSteamLink,
+  isBrowserPlayable,
+} from "@/lib/play-environment";
 
 function gameSearchText(game: Game): string {
   return [game.genre, ...(game.tags ?? [])].join(" ").toLowerCase();
+}
+
+export function matchesPlatformFilter(game: Game, platform: PlatformFilter): boolean {
+  return matchesPlayEnvironmentFilter(game, platform);
 }
 
 export function matchesGenreFilter(game: Game, genre: GenreFilter): boolean {

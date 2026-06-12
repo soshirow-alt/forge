@@ -6,8 +6,15 @@ import { useAuth } from "@/components/auth-provider";
 import { BookmarkButton } from "@/components/bookmark-button";
 import { CreatorLink } from "@/components/creator-link";
 import { ForgeHeader } from "@/components/forge-header";
+import { ForgeIdentityBlock } from "@/components/forge-identity-block";
+import { GameCommunityImpactSection } from "@/components/game-community-impact-section";
 import { GameDevlogSection } from "@/components/game-devlog-section";
+import { ProjectStatusBadge } from "@/components/project-status-badge";
 import { GameExternalLinks } from "@/components/game-external-links";
+import { PlayEnvironmentBadges } from "@/components/play-environment-badges";
+import { PlaySafetyNote } from "@/components/play-safety-note";
+import { getDistributionType } from "@/lib/play-environment";
+import { TrustSafetyBadge } from "@/components/trust-safety-badge";
 import { GameFeedback } from "@/components/game-feedback";
 import { GameSupport } from "@/components/game-support";
 import { GameTags } from "@/components/game-tags";
@@ -99,18 +106,32 @@ export function GameDetailPageClient({ id }: { id: string }) {
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
               {game.title}
             </h1>
-            <p className="mt-2 text-zinc-500">{game.genre}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <p className="text-zinc-500">{game.genre}</p>
+              <ProjectStatusBadge game={game} />
+              <TrustSafetyBadge game={game} />
+            </div>
+            <PlayEnvironmentBadges game={game} />
             <GameTags tags={game.tags} />
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <a
-                href={game.playUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-4 text-center text-lg font-semibold text-zinc-950 transition-opacity hover:opacity-90 sm:w-auto"
-              >
-                プレイする
-              </a>
+              <div className="w-full sm:w-auto">
+                <a
+                  href={game.playUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-4 text-center text-lg font-semibold text-zinc-950 transition-opacity hover:opacity-90 sm:w-auto"
+                >
+                  プレイする
+                </a>
+                <PlaySafetyNote
+                  playUrl={game.playUrl}
+                  variant={
+                    getDistributionType(game) === "download" ? "download" : "external"
+                  }
+                  className="mt-2 px-1"
+                />
+              </div>
               <BookmarkButton gameId={game.id} />
               {canEdit && (
                 <Link
@@ -184,15 +205,23 @@ export function GameDetailPageClient({ id }: { id: string }) {
               </p>
             </div>
 
+            <div className="mt-8">
+              <ForgeIdentityBlock />
+            </div>
+
             <GameExternalLinks
+              playUrl={game.playUrl}
               steamUrl={game.steamUrl}
               itchUrl={game.itchUrl}
               githubUrl={game.githubUrl}
               discordUrl={game.discordUrl}
               officialUrl={game.officialUrl}
+              tags={game.tags}
             />
 
-            <GameDevlogSection projectId={game.id} />
+            <GameDevlogSection game={game} />
+
+            <GameCommunityImpactSection projectId={game.id} />
 
             <GameFeedback gameId={game.id} />
           </div>

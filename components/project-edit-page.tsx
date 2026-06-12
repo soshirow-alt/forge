@@ -7,8 +7,15 @@ import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { ForgeHeader } from "@/components/forge-header";
 import { ForgeSdkNote } from "@/components/forge-sdk-note";
+import { PlayEnvironmentFormFields } from "@/components/play-environment-form-fields";
 import { useGames } from "@/components/games-provider";
 import { AVAILABLE_TAGS } from "@/lib/game-tags";
+import {
+  EMPTY_PLAY_ENVIRONMENT_FORM,
+  getPublicGameTags,
+  mergePlayEnvironmentIntoTags,
+  parsePlayEnvironmentFromTags,
+} from "@/lib/play-environment";
 import type { ProjectVisibility } from "@/lib/project-visibility";
 
 const inputClassName =
@@ -47,6 +54,7 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
   const [thumbnailPreview, setThumbnailPreview] = useState<string | undefined>();
   const [fileInputKey, setFileInputKey] = useState(0);
   const [formLoaded, setFormLoaded] = useState(false);
+  const [playEnvironment, setPlayEnvironment] = useState(EMPTY_PLAY_ENVIRONMENT_FORM);
 
   useEffect(() => {
     if (!game || formLoaded) {
@@ -58,9 +66,8 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
     setDescription(game.description);
     setLookingForTesters(game.lookingForTesters);
     setTesterSlots(game.testerSlots ?? 10);
-    setSelectedTags(
-      (game.tags ?? []).filter((tag) => tag !== "テスター募集中"),
-    );
+    setSelectedTags(getPublicGameTags(game.tags));
+    setPlayEnvironment(parsePlayEnvironmentFromTags(game.tags ?? []));
     setSteamUrl(game.steamUrl ?? "");
     setItchUrl(game.itchUrl ?? "");
     setGithubUrl(game.githubUrl ?? "");
@@ -134,7 +141,7 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
       description,
       lookingForTesters,
       testerSlots: lookingForTesters ? testerSlots : undefined,
-      tags: selectedTags,
+      tags: mergePlayEnvironmentIntoTags(selectedTags, playEnvironment),
       thumbnailUrl,
       steamUrl: steamUrl || undefined,
       itchUrl: itchUrl || undefined,
@@ -277,6 +284,11 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
               </div>
             )}
           </div>
+
+          <PlayEnvironmentFormFields
+            value={playEnvironment}
+            onChange={setPlayEnvironment}
+          />
 
           <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
             <p className="text-sm font-medium text-zinc-400">外部リンク（任意）</p>

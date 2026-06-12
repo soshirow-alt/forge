@@ -17,6 +17,9 @@ import {
   type SortOption,
 } from "@/lib/game-filters";
 import { DiscoveryFilterChips } from "@/components/discovery-filter-chips";
+import { ProjectStatusBadge } from "@/components/project-status-badge";
+import { PlayEnvironmentBadges } from "@/components/play-environment-badges";
+import { TrustSafetyBadge } from "@/components/trust-safety-badge";
 import { HeroGameShowcase } from "@/components/hero-game-showcase";
 import {
   EMPTY_DISCOVERY_FILTERS,
@@ -132,6 +135,9 @@ function DiscoveryGameCard({
               <DiscoveryBadge variant="tester">{LABEL_TEST_PLAY_OPEN}</DiscoveryBadge>
             )}
           </div>
+          <div className="absolute bottom-3 right-3">
+            <ProjectStatusBadge game={game} compact />
+          </div>
           <div className="absolute bottom-3 left-3">
             <DiscoveryBadge variant="phase">{game.phase}</DiscoveryBadge>
           </div>
@@ -147,12 +153,14 @@ function DiscoveryGameCard({
             </div>
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-1.5">
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
             <DiscoveryBadge variant="play">{playLabel}</DiscoveryBadge>
             {hasUpdate && <DiscoveryBadge variant="update">更新あり</DiscoveryBadge>}
+            <TrustSafetyBadge game={game} />
           </div>
 
           <GameTags tags={game.tags} />
+          <PlayEnvironmentBadges game={game} compact />
 
           {game.lookingForTesters && game.testerSlots !== undefined && (
             <p className="mt-3 text-sm text-violet-300/90">
