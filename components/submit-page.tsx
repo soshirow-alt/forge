@@ -7,6 +7,7 @@ import { useAuth } from "@/components/auth-provider";
 import { DeveloperProfileSetup } from "@/components/developer-profile-setup";
 import { ForgeHeader } from "@/components/forge-header";
 import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
+import { ForgeSdkNote } from "@/components/forge-sdk-note";
 import { useGames } from "@/components/games-provider";
 import { AVAILABLE_TAGS } from "@/lib/game-tags";
 
@@ -533,6 +534,10 @@ export function SubmitPage() {
                 </p>
               </div>
             ) : null}
+          </div>
+
+          <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-3">
+            <ForgeSdkNote />
           </div>
 
           <button

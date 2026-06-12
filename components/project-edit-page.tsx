@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { ForgeHeader } from "@/components/forge-header";
+import { ForgeSdkNote } from "@/components/forge-sdk-note";
 import { useGames } from "@/components/games-provider";
 import { AVAILABLE_TAGS } from "@/lib/game-tags";
 import type { ProjectVisibility } from "@/lib/project-visibility";
@@ -389,6 +390,10 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
                 />
               </div>
             )}
+          </div>
+
+          <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-3">
+            <ForgeSdkNote />
           </div>
 
           <button

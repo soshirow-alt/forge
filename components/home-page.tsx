@@ -16,7 +16,14 @@ import {
   type DiscoveryTab,
   type SortOption,
 } from "@/lib/game-filters";
+import { DiscoveryFilterChips } from "@/components/discovery-filter-chips";
 import { HeroGameShowcase } from "@/components/hero-game-showcase";
+import {
+  EMPTY_DISCOVERY_FILTERS,
+  applyDiscoveryChipFilters,
+  hasActiveChipFilters,
+  type DiscoveryChipFilters,
+} from "@/lib/discovery-filters";
 import { pickFeaturedGames } from "@/lib/featured-games";
 import { getPlayTypeLabel } from "@/lib/game-links";
 import { games as mockGames, type Game } from "@/lib/mock-games";
@@ -254,6 +261,8 @@ export function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [discoveryTab, setDiscoveryTab] = useState<DiscoveryTab>("new");
   const [sortOption, setSortOption] = useState<SortOption>("newest");
+  const [chipFilters, setChipFilters] =
+    useState<DiscoveryChipFilters>(EMPTY_DISCOVERY_FILTERS);
 
   const newGamesRaw = useMemo(
     () => getGamesBySection("new"),
@@ -322,18 +331,21 @@ export function HomePage() {
     [discoveryTab, newGamesRaw, testerGamesRaw, allListableGames],
   );
 
-  const displayedGames = useMemo(
-    () =>
-      sortGames(
-        filterGames(tabGamesRaw, searchQuery),
-        sortOption,
-        getSupportCount,
-        isSubmittedGame,
-      ),
-    [tabGamesRaw, searchQuery, sortOption, getSupportCount, isSubmittedGame],
-  );
+  const displayedGames = useMemo(() => {
+    const searched = filterGames(tabGamesRaw, searchQuery);
+    const filtered = applyDiscoveryChipFilters(searched, chipFilters);
+    return sortGames(filtered, sortOption, getSupportCount, isSubmittedGame);
+  }, [
+    tabGamesRaw,
+    searchQuery,
+    chipFilters,
+    sortOption,
+    getSupportCount,
+    isSubmittedGame,
+  ]);
 
-  const hasActiveFilter = searchQuery.trim().length > 0;
+  const hasActiveFilter =
+    searchQuery.trim().length > 0 || hasActiveChipFilters(chipFilters);
   const totalVisible = displayedGames.length;
   const totalAvailable = tabGamesRaw.length;
 
@@ -410,6 +422,10 @@ export function HomePage() {
           </div>
         </section>
 
+        <div className="mx-auto max-w-7xl px-6 pt-6 sm:pt-8">
+          <DiscoveryFilterChips filters={chipFilters} onChange={setChipFilters} />
+        </div>
+
         <div
           id="discover"
           className="mx-auto max-w-7xl scroll-mt-24 px-6 pt-8 sm:pt-10"
@@ -472,7 +488,7 @@ export function HomePage() {
 
           {hasActiveFilter && totalVisible === 0 && totalAvailable > 0 && (
             <div className="mt-6 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-200/90">
-              条件に一致する作品が見つかりませんでした。検索ワードを変えてお試しください。
+              条件に一致する作品が見つかりませんでした。フィルターや検索条件を変えてお試しください。
             </div>
           )}
         </div>

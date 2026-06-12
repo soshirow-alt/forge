@@ -8,6 +8,7 @@ import { ForgeHeader } from "@/components/forge-header";
 import { useGames } from "@/components/games-provider";
 import type { Game } from "@/lib/mock-games";
 import { LABEL_TEST_PLAY_JOIN, displayGameStatus } from "@/lib/user-labels";
+import { ForgeSdkNote } from "@/components/forge-sdk-note";
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString("ja-JP", {
@@ -299,8 +300,8 @@ export function MyProjectsPage() {
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-500">
                   より詳細なアナリティクス（プレイ時間、離脱ポイント、デバイス別の傾向など）は、
                   任意でForge SDKを組み込むことで利用できる予定です。
-                  SDKの導入は必須ではありません。
                 </p>
+                <ForgeSdkNote className="mt-3 max-w-2xl" />
               </div>
               <span className="inline-flex shrink-0 items-center rounded-full border border-zinc-700 bg-zinc-900 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-400">
                 Coming Soon
