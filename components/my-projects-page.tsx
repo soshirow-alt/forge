@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { CreatorLink } from "@/components/creator-link";
 import { ForgeHeader } from "@/components/forge-header";
@@ -9,6 +11,7 @@ import { useGames } from "@/components/games-provider";
 import { getVisibilityBadgeLabel } from "@/lib/project-visibility";
 
 export function MyProjectsPage() {
+  const router = useRouter();
   const { user, hydrated } = useAuth();
   const {
     getOwnedProjects,
@@ -18,6 +21,12 @@ export function MyProjectsPage() {
   } = useGames();
 
   const ownedGames = getOwnedProjects(user?.id);
+
+  useEffect(() => {
+    if (hydrated && !user) {
+      router.replace("/login?redirect=/my-projects");
+    }
+  }, [hydrated, user, router]);
 
   return (
     <div className="min-h-full bg-zinc-950 text-zinc-100">

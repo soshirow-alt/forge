@@ -1,20 +1,55 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, type FormEvent } from "react";
 import { useAuth } from "@/components/auth-provider";
-import type { AuthProvider } from "@/lib/auth";
+import { getAuthErrorMessage } from "@/lib/auth";
+import { hasSupabaseEnv } from "@/lib/supabase/env";
 
-const buttonClassName =
-  "w-full rounded-lg border border-zinc-700 bg-zinc-900 px-6 py-4 text-base font-medium text-zinc-100 transition-colors hover:border-orange-500/50 hover:bg-zinc-800";
+const inputClassName =
+  "mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
 
 export function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/";
+  const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
 
-  function handleLogin(provider: AuthProvider) {
-    login(provider);
-    router.push("/");
+  const { signIn, signUp } = useAuth();
+  const [mode, setMode] = useState<"login" | "signup">(initialMode);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setMessage(null);
+    setSubmitting(true);
+
+    try {
+      if (mode === "login") {
+        await signIn(email, password);
+        router.push(redirectTo);
+        router.refresh();
+        return;
+      }
+
+      await signUp(email, password, displayName);
+      setMessage(
+        "アカウントを作成しました。確認メールが有効な場合はメールを確認してください。",
+      );
+      setMode("login");
+    } catch (caught) {
+      const authError = caught as { message?: string };
+      setError(getAuthErrorMessage(authError.message ?? "認証に失敗しました。"));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -26,35 +61,131 @@ export function LoginPage() {
               Forge
             </span>
           </Link>
-          <h1 className="mt-8 text-2xl font-bold tracking-tight">ログイン</h1>
+          <h1 className="mt-8 text-2xl font-bold tracking-tight">
+            {mode === "login" ? "ログイン" : "新規登録"}
+          </h1>
           <p className="mt-2 text-sm text-zinc-500">
-            アカウントでログインするか、ゲストとして続けられます。
+            {mode === "login"
+              ? "メールアドレスとパスワードでログインしてください。"
+              : "メールアドレスとパスワードでアカウントを作成してください。"}
           </p>
         </div>
 
-        <div className="mt-10 space-y-3">
+        {!hasSupabaseEnv() && (
+          <div className="mt-8 rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+            Supabaseの環境変数が設定されていません。
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="mt-10 space-y-4">
+          {mode === "signup" && (
+            <div>
+              <label htmlFor="displayName" className="text-sm font-medium text-zinc-400">
+                表示名
+              </label>
+              <input
+                id="displayName"
+                type="text"
+                required
+                value={displayName}
+                onChange={(event) => setDisplayName(event.target.value)}
+                className={inputClassName}
+                placeholder="開発者名"
+              />
+            </div>
+          )}
+
+          <div>
+            <label htmlFor="email" className="text-sm font-medium text-zinc-400">
+              メールアドレス
+            </label>
+            <input
+              id="email"
+              type="email"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className={inputClassName}
+              placeholder="you@example.com"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="password" className="text-sm font-medium text-zinc-400">
+              パスワード
+            </label>
+            <input
+              id="password"
+              type="password"
+              required
+              minLength={6}
+              autoComplete={mode === "login" ? "current-password" : "new-password"}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className={inputClassName}
+              placeholder="6文字以上"
+            />
+          </div>
+
+          {error && (
+            <div className="rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+              {error}
+            </div>
+          )}
+
+          {message && (
+            <div className="rounded-lg border border-orange-500/30 bg-orange-500/10 px-4 py-3 text-sm text-orange-300">
+              {message}
+            </div>
+          )}
+
           <button
-            type="button"
-            onClick={() => handleLogin("google")}
-            className={buttonClassName}
+            type="submit"
+            disabled={submitting || !hasSupabaseEnv()}
+            className="w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-4 text-base font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Googleでログイン
+            {submitting
+              ? "処理中..."
+              : mode === "login"
+                ? "ログイン"
+                : "アカウントを作成"}
           </button>
-          <button
-            type="button"
-            onClick={() => handleLogin("discord")}
-            className={buttonClassName}
-          >
-            Discordでログイン
-          </button>
-          <button
-            type="button"
-            onClick={() => handleLogin("guest")}
-            className="w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-4 text-base font-semibold text-zinc-950 transition-opacity hover:opacity-90"
-          >
-            ゲストとして続ける
-          </button>
-        </div>
+        </form>
+
+        <p className="mt-6 text-center text-sm text-zinc-500">
+          {mode === "login" ? (
+            <>
+              アカウントをお持ちでない方は{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("signup");
+                  setError(null);
+                  setMessage(null);
+                }}
+                className="font-medium text-orange-400 transition-colors hover:text-orange-300"
+              >
+                新規登録
+              </button>
+            </>
+          ) : (
+            <>
+              既にアカウントをお持ちの方は{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("login");
+                  setError(null);
+                  setMessage(null);
+                }}
+                className="font-medium text-orange-400 transition-colors hover:text-orange-300"
+              >
+                ログイン
+              </button>
+            </>
+          )}
+        </p>
       </main>
     </div>
   );

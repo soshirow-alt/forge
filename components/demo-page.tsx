@@ -9,12 +9,16 @@ import { setupDemoEnvironment } from "@/lib/demo-setup";
 
 export function DemoPage() {
   const router = useRouter();
-  const { loginDemoUser } = useAuth();
+  const { user, hydrated } = useAuth();
   const { reloadFromStorage } = useGames();
 
   function handleSetup() {
-    setupDemoEnvironment();
-    loginDemoUser();
+    if (!user) {
+      router.push("/login?redirect=/demo");
+      return;
+    }
+
+    setupDemoEnvironment(user.id, user.name);
     reloadFromStorage();
     router.push("/my-projects");
   }
@@ -39,17 +43,29 @@ export function DemoPage() {
           </p>
           <h1 className="mt-8 text-2xl font-bold tracking-tight">デモ環境</h1>
           <p className="mt-3 text-zinc-500">
-            開発者向けのデモデータを作成します。ログイン状態、作品3件、応援数、フィードバック、開発日誌がセットアップされます。
+            ログイン中のアカウントにデモ作品3件、応援数、フィードバック、開発日誌をセットアップします。
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleSetup}
-          className="mt-12 w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-6 text-xl font-semibold text-zinc-950 transition-opacity hover:opacity-90"
-        >
-          デモ環境を作成する
-        </button>
+        {hydrated && !user ? (
+          <div className="mt-12 space-y-4 text-center">
+            <p className="text-zinc-400">デモ環境を作成するにはログインが必要です。</p>
+            <Link
+              href="/login?redirect=/demo"
+              className="inline-block rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+            >
+              ログイン
+            </Link>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={handleSetup}
+            className="mt-12 w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-6 text-xl font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+          >
+            デモ環境を作成する
+          </button>
+        )}
       </main>
     </div>
   );

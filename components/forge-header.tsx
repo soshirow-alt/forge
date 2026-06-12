@@ -12,8 +12,10 @@ export function ForgeHeader() {
   const unreadCount = getUnreadNotificationCount();
 
   function handleLogout() {
-    logout();
-    router.push("/");
+    void logout().then(() => {
+      router.push("/");
+      router.refresh();
+    });
   }
 
   return (

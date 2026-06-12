@@ -1,55 +1,38 @@
-export type AuthProvider = "google" | "discord" | "guest";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 export type User = {
   id: string;
+  email: string;
   name: string;
   avatarInitial: string;
-  provider: AuthProvider;
 };
 
-export const AUTH_STORAGE_KEY = "forge-user";
+export function mapSupabaseUser(supabaseUser: SupabaseUser): User {
+  const name =
+    (supabaseUser.user_metadata?.display_name as string | undefined) ||
+    supabaseUser.email?.split("@")[0] ||
+    "ユーザー";
+  const avatarInitial = name.charAt(0).toUpperCase() || "U";
 
-export function createUser(provider: AuthProvider): User {
-  const id = `user-${Date.now()}`;
-
-  switch (provider) {
-    case "google":
-      return { id, name: "Googleユーザー", avatarInitial: "G", provider };
-    case "discord":
-      return { id, name: "Discordユーザー", avatarInitial: "D", provider };
-    case "guest":
-      return { id, name: "ゲストユーザー", avatarInitial: "G", provider };
-  }
+  return {
+    id: supabaseUser.id,
+    email: supabaseUser.email ?? "",
+    name,
+    avatarInitial,
+  };
 }
 
-export function loadUser(): User | null {
-  if (typeof window === "undefined") {
-    return null;
+export function getAuthErrorMessage(message: string): string {
+  switch (message) {
+    case "Invalid login credentials":
+      return "メールアドレスまたはパスワードが正しくありません。";
+    case "User already registered":
+      return "このメールアドレスは既に登録されています。";
+    case "Password should be at least 6 characters":
+      return "パスワードは6文字以上で入力してください。";
+    case "Unable to validate email address: invalid format":
+      return "メールアドレスの形式が正しくありません。";
+    default:
+      return message;
   }
-
-  try {
-    const stored = localStorage.getItem(AUTH_STORAGE_KEY);
-    if (!stored) {
-      return null;
-    }
-
-    const user = JSON.parse(stored) as User;
-    if (!user.id) {
-      const migrated = { ...user, id: `user-${Date.now()}` };
-      saveUser(migrated);
-      return migrated;
-    }
-
-    return user;
-  } catch {
-    return null;
-  }
-}
-
-export function saveUser(user: User) {
-  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
-}
-
-export function clearUser() {
-  localStorage.removeItem(AUTH_STORAGE_KEY);
 }

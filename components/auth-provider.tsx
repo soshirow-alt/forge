@@ -9,22 +9,16 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import {
-  clearUser,
-  createUser,
-  loadUser,
-  saveUser,
-  type AuthProvider,
-  type User,
-} from "@/lib/auth";
-import { DEMO_USER } from "@/lib/demo-setup";
+import { mapSupabaseUser, type User } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/client";
+import { hasSupabaseEnv } from "@/lib/supabase/env";
 
 type AuthContextValue = {
   user: User | null;
   hydrated: boolean;
-  login: (provider: AuthProvider) => void;
-  loginDemoUser: () => void;
-  logout: () => void;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, displayName: string) => Promise<void>;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -32,31 +26,83 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const supabase = useMemo(() => (hasSupabaseEnv() ? createClient() : null), []);
 
   useEffect(() => {
-    setUser(loadUser());
-    setHydrated(true);
-  }, []);
+    if (!supabase) {
+      setHydrated(true);
+      return;
+    }
 
-  const login = useCallback((provider: AuthProvider) => {
-    const nextUser = createUser(provider);
-    saveUser(nextUser);
-    setUser(nextUser);
-  }, []);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ? mapSupabaseUser(session.user) : null);
+      setHydrated(true);
+    });
 
-  const loginDemoUser = useCallback(() => {
-    saveUser(DEMO_USER);
-    setUser(DEMO_USER);
-  }, []);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ? mapSupabaseUser(session.user) : null);
+      setHydrated(true);
+    });
 
-  const logout = useCallback(() => {
-    clearUser();
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw error;
+      }
+    },
+    [supabase],
+  );
+
+  const signUp = useCallback(
+    async (email: string, password: string, displayName: string) => {
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            display_name: displayName.trim(),
+          },
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+    },
+    [supabase],
+  );
+
+  const logout = useCallback(async () => {
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+
     setUser(null);
-  }, []);
+  }, [supabase]);
 
   const value = useMemo(
-    () => ({ user, hydrated, login, loginDemoUser, logout }),
-    [user, hydrated, login, loginDemoUser, logout],
+    () => ({ user, hydrated, signIn, signUp, logout }),
+    [user, hydrated, signIn, signUp, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

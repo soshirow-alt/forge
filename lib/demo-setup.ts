@@ -1,17 +1,6 @@
 import { mergeTagsWithRecruitment } from "@/lib/game-tags";
-import type { User } from "@/lib/auth";
-import { saveUser } from "@/lib/auth";
 import type { DevlogEntry } from "@/lib/devlogs";
 import type { Game } from "@/lib/mock-games";
-
-export const DEMO_USER_ID = "demo-user";
-
-export const DEMO_USER: User = {
-  id: DEMO_USER_ID,
-  name: "デモ開発者",
-  avatarInitial: "デ",
-  provider: "guest",
-};
 
 const GAMES_STORAGE_KEY = "forge-submitted-games";
 const SUPPORT_STORAGE_KEY = "forge-support-counts";
@@ -48,14 +37,14 @@ function createDemoThumbnail(label: string, accent: string): string {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
-function createDemoProjects(): Game[] {
+function createDemoProjects(ownerId: string, ownerName: string): Game[] {
   return [
     {
       id: "demo-project-1",
       title: "星詠みの廃都",
       genre: "アクションRPG",
       status: "テスター募集中",
-      creator: "デモ開発者",
+      creator: ownerName,
       phase: "試作版",
       description:
         "星の欠片で魔法を紡ぐ探索アクションRPG。廃都を巡り、失われた詠唱を集めて世界の均衡を取り戻すデモ版です。",
@@ -68,8 +57,8 @@ function createDemoProjects(): Game[] {
       playUrl: "https://example.com/demo/stellar-ruins",
       itchUrl: "https://example.itch.io/stellar-ruins-demo",
       githubUrl: "https://github.com/demo-forge/stellar-ruins",
-      ownerId: DEMO_USER_ID,
-      ownerName: "デモ開発者",
+      ownerId,
+      ownerName,
       visibility: "public",
     },
     {
@@ -77,7 +66,7 @@ function createDemoProjects(): Game[] {
       title: "ネオン・アーカイブ",
       genre: "パズル",
       status: "テスター募集中",
-      creator: "デモ開発者",
+      creator: ownerName,
       phase: "プロトタイプ",
       description:
         "ネオンに彩られたデータ迷宮を解き明かすローグライク・パズル。記憶の断片を組み合わせ、失われた都市の真実に迫ります。",
@@ -89,8 +78,8 @@ function createDemoProjects(): Game[] {
       tags: mergeTagsWithRecruitment(["パズル", "ローグライク"], true),
       playUrl: "https://example.com/demo/neon-archive",
       discordUrl: "https://discord.gg/demo-neon-archive",
-      ownerId: DEMO_USER_ID,
-      ownerName: "デモ開発者",
+      ownerId,
+      ownerName,
       visibility: "public",
     },
     {
@@ -98,7 +87,7 @@ function createDemoProjects(): Game[] {
       title: "群青の境界",
       genre: "ホラー",
       status: "テスター募集中",
-      creator: "デモ開発者",
+      creator: ownerName,
       phase: "α版",
       description:
         "霧に包まれた離島で起きる協力型ホラー体験。仲間と連携しながら、境界の向こうから迫る存在から逃げ延びるサバイバルデモ。",
@@ -111,8 +100,8 @@ function createDemoProjects(): Game[] {
       playUrl: "https://example.com/demo/azure-border",
       steamUrl: "https://store.steampowered.com/app/demo-azure-border",
       officialUrl: "https://demo-forge.example/azure-border",
-      ownerId: DEMO_USER_ID,
-      ownerName: "デモ開発者",
+      ownerId,
+      ownerName,
       visibility: "public",
     },
   ];
@@ -217,19 +206,19 @@ function createDemoDevlogs(): DevlogEntry[] {
   ];
 }
 
-export function setupDemoEnvironment(): void {
+export function setupDemoEnvironment(ownerId: string, ownerName: string): void {
   if (typeof window === "undefined") {
     return;
   }
 
-  const demoProjects = createDemoProjects();
+  const demoProjects = createDemoProjects(ownerId, ownerName);
 
   try {
     const existingGames = JSON.parse(
       localStorage.getItem(GAMES_STORAGE_KEY) || "[]",
     ) as Game[];
     const filteredGames = existingGames.filter(
-      (game) => game.ownerId !== DEMO_USER_ID,
+      (game) => !(DEMO_PROJECT_IDS as readonly string[]).includes(game.id),
     );
     localStorage.setItem(
       GAMES_STORAGE_KEY,
@@ -282,8 +271,6 @@ export function setupDemoEnvironment(): void {
       DEVLOGS_STORAGE_KEY,
       JSON.stringify([...createDemoDevlogs(), ...filteredDevlogs]),
     );
-
-    saveUser(DEMO_USER);
   } catch {
     // ignore storage errors
   }
