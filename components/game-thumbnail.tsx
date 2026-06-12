@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
 
 type GameThumbnailProps = {
@@ -11,6 +14,7 @@ type GameThumbnailProps = {
   statusClassName?: string;
   showStatus?: boolean;
   featured?: boolean;
+  overlayClassName?: string;
 };
 
 export function GameThumbnail({
@@ -24,18 +28,27 @@ export function GameThumbnail({
   statusClassName = "absolute bottom-3 left-3 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-orange-400 backdrop-blur-sm",
   showStatus = true,
   featured = false,
+  overlayClassName = "pointer-events-none absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-transparent opacity-60",
 }: GameThumbnailProps) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const resolvedUrl = thumbnailUrl?.trim();
   const canGeneratePoster = Boolean(title.trim() || genre.trim() || phase.trim());
+  const showImage = Boolean(resolvedUrl) && !imageFailed;
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [resolvedUrl]);
 
   return (
     <div
       className={`relative overflow-hidden bg-gradient-to-br from-zinc-800 via-zinc-900 to-zinc-950 ${aspectClassName}`}
     >
-      {thumbnailUrl ? (
+      {showImage ? (
         <img
-          src={thumbnailUrl}
+          src={resolvedUrl}
           alt=""
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+          onError={() => setImageFailed(true)}
         />
       ) : canGeneratePoster ? (
         <GeneratedThumbnailPoster
@@ -48,8 +61,8 @@ export function GameThumbnail({
       ) : (
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(249,115,22,0.15),transparent_60%)]" />
       )}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-transparent opacity-60" />
-      {showStatus && thumbnailUrl && (
+      {overlayClassName ? <div className={overlayClassName} /> : null}
+      {showStatus && showImage && (
         <div className={statusClassName}>{status}</div>
       )}
     </div>

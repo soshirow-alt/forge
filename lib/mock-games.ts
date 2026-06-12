@@ -1,4 +1,4 @@
-import { getBuiltInThumbnailUrl } from "@/lib/demo-thumbnails";
+import { getBuiltInThumbnailUrl, isBuiltInThumbnailId } from "@/lib/demo-thumbnails";
 
 export type Game = {
   id: string;
@@ -340,7 +340,9 @@ export const games: Game[] = [
 ];
 
 for (const game of games) {
-  game.thumbnailUrl = getBuiltInThumbnailUrl(game.id);
+  if (isBuiltInThumbnailId(game.id)) {
+    game.thumbnailUrl = getBuiltInThumbnailUrl(game.id);
+  }
 }
 
 export function getGameById(id: string): Game | undefined {

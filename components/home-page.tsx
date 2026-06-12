@@ -9,9 +9,18 @@ import { GameTags } from "@/components/game-tags";
 import { GameThumbnail } from "@/components/game-thumbnail";
 import { useGames } from "@/components/games-provider";
 import { filterGames, sortGames, type SortOption } from "@/lib/game-filters";
+import { HeroGameShowcase } from "@/components/hero-game-showcase";
 import { pickFeaturedGames, type FeaturedGameMeta } from "@/lib/featured-games";
 import { getPlayTypeLabel } from "@/lib/game-links";
-import type { Game } from "@/lib/mock-games";
+import { games as mockGames, type Game } from "@/lib/mock-games";
+
+const HERO_SHOWCASE_FALLBACK_IDS = [
+  "emberfall",
+  "neon-drift",
+  "starbound-tactics",
+  "hollow-signal",
+  "wolfpack-siege",
+] as const;
 
 const sortOptions: { value: SortOption; label: string }[] = [
   { value: "newest", label: "新着順" },
@@ -359,6 +368,34 @@ export function HomePage() {
     [allListableGames, getSupportCount, isSubmittedGame, hasDevlogs],
   );
 
+  const heroShowcaseGames = useMemo(() => {
+    const featured = pickFeaturedGames(
+      allListableGames,
+      getSupportCount,
+      isSubmittedGame,
+      hasDevlogs,
+      5,
+    ).map((item) => item.game);
+
+    if (featured.length >= 3) {
+      return featured;
+    }
+
+    const fallback = HERO_SHOWCASE_FALLBACK_IDS.map(
+      (id) => mockGames.find((game) => game.id === id)!,
+    ).filter(Boolean);
+
+    const seen = new Set<string>();
+    const combined: Game[] = [];
+    for (const game of [...featured, ...fallback]) {
+      if (!seen.has(game.id)) {
+        seen.add(game.id);
+        combined.push(game);
+      }
+    }
+    return combined.slice(0, 5);
+  }, [allListableGames, getSupportCount, isSubmittedGame, hasDevlogs]);
+
   const newGames = useMemo(
     () => processGames(newGamesRaw),
     [processGames, newGamesRaw],
@@ -389,47 +426,57 @@ export function HomePage() {
         <section className="relative overflow-hidden border-b border-white/[0.06]">
           <div className="forge-hero-glow absolute inset-0" />
           <div className="forge-noise absolute inset-0 opacity-70" />
-          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_40%,#09090b_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_55%,#09090b_100%)]" />
+          <div className="forge-hero-grid absolute inset-0 opacity-[0.35]" />
 
-          <div className="relative mx-auto max-w-7xl px-6 pb-20 pt-16 sm:pb-28 sm:pt-20 lg:pb-32 lg:pt-24">
-            <div className="mx-auto max-w-4xl text-center">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2 rounded-full border border-zinc-800/80 bg-zinc-900/50 px-4 py-1.5 text-sm font-semibold backdrop-blur-sm"
-              >
-                <span className="bg-gradient-to-r from-orange-400 to-amber-500 bg-clip-text text-transparent">
-                  Forge
-                </span>
-                <span className="text-zinc-600">·</span>
-                <span className="text-zinc-400">Indie Discovery</span>
-              </Link>
-
-              <h1 className="mt-8 text-4xl font-bold leading-[1.15] tracking-tight text-zinc-50 sm:text-5xl lg:text-6xl">
-                次にハマるゲームは、
-                <span className="bg-gradient-to-r from-orange-300 via-amber-200 to-orange-400 bg-clip-text text-transparent">
-                  完成前に
-                </span>
-                見つかる。
-              </h1>
-
-              <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-zinc-400 sm:text-xl">
-                Forgeは、開発中のインディーゲームを見つけて、応援し、テスト参加できるプラットフォームです。
-              </p>
-
-              <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={scrollToDiscover}
-                  className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-3.5 text-sm font-semibold text-zinc-950 shadow-lg shadow-orange-500/25 transition-all hover:opacity-95 hover:shadow-orange-500/35 sm:w-auto"
-                >
-                  ゲームを探す
-                </button>
+          <div className="relative mx-auto max-w-7xl px-6 pb-16 pt-14 sm:pb-20 sm:pt-16 lg:pb-24 lg:pt-20">
+            <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-12 xl:gap-16">
+              <div className="mx-auto max-w-xl text-center lg:mx-0 lg:max-w-none lg:text-left">
                 <Link
-                  href="/submit"
-                  className="w-full rounded-xl border border-zinc-700/80 bg-zinc-900/60 px-8 py-3.5 text-center text-sm font-semibold text-zinc-100 backdrop-blur-sm transition-all hover:border-orange-500/40 hover:bg-zinc-900 sm:w-auto"
+                  href="/"
+                  className="inline-flex items-center gap-2 rounded-full border border-zinc-800/80 bg-zinc-900/50 px-4 py-1.5 text-sm font-semibold backdrop-blur-sm"
                 >
-                  作品を投稿する
+                  <span className="bg-gradient-to-r from-orange-400 to-amber-500 bg-clip-text text-transparent">
+                    Forge
+                  </span>
+                  <span className="text-zinc-600">·</span>
+                  <span className="text-zinc-400">Indie Discovery</span>
                 </Link>
+
+                <h1 className="mt-8 text-4xl font-bold leading-[1.15] tracking-tight text-zinc-50 sm:text-5xl lg:text-[3.25rem] lg:leading-[1.12]">
+                  次にハマるゲームは、
+                  <span className="bg-gradient-to-r from-orange-300 via-amber-200 to-orange-400 bg-clip-text text-transparent">
+                    完成前に
+                  </span>
+                  見つかる。
+                </h1>
+
+                <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-zinc-400 sm:text-xl lg:mx-0">
+                  Forgeは、開発中のインディーゲームを見つけて、応援し、テスト参加できるプラットフォームです。
+                </p>
+
+                <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
+                  <button
+                    type="button"
+                    onClick={scrollToDiscover}
+                    className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-3.5 text-sm font-semibold text-zinc-950 shadow-lg shadow-orange-500/25 transition-all hover:opacity-95 hover:shadow-orange-500/35 sm:w-auto"
+                  >
+                    ゲームを探す
+                  </button>
+                  <Link
+                    href="/submit"
+                    className="w-full rounded-xl border border-zinc-700/80 bg-zinc-900/60 px-8 py-3.5 text-center text-sm font-semibold text-zinc-100 backdrop-blur-sm transition-all hover:border-orange-500/40 hover:bg-zinc-900 sm:w-auto"
+                  >
+                    作品を投稿する
+                  </Link>
+                </div>
+              </div>
+
+              <div className="mx-auto w-full max-w-xl lg:max-w-none">
+                <HeroGameShowcase
+                  games={heroShowcaseGames}
+                  loading={!dataReady}
+                />
               </div>
             </div>
           </div>
