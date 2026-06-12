@@ -52,22 +52,6 @@ export function AuthProvider({
 
     let active = true;
 
-    supabase.auth
-      .getUser()
-      .then(({ data: { user: supabaseUser } }) => {
-        if (!active) {
-          return;
-        }
-
-        setUser(supabaseUser ? mapSupabaseUser(supabaseUser) : null);
-        setHydrated(true);
-      })
-      .catch(() => {
-        if (active) {
-          setHydrated(true);
-        }
-      });
-
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
