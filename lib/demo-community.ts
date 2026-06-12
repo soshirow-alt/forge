@@ -13,7 +13,6 @@ export type DemoCommunityComment = {
 };
 
 export type DemoCommunityData = {
-  developerResponseRate: number;
   communityHighlights: DemoCommunityHighlight[];
   communityComments: DemoCommunityComment[];
   averageRatings: {
@@ -26,7 +25,6 @@ export type DemoCommunityData = {
 
 const DEMO_COMMUNITY: Record<string, DemoCommunityData> = {
   emberfall: {
-    developerResponseRate: 92,
     communityHighlights: [
       { stars: 5, text: "面白いボス戦" },
       { stars: 4, text: "テンポが良い" },
@@ -50,7 +48,6 @@ const DEMO_COMMUNITY: Record<string, DemoCommunityData> = {
     feedbackHighlights: ["UI改善", "難易度調整", "チュートリアル追加"],
   },
   "rift-runner": {
-    developerResponseRate: 88,
     communityHighlights: [
       { stars: 5, text: "次元切り替えが爽快" },
       { stars: 4, text: "テンポが良い" },
@@ -74,7 +71,6 @@ const DEMO_COMMUNITY: Record<string, DemoCommunityData> = {
     feedbackHighlights: ["操作説明の改善", "難易度調整", "UI改善"],
   },
   "wolfpack-siege": {
-    developerResponseRate: 95,
     communityHighlights: [
       { stars: 5, text: "友達と遊ぶと楽しい" },
       { stars: 4, text: "協力プレイが熱い" },
@@ -92,7 +88,6 @@ const DEMO_COMMUNITY: Record<string, DemoCommunityData> = {
     feedbackHighlights: ["協力プレイの同期改善", "難易度調整"],
   },
   "pulse-circuit": {
-    developerResponseRate: 90,
     communityHighlights: [
       { stars: 4, text: "パズルのひらめきが気持ちいい" },
       { stars: 4, text: "テンポが良い" },
@@ -110,7 +105,6 @@ const DEMO_COMMUNITY: Record<string, DemoCommunityData> = {
     feedbackHighlights: ["ヒントUI追加", "UI改善"],
   },
   aetherborn: {
-    developerResponseRate: 78,
     communityHighlights: [
       { stars: 5, text: "世界観が広がる" },
       { stars: 4, text: "探索が楽しい" },
@@ -138,26 +132,21 @@ const DEFAULT_HIGHLIGHTS: DemoCommunityHighlight[] = [
 const DEFAULT_COMMENTS: DemoCommunityComment[] = [
   {
     id: "default-c1",
-    text: "プロトタイプながら完成度が高く、フィードバックしたい要素がはっきりしている。",
+    text: "プロトタイプながら完成度が高く、プレイ後に伝えたいことがはっきりしている。",
     funRating: 4,
     date: "2026-06-04",
   },
 ];
 
 function buildDefaultCommunity(gameId: string): DemoCommunityData {
-  const activity = getBuiltInDemoActivity(gameId);
-
   return {
-    developerResponseRate: 82,
     communityHighlights: DEFAULT_HIGHLIGHTS,
     communityComments: DEFAULT_COMMENTS.map((comment) => ({
       ...comment,
       id: `${gameId}-${comment.id}`,
     })),
     averageRatings: { fun: 4.1, controls: 3.9, replay: 4.2 },
-    feedbackHighlights: activity
-      ? [`${activity.feedbackAppliedCount}件の提案を反映`]
-      : ["UI改善", "難易度調整"],
+    feedbackHighlights: ["UI改善", "難易度調整"],
   };
 }
 
@@ -174,25 +163,45 @@ export function formatStars(rating: number): string {
   return `${"★".repeat(rounded)}${"☆".repeat(5 - rounded)}`;
 }
 
-export type DeveloperResponsivenessMetrics = {
-  responseRate: number | null;
-  feedbackAppliedCount: number | null;
-  recentUpdateLabel: string | null;
+export type DevelopmentActivityMetrics = {
+  updateFrequency: string;
+  recentImprovement: string;
+  devActivityCount: number;
+  adoptedSuggestionsCount: number;
 };
 
-export function getDeveloperResponsivenessMetrics(
+function deriveUpdateFrequency(devlogCount: number): string {
+  if (devlogCount >= 3) {
+    return "週1〜2回";
+  }
+
+  if (devlogCount >= 2) {
+    return "月2〜3回";
+  }
+
+  return "不定期";
+}
+
+export function getDevelopmentActivityMetrics(
   gameId: string,
-): DeveloperResponsivenessMetrics | null {
-  const community = getDemoCommunityData(gameId);
+): DevelopmentActivityMetrics | null {
   const activity = getBuiltInDemoActivity(gameId);
 
-  if (!community && !activity) {
+  if (!activity) {
     return null;
   }
 
+  const recentImprovement =
+    activity.recentEvents.find(
+      (event) => event.type === "update" || event.type === "feedback_applied",
+    )?.label ??
+    activity.recentEvents.find((event) => event.type === "launch")?.label ??
+    "—";
+
   return {
-    responseRate: community?.developerResponseRate ?? null,
-    feedbackAppliedCount: activity?.feedbackAppliedCount ?? null,
-    recentUpdateLabel: activity?.recentActivityLabel ?? null,
+    updateFrequency: deriveUpdateFrequency(activity.devlogCount),
+    recentImprovement,
+    devActivityCount: activity.devlogCount,
+    adoptedSuggestionsCount: activity.feedbackAppliedCount,
   };
 }

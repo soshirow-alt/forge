@@ -7,6 +7,7 @@ import { useAuth } from "@/components/auth-provider";
 import { ForgeHeader } from "@/components/forge-header";
 import { ForgeIdentityBlock } from "@/components/forge-identity-block";
 import { GameCommunityVoicesSection } from "@/components/game-community-voices-section";
+import { GameDescriptionSection } from "@/components/game-description-section";
 import { GameDetailSidebar } from "@/components/game-detail-sidebar";
 import { GameFeedbackForm } from "@/components/game-feedback";
 import { GameProjectHistorySection } from "@/components/game-project-history-section";
@@ -14,7 +15,6 @@ import { GameTags } from "@/components/game-tags";
 import { GameThumbnail } from "@/components/game-thumbnail";
 import { PlayEnvironmentBadges } from "@/components/play-environment-badges";
 import { GameActivityBadges } from "@/components/game-activity-badges";
-import { GameRecentActivitySection } from "@/components/game-recent-activity-section";
 import { TrustSafetyBadge } from "@/components/trust-safety-badge";
 import { useGames } from "@/components/games-provider";
 import { hasUserSubmittedFeedback } from "@/lib/game-feedback-storage";
@@ -109,7 +109,7 @@ export function GameDetailPageClient({ id }: { id: string }) {
           />
 
           <div className="p-5 sm:p-6 lg:p-7">
-            <header>
+            <header className="border-b border-zinc-800/60 pb-4">
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
                 {game.title}
               </h1>
@@ -124,23 +124,16 @@ export function GameDetailPageClient({ id }: { id: string }) {
               <GameTags tags={game.tags} />
             </header>
 
-            <div className="mt-5 lg:grid lg:grid-cols-[minmax(0,1fr)_232px] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1.12fr)_248px] xl:gap-7">
-              <div className="min-w-0 space-y-0">
-                <section>
-                  <h2 className="text-sm font-medium text-zinc-500">説明</h2>
-                  <p className="mt-2 text-sm leading-relaxed text-zinc-300">
-                    {game.description}
-                  </p>
-                  <div className="mt-3">
-                    <ForgeIdentityBlock compact />
-                  </div>
-                </section>
+            <div className="mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_232px] lg:items-start lg:gap-5 xl:grid-cols-[minmax(0,1.15fr)_248px] xl:gap-6">
+              <div className="min-w-0">
+                <GameDescriptionSection description={game.description} />
+                <div className="mt-3">
+                  <ForgeIdentityBlock compact />
+                </div>
 
                 <GameCommunityVoicesSection gameId={game.id} />
 
-                <GameRecentActivitySection game={game} compact />
-
-                <GameProjectHistorySection game={game} secondary />
+                <GameProjectHistorySection game={game} />
 
                 {canSubmitFeedback && <GameFeedbackForm gameId={game.id} />}
               </div>

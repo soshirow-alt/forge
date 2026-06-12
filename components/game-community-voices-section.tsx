@@ -107,7 +107,7 @@ export function GameCommunityVoicesSection({
 
   if (!demo && storedFeedback.length === 0) {
     return (
-      <section className="mt-5 border-t border-zinc-800/80 pt-5">
+      <section className="mt-4 border-t border-zinc-800/80 pt-4">
         <h2 className="text-sm font-medium text-zinc-500">コミュニティの声</h2>
         <p className="mt-2 text-sm text-zinc-600">
           まだプレイヤーの声はありません
@@ -117,7 +117,7 @@ export function GameCommunityVoicesSection({
   }
 
   return (
-    <section className="mt-5 border-t border-zinc-800/80 pt-5">
+    <section className="mt-4 border-t border-zinc-800/80 pt-4">
       <h2 className="text-sm font-medium text-zinc-500">コミュニティの声</h2>
 
       {demo && demo.communityHighlights.length > 0 && (
@@ -137,7 +137,7 @@ export function GameCommunityVoicesSection({
       )}
 
       {summary && (
-        <dl className="mt-4 grid grid-cols-3 gap-3 rounded-lg border border-zinc-800/60 bg-zinc-950/30 px-3 py-3">
+        <dl className="mt-3 grid grid-cols-3 gap-2 rounded-lg border border-zinc-800/60 bg-zinc-950/30 px-3 py-2.5">
           <div>
             <dt className="text-[11px] text-zinc-600">面白さ</dt>
             <dd className="mt-0.5 text-sm font-medium tabular-nums text-zinc-300">
@@ -160,7 +160,7 @@ export function GameCommunityVoicesSection({
       )}
 
       {comments.length > 0 && (
-        <ul className="mt-4 space-y-2.5">
+        <ul className="mt-3 space-y-2">
           {comments.map((comment) => (
             <li
               key={`${comment.date}-${comment.text.slice(0, 24)}`}
@@ -179,7 +179,7 @@ export function GameCommunityVoicesSection({
       )}
 
       {highlights.length > 0 && (
-        <div className="mt-4">
+        <div className="mt-3">
           <p className="text-[11px] font-medium text-zinc-600">よく挙がる声</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {highlights.map((label) => (

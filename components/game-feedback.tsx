@@ -114,7 +114,7 @@ export function GameFeedbackForm({ gameId }: { gameId: string }) {
   }
 
   return (
-    <section className="mt-5 border-t border-zinc-800/80 pt-5">
+    <section className="mt-4 border-t border-zinc-800/80 pt-4">
       <h2 className="text-sm font-medium text-zinc-500">感想を送る</h2>
       <p className="mt-1 text-xs text-zinc-600">
         プレイありがとうございます。開発へのフィードバックを共有できます。

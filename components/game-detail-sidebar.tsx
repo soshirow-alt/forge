@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { BookmarkButton } from "@/components/bookmark-button";
 import { CreatorLink } from "@/components/creator-link";
-import { DeveloperResponsivenessPanel } from "@/components/developer-responsiveness-panel";
+import { DevelopmentActivityPanel } from "@/components/development-activity-panel";
 import { GameExternalLinks } from "@/components/game-external-links";
 import { GameSupport } from "@/components/game-support";
 import { GameTesterApply } from "@/components/game-tester-apply";
@@ -78,7 +78,7 @@ export function GameDetailSidebar({
           />
         )}
 
-        <DeveloperResponsivenessPanel gameId={game.id} />
+        <DevelopmentActivityPanel gameId={game.id} />
 
         <dl className="grid gap-2.5 border-t border-zinc-800 pt-3.5 text-sm">
           <div>

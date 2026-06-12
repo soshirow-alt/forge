@@ -6,7 +6,7 @@ export function ForgeIdentityBlock({ compact = false }: { compact?: boolean }) {
           まだ誰も知らないゲームを、一緒に面白くする。
         </span>
         {" "}
-        見つけて、遊び、フィードバックし、成長を見届けましょう。
+        見つけて、遊び、反応を届け、成長を見届けましょう。
       </p>
     );
   }
