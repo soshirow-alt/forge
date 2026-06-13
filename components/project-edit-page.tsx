@@ -249,7 +249,10 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
             </div>
           </div>
 
-          <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
+          <div
+            id="tester-recruitment"
+            className="scroll-mt-24 space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4"
+          >
             <label className="flex cursor-pointer items-center gap-3">
               <input
                 type="checkbox"

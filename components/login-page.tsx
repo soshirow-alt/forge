@@ -144,8 +144,16 @@ export function LoginPage({
               required
               minLength={6}
               autoComplete={mode === "login" ? "current-password" : "new-password"}
+              enterKeyHint="go"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" || event.nativeEvent.isComposing) {
+                  return;
+                }
+                event.preventDefault();
+                event.currentTarget.form?.requestSubmit();
+              }}
               className={inputClassName}
               placeholder="6文字以上"
             />

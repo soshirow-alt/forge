@@ -1,31 +1,20 @@
 ■ 現在の状態
-migration 004 実装完了・build 成功・commit f4f09c2 push 済み（本番 migration / deploy は未実施）。projects 1件（消えるかな？ phase=プロトタイプ→004で試作版に更新予定、status=テスター募集中）。
+UX P0実装完了。build成功。commit/push/deploy実施予定。DB変更なし。
 
-■ migration 004 の内容（実装済み）
-projects.playable_version（default 0.1）。project_feedback.version_key + updated_at + UNIQUE(user_id,project_id,version_key)。project_devlogs.published_version。RLS：自分のFB UPDATE 可。phase プロトタイプ→試作版 UPDATE 同梱。status は触らない。
+■ P0実装内容
+1 devlogラベル：「今回の更新タイトル/内容」+説明。2 投稿完了「次にやること」：開発ログ(primary)、プレイURL確認、テスター募集。3 開発ダッシュボード各行：開発ログを書く、フィードバックを見る。4 名称「開発ダッシュボード」に統一。5 ログインEnter送信。
 
-■ アプリ側（実装済み）
-FB：現行 playable_version に対し投稿 or 同版編集。devlog：「新しいプレイ可能版として公開」チェック + 自由入力版名 → playable_version 更新 + published_version 保存。開発者 FB 一覧に versionKey 表示。開発の歩みは published_version があればそのラベル表示。
+■ オーナー判断（反映済み）
+テスター募集中タブは短期維持・中長期統合寄り。P0 CTAで十分。ダッシュボード名称=開発ダッシュボード。新規page不要。
 
-■ やらない（今回）
-旧版 FB のプレイヤー向け履歴表示、AI要約、開発者返信、status 整理。
+■ 本番確認ポイント
+投稿完了→次にやること3項目。開発ダッシュボード→開発ログ/FBボタン。devlogフォームラベル。ログインEnter。ヘッダー「開発ダッシュボード」。
 
-■ 本番適用順（必須）
-1. 事前 SELECT（FB 重複確認）2. Supabase Dashboard で 004 SQL 実行 3. 確認 SELECT 4. Vercel 本番 deploy。コード deploy を migration より先にすると本番が壊れる可能性あり。
+■ 次
+オーナーUX再レビュー。P1（ホームタブ説明、版/FB導線copy）は様子見。
 
-■ 事前確認 SQL（オーナーが Dashboard で実行）
-SELECT user_id, project_id, COUNT(*) FROM public.project_feedback GROUP BY 1, 2 HAVING COUNT(*) > 1;
-→ 0行ならそのまま 004 可。行ありなら dedupe で古い行削除（004 内蔵）だが内容確認推奨。
+■ 詳細
+docs/ux-improvement-backlog.md docs/forge-changelog.md
 
-■ 004 SQL の場所
-supabase/migrations/004_feedback_versions_and_phase_cleanup.sql
-手順：docs/supabase-dashboard-migration-guide.md §004
-
-■ Cursor vs オーナー
-Cursor：コード・SQL ファイル・push まで完了。オーナー：Dashboard で事前 SELECT → 004 Run → 確認 SELECT → deploy 承認（GPT判断用メモ後）。
-
-■ 次のステップ
-1. 本レスポンス末尾の GPT判断用メモを ChatGPT に貼る 2. 承認後 Dashboard で 004 3. 確認後 deploy 指示 4. 画面確認（FB 投稿・編集、devlog 版公開、my-projects FB 一覧）
-
-■ Cursor連携メモ
-GPT には返答末尾 text ブロックの Copy を使用。
+■ Cursor連携
+GPTには返答末尾textブロックのCopyを使用。

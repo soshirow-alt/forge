@@ -43,6 +43,37 @@ function AnalyticsCard({
   );
 }
 
+function ProjectQuickActions({ gameId }: { gameId: string }) {
+  return (
+    <>
+      <Link
+        href={`/projects/${gameId}/devlog/new`}
+        className="rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-300 transition-colors hover:border-orange-500/50 hover:bg-orange-500/15"
+      >
+        開発ログを書く
+      </Link>
+      <Link
+        href={`/my-projects#feedback-${gameId}`}
+        className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-orange-500/50 hover:text-orange-400"
+      >
+        フィードバックを見る
+      </Link>
+      <Link
+        href={`/games/${gameId}`}
+        className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-orange-500/50 hover:text-orange-400"
+      >
+        詳細を見る
+      </Link>
+      <Link
+        href={`/projects/${gameId}/edit`}
+        className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200"
+      >
+        編集
+      </Link>
+    </>
+  );
+}
+
 export function MyProjectsPage() {
   const router = useRouter();
   const { user, hydrated } = useAuth();
@@ -118,10 +149,10 @@ export function MyProjectsPage() {
         <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
-              クリエイターダッシュボード
+              開発ダッシュボード
             </h1>
             <p className="mt-2 text-zinc-500">
-              投稿した作品の管理と、今後のアナリティクス機能の確認ができます。
+              作品を育てるための場所です。開発ログの投稿やフィードバックの確認ができます。
             </p>
           </div>
           <Link
@@ -135,7 +166,7 @@ export function MyProjectsPage() {
         <section className="mt-12">
           <h2 className="text-xl font-semibold tracking-tight">作品管理</h2>
           <p className="mt-1 text-sm text-zinc-500">
-            あなたが投稿した作品の一覧です。
+            あなたが投稿した作品の一覧です。開発ログやフィードバックは各行からすぐ開けます。
           </p>
 
           {ownedGames.length === 0 ? (
@@ -151,7 +182,7 @@ export function MyProjectsPage() {
           ) : (
             <div className="mt-6 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/80">
               <div className="hidden overflow-x-auto md:block">
-                <table className="w-full min-w-[720px] text-left text-sm">
+                <table className="w-full min-w-[880px] text-left text-sm">
                   <thead>
                     <tr className="border-b border-zinc-800 text-zinc-500">
                       <th className="px-5 py-4 font-medium">タイトル</th>
@@ -185,18 +216,7 @@ export function MyProjectsPage() {
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex flex-wrap gap-2">
-                            <Link
-                              href={`/games/${game.id}`}
-                              className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-orange-500/50 hover:text-orange-400"
-                            >
-                              詳細を見る
-                            </Link>
-                            <Link
-                              href={`/projects/${game.id}/edit`}
-                              className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200"
-                            >
-                              編集
-                            </Link>
+                            <ProjectQuickActions gameId={game.id} />
                             <button
                               type="button"
                               onClick={() => deleteSubmittedGame(game.id)}
@@ -243,18 +263,7 @@ export function MyProjectsPage() {
                       </div>
                     </dl>
                     <div className="mt-4 flex flex-wrap gap-2">
-                      <Link
-                        href={`/games/${game.id}`}
-                        className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-orange-500/50 hover:text-orange-400"
-                      >
-                        詳細を見る
-                      </Link>
-                      <Link
-                        href={`/projects/${game.id}/edit`}
-                        className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200"
-                      >
-                        編集
-                      </Link>
+                      <ProjectQuickActions gameId={game.id} />
                       <button
                         type="button"
                         onClick={() => deleteSubmittedGame(game.id)}

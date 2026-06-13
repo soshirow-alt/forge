@@ -46,7 +46,7 @@ export function DeveloperFeedbackInbox({ userId }: DeveloperFeedbackInboxProps) 
   }
 
   return (
-    <section className="mt-12">
+    <section id="developer-feedback" className="mt-12 scroll-mt-24">
       <h2 className="text-xl font-semibold tracking-tight">フィードバック</h2>
       <p className="mt-1 text-sm text-zinc-500">
         プレイヤーから届いた改善材料です。レビューではなく、次の更新の参考にしてください。
@@ -64,7 +64,8 @@ export function DeveloperFeedbackInbox({ userId }: DeveloperFeedbackInboxProps) 
           {entries.map(({ projectId, item }) => (
             <article
               key={item.id}
-              className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-5"
+              id={`feedback-${projectId}`}
+              className="scroll-mt-24 rounded-xl border border-zinc-800 bg-zinc-900/80 p-5"
             >
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">

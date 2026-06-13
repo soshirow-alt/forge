@@ -286,7 +286,7 @@ export function MyPagePage() {
                 自分が投稿した作品
               </h2>
               <p className="mt-1 text-sm text-zinc-500">
-                あなたが Forge に投稿した作品です。編集・削除はダッシュボードでも行えます。
+                あなたが Forge に投稿した作品です。編集・削除は開発ダッシュボードでも行えます。
               </p>
             </div>
 
@@ -316,7 +316,7 @@ export function MyPagePage() {
                     href="/my-projects"
                     className="transition-colors hover:text-zinc-400"
                   >
-                    応援数・テスター管理はダッシュボード →
+                    応援数・テスター管理は開発ダッシュボード →
                   </Link>
                 </p>
               </>

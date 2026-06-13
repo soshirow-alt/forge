@@ -77,8 +77,11 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
           ← 作品詳細に戻る
         </Link>
 
-        <h1 className="mt-8 text-3xl font-bold tracking-tight">開発日誌を投稿</h1>
+        <h1 className="mt-8 text-3xl font-bold tracking-tight">開発ログを書く</h1>
         <p className="mt-2 text-zinc-500">{game.title}</p>
+        <p className="mt-1 text-sm text-zinc-600">
+          プレイヤーに、今回の改善や変更点を伝えます。
+        </p>
 
         <form
           onSubmit={handleSubmit}
@@ -92,7 +95,7 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
 
           <div>
             <label htmlFor="title" className="text-sm font-medium text-zinc-400">
-              タイトル
+              今回の更新タイトル
             </label>
             <input
               id="title"
@@ -101,8 +104,11 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               className={inputClassName}
-              placeholder="更新のタイトル"
+              placeholder="例: チュートリアルを追加、バグを修正"
             />
+            <p className="mt-2 text-xs text-zinc-600">
+              プレイヤーに伝える、今回の変更の見出しです（ゲームタイトルやバージョン名ではありません）。
+            </p>
           </div>
 
           <div>
@@ -110,7 +116,7 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
               htmlFor="content"
               className="text-sm font-medium text-zinc-400"
             >
-              内容
+              今回の更新内容
             </label>
             <textarea
               id="content"
@@ -119,7 +125,7 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
               value={content}
               onChange={(event) => setContent(event.target.value)}
               className={`${inputClassName} resize-y`}
-              placeholder="開発の進捗や変更点を書いてください"
+              placeholder="何を直したか、何が変わったか、プレイヤーに試してほしい点を書いてください"
             />
           </div>
 

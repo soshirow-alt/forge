@@ -62,7 +62,7 @@ export function GameProjectHistorySection({ game }: GameProjectHistorySectionPro
             href={`/projects/${game.id}/devlog/new`}
             className="shrink-0 rounded-md border border-zinc-700 px-2.5 py-1 text-xs font-medium text-zinc-200 transition-colors hover:border-orange-500/50 hover:bg-zinc-900 hover:text-orange-400"
           >
-            開発ログを投稿
+            開発ログを書く
           </Link>
         )}
       </div>

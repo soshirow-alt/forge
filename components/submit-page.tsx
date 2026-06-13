@@ -406,13 +406,55 @@ export function SubmitPage() {
             <p className="mt-2 text-zinc-500">
               作品一覧の「新着作品」に表示されます
             </p>
+
+            {submittedGameId && (
+              <div className="mx-auto mt-10 max-w-lg text-left">
+                <p className="text-sm font-medium text-zinc-300">次にやること</p>
+                <p className="mt-1 text-xs text-zinc-600">
+                  作品を育てるために、次のステップから始められます。
+                </p>
+                <ul className="mt-4 space-y-3">
+                  <li>
+                    <Link
+                      href={`/projects/${submittedGameId}/devlog/new`}
+                      className="flex w-full items-center justify-between rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3.5 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+                    >
+                      開発ログを書く
+                      <span aria-hidden="true">→</span>
+                    </Link>
+                    <p className="mt-1.5 text-xs text-zinc-600">
+                      改善内容を共有し、プレイヤーに届けます。
+                    </p>
+                  </li>
+                  <li>
+                    <Link
+                      href={`/games/${submittedGameId}`}
+                      className="flex w-full items-center justify-between rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3.5 text-sm font-semibold text-zinc-100 transition-colors hover:border-orange-500/50 hover:text-orange-400"
+                    >
+                      プレイURLを確認する
+                      <span aria-hidden="true">→</span>
+                    </Link>
+                    <p className="mt-1.5 text-xs text-zinc-600">
+                      作品詳細からプレイボタンが正しく動くか確認できます。
+                    </p>
+                  </li>
+                  <li>
+                    <Link
+                      href={`/projects/${submittedGameId}/edit#tester-recruitment`}
+                      className="flex w-full items-center justify-between rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3.5 text-sm font-semibold text-zinc-100 transition-colors hover:border-orange-500/50 hover:text-orange-400"
+                    >
+                      テスターを募集する
+                      <span aria-hidden="true">→</span>
+                    </Link>
+                    <p className="mt-1.5 text-xs text-zinc-600">
+                      作品編集でテストプレイ受付をオンにできます。
+                    </p>
+                  </li>
+                </ul>
+              </div>
+            )}
+
             <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:justify-center">
-              <Link
-                href="/"
-                className="rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
-              >
-                ホームへ戻る
-              </Link>
               {submittedGameId && (
                 <Link
                   href={`/games/${submittedGameId}`}
@@ -425,12 +467,18 @@ export function SubmitPage() {
                 href="/my-projects"
                 className="rounded-lg border border-zinc-700 bg-zinc-900 px-6 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-orange-500/50 hover:text-orange-400"
               >
-                ダッシュボードを見る
+                開発ダッシュボードを見る
+              </Link>
+              <Link
+                href="/"
+                className="rounded-lg border border-zinc-700 bg-zinc-900 px-6 py-3 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-600 hover:text-zinc-100"
+              >
+                ホームへ戻る
               </Link>
               <button
                 type="button"
                 onClick={handleSubmitAnother}
-                className="rounded-lg border border-zinc-700 bg-zinc-900 px-6 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-orange-500/50 hover:text-orange-400"
+                className="rounded-lg border border-zinc-700 bg-zinc-900 px-6 py-3 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-600 hover:text-zinc-100"
               >
                 もう1件投稿する
               </button>
