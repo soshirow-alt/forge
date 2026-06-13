@@ -129,6 +129,8 @@ type GamesContextValue = {
   isBookmarked: (gameId: string) => boolean;
   bookmarkGame: (gameId: string) => void;
   getBookmarkedGames: () => Game[];
+  getSupportedGames: () => Game[];
+  getWatchedGames: () => Game[];
   isWatching: (gameId: string) => boolean;
   watchGame: (gameId: string) => void;
   unwatchGame: (gameId: string) => void;
@@ -803,6 +805,25 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       .map((game) => mergeGameWithExtras(game));
   }, [userEngagement.bookmarkedProjectIds, getSubmittedGameById]);
 
+  const resolveEngagementGames = useCallback(
+    (projectIds: string[]) =>
+      projectIds
+        .map((id) => getSubmittedGameById(id) ?? getMockGameById(id))
+        .filter((game): game is Game => game !== undefined)
+        .map((game) => mergeGameWithExtras(game)),
+    [getSubmittedGameById],
+  );
+
+  const getSupportedGames = useCallback(
+    () => resolveEngagementGames(userEngagement.supportedProjectIds),
+    [resolveEngagementGames, userEngagement.supportedProjectIds],
+  );
+
+  const getWatchedGames = useCallback(
+    () => resolveEngagementGames(userEngagement.watchedProjectIds),
+    [resolveEngagementGames, userEngagement.watchedProjectIds],
+  );
+
   const isWatching = useCallback(
     (gameId: string) => userEngagement.watchedProjectIds.includes(gameId),
     [userEngagement.watchedProjectIds],
@@ -986,6 +1007,8 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       isBookmarked,
       bookmarkGame,
       getBookmarkedGames,
+      getSupportedGames,
+      getWatchedGames,
       isWatching,
       watchGame,
       unwatchGame,
@@ -1033,6 +1056,8 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       isBookmarked,
       bookmarkGame,
       getBookmarkedGames,
+      getSupportedGames,
+      getWatchedGames,
       isWatching,
       watchGame,
       unwatchGame,

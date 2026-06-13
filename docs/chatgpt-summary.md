@@ -1,65 +1,76 @@
 ■ 現在の状態
 
-本番 https://forge-flame-gamma.vercel.app は commit **5dfa233**（LS 残骸削除）Deploy **Ready**。Supabase migration 001/002/003 適用済み。devlog 本番確認済み。
+本番 forge-flame-gamma。Supabase migration 001/002/003 適用済み。コア engagement 本番確認済み。マイページ最小版（/mypage）実装・build 成功。push/deploy 実施予定。
 
-■ 今回実装・確認したこと
+■ 今回実装したこと
 
-DB保存のコード調査：応援・更新を追う・あとで見る・FB・プレイ・devlog・devlog通知はすべて Supabase のみ（LS フォールバックなし）。Step 2 削除：play-session.ts、feedback LS、loadDeveloperProfiles、demo support/feedback seed。
+/mypage：応援中・更新を追う・あとで見る・投稿した作品の4セクション。DB の project_supports / project_watches / project_bookmarks / projects のみ参照。新規テーブルなし。ヘッダーにマイページリンク。
+
+■ 設計整理（実装前）
+
+■ マイページの画面構成案
+/mypage — 4セクション縦並び（応援=橙 / 追跡=amber / 保存=灰 / 投稿=灰）。各セクションに意味の説明文。投稿作品はコンパクト行+ダッシュボードへの導線。
+
+■ 必要なDB参照
+project_supports, project_watches, project_bookmarks（fetchUserEngagement 済み）, projects（owner_id）。
+
+■ 現在のDBで実現可能か
+はい。追加 migration 不要。
+
+■ 新規テーブルが必要か
+不要。
+
+■ Cursor推奨案
+既存 games-provider の engagement state をそのまま使い、/my-projects（開発者ダッシュボード）とは URL を分離。
+
+■ 推奨理由
+DB・UI ともに追加コスト最小。プレイヤー視点と開発者管理を混ぜない。
+
+■ 懸念点
+/bookmarks と内容が重複。将来統合 or リダイレクト検討可。
 
 ■ ユーザー目線の変化
 
-画面の見え方は変わらない。裏側の dead code のみ整理。
+「応援した」「追跡している」「保存した」「投稿した」がマイページで一覧できる。
 
 ■ 本番で確認済みのもの
 
-- 開発ログ投稿 → ゲスト別ブラウザ表示 OK
-- Vercel 本番 = commit bffe4ff Ready
+- 応援・追跡・保存・devlog の DB 保存（別ブラウザ OK）
 
 ■ まだ localStorage に残っているもの
 
-- forge-notifications（応援/FB/テスター通知・オーナー向け・端末ローカル）
-- forge-applicant-counts（テスター応募数）
-- forge-follower-counts / forge-following-creators
-- forge-game-extras（プレイ時間・観点）
-- forge-demo-project-ids（デモ用）
+- forge-notifications, forge-applicant-counts, follow 系, forge-game-extras, forge-demo-project-ids
 
 ■ 次にマイページへ進める状態か
 
-ほぼ YES。コアデータは DB 一本化済み。オーナーが応援・追跡・保存の別ブラウザ再現を確認すればマイページ着手 OK。
+実装完了。本番 /mypage の画面確認が次。
 
 ■ オーナーが画面で確認すべきこと
 
-1. ログイン → 応援 → 別ブラウザ（同アカウント）で「応援中」維持
-2. 更新を追う → 別ブラウザで「更新を追跡中」維持
-3. あとで見る → /bookmarks に表示、別ブラウザでも維持
-4. （任意）プレイ → FB 送信 → プレイヤーの声に反映
-5. （2アカウント）watch → devlog → /notifications
+1. ログイン → ヘッダー「マイページ」
+2. 応援・追跡・保存した作品が各セクションに表示
+3. 投稿作品が「自分が投稿した作品」に表示
+4. 空セクションの説明文が分かりやすいか
 
 ■ 今すぐ私がやるべきこと
 
-上記 1〜3 を本番で確認。「本番OK」でマイページへ。
+本番 /mypage を開いて上記 1〜4 を確認。
 
 ■ Cursorだけで完了できること
 
-- マイページ最小版実装
-- push/deploy 後の不具合調査
+- /bookmarks と /mypage の統合検討
+- extras DB 化（低優先）
 
 ■ 次に検討すべきこと
 
-1. コア engagement 別ブラウザ確認（オーナー）
-2. マイページ最小版
-3. extras / オーナー通知の DB 化（低〜中優先）
+1. マイページ本番確認
+2. extras カラム
+3. オーナー通知 DB 化
 
 ■ ChatGPTに相談したい論点
 
-マイページ最小版に最初から載せる項目（応援中・追跡中・保存・自分の作品・自分のFB）。
+/bookmarks を /mypage#bookmarks に統合するか、両方残すか。
 
 ■ 運用メモ（Cursor 自身への指示）
 
 返答末尾に必ず text ブロック。省略禁止。
-
-■ localStorage 分類（要約）
-
-削除済み：play-session、feedback LS、developer profile LS、demo support/feedback seed。
-残す：notifications（非devlog）、applicant、follow、extras、demo-ids。
-DB移行後回し：応援通知、extras、follow、applicant。
