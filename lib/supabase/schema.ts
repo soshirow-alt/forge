@@ -76,9 +76,10 @@ export type ProjectDevlogRow = {
 export type UserNotificationRow = {
   id: string;
   user_id: string;
-  type: "devlog";
+  type: "devlog" | "version_published";
   project_id: string;
   devlog_id: string | null;
+  published_version: string | null;
   message: string;
   read_at: string | null;
   created_at: string;

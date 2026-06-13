@@ -1,4 +1,9 @@
-export type NotificationType = "support" | "tester_apply" | "feedback" | "devlog";
+export type NotificationType =
+  | "support"
+  | "tester_apply"
+  | "feedback"
+  | "devlog"
+  | "version_published";
 
 export type Notification = {
   id: string;
@@ -8,6 +13,7 @@ export type Notification = {
   projectId: string;
   projectTitle: string;
   read: boolean;
+  publishedVersion?: string;
 };
 
 export function getNotificationTypeLabel(type: NotificationType): string {
@@ -20,6 +26,8 @@ export function getNotificationTypeLabel(type: NotificationType): string {
       return "フィードバック";
     case "devlog":
       return "開発日誌";
+    case "version_published":
+      return "新しいプレイ可能版";
   }
 }
 
@@ -36,7 +44,16 @@ export function createNotificationMessage(
       return `「${projectTitle}」にフィードバックが投稿されました`;
     case "devlog":
       return `「${projectTitle}」に開発日誌が投稿されました`;
+    case "version_published":
+      return `「${projectTitle}」の新しいプレイ可能版が公開されました`;
   }
+}
+
+export function createVersionPublishedMessage(
+  projectTitle: string,
+  publishedVersion: string,
+): string {
+  return `「${projectTitle}」のプレイ可能版 ${publishedVersion} が公開されました。もう一度プレイして、新しいフィードバックを送れます。`;
 }
 
 export function sortNotificationsNewestFirst(

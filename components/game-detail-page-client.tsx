@@ -13,6 +13,7 @@ import { GameDetailOverview } from "@/components/game-detail-overview";
 import { GameDetailSidebar } from "@/components/game-detail-sidebar";
 import { GameFeedbackForm } from "@/components/game-feedback";
 import { GameProjectHistorySection } from "@/components/game-project-history-section";
+import { NewPlayableVersionBanner } from "@/components/new-playable-version-banner";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 
@@ -104,6 +105,8 @@ export function GameDetailPageClient({ id }: { id: string }) {
             <div className="mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_232px] lg:items-start lg:gap-5 xl:grid-cols-[minmax(0,1.15fr)_248px] xl:gap-6">
               <div className="min-w-0">
                 <GameDetailOverview game={game} />
+
+                <NewPlayableVersionBanner game={game} />
 
                 <GameDescriptionSection description={game.description} />
 

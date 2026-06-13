@@ -25,6 +25,7 @@ import {
 } from "@/lib/devlogs";
 import {
   createNotificationMessage,
+  createVersionPublishedMessage,
   sortNotificationsNewestFirst,
   type Notification,
   type NotificationType,
@@ -63,6 +64,7 @@ import {
   fetchSupportCounts,
   fetchUserEngagement,
   fetchUserFeedbackForVersion,
+  fetchUserLatestFeedbackVersionKey,
   insertProjectFeedback,
   recordProjectPlay,
   removeProjectWatch,
@@ -80,6 +82,7 @@ import {
 import {
   fetchUserNotifications,
   insertDevlogNotifications,
+  insertVersionPublishedNotifications,
   isDatabaseNotificationId,
   markAllUserNotificationsAsRead,
   markUserNotificationAsRead,
@@ -123,6 +126,11 @@ type GamesContextValue = {
     feedback: Omit<GameFeedbackItem, "id" | "createdAt" | "versionKey" | "updatedAt">,
   ) => Promise<GameFeedbackItem>;
   getMyFeedbackForProject: (gameId: string) => Promise<GameFeedbackItem | null>;
+  getNewPlayableVersionBannerState: (gameId: string) => Promise<{
+    show: boolean;
+    priorVersion?: string;
+    currentVersion?: string;
+  }>;
   getProjectFeedback: (gameId: string) => Promise<GameFeedbackItem[]>;
   getOwnedProjectFeedback: (
     userId: string | undefined,
@@ -766,6 +774,48 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     [user, getSubmittedGameById],
   );
 
+  const getNewPlayableVersionBannerState = useCallback(
+    async (gameId: string) => {
+      if (!user || !userEngagement.watchedProjectIds.includes(gameId)) {
+        return { show: false };
+      }
+
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return { show: false };
+      }
+
+      const game = getSubmittedGameById(gameId) ?? getMockGameById(gameId);
+      const currentVersion = resolvePlayableVersion(game?.playableVersion);
+
+      const currentFeedback = await fetchUserFeedbackForVersion(
+        supabase,
+        user.id,
+        gameId,
+        currentVersion,
+      );
+      if (currentFeedback) {
+        return { show: false };
+      }
+
+      const latestVersion = await fetchUserLatestFeedbackVersionKey(
+        supabase,
+        user.id,
+        gameId,
+      );
+      if (!latestVersion || latestVersion === currentVersion) {
+        return { show: false };
+      }
+
+      return {
+        show: true,
+        priorVersion: latestVersion,
+        currentVersion,
+      };
+    },
+    [user, userEngagement.watchedProjectIds, getSubmittedGameById],
+  );
+
   const getProjectFeedback = useCallback(async (gameId: string) => {
     const supabase = getOptionalSupabaseClient();
     if (!supabase) {
@@ -1013,6 +1063,18 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      if (publishVersion) {
+        const message = createVersionPublishedMessage(projectTitle, publishVersion);
+        await insertVersionPublishedNotifications(supabase, {
+          recipientUserIds: recipientIds,
+          projectId,
+          devlogId: entry.id,
+          publishedVersion: publishVersion,
+          message,
+        });
+        return;
+      }
+
       const message = createNotificationMessage("devlog", projectTitle);
       await insertDevlogNotifications(supabase, {
         recipientUserIds: recipientIds,
@@ -1095,6 +1157,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       recordPlay,
       submitProjectFeedback,
       getMyFeedbackForProject,
+      getNewPlayableVersionBannerState,
       getProjectFeedback,
       getOwnedProjectFeedback,
       getApplicantCount,
@@ -1146,6 +1209,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       recordPlay,
       submitProjectFeedback,
       getMyFeedbackForProject,
+      getNewPlayableVersionBannerState,
       getProjectFeedback,
       getOwnedProjectFeedback,
       getApplicantCount,

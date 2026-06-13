@@ -1,12 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Notification, NotificationType } from "@/lib/notifications";
+import type { Notification } from "@/lib/notifications";
 
 type NotificationRow = {
   id: string;
   user_id: string;
-  type: NotificationType;
+  type: "devlog" | "version_published";
   project_id: string;
   devlog_id: string | null;
+  published_version: string | null;
   message: string;
   read_at: string | null;
   created_at: string;
@@ -24,6 +25,7 @@ export function notificationRowToNotification(
     projectId: row.project_id,
     projectTitle,
     read: row.read_at !== null,
+    publishedVersion: row.published_version ?? undefined,
   };
 }
 
@@ -42,6 +44,36 @@ export async function fetchUserNotifications(
   }
 
   return (data ?? []) as NotificationRow[];
+}
+
+export async function insertVersionPublishedNotifications(
+  supabase: SupabaseClient,
+  input: {
+    recipientUserIds: string[];
+    projectId: string;
+    devlogId: string;
+    publishedVersion: string;
+    message: string;
+  },
+): Promise<void> {
+  if (input.recipientUserIds.length === 0) {
+    return;
+  }
+
+  const rows = input.recipientUserIds.map((userId) => ({
+    user_id: userId,
+    type: "version_published" as const,
+    project_id: input.projectId,
+    devlog_id: input.devlogId,
+    published_version: input.publishedVersion,
+    message: input.message,
+  }));
+
+  const { error } = await supabase.from("user_notifications").insert(rows);
+
+  if (error) {
+    throw error;
+  }
 }
 
 export async function insertDevlogNotifications(

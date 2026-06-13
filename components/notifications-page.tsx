@@ -140,7 +140,11 @@ export function NotificationsPage() {
             {filteredNotifications.map((notification) => (
               <li key={notification.id}>
                 <Link
-                  href={`/games/${notification.projectId}`}
+                  href={
+                    notification.type === "version_published"
+                      ? `/games/${notification.projectId}#new-playable-version-banner`
+                      : `/games/${notification.projectId}`
+                  }
                   onClick={() => handleNotificationClick(notification.id)}
                   className="block rounded-xl border border-zinc-800 bg-zinc-900/80 p-6 transition-colors hover:border-orange-500/50 hover:bg-zinc-900"
                 >

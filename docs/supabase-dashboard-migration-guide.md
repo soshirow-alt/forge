@@ -213,6 +213,39 @@ SELECT user_id, project_id, version_key, updated_at FROM public.project_feedback
 
 ---
 
+## migration 005 を適用する
+
+**目的**：版 bump 時の **version_published** 通知（watch ユーザー向け）。devlog 通知とは別 type。
+
+**重要**：005 対応コードの **本番 deploy より先** に Dashboard で 005 を実行してください。
+
+### 適用手順
+
+1. ファイル `supabase/migrations/005_version_published_notifications.sql` を開く
+2. **全文** を SQL Editor に貼り付け
+3. **Run**（1回）
+
+### 005 適用後の確認
+
+```sql
+-- type 制約確認（version_published が許可されている）
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'user_notifications'
+  AND column_name IN ('type', 'published_version');
+```
+
+### よくあるエラー
+
+| メッセージ | 意味 | 対処 |
+|---|---|---|
+| `violates check constraint "user_notifications_type_check"` | 005 未適用でコードが version_published を insert | **005 を先に適用** |
+| `policy "Project owners insert notifications" already exists` | 005 適用済み | 確認へ |
+
+005 適用後 → **Vercel 本番 deploy** → 版 bump 通知の画面確認
+
+---
+
 ## 最終チェック（Dashboard だけで OK）
 
 Table Editor に以下が **すべて** ある状態がゴール：
