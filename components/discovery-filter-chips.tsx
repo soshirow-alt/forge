@@ -4,12 +4,15 @@ import {
   GENRE_FILTER_OPTIONS,
   PHASE_FILTER_OPTIONS,
   PLATFORM_FILTER_OPTIONS,
+  PLAY_TIME_FILTER_OPTIONS,
   type DiscoveryChipFilters,
   type GenreFilter,
   type PhaseFilter,
   type PlatformFilter,
+  type PlayTimeFilter,
   hasActiveChipFilters,
 } from "@/lib/discovery-filters";
+import { LABEL_TEST_PLAY_OPEN } from "@/lib/user-labels";
 
 type DiscoveryFilterChipsProps = {
   filters: DiscoveryChipFilters;
@@ -91,30 +94,63 @@ export function DiscoveryFilterChips({
     onChange({ ...filters, phases: toggleValue(filters.phases, phase) });
   }
 
+  function togglePlayTime(playTime: PlayTimeFilter) {
+    onChange({ ...filters, playTimes: toggleValue(filters.playTimes, playTime) });
+  }
+
   function clearAll() {
-    onChange({ genres: [], platforms: [], phases: [] });
+    onChange({
+      genres: [],
+      platforms: [],
+      phases: [],
+      playTimes: [],
+      recruitingOnly: false,
+    });
   }
 
   return (
     <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/30 p-5 backdrop-blur-sm sm:p-6">
       <div className="flex flex-col gap-5">
         <FilterGroup
-          title="ジャンルから探す"
+          title="ジャンル"
           options={GENRE_FILTER_OPTIONS}
           selected={filters.genres}
           onToggle={toggleGenre}
         />
         <FilterGroup
+          title="開発フェーズ"
+          options={PHASE_FILTER_OPTIONS}
+          selected={filters.phases}
+          onToggle={togglePhase}
+        />
+        <FilterGroup
+          title="想定プレイ時間"
+          options={PLAY_TIME_FILTER_OPTIONS}
+          selected={filters.playTimes}
+          onToggle={togglePlayTime}
+        />
+        <div>
+          <p className="text-xs font-semibold tracking-wide text-zinc-500">
+            テストプレイ
+          </p>
+          <div className="mt-2">
+            <FilterChip
+              label={LABEL_TEST_PLAY_OPEN}
+              active={filters.recruitingOnly}
+              onClick={() =>
+                onChange({
+                  ...filters,
+                  recruitingOnly: !filters.recruitingOnly,
+                })
+              }
+            />
+          </div>
+        </div>
+        <FilterGroup
           title="プレイ環境"
           options={PLATFORM_FILTER_OPTIONS}
           selected={filters.platforms}
           onToggle={togglePlatform}
-        />
-        <FilterGroup
-          title="開発段階"
-          options={PHASE_FILTER_OPTIONS}
-          selected={filters.phases}
-          onToggle={togglePhase}
         />
       </div>
       {hasActiveChipFilters(filters) && (

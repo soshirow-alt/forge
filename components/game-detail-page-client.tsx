@@ -8,14 +8,10 @@ import { ForgeHeader } from "@/components/forge-header";
 import { ForgeIdentityBlock } from "@/components/forge-identity-block";
 import { GameCommunityVoicesSection } from "@/components/game-community-voices-section";
 import { GameDescriptionSection } from "@/components/game-description-section";
+import { GameDetailOverview } from "@/components/game-detail-overview";
 import { GameDetailSidebar } from "@/components/game-detail-sidebar";
 import { GameFeedbackForm } from "@/components/game-feedback";
 import { GameProjectHistorySection } from "@/components/game-project-history-section";
-import { GameTags } from "@/components/game-tags";
-import { GameThumbnail } from "@/components/game-thumbnail";
-import { PlayEnvironmentBadges } from "@/components/play-environment-badges";
-import { GameActivityBadges } from "@/components/game-activity-badges";
-import { TrustSafetyBadge } from "@/components/trust-safety-badge";
 import { useGames } from "@/components/games-provider";
 import { hasUserSubmittedFeedback } from "@/lib/game-feedback-storage";
 import { hasUserPlayedGame } from "@/lib/play-session";
@@ -37,9 +33,11 @@ export function GameDetailPageClient({ id }: { id: string }) {
   const { getGameById, isSubmittedGame, isProjectOwner, dataReady } = useGames();
   const game = getGameById(id);
   const [canSubmitFeedback, setCanSubmitFeedback] = useState(false);
+  const [hasPlayed, setHasPlayed] = useState(false);
 
   useEffect(() => {
     setCanSubmitFeedback(userCanSubmitFeedback(id));
+    setHasPlayed(hasUserPlayedGame(id));
   }, [id]);
 
   if (!dataReady) {
@@ -95,47 +93,34 @@ export function GameDetailPageClient({ id }: { id: string }) {
         </Link>
 
         <div className="mt-6 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/80">
-          <GameThumbnail
-            thumbnailUrl={game.thumbnailUrl}
-            status={game.status}
-            projectId={game.id}
-            title={game.title}
-            genre={game.genre}
-            phase={game.phase}
-            aspectClassName="aspect-[21/9]"
-            statusClassName="absolute bottom-4 left-4 rounded-md bg-black/60 px-3 py-1.5 text-sm font-medium text-orange-400 backdrop-blur-sm"
-            showStatus={Boolean(game.thumbnailUrl)}
-            featured
-          />
-
           <div className="p-5 sm:p-6 lg:p-7">
             <header className="border-b border-zinc-800/60 pb-4">
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
                 {game.title}
               </h1>
-              <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                <p className="text-sm text-zinc-500">{game.genre}</p>
-                <TrustSafetyBadge game={game} />
-              </div>
-              <div className="mt-2">
-                <GameActivityBadges game={game} />
-              </div>
-              <PlayEnvironmentBadges game={game} />
-              <GameTags tags={game.tags} />
+              <p className="mt-1 text-sm text-zinc-500">{game.creator}</p>
             </header>
 
             <div className="mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_232px] lg:items-start lg:gap-5 xl:grid-cols-[minmax(0,1.15fr)_248px] xl:gap-6">
               <div className="min-w-0">
+                <GameDetailOverview game={game} />
+
                 <GameDescriptionSection description={game.description} />
-                <div className="mt-3">
-                  <ForgeIdentityBlock compact />
-                </div>
 
                 <GameCommunityVoicesSection gameId={game.id} />
 
                 <GameProjectHistorySection game={game} />
 
-                {canSubmitFeedback && <GameFeedbackForm gameId={game.id} />}
+                {canSubmitFeedback ? (
+                  <GameFeedbackForm
+                    gameId={game.id}
+                    focusNotes={game.focusNotes}
+                  />
+                ) : hasPlayed ? null : (
+                  <p className="mt-4 border-t border-zinc-800/80 pt-4 text-xs text-zinc-600">
+                    プレイ後に、開発者向けのフィードバックを送れます。
+                  </p>
+                )}
               </div>
 
               <GameDetailSidebar
@@ -143,8 +128,15 @@ export function GameDetailPageClient({ id }: { id: string }) {
                 userSubmitted={userSubmitted}
                 canEdit={canEdit}
                 formatDate={formatDate}
-                onPlay={() => setCanSubmitFeedback(true)}
+                onPlay={() => {
+                  setHasPlayed(true);
+                  setCanSubmitFeedback(true);
+                }}
               />
+            </div>
+
+            <div className="mt-4 border-t border-zinc-800/60 pt-3">
+              <ForgeIdentityBlock compact />
             </div>
           </div>
         </div>

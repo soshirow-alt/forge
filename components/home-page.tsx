@@ -147,6 +147,11 @@ function DiscoveryGameCard({
                 {game.title}
               </h3>
               <p className="mt-1 text-sm text-zinc-500">{game.genre}</p>
+              {game.estimatedPlayTime && (
+                <p className="mt-0.5 text-xs text-zinc-600">
+                  想定 {game.estimatedPlayTime}
+                </p>
+              )}
             </div>
           </div>
 

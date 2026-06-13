@@ -15,6 +15,7 @@ import {
   type DistributionType,
 } from "@/lib/play-environment";
 import { DEVELOPMENT_PHASE_OPTIONS } from "@/lib/development-phases";
+import { PLAY_TIME_OPTIONS } from "@/lib/play-time-options";
 
 const phaseOptions = DEVELOPMENT_PHASE_OPTIONS;
 
@@ -136,6 +137,7 @@ export function SubmitPage() {
   const [genre, setGenre] = useState("");
   const [description, setDescription] = useState("");
   const [phase, setPhase] = useState("");
+  const [estimatedPlayTime, setEstimatedPlayTime] = useState("");
   const [playUrl, setPlayUrl] = useState("");
   const [distribution, setDistribution] = useState<DistributionType>("");
   const [testerNotesMode, setTesterNotesMode] = useState<"none" | "custom">(
@@ -310,6 +312,11 @@ export function SubmitPage() {
       lookingForTesters: true,
       tags: mergePlayEnvironmentIntoTags(selectedTags, playEnvironment),
       playUrl,
+      estimatedPlayTime: estimatedPlayTime || undefined,
+      focusNotes:
+        testerNotesMode === "custom" && testerNotes.trim()
+          ? testerNotes.trim()
+          : undefined,
       steamUrl: steamUrl || undefined,
       itchUrl: itchUrl || undefined,
       githubUrl: githubUrl || undefined,
@@ -328,6 +335,7 @@ export function SubmitPage() {
     setGenre("");
     setDescription("");
     setPhase("");
+    setEstimatedPlayTime("");
     setPlayUrl("");
     setDistribution("");
     setTesterNotesMode("none");
@@ -542,6 +550,26 @@ export function SubmitPage() {
               ))}
             </div>
           </fieldset>
+
+          <div>
+            <label htmlFor="estimatedPlayTime" className="text-sm font-medium text-zinc-400">
+              想定プレイ時間{" "}
+              <span className="font-normal text-zinc-600">（任意）</span>
+            </label>
+            <select
+              id="estimatedPlayTime"
+              value={estimatedPlayTime}
+              onChange={(event) => setEstimatedPlayTime(event.target.value)}
+              className={inputClassName}
+            >
+              <option value="">選択しない</option>
+              {PLAY_TIME_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
             <div>

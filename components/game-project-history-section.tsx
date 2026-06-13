@@ -8,21 +8,24 @@ import {
   getUnifiedProjectHistory,
 } from "@/lib/project-activity";
 import type { Game } from "@/lib/mock-games";
+import type { ProjectHistoryEntry } from "@/lib/project-activity";
 
 type GameProjectHistorySectionProps = {
   game: Game;
 };
 
-function getDevelopmentEntryLabel(title: string): string {
-  if (title === "初公開") {
-    return "初公開";
-  }
+function buildVersionLabels(entries: ProjectHistoryEntry[]): Map<string, string> {
+  const developmentEntries = entries
+    .filter((entry) => entry.kind === "development")
+    .sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
 
-  if (/テスト|α版|β版/.test(title)) {
-    return "テスト開始";
-  }
-
-  return "アップデート";
+  const labels = new Map<string, string>();
+  developmentEntries.forEach((entry, index) => {
+    labels.set(entry.id, `v0.${index + 1}`);
+  });
+  return labels;
 }
 
 export function GameProjectHistorySection({ game }: GameProjectHistorySectionProps) {
@@ -34,6 +37,7 @@ export function GameProjectHistorySection({ game }: GameProjectHistorySectionPro
     realDevlogs,
   );
   const canPost = isProjectOwner(game.id, user?.id);
+  const versionLabels = buildVersionLabels(entries);
   const latestDevIndex = entries.findIndex(
     (entry) => entry.kind === "development",
   );
@@ -43,8 +47,11 @@ export function GameProjectHistorySection({ game }: GameProjectHistorySectionPro
       <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-sm font-medium text-zinc-500">開発の歩み</h2>
+          <p className="text-xs text-zinc-600">
+            このゲームがどう育ってきたかの履歴です
+          </p>
           {usingPlaceholderDevlogs && (
-            <p className="text-xs text-zinc-600">更新履歴（サンプル表示）</p>
+            <p className="text-xs text-zinc-600">（サンプル表示）</p>
           )}
         </div>
         {canPost && (
@@ -61,6 +68,7 @@ export function GameProjectHistorySection({ game }: GameProjectHistorySectionPro
         {entries.map((entry, index) => {
           const isCommunity = entry.kind === "community";
           const isLatestDev = !isCommunity && index === latestDevIndex;
+          const version = versionLabels.get(entry.id);
 
           return (
             <li
@@ -88,15 +96,13 @@ export function GameProjectHistorySection({ game }: GameProjectHistorySectionPro
                 {formatActivityDate(entry.date)}
               </time>
               <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                {!isCommunity && (
-                  <span className="text-[11px] font-medium text-orange-400/80">
-                    {getDevelopmentEntryLabel(entry.title)}
+                {!isCommunity && version && (
+                  <span className="text-[11px] font-semibold text-orange-400/90">
+                    {version}
                   </span>
                 )}
                 {isCommunity && (
-                  <span className="text-[11px] text-zinc-600">
-                    プレイヤー提案を反映
-                  </span>
+                  <span className="text-[11px] text-zinc-600">改善を反映</span>
                 )}
                 <h3
                   className={

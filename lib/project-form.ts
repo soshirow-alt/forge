@@ -9,6 +9,8 @@ export type SubmitFormData = {
   testerSlots?: number;
   tags: string[];
   playUrl: string;
+  estimatedPlayTime?: string;
+  focusNotes?: string;
   steamUrl?: string;
   itchUrl?: string;
   githubUrl?: string;

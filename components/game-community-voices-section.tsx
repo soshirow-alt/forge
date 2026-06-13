@@ -6,7 +6,7 @@ import {
   getDemoCommunityData,
   type DemoCommunityComment,
 } from "@/lib/demo-community";
-import { loadStoredFeedback, type GameFeedbackItem } from "@/lib/game-feedback-storage";
+import { loadStoredFeedback, type GameFeedbackItem, getFeedbackSummaryText } from "@/lib/game-feedback-storage";
 
 type GameCommunityVoicesSectionProps = {
   gameId: string;
@@ -24,13 +24,18 @@ function average(values: number[]) {
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
+function averageOptional(values: (number | undefined)[]) {
+  const nums = values.filter((value): value is number => value !== undefined && value > 0);
+  return average(nums);
+}
+
 function mergeComments(
   demoComments: DemoCommunityComment[],
   stored: GameFeedbackItem[],
 ): { text: string; funRating: number; date: string }[] {
   const fromStored = stored.slice(0, 2).map((item) => ({
-    text: item.text,
-    funRating: item.funRating,
+    text: getFeedbackSummaryText(item),
+    funRating: item.funRating ?? 0,
     date: item.createdAt.split("T")[0] ?? item.createdAt,
   }));
 
@@ -61,11 +66,14 @@ export function GameCommunityVoicesSection({
 
   const summary = useMemo(() => {
     if (storedFeedback.length > 0) {
-      return {
-        fun: average(storedFeedback.map((item) => item.funRating)),
-        controls: average(storedFeedback.map((item) => item.controlsRating)),
-        replay: average(storedFeedback.map((item) => item.replayRating)),
-      };
+      const fun = averageOptional(storedFeedback.map((item) => item.funRating));
+      if (fun > 0) {
+        return {
+          fun,
+          controls: averageOptional(storedFeedback.map((item) => item.controlsRating)),
+          replay: averageOptional(storedFeedback.map((item) => item.replayRating)),
+        };
+      }
     }
 
     return demo?.averageRatings ?? null;
@@ -77,8 +85,8 @@ export function GameCommunityVoicesSection({
     }
 
     return storedFeedback.slice(0, 3).map((item) => ({
-      text: item.text,
-      funRating: item.funRating,
+      text: getFeedbackSummaryText(item),
+      funRating: item.funRating ?? 0,
       date: item.createdAt.split("T")[0] ?? item.createdAt,
     }));
   }, [demo, storedFeedback]);
@@ -88,7 +96,7 @@ export function GameCommunityVoicesSection({
     const optionCounts = new Map<string, number>();
 
     for (const item of storedFeedback) {
-      for (const option of item.selectedOptions) {
+      for (const option of item.selectedOptions ?? []) {
         optionCounts.set(option, (optionCounts.get(option) ?? 0) + 1);
       }
     }

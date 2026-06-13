@@ -7,10 +7,11 @@ import { DevelopmentActivityPanel } from "@/components/development-activity-pane
 import { GameExternalLinks } from "@/components/game-external-links";
 import { GameSupport } from "@/components/game-support";
 import { GameTesterApply } from "@/components/game-tester-apply";
+import { GameThumbnail } from "@/components/game-thumbnail";
+import { GameWatchButton } from "@/components/game-watch-button";
 import { PlaySafetyNote } from "@/components/play-safety-note";
 import { getDistributionType } from "@/lib/play-environment";
 import { markGameAsPlayed } from "@/lib/play-session";
-import { LABEL_TEST_PLAY_OPEN } from "@/lib/user-labels";
 import type { Game } from "@/lib/mock-games";
 
 type GameDetailSidebarProps = {
@@ -35,6 +36,17 @@ export function GameDetailSidebar({
 
   return (
     <aside className="space-y-3 lg:sticky lg:top-20 lg:self-start">
+      <GameThumbnail
+        thumbnailUrl={game.thumbnailUrl}
+        status={game.status}
+        projectId={game.id}
+        title={game.title}
+        genre={game.genre}
+        phase={game.phase}
+        aspectClassName="aspect-video rounded-xl overflow-hidden border border-zinc-800"
+        showStatus={Boolean(game.thumbnailUrl)}
+      />
+
       <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3.5">
         <a
           href={game.playUrl}
@@ -54,6 +66,7 @@ export function GameDetailSidebar({
         />
 
         <div className="mt-2.5 flex flex-col gap-2">
+          <GameWatchButton gameId={game.id} compact className="w-full" />
           <BookmarkButton gameId={game.id} compact className="w-full" />
           {canEdit && (
             <Link
@@ -81,26 +94,18 @@ export function GameDetailSidebar({
         <DevelopmentActivityPanel gameId={game.id} />
 
         <dl className="grid gap-2.5 border-t border-zinc-800 pt-3.5 text-sm">
-          <div>
-            <dt className="text-xs text-zinc-500">開発フェーズ</dt>
-            <dd className="mt-0.5 font-medium text-zinc-100">{game.phase}</dd>
-          </div>
+          {game.estimatedPlayTime && (
+            <div>
+              <dt className="text-xs text-zinc-500">想定プレイ時間</dt>
+              <dd className="mt-0.5 font-medium text-zinc-100">
+                {game.estimatedPlayTime}
+              </dd>
+            </div>
+          )}
           <div>
             <dt className="text-xs text-zinc-500">最終更新</dt>
             <dd className="mt-0.5 text-zinc-100">
               {formatDate(game.lastUpdated)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs text-zinc-500">{LABEL_TEST_PLAY_OPEN}</dt>
-            <dd className="mt-0.5">
-              <span
-                className={
-                  game.lookingForTesters ? "text-orange-400" : "text-zinc-400"
-                }
-              >
-                {game.lookingForTesters ? "受付中" : "—"}
-              </span>
             </dd>
           </div>
           <div>

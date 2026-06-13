@@ -24,6 +24,8 @@ export type Game = {
   ownerName?: string;
   visibility?: "public" | "private";
   createdAt?: string;
+  estimatedPlayTime?: string;
+  focusNotes?: string;
 };
 
 export const games: Game[] = [
@@ -37,6 +39,8 @@ export const games: Game[] = [
     description:
       "落ちた余燼が禁断の力を授けるダークファンタジーアクションRPG。崩れゆく王国を探索し、呪われた武器を鍛え、内側から燃え上がる世界の運命を決めよ。",
     lookingForTesters: false,
+    estimatedPlayTime: "30分〜1時間",
+    focusNotes: "序盤の戦闘テンポと、UIの分かりやすさを見てほしい。",
     lastUpdated: "2026-05-28",
     section: "new",
     tags: ["RPG", "アクション"],
@@ -140,6 +144,8 @@ export const games: Game[] = [
       "次元を跳ぶモメンタム型プラットフォーマー。ジャンプ中に並行世界を切り替え、パズルを解き、崩壊するリフトから逃げろ。",
     lookingForTesters: true,
     testerSlots: 10,
+    estimatedPlayTime: "15〜30分",
+    focusNotes: "次元切り替えの操作感と、序盤チュートリアルの分かりやすさを見てほしい。",
     lastUpdated: "2026-06-08",
     section: "testers",
     tags: ["アクション", "パズル", "テスター募集中"],

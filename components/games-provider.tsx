@@ -43,6 +43,7 @@ import {
   type Creator,
 } from "@/lib/creators";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
+import { mergeGameWithExtras, saveGameExtra } from "@/lib/game-extra-storage";
 import { upsertDeveloperProfile, fetchDeveloperProfiles } from "@/lib/supabase/developer-profiles-db";
 import {
   deleteProjectInDb,
@@ -57,6 +58,7 @@ const APPLICANT_STORAGE_KEY = "forge-applicant-counts";
 const FOLLOWERS_STORAGE_KEY = "forge-follower-counts";
 const FOLLOWING_STORAGE_KEY = "forge-following-creators";
 const BOOKMARKS_STORAGE_KEY = "forge-bookmarks";
+const WATCHED_STORAGE_KEY = "forge-watched-games";
 const DEVLOGS_STORAGE_KEY = "forge-devlogs";
 const NOTIFICATIONS_STORAGE_KEY = "forge-notifications";
 
@@ -89,6 +91,9 @@ type GamesContextValue = {
   isBookmarked: (gameId: string) => boolean;
   bookmarkGame: (gameId: string) => void;
   getBookmarkedGames: () => Game[];
+  isWatching: (gameId: string) => boolean;
+  watchGame: (gameId: string) => void;
+  unwatchGame: (gameId: string) => void;
   getDevlogsByProject: (projectId: string) => DevlogEntry[];
   hasDevlogs: (projectId: string) => boolean;
   addDevlog: (projectId: string, title: string, content: string) => void;
@@ -161,6 +166,19 @@ function loadBookmarks(): string[] {
   }
 }
 
+function loadWatchedGames(): string[] {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const stored = localStorage.getItem(WATCHED_STORAGE_KEY);
+    return stored ? (JSON.parse(stored) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 function loadNotifications(): Notification[] {
   if (typeof window === "undefined") {
     return [];
@@ -186,6 +204,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   const [followerCounts, setFollowerCounts] = useState<Counts>({});
   const [followedCreators, setFollowedCreators] = useState<string[]>([]);
   const [bookmarkedGameIds, setBookmarkedGameIds] = useState<string[]>([]);
+  const [watchedGameIds, setWatchedGameIds] = useState<string[]>([]);
   const [devlogs, setDevlogs] = useState<DevlogEntry[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [developerProfiles, setDeveloperProfiles] = useState<DeveloperProfile[]>(
@@ -206,7 +225,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       fetchDeveloperProfiles(supabase),
     ]);
 
-    setSubmittedGames(projects);
+    setSubmittedGames(projects.map((game) => mergeGameWithExtras(game)));
     setDeveloperProfiles(profiles);
   }, []);
 
@@ -216,6 +235,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     setFollowerCounts(loadCounts(FOLLOWERS_STORAGE_KEY));
     setFollowedCreators(loadFollowing());
     setBookmarkedGameIds(loadBookmarks());
+    setWatchedGameIds(loadWatchedGames());
     setDevlogs(loadDevlogs());
     setNotifications(loadNotifications());
     setHydrated(true);
@@ -277,6 +297,14 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    localStorage.setItem(WATCHED_STORAGE_KEY, JSON.stringify(watchedGameIds));
+  }, [watchedGameIds, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
     localStorage.setItem(DEVLOGS_STORAGE_KEY, JSON.stringify(devlogs));
   }, [devlogs, hydrated]);
 
@@ -302,8 +330,22 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       }
 
       const game = await insertProject(supabase, data, owner);
-      setSubmittedGames((prev) => [game, ...prev.filter((item) => item.id !== game.id)]);
-      return game;
+      const enriched = mergeGameWithExtras({
+        ...game,
+        estimatedPlayTime: data.estimatedPlayTime,
+        focusNotes: data.focusNotes,
+      });
+      if (data.estimatedPlayTime || data.focusNotes) {
+        saveGameExtra(game.id, {
+          estimatedPlayTime: data.estimatedPlayTime,
+          focusNotes: data.focusNotes,
+        });
+      }
+      setSubmittedGames((prev) => [
+        enriched,
+        ...prev.filter((item) => item.id !== game.id),
+      ]);
+      return enriched;
     },
     [],
   );
@@ -402,7 +444,8 @@ export function GamesProvider({ children }: { children: ReactNode }) {
 
   const getGameById = useCallback(
     (id: string) => {
-      return getSubmittedGameById(id) ?? getMockGameById(id);
+      const game = getSubmittedGameById(id) ?? getMockGameById(id);
+      return game ? mergeGameWithExtras(game) : undefined;
     },
     [getSubmittedGameById],
   );
@@ -559,8 +602,24 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   const getBookmarkedGames = useCallback(() => {
     return bookmarkedGameIds
       .map((id) => getSubmittedGameById(id) ?? getMockGameById(id))
-      .filter((game): game is Game => game !== undefined);
+      .filter((game): game is Game => game !== undefined)
+      .map((game) => mergeGameWithExtras(game));
   }, [bookmarkedGameIds, getSubmittedGameById]);
+
+  const isWatching = useCallback(
+    (gameId: string) => watchedGameIds.includes(gameId),
+    [watchedGameIds],
+  );
+
+  const watchGame = useCallback((gameId: string) => {
+    setWatchedGameIds((prev) =>
+      prev.includes(gameId) ? prev : [...prev, gameId],
+    );
+  }, []);
+
+  const unwatchGame = useCallback((gameId: string) => {
+    setWatchedGameIds((prev) => prev.filter((id) => id !== gameId));
+  }, []);
 
   const getDevlogsByProject = useCallback(
     (projectId: string) =>
@@ -670,6 +729,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       isBookmarked,
       bookmarkGame,
       getBookmarkedGames,
+      isWatching,
+      watchGame,
+      unwatchGame,
       getDevlogsByProject,
       hasDevlogs,
       addDevlog,
@@ -708,6 +770,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       isBookmarked,
       bookmarkGame,
       getBookmarkedGames,
+      isWatching,
+      watchGame,
+      unwatchGame,
       getDevlogsByProject,
       hasDevlogs,
       addDevlog,
