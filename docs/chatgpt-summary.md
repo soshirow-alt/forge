@@ -1,6 +1,6 @@
 ■ 現在の状態
 
-本番 bffe4ff + Supabase migration 001/002/003 適用済み。devlog は本番確認済み。localStorage Step 2（デッドコード削除）を実装・build 成功。push/deploy 待ち or 実施中。
+本番 https://forge-flame-gamma.vercel.app は commit **5dfa233**（LS 残骸削除）Deploy **Ready**。Supabase migration 001/002/003 適用済み。devlog 本番確認済み。
 
 ■ 今回実装・確認したこと
 
