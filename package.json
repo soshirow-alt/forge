@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "copy-summary": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/copy-chatgpt-summary.ps1"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

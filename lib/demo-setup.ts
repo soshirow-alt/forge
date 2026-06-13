@@ -2,12 +2,15 @@ import { mergeTagsWithRecruitment } from "@/lib/game-tags";
 import type { DevlogEntry } from "@/lib/devlogs";
 import type { SubmitFormData } from "@/lib/project-form";
 import { insertDemoProjects } from "@/lib/supabase/projects";
+import {
+  deleteProjectDevlogsByProjectId,
+  insertProjectDevlog,
+} from "@/lib/supabase/project-devlogs";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Game } from "@/lib/mock-games";
 
 const SUPPORT_STORAGE_KEY = "forge-support-counts";
 const APPLICANT_STORAGE_KEY = "forge-applicant-counts";
-const DEVLOGS_STORAGE_KEY = "forge-devlogs";
 const FEEDBACK_STORAGE_KEY = "forge-game-feedback";
 
 const DEMO_PROJECT_TITLES = [
@@ -217,12 +220,7 @@ function removeDemoLocalData(existingProjectIds: string[]) {
     delete feedback[id];
   }
 
-  const storedDevlogs = localStorage.getItem(DEVLOGS_STORAGE_KEY);
-  const existingDevlogs = storedDevlogs
-    ? (JSON.parse(storedDevlogs) as DevlogEntry[])
-    : [];
-
-  return { supportCounts, applicantCounts, feedback, existingDevlogs };
+  return { supportCounts, applicantCounts, feedback };
 }
 
 export async function setupDemoEnvironment(
@@ -250,8 +248,12 @@ export async function setupDemoEnvironment(
       localStorage.getItem("forge-demo-project-ids") || "[]",
     ) as string[];
 
-    const { supportCounts, applicantCounts, feedback, existingDevlogs } =
+    const { supportCounts, applicantCounts, feedback } =
       removeDemoLocalData(previousIds);
+
+    for (const oldId of previousIds) {
+      await deleteProjectDevlogsByProjectId(supabase, oldId).catch(() => undefined);
+    }
 
     projectIds.forEach((id, index) => {
       supportCounts[id] = supportTotals[index] ?? 0;
@@ -260,21 +262,23 @@ export async function setupDemoEnvironment(
 
     Object.assign(feedback, createDemoFeedback(projectIds));
 
-    const filteredDevlogs = existingDevlogs.filter(
-      (entry) => !previousIds.includes(entry.projectId),
-    );
-
     localStorage.setItem(SUPPORT_STORAGE_KEY, JSON.stringify(supportCounts));
     localStorage.setItem(APPLICANT_STORAGE_KEY, JSON.stringify(applicantCounts));
     localStorage.setItem(FEEDBACK_STORAGE_KEY, JSON.stringify(feedback));
     localStorage.setItem(
-      DEVLOGS_STORAGE_KEY,
-      JSON.stringify([...createDemoDevlogs(projectIds), ...filteredDevlogs]),
-    );
-    localStorage.setItem(
       "forge-demo-project-ids",
       JSON.stringify(projectIds),
     );
+
+    for (const devlog of createDemoDevlogs(projectIds)) {
+      await insertProjectDevlog(
+        supabase,
+        ownerId,
+        devlog.projectId,
+        devlog.title,
+        devlog.content,
+      ).catch(() => undefined);
+    }
   } catch {
     // ignore storage errors
   }

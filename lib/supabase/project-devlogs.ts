@@ -1,0 +1,91 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { DevlogEntry } from "@/lib/devlogs";
+
+type DevlogRow = {
+  id: string;
+  project_id: string;
+  author_id: string;
+  title: string;
+  content: string;
+  created_at: string;
+};
+
+function devlogRowToEntry(row: DevlogRow): DevlogEntry {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    title: row.title,
+    content: row.content,
+    date: row.created_at.split("T")[0] ?? row.created_at,
+  };
+}
+
+export async function fetchAllProjectDevlogs(
+  supabase: SupabaseClient,
+): Promise<DevlogEntry[]> {
+  const { data, error } = await supabase
+    .from("project_devlogs")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return ((data ?? []) as DevlogRow[]).map(devlogRowToEntry);
+}
+
+export async function insertProjectDevlog(
+  supabase: SupabaseClient,
+  authorId: string,
+  projectId: string,
+  title: string,
+  content: string,
+): Promise<DevlogEntry> {
+  const { data, error } = await supabase
+    .from("project_devlogs")
+    .insert({
+      project_id: projectId,
+      author_id: authorId,
+      title: title.trim(),
+      content: content.trim(),
+    })
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return devlogRowToEntry(data as DevlogRow);
+}
+
+export async function deleteProjectDevlogsByProjectId(
+  supabase: SupabaseClient,
+  projectId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("project_devlogs")
+    .delete()
+    .eq("project_id", projectId);
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function fetchWatcherUserIds(
+  supabase: SupabaseClient,
+  projectId: string,
+): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("project_watches")
+    .select("user_id")
+    .eq("project_id", projectId);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map((row) => row.user_id);
+}

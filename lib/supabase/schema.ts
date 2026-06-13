@@ -60,6 +60,26 @@ export type ProjectFeedbackRow = {
   created_at: string;
 };
 
+export type ProjectDevlogRow = {
+  id: string;
+  project_id: string;
+  author_id: string;
+  title: string;
+  content: string;
+  created_at: string;
+};
+
+export type UserNotificationRow = {
+  id: string;
+  user_id: string;
+  type: "devlog";
+  project_id: string;
+  devlog_id: string | null;
+  message: string;
+  read_at: string | null;
+  created_at: string;
+};
+
 export type DeveloperProfileRow = {
   user_id: string;
   creator_id: string;

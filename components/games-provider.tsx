@@ -20,7 +20,6 @@ import { isGamePublic } from "@/lib/project-visibility";
 import type { ProjectEditFormData, SubmitFormData } from "@/lib/project-form";
 export type { ProjectEditFormData, SubmitFormData } from "@/lib/project-form";
 import {
-  mockDevlogs,
   sortDevlogsNewestFirst,
   type DevlogEntry,
 } from "@/lib/devlogs";
@@ -66,11 +65,24 @@ import {
   type UserEngagementState,
 } from "@/lib/supabase/user-engagement";
 import type { GameFeedbackItem } from "@/lib/game-feedback-storage";
+import {
+  deleteProjectDevlogsByProjectId,
+  fetchAllProjectDevlogs,
+  fetchWatcherUserIds,
+  insertProjectDevlog,
+} from "@/lib/supabase/project-devlogs";
+import {
+  fetchUserNotifications,
+  insertDevlogNotifications,
+  isDatabaseNotificationId,
+  markAllUserNotificationsAsRead,
+  markUserNotificationAsRead,
+  notificationRowToNotification,
+} from "@/lib/supabase/user-notifications-db";
 
 const APPLICANT_STORAGE_KEY = "forge-applicant-counts";
 const FOLLOWERS_STORAGE_KEY = "forge-follower-counts";
 const FOLLOWING_STORAGE_KEY = "forge-following-creators";
-const DEVLOGS_STORAGE_KEY = "forge-devlogs";
 const NOTIFICATIONS_STORAGE_KEY = "forge-notifications";
 
 const EMPTY_USER_ENGAGEMENT: UserEngagementState = {
@@ -122,12 +134,13 @@ type GamesContextValue = {
   unwatchGame: (gameId: string) => void;
   getDevlogsByProject: (projectId: string) => DevlogEntry[];
   hasDevlogs: (projectId: string) => boolean;
-  addDevlog: (projectId: string, title: string, content: string) => void;
+  addDevlog: (projectId: string, title: string, content: string) => Promise<void>;
   getNotifications: () => Notification[];
   getUnreadNotificationCount: () => number;
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
   addNotification: (type: NotificationType, projectId: string) => void;
+  reloadNotifications: () => Promise<void>;
   reloadFromStorage: () => Promise<void>;
   getDeveloperProfileByUserId: (userId: string) => DeveloperProfile | undefined;
   saveDeveloperProfile: (
@@ -166,20 +179,7 @@ function loadFollowing(): string[] {
   }
 }
 
-function loadDevlogs(): DevlogEntry[] {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  try {
-    const stored = localStorage.getItem(DEVLOGS_STORAGE_KEY);
-    return stored ? (JSON.parse(stored) as DevlogEntry[]) : mockDevlogs;
-  } catch {
-    return mockDevlogs;
-  }
-}
-
-function loadNotifications(): Notification[] {
+function loadLocalNotifications(): Notification[] {
   if (typeof window === "undefined") {
     return [];
   }
@@ -187,10 +187,12 @@ function loadNotifications(): Notification[] {
   try {
     const stored = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
     const notifications = stored ? (JSON.parse(stored) as Notification[]) : [];
-    return notifications.map((notification) => ({
-      ...notification,
-      read: notification.read ?? false,
-    }));
+    return notifications
+      .filter((notification) => notification.type !== "devlog")
+      .map((notification) => ({
+        ...notification,
+        read: notification.read ?? false,
+      }));
   } catch {
     return [];
   }
@@ -206,7 +208,10 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   const [followerCounts, setFollowerCounts] = useState<Counts>({});
   const [followedCreators, setFollowedCreators] = useState<string[]>([]);
   const [devlogs, setDevlogs] = useState<DevlogEntry[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [localNotifications, setLocalNotifications] = useState<Notification[]>(
+    [],
+  );
+  const [dbNotifications, setDbNotifications] = useState<Notification[]>([]);
   const [developerProfiles, setDeveloperProfiles] = useState<DeveloperProfile[]>(
     [],
   );
@@ -233,8 +238,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     setApplicantCounts(loadCounts(APPLICANT_STORAGE_KEY));
     setFollowerCounts(loadCounts(FOLLOWERS_STORAGE_KEY));
     setFollowedCreators(loadFollowing());
-    setDevlogs(loadDevlogs());
-    setNotifications(loadNotifications());
+    setLocalNotifications(loadLocalNotifications());
     setHydrated(true);
 
     const supabase = getOptionalSupabaseClient();
@@ -242,6 +246,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       void fetchSupportCounts(supabase)
         .then(setSupportCounts)
         .catch(() => setSupportCounts({}));
+      void fetchAllProjectDevlogs(supabase)
+        .then(setDevlogs)
+        .catch(() => setDevlogs([]));
     }
   }, []);
 
@@ -252,6 +259,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
 
     if (!user) {
       setUserEngagement(EMPTY_USER_ENGAGEMENT);
+      setDbNotifications([]);
       return;
     }
 
@@ -263,7 +271,21 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     void fetchUserEngagement(supabase, user.id)
       .then(setUserEngagement)
       .catch(() => setUserEngagement(EMPTY_USER_ENGAGEMENT));
-  }, [authHydrated, user?.id]);
+
+    void fetchUserNotifications(supabase, user.id)
+      .then((rows) =>
+        rows.map((row) =>
+          notificationRowToNotification(
+            row,
+            submittedGames.find((game) => game.id === row.project_id)?.title ??
+              getMockGameById(row.project_id)?.title ??
+              "作品",
+          ),
+        ),
+      )
+      .then(setDbNotifications)
+      .catch(() => setDbNotifications([]));
+  }, [authHydrated, user?.id, submittedGames]);
 
   useEffect(() => {
     if (!authHydrated) {
@@ -305,19 +327,11 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    localStorage.setItem(DEVLOGS_STORAGE_KEY, JSON.stringify(devlogs));
-  }, [devlogs, hydrated]);
-
-  useEffect(() => {
-    if (!hydrated) {
-      return;
-    }
-
     localStorage.setItem(
       NOTIFICATIONS_STORAGE_KEY,
-      JSON.stringify(notifications),
+      JSON.stringify(localNotifications),
     );
-  }, [notifications, hydrated]);
+  }, [localNotifications, hydrated]);
 
   const addSubmittedGame = useCallback(
     async (
@@ -393,6 +407,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     }
 
     await deleteProjectInDb(supabase, id);
+    await deleteProjectDevlogsByProjectId(supabase, id);
     setSubmittedGames((prev) => prev.filter((game) => game.id !== id));
     setSupportCounts((prev) => {
       const next = { ...prev };
@@ -416,7 +431,8 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       playedProjectIds: prev.playedProjectIds.filter((gameId) => gameId !== id),
     }));
     setDevlogs((prev) => prev.filter((entry) => entry.projectId !== id));
-    setNotifications((prev) => prev.filter((entry) => entry.projectId !== id));
+    setLocalNotifications((prev) => prev.filter((entry) => entry.projectId !== id));
+    setDbNotifications((prev) => prev.filter((entry) => entry.projectId !== id));
   }, []);
 
   const getSubmittedGameById = useCallback(
@@ -462,6 +478,10 @@ export function GamesProvider({ children }: { children: ReactNode }) {
 
   const addNotification = useCallback(
     (type: NotificationType, projectId: string) => {
+      if (type === "devlog") {
+        return;
+      }
+
       const game = getSubmittedGameById(projectId) ?? getMockGameById(projectId);
       if (!game) {
         return;
@@ -477,34 +497,98 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         read: false,
       };
 
-      setNotifications((prev) => [notification, ...prev]);
+      setLocalNotifications((prev) => [notification, ...prev]);
     },
     [getSubmittedGameById],
   );
 
   const getNotifications = useCallback(
-    () => sortNotificationsNewestFirst(notifications),
-    [notifications],
+    () =>
+      sortNotificationsNewestFirst([...dbNotifications, ...localNotifications]),
+    [dbNotifications, localNotifications],
   );
 
   const getUnreadNotificationCount = useCallback(
-    () => notifications.filter((notification) => !notification.read).length,
-    [notifications],
+    () =>
+      [...dbNotifications, ...localNotifications].filter(
+        (notification) => !notification.read,
+      ).length,
+    [dbNotifications, localNotifications],
   );
 
-  const markNotificationAsRead = useCallback((id: string) => {
-    setNotifications((prev) =>
-      prev.map((notification) =>
-        notification.id === id ? { ...notification, read: true } : notification,
-      ),
-    );
-  }, []);
+  const markNotificationAsRead = useCallback(
+    (id: string) => {
+      if (isDatabaseNotificationId(id)) {
+        if (!user) {
+          return;
+        }
+
+        const supabase = getOptionalSupabaseClient();
+        if (!supabase) {
+          return;
+        }
+
+        setDbNotifications((prev) =>
+          prev.map((notification) =>
+            notification.id === id ? { ...notification, read: true } : notification,
+          ),
+        );
+        void markUserNotificationAsRead(supabase, user.id, id);
+        return;
+      }
+
+      setLocalNotifications((prev) =>
+        prev.map((notification) =>
+          notification.id === id ? { ...notification, read: true } : notification,
+        ),
+      );
+    },
+    [user],
+  );
 
   const markAllNotificationsAsRead = useCallback(() => {
-    setNotifications((prev) =>
+    setLocalNotifications((prev) =>
       prev.map((notification) => ({ ...notification, read: true })),
     );
-  }, []);
+
+    if (!user) {
+      return;
+    }
+
+    const supabase = getOptionalSupabaseClient();
+    if (!supabase) {
+      return;
+    }
+
+    setDbNotifications((prev) =>
+      prev.map((notification) => ({ ...notification, read: true })),
+    );
+    void markAllUserNotificationsAsRead(supabase, user.id);
+  }, [user]);
+
+  const reloadNotifications = useCallback(async () => {
+    if (!user) {
+      setDbNotifications([]);
+      return;
+    }
+
+    const supabase = getOptionalSupabaseClient();
+    if (!supabase) {
+      return;
+    }
+
+    const rows = await fetchUserNotifications(supabase, user.id);
+    setDbNotifications(
+      rows.map((row) =>
+        notificationRowToNotification(
+          row,
+          submittedGames.find((game) => game.id === row.project_id)?.title ??
+            getMockGameById(row.project_id)?.title ??
+            "作品",
+        ),
+      ),
+    );
+  }, [user, submittedGames]);
 
   const getGamesBySection = useCallback(
     (section: Game["section"]) => {
@@ -779,19 +863,44 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   );
 
   const addDevlog = useCallback(
-    (projectId: string, title: string, content: string) => {
-      const entry: DevlogEntry = {
-        id: `devlog-${Date.now()}`,
+    async (projectId: string, title: string, content: string) => {
+      if (!user) {
+        throw new Error("Login required");
+      }
+
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      const game = getSubmittedGameById(projectId) ?? getMockGameById(projectId);
+      const projectTitle = game?.title ?? "作品";
+
+      const entry = await insertProjectDevlog(
+        supabase,
+        user.id,
         projectId,
         title,
         content,
-        date: new Date().toISOString().split("T")[0],
-      };
-
+      );
       setDevlogs((prev) => [entry, ...prev]);
-      addNotification("devlog", projectId);
+
+      const watcherIds = await fetchWatcherUserIds(supabase, projectId);
+      const recipientIds = watcherIds.filter((watcherId) => watcherId !== user.id);
+
+      if (recipientIds.length === 0) {
+        return;
+      }
+
+      const message = createNotificationMessage("devlog", projectTitle);
+      await insertDevlogNotifications(supabase, {
+        recipientUserIds: recipientIds,
+        projectId,
+        devlogId: entry.id,
+        message,
+      });
     },
-    [addNotification],
+    [user, getSubmittedGameById],
   );
 
   const getDeveloperProfileByUserId = useCallback(
@@ -888,6 +997,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       markNotificationAsRead,
       markAllNotificationsAsRead,
       addNotification,
+      reloadNotifications,
       reloadFromStorage,
       getDeveloperProfileByUserId,
       saveDeveloperProfile,
@@ -934,6 +1044,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       markNotificationAsRead,
       markAllNotificationsAsRead,
       addNotification,
+      reloadNotifications,
       reloadFromStorage,
       getDeveloperProfileByUserId,
       saveDeveloperProfile,

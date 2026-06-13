@@ -16,16 +16,26 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
   const game = getGameById(projectId);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!game) {
     notFound();
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSubmitting(true);
+    setError(null);
 
-    addDevlog(projectId, title, content);
-    router.push(`/games/${projectId}`);
+    try {
+      await addDevlog(projectId, title, content);
+      router.push(`/games/${projectId}`);
+    } catch {
+      setError("開発ログの投稿に失敗しました。Supabase の設定と migration 003 を確認してください。");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -47,6 +57,12 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
           onSubmit={handleSubmit}
           className="mt-8 space-y-6 rounded-xl border border-zinc-800 bg-zinc-900/80 p-8"
         >
+          {error && (
+            <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+              {error}
+            </p>
+          )}
+
           <div>
             <label htmlFor="title" className="text-sm font-medium text-zinc-400">
               タイトル
@@ -82,9 +98,10 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
 
           <button
             type="submit"
-            className="w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-4 text-lg font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+            disabled={submitting}
+            className="w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-4 text-lg font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:opacity-60"
           >
-            投稿する
+            {submitting ? "投稿中..." : "投稿する"}
           </button>
         </form>
       </main>

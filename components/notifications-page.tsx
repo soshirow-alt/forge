@@ -28,8 +28,15 @@ export function NotificationsPage() {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     getUnreadNotificationCount,
+    reloadNotifications,
   } = useGames();
   const [filter, setFilter] = useState<NotificationFilter>("all");
+
+  useEffect(() => {
+    if (hydrated && user) {
+      void reloadNotifications();
+    }
+  }, [hydrated, user, reloadNotifications]);
 
   useEffect(() => {
     if (hydrated && !user) {

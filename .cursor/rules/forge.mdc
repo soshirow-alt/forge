@@ -1,0 +1,16 @@
+---
+description: Forge product rules —原典優先、コア体験ループ、ドキュメント更新義務
+alwaysApply: true
+---
+
+# Forge
+
+Read `docs/forge-principles.md` before product or UX changes. Do not alter the meaning of the原典.
+
+- Judge features by whether they strengthen: 投稿 → 発見 → プレイ → フィードバック → 改善 → 再プレイ
+- Do not change specs for implementation convenience
+- Do not store shared production user data in localStorage (drafts/UI state only; Supabase for persistence)
+- On task completion: update `docs/forge-changelog.md`, `docs/forge-handoff.md`, overwrite `docs/chatgpt-summary.md`, and output the same summary in one ```text code block at the end
+- When a **design decision** is involved (DB, auth, notifications, permissions, storage, extensibility): add optional blocks per topic — `■ Cursorの推奨案` / `■ 推奨理由` / `■ 懸念点` (3–5 lines each). Not every task.
+
+Full rules: `AGENTS.md` and `docs/forge-principles.md`.
