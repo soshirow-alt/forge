@@ -1,5 +1,5 @@
 ■ 現在の状態
-UX P0実装完了。build成功。commit/push/deploy実施予定。DB変更なし。
+UX P0実装完了。commit 771039f。本番 deploy 完了（forge-flame-gamma.vercel.app）。DB変更なし。
 
 ■ P0実装内容
 1 devlogラベル：「今回の更新タイトル/内容」+説明。2 投稿完了「次にやること」：開発ログ(primary)、プレイURL確認、テスター募集。3 開発ダッシュボード各行：開発ログを書く、フィードバックを見る。4 名称「開発ダッシュボード」に統一。5 ログインEnter送信。
