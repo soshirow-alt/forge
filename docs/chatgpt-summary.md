@@ -1,5 +1,5 @@
 ■ 現在の状態
-migration 004 実装完了・build 成功・commit/push 済み（本番 migration / deploy は未実施）。本番 commit は push 後の HEAD。projects 1件（消えるかな？ phase=プロトタイプ→004で試作版に更新予定、status=テスター募集中）。
+migration 004 実装完了・build 成功・commit f4f09c2 push 済み（本番 migration / deploy は未実施）。projects 1件（消えるかな？ phase=プロトタイプ→004で試作版に更新予定、status=テスター募集中）。
 
 ■ migration 004 の内容（実装済み）
 projects.playable_version（default 0.1）。project_feedback.version_key + updated_at + UNIQUE(user_id,project_id,version_key)。project_devlogs.published_version。RLS：自分のFB UPDATE 可。phase プロトタイプ→試作版 UPDATE 同梱。status は触らない。
