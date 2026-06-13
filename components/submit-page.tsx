@@ -165,7 +165,7 @@ export function SubmitPage() {
 
   useEffect(() => {
     if (hydrated && !user) {
-      router.replace("/login?redirect=/submit");
+      router.replace("/login");
     }
   }, [hydrated, user, router]);
 
@@ -287,7 +287,7 @@ export function SubmitPage() {
     event.preventDefault();
 
     if (!user) {
-      router.push("/login?redirect=/submit");
+      router.push("/login");
       return;
     }
 

@@ -1,13 +1,10 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useGames } from "@/components/games-provider";
 import {
   feedbackHasContent,
-  loadStoredFeedback,
   replayIntentLabel,
-  saveStoredFeedback,
-  type FeedbackByGame,
   type GameFeedbackItem,
   type ReplayIntent,
 } from "@/lib/game-feedback-storage";
@@ -21,35 +18,19 @@ type GameFeedbackFormProps = {
 };
 
 export function GameFeedbackForm({ gameId, focusNotes }: GameFeedbackFormProps) {
-  const { addNotification } = useGames();
-  const [feedbackByGame, setFeedbackByGame] = useState<FeedbackByGame>({});
+  const { submitProjectFeedback } = useGames();
   const [goodPoints, setGoodPoints] = useState("");
   const [concerns, setConcerns] = useState("");
   const [bugs, setBugs] = useState("");
   const [focusResponse, setFocusResponse] = useState("");
   const [wouldReplay, setWouldReplay] = useState<ReplayIntent | "">("");
-  const [hydrated, setHydrated] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    setFeedbackByGame(loadStoredFeedback());
-    setHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (!hydrated) {
-      return;
-    }
-
-    saveStoredFeedback(feedbackByGame);
-  }, [feedbackByGame, hydrated]);
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const feedback: GameFeedbackItem = {
-      id: `feedback-${Date.now()}`,
-      createdAt: new Date().toISOString(),
+    const feedback: Omit<GameFeedbackItem, "id" | "createdAt"> = {
       goodPoints: goodPoints.trim() || undefined,
       concerns: concerns.trim() || undefined,
       bugs: bugs.trim() || undefined,
@@ -61,18 +42,18 @@ export function GameFeedbackForm({ gameId, focusNotes }: GameFeedbackFormProps) 
       return;
     }
 
-    setFeedbackByGame((prev) => ({
-      ...prev,
-      [gameId]: [feedback, ...(prev[gameId] ?? [])],
-    }));
-
-    addNotification("feedback", gameId);
-    setSubmitted(true);
-    setGoodPoints("");
-    setConcerns("");
-    setBugs("");
-    setFocusResponse("");
-    setWouldReplay("");
+    setSubmitting(true);
+    try {
+      await submitProjectFeedback(gameId, feedback);
+      setSubmitted(true);
+      setGoodPoints("");
+      setConcerns("");
+      setBugs("");
+      setFocusResponse("");
+      setWouldReplay("");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (submitted) {
@@ -94,7 +75,7 @@ export function GameFeedbackForm({ gameId, focusNotes }: GameFeedbackFormProps) 
     <section className="mt-4 border-t border-zinc-800/80 pt-4">
       <h2 className="text-sm font-medium text-zinc-500">プレイ後フィードバック</h2>
       <p className="mt-1 text-xs text-zinc-600">
-        感想は開発者への改善材料として届きます。星評価ではなく、具体的な観点で書いてください。
+        感想は開発者への改善材料として届きます。具体的な観点で書いてください。
       </p>
 
       <form
@@ -196,7 +177,8 @@ export function GameFeedbackForm({ gameId, focusNotes }: GameFeedbackFormProps) 
 
         <button
           type="submit"
-          className="rounded-lg border border-zinc-700 px-5 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-orange-500/40 hover:text-orange-400"
+          disabled={submitting}
+          className="rounded-lg border border-zinc-700 px-5 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-orange-500/40 hover:text-orange-400 disabled:opacity-60"
         >
           フィードバックを送る
         </button>

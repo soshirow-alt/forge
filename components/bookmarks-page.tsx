@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useAuth } from "@/components/auth-provider";
 import { BookmarkButton } from "@/components/bookmark-button";
 import { CreatorLink } from "@/components/creator-link";
 import { ForgeHeader } from "@/components/forge-header";
@@ -8,9 +11,30 @@ import { GameTags } from "@/components/game-tags";
 import { GameThumbnail } from "@/components/game-thumbnail";
 import { PlayTypeLabel } from "@/components/play-type-label";
 import { useGames } from "@/components/games-provider";
+import { LOGIN_PATH } from "@/hooks/use-require-auth";
 
 export function BookmarksPage() {
+  const router = useRouter();
+  const { user, hydrated } = useAuth();
   const { getBookmarkedGames } = useGames();
+
+  useEffect(() => {
+    if (hydrated && !user) {
+      router.replace(LOGIN_PATH);
+    }
+  }, [hydrated, user, router]);
+
+  if (!hydrated || !user) {
+    return (
+      <div className="min-h-full bg-zinc-950 text-zinc-100">
+        <ForgeHeader />
+        <main className="mx-auto max-w-7xl px-6 py-12">
+          <p className="text-zinc-500">読み込み中...</p>
+        </main>
+      </div>
+    );
+  }
+
   const games = getBookmarkedGames();
 
   return (

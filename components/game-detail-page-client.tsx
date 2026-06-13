@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { AuthGatedHint } from "@/components/auth-gated-hint";
 import { ForgeHeader } from "@/components/forge-header";
 import { ForgeIdentityBlock } from "@/components/forge-identity-block";
 import { GameCommunityVoicesSection } from "@/components/game-community-voices-section";
@@ -13,8 +14,7 @@ import { GameDetailSidebar } from "@/components/game-detail-sidebar";
 import { GameFeedbackForm } from "@/components/game-feedback";
 import { GameProjectHistorySection } from "@/components/game-project-history-section";
 import { useGames } from "@/components/games-provider";
-import { hasUserSubmittedFeedback } from "@/lib/game-feedback-storage";
-import { hasUserPlayedGame } from "@/lib/play-session";
+import { useRequireAuth } from "@/hooks/use-require-auth";
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString("ja-JP", {
@@ -24,21 +24,21 @@ function formatDate(date: string) {
   });
 }
 
-function userCanSubmitFeedback(gameId: string): boolean {
-  return hasUserPlayedGame(gameId) || hasUserSubmittedFeedback(gameId);
-}
-
 export function GameDetailPageClient({ id }: { id: string }) {
   const { user } = useAuth();
-  const { getGameById, isSubmittedGame, isProjectOwner, dataReady } = useGames();
+  const { getGameById, isSubmittedGame, isProjectOwner, dataReady, hasPlayedGame } =
+    useGames();
+  const { isLoggedIn, goToLogin } = useRequireAuth();
   const game = getGameById(id);
-  const [canSubmitFeedback, setCanSubmitFeedback] = useState(false);
-  const [hasPlayed, setHasPlayed] = useState(false);
+  const [played, setPlayed] = useState(false);
 
   useEffect(() => {
-    setCanSubmitFeedback(userCanSubmitFeedback(id));
-    setHasPlayed(hasUserPlayedGame(id));
-  }, [id]);
+    if (isLoggedIn) {
+      setPlayed(hasPlayedGame(id));
+    } else {
+      setPlayed(false);
+    }
+  }, [id, isLoggedIn, hasPlayedGame]);
 
   if (!dataReady) {
     return (
@@ -111,15 +111,34 @@ export function GameDetailPageClient({ id }: { id: string }) {
 
                 <GameProjectHistorySection game={game} />
 
-                {canSubmitFeedback ? (
+                {isLoggedIn && played ? (
                   <GameFeedbackForm
                     gameId={game.id}
                     focusNotes={game.focusNotes}
                   />
-                ) : hasPlayed ? null : (
-                  <p className="mt-4 border-t border-zinc-800/80 pt-4 text-xs text-zinc-600">
-                    プレイ後に、開発者向けのフィードバックを送れます。
-                  </p>
+                ) : (
+                  <div className="mt-4 border-t border-zinc-800/80 pt-4">
+                    {!isLoggedIn ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={goToLogin}
+                          title="ログインすると使えます"
+                          className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-orange-500/40 hover:text-orange-400"
+                        >
+                          ログインしてフィードバック
+                        </button>
+                        <AuthGatedHint
+                          hint="プレイ後にフィードバックを送れます"
+                          className="mt-2"
+                        />
+                      </>
+                    ) : (
+                      <p className="text-xs text-zinc-600">
+                        プレイ後に、開発者向けのフィードバックを送れます。
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -128,10 +147,7 @@ export function GameDetailPageClient({ id }: { id: string }) {
                 userSubmitted={userSubmitted}
                 canEdit={canEdit}
                 formatDate={formatDate}
-                onPlay={() => {
-                  setHasPlayed(true);
-                  setCanSubmitFeedback(true);
-                }}
+                onPlay={() => setPlayed(true)}
               />
             </div>
 

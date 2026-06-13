@@ -83,7 +83,7 @@ export function MyProjectsPage() {
 
   useEffect(() => {
     if (hydrated && !user) {
-      router.replace("/login?redirect=/my-projects");
+      router.replace("/login");
     }
   }, [hydrated, user, router]);
 

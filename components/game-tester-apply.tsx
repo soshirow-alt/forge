@@ -1,6 +1,7 @@
 "use client";
 
 import { useGames } from "@/components/games-provider";
+import { useRequireAuth } from "@/hooks/use-require-auth";
 import { getDefaultApplicantCount } from "@/lib/demo-activity";
 import { LABEL_TEST_PLAY_JOIN, LABEL_TEST_PLAY_OPEN } from "@/lib/user-labels";
 
@@ -18,11 +19,14 @@ export function GameTesterApply({
   compact = false,
 }: GameTesterApplyProps) {
   const { getApplicantCount, incrementApplicantCount } = useGames();
+  const { isLoggedIn, requireAuth } = useRequireAuth();
   const defaultCount = getDefaultApplicantCount(gameId, isUserSubmitted);
   const applicantCount = getApplicantCount(gameId, defaultCount);
 
   function handleApply() {
-    incrementApplicantCount(gameId, defaultCount);
+    requireAuth(() => {
+      incrementApplicantCount(gameId, defaultCount);
+    });
   }
 
   return (
@@ -49,13 +53,14 @@ export function GameTesterApply({
       <button
         type="button"
         onClick={handleApply}
+        title={isLoggedIn ? undefined : "ログインすると使えます"}
         className={
           compact
             ? "mt-2 w-full rounded-lg border border-orange-500/50 bg-orange-500/10 px-4 py-2.5 text-sm font-semibold text-orange-400 transition-colors hover:bg-orange-500/20"
             : "mt-4 w-full rounded-lg border border-orange-500/50 bg-orange-500/10 px-8 py-4 text-lg font-semibold text-orange-400 transition-colors hover:bg-orange-500/20 sm:w-auto"
         }
       >
-        {LABEL_TEST_PLAY_JOIN}
+        {isLoggedIn ? LABEL_TEST_PLAY_JOIN : "ログインして応募"}
       </button>
     </div>
   );

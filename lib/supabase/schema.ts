@@ -24,6 +24,42 @@ export type ProjectRow = {
   updated_at: string;
 };
 
+export type ProjectSupportRow = {
+  user_id: string;
+  project_id: string;
+  created_at: string;
+};
+
+export type ProjectBookmarkRow = {
+  user_id: string;
+  project_id: string;
+  created_at: string;
+};
+
+export type ProjectWatchRow = {
+  user_id: string;
+  project_id: string;
+  created_at: string;
+};
+
+export type ProjectPlayRow = {
+  user_id: string;
+  project_id: string;
+  created_at: string;
+};
+
+export type ProjectFeedbackRow = {
+  id: string;
+  user_id: string;
+  project_id: string;
+  good_points: string | null;
+  concerns: string | null;
+  bugs: string | null;
+  focus_response: string | null;
+  would_replay: "yes" | "maybe" | "no" | null;
+  created_at: string;
+};
+
 export type DeveloperProfileRow = {
   user_id: string;
   creator_id: string;

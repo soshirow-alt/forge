@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/components/auth-provider";
 import { ForgeHeader } from "@/components/forge-header";
 import { useGames } from "@/components/games-provider";
+import { LOGIN_PATH } from "@/hooks/use-require-auth";
 import {
   formatNotificationDate,
   getNotificationTypeLabel,
@@ -18,6 +21,8 @@ const filterOptions: { value: NotificationFilter; label: string }[] = [
 ];
 
 export function NotificationsPage() {
+  const router = useRouter();
+  const { user, hydrated } = useAuth();
   const {
     getNotifications,
     markNotificationAsRead,
@@ -25,6 +30,23 @@ export function NotificationsPage() {
     getUnreadNotificationCount,
   } = useGames();
   const [filter, setFilter] = useState<NotificationFilter>("all");
+
+  useEffect(() => {
+    if (hydrated && !user) {
+      router.replace(LOGIN_PATH);
+    }
+  }, [hydrated, user, router]);
+
+  if (!hydrated || !user) {
+    return (
+      <div className="min-h-full bg-zinc-950 text-zinc-100">
+        <ForgeHeader />
+        <main className="mx-auto max-w-3xl px-6 py-12">
+          <p className="text-zinc-500">読み込み中...</p>
+        </main>
+      </div>
+    );
+  }
 
   const notifications = getNotifications();
   const unreadCount = getUnreadNotificationCount();

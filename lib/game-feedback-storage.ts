@@ -73,7 +73,17 @@ export function hasUserSubmittedFeedback(gameId: string): boolean {
   return items.length > 0;
 }
 
-export function feedbackHasContent(item: GameFeedbackItem): boolean {
+export function feedbackHasContent(
+  item: Pick<
+    GameFeedbackItem,
+    | "goodPoints"
+    | "concerns"
+    | "bugs"
+    | "focusResponse"
+    | "wouldReplay"
+    | "text"
+  >,
+): boolean {
   return Boolean(
     item.goodPoints?.trim() ||
       item.concerns?.trim() ||

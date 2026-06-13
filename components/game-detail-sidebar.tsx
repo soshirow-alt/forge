@@ -1,17 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { BookmarkButton } from "@/components/bookmark-button";
 import { CreatorLink } from "@/components/creator-link";
 import { DevelopmentActivityPanel } from "@/components/development-activity-panel";
+import { AuthGatedHint } from "@/components/auth-gated-hint";
 import { GameExternalLinks } from "@/components/game-external-links";
 import { GameSupport } from "@/components/game-support";
 import { GameTesterApply } from "@/components/game-tester-apply";
 import { GameThumbnail } from "@/components/game-thumbnail";
 import { GameWatchButton } from "@/components/game-watch-button";
+import { BookmarkButton } from "@/components/bookmark-button";
 import { PlaySafetyNote } from "@/components/play-safety-note";
+import { useGames } from "@/components/games-provider";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import type { MouseEvent } from "react";
 import { getDistributionType } from "@/lib/play-environment";
-import { markGameAsPlayed } from "@/lib/play-session";
 import type { Game } from "@/lib/mock-games";
 
 type GameDetailSidebarProps = {
@@ -29,9 +32,19 @@ export function GameDetailSidebar({
   formatDate,
   onPlay,
 }: GameDetailSidebarProps) {
-  function handlePlayClick() {
-    markGameAsPlayed(game.id);
-    onPlay?.();
+  const { recordPlay } = useGames();
+  const { isLoggedIn, requireAuth } = useRequireAuth();
+
+  function handlePlayClick(event: MouseEvent<HTMLAnchorElement>) {
+    if (!isLoggedIn) {
+      event.preventDefault();
+      requireAuth(() => undefined);
+      return;
+    }
+
+    void recordPlay(game.id).then(() => {
+      onPlay?.();
+    });
   }
 
   return (
@@ -49,14 +62,21 @@ export function GameDetailSidebar({
 
       <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3.5">
         <a
-          href={game.playUrl}
+          href={isLoggedIn ? game.playUrl : LOGIN_FALLBACK}
           target="_blank"
           rel="noopener noreferrer"
           onClick={handlePlayClick}
+          title={isLoggedIn ? undefined : "ログインすると使えます"}
           className="block w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 text-center text-base font-semibold text-zinc-950 transition-opacity hover:opacity-90"
         >
-          プレイする
+          {isLoggedIn ? "プレイする" : "ログインしてプレイ"}
         </a>
+        {!isLoggedIn && (
+          <AuthGatedHint
+            hint="プレイ後にフィードバックを送れます"
+            className="mt-2 px-0.5"
+          />
+        )}
         <PlaySafetyNote
           playUrl={game.playUrl}
           variant={
@@ -120,6 +140,7 @@ export function GameDetailSidebar({
         </dl>
 
         <GameExternalLinks
+          gameId={game.id}
           playUrl={game.playUrl}
           steamUrl={game.steamUrl}
           itchUrl={game.itchUrl}
@@ -133,3 +154,5 @@ export function GameDetailSidebar({
     </aside>
   );
 }
+
+const LOGIN_FALLBACK = "#";

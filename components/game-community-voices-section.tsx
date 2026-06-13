@@ -6,7 +6,9 @@ import {
   getDemoCommunityData,
   type DemoCommunityComment,
 } from "@/lib/demo-community";
-import { loadStoredFeedback, type GameFeedbackItem, getFeedbackSummaryText } from "@/lib/game-feedback-storage";
+import { useGames } from "@/components/games-provider";
+import type { GameFeedbackItem } from "@/lib/game-feedback-storage";
+import { getFeedbackSummaryText } from "@/lib/game-feedback-storage";
 
 type GameCommunityVoicesSectionProps = {
   gameId: string;
@@ -56,13 +58,15 @@ function mergeComments(
 export function GameCommunityVoicesSection({
   gameId,
 }: GameCommunityVoicesSectionProps) {
+  const { getProjectFeedback } = useGames();
   const [storedFeedback, setStoredFeedback] = useState<GameFeedbackItem[]>([]);
   const demo = getDemoCommunityData(gameId);
 
   useEffect(() => {
-    const all = loadStoredFeedback();
-    setStoredFeedback(all[gameId] ?? []);
-  }, [gameId]);
+    void getProjectFeedback(gameId)
+      .then(setStoredFeedback)
+      .catch(() => setStoredFeedback([]));
+  }, [gameId, getProjectFeedback]);
 
   const summary = useMemo(() => {
     if (storedFeedback.length > 0) {

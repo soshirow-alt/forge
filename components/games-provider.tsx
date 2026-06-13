@@ -53,14 +53,32 @@ import {
   updateProjectFromSubmitForm,
 } from "@/lib/supabase/projects";
 
-const SUPPORT_STORAGE_KEY = "forge-support-counts";
+import {
+  addProjectBookmark,
+  addProjectSupport,
+  addProjectWatch,
+  fetchProjectFeedback,
+  fetchSupportCounts,
+  fetchUserEngagement,
+  insertProjectFeedback,
+  recordProjectPlay,
+  removeProjectWatch,
+  type UserEngagementState,
+} from "@/lib/supabase/user-engagement";
+import type { GameFeedbackItem } from "@/lib/game-feedback-storage";
+
 const APPLICANT_STORAGE_KEY = "forge-applicant-counts";
 const FOLLOWERS_STORAGE_KEY = "forge-follower-counts";
 const FOLLOWING_STORAGE_KEY = "forge-following-creators";
-const BOOKMARKS_STORAGE_KEY = "forge-bookmarks";
-const WATCHED_STORAGE_KEY = "forge-watched-games";
 const DEVLOGS_STORAGE_KEY = "forge-devlogs";
 const NOTIFICATIONS_STORAGE_KEY = "forge-notifications";
+
+const EMPTY_USER_ENGAGEMENT: UserEngagementState = {
+  supportedProjectIds: [],
+  bookmarkedProjectIds: [],
+  watchedProjectIds: [],
+  playedProjectIds: [],
+};
 
 type Counts = Record<string, number>;
 
@@ -78,7 +96,15 @@ type GamesContextValue = {
   getGameById: (id: string) => Game | undefined;
   getGamesBySection: (section: Game["section"]) => Game[];
   getSupportCount: (id: string, defaultCount?: number) => number;
-  incrementSupportCount: (id: string, defaultCount?: number) => number;
+  isSupported: (gameId: string) => boolean;
+  supportGame: (gameId: string) => Promise<void>;
+  hasPlayedGame: (gameId: string) => boolean;
+  recordPlay: (gameId: string) => Promise<void>;
+  submitProjectFeedback: (
+    gameId: string,
+    feedback: Omit<GameFeedbackItem, "id" | "createdAt">,
+  ) => Promise<GameFeedbackItem>;
+  getProjectFeedback: (gameId: string) => Promise<GameFeedbackItem[]>;
   getApplicantCount: (id: string, defaultCount?: number) => number;
   incrementApplicantCount: (id: string, defaultCount?: number) => number;
   isSubmittedGame: (id: string) => boolean;
@@ -153,32 +179,6 @@ function loadDevlogs(): DevlogEntry[] {
   }
 }
 
-function loadBookmarks(): string[] {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  try {
-    const stored = localStorage.getItem(BOOKMARKS_STORAGE_KEY);
-    return stored ? (JSON.parse(stored) as string[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function loadWatchedGames(): string[] {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  try {
-    const stored = localStorage.getItem(WATCHED_STORAGE_KEY);
-    return stored ? (JSON.parse(stored) as string[]) : [];
-  } catch {
-    return [];
-  }
-}
-
 function loadNotifications(): Notification[] {
   if (typeof window === "undefined") {
     return [];
@@ -200,11 +200,11 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   const { user, hydrated: authHydrated } = useAuth();
   const [submittedGames, setSubmittedGames] = useState<Game[]>([]);
   const [supportCounts, setSupportCounts] = useState<Counts>({});
+  const [userEngagement, setUserEngagement] =
+    useState<UserEngagementState>(EMPTY_USER_ENGAGEMENT);
   const [applicantCounts, setApplicantCounts] = useState<Counts>({});
   const [followerCounts, setFollowerCounts] = useState<Counts>({});
   const [followedCreators, setFollowedCreators] = useState<string[]>([]);
-  const [bookmarkedGameIds, setBookmarkedGameIds] = useState<string[]>([]);
-  const [watchedGameIds, setWatchedGameIds] = useState<string[]>([]);
   const [devlogs, setDevlogs] = useState<DevlogEntry[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [developerProfiles, setDeveloperProfiles] = useState<DeveloperProfile[]>(
@@ -230,16 +230,40 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    setSupportCounts(loadCounts(SUPPORT_STORAGE_KEY));
     setApplicantCounts(loadCounts(APPLICANT_STORAGE_KEY));
     setFollowerCounts(loadCounts(FOLLOWERS_STORAGE_KEY));
     setFollowedCreators(loadFollowing());
-    setBookmarkedGameIds(loadBookmarks());
-    setWatchedGameIds(loadWatchedGames());
     setDevlogs(loadDevlogs());
     setNotifications(loadNotifications());
     setHydrated(true);
+
+    const supabase = getOptionalSupabaseClient();
+    if (supabase) {
+      void fetchSupportCounts(supabase)
+        .then(setSupportCounts)
+        .catch(() => setSupportCounts({}));
+    }
   }, []);
+
+  useEffect(() => {
+    if (!authHydrated) {
+      return;
+    }
+
+    if (!user) {
+      setUserEngagement(EMPTY_USER_ENGAGEMENT);
+      return;
+    }
+
+    const supabase = getOptionalSupabaseClient();
+    if (!supabase) {
+      return;
+    }
+
+    void fetchUserEngagement(supabase, user.id)
+      .then(setUserEngagement)
+      .catch(() => setUserEngagement(EMPTY_USER_ENGAGEMENT));
+  }, [authHydrated, user?.id]);
 
   useEffect(() => {
     if (!authHydrated) {
@@ -251,14 +275,6 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       setDeveloperProfiles([]);
     });
   }, [authHydrated, user?.id, reloadFromStorage]);
-
-  useEffect(() => {
-    if (!hydrated) {
-      return;
-    }
-
-    localStorage.setItem(SUPPORT_STORAGE_KEY, JSON.stringify(supportCounts));
-  }, [supportCounts, hydrated]);
 
   useEffect(() => {
     if (!hydrated) {
@@ -283,22 +299,6 @@ export function GamesProvider({ children }: { children: ReactNode }) {
 
     localStorage.setItem(FOLLOWING_STORAGE_KEY, JSON.stringify(followedCreators));
   }, [followedCreators, hydrated]);
-
-  useEffect(() => {
-    if (!hydrated) {
-      return;
-    }
-
-    localStorage.setItem(BOOKMARKS_STORAGE_KEY, JSON.stringify(bookmarkedGameIds));
-  }, [bookmarkedGameIds, hydrated]);
-
-  useEffect(() => {
-    if (!hydrated) {
-      return;
-    }
-
-    localStorage.setItem(WATCHED_STORAGE_KEY, JSON.stringify(watchedGameIds));
-  }, [watchedGameIds, hydrated]);
 
   useEffect(() => {
     if (!hydrated) {
@@ -404,7 +404,17 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       delete next[id];
       return next;
     });
-    setBookmarkedGameIds((prev) => prev.filter((gameId) => gameId !== id));
+    setUserEngagement((prev) => ({
+      ...prev,
+      bookmarkedProjectIds: prev.bookmarkedProjectIds.filter(
+        (gameId) => gameId !== id,
+      ),
+      watchedProjectIds: prev.watchedProjectIds.filter((gameId) => gameId !== id),
+      supportedProjectIds: prev.supportedProjectIds.filter(
+        (gameId) => gameId !== id,
+      ),
+      playedProjectIds: prev.playedProjectIds.filter((gameId) => gameId !== id),
+    }));
     setDevlogs((prev) => prev.filter((entry) => entry.projectId !== id));
     setNotifications((prev) => prev.filter((entry) => entry.projectId !== id));
   }, []);
@@ -520,20 +530,109 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   );
 
   const getSupportCount = useCallback(
-    (id: string, defaultCount = 124) => supportCounts[id] ?? defaultCount,
+    (id: string, defaultCount = 0) => {
+      const dbCount = supportCounts[id];
+      if (dbCount !== undefined && dbCount > 0) {
+        return dbCount;
+      }
+      return defaultCount;
+    },
     [supportCounts],
   );
 
-  const incrementSupportCount = useCallback(
-    (id: string, defaultCount = 124) => {
-      const current = supportCounts[id] ?? defaultCount;
-      const next = current + 1;
-      setSupportCounts((prev) => ({ ...prev, [id]: next }));
-      addNotification("support", id);
-      return next;
-    },
-    [supportCounts, addNotification],
+  const isSupported = useCallback(
+    (gameId: string) => userEngagement.supportedProjectIds.includes(gameId),
+    [userEngagement.supportedProjectIds],
   );
+
+  const supportGame = useCallback(
+    async (gameId: string) => {
+      if (!user || isSupported(gameId)) {
+        return;
+      }
+
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return;
+      }
+
+      const added = await addProjectSupport(supabase, user.id, gameId);
+      if (!added) {
+        return;
+      }
+
+      setUserEngagement((prev) => ({
+        ...prev,
+        supportedProjectIds: [...prev.supportedProjectIds, gameId],
+      }));
+      setSupportCounts((prev) => ({
+        ...prev,
+        [gameId]: (prev[gameId] ?? 0) + 1,
+      }));
+      addNotification("support", gameId);
+    },
+    [user, isSupported, addNotification],
+  );
+
+  const hasPlayedGame = useCallback(
+    (gameId: string) => userEngagement.playedProjectIds.includes(gameId),
+    [userEngagement.playedProjectIds],
+  );
+
+  const recordPlay = useCallback(
+    async (gameId: string) => {
+      if (!user || hasPlayedGame(gameId)) {
+        return;
+      }
+
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return;
+      }
+
+      await recordProjectPlay(supabase, user.id, gameId);
+      setUserEngagement((prev) => ({
+        ...prev,
+        playedProjectIds: [...prev.playedProjectIds, gameId],
+      }));
+    },
+    [user, hasPlayedGame],
+  );
+
+  const submitProjectFeedback = useCallback(
+    async (
+      gameId: string,
+      feedback: Omit<GameFeedbackItem, "id" | "createdAt">,
+    ) => {
+      if (!user) {
+        throw new Error("Login required");
+      }
+
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      const item = await insertProjectFeedback(
+        supabase,
+        user.id,
+        gameId,
+        feedback,
+      );
+      addNotification("feedback", gameId);
+      return item;
+    },
+    [user, addNotification],
+  );
+
+  const getProjectFeedback = useCallback(async (gameId: string) => {
+    const supabase = getOptionalSupabaseClient();
+    if (!supabase) {
+      return [];
+    }
+
+    return fetchProjectFeedback(supabase, gameId);
+  }, []);
 
   const getApplicantCount = useCallback(
     (id: string, defaultCount = 0) => applicantCounts[id] ?? defaultCount,
@@ -589,37 +688,81 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   );
 
   const isBookmarked = useCallback(
-    (gameId: string) => bookmarkedGameIds.includes(gameId),
-    [bookmarkedGameIds],
+    (gameId: string) => userEngagement.bookmarkedProjectIds.includes(gameId),
+    [userEngagement.bookmarkedProjectIds],
   );
 
-  const bookmarkGame = useCallback((gameId: string) => {
-    setBookmarkedGameIds((prev) =>
-      prev.includes(gameId) ? prev : [...prev, gameId],
-    );
-  }, []);
+  const bookmarkGame = useCallback(
+    async (gameId: string) => {
+      if (!user || isBookmarked(gameId)) {
+        return;
+      }
+
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return;
+      }
+
+      await addProjectBookmark(supabase, user.id, gameId);
+      setUserEngagement((prev) => ({
+        ...prev,
+        bookmarkedProjectIds: [...prev.bookmarkedProjectIds, gameId],
+      }));
+    },
+    [user, isBookmarked],
+  );
 
   const getBookmarkedGames = useCallback(() => {
-    return bookmarkedGameIds
+    return userEngagement.bookmarkedProjectIds
       .map((id) => getSubmittedGameById(id) ?? getMockGameById(id))
       .filter((game): game is Game => game !== undefined)
       .map((game) => mergeGameWithExtras(game));
-  }, [bookmarkedGameIds, getSubmittedGameById]);
+  }, [userEngagement.bookmarkedProjectIds, getSubmittedGameById]);
 
   const isWatching = useCallback(
-    (gameId: string) => watchedGameIds.includes(gameId),
-    [watchedGameIds],
+    (gameId: string) => userEngagement.watchedProjectIds.includes(gameId),
+    [userEngagement.watchedProjectIds],
   );
 
-  const watchGame = useCallback((gameId: string) => {
-    setWatchedGameIds((prev) =>
-      prev.includes(gameId) ? prev : [...prev, gameId],
-    );
-  }, []);
+  const watchGame = useCallback(
+    async (gameId: string) => {
+      if (!user || isWatching(gameId)) {
+        return;
+      }
 
-  const unwatchGame = useCallback((gameId: string) => {
-    setWatchedGameIds((prev) => prev.filter((id) => id !== gameId));
-  }, []);
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return;
+      }
+
+      await addProjectWatch(supabase, user.id, gameId);
+      setUserEngagement((prev) => ({
+        ...prev,
+        watchedProjectIds: [...prev.watchedProjectIds, gameId],
+      }));
+    },
+    [user, isWatching],
+  );
+
+  const unwatchGame = useCallback(
+    async (gameId: string) => {
+      if (!user || !isWatching(gameId)) {
+        return;
+      }
+
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return;
+      }
+
+      await removeProjectWatch(supabase, user.id, gameId);
+      setUserEngagement((prev) => ({
+        ...prev,
+        watchedProjectIds: prev.watchedProjectIds.filter((id) => id !== gameId),
+      }));
+    },
+    [user, isWatching],
+  );
 
   const getDevlogsByProject = useCallback(
     (projectId: string) =>
@@ -716,7 +859,12 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       getGameById,
       getGamesBySection,
       getSupportCount,
-      incrementSupportCount,
+      isSupported,
+      supportGame,
+      hasPlayedGame,
+      recordPlay,
+      submitProjectFeedback,
+      getProjectFeedback,
       getApplicantCount,
       incrementApplicantCount,
       isSubmittedGame,
@@ -757,7 +905,12 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       getGameById,
       getGamesBySection,
       getSupportCount,
-      incrementSupportCount,
+      isSupported,
+      supportGame,
+      hasPlayedGame,
+      recordPlay,
+      submitProjectFeedback,
+      getProjectFeedback,
       getApplicantCount,
       incrementApplicantCount,
       isSubmittedGame,
