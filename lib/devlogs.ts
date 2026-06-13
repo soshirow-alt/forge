@@ -4,6 +4,7 @@ export type DevlogEntry = {
   title: string;
   content: string;
   date: string;
+  publishedVersion?: string;
 };
 
 export const mockDevlogs: DevlogEntry[] = [

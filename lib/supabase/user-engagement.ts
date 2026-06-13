@@ -17,6 +17,8 @@ type FeedbackRow = {
   bugs: string | null;
   focus_response: string | null;
   would_replay: ReplayIntent | null;
+  version_key: string;
+  updated_at: string | null;
   created_at: string;
 };
 
@@ -29,6 +31,8 @@ function feedbackRowToItem(row: FeedbackRow): GameFeedbackItem {
     bugs: row.bugs ?? undefined,
     focusResponse: row.focus_response ?? undefined,
     wouldReplay: row.would_replay ?? undefined,
+    versionKey: row.version_key,
+    updatedAt: row.updated_at ?? undefined,
   };
 }
 
@@ -152,13 +156,15 @@ export async function insertProjectFeedback(
   supabase: SupabaseClient,
   userId: string,
   projectId: string,
-  feedback: Omit<GameFeedbackItem, "id" | "createdAt">,
+  versionKey: string,
+  feedback: Omit<GameFeedbackItem, "id" | "createdAt" | "versionKey" | "updatedAt">,
 ): Promise<GameFeedbackItem> {
   const { data, error } = await supabase
     .from("project_feedback")
     .insert({
       user_id: userId,
       project_id: projectId,
+      version_key: versionKey,
       good_points: feedback.goodPoints ?? null,
       concerns: feedback.concerns ?? null,
       bugs: feedback.bugs ?? null,
@@ -170,6 +176,59 @@ export async function insertProjectFeedback(
 
   if (error) {
     throw error;
+  }
+
+  return feedbackRowToItem(data as FeedbackRow);
+}
+
+export async function updateProjectFeedback(
+  supabase: SupabaseClient,
+  feedbackId: string,
+  userId: string,
+  feedback: Omit<GameFeedbackItem, "id" | "createdAt" | "versionKey" | "updatedAt">,
+): Promise<GameFeedbackItem> {
+  const { data, error } = await supabase
+    .from("project_feedback")
+    .update({
+      good_points: feedback.goodPoints ?? null,
+      concerns: feedback.concerns ?? null,
+      bugs: feedback.bugs ?? null,
+      focus_response: feedback.focusResponse ?? null,
+      would_replay: feedback.wouldReplay ?? null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", feedbackId)
+    .eq("user_id", userId)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return feedbackRowToItem(data as FeedbackRow);
+}
+
+export async function fetchUserFeedbackForVersion(
+  supabase: SupabaseClient,
+  userId: string,
+  projectId: string,
+  versionKey: string,
+): Promise<GameFeedbackItem | null> {
+  const { data, error } = await supabase
+    .from("project_feedback")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("project_id", projectId)
+    .eq("version_key", versionKey)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+    return null;
   }
 
   return feedbackRowToItem(data as FeedbackRow);

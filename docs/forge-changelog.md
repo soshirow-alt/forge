@@ -4,7 +4,29 @@
 
 ---
 
-## 2026-06-13 開発フェーズ表現の整理
+## 2026-06-12 migration 004 — バージョン別フィードバック（コード実装済み・DB未適用）
+
+### 今回やったこと
+
+- **migration 004 SQL** 作成：`playable_version`、`version_key` / `updated_at`、UNIQUE（user×作品×版）、devlog `published_version`、phase `プロトタイプ`→`試作版`
+- 作品ごとに **プレイ可能版**（自由入力、初期 `0.1`）を保持
+- FB：**1ユーザー×1作品×1プレイ可能版 = 1件**。同版は **編集可**（UPDATE）
+- devlog 投稿時：「新しいプレイ可能版として公開」チェック + 版名入力 → `playable_version` 更新 + devlog に `published_version` 保存
+- 既存 FB は `version_key = 0.1` 扱い。旧版 FB のプレイヤー向け表示は **後回し**
+- 開発者 FB 一覧・作品詳細 FB フォーム・開発の歩み（`published_version` ラベル）を対応
+
+### ユーザー目線で変わること（migration + deploy 後）
+
+- プレイヤー：現行プレイ可能版に対して FB を投稿・**同版なら編集**できる
+- 開発者：devlog から新版を公開すると FB 枠が版ごとに分かれる。ダッシュボードで版ラベル付き FB を確認
+
+### 注意事項
+
+- **本番 DB 変更あり**。適用順：**Dashboard で 004 → その後 deploy**
+- `status` 列は変更しない
+- 詳細：`docs/migration-004-design.md`、`docs/supabase-dashboard-migration-guide.md` §004
+
+---
 
 ### 今回やったこと
 

@@ -75,7 +75,8 @@ export function DeveloperFeedbackInbox({ userId }: DeveloperFeedbackInboxProps) 
                     {titleByProjectId.get(projectId) ?? projectId}
                   </Link>
                   <p className="mt-0.5 text-xs text-zinc-600">
-                    投稿日時: {formatFeedbackDate(item.createdAt)}
+                    プレイ可能版 {item.versionKey ?? "0.1"} · 投稿日時:{" "}
+                    {formatFeedbackDate(item.createdAt)}
                   </p>
                 </div>
                 <Link

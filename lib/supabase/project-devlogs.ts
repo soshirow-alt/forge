@@ -7,6 +7,7 @@ type DevlogRow = {
   author_id: string;
   title: string;
   content: string;
+  published_version: string | null;
   created_at: string;
 };
 
@@ -17,6 +18,7 @@ function devlogRowToEntry(row: DevlogRow): DevlogEntry {
     title: row.title,
     content: row.content,
     date: row.created_at.split("T")[0] ?? row.created_at,
+    publishedVersion: row.published_version ?? undefined,
   };
 }
 
@@ -35,12 +37,17 @@ export async function fetchAllProjectDevlogs(
   return ((data ?? []) as DevlogRow[]).map(devlogRowToEntry);
 }
 
+export type InsertProjectDevlogOptions = {
+  publishedVersion?: string | null;
+};
+
 export async function insertProjectDevlog(
   supabase: SupabaseClient,
   authorId: string,
   projectId: string,
   title: string,
   content: string,
+  options?: InsertProjectDevlogOptions,
 ): Promise<DevlogEntry> {
   const { data, error } = await supabase
     .from("project_devlogs")
@@ -49,6 +56,7 @@ export async function insertProjectDevlog(
       author_id: authorId,
       title: title.trim(),
       content: content.trim(),
+      published_version: options?.publishedVersion ?? null,
     })
     .select("*")
     .single();

@@ -14,6 +14,7 @@ export type ProjectHistoryEntry = {
   title: string;
   content?: string;
   kind: "development" | "community";
+  publishedVersion?: string;
 };
 
 type GameActivitySeed = Pick<Game, "id" | "lastUpdated" | "createdAt">;
@@ -432,7 +433,8 @@ export function getUnifiedProjectHistory(
     date: entry.date,
     title: entry.title,
     content: entry.content,
-    kind: "development",
+    kind: "development" as const,
+    publishedVersion: entry.publishedVersion,
   }));
 
   const communityEntries: ProjectHistoryEntry[] = getCommunityImpactItems(

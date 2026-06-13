@@ -1,4 +1,4 @@
-# Supabase Dashboard — migration 002 / 003 適用手順
+# Supabase Dashboard — migration 002 / 003 / 004 適用手順
 
 非エンジニア向け。コピペで進められます。
 
@@ -155,6 +155,61 @@
 |---|---|
 | `project_devlogs` | 開発ログ |
 | `user_notifications` | 通知（watch → devlog） |
+
+---
+
+## migration 004 を適用する
+
+**目的**：プレイ可能版（`playable_version`）ごとの FB 制約、同版編集、devlog からの版公開、`published_version` 記録、phase `プロトタイプ`→`試作版`（1件想定）。
+
+**重要**：004 対応コードの **本番 deploy より先** に Dashboard で 004 を実行してください。
+
+### 事前確認（必須）
+
+SQL Editor で次を実行し、**行が 0 件** であることを確認：
+
+```sql
+SELECT user_id, project_id, COUNT(*)
+FROM public.project_feedback
+GROUP BY 1, 2
+HAVING COUNT(*) > 1;
+```
+
+行がある場合：004 内の dedupe が古い行を削除します。内容を確認してから続行。
+
+### 適用手順
+
+1. ファイル `supabase/migrations/004_feedback_versions_and_phase_cleanup.sql` を開く
+2. **全文** を SQL Editor に貼り付け
+3. **Run**（1回）
+
+### 004 適用後の確認
+
+```sql
+-- phase が試作版になっているか（本番1件想定）
+SELECT id, title, phase, playable_version FROM public.projects;
+
+-- FB に version_key があるか
+SELECT user_id, project_id, version_key, updated_at FROM public.project_feedback;
+```
+
+**Table Editor** で列が追加されているか：
+
+| テーブル | 追加列 |
+|---|---|
+| `projects` | `playable_version`（default `0.1`） |
+| `project_feedback` | `version_key`（default `0.1`）、`updated_at` |
+| `project_devlogs` | `published_version`（nullable） |
+
+### よくあるエラー
+
+| メッセージ | 意味 | 対処 |
+|---|---|---|
+| `duplicate key value violates unique constraint "project_feedback_user_project_version_idx"` | FB 重複が残っている | 事前 SELECT を確認。dedupe 後に再実行 |
+| `policy "Users update own feedback" already exists` | 004 適用済み | 確認 SELECT へ |
+| その他 | — | 実行停止、エラー全文を共有 |
+
+004 適用後 → **Vercel 本番 deploy**（004 対応 commit）→ [`docs/supabase-post-migration-checklist.md`](./supabase-post-migration-checklist.md)
 
 ---
 

@@ -50,7 +50,9 @@ import {
   insertProject,
   updateProjectDetailsInDb,
   updateProjectFromSubmitForm,
+  updateProjectPlayableVersion,
 } from "@/lib/supabase/projects";
+import { resolvePlayableVersion } from "@/lib/playable-version";
 
 import {
   addProjectBookmark,
@@ -60,9 +62,11 @@ import {
   fetchFeedbackForProjects,
   fetchSupportCounts,
   fetchUserEngagement,
+  fetchUserFeedbackForVersion,
   insertProjectFeedback,
   recordProjectPlay,
   removeProjectWatch,
+  updateProjectFeedback,
   type UserEngagementState,
 } from "@/lib/supabase/user-engagement";
 import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
@@ -116,8 +120,9 @@ type GamesContextValue = {
   recordPlay: (gameId: string) => Promise<void>;
   submitProjectFeedback: (
     gameId: string,
-    feedback: Omit<GameFeedbackItem, "id" | "createdAt">,
+    feedback: Omit<GameFeedbackItem, "id" | "createdAt" | "versionKey" | "updatedAt">,
   ) => Promise<GameFeedbackItem>;
+  getMyFeedbackForProject: (gameId: string) => Promise<GameFeedbackItem | null>;
   getProjectFeedback: (gameId: string) => Promise<GameFeedbackItem[]>;
   getOwnedProjectFeedback: (
     userId: string | undefined,
@@ -141,7 +146,12 @@ type GamesContextValue = {
   unwatchGame: (gameId: string) => void;
   getDevlogsByProject: (projectId: string) => DevlogEntry[];
   hasDevlogs: (projectId: string) => boolean;
-  addDevlog: (projectId: string, title: string, content: string) => Promise<void>;
+  addDevlog: (
+    projectId: string,
+    title: string,
+    content: string,
+    options?: { publishPlayableVersion?: string },
+  ) => Promise<void>;
   getNotifications: () => Notification[];
   getUnreadNotificationCount: () => number;
   markNotificationAsRead: (id: string) => void;
@@ -693,7 +703,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   const submitProjectFeedback = useCallback(
     async (
       gameId: string,
-      feedback: Omit<GameFeedbackItem, "id" | "createdAt">,
+      feedback: Omit<GameFeedbackItem, "id" | "createdAt" | "versionKey" | "updatedAt">,
     ) => {
       if (!user) {
         throw new Error("Login required");
@@ -704,16 +714,56 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         throw new Error("Supabase is not configured.");
       }
 
-      const item = await insertProjectFeedback(
+      const game = getSubmittedGameById(gameId) ?? getMockGameById(gameId);
+      const versionKey = resolvePlayableVersion(game?.playableVersion);
+      const existing = await fetchUserFeedbackForVersion(
         supabase,
         user.id,
         gameId,
-        feedback,
+        versionKey,
       );
-      addNotification("feedback", gameId);
+
+      const item = existing
+        ? await updateProjectFeedback(supabase, existing.id, user.id, feedback)
+        : await insertProjectFeedback(
+            supabase,
+            user.id,
+            gameId,
+            versionKey,
+            feedback,
+          );
+
+      if (!existing) {
+        addNotification("feedback", gameId);
+      }
+
       return item;
     },
-    [user, addNotification],
+    [user, addNotification, getSubmittedGameById],
+  );
+
+  const getMyFeedbackForProject = useCallback(
+    async (gameId: string) => {
+      if (!user) {
+        return null;
+      }
+
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return null;
+      }
+
+      const game = getSubmittedGameById(gameId) ?? getMockGameById(gameId);
+      const versionKey = resolvePlayableVersion(game?.playableVersion);
+
+      return fetchUserFeedbackForVersion(
+        supabase,
+        user.id,
+        gameId,
+        versionKey,
+      );
+    },
+    [user, getSubmittedGameById],
   );
 
   const getProjectFeedback = useCallback(async (gameId: string) => {
@@ -910,7 +960,12 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   );
 
   const addDevlog = useCallback(
-    async (projectId: string, title: string, content: string) => {
+    async (
+      projectId: string,
+      title: string,
+      content: string,
+      options?: { publishPlayableVersion?: string },
+    ) => {
       if (!user) {
         throw new Error("Login required");
       }
@@ -922,6 +977,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
 
       const game = getSubmittedGameById(projectId) ?? getMockGameById(projectId);
       const projectTitle = game?.title ?? "作品";
+      const publishVersion = options?.publishPlayableVersion?.trim();
 
       const entry = await insertProjectDevlog(
         supabase,
@@ -929,8 +985,26 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         projectId,
         title,
         content,
+        publishVersion
+          ? { publishedVersion: publishVersion }
+          : undefined,
       );
       setDevlogs((prev) => [entry, ...prev]);
+
+      if (publishVersion && isSubmittedGame(projectId)) {
+        const updated = await updateProjectPlayableVersion(
+          supabase,
+          projectId,
+          publishVersion,
+        );
+        setSubmittedGames((prev) =>
+          prev.map((item) =>
+            item.id === projectId
+              ? mergeGameWithExtras(updated)
+              : item,
+          ),
+        );
+      }
 
       const watcherIds = await fetchWatcherUserIds(supabase, projectId);
       const recipientIds = watcherIds.filter((watcherId) => watcherId !== user.id);
@@ -947,7 +1021,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         message,
       });
     },
-    [user, getSubmittedGameById],
+    [user, getSubmittedGameById, isSubmittedGame],
   );
 
   const getDeveloperProfileByUserId = useCallback(
@@ -1020,6 +1094,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       hasPlayedGame,
       recordPlay,
       submitProjectFeedback,
+      getMyFeedbackForProject,
       getProjectFeedback,
       getOwnedProjectFeedback,
       getApplicantCount,
@@ -1070,6 +1145,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       hasPlayedGame,
       recordPlay,
       submitProjectFeedback,
+      getMyFeedbackForProject,
       getProjectFeedback,
       getOwnedProjectFeedback,
       getApplicantCount,

@@ -26,6 +26,7 @@ export type Game = {
   createdAt?: string;
   estimatedPlayTime?: string;
   focusNotes?: string;
+  playableVersion?: string;
 };
 
 export const games: Game[] = [

@@ -23,7 +23,10 @@ function buildVersionLabels(entries: ProjectHistoryEntry[]): Map<string, string>
 
   const labels = new Map<string, string>();
   developmentEntries.forEach((entry, index) => {
-    labels.set(entry.id, `v0.${index + 1}`);
+    labels.set(
+      entry.id,
+      entry.publishedVersion ?? `v0.${index + 1}`,
+    );
   });
   return labels;
 }

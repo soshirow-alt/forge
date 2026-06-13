@@ -20,6 +20,7 @@ export type ProjectRow = {
   discord_url: string | null;
   official_url: string | null;
   visibility: "public" | "private";
+  playable_version?: string;
   created_at: string;
   updated_at: string;
 };
@@ -57,6 +58,8 @@ export type ProjectFeedbackRow = {
   bugs: string | null;
   focus_response: string | null;
   would_replay: "yes" | "maybe" | "no" | null;
+  version_key: string;
+  updated_at: string | null;
   created_at: string;
 };
 
@@ -66,6 +69,7 @@ export type ProjectDevlogRow = {
   author_id: string;
   title: string;
   content: string;
+  published_version: string | null;
   created_at: string;
 };
 

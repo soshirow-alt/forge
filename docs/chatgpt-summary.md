@@ -1,39 +1,31 @@
 ■ 現在の状態
-本番 https://forge-flame-gamma.vercel.app。commit 750b055（FB表示改善）の次に、開発フェーズ4名称統一を実装・デプロイ予定。DB変更なし。
+migration 004 実装完了・build 成功・commit/push 済み（本番 migration / deploy は未実施）。本番 commit は push 後の HEAD。projects 1件（消えるかな？ phase=プロトタイプ→004で試作版に更新予定、status=テスター募集中）。
 
-■ 今回実装したこと
-開発フェーズ表現の整理。
-- 4名称：試作版 / プレイ可能版 / 通しプレイ版 / 公開準備中
-- 投稿フォーム：4択＋開発者向け hint
-- 詳細ページ：フェーズ名＋プレイヤー向け1行説明
-- 一覧カード：フェーズ名のみ（displayPhase で旧文字列も正規化表示）
-- mock 18作品・demo-setup の α/β/プロトタイプ等を整理
-- 発見フィルタ新4名称＋legacy fuzzy マッチ維持
+■ migration 004 の内容（実装済み）
+projects.playable_version（default 0.1）。project_feedback.version_key + updated_at + UNIQUE(user_id,project_id,version_key)。project_devlogs.published_version。RLS：自分のFB UPDATE 可。phase プロトタイプ→試作版 UPDATE 同梱。status は触らない。
 
-■ ユーザー目線の変化
-開発者：α/β で迷わず「どこまで遊べるか」で選べる。プレイヤー：詳細で完成度の目安が1行で分かる。
+■ アプリ側（実装済み）
+FB：現行 playable_version に対し投稿 or 同版編集。devlog：「新しいプレイ可能版として公開」チェック + 自由入力版名 → playable_version 更新 + published_version 保存。開発者 FB 一覧に versionKey 表示。開発の歩みは published_version があればそのラベル表示。
 
-■ 注意事項
-DB変更なし。Supabase に旧 phase（プロトタイプ/α版等）が残っていても表示は正規化。DB一括移行は任意（後日判断）。未実装：バージョン別FB、migration 004、フェーズ enum/CHECK。
+■ やらない（今回）
+旧版 FB のプレイヤー向け履歴表示、AI要約、開発者返信、status 整理。
 
-■ 本番で私が確認する手順（非エンジニア向け）
-1. トップ https://forge-flame-gamma.vercel.app を開く
-2. 画面上部のフィルタ（チップ）に「試作版」「プレイ可能版」「通しプレイ版」「公開準備中」があるか確認
-3. 「試作版」チップを押す→余燼の王国など試作版の作品だけ残るか
-4. 作品カード左下のラベルが新名称（例：試作版、通しプレイ版）になっているか（α版/β版が出ていないか）
-5. 余燼の王国（/games/emberfall）の詳細を開く
-   → オレンジの説明文と「開発フェーズ」に「試作版」と「一部だけ遊べます」が出るか
-6. エーテルボーン（/games/aetherborn）の詳細を開く
-   → 「通しプレイ版」と「最後まで遊べます。調整・バグ修正中です」が出るか
-7. ログインして /submit を開く
-   → 開発フェーズが4択で、それぞれ下に短い補足説明があるか
-8. （任意）自分が以前投稿した作品があり、旧名称のまま DB に残っている場合→詳細では新名称で表示されるか
+■ 本番適用順（必須）
+1. 事前 SELECT（FB 重複確認）2. Supabase Dashboard で 004 SQL 実行 3. 確認 SELECT 4. Vercel 本番 deploy。コード deploy を migration より先にすると本番が壊れる可能性あり。
 
-■ Cursorだけで完了できること
-次：バージョン別 FB（migration 004、オーナー合意後）。
+■ 事前確認 SQL（オーナーが Dashboard で実行）
+SELECT user_id, project_id, COUNT(*) FROM public.project_feedback GROUP BY 1, 2 HAVING COUNT(*) > 1;
+→ 0行ならそのまま 004 可。行ありなら dedupe で古い行削除（004 内蔵）だが内容確認推奨。
 
-■ ChatGPTに相談したい論点
-Supabase 既存 projects.phase の一括移行要否とタイミング。版 bump を devlog 連動にするか。
+■ 004 SQL の場所
+supabase/migrations/004_feedback_versions_and_phase_cleanup.sql
+手順：docs/supabase-dashboard-migration-guide.md §004
+
+■ Cursor vs オーナー
+Cursor：コード・SQL ファイル・push まで完了。オーナー：Dashboard で事前 SELECT → 004 Run → 確認 SELECT → deploy 承認（GPT判断用メモ後）。
+
+■ 次のステップ
+1. 本レスポンス末尾の GPT判断用メモを ChatGPT に貼る 2. 承認後 Dashboard で 004 3. 確認後 deploy 指示 4. 画面確認（FB 投稿・編集、devlog 版公開、my-projects FB 一覧）
 
 ■ Cursor連携メモ
 GPT には返答末尾 text ブロックの Copy を使用。

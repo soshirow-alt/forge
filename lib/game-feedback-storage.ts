@@ -8,6 +8,8 @@ export type GameFeedbackItem = {
   bugs?: string;
   focusResponse?: string;
   wouldReplay?: ReplayIntent;
+  versionKey?: string;
+  updatedAt?: string;
   /** @deprecated legacy single-field feedback */
   text?: string;
   funRating?: number;

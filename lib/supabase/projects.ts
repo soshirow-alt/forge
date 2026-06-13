@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { mergeTagsWithRecruitment } from "@/lib/game-tags";
 import type { Game } from "@/lib/mock-games";
+import { DEFAULT_PLAYABLE_VERSION } from "@/lib/playable-version";
 import type { ProjectRow } from "@/lib/supabase/schema";
 import type { ProjectEditFormData, SubmitFormData } from "@/lib/project-form";
 
@@ -33,6 +34,7 @@ export function projectRowToGame(row: ProjectRow): Game {
     ownerId: row.owner_id,
     ownerName: row.owner_name,
     visibility: row.visibility,
+    playableVersion: row.playable_version ?? DEFAULT_PLAYABLE_VERSION,
   };
 }
 
@@ -61,6 +63,7 @@ function submitFormToInsertRow(
     discord_url: data.discordUrl ?? null,
     official_url: data.officialUrl ?? null,
     visibility: "public" as const,
+    playable_version: DEFAULT_PLAYABLE_VERSION,
   };
 }
 
@@ -75,6 +78,25 @@ export async function fetchProjects(supabase: SupabaseClient): Promise<Game[]> {
   }
 
   return ((data ?? []) as ProjectRow[]).map(projectRowToGame);
+}
+
+export async function updateProjectPlayableVersion(
+  supabase: SupabaseClient,
+  projectId: string,
+  playableVersion: string,
+): Promise<Game> {
+  const { data, error } = await supabase
+    .from("projects")
+    .update({ playable_version: playableVersion })
+    .eq("id", projectId)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return projectRowToGame(data as ProjectRow);
 }
 
 export async function insertProject(
