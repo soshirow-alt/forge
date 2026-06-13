@@ -38,8 +38,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 1. `docs/forge-changelog.md` — ユーザー体験・仕様の変化
 2. `docs/forge-handoff.md` — 現在地
-3. **`docs/chatgpt-summary.md`** — ChatGPT に貼る最新サマリ（本文のみ、見出しや装飾線なし）
-4. レスポンス末尾 — 同じサマリを **1つの `text` コードブロック** に入れる（Cursor のコピーボタン用）
+3. **`docs/chatgpt-summary.md`** — ChatGPT に貼る最新サマリ（**プレーンテキストのみ**：`■` 見出し可、Markdown 表・`#` 見出し・`---` 区切り・コードフェンス・余分な空行は不可）
+4. レスポンス末尾 — 上記と**同一内容**を **1つの ` ```text ` ブロック** に入れる（**オーナーはここの Copy ボタンが主経路**）
 
 ### GPT用メモ省略禁止（Cursor 自身への指示）
 
@@ -84,13 +84,14 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ユーザーは **`docs/chatgpt-summary.md` の内容だけ** を ChatGPT に貼る。
 
-コピー方法（いずれか）：
+コピー方法（優先順）：
 
-- ターミナルで `npm run copy-summary` → クリップボードに入る
-- Cursor 返答末尾のコードブロック右上 **Copy** をクリック
-- `docs/chatgpt-summary.md` を開いて全選択
+1. **Cursor 返答末尾の `text` ブロック右上 Copy**（推奨・主経路）
+2. ターミナルで `npm run copy-summary` → クリップボード（ファイルと同一内容）
 
-長文レス全文のコピーは不要。
+**やらないこと**：Cursor 返答全文のコピー、`chatgpt-summary.md` の Ctrl+A（Markdown エディタ表示と貼り付け結果がずれるため）。
+
+サマリは情報量は多くてよいが、**表形式にしない**（GPT 貼り付けで崩れる）。箇条書き・`｜` 区切り・`-` リストで書く。
 
 ## Run 確認前の停止 — GPT判断用メモ
 

@@ -191,3 +191,32 @@ export async function fetchProjectFeedback(
 
   return ((data ?? []) as FeedbackRow[]).map(feedbackRowToItem);
 }
+
+export type ProjectFeedbackEntry = {
+  projectId: string;
+  item: GameFeedbackItem;
+};
+
+export async function fetchFeedbackForProjects(
+  supabase: SupabaseClient,
+  projectIds: string[],
+): Promise<ProjectFeedbackEntry[]> {
+  if (projectIds.length === 0) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("project_feedback")
+    .select("*")
+    .in("project_id", projectIds)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return ((data ?? []) as FeedbackRow[]).map((row) => ({
+    projectId: row.project_id,
+    item: feedbackRowToItem(row),
+  }));
+}

@@ -57,6 +57,7 @@ import {
   addProjectSupport,
   addProjectWatch,
   fetchProjectFeedback,
+  fetchFeedbackForProjects,
   fetchSupportCounts,
   fetchUserEngagement,
   insertProjectFeedback,
@@ -64,6 +65,7 @@ import {
   removeProjectWatch,
   type UserEngagementState,
 } from "@/lib/supabase/user-engagement";
+import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
 import type { GameFeedbackItem } from "@/lib/game-feedback-storage";
 import {
   deleteProjectDevlogsByProjectId,
@@ -117,6 +119,9 @@ type GamesContextValue = {
     feedback: Omit<GameFeedbackItem, "id" | "createdAt">,
   ) => Promise<GameFeedbackItem>;
   getProjectFeedback: (gameId: string) => Promise<GameFeedbackItem[]>;
+  getOwnedProjectFeedback: (
+    userId: string | undefined,
+  ) => Promise<ProjectFeedbackEntry[]>;
   getApplicantCount: (id: string, defaultCount?: number) => number;
   incrementApplicantCount: (id: string, defaultCount?: number) => number;
   isSubmittedGame: (id: string) => boolean;
@@ -720,6 +725,27 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     return fetchProjectFeedback(supabase, gameId);
   }, []);
 
+  const getOwnedProjectFeedback = useCallback(
+    async (userId: string | undefined) => {
+      if (!userId) {
+        return [];
+      }
+
+      const ownedIds = getOwnedProjects(userId).map((game) => game.id);
+      if (ownedIds.length === 0) {
+        return [];
+      }
+
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return [];
+      }
+
+      return fetchFeedbackForProjects(supabase, ownedIds);
+    },
+    [getOwnedProjects],
+  );
+
   const getApplicantCount = useCallback(
     (id: string, defaultCount = 0) => applicantCounts[id] ?? defaultCount,
     [applicantCounts],
@@ -995,6 +1021,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       recordPlay,
       submitProjectFeedback,
       getProjectFeedback,
+      getOwnedProjectFeedback,
       getApplicantCount,
       incrementApplicantCount,
       isSubmittedGame,
@@ -1044,6 +1071,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       recordPlay,
       submitProjectFeedback,
       getProjectFeedback,
+      getOwnedProjectFeedback,
       getApplicantCount,
       incrementApplicantCount,
       isSubmittedGame,

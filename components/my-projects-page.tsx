@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { DeveloperFeedbackInbox } from "@/components/developer-feedback-inbox";
 import { ForgeHeader } from "@/components/forge-header";
 import { useGames } from "@/components/games-provider";
 import type { Game } from "@/lib/mock-games";
@@ -268,6 +269,8 @@ export function MyProjectsPage() {
             </div>
           )}
         </section>
+
+        <DeveloperFeedbackInbox userId={user.id} />
 
         <section className="mt-12">
           <h2 className="text-xl font-semibold tracking-tight">アナリティクス</h2>

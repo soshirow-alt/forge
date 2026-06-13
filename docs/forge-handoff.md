@@ -3,7 +3,7 @@
 > ChatGPT / Cursor 間の**現在地サマリ**。  
 > 詳細な原典は `docs/forge-principles.md`、履歴は `docs/forge-changelog.md` を参照。
 
-最終更新：**2026-06-12**（migration 001/002/003 本番適用済み）
+最終更新：**2026-06-13**（FB 表示改善 & 開発者 FB 一覧）
 
 ---
 
@@ -18,6 +18,8 @@ Forge は **完成前のインディーゲームを発見 → プレイ → フ�
 - **本番確認**：開発ログ → ゲスト別ブラウザ表示 **OK**（2026-06-12）
 - **暫定 localStorage**：応援/FB 等の通知、クリエイターフォロー、テスター応募数、作品 extras
 - **デプロイ**：Vercel プロジェクト **forge** → https://forge-flame-gamma.vercel.app
+- **FB 表示**：詳細ページ構造化表示、開発者ダッシュボード FB 一覧（2026-06-13）
+- **FB 将来**：バージョン別制御は `docs/feedback-roadmap.md` 参照（未実装）
 
 ---
 
@@ -26,7 +28,7 @@ Forge は **完成前のインディーゲームを発見 → プレイ → フ�
 1. **原典はリポジトリ内 `docs/forge-principles.md` が唯一の憲法**
 2. **ログイン方針**：発見は開放、プレイ以降はログイン必須。ボタンは隠さず `/login` へ
 3. **応援**：投げ銭ではない。1人1回、「応援中」表示
-4. **ChatGPT 連携**：`docs/chatgpt-summary.md` を貼るだけ（`npm run copy-summary` でクリップボードにコピー可）
+4. **ChatGPT 連携**：Cursor 返答末尾 `text` ブロックの **Copy** を押して GPT に貼る（主経路）。代替：`npm run copy-summary`。ファイル Ctrl+A は不要
 5. **ログイン後**：原則 `/` へ。**プレイ / 外部リンク** から来た場合のみ作品詳細へ return（`lib/login-return-url.ts`）
 
 ---
@@ -61,9 +63,9 @@ Forge は **完成前のインディーゲームを発見 → プレイ → フ�
 
 ## 次にやるべきこと
 
-1. **プレイ/外部リンク UX** — 本番目視（A 実装済みの確認）
-2. （任意）ログイン後 returnUrl — ChatGPT と原典整合を相談
-3. **Step 5**：projects extras カラム（低優先）
+1. **returnUrl 本番確認**（オーナー）
+2. **フィードバック体験 Phase 1** — 表示の構造化（入力は原典どおり済み）
+3. **Step 5**：projects extras カラム（focus_notes 含む・低優先）
 
 ## 運用ルール（2026-06-12 追加）
 
@@ -75,7 +77,10 @@ Forge は **完成前のインディーゲームを発見 → プレイ → フ�
 
 ## ChatGPTに相談したいこと
 
-- localStorage 暫定データの **Supabase 移行優先順位**（何から移すか）
+- **開発フェーズ**：4名称の最終案（試作/プレイ可能/継続改善/公開準備 vs 現行4択の改良）
+- **FB 版管理**：`playable_version` + devlog 連動 bump vs 手動のみ
+- 旧 `phase` 文字列の DB 移行要否
+- localStorage 暫定データの **Supabase 移行優先順位**
 - ログイン後に元ページへ戻す **最小リスクの UX**（redirect なしで可能か）
 - MVP 公開前の **体験確認チェックリスト**（非エンジニア向け）
 - マネタイズ仮説の **優先順位付け**（原典を壊さない範囲）

@@ -1,209 +1,115 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  formatStars,
-  getDemoCommunityData,
-  type DemoCommunityComment,
-} from "@/lib/demo-community";
+import { FeedbackStructuredCard } from "@/components/feedback-structured-card";
 import { useGames } from "@/components/games-provider";
+import { getDemoCommunityData } from "@/lib/demo-community";
 import type { GameFeedbackItem } from "@/lib/game-feedback-storage";
-import { getFeedbackSummaryText } from "@/lib/game-feedback-storage";
 
 type GameCommunityVoicesSectionProps = {
   gameId: string;
 };
 
-function formatAverage(value: number) {
-  return value > 0 ? value.toFixed(1) : "-";
-}
-
-function average(values: number[]) {
-  if (values.length === 0) {
-    return 0;
-  }
-
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
-}
-
-function averageOptional(values: (number | undefined)[]) {
-  const nums = values.filter((value): value is number => value !== undefined && value > 0);
-  return average(nums);
-}
-
-function mergeComments(
-  demoComments: DemoCommunityComment[],
-  stored: GameFeedbackItem[],
-): { text: string; funRating: number; date: string }[] {
-  const fromStored = stored.slice(0, 2).map((item) => ({
-    text: getFeedbackSummaryText(item),
-    funRating: item.funRating ?? 0,
-    date: item.createdAt.split("T")[0] ?? item.createdAt,
-  }));
-
-  if (fromStored.length >= 2) {
-    return fromStored;
-  }
-
-  return [
-    ...fromStored,
-    ...demoComments.slice(0, 3 - fromStored.length).map((item) => ({
-      text: item.text,
-      funRating: item.funRating,
-      date: item.date,
-    })),
-  ];
-}
+const DETAIL_FEEDBACK_LIMIT = 3;
 
 export function GameCommunityVoicesSection({
   gameId,
 }: GameCommunityVoicesSectionProps) {
   const { getProjectFeedback } = useGames();
   const [storedFeedback, setStoredFeedback] = useState<GameFeedbackItem[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const demo = getDemoCommunityData(gameId);
 
   useEffect(() => {
     void getProjectFeedback(gameId)
-      .then(setStoredFeedback)
-      .catch(() => setStoredFeedback([]));
+      .then((items) => {
+        setStoredFeedback(items);
+      })
+      .catch(() => {
+        setStoredFeedback([]);
+      })
+      .finally(() => {
+        setLoaded(true);
+      });
   }, [gameId, getProjectFeedback]);
 
-  const summary = useMemo(() => {
-    if (storedFeedback.length > 0) {
-      const fun = averageOptional(storedFeedback.map((item) => item.funRating));
-      if (fun > 0) {
-        return {
-          fun,
-          controls: averageOptional(storedFeedback.map((item) => item.controlsRating)),
-          replay: averageOptional(storedFeedback.map((item) => item.replayRating)),
-        };
-      }
+  const visibleFeedback = useMemo(
+    () => storedFeedback.slice(0, DETAIL_FEEDBACK_LIMIT),
+    [storedFeedback],
+  );
+
+  const sampleComments = useMemo(() => {
+    if (!demo || storedFeedback.length > 0) {
+      return [];
     }
+    return demo.communityComments.slice(0, 2);
+  }, [demo, storedFeedback.length]);
 
-    return demo?.averageRatings ?? null;
-  }, [storedFeedback, demo]);
-
-  const comments = useMemo(() => {
-    if (demo) {
-      return mergeComments(demo.communityComments, storedFeedback);
-    }
-
-    return storedFeedback.slice(0, 3).map((item) => ({
-      text: getFeedbackSummaryText(item),
-      funRating: item.funRating ?? 0,
-      date: item.createdAt.split("T")[0] ?? item.createdAt,
-    }));
-  }, [demo, storedFeedback]);
-
-  const highlights = useMemo(() => {
-    const fromDemo = demo?.feedbackHighlights ?? [];
-    const optionCounts = new Map<string, number>();
-
-    for (const item of storedFeedback) {
-      for (const option of item.selectedOptions ?? []) {
-        optionCounts.set(option, (optionCounts.get(option) ?? 0) + 1);
-      }
-    }
-
-    const fromStored = [...optionCounts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([label]) => label);
-
-    if (fromStored.length > 0) {
-      return fromStored;
-    }
-
-    return fromDemo;
-  }, [demo, storedFeedback]);
-
-  if (!demo && storedFeedback.length === 0) {
+  if (!loaded) {
     return (
       <section className="mt-4 border-t border-zinc-800/80 pt-4">
-        <h2 className="text-sm font-medium text-zinc-500">コミュニティの声</h2>
-        <p className="mt-2 text-sm text-zinc-600">
-          まだプレイヤーの声はありません
+        <h2 className="text-sm font-medium text-zinc-500">プレイヤーからの改善材料</h2>
+        <p className="mt-2 text-sm text-zinc-600">読み込み中...</p>
+      </section>
+    );
+  }
+
+  if (storedFeedback.length === 0 && sampleComments.length === 0) {
+    return (
+      <section className="mt-4 border-t border-zinc-800/80 pt-4">
+        <h2 className="text-sm font-medium text-zinc-500">プレイヤーからの改善材料</h2>
+        <p className="mt-1 text-xs text-zinc-600">
+          プレイ後に届いた感想が、開発の参考になります
         </p>
+        <p className="mt-2 text-sm text-zinc-600">まだフィードバックはありません</p>
       </section>
     );
   }
 
   return (
     <section className="mt-4 border-t border-zinc-800/80 pt-4">
-      <h2 className="text-sm font-medium text-zinc-500">コミュニティの声</h2>
+      <h2 className="text-sm font-medium text-zinc-500">プレイヤーからの改善材料</h2>
+      <p className="mt-1 text-xs text-zinc-600">
+        レビューではなく、開発者への改善ヒントとして届いています
+      </p>
 
-      {demo && demo.communityHighlights.length > 0 && (
-        <ul className="mt-3 space-y-1.5">
-          {demo.communityHighlights.map((item) => (
+      {storedFeedback.length > 0 ? (
+        <ul className="mt-3 space-y-2.5">
+          {visibleFeedback.map((item) => (
             <li
-              key={item.text}
-              className="flex items-baseline gap-2 text-sm text-zinc-300"
+              key={item.id}
+              className="rounded-lg border border-zinc-800/60 bg-zinc-950/30 px-3 py-2.5"
             >
-              <span className="shrink-0 text-xs tracking-tight text-amber-400/90">
-                {formatStars(item.stars)}
-              </span>
-              <span className="text-zinc-400">{item.text}</span>
+              <FeedbackStructuredCard item={item} />
             </li>
           ))}
         </ul>
-      )}
-
-      {summary && (
-        <dl className="mt-3 grid grid-cols-3 gap-2 rounded-lg border border-zinc-800/60 bg-zinc-950/30 px-3 py-2.5">
-          <div>
-            <dt className="text-[11px] text-zinc-600">面白さ</dt>
-            <dd className="mt-0.5 text-sm font-medium tabular-nums text-zinc-300">
-              {formatAverage(summary.fun)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-[11px] text-zinc-600">操作性</dt>
-            <dd className="mt-0.5 text-sm font-medium tabular-nums text-zinc-300">
-              {formatAverage(summary.controls)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-[11px] text-zinc-600">続きたい度</dt>
-            <dd className="mt-0.5 text-sm font-medium tabular-nums text-zinc-300">
-              {formatAverage(summary.replay)}
-            </dd>
-          </div>
-        </dl>
-      )}
-
-      {comments.length > 0 && (
-        <ul className="mt-3 space-y-2">
-          {comments.map((comment) => (
-            <li
-              key={`${comment.date}-${comment.text.slice(0, 24)}`}
-              className="rounded-lg border border-zinc-800/50 bg-zinc-950/25 px-3 py-2.5"
+      ) : (
+        <div className="mt-3 space-y-2">
+          <p className="text-[11px] text-zinc-600">（サンプル表示）</p>
+          {sampleComments.map((comment) => (
+            <div
+              key={comment.id}
+              className="rounded-lg border border-dashed border-zinc-800/80 bg-zinc-950/20 px-3 py-2.5"
             >
-              <div className="flex items-center gap-2 text-xs text-amber-400/80">
-                <span>{formatStars(comment.funRating)}</span>
-                <span className="text-zinc-600">{comment.date}</span>
-              </div>
-              <p className="mt-1 text-sm leading-relaxed text-zinc-400">
+              <time
+                dateTime={comment.date}
+                className="text-xs tabular-nums text-zinc-600"
+              >
+                {comment.date}
+              </time>
+              <p className="mt-1 text-sm leading-relaxed text-zinc-500">
                 {comment.text}
               </p>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
 
-      {highlights.length > 0 && (
-        <div className="mt-3">
-          <p className="text-[11px] font-medium text-zinc-600">よく挙がる声</p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {highlights.map((label) => (
-              <span
-                key={label}
-                className="rounded-full border border-zinc-800 bg-zinc-950/40 px-2.5 py-0.5 text-xs text-zinc-500"
-              >
-                {label}
-              </span>
-            ))}
-          </div>
-        </div>
+      {storedFeedback.length > DETAIL_FEEDBACK_LIMIT && (
+        <p className="mt-2 text-xs text-zinc-600">
+          ほか {storedFeedback.length - DETAIL_FEEDBACK_LIMIT} 件のフィードバックがあります
+        </p>
       )}
     </section>
   );
