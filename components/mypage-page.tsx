@@ -11,6 +11,7 @@ import { PlayTypeLabel } from "@/components/play-type-label";
 import { useGames } from "@/components/games-provider";
 import { LOGIN_PATH } from "@/hooks/use-require-auth";
 import type { Game } from "@/lib/mock-games";
+import { displayPhase } from "@/lib/development-phases";
 import { displayGameStatus } from "@/lib/user-labels";
 
 function MyPageGameRow({ game }: { game: Game }) {
@@ -26,7 +27,7 @@ function MyPageGameRow({ game }: { game: Game }) {
           projectId={game.id}
           title={game.title}
           genre={game.genre}
-          phase={game.phase}
+          phase={displayPhase(game.phase)}
           showStatus={false}
           aspectClassName="aspect-video"
         />

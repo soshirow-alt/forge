@@ -14,6 +14,7 @@ import { PlaySafetyNote } from "@/components/play-safety-note";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { gameDetailReturnPath } from "@/lib/login-return-url";
+import { displayPhase } from "@/lib/development-phases";
 import type { MouseEvent } from "react";
 import { getDistributionType } from "@/lib/play-environment";
 import type { Game } from "@/lib/mock-games";
@@ -56,7 +57,7 @@ export function GameDetailSidebar({
         projectId={game.id}
         title={game.title}
         genre={game.genre}
-        phase={game.phase}
+        phase={displayPhase(game.phase)}
         aspectClassName="aspect-video rounded-xl overflow-hidden border border-zinc-800"
         showStatus={Boolean(game.thumbnailUrl)}
       />

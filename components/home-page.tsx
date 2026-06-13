@@ -16,6 +16,7 @@ import {
   type DiscoveryTab,
   type SortOption,
 } from "@/lib/game-filters";
+import { displayPhase } from "@/lib/development-phases";
 import { DiscoveryFilterChips } from "@/components/discovery-filter-chips";
 import { GameActivityBadges } from "@/components/game-activity-badges";
 import { PlayEnvironmentBadges } from "@/components/play-environment-badges";
@@ -123,7 +124,7 @@ function DiscoveryGameCard({
             projectId={game.id}
             title={game.title}
             genre={game.genre}
-            phase={game.phase}
+            phase={displayPhase(game.phase)}
             showStatus={false}
           />
           <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
@@ -136,7 +137,7 @@ function DiscoveryGameCard({
             )}
           </div>
           <div className="absolute bottom-3 left-3">
-            <DiscoveryBadge variant="phase">{game.phase}</DiscoveryBadge>
+            <DiscoveryBadge variant="phase">{displayPhase(game.phase)}</DiscoveryBadge>
           </div>
         </div>
 

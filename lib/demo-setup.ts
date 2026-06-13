@@ -55,7 +55,7 @@ function createDemoProjectForms(ownerName: string): SubmitFormData[] {
       title: "ネオン・アーカイブ",
       genre: "パズル",
       creator: ownerName,
-      phase: "プロトタイプ",
+      phase: "試作版",
       description:
         "ネオンに彩られたデータ迷宮を解き明かすローグライク・パズル。記憶の断片を組み合わせ、失われた都市の真実に迫ります。",
       lookingForTesters: true,
@@ -69,7 +69,7 @@ function createDemoProjectForms(ownerName: string): SubmitFormData[] {
       title: "群青の境界",
       genre: "ホラー",
       creator: ownerName,
-      phase: "α版",
+      phase: "プレイ可能版",
       description:
         "霧に包まれた離島で起きる協力型ホラー体験。仲間と連携しながら、境界の向こうから迫る存在から逃げ延びるサバイバルデモ。",
       lookingForTesters: true,

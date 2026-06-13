@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { GameThumbnail } from "@/components/game-thumbnail";
 import type { Game } from "@/lib/mock-games";
+import { displayPhase } from "@/lib/development-phases";
 import { LABEL_TEST_PLAY_OPEN } from "@/lib/user-labels";
 
 type HeroGameShowcaseProps = {
@@ -84,7 +85,7 @@ export function HeroGameShowcase({ games, loading = false }: HeroGameShowcasePro
             projectId={activeGame.id}
             title={activeGame.title}
             genre={activeGame.genre}
-            phase={activeGame.phase}
+            phase={displayPhase(activeGame.phase)}
             aspectClassName="aspect-[16/9] min-h-[220px] sm:aspect-[2/1] sm:min-h-[280px] lg:min-h-[340px]"
             showStatus={false}
             featured
@@ -163,7 +164,7 @@ export function HeroGameShowcase({ games, loading = false }: HeroGameShowcasePro
                     projectId={game.id}
                     title={game.title}
                     genre={game.genre}
-                    phase={game.phase}
+                    phase={displayPhase(game.phase)}
                     aspectClassName="aspect-video"
                     showStatus={false}
                     overlayClassName="pointer-events-none absolute inset-0 bg-gradient-to-t from-zinc-950/80 to-transparent opacity-60"

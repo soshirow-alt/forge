@@ -12,6 +12,7 @@ import { GameThumbnail } from "@/components/game-thumbnail";
 import { PlayTypeLabel } from "@/components/play-type-label";
 import { useGames } from "@/components/games-provider";
 import { LOGIN_PATH } from "@/hooks/use-require-auth";
+import { displayPhase } from "@/lib/development-phases";
 
 export function BookmarksPage() {
   const router = useRouter();
@@ -70,7 +71,7 @@ export function BookmarksPage() {
                     projectId={game.id}
                     title={game.title}
                     genre={game.genre}
-                    phase={game.phase}
+                    phase={displayPhase(game.phase)}
                   />
                   <div className="p-4">
                     <h2 className="font-semibold text-zinc-100 transition-colors group-hover:text-orange-400">

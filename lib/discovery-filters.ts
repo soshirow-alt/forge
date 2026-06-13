@@ -1,5 +1,8 @@
 import type { Game } from "@/lib/mock-games";
-import { DEVELOPMENT_PHASE_OPTIONS } from "@/lib/development-phases";
+import {
+  DEVELOPMENT_PHASE_OPTIONS,
+  type DevelopmentPhase,
+} from "@/lib/development-phases";
 import { PLAY_TIME_OPTIONS } from "@/lib/play-time-options";
 import { matchesPlayEnvironmentFilter } from "@/lib/play-environment";
 
@@ -27,10 +30,10 @@ export const PLATFORM_FILTER_OPTIONS = [
 export const PHASE_FILTER_OPTIONS = DEVELOPMENT_PHASE_OPTIONS.map(
   (option) => option.value,
 ) as [
-  "プロトタイプ",
-  "開発中",
-  "テスト版",
-  "公開準備",
+  DevelopmentPhase,
+  DevelopmentPhase,
+  DevelopmentPhase,
+  DevelopmentPhase,
 ];
 
 export const PLAY_TIME_FILTER_OPTIONS = PLAY_TIME_OPTIONS;
@@ -79,26 +82,34 @@ export function matchesGenreFilter(game: Game, genre: GenreFilter): boolean {
   return genreField.includes(genre.toLowerCase()) || text.includes(genre.toLowerCase());
 }
 
+/** Legacy phase strings in mock/DB still match until data is fully migrated. */
 export function matchesPhaseFilter(game: Game, phase: PhaseFilter): boolean {
   const value = `${game.phase} ${game.status}`.toLowerCase();
 
   switch (phase) {
-    case "プロトタイプ":
+    case "試作版":
       return (
-        value.includes("プロトタイプ") ||
         value.includes("試作") ||
-        value.includes("企画")
+        value.includes("プロトタイプ") ||
+        value.includes("企画") ||
+        value.includes("初期開発")
       );
-    case "開発中":
+    case "プレイ可能版":
       return (
+        value.includes("プレイ可能") ||
         value.includes("開発中") ||
-        value.includes("初期開発") ||
         value.includes("α") ||
-        value.includes("試作版")
+        value.includes("alpha") ||
+        value.includes("early access")
       );
-    case "テスト版":
-      return value.includes("テスト") || value.includes("β");
-    case "公開準備":
+    case "通しプレイ版":
+      return (
+        value.includes("通し") ||
+        value.includes("テスト版") ||
+        value.includes("β") ||
+        value.includes("beta")
+      );
+    case "公開準備中":
       return value.includes("公開準備") || value.includes("公開間近");
     default:
       return false;

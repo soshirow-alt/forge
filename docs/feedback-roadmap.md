@@ -6,7 +6,7 @@
 
 1. フィードバック表示改善 — **実装済み**
 2. 開発者ダッシュボード FB 一覧 — **実装済み**
-3. 開発フェーズ表現の整理 — 未着手
+3. 開発フェーズ表現の整理 — **実装済み**（DB 移行なし、表示正規化 + legacy フィルタ）
 4. バージョン別フィードバック仕様 — 未着手（migration 004）
 
 ## バージョン別フィードバック（将来）
@@ -27,11 +27,17 @@ Forge の将来コア機能として採用。
 
 ### 技術イメージ（migration 004 時）
 
-- `projects.playable_version`（text）
+- `projects.playable_version`（text、開発者自由入力が基本）
 - `project_feedback.version_key`（投稿時スナップショット）
 - UNIQUE(user_id, project_id, version_key)
 - UPDATE ポリシー（自分の FB のみ）
 - 版 bump：開発ログ投稿時「新しいプレイ可能版」チェック（推奨）または作品編集
+
+### Supabase phase 列（任意・後日）
+
+- 投稿フォームは新4名称で保存
+- 既存行に旧文字列（プロトタイプ/α版等）が残る場合、フロントは `normalizePhase` で表示
+- 一括 UPDATE は migration または Dashboard 手動（オーナー判断）
 
 ### 今回やらないもの
 
