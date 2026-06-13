@@ -2,20 +2,26 @@
 
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
+import {
+  buildLoginUrlWithReturn,
+  LOGIN_PATH,
+} from "@/lib/login-return-url";
 
-export const LOGIN_PATH = "/login";
+export { LOGIN_PATH } from "@/lib/login-return-url";
 
 export function useRequireAuth() {
   const router = useRouter();
   const { user, hydrated } = useAuth();
 
-  function requireAuth(action: () => void) {
+  function requireAuth(action: () => void, returnPath?: string) {
     if (!hydrated) {
       return;
     }
 
     if (!user) {
-      router.push(LOGIN_PATH);
+      router.push(
+        returnPath ? buildLoginUrlWithReturn(returnPath) : LOGIN_PATH,
+      );
       return;
     }
 
@@ -27,6 +33,9 @@ export function useRequireAuth() {
     hydrated,
     isLoggedIn: Boolean(user),
     requireAuth,
-    goToLogin: () => router.push(LOGIN_PATH),
+    goToLogin: (returnPath?: string) =>
+      router.push(
+        returnPath ? buildLoginUrlWithReturn(returnPath) : LOGIN_PATH,
+      ),
   };
 }

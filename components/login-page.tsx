@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { getAuthErrorMessage } from "@/lib/auth";
+import { resolvePostLoginPath } from "@/lib/login-return-url";
 
 const inputClassName =
   "mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
@@ -16,6 +17,7 @@ export function LoginPage({
 }) {
   const searchParams = useSearchParams();
   const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
+  const returnParam = searchParams.get("return");
 
   const { user, hydrated, signIn, signUp } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
@@ -28,9 +30,9 @@ export function LoginPage({
 
   useEffect(() => {
     if (hydrated && user) {
-      window.location.href = "/";
+      window.location.href = resolvePostLoginPath(returnParam);
     }
-  }, [hydrated, user]);
+  }, [hydrated, user, returnParam]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -48,7 +50,7 @@ export function LoginPage({
         return;
       }
 
-      window.location.href = "/";
+      window.location.href = resolvePostLoginPath(returnParam);
       return;
     }
 
@@ -56,7 +58,7 @@ export function LoginPage({
       const hasSession = await signUp(email, password, displayName);
 
       if (hasSession) {
-        window.location.href = "/";
+        window.location.href = resolvePostLoginPath(returnParam);
         return;
       }
 

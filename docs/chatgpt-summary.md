@@ -1,75 +1,71 @@
 ■ 現在の状態
 
-本番 forge-flame-gamma。Supabase migration 001/002/003 適用済み。コア engagement 本番確認済み。マイページ最小版（/mypage）実装・build 成功。push/deploy 実施予定。
+本番 forge-flame-gamma。A案（プレイはログイン必須）維持 + 限定 returnUrl 実装・deploy 予定/済み。
 
 ■ 今回実装したこと
 
-/mypage：応援中・更新を追う・あとで見る・投稿した作品の4セクション。DB の project_supports / project_watches / project_bookmarks / projects のみ参照。新規テーブルなし。ヘッダーにマイページリンク。
+プレイ / 外部リンクから `/login?return=/games/{id}` → ログイン成功後に作品詳細へ。`/games/{id}` のみ許可、それ以外・不正値は `/` フォールバック。
 
-■ 設計整理（実装前）
+■ Cursorの推奨案
 
-■ マイページの画面構成案
-/mypage — 4セクション縦並び（応援=橙 / 追跡=amber / 保存=灰 / 投稿=灰）。各セクションに意味の説明文。投稿作品はコンパクト行+ダッシュボードへの導線。
-
-■ 必要なDB参照
-project_supports, project_watches, project_bookmarks（fetchUserEngagement 済み）, projects（owner_id）。
-
-■ 現在のDBで実現可能か
-はい。追加 migration 不要。
-
-■ 新規テーブルが必要か
-不要。
-
-■ Cursor推奨案
-既存 games-provider の engagement state をそのまま使い、/my-projects（開発者ダッシュボード）とは URL を分離。
+限定 returnUrl（今回実装）。全ページ共通 redirect はしない。
 
 ■ 推奨理由
-DB・UI ともに追加コスト最小。プレイヤー視点と開発者管理を混ぜない。
+
+発見→プレイ直前のログインで元作品へ戻るのが自然。ホワイトリストで open redirect 回避。
 
 ■ 懸念点
-/bookmarks と内容が重複。将来統合 or リダイレクト検討可。
 
-■ ユーザー目線の変化
+過去 redirect 障害の再発リスク → スコープ限定・検証関数で緩和。
 
-「応援した」「追跡している」「保存した」「投稿した」がマイページで一覧できる。
+■ Forge原典との整合性
+
+A 維持。原典にプレイ導線 return の例外を追記。
+
+■ 本番で私が確認する手順（非エンジニア向け）
+
+【成功パターン】
+1. ログアウト（またはシークレット）で任意の作品詳細を開く
+2. 「ログインしてプレイ」を押す → ログイン画面へ（URL に return= と /games/ が含まれる）
+3. ログイン成功 → 同じ作品詳細に戻る（トップではない）
+4. 「プレイする」→ 外部でプレイ開始できる
+
+【外部リンク】
+5. 未ログインで「ログインして Steam」等を押す → ログイン → 同じ作品詳細に戻る
+
+【従来どおり / へ】
+6. ヘッダー「ログイン」から直接ログイン → トップ（/）に戻る
+7. 応援・あとで見る・更新を追う からログイン → トップ（return なし）
+
+【失敗時フォールバック】
+8. ログイン失敗（パスワード誤り）→ ログイン画面に留まる
+9. 問題なければ「returnUrl OK」と返信
 
 ■ 本番で確認済みのもの
 
-- 応援・追跡・保存・devlog の DB 保存（別ブラウザ OK）
+（returnUrl 実装前）応援・追跡・保存・devlog・マイページ
 
 ■ まだ localStorage に残っているもの
 
-- forge-notifications, forge-applicant-counts, follow 系, forge-game-extras, forge-demo-project-ids
-
-■ 次にマイページへ進める状態か
-
-実装完了。本番 /mypage の画面確認が次。
-
-■ オーナーが画面で確認すべきこと
-
-1. ログイン → ヘッダー「マイページ」
-2. 応援・追跡・保存した作品が各セクションに表示
-3. 投稿作品が「自分が投稿した作品」に表示
-4. 空セクションの説明文が分かりやすいか
+forge-notifications, applicant, follow, forge-game-extras
 
 ■ 今すぐ私がやるべきこと
 
-本番 /mypage を開いて上記 1〜4 を確認。
+上記手順 1〜9 を本番で確認。
 
 ■ Cursorだけで完了できること
 
-- /bookmarks と /mypage の統合検討
+- 不具合修正
 - extras DB 化（低優先）
 
 ■ 次に検討すべきこと
 
-1. マイページ本番確認
+1. returnUrl 本番確認
 2. extras カラム
-3. オーナー通知 DB 化
 
 ■ ChatGPTに相談したい論点
 
-/bookmarks を /mypage#bookmarks に統合するか、両方残すか。
+returnUrl 問題なければ次フェーズ（extras / オーナー通知）。
 
 ■ 運用メモ（Cursor 自身への指示）
 

@@ -3,6 +3,7 @@
 import { AuthGatedHint } from "@/components/auth-gated-hint";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
+import { gameDetailReturnPath } from "@/lib/login-return-url";
 import { getExternalLinks } from "@/lib/game-links";
 import type { Game } from "@/lib/mock-games";
 import { gameHasDownloadDistribution } from "@/lib/play-environment";
@@ -56,11 +57,14 @@ export function GameExternalLinks({
   } as Game);
 
   function handleLinkClick(url: string) {
-    requireAuth(() => {
-      void recordPlay(gameId).finally(() => {
-        window.open(url, "_blank", "noopener,noreferrer");
-      });
-    });
+    requireAuth(
+      () => {
+        void recordPlay(gameId).finally(() => {
+          window.open(url, "_blank", "noopener,noreferrer");
+        });
+      },
+      gameDetailReturnPath(gameId),
+    );
   }
 
   return (

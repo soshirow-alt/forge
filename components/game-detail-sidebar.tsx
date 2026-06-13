@@ -13,6 +13,7 @@ import { BookmarkButton } from "@/components/bookmark-button";
 import { PlaySafetyNote } from "@/components/play-safety-note";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
+import { gameDetailReturnPath } from "@/lib/login-return-url";
 import type { MouseEvent } from "react";
 import { getDistributionType } from "@/lib/play-environment";
 import type { Game } from "@/lib/mock-games";
@@ -38,7 +39,7 @@ export function GameDetailSidebar({
   function handlePlayClick(event: MouseEvent<HTMLAnchorElement>) {
     if (!isLoggedIn) {
       event.preventDefault();
-      requireAuth(() => undefined);
+      requireAuth(() => undefined, gameDetailReturnPath(game.id));
       return;
     }
 
