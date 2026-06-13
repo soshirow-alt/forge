@@ -4,6 +4,62 @@
 
 ---
 
+## 2026-06-13 localStorage 残骸削除（Step 2）
+
+### 今回やったこと
+
+- デッドコード削除：`play-session.ts`、feedback LS 関数、`loadDeveloperProfiles`
+- demo-setup から未使用の support/feedback LS seed 削除
+- localStorage 分類ドキュメント追加
+
+### ユーザー目線で変わったこと
+
+- なし（本番 UX は同じ）。コア操作はもともと Supabase 保存。
+
+### 注意事項
+
+- 応援・FB 等のオーナー通知は `forge-notifications`（LS）のまま
+- extras / follow / テスター応募数も LS 継続
+
+---
+
+## 2026-06-12 本番 Supabase migration 001/002/003 適用完了
+
+### 今回やったこと
+
+- オーナーが Supabase Dashboard SQL Editor で 001 → 002 → 003 を順に実行
+- Table Editor で 9 テーブルすべて確認済み
+
+### ユーザー目線で変わったこと
+
+- 本番で応援・保存・追跡・FB・開発ログ・watch 通知が DB 保存可能になった（画面確認はこれから）
+
+### 注意事項
+
+- 本番 URL は forge-flame-gamma.vercel.app
+- 確認手順: docs/supabase-post-migration-checklist.md
+
+---
+
+## 2026-06-12 本番 migration 手順・運用ルール整備
+
+### 今回やったこと
+
+- Supabase Dashboard 向け migration 002/003 適用手順（非エンジニア向け）
+- migration 適用後の本番確認チェックリスト（成功/失敗の見え方）
+- Run 停止時の **GPT判断用メモ** 運用ルール（AGENTS.md / Cursor Rules / handoff）
+- Supabase プラン・課金確認ガイド（オーナー向け）
+
+### ユーザー目線で変わったこと
+
+- なし（ドキュメント・運用のみ）。migration 適用後に devlog・通知・エンゲージメントが本番で動く。
+
+### 注意事項
+
+- migration 002/003 は **オーナーが Dashboard で実行**（Cursor は認証なしのため自動適用しない）
+
+---
+
 ## 2026-06-12 開発ログ Supabase 化 + watch 通知
 
 ### 今回やったこと

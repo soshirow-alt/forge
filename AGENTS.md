@@ -41,13 +41,24 @@ This version has breaking changes — APIs, conventions, and file structure may 
 3. **`docs/chatgpt-summary.md`** — ChatGPT に貼る最新サマリ（本文のみ、見出しや装飾線なし）
 4. レスポンス末尾 — 同じサマリを **1つの `text` コードブロック** に入れる（Cursor のコピーボタン用）
 
+### GPT用メモ省略禁止（Cursor 自身への指示）
+
+**返答を送る直前に必ず確認：** レスポンス末尾に `docs/chatgpt-summary.md` と同内容の **` ```text ` ブロック** があるか。
+
+- **省略してはいけない場面**：作業完了時、状態確認・Deploy 確認、本番検証報告、ドキュメント更新、ユーザーが「GPT用メモ」と言及したとき、**説明のみの返答でも Forge の現在地が変わる／伝わる内容なら常に**
+- **省略してよい場面**：ユーザーが「メモ不要」「コードブロック不要」と明示したときのみ
+- **忘れた場合**：ユーザーから指摘される前に、次の返答で必ず載せる。指摘されたら **その返答の最優先** でメモ + `docs/chatgpt-summary.md` 更新
+- **チェックリスト**（送信前 3 秒）：① chatgpt-summary.md 更新済みか ② 末尾 text ブロックがあるか ③ 「今すぐ私がやるべきこと」「Cursorだけで完了できること」が必要なら入っているか
+
 サマリ形式（非エンジニア向け、コード差分・ファイル一覧不要）：
 
 ```
 ■ 現在の状態
-■ 今回実装したこと
+■ 今回実装したこと（または今回確認したこと）
 ■ ユーザー目線の変化
 ■ 注意事項
+■ 今すぐ私がやるべきこと
+■ Cursorだけで完了できること
 ■ 次に検討すべきこと
 ■ ChatGPTに相談したい論点
 ```
@@ -80,4 +91,23 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - `docs/chatgpt-summary.md` を開いて全選択
 
 長文レス全文のコピーは不要。
+
+## Run 確認前の停止 — GPT判断用メモ
+
+次の操作で Cursor が **Run 確認前に停止** したら、スクリーンショットではなく **`docs/gpt-run-decision-memo.md` のフォーマット** をレスポンスに必ず出力する：
+
+- git **push**（特に `main`）
+- **main への反映**
+- **Supabase migration** / **DB 変更** / **削除処理**
+- **本番環境変更**（Vercel `--prod`、env 変更）
+- **課金が発生しうる操作**
+
+オーナーはこのメモを ChatGPT に貼って判断する。詳細: `docs/gpt-run-decision-memo.md`
+
+## Supabase migration（本番）
+
+- オーナー方針：**Supabase Dashboard SQL** で手動適用（CLI より可視性優先）
+- 手順: `docs/supabase-dashboard-migration-guide.md`
+- 適用後確認: `docs/supabase-post-migration-checklist.md`
+- プラン・課金: `docs/supabase-owner-operations.md`（オーナーが Dashboard で確認）
 <!-- END:forge-agent-rules -->

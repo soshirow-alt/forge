@@ -4,11 +4,22 @@
 **本番 URL**: https://forge-flame-gamma.vercel.app  
 **Vercel プロジェクト**: `forge`（`forge-app` ではない — env 未設定）
 
+## 非エンジニア向け（推奨）
+
+画面操作・コピペ・成功/失敗の見え方は **`docs/supabase-dashboard-migration-guide.md`** に詳述。  
+適用後の本番確認は **`docs/supabase-post-migration-checklist.md`**。
+
 ## 適用順
 
 1. [Supabase Dashboard](https://supabase.com/dashboard) → 対象プロジェクト → **SQL Editor**
 2. 未適用の migration のみ実行（下記「確認方法」参照）
-3. 実行後、`scripts/check-supabase-tables.mjs` をローカル `.env` で実行して確認
+3. 実行後、`scripts/check-supabase-tables.mjs` をローカル `.env` で実行して確認（任意）
+
+**適用順は必ず 001 → 002 → 003**（001 なしで 002/003 はエラーになります）。
+
+## 001（未適用の場合）
+
+`supabase/migrations/001_projects_and_developer_profiles.sql` の全文を実行。
 
 ## 002（未適用の場合）
 

@@ -3,7 +3,7 @@
 > ChatGPT / Cursor 間の**現在地サマリ**。  
 > 詳細な原典は `docs/forge-principles.md`、履歴は `docs/forge-changelog.md` を参照。
 
-最終更新：**2026-06-12**
+最終更新：**2026-06-12**（migration 001/002/003 本番適用済み）
 
 ---
 
@@ -14,8 +14,10 @@ Forge は **完成前のインディーゲームを発見 → プレイ → フ�
 - **公開**：トップ、一覧、ゲーム詳細の閲覧
 - **ログイン必須**：プレイ、外部リンク、応援、あとで見る、更新追跡、フィードバック、投稿、通知、マイ作品
 - **データ**：作品・プロフィール・エンゲージメント・**開発ログ**・**devlog 通知**は Supabase
+- **DB**：migration **001 / 002 / 003 適用済み**（9 テーブル確認済み）
+- **本番確認**：開発ログ → ゲスト別ブラウザ表示 **OK**（2026-06-12）
 - **暫定 localStorage**：応援/FB 等の通知、クリエイターフォロー、テスター応募数、作品 extras
-- **デプロイ**：Vercel + Supabase（環境変数要設定）
+- **デプロイ**：Vercel プロジェクト **forge** → https://forge-flame-gamma.vercel.app
 
 ---
 
@@ -48,8 +50,8 @@ Forge は **完成前のインディーゲームを発見 → プレイ → フ�
 
 | 項目 | リスク |
 |------|--------|
-| Supabase migration 002 未適用 | 応援・保存・プレイ記録・FB が保存されない |
-| Supabase 未設定環境 | ログイン・投稿が動かない |
+| 本番動作未確認 | migration 適用済みだが画面確認が未完の可能性 |
+| Supabase 未設定環境 | ログイン・投稿が動かない（forge-app URL 注意） |
 | localStorage 暫定データ | 端末・ブラウザをまたいで消える / 本番共有不可 |
 | extras（プレイ時間等） | localStorage のみ — 投稿者が別端末だと見えない |
 | ログイン後 `/` 固定 | 詳細からログインするとトップに戻る |
@@ -59,10 +61,15 @@ Forge は **完成前のインディーゲームを発見 → プレイ → フ�
 
 ## 次にやるべきこと
 
-1. **Supabase**：`002_user_engagement.sql` と **`003_project_devlogs_and_notifications.sql`** を本番に適用
-2. **動作確認**：A が watch → B（owner）が devlog 投稿 → A の通知一覧
-3. **Step 2（LS 残骸削除）**：play-session.ts、feedback LS 関数、demo support/feedback LS seed
-4. **Step 5**：projects extras カラム
+1. **本番動作確認**（応援・追跡・保存・FB・プレイの別ブラウザ再現）— オーナー作業
+2. **マイページ最小版**（コア DB データ参照）
+3. **Step 5**：projects extras カラム（低優先）
+
+## 運用ルール（2026-06-12 追加）
+
+- Cursor が Run 前に止まったら **`docs/gpt-run-decision-memo.md`** 形式のメモを ChatGPT に貼る（スクショ不要）
+- Supabase プラン・課金は **`docs/supabase-owner-operations.md`**（オーナーが Dashboard で確認）
+- **GPT用メモ省略禁止**：Forge 関連の返答末尾に `docs/chatgpt-summary.md` 同内容の text ブロック必須（AGENTS.md 参照）
 
 ---
 

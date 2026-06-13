@@ -14,8 +14,6 @@ export type DeveloperProfileInput = {
   website?: string;
 };
 
-export const DEVELOPER_PROFILES_STORAGE_KEY = "forge-developer-profiles";
-
 export function createDeveloperProfile(
   userId: string,
   input: DeveloperProfileInput,
@@ -28,19 +26,6 @@ export function createDeveloperProfile(
     xAccount: input.xAccount?.trim() || undefined,
     website: input.website?.trim() || undefined,
   };
-}
-
-export function loadDeveloperProfiles(): DeveloperProfile[] {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  try {
-    const stored = localStorage.getItem(DEVELOPER_PROFILES_STORAGE_KEY);
-    return stored ? (JSON.parse(stored) as DeveloperProfile[]) : [];
-  } catch {
-    return [];
-  }
 }
 
 export function findDeveloperProfileByUserId(
