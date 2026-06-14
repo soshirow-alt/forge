@@ -1,27 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { DeveloperFeedbackInbox } from "@/components/developer-feedback-inbox";
 import { ForgeHeader } from "@/components/forge-header";
+import { ProjectGrowthCard } from "@/components/project-growth-card";
 import { useGames } from "@/components/games-provider";
-import type { Game } from "@/lib/mock-games";
-import { LABEL_TEST_PLAY_JOIN, displayGameStatus } from "@/lib/user-labels";
+import { useOwnedProjectFeedback } from "@/hooks/use-owned-project-feedback";
+import {
+  buildNurtureDisplayContext,
+  buildProjectGrowthSnapshot,
+  groupFeedbackByProject,
+  sortProjectsForGrowthHub,
+} from "@/lib/project-growth-state";
 import { ForgeSdkNote } from "@/components/forge-sdk-note";
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("ja-JP", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
-function getCreatedDate(game: Game) {
-  return game.createdAt ?? game.lastUpdated;
-}
 
 function AnalyticsCard({
   label,
@@ -43,56 +36,42 @@ function AnalyticsCard({
   );
 }
 
-function ProjectQuickActions({ gameId }: { gameId: string }) {
-  return (
-    <>
-      <Link
-        href={`/projects/${gameId}/devlog/new`}
-        className="rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-300 transition-colors hover:border-orange-500/50 hover:bg-orange-500/15"
-      >
-        開発ログを書く
-      </Link>
-      <Link
-        href={`/my-projects#feedback-${gameId}`}
-        className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-orange-500/50 hover:text-orange-400"
-      >
-        フィードバックを見る
-      </Link>
-      <Link
-        href={`/games/${gameId}`}
-        className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-orange-500/50 hover:text-orange-400"
-      >
-        詳細を見る
-      </Link>
-      <Link
-        href={`/projects/${gameId}/edit`}
-        className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200"
-      >
-        編集
-      </Link>
-    </>
-  );
-}
-
-export function MyProjectsPage() {
+function MyProjectsPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const focusProjectId = searchParams.get("focus");
   const { user, hydrated } = useAuth();
   const {
     getOwnedProjects,
     deleteSubmittedGame,
     getSupportCount,
-    getApplicantCount,
+    getDevlogsByProject,
     dataReady,
   } = useGames();
 
+  const { entries: feedbackEntries, loaded: feedbackLoaded } =
+    useOwnedProjectFeedback(user?.id);
+
   const ownedGames = useMemo(
-    () =>
-      getOwnedProjects(user?.id).sort(
-        (a, b) =>
-          new Date(getCreatedDate(b)).getTime() -
-          new Date(getCreatedDate(a)).getTime(),
-      ),
+    () => getOwnedProjects(user?.id),
     [getOwnedProjects, user?.id],
+  );
+
+  const sortedGames = useMemo(
+    () =>
+      feedbackLoaded
+        ? sortProjectsForGrowthHub(
+            ownedGames,
+            feedbackEntries,
+            getDevlogsByProject,
+          )
+        : ownedGames,
+    [ownedGames, feedbackEntries, feedbackLoaded, getDevlogsByProject],
+  );
+
+  const feedbackByProject = useMemo(
+    () => groupFeedbackByProject(feedbackEntries),
+    [feedbackEntries],
   );
 
   const totalSupports = useMemo(
@@ -104,14 +83,7 @@ export function MyProjectsPage() {
     [ownedGames, getSupportCount],
   );
 
-  const totalTesterApplications = useMemo(
-    () =>
-      ownedGames.reduce(
-        (sum, game) => sum + getApplicantCount(game.id, 0),
-        0,
-      ),
-    [ownedGames, getApplicantCount],
-  );
+  const hasProjects = ownedGames.length > 0;
 
   useEffect(() => {
     if (hydrated && !user) {
@@ -119,7 +91,16 @@ export function MyProjectsPage() {
     }
   }, [hydrated, user, router]);
 
-  if (!hydrated || !dataReady) {
+  useEffect(() => {
+    if (!focusProjectId || !feedbackLoaded) {
+      return;
+    }
+
+    const element = document.getElementById(`project-${focusProjectId}`);
+    element?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [focusProjectId, feedbackLoaded]);
+
+  if (!hydrated || !dataReady || !feedbackLoaded) {
     return (
       <div className="min-h-full bg-zinc-950 text-zinc-100">
         <ForgeHeader />
@@ -151,25 +132,34 @@ export function MyProjectsPage() {
             <h1 className="text-3xl font-bold tracking-tight">
               開発ダッシュボード
             </h1>
-            <p className="mt-2 text-zinc-500">
-              作品を育てるための場所です。開発ログの投稿やフィードバックの確認ができます。
+            <p className="mt-2 max-w-2xl text-zinc-500">
+              ゲームを育てる場所です。プレイヤーの声は、次の版を作るための材料です。
             </p>
           </div>
-          <Link
-            href="/submit"
-            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
-          >
-            作品を投稿する
-          </Link>
+          {hasProjects ? (
+            <Link
+              href="/submit"
+              className="inline-flex shrink-0 items-center justify-center rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200"
+            >
+              + 作品を投稿
+            </Link>
+          ) : (
+            <Link
+              href="/submit"
+              className="inline-flex shrink-0 items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+            >
+              作品を投稿する
+            </Link>
+          )}
         </div>
 
-        <section className="mt-12">
-          <h2 className="text-xl font-semibold tracking-tight">作品管理</h2>
+        <section className="mt-10">
+          <h2 className="text-xl font-semibold tracking-tight">作品一覧</h2>
           <p className="mt-1 text-sm text-zinc-500">
-            あなたが投稿した作品の一覧です。開発ログやフィードバックは各行からすぐ開けます。
+            育てる作品を選び、現在地と次にやることから開発を進めましょう。
           </p>
 
-          {ownedGames.length === 0 ? (
+          {!hasProjects ? (
             <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-900/80 px-6 py-16 text-center">
               <p className="text-zinc-400">まだ投稿した作品がありません。</p>
               <Link
@@ -180,123 +170,51 @@ export function MyProjectsPage() {
               </Link>
             </div>
           ) : (
-            <div className="mt-6 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/80">
-              <div className="hidden overflow-x-auto md:block">
-                <table className="w-full min-w-[880px] text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-zinc-800 text-zinc-500">
-                      <th className="px-5 py-4 font-medium">タイトル</th>
-                      <th className="px-5 py-4 font-medium">ステータス</th>
-                      <th className="px-5 py-4 font-medium">投稿日</th>
-                      <th className="px-5 py-4 font-medium">応援数</th>
-                      <th className="px-5 py-4 font-medium">{LABEL_TEST_PLAY_JOIN}</th>
-                      <th className="px-5 py-4 font-medium">操作</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ownedGames.map((game) => (
-                      <tr
-                        key={game.id}
-                        className="border-b border-zinc-800/80 last:border-b-0"
-                      >
-                        <td className="px-5 py-4 font-medium text-zinc-100">
-                          {game.title}
-                        </td>
-                        <td className="px-5 py-4 text-zinc-300">{displayGameStatus(game.status)}</td>
-                        <td className="px-5 py-4 text-zinc-400">
-                          {formatDate(getCreatedDate(game))}
-                        </td>
-                        <td className="px-5 py-4 text-orange-400">
-                          {getSupportCount(game.id, 0)}
-                        </td>
-                        <td className="px-5 py-4 text-zinc-300">
-                          {game.lookingForTesters
-                            ? getApplicantCount(game.id, 0)
-                            : "—"}
-                        </td>
-                        <td className="px-5 py-4">
-                          <div className="flex flex-wrap gap-2">
-                            <ProjectQuickActions gameId={game.id} />
-                            <button
-                              type="button"
-                              onClick={() => deleteSubmittedGame(game.id)}
-                              className="rounded-lg border border-red-900/50 px-3 py-1.5 text-xs font-medium text-red-400 transition-colors hover:border-red-500/50 hover:bg-red-950/30"
-                            >
-                              削除
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="mt-6 space-y-4">
+              {sortedGames.map((game) => {
+                const growth = buildProjectGrowthSnapshot(
+                  game,
+                  feedbackEntries,
+                  getDevlogsByProject,
+                );
+                const projectFeedback =
+                  feedbackByProject.get(game.id) ?? [];
 
-              <div className="divide-y divide-zinc-800 md:hidden">
-                {ownedGames.map((game) => (
-                  <article key={game.id} className="p-5">
-                    <h3 className="font-semibold text-zinc-100">{game.title}</h3>
-                    <dl className="mt-3 space-y-2 text-sm">
-                      <div className="flex justify-between gap-4">
-                        <dt className="text-zinc-500">ステータス</dt>
-                        <dd className="text-zinc-300">{displayGameStatus(game.status)}</dd>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <dt className="text-zinc-500">投稿日</dt>
-                        <dd className="text-zinc-400">
-                          {formatDate(getCreatedDate(game))}
-                        </dd>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <dt className="text-zinc-500">応援数</dt>
-                        <dd className="text-orange-400">
-                          {getSupportCount(game.id, 0)}
-                        </dd>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <dt className="text-zinc-500">{LABEL_TEST_PLAY_JOIN}</dt>
-                        <dd className="text-zinc-300">
-                          {game.lookingForTesters
-                            ? getApplicantCount(game.id, 0)
-                            : "—"}
-                        </dd>
-                      </div>
-                    </dl>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <ProjectQuickActions gameId={game.id} />
-                      <button
-                        type="button"
-                        onClick={() => deleteSubmittedGame(game.id)}
-                        className="rounded-lg border border-red-900/50 px-3 py-1.5 text-xs font-medium text-red-400 transition-colors hover:border-red-500/50 hover:bg-red-950/30"
-                      >
-                        削除
-                      </button>
-                    </div>
-                  </article>
-                ))}
-              </div>
+                return (
+                  <ProjectGrowthCard
+                    key={game.id}
+                    game={game}
+                    growth={growth}
+                    feedbackEntries={projectFeedback}
+                    supportCount={getSupportCount(game.id, 0)}
+                    focusStep={
+                      focusProjectId === game.id
+                        ? buildNurtureDisplayContext(
+                            growth,
+                            false,
+                            game.id,
+                          ).nextStepId
+                        : null
+                    }
+                    onDelete={() => deleteSubmittedGame(game.id)}
+                  />
+                );
+              })}
             </div>
           )}
         </section>
-
-        <DeveloperFeedbackInbox userId={user.id} />
 
         <section className="mt-12">
           <h2 className="text-xl font-semibold tracking-tight">アナリティクス</h2>
           <p className="mt-1 text-sm text-zinc-500">
             作品全体のパフォーマンス概要（準備中）
           </p>
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <AnalyticsCard label="閲覧数" value="—" hint="準備中" />
             <AnalyticsCard label="プレイクリック" value="—" hint="準備中" />
             <AnalyticsCard
               label="応援数"
               value={String(totalSupports)}
-              hint="現在の合計"
-            />
-            <AnalyticsCard
-              label={LABEL_TEST_PLAY_JOIN}
-              value={String(totalTesterApplications)}
               hint="現在の合計"
             />
           </div>
@@ -323,5 +241,22 @@ export function MyProjectsPage() {
         </section>
       </main>
     </div>
+  );
+}
+
+export function MyProjectsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-full bg-zinc-950 text-zinc-100">
+          <ForgeHeader />
+          <main className="mx-auto max-w-7xl px-6 py-12">
+            <p className="text-zinc-500">読み込み中...</p>
+          </main>
+        </div>
+      }
+    >
+      <MyProjectsPageContent />
+    </Suspense>
   );
 }
