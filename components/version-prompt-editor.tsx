@@ -5,6 +5,7 @@ import {
   DEVELOPER_RESPONSE_KIND_OPTIONS,
   type DeveloperPromptDraft,
 } from "@/lib/version-prompt-form";
+import { DefaultVersionPromptPreview } from "@/components/default-version-prompt-preview";
 import { MAX_PROMPTS_PER_VERSION } from "@/lib/version-prompt-types";
 
 const inputClassName =
@@ -99,6 +100,8 @@ export function VersionPromptEditor({
           自分で問いを設定する
         </label>
       </div>
+
+      {mode === "none" && <DefaultVersionPromptPreview />}
 
       {mode === "custom" && (
         <div className="space-y-4">

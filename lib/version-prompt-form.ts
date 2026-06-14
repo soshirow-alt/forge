@@ -45,8 +45,8 @@ export const DEVELOPER_RESPONSE_KIND_OPTIONS: {
   },
   {
     value: "short_text",
-    label: "1行テキスト",
-    hint: "短文の自由記述",
+    label: "自由記述（短文）",
+    hint: "プレイヤーが短く自由に答えられます",
   },
   {
     value: "choice",

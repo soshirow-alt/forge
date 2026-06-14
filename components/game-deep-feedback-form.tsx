@@ -12,9 +12,13 @@ function hasDeepContent(item: {
   goodPoints?: string;
   concerns?: string;
   bugs?: string;
+  otherNotes?: string;
 }): boolean {
   return Boolean(
-    item.goodPoints?.trim() || item.concerns?.trim() || item.bugs?.trim(),
+    item.goodPoints?.trim() ||
+      item.concerns?.trim() ||
+      item.bugs?.trim() ||
+      item.otherNotes?.trim(),
   );
 }
 
@@ -29,9 +33,11 @@ export function GameDeepFeedbackForm({ gameId }: GameDeepFeedbackFormProps) {
   const [goodPoints, setGoodPoints] = useState("");
   const [concerns, setConcerns] = useState("");
   const [bugs, setBugs] = useState("");
+  const [otherNotes, setOtherNotes] = useState("");
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -46,6 +52,7 @@ export function GameDeepFeedbackForm({ gameId }: GameDeepFeedbackFormProps) {
           setGoodPoints(item.goodPoints ?? "");
           setConcerns(item.concerns ?? "");
           setBugs(item.bugs ?? "");
+          setOtherNotes(item.otherNotes ?? "");
         }
       })
       .finally(() => {
@@ -63,6 +70,7 @@ export function GameDeepFeedbackForm({ gameId }: GameDeepFeedbackFormProps) {
       goodPoints: goodPoints.trim() || undefined,
       concerns: concerns.trim() || undefined,
       bugs: bugs.trim() || undefined,
+      otherNotes: otherNotes.trim() || undefined,
     };
 
     if (!hasDeepContent(feedback)) {
@@ -70,9 +78,16 @@ export function GameDeepFeedbackForm({ gameId }: GameDeepFeedbackFormProps) {
     }
 
     setSubmitting(true);
+    setSaveError(null);
     try {
       await submitProjectFeedback(gameId, feedback);
       setSaved(true);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "保存に失敗しました。時間をおいて再度お試しください。";
+      setSaveError(message);
     } finally {
       setSubmitting(false);
     }
@@ -141,6 +156,30 @@ export function GameDeepFeedbackForm({ gameId }: GameDeepFeedbackFormProps) {
           className={`${inputClassName} mt-1.5`}
         />
       </div>
+      <div>
+        <label htmlFor={`other-${gameId}`} className="text-xs font-medium text-zinc-500">
+          その他・自由に伝えたいこと
+        </label>
+        <p className="mt-0.5 text-[11px] leading-relaxed text-zinc-600">
+          上の項目に当てはまらないこと、開発者へのメモなど（任意）
+        </p>
+        <textarea
+          id={`other-${gameId}`}
+          rows={3}
+          value={otherNotes}
+          onChange={(event) => setOtherNotes(event.target.value)}
+          className={`${inputClassName} mt-1.5`}
+          placeholder="例：このシーンの雰囲気が好きでした / 続編が楽しみです"
+        />
+      </div>
+      {saveError && (
+        <p
+          role="alert"
+          className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200"
+        >
+          {saveError}
+        </p>
+      )}
       <button
         type="submit"
         disabled={submitting}

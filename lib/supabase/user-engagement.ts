@@ -15,6 +15,7 @@ type FeedbackRow = {
   good_points: string | null;
   concerns: string | null;
   bugs: string | null;
+  other_notes: string | null;
   focus_response: string | null;
   would_replay: ReplayIntent | null;
   version_key: string;
@@ -29,6 +30,7 @@ function feedbackRowToItem(row: FeedbackRow): GameFeedbackItem {
     goodPoints: row.good_points ?? undefined,
     concerns: row.concerns ?? undefined,
     bugs: row.bugs ?? undefined,
+    otherNotes: row.other_notes ?? undefined,
     focusResponse: row.focus_response ?? undefined,
     wouldReplay: row.would_replay ?? undefined,
     versionKey: row.version_key,
@@ -168,6 +170,7 @@ export async function insertProjectFeedback(
       good_points: feedback.goodPoints ?? null,
       concerns: feedback.concerns ?? null,
       bugs: feedback.bugs ?? null,
+      other_notes: feedback.otherNotes ?? null,
       focus_response: feedback.focusResponse ?? null,
       would_replay: feedback.wouldReplay ?? null,
     })
@@ -193,6 +196,7 @@ export async function updateProjectFeedback(
       good_points: feedback.goodPoints ?? null,
       concerns: feedback.concerns ?? null,
       bugs: feedback.bugs ?? null,
+      other_notes: feedback.otherNotes ?? null,
       focus_response: feedback.focusResponse ?? null,
       would_replay: feedback.wouldReplay ?? null,
       updated_at: new Date().toISOString(),

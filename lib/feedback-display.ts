@@ -43,6 +43,13 @@ export function getFeedbackDisplayFields(
       tone: "bug",
     });
   }
+  if (item.otherNotes?.trim()) {
+    fields.push({
+      label: "その他・自由に伝えたいこと",
+      value: item.otherNotes.trim(),
+      tone: "neutral",
+    });
+  }
   if (item.focusResponse?.trim()) {
     fields.push({
       label: "観点への回答",

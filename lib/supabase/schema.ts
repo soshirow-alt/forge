@@ -56,6 +56,7 @@ export type ProjectFeedbackRow = {
   good_points: string | null;
   concerns: string | null;
   bugs: string | null;
+  other_notes: string | null;
   focus_response: string | null;
   would_replay: "yes" | "maybe" | "no" | null;
   version_key: string;

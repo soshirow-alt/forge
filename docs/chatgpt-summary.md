@@ -1,98 +1,123 @@
-Forge ChatGPT 用サマリ — P0 作品編集「更新する」保存不具合修正
+Forge ChatGPT 用サマリ — UX Phase1 実装（問いプレビュー / 自由記述 / other_notes）
 
 ■ 現在の状態
-本番 URL: https://forge-flame-gamma.vercel.app（deploy 906b84d）
-DB: migration 006+007 適用済み（オーナー確認済み）
-P0 不具合: 作品編集で問い設定後「更新する」が無反応 — 原因特定・修正済み（ローカル build OK、本番 deploy 待ち）
-UX 改善 7 論点: 整理済み。P0 修正後 Phase1（#2 #4 #7）着手はオーナー GO 待ち
-npm run build: 成功（2026-06-15）
-npm run lint: 既存 eslint エラー 22 件（本修正ファイルに新規 lint なし）
+本番 URL: https://forge-flame-gamma.vercel.app（commit 6576b21 = P0 deploy 済）
+UX Phase1: コード実装済み・本番 deploy / migration 008 適用はオーナー作業待ち
+P0 保存不具合: オーナー本番確認 OK → クローズ
+DB: 006+007 適用済み。008 はリポジトリに SQL あり（Dashboard 適用待ち）
+npm run build: 成功（2026-06-15 ローカル）
 
-■ 今回実装したこと（P0）
-1. 根本原因
-   - 作品詳細を誰かが閲覧すると fetchVersionPrompts → ensure_platform_default_prompt が DB に source=platform_default, sort_order=0 の行を作成
-   - 開発者が /projects/{id}/edit で「自分で問いを設定」→ saveDeveloperVersionPrompts が developer 問いを sort_order=0 で INSERT
-   - unique index project_version_prompts_sort_idx（archived_at IS NULL 時の project_id+version_key+sort_order）が衝突
-   - handleSubmit に try/catch がなく Promise reject が無視され、画面上は「ボタンが効いていない」ように見える
-2. 修正（lib/supabase/voice-engagement.ts）
-   - 開発者問いを 1 件以上保存する直前に、同一版の active platform_default 行を archived_at で履歴化してから INSERT/UPDATE
-   - 開発者カスタム問いがデフォルト問いを置き換える原典意図とも整合
-3. 修正（components/project-edit-page.tsx）
-   - isSaving / saveError 状態を追加
-   - try/catch/finally で updateProjectDetails → saveDeveloperVersionPrompts → router.push をラップ
-   - カスタムモードで sanitize が空（選択肢不足等）のときユーザー向けメッセージ
-   - ボタン disabled + 「保存中...」表示、role=alert のエラー枠
+■ Forge原典コアループ（判断の基準）
+プレイヤー: 発見→プレイ→声を届ける→変化を見る→再プレイ
+Phase1 は「作りやすさ・届けやすさ」の改善。初声/2層/非公開/集計思想は不変
 
-■ 調査チェックリスト結果（オーナー依頼 10 項目）
-1. disabled — 修正前は disabled なし。修正後は保存中のみ disabled
-2. submit 発火 — 発火していた（HTML5 ブロックではない）
-3. updateProjectDetails — 呼ばれていた（プロジェクト情報は更新されていた可能性）
-4. saveDeveloperVersionPrompts — 呼ばれていたが unique 違反等で throw → 遷移しない
-5. validation — choice 2 未満は sanitize で除外（今回エラー表示を追加）
-6. immutable — 今回の主因ではない（初回 INSERT 段階で失敗）
-7. Supabase — duplicate key / unique constraint 相当のエラー
-8. Network/console — 未捕捉の Promise rejection（UI 無反応）
-9. ローカル再現 — コード解析で再現条件確定（詳細閲覧後に編集で問い保存）
-10. env/RLS — RLS ではなく DB 制約。migration 追加不要
+■ 今回実装したこと（UX Phase1 — 3点）
+1. デフォルト問いプレビュー
+   - 新規: components/default-version-prompt-preview.tsx
+   - VersionPromptEditor で mode=none 時に「もう一度遊びたい？」+ 3 選択肢をプレビュー表示
+   - /submit と /projects/{id}/edit の両方（VersionPromptEditor 共有）
+2. 「1行入力」→「自由記述（短文）」
+   - lib/version-prompt-form.ts: 開発者向けラベル・hint 変更（response_kind=short_text は DB 値据え置き）
+   - components/voice-prompt-card.tsx: プレイヤー UI を input → textarea 3行、placeholder「短く自由に入力」
+   - maxLength 200 は維持
+3. 「もっと詳しく伝えたい」自由記述欄
+   - migration 008: project_feedback.other_notes (text, nullable)
+   - components/game-deep-feedback-form.tsx: 「その他・自由に伝えたいこと」欄追加
+   - lib/game-feedback-storage.ts / user-engagement.ts / feedback-display.ts: 保存・開発者表示対応
+   - 初声ではなく深い改善材料（任意）側のみ
 
 ■ 今回変更した画面
-画面: 作品編集 /projects/{id}/edit
-位置: フォーム最下部「更新する」ボタン直上
-変更前: 保存失敗時無反応。成功時のみ詳細へ遷移
-変更後: 保存中ラベル、失敗時赤枠エラー、成功時は従来どおり詳細へ
-プレイヤー視点: 開発者が問いを設定できない状態が解消
-開発者視点: 保存の成功/失敗が分かる
-確認手順: 下記「本番確認手順」参照
+画面1: 作品投稿 /submit、作品編集 /projects/{id}/edit
+位置: 「プレイヤーへの問い」セクション、「デフォルト問いを使う」選択時
+変更前: ラジオのみで中身不明
+変更後: 問い文 + 3 選択肢のプレビュー（オレンジ枠）
+確認: デフォルト選択 → プレビュー表示 / カスタム選択 → プレビュー非表示
 
-■ ユーザー目線の変化
-- 作品編集でプレイヤーへの問いを設定して「更新する」→ 保存され作品詳細へ戻れる
-- 失敗しても「何も起きない」ではなく理由が画面に出る
+画面2: 作品詳細 /games/{id} — 初声「vX.X への返事」
+位置: 開発者が short_text 問いを設定した場合の回答欄
+変更前: 1行 input、「1行で入力」
+変更後: textarea 3行、「短く自由に入力」
+確認: 開発者が自由記述（短文）問いを設定 → プレイヤー側 textarea
 
-■ 注意事項
-- 本修正はコード deploy のみ。Supabase migration 追加不要
-- 906b84d 本番にはまだ未反映。push + Vercel prod deploy 後に再確認
-- 既存 lint エラー（react-hooks/set-state-in-effect 等）は別件・本 P0 では触らない
+画面3: 作品詳細 — 「もっと詳しく伝えたい」（GameDeepFeedbackForm）
+位置: 良かった点/気になった点/バグの下
+変更前: 3 項目のみ
+変更後: 「その他・自由に伝えたいこと」textarea 追加
+確認: 008 適用後に入力→保存→my-projects FB 表示に「その他」行
 
-■ なぜこの設計
-- platform_default は「開発者未設定時のフォールバック」。開発者がカスタム問いを保存した時点で DB 上のデフォルト行は不要 → archive が正
-- 物理削除は immutable 方針と集計履歴の観点から避ける
-- 他案: sort_order を developer 用に 1 から振る — 衝突回避になるがデフォルト行が残りプレイヤー側で二重問いのリスク
-- 他案不採用: unique index 変更 — migration 要・影響大
+■ 今回やらなかったこと（Phase2以降）
+- 質問テンプレートと回答形式の大規模分離（#3）
+- カスタム選択肢 UI 個別ボックス化（#5）
+- プレイ後初声導線の大幅変更（#6）
+- my-projects 育成ハブ本格改善（#1）
+- AI 集約 / 変化を見る UI
 
-■ In / Out
-In: save 前 archive platform_default、編集画面エラー UX
-Out: P1 UX（プレビュー/用語/深いFB欄）、P2/P3 論点、submit 画面の同等エラー UX（必要なら次タスク）
+■ migration 008
+ファイル: supabase/migrations/008_feedback_other_notes.sql
+内容: ALTER TABLE project_feedback ADD COLUMN other_notes text
+RLS 変更なし（既存 owner-only SELECT 継続）
+チェックリスト: docs/supabase-post-migration-checklist.md §9 追加
 
-■ リスク
-- 低: archive 後 ensure_platform_default が再度行を作るが、developer 問いがある限り fetchVersionPrompts は developer 優先で問題なし
-- 開発者が「デフォルト問いを使う」に戻した場合: developer 行は archive、platform_default は ensure で再作成（既存挙動）
+■ 変更ファイル一覧
+- components/default-version-prompt-preview.tsx（新規）
+- components/version-prompt-editor.tsx
+- components/voice-prompt-card.tsx
+- components/game-deep-feedback-form.tsx
+- lib/version-prompt-form.ts
+- lib/game-feedback-storage.ts
+- lib/supabase/user-engagement.ts
+- lib/supabase/schema.ts
+- lib/feedback-display.ts
+- supabase/migrations/008_feedback_other_notes.sql（新規）
+- docs/forge-changelog.md
+- docs/supabase-post-migration-checklist.md §9
+
+■ build / lint
+- npm run build: 成功
+- npm run lint: 既存 repo 全体エラー 22 件（Phase1 変更ファイルに新規 lint なし）
+
+■ 残リスク
+- 008 未適用のまま other_notes 保存 → Supabase エラー（深いFB フォームに赤枠エラー表示を追加済み）
+- 008 適用前に Phase1 コードだけ deploy すると other_notes 欄は表示されるが保存時エラー表示
+- short_text の DB 値 short_text は不変（集計 RPC 影響なし）
+
+■ 本番確認手順（deploy + 008 適用後）
+A. migration 008
+1. Supabase Dashboard SQL Editor → 008 SQL Run
+2. Table Editor → project_feedback に other_notes 列
+
+B. デフォルト問いプレビュー
+1. /projects/{id}/edit → 「デフォルト問いを使う」
+2. 「もう一度遊びたい？」+ 3 選択肢プレビューが見える
+
+C. 自由記述（短文）
+1. edit で問い 1 件・回答形式「自由記述（短文）」→ 保存
+2. 別アカウントで詳細 → 初声 textarea（3行）で回答
+
+D. other_notes
+1. プレイ後「もっと詳しく伝えたい」→ その他欄に入力 → 送信
+2. 開発者 my-projects / FB 受信箱に「その他・自由に伝えたいこと」表示
+
+■ 次に進むべき Phase2 案（オーナー優先順位準拠）
+P2-1: #3 質問テンプレートと回答形式の分離（VersionPromptEditor 再設計）
+P2-2: #5 カスタム選択肢 UI — 選択肢数 + 個別入力フィールド
+P2-3: #6 プレイ後初声導線 — 右サイド / プレイ後 CTA / アンカー / 初声完了状態（プレイ前 FB は不可）
+P3: #1 my-projects 育成ハブ IA 本格改善
 
 ■ 今すぐ私がやるべきこと
-1. 本修正を main に merge / deploy（Vercel prod）
-2. 本番確認手順を実行（下記）
-3. P0 OK なら Phase1（#2 #4 #7）の GO/NG を返す
+1. Phase1 コード deploy（Vercel prod）の GO
+2. migration 008 Dashboard 適用
+3. 上記本番確認 A〜D
 
 ■ Cursorだけで完了できること
-- deploy 後の docs 更新
-- Phase1 UX 実装（オーナー GO 後）
-- submit 画面への同等 save エラー UX（任意）
-
-■ 次に検討すべきこと（UX Phase1 案 — オーナー優先順位準拠）
-P1: #2 デフォルト問いプレビュー / #4 「1行入力」→「自由記述（短文）」/ #7 深いFB自由記述欄（migration 要検討）
-P2: #3 テンプレートと回答形式分離 / #5 カスタム選択肢UI（個別フィールド）/ #6 プレイ後初声導線
-P3: #1 my-projects 育成ハブ本格改善
-
-■ 本番確認手順（deploy 後）
-1. ログイン（開発者）→ 既存作品の詳細 /games/{id} を一度開く（platform_default 行が存在しうる状態）
-2. /projects/{id}/edit → 「自分で問いを設定」→ 問い 1 件（はい/いいえで可）入力
-3. 「更新する」→ 「保存中...」→ 作品詳細へ遷移すること
-4. 詳細下部「vX.X への返事」に設定した問いが表示されること
-5. Supabase Table Editor: project_version_prompts に source=developer の active 行。platform_default は archived_at 付き
-6. 意図的にカスタム選択肢 1 個だけ → 保存 → 赤枠エラー（無反応ではない）
+- Phase1 deploy（GO 後）
+- 深いFB 保存エラー UX（008 未適用時の表示）
+- Phase2 各項目の実装
 
 ■ deploy 可否
-コードのみ・migration 不要 → deploy 可（オーナー Run 判断で push + Vercel prod）
+コード deploy: 可（008 なしでもプレビュー・用語・textarea は動作）
+other_notes 保存: 008 適用必須
 
 ■ ChatGPTに相談したい論点
-P0 本番確認 OK 後、Phase1 を #2+#4+#7 の 3 点セットで GO してよいか
-#7 自由記述欄の DB 列名（other_notes 等）を Phase1 で入れるか Phase2 まで待つか
+Phase1 deploy と 008 適用を同時に行うか（推奨: 同時）
+Phase2 の着手順 — #6 導線 vs #5 選択肢 UI どちらを先にするか

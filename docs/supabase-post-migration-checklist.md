@@ -211,3 +211,19 @@
 - [ ] my-projects で開発者向け集計が見える
 
 すべてチェックできたら **migration 006 本番適用フェーズ完了** です。
+
+---
+
+## 9. 深い改善材料 — other_notes（migration 008）
+
+**前提**: migration **008** を Dashboard SQL Editor で適用済み（`supabase/migrations/008_feedback_other_notes.sql`）
+
+| | 内容 |
+|---|---|
+| **操作** | ログイン → 作品詳細 → プレイ後「もっと詳しく伝えたい」→ **その他・自由に伝えたいこと** に入力 → 送信 |
+| **成功** | 「詳しい改善材料を届けました」。Dashboard `project_feedback` に `other_notes` が入る |
+| **失敗** | 保存エラー / 列なし → **008 未適用** |
+
+開発者（オーナー）: `/my-projects` または FB 受信箱で **その他・自由に伝えたいこと** が表示される（個別非公開・RLS 従来どおり）
+
+---
