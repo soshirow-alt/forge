@@ -62,21 +62,11 @@ export function GameActivityBadges({
     return null;
   }
 
-  const showTesterBadge =
-    game.lookingForTesters &&
-    snapshot.testerSlots > 0 &&
-    (snapshot.hasBuiltInDemoData || snapshot.testerAppliedCount > 0);
-
   return (
     <div className="flex flex-wrap gap-1.5">
       {(snapshot.supportCount > 0 || snapshot.hasBuiltInDemoData) && (
         <ActivityBadge tone="support" compact={compact}>
           応援 {snapshot.supportCount}
-        </ActivityBadge>
-      )}
-      {showTesterBadge && (
-        <ActivityBadge tone="test" compact={compact}>
-          テスト参加 {snapshot.testerAppliedCount}/{snapshot.testerSlots}
         </ActivityBadge>
       )}
       {snapshot.recentActivityLabel && (

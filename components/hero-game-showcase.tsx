@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from "react";
 import { GameThumbnail } from "@/components/game-thumbnail";
 import type { Game } from "@/lib/mock-games";
 import { displayPhase } from "@/lib/development-phases";
-import { LABEL_TEST_PLAY_OPEN } from "@/lib/user-labels";
 
 type HeroGameShowcaseProps = {
   games: Game[];
@@ -99,11 +98,6 @@ export function HeroGameShowcase({ games, loading = false }: HeroGameShowcasePro
               <span className="rounded-full border border-orange-400/50 bg-orange-500/20 px-3 py-1 text-xs font-bold tracking-wide text-orange-200 shadow-lg shadow-orange-950/40">
                 FEATURED
               </span>
-              {activeGame.lookingForTesters && (
-                <span className="rounded-full border border-violet-500/40 bg-violet-500/15 px-3 py-1 text-xs font-semibold text-violet-200">
-                  {LABEL_TEST_PLAY_OPEN}
-                </span>
-              )}
             </div>
             <p className="mt-3 text-sm font-medium text-orange-300/80">{activeGame.genre}</p>
             <h2 className="mt-1 text-2xl font-bold leading-tight text-white drop-shadow-lg transition-colors group-hover:text-orange-200 sm:text-3xl lg:text-4xl">

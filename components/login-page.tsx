@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { getAuthErrorMessage } from "@/lib/auth";
@@ -16,8 +16,10 @@ export function LoginPage({
   supabaseConfigured: boolean;
 }) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
   const returnParam = searchParams.get("return");
+  const callbackError = searchParams.get("error");
 
   const { user, hydrated, signIn, signUp } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
@@ -27,6 +29,14 @@ export function LoginPage({
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (callbackError === "auth_callback") {
+      setError(
+        "メール確認リンクが無効または期限切れです。確認メールを再送するか、ログインをお試しください。",
+      );
+    }
+  }, [callbackError]);
 
   useEffect(() => {
     if (hydrated && user) {
@@ -62,10 +72,8 @@ export function LoginPage({
         return;
       }
 
-      setMessage(
-        "アカウントを作成しました。確認メールが有効な場合はメールを確認してください。",
-      );
-      setMode("login");
+      const params = new URLSearchParams({ email });
+      router.push(`/auth/verify-email?${params.toString()}`);
     } catch (caught) {
       const authError = caught as { message?: string };
       setError(getAuthErrorMessage(authError.message ?? "認証に失敗しました。"));

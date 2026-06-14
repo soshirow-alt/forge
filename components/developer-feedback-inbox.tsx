@@ -1,44 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
 import { FeedbackStructuredCard } from "@/components/feedback-structured-card";
 import { useGames } from "@/components/games-provider";
 import { formatFeedbackDate } from "@/lib/feedback-display";
 import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
 
+const primaryButtonClassName =
+  "inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90";
+
+const secondaryButtonClassName =
+  "inline-flex items-center justify-center rounded-lg border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-200 transition-colors hover:border-orange-500/50 hover:text-orange-400";
+
 type DeveloperFeedbackInboxProps = {
   userId: string;
+  entries: ProjectFeedbackEntry[];
+  loaded: boolean;
 };
 
-export function DeveloperFeedbackInbox({ userId }: DeveloperFeedbackInboxProps) {
-  const { getOwnedProjects, getOwnedProjectFeedback } = useGames();
-  const [entries, setEntries] = useState<ProjectFeedbackEntry[]>([]);
-  const [loaded, setLoaded] = useState(false);
+export function DeveloperFeedbackInbox({
+  userId,
+  entries,
+  loaded,
+}: DeveloperFeedbackInboxProps) {
+  const { getOwnedProjects } = useGames();
 
-  const ownedGames = useMemo(
-    () => getOwnedProjects(userId),
-    [getOwnedProjects, userId],
+  const ownedGames = getOwnedProjects(userId);
+  const titleByProjectId = new Map(
+    ownedGames.map((game) => [game.id, game.title]),
   );
-
-  const titleByProjectId = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const game of ownedGames) {
-      map.set(game.id, game.title);
-    }
-    return map;
-  }, [ownedGames]);
-
-  useEffect(() => {
-    void getOwnedProjectFeedback(userId)
-      .then(setEntries)
-      .catch(() => setEntries([]))
-      .finally(() => setLoaded(true));
-  }, [getOwnedProjectFeedback, userId]);
 
   if (!loaded) {
     return (
-      <section className="mt-12">
+      <section className="mt-10">
         <h2 className="text-xl font-semibold tracking-tight">フィードバック</h2>
         <p className="mt-2 text-sm text-zinc-500">読み込み中...</p>
       </section>
@@ -46,7 +40,7 @@ export function DeveloperFeedbackInbox({ userId }: DeveloperFeedbackInboxProps) 
   }
 
   return (
-    <section id="developer-feedback" className="mt-12 scroll-mt-24">
+    <section id="developer-feedback" className="mt-10 scroll-mt-24">
       <h2 className="text-xl font-semibold tracking-tight">フィードバック</h2>
       <p className="mt-1 text-sm text-zinc-500">
         プレイヤーから届いた改善材料です。レビューではなく、次の更新の参考にしてください。
@@ -67,7 +61,7 @@ export function DeveloperFeedbackInbox({ userId }: DeveloperFeedbackInboxProps) 
               id={`feedback-${projectId}`}
               className="scroll-mt-24 rounded-xl border border-zinc-800 bg-zinc-900/80 p-5"
             >
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                   <Link
                     href={`/games/${projectId}`}
@@ -80,16 +74,25 @@ export function DeveloperFeedbackInbox({ userId }: DeveloperFeedbackInboxProps) 
                     {formatFeedbackDate(item.createdAt)}
                   </p>
                 </div>
-                <Link
-                  href={`/games/${projectId}`}
-                  className="mt-2 shrink-0 text-xs font-medium text-zinc-500 transition-colors hover:text-orange-400 sm:mt-0"
-                >
-                  作品詳細を見る →
-                </Link>
               </div>
 
               <div className="mt-4 border-t border-zinc-800/80 pt-4">
                 <FeedbackStructuredCard item={item} showDate={false} />
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2 border-t border-zinc-800/80 pt-4">
+                <Link
+                  href={`/projects/${projectId}/devlog/new`}
+                  className={primaryButtonClassName}
+                >
+                  このFBをもとに開発ログを書く
+                </Link>
+                <Link
+                  href={`/games/${projectId}`}
+                  className={secondaryButtonClassName}
+                >
+                  作品詳細を見る
+                </Link>
               </div>
             </article>
           ))}

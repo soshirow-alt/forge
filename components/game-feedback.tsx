@@ -253,13 +253,13 @@ export function GameFeedbackForm({ gameId, focusNotes }: GameFeedbackFormProps) 
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-lg border border-zinc-700 px-5 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-orange-500/40 hover:text-orange-400 disabled:opacity-60"
+          className="w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:opacity-60 sm:w-auto"
         >
           {submitting
             ? "送信中..."
             : isEditing
-              ? "フィードバックを更新する"
-              : "フィードバックを送る"}
+              ? "感想を更新する"
+              : "感想を届ける"}
         </button>
       </form>
     </section>

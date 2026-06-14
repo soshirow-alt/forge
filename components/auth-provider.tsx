@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { getEmailConfirmRedirectUrl } from "@/lib/auth-redirect";
 import { mapSupabaseUser, type User } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/client";
 
@@ -115,6 +116,7 @@ export function AuthProvider({
           data: {
             display_name: displayName.trim(),
           },
+          emailRedirectTo: getEmailConfirmRedirectUrl(),
         },
       });
 
@@ -122,8 +124,8 @@ export function AuthProvider({
         throw error;
       }
 
-      if (data.user) {
-        setUser(mapSupabaseUser(data.user));
+      if (data.session?.user) {
+        setUser(mapSupabaseUser(data.session.user));
       }
 
       return Boolean(data.session);

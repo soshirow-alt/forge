@@ -48,7 +48,6 @@ export type DiscoveryChipFilters = {
   platforms: PlatformFilter[];
   phases: PhaseFilter[];
   playTimes: PlayTimeFilter[];
-  recruitingOnly: boolean;
 };
 
 export const EMPTY_DISCOVERY_FILTERS: DiscoveryChipFilters = {
@@ -56,7 +55,6 @@ export const EMPTY_DISCOVERY_FILTERS: DiscoveryChipFilters = {
   platforms: [],
   phases: [],
   playTimes: [],
-  recruitingOnly: false,
 };
 
 export {
@@ -124,12 +122,9 @@ export function applyDiscoveryChipFilters(
   games: Game[],
   filters: DiscoveryChipFilters,
 ): Game[] {
-  const { genres, platforms, phases, playTimes, recruitingOnly } = filters;
+  const { genres, platforms, phases, playTimes } = filters;
 
   return games.filter((game) => {
-    if (recruitingOnly && !game.lookingForTesters) {
-      return false;
-    }
     if (genres.length > 0 && !genres.some((genre) => matchesGenreFilter(game, genre))) {
       return false;
     }
@@ -157,7 +152,6 @@ export function hasActiveChipFilters(filters: DiscoveryChipFilters): boolean {
     filters.genres.length > 0 ||
     filters.platforms.length > 0 ||
     filters.phases.length > 0 ||
-    filters.playTimes.length > 0 ||
-    filters.recruitingOnly
+    filters.playTimes.length > 0
   );
 }

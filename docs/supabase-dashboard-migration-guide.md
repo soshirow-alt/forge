@@ -242,7 +242,7 @@ WHERE table_name = 'user_notifications'
 | `violates check constraint "user_notifications_type_check"` | 005 未適用でコードが version_published を insert | **005 を先に適用** |
 | `policy "Project owners insert notifications" already exists` | 005 適用済み | 確認へ |
 
-005 適用後 → **Vercel 本番 deploy** → 版 bump 通知の画面確認
+005 適用後 → **Vercel 本番 deploy** → [`docs/e2e-version-published-loop-production.md`](./e2e-version-published-loop-production.md) で本番 E2E 確認
 
 ---
 

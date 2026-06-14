@@ -6,16 +6,11 @@ import { DevelopmentActivityPanel } from "@/components/development-activity-pane
 import { AuthGatedHint } from "@/components/auth-gated-hint";
 import { GameExternalLinks } from "@/components/game-external-links";
 import { GameSupport } from "@/components/game-support";
-import { GameTesterApply } from "@/components/game-tester-apply";
 import { GameThumbnail } from "@/components/game-thumbnail";
 import { GameWatchButton } from "@/components/game-watch-button";
 import { BookmarkButton } from "@/components/bookmark-button";
 import { PlaySafetyNote } from "@/components/play-safety-note";
-import { useGames } from "@/components/games-provider";
-import { useRequireAuth } from "@/hooks/use-require-auth";
-import { gameDetailReturnPath } from "@/lib/login-return-url";
 import { displayPhase } from "@/lib/development-phases";
-import type { MouseEvent } from "react";
 import { getDistributionType } from "@/lib/play-environment";
 import type { Game } from "@/lib/mock-games";
 
@@ -24,7 +19,10 @@ type GameDetailSidebarProps = {
   userSubmitted: boolean;
   canEdit: boolean;
   formatDate: (date: string) => string;
-  onPlay?: () => void;
+  played: boolean;
+  isLoggedIn: boolean;
+  onPlayRequest: () => void;
+  onFeedbackRequest: () => void;
 };
 
 export function GameDetailSidebar({
@@ -32,23 +30,11 @@ export function GameDetailSidebar({
   userSubmitted,
   canEdit,
   formatDate,
-  onPlay,
+  played,
+  isLoggedIn,
+  onPlayRequest,
+  onFeedbackRequest,
 }: GameDetailSidebarProps) {
-  const { recordPlay } = useGames();
-  const { isLoggedIn, requireAuth } = useRequireAuth();
-
-  function handlePlayClick(event: MouseEvent<HTMLAnchorElement>) {
-    if (!isLoggedIn) {
-      event.preventDefault();
-      requireAuth(() => undefined, gameDetailReturnPath(game.id));
-      return;
-    }
-
-    void recordPlay(game.id).then(() => {
-      onPlay?.();
-    });
-  }
-
   return (
     <aside className="space-y-3 lg:sticky lg:top-20 lg:self-start">
       <GameThumbnail
@@ -63,16 +49,33 @@ export function GameDetailSidebar({
       />
 
       <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3.5">
-        <a
-          href={isLoggedIn ? game.playUrl : LOGIN_FALLBACK}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={handlePlayClick}
-          title={isLoggedIn ? undefined : "ログインすると使えます"}
-          className="block w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 text-center text-base font-semibold text-zinc-950 transition-opacity hover:opacity-90"
-        >
-          {isLoggedIn ? "プレイする" : "ログインしてプレイ"}
-        </a>
+        {isLoggedIn && played ? (
+          <>
+            <button
+              type="button"
+              onClick={onFeedbackRequest}
+              className="block w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 text-center text-base font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+            >
+              感想を届ける
+            </button>
+            <button
+              type="button"
+              onClick={onPlayRequest}
+              className="mt-2 w-full text-center text-xs font-medium text-zinc-500 transition-colors hover:text-orange-400/90"
+            >
+              もう一度プレイする
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={onPlayRequest}
+            title={isLoggedIn ? undefined : "ログインすると使えます"}
+            className="block w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 text-center text-base font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+          >
+            {isLoggedIn ? "プレイする" : "ログインしてプレイ"}
+          </button>
+        )}
         {!isLoggedIn && (
           <AuthGatedHint
             hint="プレイ後にフィードバックを送れます"
@@ -103,15 +106,6 @@ export function GameDetailSidebar({
 
       <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3.5 space-y-3.5">
         <GameSupport gameId={game.id} isUserSubmitted={userSubmitted} compact />
-
-        {game.lookingForTesters && game.testerSlots !== undefined && (
-          <GameTesterApply
-            gameId={game.id}
-            testerSlots={game.testerSlots}
-            isUserSubmitted={userSubmitted}
-            compact
-          />
-        )}
 
         <DevelopmentActivityPanel gameId={game.id} />
 
@@ -156,5 +150,3 @@ export function GameDetailSidebar({
     </aside>
   );
 }
-
-const LOGIN_FALLBACK = "#";

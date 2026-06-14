@@ -32,6 +32,10 @@ export function getAuthErrorMessage(message: string): string {
       return "パスワードは6文字以上で入力してください。";
     case "Unable to validate email address: invalid format":
       return "メールアドレスの形式が正しくありません。";
+    case "Email not confirmed":
+      return "メールアドレスの確認が完了していません。登録時の確認メールをご確認ください。";
+    case "auth_callback":
+      return "メール確認リンクが無効または期限切れです。確認メールを再送するか、ログインをお試しください。";
     default:
       return message;
   }

@@ -7,6 +7,60 @@ export type NurtureStepId = "read" | "improving" | "devlog" | "publish" | "wait"
 
 export type NurtureStepVisualState = "done" | "now" | "next" | "upcoming";
 
+export type ProgressRailVisual = "done" | "current" | "upcoming";
+
+export const NURTURE_STEP_WHY: Record<NurtureStepId, string> = {
+  read: "声を聞く",
+  improving: "直す",
+  devlog: "記録する",
+  publish: "届ける",
+  wait: "育つ",
+};
+
+export const NURTURE_STEPS: {
+  id: NurtureStepId;
+  label: string;
+  railLabel: string;
+  shortLabel: string;
+  whyLabel: string;
+}[] = [
+  {
+    id: "read",
+    label: "FBを読む",
+    railLabel: "FB",
+    shortLabel: "FB",
+    whyLabel: NURTURE_STEP_WHY.read,
+  },
+  {
+    id: "improving",
+    label: "改善する",
+    railLabel: "改善",
+    shortLabel: "改善",
+    whyLabel: NURTURE_STEP_WHY.improving,
+  },
+  {
+    id: "devlog",
+    label: "開発ログを書く",
+    railLabel: "ログ",
+    shortLabel: "ログ",
+    whyLabel: NURTURE_STEP_WHY.devlog,
+  },
+  {
+    id: "publish",
+    label: "新版公開する",
+    railLabel: "公開",
+    shortLabel: "公開",
+    whyLabel: NURTURE_STEP_WHY.publish,
+  },
+  {
+    id: "wait",
+    label: "反応を待つ",
+    railLabel: "待つ",
+    shortLabel: "待つ",
+    whyLabel: NURTURE_STEP_WHY.wait,
+  },
+];
+
 export type NurtureDataPhase =
   | "no_feedback"
   | "feedback_pending"
@@ -49,14 +103,6 @@ export type ProjectGrowthSnapshot = {
   cyclePrevious?: string;
   cycleCurrent?: string;
 };
-
-export const NURTURE_STEPS: { id: NurtureStepId; label: string; shortLabel: string }[] = [
-  { id: "read", label: "FBを読む", shortLabel: "読む" },
-  { id: "improving", label: "改善中", shortLabel: "改善中" },
-  { id: "devlog", label: "開発ログを書く", shortLabel: "devlog" },
-  { id: "publish", label: "新版公開する", shortLabel: "公開" },
-  { id: "wait", label: "反応を待つ", shortLabel: "待つ" },
-];
 
 export type NurtureDisplayContext = {
   nowStepId: NurtureStepId | null;
@@ -184,6 +230,43 @@ export function getNurtureStepVisualState(
   return "upcoming";
 }
 
+/** P1-2.7.1: Rail は 5 段常時。Hero と役割分担する進捗位置。 */
+export function getProgressRailStepIds(): NurtureStepId[] {
+  return NURTURE_STEPS.map((step) => step.id);
+}
+
+/** Rail 上の ● は Hero の行動ではなく、サイクル上の進捗位置（now → next）。 */
+export function getProgressRailPositionId(
+  display: NurtureDisplayContext,
+): NurtureStepId {
+  return display.nowStepId ?? display.nextStepId;
+}
+
+/** Rail 用 — 色・バッジなし。進捗 1 点のみやや明るく。 */
+export function getProgressRailVisual(
+  stepId: NurtureStepId,
+  display: NurtureDisplayContext,
+): ProgressRailVisual {
+  const visibleStepIds = getProgressRailStepIds();
+  const progressStepId = getProgressRailPositionId(display);
+  const stepIndex = visibleStepIds.indexOf(stepId);
+  const progressIndex = visibleStepIds.indexOf(progressStepId);
+
+  if (stepIndex === -1 || progressIndex === -1) {
+    return "upcoming";
+  }
+
+  if (stepId === progressStepId) {
+    return "current";
+  }
+
+  if (stepIndex < progressIndex) {
+    return "done";
+  }
+
+  return "upcoming";
+}
+
 export function buildNurtureDisplayContext(
   snapshot: ProjectGrowthSnapshot,
   feedbackRead: boolean,
@@ -195,7 +278,7 @@ export function buildNurtureDisplayContext(
         nowStepId: "wait",
         nextStepId: "wait",
         heroTitle: "反応を待つ",
-        heroSubline: "プレイヤーの声を待っています",
+        heroSubline: undefined,
         primaryCta: {
           label: "作品ページを確認する",
           href: `/games/${gameId}`,
@@ -213,7 +296,7 @@ export function buildNurtureDisplayContext(
           heroTitle: "FBを読む",
           heroSubline: snapshot.loopActive
             ? `${snapshot.cycleNumber} 周目 · また声が届きました`
-            : "プレイヤーの声を読みましょう",
+            : "届いた声が、次の改善の材料になります",
           primaryCta: {
             label: "FBを読む",
             href: `#project-${gameId}-detail`,
@@ -228,7 +311,7 @@ export function buildNurtureDisplayContext(
         nowStepId: "improving",
         nextStepId: "devlog",
         heroTitle: "開発ログを書く",
-        heroSubline: "改善が終わったら記録しましょう",
+        heroSubline: "改善が終わったら、記録して届けましょう",
         primaryCta: {
           label: "開発ログを書く",
           href: `/projects/${gameId}/devlog/new`,
@@ -243,6 +326,7 @@ export function buildNurtureDisplayContext(
         nowStepId: null,
         nextStepId: "publish",
         heroTitle: "新版公開する",
+        heroSubline: "記録した改善を、プレイヤーに届けましょう",
         primaryCta: {
           label: "新版を公開する",
           href: `/projects/${gameId}/devlog/new`,
@@ -257,7 +341,7 @@ export function buildNurtureDisplayContext(
         nowStepId: "wait",
         nextStepId: "wait",
         heroTitle: "反応を待つ",
-        heroSubline: "プレイヤーの再プレイと新しい声を待っています",
+        heroSubline: "新しい声が届いたら、またサイクルが回ります",
         primaryCta: {
           label: "作品ページを確認する",
           href: `/games/${gameId}`,

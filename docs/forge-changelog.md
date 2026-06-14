@@ -4,6 +4,236 @@
 
 ---
 
+## 2026-06-15 version_prompt immutable（同一版内の問い履歴整合）
+
+### 今回やったこと
+
+- **saveDeveloperVersionPrompts**: 初声 1 件以上付いた prompt は文言・形式を UPDATE しない。変更時は archive + 新 INSERT
+- 回答 0 件の prompt は同一 id の UPDATE を継続
+- 削除は物理削除禁止（archived_at のみ）
+- **migration 007**: `get_public_voice_aggregates` — active + 回答済み archived を表示、未回答 archived は非表示
+- **fetchOwnerVoiceAggregates**: 上記と同方針の TS 集計（非公開作品も可）
+- 共有ロジック: `lib/supabase/voice-prompt-immutable.ts`
+
+### ユーザー体験の変化
+
+- 開発者が問いを直しても、プレイヤーが届けた声の集計ラベル（問い文）が後から書き換わらない
+- 回答済み問いを削除しても「みんなの声」から消えない（その版への声として残る）
+- プレイヤー向け初声フォームは **active 問いのみ**（変更後の新問いが対象）
+
+### 原典
+
+- `docs/forge-principles.md` §5（版への返答・個別非公開・集計のみ公開）
+
+---
+
+## 2026-06-15 開発者問い設定 UI + migration 006 確認手順
+
+### 今回やったこと
+
+- **開発者問い設定 UI**（`/submit`・`/projects/{id}/edit`）
+  - 旧「特に見てほしい観点」（focusNotes テキスト）を **版プレイヤー問い（version_prompt）** エディタに置換
+  - 1 版・最大 10 問。回答形式：はい/いいえ、3 段階、もう一度遊びたい、1 行テキスト、カスタム選択肢
+  - 未設定時はデフォルト問い「もう一度遊びたい？」（従来どおり）
+  - 3 問以上で回答率低下の注意喚起（原典 §5 準拠）
+- **Supabase 保存**：`saveDeveloperVersionPrompts` / `fetchDeveloperVersionPrompts`（archived_at で差分同期）
+- **migration 006 本番確認チェックリスト** を `docs/supabase-post-migration-checklist.md` §8 に追加
+
+### ユーザー体験の変化
+
+- 開発者：投稿・編集時にプレイヤーへの問いを構造化して設定できる
+- プレイヤー：開発者が設定した問いが詳細の「vX.X への返事」に反映（006 適用後）
+- focusNotes は新規投稿では保存しない（既存作品の表示は legacy として残る）
+
+### 原典
+
+- `docs/forge-principles.md` §5（版プレイヤー問い・デフォルト問い）
+
+---
+
+## 2026-06-12 初声（version_prompt）+ みんなの声 — プレイヤーサイクル実装 GO
+
+### 今回やったこと
+
+- 原典 §5 更新：1 版・最大 10 問、初声完了 = 返答 1 件以上、応援≠初声、みんなの声（プレイヤー=グラフ / 開発者=解釈）
+- migration **006**：`project_version_prompts` / `project_voice_responses` / 公開集計 RPC / feedback RLS 個別非公開
+- 1 段目 UI：`GameVoiceSection`（複数問い・1 問 OK・返事を届ける）
+- 2 段目：`GameDeepFeedbackForm`（任意・折りたたみ）
+- プレイヤー向け「みんなの声」：集計グラフのみ（個別回答非公開）
+- 開発者向け：問い別集計 + ルールベース解釈（AI 前段）
+- Phase A 接続：プレイ後バナー / モーダル → `#game-voice-section`
+
+### ユーザー体験の変化
+
+- プレイヤー：5 項目フォーム一括ではなく、開発者の問いに短く返事 → 成功体験完結
+- プレイヤー：「みんなの声」で集計傾向を確認（レビュー一覧ではない）
+- 開発者：my-projects で問い別の解釈 + 数字を確認
+- 個別の初声・深い改善材料は公開されない
+
+### 原典
+
+- `docs/forge-principles.md` §1・§5・§7
+
+---
+
+## 2026-06-12 P1-2.5 作品育成ハブ — /my-projects 情報設計
+
+### 今回やったこと
+
+- `/my-projects` を **作品育成ハブ** に再設計（FB inbox 型から転換）
+- 3層構造: 作品一覧 → 作品選択（アコーディオン）→ 作品育成
+- 各作品カードに **現在地** + **次にやること** を最優先表示
+- 成長ステップ: 投稿/発見/プレイ（小）+ FB/改善/新版公開/反応待ち（大ループ）
+- 改善サイクル: 前回/今回/次 の文脈表示（競わせない）
+- プレイヤーの声（FB）を展開内最後段に格下げ
+- 横断 NextActionsPanel / FB inbox 廃止
+- `?focus=id` 拡張余地（任意深リンク）
+- 投稿 CTA: 作品あり時 tertiary
+
+### ユーザー体験の変化
+
+- 入室直後に「どの作品を育てるか」が分かる
+- FB は材料、主行动は devlog / 版公開
+- CTA 散在・重複の解消
+
+### 関連
+
+- オーナー GO: P1-2.5 v2 ワイヤ
+
+---
+
+## 2026-06-12 P1-2 my-projects 強化（案 B B1+B2）
+
+### 今回やったこと
+
+- `/my-projects` 冒頭に **NextActionsPanel**（次にやること）を追加
+- **FB inbox** を作品管理テーブルより上へ移動
+- 各 FB から **開発ログを書く** primary CTA → `/projects/{id}/devlog/new`
+- FB 件数バッジを作品テーブルに表示
+- B2 ヒューリスティック: FB 受信後 devlog 未対応作品を「要対応」表示
+
+### ユーザー体験の変化
+
+- 開発者がログイン後すぐ「次に何をすればいいか」が分かる
+- FB → 改善(devlog) の 1 クリック導線
+- 分析ダッシュボード化ではなく行動導線を優先
+
+### Out（今回やらない）
+
+- 作品別 Studio ページ（案 C）
+- DB migration / 開発者 FB 通知 Supabase 化 / AI 要約 / ランキング
+
+### 本番 deploy
+
+- Deploy ID: `dpl_BmY7mgTEqocGqSUDNVvgd6GXzy59` — READY
+- 本番: https://forge-flame-gamma.vercel.app
+
+---
+
+## 2026-06-12 P1-1 登録〜メール認証導線（案α A+B）
+
+### 今回やったこと
+
+- signUp 後 **session なしではログイン済み扱いにしない**（auth-provider）
+- 新規登録成功後 **`/auth/verify-email`** 確認待ち画面へ遷移
+- **`/auth/callback`** で Supabase メール確認リンクの code 交換
+- **`/auth/welcome`** で「メール確認完了」「Forgeへようこそ」→ CTA は **ホーム `/`**
+- signUp / 再送に `emailRedirectTo` を指定（`lib/auth-redirect.ts`）
+
+### ユーザー体験の変化
+
+- 登録直後にホームへ誤リダイレクトしなくなった
+- 確認メール送信・待ち状態が専用画面で明示される
+- メール Confirm 後、welcome 経由でログイン済みホームへ進める
+
+### オーナー作業
+
+- Supabase Dashboard → Redirect URLs に `/auth/callback`（本番 + localhost）を追加 — **設定済み（2026-06-12）**
+
+### 本番 deploy
+
+- Deploy ID: `dpl_8NwvuGAZcNTED29DfCn3vxL9Lqcm` — READY
+- 本番: https://forge-flame-gamma.vercel.app
+
+### 関連
+
+- オーナー GO: P1-1 案α Phase A+B 一括
+
+---
+
+## 2026-06-13 Discovery 統合 — テストプレイ受付中タブ廃止
+
+### 今回やったこと
+
+- ホーム Discovery を **新着作品 + 急上昇** の 2 タブに整理（「テストプレイ受付中」タブ削除）
+- 新着 feed に **全 public 投稿作品** を統合（`lookingForTesters` による exclusion 廃止）
+- 投稿時 `lookingForTesters: false` をデフォルト化
+- recruitingOnly フィルタチップ・「テストプレイ受付中」ソートを削除
+- 投稿完了画面 CTA を原典順に再構成（新着確認 → プレイURL → ダッシュボード → devlog）
+- テスター募集系 UI を MVP 非露出（作品編集・詳細 Apply・バッジ・Hero 等）
+- `looking_for_testers` DB 列・内部型は温存（migration なし）
+
+### ユーザー体験の変化
+
+- 投稿後、**新着作品タブ**に載る（バグ誤認の解消）
+- Forge がテスター募集サイトに見えにくくなった
+- 主導線: 発見 → プレイ → FB → 改善
+
+### 関連
+
+- オーナー GO: 2026-06-13 Discovery 設計整理
+
+---
+
+## 2026-06-13 本番 E2E 確認手順書 — 再プレイ→新FB ループ
+
+### 今回やったこと
+
+- **`docs/e2e-version-published-loop-production.md` 新設**
+  - 事前条件（005・deploy・2 アカウント・実作品・watch/FB 状態）
+  - プレイヤー（B）/ 開発者（A）の 1 クリック単位手順
+  - 各ステップの期待結果
+  - 失敗時切り分け（通知なし / バナーなし / FB 切替なし）
+  - ChatGPT・Cursor 貼付用の結果記録テンプレート
+
+### ユーザー体験の変化
+
+- プロダクト UI 変更なし。**検証フェーズ**のドキュメント整備
+- オーナーが本番でコアループ最終節を非エンジニアでも確認可能
+
+### 関連リンク
+
+- `docs/version-published-loop-design.md` / `docs/supabase-dashboard-migration-guide.md` §005 から参照
+
+---
+
+## 2026-06-13 オーナー × ChatGPT × Cursor トリガー運用の恒久化
+
+### 今回やったこと
+
+- **`docs/forge-triage-operations.md` 新設** — トリガー運用の正本
+  - `CURSOR` キーワード（Cursor 貼付用完成文 1 本）
+  - Run スクショ → Run 判断 [A]〜[D]
+  - summary / handoff / 判断用メモ → レビュー運用
+  - UX 違和感発言 → UX レビュー
+  - プロダクトレビュー優先順位（原典＞ユーザー＞開発者＞MVP＞技術）
+  - チャット移行（handoff 初回 → summary 追従）
+- `docs/gpt-run-decision-memo.md` — 結論を 4 段階 [A]〜[D] に更新
+- `AGENTS.md` / `forge.mdc` / `forge-principles.md` / `chatgpt-summary-format.md` / `chatgpt-handoff.md` に反映
+
+### オーナー・ChatGPT 体験の変化
+
+- 「CURSOR」だけで ChatGPT から Cursor へ貼れる完成指示が得られる
+- Run スクショ・サマリ貼付時の ChatGPT の振る舞いが明文化され、解釈ブレを防止
+- UX の「なんか違う」等が感想ではなくレビュー依頼として扱われる
+
+### 注意事項
+
+- プロダクトコード変更なし。運用ドキュメントのみ
+- 旧 Run 結論「[C] 中止推奨」は **[D] Run禁止** または **[C] 追加確認推奨** に読み替え
+
+---
+
 ## 2026-06-12 成長ループ接続 — 新版公開通知 + 再プレイバナー（コード実装済み・DB migration 005 未適用）
 
 ### 今回やったこと

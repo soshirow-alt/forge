@@ -67,7 +67,9 @@ function isMetaTag(tag: string): boolean {
 }
 
 export function getPublicGameTags(tags?: string[]): string[] {
-  return (tags ?? []).filter((tag) => !isMetaTag(tag));
+  return (tags ?? []).filter(
+    (tag) => !isMetaTag(tag) && tag !== "テスター募集中",
+  );
 }
 
 function hasTag(game: Game, tag: string): boolean {

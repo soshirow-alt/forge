@@ -78,6 +78,15 @@ Forge MVP 初期（ユーザー数十〜数百）では **DB サイズ・MAU と
 | Vercel プロジェクト名 | **forge**（`forge-app` ではない） |
 | env 変数 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` |
 
+### Auth Redirect URLs（P1-1 以降必須）
+
+**Authentication → URL Configuration → Redirect URLs** に追加:
+
+- `https://forge-flame-gamma.vercel.app/auth/callback`
+- `http://localhost:3000/auth/callback`（ローカル dev）
+
+未設定時: メール確認リンククリック後に `/login?error=auth_callback` へ落ちる。
+
 ---
 
 ## オーナーが月1で見るとよいもの

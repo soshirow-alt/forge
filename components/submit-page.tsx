@@ -8,6 +8,7 @@ import { DeveloperProfileSetup } from "@/components/developer-profile-setup";
 import { ForgeHeader } from "@/components/forge-header";
 import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
 import { ForgeSdkNote } from "@/components/forge-sdk-note";
+import { VersionPromptEditor } from "@/components/version-prompt-editor";
 import { useGames } from "@/components/games-provider";
 import {
   EMPTY_PLAY_ENVIRONMENT_FORM,
@@ -16,6 +17,12 @@ import {
 } from "@/lib/play-environment";
 import { DEVELOPMENT_PHASE_OPTIONS } from "@/lib/development-phases";
 import { PLAY_TIME_OPTIONS } from "@/lib/play-time-options";
+import { resolvePlayableVersion } from "@/lib/playable-version";
+import {
+  createEmptyPromptDraft,
+  sanitizePromptDrafts,
+  type DeveloperPromptDraft,
+} from "@/lib/version-prompt-form";
 
 const phaseOptions = DEVELOPMENT_PHASE_OPTIONS;
 
@@ -124,7 +131,7 @@ export function SubmitPage() {
   const editId = searchParams.get("edit");
   const { user, hydrated } = useAuth();
 
-  const { addSubmittedGame, getDeveloperProfileByUserId, saveDeveloperProfile } =
+  const { addSubmittedGame, getDeveloperProfileByUserId, saveDeveloperProfile, saveDeveloperVersionPrompts } =
     useGames();
 
   const developerProfile = user
@@ -143,7 +150,9 @@ export function SubmitPage() {
   const [testerNotesMode, setTesterNotesMode] = useState<"none" | "custom">(
     "none",
   );
-  const [testerNotes, setTesterNotes] = useState("");
+  const [promptDrafts, setPromptDrafts] = useState<DeveloperPromptDraft[]>([
+    createEmptyPromptDraft(),
+  ]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [enabledExternalLinks, setEnabledExternalLinks] = useState<
     ExternalLinkKey[]
@@ -313,10 +322,6 @@ export function SubmitPage() {
       tags: mergePlayEnvironmentIntoTags(selectedTags, playEnvironment),
       playUrl,
       estimatedPlayTime: estimatedPlayTime || undefined,
-      focusNotes:
-        testerNotesMode === "custom" && testerNotes.trim()
-          ? testerNotes.trim()
-          : undefined,
       steamUrl: steamUrl || undefined,
       itchUrl: itchUrl || undefined,
       githubUrl: githubUrl || undefined,
@@ -329,6 +334,11 @@ export function SubmitPage() {
       ownerName: user.name,
     });
 
+    const versionKey = resolvePlayableVersion(game.playableVersion);
+    const promptsToSave =
+      testerNotesMode === "custom" ? sanitizePromptDrafts(promptDrafts) : [];
+    await saveDeveloperVersionPrompts(game.id, versionKey, promptsToSave);
+
     setSubmittedGameId(game.id);
     setSuccess(true);
     setTitle("");
@@ -339,7 +349,7 @@ export function SubmitPage() {
     setPlayUrl("");
     setDistribution("");
     setTesterNotesMode("none");
-    setTesterNotes("");
+    setPromptDrafts([createEmptyPromptDraft()]);
     setSelectedTags([]);
     setEnabledExternalLinks([]);
     setSteamUrl("");
@@ -690,64 +700,13 @@ export function SubmitPage() {
             )}
           </div>
 
-          <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
-            <div>
-              <p className="text-sm font-medium text-zinc-400">
-                特に見てほしい観点{" "}
-                <span className="font-normal text-zinc-600">（任意）</span>
-              </p>
-              <p className="mt-1 text-xs text-zinc-600">
-                重点的にフィードバックしてほしい点があれば記載してください
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <label
-                className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
-                  testerNotesMode === "none"
-                    ? "border-orange-500/40 bg-orange-500/5 text-orange-300"
-                    : "border-zinc-800 bg-zinc-900/60 text-zinc-300"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="testerNotesMode"
-                  checked={testerNotesMode === "none"}
-                  onChange={() => {
-                    setTesterNotesMode("none");
-                    setTesterNotes("");
-                  }}
-                  className="h-4 w-4 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
-                />
-                特になし
-              </label>
-              <label
-                className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
-                  testerNotesMode === "custom"
-                    ? "border-orange-500/40 bg-orange-500/5 text-orange-300"
-                    : "border-zinc-800 bg-zinc-900/60 text-zinc-300"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="testerNotesMode"
-                  checked={testerNotesMode === "custom"}
-                  onChange={() => setTesterNotesMode("custom")}
-                  className="h-4 w-4 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
-                />
-                記載する
-              </label>
-            </div>
-            {testerNotesMode === "custom" && (
-              <textarea
-                id="testerNotes"
-                rows={3}
-                value={testerNotes}
-                onChange={(event) => setTesterNotes(event.target.value)}
-                className={`${inputClassName} mt-0 resize-y`}
-                placeholder="例：序盤離脱が多いので最初の10分の感想が欲しい。UIの分かりやすさも見てほしい。"
-              />
-            )}
-          </div>
+          <VersionPromptEditor
+            mode={testerNotesMode}
+            onModeChange={setTesterNotesMode}
+            drafts={promptDrafts}
+            onDraftsChange={setPromptDrafts}
+            versionLabel="初回のプレイ可能版"
+          />
 
           <div>
             <p className="text-sm font-medium text-zinc-400">特徴タグ</p>

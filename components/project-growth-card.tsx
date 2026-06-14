@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { GameGrowthCycle } from "@/components/game-growth-cycle";
 import { GameThumbnail } from "@/components/game-thumbnail";
-import { displayPhase } from "@/lib/development-phases";
 import type { NurtureStepId, ProjectGrowthSnapshot } from "@/lib/project-growth-state";
 import type { Game } from "@/lib/mock-games";
 import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
@@ -28,12 +27,10 @@ export function ProjectGrowthCard({
   return (
     <article
       id={`project-${game.id}`}
-      className={`scroll-mt-24 rounded-xl border bg-zinc-900/80 ${
-        growth.needsAttention ? "border-orange-500/30" : "border-zinc-800"
-      }`}
+      className="scroll-mt-24 rounded-xl bg-zinc-900/60"
     >
-      <div className="flex flex-col gap-4 p-5 sm:flex-row sm:gap-5">
-        <div className="h-16 w-24 shrink-0 overflow-hidden rounded-lg sm:h-20 sm:w-28">
+      <div className="flex flex-col gap-5 p-6 sm:flex-row sm:gap-6">
+        <div className="order-2 h-14 w-[4.5rem] shrink-0 overflow-hidden rounded-lg opacity-80 sm:order-1 sm:h-16 sm:w-20">
           <GameThumbnail
             thumbnailUrl={game.thumbnailUrl}
             status={game.status}
@@ -47,46 +44,46 @@ export function ProjectGrowthCard({
           />
         </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <h2 className="text-lg font-semibold text-zinc-100">{game.title}</h2>
-            <span className="text-xs text-zinc-600">{displayPhase(game.phase)}</span>
+        <div className="order-1 min-w-0 flex-1 sm:order-2">
+          <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <h2 className="text-base font-semibold text-zinc-300">{game.title}</h2>
+            {growth.pendingFeedbackCount > 0 && (
+              <span className="text-[10px] font-medium text-orange-400/90">
+                新しい声
+              </span>
+            )}
+            <span className="text-[10px] text-zinc-600">
+              v{growth.playableVersion}
+              {growth.cycleNumber > 0 && ` · サイクル ${growth.cycleNumber}`}
+            </span>
           </div>
 
-          <p className="mt-2 text-xs text-zinc-500">
-            最新版 {growth.playableVersion} · 最終更新 {growth.lastUpdatedLabel} ·
-            応援 {supportCount}
-            {growth.cycleNumber > 0 && ` · 改善サイクル ${growth.cycleNumber}`}
-            {growth.pendingFeedbackCount > 0 && " · 新しい声あり"}
-          </p>
+          <GameGrowthCycle
+            game={game}
+            growth={growth}
+            feedbackEntries={feedbackEntries}
+            detailPanelId={`project-${game.id}-detail`}
+            initialSelectedStep={focusStep}
+          />
 
-          <div className="mt-4">
-            <GameGrowthCycle
-              game={game}
-              growth={growth}
-              feedbackEntries={feedbackEntries}
-              detailPanelId={`project-${game.id}-detail`}
-              initialSelectedStep={focusStep}
-            />
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-zinc-800 pt-4 text-sm">
+          <div className="mt-5 flex flex-wrap items-center gap-3 text-xs text-zinc-600">
             <Link
               href={`/games/${game.id}`}
-              className="text-zinc-500 transition-colors hover:text-orange-400"
+              className="transition-colors hover:text-zinc-400"
             >
               作品詳細
             </Link>
             <Link
               href={`/projects/${game.id}/edit`}
-              className="text-zinc-500 transition-colors hover:text-orange-400"
+              className="transition-colors hover:text-zinc-400"
             >
-              投稿を編集
+              編集
             </Link>
+            <span className="text-zinc-700">応援 {supportCount}</span>
             <button
               type="button"
               onClick={onDelete}
-              className="text-red-400 transition-colors hover:text-red-300"
+              className="text-red-400/80 transition-colors hover:text-red-300"
             >
               削除
             </button>

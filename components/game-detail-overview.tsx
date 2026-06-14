@@ -7,7 +7,6 @@ import {
   getPhasePlayerDescription,
 } from "@/lib/development-phases";
 import { getPublicGameTags } from "@/lib/play-environment";
-import { LABEL_TEST_PLAY_OPEN } from "@/lib/user-labels";
 import type { Game } from "@/lib/mock-games";
 
 type GameDetailOverviewProps = {
@@ -34,9 +33,6 @@ function getWhyPlayHook(game: Game): string {
   if (phaseDescription) {
     return phaseDescription;
   }
-  if (game.lookingForTesters) {
-    return "いま公開中のバージョンを、無料で先行プレイできます。";
-  }
   return "Forgeでしか出会えない、開発中のインディーゲームです。";
 }
 
@@ -61,9 +57,6 @@ export function GameDetailOverview({ game }: GameDetailOverviewProps) {
         <OverviewItem label="ジャンル">{game.genre}</OverviewItem>
         {game.estimatedPlayTime && (
           <OverviewItem label="想定プレイ時間">{game.estimatedPlayTime}</OverviewItem>
-        )}
-        {game.lookingForTesters && (
-          <OverviewItem label="テストプレイ">{LABEL_TEST_PLAY_OPEN}</OverviewItem>
         )}
       </dl>
 

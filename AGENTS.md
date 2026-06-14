@@ -37,9 +37,18 @@ This version has breaking changes — APIs, conventions, and file structure may 
 作業完了時に必ず更新：
 
 1. `docs/forge-changelog.md` — ユーザー体験・仕様の変化
-2. `docs/forge-handoff.md` — 現在地
-3. **`docs/chatgpt-summary.md`** — ChatGPT に貼る最新サマリ（**プレーンテキストのみ**：`■` 見出し可、Markdown 表・`#` 見出し・`---` 区切り・コードフェンス・余分な空行は不可）
-4. レスポンス末尾 — 上記と**同一内容**を **1つの ` ```text ` ブロック** に入れる（**オーナーはここの Copy ボタンが主経路**）
+2. `docs/forge-handoff.md` — 現在地（Cursor / リポジトリ向け Markdown）
+3. **`docs/chatgpt-summary.md`** — ChatGPT に貼る**差分サマリ**（**プレーンテキストのみ**：`■` 見出し可、Markdown 表・`#` 見出し・`---` 区切り・コードフェンス・余分な空行は不可）
+4. レスポンス末尾 — 上記 3 と**同一内容**を **1つの ` ```text ` ブロック** に入れる（**オーナーはここの Copy ボタンが主経路**）
+
+**`docs/chatgpt-handoff.md`** — 新 GPT スレッド用**全量スナップショット**。毎タスクでは更新しない。以下のトリガー時のみ全量更新：
+
+- 大テーマ完了
+- migration 完了（本番適用・確認済み）
+- **ロードマップ順位変更**（次テーマの優先順位・Cursor 推奨1位が変わったとき）
+- オーナーが引継ぎを指示したとき
+
+**粒度標準（必読・恒久）**: `docs/chatgpt-summary-format.md` が**唯一の形式標準**。オーナーがフォーマット変更を明示するまで、毎タスク従う。**薄い要点メモは禁止**。ロードマップ整理時は **60行以上**、実装完了時は **40行以上** を目安。各 `■` は複数行・具体例・オーナー判断・理由まで書く。「詳細は docs/xxx」のみの省略不可。**UI 変更がある実装**では `■ 今回変更した画面` を必須（画面名・URL・**画面位置**・変更前/後・プレイヤー/開発者視点・確認手順）。既存の設計判断セクション（なぜこの設計 / 他案不採用 / In Out / リスク / オーナー確認手順）は削らない。
 
 ### GPT用メモ省略禁止（Cursor 自身への指示）
 
@@ -47,10 +56,17 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 - **省略してはいけない場面**：作業完了時、状態確認・Deploy 確認、本番検証報告、ドキュメント更新、ユーザーが「GPT用メモ」と言及したとき、**説明のみの返答でも Forge の現在地が変わる／伝わる内容なら常に**
 - **省略してよい場面**：ユーザーが「メモ不要」「コードブロック不要」と明示したときのみ
+- **薄くしてはいけない**：各 `■` を1行だけにまとめる、ロードマップ・判断理由・スコープ In/Out を削る、オーナー判断を省略する — **すべて NG**（`docs/chatgpt-summary-format.md` 参照）
 - **忘れた場合**：ユーザーから指摘される前に、次の返答で必ず載せる。指摘されたら **その返答の最優先** でメモ + `docs/chatgpt-summary.md` 更新
-- **チェックリスト**（送信前 3 秒）：① chatgpt-summary.md 更新済みか ② 末尾 text ブロックがあるか ③ 「今すぐ私がやるべきこと」「Cursorだけで完了できること」が必要なら入っているか
+- **チェックリスト**（送信前 3 秒）：
+  1. chatgpt-summary.md 更新済みか
+  2. 末尾 text ブロックがあるか
+  3. **粒度**：ロードマップ系 60行+ / 実装完了 40行+ / 各■が複数行か（薄くないか）
+  4. UI 変更あり → `■ 今回変更した画面`（画面位置含む）入っているか
+  5. 引継ぎトリガー該当 → chatgpt-handoff.md 全量更新済みか
+  6. 「今すぐ私がやるべきこと」「Cursorだけで完了できること」が必要なら入っているか
 
-サマリ形式（非エンジニア向け、コード差分・ファイル一覧不要）：
+サマリ形式：**最小セット**は下記。ロードマップ・優先順位整理時は **`docs/chatgpt-summary-format.md` の必須セクションすべて** を含めること（60行以上目安）。
 
 ```
 ■ 現在の状態
@@ -82,16 +98,22 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Handoff for ChatGPT
 
-ユーザーは **`docs/chatgpt-summary.md` の内容だけ** を ChatGPT に貼る。
+**2ファイル運用**（詳細: `docs/chatgpt-summary-format.md`）：
+
+| ファイル | いつ貼る | 内容 |
+|---|---|---|
+| `docs/chatgpt-handoff.md` | **新 GPT スレッドの最初に1回** | 全量スナップショット（今どこを作っているか・画面マップ・優先順位） |
+| `docs/chatgpt-summary.md` | **以降の毎タスク** | 差分中心（設計判断・画面変更・確認手順） |
 
 コピー方法（優先順）：
 
-1. **Cursor 返答末尾の `text` ブロック右上 Copy**（推奨・主経路）
-2. ターミナルで `npm run copy-summary` → クリップボード（ファイルと同一内容）
+1. **Cursor 返答末尾の `text` ブロック右上 Copy**（推奨・主経路 — summary 用）
+2. ターミナルで `npm run copy-summary` → クリップボード（summary と同一内容）
+3. 新スレッド開始時 — `docs/chatgpt-handoff.md` をファイルから Copy（Ctrl+A 可。プレーンテキスト）
 
 **やらないこと**：Cursor 返答全文のコピー、`chatgpt-summary.md` の Ctrl+A（Markdown エディタ表示と貼り付け結果がずれるため）。
 
-サマリは情報量は多くてよいが、**表形式にしない**（GPT 貼り付けで崩れる）。箇条書き・`｜` 区切り・`-` リストで書く。
+サマリは情報量は多くてよいが、**表形式にしない**（GPT 貼り付けで崩れる）。箇条書き・`-` リストで書く。**薄い1行サマリは禁止** — 詳細は `docs/chatgpt-summary-format.md`。
 
 ## Run 確認前の停止 — GPT判断用メモ
 
@@ -103,7 +125,21 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **本番環境変更**（Vercel `--prod`、env 変更）
 - **課金が発生しうる操作**
 
-オーナーはこのメモを ChatGPT に貼って判断する。詳細: `docs/gpt-run-decision-memo.md`
+オーナーはこのメモを ChatGPT に貼って判断する。詳細: `docs/gpt-run-decision-memo.md`  
+**トリガー運用全体**（CURSOR キーワード、Run スクショ、サマリレビュー、UX レビュー）: `docs/forge-triage-operations.md`
+
+## Owner × ChatGPT × Cursor トリガー運用（恒久）
+
+正本: **`docs/forge-triage-operations.md`**
+
+| トリガー | 意味 |
+|---|---|
+| オーナーが **`CURSOR`** のみ送信 | ChatGPT が直前会話を踏まえ **Cursor 貼付用完成文 1 本**を出力（断片・追記禁止）。オーナー判断未確定なら判断材料のみ |
+| Run/Deploy/Migration **スクショ** | ChatGPT が Run 判断依頼。結論 **[A]〜[D]**（Run推奨 / 事前確認 / 追加確認 / Run禁止）。Forge価値・ユーザー影響・復旧難易度も考慮 |
+| **chatgpt-summary / handoff / GPT判断用メモ** 貼付 | ChatGPT が要約ではなく **レビュー**（現在地・リスク・次アクション・原典整合） |
+| オーナーの **UX 違和感**（分かりにくい等） | UX レビュー依頼。他ユーザーにも起きうるか検討。プロダクトレビュー優先（原典＞ユーザー＞開発者＞MVP＞技術） |
+
+ChatGPT の役割は **コードレビューではなくプロダクトレビュー**。Cursor 向け指示は完成版 1 本。
 
 ## Supabase migration（本番）
 

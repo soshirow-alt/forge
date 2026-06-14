@@ -12,7 +12,6 @@ import {
   type PlayTimeFilter,
   hasActiveChipFilters,
 } from "@/lib/discovery-filters";
-import { LABEL_TEST_PLAY_OPEN } from "@/lib/user-labels";
 
 type DiscoveryFilterChipsProps = {
   filters: DiscoveryChipFilters;
@@ -104,7 +103,6 @@ export function DiscoveryFilterChips({
       platforms: [],
       phases: [],
       playTimes: [],
-      recruitingOnly: false,
     });
   }
 
@@ -129,23 +127,6 @@ export function DiscoveryFilterChips({
           selected={filters.playTimes}
           onToggle={togglePlayTime}
         />
-        <div>
-          <p className="text-xs font-semibold tracking-wide text-zinc-500">
-            テストプレイ
-          </p>
-          <div className="mt-2">
-            <FilterChip
-              label={LABEL_TEST_PLAY_OPEN}
-              active={filters.recruitingOnly}
-              onClick={() =>
-                onChange({
-                  ...filters,
-                  recruitingOnly: !filters.recruitingOnly,
-                })
-              }
-            />
-          </div>
-        </div>
         <FilterGroup
           title="プレイ環境"
           options={PLATFORM_FILTER_OPTIONS}

@@ -102,3 +102,5 @@
 7. バナー消える（0.2 FB 投稿後）
 
 ※ 005 Dashboard 適用 + deploy 後に実施
+
+**詳細手順（本番 E2E）**：`docs/e2e-version-published-loop-production.md` — 非エンジニア向け・1 クリック単位・失敗切り分け・結果記録テンプレ付き

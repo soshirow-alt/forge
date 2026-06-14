@@ -74,6 +74,18 @@ import {
 import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
 import type { GameFeedbackItem } from "@/lib/game-feedback-storage";
 import {
+  fetchOwnerVoiceAggregates,
+  fetchPublicVoiceAggregates,
+  fetchDeveloperVersionPrompts,
+  fetchUserVoiceResponses as fetchUserVoiceResponsesDb,
+  fetchVersionPrompts,
+  saveDeveloperVersionPrompts,
+  upsertVoiceResponses,
+} from "@/lib/supabase/voice-engagement";
+import type { DeveloperPromptInput } from "@/lib/version-prompt-form";
+import type { VoiceAnswerDraft, VersionPrompt, VoiceResponse } from "@/lib/version-prompt-types";
+import type { PublicVoiceAggregateRow } from "@/lib/voice-aggregates";
+import {
   deleteProjectDevlogsByProjectId,
   fetchAllProjectDevlogs,
   fetchWatcherUserIds,
@@ -135,6 +147,33 @@ type GamesContextValue = {
   getOwnedProjectFeedback: (
     userId: string | undefined,
   ) => Promise<ProjectFeedbackEntry[]>;
+  getVersionPrompts: (gameId: string, versionKey: string) => Promise<VersionPrompt[]>;
+  getDeveloperVersionPrompts: (
+    gameId: string,
+    versionKey: string,
+  ) => Promise<VersionPrompt[]>;
+  saveDeveloperVersionPrompts: (
+    gameId: string,
+    versionKey: string,
+    prompts: DeveloperPromptInput[],
+  ) => Promise<VersionPrompt[]>;
+  getMyVoiceResponses: (
+    gameId: string,
+    versionKey: string,
+  ) => Promise<VoiceResponse[]>;
+  submitVoiceResponses: (
+    gameId: string,
+    versionKey: string,
+    answers: VoiceAnswerDraft[],
+  ) => Promise<VoiceResponse[]>;
+  getPublicVoiceAggregates: (
+    gameId: string,
+    versionKey: string,
+  ) => Promise<PublicVoiceAggregateRow[]>;
+  getOwnerVoiceAggregates: (
+    gameId: string,
+    versionKey: string,
+  ) => Promise<PublicVoiceAggregateRow[]>;
   getApplicantCount: (id: string, defaultCount?: number) => number;
   incrementApplicantCount: (id: string, defaultCount?: number) => number;
   isSubmittedGame: (id: string) => boolean;
@@ -619,18 +658,20 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     (section: Game["section"]) => {
       const publicSubmitted = submittedGames.filter(isGamePublic);
 
-      if (section === "testers") {
-        const submitted = publicSubmitted.filter((game) => game.lookingForTesters);
-        const mock = getMockGamesBySection("testers").filter(
-          (game) => game.lookingForTesters,
-        );
-        return [...submitted, ...mock];
-      }
-
       if (section === "new") {
-        const submitted = publicSubmitted.filter((game) => !game.lookingForTesters);
-        const mock = getMockGamesBySection("new");
-        return [...submitted, ...mock];
+        const seen = new Set<string>();
+        const combined: Game[] = [];
+        for (const game of [
+          ...publicSubmitted,
+          ...getMockGamesBySection("new"),
+          ...getMockGamesBySection("testers"),
+        ]) {
+          if (!seen.has(game.id)) {
+            seen.add(game.id);
+            combined.push(game);
+          }
+        }
+        return combined;
       }
 
       return getMockGamesBySection(section);
@@ -794,7 +835,13 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         gameId,
         currentVersion,
       );
-      if (currentFeedback) {
+      const currentVoice = await fetchUserVoiceResponsesDb(
+        supabase,
+        user.id,
+        gameId,
+        currentVersion,
+      );
+      if (currentFeedback || currentVoice.length > 0) {
         return { show: false };
       }
 
@@ -824,6 +871,128 @@ export function GamesProvider({ children }: { children: ReactNode }) {
 
     return fetchProjectFeedback(supabase, gameId);
   }, []);
+
+  const getVersionPrompts = useCallback(
+    async (gameId: string, versionKey: string) => {
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return [];
+      }
+
+      return fetchVersionPrompts(supabase, gameId, versionKey);
+    },
+    [],
+  );
+
+  const getDeveloperVersionPrompts = useCallback(
+    async (gameId: string, versionKey: string) => {
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return [];
+      }
+
+      return fetchDeveloperVersionPrompts(supabase, gameId, versionKey);
+    },
+    [],
+  );
+
+  const saveDeveloperVersionPromptsFn = useCallback(
+    async (
+      gameId: string,
+      versionKey: string,
+      prompts: DeveloperPromptInput[],
+    ) => {
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      return saveDeveloperVersionPrompts(
+        supabase,
+        gameId,
+        versionKey,
+        prompts,
+      );
+    },
+    [],
+  );
+
+  const getMyVoiceResponses = useCallback(
+    async (gameId: string, versionKey: string) => {
+      if (!user) {
+        return [];
+      }
+
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return [];
+      }
+
+      return fetchUserVoiceResponsesDb(
+        supabase,
+        user.id,
+        gameId,
+        versionKey,
+      );
+    },
+    [user],
+  );
+
+  const submitVoiceResponses = useCallback(
+    async (
+      gameId: string,
+      versionKey: string,
+      answers: VoiceAnswerDraft[],
+    ) => {
+      if (!user) {
+        throw new Error("Login required");
+      }
+
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      const saved = await upsertVoiceResponses(
+        supabase,
+        user.id,
+        gameId,
+        versionKey,
+        answers,
+      );
+
+      if (saved.length > 0) {
+        addNotification("feedback", gameId);
+      }
+
+      return saved;
+    },
+    [user, addNotification],
+  );
+
+  const getPublicVoiceAggregates = useCallback(
+    async (gameId: string, versionKey: string) => {
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return [];
+      }
+
+      return fetchPublicVoiceAggregates(supabase, gameId, versionKey);
+    },
+    [],
+  );
+
+  const getOwnerVoiceAggregates = useCallback(
+    async (gameId: string, versionKey: string) => {
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return [];
+      }
+
+      return fetchOwnerVoiceAggregates(supabase, gameId, versionKey);
+    },
+    [],
+  );
 
   const getOwnedProjectFeedback = useCallback(
     async (userId: string | undefined) => {
@@ -1160,6 +1329,13 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       getNewPlayableVersionBannerState,
       getProjectFeedback,
       getOwnedProjectFeedback,
+      getVersionPrompts,
+      getDeveloperVersionPrompts,
+      saveDeveloperVersionPrompts: saveDeveloperVersionPromptsFn,
+      getMyVoiceResponses,
+      submitVoiceResponses,
+      getPublicVoiceAggregates,
+      getOwnerVoiceAggregates,
       getApplicantCount,
       incrementApplicantCount,
       isSubmittedGame,
@@ -1212,6 +1388,13 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       getNewPlayableVersionBannerState,
       getProjectFeedback,
       getOwnedProjectFeedback,
+      getVersionPrompts,
+      getDeveloperVersionPrompts,
+      saveDeveloperVersionPromptsFn,
+      getMyVoiceResponses,
+      submitVoiceResponses,
+      getPublicVoiceAggregates,
+      getOwnerVoiceAggregates,
       getApplicantCount,
       incrementApplicantCount,
       isSubmittedGame,

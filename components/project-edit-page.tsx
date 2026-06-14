@@ -8,6 +8,7 @@ import { useAuth } from "@/components/auth-provider";
 import { ForgeHeader } from "@/components/forge-header";
 import { ForgeSdkNote } from "@/components/forge-sdk-note";
 import { PlayEnvironmentFormFields } from "@/components/play-environment-form-fields";
+import { VersionPromptEditor } from "@/components/version-prompt-editor";
 import { useGames } from "@/components/games-provider";
 import { AVAILABLE_TAGS } from "@/lib/game-tags";
 import {
@@ -17,6 +18,13 @@ import {
   parsePlayEnvironmentFromTags,
 } from "@/lib/play-environment";
 import type { ProjectVisibility } from "@/lib/project-visibility";
+import { resolvePlayableVersion } from "@/lib/playable-version";
+import {
+  createEmptyPromptDraft,
+  draftFromVersionPrompt,
+  sanitizePromptDrafts,
+  type DeveloperPromptDraft,
+} from "@/lib/version-prompt-form";
 
 const inputClassName =
   "mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
@@ -33,7 +41,7 @@ function readImageAsDataUrl(file: File): Promise<string> {
 export function ProjectEditPage({ projectId }: { projectId: string }) {
   const router = useRouter();
   const { user, hydrated: authHydrated } = useAuth();
-  const { getSubmittedGameById, isProjectOwner, updateProjectDetails, dataReady } =
+  const { getSubmittedGameById, isProjectOwner, updateProjectDetails, getDeveloperVersionPrompts, saveDeveloperVersionPrompts, dataReady } =
     useGames();
 
   const game = getSubmittedGameById(projectId);
@@ -55,6 +63,11 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
   const [fileInputKey, setFileInputKey] = useState(0);
   const [formLoaded, setFormLoaded] = useState(false);
   const [playEnvironment, setPlayEnvironment] = useState(EMPTY_PLAY_ENVIRONMENT_FORM);
+  const [promptMode, setPromptMode] = useState<"none" | "custom">("none");
+  const [promptDrafts, setPromptDrafts] = useState<DeveloperPromptDraft[]>([
+    createEmptyPromptDraft(),
+  ]);
+  const [promptsLoaded, setPromptsLoaded] = useState(false);
 
   useEffect(() => {
     if (!game || formLoaded) {
@@ -78,6 +91,24 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
     setThumbnailPreview(game.thumbnailUrl);
     setFormLoaded(true);
   }, [game, formLoaded]);
+
+  useEffect(() => {
+    if (!game || promptsLoaded) {
+      return;
+    }
+
+    const versionKey = resolvePlayableVersion(game.playableVersion);
+    void getDeveloperVersionPrompts(projectId, versionKey).then((prompts) => {
+      if (prompts.length > 0) {
+        setPromptMode("custom");
+        setPromptDrafts(prompts.map(draftFromVersionPrompt));
+      } else {
+        setPromptMode("none");
+        setPromptDrafts([createEmptyPromptDraft()]);
+      }
+      setPromptsLoaded(true);
+    });
+  }, [game, getDeveloperVersionPrompts, projectId, promptsLoaded]);
 
   if (!dataReady) {
     return (
@@ -150,6 +181,11 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
       officialUrl: officialUrl || undefined,
       visibility,
     });
+
+    const versionKey = resolvePlayableVersion(game?.playableVersion);
+    const promptsToSave =
+      promptMode === "custom" ? sanitizePromptDrafts(promptDrafts) : [];
+    await saveDeveloperVersionPrompts(projectId, versionKey, promptsToSave);
 
     router.push(`/games/${projectId}`);
   }
@@ -249,48 +285,17 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
             </div>
           </div>
 
-          <div
-            id="tester-recruitment"
-            className="scroll-mt-24 space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4"
-          >
-            <label className="flex cursor-pointer items-center gap-3">
-              <input
-                type="checkbox"
-                checked={lookingForTesters}
-                onChange={(event) => setLookingForTesters(event.target.checked)}
-                className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
-              />
-              <span className="text-sm font-medium text-zinc-300">
-                テスターを募集する
-              </span>
-            </label>
-
-            {lookingForTesters && (
-              <div>
-                <label
-                  htmlFor="testerSlots"
-                  className="text-sm font-medium text-zinc-400"
-                >
-                  募集人数
-                </label>
-                <input
-                  id="testerSlots"
-                  type="number"
-                  min={1}
-                  required
-                  value={testerSlots}
-                  onChange={(event) =>
-                    setTesterSlots(Number(event.target.value))
-                  }
-                  className={inputClassName}
-                />
-              </div>
-            )}
-          </div>
-
           <PlayEnvironmentFormFields
             value={playEnvironment}
             onChange={setPlayEnvironment}
+          />
+
+          <VersionPromptEditor
+            mode={promptMode}
+            onModeChange={setPromptMode}
+            drafts={promptDrafts}
+            onDraftsChange={setPromptDrafts}
+            versionLabel={`v${resolvePlayableVersion(game.playableVersion)}`}
           />
 
           <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">

@@ -133,7 +133,7 @@ function MyProjectsPageContent() {
               開発ダッシュボード
             </h1>
             <p className="mt-2 max-w-2xl text-zinc-500">
-              ゲームを育てる場所です。プレイヤーの声は、次の版を作るための材料です。
+              プレイヤーの声をもとに、作品を育てていきましょう。
             </p>
           </div>
           {hasProjects ? (
@@ -155,9 +155,6 @@ function MyProjectsPageContent() {
 
         <section className="mt-10">
           <h2 className="text-xl font-semibold tracking-tight">作品一覧</h2>
-          <p className="mt-1 text-sm text-zinc-500">
-            育てる作品を選び、現在地と次にやることから開発を進めましょう。
-          </p>
 
           {!hasProjects ? (
             <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-900/80 px-6 py-16 text-center">
@@ -170,7 +167,7 @@ function MyProjectsPageContent() {
               </Link>
             </div>
           ) : (
-            <div className="mt-6 space-y-4">
+            <div className="mt-6 space-y-5">
               {sortedGames.map((game) => {
                 const growth = buildProjectGrowthSnapshot(
                   game,
