@@ -309,7 +309,7 @@ export function SubmitPage() {
       description,
       phase,
       thumbnailUrl,
-      lookingForTesters: true,
+      lookingForTesters: false,
       tags: mergePlayEnvironmentIntoTags(selectedTags, playEnvironment),
       playUrl,
       estimatedPlayTime: estimatedPlayTime || undefined,
@@ -411,19 +411,19 @@ export function SubmitPage() {
               <div className="mx-auto mt-10 max-w-lg text-left">
                 <p className="text-sm font-medium text-zinc-300">次にやること</p>
                 <p className="mt-1 text-xs text-zinc-600">
-                  作品を育てるために、次のステップから始められます。
+                  投稿 → 発見 → プレイ → フィードバックの流れに沿って進められます。
                 </p>
                 <ul className="mt-4 space-y-3">
                   <li>
                     <Link
-                      href={`/projects/${submittedGameId}/devlog/new`}
+                      href={`/?highlight=${submittedGameId}#discover`}
                       className="flex w-full items-center justify-between rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3.5 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
                     >
-                      開発ログを書く
+                      新着作品で表示を確認
                       <span aria-hidden="true">→</span>
                     </Link>
                     <p className="mt-1.5 text-xs text-zinc-600">
-                      改善内容を共有し、プレイヤーに届けます。
+                      ホームの新着作品に載っているか確認しましょう。
                     </p>
                   </li>
                   <li>
@@ -440,14 +440,26 @@ export function SubmitPage() {
                   </li>
                   <li>
                     <Link
-                      href={`/projects/${submittedGameId}/edit#tester-recruitment`}
+                      href="/my-projects"
                       className="flex w-full items-center justify-between rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3.5 text-sm font-semibold text-zinc-100 transition-colors hover:border-orange-500/50 hover:text-orange-400"
                     >
-                      テスターを募集する
+                      開発ダッシュボードを見る
                       <span aria-hidden="true">→</span>
                     </Link>
                     <p className="mt-1.5 text-xs text-zinc-600">
-                      作品編集でテストプレイ受付をオンにできます。
+                      プレイヤーからのフィードバックはここで確認できます。
+                    </p>
+                  </li>
+                  <li>
+                    <Link
+                      href={`/projects/${submittedGameId}/devlog/new`}
+                      className="flex w-full items-center justify-between rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3.5 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-600 hover:text-zinc-100"
+                    >
+                      開発ログを書く
+                      <span aria-hidden="true">→</span>
+                    </Link>
+                    <p className="mt-1.5 text-xs text-zinc-600">
+                      初回の更新告知や改善共有に使えます（任意）。
                     </p>
                   </li>
                 </ul>

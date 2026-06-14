@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { BookmarkButton } from "@/components/bookmark-button";
 import { ForgeHeader } from "@/components/forge-header";
 import { CreatorLink } from "@/components/creator-link";
@@ -28,10 +29,13 @@ import {
   hasActiveChipFilters,
   type DiscoveryChipFilters,
 } from "@/lib/discovery-filters";
-import { pickFeaturedGames } from "@/lib/featured-games";
 import { getPlayTypeLabel } from "@/lib/game-links";
 import { games as mockGames, type Game } from "@/lib/mock-games";
-import { LABEL_TEST_PLAY_OPEN } from "@/lib/user-labels";
+import { isGamePublic } from "@/lib/project-visibility";
+import {
+  pickHeroShowcaseGames,
+  showFirstPublishBadge,
+} from "@/lib/submission-exposure";
 
 const HERO_SHOWCASE_FALLBACK_IDS = [
   "emberfall",
@@ -48,11 +52,6 @@ const discoveryTabs: { id: DiscoveryTab; label: string; subtitle: string }[] = [
     subtitle: "完成前の作品をいち早くチェック",
   },
   {
-    id: "testers",
-    label: "テストプレイ受付中",
-    subtitle: "開発者が感想や不具合報告を求めている作品",
-  },
-  {
     id: "trending",
     label: "急上昇",
     subtitle: "いま応援が集まっている作品",
@@ -63,17 +62,17 @@ const sortOptions: { value: SortOption; label: string }[] = [
   { value: "newest", label: "新着順" },
   { value: "support", label: "応援数順" },
   { value: "updated", label: "更新日順" },
-  { value: "testers", label: "テストプレイ受付中" },
 ];
 
 const inputClassName =
   "w-full rounded-xl border border-zinc-700/80 bg-zinc-900/80 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 backdrop-blur-sm focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
 
-type BadgeVariant = "new" | "tester" | "play" | "update" | "phase" | "trending";
+type BadgeVariant = "new" | "play" | "update" | "phase" | "trending" | "firstPublish";
 
 const badgeStyles: Record<BadgeVariant, string> = {
   new: "border-orange-500/35 bg-orange-500/10 text-orange-300",
-  tester: "border-violet-500/35 bg-violet-500/10 text-violet-300",
+  firstPublish:
+    "border-emerald-500/35 bg-emerald-500/10 text-emerald-300",
   play: "border-sky-500/35 bg-sky-500/10 text-sky-300",
   update: "border-amber-500/35 bg-amber-500/10 text-amber-300",
   phase: "border-zinc-600/50 bg-zinc-950/70 text-zinc-300",
@@ -98,19 +97,28 @@ function DiscoveryBadge({
 
 function DiscoveryGameCard({
   game,
-  showNewBadge = false,
   showTrendingBadge = false,
+  showFirstPublishBadge = false,
+  highlighted = false,
 }: {
   game: Game;
-  showNewBadge?: boolean;
   showTrendingBadge?: boolean;
+  showFirstPublishBadge?: boolean;
+  highlighted?: boolean;
 }) {
   const { hasDevlogs } = useGames();
   const playLabel = getPlayTypeLabel(game.playUrl);
   const hasUpdate = hasDevlogs(game.id);
 
   return (
-    <article className="group relative overflow-hidden rounded-2xl border border-zinc-800/90 bg-zinc-900/40 shadow-lg shadow-black/20 transition-all duration-300 hover:-translate-y-1 hover:border-orange-500/40 hover:shadow-xl hover:shadow-orange-500/10">
+    <article
+      id={`discovery-game-${game.id}`}
+      className={`group relative overflow-hidden rounded-2xl border bg-zinc-900/40 shadow-lg shadow-black/20 transition-all duration-300 hover:-translate-y-1 hover:border-orange-500/40 hover:shadow-xl hover:shadow-orange-500/10 ${
+        highlighted
+          ? "border-orange-500/70 ring-2 ring-orange-500/80 ring-offset-2 ring-offset-zinc-950"
+          : "border-zinc-800/90"
+      }`}
+    >
       <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-orange-500/0 via-transparent to-violet-600/0 opacity-0 transition-opacity duration-300 group-hover:from-orange-500/[0.04] group-hover:to-violet-600/[0.06] group-hover:opacity-100" />
 
       <Link
@@ -128,12 +136,11 @@ function DiscoveryGameCard({
             showStatus={false}
           />
           <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
-            {showNewBadge && <DiscoveryBadge variant="new">新着</DiscoveryBadge>}
+            {showFirstPublishBadge && (
+              <DiscoveryBadge variant="firstPublish">初公開</DiscoveryBadge>
+            )}
             {showTrendingBadge && (
               <DiscoveryBadge variant="trending">急上昇</DiscoveryBadge>
-            )}
-            {game.lookingForTesters && (
-              <DiscoveryBadge variant="tester">{LABEL_TEST_PLAY_OPEN}</DiscoveryBadge>
             )}
           </div>
           <div className="absolute bottom-3 left-3">
@@ -203,18 +210,20 @@ function GameSection({
   title,
   subtitle,
   games,
-  showNewBadge = false,
   showTrendingBadge = false,
   loading = false,
   emptyMessage,
+  highlightGameId = null,
+  isSubmittedGame,
 }: {
   title: string;
   subtitle: string;
   games: Game[];
-  showNewBadge?: boolean;
   showTrendingBadge?: boolean;
   loading?: boolean;
   emptyMessage?: string;
+  highlightGameId?: string | null;
+  isSubmittedGame: (id: string) => boolean;
 }) {
   return (
     <section className="mx-auto w-full max-w-7xl px-6 py-14 sm:py-16">
@@ -249,8 +258,9 @@ function GameSection({
             <DiscoveryGameCard
               key={game.id}
               game={game}
-              showNewBadge={showNewBadge}
               showTrendingBadge={showTrendingBadge}
+              showFirstPublishBadge={showFirstPublishBadge(game, isSubmittedGame)}
+              highlighted={highlightGameId === game.id}
             />
           ))}
         </div>
@@ -260,10 +270,12 @@ function GameSection({
 }
 
 export function HomePage() {
+  const searchParams = useSearchParams();
   const {
     getGamesBySection,
     getSupportCount,
     isSubmittedGame,
+    submittedGames,
     dataReady,
     hasDevlogs,
   } = useGames();
@@ -272,13 +284,10 @@ export function HomePage() {
   const [sortOption, setSortOption] = useState<SortOption>("newest");
   const [chipFilters, setChipFilters] =
     useState<DiscoveryChipFilters>(EMPTY_DISCOVERY_FILTERS);
+  const [highlightGameId, setHighlightGameId] = useState<string | null>(null);
 
   const newGamesRaw = useMemo(
     () => getGamesBySection("new"),
-    [getGamesBySection],
-  );
-  const testerGamesRaw = useMemo(
-    () => getGamesBySection("testers"),
     [getGamesBySection],
   );
   const betaGamesRaw = useMemo(
@@ -289,55 +298,47 @@ export function HomePage() {
   const allListableGames = useMemo(() => {
     const seen = new Set<string>();
     const combined: Game[] = [];
-    for (const game of [...newGamesRaw, ...testerGamesRaw, ...betaGamesRaw]) {
+    for (const game of [...newGamesRaw, ...betaGamesRaw]) {
       if (!seen.has(game.id)) {
         seen.add(game.id);
         combined.push(game);
       }
     }
     return combined;
-  }, [newGamesRaw, testerGamesRaw, betaGamesRaw]);
+  }, [newGamesRaw, betaGamesRaw]);
+
+  const publicRealCount = useMemo(
+    () => submittedGames.filter(isGamePublic).length,
+    [submittedGames],
+  );
 
   const heroShowcaseGames = useMemo(() => {
-    const featured = pickFeaturedGames(
+    return pickHeroShowcaseGames(
       allListableGames,
       getSupportCount,
       isSubmittedGame,
       hasDevlogs,
-      5,
-    ).map((item) => item.game);
-
-    if (featured.length >= 3) {
-      return featured;
-    }
-
-    const fallback = HERO_SHOWCASE_FALLBACK_IDS.map(
-      (id) => mockGames.find((game) => game.id === id)!,
-    ).filter(Boolean);
-
-    const seen = new Set<string>();
-    const combined: Game[] = [];
-    for (const game of [...featured, ...fallback]) {
-      if (!seen.has(game.id)) {
-        seen.add(game.id);
-        combined.push(game);
-      }
-    }
-    return combined.slice(0, 5);
-  }, [allListableGames, getSupportCount, isSubmittedGame, hasDevlogs]);
+      publicRealCount,
+      {
+        limit: 5,
+        fallbackMockIds: HERO_SHOWCASE_FALLBACK_IDS,
+        resolveMockGame: (id) => mockGames.find((game) => game.id === id),
+      },
+    );
+  }, [
+    allListableGames,
+    getSupportCount,
+    isSubmittedGame,
+    hasDevlogs,
+    publicRealCount,
+  ]);
 
   const activeTabConfig =
     discoveryTabs.find((tab) => tab.id === discoveryTab) ?? discoveryTabs[0];
 
   const tabGamesRaw = useMemo(
-    () =>
-      getGamesForDiscoveryTab(
-        discoveryTab,
-        newGamesRaw,
-        testerGamesRaw,
-        allListableGames,
-      ),
-    [discoveryTab, newGamesRaw, testerGamesRaw, allListableGames],
+    () => getGamesForDiscoveryTab(discoveryTab, newGamesRaw, allListableGames),
+    [discoveryTab, newGamesRaw, allListableGames],
   );
 
   const displayedGames = useMemo(() => {
@@ -357,6 +358,56 @@ export function HomePage() {
     searchQuery.trim().length > 0 || hasActiveChipFilters(chipFilters);
   const totalVisible = displayedGames.length;
   const totalAvailable = tabGamesRaw.length;
+
+  useEffect(() => {
+    let highlightId = searchParams.get("highlight");
+
+    if (!highlightId && typeof window !== "undefined") {
+      const hashMatch = window.location.hash.match(/highlight=([^&]+)/);
+      if (hashMatch?.[1]) {
+        highlightId = decodeURIComponent(hashMatch[1]);
+      }
+    }
+
+    if (!highlightId) {
+      return;
+    }
+
+    setHighlightGameId(highlightId);
+    setDiscoveryTab("new");
+    setSortOption("newest");
+    setChipFilters(EMPTY_DISCOVERY_FILTERS);
+    setSearchQuery("");
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!highlightGameId || !dataReady) {
+      return;
+    }
+
+    const isVisible = displayedGames.some((game) => game.id === highlightGameId);
+    if (!isVisible) {
+      return;
+    }
+
+    const scrollTimer = window.setTimeout(() => {
+      document.getElementById("discover")?.scrollIntoView({ behavior: "smooth" });
+      window.setTimeout(() => {
+        document
+          .getElementById(`discovery-game-${highlightGameId}`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 350);
+    }, 150);
+
+    const clearHighlightTimer = window.setTimeout(() => {
+      setHighlightGameId(null);
+    }, 8000);
+
+    return () => {
+      window.clearTimeout(scrollTimer);
+      window.clearTimeout(clearHighlightTimer);
+    };
+  }, [highlightGameId, dataReady, displayedGames]);
 
   function handleDiscoveryTabChange(tab: DiscoveryTab) {
     setDiscoveryTab(tab);
@@ -401,7 +452,7 @@ export function HomePage() {
                 </h1>
 
                 <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-zinc-400 sm:text-xl lg:mx-0">
-                  Forgeは、開発中のインディーゲームを見つけて、応援し、テスト参加できるプラットフォームです。
+                  Forgeは、開発中のインディーゲームを見つけて、遊び、感想を届け、成長を見届けるプラットフォームです。
                 </p>
 
                 <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
@@ -506,17 +557,16 @@ export function HomePage() {
           title={activeTabConfig.label}
           subtitle={activeTabConfig.subtitle}
           games={displayedGames}
-          showNewBadge={discoveryTab === "new"}
           showTrendingBadge={discoveryTab === "trending"}
           loading={!dataReady}
+          highlightGameId={highlightGameId}
+          isSubmittedGame={isSubmittedGame}
           emptyMessage={
             hasActiveFilter
               ? "検索条件に一致する作品がありません。"
-              : discoveryTab === "testers"
-                ? "現在テストプレイ受付中の作品はありません。"
-                : discoveryTab === "trending"
-                  ? "急上昇作品はまだありません。"
-                  : "新着作品はまだありません。"
+              : discoveryTab === "trending"
+                ? "急上昇作品はまだありません。"
+                : "新着作品はまだありません。"
           }
         />
       </main>

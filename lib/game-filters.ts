@@ -1,19 +1,17 @@
 import type { Game } from "@/lib/mock-games";
 import { getDefaultSupportCount } from "@/lib/demo-activity";
+import { getGameCreatedTimestamp } from "@/lib/game-timestamp";
 
-export type SortOption = "newest" | "support" | "updated" | "testers";
+export type SortOption = "newest" | "support" | "updated";
 
-export type DiscoveryTab = "new" | "testers" | "trending";
+export type DiscoveryTab = "new" | "trending";
 
 export function getGamesForDiscoveryTab(
   tab: DiscoveryTab,
   newGames: Game[],
-  testerGames: Game[],
   allGames: Game[],
 ): Game[] {
   switch (tab) {
-    case "testers":
-      return testerGames;
     case "trending":
       return allGames;
     case "new":
@@ -26,8 +24,6 @@ export function getDefaultSortForTab(tab: DiscoveryTab): SortOption {
   switch (tab) {
     case "trending":
       return "support";
-    case "testers":
-      return "updated";
     case "new":
     default:
       return "newest";
@@ -35,14 +31,7 @@ export function getDefaultSortForTab(tab: DiscoveryTab): SortOption {
 }
 
 function getNewestTimestamp(game: Game): number {
-  if (game.id.startsWith("user-")) {
-    const timestamp = Number(game.id.replace("user-", ""));
-    if (!Number.isNaN(timestamp)) {
-      return timestamp;
-    }
-  }
-
-  return new Date(game.lastUpdated).getTime();
+  return getGameCreatedTimestamp(game);
 }
 
 export function matchesSearch(game: Game, query: string): boolean {
@@ -83,10 +72,6 @@ export function sortGames(
       return sorted.sort(
         (a, b) =>
           new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime(),
-      );
-    case "testers":
-      return sorted.sort(
-        (a, b) => Number(b.lookingForTesters) - Number(a.lookingForTesters),
       );
     case "newest":
     default:
