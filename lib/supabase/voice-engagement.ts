@@ -162,6 +162,20 @@ export async function saveDeveloperVersionPrompts(
     normalized.map((prompt) => prompt.id).filter(Boolean) as string[],
   );
 
+  if (normalized.length > 0) {
+    const { error: archiveDefaultError } = await supabase
+      .from("project_version_prompts")
+      .update({ archived_at: now })
+      .eq("project_id", projectId)
+      .eq("version_key", version)
+      .eq("source", "platform_default")
+      .is("archived_at", null);
+
+    if (archiveDefaultError) {
+      throw new Error(archiveDefaultError.message);
+    }
+  }
+
   for (const id of existingIds) {
     if (!keepIds.has(id)) {
       const { error: archiveError } = await supabase

@@ -68,6 +68,8 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
     createEmptyPromptDraft(),
   ]);
   const [promptsLoaded, setPromptsLoaded] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!game || formLoaded) {
@@ -165,29 +167,52 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSaveError(null);
+    setIsSaving(true);
 
-    await updateProjectDetails(projectId, {
-      title,
-      genre,
-      description,
-      lookingForTesters,
-      testerSlots: lookingForTesters ? testerSlots : undefined,
-      tags: mergePlayEnvironmentIntoTags(selectedTags, playEnvironment),
-      thumbnailUrl,
-      steamUrl: steamUrl || undefined,
-      itchUrl: itchUrl || undefined,
-      githubUrl: githubUrl || undefined,
-      discordUrl: discordUrl || undefined,
-      officialUrl: officialUrl || undefined,
-      visibility,
-    });
+    try {
+      await updateProjectDetails(projectId, {
+        title,
+        genre,
+        description,
+        lookingForTesters,
+        testerSlots: lookingForTesters ? testerSlots : undefined,
+        tags: mergePlayEnvironmentIntoTags(selectedTags, playEnvironment),
+        thumbnailUrl,
+        steamUrl: steamUrl || undefined,
+        itchUrl: itchUrl || undefined,
+        githubUrl: githubUrl || undefined,
+        discordUrl: discordUrl || undefined,
+        officialUrl: officialUrl || undefined,
+        visibility,
+      });
 
-    const versionKey = resolvePlayableVersion(game?.playableVersion);
-    const promptsToSave =
-      promptMode === "custom" ? sanitizePromptDrafts(promptDrafts) : [];
-    await saveDeveloperVersionPrompts(projectId, versionKey, promptsToSave);
+      const versionKey = resolvePlayableVersion(game?.playableVersion);
+      const promptsToSave =
+        promptMode === "custom" ? sanitizePromptDrafts(promptDrafts) : [];
 
-    router.push(`/games/${projectId}`);
+      if (promptMode === "custom" && promptsToSave.length === 0) {
+        const hasDraftText = promptDrafts.some((draft) => draft.promptText.trim());
+        if (hasDraftText) {
+          setSaveError(
+            "プレイヤーへの問いを保存できませんでした。質問文を入力するか、カスタム選択肢は2個以上設定してください。",
+          );
+          return;
+        }
+      }
+
+      await saveDeveloperVersionPrompts(projectId, versionKey, promptsToSave);
+
+      router.push(`/games/${projectId}`);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "保存に失敗しました。時間をおいて再度お試しください。";
+      setSaveError(message);
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -416,11 +441,21 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
             <ForgeSdkNote />
           </div>
 
+          {saveError && (
+            <p
+              role="alert"
+              className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+            >
+              {saveError}
+            </p>
+          )}
+
           <button
             type="submit"
-            className="w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-4 text-lg font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+            disabled={isSaving}
+            className="w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-4 text-lg font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            更新する
+            {isSaving ? "保存中..." : "更新する"}
           </button>
         </form>
       </main>

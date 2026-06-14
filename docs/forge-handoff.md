@@ -3,7 +3,7 @@
 > ChatGPT / Cursor 間の**現在地サマリ**。  
 > 詳細な原典は `docs/forge-principles.md`、履歴は `docs/forge-changelog.md` を参照。
 
-最終更新：**2026-06-15**（開発者問い設定 UI 実装 — migration 006 本番確認待ち）
+最終更新：**2026-06-15**（P0 作品編集保存不具合修正 — deploy 待ち）
 
 ---
 
@@ -25,7 +25,8 @@ Forge は **完成前のインディーゲームを発見 → プレイ → 声�
 - **公開**：トップ、一覧、ゲーム詳細の閲覧
 - **ログイン必須**：プレイ、外部リンク、応援、あとで見る、更新追跡、フィードバック、投稿、通知、マイ作品
 - **データ**：作品・プロフィール・エンゲージメント・**開発ログ**・**devlog 通知**は Supabase
-- **DB**：migration **001 / 002 / 003 適用済み**。**006 + 007** はコード済み・本番 Dashboard 適用はオーナー作業（007 は immutable 集計 RPC）
+- **DB**：migration **001〜007** 適用済み（006 初声 / 007 immutable RPC）。**本番 deploy 906b84d**（2026-06-15）
+- **P0 修正済（未 deploy）**：作品編集「更新する」— platform_default と sort_order 衝突を解消 + 保存エラー表示
 - **本番確認**：開発ログ → ゲスト別ブラウザ表示 **OK**（2026-06-12）
 - **暫定 localStorage**：応援/FB 等の通知、クリエイターフォロー、テスター応募数、作品 extras
 - **デプロイ**：Vercel プロジェクト **forge** → https://forge-flame-gamma.vercel.app
