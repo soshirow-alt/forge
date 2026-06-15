@@ -38,8 +38,9 @@
 
 ### デプロイ
 
-- **commit**: 未 push（実装完了・build pass）
-- **本番**: migration 009 → deploy → 010 → deploy の順で反映予定
+- **commit**: `4127731` — voice_received / 読了 Supabase / マイページ IA
+- **本番**: push 済み → Vercel production deploy 待ち（https://forge-flame-gamma.vercel.app）
+- **前提**: Dashboard **009 → 010 両方適用後**に E2E
 
 ---
 
