@@ -1,11 +1,15 @@
 "use client";
 
+import { ChoicePromptFields } from "@/components/choice-prompt-fields";
+import { DeveloperChoicePreview } from "@/components/developer-choice-preview";
+import { DefaultVersionPromptPreview } from "@/components/default-version-prompt-preview";
 import {
+  createDefaultChoiceDraftPatch,
   createEmptyPromptDraft,
   DEVELOPER_RESPONSE_KIND_OPTIONS,
+  resolveOptionsForDraft,
   type DeveloperPromptDraft,
 } from "@/lib/version-prompt-form";
-import { DefaultVersionPromptPreview } from "@/components/default-version-prompt-preview";
 import { MAX_PROMPTS_PER_VERSION } from "@/lib/version-prompt-types";
 
 const inputClassName =
@@ -17,6 +21,7 @@ type VersionPromptEditorProps = {
   drafts: DeveloperPromptDraft[];
   onDraftsChange: (drafts: DeveloperPromptDraft[]) => void;
   versionLabel?: string;
+  showValidation?: boolean;
 };
 
 export function VersionPromptEditor({
@@ -25,6 +30,7 @@ export function VersionPromptEditor({
   drafts,
   onDraftsChange,
   versionLabel = "現在のプレイ可能版",
+  showValidation = false,
 }: VersionPromptEditorProps) {
   const activeCount = drafts.filter((draft) => draft.promptText.trim()).length;
 
@@ -159,12 +165,18 @@ export function VersionPromptEditor({
                 <select
                   id={`prompt-kind-${draft.clientId}`}
                   value={draft.responseKind}
-                  onChange={(event) =>
-                    updateDraft(draft.clientId, {
-                      responseKind: event.target
-                        .value as DeveloperPromptDraft["responseKind"],
-                    })
-                  }
+                  onChange={(event) => {
+                    const responseKind = event.target
+                      .value as DeveloperPromptDraft["responseKind"];
+                    const patch: Partial<DeveloperPromptDraft> = { responseKind };
+                    if (
+                      responseKind === "choice" &&
+                      !draft.choiceOptions?.length
+                    ) {
+                      Object.assign(patch, createDefaultChoiceDraftPatch());
+                    }
+                    updateDraft(draft.clientId, patch);
+                  }}
                   className={inputClassName}
                 >
                   {DEVELOPER_RESPONSE_KIND_OPTIONS.map((option) => (
@@ -183,24 +195,15 @@ export function VersionPromptEditor({
               </div>
 
               {draft.responseKind === "choice" && (
-                <div>
-                  <label
-                    htmlFor={`prompt-choice-${draft.clientId}`}
-                    className="text-xs font-medium text-zinc-500"
-                  >
-                    選択肢（2〜4個・改行またはカンマ区切り）
-                  </label>
-                  <textarea
-                    id={`prompt-choice-${draft.clientId}`}
-                    rows={3}
-                    value={draft.choiceLabels ?? ""}
-                    onChange={(event) =>
-                      updateDraft(draft.clientId, {
-                        choiceLabels: event.target.value,
-                      })
-                    }
-                    className={`${inputClassName} resize-y`}
-                    placeholder={"武器A\n武器B\n武器C"}
+                <div className="space-y-3">
+                  <ChoicePromptFields
+                    draft={draft}
+                    showValidation={showValidation}
+                    onChange={(patch) => updateDraft(draft.clientId, patch)}
+                  />
+                  <DeveloperChoicePreview
+                    promptText={draft.promptText}
+                    options={resolveOptionsForDraft(draft) ?? []}
                   />
                 </div>
               )}

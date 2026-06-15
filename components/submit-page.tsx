@@ -21,6 +21,7 @@ import { resolvePlayableVersion } from "@/lib/playable-version";
 import {
   createEmptyPromptDraft,
   sanitizePromptDrafts,
+  validatePromptDrafts,
   type DeveloperPromptDraft,
 } from "@/lib/version-prompt-form";
 
@@ -165,6 +166,9 @@ export function SubmitPage() {
   const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>();
   const [thumbnailPreview, setThumbnailPreview] = useState<string | undefined>();
   const [fileInputKey, setFileInputKey] = useState(0);
+  const [promptSaveError, setPromptSaveError] = useState<string | null>(null);
+  const [showPromptValidation, setShowPromptValidation] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (editId) {
@@ -294,6 +298,8 @@ export function SubmitPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setPromptSaveError(null);
+    setShowPromptValidation(false);
 
     if (!user) {
       router.push("/login");
@@ -304,6 +310,15 @@ export function SubmitPage() {
     if (!profile) {
       setShowProjectForm(false);
       return;
+    }
+
+    if (testerNotesMode === "custom") {
+      const validation = validatePromptDrafts(promptDrafts);
+      if (validation.blocking) {
+        setShowPromptValidation(true);
+        setPromptSaveError(validation.message);
+        return;
+      }
     }
 
     const playEnvironment = {
@@ -329,37 +344,48 @@ export function SubmitPage() {
       officialUrl: officialUrl || undefined,
     };
 
-    const game = await addSubmittedGame(data, {
-      ownerId: user.id,
-      ownerName: user.name,
-    });
+    setSubmitting(true);
+    try {
+      const game = await addSubmittedGame(data, {
+        ownerId: user.id,
+        ownerName: user.name,
+      });
 
-    const versionKey = resolvePlayableVersion(game.playableVersion);
-    const promptsToSave =
-      testerNotesMode === "custom" ? sanitizePromptDrafts(promptDrafts) : [];
-    await saveDeveloperVersionPrompts(game.id, versionKey, promptsToSave);
+      const versionKey = resolvePlayableVersion(game.playableVersion);
+      const promptsToSave =
+        testerNotesMode === "custom" ? sanitizePromptDrafts(promptDrafts) : [];
+      await saveDeveloperVersionPrompts(game.id, versionKey, promptsToSave);
 
-    setSubmittedGameId(game.id);
-    setSuccess(true);
-    setTitle("");
-    setGenre("");
-    setDescription("");
-    setPhase("");
-    setEstimatedPlayTime("");
-    setPlayUrl("");
-    setDistribution("");
-    setTesterNotesMode("none");
-    setPromptDrafts([createEmptyPromptDraft()]);
-    setSelectedTags([]);
-    setEnabledExternalLinks([]);
-    setSteamUrl("");
-    setItchUrl("");
-    setGithubUrl("");
-    setDiscordUrl("");
-    setOfficialUrl("");
-    setThumbnailUrl(undefined);
-    setThumbnailPreview(undefined);
-    setFileInputKey((key) => key + 1);
+      setSubmittedGameId(game.id);
+      setSuccess(true);
+      setTitle("");
+      setGenre("");
+      setDescription("");
+      setPhase("");
+      setEstimatedPlayTime("");
+      setPlayUrl("");
+      setDistribution("");
+      setTesterNotesMode("none");
+      setPromptDrafts([createEmptyPromptDraft()]);
+      setSelectedTags([]);
+      setEnabledExternalLinks([]);
+      setSteamUrl("");
+      setItchUrl("");
+      setGithubUrl("");
+      setDiscordUrl("");
+      setOfficialUrl("");
+      setThumbnailUrl(undefined);
+      setThumbnailPreview(undefined);
+      setFileInputKey((key) => key + 1);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "投稿に失敗しました。時間をおいて再度お試しください。";
+      setPromptSaveError(message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function handleSubmitAnother() {
@@ -705,6 +731,7 @@ export function SubmitPage() {
             onModeChange={setTesterNotesMode}
             drafts={promptDrafts}
             onDraftsChange={setPromptDrafts}
+            showValidation={showPromptValidation}
             versionLabel="初回のプレイ可能版"
           />
 
@@ -833,11 +860,21 @@ export function SubmitPage() {
             <ForgeSdkNote />
           </div>
 
+          {promptSaveError && (
+            <p
+              role="alert"
+              className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+            >
+              {promptSaveError}
+            </p>
+          )}
+
           <button
             type="submit"
-            className="w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-4 text-lg font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+            disabled={submitting}
+            className="w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-4 text-lg font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            投稿する
+            {submitting ? "投稿中..." : "投稿する"}
           </button>
         </form>
         )}

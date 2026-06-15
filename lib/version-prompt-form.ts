@@ -12,7 +12,11 @@ export type DeveloperPromptDraft = {
   id?: string;
   promptText: string;
   responseKind: VersionPromptResponseKind;
-  /** choice 用。改行またはカンマ区切り */
+  /** choice 用: 2 | 3 | 4 */
+  choiceCount?: number;
+  /** choice 用: 長さ = choiceCount */
+  choiceOptions?: string[];
+  /** @deprecated 読み込み互換のみ */
   choiceLabels?: string;
 };
 
@@ -22,6 +26,17 @@ export type DeveloperPromptInput = {
   responseKind: VersionPromptResponseKind;
   options?: VersionPromptOption[];
 };
+
+export type PromptDraftValidation = {
+  blocking: boolean;
+  message: string | null;
+};
+
+export const MIN_CHOICE_COUNT = 2;
+export const MAX_CHOICE_COUNT = 4;
+export const DEFAULT_CHOICE_COUNT = 3;
+export const MAX_CHOICE_LABEL_LENGTH = 40;
+export const CHOICE_COUNT_OPTIONS = [2, 3, 4] as const;
 
 export const DEVELOPER_RESPONSE_KIND_OPTIONS: {
   value: VersionPromptResponseKind;
@@ -68,6 +83,14 @@ function newClientId(): string {
   return `draft-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+function clampChoiceCount(count: number): number {
+  return Math.min(MAX_CHOICE_COUNT, Math.max(MIN_CHOICE_COUNT, count));
+}
+
+function emptyChoiceOptions(count: number = DEFAULT_CHOICE_COUNT): string[] {
+  return Array.from({ length: clampChoiceCount(count) }, () => "");
+}
+
 export function createEmptyPromptDraft(): DeveloperPromptDraft {
   return {
     clientId: newClientId(),
@@ -76,7 +99,35 @@ export function createEmptyPromptDraft(): DeveloperPromptDraft {
   };
 }
 
+export function createDefaultChoiceDraftPatch(): Pick<
+  DeveloperPromptDraft,
+  "choiceCount" | "choiceOptions"
+> {
+  return {
+    choiceCount: DEFAULT_CHOICE_COUNT,
+    choiceOptions: emptyChoiceOptions(DEFAULT_CHOICE_COUNT),
+  };
+}
+
 export function draftFromVersionPrompt(prompt: VersionPrompt): DeveloperPromptDraft {
+  if (prompt.responseKind === "choice" && prompt.options?.length) {
+    const labels = prompt.options.map((option) => option.label);
+    const choiceCount = clampChoiceCount(labels.length);
+    const choiceOptions = [...labels.slice(0, choiceCount)];
+    while (choiceOptions.length < choiceCount) {
+      choiceOptions.push("");
+    }
+
+    return {
+      clientId: prompt.id,
+      id: prompt.id,
+      promptText: prompt.promptText,
+      responseKind: prompt.responseKind,
+      choiceCount,
+      choiceOptions,
+    };
+  }
+
   const choiceLabels =
     prompt.responseKind === "choice" && prompt.options?.length
       ? prompt.options.map((option) => option.label).join("\n")
@@ -109,17 +160,42 @@ export function parseChoiceLabels(raw: string | undefined): VersionPromptOption[
     .split(/[\n,、]/)
     .map((item) => item.trim())
     .filter(Boolean)
-    .slice(0, 4);
+    .slice(0, MAX_CHOICE_COUNT);
 
+  return buildChoiceOptionsFromLabels(labels);
+}
+
+export function buildChoiceOptionsFromLabels(
+  labels: string[],
+): VersionPromptOption[] {
   const seen = new Set<string>();
-  return labels.map((label, index) => {
-    let id = slugifyOptionId(label, index);
-    while (seen.has(id)) {
-      id = `${id}_${index + 1}`;
-    }
-    seen.add(id);
-    return { id, label };
-  });
+  return labels
+    .map((label) => label.trim())
+    .filter(Boolean)
+    .slice(0, MAX_CHOICE_COUNT)
+    .map((label, index) => {
+      let id = slugifyOptionId(label, index);
+      while (seen.has(id)) {
+        id = `${id}_${index + 1}`;
+      }
+      seen.add(id);
+      return { id, label };
+    });
+}
+
+function getChoiceLabelsForDraft(draft: DeveloperPromptDraft): string[] {
+  if (draft.choiceOptions?.length) {
+    return draft.choiceOptions
+      .map((label) => label.trim())
+      .filter(Boolean)
+      .slice(0, MAX_CHOICE_COUNT);
+  }
+
+  if (draft.choiceLabels?.trim()) {
+    return parseChoiceLabels(draft.choiceLabels).map((option) => option.label);
+  }
+
+  return [];
 }
 
 export function resolveOptionsForDraft(
@@ -135,10 +211,46 @@ export function resolveOptionsForDraft(
     case "short_text":
       return undefined;
     case "choice":
-      return parseChoiceLabels(draft.choiceLabels);
+      return buildChoiceOptionsFromLabels(getChoiceLabelsForDraft(draft));
     default:
       return undefined;
   }
+}
+
+export function validatePromptDrafts(
+  drafts: DeveloperPromptDraft[],
+): PromptDraftValidation {
+  for (let index = 0; index < drafts.length; index += 1) {
+    const draft = drafts[index]!;
+    const questionNum = index + 1;
+    const promptText = draft.promptText.trim();
+
+    if (!promptText || draft.responseKind !== "choice") {
+      continue;
+    }
+
+    const options = draft.choiceOptions ?? emptyChoiceOptions(draft.choiceCount);
+
+    for (let optionIndex = 0; optionIndex < options.length; optionIndex += 1) {
+      const label = options[optionIndex] ?? "";
+      if (label.length > MAX_CHOICE_LABEL_LENGTH) {
+        return {
+          blocking: true,
+          message: `問い${questionNum}: 選択肢${optionIndex + 1}は${MAX_CHOICE_LABEL_LENGTH}文字以内にしてください`,
+        };
+      }
+    }
+
+    const validCount = getChoiceLabelsForDraft(draft).length;
+    if (validCount < MIN_CHOICE_COUNT) {
+      return {
+        blocking: true,
+        message: `問い${questionNum}: 選択肢は2個以上入力してください`,
+      };
+    }
+  }
+
+  return { blocking: false, message: null };
 }
 
 export function sanitizePromptDrafts(
@@ -156,7 +268,7 @@ export function sanitizePromptDrafts(
 
   for (const draft of trimmed) {
     const options = resolveOptionsForDraft(draft);
-    if (draft.responseKind === "choice" && (!options || options.length < 2)) {
+    if (draft.responseKind === "choice" && (!options || options.length < MIN_CHOICE_COUNT)) {
       continue;
     }
 

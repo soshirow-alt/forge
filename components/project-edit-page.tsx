@@ -23,6 +23,7 @@ import {
   createEmptyPromptDraft,
   draftFromVersionPrompt,
   sanitizePromptDrafts,
+  validatePromptDrafts,
   type DeveloperPromptDraft,
 } from "@/lib/version-prompt-form";
 
@@ -70,6 +71,7 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
   const [promptsLoaded, setPromptsLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [showPromptValidation, setShowPromptValidation] = useState(false);
 
   useEffect(() => {
     if (!game || formLoaded) {
@@ -168,6 +170,7 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaveError(null);
+    setShowPromptValidation(false);
     setIsSaving(true);
 
     try {
@@ -188,18 +191,18 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
       });
 
       const versionKey = resolvePlayableVersion(game?.playableVersion);
-      const promptsToSave =
-        promptMode === "custom" ? sanitizePromptDrafts(promptDrafts) : [];
 
-      if (promptMode === "custom" && promptsToSave.length === 0) {
-        const hasDraftText = promptDrafts.some((draft) => draft.promptText.trim());
-        if (hasDraftText) {
-          setSaveError(
-            "プレイヤーへの問いを保存できませんでした。質問文を入力するか、カスタム選択肢は2個以上設定してください。",
-          );
+      if (promptMode === "custom") {
+        const validation = validatePromptDrafts(promptDrafts);
+        if (validation.blocking) {
+          setShowPromptValidation(true);
+          setSaveError(validation.message);
           return;
         }
       }
+
+      const promptsToSave =
+        promptMode === "custom" ? sanitizePromptDrafts(promptDrafts) : [];
 
       await saveDeveloperVersionPrompts(projectId, versionKey, promptsToSave);
 
@@ -320,6 +323,7 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
             onModeChange={setPromptMode}
             drafts={promptDrafts}
             onDraftsChange={setPromptDrafts}
+            showValidation={showPromptValidation}
             versionLabel={`v${resolvePlayableVersion(game.playableVersion)}`}
           />
 
