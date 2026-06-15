@@ -45,7 +45,7 @@ export function PlayLaunchDialog({
         <div className="mt-4 space-y-3 text-sm leading-relaxed text-zinc-400">
           <p>
             ゲームを遊び終わったら、
-            <span className="text-zinc-200">このタブに戻って開発者の問いに返事を届けてください。</span>
+            <span className="text-zinc-200">このタブに戻って、開発者の質問に答えてください。</span>
           </p>
           <p>1つ答えるだけでOKです。</p>
         </div>

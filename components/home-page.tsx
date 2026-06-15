@@ -452,7 +452,7 @@ export function HomePage() {
                 </h1>
 
                 <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-zinc-400 sm:text-xl lg:mx-0">
-                  Forgeは、開発中のインディーゲームを見つけて、遊び、感想を届け、成長を見届けるプラットフォームです。
+                  Forgeは、開発中のインディーゲームを見つけて、遊び、声を届け、成長を見届けるプラットフォームです。
                 </p>
 
                 <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">

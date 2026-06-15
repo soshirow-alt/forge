@@ -13,7 +13,7 @@ export function VoiceAggregateBars({
 }: VoiceAggregateBarsProps) {
   if (aggregate.totalResponses === 0) {
     return (
-      <p className="text-xs text-zinc-600">まだ返事はありません</p>
+      <p className="text-xs text-zinc-600">まだ回答はありません</p>
     );
   }
 
@@ -42,7 +42,7 @@ export function VoiceAggregateBars({
       })}
       {!compact && (
         <p className="pt-1 text-[11px] text-zinc-600">
-          合計 {aggregate.totalResponses} 件の返事（個別の内容は非公開）
+          合計 {aggregate.totalResponses} 件の回答（個別の内容は非公開）
         </p>
       )}
     </div>

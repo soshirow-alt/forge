@@ -118,7 +118,7 @@ export function GameDeepFeedbackForm({ gameId }: GameDeepFeedbackFormProps) {
       className="space-y-3 rounded-lg border border-zinc-800/60 bg-zinc-950/30 p-4"
     >
       <p className="text-xs text-zinc-600">
-        任意です。書かなくても、返事はすでに届いています。
+        任意です。書かなくても、質問への回答はすでに送信済みです。
       </p>
       <div>
         <label htmlFor={`good-${gameId}`} className="text-xs font-medium text-zinc-500">

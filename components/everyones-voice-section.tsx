@@ -45,7 +45,7 @@ export function EveryonesVoiceSection({
   if (!loaded) {
     return (
       <section className="mt-4 border-t border-zinc-800/80 pt-4">
-        <h2 className="text-sm font-medium text-zinc-500">みんなの声</h2>
+        <h2 className="text-sm font-medium text-zinc-500">プレイヤーの回答</h2>
         <p className="mt-2 text-sm text-zinc-600">読み込み中...</p>
       </section>
     );
@@ -53,14 +53,14 @@ export function EveryonesVoiceSection({
 
   return (
     <section className="mt-4 border-t border-zinc-800/80 pt-4">
-      <h2 className="text-sm font-medium text-zinc-500">みんなの声</h2>
+      <h2 className="text-sm font-medium text-zinc-500">プレイヤーの回答</h2>
       <p className="mt-1 text-xs text-zinc-600">
-        v{version} への返事の集計です。個別の回答内容は公開されません。
+        v{version} への回答の集計です。個別の回答内容は公開されません。
       </p>
 
       {!hasResponses ? (
         <p className="mt-3 text-sm text-zinc-600">
-          まだ声は届いていません。プレイ後、開発者の問いに声を届けるとここに集計が表示されます。
+          まだ回答はありません。プレイ後、開発者の質問に答えるとここに集計が表示されます。
         </p>
       ) : (
         <ul className="mt-3 space-y-4">

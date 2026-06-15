@@ -9,9 +9,9 @@ type ProjectNurtureActionsProps = {
 
 const actions = [
   {
-    label: "届いた声を見る",
+    label: "届いた回答を見る",
     href: (id: string) => `/my-projects?focus=${id}`,
-    description: "プレイヤーの声と集計",
+    description: "プレイヤーの回答と集計",
   },
   {
     label: "問いを設定する",

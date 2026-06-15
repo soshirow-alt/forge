@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { AuthGatedHint } from "@/components/auth-gated-hint";
 import { ForgeHeader } from "@/components/forge-header";
@@ -28,6 +28,7 @@ import { gameDetailReturnPath } from "@/lib/login-return-url";
 import {
   derivePlayerVoiceFlowState,
   getFirstPromptPreview,
+  type PlayerVoiceFlowState,
 } from "@/lib/player-voice-flow-state";
 
 function formatDate(date: string) {
@@ -79,6 +80,7 @@ export function GameDetailPageClient({ id }: { id: string }) {
   const [overlayMode, setOverlayMode] = useState<VoiceOverlayMode>("hidden");
   const [overlayDismissed, setOverlayDismissed] = useState(false);
   const [voiceDataReady, setVoiceDataReady] = useState(false);
+  const voiceCompleteKnownRef = useRef(false);
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -94,14 +96,42 @@ export function GameDetailPageClient({ id }: { id: string }) {
       setVoiceFlowMeta(INITIAL_VOICE_FLOW_META);
       setOverlayMode("hidden");
       setVoiceDataReady(false);
+      voiceCompleteKnownRef.current = false;
     }
   }, [id, isLoggedIn, played]);
 
-  const voiceFlowState = derivePlayerVoiceFlowState({
-    isLoggedIn,
-    played,
-    voiceComplete: voiceFlowMeta.voiceComplete,
-  });
+  const handleVoiceFlowStateChange = useCallback((meta: GameVoiceFlowMeta) => {
+    if (meta.loading) {
+      return;
+    }
+
+    if (meta.voiceComplete) {
+      voiceCompleteKnownRef.current = true;
+    }
+
+    setVoiceFlowMeta((prev) => ({
+      ...meta,
+      voiceComplete: meta.voiceComplete || voiceCompleteKnownRef.current,
+    }));
+    setVoiceDataReady(true);
+  }, []);
+
+  const voiceFlowState = useMemo((): PlayerVoiceFlowState => {
+    if (!isLoggedIn || !played) {
+      return "not_played";
+    }
+
+    if (!voiceDataReady) {
+      return voiceCompleteKnownRef.current ? "voice_complete" : "played_pending";
+    }
+
+    return derivePlayerVoiceFlowState({
+      isLoggedIn,
+      played,
+      voiceComplete:
+        voiceFlowMeta.voiceComplete || voiceCompleteKnownRef.current,
+    });
+  }, [isLoggedIn, played, voiceDataReady, voiceFlowMeta.voiceComplete]);
 
   const firstPromptPreview = useMemo(
     () => getFirstPromptPreview(voiceFlowMeta.prompts),
@@ -113,18 +143,11 @@ export function GameDetailPageClient({ id }: { id: string }) {
       voiceFlowState === "played_pending" &&
       voiceDataReady &&
       !overlayDismissed &&
-      !voiceFlowMeta.loading &&
       overlayMode === "hidden"
     ) {
       setOverlayMode("prompt");
     }
-  }, [
-    voiceFlowState,
-    voiceDataReady,
-    overlayDismissed,
-    voiceFlowMeta.loading,
-    overlayMode,
-  ]);
+  }, [voiceFlowState, voiceDataReady, overlayDismissed, overlayMode]);
 
   const handlePlayRequest = useCallback(() => {
     if (!isLoggedIn) {
@@ -167,14 +190,8 @@ export function GameDetailPageClient({ id }: { id: string }) {
     setOverlayMode("form");
   }, []);
 
-  const handleVoiceFlowStateChange = useCallback((meta: GameVoiceFlowMeta) => {
-    setVoiceFlowMeta(meta);
-    if (!meta.loading) {
-      setVoiceDataReady(true);
-    }
-  }, []);
-
   const handleVoiceComplete = useCallback(() => {
+    voiceCompleteKnownRef.current = true;
     writeOverlayDismissed(id);
     setOverlayDismissed(true);
     setOverlayMode("hidden");
@@ -196,10 +213,11 @@ export function GameDetailPageClient({ id }: { id: string }) {
   }
 
   const userSubmitted = isSubmittedGame(game.id);
-  const canEdit = isProjectOwner(game.id, user?.id);
+  const isOwnerPreview = isProjectOwner(game.id, user?.id);
   const isPrivate = userSubmitted && game.visibility === "private";
+  const showPlayerVoiceFlow = isLoggedIn && played && !isOwnerPreview;
 
-  if (isPrivate && !canEdit) {
+  if (isPrivate && !isOwnerPreview) {
     return (
       <div className="min-h-full bg-zinc-950 text-zinc-100">
         <ForgeHeader />
@@ -233,36 +251,22 @@ export function GameDetailPageClient({ id }: { id: string }) {
         launching={launchingGame}
       />
 
-      {isLoggedIn && played && !voiceDataReady && (
-        <div className="hidden" aria-hidden>
+      {showPlayerVoiceFlow && voiceFlowState !== "voice_complete" && (
+        <PostPlayVoiceOverlay
+          mode={!voiceDataReady ? "hidden" : overlayMode}
+          firstPromptPreview={firstPromptPreview}
+          onDismiss={handleOverlayDismiss}
+          onOpenForm={handleOpenVoiceForm}
+        >
           <GameVoiceSection
             gameId={id}
             embedded
             showDeepFeedback={false}
             onFlowStateChange={handleVoiceFlowStateChange}
+            onVoiceComplete={handleVoiceComplete}
           />
-        </div>
+        </PostPlayVoiceOverlay>
       )}
-
-      {isLoggedIn &&
-        played &&
-        voiceDataReady &&
-        voiceFlowState !== "voice_complete" && (
-          <PostPlayVoiceOverlay
-            mode={overlayMode}
-            firstPromptPreview={firstPromptPreview}
-            onDismiss={handleOverlayDismiss}
-            onOpenForm={handleOpenVoiceForm}
-          >
-            <GameVoiceSection
-              gameId={id}
-              embedded
-              showDeepFeedback={false}
-              onFlowStateChange={handleVoiceFlowStateChange}
-              onVoiceComplete={handleVoiceComplete}
-            />
-          </PostPlayVoiceOverlay>
-        )}
 
       <main className="mx-auto max-w-7xl px-6 py-8">
         <Link
@@ -279,13 +283,18 @@ export function GameDetailPageClient({ id }: { id: string }) {
                 {game.title}
               </h1>
               <p className="mt-1 text-sm text-zinc-500">{game.creator}</p>
+              {isOwnerPreview && (
+                <p className="mt-2 text-xs text-orange-300/80">
+                  開発者プレビュー — プレイヤー向けページの見え方
+                </p>
+              )}
             </header>
 
             <div className="mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_232px] lg:items-start lg:gap-5 xl:grid-cols-[minmax(0,1.15fr)_248px] xl:gap-6">
               <div className="min-w-0">
                 <GameDetailOverview game={game} />
 
-                <NewPlayableVersionBanner game={game} />
+                {!isOwnerPreview && <NewPlayableVersionBanner game={game} />}
 
                 <GameDescriptionSection description={game.description} />
 
@@ -296,15 +305,17 @@ export function GameDetailPageClient({ id }: { id: string }) {
 
                 <GameProjectHistorySection game={game} />
 
-                {voiceFlowState === "voice_complete" && voiceDataReady && (
-                  <GameVoiceSection
-                    gameId={id}
-                    onFlowStateChange={handleVoiceFlowStateChange}
-                    showDeepFeedback
-                  />
-                )}
+                {showPlayerVoiceFlow &&
+                  voiceFlowState === "voice_complete" &&
+                  voiceDataReady && (
+                    <GameVoiceSection
+                      gameId={id}
+                      onFlowStateChange={handleVoiceFlowStateChange}
+                      showDeepFeedback
+                    />
+                  )}
 
-                {voiceFlowState === "not_played" && (
+                {!isOwnerPreview && voiceFlowState === "not_played" && (
                   <div className="mt-4 border-t border-zinc-800/80 pt-4">
                     {!isLoggedIn ? (
                       <>
@@ -314,16 +325,16 @@ export function GameDetailPageClient({ id }: { id: string }) {
                           title="ログインすると使えます"
                           className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-orange-500/40 hover:text-orange-400"
                         >
-                          ログインして声を届ける
+                          ログインしてプレイ
                         </button>
                         <AuthGatedHint
-                          hint="プレイ後に開発者の問いへ声を送れます"
+                          hint="プレイ後に開発者の質問へ回答できます"
                           className="mt-2"
                         />
                       </>
                     ) : (
                       <p className="text-xs text-zinc-600">
-                        プレイ後に、開発者の問いへ声を届けられます。
+                        プレイ後に、開発者の質問へ回答できます。
                       </p>
                     )}
                   </div>
@@ -333,7 +344,7 @@ export function GameDetailPageClient({ id }: { id: string }) {
               <GameDetailSidebar
                 game={game}
                 userSubmitted={userSubmitted}
-                canEdit={canEdit}
+                isOwnerPreview={isOwnerPreview}
                 formatDate={formatDate}
                 isLoggedIn={isLoggedIn}
                 voiceFlowState={voiceFlowState}

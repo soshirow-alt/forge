@@ -479,7 +479,7 @@ export function SubmitPage() {
                       href="/my-projects"
                       className="flex w-full items-center justify-between rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3.5 text-sm font-semibold text-zinc-100 transition-colors hover:border-orange-500/50 hover:text-orange-400"
                     >
-                      開発ダッシュボードを見る
+                      開発マイページを見る
                       <span aria-hidden="true">→</span>
                     </Link>
                     <p className="mt-1.5 text-xs text-zinc-600">
@@ -515,7 +515,7 @@ export function SubmitPage() {
                 href="/my-projects"
                 className="rounded-lg border border-zinc-700 bg-zinc-900 px-6 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-orange-500/50 hover:text-orange-400"
               >
-                開発ダッシュボードを見る
+                開発マイページを見る
               </Link>
               <Link
                 href="/"

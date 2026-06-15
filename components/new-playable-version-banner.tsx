@@ -48,17 +48,17 @@ export function NewPlayableVersionBanner({ game }: NewPlayableVersionBannerProps
       <p className="mt-2 text-sm leading-relaxed text-zinc-400">
         {priorVersion ? (
           <>
-            以前の版（{priorVersion}）向けにフィードバックを送っています。もう一度プレイして、版{" "}
-            {currentVersion} 向けの新しいフィードバックを送れます。
+            以前の版（{priorVersion}）向けに回答を送っています。もう一度プレイして、版{" "}
+            {currentVersion} 向けの新しい回答を送れます。
           </>
         ) : (
           <>
-            もう一度プレイして、版 {currentVersion} 向けのフィードバックを送れます。
+            もう一度プレイして、版 {currentVersion} 向けの質問に答えられます。
           </>
         )}
       </p>
       <p className="mt-2 text-xs text-zinc-600">
-        右側の「プレイする」から再プレイできます。プレイ後、ページ下部のフィードバック欄が開きます。
+        右側の「プレイする」から再プレイできます。プレイ後、質問への回答を sidebar から送れます。
       </p>
     </div>
   );
