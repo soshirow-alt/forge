@@ -372,7 +372,7 @@ function buildGenericPlaceholderDevlogs(game: GameActivitySeed): DevlogEntry[] {
       id: `placeholder-${game.id}-latest`,
       projectId: game.id,
       title: "最新アップデート",
-      content: "プレイフィードバックを反映した更新を行いました。",
+      content: "プレイヤーの回答を反映した更新を行いました。",
       date: latest,
     },
     {

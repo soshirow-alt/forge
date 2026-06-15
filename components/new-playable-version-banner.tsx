@@ -58,7 +58,7 @@ export function NewPlayableVersionBanner({ game }: NewPlayableVersionBannerProps
         )}
       </p>
       <p className="mt-2 text-xs text-zinc-600">
-        右側の「プレイする」から再プレイできます。プレイ後、質問への回答を sidebar から送れます。
+        右側の「プレイする」から再プレイできます。プレイ後、質問に答えられます。
       </p>
     </div>
   );

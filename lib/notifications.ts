@@ -41,11 +41,27 @@ export function createNotificationMessage(
     case "tester_apply":
       return `「${projectTitle}」にテストプレイの参加がありました`;
     case "feedback":
-      return `「${projectTitle}」に回答が届きました`;
+      return `「${projectTitle}」にプレイヤーの回答が届きました`;
     case "devlog":
-      return `「${projectTitle}」に開発日誌が投稿されました`;
+      return `「${projectTitle}」が更新されました — 開発ログを公開`;
     case "version_published":
-      return `「${projectTitle}」の新しいプレイ可能版が公開されました`;
+      return `「${projectTitle}」の新しいプレイ可能版が公開されました — 再プレイして回答できます`;
+  }
+}
+
+/** 通知カード下に表示する次アクション文言 */
+export function getNotificationActionHint(type: NotificationType): string {
+  switch (type) {
+    case "support":
+      return "作品詳細を見る →";
+    case "tester_apply":
+      return "作品詳細を見る →";
+    case "feedback":
+      return "届いた回答を見る →";
+    case "devlog":
+      return "開発の歩みを見る →";
+    case "version_published":
+      return "新版を確認して再プレイ →";
   }
 }
 

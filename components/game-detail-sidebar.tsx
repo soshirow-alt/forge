@@ -70,7 +70,7 @@ export function GameDetailSidebar({
             onClick={onPlayRequest}
             className="mt-3 w-full rounded-lg px-4 py-2 text-center text-xs font-medium text-zinc-500 transition-colors hover:text-orange-400/90"
           >
-            テストプレイ（任意）
+            確認用にプレイ
           </button>
         </div>
       ) : (

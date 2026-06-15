@@ -9,9 +9,13 @@ import { useGames } from "@/components/games-provider";
 import { LOGIN_PATH } from "@/hooks/use-require-auth";
 import {
   formatNotificationDate,
+  getNotificationActionHint,
   getNotificationTypeLabel,
 } from "@/lib/notifications";
-import { notificationTargetHref } from "@/lib/project-nurture-links";
+import {
+  mypageUpdatesHref,
+  notificationTargetHref,
+} from "@/lib/project-nurture-links";
 
 type NotificationFilter = "all" | "unread" | "read";
 
@@ -91,8 +95,14 @@ export function NotificationsPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">通知</h1>
             <p className="mt-2 text-zinc-500">
-              作品に関する最新のアクティビティを確認できます。
+              追跡中の作品の更新（開発ログ・新版公開）や、あなたの作品への応援などを確認できます。
             </p>
+            <Link
+              href={mypageUpdatesHref()}
+              className="mt-3 inline-block text-sm font-medium text-orange-400 transition-colors hover:text-orange-300"
+            >
+              更新を見る（マイページ） →
+            </Link>
           </div>
           {unreadCount > 0 && (
             <button
@@ -169,11 +179,8 @@ export function NotificationsPage() {
                   </div>
                   <p className="mt-3 text-zinc-200">{notification.message}</p>
                   <span className="mt-3 inline-block text-sm font-medium text-orange-400">
-                    {notification.projectTitle}
-                    {notification.type === "devlog" ||
-                    notification.type === "version_published"
-                      ? " — 開発の歩みを見る →"
-                      : ""}
+                    {notification.projectTitle} —{" "}
+                    {getNotificationActionHint(notification.type)}
                   </span>
                 </Link>
               </li>

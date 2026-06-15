@@ -161,6 +161,13 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
             <p className="mt-1 text-xs text-zinc-600">
               現在: {display.heroTitle}
               {display.heroSubline ? ` — ${display.heroSubline}` : ""}
+              {" · "}
+              <Link
+                href={gamePlayHref(game.id)}
+                className="text-zinc-500 transition-colors hover:text-orange-400/90"
+              >
+                プレイヤー画面をプレビュー
+              </Link>
             </p>
           </div>
         </header>
@@ -175,16 +182,11 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
           />
         </section>
 
-        <ProjectNurtureActions projectId={game.id} className="mt-8" />
-
-        <p className="mt-8 text-center text-xs text-zinc-600">
-          <Link
-            href={gamePlayHref(game.id)}
-            className="transition-colors hover:text-zinc-400"
-          >
-            プレイヤー向けページをプレビュー →
-          </Link>
-        </p>
+        <ProjectNurtureActions
+          projectId={game.id}
+          context="studio"
+          className="mt-8"
+        />
       </main>
     </div>
   );

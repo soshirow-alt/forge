@@ -22,10 +22,20 @@ type WatchedUpdateItem = {
   kind: "devlog" | "version_published";
   label: string;
   message: string;
+  summary?: string;
   date: string;
   historyHref: string;
   replayHref: string;
 };
+
+function truncateSummary(text: string, maxLength = 72): string {
+  const trimmed = text.trim().replace(/\s+/g, " ");
+  if (trimmed.length <= maxLength) {
+    return trimmed;
+  }
+
+  return `${trimmed.slice(0, maxLength)}…`;
+}
 
 function buildWatchedUpdates(
   watchedGames: Game[],
@@ -52,6 +62,10 @@ function buildWatchedUpdates(
       continue;
     }
 
+    const latestDevlog = sortDevlogsNewestFirst(
+      getDevlogsByProject(notification.projectId),
+    )[0];
+
     items.set(notification.id, {
       id: notification.id,
       game,
@@ -61,6 +75,12 @@ function buildWatchedUpdates(
           : "devlog",
       label: getNotificationTypeLabel(notification.type),
       message: notification.message,
+      summary:
+        notification.type === "devlog" && latestDevlog?.content
+          ? truncateSummary(latestDevlog.content)
+          : notification.type === "version_published"
+            ? "前回プレイした版から内容が更新されています。再プレイして新しい版向けに回答できます。"
+            : undefined,
       date: notification.date,
       historyHref:
         notification.type === "version_published"
@@ -104,6 +124,9 @@ function buildWatchedUpdates(
       kind: "devlog",
       label: "開発日誌",
       message: `「${game.title}」— ${latestDevlog.title}`,
+      summary: latestDevlog.content
+        ? truncateSummary(latestDevlog.content)
+        : undefined,
       date: latestDevlog.date,
       historyHref: gameHistoryHref(game.id),
       replayHref: gamePlayHref(game.id),
@@ -135,7 +158,7 @@ export function MyPageUpdatesSection({ watchedGames }: { watchedGames: Game[] })
           更新を見る
         </h2>
         <p className="mt-1 text-sm text-zinc-500">
-          追跡中の作品で、新しい開発ログやプレイ可能版の更新です。
+          前回遊んだあとに変わった点です。追跡中の作品の開発ログと新版公開をまとめて確認できます。
         </p>
       </div>
 
@@ -186,19 +209,26 @@ export function MyPageUpdatesSection({ watchedGames }: { watchedGames: Game[] })
                   {update.game.title}
                 </p>
                 <p className="mt-1 text-sm text-zinc-500">{update.message}</p>
+                {update.summary && (
+                  <p className="mt-2 text-xs leading-relaxed text-zinc-600">
+                    変更の要点: {update.summary}
+                  </p>
+                )}
                 <div className="mt-3 flex flex-wrap gap-3 text-xs font-medium">
                   <Link
                     href={update.historyHref}
                     className="text-orange-400 transition-colors hover:text-orange-300"
                   >
-                    開発の歩みを見る →
+                    {update.kind === "version_published"
+                      ? "新版の内容を見る →"
+                      : "開発の歩みを見る →"}
                   </Link>
                   <Link
                     href={update.replayHref}
                     className="text-zinc-400 transition-colors hover:text-zinc-200"
                   >
                     {update.kind === "version_published"
-                      ? "新版をプレイ →"
+                      ? "新版をプレイして回答 →"
                       : "作品詳細へ →"}
                   </Link>
                 </div>
@@ -206,6 +236,19 @@ export function MyPageUpdatesSection({ watchedGames }: { watchedGames: Game[] })
             </li>
           ))}
         </ul>
+      )}
+
+      {updates.length > 0 && (
+        <p className="mt-4 text-xs text-zinc-600">
+          すべての通知は
+          <Link
+            href="/notifications"
+            className="mx-1 text-orange-400/90 hover:text-orange-300"
+          >
+            通知一覧
+          </Link>
+          からも確認できます。
+        </p>
       )}
     </section>
   );

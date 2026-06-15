@@ -771,7 +771,7 @@ export function SubmitPage() {
                 <span className="font-normal text-zinc-600">（任意）</span>
               </p>
               <p className="mt-1 text-xs leading-relaxed text-zinc-600">
-                上のアクセスURLとは別に、作品ページに載せたいリンクです。Discord（フィードバック用）や
+                上のアクセスURLとは別に、作品ページに載せたいリンクです。Discord（コミュニティ用）や
                 GitHub（開発リポジトリ）など、テスター向けの補助情報に使います。
               </p>
             </div>

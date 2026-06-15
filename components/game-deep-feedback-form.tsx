@@ -94,7 +94,7 @@ export function GameDeepFeedbackForm({ gameId }: GameDeepFeedbackFormProps) {
   }
 
   if (loading) {
-    return <p className="text-xs text-zinc-600">詳しい材料フォームを読み込み中...</p>;
+    return <p className="text-xs text-zinc-600">詳しい感想フォームを読み込み中...</p>;
   }
 
   if (saved && !submitting) {
@@ -185,7 +185,7 @@ export function GameDeepFeedbackForm({ gameId }: GameDeepFeedbackFormProps) {
         disabled={submitting}
         className="rounded-lg border border-zinc-700 px-4 py-2 text-xs font-medium text-zinc-300 transition-colors hover:border-orange-500/40 hover:text-orange-300 disabled:opacity-60"
       >
-        {submitting ? "送信中..." : "詳しい材料を届ける"}
+        {submitting ? "送信中..." : "詳しい感想を届ける"}
       </button>
     </form>
   );

@@ -793,13 +793,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
             feedback,
           );
 
-      if (!existing) {
-        addNotification("feedback", gameId);
-      }
-
       return item;
     },
-    [user, addNotification, getSubmittedGameById],
+    [user, getSubmittedGameById],
   );
 
   const getMyFeedbackForProject = useCallback(
@@ -972,13 +968,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         answers,
       );
 
-      if (saved.length > 0) {
-        addNotification("feedback", gameId);
-      }
-
       return saved;
     },
-    [user, addNotification],
+    [user],
   );
 
   const getPublicVoiceAggregates = useCallback(

@@ -1,23 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { PROJECT_NURTURE_ACTIONS } from "@/lib/project-nurture-links";
+import { getProjectNurtureActions } from "@/lib/project-nurture-links";
 
 type ProjectNurtureActionsProps = {
   projectId: string;
   className?: string;
+  context?: "studio" | "default";
 };
 
 export function ProjectNurtureActions({
   projectId,
   className = "",
+  context = "default",
 }: ProjectNurtureActionsProps) {
+  const actions = getProjectNurtureActions(context);
+
   return (
     <div className={`rounded-lg border border-zinc-800/80 bg-zinc-950/40 p-4 ${className}`}>
-      <p className="text-xs font-medium text-zinc-500">やること一覧</p>
+      <p className="text-xs font-medium text-zinc-500">
+        {context === "studio" ? "その他のやること" : "やること一覧"}
+      </p>
       <ul className="mt-3 space-y-2">
-        {PROJECT_NURTURE_ACTIONS.map((action) => (
-          <li key={action.label}>
+        {actions.map((action) => (
+          <li key={action.id}>
             <Link
               href={action.href(projectId)}
               className="group block rounded-lg border border-transparent px-3 py-2 transition-colors hover:border-zinc-800 hover:bg-zinc-900/60"

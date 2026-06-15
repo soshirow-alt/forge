@@ -13,7 +13,7 @@ export const mockDevlogs: DevlogEntry[] = [
     projectId: "emberfall",
     title: "戦闘プロトタイプを公開",
     content:
-      "剣戟コンボと回避アクションの初期版を実装しました。フィードバックをお待ちしています。",
+      "剣戟コンボと回避アクションの初期版を実装しました。プレイヤーの回答をお待ちしています。",
     date: "2026-06-01",
   },
   {

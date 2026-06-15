@@ -55,7 +55,7 @@ export function GameProjectHistorySection({ game }: GameProjectHistorySectionPro
         <div>
           <h2 className="text-sm font-medium text-zinc-500">開発の歩み</h2>
           <p className="text-xs text-zinc-600">
-            このゲームがどう育ってきたかの履歴です
+            前回プレイしたあとに変わった点は、ここで確認できます
           </p>
           {usingPlaceholderDevlogs && (
             <p className="text-xs text-zinc-600">（サンプル表示）</p>

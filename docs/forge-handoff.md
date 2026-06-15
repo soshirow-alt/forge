@@ -19,7 +19,7 @@ Forge は **完成前のインディーゲームを発見 → プレイ → 声�
 - **読了**: localStorage `project_voice_reads:{projectId}:{version}`（DB 化は後続）
 - **開発マイページ**: `/my-projects` — voice ベースの次アクション表示
 - **本番 deploy**: `d7443b3` — voice 中心化（https://forge-flame-gamma.vercel.app / dpl_BJi4jXt4q2xbfzfd2xAJEf1GSAot）
-- **次 Cursor 推奨**: ① 本番確認（studio voice 6観点）→ ② nurture 読了 Supabase 化 → ③ 通知 DB 化
+- **次 Cursor 推奨**: ① 本番 E2E（更新/studio/用語）→ ② 開発者回答通知 DB 化 → ③ nurture 読了 Supabase 化
 
 ---
 

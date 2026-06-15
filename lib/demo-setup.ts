@@ -92,7 +92,7 @@ function createDemoDevlogs(projectIds: string[]): DevlogEntry[] {
       projectId: project1,
       title: "試作版デモを公開しました",
       content:
-        "星詠みの廃都の試作版を公開しました。テスターの皆さんからのフィードバックをお待ちしています。",
+        "星詠みの廃都の試作版を公開しました。テスターの皆さんからの回答をお待ちしています。",
       date: "2026-06-10",
     },
     {
@@ -115,7 +115,7 @@ function createDemoDevlogs(projectIds: string[]): DevlogEntry[] {
       projectId: project3,
       title: "α版テスト開始のお知らせ",
       content:
-        "群青の境界のα版テストを開始しました。3人協力プレイでのフィードバックを募集しています。",
+        "群青の境界のα版テストを開始しました。3人協力プレイでの回答を募集しています。",
       date: "2026-06-05",
     },
     {
