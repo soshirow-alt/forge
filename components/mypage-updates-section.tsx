@@ -138,7 +138,13 @@ function buildWatchedUpdates(
   );
 }
 
-export function MyPageUpdatesSection({ watchedGames }: { watchedGames: Game[] }) {
+export function MyPageUpdatesSection({
+  watchedGames,
+  previewLimit,
+}: {
+  watchedGames: Game[];
+  previewLimit?: number;
+}) {
   const { getNotifications, getDevlogsByProject } = useGames();
 
   const updates = useMemo(
@@ -151,14 +157,36 @@ export function MyPageUpdatesSection({ watchedGames }: { watchedGames: Game[] })
     [watchedGames, getNotifications, getDevlogsByProject],
   );
 
+  const displayUpdates = previewLimit
+    ? updates.slice(0, previewLimit)
+    : updates.slice(0, 8);
+
   return (
     <section id="updates" className="scroll-mt-24">
-      <div className="border-l-2 border-emerald-500 pl-4">
-        <h2 className="text-xl font-semibold tracking-tight text-zinc-100">
+      <div
+        className={
+          previewLimit
+            ? "border-l-2 border-emerald-500 pl-3"
+            : "border-l-2 border-emerald-500 pl-4"
+        }
+      >
+        <h2
+          className={
+            previewLimit
+              ? "text-base font-semibold tracking-tight text-zinc-100"
+              : "text-xl font-semibold tracking-tight text-zinc-100"
+          }
+        >
           更新を見る
         </h2>
-        <p className="mt-1 text-sm text-zinc-500">
-          前回遊んだあとに変わった点です。追跡中の作品の開発ログと新版公開をまとめて確認できます。
+        <p
+          className={
+            previewLimit
+              ? "mt-1 text-xs leading-relaxed text-zinc-500"
+              : "mt-1 text-sm text-zinc-500"
+          }
+        >
+          追跡中作品の devlog と新版公開の変更要点です。
         </p>
       </div>
 
@@ -184,8 +212,8 @@ export function MyPageUpdatesSection({ watchedGames }: { watchedGames: Game[] })
           </Link>
         </div>
       ) : (
-        <ul className="mt-5 space-y-3">
-          {updates.slice(0, 8).map((update) => (
+        <ul className={previewLimit ? "mt-4 space-y-2" : "mt-5 space-y-3"}>
+          {displayUpdates.map((update) => (
             <li key={update.id}>
               <article className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4">
                 <div className="flex flex-wrap items-center gap-2">
@@ -239,15 +267,30 @@ export function MyPageUpdatesSection({ watchedGames }: { watchedGames: Game[] })
       )}
 
       {updates.length > 0 && (
-        <p className="mt-4 text-xs text-zinc-600">
-          すべての通知は
-          <Link
-            href="/notifications"
-            className="mx-1 text-orange-400/90 hover:text-orange-300"
-          >
-            通知一覧
-          </Link>
-          からも確認できます。
+        <p className={previewLimit ? "mt-3 text-xs text-zinc-600" : "mt-4 text-xs text-zinc-600"}>
+          {previewLimit && updates.length > (previewLimit ?? 0) && (
+            <>
+              <Link
+                href="/notifications"
+                className="text-orange-400/90 hover:text-orange-300"
+              >
+                通知一覧
+              </Link>
+              で全件確認 ·{" "}
+            </>
+          )}
+          {!previewLimit && (
+            <>
+              すべての通知は
+              <Link
+                href="/notifications"
+                className="mx-1 text-orange-400/90 hover:text-orange-300"
+              >
+                通知一覧
+              </Link>
+              からも確認できます。
+            </>
+          )}
         </p>
       )}
     </section>

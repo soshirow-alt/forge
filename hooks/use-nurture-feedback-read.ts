@@ -1,41 +1,81 @@
 "use client";
 
 /**
- * 現行版 voice の読了状態 hook。
+ * 現行版 voice の読了状態 hook（Supabase project_voice_reads）。
  *
- * キー: projectId + playableVersion
- * 暫定 localStorage → 将来 DB 化予定
+ * キー: projectId + playableVersion + source_type=voice
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { voiceReadStore } from "@/lib/nurture-voice-read-store";
+import { useAuth } from "@/components/auth-provider";
+import { useGames } from "@/components/games-provider";
+import { getOptionalSupabaseClient } from "@/lib/supabase/client";
+import {
+  fetchVoiceReadForVersion,
+  upsertVoiceReadForVersion,
+} from "@/lib/supabase/voice-reads-db";
+import { markVoiceReceivedNotificationsReadForVersion } from "@/lib/supabase/user-notifications-db";
 
 export function useNurtureVoiceRead(
   projectId: string,
   versionKey: string | undefined,
 ) {
+  const { user } = useAuth();
+  const { reloadNotifications } = useGames();
   const [isRead, setIsRead] = useState(false);
   const [ready, setReady] = useState(false);
+  const supabase = getOptionalSupabaseClient();
+  const canFetch = Boolean(versionKey && user && supabase);
 
   useEffect(() => {
-    if (!versionKey) {
-      setIsRead(false);
-      setReady(true);
+    if (!canFetch || !versionKey || !user || !supabase) {
       return;
     }
 
-    setIsRead(voiceReadStore.getIsRead(projectId, versionKey));
-    setReady(true);
-  }, [projectId, versionKey]);
+    let active = true;
+    setReady(false);
 
-  const markRead = useCallback(() => {
-    if (!versionKey) {
+    void fetchVoiceReadForVersion(supabase, user.id, projectId, versionKey)
+      .then((read) => {
+        if (active) {
+          setIsRead(read);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setIsRead(false);
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setReady(true);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [canFetch, projectId, supabase, user, versionKey]);
+
+  const markRead = useCallback(async () => {
+    if (!versionKey || !user || !supabase) {
       return;
     }
 
-    voiceReadStore.markRead(projectId, versionKey);
+    await upsertVoiceReadForVersion(supabase, user.id, projectId, versionKey);
+    await markVoiceReceivedNotificationsReadForVersion(
+      supabase,
+      user.id,
+      projectId,
+      versionKey,
+    );
     setIsRead(true);
-  }, [projectId, versionKey]);
+    void reloadNotifications();
+  }, [projectId, reloadNotifications, supabase, user, versionKey]);
+
+  if (!canFetch) {
+    return { isRead: false, markRead, ready: true };
+  }
 
   return { isRead, markRead, ready };
 }

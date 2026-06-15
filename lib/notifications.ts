@@ -3,7 +3,8 @@ export type NotificationType =
   | "tester_apply"
   | "feedback"
   | "devlog"
-  | "version_published";
+  | "version_published"
+  | "voice_received";
 
 export type Notification = {
   id: string;
@@ -24,6 +25,8 @@ export function getNotificationTypeLabel(type: NotificationType): string {
       return "テストプレイ参加";
     case "feedback":
       return "回答";
+    case "voice_received":
+      return "プレイヤーの回答";
     case "devlog":
       return "開発日誌";
     case "version_published":
@@ -42,6 +45,8 @@ export function createNotificationMessage(
       return `「${projectTitle}」にテストプレイの参加がありました`;
     case "feedback":
       return `「${projectTitle}」にプレイヤーの回答が届きました`;
+    case "voice_received":
+      return `「${projectTitle}」にプレイヤーの回答が届きました`;
     case "devlog":
       return `「${projectTitle}」が更新されました — 開発ログを公開`;
     case "version_published":
@@ -57,6 +62,8 @@ export function getNotificationActionHint(type: NotificationType): string {
     case "tester_apply":
       return "作品詳細を見る →";
     case "feedback":
+      return "届いた回答を見る →";
+    case "voice_received":
       return "届いた回答を見る →";
     case "devlog":
       return "開発の歩みを見る →";

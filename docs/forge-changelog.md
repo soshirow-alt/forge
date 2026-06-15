@@ -4,6 +4,45 @@
 
 ---
 
+## 2026-06-15 マイページ IA 統合（タブ化・ダッシュボード）
+
+### 今回やったこと
+
+- **ヘッダー**: 「マイページ」1本化（開発マイページリンク削除）
+- **/mypage タブ**: 「プレイヤー活動」「作品管理」。`/my-projects` は `?tab=developer` へリダイレクト
+- **プレイヤータブ**: 2×2 カード（更新を見る / 応援中 / あとで見る / 最近プレイした）。各2件プレビュー + さらに表示
+- **用語整理**: 応援中 / 更新を追っている / 更新を見る の定義をページ内に明示
+- **投稿作品**: プレイヤータブから削除 → 作品管理タブのみ
+- **作品管理**: 2カラムグリッド、検索、要対応フィルタ、要対応セクション
+
+### migration
+
+- なし（UI のみ）
+
+---
+
+## 2026-06-15 voice_received 通知 DB 化 + nurture 読了 Supabase 化 + E2E 正本
+
+### 今回やったこと
+
+- **開発者向け「回答届いた」通知（migration 009）**: `user_notifications.type = voice_received` + `version_key`。`project_voice_responses` INSERT 時に SECURITY DEFINER trigger で owner へ通知。owner 自身のテスト回答は除外。未読は owner+project+version で 1 件に集約
+- **nurture 読了 Supabase 化（migration 010）**: `project_voice_reads` テーブル。studio「読了にする」で upsert。同版の未読 `voice_received` 通知も既読化
+- **アプリ**: 通知 type `voice_received` 表示・studio 深リンク。`useNurtureVoiceRead` が Supabase 正本（localStorage 読了は廃止、移行なし）
+- **E2E 正本**: `docs/mvp-production-e2e-checklist.md` 新設
+
+### migration
+
+- **009**: `009_voice_received_notifications.sql` — Dashboard 手動適用待ち
+- **010**: `010_project_voice_reads.sql` — 009 後・読了 UI deploy 前に適用推奨
+- 手順: `docs/migration-009-010-apply.md`
+
+### デプロイ
+
+- **commit**: 未 push（実装完了・build pass）
+- **本番**: migration 009 → deploy → 010 → deploy の順で反映予定
+
+---
+
 ## 2026-06-15 MVP完成向け一括（用語・更新導線・studio・通知）
 
 ### 今回やったこと

@@ -3,7 +3,7 @@
 > ChatGPT / Cursor 間の**現在地サマリ**。  
 > 詳細な原典は `docs/forge-principles.md`、履歴は `docs/forge-changelog.md` を参照。
 
-最終更新：**2026-06-15**（studio voice 中心化 実装完了・未 deploy）
+最終更新：**2026-06-15**（voice_received 通知 + 読了 Supabase 化 実装完了・migration/deploy 待ち）
 
 ---
 
@@ -16,10 +16,10 @@ Forge は **完成前のインディーゲームを発見 → プレイ → 声�
 
 - **作品育成**: `/projects/{id}/studio` — voice 集計が主。詳しい感想（project_feedback）は副
 - **growth 判定**: `project_voice_responses` 中心。pending = 現行版 voice が devlog より新しい
-- **読了**: localStorage `project_voice_reads:{projectId}:{version}`（DB 化は後続）
-- **開発マイページ**: `/my-projects` — voice ベースの次アクション表示
-- **本番 deploy**: `d7443b3` — voice 中心化（https://forge-flame-gamma.vercel.app / dpl_BJi4jXt4q2xbfzfd2xAJEf1GSAot）
-- **次 Cursor 推奨**: ① 本番 E2E（更新/studio/用語）→ ② 開発者回答通知 DB 化 → ③ nurture 読了 Supabase 化
+- **読了**: Supabase `project_voice_reads`（owner + version + source_type=voice）。improvement メモは localStorage 継続
+- **開発者通知**: trigger 経由 `voice_received` → `/notifications` → studio `#feedback`
+- **本番 deploy**: `9391ec9` 系（https://forge-flame-gamma.vercel.app）— 本 batch は未 deploy
+- **次**: Dashboard で 009→010 適用 → deploy → `docs/mvp-production-e2e-checklist.md` で本番確認
 
 ---
 

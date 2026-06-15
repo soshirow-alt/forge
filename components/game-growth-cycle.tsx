@@ -204,7 +204,7 @@ function StepDetailPanel({
   growth: ProjectGrowthSnapshot;
   feedbackEntries: ProjectFeedbackEntry[];
   voiceRead: boolean;
-  onMarkRead: () => void;
+  onMarkRead: () => void | Promise<void>;
   improvementNote: string;
   onImprovementNoteChange: (value: string) => void;
   voiceResponses: OwnerVoiceResponseDetail[];

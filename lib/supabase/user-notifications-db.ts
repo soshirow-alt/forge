@@ -1,13 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Notification } from "@/lib/notifications";
+import { resolvePlayableVersion } from "@/lib/playable-version";
 
 type NotificationRow = {
   id: string;
   user_id: string;
-  type: "devlog" | "version_published";
+  type: "devlog" | "version_published" | "voice_received";
   project_id: string;
   devlog_id: string | null;
   published_version: string | null;
+  version_key: string | null;
   message: string;
   read_at: string | null;
   created_at: string;
@@ -114,6 +116,27 @@ export async function markUserNotificationAsRead(
     .update({ read_at: new Date().toISOString() })
     .eq("id", notificationId)
     .eq("user_id", userId);
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function markVoiceReceivedNotificationsReadForVersion(
+  supabase: SupabaseClient,
+  userId: string,
+  projectId: string,
+  versionKey: string,
+): Promise<void> {
+  const version = resolvePlayableVersion(versionKey);
+  const { error } = await supabase
+    .from("user_notifications")
+    .update({ read_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .eq("project_id", projectId)
+    .eq("version_key", version)
+    .eq("type", "voice_received")
+    .is("read_at", null);
 
   if (error) {
     throw error;

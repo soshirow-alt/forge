@@ -197,6 +197,7 @@ type GamesContextValue = {
   isBookmarked: (gameId: string) => boolean;
   bookmarkGame: (gameId: string) => void;
   getBookmarkedGames: () => Game[];
+  getPlayedGames: () => Game[];
   getSupportedGames: () => Game[];
   getWatchedGames: () => Game[];
   isWatching: (gameId: string) => boolean;
@@ -1161,6 +1162,12 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     [resolveEngagementGames, userEngagement.watchedProjectIds],
   );
 
+  const getPlayedGames = useCallback(
+    () =>
+      resolveEngagementGames([...userEngagement.playedProjectIds].reverse()),
+    [resolveEngagementGames, userEngagement.playedProjectIds],
+  );
+
   const isWatching = useCallback(
     (gameId: string) => userEngagement.watchedProjectIds.includes(gameId),
     [userEngagement.watchedProjectIds],
@@ -1392,6 +1399,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       isBookmarked,
       bookmarkGame,
       getBookmarkedGames,
+      getPlayedGames,
       getSupportedGames,
       getWatchedGames,
       isWatching,
@@ -1453,6 +1461,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       isBookmarked,
       bookmarkGame,
       getBookmarkedGames,
+      getPlayedGames,
       getSupportedGames,
       getWatchedGames,
       isWatching,

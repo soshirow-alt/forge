@@ -40,6 +40,8 @@ export function notificationTargetHref(notification: Notification): string {
       return gameHistoryHref(notification.projectId);
     case "feedback":
       return projectStudioFeedbackHref(notification.projectId);
+    case "voice_received":
+      return projectStudioFeedbackHref(notification.projectId);
     default:
       return gamePlayHref(notification.projectId);
   }

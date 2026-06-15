@@ -122,10 +122,10 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
 
       <main className="mx-auto max-w-3xl px-6 py-12">
         <Link
-          href="/my-projects"
+          href="/mypage?tab=developer"
           className="text-sm text-zinc-500 transition-colors hover:text-orange-400"
         >
-          ← 開発マイページ
+          ← マイページ（作品管理）
         </Link>
 
         <header className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">

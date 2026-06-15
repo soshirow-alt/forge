@@ -15,6 +15,7 @@ type ProjectListCardProps = {
   growth: ProjectGrowthSnapshot;
   supportCount: number;
   onDelete: () => void;
+  compact?: boolean;
 };
 
 export function ProjectListCard({
@@ -22,6 +23,7 @@ export function ProjectListCard({
   growth,
   supportCount,
   onDelete,
+  compact = false,
 }: ProjectListCardProps) {
   const { isRead: voiceRead } = useNurtureVoiceRead(
     game.id,
@@ -30,9 +32,17 @@ export function ProjectListCard({
   const display = buildNurtureDisplayContext(growth, voiceRead, game.id);
 
   return (
-    <article className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
-        <div className="h-16 w-24 shrink-0 overflow-hidden rounded-lg border border-zinc-800/80">
+    <article
+      className={`rounded-xl border border-zinc-800 bg-zinc-900/60 ${
+        compact ? "p-4" : "p-5"
+      }`}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+        <div
+          className={`shrink-0 overflow-hidden rounded-lg border border-zinc-800/80 ${
+            compact ? "h-14 w-20" : "h-16 w-24"
+          }`}
+        >
           <GameThumbnail
             thumbnailUrl={game.thumbnailUrl}
             status={game.status}
@@ -69,33 +79,39 @@ export function ProjectListCard({
             応援 {supportCount}
           </p>
 
-          <p className="mt-2 text-sm text-zinc-400">
+          <p className={`text-zinc-400 ${compact ? "mt-1 text-xs" : "mt-2 text-sm"}`}>
             次: <span className="text-zinc-200">{display.heroTitle}</span>
-            {display.heroSubline && (
+            {!compact && display.heroSubline && (
               <span className="text-zinc-500"> — {display.heroSubline}</span>
             )}
           </p>
 
-          <div className="mt-4 flex flex-wrap items-center gap-3">
+          <div className={`flex flex-wrap items-center gap-3 ${compact ? "mt-3" : "mt-4"}`}>
             <Link
               href={projectStudioPath(game.id)}
-              className="inline-flex items-center rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+              className={`inline-flex items-center rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 font-semibold text-zinc-950 transition-opacity hover:opacity-90 ${
+                compact ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm"
+              }`}
             >
               この作品を育てる
             </Link>
-            <Link
-              href={gamePlayHref(game.id)}
-              className="text-xs font-medium text-zinc-500 transition-colors hover:text-orange-400"
-            >
-              プレイヤー向けページ
-            </Link>
-            <button
-              type="button"
-              onClick={onDelete}
-              className="text-xs text-red-400/80 transition-colors hover:text-red-300"
-            >
-              削除
-            </button>
+            {!compact && (
+              <Link
+                href={gamePlayHref(game.id)}
+                className="text-xs font-medium text-zinc-500 transition-colors hover:text-orange-400"
+              >
+                プレイヤー向けページ
+              </Link>
+            )}
+            {!compact && (
+              <button
+                type="button"
+                onClick={onDelete}
+                className="text-xs text-red-400/80 transition-colors hover:text-red-300"
+              >
+                削除
+              </button>
+            )}
           </div>
         </div>
       </div>
