@@ -18,8 +18,8 @@ Forge は **完成前のインディーゲームを発見 → プレイ → 声�
 - **growth 判定**: `project_voice_responses` 中心。pending = 現行版 voice が devlog より新しい
 - **読了**: localStorage `project_voice_reads:{projectId}:{version}`（DB 化は後続）
 - **開発マイページ**: `/my-projects` — voice ベースの次アクション表示
-- **本番 deploy**: 431cd4f（voice 中心化は **ローカル未 commit**）
-- **次 Cursor 推奨**: ① push + 本番確認 → ② nurture 読了 Supabase 化 → ③ 通知 DB 化
+- **本番 deploy**: `d7443b3` — voice 中心化（https://forge-flame-gamma.vercel.app / dpl_BJi4jXt4q2xbfzfd2xAJEf1GSAot）
+- **次 Cursor 推奨**: ① 本番確認（studio voice 6観点）→ ② nurture 読了 Supabase 化 → ③ 通知 DB 化
 
 ---
 
