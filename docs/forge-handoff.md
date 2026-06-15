@@ -3,7 +3,7 @@
 > ChatGPT / Cursor 間の**現在地サマリ**。  
 > 詳細な原典は `docs/forge-principles.md`、履歴は `docs/forge-changelog.md` を参照。
 
-最終更新：**2026-06-15**（UX Phase1 実装 — deploy / 008 適用待ち）
+最終更新：**2026-06-15**（Phase2 #5 クローズ / #6 設計レビュー / 優先 #6→#3）
 
 ---
 
@@ -27,7 +27,10 @@ Forge は **完成前のインディーゲームを発見 → プレイ → 声�
 - **データ**：作品・プロフィール・エンゲージメント・**開発ログ**・**devlog 通知**は Supabase
 - **DB**：migration **001〜007** 適用済み（006 初声 / 007 immutable RPC）。**本番 deploy 906b84d**（2026-06-15）
 - **P0 修正 deploy 済**：6576b21 / https://forge-flame-gamma.vercel.app（本番確認 OK・クローズ）
-- **UX Phase1 実装済（未 deploy）**：デフォルト問いプレビュー / 自由記述（短文）/ other_notes（**008 要**）
+- **UX Phase1 クローズ**：71b2712 本番確認 OK（プレビュー / 自由記述 / other_notes）
+- **Phase2 #5 クローズ**：6d5e0d2 本番確認 OK
+- **Phase2 優先順位**：#5 → **#6** → #3
+- **Phase2 #6 実装済** — 初声導線（deploy 前・本番確認待ち）
 - **本番確認**：開発ログ → ゲスト別ブラウザ表示 **OK**（2026-06-12）
 - **暫定 localStorage**：応援/FB 等の通知、クリエイターフォロー、テスター応募数、作品 extras
 - **デプロイ**：Vercel プロジェクト **forge** → https://forge-flame-gamma.vercel.app
@@ -91,14 +94,9 @@ Forge は **完成前のインディーゲームを発見 → プレイ → 声�
 
 ## 次にやるべきこと
 
-1. **migration 006 本番適用 + 動作確認**（オーナー）
-   - Dashboard SQL：`supabase/migrations/006_version_prompts_and_voice_responses.sql`
-   - 確認：`docs/supabase-post-migration-checklist.md` §8（問い設定 → 初声 → みんなの声 → my-projects）
-2. **プレイヤーサイクル残り**
-   - 変化を見る（3 段目：devlog / 新版 / 参考にした声）
-   - Phase A 接続の本番確認（プレイ→初声バナー）
-3. **returnUrl 本番確認**（オーナー）
-4. **Step 5**：projects extras カラム（focus_notes 完全移行）
+1. **Phase2 #6 deploy + 本番確認**（オーナー）
+2. **Phase2 #3 設計レビュー** — #6 確認 OK 後
+4. **Phase3 #1 育成ハブ** — 詳細 sidebar 開発者導線本格整理
 
 ## 運用ルール（2026-06-12 追加）
 

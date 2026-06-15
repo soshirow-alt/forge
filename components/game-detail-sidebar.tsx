@@ -11,7 +11,9 @@ import { GameWatchButton } from "@/components/game-watch-button";
 import { BookmarkButton } from "@/components/bookmark-button";
 import { PlaySafetyNote } from "@/components/play-safety-note";
 import { displayPhase } from "@/lib/development-phases";
+import { scrollToGameDeepFeedbackEntry } from "@/lib/game-feedback-ui";
 import { getDistributionType } from "@/lib/play-environment";
+import type { PlayerVoiceFlowState } from "@/lib/player-voice-flow-state";
 import type { Game } from "@/lib/mock-games";
 
 type GameDetailSidebarProps = {
@@ -19,8 +21,9 @@ type GameDetailSidebarProps = {
   userSubmitted: boolean;
   canEdit: boolean;
   formatDate: (date: string) => string;
-  played: boolean;
   isLoggedIn: boolean;
+  voiceFlowState: PlayerVoiceFlowState;
+  firstPromptPreview?: string | null;
   onPlayRequest: () => void;
   onFeedbackRequest: () => void;
 };
@@ -30,8 +33,9 @@ export function GameDetailSidebar({
   userSubmitted,
   canEdit,
   formatDate,
-  played,
   isLoggedIn,
+  voiceFlowState,
+  firstPromptPreview,
   onPlayRequest,
   onFeedbackRequest,
 }: GameDetailSidebarProps) {
@@ -49,21 +53,51 @@ export function GameDetailSidebar({
       />
 
       <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3.5">
-        {isLoggedIn && played ? (
+        {voiceFlowState === "played_pending" ? (
           <>
             <button
               type="button"
               onClick={onFeedbackRequest}
-              className="block w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 text-center text-base font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+              className="hidden w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 text-center text-base font-semibold text-zinc-950 transition-opacity hover:opacity-90 lg:block"
             >
-              感想を届ける
+              返事を届ける
             </button>
+            {firstPromptPreview ? (
+              <p className="mt-2 hidden text-xs leading-relaxed text-zinc-500 lg:block">
+                「{firstPromptPreview}」
+              </p>
+            ) : null}
+            <p className="mt-2 hidden text-[11px] text-zinc-600 lg:block">
+              1つ答えるだけでOK
+            </p>
+            <button
+              type="button"
+              onClick={onPlayRequest}
+              className={`w-full text-center text-xs font-medium text-zinc-500 transition-colors hover:text-orange-400/90 ${
+                firstPromptPreview ? "mt-2 lg:mt-3" : ""
+              }`}
+            >
+              もう一度プレイする
+            </button>
+          </>
+        ) : voiceFlowState === "voice_complete" ? (
+          <>
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 px-4 py-3 text-center text-sm font-medium text-zinc-500">
+              返事を届けました ✓
+            </div>
             <button
               type="button"
               onClick={onPlayRequest}
               className="mt-2 w-full text-center text-xs font-medium text-zinc-500 transition-colors hover:text-orange-400/90"
             >
               もう一度プレイする
+            </button>
+            <button
+              type="button"
+              onClick={scrollToGameDeepFeedbackEntry}
+              className="mt-2 w-full text-center text-xs font-medium text-zinc-500 transition-colors hover:text-orange-400/90"
+            >
+              もっと詳しく伝えたい（任意）
             </button>
           </>
         ) : (
@@ -78,7 +112,7 @@ export function GameDetailSidebar({
         )}
         {!isLoggedIn && (
           <AuthGatedHint
-            hint="プレイ後にフィードバックを送れます"
+            hint="プレイ後に返事を届けられます"
             className="mt-2 px-0.5"
           />
         )}
@@ -93,16 +127,26 @@ export function GameDetailSidebar({
         <div className="mt-2.5 flex flex-col gap-2">
           <GameWatchButton gameId={game.id} compact className="w-full" />
           <BookmarkButton gameId={game.id} compact className="w-full" />
-          {canEdit && (
-            <Link
-              href={`/projects/${game.id}/edit`}
-              className="block w-full rounded-lg border border-zinc-700 px-4 py-2 text-center text-sm font-semibold text-zinc-200 transition-colors hover:border-orange-500/50 hover:bg-zinc-900"
-            >
-              編集する
-            </Link>
-          )}
         </div>
       </div>
+
+      {canEdit && (
+        <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-3.5">
+          <p className="text-xs font-medium text-zinc-500">開発者メニュー</p>
+          <Link
+            href="/my-projects"
+            className="mt-2 block w-full rounded-lg border border-zinc-700 px-4 py-2 text-center text-sm font-semibold text-zinc-200 transition-colors hover:border-orange-500/50 hover:bg-zinc-900"
+          >
+            作品を育てる
+          </Link>
+          <Link
+            href={`/projects/${game.id}/edit`}
+            className="mt-2 block w-full rounded-lg px-4 py-2 text-center text-xs font-medium text-zinc-500 transition-colors hover:text-orange-400/90"
+          >
+            編集する
+          </Link>
+        </div>
+      )}
 
       <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3.5 space-y-3.5">
         <GameSupport gameId={game.id} isUserSubmitted={userSubmitted} compact />

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { AuthGatedHint } from "@/components/auth-gated-hint";
 import { ForgeHeader } from "@/components/forge-header";
@@ -11,11 +11,15 @@ import { EveryonesVoiceSection } from "@/components/everyones-voice-section";
 import { GameDescriptionSection } from "@/components/game-description-section";
 import { GameDetailOverview } from "@/components/game-detail-overview";
 import { GameDetailSidebar } from "@/components/game-detail-sidebar";
-import { GameVoiceSection } from "@/components/game-voice-section";
+import {
+  GameVoiceSection,
+  type GameVoiceFlowMeta,
+} from "@/components/game-voice-section";
 import { GameProjectHistorySection } from "@/components/game-project-history-section";
 import { NewPlayableVersionBanner } from "@/components/new-playable-version-banner";
 import { PlayLaunchDialog } from "@/components/play-launch-dialog";
 import { PostPlayFeedbackBanner } from "@/components/post-play-feedback-banner";
+import { PostPlayVoiceStickyCta } from "@/components/post-play-voice-sticky-cta";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import {
@@ -23,6 +27,10 @@ import {
   scrollToGameVoiceSection,
 } from "@/lib/game-feedback-ui";
 import { gameDetailReturnPath } from "@/lib/login-return-url";
+import {
+  derivePlayerVoiceFlowState,
+  getFirstPromptPreview,
+} from "@/lib/player-voice-flow-state";
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString("ja-JP", {
@@ -31,6 +39,12 @@ function formatDate(date: string) {
     day: "numeric",
   });
 }
+
+const INITIAL_VOICE_FLOW_META: GameVoiceFlowMeta = {
+  voiceComplete: false,
+  prompts: [],
+  loading: false,
+};
 
 export function GameDetailPageClient({ id }: { id: string }) {
   const { user } = useAuth();
@@ -47,6 +61,8 @@ export function GameDetailPageClient({ id }: { id: string }) {
   const [played, setPlayed] = useState(false);
   const [playDialogOpen, setPlayDialogOpen] = useState(false);
   const [launchingGame, setLaunchingGame] = useState(false);
+  const [voiceFlowMeta, setVoiceFlowMeta] =
+    useState<GameVoiceFlowMeta>(INITIAL_VOICE_FLOW_META);
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -55,6 +71,12 @@ export function GameDetailPageClient({ id }: { id: string }) {
       setPlayed(false);
     }
   }, [id, isLoggedIn, hasPlayedGame]);
+
+  useEffect(() => {
+    if (!isLoggedIn || !played) {
+      setVoiceFlowMeta(INITIAL_VOICE_FLOW_META);
+    }
+  }, [id, isLoggedIn, played]);
 
   const handlePlayRequest = useCallback(() => {
     if (!isLoggedIn) {
@@ -84,6 +106,57 @@ export function GameDetailPageClient({ id }: { id: string }) {
   const handleFeedbackRequest = useCallback(() => {
     scrollToGameVoiceSection();
   }, []);
+
+  const handleVoiceFlowStateChange = useCallback((meta: GameVoiceFlowMeta) => {
+    setVoiceFlowMeta(meta);
+  }, []);
+
+  const voiceFlowState = derivePlayerVoiceFlowState({
+    isLoggedIn,
+    played,
+    voiceComplete: voiceFlowMeta.voiceComplete,
+  });
+
+  const firstPromptPreview = useMemo(
+    () => getFirstPromptPreview(voiceFlowMeta.prompts),
+    [voiceFlowMeta.prompts],
+  );
+
+  const showVoiceAtTop =
+    voiceFlowState === "played_pending" || voiceFlowState === "voice_complete";
+
+  const voiceSection = isLoggedIn && played ? (
+    <GameVoiceSection
+      gameId={id}
+      onFlowStateChange={handleVoiceFlowStateChange}
+      compactTop={showVoiceAtTop}
+    />
+  ) : null;
+
+  const voicePlaceholder = (
+    <div className="mt-4 border-t border-zinc-800/80 pt-4">
+      {!isLoggedIn ? (
+        <>
+          <button
+            type="button"
+            onClick={() => goToLogin()}
+            title="ログインすると使えます"
+            className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-orange-500/40 hover:text-orange-400"
+          >
+            ログインして返事を届ける
+          </button>
+          <AuthGatedHint
+            hint="プレイ後に開発者の問いへ返事を送れます"
+            className="mt-2"
+          />
+        </>
+      ) : (
+        <p className="text-xs text-zinc-600">
+          プレイ後に、開発者の問いへ返事を届けられます。
+        </p>
+      )}
+    </div>
+  );
 
   if (!dataReady) {
     return (
@@ -138,7 +211,9 @@ export function GameDetailPageClient({ id }: { id: string }) {
         launching={launchingGame}
       />
 
-      <main className="mx-auto max-w-7xl px-6 py-8">
+      <PostPlayVoiceStickyCta active={voiceFlowState === "played_pending"} />
+
+      <main className="mx-auto max-w-7xl px-6 py-8 pb-24 lg:pb-8">
         <Link
           href="/"
           className="text-sm text-zinc-500 transition-colors hover:text-orange-400"
@@ -159,8 +234,17 @@ export function GameDetailPageClient({ id }: { id: string }) {
               <div className="min-w-0">
                 <GameDetailOverview game={game} />
 
-                {isLoggedIn && played && (
-                  <PostPlayFeedbackBanner onWriteFeedback={handleFeedbackRequest} />
+                {voiceFlowState === "played_pending" && (
+                  <PostPlayFeedbackBanner
+                    firstPromptPreview={firstPromptPreview}
+                    onWriteFeedback={handleFeedbackRequest}
+                  />
+                )}
+
+                {showVoiceAtTop && (
+                  <div id={GAME_VOICE_SECTION_ID} className="scroll-mt-24">
+                    {voiceSection}
+                  </div>
                 )}
 
                 <NewPlayableVersionBanner game={game} />
@@ -174,34 +258,11 @@ export function GameDetailPageClient({ id }: { id: string }) {
 
                 <GameProjectHistorySection game={game} />
 
-                <div id={GAME_VOICE_SECTION_ID} className="scroll-mt-24">
-                  {isLoggedIn && played ? (
-                    <GameVoiceSection gameId={game.id} />
-                  ) : (
-                    <div className="mt-4 border-t border-zinc-800/80 pt-4">
-                      {!isLoggedIn ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => goToLogin()}
-                            title="ログインすると使えます"
-                            className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-orange-500/40 hover:text-orange-400"
-                          >
-                            ログインして返事を届ける
-                          </button>
-                          <AuthGatedHint
-                            hint="プレイ後に開発者の問いへ返事を送れます"
-                            className="mt-2"
-                          />
-                        </>
-                      ) : (
-                        <p className="text-xs text-zinc-600">
-                          プレイ後に、開発者の問いへ返事を届けられます。
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
+                {!showVoiceAtTop && (
+                  <div id={GAME_VOICE_SECTION_ID} className="scroll-mt-24">
+                    {voicePlaceholder}
+                  </div>
+                )}
               </div>
 
               <GameDetailSidebar
@@ -209,8 +270,9 @@ export function GameDetailPageClient({ id }: { id: string }) {
                 userSubmitted={userSubmitted}
                 canEdit={canEdit}
                 formatDate={formatDate}
-                played={played}
                 isLoggedIn={isLoggedIn}
+                voiceFlowState={voiceFlowState}
+                firstPromptPreview={firstPromptPreview}
                 onPlayRequest={handlePlayRequest}
                 onFeedbackRequest={handleFeedbackRequest}
               />

@@ -4,6 +4,51 @@
 
 ---
 
+---
+
+---
+
+## 2026-06-15 Phase2 #6 — プレイ後初声導線（実装）
+
+### 今回やったこと
+
+- main 列条件付き reorder（played_pending / voice_complete）
+- PostPlayFeedbackBanner: 先頭問い preview + CTA「返事を届ける」統一
+- sidebar 3 状態 + canEdit interim（開発者メニュー分離）
+- VoicePromptCard 未選択アフォーダンス（hover / pointer / 補助文等）
+- mobile sticky bottom bar（played_pending・フォーム viewport 外）
+
+### ユーザー体験の変化
+
+- プレイ後: Banner 直下に初声フォーム。desktop sidebar も状態連動
+- 選択肢: 未選択時に押せる UI と分かりやすく
+- 開発者: 「編集する」が primary CTA から分離、「作品を育てる」へ
+
+### 原典
+
+- §5 プレイ → 声を届ける。プレイ前初声 NG / 1 問 OK / 深い FB 任意
+
+---
+
+## 2026-06-15 Phase2 #6 — 初声導線 詳細設計（未実装）
+
+### 今回やったこと
+
+- 本番確認フィードバックを反映した **#6 詳細設計**（`docs/phase2-6-voice-flow-design.md`）
+- Phase2 優先順位を **#5 → #6 → #3** に変更（オーナー判断）
+
+### 設計の要点
+
+- プレイ後: Banner 直下に初声フォーム、サイドバー 3 状態（未プレイ / 未回答 / 回答済）
+- 選択肢: 未選択アフォーダンス改善（選択後見た目は維持）
+- 開発者 sidebar「編集する」: #6 interim 分離、本格は Phase3 育成ハブ
+
+### ユーザー体験の変化
+
+- **まだなし**（設計レビュー段階）
+
+---
+
 ## 2026-06-15 Phase2 #5 — カスタム選択肢 UI
 
 ### 今回やったこと

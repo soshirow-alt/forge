@@ -20,21 +20,31 @@ function OptionButtons({
   onChange: (answerValue: string, answerLabel: string) => void;
 }) {
   return (
-    <div className="mt-2 flex flex-wrap gap-2">
-      {options.map((option) => (
-        <button
-          key={option.id}
-          type="button"
-          onClick={() => onChange(option.id, option.label)}
-          className={`rounded-lg border px-3 py-2 text-xs transition-colors ${
-            value === option.id
-              ? "border-orange-500/40 bg-orange-500/10 text-orange-300"
-              : "border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-700 hover:text-zinc-300"
-          }`}
-        >
-          {option.label}
-        </button>
-      ))}
+    <div>
+      <p className="mt-2 text-xs text-zinc-500">ひとつ選んでください</p>
+      <div
+        className="mt-2 flex flex-wrap gap-2"
+        role="group"
+        aria-label="回答を選ぶ"
+      >
+        {options.map((option) => {
+          const selected = value === option.id;
+          return (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => onChange(option.id, option.label)}
+              className={`min-h-10 cursor-pointer rounded-lg border px-4 py-2 text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40 ${
+                selected
+                  ? "border-orange-500/40 bg-orange-500/10 text-orange-300"
+                  : "border-zinc-600/80 bg-zinc-800/80 text-zinc-300 hover:border-orange-500/30 hover:bg-zinc-800 hover:text-zinc-100"
+              }`}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

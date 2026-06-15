@@ -5,6 +5,7 @@ import { GameDeepFeedbackForm } from "@/components/game-deep-feedback-form";
 import { VoicePromptCard } from "@/components/voice-prompt-card";
 import { useAuth } from "@/components/auth-provider";
 import { useGames } from "@/components/games-provider";
+import { GAME_DEEP_FEEDBACK_ENTRY_ID } from "@/lib/game-feedback-ui";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import type { VoiceAnswerDraft } from "@/lib/version-prompt-types";
 import type { VersionPrompt } from "@/lib/version-prompt-types";
@@ -13,11 +14,23 @@ import { hasInitialVoiceComplete } from "@/lib/supabase/voice-engagement";
 
 type DraftAnswers = Record<string, { value: string; label: string }>;
 
-type GameVoiceSectionProps = {
-  gameId: string;
+export type GameVoiceFlowMeta = {
+  voiceComplete: boolean;
+  prompts: VersionPrompt[];
+  loading: boolean;
 };
 
-export function GameVoiceSection({ gameId }: GameVoiceSectionProps) {
+type GameVoiceSectionProps = {
+  gameId: string;
+  onFlowStateChange?: (meta: GameVoiceFlowMeta) => void;
+  compactTop?: boolean;
+};
+
+export function GameVoiceSection({
+  gameId,
+  onFlowStateChange,
+  compactTop = false,
+}: GameVoiceSectionProps) {
   const { user } = useAuth();
   const {
     getGameById,
@@ -70,6 +83,10 @@ export function GameVoiceSection({ gameId }: GameVoiceSectionProps) {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    onFlowStateChange?.({ voiceComplete, prompts, loading });
+  }, [voiceComplete, prompts, loading, onFlowStateChange]);
+
   const pendingAnswers = useMemo(() => {
     const answers: VoiceAnswerDraft[] = [];
     for (const prompt of prompts) {
@@ -117,9 +134,13 @@ export function GameVoiceSection({ gameId }: GameVoiceSectionProps) {
     }));
   }
 
+  const sectionClassName = compactTop
+    ? "mt-4"
+    : "mt-4 border-t border-zinc-800/80 pt-4";
+
   if (loading) {
     return (
-      <section className="mt-4 border-t border-zinc-800/80 pt-4">
+      <section className={sectionClassName}>
         <p className="text-sm text-zinc-600">返事フォームを読み込み中...</p>
       </section>
     );
@@ -127,7 +148,7 @@ export function GameVoiceSection({ gameId }: GameVoiceSectionProps) {
 
   if (voiceComplete && !submitting) {
     return (
-      <section className="mt-4 border-t border-zinc-800/80 pt-4">
+      <section className={sectionClassName}>
         <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 px-4 py-4">
           <p className="text-sm font-medium text-orange-300">返事を届けました</p>
           <p className="mt-1 text-xs leading-relaxed text-zinc-500">
@@ -136,7 +157,7 @@ export function GameVoiceSection({ gameId }: GameVoiceSectionProps) {
           </p>
         </div>
 
-        <div className="mt-4">
+        <div id={GAME_DEEP_FEEDBACK_ENTRY_ID} className="mt-4 scroll-mt-24">
           <button
             type="button"
             onClick={() => setDeepOpen((open) => !open)}
@@ -155,7 +176,7 @@ export function GameVoiceSection({ gameId }: GameVoiceSectionProps) {
   }
 
   return (
-    <section className="mt-4 border-t border-zinc-800/80 pt-4">
+    <section className={sectionClassName}>
       <h2 className="text-sm font-medium text-zinc-500">v{playableVersion} への返事</h2>
       <p className="mt-1 text-xs leading-relaxed text-zinc-600">
         プレイありがとう。開発者からの質問に、短く返事を届けられます。
@@ -193,7 +214,7 @@ export function GameVoiceSection({ gameId }: GameVoiceSectionProps) {
         {submitting ? "送信中..." : "返事を届ける"}
       </button>
 
-      <div className="mt-4">
+      <div id={GAME_DEEP_FEEDBACK_ENTRY_ID} className="mt-4 scroll-mt-24">
         <button
           type="button"
           onClick={() => setDeepOpen((open) => !open)}
