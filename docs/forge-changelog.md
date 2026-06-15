@@ -24,6 +24,11 @@
 
 - なし
 
+### デプロイ
+
+- **commit**: `d7443b3` — studio voice 中心化
+- **本番**: https://forge-flame-gamma.vercel.app（deploy `dpl_BJi4jXt4q2xbfzfd2xAJEf1GSAot` Ready）
+
 ---
 
 ## 2026-06-16 作品育成 studio / 導線 IA 一括 + メンテ
