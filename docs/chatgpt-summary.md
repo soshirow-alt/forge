@@ -1,8 +1,8 @@
 Forge ChatGPT 用サマリ — サイドバーぶれ修正 / 所有者プレビュー / 用語バッチ
 
 ■ 現在の状態
-- 本番: https://forge-flame-gamma.vercel.app（17b4243 — 今回変更はローカル未 commit / 未 deploy）
-- IA 一括 deploy 済。オーナー本番確認フィードバック反映を実装
+- 本番: https://forge-flame-gamma.vercel.app（commit 952985d / deploy dpl_8nPRYPEWPKsvkSAMYzCtMUq94Tie — Ready）
+- サイドバーぶれ修正 / 所有者プレビュー / 用語バッチ: 本番 deploy 済み（2026-06-16）
 - migration: なし
 
 ■ 今回実装したこと
@@ -40,7 +40,8 @@ Forge ChatGPT 用サマリ — サイドバーぶれ修正 / 所有者プレビ�
 - lint: 既存 errors 残存（今回 diff 起因ではない）
 
 ■ 今すぐ私がやるべきこと
-- commit → push → 本番確認（ぶれ解消 / 所有者プレビュー / 用語）
+- 本番 7 観点の確認（オーナー実施）
+- GO なら次テーマ（変化を見る UI 等）判断
 
 ■ 本番確認手順
 1. 別アカウントで作品詳細: プレイ→質問に答える→sidebar 文言が静止
