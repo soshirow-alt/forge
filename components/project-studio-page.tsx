@@ -10,6 +10,7 @@ import { GameThumbnail } from "@/components/game-thumbnail";
 import { ProjectNurtureActions } from "@/components/project-nurture-actions";
 import { useGames } from "@/components/games-provider";
 import { useOwnedProjectFeedback } from "@/hooks/use-owned-project-feedback";
+import { useOwnedProjectVoiceSignals } from "@/hooks/use-owned-project-voice-signals";
 import {
   PROJECT_STUDIO_FEEDBACK_SECTION_ID,
   gamePlayHref,
@@ -19,6 +20,7 @@ import {
   buildProjectGrowthSnapshot,
   groupFeedbackByProject,
 } from "@/lib/project-growth-state";
+import { resolveVoiceSignalForGame } from "@/lib/project-voice-nurture";
 
 function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   const router = useRouter();
@@ -28,6 +30,8 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
 
   const { entries: feedbackEntries, loaded: feedbackLoaded } =
     useOwnedProjectFeedback(user?.id);
+  const { signals: voiceSignals, loaded: voiceLoaded } =
+    useOwnedProjectVoiceSignals(user?.id);
 
   const game = getSubmittedGameById(projectId);
   const isOwner = isProjectOwner(projectId, user?.id);
@@ -39,10 +43,10 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
 
     return buildProjectGrowthSnapshot(
       game,
-      feedbackEntries,
+      resolveVoiceSignalForGame(game, voiceSignals),
       getDevlogsByProject,
     );
-  }, [game, feedbackEntries, getDevlogsByProject]);
+  }, [game, voiceSignals, getDevlogsByProject]);
 
   const projectFeedback = useMemo(() => {
     return groupFeedbackByProject(feedbackEntries).get(projectId) ?? [];
@@ -81,15 +85,15 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   }, []);
 
   useEffect(() => {
-    if (!feedbackLoaded || !growth || !openFeedbackPanel) {
+    if (!feedbackLoaded || !voiceLoaded || !growth || !openFeedbackPanel) {
       return;
     }
 
     const element = document.getElementById(PROJECT_STUDIO_FEEDBACK_SECTION_ID);
     element?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [feedbackLoaded, growth, openFeedbackPanel]);
+  }, [feedbackLoaded, voiceLoaded, growth, openFeedbackPanel]);
 
-  if (!hydrated || !dataReady || !feedbackLoaded) {
+  if (!hydrated || !dataReady || !feedbackLoaded || !voiceLoaded) {
     return (
       <div className="min-h-full bg-zinc-950 text-zinc-100">
         <ForgeHeader />
@@ -145,6 +149,11 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
             <p className="mt-2 text-sm text-zinc-500">
               v{growth.playableVersion}
               {growth.cycleNumber > 0 && ` · サイクル ${growth.cycleNumber}`}
+              {growth.totalVoiceResponseCount > 0 && (
+                <span className="ml-2 text-zinc-400">
+                  回答 {growth.totalVoiceResponseCount}件
+                </span>
+              )}
               {growth.pendingFeedbackCount > 0 && (
                 <span className="ml-2 text-orange-400/90">新しい回答あり</span>
               )}

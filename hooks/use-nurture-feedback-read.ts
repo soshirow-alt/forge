@@ -1,45 +1,49 @@
 "use client";
 
 /**
- * 今周 FB の読了状態 hook。
+ * 現行版 voice の読了状態 hook。
  *
- * 依存方向: UI → hook → store → persistence
- * UI コンポーネントは localStorage / store を直接参照しない。
- *
+ * キー: projectId + playableVersion
  * 暫定 localStorage → 将来 DB 化予定
- *
- * @see docs/p1-2-7-feedback-read-state.md
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { feedbackReadStore } from "@/lib/nurture-feedback-read-store";
+import { voiceReadStore } from "@/lib/nurture-voice-read-store";
 
-export function useNurtureFeedbackRead(
+export function useNurtureVoiceRead(
   projectId: string,
-  feedbackId: string | undefined,
+  versionKey: string | undefined,
 ) {
   const [isRead, setIsRead] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (!feedbackId) {
+    if (!versionKey) {
       setIsRead(false);
       setReady(true);
       return;
     }
 
-    setIsRead(feedbackReadStore.getIsRead(projectId, feedbackId));
+    setIsRead(voiceReadStore.getIsRead(projectId, versionKey));
     setReady(true);
-  }, [projectId, feedbackId]);
+  }, [projectId, versionKey]);
 
   const markRead = useCallback(() => {
-    if (!feedbackId) {
+    if (!versionKey) {
       return;
     }
 
-    feedbackReadStore.markRead(projectId, feedbackId);
+    voiceReadStore.markRead(projectId, versionKey);
     setIsRead(true);
-  }, [projectId, feedbackId]);
+  }, [projectId, versionKey]);
 
   return { isRead, markRead, ready };
+}
+
+/** @deprecated useNurtureVoiceRead を使用 */
+export function useNurtureFeedbackRead(
+  projectId: string,
+  versionKey: string | undefined,
+) {
+  return useNurtureVoiceRead(projectId, versionKey);
 }

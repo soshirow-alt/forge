@@ -1,7 +1,7 @@
 import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 
-export type FeedbackVoiceSummary = {
+export type DeepFeedbackSummary = {
   title: string;
   lines: string[];
 };
@@ -27,54 +27,31 @@ function sortNewestFirst(entries: ProjectFeedbackEntry[]): ProjectFeedbackEntry[
   );
 }
 
-export function buildFeedbackVoiceSummary(
+/** 詳しい感想（project_feedback）向けサマリ — studio 副セクション用 */
+export function buildDeepFeedbackSummary(
   entries: ProjectFeedbackEntry[],
   currentPlayableVersion: string,
-): FeedbackVoiceSummary {
+): DeepFeedbackSummary {
   const currentVersion = resolvePlayableVersion(currentPlayableVersion);
   const sorted = sortNewestFirst(entries);
-
-  if (sorted.length === 0) {
-    return {
-      title: "届いている声",
-      lines: ["まだプレイヤーの声は届いていません。"],
-    };
-  }
-
   const currentVersionEntries = sorted.filter(
     (entry) => feedbackVersionKey(entry.item.versionKey) === currentVersion,
   );
-  const hasOtherVersionFeedback = sorted.some(
-    (entry) => feedbackVersionKey(entry.item.versionKey) !== currentVersion,
-  );
-
-  if (currentVersionEntries.length === 0 && hasOtherVersionFeedback) {
-    return {
-      title: "届いている声",
-      lines: [
-        `新版 v${currentVersion} 向けの声はまだありません。`,
-        "プレイヤーの反応を待ちましょう。",
-      ],
-    };
-  }
 
   if (currentVersionEntries.length === 0) {
     return {
-      title: "届いている声",
-      lines: ["まだプレイヤーの声は届いていません。"],
+      title: "詳しい感想（任意）",
+      lines: ["この版向けの詳しい感想はまだありません。"],
     };
   }
 
-  const lines: string[] = [`回答 ${currentVersionEntries.length}件`];
+  const lines: string[] = [`詳しい感想 ${currentVersionEntries.length}件`];
 
-  const replayAnswers = currentVersionEntries.filter(
-    (entry) => entry.item.wouldReplay,
+  const latestGood = currentVersionEntries.find((entry) =>
+    entry.item.goodPoints?.trim(),
   );
-  const replayYesCount = replayAnswers.filter(
-    (entry) => entry.item.wouldReplay === "yes",
-  ).length;
-  if (replayAnswers.length > 0) {
-    lines.push(`もう一度遊びたい ${replayYesCount}/${replayAnswers.length}`);
+  if (latestGood?.item.goodPoints?.trim()) {
+    lines.push(`良かった点: ${truncateLine(latestGood.item.goodPoints)}`);
   }
 
   const latestConcern = currentVersionEntries.find((entry) =>
@@ -91,25 +68,27 @@ export function buildFeedbackVoiceSummary(
   );
   if (latestBug?.item.bugs?.trim()) {
     lines.push(`バグ: ${truncateLine(latestBug.item.bugs)}`);
-  } else {
-    lines.push("バグ報告はまだありません");
   }
 
-  const versionCounts = new Map<string, number>();
-  for (const entry of sorted) {
-    const version = feedbackVersionKey(entry.item.versionKey);
-    versionCounts.set(version, (versionCounts.get(version) ?? 0) + 1);
-  }
-  if (versionCounts.size > 1) {
-    const versionLine = [...versionCounts.entries()]
-      .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
-      .map(([version, count]) => `v${version} ${count}件`)
-      .join(" · ");
-    lines.push(`版別 ${versionLine}`);
+  const latestOther = currentVersionEntries.find((entry) =>
+    entry.item.otherNotes?.trim(),
+  );
+  if (latestOther?.item.otherNotes?.trim()) {
+    lines.push(`その他: ${truncateLine(latestOther.item.otherNotes)}`);
   }
 
   return {
-    title: "この版に届いた声",
+    title: "詳しい感想（任意）",
     lines,
   };
 }
+
+/** @deprecated buildDeepFeedbackSummary を使用 */
+export function buildFeedbackVoiceSummary(
+  entries: ProjectFeedbackEntry[],
+  currentPlayableVersion: string,
+): DeepFeedbackSummary {
+  return buildDeepFeedbackSummary(entries, currentPlayableVersion);
+}
+
+export type FeedbackVoiceSummary = DeepFeedbackSummary;

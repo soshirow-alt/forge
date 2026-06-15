@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FeedbackStructuredCard } from "@/components/feedback-structured-card";
 import { DeveloperVoiceInsights } from "@/components/developer-voice-insights";
-import { NurtureFeedbackVoiceSummary } from "@/components/nurture-feedback-voice-summary";
-import { formatFeedbackDate } from "@/lib/feedback-display";
-import { useNurtureFeedbackRead } from "@/hooks/use-nurture-feedback-read";
+import { NurtureDeepFeedbackSection } from "@/components/nurture-deep-feedback-section";
+import { OwnerVoiceResponseList } from "@/components/owner-voice-response-list";
+import { useNurtureVoiceRead } from "@/hooks/use-nurture-feedback-read";
 import { useNurtureImprovementNote } from "@/hooks/use-nurture-improvement-note";
 import type { Game } from "@/lib/mock-games";
 import {
@@ -18,6 +17,7 @@ import {
   type NurtureStepId,
   type ProjectGrowthSnapshot,
 } from "@/lib/project-growth-state";
+import type { OwnerVoiceResponseDetail } from "@/lib/supabase/voice-engagement";
 import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
 import { buildVoicePromptAggregates } from "@/lib/voice-aggregates";
 import { useGames } from "@/components/games-provider";
@@ -193,88 +193,64 @@ function StepDetailPanel({
   game,
   growth,
   feedbackEntries,
-  feedbackRead,
+  voiceRead,
   onMarkRead,
   improvementNote,
   onImprovementNoteChange,
+  voiceResponses,
 }: {
   stepId: NurtureStepId;
   game: Game;
   growth: ProjectGrowthSnapshot;
   feedbackEntries: ProjectFeedbackEntry[];
-  feedbackRead: boolean;
+  voiceRead: boolean;
   onMarkRead: () => void;
   improvementNote: string;
   onImprovementNoteChange: (value: string) => void;
+  voiceResponses: OwnerVoiceResponseDetail[];
 }) {
-  const latestFeedback = feedbackEntries[0];
-  const pastFeedback = feedbackEntries.slice(1);
-  const [showPastFeedback, setShowPastFeedback] = useState(false);
   switch (stepId) {
     case "read":
       return (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <h4 className="text-sm font-semibold text-zinc-300">届いた回答</h4>
-            {latestFeedback && !feedbackRead && (
-              <button
-                type="button"
-                onClick={onMarkRead}
-                className="text-xs text-orange-400 hover:text-orange-300"
-              >
-                読了にする
-              </button>
-            )}
-            {feedbackRead && (
-              <span className="text-xs text-zinc-600">読了済み</span>
+        <div className="space-y-4">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h4 className="text-sm font-semibold text-zinc-300">
+                プレイヤーの回答
+              </h4>
+              {growth.totalVoiceResponseCount > 0 && !voiceRead && (
+                <button
+                  type="button"
+                  onClick={onMarkRead}
+                  className="text-xs text-orange-400 hover:text-orange-300"
+                >
+                  読了にする
+                </button>
+              )}
+              {voiceRead && growth.totalVoiceResponseCount > 0 && (
+                <span className="text-xs text-zinc-600">読了済み</span>
+              )}
+            </div>
+            {growth.totalVoiceResponseCount === 0 ? (
+              <p className="text-sm text-zinc-500">
+                この版への回答はまだありません。
+              </p>
+            ) : (
+              <>
+                <p className="text-sm text-zinc-400">
+                  v{growth.playableVersion} に回答 {growth.totalVoiceResponseCount}
+                  件。集計と解釈は上の「プレイヤーの回答」セクションを参照してください。
+                </p>
+                <OwnerVoiceResponseList responses={voiceResponses} />
+              </>
             )}
           </div>
-          {feedbackEntries.length === 0 ? (
-            <p className="text-sm text-zinc-500">まだ回答は届いていません。</p>
-          ) : (
-            <>
-              {latestFeedback && (
-                <div className="rounded-lg bg-zinc-950/50 p-4">
-                  <p className="text-xs text-zinc-600">
-                    プレイ可能版 {latestFeedback.item.versionKey ?? "0.1"} ·{" "}
-                    {formatFeedbackDate(latestFeedback.item.createdAt)}
-                  </p>
-                  <div className="mt-3 border-t border-zinc-800/80 pt-3">
-                    <FeedbackStructuredCard item={latestFeedback.item} showDate={false} />
-                  </div>
-                </div>
-              )}
-              {pastFeedback.length > 0 && (
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setShowPastFeedback((value) => !value)}
-                    className="text-sm text-zinc-500 transition-colors hover:text-orange-400"
-                  >
-                    過去の回答 {pastFeedback.length}件 {showPastFeedback ? "▲" : "▼"}
-                  </button>
-                  {showPastFeedback && (
-                    <div className="mt-3 space-y-3">
-                      {pastFeedback.map(({ item }) => (
-                        <div
-                          key={item.id}
-                          className="rounded-lg bg-zinc-950/30 p-4"
-                        >
-                          <p className="text-xs text-zinc-600">
-                            プレイ可能版 {item.versionKey ?? "0.1"} ·{" "}
-                            {formatFeedbackDate(item.createdAt)}
-                          </p>
-                          <div className="mt-3 border-t border-zinc-800/80 pt-3">
-                            <FeedbackStructuredCard item={item} showDate={false} />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </>
-          )}
+
+          <NurtureDeepFeedbackSection
+            feedbackEntries={feedbackEntries}
+            playableVersion={growth.playableVersion}
+            compact
+          />
         </div>
       );
 
@@ -347,10 +323,10 @@ function StepDetailPanel({
     case "wait":
       return (
         <div className="space-y-3">
-          <h4 className="text-sm font-semibold text-zinc-300">反応待ち</h4>
+          <h4 className="text-sm font-semibold text-zinc-300">回答待ち</h4>
           <p className="text-sm leading-relaxed text-zinc-400">
             {growth.dataPhase === "no_feedback"
-              ? "プレイヤーの回答を待っています。"
+              ? "プレイヤーの初声を待っています。"
               : "新しい回答が届いたら、また回答を見る から始まります。"}
           </p>
           <Link
@@ -371,13 +347,13 @@ export function GameGrowthCycle({
   detailPanelId,
   initialSelectedStep = null,
 }: GameGrowthCycleProps) {
-  const feedbackId = growth.latestFeedbackId ?? feedbackEntries[0]?.item.id;
-  const { isRead: feedbackRead, markRead } = useNurtureFeedbackRead(
+  const versionKey = growth.playableVersion;
+  const { isRead: voiceRead, markRead } = useNurtureVoiceRead(
     game.id,
-    feedbackId,
+    versionKey,
   );
   const { note: improvementNote, updateNote: onImprovementNoteChange } =
-    useNurtureImprovementNote(game.id, feedbackId);
+    useNurtureImprovementNote(game.id, versionKey);
   const [selectedStep, setSelectedStep] = useState<NurtureStepId | null>(
     initialSelectedStep,
   );
@@ -389,13 +365,16 @@ export function GameGrowthCycle({
   }, [initialSelectedStep]);
 
   const display = useMemo(
-    () => buildNurtureDisplayContext(growth, feedbackRead, game.id),
-    [growth, feedbackRead, game.id],
+    () => buildNurtureDisplayContext(growth, voiceRead, game.id),
+    [growth, voiceRead, game.id],
   );
 
-  const { getOwnerVoiceAggregates } = useGames();
+  const { getOwnerVoiceAggregates, getOwnerVoiceResponseDetails } = useGames();
   const [voiceAggregates, setVoiceAggregates] = useState(
     buildVoicePromptAggregates([]),
+  );
+  const [voiceResponses, setVoiceResponses] = useState<OwnerVoiceResponseDetail[]>(
+    [],
   );
 
   useEffect(() => {
@@ -407,6 +386,24 @@ export function GameGrowthCycle({
         setVoiceAggregates(buildVoicePromptAggregates([]));
       });
   }, [game.id, growth.playableVersion, getOwnerVoiceAggregates]);
+
+  useEffect(() => {
+    if (selectedStep !== "read" || growth.totalVoiceResponseCount === 0) {
+      return;
+    }
+
+    void getOwnerVoiceResponseDetails(game.id, growth.playableVersion)
+      .then(setVoiceResponses)
+      .catch(() => {
+        setVoiceResponses([]);
+      });
+  }, [
+    game.id,
+    getOwnerVoiceResponseDetails,
+    growth.playableVersion,
+    growth.totalVoiceResponseCount,
+    selectedStep,
+  ]);
 
   const handlePrimaryRead = useCallback(() => {
     markRead();
@@ -439,12 +436,24 @@ export function GameGrowthCycle({
         </div>
       )}
 
-      <DeveloperVoiceInsights
-        aggregates={voiceAggregates}
-        versionKey={growth.playableVersion}
-      />
+      <section aria-label="プレイヤーの回答" className="mt-6 space-y-2">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+            プレイヤーの回答
+          </h3>
+          {growth.totalVoiceResponseCount > 0 && (
+            <p className="text-xs text-zinc-600">
+              v{growth.playableVersion} · 回答 {growth.totalVoiceResponseCount}件
+            </p>
+          )}
+        </div>
+        <DeveloperVoiceInsights
+          aggregates={voiceAggregates}
+          versionKey={growth.playableVersion}
+        />
+      </section>
 
-      <NurtureFeedbackVoiceSummary
+      <NurtureDeepFeedbackSection
         feedbackEntries={feedbackEntries}
         playableVersion={growth.playableVersion}
       />
@@ -468,10 +477,11 @@ export function GameGrowthCycle({
             game={game}
             growth={growth}
             feedbackEntries={feedbackEntries}
-            feedbackRead={feedbackRead}
+            voiceRead={voiceRead}
             onMarkRead={markRead}
             improvementNote={improvementNote}
             onImprovementNoteChange={onImprovementNoteChange}
+            voiceResponses={voiceResponses}
           />
         </div>
       )}

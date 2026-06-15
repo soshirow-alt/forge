@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { GameThumbnail } from "@/components/game-thumbnail";
-import { useNurtureFeedbackRead } from "@/hooks/use-nurture-feedback-read";
+import { useNurtureVoiceRead } from "@/hooks/use-nurture-feedback-read";
 import {
   buildNurtureDisplayContext,
   type ProjectGrowthSnapshot,
@@ -13,7 +13,6 @@ import type { Game } from "@/lib/mock-games";
 type ProjectListCardProps = {
   game: Game;
   growth: ProjectGrowthSnapshot;
-  feedbackId?: string;
   supportCount: number;
   onDelete: () => void;
 };
@@ -21,15 +20,14 @@ type ProjectListCardProps = {
 export function ProjectListCard({
   game,
   growth,
-  feedbackId,
   supportCount,
   onDelete,
 }: ProjectListCardProps) {
-  const { isRead: feedbackRead } = useNurtureFeedbackRead(
+  const { isRead: voiceRead } = useNurtureVoiceRead(
     game.id,
-    feedbackId,
+    growth.playableVersion,
   );
-  const display = buildNurtureDisplayContext(growth, feedbackRead, game.id);
+  const display = buildNurtureDisplayContext(growth, voiceRead, game.id);
 
   return (
     <article className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
@@ -65,6 +63,8 @@ export function ProjectListCard({
           <p className="mt-1 text-xs text-zinc-600">
             v{growth.playableVersion}
             {growth.cycleNumber > 0 && ` · サイクル ${growth.cycleNumber}`}
+            {growth.totalVoiceResponseCount > 0 &&
+              ` · 回答 ${growth.totalVoiceResponseCount}件`}
             {" · "}
             応援 {supportCount}
           </p>

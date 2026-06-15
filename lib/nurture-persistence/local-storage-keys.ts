@@ -6,11 +6,13 @@
  * | localStorage key プレフィックス     | 将来テーブル（案）              |
  * |-----------------------------------|--------------------------------|
  * | project_feedback_reads            | project_feedback_reads         |
+ * | project_voice_reads               | project_voice_reads            |
  * | project_improvement_notes         | project_improvement_notes      |
  */
 
 export const NURTURE_PERSISTENCE_TABLES = {
   project_feedback_reads: "project_feedback_reads",
+  project_voice_reads: "project_voice_reads",
   project_improvement_notes: "project_improvement_notes",
 } as const;
 
@@ -19,6 +21,14 @@ export function projectFeedbackReadKey(
   feedbackId: string,
 ): string {
   return `${NURTURE_PERSISTENCE_TABLES.project_feedback_reads}:${projectId}:${feedbackId}`;
+}
+
+/** 現行版 voice の読了（projectId + playableVersion） */
+export function projectVoiceReadKey(
+  projectId: string,
+  versionKey: string,
+): string {
+  return `${NURTURE_PERSISTENCE_TABLES.project_voice_reads}:${projectId}:${versionKey}`;
 }
 
 export function projectImprovementNoteKey(

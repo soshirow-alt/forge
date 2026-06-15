@@ -3,7 +3,7 @@
 > ChatGPT / Cursor 間の**現在地サマリ**。  
 > 詳細な原典は `docs/forge-principles.md`、履歴は `docs/forge-changelog.md` を参照。
 
-最終更新：**2026-06-16**（studio / mypage 更新導線 / メンテ一括）
+最終更新：**2026-06-15**（studio voice 中心化 実装完了・未 deploy）
 
 ---
 
@@ -11,16 +11,15 @@
 
 Forge は **完成前のインディーゲームを発見 → プレイ → 声を届ける → 変化を見る → 再プレイ** する MVP。
 
-**開発者ループ**: 投稿 → **育成（studio）** → 回答を見る → 改善 → 再公開  
+**開発者ループ**: 投稿 → **育成（studio）** → **プレイヤーの回答を見る** → 改善 → 再公開  
 **プレイヤーサイクル**: 発見 → プレイ → 声を届ける → 変化を見る → 再プレイ
 
-- **作品育成**: `/projects/{id}/studio` — Primary CTA + 届いた回答 + やること一覧
-- **開発マイページ**: `/my-projects` — 作品一覧入口（育成詳細は studio）
-- **プレイヤー更新**: `/mypage#updates` — 追跡中の devlog / 新版
-- **開発の歩み**: `/games/{id}#game-project-history`
-- **新版バナー**: `/games/{id}#new-playable-version-banner`
-- **本番 deploy**: メンテ + IA 一括 commit 後（push 直後）
-- **次 Cursor 推奨**: voice / 詳しい感想 データ整理、nurture 読了 Supabase 化、008 migration 本番適用
+- **作品育成**: `/projects/{id}/studio` — voice 集計が主。詳しい感想（project_feedback）は副
+- **growth 判定**: `project_voice_responses` 中心。pending = 現行版 voice が devlog より新しい
+- **読了**: localStorage `project_voice_reads:{projectId}:{version}`（DB 化は後続）
+- **開発マイページ**: `/my-projects` — voice ベースの次アクション表示
+- **本番 deploy**: 431cd4f（voice 中心化は **ローカル未 commit**）
+- **次 Cursor 推奨**: ① push + 本番確認 → ② nurture 読了 Supabase 化 → ③ 通知 DB 化
 
 ---
 
@@ -51,6 +50,10 @@ Forge は **完成前のインディーゲームを発見 → プレイ → 声�
 - みんなの声（プレイヤー向け集計グラフ / 開発者向け解釈）
 - **開発者問い設定 UI**（`/submit` + `/projects/{id}/edit`）— 2026-06-15
 
+### プロダクト（2026-06-15）
+
+- **studio voice 中心化** — project-growth-state / read パネル / 読了キーを voice 版単位に
+
 ### プロダクト（2026-06-12 前後）
 
 - ログイン必須アクション UX + Supabase エンゲージメント保存
@@ -79,11 +82,11 @@ Forge は **完成前のインディーゲームを発見 → プレイ → 声�
 
 ## 次にやるべきこと
 
-1. **本番確認** — studio / mypage 更新 / 通知 deep link（オーナー）
-2. **migration 008** 本番適用（`feedback_other_notes` — 別タスク）
-3. **voice / 詳しい感想** データモデル整理方針
-4. **nurture 読了状態** Supabase 化
-5. **RLS 監査**（ユーザー増加前）
+1. **voice 中心化を push + 本番確認**（本タスク実装済み・未 deploy）
+2. **nurture 読了 Supabase 化**（009 案 — localStorage → DB）
+3. **開発者「回答届いた」通知の DB 化**（localStorage 縮小）
+4. **RLS 再確認**（006 feedback policy / voice owner read）
+5. **migration 008 本番適用確認** — other_notes 列（未適用なら Dashboard SQL）
 
 ## 運用ルール（2026-06-12 追加）
 

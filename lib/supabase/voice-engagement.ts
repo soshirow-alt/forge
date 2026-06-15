@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolvePlayableVersion } from "@/lib/playable-version";
+import type { ProjectVoiceNurtureSignal } from "@/lib/project-voice-nurture";
+import { emptyVoiceNurtureSignal } from "@/lib/project-voice-nurture";
 import type { VoiceAnswerDraft } from "@/lib/version-prompt-types";
 import type { DeveloperPromptInput } from "@/lib/version-prompt-form";
 import {
@@ -500,4 +502,136 @@ export async function fetchOwnerVoiceAggregates(
 
 export function hasInitialVoiceComplete(responses: VoiceResponse[]): boolean {
   return responses.length >= 1;
+}
+
+export type OwnerVoiceResponseDetail = {
+  id: string;
+  userId: string;
+  promptId: string;
+  promptText: string;
+  answerValue: string;
+  answerLabel: string | null;
+  createdAt: string;
+};
+
+export async function fetchOwnerVoiceNurtureSignal(
+  supabase: SupabaseClient,
+  projectId: string,
+  versionKey: string,
+): Promise<ProjectVoiceNurtureSignal> {
+  const version = resolvePlayableVersion(versionKey);
+  const { data, error } = await supabase
+    .from("project_voice_responses")
+    .select("created_at")
+    .eq("project_id", projectId)
+    .eq("version_key", version)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) {
+    return emptyVoiceNurtureSignal(projectId, version);
+  }
+
+  const rows = data as { created_at: string }[];
+
+  return {
+    projectId,
+    playableVersion: version,
+    responseCount: rows.length,
+    latestResponseAt: rows[0]?.created_at ?? null,
+  };
+}
+
+export async function fetchVoiceNurtureSignalsForProjects(
+  supabase: SupabaseClient,
+  projects: { projectId: string; playableVersion: string }[],
+): Promise<ProjectVoiceNurtureSignal[]> {
+  if (projects.length === 0) {
+    return [];
+  }
+
+  const projectIds = projects.map((project) => project.projectId);
+  const { data, error } = await supabase
+    .from("project_voice_responses")
+    .select("project_id, version_key, created_at")
+    .in("project_id", projectIds);
+
+  if (error || !data) {
+    return projects.map((project) =>
+      emptyVoiceNurtureSignal(project.projectId, project.playableVersion),
+    );
+  }
+
+  const grouped = new Map<string, { count: number; latest: string | null }>();
+
+  for (const row of data as {
+    project_id: string;
+    version_key: string;
+    created_at: string;
+  }[]) {
+    const key = `${row.project_id}:${resolvePlayableVersion(row.version_key)}`;
+    const existing = grouped.get(key) ?? { count: 0, latest: null };
+    existing.count += 1;
+
+    if (
+      !existing.latest ||
+      new Date(row.created_at).getTime() > new Date(existing.latest).getTime()
+    ) {
+      existing.latest = row.created_at;
+    }
+
+    grouped.set(key, existing);
+  }
+
+  return projects.map((project) => {
+    const version = resolvePlayableVersion(project.playableVersion);
+    const stats = grouped.get(`${project.projectId}:${version}`);
+
+    return {
+      projectId: project.projectId,
+      playableVersion: version,
+      responseCount: stats?.count ?? 0,
+      latestResponseAt: stats?.latest ?? null,
+    };
+  });
+}
+
+export async function fetchOwnerVoiceResponseDetails(
+  supabase: SupabaseClient,
+  projectId: string,
+  versionKey: string,
+): Promise<OwnerVoiceResponseDetail[]> {
+  const version = resolvePlayableVersion(versionKey);
+  const { data: responses, error: responseError } = await supabase
+    .from("project_voice_responses")
+    .select("id, user_id, prompt_id, answer_value, answer_label, created_at")
+    .eq("project_id", projectId)
+    .eq("version_key", version)
+    .order("created_at", { ascending: false });
+
+  if (responseError || !responses?.length) {
+    return [];
+  }
+
+  const { data: prompts } = await supabase
+    .from("project_version_prompts")
+    .select("id, prompt_text")
+    .eq("project_id", projectId)
+    .eq("version_key", version);
+
+  const promptTextById = new Map(
+    ((prompts ?? []) as { id: string; prompt_text: string }[]).map((prompt) => [
+      prompt.id,
+      prompt.prompt_text,
+    ]),
+  );
+
+  return (responses as ResponseRow[]).map((row) => ({
+    id: row.id,
+    userId: row.user_id,
+    promptId: row.prompt_id,
+    promptText: promptTextById.get(row.prompt_id) ?? "（質問）",
+    answerValue: row.answer_value,
+    answerLabel: row.answer_label,
+    createdAt: row.created_at,
+  }));
 }

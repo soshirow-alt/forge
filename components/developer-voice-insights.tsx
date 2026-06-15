@@ -22,7 +22,7 @@ export function DeveloperVoiceInsights({
     return (
       <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3.5 py-3">
         <p className="text-xs font-medium text-zinc-500">
-          届いている回答（v{versionKey}）
+          集計（v{versionKey}）
         </p>
         <p className="mt-1 text-sm text-zinc-600">
           この版への回答はまだありません。
@@ -34,7 +34,7 @@ export function DeveloperVoiceInsights({
   return (
     <div className="space-y-3">
       <p className="text-xs font-medium text-zinc-500">
-        届いている回答（v{versionKey}）— 解釈
+        集計と解釈（v{versionKey}）
       </p>
       {withResponses.map((aggregate) => {
         const lines = interpretVoiceAggregate(aggregate);

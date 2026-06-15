@@ -2,6 +2,10 @@ import { sortDevlogsNewestFirst, type DevlogEntry } from "@/lib/devlogs";
 import type { Game } from "@/lib/mock-games";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import { projectStudioFeedbackHref } from "@/lib/project-nurture-links";
+import {
+  resolveVoiceSignalForGame,
+  type ProjectVoiceNurtureSignal,
+} from "@/lib/project-voice-nurture";
 import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
 
 export type NurtureStepId = "read" | "improving" | "devlog" | "publish" | "wait";
@@ -91,15 +95,15 @@ export type ProjectGrowthSnapshot = {
   dataPhase: NurtureDataPhase;
   cycleNumber: number;
   loopActive: boolean;
-  latestFeedbackId?: string;
   earlySteps: GrowthStepChip[];
   pastCycles: PastCycleSummary[];
   playableVersion: string;
   lastUpdatedLabel: string;
   devlogCount: number;
   latestDevlogTitle?: string;
+  /** 現行版の project_voice_responses 件数 */
   pendingFeedbackCount: number;
-  totalFeedbackCount: number;
+  totalVoiceResponseCount: number;
   needsAttention: boolean;
   cyclePrevious?: string;
   cycleCurrent?: string;
@@ -116,19 +120,6 @@ export type NurtureDisplayContext = {
   newFeedbackArrived: boolean;
 };
 
-function feedbackForProject(
-  projectId: string,
-  entries: ProjectFeedbackEntry[],
-): ProjectFeedbackEntry[] {
-  return entries
-    .filter((entry) => entry.projectId === projectId)
-    .sort(
-      (a, b) =>
-        new Date(b.item.createdAt).getTime() -
-        new Date(a.item.createdAt).getTime(),
-    );
-}
-
 function devlogsForProject(
   projectId: string,
   getDevlogsByProject: (projectId: string) => DevlogEntry[],
@@ -136,11 +127,11 @@ function devlogsForProject(
   return sortDevlogsNewestFirst(getDevlogsByProject(projectId));
 }
 
-function isFeedbackPendingDevlog(
-  latestFeedback: ProjectFeedbackEntry | undefined,
+function isVoicePendingDevlog(
+  latestResponseAt: string | null,
   latestDevlog: DevlogEntry | undefined,
 ): boolean {
-  if (!latestFeedback) {
+  if (!latestResponseAt) {
     return false;
   }
 
@@ -149,8 +140,7 @@ function isFeedbackPendingDevlog(
   }
 
   return (
-    new Date(latestFeedback.item.createdAt).getTime() >
-    new Date(latestDevlog.date).getTime()
+    new Date(latestResponseAt).getTime() > new Date(latestDevlog.date).getTime()
   );
 }
 
@@ -158,15 +148,15 @@ function countPublishedDevlogs(devlogs: DevlogEntry[]): number {
   return devlogs.filter((entry) => entry.publishedVersion).length;
 }
 
-function buildEarlySteps(hasFeedback: boolean): GrowthStepChip[] {
+function buildEarlySteps(hasVoiceResponses: boolean): GrowthStepChip[] {
   return [
     { id: "submit", label: "投稿", done: true, active: false },
     { id: "discover", label: "発見", done: true, active: false },
     {
       id: "play",
       label: "プレイ",
-      done: hasFeedback,
-      active: !hasFeedback,
+      done: hasVoiceResponses,
+      active: !hasVoiceResponses,
     },
   ];
 }
@@ -270,7 +260,7 @@ export function getProgressRailVisual(
 
 export function buildNurtureDisplayContext(
   snapshot: ProjectGrowthSnapshot,
-  feedbackRead: boolean,
+  voiceRead: boolean,
   gameId: string,
 ): NurtureDisplayContext {
   switch (snapshot.dataPhase) {
@@ -278,8 +268,8 @@ export function buildNurtureDisplayContext(
       return {
         nowStepId: "wait",
         nextStepId: "wait",
-        heroTitle: "反応を待つ",
-        heroSubline: undefined,
+        heroTitle: "回答を待つ",
+        heroSubline: "プレイヤーの初声を待っています",
         primaryCta: {
           label: "作品ページを確認する",
           href: `/games/${gameId}`,
@@ -290,7 +280,7 @@ export function buildNurtureDisplayContext(
       };
 
     case "feedback_pending":
-      if (!feedbackRead) {
+      if (!voiceRead) {
         return {
           nowStepId: null,
           nextStepId: "read",
@@ -341,7 +331,7 @@ export function buildNurtureDisplayContext(
       return {
         nowStepId: "wait",
         nextStepId: "wait",
-        heroTitle: "反応を待つ",
+        heroTitle: "回答を待つ",
         heroSubline: "新しい回答が届いたら、またサイクルが回ります",
         primaryCta: {
           label: "作品ページを確認する",
@@ -356,23 +346,25 @@ export function buildNurtureDisplayContext(
 
 export function buildProjectGrowthSnapshot(
   game: Game,
-  feedbackEntries: ProjectFeedbackEntry[],
+  voiceSignal: ProjectVoiceNurtureSignal,
   getDevlogsByProject: (projectId: string) => DevlogEntry[],
 ): ProjectGrowthSnapshot {
-  const projectFeedback = feedbackForProject(game.id, feedbackEntries);
   const devlogs = devlogsForProject(game.id, getDevlogsByProject);
-  const latestFeedback = projectFeedback[0];
   const latestDevlog = devlogs[0];
   const previousDevlog = devlogs[1];
   const playableVersion = resolvePlayableVersion(game.playableVersion);
   const lastUpdatedLabel = game.lastUpdated || game.createdAt || "—";
-  const pendingFeedbackCount = isFeedbackPendingDevlog(latestFeedback, latestDevlog)
+  const hasVoice = voiceSignal.responseCount > 0;
+  const pendingFeedbackCount = isVoicePendingDevlog(
+    voiceSignal.latestResponseAt,
+    latestDevlog,
+  )
     ? 1
     : 0;
   const publishedCount = countPublishedDevlogs(devlogs);
   const pastCycles = buildPastCycles(devlogs, publishedCount);
 
-  if (projectFeedback.length === 0) {
+  if (!hasVoice) {
     return {
       dataPhase: "no_feedback",
       cycleNumber: 0,
@@ -384,19 +376,18 @@ export function buildProjectGrowthSnapshot(
       devlogCount: devlogs.length,
       latestDevlogTitle: latestDevlog?.title,
       pendingFeedbackCount: 0,
-      totalFeedbackCount: 0,
+      totalVoiceResponseCount: 0,
       needsAttention: false,
     };
   }
 
-  if (isFeedbackPendingDevlog(latestFeedback, latestDevlog)) {
+  if (isVoicePendingDevlog(voiceSignal.latestResponseAt, latestDevlog)) {
     const cycleNumber = Math.max(1, publishedCount + 1);
 
     return {
       dataPhase: "feedback_pending",
       cycleNumber,
       loopActive: publishedCount >= 1,
-      latestFeedbackId: latestFeedback.item.id,
       earlySteps: buildEarlySteps(true),
       pastCycles,
       playableVersion,
@@ -404,7 +395,7 @@ export function buildProjectGrowthSnapshot(
       devlogCount: devlogs.length,
       latestDevlogTitle: latestDevlog?.title,
       pendingFeedbackCount,
-      totalFeedbackCount: projectFeedback.length,
+      totalVoiceResponseCount: voiceSignal.responseCount,
       needsAttention: true,
       cyclePrevious: previousDevlog?.title,
       cycleCurrent: latestDevlog?.title ?? "（回答受領後）",
@@ -425,7 +416,7 @@ export function buildProjectGrowthSnapshot(
       devlogCount: devlogs.length,
       latestDevlogTitle: latestDevlog.title,
       pendingFeedbackCount: 0,
-      totalFeedbackCount: projectFeedback.length,
+      totalVoiceResponseCount: voiceSignal.responseCount,
       needsAttention: true,
       cyclePrevious: previousDevlog?.title,
       cycleCurrent: latestDevlog.title,
@@ -445,7 +436,7 @@ export function buildProjectGrowthSnapshot(
     devlogCount: devlogs.length,
     latestDevlogTitle: latestDevlog?.title,
     pendingFeedbackCount: 0,
-    totalFeedbackCount: projectFeedback.length,
+    totalVoiceResponseCount: voiceSignal.responseCount,
     needsAttention: false,
     cyclePrevious: previousDevlog?.title,
     cycleCurrent: latestDevlog?.title,
@@ -454,18 +445,18 @@ export function buildProjectGrowthSnapshot(
 
 export function sortProjectsForGrowthHub(
   games: Game[],
-  feedbackEntries: ProjectFeedbackEntry[],
+  voiceSignals: ProjectVoiceNurtureSignal[],
   getDevlogsByProject: (projectId: string) => DevlogEntry[],
 ): Game[] {
   return [...games].sort((a, b) => {
     const aSnapshot = buildProjectGrowthSnapshot(
       a,
-      feedbackEntries,
+      resolveVoiceSignalForGame(a, voiceSignals),
       getDevlogsByProject,
     );
     const bSnapshot = buildProjectGrowthSnapshot(
       b,
-      feedbackEntries,
+      resolveVoiceSignalForGame(b, voiceSignals),
       getDevlogsByProject,
     );
 
@@ -503,4 +494,15 @@ export function groupFeedbackByProject(
   }
 
   return map;
+}
+
+export function filterDeepFeedbackForVersion(
+  entries: ProjectFeedbackEntry[],
+  playableVersion: string,
+): ProjectFeedbackEntry[] {
+  const version = resolvePlayableVersion(playableVersion);
+
+  return entries.filter(
+    (entry) => resolvePlayableVersion(entry.item.versionKey) === version,
+  );
 }

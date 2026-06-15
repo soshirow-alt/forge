@@ -4,6 +4,28 @@
 
 ---
 
+## 2026-06-15 studio voice 中心化（project-growth-state / 読了 / read パネル分離）
+
+### 今回やったこと
+
+- **project-growth-state**: 主データを `project_voice_responses` に切替。現行版に voice があれば反応あり。pending は「voice 最新 > devlog 最新」
+- **studio read パネル分離**: 主 = プレイヤーの回答（集計・解釈・折りたたみ個別行）。副 = 詳しい感想（project_feedback・任意）
+- **読了状態**: localStorage キーを `projectId + playableVersion` に変更（`project_voice_reads` プレフィックス）
+- **my-projects**: 作品カードの次アクション・回答件数も voice ベースに
+- **データ取得**: `fetchVoiceNurtureSignalsForProjects` / `fetchOwnerVoiceResponseDetails` 追加
+
+### ユーザー体験の変化
+
+- **開発者**: 初声100件・詳しい感想0件でも studio で「回答100件」と表示。反応なしにならない
+- **開発者**: studio 上で voice 集計が主役。詳しい感想は補助セクション
+- **開発者**: 個別 voice 行は折りたたみ・開発者のみ（公開詳細には出さない）
+
+### migration
+
+- なし
+
+---
+
 ## 2026-06-16 作品育成 studio / 導線 IA 一括 + メンテ
 
 ### 今回やったこと

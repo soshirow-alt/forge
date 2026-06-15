@@ -7,12 +7,12 @@ import { useAuth } from "@/components/auth-provider";
 import { ForgeHeader } from "@/components/forge-header";
 import { ProjectListCard } from "@/components/project-list-card";
 import { useGames } from "@/components/games-provider";
-import { useOwnedProjectFeedback } from "@/hooks/use-owned-project-feedback";
+import { useOwnedProjectVoiceSignals } from "@/hooks/use-owned-project-voice-signals";
 import {
   buildProjectGrowthSnapshot,
-  groupFeedbackByProject,
   sortProjectsForGrowthHub,
 } from "@/lib/project-growth-state";
+import { resolveVoiceSignalForGame } from "@/lib/project-voice-nurture";
 import { projectStudioPath } from "@/lib/project-nurture-links";
 import { ForgeSdkNote } from "@/components/forge-sdk-note";
 
@@ -49,8 +49,8 @@ function MyProjectsPageContent() {
     dataReady,
   } = useGames();
 
-  const { entries: feedbackEntries, loaded: feedbackLoaded } =
-    useOwnedProjectFeedback(user?.id);
+  const { signals: voiceSignals, loaded: voiceLoaded } =
+    useOwnedProjectVoiceSignals(user?.id);
 
   const ownedGames = useMemo(
     () => getOwnedProjects(user?.id),
@@ -59,19 +59,14 @@ function MyProjectsPageContent() {
 
   const sortedGames = useMemo(
     () =>
-      feedbackLoaded
+            voiceLoaded
         ? sortProjectsForGrowthHub(
             ownedGames,
-            feedbackEntries,
+            voiceSignals,
             getDevlogsByProject,
           )
         : ownedGames,
-    [ownedGames, feedbackEntries, feedbackLoaded, getDevlogsByProject],
-  );
-
-  const feedbackByProject = useMemo(
-    () => groupFeedbackByProject(feedbackEntries),
-    [feedbackEntries],
+    [ownedGames, voiceSignals, voiceLoaded, getDevlogsByProject],
   );
 
   const totalSupports = useMemo(
@@ -99,7 +94,7 @@ function MyProjectsPageContent() {
     router.replace(projectStudioPath(focusProjectId));
   }, [focusProjectId, router]);
 
-  if (!hydrated || !dataReady || !feedbackLoaded) {
+  if (!hydrated || !dataReady || !voiceLoaded) {
     return (
       <div className="min-h-full bg-zinc-950 text-zinc-100">
         <ForgeHeader />
@@ -171,18 +166,15 @@ function MyProjectsPageContent() {
               {sortedGames.map((game) => {
                 const growth = buildProjectGrowthSnapshot(
                   game,
-                  feedbackEntries,
+                  resolveVoiceSignalForGame(game, voiceSignals),
                   getDevlogsByProject,
                 );
-                const projectFeedback =
-                  feedbackByProject.get(game.id) ?? [];
 
                 return (
                   <ProjectListCard
                     key={game.id}
                     game={game}
                     growth={growth}
-                    feedbackId={growth.latestFeedbackId ?? projectFeedback[0]?.item.id}
                     supportCount={getSupportCount(game.id, 0)}
                     onDelete={() => deleteSubmittedGame(game.id)}
                   />

@@ -1,103 +1,149 @@
-Forge ChatGPT 用サマリ — studio / mypage 更新 / メンテ一括 deploy
+Forge ChatGPT 用サマリ — studio voice 中心化 実装完了
 
 ■ 現在の状態
-- 本番: https://forge-flame-gamma.vercel.app（push 後 Vercel 自動 deploy）
-- 今回: メンテ（用語統一 + 死コード削除）+ IA 一括（studio / my-projects 整理 / 詳細 owner 導線 / mypage 更新 / 通知 deep link / nurture リンク共通化）
-- migration: なし（008 は未適用のまま）
-- オーナー GO: メンテ + まとめて IA 実装 + commit/push/deploy
+- 本番: commit 431cd4f（https://forge-flame-gamma.vercel.app）— voice 中心化はローカル実装済み・未 commit / 未 deploy
+- DB migration: 今回なし（006 voice テーブル既存。008 other_notes はオーナー完了扱い）
+- オーナー判断: studio / project-growth-state を voice 中心へ GO（2026-06-15）
+- 原典整合: 初声=project_voice_responses / 詳しい感想=project_feedback（任意）/ studio 主役=プレイヤーの回答
 
 ■ Forge原典コアループ（判断の基準）
 - 投稿 → 発見 → プレイ → フィードバック → 改善 → 再プレイ
-- 開発者: 投稿 → 育成（studio）→ 回答確認 → 改善 → 再公開
-- プレイヤー: 発見 → プレイ → 回答 → 更新を見る → 再プレイ
+- 今回は開発者側「回答を見る → 改善」の入口を voice（初声）に揃え、structured feedback を副材料に降格
 
 ■ 今回実装したこと
-1. メンテ（前回 GO 分）
-   - 用語統一: 回答/詳しい感想/届いた回答。FB/フィードバック/改善材料/返事排除
-   - 削除: game-feedback.tsx, game-community-voices-section, developer-feedback-inbox, developer-next-actions-panel, developer-next-actions.ts, project-growth-card.tsx
-2. /projects/{id}/studio 新規
-   - GameGrowthCycle + ProjectNurtureActions + 作品ヘッダ + Primary CTA
-   - #feedback で届いた回答パネルへスクロール
-   - オーナーのみ。非オーナーは /games/{id} へ
-3. /my-projects 整理
-   - ProjectListCard（状態サマリ + 「この作品を育てる」→ studio）
-   - ?focus= → studio へ replace リダイレクト
-4. /games/{id} 所有者 sidebar
-   - 「この作品を育てる」→ studio のみ。edit/devlog 直リンク撤去
-5. /mypage#updates
-   - MyPageUpdatesSection: 追跡中の devlog/新版、開発の歩み・再プレイリンク
-6. /notifications
-   - devlog → /games/{id}#game-project-history
-   - version_published → #new-playable-version-banner
-7. lib/project-nurture-links.ts
-   - PROJECT_NURTURE_ACTIONS, section id, notificationTargetHref 等を一元化
-8. middleware: /projects/ をログイン必須に追加
+1. lib/project-growth-state.ts
+   - buildProjectGrowthSnapshot の入力を ProjectVoiceNurtureSignal に変更
+   - no_feedback: 現行版 voice 0件（詳しい感想があっても voice なしなら回答待ち）
+   - feedback_pending: isVoicePendingDevlog（voice 最新 created_at > devlog date）
+   - totalVoiceResponseCount: 現行版の project_voice_responses 件数
+   - latestFeedbackId 削除（読了は playableVersion 単位）
+   - filterDeepFeedbackForVersion 追加（詳しい感想フィルタ用）
+
+2. lib/supabase/voice-engagement.ts
+   - fetchOwnerVoiceNurtureSignal / fetchVoiceNurtureSignalsForProjects
+   - fetchOwnerVoiceResponseDetails（studio 折りたたみ個別行用）
+
+3. lib/project-voice-nurture.ts（新規）
+   - ProjectVoiceNurtureSignal 型、resolveVoiceSignalForGame
+
+4. 読了 localStorage
+   - project_voice_reads:{projectId}:{playableVersion}
+   - voiceReadStore / useNurtureVoiceRead（旧 feedbackId キーは非使用）
+
+5. studio UI 分離（game-growth-cycle.tsx）
+   - 主セクション: プレイヤーの回答（DeveloperVoiceInsights + 件数）
+   - 副セクション: NurtureDeepFeedbackSection（詳しい感想・任意）
+   - read パネル: voice 読了 + 折りたたみ個別行 + 詳しい感想
+   - 公開詳細には個別 voice 行を出さない（変更なし）
+
+6. my-projects / ProjectListCard
+   - voice signals で growth 再計算・ソート
+   - カードに「回答 N件」表示
+
+7. games-provider
+   - getOwnedProjectVoiceSignals / getOwnerVoiceResponseDetails
 
 ■ 今回変更した画面
---- 作品育成ページ（新規） ---
-画面名: 作品育成
-URL: /projects/{id}/studio
-画面位置: 全ページ（ヘッダ下）
-内容: 作品名/版/サイクル、次にやること Hero、Primary CTA、届いた回答（GameGrowthCycle）、やること一覧 5 リンク
-確認: ログイン → 自分作品 → my-projects「この作品を育てる」
+- 作品育成 /projects/{id}/studio
+  - 画面位置: ヘッダー下 GameGrowthCycle 全体
+  - 変更前: structured feedback が read パネル主。voice 0件でも詳しい感想があれば反応あり扱いにならず、逆に voice 100件でも feedback 0で「反応なし」
+  - 変更後: 「プレイヤーの回答」セクションが主（集計・解釈）。其下に「詳しい感想（任意）」。ヘッダーに回答件数
+  - 開発者視点: 初声100/詳しい感想0 → 「回答100件」と pending CTA
+  - 確認: ログイン → my-projects → この作品を育てる → 回答件数・集計・read パネル
 
---- 開発マイページ ---
-URL: /my-projects
-変更前: 各作品に GameGrowthCycle フル表示 + ?focus=
-変更後: コンパクト一覧 + studio へ。育成詳細は studio のみ
-確認: 作品が複数あっても一覧が短く、CTA が studio へ
-
---- 作品詳細（所有者） ---
-URL: /games/{id}
-変更前: sidebar に 5 直リンク + my-projects?focus=
-変更後: 「この作品を育てる」→ studio + テストプレイのみ
-確認: 自分作品を開く → プレビューバッジ + studio 1 ボタン
-
---- マイページ ---
-URL: /mypage#updates
-変更前: 更新を追う = 作品リストのみ
-変更後: 「更新を見る」セクション（devlog/新版 + 開発の歩み・再プレイ）
-確認: 追跡中作品あり → 更新カード表示
-
---- 通知 ---
-URL: /notifications
-変更: devlog/新版カードが #game-project-history / #new-playable-version-banner へ
-確認: 開発日誌通知タップ → 詳細の開発の歩みへスクロール
+- 開発マイページ /my-projects
+  - 画面位置: 作品一覧 ProjectListCard
+  - 変更前: growth が project_feedback のみ参照
+  - 変更後: voice 件数・次アクション（回答を見る/回答を待つ）が voice ベース
+  - 確認: voice がある作品で「回答 N件」「新しい回答」バッジ
 
 ■ ユーザー目線の変化
-- 開発者: 「次に何をするか」が studio 1 URL。my-projects は入口一覧
-- プレイヤー: 追跡作品の変化が mypage で見える。通知から開発の歩みへ直行
-- 詳細: 所有者はプレイヤー体験プレビューに専念、作業は studio
+- 開発者: Forge原典どおり「プレイヤーの回答」が studio の主役。詳しい感想は追加材料
+- 開発者: 初声だけ届いた状態でも育成サイクルが回り始める（反応なし表示の解消）
+- プレイヤー: 変更なし（公開詳細に個別回答は出さない）
 
-■ build / lint / deploy
-- npm run build: 成功（/projects/[id]/studio 追加）
-- migration: なし
-- deploy: push → Vercel prod（オーナー依頼どおり）
+■ なぜこの設計にしたか
+- 原典: プレイヤー主導線=初声（voice）、詳しい感想=任意
+- 旧実装は project_feedback を growth/read の主データにしており、100 voice / 0 structured で「反応なし」になる矛盾があった
+- 読了を version 単位にしたのは、voice は版ごとに届くため。DB 化前の localStorage でも意味が通る
 
-■ 今すぐ私がやるべきこと（本番確認 5 分）
-1. /my-projects →「この作品を育てる」→ studio 表示（Primary CTA / 回答 / やること）
-2. 自分作品 /games/{id} → sidebar studio のみ（直リンクなし）
-3. /mypage →「更新を見る」セクション（追跡作品で devlog または新版）
-4. /notifications → devlog 通知 → #game-project-history へ
-5. 旧 URL /my-projects?focus={id} → studio へリダイレクト
+■ 他案を採用しなかった理由
+- voice と project_feedback を1テーブルに統合: 今回 Out（migration 不要方針）
+- 初声を project_feedback に寄せる: 原典と逆
+- 読了を feedback UUID のまま: voice 版単位と整合しない
+- 個別 voice 行を studio 主表示: 原典上 集計・解釈優先。折りたたみ副次に
+
+■ In / Out
+In:
+- project-growth-state voice 化
+- studio 主/副 UI 分離
+- 読了 localStorage を projectId+playableVersion
+- pending = voice 新着 > devlog
+- my-projects 整合
+
+Out（オーナー指定）:
+- DB migration / テーブル統合
+- nurture_reads Supabase 化
+- 通知 DB 化 / RLS 変更
+- 個別回答の公開 / AI 集約
+
+■ 注意事項
+- 旧 project_feedback_reads キーの読了は引き継がれない（新キー project_voice_reads）
+- improvement メモも playableVersion キーに変更（サイクル単位）
+- 未 commit。deploy 前にオーナー確認推奨
+
+■ build / lint
+- npm run build: 成功（Next.js 16.2.9 TypeScript OK）
+- npm run lint: リポジトリ既存の react-hooks/set-state-in-effect 等で exit 1。今回追加ファイルに新規致命エラーなし
+
+■ migration 有無
+- なし
+
+■ 今すぐ私（オーナー）がやるべきこと
+1. ローカル or preview で /projects/{id}/studio を開き、voice あり / なし / 詳しい感想のみ の3パターン確認
+2. 問題なければ commit + push を指示（本番 deploy）
+3. 本番で同一3パターン再確認
 
 ■ Cursorだけで完了できること
-- 008 migration 本番適用手順の SQL レビュー
-- nurture 読了 Supabase 化
-- voice / 詳しい感想 統合設計
+- commit / push（オーナー指示後）
+- nurture 読了 Supabase 化（009）
+- 通知 DB 化
+- studio UX 微調整（copy / 折りたたみ初期状態）
 
 ■ 残リスク
-- nurture 読了は localStorage のまま（端末跨ぎ不可）
-- voice / structured feedback 二重構造は未整理
-- mypage 更新は通知 + 最新 devlog ベース（「前回プレイ以降」差分 UI なし）
-- project-growth-card 削除済み。studio が育成 UI の唯一の詳細画面
+- 旧読了 localStorage 非移行 → 同一版で「新しい回答あり」が再表示されうる
+- voice と devlog の日時比較は created_at vs devlog.date — タイムゾーン・精度差で edge case の可能性
+- my-projects は voice signals のみ待機（feedback 読込不要に変更）— studio 側は両方待機
+- lint ルールと既存 useEffect setState パターンの共存（build は通る）
 
 ■ 次に検討すべきこと
-- migration 008 本番適用
-- voice / 詳しい感想 DB 統合方針
-- nurture 読了 Supabase 化
-- RLS 監査
+- nurture 読了 Supabase 化（009）
+- 開発者向け「新しい回答」通知の DB 化
+- voice 到着時の studio 深リンク / 通知連携
 
 ■ ChatGPTに相談したい論点
-- mypage 更新を通知依存のまま育てるか、プレイ記録ベース diff を先にするか
-- studio から devlog/edit への Primary CTA 順序は現状の project-growth-state でよいか
+- 読了を version 単位にした場合、新版公開後の「未読」UX が十分か
+- 詳しい感想 0 件時に studio 副セクションを折りたたみ初期 closed にするべきか
+
+■ 変更ファイル一覧
+- lib/project-growth-state.ts
+- lib/project-voice-nurture.ts（新規）
+- lib/supabase/voice-engagement.ts
+- lib/feedback-voice-summary.ts
+- lib/nurture-persistence/local-storage-keys.ts
+- lib/nurture-persistence/voice-read-local.ts（新規）
+- lib/nurture-voice-read-store.ts（新規）
+- hooks/use-nurture-feedback-read.ts
+- hooks/use-owned-project-voice-signals.ts（新規）
+- components/games-provider.tsx
+- components/game-growth-cycle.tsx
+- components/project-studio-page.tsx
+- components/my-projects-page.tsx
+- components/project-list-card.tsx
+- components/developer-voice-insights.tsx
+- components/nurture-deep-feedback-section.tsx（新規）
+- components/owner-voice-response-list.tsx（新規）
+- components/nurture-feedback-voice-summary.tsx（re-export）
+- docs/forge-changelog.md
+- docs/forge-handoff.md
+- docs/chatgpt-summary.md

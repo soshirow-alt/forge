@@ -54,6 +54,7 @@ import {
   updateProjectPlayableVersion,
 } from "@/lib/supabase/projects";
 import { resolvePlayableVersion } from "@/lib/playable-version";
+import type { ProjectVoiceNurtureSignal } from "@/lib/project-voice-nurture";
 
 import {
   addProjectBookmark,
@@ -75,12 +76,15 @@ import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
 import type { GameFeedbackItem } from "@/lib/game-feedback-storage";
 import {
   fetchOwnerVoiceAggregates,
+  fetchOwnerVoiceResponseDetails,
   fetchPublicVoiceAggregates,
   fetchDeveloperVersionPrompts,
   fetchUserVoiceResponses as fetchUserVoiceResponsesDb,
   fetchVersionPrompts,
+  fetchVoiceNurtureSignalsForProjects,
   saveDeveloperVersionPrompts,
   upsertVoiceResponses,
+  type OwnerVoiceResponseDetail,
 } from "@/lib/supabase/voice-engagement";
 import type { DeveloperPromptInput } from "@/lib/version-prompt-form";
 import type { VoiceAnswerDraft, VersionPrompt, VoiceResponse } from "@/lib/version-prompt-types";
@@ -147,6 +151,9 @@ type GamesContextValue = {
   getOwnedProjectFeedback: (
     userId: string | undefined,
   ) => Promise<ProjectFeedbackEntry[]>;
+  getOwnedProjectVoiceSignals: (
+    userId: string | undefined,
+  ) => Promise<ProjectVoiceNurtureSignal[]>;
   getVersionPrompts: (gameId: string, versionKey: string) => Promise<VersionPrompt[]>;
   getDeveloperVersionPrompts: (
     gameId: string,
@@ -174,6 +181,10 @@ type GamesContextValue = {
     gameId: string,
     versionKey: string,
   ) => Promise<PublicVoiceAggregateRow[]>;
+  getOwnerVoiceResponseDetails: (
+    gameId: string,
+    versionKey: string,
+  ) => Promise<OwnerVoiceResponseDetail[]>;
   getApplicantCount: (id: string, defaultCount?: number) => number;
   incrementApplicantCount: (id: string, defaultCount?: number) => number;
   isSubmittedGame: (id: string) => boolean;
@@ -994,6 +1005,18 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const getOwnerVoiceResponseDetails = useCallback(
+    async (gameId: string, versionKey: string) => {
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return [];
+      }
+
+      return fetchOwnerVoiceResponseDetails(supabase, gameId, versionKey);
+    },
+    [],
+  );
+
   const getOwnedProjectFeedback = useCallback(
     async (userId: string | undefined) => {
       if (!userId) {
@@ -1011,6 +1034,33 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       }
 
       return fetchFeedbackForProjects(supabase, ownedIds);
+    },
+    [getOwnedProjects],
+  );
+
+  const getOwnedProjectVoiceSignals = useCallback(
+    async (userId: string | undefined) => {
+      if (!userId) {
+        return [];
+      }
+
+      const ownedGames = getOwnedProjects(userId);
+      if (ownedGames.length === 0) {
+        return [];
+      }
+
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return [];
+      }
+
+      return fetchVoiceNurtureSignalsForProjects(
+        supabase,
+        ownedGames.map((game) => ({
+          projectId: game.id,
+          playableVersion: resolvePlayableVersion(game.playableVersion),
+        })),
+      );
     },
     [getOwnedProjects],
   );
@@ -1329,6 +1379,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       getNewPlayableVersionBannerState,
       getProjectFeedback,
       getOwnedProjectFeedback,
+      getOwnedProjectVoiceSignals,
       getVersionPrompts,
       getDeveloperVersionPrompts,
       saveDeveloperVersionPrompts: saveDeveloperVersionPromptsFn,
@@ -1336,6 +1387,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       submitVoiceResponses,
       getPublicVoiceAggregates,
       getOwnerVoiceAggregates,
+      getOwnerVoiceResponseDetails,
       getApplicantCount,
       incrementApplicantCount,
       isSubmittedGame,
@@ -1388,6 +1440,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       getNewPlayableVersionBannerState,
       getProjectFeedback,
       getOwnedProjectFeedback,
+      getOwnedProjectVoiceSignals,
       getVersionPrompts,
       getDeveloperVersionPrompts,
       saveDeveloperVersionPromptsFn,
@@ -1395,6 +1448,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       submitVoiceResponses,
       getPublicVoiceAggregates,
       getOwnerVoiceAggregates,
+      getOwnerVoiceResponseDetails,
       getApplicantCount,
       incrementApplicantCount,
       isSubmittedGame,
