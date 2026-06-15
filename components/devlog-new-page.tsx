@@ -142,7 +142,7 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
                   今回の更新を新しいプレイ可能版として公開する
                 </span>
                 <span className="mt-1 block text-xs text-zinc-600">
-                  チェックすると、プレイヤーは新しい版向けにフィードバックを送れるようになります。
+                  チェックすると、プレイヤーは新しい版向けに回答を送れるようになります。
                 </span>
               </span>
             </label>

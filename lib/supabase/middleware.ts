@@ -7,6 +7,7 @@ const PROTECTED_PREFIXES = [
   "/mypage",
   "/notifications",
   "/bookmarks",
+  "/projects/",
 ];
 
 export async function updateSession(request: NextRequest) {

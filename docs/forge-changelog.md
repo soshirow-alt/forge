@@ -4,6 +4,30 @@
 
 ---
 
+## 2026-06-16 作品育成 studio / 導線 IA 一括 + メンテ
+
+### 今回やったこと
+
+- **用語統一 + 死コード削除**: FB/フィードバック/改善材料/返事を UI から排除。旧 feedback コンポーネント 5 件削除
+- **`/projects/{id}/studio`**: 1 作品の育成専用ページ（GameGrowthCycle + やること一覧 + Primary CTA）
+- **`/my-projects` 整理**: 作品一覧 + コンパクトカード。「この作品を育てる」→ studio。`?focus=` は studio へリダイレクト
+- **詳細 `/games/{id}` 所有者**: sidebar は「この作品を育てる」→ studio のみ（直リンク集約を撤去）
+- **マイページ `/mypage`**: 「更新を見る」セクション追加（追跡中の devlog / 新版 + 開発の歩み・再プレイ導線）
+- **通知 `/notifications`**: devlog → `#game-project-history`、新版 → `#new-playable-version-banner`
+- **共通化**: `lib/project-nurture-links.ts`（studio URL・section id・やること一覧・通知 href）
+
+### ユーザー体験の変化
+
+- **開発者**: 次に何をするかが studio 1 画面で完結。my-projects は複数作品の入口
+- **プレイヤー**: 追跡中作品の更新が mypage で一覧化。通知から開発の歩みへ直接ジャンプ
+- **詳細**: 所有者はプレイヤー向けプレビュー + studio 誘導のみ
+
+### migration
+
+- なし
+
+---
+
 ## 2026-06-16 サイドバーぶれ修正 / 所有者プレビュー / 用語高優先バッチ
 
 ### 今回やったこと

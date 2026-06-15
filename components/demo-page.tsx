@@ -70,7 +70,7 @@ export function DemoPage() {
           </p>
           <h1 className="mt-8 text-2xl font-bold tracking-tight">デモ環境</h1>
           <p className="mt-3 text-zinc-500">
-            ログイン中のアカウントにデモ作品3件、応援数、フィードバック、開発日誌をセットアップします。
+            ログイン中のアカウントにデモ作品3件、応援数、回答、開発日誌をセットアップします。
           </p>
         </div>
 

@@ -7,6 +7,7 @@ import {
   formatActivityDate,
   getUnifiedProjectHistory,
 } from "@/lib/project-activity";
+import { GAME_PROJECT_HISTORY_SECTION_ID } from "@/lib/project-nurture-links";
 import type { Game } from "@/lib/mock-games";
 import type { ProjectHistoryEntry } from "@/lib/project-activity";
 
@@ -46,7 +47,10 @@ export function GameProjectHistorySection({ game }: GameProjectHistorySectionPro
   );
 
   return (
-    <section className="mt-4 border-t border-zinc-800/80 pt-4">
+    <section
+      id={GAME_PROJECT_HISTORY_SECTION_ID}
+      className="mt-4 scroll-mt-24 border-t border-zinc-800/80 pt-4"
+    >
       <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-sm font-medium text-zinc-500">開発の歩み</h2>

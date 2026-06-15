@@ -12,6 +12,8 @@ import { useGames } from "@/components/games-provider";
 import { LOGIN_PATH } from "@/hooks/use-require-auth";
 import type { Game } from "@/lib/mock-games";
 import { displayPhase } from "@/lib/development-phases";
+import { MyPageUpdatesSection } from "@/components/mypage-updates-section";
+import { projectStudioPath } from "@/lib/project-nurture-links";
 import { displayGameStatus } from "@/lib/user-labels";
 
 function MyPageGameRow({ game }: { game: Game }) {
@@ -114,16 +116,16 @@ function OwnedProjectRow({ game }: { game: Game }) {
       </div>
       <div className="flex shrink-0 flex-wrap gap-2">
         <Link
-          href={`/games/${game.id}`}
+          href={projectStudioPath(game.id)}
           className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-orange-500/50 hover:text-orange-400"
         >
-          詳細を見る
+          育成ページ
         </Link>
         <Link
-          href={`/projects/${game.id}/edit`}
+          href={`/games/${game.id}`}
           className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200"
         >
-          編集
+          詳細を見る
         </Link>
       </div>
     </article>
@@ -227,6 +229,14 @@ export function MyPagePage() {
             )}
             {watchedGames.length > 0 && (
               <a
+                href="#updates"
+                className="rounded-full border border-zinc-800 px-3 py-1 text-zinc-400 transition-colors hover:border-emerald-500/40 hover:text-emerald-400"
+              >
+                更新を見る
+              </a>
+            )}
+            {watchedGames.length > 0 && (
+              <a
                 href="#watching"
                 className="rounded-full border border-zinc-800 px-3 py-1 text-zinc-400 transition-colors hover:border-amber-500/40 hover:text-amber-400"
               >
@@ -253,6 +263,8 @@ export function MyPagePage() {
         )}
 
         <div className="mt-12 space-y-14">
+          <MyPageUpdatesSection watchedGames={watchedGames} />
+
           <MyPageSection
             id="supported"
             title="応援中のゲーム"

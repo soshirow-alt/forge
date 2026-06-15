@@ -11,12 +11,12 @@ export const DEVELOPMENT_PHASE_OPTIONS = [
   },
   {
     value: "通しプレイ版",
-    hint: "最後までクリア可能。バランス・バグ・UX のフィードバック向け",
+    hint: "最後までクリア可能。バランス・バグ・UX のテスト向け",
     playerDescription: "最後まで遊べます。調整・バグ修正中です",
   },
   {
     value: "公開準備中",
-    hint: "ほぼ完成。最終調整と仕上げのフィードバック向け",
+    hint: "ほぼ完成。最終調整と仕上げのテスト向け",
     playerDescription: "ほぼ完成版に近い体験ができます",
   },
 ] as const;

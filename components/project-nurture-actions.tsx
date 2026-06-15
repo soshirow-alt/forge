@@ -1,39 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { PROJECT_NURTURE_ACTIONS } from "@/lib/project-nurture-links";
 
 type ProjectNurtureActionsProps = {
   projectId: string;
   className?: string;
 };
-
-const actions = [
-  {
-    label: "届いた回答を見る",
-    href: (id: string) => `/my-projects?focus=${id}`,
-    description: "プレイヤーの回答と集計",
-  },
-  {
-    label: "問いを設定する",
-    href: (id: string) => `/projects/${id}/edit#version-prompts`,
-    description: "版ごとの質問",
-  },
-  {
-    label: "開発ログを書く",
-    href: (id: string) => `/projects/${id}/devlog/new`,
-    description: "改善を記録して公開",
-  },
-  {
-    label: "作品情報を編集する",
-    href: (id: string) => `/projects/${id}/edit`,
-    description: "タイトル・説明・公開設定",
-  },
-  {
-    label: "プレイヤー向けページを確認する",
-    href: (id: string) => `/games/${id}`,
-    description: "公開中の見え方",
-  },
-] as const;
 
 export function ProjectNurtureActions({
   projectId,
@@ -43,7 +16,7 @@ export function ProjectNurtureActions({
     <div className={`rounded-lg border border-zinc-800/80 bg-zinc-950/40 p-4 ${className}`}>
       <p className="text-xs font-medium text-zinc-500">やること一覧</p>
       <ul className="mt-3 space-y-2">
-        {actions.map((action) => (
+        {PROJECT_NURTURE_ACTIONS.map((action) => (
           <li key={action.label}>
             <Link
               href={action.href(projectId)}

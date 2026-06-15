@@ -215,7 +215,7 @@ function StepDetailPanel({
       return (
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <h4 className="text-sm font-semibold text-zinc-300">プレイヤーの声</h4>
+            <h4 className="text-sm font-semibold text-zinc-300">届いた回答</h4>
             {latestFeedback && !feedbackRead && (
               <button
                 type="button"
@@ -230,7 +230,7 @@ function StepDetailPanel({
             )}
           </div>
           {feedbackEntries.length === 0 ? (
-            <p className="text-sm text-zinc-500">まだフィードバックは届いていません。</p>
+            <p className="text-sm text-zinc-500">まだ回答は届いていません。</p>
           ) : (
             <>
               {latestFeedback && (
@@ -251,7 +251,7 @@ function StepDetailPanel({
                     onClick={() => setShowPastFeedback((value) => !value)}
                     className="text-sm text-zinc-500 transition-colors hover:text-orange-400"
                   >
-                    過去の声 {pastFeedback.length}件 {showPastFeedback ? "▲" : "▼"}
+                    過去の回答 {pastFeedback.length}件 {showPastFeedback ? "▲" : "▼"}
                   </button>
                   {showPastFeedback && (
                     <div className="mt-3 space-y-3">
@@ -350,8 +350,8 @@ function StepDetailPanel({
           <h4 className="text-sm font-semibold text-zinc-300">反応待ち</h4>
           <p className="text-sm leading-relaxed text-zinc-400">
             {growth.dataPhase === "no_feedback"
-              ? "プレイヤーの声を待っています。"
-              : "新しい声が届いたら、また FBを読む から始まります。"}
+              ? "プレイヤーの回答を待っています。"
+              : "新しい回答が届いたら、また回答を見る から始まります。"}
           </p>
           <Link
             href={`/games/${game.id}`}

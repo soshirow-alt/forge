@@ -54,7 +54,7 @@ export function getFeedbackSummaryText(item: GameFeedbackItem): string {
     item.otherNotes?.trim() ? `その他: ${item.otherNotes.trim()}` : "",
   ].filter(Boolean);
 
-  return parts.join(" / ") || "フィードバックを送信しました";
+  return parts.join(" / ") || "詳しい感想を送信しました";
 }
 
 export function replayIntentLabel(intent: ReplayIntent): string {

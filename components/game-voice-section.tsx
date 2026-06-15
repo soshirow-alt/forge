@@ -163,7 +163,7 @@ export function GameVoiceSection({
         <section className={sectionClassName}>
           <p className="text-sm font-medium text-orange-300">回答を送信しました</p>
           <p className="mt-1 text-xs text-zinc-500">
-            あなたの回答は v{playableVersion} の改善材料として開発者に届きます。
+            あなたの回答は v{playableVersion} 向けに開発者に届きます。
           </p>
         </section>
       );
@@ -174,7 +174,7 @@ export function GameVoiceSection({
         <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 px-4 py-4">
           <p className="text-sm font-medium text-orange-300">回答を送信しました</p>
           <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-            あなたの回答は v{playableVersion} の改善材料として開発者に届きます。
+            あなたの回答は v{playableVersion} 向けに開発者に届きます。
             更新が公開されたら、開発の歩みで確認できます。
           </p>
         </div>

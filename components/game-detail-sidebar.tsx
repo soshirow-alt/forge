@@ -11,33 +11,11 @@ import { GameWatchButton } from "@/components/game-watch-button";
 import { BookmarkButton } from "@/components/bookmark-button";
 import { PlaySafetyNote } from "@/components/play-safety-note";
 import { displayPhase } from "@/lib/development-phases";
+import { projectStudioPath } from "@/lib/project-nurture-links";
 import { scrollToGameDeepFeedbackEntry } from "@/lib/game-feedback-ui";
 import { getDistributionType } from "@/lib/play-environment";
 import type { PlayerVoiceFlowState } from "@/lib/player-voice-flow-state";
 import type { Game } from "@/lib/mock-games";
-
-const ownerPreviewActions = [
-  {
-    label: "届いた回答を見る",
-    href: (id: string) => `/my-projects?focus=${id}`,
-    description: "プレイヤーの回答と集計",
-  },
-  {
-    label: "質問を設定する",
-    href: (id: string) => `/projects/${id}/edit#version-prompts`,
-    description: "版ごとの質問",
-  },
-  {
-    label: "開発ログを書く",
-    href: (id: string) => `/projects/${id}/devlog/new`,
-    description: "改善を記録して公開",
-  },
-  {
-    label: "作品情報を編集する",
-    href: (id: string) => `/projects/${id}/edit`,
-    description: "タイトル・説明・公開設定",
-  },
-] as const;
 
 type GameDetailSidebarProps = {
   game: Game;
@@ -82,23 +60,11 @@ export function GameDetailSidebar({
             公開中の見え方を確認しています。回答の送信やプレイヤー向け操作は、別アカウントで確認してください。
           </p>
           <Link
-            href={`/my-projects?focus=${game.id}`}
+            href={projectStudioPath(game.id)}
             className="mt-3 block w-full rounded-lg border border-zinc-700 bg-zinc-950/60 px-4 py-2.5 text-center text-sm font-semibold text-zinc-100 transition-colors hover:border-orange-500/50 hover:bg-zinc-900"
           >
             この作品を育てる
           </Link>
-          <ul className="mt-3 space-y-1.5 border-t border-zinc-800/60 pt-3">
-            {ownerPreviewActions.map((action) => (
-              <li key={action.label}>
-                <Link
-                  href={action.href(game.id)}
-                  className="block rounded-lg px-2 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-900/60 hover:text-orange-300"
-                >
-                  {action.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
           <button
             type="button"
             onClick={onPlayRequest}

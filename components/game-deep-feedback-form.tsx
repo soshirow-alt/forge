@@ -100,7 +100,7 @@ export function GameDeepFeedbackForm({ gameId }: GameDeepFeedbackFormProps) {
   if (saved && !submitting) {
     return (
       <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3.5 py-3">
-        <p className="text-xs text-zinc-500">詳しい改善材料を届けました。</p>
+        <p className="text-xs text-zinc-500">詳しい感想を送信しました。</p>
         <button
           type="button"
           onClick={() => setSaved(false)}

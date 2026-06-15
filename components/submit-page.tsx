@@ -15,6 +15,7 @@ import {
   mergePlayEnvironmentIntoTags,
   type DistributionType,
 } from "@/lib/play-environment";
+import { projectStudioPath } from "@/lib/project-nurture-links";
 import { DEVELOPMENT_PHASE_OPTIONS } from "@/lib/development-phases";
 import { PLAY_TIME_OPTIONS } from "@/lib/play-time-options";
 import { resolvePlayableVersion } from "@/lib/playable-version";
@@ -447,7 +448,7 @@ export function SubmitPage() {
               <div className="mx-auto mt-10 max-w-lg text-left">
                 <p className="text-sm font-medium text-zinc-300">次にやること</p>
                 <p className="mt-1 text-xs text-zinc-600">
-                  投稿 → 発見 → プレイ → フィードバックの流れに沿って進められます。
+                  投稿 → 発見 → プレイ → 回答の流れに沿って進められます。
                 </p>
                 <ul className="mt-4 space-y-3">
                   <li>
@@ -476,14 +477,18 @@ export function SubmitPage() {
                   </li>
                   <li>
                     <Link
-                      href="/my-projects"
+                      href={
+                        submittedGameId
+                          ? projectStudioPath(submittedGameId)
+                          : "/my-projects"
+                      }
                       className="flex w-full items-center justify-between rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3.5 text-sm font-semibold text-zinc-100 transition-colors hover:border-orange-500/50 hover:text-orange-400"
                     >
-                      開発マイページを見る
+                      作品育成ページを開く
                       <span aria-hidden="true">→</span>
                     </Link>
                     <p className="mt-1.5 text-xs text-zinc-600">
-                      プレイヤーからのフィードバックはここで確認できます。
+                      届いた回答の確認や、次の改善は育成ページから進められます。
                     </p>
                   </li>
                   <li>
@@ -512,10 +517,14 @@ export function SubmitPage() {
                 </Link>
               )}
               <Link
-                href="/my-projects"
+                href={
+                  submittedGameId
+                    ? projectStudioPath(submittedGameId)
+                    : "/my-projects"
+                }
                 className="rounded-lg border border-zinc-700 bg-zinc-900 px-6 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-orange-500/50 hover:text-orange-400"
               >
-                開発マイページを見る
+                作品育成ページを開く
               </Link>
               <Link
                 href="/"

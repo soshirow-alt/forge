@@ -5,15 +5,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { ForgeHeader } from "@/components/forge-header";
-import { ProjectGrowthCard } from "@/components/project-growth-card";
+import { ProjectListCard } from "@/components/project-list-card";
 import { useGames } from "@/components/games-provider";
 import { useOwnedProjectFeedback } from "@/hooks/use-owned-project-feedback";
 import {
-  buildNurtureDisplayContext,
   buildProjectGrowthSnapshot,
   groupFeedbackByProject,
   sortProjectsForGrowthHub,
 } from "@/lib/project-growth-state";
+import { projectStudioPath } from "@/lib/project-nurture-links";
 import { ForgeSdkNote } from "@/components/forge-sdk-note";
 
 function AnalyticsCard({
@@ -92,13 +92,12 @@ function MyProjectsPageContent() {
   }, [hydrated, user, router]);
 
   useEffect(() => {
-    if (!focusProjectId || !feedbackLoaded) {
+    if (!focusProjectId) {
       return;
     }
 
-    const element = document.getElementById(`project-${focusProjectId}`);
-    element?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [focusProjectId, feedbackLoaded]);
+    router.replace(projectStudioPath(focusProjectId));
+  }, [focusProjectId, router]);
 
   if (!hydrated || !dataReady || !feedbackLoaded) {
     return (
@@ -131,7 +130,7 @@ function MyProjectsPageContent() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">開発マイページ</h1>
             <p className="mt-2 max-w-2xl text-zinc-500">
-              作品一覧から育てたい作品を選び、声を見て、次の版につなげましょう。
+              投稿した作品の一覧です。育てたい作品を選び、作品育成ページで次の行動を進めましょう。
             </p>
           </div>
           {hasProjects ? (
@@ -154,7 +153,7 @@ function MyProjectsPageContent() {
         <section className="mt-10">
           <h2 className="text-xl font-semibold tracking-tight">作品一覧</h2>
           <p className="mt-1 text-sm text-zinc-500">
-            各作品の育成サイクルと、やること一覧から次の行動を選べます。
+            各作品の状態を確認し、「この作品を育てる」から育成ページへ進みます。
           </p>
 
           {!hasProjects ? (
@@ -168,7 +167,7 @@ function MyProjectsPageContent() {
               </Link>
             </div>
           ) : (
-            <div className="mt-6 space-y-5">
+            <div className="mt-6 space-y-4">
               {sortedGames.map((game) => {
                 const growth = buildProjectGrowthSnapshot(
                   game,
@@ -179,21 +178,12 @@ function MyProjectsPageContent() {
                   feedbackByProject.get(game.id) ?? [];
 
                 return (
-                  <ProjectGrowthCard
+                  <ProjectListCard
                     key={game.id}
                     game={game}
                     growth={growth}
-                    feedbackEntries={projectFeedback}
+                    feedbackId={growth.latestFeedbackId ?? projectFeedback[0]?.item.id}
                     supportCount={getSupportCount(game.id, 0)}
-                    focusStep={
-                      focusProjectId === game.id
-                        ? buildNurtureDisplayContext(
-                            growth,
-                            false,
-                            game.id,
-                          ).nextStepId
-                        : null
-                    }
                     onDelete={() => deleteSubmittedGame(game.id)}
                   />
                 );

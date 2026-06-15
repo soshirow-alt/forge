@@ -3,7 +3,7 @@
 > ChatGPT / Cursor 間の**現在地サマリ**。  
 > 詳細な原典は `docs/forge-principles.md`、履歴は `docs/forge-changelog.md` を参照。
 
-最終更新：**2026-06-15**（Forge IA 一括実装 — #6b / 育成ハブ / #3）
+最終更新：**2026-06-16**（studio / mypage 更新導線 / メンテ一括）
 
 ---
 
@@ -11,34 +11,16 @@
 
 Forge は **完成前のインディーゲームを発見 → プレイ → 声を届ける → 変化を見る → 再プレイ** する MVP。
 
-**開発者ループ**（IA 整理後）：投稿 → **育成** → 声を見る → 改善 → 再公開  
-**プレイヤーサイクル**（正式定義・2026-06-12 GO）：発見 → プレイ → 声を届ける → 変化を見る → 再プレイ
+**開発者ループ**: 投稿 → **育成（studio）** → 回答を見る → 改善 → 再公開  
+**プレイヤーサイクル**: 発見 → プレイ → 声を届ける → 変化を見る → 再プレイ
 
-- **声を届けた** = **初声完了**（問いへの返答 1 件以上）。深い改善材料は任意
-- **版プレイヤー問い**：1 版・最大 10 問。プレイヤー回答は 0〜全問自由
-- **応援と初声**は別概念（統合しない）
-- **個別回答は非公開**。**みんなの声** = 集計のみ公開（プレイヤー：グラフ / 開発者：解釈+数字）
-- **デフォルト問い**（開発者未設定時）：もう一度遊びたい？
-- **原典唯一の正**：`docs/forge-principles.md`（ChatGPT と共有）
-- 詳細は `docs/forge-principles.md` §1・§5・§7・§8
-
-- **公開**：トップ、一覧、ゲーム詳細の閲覧
-- **ログイン必須**：プレイ、外部リンク、応援、あとで見る、更新追跡、フィードバック、投稿、通知、マイ作品
-- **データ**：作品・プロフィール・エンゲージメント・**開発ログ**・**devlog 通知**は Supabase
-- **DB**：migration **001〜007** 適用済み（006 初声 / 007 immutable RPC）。**本番 deploy 906b84d**（2026-06-15）
-- **P0 修正 deploy 済**：6576b21 / https://forge-flame-gamma.vercel.app（本番確認 OK・クローズ）
-- **UX Phase1 クローズ**：71b2712 本番確認 OK（プレビュー / 自由記述 / other_notes）
-- **Phase2 #5 クローズ**：6d5e0d2 本番確認 OK
-- **Phase2 #6b / IA 一括**: **本番 deploy 済み**（17b4243 / dpl_HPschPwXLzsNwG1xeYfQq6VmbJr4）
-- **Phase2 #3 UI 分離**：質問テンプレート / 回答形式を edit UI で分離（migration なし）
-- **Phase3 育成ハブ**：`/my-projects` = 開発マイページ + やること一覧（初版）
-- **Forge IA レビュー**: `docs/forge-ia-review.md` — 方針 GO、実装反映済み
-- **次 Cursor 推奨**: 本番確認 → **変化を見る UI** または devlog 強化（オーナー判断）
-- **本番確認**：開発ログ → ゲスト別ブラウザ表示 **OK**（2026-06-12）
-- **暫定 localStorage**：応援/FB 等の通知、クリエイターフォロー、テスター応募数、作品 extras
-- **デプロイ**：Vercel プロジェクト **forge** → https://forge-flame-gamma.vercel.app
-- **FB 将来**：バージョン別制御は `docs/feedback-roadmap.md` 参照（未実装）
-- **開発フェーズ**：試作版 / プレイ可能版 / 通しプレイ版 / 公開準備中（2026-06-13）
+- **作品育成**: `/projects/{id}/studio` — Primary CTA + 届いた回答 + やること一覧
+- **開発マイページ**: `/my-projects` — 作品一覧入口（育成詳細は studio）
+- **プレイヤー更新**: `/mypage#updates` — 追跡中の devlog / 新版
+- **開発の歩み**: `/games/{id}#game-project-history`
+- **新版バナー**: `/games/{id}#new-playable-version-banner`
+- **本番 deploy**: メンテ + IA 一括 commit 後（push 直後）
+- **次 Cursor 推奨**: voice / 詳しい感想 データ整理、nurture 読了 Supabase 化、008 migration 本番適用
 
 ---
 
@@ -97,10 +79,11 @@ Forge は **完成前のインディーゲームを発見 → プレイ → 声�
 
 ## 次にやるべきこと
 
-1. **IA 一括実装の commit → push → 本番確認**（オーナーまとめて）
-2. **#6b クローズ判断**（オーバーレイ + sidebar 入口で GO なら Phase2 #6 完了扱い）
-3. **変化を見る UI** — プレイヤーサイクル 4 段目（未実装・次テーマ候補）
-4. **専用 studio URL** — `/my-projects?focus=` から独立ページ化は将来
+1. **本番確認** — studio / mypage 更新 / 通知 deep link（オーナー）
+2. **migration 008** 本番適用（`feedback_other_notes` — 別タスク）
+3. **voice / 詳しい感想** データモデル整理方針
+4. **nurture 読了状態** Supabase 化
+5. **RLS 監査**（ユーザー増加前）
 
 ## 運用ルール（2026-06-12 追加）
 

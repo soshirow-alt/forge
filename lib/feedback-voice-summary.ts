@@ -65,7 +65,7 @@ export function buildFeedbackVoiceSummary(
     };
   }
 
-  const lines: string[] = [`FB ${currentVersionEntries.length}件`];
+  const lines: string[] = [`回答 ${currentVersionEntries.length}件`];
 
   const replayAnswers = currentVersionEntries.filter(
     (entry) => entry.item.wouldReplay,

@@ -11,7 +11,7 @@ export function interpretVoiceAggregate(
   aggregate: VoicePromptAggregate,
 ): string[] {
   if (aggregate.totalResponses === 0) {
-    return ["この版ではまだ返事が届いていません。"];
+    return ["この版ではまだ回答が届いていません。"];
   }
 
   const lines: string[] = [];
@@ -81,12 +81,12 @@ export function interpretVoiceAggregate(
     }
     case "short_text": {
       lines.push(
-        `自由記述への返事が ${aggregate.totalResponses} 件。個別内容は開発者のみ確認できます。`,
+        `自由記述への回答が ${aggregate.totalResponses} 件。個別内容は開発者のみ確認できます。`,
       );
       break;
     }
     default:
-      lines.push(`返事 ${aggregate.totalResponses} 件。`);
+      lines.push(`回答 ${aggregate.totalResponses} 件。`);
   }
 
   return lines;

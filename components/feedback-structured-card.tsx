@@ -24,7 +24,7 @@ export function FeedbackStructuredCard({
 
   if (fields.length === 0 && !replayLabel && !item.text?.trim()) {
     return (
-      <p className="text-sm text-zinc-500">内容のないフィードバック</p>
+      <p className="text-sm text-zinc-500">内容のない感想</p>
     );
   }
 

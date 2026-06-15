@@ -11,6 +11,7 @@ import {
   formatNotificationDate,
   getNotificationTypeLabel,
 } from "@/lib/notifications";
+import { notificationTargetHref } from "@/lib/project-nurture-links";
 
 type NotificationFilter = "all" | "unread" | "read";
 
@@ -140,11 +141,7 @@ export function NotificationsPage() {
             {filteredNotifications.map((notification) => (
               <li key={notification.id}>
                 <Link
-                  href={
-                    notification.type === "version_published"
-                      ? `/games/${notification.projectId}#new-playable-version-banner`
-                      : `/games/${notification.projectId}`
-                  }
+                  href={notificationTargetHref(notification)}
                   onClick={() => handleNotificationClick(notification.id)}
                   className="block rounded-xl border border-zinc-800 bg-zinc-900/80 p-6 transition-colors hover:border-orange-500/50 hover:bg-zinc-900"
                 >
@@ -173,6 +170,10 @@ export function NotificationsPage() {
                   <p className="mt-3 text-zinc-200">{notification.message}</p>
                   <span className="mt-3 inline-block text-sm font-medium text-orange-400">
                     {notification.projectTitle}
+                    {notification.type === "devlog" ||
+                    notification.type === "version_published"
+                      ? " — 開発の歩みを見る →"
+                      : ""}
                   </span>
                 </Link>
               </li>
