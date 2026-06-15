@@ -1,10 +1,10 @@
 Forge ChatGPT 用サマリ — IA 一括実装（#6b / 育成ハブ / #3）
 
 ■ 現在の状態
-- 本番: https://forge-flame-gamma.vercel.app（まだ 64b481f = 旧 #6。今回 IA 実装はローカル未 commit / 未 deploy）
+- 本番: https://forge-flame-gamma.vercel.app（commit 17b4243 / deploy dpl_HPschPwXLzsNwG1xeYfQq6VmbJr4 — Ready）
 - Phase2 #5: クローズ
-- Phase2 #6 旧案（Banner/embed/sticky）: 不採用・コード削除済み
-- 今回: IA 一括実装完了（build OK）。オーナーが commit → push → 本番まとめて確認予定
+- Phase2 #6 旧案（Banner/embed/sticky）: 不採用・削除済み
+- Phase2 #6b / IA 一括: **本番 deploy 済み**（2026-06-16）。オーナー本番確認待ち
 - DB migration: なし（response_kind / short_text 維持）
 
 ■ Forge原典コアループ（判断の基準）
@@ -12,7 +12,11 @@ Forge ChatGPT 用サマリ — IA 一括実装（#6b / 育成ハブ / #3）
 - 開発者: 投稿 → 育成 → 声を見る → 改善 → 再公開
 - 今回はループに沿って IA を整理。レビューサイト化・アンケート化・入口乱立を避けた
 
-■ 今回実装したこと
+■ 今回実装したこと（deploy 完了）
+- commit 17b4243 → main push → Vercel production Ready
+- deploy URL: https://forge-flame-gamma.vercel.app
+- deployment ID: dpl_HPschPwXLzsNwG1xeYfQq6VmbJr4
+- build ID: bld_43wi4uizb
 1. #3 質問テンプレートと回答形式の分離（lib/version-prompt-form.ts + version-prompt-editor.tsx）
    - 回答形式: はい/いいえ / 3段階 / 選択式 / 自由記述（replay_intent は形式一覧に出さない）
    - テンプレート: もう一度遊びたい？ / チュートリアル / 難易度 / カスタム
@@ -66,14 +70,13 @@ Forge ChatGPT 用サマリ — IA 一括実装（#6b / 育成ハブ / #3）
 - Out: AI 集約 / 変化を見る UI / devlog↔声リンク / SDK / 高度分析 / migration
 
 ■ 注意事項
-- 未 deploy。push 前にオーナー判断（GPT Run メモ推奨）
+- 本番 deploy 済み。オーナーが 11 観点をまとめて確認中
 - オーバーレイ dismiss は sessionStorage（タブ単位）。再プレイで overlay 再表示
 - lint: 既存 62 errors（react-hooks/set-state-in-effect 等）。今回 diff 起因ではない
 
 ■ 今すぐ私がやるべきこと
-- commit → push → Vercel 本番 deploy 確認
-- 本番で以下をまとめて確認（下記手順）
-- GO なら Phase2 #6b クローズ扱い。次は変化を見る UI 等は別テーマ
+- 本番 11 観点の確認（オーナー実施）
+- GO なら Phase2 #6b クローズ扱い。残リスクは必要なら追加修正
 
 ■ Cursorだけで完了できること
 - commit / push（オーナー GO 後）

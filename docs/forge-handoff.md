@@ -29,7 +29,7 @@ Forge は **完成前のインディーゲームを発見 → プレイ → 声�
 - **P0 修正 deploy 済**：6576b21 / https://forge-flame-gamma.vercel.app（本番確認 OK・クローズ）
 - **UX Phase1 クローズ**：71b2712 本番確認 OK（プレビュー / 自由記述 / other_notes）
 - **Phase2 #5 クローズ**：6d5e0d2 本番確認 OK
-- **Phase2 #6 旧案（64b481f）**：不採用（Banner/embed/sticky）。**#6b オーバーレイ案を IA 一括で実装済み（ローカル・未 deploy）**
+- **Phase2 #6b / IA 一括**: **本番 deploy 済み**（17b4243 / dpl_HPschPwXLzsNwG1xeYfQq6VmbJr4）
 - **Phase2 #3 UI 分離**：質問テンプレート / 回答形式を edit UI で分離（migration なし）
 - **Phase3 育成ハブ**：`/my-projects` = 開発マイページ + やること一覧（初版）
 - **Forge IA レビュー**: `docs/forge-ia-review.md` — 方針 GO、実装反映済み
