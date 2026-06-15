@@ -19,6 +19,11 @@
 
 - なし
 
+### デプロイ
+
+- **commit**: `9391ec9` — MVP P1/P2 一括
+- **本番**: https://forge-flame-gamma.vercel.app（deploy `dpl_3mG3QrdXG4XesEzAbQcu75d8pL2V` Ready）
+
 ---
 
 ## 2026-06-15 studio voice 中心化（project-growth-state / 読了 / read パネル分離）
