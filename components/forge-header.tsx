@@ -54,7 +54,7 @@ export function ForgeHeader() {
                 href="/my-projects"
                 className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-orange-500/50 hover:bg-zinc-900 hover:text-white"
               >
-                開発ダッシュボード
+                開発マイページ
               </Link>
               <Link
                 href="/notifications"

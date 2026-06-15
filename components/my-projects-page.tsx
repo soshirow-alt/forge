@@ -129,11 +129,9 @@ function MyProjectsPageContent() {
 
         <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              開発ダッシュボード
-            </h1>
+            <h1 className="text-3xl font-bold tracking-tight">開発マイページ</h1>
             <p className="mt-2 max-w-2xl text-zinc-500">
-              プレイヤーの声をもとに、作品を育てていきましょう。
+              作品一覧から育てたい作品を選び、声を見て、次の版につなげましょう。
             </p>
           </div>
           {hasProjects ? (
@@ -155,6 +153,9 @@ function MyProjectsPageContent() {
 
         <section className="mt-10">
           <h2 className="text-xl font-semibold tracking-tight">作品一覧</h2>
+          <p className="mt-1 text-sm text-zinc-500">
+            各作品の育成サイクルと、やること一覧から次の行動を選べます。
+          </p>
 
           {!hasProjects ? (
             <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-900/80 px-6 py-16 text-center">

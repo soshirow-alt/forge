@@ -1,4 +1,5 @@
 import {
+  DEFAULT_REPLAY_PROMPT_TEXT,
   MAX_PROMPTS_PER_VERSION,
   REPLAY_INTENT_OPTIONS,
   YES_NO_OPTIONS,
@@ -7,9 +8,12 @@ import {
   type VersionPromptResponseKind,
 } from "@/lib/version-prompt-types";
 
+export type QuestionTemplateId = "replay" | "tutorial" | "difficulty" | "custom";
+
 export type DeveloperPromptDraft = {
   clientId: string;
   id?: string;
+  templateId?: QuestionTemplateId;
   promptText: string;
   responseKind: VersionPromptResponseKind;
   /** choice 用: 2 | 3 | 4 */
@@ -38,8 +42,9 @@ export const DEFAULT_CHOICE_COUNT = 3;
 export const MAX_CHOICE_LABEL_LENGTH = 40;
 export const CHOICE_COUNT_OPTIONS = [2, 3, 4] as const;
 
-export const DEVELOPER_RESPONSE_KIND_OPTIONS: {
-  value: VersionPromptResponseKind;
+/** 回答形式（テンプレートと分離。replay_intent はテンプレート経由のみ） */
+export const DEVELOPER_RESPONSE_FORMAT_OPTIONS: {
+  value: Exclude<VersionPromptResponseKind, "replay_intent">;
   label: string;
   hint: string;
 }[] = [
@@ -50,23 +55,69 @@ export const DEVELOPER_RESPONSE_KIND_OPTIONS: {
   },
   {
     value: "scale_3",
-    label: "3段階（低・普通・高）",
-    hint: "難易度や満足度など",
-  },
-  {
-    value: "replay_intent",
-    label: "もう一度遊びたい？",
-    hint: "継続プレイ意向（3択固定）",
-  },
-  {
-    value: "short_text",
-    label: "自由記述（短文）",
-    hint: "プレイヤーが短く自由に答えられます",
+    label: "3段階",
+    hint: "低・普通・高（難易度や満足度など）",
   },
   {
     value: "choice",
-    label: "カスタム選択肢",
+    label: "選択式",
     hint: "2〜4個の選択肢を設定",
+  },
+  {
+    value: "short_text",
+    label: "自由記述",
+    hint: "200文字以内で自由に答えられます",
+  },
+];
+
+export const DEVELOPER_QUESTION_TEMPLATES: {
+  id: QuestionTemplateId;
+  label: string;
+  promptText: string;
+  responseKind: VersionPromptResponseKind;
+  formatLabel: string;
+}[] = [
+  {
+    id: "replay",
+    label: "もう一度遊びたい？",
+    promptText: DEFAULT_REPLAY_PROMPT_TEXT,
+    responseKind: "replay_intent",
+    formatLabel: "3択（もう一度 / 更新次第 / 今は遊ばない）",
+  },
+  {
+    id: "tutorial",
+    label: "チュートリアルは分かりやすかった？",
+    promptText: "チュートリアルは分かりやすかった？",
+    responseKind: "yes_no",
+    formatLabel: "はい / いいえ",
+  },
+  {
+    id: "difficulty",
+    label: "難易度はどうだった？",
+    promptText: "難易度はどうだった？",
+    responseKind: "scale_3",
+    formatLabel: "3段階（低・普通・高）",
+  },
+  {
+    id: "custom",
+    label: "カスタム",
+    promptText: "",
+    responseKind: "yes_no",
+    formatLabel: "下で質問文と回答形式を設定",
+  },
+];
+
+/** @deprecated use DEVELOPER_RESPONSE_FORMAT_OPTIONS */
+export const DEVELOPER_RESPONSE_KIND_OPTIONS: {
+  value: VersionPromptResponseKind;
+  label: string;
+  hint: string;
+}[] = [
+  ...DEVELOPER_RESPONSE_FORMAT_OPTIONS,
+  {
+    value: "replay_intent",
+    label: "もう一度遊びたい？（テンプレート）",
+    hint: "質問テンプレートから選んでください",
   },
 ];
 
@@ -94,9 +145,77 @@ function emptyChoiceOptions(count: number = DEFAULT_CHOICE_COUNT): string[] {
 export function createEmptyPromptDraft(): DeveloperPromptDraft {
   return {
     clientId: newClientId(),
+    templateId: "custom",
     promptText: "",
     responseKind: "yes_no",
   };
+}
+
+export function inferTemplateFromDraft(
+  draft: DeveloperPromptDraft,
+): QuestionTemplateId {
+  if (draft.templateId) {
+    return draft.templateId;
+  }
+
+  const replay = DEVELOPER_QUESTION_TEMPLATES.find((t) => t.id === "replay")!;
+  const tutorial = DEVELOPER_QUESTION_TEMPLATES.find((t) => t.id === "tutorial")!;
+  const difficulty = DEVELOPER_QUESTION_TEMPLATES.find(
+    (t) => t.id === "difficulty",
+  )!;
+
+  if (
+    draft.promptText.trim() === replay.promptText &&
+    draft.responseKind === "replay_intent"
+  ) {
+    return "replay";
+  }
+
+  if (
+    draft.promptText.trim() === tutorial.promptText &&
+    draft.responseKind === "yes_no"
+  ) {
+    return "tutorial";
+  }
+
+  if (
+    draft.promptText.trim() === difficulty.promptText &&
+    draft.responseKind === "scale_3"
+  ) {
+    return "difficulty";
+  }
+
+  return "custom";
+}
+
+export function applyQuestionTemplate(
+  templateId: QuestionTemplateId,
+): Pick<DeveloperPromptDraft, "templateId" | "promptText" | "responseKind"> {
+  const template =
+    DEVELOPER_QUESTION_TEMPLATES.find((entry) => entry.id === templateId) ??
+    DEVELOPER_QUESTION_TEMPLATES.find((entry) => entry.id === "custom")!;
+
+  return {
+    templateId: template.id,
+    promptText: template.promptText,
+    responseKind: template.responseKind,
+  };
+}
+
+export function getFormatLabelForDraft(draft: DeveloperPromptDraft): string {
+  const templateId = inferTemplateFromDraft(draft);
+  if (templateId !== "custom") {
+    return (
+      DEVELOPER_QUESTION_TEMPLATES.find((entry) => entry.id === templateId)
+        ?.formatLabel ?? ""
+    );
+  }
+
+  return (
+    DEVELOPER_RESPONSE_FORMAT_OPTIONS.find(
+      (option) => option.value === draft.responseKind,
+    )?.label ?? draft.responseKind
+  );
 }
 
 export function createDefaultChoiceDraftPatch(): Pick<
@@ -121,6 +240,11 @@ export function draftFromVersionPrompt(prompt: VersionPrompt): DeveloperPromptDr
     return {
       clientId: prompt.id,
       id: prompt.id,
+      templateId: inferTemplateFromDraft({
+        clientId: prompt.id,
+        promptText: prompt.promptText,
+        responseKind: prompt.responseKind,
+      }),
       promptText: prompt.promptText,
       responseKind: prompt.responseKind,
       choiceCount,
@@ -136,6 +260,11 @@ export function draftFromVersionPrompt(prompt: VersionPrompt): DeveloperPromptDr
   return {
     clientId: prompt.id,
     id: prompt.id,
+    templateId: inferTemplateFromDraft({
+      clientId: prompt.id,
+      promptText: prompt.promptText,
+      responseKind: prompt.responseKind,
+    }),
     promptText: prompt.promptText,
     responseKind: prompt.responseKind,
     choiceLabels,

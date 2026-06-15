@@ -23,9 +23,8 @@ type GameDetailSidebarProps = {
   formatDate: (date: string) => string;
   isLoggedIn: boolean;
   voiceFlowState: PlayerVoiceFlowState;
-  firstPromptPreview?: string | null;
   onPlayRequest: () => void;
-  onFeedbackRequest: () => void;
+  onVoiceRequest: () => void;
 };
 
 export function GameDetailSidebar({
@@ -35,9 +34,8 @@ export function GameDetailSidebar({
   formatDate,
   isLoggedIn,
   voiceFlowState,
-  firstPromptPreview,
   onPlayRequest,
-  onFeedbackRequest,
+  onVoiceRequest,
 }: GameDetailSidebarProps) {
   return (
     <aside className="space-y-3 lg:sticky lg:top-20 lg:self-start">
@@ -57,25 +55,16 @@ export function GameDetailSidebar({
           <>
             <button
               type="button"
-              onClick={onFeedbackRequest}
-              className="hidden w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 text-center text-base font-semibold text-zinc-950 transition-opacity hover:opacity-90 lg:block"
+              onClick={onVoiceRequest}
+              className="block w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 text-center text-base font-semibold text-zinc-950 transition-opacity hover:opacity-90"
             >
-              返事を届ける
+              声を届ける
             </button>
-            {firstPromptPreview ? (
-              <p className="mt-2 hidden text-xs leading-relaxed text-zinc-500 lg:block">
-                「{firstPromptPreview}」
-              </p>
-            ) : null}
-            <p className="mt-2 hidden text-[11px] text-zinc-600 lg:block">
-              1つ答えるだけでOK
-            </p>
+            <p className="mt-2 text-[11px] text-zinc-600">1つ答えるだけでOK</p>
             <button
               type="button"
               onClick={onPlayRequest}
-              className={`w-full text-center text-xs font-medium text-zinc-500 transition-colors hover:text-orange-400/90 ${
-                firstPromptPreview ? "mt-2 lg:mt-3" : ""
-              }`}
+              className="mt-3 w-full text-center text-xs font-medium text-zinc-500 transition-colors hover:text-orange-400/90"
             >
               もう一度プレイする
             </button>
@@ -83,7 +72,7 @@ export function GameDetailSidebar({
         ) : voiceFlowState === "voice_complete" ? (
           <>
             <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 px-4 py-3 text-center text-sm font-medium text-zinc-500">
-              返事を届けました ✓
+              声を届けました ✓
             </div>
             <button
               type="button"
@@ -112,7 +101,7 @@ export function GameDetailSidebar({
         )}
         {!isLoggedIn && (
           <AuthGatedHint
-            hint="プレイ後に返事を届けられます"
+            hint="プレイ後に声を届けられます"
             className="mt-2 px-0.5"
           />
         )}
@@ -132,16 +121,25 @@ export function GameDetailSidebar({
 
       {canEdit && (
         <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-3.5">
-          <p className="text-xs font-medium text-zinc-500">開発者メニュー</p>
+          <p className="text-xs font-medium text-zinc-500">開発者向け</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-zinc-600">
+            この作品を育てる操作は開発マイページから行えます。
+          </p>
           <Link
-            href="/my-projects"
-            className="mt-2 block w-full rounded-lg border border-zinc-700 px-4 py-2 text-center text-sm font-semibold text-zinc-200 transition-colors hover:border-orange-500/50 hover:bg-zinc-900"
+            href={`/my-projects?focus=${game.id}`}
+            className="mt-3 block w-full rounded-lg border border-zinc-700 px-4 py-2 text-center text-sm font-semibold text-zinc-200 transition-colors hover:border-orange-500/50 hover:bg-zinc-900"
           >
             作品を育てる
           </Link>
           <Link
-            href={`/projects/${game.id}/edit`}
+            href="/my-projects"
             className="mt-2 block w-full rounded-lg px-4 py-2 text-center text-xs font-medium text-zinc-500 transition-colors hover:text-orange-400/90"
+          >
+            開発マイページへ
+          </Link>
+          <Link
+            href={`/projects/${game.id}/edit`}
+            className="mt-2 block w-full rounded-lg px-4 py-2 text-center text-xs font-medium text-zinc-600 transition-colors hover:text-zinc-400"
           >
             編集する
           </Link>

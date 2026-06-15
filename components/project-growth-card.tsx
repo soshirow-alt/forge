@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { GameGrowthCycle } from "@/components/game-growth-cycle";
 import { GameThumbnail } from "@/components/game-thumbnail";
+import { ProjectNurtureActions } from "@/components/project-nurture-actions";
 import type { NurtureStepId, ProjectGrowthSnapshot } from "@/lib/project-growth-state";
 import type { Game } from "@/lib/mock-games";
 import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
@@ -66,19 +67,9 @@ export function ProjectGrowthCard({
             initialSelectedStep={focusStep}
           />
 
+          <ProjectNurtureActions projectId={game.id} className="mt-5" />
+
           <div className="mt-5 flex flex-wrap items-center gap-3 text-xs text-zinc-600">
-            <Link
-              href={`/games/${game.id}`}
-              className="transition-colors hover:text-zinc-400"
-            >
-              作品詳細
-            </Link>
-            <Link
-              href={`/projects/${game.id}/edit`}
-              className="transition-colors hover:text-zinc-400"
-            >
-              編集
-            </Link>
             <span className="text-zinc-700">応援 {supportCount}</span>
             <button
               type="button"

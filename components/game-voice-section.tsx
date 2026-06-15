@@ -23,13 +23,17 @@ export type GameVoiceFlowMeta = {
 type GameVoiceSectionProps = {
   gameId: string;
   onFlowStateChange?: (meta: GameVoiceFlowMeta) => void;
-  compactTop?: boolean;
+  onVoiceComplete?: () => void;
+  embedded?: boolean;
+  showDeepFeedback?: boolean;
 };
 
 export function GameVoiceSection({
   gameId,
   onFlowStateChange,
-  compactTop = false,
+  onVoiceComplete,
+  embedded = false,
+  showDeepFeedback = true,
 }: GameVoiceSectionProps) {
   const { user } = useAuth();
   const {
@@ -117,7 +121,11 @@ export function GameVoiceSection({
         pendingAnswers,
       );
       setSavedResponses(saved);
-      setVoiceComplete(hasInitialVoiceComplete(saved));
+      const complete = hasInitialVoiceComplete(saved);
+      setVoiceComplete(complete);
+      if (complete) {
+        onVoiceComplete?.();
+      }
     } finally {
       setSubmitting(false);
     }
@@ -134,54 +142,73 @@ export function GameVoiceSection({
     }));
   }
 
-  const sectionClassName = compactTop
-    ? "mt-4"
+  const sectionClassName = embedded
+    ? ""
     : "mt-4 border-t border-zinc-800/80 pt-4";
 
   if (loading) {
     return (
       <section className={sectionClassName}>
-        <p className="text-sm text-zinc-600">返事フォームを読み込み中...</p>
+        <p className="text-sm text-zinc-600">読み込み中...</p>
       </section>
     );
   }
 
   if (voiceComplete && !submitting) {
+    if (embedded) {
+      return (
+        <section className={sectionClassName}>
+          <p className="text-sm font-medium text-orange-300">声を届けました</p>
+          <p className="mt-1 text-xs text-zinc-500">
+            あなたの声は v{playableVersion} の改善材料として開発者に届きます。
+          </p>
+        </section>
+      );
+    }
+
     return (
       <section className={sectionClassName}>
         <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 px-4 py-4">
-          <p className="text-sm font-medium text-orange-300">返事を届けました</p>
+          <p className="text-sm font-medium text-orange-300">声を届けました</p>
           <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-            あなたの返事は v{playableVersion} の改善材料として開発者に届きます。
+            あなたの声は v{playableVersion} の改善材料として開発者に届きます。
             更新が公開されたら、ここで育ちを確認できます。
           </p>
         </div>
 
-        <div id={GAME_DEEP_FEEDBACK_ENTRY_ID} className="mt-4 scroll-mt-24">
-          <button
-            type="button"
-            onClick={() => setDeepOpen((open) => !open)}
-            className="text-xs font-medium text-zinc-500 transition-colors hover:text-orange-400/90"
-          >
-            {deepOpen ? "▾" : "▸"} もっと詳しく伝えたい（任意）
-          </button>
-          {deepOpen && (
-            <div className="mt-3">
-              <GameDeepFeedbackForm gameId={gameId} />
-            </div>
-          )}
-        </div>
+        {showDeepFeedback && (
+          <div id={GAME_DEEP_FEEDBACK_ENTRY_ID} className="mt-4 scroll-mt-24">
+            <button
+              type="button"
+              onClick={() => setDeepOpen((open) => !open)}
+              className="text-xs font-medium text-zinc-500 transition-colors hover:text-orange-400/90"
+            >
+              {deepOpen ? "▾" : "▸"} もっと詳しく伝えたい（任意）
+            </button>
+            {deepOpen && (
+              <div className="mt-3">
+                <GameDeepFeedbackForm gameId={gameId} />
+              </div>
+            )}
+          </div>
+        )}
       </section>
     );
   }
 
   return (
     <section className={sectionClassName}>
-      <h2 className="text-sm font-medium text-zinc-500">v{playableVersion} への返事</h2>
-      <p className="mt-1 text-xs leading-relaxed text-zinc-600">
-        プレイありがとう。開発者からの質問に、短く返事を届けられます。
-      </p>
-      <p className="mt-1 text-xs text-orange-400/80">
+      {!embedded && (
+        <>
+          <h2 className="text-sm font-medium text-zinc-500">
+            v{playableVersion} への声
+          </h2>
+          <p className="mt-1 text-xs leading-relaxed text-zinc-600">
+            開発者からの質問に、短く声を届けられます。
+          </p>
+        </>
+      )}
+      <p className={`text-xs text-orange-400/80 ${embedded ? "" : "mt-1"}`}>
         1つ答えるだけでOK。全部答える必要はありません。
       </p>
 
@@ -209,25 +236,27 @@ export function GameVoiceSection({
         onClick={() => {
           void handleSubmitVoice();
         }}
-        className="mt-4 w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:opacity-50 sm:w-auto"
+        className="mt-4 w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:opacity-50"
       >
-        {submitting ? "送信中..." : "返事を届ける"}
+        {submitting ? "送信中..." : "声を届ける"}
       </button>
 
-      <div id={GAME_DEEP_FEEDBACK_ENTRY_ID} className="mt-4 scroll-mt-24">
-        <button
-          type="button"
-          onClick={() => setDeepOpen((open) => !open)}
-          className="text-xs font-medium text-zinc-500 transition-colors hover:text-orange-400/90"
-        >
-          {deepOpen ? "▾" : "▸"} もっと詳しく伝えたい（任意）
-        </button>
-        {deepOpen && (
-          <div className="mt-3">
-            <GameDeepFeedbackForm gameId={gameId} />
-          </div>
-        )}
-      </div>
+      {showDeepFeedback && !embedded && (
+        <div id={GAME_DEEP_FEEDBACK_ENTRY_ID} className="mt-4 scroll-mt-24">
+          <button
+            type="button"
+            onClick={() => setDeepOpen((open) => !open)}
+            className="text-xs font-medium text-zinc-500 transition-colors hover:text-orange-400/90"
+          >
+            {deepOpen ? "▾" : "▸"} もっと詳しく伝えたい（任意）
+          </button>
+          {deepOpen && (
+            <div className="mt-3">
+              <GameDeepFeedbackForm gameId={gameId} />
+            </div>
+          )}
+        </div>
+      )}
     </section>
   );
 }

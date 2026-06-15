@@ -71,14 +71,17 @@ export function VoicePromptCard({
       </div>
 
       {prompt.responseKind === "short_text" ? (
-        <textarea
-          rows={3}
-          value={value ?? ""}
-          maxLength={200}
-          placeholder="短く自由に入力"
-          onChange={(event) => onChange(event.target.value, event.target.value)}
-          className="mt-2 w-full resize-y rounded-lg border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/40 focus:outline-none focus:ring-1 focus:ring-orange-500/30"
-        />
+        <>
+          <textarea
+            rows={3}
+            value={value ?? ""}
+            maxLength={200}
+            placeholder="200文字以内で自由に入力"
+            onChange={(event) => onChange(event.target.value, event.target.value)}
+            className="mt-2 w-full resize-y rounded-lg border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/40 focus:outline-none focus:ring-1 focus:ring-orange-500/30"
+          />
+          <p className="mt-1 text-[11px] text-zinc-600">200文字以内</p>
+        </>
       ) : (
         <OptionButtons options={options} value={value} onChange={onChange} />
       )}

@@ -4,11 +4,16 @@ import { ChoicePromptFields } from "@/components/choice-prompt-fields";
 import { DeveloperChoicePreview } from "@/components/developer-choice-preview";
 import { DefaultVersionPromptPreview } from "@/components/default-version-prompt-preview";
 import {
+  applyQuestionTemplate,
   createDefaultChoiceDraftPatch,
   createEmptyPromptDraft,
-  DEVELOPER_RESPONSE_KIND_OPTIONS,
+  DEVELOPER_QUESTION_TEMPLATES,
+  DEVELOPER_RESPONSE_FORMAT_OPTIONS,
+  getFormatLabelForDraft,
+  inferTemplateFromDraft,
   resolveOptionsForDraft,
   type DeveloperPromptDraft,
+  type QuestionTemplateId,
 } from "@/lib/version-prompt-form";
 import { MAX_PROMPTS_PER_VERSION } from "@/lib/version-prompt-types";
 
@@ -55,7 +60,10 @@ export function VersionPromptEditor({
   }
 
   return (
-    <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
+    <div
+      id="version-prompts"
+      className="scroll-mt-24 space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4"
+    >
       <div>
         <p className="text-sm font-medium text-zinc-400">
           プレイヤーへの問い{" "}
@@ -117,98 +125,141 @@ export function VersionPromptEditor({
             </p>
           )}
 
-          {drafts.map((draft, index) => (
-            <div
-              key={draft.clientId}
-              className="space-y-3 rounded-lg border border-zinc-800/80 bg-zinc-900/40 p-4"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-medium text-zinc-500">問い {index + 1}</p>
-                {drafts.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeDraft(draft.clientId)}
-                    className="text-xs text-zinc-600 transition-colors hover:text-red-400/90"
+          {drafts.map((draft, index) => {
+            const templateId = inferTemplateFromDraft(draft);
+            const isCustomTemplate = templateId === "custom";
+
+            return (
+              <div
+                key={draft.clientId}
+                className="space-y-3 rounded-lg border border-zinc-800/80 bg-zinc-900/40 p-4"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium text-zinc-500">
+                    問い {index + 1}
+                  </p>
+                  {drafts.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeDraft(draft.clientId)}
+                      className="text-xs text-zinc-600 transition-colors hover:text-red-400/90"
+                    >
+                      削除
+                    </button>
+                  )}
+                </div>
+
+                <div>
+                  <label
+                    htmlFor={`prompt-template-${draft.clientId}`}
+                    className="text-xs font-medium text-zinc-500"
                   >
-                    削除
-                  </button>
-                )}
-              </div>
+                    質問テンプレート
+                  </label>
+                  <select
+                    id={`prompt-template-${draft.clientId}`}
+                    value={templateId}
+                    onChange={(event) => {
+                      const nextTemplateId = event.target
+                        .value as QuestionTemplateId;
+                      const patch = applyQuestionTemplate(nextTemplateId);
+                      updateDraft(draft.clientId, patch);
+                    }}
+                    className={inputClassName}
+                  >
+                    {DEVELOPER_QUESTION_TEMPLATES.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div>
-                <label
-                  htmlFor={`prompt-text-${draft.clientId}`}
-                  className="text-xs font-medium text-zinc-500"
-                >
-                  質問文
-                </label>
-                <input
-                  id={`prompt-text-${draft.clientId}`}
-                  type="text"
-                  value={draft.promptText}
-                  maxLength={200}
-                  onChange={(event) =>
-                    updateDraft(draft.clientId, { promptText: event.target.value })
-                  }
-                  className={inputClassName}
-                  placeholder="例：チュートリアルは分かりやすかった？"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor={`prompt-kind-${draft.clientId}`}
-                  className="text-xs font-medium text-zinc-500"
-                >
-                  回答形式
-                </label>
-                <select
-                  id={`prompt-kind-${draft.clientId}`}
-                  value={draft.responseKind}
-                  onChange={(event) => {
-                    const responseKind = event.target
-                      .value as DeveloperPromptDraft["responseKind"];
-                    const patch: Partial<DeveloperPromptDraft> = { responseKind };
-                    if (
-                      responseKind === "choice" &&
-                      !draft.choiceOptions?.length
-                    ) {
-                      Object.assign(patch, createDefaultChoiceDraftPatch());
+                <div>
+                  <label
+                    htmlFor={`prompt-text-${draft.clientId}`}
+                    className="text-xs font-medium text-zinc-500"
+                  >
+                    質問文
+                  </label>
+                  <input
+                    id={`prompt-text-${draft.clientId}`}
+                    type="text"
+                    value={draft.promptText}
+                    readOnly={!isCustomTemplate}
+                    maxLength={200}
+                    onChange={(event) =>
+                      updateDraft(draft.clientId, {
+                        promptText: event.target.value,
+                      })
                     }
-                    updateDraft(draft.clientId, patch);
-                  }}
-                  className={inputClassName}
-                >
-                  {DEVELOPER_RESPONSE_KIND_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-1 text-[11px] text-zinc-600">
-                  {
-                    DEVELOPER_RESPONSE_KIND_OPTIONS.find(
-                      (option) => option.value === draft.responseKind,
-                    )?.hint
-                  }
-                </p>
-              </div>
-
-              {draft.responseKind === "choice" && (
-                <div className="space-y-3">
-                  <ChoicePromptFields
-                    draft={draft}
-                    showValidation={showValidation}
-                    onChange={(patch) => updateDraft(draft.clientId, patch)}
-                  />
-                  <DeveloperChoicePreview
-                    promptText={draft.promptText}
-                    options={resolveOptionsForDraft(draft) ?? []}
+                    className={`${inputClassName} ${
+                      !isCustomTemplate ? "cursor-default text-zinc-400" : ""
+                    }`}
+                    placeholder="例：チュートリアルは分かりやすかった？"
                   />
                 </div>
-              )}
-            </div>
-          ))}
+
+                <div>
+                  <p className="text-xs font-medium text-zinc-500">回答形式</p>
+                  {isCustomTemplate ? (
+                    <>
+                      <select
+                        id={`prompt-kind-${draft.clientId}`}
+                        value={draft.responseKind}
+                        onChange={(event) => {
+                          const responseKind = event.target
+                            .value as DeveloperPromptDraft["responseKind"];
+                          const patch: Partial<DeveloperPromptDraft> = {
+                            responseKind,
+                          };
+                          if (
+                            responseKind === "choice" &&
+                            !draft.choiceOptions?.length
+                          ) {
+                            Object.assign(patch, createDefaultChoiceDraftPatch());
+                          }
+                          updateDraft(draft.clientId, patch);
+                        }}
+                        className={inputClassName}
+                      >
+                        {DEVELOPER_RESPONSE_FORMAT_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="mt-1 text-[11px] text-zinc-600">
+                        {
+                          DEVELOPER_RESPONSE_FORMAT_OPTIONS.find(
+                            (option) => option.value === draft.responseKind,
+                          )?.hint
+                        }
+                      </p>
+                    </>
+                  ) : (
+                    <p className="mt-2 rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2 text-sm text-zinc-400">
+                      {getFormatLabelForDraft(draft)}
+                    </p>
+                  )}
+                </div>
+
+                {draft.responseKind === "choice" && isCustomTemplate && (
+                  <div className="space-y-3">
+                    <ChoicePromptFields
+                      draft={draft}
+                      showValidation={showValidation}
+                      onChange={(patch) => updateDraft(draft.clientId, patch)}
+                    />
+                    <DeveloperChoicePreview
+                      promptText={draft.promptText}
+                      options={resolveOptionsForDraft(draft) ?? []}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
           {drafts.length < MAX_PROMPTS_PER_VERSION && (
             <button

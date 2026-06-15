@@ -60,7 +60,7 @@ export function EveryonesVoiceSection({
 
       {!hasResponses ? (
         <p className="mt-3 text-sm text-zinc-600">
-          まだ返事は届いていません。プレイ後、開発者の問いに返事を届けるとここに集計が表示されます。
+          まだ声は届いていません。プレイ後、開発者の問いに声を届けるとここに集計が表示されます。
         </p>
       ) : (
         <ul className="mt-3 space-y-4">
