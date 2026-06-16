@@ -1,29 +1,42 @@
 # Forge Handoff
 
-最終更新：**2026-06-16**（プレイヤー UI 方向修正 — e6d5fc1 staging preview deploy）
+最終更新：**2026-06-16**（P0/P1 実装 — verify 18/18 PASS）
 
 ---
 
 ## 現在の状態
 
-- プレイ履歴 Phase 1 — **UI 方向修正済み**（関係性バッジ + 最低 ▶️ プレイ済み + プレイヤー視点タイムライン）
-- **マイページ更新** — プレイヤー視点見出し（Devlog タイトル非表示）
-- commit **e6d5fc1** — main push 済み
-- **staging preview**: https://forge-bmcjf6vzw-soshirow-alts-projects.vercel.app（deploy `dpl_3eaac2YQwqVCV5dBQVGasduX8Zyt` READY）
-- **正式版 Phase 1** — main 反映済み
-- **見届け人 W1–W4 + tier T1/T2** — main 反映済み
+- **P0/P1 UI レビュー** — 実装完了（ForgeGameCard + Veteran developer patch）
+- **verify:future-demo:staging** — **18/18 PASS**（Veteran 所有 7 / Gold 回帰）
+- プレイ履歴 + 更新見出し — e6d5fc1 preview deploy 済み（UI 追加変更は未 deploy）
+- **本番 prod deploy — 保留**
+- 正式版 Phase 1 / 見届け人 W1–W4 + tier — main 反映済み
 - migration **014** — staging + 本番適用済み
 - **将来像デモ F1** — staging seed + verify 13/13 PASS
 - PLAYER_VISIBLE=false 維持
 
 ---
 
-## 優先順位（2026-06-16 更新）
+## 優先順位（2026-06-16 更新 — ロードマップ順位変更）
 
-1. **Veteran 実機 Walkthrough** → **UI 全面レビュー**
-2. **伴走者**
-3. **育成者**
-4. **Phase 1b** — 作品詳細コンパクト履歴
+**prod deploy までの流れ**
+
+1. **Veteran walkthrough** — preview deploy 後、実機確認
+2. **スクリーンショット確認**
+3. **UI 全面レビュー継続**
+4. **prod deploy 判断**
+
+**Cursor 推奨 1 位**: Veteran Walkthrough + 実機 UI 確認
+
+| 優先 | 論点 | 状態 |
+|------|------|------|
+| **P0** | Demo Veteran 開発者 | **完了** — patch 7 本、verify PASS |
+| **P1** | 正式版 grid | **完了** |
+| **P1** | ForgeGameCard | **完了**（プレイヤー側） |
+| **P1** | サムネ | **完了** — GeneratedThumbnailPoster |
+| **P2** | タブ名称 | **完了** |
+
+**その後**: **開発者タブ ForgeGameCard 化** → 伴走者 → 育成者 → Phase 1b
 
 ---
 
@@ -68,6 +81,9 @@ Studio: 開発中 / 正式版 / 正式版再調整中
 
 ## 次
 
-1. **Veteran 実機 Walkthrough** — `docs/future-demo-walkthrough.md`
-2. **UI 全面レビュー**
-3. 世界戦切替 — hide / show（オーナー指示時）
+1. **Veteran walkthrough** — 実機 + スクショ
+2. **UI 全面レビュー継続** — P0–P2 消化
+3. **prod deploy 判断** — 主要 UI 修正後に GO/NO-GO
+4. 世界戦切替 — hide / show（オーナー指示時）
+
+**触らない**: `vercel deploy --prod` / 本番反映（オーナー保留中）

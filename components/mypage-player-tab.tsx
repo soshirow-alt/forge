@@ -2,54 +2,20 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { CreatorLink } from "@/components/creator-link";
 import {
-  MyPageCompactGameList,
-  MyPageDashboardCard,
-} from "@/components/mypage-dashboard-card";
+  ForgeGameCardList,
+  type ForgeGameCardBadge,
+} from "@/components/forge-game-card";
 import { MyPageUpdatesSection } from "@/components/mypage-updates-section";
 import { OfficialReleaseSection } from "@/components/official-release-section";
 import { PlayHistorySection } from "@/components/play-history-section";
 import { VoiceAdoptionsSection } from "@/components/voice-adoptions-section";
-import { PlayTypeLabel } from "@/components/play-type-label";
+import { MyPageDashboardCard } from "@/components/mypage-dashboard-card";
 import { useGames } from "@/components/games-provider";
 import type { Game } from "@/lib/mock-games";
 
-function toCompactGames(games: Game[]) {
-  return games.map((game) => ({
-    id: game.id,
-    title: game.title,
-    href: `/games/${game.id}`,
-    meta: game.genre,
-  }));
-}
-
-function ExpandedGameList({ games }: { games: Game[] }) {
-  return (
-    <ul className="space-y-2">
-      {games.map((game) => (
-        <li key={game.id}>
-          <Link
-            href={`/games/${game.id}`}
-            className="group flex items-center justify-between gap-3 rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3 py-2 transition-colors hover:border-zinc-700"
-          >
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-zinc-200 group-hover:text-orange-400">
-                {game.title}
-              </p>
-              <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-zinc-600">
-                <CreatorLink name={game.creator} />
-                <PlayTypeLabel playUrl={game.playUrl} />
-              </div>
-            </div>
-            <span aria-hidden="true" className="shrink-0 text-zinc-600">
-              →
-            </span>
-          </Link>
-        </li>
-      ))}
-    </ul>
-  );
+function engagementBadge(id: string, label: string, emoji?: string): ForgeGameCardBadge[] {
+  return [{ id, emoji, label }];
 }
 
 export function MyPagePlayerTab() {
@@ -81,11 +47,24 @@ export function MyPagePlayerTab() {
 
   const hasPlayedProjects = playedGames.length > 0;
 
+  const renderGameList = (
+    games: Game[],
+    badge: ForgeGameCardBadge[],
+    limit?: number,
+  ) => (
+    <ForgeGameCardList
+      games={games}
+      variant="compact"
+      limit={limit}
+      badgesForGame={() => badge}
+      detailLabel="詳細 →"
+    />
+  );
+
   return (
     <div className="space-y-8">
       <VoiceAdoptionsSection />
       <PlayHistorySection />
-      <OfficialReleaseSection />
 
       {!hasEngagementLists && !hasPlayedProjects ? (
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-6 py-16 text-center">
@@ -112,10 +91,15 @@ export function MyPagePlayerTab() {
             count={supportedGames.length}
             emptyMessage="応援した作品はまだありません。"
             accentClassName="border-orange-500"
-            preview={
-              <MyPageCompactGameList games={toCompactGames(supportedGames)} limit={2} />
-            }
-            expanded={<ExpandedGameList games={supportedGames} />}
+            preview={renderGameList(
+              supportedGames,
+              engagementBadge("supported", "応援中", "🧡"),
+              2,
+            )}
+            expanded={renderGameList(
+              supportedGames,
+              engagementBadge("supported", "応援中", "🧡"),
+            )}
             isExpanded={expanded === "supported"}
             onToggleExpand={() => toggle("supported")}
             showExpand={supportedGames.length > 2}
@@ -128,10 +112,15 @@ export function MyPagePlayerTab() {
             count={watchedGames.length}
             emptyMessage="追跡中の作品はまだありません。"
             accentClassName="border-amber-500"
-            preview={
-              <MyPageCompactGameList games={toCompactGames(watchedGames)} limit={2} />
-            }
-            expanded={<ExpandedGameList games={watchedGames} />}
+            preview={renderGameList(
+              watchedGames,
+              engagementBadge("watching", "更新を追う", "🔄"),
+              2,
+            )}
+            expanded={renderGameList(
+              watchedGames,
+              engagementBadge("watching", "更新を追う", "🔄"),
+            )}
             isExpanded={expanded === "watching"}
             onToggleExpand={() => toggle("watching")}
             showExpand={watchedGames.length > 2}
@@ -144,16 +133,23 @@ export function MyPagePlayerTab() {
             count={bookmarkedGames.length}
             emptyMessage="保存した作品はまだありません。"
             accentClassName="border-zinc-500"
-            preview={
-              <MyPageCompactGameList games={toCompactGames(bookmarkedGames)} limit={2} />
-            }
-            expanded={<ExpandedGameList games={bookmarkedGames} />}
+            preview={renderGameList(
+              bookmarkedGames,
+              engagementBadge("bookmark", "あとで見る", "🔖"),
+              2,
+            )}
+            expanded={renderGameList(
+              bookmarkedGames,
+              engagementBadge("bookmark", "あとで見る", "🔖"),
+            )}
             isExpanded={expanded === "bookmarks"}
             onToggleExpand={() => toggle("bookmarks")}
             showExpand={bookmarkedGames.length > 2}
           />
         </div>
       )}
+
+      <OfficialReleaseSection />
     </div>
   );
 }

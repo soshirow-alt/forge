@@ -4,7 +4,26 @@
 
 ---
 
-## 2026-06-16 プレイヤー画面 UI — プレイ履歴・更新通知（方向修正）
+## 2026-06-16 UI 全面レビュー P0/P1 — Veteran 開発者 + 標準カード
+
+### P0 — Demo Veteran 開発者 patch
+
+- `--patch-veteran-developer` — Veteran 所有 7 本 additive（既存 25 本維持）
+- developer_profiles、Devlog 5/作品、NPC Voice、Released 5 / Reopened 1
+- verify 18/18 PASS（Veteran Gold 回帰 + 開発者断言）
+
+### P1 — ForgeGameCard + 正式版 grid
+
+- `components/forge-game-card.tsx` — compact / row / grid + GeneratedThumbnailPoster
+- プレイ履歴 / 応援中 / 更新を追う / 更新セクション — 統一カード
+- 正式版セクション — 折りたたみ + sm:2 lg:3 grid、grant 詳細削除
+- マイページタブ — 遊んだゲーム / 作ったゲーム
+
+### デプロイ
+
+- prod deploy — **保留**
+
+---
 
 ### プレイ履歴（`/mypage#play-history`）
 
@@ -26,6 +45,12 @@
 - `lib/player-update-display.ts` — 更新見出しの共通ロジック
 - `components/play-history-section.tsx` / `mypage-updates-section.tsx`
 - `hooks/use-player-play-history.ts` — witness grants 取得
+
+### デプロイ判断（オーナー 2026-06-16）
+
+- commit **e6d5fc1** / **b0f1a2f** — main push 済み
+- **staging preview** READY — `dpl_3eaac2YQwqVCV5dBQVGasduX8Zyt`
+- **本番 prod deploy — 保留**（UI 全面レビュー主要論点 P0–P2 未消化のため）
 
 ---
 

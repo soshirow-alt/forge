@@ -23,7 +23,8 @@
     "seed:future-demo:staging": "npx --yes tsx scripts/future-demo-seed.ts",
     "verify:future-demo:staging": "npx --yes tsx scripts/future-demo-verify.ts",
     "hide:future-demo:staging": "npx --yes tsx scripts/future-demo-seed.ts --hide",
-    "show:future-demo:staging": "npx --yes tsx scripts/future-demo-seed.ts --show"
+    "show:future-demo:staging": "npx --yes tsx scripts/future-demo-seed.ts --show",
+    "patch:veteran-developer:staging": "npx --yes tsx scripts/future-demo-seed.ts --patch-veteran-developer"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

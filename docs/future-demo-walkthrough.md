@@ -18,10 +18,11 @@ NPC 18 人（開発者 6 + プレイヤー 12）は Seeder が作成。**オー�
 
 ---
 
-## 2. Seed / Verify
+## 2. Seed / Verify / Patch
 
 ```bash
 npm run seed:future-demo:staging
+npm run patch:veteran-developer:staging   # Veteran 開発者 7 本（additive）
 npm run verify:future-demo:staging
 ```
 
@@ -66,6 +67,7 @@ witness grants 付与後は作品削除不可のため、**visibility トグル*
 - 見届け人 grant: **12** → tier **Gold**
 - プレイ sessions: **40+**
 - Voice: **25+**
+- **開発者タブ**: 所有作品 **7**（Released 5 / Reopened 1）
 - 正式版到達・Devlog 反映をプレイ履歴で確認可能
 
 ---
@@ -75,10 +77,11 @@ witness grants 付与後は作品削除不可のため、**visibility トグル*
 1. **ログイン** — `veteran@forge-future-demo.local`
 2. **`/`** — 投稿密度。`[future-demo]` 作品が並ぶか
 3. **代表作** — `[future-demo] 星灯の旅路` 等の `/games/[id]` — 育成感・Voice・Devlog 導線
-4. **`/mypage#play-history`** — 厚いタイムライン、release 行
-5. **`/mypage#official-release`** — **Gold** tier + 見届け人 teal カード
-6. **Devlog 一覧** — 連続更新、変化の narrative
-7. **Reopened 作品** — `[future-demo]` の Reopened 3 本で再調整履歴
+4. **`/mypage#play-history`** — サムネ付きカード + 関係性バッジ + 展開タイムライン
+5. **`/mypage?tab=developer`** — **所有 7 作品**がカード並び（空でないこと）
+6. **`/mypage#official-release`**（最下部）— 折りたたみ → grid、Gold tier は見出しのみ
+7. **Devlog 一覧** — 連続更新、変化の narrative
+8. **Reopened 作品** — `[future-demo]` の Reopened 3 本 + Veteran 所有 1 本
 
 ### UI レビュー 6 観点
 

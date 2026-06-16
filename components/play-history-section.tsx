@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { CreatorLink } from "@/components/creator-link";
+import {
+  ForgeGameCard,
+  type ForgeGameCardBadge,
+} from "@/components/forge-game-card";
 import { PlayTypeLabel } from "@/components/play-type-label";
 import { useGames } from "@/components/games-provider";
 import { usePlayerPlayHistory } from "@/hooks/use-player-play-history";
@@ -10,6 +14,14 @@ import {
   formatPlayHistoryDate,
   type PlayHistoryProjectTimeline,
 } from "@/lib/player-play-timeline";
+
+function timelineBadges(timeline: PlayHistoryProjectTimeline): ForgeGameCardBadge[] {
+  return timeline.summary.badges.map((badge) => ({
+    id: badge.id,
+    emoji: badge.emoji,
+    label: badge.label,
+  }));
+}
 
 function PlayHistoryProjectCard({
   timeline,
@@ -28,30 +40,33 @@ function PlayHistoryProjectCard({
 
   return (
     <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/40">
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setExpanded((current) => !current)}
-        className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-zinc-900/40"
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setExpanded((current) => !current);
+          }
+        }}
+        className="cursor-pointer transition-colors hover:bg-zinc-900/40"
         aria-expanded={expanded}
       >
-        <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-zinc-100">{game.title}</p>
-          <ul className="mt-2 flex flex-wrap gap-1.5">
-            {timeline.summary.badges.map((badge) => (
-              <li
-                key={badge.id}
-                className="inline-flex items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900/60 px-2 py-0.5 text-[11px] text-zinc-400"
-              >
-                <span aria-hidden="true">{badge.emoji}</span>
-                <span>{badge.label}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <span aria-hidden="true" className="shrink-0 pt-0.5 text-zinc-600">
-          {expanded ? "▼" : "▶"}
-        </span>
-      </button>
+        <ForgeGameCard
+          game={game}
+          variant="row"
+          badges={timelineBadges(timeline)}
+          linkTitle={false}
+          showActions={false}
+          className="border-0 bg-transparent"
+          trailing={
+            <span aria-hidden="true" className="pt-1 text-zinc-600">
+              {expanded ? "▼" : "▶"}
+            </span>
+          }
+        />
+      </div>
 
       {expanded ? (
         <div className="border-t border-zinc-800/80 px-4 py-3">

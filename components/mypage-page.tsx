@@ -70,7 +70,7 @@ function MyPagePageContent() {
         <header className="mt-8">
           <h1 className="text-3xl font-bold tracking-tight">マイページ</h1>
           <p className="mt-3 max-w-3xl text-zinc-400 leading-relaxed">
-            プレイヤーとしての活動と、開発者としての作品管理を切り替えて確認できます。
+            遊んだゲームと、作ったゲームを切り替えて確認できます。
           </p>
         </header>
 
@@ -90,7 +90,7 @@ function MyPagePageContent() {
                 : "border border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
             }`}
           >
-            プレイヤー活動
+            遊んだゲーム
           </button>
           <button
             type="button"
@@ -103,7 +103,7 @@ function MyPagePageContent() {
                 : "border border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
             }`}
           >
-            作品管理
+            作ったゲーム
             {ownedCount > 0 && (
               <span className="ml-1.5 text-xs text-zinc-500">({ownedCount})</span>
             )}

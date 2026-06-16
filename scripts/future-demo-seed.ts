@@ -6,6 +6,7 @@
  *   npm run seed:future-demo:staging -- --fresh
  *   npm run hide:future-demo:staging
  *   npm run show:future-demo:staging
+ *   npm run patch:veteran-developer:staging
  */
 import { createClient } from "@supabase/supabase-js";
 import {
@@ -15,8 +16,14 @@ import {
   DEMO_VETERAN_EMAIL,
   DEMO_VETERAN_PASSWORD,
   FUTURE_DEMO_MARKER,
+  FUTURE_DEMO_TITLE_PREFIX,
   GENRES,
   PROJECT_TITLE_SUFFIXES,
+  VETERAN_DEVELOPER_CREATOR,
+  VETERAN_DEVELOPER_CREATOR_ID,
+  VETERAN_DEVELOPER_NAME,
+  VETERAN_OWNED_PROJECT_COUNT,
+  VETERAN_PROJECT_SUFFIXES,
   WORLD_COUNTS,
   check014Applied,
   decodeWorldMeta,
@@ -31,6 +38,7 @@ import {
   insertWatch,
   listFutureDemoProjects,
   loadEnvLocal,
+  loadWorldState,
   makePlayerNpcEmail,
   makePlayerNpcPassword,
   printLoginCredentials,
@@ -49,6 +57,7 @@ const fresh = process.argv.includes("--fresh");
 const hideWorld = process.argv.includes("--hide");
 const showWorld = process.argv.includes("--show");
 const patchVeteranVoices = process.argv.includes("--patch-veteran-voices");
+const patchVeteranDeveloper = process.argv.includes("--patch-veteran-developer");
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -69,6 +78,222 @@ type SeededProject = {
   title: string;
   index: number;
 };
+
+async function seedVeteranOwnedDevlogs(
+  project: SeededProject,
+  base: Date,
+  meta: FutureDemoWorldMeta,
+) {
+  const count = 5;
+
+  for (let index = 0; index < count; index += 1) {
+    const publishedVersion =
+      index === count - 1 ? "0.2" : index > 0 ? "0.1" : null;
+
+    const { error } = await supabase.from("project_devlogs").insert({
+      project_id: project.idText,
+      author_id: project.ownerId,
+      title:
+        index === 0
+          ? "試作版を公開しました"
+          : index === 1
+            ? "版 0.2 を公開しました"
+            : `開発メモ #${index + 1}`,
+      content: `${project.title} の更新です。${FUTURE_DEMO_MARKER} world=${meta.worldId}`,
+      published_version: publishedVersion,
+      created_at: worldTs(base, 8000 + project.index * 120 + index * 30),
+    });
+
+    if (error) {
+      throw error;
+    }
+  }
+}
+
+async function resolvePlayerNpcIds(): Promise<string[]> {
+  const state = loadWorldState();
+  if (state?.playerNpcIds?.length) {
+    return state.playerNpcIds;
+  }
+
+  const ids: string[] = [];
+  for (let index = 1; index <= WORLD_COUNTS.playerNpcs; index += 1) {
+    const id = await ensureAuthUser(
+      supabase,
+      makePlayerNpcEmail(index),
+      makePlayerNpcPassword(index),
+    );
+    ids.push(id);
+  }
+
+  return ids;
+}
+
+async function countVeteranOwnedProjects(veteranId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from("projects")
+    .select("id", { count: "exact", head: true })
+    .eq("owner_id", veteranId)
+    .like("title", `${FUTURE_DEMO_TITLE_PREFIX}%`);
+
+  if (error) {
+    throw error;
+  }
+
+  return count ?? 0;
+}
+
+async function patchVeteranDeveloperProjects() {
+  console.log("=== Patch Demo Veteran developer projects (additive) ===");
+
+  const applied = await check014Applied(supabase);
+  if (!applied) {
+    console.error("Apply migration 014 before patching veteran developer data.");
+    process.exit(2);
+  }
+
+  const existingWorld = await listFutureDemoProjects(supabase);
+  if (existingWorld.length < WORLD_COUNTS.projects) {
+    console.error("Run seed:future-demo:staging first (base world missing).");
+    process.exit(1);
+  }
+
+  const veteranId = await ensureAuthUser(supabase, DEMO_VETERAN_EMAIL, DEMO_VETERAN_PASSWORD);
+  const ownedCount = await countVeteranOwnedProjects(veteranId);
+
+  if (ownedCount >= VETERAN_OWNED_PROJECT_COUNT) {
+    console.log(`PASS — veteran already owns ${ownedCount} future-demo project(s).`);
+    printLoginCredentials();
+    return;
+  }
+
+  await ensureDeveloperProfile(
+    supabase,
+    veteranId,
+    VETERAN_DEVELOPER_CREATOR_ID,
+    VETERAN_DEVELOPER_NAME,
+  );
+
+  const playerNpcIds = await resolvePlayerNpcIds();
+  const base = worldBaseTime();
+  const state = loadWorldState();
+  const meta: FutureDemoWorldMeta = state ?? {
+    worldId: `world-patch-${Date.now()}`,
+    veteranId,
+    newUserId: "",
+    devNpcIds: [],
+    playerNpcIds,
+    projectIds: existingWorld.map((project) => project.id as string),
+    releasedProjectIds: [],
+    reopenedProjectIds: [],
+    veteranOwnedProjectIds: [],
+    seededAt: new Date().toISOString(),
+    visibility: "public",
+  };
+
+  meta.veteranId = veteranId;
+  meta.playerNpcIds = playerNpcIds;
+  meta.veteranOwnedProjectIds = meta.veteranOwnedProjectIds ?? [];
+
+  const projects: SeededProject[] = [];
+
+  console.log(`\n--- Insert ${VETERAN_OWNED_PROJECT_COUNT} veteran-owned projects ---`);
+
+  for (let index = 0; index < VETERAN_OWNED_PROJECT_COUNT; index += 1) {
+    const suffix = VETERAN_PROJECT_SUFFIXES[index]!;
+    const title = projectTitle(suffix);
+    const blurb = `${suffix} — Demo Veteran が育てた作品です。`;
+
+    const { data, error } = await supabase
+      .from("projects")
+      .insert({
+        owner_id: veteranId,
+        owner_name: VETERAN_DEVELOPER_NAME,
+        title,
+        creator: VETERAN_DEVELOPER_CREATOR,
+        genre: GENRES[index % GENRES.length],
+        description: `${blurb}\n\n${FUTURE_DEMO_MARKER}\n${JSON.stringify({ ...meta, veteranOwned: true })}`,
+        phase: index < 3 ? "試作版" : "プレイ可能版",
+        status: "プレイ可能版",
+        looking_for_testers: index === 0,
+        tester_slots: index === 0 ? 8 : null,
+        section: index < 2 ? "new" : index < 5 ? "beta" : "testers",
+        play_url: `https://example.com/future-demo/veteran/${index + 1}`,
+        visibility: meta.visibility ?? "public",
+        playable_version: index % 2 === 0 ? "0.2" : "0.1",
+        release_status: "in_development",
+        created_at: worldTs(base, 7000 + index * 60),
+      })
+      .select("id, title")
+      .single();
+
+    if (error || !data) {
+      throw error ?? new Error("veteran project insert failed");
+    }
+
+    const project: SeededProject = {
+      id: data.id as string,
+      idText: data.id as string,
+      ownerId: veteranId,
+      title: data.title as string,
+      index: 100 + index,
+    };
+
+    projects.push(project);
+    meta.veteranOwnedProjectIds!.push(project.id);
+    meta.projectIds.push(project.id);
+  }
+
+  console.log("\n--- Devlogs ---");
+  for (const project of projects) {
+    await seedVeteranOwnedDevlogs(project, base, meta);
+  }
+
+  console.log("\n--- NPC engagement (no veteran self-play) ---");
+  for (const project of projects) {
+    const v01 = await ensureVersionPrompt(supabase, project.idText, "0.1");
+    const v02 = await ensureVersionPrompt(supabase, project.idText, "0.2");
+    await seedNpcEngagement(playerNpcIds, project, base, v01, v02);
+  }
+
+  const releasedCount = 5;
+  const releasedProjects = projects.slice(0, releasedCount);
+  const reopenIndex = 2;
+
+  console.log("\n--- Release events ---");
+  for (const project of releasedProjects) {
+    const releaseAt = worldTs(base, 9000 + project.index * 30);
+    await insertReleaseEvent(
+      supabase,
+      project.id,
+      veteranId,
+      "released",
+      `${project.title} を正式版として公開しました。`,
+      releaseAt,
+    );
+    meta.releasedProjectIds.push(project.id);
+  }
+
+  const reopenedProject = releasedProjects[reopenIndex]!;
+  await insertReleaseEvent(
+    supabase,
+    reopenedProject.id,
+    veteranId,
+    "release_reopened",
+    `${reopenedProject.title} を再調整中に戻しました。`,
+    worldTs(base, 9600 + reopenIndex * 20),
+  );
+  meta.reopenedProjectIds.push(reopenedProject.id);
+
+  saveWorldState(meta);
+
+  console.log("\nPASS — veteran developer patch complete");
+  console.log(`veteran-owned projects: ${projects.length}`);
+  console.log(`released: ${releasedProjects.length}`);
+  console.log(`reopened: 1`);
+  printLoginCredentials();
+  console.log("\nNext: npm run verify:future-demo:staging");
+}
 
 async function seedDevlogs(project: SeededProject, base: Date, meta: FutureDemoWorldMeta) {
   const count = project.index < 12 ? 4 : project.index < 20 ? 3 : 2;
@@ -549,6 +774,11 @@ async function main() {
 
   if (patchVeteranVoices) {
     await augmentVeteranVoices();
+    return;
+  }
+
+  if (patchVeteranDeveloper) {
+    await patchVeteranDeveloperProjects();
     return;
   }
 

@@ -26,6 +26,30 @@ export const VERIFY_THRESHOLDS = {
   veteranVoices: 25,
 } as const;
 
+export const VETERAN_OWNED_PROJECT_COUNT = 7;
+
+export const VETERAN_DEVELOPER_THRESHOLDS = {
+  ownedProjects: 6,
+  ownedReleased: 4,
+  ownedReopened: 1,
+  ownedDevlogs: 20,
+  ownedVoices: 15,
+} as const;
+
+export const VETERAN_DEVELOPER_NAME = "デモベテラン";
+export const VETERAN_DEVELOPER_CREATOR = "Demo Veteran";
+export const VETERAN_DEVELOPER_CREATOR_ID = "future-demo-veteran";
+
+export const VETERAN_PROJECT_SUFFIXES = [
+  "炉心の残光",
+  "緑潮の工房",
+  "星屑の航路",
+  "白磁の庭",
+  "夜航の手記",
+  "琥珀の回廊",
+  "遠雷の譜",
+] as const;
+
 export const WORLD_COUNTS = {
   projects: 25,
   devNpcs: 6,
@@ -44,6 +68,7 @@ export type FutureDemoWorldMeta = {
   projectIds: string[];
   releasedProjectIds: string[];
   reopenedProjectIds: string[];
+  veteranOwnedProjectIds?: string[];
   seededAt: string;
   visibility: "public" | "private";
 };

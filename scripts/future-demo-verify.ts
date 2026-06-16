@@ -8,6 +8,8 @@ import {
   DEMO_NEW_USER_EMAIL,
   DEMO_VETERAN_EMAIL,
   FUTURE_DEMO_TITLE_PREFIX,
+  VETERAN_DEVELOPER_THRESHOLDS,
+  VETERAN_OWNED_PROJECT_COUNT,
   VERIFY_THRESHOLDS,
   assertVeteranGold,
   check014Applied,
@@ -66,8 +68,8 @@ async function main() {
 
   record(
     "projects",
-    projects.length >= VERIFY_THRESHOLDS.projects,
-    `${projects.length} (min ${VERIFY_THRESHOLDS.projects})`,
+    projects.length >= VERIFY_THRESHOLDS.projects + VETERAN_OWNED_PROJECT_COUNT - 1,
+    `${projects.length} (min ${VERIFY_THRESHOLDS.projects + VETERAN_OWNED_PROJECT_COUNT - 1} with veteran patch)`,
   );
 
   const { count: devlogCount, error: devlogError } = await supabase
@@ -228,6 +230,95 @@ async function main() {
   }
 
   record("new user sessions", (newUserSessionCount ?? 0) === 0, `${newUserSessionCount ?? 0}`);
+
+  const veteranOwnedProjects = projects.filter(
+    (project) => project.owner_id === veteranId,
+  );
+  const veteranOwnedIds = veteranOwnedProjects.map((project) => project.id as string);
+
+  record(
+    "veteran owned projects",
+    veteranOwnedProjects.length >= VETERAN_DEVELOPER_THRESHOLDS.ownedProjects,
+    `${veteranOwnedProjects.length} (min ${VETERAN_DEVELOPER_THRESHOLDS.ownedProjects}, target ${VETERAN_OWNED_PROJECT_COUNT})`,
+  );
+
+  if (veteranOwnedIds.length > 0) {
+    const { count: veteranOwnedDevlogCount, error: veteranOwnedDevlogError } =
+      await supabase
+        .from("project_devlogs")
+        .select("id", { count: "exact", head: true })
+        .in("project_id", veteranOwnedIds);
+
+    if (veteranOwnedDevlogError) {
+      throw veteranOwnedDevlogError;
+    }
+
+    record(
+      "veteran owned devlogs",
+      (veteranOwnedDevlogCount ?? 0) >= VETERAN_DEVELOPER_THRESHOLDS.ownedDevlogs,
+      `${veteranOwnedDevlogCount ?? 0} (min ${VETERAN_DEVELOPER_THRESHOLDS.ownedDevlogs})`,
+    );
+
+    const { count: veteranOwnedVoiceCount, error: veteranOwnedVoiceError } =
+      await supabase
+        .from("project_voice_responses")
+        .select("id", { count: "exact", head: true })
+        .in("project_id", veteranOwnedIds)
+        .neq("user_id", veteranId);
+
+    if (veteranOwnedVoiceError) {
+      throw veteranOwnedVoiceError;
+    }
+
+    record(
+      "veteran owned npc voices",
+      (veteranOwnedVoiceCount ?? 0) >= VETERAN_DEVELOPER_THRESHOLDS.ownedVoices,
+      `${veteranOwnedVoiceCount ?? 0} (min ${VETERAN_DEVELOPER_THRESHOLDS.ownedVoices})`,
+    );
+
+    const { count: veteranOwnedReleasedCount, error: veteranOwnedReleasedError } =
+      await supabase
+        .from("project_release_events")
+        .select("id", { count: "exact", head: true })
+        .in("project_id", veteranOwnedIds)
+        .eq("event_type", "released");
+
+    if (veteranOwnedReleasedError) {
+      throw veteranOwnedReleasedError;
+    }
+
+    record(
+      "veteran owned released",
+      (veteranOwnedReleasedCount ?? 0) >= VETERAN_DEVELOPER_THRESHOLDS.ownedReleased,
+      `${veteranOwnedReleasedCount ?? 0} (min ${VETERAN_DEVELOPER_THRESHOLDS.ownedReleased})`,
+    );
+
+    const { count: veteranOwnedReopenedCount, error: veteranOwnedReopenedError } =
+      await supabase
+        .from("project_release_events")
+        .select("id", { count: "exact", head: true })
+        .in("project_id", veteranOwnedIds)
+        .eq("event_type", "release_reopened");
+
+    if (veteranOwnedReopenedError) {
+      throw veteranOwnedReopenedError;
+    }
+
+    record(
+      "veteran owned reopened",
+      (veteranOwnedReopenedCount ?? 0) >= VETERAN_DEVELOPER_THRESHOLDS.ownedReopened,
+      `${veteranOwnedReopenedCount ?? 0} (min ${VETERAN_DEVELOPER_THRESHOLDS.ownedReopened})`,
+    );
+  } else {
+    record(
+      "veteran owned devlogs",
+      false,
+      "0 — run patch:veteran-developer:staging",
+    );
+    record("veteran owned npc voices", false, "0 — run patch");
+    record("veteran owned released", false, "0 — run patch");
+    record("veteran owned reopened", false, "0 — run patch");
+  }
 
   const publicCount = projects.filter((project) => project.visibility === "public").length;
   record(

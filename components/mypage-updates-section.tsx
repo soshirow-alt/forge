@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { useGames } from "@/components/games-provider";
+import { ForgeGameCard } from "@/components/forge-game-card";
 import { sortDevlogsNewestFirst, type DevlogEntry } from "@/lib/devlogs";
 import { formatNotificationDate, type Notification } from "@/lib/notifications";
 import {
@@ -152,11 +153,6 @@ function buildWatchedUpdates(
   );
 }
 
-const primaryUpdateButtonClassName =
-  "inline-flex cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2 text-xs font-semibold text-zinc-950 transition-opacity hover:opacity-90 sm:text-sm";
-
-const secondaryUpdateLinkClassName =
-  "inline-flex cursor-pointer items-center text-xs font-medium text-zinc-400 transition-colors hover:text-orange-300 sm:text-sm";
 
 export function MyPageUpdatesSection({
   watchedGames,
@@ -256,14 +252,19 @@ export function MyPageUpdatesSection({
                 <p className="mt-2 text-base font-semibold text-zinc-100">
                   {update.headline}
                 </p>
-                <p className="mt-1 text-sm text-zinc-500">{update.game.title}</p>
-                <div className="mt-4 flex flex-wrap items-center gap-3">
-                  <Link href={update.replayHref} className={primaryUpdateButtonClassName}>
-                    もう一度プレイする
-                  </Link>
-                  <Link href={update.detailsHref} className={secondaryUpdateLinkClassName}>
-                    更新内容を見る →
-                  </Link>
+                <div className="mt-3">
+                  <ForgeGameCard
+                    game={update.game}
+                    variant="row"
+                    badges={[{ id: "watching", emoji: "🔄", label: "更新を追う" }]}
+                    primaryAction={{
+                      label: "もう一度プレイする",
+                      href: update.replayHref,
+                    }}
+                    detailHref={update.detailsHref}
+                    detailLabel="更新内容を見る →"
+                    className="border-zinc-800/60"
+                  />
                 </div>
               </article>
             </li>
