@@ -27,6 +27,7 @@ export type Game = {
   estimatedPlayTime?: string;
   focusNotes?: string;
   playableVersion?: string;
+  releaseStatus?: "in_development" | "released" | "release_reopened";
 };
 
 export const games: Game[] = [

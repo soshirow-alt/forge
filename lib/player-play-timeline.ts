@@ -1,8 +1,13 @@
 import type { DevlogEntry } from "@/lib/devlogs";
+import {
+  formatReleaseTimelineLabel,
+  getFirstReleasedEvent,
+  type ProjectReleaseEvent,
+} from "@/lib/project-release-state";
 import type { ProjectPlaySession } from "@/lib/supabase/play-sessions-db";
 import type { VoiceResponse } from "@/lib/version-prompt-types";
 
-export type PlayHistoryEventType = "play" | "voice" | "devlog";
+export type PlayHistoryEventType = "play" | "voice" | "devlog" | "release";
 
 export type PlayHistoryTimelineEvent = {
   id: string;
@@ -10,6 +15,7 @@ export type PlayHistoryTimelineEvent = {
   occurredAt: string;
   label: string;
   versionKey?: string;
+  releaseEventType?: "released" | "release_reopened";
 };
 
 export type PlayHistoryProjectSummary = {
@@ -17,6 +23,7 @@ export type PlayHistoryProjectSummary = {
   voiceCount: number;
   updateWatchCount: number;
   daysSinceFirstPlay: number;
+  reachedOfficialRelease: boolean;
   summaryLines: string[];
 };
 
@@ -58,6 +65,7 @@ export function buildPlayHistorySummary(input: {
   voiceCount: number;
   updateWatchCount: number;
   firstPlayedAt: string | null;
+  reachedOfficialRelease: boolean;
 }): PlayHistoryProjectSummary {
   const lines: string[] = [];
 
@@ -73,6 +81,10 @@ export function buildPlayHistorySummary(input: {
     lines.push(`${input.updateWatchCount}回更新を見届けた`);
   }
 
+  if (input.reachedOfficialRelease) {
+    lines.push("正式版到達を見届けた");
+  }
+
   const daysSinceFirstPlay = input.firstPlayedAt
     ? daysBetween(input.firstPlayedAt)
     : 0;
@@ -86,6 +98,7 @@ export function buildPlayHistorySummary(input: {
     voiceCount: input.voiceCount,
     updateWatchCount: input.updateWatchCount,
     daysSinceFirstPlay,
+    reachedOfficialRelease: input.reachedOfficialRelease,
     summaryLines: lines,
   };
 }
@@ -121,6 +134,7 @@ export function buildPlayHistoryTimelineEvents(input: {
   sessions: ProjectPlaySession[];
   voices: VoiceResponse[];
   devlogs: DevlogEntry[];
+  releaseEvents?: ProjectReleaseEvent[];
 }): PlayHistoryTimelineEvent[] {
   const events: PlayHistoryTimelineEvent[] = [];
 
@@ -158,6 +172,16 @@ export function buildPlayHistoryTimelineEvents(input: {
     });
   }
 
+  for (const releaseEvent of input.releaseEvents ?? []) {
+    events.push({
+      id: `release:${releaseEvent.id}`,
+      type: "release",
+      occurredAt: releaseEvent.createdAt,
+      label: formatReleaseTimelineLabel(releaseEvent),
+      releaseEventType: releaseEvent.eventType,
+    });
+  }
+
   events.sort(
     (left, right) =>
       new Date(right.occurredAt).getTime() - new Date(left.occurredAt).getTime(),
@@ -172,11 +196,22 @@ export function buildPlayHistoryProjectTimeline(input: {
   sessions: ProjectPlaySession[];
   voices: VoiceResponse[];
   devlogs: DevlogEntry[];
+  releaseEvents?: ProjectReleaseEvent[];
 }): PlayHistoryProjectTimeline {
+  const releaseEvents = input.releaseEvents ?? [];
+  const firstReleased = getFirstReleasedEvent(releaseEvents);
+  const reachedOfficialRelease = Boolean(
+    firstReleased &&
+      input.firstPlayedAt &&
+      new Date(input.firstPlayedAt).getTime() <=
+        new Date(firstReleased.createdAt).getTime(),
+  );
+
   const events = buildPlayHistoryTimelineEvents({
     sessions: input.sessions,
     voices: input.voices,
     devlogs: input.devlogs,
+    releaseEvents,
   });
 
   const updateWatchCount = input.devlogs.filter(
@@ -188,6 +223,7 @@ export function buildPlayHistoryProjectTimeline(input: {
     voiceCount: input.voices.length,
     updateWatchCount,
     firstPlayedAt: input.firstPlayedAt,
+    reachedOfficialRelease,
   });
 
   const latestActivityAt =
@@ -208,10 +244,12 @@ export function buildPlayHistoryForProjects(input: {
   sessions: ProjectPlaySession[];
   voices: VoiceResponse[];
   devlogs: DevlogEntry[];
+  releaseEvents?: ProjectReleaseEvent[];
 }): PlayHistoryProjectTimeline[] {
   const sessionsByProject = new Map<string, ProjectPlaySession[]>();
   const voicesByProject = new Map<string, VoiceResponse[]>();
   const devlogsByProject = new Map<string, DevlogEntry[]>();
+  const releasesByProject = new Map<string, ProjectReleaseEvent[]>();
 
   for (const session of input.sessions) {
     const list = sessionsByProject.get(session.projectId) ?? [];
@@ -231,6 +269,12 @@ export function buildPlayHistoryForProjects(input: {
     devlogsByProject.set(devlog.projectId, list);
   }
 
+  for (const releaseEvent of input.releaseEvents ?? []) {
+    const list = releasesByProject.get(releaseEvent.projectId) ?? [];
+    list.push(releaseEvent);
+    releasesByProject.set(releaseEvent.projectId, list);
+  }
+
   return input.playedProjectIds
     .map((projectId) =>
       buildPlayHistoryProjectTimeline({
@@ -239,6 +283,7 @@ export function buildPlayHistoryForProjects(input: {
         sessions: sessionsByProject.get(projectId) ?? [],
         voices: voicesByProject.get(projectId) ?? [],
         devlogs: devlogsByProject.get(projectId) ?? [],
+        releaseEvents: releasesByProject.get(projectId) ?? [],
       }),
     )
     .sort(

@@ -9,6 +9,7 @@ import {
 } from "@/lib/player-play-timeline";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 import { fetchProjectDevlogsForProjects } from "@/lib/supabase/project-devlogs";
+import { fetchReleaseEventsForProjects } from "@/lib/supabase/project-release-events-db";
 import {
   fetchPlaySessionsForUser,
   fetchProjectPlayFirstSeen,
@@ -52,11 +53,13 @@ export function usePlayerPlayHistory() {
     }
 
     try {
-      const [sessions, firstSeenRows, voices, devlogs] = await Promise.all([
+      const [sessions, firstSeenRows, voices, devlogs, releaseEvents] =
+        await Promise.all([
         fetchPlaySessionsForUser(supabase, user.id),
         fetchProjectPlayFirstSeen(supabase, user.id),
         fetchUserVoiceResponsesForProjects(supabase, user.id, playedProjectIdsList),
         fetchProjectDevlogsForProjects(supabase, playedProjectIdsList),
+        fetchReleaseEventsForProjects(supabase, playedProjectIdsList),
       ]);
 
       const firstPlayedByProject = new Map(
@@ -71,6 +74,7 @@ export function usePlayerPlayHistory() {
         ),
         voices,
         devlogs,
+        releaseEvents,
       }).filter((timeline) => getGameById(timeline.projectId));
 
       setTimelines(built);

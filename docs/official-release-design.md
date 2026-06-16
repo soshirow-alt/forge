@@ -1,7 +1,7 @@
 # 正式版（Released）設計
 
-**ステータス**: オーナー方針確定（2026-06-15 レビュー）  
-**実装**: 未着手（**プレイ履歴の後** — 2026-06-16 優先順位更新）
+**ステータス**: Phase 1 実装完了（2026-06-16）  
+**検証**: `docs/official-release-phase1-verification.md`
 
 ---
 
@@ -150,25 +150,23 @@ Forge は **現在状態** ではなく **育成履歴** を評価する。
 
 ---
 
-## 6. 実装スコープ（将来）
+## 6. Phase 1 実装（2026-06-16）
 
-**In**
+| 項目 | 正本 |
+|------|------|
+| migration | `013_project_release_events.sql` |
+| 状態 lib | `lib/project-release-state.ts` |
+| DB | `lib/supabase/project-release-events-db.ts` |
+| Studio UI | `components/project-release-studio-panel.tsx` |
+| マイページ | `components/official-release-section.tsx` |
+| プレイ履歴 | `lib/player-play-timeline.ts` — `release` イベント |
 
-- `projects` に `release_status`（現在状態）
-- **`project_release_events`** — Released / Release Reopened の immutable 履歴
-- Studio Released / Reopen フロー + 条件バリデーション
-- 見届け人バッジ用 — イベント履歴から初回 Released 前の参加者を判定
-
-**Out**
-
-- semver による自動 Released
-- 品質スコア / 審査 UI
-- 正式版後のページ非公開
-- **Released 取り消しで履歴削除**
+**`projects.release_status`**: `in_development` / `released` / `release_reopened`  
+**`project_release_events`**: append-only、`released` / `release_reopened`
 
 ---
 
-## 7. オーナー確認論点（実装前）
+## 7. 実装スコープ（将来 Phase 2+）
 
 1. ~~Released 取り消し可否~~ → **取り消し可、履歴保持（確定）**
 2. Released 後に devlog 新版公開 — 表示上「正式版 + 更新中」か

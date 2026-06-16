@@ -4,6 +4,23 @@
 
 ---
 
+## 2026-06-16 正式版 Phase 1 実装
+
+### 今回やったこと
+
+- migration **013** — `project_release_events` + `projects.release_status`
+- Studio 正式版パネル — Released / Release Reopened（履歴保持）
+- マイページ `#official-release` — プレイした作品の正式版到達一覧
+- プレイ履歴 — release イベント + 見届け人土台サマリ
+- build PASS
+
+### ユーザー体験の変化
+
+- 開発者: Studio で正式版宣言・再調整（semver / 審査なし）
+- プレイヤー: 育てた作品の正式版到達をマイページで確認可能（013 適用後）
+
+---
+
 ## 2026-06-16 Cursor 一気通貫運用 — 運用方針変更
 
 ### 方針

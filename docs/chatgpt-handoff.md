@@ -482,12 +482,13 @@ PLAYER_VISIBLE:
 - Vercel プロジェクト forge に OPENAI_API_KEY + SUPABASE_SERVICE_ROLE_KEY 設定 + Redeploy
 
 Cursor 次テーマ（優先順位）:
-1. matcher 本番 deploy 支援（doc 済み — オーナー Vercel）
-2. **プレイ履歴** — docs/player-play-history-design.md、migration 012 草案
-3. 正式版
-4. バッジ
+1. **正式版** — Phase 1 実装完了 → 013 適用 + staging 目視
+2. **見届け人** — release_events 正本
+3. 伴走者
+4. 育成者
+5. Phase 1b（作品詳細コンパクト履歴）
 
-Phase3: **実装完了**。PLAYER_VISIBLE=true は別 Run。
+PLAYER_VISIBLE=true は別 Run。バッジ付与は見届け人以降。
 
 ================================================================
 ■ 現在のロードマップ

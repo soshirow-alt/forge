@@ -21,6 +21,7 @@ export type ProjectRow = {
   official_url: string | null;
   visibility: "public" | "private";
   playable_version?: string;
+  release_status?: "in_development" | "released" | "release_reopened";
   created_at: string;
   updated_at: string;
 };

@@ -1,56 +1,106 @@
 ■ 現在の状態
-- main 6c8e992 — プレイ履歴 Phase1 + matcher + Phase3 反映済み
+- 正式版 Phase 1 実装完了 — npm run build PASS
+- migration 013 — SQL 正本済み、Dashboard 適用はオーナー（staging）
+- プレイ履歴 Phase 1 — main 反映済み
 - PLAYER_VISIBLE=false 維持
-- 運用方針更新 — Cursor 一気通貫（2026-06-16 オーナー確定）
+- 優先順位更新: 正式版 → 見届け人 → 伴走者 → 育成者 → Phase1b
 
-■ 今回実施したこと
-- docs/forge-triage-operations.md §10 — 一気通貫運用の正本
-- docs/gpt-run-decision-memo.md — 停止条件 9 項目に更新（push 一律停止を廃止）
-- AGENTS.md / .cursor/rules/forge.mdc / chatgpt-summary-format.md — 同期
-- forge-handoff / forge-changelog 更新
+■ 今回実装したこと
+- supabase/migrations/013_project_release_events.sql
+- projects.release_status — in_development / released / release_reopened
+- project_release_events — append-only（released / release_reopened）
+- lib/project-release-state.ts — 状態判定・バリデーション・見届け人土台 wasActiveBeforeFirstRelease
+- lib/supabase/project-release-events-db.ts
+- components/project-release-studio-panel.tsx — Studio Released / Reopened
+- components/official-release-section.tsx — マイページ #official-release
+- lib/player-play-timeline.ts — release イベント + 「正式版到達を見届けた」サマリ
+- games-provider — declareProjectReleased / declareProjectReleaseReopened
+- docs/official-release-phase1-verification.md
 
-■ 一気通貫運用（要点）
-- 原則フロー: 設計 → 実装 → build → staging 確認 → main 反映準備
-- 毎工程の承認待ち不要 — 機能タスク単位で完走
-- 開発速度優先。安全性は停止 9 条件で維持
+■ DB設計（レビュー用）
+- 正本: project_release_events（immutable 積み上げ）
+- 現在状態: projects.release_status（イベント INSERT 時に同期）
+- event_type: released | release_reopened
+- semver 不使用。Forge 品質審査なし
+- Released 条件: devlog 1+ / playable_version あり / 開発者明示
+- DELETE/UPDATE なし — Reopened 後も初回 Released 行は残る
 
-■ 必ず停止（9 条件）
-- 課金発生
-- 新規 API 契約
-- 本番公開
-- PLAYER_VISIBLE=true
-- DB 破壊変更
-- 既存データ移行
-- Forge 原典変更
-- ロードマップ優先順位変更
-- 不可逆な作業
+■ Studio UI（レビュー用）
+- /projects/[id]/studio #official-release
+- 現在状態バッジ: 開発中 / 正式版 / 正式版再調整中
+- Released ボタン — 正式版として宣言
+- Release Reopened ボタン — 正式版再調整（released 中のみ）
+- イベント履歴リスト（日時 + メモ）
+- ヘッダーにも release_status 表示
 
-■ 自動で進めてよいもの
-- migration 作成、設計 doc、実装、build、staging 確認、テストデータ、main 反映準備（commit/push）、handoff 更新
+■ プレイヤー側体験（レビュー用）
+- /mypage #official-release — プレイした作品のうち一度でも Released されたもの
+- 初回 Released 日、現在状態、イベント件数
+- /mypage #play-history — release 行が時系列に混在
+- 初回 Released 前にプレイ済みならサマリ「正式版到達を見届けた」
+- 見届け人バッジ付与は今回 Out（データ構造のみ）
 
-■ サマリ報告ルール（変更）
-- ■ 今すぐ私がやるべきこと — オーナーしかできないことだけ
-- Cursor が実行できる内容はオーナー欄に書かない
+■ Release Reopened 挙動
+- released → release_reopened イベント INSERT + status 更新
+- マイページ一覧からは消えない（hasEverReachedOfficialRelease）
+- 再 Released で released イベント追加 — 履歴 3 行例: released → reopened → released
+- 見届け人は将来「初回 released 前の参加者」— Reopened でも剥奪しない設計
 
-■ ユーザー目線の変化
-- なし（運用ルールのみ）
+■ プレイ履歴との接続
+- buildPlayHistoryTimelineEvents に releaseEvents
+- getFirstReleasedEvent + firstPlayedAt 比較で reachedOfficialRelease
+- 将来見届け人: wasActiveBeforeFirstRelease(firstPlayedAt, firstReleasedAt)
+
+■ build結果
+- npm run build — PASS（2026-06-16）
+
+■ staging確認
+- 手順: docs/official-release-phase1-verification.md
+- 013 Dashboard 適用 → Studio Released/Reopened → マイページ目視
+- Cursor は Dashboard SQL 実行不可 — オーナー適用後に目視
 
 ■ 今回変更した画面
-- 該当なし
+- Studio 正式版パネル — /projects/[id]/studio #official-release
+- マイページ 正式版に到達した作品 — /mypage #official-release（プレイ履歴の下）
+- マイページ プレイ履歴 — release 行 + サマリ行追加
 
-■ 注意事項
-- Supabase Dashboard SQL 適用は引き続きオーナー操作が必要なことが多い（Cursor は SQL 正本まで）
-- 本番公開・PLAYER_VISIBLE ON は従来どおり必ず停止
-
-■ 今すぐ私がやるべきこと
-- 該当なし（本タスクは doc 更新のみ）
-
-■ 次に検討すべきこと
-- 次機能タスク（Phase 1b / updateWatchCount B 定義 / matcher env）を一気通貫で着手
+■ ユーザー目線の変化
+- 開発者: Forge 最大マイルストーン「正式版」を自分で宣言できる
+- プレイヤー: 育てた（プレイした）作品が正式版に到達した事実をマイページで辿れる
+- 「俺が育てたゲームが正式版になった」土台 — バッジは次フェーズ
 
 ■ In / Out
-- In: 運用正本 §10、停止リスト刷新、エージェントルール同期
-- Out: 原典変更、ロードマップ順位変更、本番公開
+- In: 013、Studio、マイページ基盤、プレイ履歴 release 連携、build PASS
+- Out: 見届け人付与、バッジ、PLAYER_VISIBLE、通知強化、ランキング、Phase1b
+
+■ 今すぐ私がやるべきこと
+- Supabase Dashboard で 013 適用（staging）
+- Studio で Released → Reopened → 再 Released 目視
+- 別アカウントでプレイ後、/mypage #official-release と #play-history 目視
+
+■ 次に検討すべきこと
+- staging 目視 GO 後 main 反映（コードは push 待ち）
+- 見届け人 Phase — release_events + play_sessions + voice 合成
 
 ■ ChatGPTに相談したい論点
-- 該当なし
+- 正式版到達後の作品詳細バッジ表示タイミング（Phase1b vs 見届け人と同時）
+
+■ なぜこの設計にしたか
+- イベント積み上げは Reopened 後も「見届けた事実」を消さない原典方針と一致
+- release_status 列は UI 高速化の denormalize（events が正本）
+- マイページは played ∩ ever_released — watch のみユーザーは対象外（プレイ履歴方針と一致）
+
+■ 他案を採用しなかった理由
+- semver 1.0 自動 Released — オーナー確定 NG
+- 履歴 DELETE で Reopened — 育成履歴消滅 NG
+
+■ リスク
+- 013 未適用時: graceful empty（Studio パネルは読み込みのみ / 宣言不可）
+- 本番 DB が staging と別なら本番でも 013 必要
+
+■ オーナーが確認する手順
+1. 013 SQL 実行
+2. devlog あり作品で Released
+3. project_release_events 行確認
+4. Release Reopened → status 正式版再調整中
+5. プレイヤー /mypage で正式版到達作品表示

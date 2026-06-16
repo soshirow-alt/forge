@@ -35,6 +35,7 @@ export function projectRowToGame(row: ProjectRow): Game {
     ownerName: row.owner_name,
     visibility: row.visibility,
     playableVersion: row.playable_version ?? DEFAULT_PLAYABLE_VERSION,
+    releaseStatus: row.release_status ?? "in_development",
   };
 }
 

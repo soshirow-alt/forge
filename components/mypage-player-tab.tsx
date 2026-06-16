@@ -8,6 +8,7 @@ import {
   MyPageDashboardCard,
 } from "@/components/mypage-dashboard-card";
 import { MyPageUpdatesSection } from "@/components/mypage-updates-section";
+import { OfficialReleaseSection } from "@/components/official-release-section";
 import { PlayHistorySection } from "@/components/play-history-section";
 import { VoiceAdoptionsSection } from "@/components/voice-adoptions-section";
 import { PlayTypeLabel } from "@/components/play-type-label";
@@ -84,6 +85,7 @@ export function MyPagePlayerTab() {
     <div className="space-y-8">
       <VoiceAdoptionsSection />
       <PlayHistorySection />
+      <OfficialReleaseSection />
 
       {!hasEngagementLists && !hasPlayedProjects ? (
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-6 py-16 text-center">

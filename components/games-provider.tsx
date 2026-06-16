@@ -97,6 +97,15 @@ import {
   insertProjectDevlog,
 } from "@/lib/supabase/project-devlogs";
 import {
+  fetchAllProjectReleaseEvents,
+  insertProjectReleaseEvent,
+} from "@/lib/supabase/project-release-events-db";
+import {
+  validateReleasedDeclaration,
+  validateReleaseReopenedDeclaration,
+  type ProjectReleaseEvent,
+} from "@/lib/project-release-state";
+import {
   fetchUserNotifications,
   insertDevlogNotifications,
   insertVersionPublishedNotifications,
@@ -210,6 +219,9 @@ type GamesContextValue = {
   watchGame: (gameId: string) => void;
   unwatchGame: (gameId: string) => void;
   getDevlogsByProject: (projectId: string) => DevlogEntry[];
+  getReleaseEventsForProject: (projectId: string) => ProjectReleaseEvent[];
+  declareProjectReleased: (projectId: string, note?: string) => Promise<void>;
+  declareProjectReleaseReopened: (projectId: string, note?: string) => Promise<void>;
   hasDevlogs: (projectId: string) => boolean;
   addDevlog: (
     projectId: string,
@@ -290,6 +302,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   const [followerCounts, setFollowerCounts] = useState<Counts>({});
   const [followedCreators, setFollowedCreators] = useState<string[]>([]);
   const [devlogs, setDevlogs] = useState<DevlogEntry[]>([]);
+  const [releaseEvents, setReleaseEvents] = useState<ProjectReleaseEvent[]>([]);
   const [localNotifications, setLocalNotifications] = useState<Notification[]>(
     [],
   );
@@ -331,6 +344,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       void fetchAllProjectDevlogs(supabase)
         .then(setDevlogs)
         .catch(() => setDevlogs([]));
+      void fetchAllProjectReleaseEvents(supabase)
+        .then(setReleaseEvents)
+        .catch(() => setReleaseEvents([]));
     }
   }, []);
 
@@ -1247,6 +1263,90 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     [devlogs],
   );
 
+  const getReleaseEventsForProject = useCallback(
+    (projectId: string) =>
+      releaseEvents.filter((event) => event.projectId === projectId),
+    [releaseEvents],
+  );
+
+  const declareProjectReleased = useCallback(
+    async (projectId: string, note?: string) => {
+      if (!user || !isProjectOwner(projectId, user.id)) {
+        throw new Error("Owner only");
+      }
+
+      const game = getSubmittedGameById(projectId);
+      const validation = validateReleasedDeclaration({
+        devlogCount: getDevlogsByProject(projectId).length,
+        playableVersion: game?.playableVersion,
+        currentStatus: game?.releaseStatus ?? "in_development",
+      });
+
+      if (!validation.ok) {
+        throw new Error(validation.reason);
+      }
+
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      const event = await insertProjectReleaseEvent(supabase, {
+        projectId,
+        eventType: "released",
+        actorUserId: user.id,
+        note,
+      });
+
+      setReleaseEvents((prev) => [...prev, event]);
+      setSubmittedGames((prev) =>
+        prev.map((entry) =>
+          entry.id === projectId ? { ...entry, releaseStatus: "released" } : entry,
+        ),
+      );
+    },
+    [getDevlogsByProject, getSubmittedGameById, isProjectOwner, user],
+  );
+
+  const declareProjectReleaseReopened = useCallback(
+    async (projectId: string, note?: string) => {
+      if (!user || !isProjectOwner(projectId, user.id)) {
+        throw new Error("Owner only");
+      }
+
+      const game = getSubmittedGameById(projectId);
+      const validation = validateReleaseReopenedDeclaration({
+        currentStatus: game?.releaseStatus ?? "in_development",
+      });
+
+      if (!validation.ok) {
+        throw new Error(validation.reason);
+      }
+
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      const event = await insertProjectReleaseEvent(supabase, {
+        projectId,
+        eventType: "release_reopened",
+        actorUserId: user.id,
+        note,
+      });
+
+      setReleaseEvents((prev) => [...prev, event]);
+      setSubmittedGames((prev) =>
+        prev.map((entry) =>
+          entry.id === projectId
+            ? { ...entry, releaseStatus: "release_reopened" }
+            : entry,
+        ),
+      );
+    },
+    [getSubmittedGameById, isProjectOwner, user],
+  );
+
   const addDevlog = useCallback(
     async (
       projectId: string,
@@ -1427,6 +1527,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       watchGame,
       unwatchGame,
       getDevlogsByProject,
+      getReleaseEventsForProject,
+      declareProjectReleased,
+      declareProjectReleaseReopened,
       hasDevlogs,
       addDevlog,
       getNotifications,
@@ -1489,6 +1592,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       watchGame,
       unwatchGame,
       getDevlogsByProject,
+      getReleaseEventsForProject,
+      declareProjectReleased,
+      declareProjectReleaseReopened,
       hasDevlogs,
       addDevlog,
       getNotifications,

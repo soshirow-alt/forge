@@ -7,6 +7,7 @@ import { useAuth } from "@/components/auth-provider";
 import { ForgeHeader } from "@/components/forge-header";
 import { GameGrowthCycle } from "@/components/game-growth-cycle";
 import { GameThumbnail } from "@/components/game-thumbnail";
+import { ProjectReleaseStudioPanel } from "@/components/project-release-studio-panel";
 import { ProjectNurtureActions } from "@/components/project-nurture-actions";
 import { useGames } from "@/components/games-provider";
 import { useOwnedProjectFeedback } from "@/hooks/use-owned-project-feedback";
@@ -22,6 +23,7 @@ import {
   groupFeedbackByProject,
 } from "@/lib/project-growth-state";
 import { resolveVoiceSignalForGame } from "@/lib/project-voice-nurture";
+import { RELEASE_STATUS_LABELS } from "@/lib/project-release-state";
 
 function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   const router = useRouter();
@@ -167,6 +169,8 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
             <p className="mt-1 text-xs text-zinc-600">
               いま: {display.phaseLabel}
               {" · "}
+              {RELEASE_STATUS_LABELS[game.releaseStatus ?? "in_development"]}
+              {" · "}
               <Link
                 href={gamePlayHref(game.id)}
                 className="cursor-pointer text-zinc-500 transition-colors hover:text-orange-400/90"
@@ -186,6 +190,12 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
             initialSelectedStep={openFeedbackPanel ? "read" : null}
           />
         </section>
+
+        <ProjectReleaseStudioPanel
+          projectId={game.id}
+          devlogCount={getDevlogsByProject(game.id).length}
+          playableVersion={growth.playableVersion}
+        />
 
         <ProjectNurtureActions
           projectId={game.id}
