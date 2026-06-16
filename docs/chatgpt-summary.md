@@ -1,7 +1,8 @@
 ■ 現在の状態
-- P0/P1 実装 — オーナー GO、commit + push + preview redeploy 実施（本メッセージ）
-- verify:future-demo:staging — 18/18 PASS（patch 済み）
-- prod deploy — **禁止**（Walkthrough + 主要 UI 確認後に判断）
+- commit 42179f3 — main push + preview deploy 済み
+- preview READY — https://forge-etb0gsaz1-soshirow-alts-projects.vercel.app（dpl_4crzKWLk2Ez3Vonnt7D7LFZNEDNR）
+- verify 18/18 PASS、patch 済み
+- prod deploy — **禁止**
 - PLAYER_VISIBLE=false 維持
 
 ■ Forge原典コアループ（判断の基準）

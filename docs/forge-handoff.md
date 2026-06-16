@@ -8,7 +8,8 @@
 
 - **P0/P1 UI レビュー** — 実装完了（ForgeGameCard + Veteran developer patch）
 - **verify:future-demo:staging** — **18/18 PASS**（Veteran 所有 7 / Gold 回帰）
-- プレイ履歴 + 更新見出し — e6d5fc1 preview deploy 済み（UI 追加変更は未 deploy）
+- commit **42179f3** — main push + preview deploy 済み
+- **staging preview**: https://forge-etb0gsaz1-soshirow-alts-projects.vercel.app（`dpl_4crzKWLk2Ez3Vonnt7D7LFZNEDNR` READY）
 - **本番 prod deploy — 保留**
 - 正式版 Phase 1 / 見届け人 W1–W4 + tier — main 反映済み
 - migration **014** — staging + 本番適用済み
