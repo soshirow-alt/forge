@@ -8,13 +8,19 @@
 
 ### 含む
 
-- migration 014 草案、witness-eligibility、W1/W3 verify
-- W4 マイページ `#official-release` 見届け人 UI
-- tier 設計レビュー草案
+- migration 014 草案、witness-eligibility、W1/W3/W4 verify scripts
+- W4 マイページ `#official-release` 見届け人 UI（teal カード・grant_path 表示）
+- tier 設計レビュー草案（`docs/witness-tier-design-review.md`）
 
-### 本番
+### main / deploy
 
-- push 後 Vercel deploy 確認
+- commit `771dfe6` — `97aeb8f..771dfe6` on `main`
+- GitHub commit status: **success** — Vercel Deployment has completed（2026-06-16T14:43–14:44Z）
+- 本番 URL: https://forge-flame-gamma.vercel.app — 200 OK
+
+### 本番 DB 注意
+
+- migration **014 は staging のみ適用済み**。本番 Dashboard 適用前は grants 空 → 見届け人カードは出ない（想定）
 
 ---
 
