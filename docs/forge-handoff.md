@@ -8,7 +8,7 @@
 
 - labeled 60 / shadow A/B / matcher 本番 GO / Phase3 完了
 - **プレイ履歴 Phase 1 実装完了** — build PASS
-- **012 適用 + staging 目視 OK** — main merge GO（2026-06-16）
+- **main push 完了** — `d09dfa9`（2026-06-16）
 - **PLAYER_VISIBLE=false** 維持
 
 ---

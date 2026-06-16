@@ -1,41 +1,46 @@
 ■ 現在の状態
-- プレイ履歴 Phase 1 実装完了 — build PASS
-- 012 適用済み — staging 目視完了（play / 再プレイ / マイページ確認 OK）
-- main merge — オーナー GO（staging 目視後反映で問題なし）
+- main push 完了 — commit d09dfa9（origin/main）
+- 012 staging 適用 + 目視 OK（play / 再プレイ / マイページ）
 - PLAYER_VISIBLE=false 維持
+- Vercel 本番 deploy — push 連動（Dashboard で完了確認推奨）
 
-■ 今回確認したこと
-- 「◯回更新を見届けた」の現行定義をコードベースで確認（実装変更なし）
+■ 今回実施したこと
+- git commit d09dfa9 — プレイ履歴 Phase1 + voice adoption matcher + Phase3 verify
+- git push origin main — オーナー「まかせる」にて実行
+- 除外: .tmp-chunk*.js, build-output.txt（未コミット）
 
-■ 「◯回更新を見届けた」の現行定義
-- A（プレイ後に devlog 公開）でも B（devlog 公開後に再プレイ）でもない
-- 現行: プレイした作品について published_version あり devlog の件数をそのまま数える
-- 実装: lib/player-play-timeline.ts — updateWatchCount = devlogs.filter(publishedVersion).length
-- 再プレイの有無・版一致・プレイ前後の時系列は Phase 1 では未判定
-- タイムラインの devlog 行も同じ（公開イベントを時系列に並べるだけ）
-- 原典の「変化を見る → 再プレイ」に照らすと B の方が自然 — 将来寄せる論点として doc に記録
+■ 「見届けた」定義（再掲・変更なし）
+- 現行: published_version あり devlog の件数（再プレイ未判定）
+- 将来 B（devlog 公開後の再プレイ）へ寄せる論点は doc 記録済み
 
-■ merge 判断
-- 012 適用 → session 生成 → 再プレイ行追加 → マイページ目視 — オーナー確認済み
-- main 反映 GO（Run A）
+■ 今回変更した画面
+- 変更なし（merge/push のみ）
+- 本番反映後: /mypage プレイ履歴が Vercel 本番でも利用可（012 本番 DB 適用済み前提）
 
 ■ ユーザー目線の変化
-- 今回の確認回答のみ — UI 変更なし
+- staging で確認済みのプレイ履歴 UI が main 経由で本番 deploy 対象になる
+- adoption UI は引き続き PLAYER_VISIBLE=false で非表示
 
 ■ 注意事項
-- サマリの「見届けた」は厳密な「変化を確かめた」ではなく「改版 devlog が N 件ある」に近い
-- Phase 2 で B 定義へ変更する場合はサマリ + タイムライン両方の見直しが必要
+- 本番 Supabase に 012 未適用なら session INSERT のみスキップ（graceful）
+- staging と本番 DB が別なら本番でも 012 Dashboard 適用が必要
+- matcher 本番は Vercel env（OPENAI + SERVICE_ROLE）確認
 
 ■ 今すぐ私がやるべきこと
-- main へ merge / deploy（オーナー側 git 操作。Cursor は明示指示があれば支援）
+1. Vercel Dashboard — main deploy 完了確認
+2. 本番 Supabase — 012 適用済みか確認（staging のみなら本番も適用）
+3. 本番 /mypage プレイ履歴 目視
 
 ■ Cursorだけで完了できること
-- B 定義への変更設計（オーナー GO 後）
 - Phase 1b 作品詳細コンパクト履歴
+- updateWatchCount B 定義への変更（オーナー GO 後）
+
+■ In / Out
+- In: commit + push main
+- Out: Vercel deploy 確認、本番 012、PLAYER_VISIBLE=true
 
 ■ 次に検討すべきこと
-- updateWatchCount を B（再プレイで新版）に寄せるタイミング
-- main merge 後の本番目視
+- 本番目視 GO 後の次 Cursor テーマ（Phase 1b vs 正式版 vs matcher env）
 
 ■ ChatGPTに相談したい論点
-- Phase 1 の緩い定義のまま main GO するか、B へ寄せてから GO するか（オーナーは staging 目視後 merge GO 済み）
+- 本番 012 を staging 目視と同時 GO するか、本番 deploy 後に別 Run か

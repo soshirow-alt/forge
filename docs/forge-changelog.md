@@ -4,7 +4,14 @@
 
 ---
 
-## 2026-06-16 プレイ履歴 Phase 1 実装
+## 2026-06-16 main 反映 — プレイ履歴 + matcher + Phase3
+
+### デプロイ
+
+- commit `d09dfa9` → `origin/main` push 完了
+- Vercel 本番 deploy は push 連動（オーナー Dashboard 確認）
+
+---
 
 ### 今回やったこと
 
