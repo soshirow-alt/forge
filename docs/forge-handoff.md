@@ -65,6 +65,6 @@ Studio: 開発中 / 正式版 / 正式版再調整中
 
 ## 次
 
-1. **将来像デモ v2** — design doc §17 確認 → F0 GO
-2. Seeder 実装（25 作品・Veteran Gold・固定 credential）
-3. Veteran で実機 Walkthrough → UI 全面レビュー
+1. **Veteran 実機 Walkthrough** — `docs/future-demo-walkthrough.md`
+2. **UI 全面レビュー**
+3. 世界戦切替 — hide / show（オーナー指示時）

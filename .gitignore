@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+scripts/.future-demo-world-state.json
 
 # debug
 npm-debug.log*

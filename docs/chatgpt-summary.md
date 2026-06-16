@@ -1,100 +1,83 @@
 ■ 現在の状態
+- 将来像デモ世界 F1 — 実装完了、staging seed + verify PASS
 - Witness + Tier — 完了、014 本番適用済み
-- 将来像デモ — 設計 v2（世界中心）提示済み、実装未開始
 - PLAYER_VISIBLE=false 維持
-- UI 全面レビュー — デモ世界完成後
+- 次 — Veteran 実機 Walkthrough → UI 全面レビュー
 
-■ 今回実施したこと
-- 設計方向をペルソナ中心から「成功した Forge 世界」中心へ改訂
-- docs/future-demo-environment-design.md v2 を全面更新
-- オーナーログイン 2 アカウント + 固定パスワード案を設計に明記
-- 世界規模・Seeder・Verify・Walkthrough を再設計
-- 実装は開始していない
+■ 今回実装したこと
+- scripts/future-demo-lib.ts — 定数、credential、Seeder ヘルパー、hide/show
+- scripts/future-demo-seed.ts — 25 作品・20 auth・engagement・release・reopen
+- scripts/future-demo-verify.ts — 世界密度 + Veteran Gold 断言
+- docs/future-demo-walkthrough.md — 固定 credential、世界戦切替手順
+- npm: seed / verify / hide / show future-demo:staging
 
-■ 設計 v2 の要点
-- 目的: Forge が普及した未来を、世界の住人として体験（ペルソナ差分検証ではない）
-- 主役: Demo Veteran — 12 witness grants、Gold、プレイ/Voice/履歴が厚い
-- 对比: Demo New User — 空状態のみ
-- 世界: 25 作品（下限 20）、6 開発者 NPC、12 Released、3 Reopened、Devlog 90、Voice 180
-- NPC プレイヤー 12 人 — 活気用（オーナーはログインしない）
-- auth 合計 20 人 — オーナーが使うのは 2 人だけ
+■ staging seed 結果（verify 13/13 PASS）
+- 作品 25、Devlog 82、Voice 162、Released 12、Reopened 3
+- 世界 witness grants 54、Veteran grants 12、tier Gold
+- Veteran sessions 46、voices 38
+- New User grants 0、sessions 0
+- worldId: world-1781624452091
 
-■ 固定ログイン情報（案 — 実装時正本化）
+■ 固定 credential（毎回同じ）
 - Demo Veteran: veteran@forge-future-demo.local / ForgeDemo!Veteran2026
 - Demo New User: new@forge-future-demo.local / ForgeDemo!New2026
-- docs/future-demo-walkthrough.md に掲載 + seed 時ターミナル出力
-- 毎回同じ — オーナーが実機で何度でもログイン可能
+- 正本: docs/future-demo-walkthrough.md
+- seed 完了時ターミナルにも出力
 
-■ 必要作品数・ユーザー数
-- 作品: 推奨 25、verify 下限 20（[future-demo] 接頭辞）
-- 開発者 NPC: 6（各 4–5 作品）
-- プレイヤー NPC: 12（世界の Voice/Play ノイズ）
-- オーナーログイン: 2（Veteran + New User）
-- auth 合計: 20
+■ seed 手順
+1. staging .env.local 確認（NEXT_PUBLIC_SUPABASE_URL + SERVICE_ROLE_KEY）
+2. npm run seed:future-demo:staging
+3. npm run verify:future-demo:staging
+- 初回のみ --fresh 可。grants 後は --fresh 不可
+- 再 seed 不要時は hide/show で世界戦切替
 
-■ Seeder 構成
-- scripts/future-demo-lib.ts — 定数、credential、テンプレ、marker
-- scripts/future-demo-seed.ts — S0–S8 フェーズ（users → projects → devlogs → engagement → release → verify）
-- scripts/future-demo-verify.ts — 世界密度 + Veteran Gold + New User 空断言
-- npm: seed:future-demo:staging / verify:future-demo:staging
-- staging のみ、service role、witness-sandbox 同型
+■ 世界戦切替（元の世界 ↔ デモ世界）
+- 元の世界戦に戻す: npm run hide:future-demo:staging（全 [future-demo] を private）
+- デモ世界戦に戻す: npm run show:future-demo:staging（public）
+- grants は DB に残る — 削除しない（014 append-only）
+- オーナーが「元の世界戦に戻して」→ hide、「デモ世界に戻して」→ show
 
-■ Verify 方針
-- ペルソナ表ではなく下限断言: 作品≥20、Devlog≥60、Voice≥100、Released≥10、Reopened≥2
-- 世界 grants≥30、Veteran grants≥10、Veteran tier=Gold、New User grants=0
-- FAIL 時は不足項目を stdout 明示
+■ 世界構成サマリ
+- 25 作品（[future-demo] 接頭辞）、6 開発者 NPC、12 プレイヤー NPC
+- 12 Released、3 Reopened
+- Demo Veteran — Gold、12 見届け人、厚いプレイ履歴
+- mock 18 も発見に並ぶ — レビューは [future-demo] を主に見る
 
-■ Walkthrough（実装後）
-- 固定 credential 表
-- Veteran ツアー: 発見→詳細→#play-history→#official-release→Devlog→Reopened
-- New User 5 分对比
-- UI レビュー 6 観点チェックリスト
-- mock 18 は非表示にしない — [future-demo] を主に見る旨を記載
-
-■ 実装コスト見積
-- フル: 8–9.5 日（25 作品・Veteran 12 grants）
-- MVP: 6 日（18 作品・8 Released・Veteran 10 grants）
-
-■ Cursorの推奨案
-- 世界データ bulk seed + オーナーは Veteran 1 アカウントで歩く
-- 2 ログイン + 固定パスワードで実機確認問題を解消
-- NPC で活気、Veteran で価値最大化状態
-
-■ 推奨理由
-- UI レビューは密度と narrative が必要 — ペルソナ 8 人より世界 25 作品が効く
-- オーナー体験が「観察用アカウント巡回」から「住人として歩く」に近づく
-
-■ 懸念点
-- grants append-only — fresh seed 制約
-- seed 工数増 — テンプレート化で吸収
-- mock 18 混在 — walkthrough で明示
-
-■ 他案不採用
-- v1 の 8 ペルソナログイン — オーナー目的とずれる
-- UI フィクスチャ — 本番 UX 変更に近い
-
-■ In / Out
-- In: v2 設計、2 ログイン、25 作品世界、Seeder/Verify/Walkthrough 案
-- Out: 実装、8 ペルソナ、本番 UX、ランキング、通知、PLAYER_VISIBLE
+■ Walkthrough
+- docs/future-demo-walkthrough.md
+- Veteran: / → 作品詳細 → #play-history → #official-release → Devlog
+- New User: 空状態对比（5 分）
 
 ■ 今回変更した画面
-- 該当なし（設計のみ）
+- 該当なし（Seeder のみ、本番 UX 変更なし）
+
+■ ユーザー目線の変化
+- staging で Demo Veteran ログインすれば「成功した Forge 世界」を実機で歩ける
+- 発見・履歴・見届け人 Gold が密度を持って確認可能
+
+■ 注意事項
+- staging のみ — 本番 DB 禁止
+- hide 中は [future-demo] が発見から消える（private）
+- PLAYER_VISIBLE=false — Adoption UI 非表示
 
 ■ 今すぐ私がやるべきこと
-1. design doc §17 — 25 vs 18 MVP、固定パスワード GO
-2. F0 GO 返答
+1. npm run dev + staging env で Veteran ログイン
+2. docs/future-demo-walkthrough.md のツアー実施
+3. UI 全面レビュー GO 判断
 
 ■ Cursorだけで完了できること
-- F0 GO 後 Seeder + walkthrough 実装
+- UI レビュー指摘の copy/レイアウト修正（別フェーズ）
+- hide/show 運用サポート
 
 ■ 次に検討すべきこと
-- F0 GO → F1 開始
-- デモ完成 → UI 全面レビュー
+- UI 全面レビュー
+- 伴走者 / 育成者
 
-■ ChatGPTに相談したい論点
-- 25 作品フル vs MVP 18 のどちらから着手するか
+■ In / Out
+- In: F1 Seeder、verify PASS、walkthrough、credential、hide/show
+- Out: 本番 UX、本番 seed、PLAYER_VISIBLE
 
 ■ オーナー確認手順
-1. future-demo-environment-design.md v2 全文
-2. Veteran / New User credential 案
-3. §17 5 項目 → F0 GO
+1. npm run verify:future-demo:staging — 13/13
+2. veteran@ で /login → Walkthrough
+3. hide → 元の世界感確認 → show で復帰

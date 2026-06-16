@@ -4,6 +4,27 @@
 
 ---
 
+## 2026-06-16 将来像デモ世界 — F1 実装 + staging seed PASS
+
+### 実装
+
+- `scripts/future-demo-lib.ts` / `future-demo-seed.ts` / `future-demo-verify.ts`
+- `docs/future-demo-walkthrough.md` — 固定 credential、hide/show 世界戦切替
+- npm: seed / verify / hide / show
+
+### staging 結果（verify 13/13 PASS）
+
+- 25 作品、82 Devlog、162 Voice、12 Released、3 Reopened
+- Veteran: 12 grants、Gold、46 sessions、38 voices
+- ログイン: veteran@ / new@forge-future-demo.local
+
+### 世界戦切替
+
+- `hide:future-demo:staging` — 元の世界戦（private）
+- `show:future-demo:staging` — デモ世界戦（public）
+
+---
+
 ## 2026-06-16 将来像デモ環境 — 設計 v2（成功した Forge 世界）
 
 ### 変更
