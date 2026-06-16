@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-06-16 将来像デモ環境 — 設計案
+
+### doc
+
+- `docs/future-demo-environment-design.md` — 8 ペルソナ、5–6 作品、CLI seeder 案、コスト見積
+- UI 全面レビューの前提テーマ（実装 GO 前）
+
+### 方針
+
+- staging + service-role Seeder + 固定デモユーザー
+- 既存画面のみ、本番 UX 変更なし
+- PLAYER_VISIBLE=false 維持
+
+---
+
 ## 2026-06-16 見届け人 tier — T1/T2 実装
 
 ### 実装
