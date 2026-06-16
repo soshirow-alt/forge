@@ -4,6 +4,24 @@
 
 ---
 
+## 2026-06-16 将来像デモ環境 — 設計 v2（成功した Forge 世界）
+
+### 変更
+
+- ペルソナ中心（8 人）→ **世界中心**（25 作品・NPC 多数）
+- オーナーログイン: **Demo Veteran**（Gold・主役）+ **Demo New User**（对比）の 2 のみ
+- 固定 credential 案を設計に明記
+
+### doc
+
+- `docs/future-demo-environment-design.md` v2
+
+### Out
+
+- 実装 GO 前、8 ペルソナ巡回
+
+---
+
 ## 2026-06-16 将来像デモ環境 — 設計案
 
 ### doc

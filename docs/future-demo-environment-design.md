@@ -1,371 +1,403 @@
-# 将来像デモ環境 — 設計案
+# 将来像デモ環境 — 設計案（v2：成功した Forge 世界）
 
 **ステータス**: 設計レビュー待ち（**実装 GO 前**）  
-**日付**: 2026-06-16  
+**日付**: 2026-06-16（v2 — ペルソナ中心から世界中心へ改訂）  
 **優先度**: 最優先（UI 全面レビューの前提）
 
 **前提**
 
 - Witness W1–W4 + Tier T1/T2 完了
-- migration 014 本番適用済み
+- migration 014 staging + 本番適用済み
 - `NEXT_PUBLIC_VOICE_ADOPTION_PLAYER_VISIBLE=false` 維持
-- ChatGPT 判断: UI 全面レビューは**先に将来像デモ** → その後 UI レビュー
 
-**Out（本フェーズ）**
+**Out**
 
-- 本番 UX 変更、新ルート、ランキング、通知追加、Adoption プレイヤー表示、新ゲーミフィケーション
-- PLAYER_VISIBLE=true
+- 本番 UX 変更、新ルート、ランキング、通知追加、Adoption プレイヤー表示
+- PLAYER_VISIBLE=true、本番 DB seed
+- **ペルソナ差分検証**（Player A/B/C… を順番に確認する運用）
 - 実装（本 doc GO 後）
 
 ---
 
-## 1. 目的
+## 1. 目的（v2 で変更）
 
-Forge が**育った未来**を、実データに近い密度で体験できる環境を作る。
+**目的は「ペルソナ検証」ではない。**
 
-見る人（オーナー / ChatGPT / Cursor）が
+**Forge が成功した未来を、世界の住人として体験すること。**
 
-「なるほど、Forge ってこう育つのか」
+オーナーは観察用アカウント切替の行列ではなく、**活気のある Forge にログインして歩き回る**。
 
-と理解できること。プレイヤーサイクル・開発者ループの**両方**が目で追えること。
+見たいのは:
+
+- ゲーム投稿数が多い
+- Devlog が大量にある
+- 正式版作品が複数ある
+- Reopened 作品もある
+- Voice が蓄積されている
+- 見届け人が多数存在する（**人数 UI は出さない** — 自分のマイページのみ）
+- Silver / Gold が自然に存在する
+- プレイ履歴が積み上がっている
+- 「変化を見る → 再プレイ」が自然に成立している
 
 **PLAYER_VISIBLE 機能追加ではない。** 既存画面 + Supabase デモデータのみ。
 
 ---
 
-## 2. なぜ今やるか
+## 2. オーナー体験（レビューのしかた）
 
-現状の Forge（本番・staging とも）はデータ量が少なく、以下が薄い:
+### 2.1 主役アカウント — Demo Veteran
 
-- プレイ履歴タイムライン
-- Devlog の連なり
-- 見届け人 / tier
-- 正式版到達 / release_reopened
-- Voice の蓄積
-- 開発の歩み（Studio / Devlog）
+**最重要。** この 1 アカウントで Forge の価値が最大化された状態を確認する。
 
-この状態で UI 全面レビューしても**空状態・1件状態の判断**に偏り、将来像の情報設計を評価できない。
+| 項目 | 目標（Seeder 後） |
+|------|-------------------|
+| 見届け人 grant | **12 作品**（Gold 閾値 10 + 余裕） |
+| tier | **見届け人 Gold** |
+| プレイした作品 | **20+** |
+| play sessions | **40+** |
+| Voice | **25+** |
+| Watch | **15+** |
+| 正式版到達を見届けた履歴 | **10+** 作品で release タイムライン |
+| Devlog 反映体験 | **8+** 作品で play → voice → devlog 公開 → 再プレイの流れ |
+
+**Walkthrough ルート（Veteran で実施）**
+
+1. `/` — 発見（投稿が並ぶ密度）
+2. 代表作 2–3 本の `/games/[id]` — 育成感・Devlog 導線
+3. `/mypage#play-history` — 厚いタイムライン
+4. `/mypage#official-release` — Gold tier + 見届け人カード群
+5. 代表作の Devlog 一覧 — 追いたくなる連なり
+6. （任意）Veteran が開発者でも持つ 1 作品 → Studio — 開発者側の厚み
+
+### 2.2 比較用 — Demo New User
+
+| 項目 | 状態 |
+|------|------|
+| プレイ / Voice / 見届け人 | **すべて空** |
+| 用途 | 新規導線・空状態 UI の对比のみ |
+
+**切替は 2 アカウントだけ。** 8 ペルソナ巡回は不要。
 
 ---
 
-## 3. 設計原則
+## 3. 設計原則（維持）
 
 | 原則 | 内容 |
 |------|------|
+| staging のみ | 本番 DB 禁止 |
+| Seeder + service role | witness-sandbox 同型 |
 | 本番機能を増やさない | 新 UI・新 API・新テーブルなし |
-| デモデータだけで成立 | 既存 hook / 画面がそのまま読む |
-| 小さい実装で大きい価値 | CLI Seeder + 固定ペルソナ + 手順書 |
-| 原典整合 | 件数競争・ランキング・通知増殖なし |
-| 共有データは Supabase | localStorage は UI 補助のみ（原典どおり） |
+| 本番 UX 変更なし | ルート・バナー・モード切替なし |
+| 原典整合 | ランキング・通知増殖・witness 人数表示なし |
+| 固定ログイン情報 | **メール + パスワードを doc に明記**（オーナー実機確認必須） |
 
 ---
 
-## 4. 推奨アーキテクチャ
+## 4. アーキテクチャ
 
-### 4.1 結論
-
-**staging Supabase + service-role CLI Seeder + 固定デモ専用 auth ユーザー**
+```
+staging Supabase
+  └── [future-demo] 世界データ（25 作品・多数 Devlog/Voice/Release）
+        ├── NPC 開発者 6 人（作品オーナー）
+        ├── NPC プレイヤー 12 人（世界のノイズ — Voice/Play 生成用）
+        ├── Demo Veteran（オーナーがログイン — 主役）
+        └── Demo New User（オーナーがログイン — 空状態）
+```
 
 | 項目 | 方針 |
 |------|------|
-| 環境 | **staging 正**（本番 DB 汚染を避ける） |
-| 投入 | `npm run seed:future-demo:staging`（新規 script） |
-| ユーザー | **Demo 専用 8 アカウント**（Player A–D + Developer A–D） |
-| 作品 | **Demo 専用 5–6 プロジェクト**（`[future-demo]` 接頭辞） |
-| 画面 | **既存 URL のみ**（`/mypage`, `/games/[id]`, Studio 等） |
-| 切替 | **ログイン切替**（impersonation UI は作らない） |
+| 環境 | **staging**（`.env.local` → staging project） |
+| 投入 | `npm run seed:future-demo:staging` |
+| 検証 | `npm run verify:future-demo:staging` |
+| 作品接頭辞 | `[future-demo]` — cleanup / 目視識別 |
+| 画面 | 既存 URL のみ |
 
-### 4.2 採用理由
+### mock 18 との共存
 
-- `witness-sandbox` と同型 — 014 grants・release trigger の検証実績あり
-- `/demo` 現行は**ログイン中 1 開発者**向け 3 作品のみ — 8 ペルソナ横断には不向き
-- 組み込み mock 18 作品は DB 非連動 — プレイ履歴・見届け人・正式版は**実 DB が必要**
-- 本番 UX 変更なし — ルート追加・バナー・モード切替 UI 不要
+組み込み mock 18 作品は**非表示にしない**（UX 変更 Out）。
 
-### 4.3 他案（不採用）
-
-| 案 | 不採用理由 |
-|----|------------|
-| `/demo` 拡張のみ | マルチペルソナ・横断プレイ履歴を再現不可 |
-| mock 18 + LS 合成 | witness / release / sessions が DB 連動しない |
-| UI フィクスチャ層 | 新機能相当、本番 UX に影響 |
-| 本番 DB に直接 seed | リスク大、クリーンアップ困難 |
-| ペルソナ impersonation UI | 新機能、スコープ外 |
+Walkthrough で **`[future-demo]` 接頭辞の作品を主に見る** と明記。発見画面は mock + デモ世界の合算密度になる。
 
 ---
 
-## 5. 再現したい 3 体験 → データマップ
+## 5. 世界データ規模（推奨値）
 
-### 体験1 — プレイヤー: 発見 → プレイ → 声 → Devlog → 再プレイ
+数字は厳密固定ではなく、**verify が下限を断言**する。
 
-**主役**: Player D × Developer B の作品
+| 対象 | 推奨 | 下限（verify） |
+|------|------|----------------|
+| **公開作品** | **25** | ≥ 20 |
+| **開発者 NPC** | **6** | ≥ 5 |
+| **NPC プレイヤー** | **12** | ≥ 10 |
+| **Devlog 合計** | **90** | ≥ 60 |
+| **Voice 合計** | **180** | ≥ 100 |
+| **Released 作品** | **12** | ≥ 10 |
+| **Reopened 作品** | **3** | ≥ 2 |
+| **世界の witness grants 合計** | **40+** | ≥ 30 |
+| **Veteran の witness grants** | **12** | ≥ 10（Gold） |
 
-| 画面 | 見せたいもの |
-|------|--------------|
-| `/` or 一覧 | 作品発見 |
-| `/games/[id]` | プレイ導線、Voice 導線 |
-| `/mypage#play-history` | play / voice / devlog タイムライン |
-| Devlog 一覧 | 声を反映した更新の連なり |
+### 作品レイヤー（25 本の内訳案）
 
-**必要データ**: sessions（複数版）, voice_responses, devlogs（`published_version` あり）, watches（任意）
+| レイヤー | 本数 | 内容 |
+|----------|------|------|
+| 序盤 | 8 | 試作・Devlog 1–3・Voice 少 |
+| 成長中 | 10 | Devlog 4–8・Voice 中・未 Released |
+| 正式版 | 12 | 初回 Released 済（上記と重複可 — 12 Released を優先） |
+| 再調整 | 3 | `release_reopened` イベントあり |
 
----
+※ 25 本のうち 12 が Released、3 が Reopened。成長中作品は Released 前の Devlog/Voice が厚い。
 
-### 体験2 — プレイヤー: 複数版 → 見届け人 → 正式版 → 履歴
+### 開発者 NPC（ログイン不要）
 
-**主役**: Player B / C × Developer C + D の Released 作品
-
-| 画面 | 見せたいもの |
-|------|--------------|
-| `/mypage#official-release` | 見届け人 teal カード + tier バッジ |
-| `/mypage#play-history` | release イベント、「正式版到達を見届けた」 |
-| `/games/[id]` | 作品詳細に witness **出さない**（原典維持） |
-
-**必要データ**: sessions（初回 Released 前）, voice or watch or multi_version 条件, `project_release_events`, `project_witness_grants`（trigger 付与）
-
----
-
-### 体験3 — 開発者: Voice 集まる → Devlog → プレイヤーが戻る
-
-**主役**: Developer D × Player D（+ 他プレイヤー少数）
-
-| 画面 | 見せたいもの |
-|------|--------------|
-| `/projects/[id]/studio` | Voice 受信、開発状況 |
-| Devlog 編集 / 一覧 | 複数 Devlog、版公開 |
-| `/my-projects` | 長期開発の並び |
-| Release パネル | Released 状態（Dev C は reopen も） |
-
-**必要データ**: 多数 voice, 多数 devlogs, version_prompts, release_events, grants（**人数は UI に出さない**）
+| ID | 表示名（案） | 作品数 | 役割 |
+|----|--------------|--------|------|
+| npc-dev-1 | 星野あかり | 5 | 多数 Devlog・Voice 受け皿 |
+| npc-dev-2 | 結城ソラ | 4 | Released 2 + Reopened 1 |
+| npc-dev-3 | 霧島レン | 4 | アクション系 flagship |
+| npc-dev-4 | 白井ヒカル | 4 | パズル・短サイクル更新 |
+| npc-dev-5 | 黒川ユイ | 4 | ホラー・長期 Devlog |
+| npc-dev-6 | 青木タク | 4 | 協力プレイ・Voice 多 |
 
 ---
 
-## 6. ペルソナ定義
+## 6. 必要ユーザー数
 
-### 6.1 プレイヤー
+| 種別 | 人数 | オーナーがログイン |
+|------|------|---------------------|
+| **Demo Veteran** | 1 | **はい（主役）** |
+| **Demo New User** | 1 | **はい（对比）** |
+| 開発者 NPC | 6 | いいえ |
+| プレイヤー NPC | 12 | いいえ |
+| **合計 auth.users** | **20** | **2 のみ** |
 
-| ID | 表示名（案） | tier | 再現内容 | 主な確認 URL |
-|----|--------------|------|----------|--------------|
-| **Player A** | （新規） | なし | 履歴空、見届け人なし、正式版空 | `/mypage` 全体 |
-| **Player B** | 見届け人 | 見届け人（1） | 1 作品 witness grant | `#official-release`, `#play-history` |
-| **Player C** | 見届け人 Silver | Silver（3） | 3 作品 witness grant | `#official-release` tier バッジ |
-| **Player D** | 熱心なプレイヤー | 任意（1+） | 多数 play / voice / devlog タイムライン | `#play-history` 中心 |
-
-**Player D の tier**: 3+ grants でもよいが、**ペルソナの主目的は履歴の厚み**。tier 強調は Player C に任せる。
-
----
-
-### 6.2 開発者
-
-| ID | 表示名（案） | 再現内容 | 主な確認 URL |
-|----|--------------|----------|--------------|
-| **Developer A** | 投稿直後 | 1 作品、Devlog 1、Voice 少 / なし、未 Released | `/my-projects`, Studio |
-| **Developer B** | 改善が見える | Devlog 5+、Voice→反映 Devlog、版 0.1→0.2 | Studio, Devlog, 作品詳細 |
-| **Developer C** | 正式版サイクル | `released` + `release_reopened` 両方 | Studio Release パネル, 履歴 |
-| **Developer D** | 長期開発 | Devlog 多数、Voice 多数、witness grants 多数（**人数 UI なし**） | Studio, `/my-projects` |
+NPC は Seeder が `auth.admin.createUser` で作成。オーナー向け credential は **2 件だけ** `docs/future-demo-walkthrough.md` に記載。
 
 ---
 
-## 7. Demo 専用プロジェクト案（5–6 本）
+## 7. 固定ログイン情報（案 — 実装時に正本化）
 
-接頭辞: **`[future-demo]`**（cleanup / verify 用。witness-sandbox と同型）
+| アカウント | メール | パスワード（固定） |
+|------------|--------|---------------------|
+| **Demo Veteran** | `veteran@forge-future-demo.local` | `ForgeDemo!Veteran2026` |
+| **Demo New User** | `new@forge-future-demo.local` | `ForgeDemo!New2026` |
 
-| # | タイトル（案） | オーナー | visibility | 役割 |
-|---|----------------|----------|------------|------|
-| P1 | `[future-demo] 初灯の試作` | Dev A | public | 投稿直後 |
-| P2 | `[future-demo] 星灯の旅路` | Dev B | public | 体験1 — Voice↔Devlog |
-| P3 | `[future-demo] 潮音の記録` | Dev C | public | 体験2 — Released + Reopened |
-| P4 | `[future-demo] 深淵ノート` | Dev D | public | 体験3 — 長期 flagship |
-| P5 | `[future-demo] 霧港の余白` | Dev D | public | Player C 2 件目 witness |
-| P6 | `[future-demo] 砂上の盟約` | Dev B | public | Player C 3 件目 witness（Released） |
-
-**版キー例**: `0.1`, `0.2`, `0.3` — `playable_version` と sessions / devlogs を整合
-
-**Release 順序（重要）**
-
-1. 先に engagement（plays, sessions, voice, watches）を **初回 Released より前** に seed
-2. 初回 `released` イベント insert → 014 trigger で grants 付与
-3. Dev C のみ `release_reopened` を追加 insert（再 Released は grant 増殖しない — 既存 verify どおり）
+- seed 実行時にもターミナル出力
+- **毎回同じ** — オーナーが何度でも実機確認可能
+- staging の `/login` からログイン（ローカル dev + staging `.env.local` または staging 向け URL）
 
 ---
 
-## 8. 必要データ一覧（Supabase）
+## 8. Demo Veteran のデータ設計
 
-### 8.1 テーブル別
+Veteran は **12 Released 作品すべて**（またはそのうち 12）で、初回 Released **前**に eligibility を満たす engagement を seed する。
 
-| テーブル | 用途 | Seeder |
-|----------|------|--------|
-| `auth.users` | 8 ペルソナ | admin.createUser |
-| `developer_profiles` | 開発者表示名 | insert |
-| `projects` | 5–6 作品 | insert |
-| `project_devlogs` | 開発の歩み | insert（`published_version` 付き複数） |
-| `project_version_prompts` | Voice プロンプト | insert |
-| `project_plays` | プレイ済みフラグ | insert |
-| `project_play_sessions` | 履歴・multi_version 判定 | insert |
-| `project_voice_responses` | 声を届ける | insert |
-| `project_watches` | watch 条件（C'） | insert（必要ユーザー only） |
-| `project_release_events` | 正式版 / 再調整 | insert（013） |
-| `project_witness_grants` | 見届け人 | **trigger 任せ**（手 insert しない） |
-| `voice_adoptions` | 影データ | **任意・最小**（PLAYER_VISIBLE=false のため UI 非表示） |
+| grant_path | 作品数（案） | Veteran の engagement |
+|------------|--------------|------------------------|
+| multi_version | 5 | sessions 0.1 + 0.2+ |
+| voice | 4 | session + voice |
+| watch | 3 | watch + sessions 2+ |
 
-### 8.2 付与しない / 最小
+**手順（014 整合）**
 
-| データ | 方針 |
-|--------|------|
-| 通知行 | **増やさない**（通知追加禁止） |
-| ランキング用集計 | 作らない |
-| Adoption プレイヤー UI 用 seed | 不要（shadow のみ将来） |
-| `project_feedback` | MVP 外なら省略可 |
+1. Veteran + NPC の engagement を時系列で insert
+2. 12 作品に初回 `released` を **時刻順** insert → trigger で Veteran に grant
+3. 3 作品に `release_reopened` を追加（grant 増殖なし）
+4. verify が Veteran grants ≥ 10 と tier Gold を断言
 
-### 8.3 localStorage（最小）
+**プレイ履歴の厚み**
 
-| キー | 用途 |
-|------|------|
-| 原則 **書かない** | デモは Supabase 正 |
-| 例外 | テスター応募数など既存 `/demo` 互換が必要なら Dev A のみ最小 |
+- 20+ 作品で `project_plays` + sessions
+- 8+ 代表作で voice + `published_version` 付き devlog + release を同一タイムラインに
+- 「◯回更新を見届けた」= 現行定義（published devlog 件数）が自然に 2+ になるよう devlog を配置
 
 ---
 
-## 9. 既存機能マトリクス（使う / 使わない）
+## 9. 世界ノイズ（NPC プレイヤー）
 
-### 使う（変更なし）
+活気のため、Veteran **以外**の NPC プレイヤーにも:
 
-- 発見: `/`, 一覧フィルタ, `games-provider`
-- 作品詳細: `/games/[id]`
-- Voice 投稿フロー（既存）
-- プレイ履歴: `use-player-play-history`, `#play-history`
-- 正式版 + 見届け人: `#official-release`, `use-player-witness-grants`, tier
-- Studio: Release パネル, Voice 一覧
-- Devlog: 公開 / 一覧
-- Witness eligibility + 014 trigger（本番ロジックそのまま）
+- 各作品 2–8 Voice
+- 各作品 1–4 play sessions
+- 一部 watch
 
-### 使わない / 触らない
+→ 開発者 Studio の Voice 一覧、作品詳細の雰囲気が「人がいる」状態になる。
 
-- mock 18 作品をデモ宇宙の正本にしない（混在はレビュー時に混乱）
-- voice_adoption プレイヤー表示
-- 通知センター増強
-- ランキング・ witness 人数・作品詳細 witness
+**witness grants** も NPC 間で 30+ 件（Silver/Gold が世界に存在するが、**他人の tier は見えない** — Veteran 自分のマイページのみ）。
 
 ---
 
-## 10. Seeder 設計
+## 10. Seeder 構成
 
-### 10.1 ファイル構成（案）
+### 10.1 ファイル
 
 ```
-scripts/future-demo-lib.ts      # 定数、ユーザー解決、marker JSON
-scripts/future-demo-seed.ts     # メイン seed
-scripts/future-demo-verify.ts   # ペルソナ断言 + 件数チェック
+scripts/future-demo-lib.ts           # 定数、固定 credential、marker、テンプレ
+scripts/future-demo-seed.ts          # オーケストレータ
+scripts/future-demo-verify.ts        # 世界密度 + Veteran/New 断言
+docs/future-demo-walkthrough.md      # オーナー実機手順（実装 F5 で作成）
 ```
 
-npm scripts:
+npm:
 
 ```
 seed:future-demo:staging
 verify:future-demo:staging
 ```
 
-### 10.2 パターン（witness-sandbox 流用）
+### 10.2 Seed フェーズ（順序固定）
 
-- `FUTURE_DEMO_TITLE_PREFIX = "[future-demo]"`
-- `FUTURE_DEMO_MARKER` in `projects.description` — 全 userId / projectId JSON
-- `--fresh`: 同名 prefix 作品を grants **前**のみ削除可能
-- `--cleanup`: 可能範囲の teardown（grants append-only 注意）
-- env: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
-- 任意: `FUTURE_DEMO_*_USER_ID` で既存 UUID 再利用
+| Step | 内容 |
+|------|------|
+| S0 | `--fresh` cleanup（grants 前のみ — append-only 遵守） |
+| S1 | auth 20 人 + developer_profiles（NPC 6 + Veteran 用 1） |
+| S2 | projects 25 insert（`[future-demo]` + marker JSON） |
+| S3 | devlogs 一括（作品あたり 2–6、計 90 目標） |
+| S4 | version_prompts + NPC engagement（Voice / sessions / watches） |
+| S5 | Veteran engagement（12 Released 対象作品を中心に厚く） |
+| S6 | release_events — 12 released → grants 発火 |
+| S7 | 3 作品 reopen |
+| S8 | verify 実行 |
 
-### 10.3 認証情報（案）
+### 10.3 テンプレート生成
 
-メール: `{persona}@forge-future-demo.local`  
-例: `player-b@forge-future-demo.local`, `developer-c@forge-future-demo.local`
+- タイトル: `[future-demo] {形容詞}{名詞}` プールから 25 件（重複なし）
+- 時系列: 基準日 2025-12-01 から 180 日 spread — 古い作品ほど Devlog/Release が多い
+- 版: `0.1` → `0.2` → `0.3` — Released 前に Veteran sessions を配置
 
-パスワード: seed 実行時ログ出力 + `docs/future-demo-walkthrough.md` に固定記載（staging のみ）
+### 10.4 marker / cleanup
 
-**Demo 専用ユーザー: はい（8 人）**  
-**Demo 専用プロジェクト: はい（5–6 本）**  
-**Seeder: はい（CLI、service role）**
-
----
-
-## 11. オーナー / レビュアー手順（実装後）
-
-1. staging に seed 実行
-2. `verify:future-demo:staging` PASS
-3. ペルソナ表に従いログイン切替
-4. 3 体験を下記順で目視
-   - Player A → 空状態確認
-   - Player B / C → tier + witness
-   - Player D → プレイ履歴の厚み
-   - Developer A → 投稿直後
-   - Developer B → Devlog 連鎖
-   - Developer C → release + reopen
-   - Developer D → 長期開発
-5. **UI 全面レビュー GO**（別フェーズ）
+- `FUTURE_DEMO_MARKER` in `projects.description` — worldId, userIds, projectIds JSON
+- `--fresh`: grants **前**の `[future-demo]` 作品のみ削除可能
+- grants 後は **残置**（witness-sandbox と同じ）
 
 ---
 
-## 12. 実装フェーズとコスト見積もり
+## 11. Verify 方針
 
-| Phase | 内容 | 工数（目安） |
-|-------|------|--------------|
-| **F0** | 本 doc GO + walkthrough 骨子 | 0.5 日 |
-| **F1** | lib + 8 users + 6 projects 骨格 | 1–1.5 日 |
-| **F2** | engagement seed（sessions, voice, devlogs） | 1.5–2 日 |
-| **F3** | release events → grants 整合 + verify | 1 日 |
-| **F4** | walkthrough doc + staging 目視 | 0.5–1 日 |
+**ペルソナ表ではなく世界密度 + 2 ログインアカウント断言。**
 
-**合計: 4.5–6 日**（Cursor 一気通貫想定）
+| チェック | 条件 |
+|----------|------|
+| 作品数 | `[future-demo]` ≥ 20 |
+| Devlog | ≥ 60 |
+| Voice | ≥ 100 |
+| Released | ≥ 10 |
+| Reopened | ≥ 2 |
+| 世界 grants | ≥ 30 |
+| Veteran grants | ≥ 10 |
+| Veteran tier | `resolveWitnessTier(n).label === "見届け人 Gold"` |
+| Veteran sessions | ≥ 40 |
+| New User grants | === 0 |
+| New User sessions | === 0 |
+| 014 table | exists |
 
-**MVP 短縮（3 日）**: Player B/C + Dev C + P2/P3/P5/P6 のみ — 体験2 優先。Player A 空状態 + Dev A は F1 で同時。
+FAIL 時: どの下限を満たさないかを stdout に明示。
 
 ---
 
-## 13. リスクと対策
+## 12. Walkthrough（実装後 doc 骨子）
+
+`docs/future-demo-walkthrough.md` に記載する内容:
+
+### 12.1 事前
+
+- staging `.env.local` 確認
+- `npm run seed:future-demo:staging`
+- `npm run verify:future-demo:staging` PASS
+
+### 12.2 ログイン情報（固定）
+
+上記 §7 の表を **そのまま** 掲載。
+
+### 12.3 Veteran ツアー（30–45 分）
+
+| # | URL | 見るポイント |
+|---|-----|--------------|
+| 1 | `/` | 投稿密度、`[future-demo]` 作品が並ぶ |
+| 2 | `/games/{flagship}` | 育成感、Voice、Devlog 導線 |
+| 3 | `/mypage#play-history` | タイムラインの厚み、release 行 |
+| 4 | `/mypage#official-release` | Gold + 見届け人カード |
+| 5 | Devlog ページ | 連続更新、変化の narrative |
+| 6 | Reopened 作品 | 正式版再調整の履歴 |
+
+### 12.4 New User（5 分）
+
+- ログアウト → `new@...` ログイン
+- `/mypage` 空状態 — Veteran との对比
+
+### 12.5 UI レビュー観点チェックリスト
+
+- 発見画面は魅力的か
+- 詳細画面は育成感があるか
+- プレイ履歴は価値を感じるか
+- 見届け人は誇らしいか（自マイページのみ）
+- Devlog は追いたくなるか
+- 正式版到達は嬉しいか
+
+---
+
+## 13. 既存機能（変更なし）
+
+**使う**: 発見、作品詳細、Voice、#play-history、#official-release + tier、Studio、Devlog、Release パネル
+
+**使わない / 禁止**: ランキング、通知追加、Adoption 表示、作品詳細 witness 人数、PLAYER_VISIBLE
+
+---
+
+## 14. 実装フェーズとコスト
+
+| Phase | 内容 | 工数 |
+|-------|------|------|
+| **F0** | 本 doc v2 GO | 0.5 日 |
+| **F1** | lib + 20 users + 25 projects 骨格 | 2 日 |
+| **F2** | devlogs + NPC voice/sessions 一括 | 2–2.5 日 |
+| **F3** | Veteran arc + 12 release + grants | 2 日 |
+| **F4** | reopen + 世界 grants ノイズ + verify | 1–1.5 日 |
+| **F5** | walkthrough doc + オーナー目視 | 0.5–1 日 |
+
+**合計: 8–9.5 日**
+
+**MVP 短縮（6 日）**: 18 作品、8 Released、Veteran grants 10、Devlog 50 — UI レビュー最低ライン。
+
+---
+
+## 15. リスクと対策
 
 | リスク | 対策 |
 |--------|------|
-| grants append-only で cleanup 困難 | prefix 作品は grants 前に `--fresh`。一度 grant 後は作品ごと残置 |
-| seed 順序ミスで witness 不付与 | verify が A/B/C 件数 + grant_path を断言 |
-| mock 18 と混在でレビュー混乱 | walkthrough に「デモ作品タイトル prefix で識別」と明記 |
-| 本番誤 seed | **staging のみ** npm script 名に `:staging` 固定 |
-| PLAYER_VISIBLE | adoption seed しても UI に出ない — 期待値を walkthrough に記載 |
+| grants append-only | `--fresh` は grants 前のみ。再 seed は新 worldId / 新 prefix 検討 |
+| seed 時間・件数 | バッチ insert、テンプレートで重複コード削減 |
+| mock 18 混在 | walkthrough で `[future-demo]` を明示 |
+| パスワード不明 | **固定 credential** を walkthrough 正本化（§7） |
+| release 順序ミス | verify が Veteran grants / Gold を断言 |
 
 ---
 
-## 14. In / Out（本テーマ）
+## 16. v1 からの変更点
 
-**In**
-
-- staging 将来像デモ
-- 8 ペルソナ + 5–6 作品
-- CLI seeder + verify
-- 既存画面のみでの体験再現
-- UI 全面レビューの前提
-
-**Out**
-
-- 本番 UX 変更、新ルート
-- ランキング、通知追加、Adoption 表示
-- PLAYER_VISIBLE=true
-- 本番 DB seed（別判断）
+| v1（旧） | v2（本 doc） |
+|----------|--------------|
+| Player A–D + Developer A–D | **Demo Veteran + Demo New User** のみログイン |
+| 5–6 作品 | **20–25 作品** |
+| ペルソナ差分検証 | **活気ある世界 + Veteran 主役体験** |
+| 8 ログインアカウント | **2 ログイン + 18 NPC** |
 
 ---
 
-## 15. オーナー判断依頼（GO 前）
+## 17. オーナー判断依頼（GO 前）
 
-1. **環境**: staging のみでよいか（本番デモアカウント要否）
-2. **MVP 範囲**: 6 作品フル vs 4 作品短縮
-3. **作品タイトル**: 上記案でよいか（世界観統一）
-4. **mock 18**: レビュー時に非表示 / 混在許容のどちらか
+1. **世界規模**: 25 作品フル vs MVP 18 作品
+2. **固定パスワード**: §7 案でよいか
+3. **mock 18 混在**: walkthrough 明示で許容か
+4. **Veteran Gold**: grants 12 でよいか（10 最低）
 5. **F0 GO** → 実装開始
 
 ---
 
-## 16. 関連
+## 18. 関連
 
-- `scripts/witness-sandbox-lib.ts` — seeder パターン正本
-- `lib/demo-setup.ts` — 現行 `/demo`（開発者 1 人 × 3 作品）
+- `scripts/witness-sandbox-lib.ts`
+- `lib/witness-tier.ts`
 - `docs/player-play-history-design.md`
-- `docs/witness-phase-w3-verification.md`
 - `docs/official-release-design.md`
-- `docs/forge-principles.md` — コアループ
+- `docs/forge-principles.md`
