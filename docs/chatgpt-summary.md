@@ -1,46 +1,56 @@
 ■ 現在の状態
-- main push 完了 — commit d09dfa9（origin/main）
-- 012 staging 適用 + 目視 OK（play / 再プレイ / マイページ）
+- main 6c8e992 — プレイ履歴 Phase1 + matcher + Phase3 反映済み
 - PLAYER_VISIBLE=false 維持
-- Vercel 本番 deploy — push 連動（Dashboard で完了確認推奨）
+- 運用方針更新 — Cursor 一気通貫（2026-06-16 オーナー確定）
 
 ■ 今回実施したこと
-- git commit d09dfa9 — プレイ履歴 Phase1 + voice adoption matcher + Phase3 verify
-- git push origin main — オーナー「まかせる」にて実行
-- 除外: .tmp-chunk*.js, build-output.txt（未コミット）
+- docs/forge-triage-operations.md §10 — 一気通貫運用の正本
+- docs/gpt-run-decision-memo.md — 停止条件 9 項目に更新（push 一律停止を廃止）
+- AGENTS.md / .cursor/rules/forge.mdc / chatgpt-summary-format.md — 同期
+- forge-handoff / forge-changelog 更新
 
-■ 「見届けた」定義（再掲・変更なし）
-- 現行: published_version あり devlog の件数（再プレイ未判定）
-- 将来 B（devlog 公開後の再プレイ）へ寄せる論点は doc 記録済み
+■ 一気通貫運用（要点）
+- 原則フロー: 設計 → 実装 → build → staging 確認 → main 反映準備
+- 毎工程の承認待ち不要 — 機能タスク単位で完走
+- 開発速度優先。安全性は停止 9 条件で維持
 
-■ 今回変更した画面
-- 変更なし（merge/push のみ）
-- 本番反映後: /mypage プレイ履歴が Vercel 本番でも利用可（012 本番 DB 適用済み前提）
+■ 必ず停止（9 条件）
+- 課金発生
+- 新規 API 契約
+- 本番公開
+- PLAYER_VISIBLE=true
+- DB 破壊変更
+- 既存データ移行
+- Forge 原典変更
+- ロードマップ優先順位変更
+- 不可逆な作業
+
+■ 自動で進めてよいもの
+- migration 作成、設計 doc、実装、build、staging 確認、テストデータ、main 反映準備（commit/push）、handoff 更新
+
+■ サマリ報告ルール（変更）
+- ■ 今すぐ私がやるべきこと — オーナーしかできないことだけ
+- Cursor が実行できる内容はオーナー欄に書かない
 
 ■ ユーザー目線の変化
-- staging で確認済みのプレイ履歴 UI が main 経由で本番 deploy 対象になる
-- adoption UI は引き続き PLAYER_VISIBLE=false で非表示
+- なし（運用ルールのみ）
+
+■ 今回変更した画面
+- 該当なし
 
 ■ 注意事項
-- 本番 Supabase に 012 未適用なら session INSERT のみスキップ（graceful）
-- staging と本番 DB が別なら本番でも 012 Dashboard 適用が必要
-- matcher 本番は Vercel env（OPENAI + SERVICE_ROLE）確認
+- Supabase Dashboard SQL 適用は引き続きオーナー操作が必要なことが多い（Cursor は SQL 正本まで）
+- 本番公開・PLAYER_VISIBLE ON は従来どおり必ず停止
 
 ■ 今すぐ私がやるべきこと
-1. Vercel Dashboard — main deploy 完了確認
-2. 本番 Supabase — 012 適用済みか確認（staging のみなら本番も適用）
-3. 本番 /mypage プレイ履歴 目視
-
-■ Cursorだけで完了できること
-- Phase 1b 作品詳細コンパクト履歴
-- updateWatchCount B 定義への変更（オーナー GO 後）
-
-■ In / Out
-- In: commit + push main
-- Out: Vercel deploy 確認、本番 012、PLAYER_VISIBLE=true
+- 該当なし（本タスクは doc 更新のみ）
 
 ■ 次に検討すべきこと
-- 本番目視 GO 後の次 Cursor テーマ（Phase 1b vs 正式版 vs matcher env）
+- 次機能タスク（Phase 1b / updateWatchCount B 定義 / matcher env）を一気通貫で着手
+
+■ In / Out
+- In: 運用正本 §10、停止リスト刷新、エージェントルール同期
+- Out: 原典変更、ロードマップ順位変更、本番公開
 
 ■ ChatGPTに相談したい論点
-- 本番 012 を staging 目視と同時 GO するか、本番 deploy 後に別 Run か
+- 該当なし

@@ -8,11 +8,21 @@ Cursor が **Run 確認前に停止** したとき、オーナーは **このメ
 
 ## 停止対象（必ずメモを出す）
 
-- git **push**（特に `main`）
-- **main への反映**（merge / 直接 push）
-- **Supabase migration** / **DB 変更** / **削除処理**
-- **本番環境変更**（Vercel `--prod` デプロイ、env 変更）
+**正本**: `docs/forge-triage-operations.md` §10.2（2026-06-16 以降）
+
+以下 **のみ** 停止（旧「push / migration 一律停止」は廃止）:
+
 - **課金が発生しうる操作**
+- **新規 API 契約**
+- **本番公開**（ユーザー向け GO）
+- **PLAYER_VISIBLE=true**
+- **DB 破壊変更**
+- **既存データ移行**（バックフィル・一括 UPDATE）
+- **Forge 原典変更**
+- **ロードマップ優先順位変更**
+- **不可逆な作業**
+
+main への commit / push、migration **作成**、build、staging 確認、main 反映準備は **停止不要**（一気通貫可）。
 
 ---
 

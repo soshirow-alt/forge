@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-06-16 Cursor 一気通貫運用 — 運用方針変更
+
+### 方針
+
+- タスク単位で設計→main反映準備まで承認待ちなし
+- 停止は 9 条件のみ（課金・本番公開・PLAYER_VISIBLE 等）
+- サマリ「今すぐ私がやるべきこと」= オーナー作業のみ
+
+### doc
+
+- `docs/forge-triage-operations.md` §10
+- `docs/gpt-run-decision-memo.md` / `AGENTS.md` / `.cursor/rules/forge.mdc` 同期
+
+---
+
 ## 2026-06-16 main 反映 — プレイ履歴 + matcher + Phase3
 
 ### デプロイ

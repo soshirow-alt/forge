@@ -26,8 +26,9 @@ Run 判断・UX 判断・設計判断すべて、この順で考える。
 
 ### Cursor の役割
 
+- **タスク単位で一気通貫** — 設計 → 実装 → build → staging 確認 → main 反映準備まで原則 Cursor 判断で完走（§10）
 - 実装・build・docs 更新・GPT用メモ（`chatgpt-summary.md` + 返答末尾 text ブロック）
-- Run 前停止時は `docs/gpt-run-decision-memo.md` 形式を出力
+- **§10 停止条件のみ**で GPT判断用メモ（`docs/gpt-run-decision-memo.md`）を出力
 - 原典の意味を勝手に変えない
 
 ---
@@ -171,7 +172,59 @@ handoff 更新トリガー: 大テーマ完了 / migration 完了 / ロードマ
 
 ---
 
-## 8. ドキュメント索引
+## 10. Cursor 一気通貫運用（2026-06-16〜）
+
+オーナーが変更を明示するまで有効。**開発速度優先**。安全性は §10.2 の停止条件で維持。
+
+### 10.1 基本方針
+
+**機能タスク単位**で、次まで **承認待ちなし** で進めてよい:
+
+```text
+設計 → 実装 → build → staging 確認 → main 反映準備
+```
+
+- 毎工程ごとの「Run判断」「GO/NG 待ち」は **不要**
+- main への commit / push も **main 反映準備** の一部として Cursor が実行してよい（staging 目視後を原則）
+- `■ 今すぐ私がやるべきこと`（サマリ）には **本当にオーナーしかできないことだけ** 書く。Cursor が実行できる内容は書かない
+
+### 10.2 必ず停止（GPT判断用メモ）
+
+以下 **のみ** 停止。`docs/gpt-run-decision-memo.md` 形式で報告:
+
+| 停止 | 例 |
+|------|-----|
+| **課金発生** | OpenAI 本番大量実行、Supabase/Vercel プラン変更 |
+| **新規 API 契約** | 未使用 SaaS の新規 signup / API key 発行 |
+| **本番公開** | ユーザー向け機能の本番 GO（PLAYER_VISIBLE ON 含む） |
+| **PLAYER_VISIBLE=true** | 採用 UI の本番表示 ON |
+| **DB 破壊変更** | DROP / 列削除 / CHECK 締め付けで既存行が壊れる |
+| **既存データ移行** | バックフィル / 一括 UPDATE / 推測補完 |
+| **Forge 原典変更** | `docs/forge-principles.md` の意味変更 |
+| **ロードマップ優先順位変更** | 次テーマ順位の確定変更 |
+| **不可逆な作業** | force push、本番データ削除、復旧不能な操作 |
+
+※ **additive migration 作成**・**012 型の追記テーブル**は停止対象外（Dashboard **適用**はオーナー Dashboard 操作が必要な場合はサマリのオーナー欄に記載）。
+
+### 10.3 自動で進めてよいもの
+
+- migration **作成**（SQL 正本）
+- 設計 doc 更新
+- 実装
+- build
+- staging 確認（Cursor / ブラウザ / スクリプトで可能な範囲）
+- テストデータ投入（staging・fixture）
+- **main 反映準備**（commit、push、handoff / changelog / summary 更新）
+- handoff 更新（差分。全量 handoff は §7 トリガー時のみ）
+
+### 10.4 旧 Run 停止リストとの関係
+
+`docs/gpt-run-decision-memo.md` の「push / migration / deploy 一律停止」は **本セクションに置換**。  
+スクショ Run 判断は **§10.2 に該当するとき** またはオーナーが明示したときのみ。
+
+---
+
+## 11. ドキュメント索引
 
 | ファイル | 用途 |
 |---|---|
@@ -185,6 +238,7 @@ handoff 更新トリガー: 大テーマ完了 / migration 完了 / ロードマ
 
 ---
 
-## 9. 変更履歴
+## 12. 変更履歴
 
+- **2026-06-16** — §10 Cursor 一気通貫運用（停止条件 9 項目・main 反映準備まで自動可・サマリオーナー欄ルール）
 - **2026-06-13** — 初版（CURSOR キーワード、Run 4 段階、サマリレビュー、UX レビュー、プロダクトレビュー優先順位、チャット移行）

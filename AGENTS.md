@@ -117,16 +117,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Run 確認前の停止 — GPT判断用メモ
 
-次の操作で Cursor が **Run 確認前に停止** したら、スクリーンショットではなく **`docs/gpt-run-decision-memo.md` のフォーマット** をレスポンスに必ず出力する：
+**§10.2 の 9 条件のみ**停止。`docs/forge-triage-operations.md` §10、`docs/gpt-run-decision-memo.md` 参照。
 
-- git **push**（特に `main`）
-- **main への反映**
-- **Supabase migration** / **DB 変更** / **削除処理**
-- **本番環境変更**（Vercel `--prod`、env 変更）
-- **課金が発生しうる操作**
+一気通貫で進めてよい: 設計 → 実装 → build → staging 確認 → **main 反映準備**（commit / push 含む）。
 
-オーナーはこのメモを ChatGPT に貼って判断する。詳細: `docs/gpt-run-decision-memo.md`  
-**トリガー運用全体**（CURSOR キーワード、Run スクショ、サマリレビュー、UX レビュー）: `docs/forge-triage-operations.md`
+停止例: 課金・新規 API 契約・**本番公開**・PLAYER_VISIBLE=true・DB 破壊・データ移行・原典変更・ロードマップ順位変更・不可逆操作。
+
+サマリ `■ 今すぐ私がやるべきこと` は **オーナーしかできないことだけ**（Cursor 実行可能な項目は書かない）。
 
 ## Owner × ChatGPT × Cursor トリガー運用（恒久）
 
