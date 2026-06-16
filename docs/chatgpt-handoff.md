@@ -1,7 +1,32 @@
 ■ ChatGPT 新チャット引継ぎ — 全量スナップショット
-更新日: 2026-06-13
+更新日: 2026-06-16
 用途: 新 GPT スレッドの最初に1回だけ貼る。以降は docs/chatgpt-summary.md（差分）を毎タスク貼る。
 素材用途: ChatGPT 側で「新チャット用の最終プロンプト」を組み立てるための全量テキスト。
+
+================================================================
+■ 現在の状態（2026-06-16）
+================================================================
+
+完了:
+- プレイ履歴 + 更新見出し UI 方向修正（e6d5fc1）
+- P0/P1 UI レビュー（42179f3）— ForgeGameCard、正式版 grid、Veteran developer patch 7 本
+- verify:future-demo:staging 18/18 PASS
+- 正式版 Phase 1、見届け人 W1–W4 + tier、migration 014 本番適用済み
+- 将来像デモ F1 — staging seed + patch
+
+デプロイ:
+- staging preview: https://forge-etb0gsaz1-soshirow-alts-projects.vercel.app（dpl_4crzKWLk2Ez3Vonnt7D7LFZNEDNR）
+- 本番 prod deploy — **保留**（Walkthrough + 主要 UI 確認後）
+
+PLAYER_VISIBLE=false 維持。/notifications 未修正。
+
+次スコープ GO:
+- 開発者タブ ProjectListCard → ForgeGameCard 思想（状態バッジ: 公開中/正式版/Reopened/Voice/Devlog/Play）
+- GeneratedThumbnailPoster は Walkthrough で許容確認。実サムネ URL は後回し
+
+prod GO 条件: Veteran walkthrough / プレイヤータブ / 開発者タブ / 正式版 grid / UX 破綻なし
+
+Cursor 推奨 1 位: Veteran Walkthrough → 開発者タブ統合（Walkthrough で旧 UI 感が強ければ即実装）
 
 ================================================================
 ■ Forge原典・コンセプト
@@ -481,12 +506,12 @@ PLAYER_VISIBLE:
 オーナー次作業:
 - Vercel プロジェクト forge に OPENAI_API_KEY + SUPABASE_SERVICE_ROLE_KEY 設定 + Redeploy
 
-Cursor 次テーマ（優先順位）:
-1. **正式版** — Phase 1 実装完了 → 013 適用 + staging 目視
-2. **見届け人** — release_events 正本
-3. 伴走者
-4. 育成者
-5. Phase 1b（作品詳細コンパクト履歴）
+Cursor 次テーマ（優先順位）— 2026-06-16 更新:
+1. **Veteran Walkthrough** — preview + staging DB
+2. **開発者タブ ForgeGameCard 化** — ProjectListCard 置換（GO）
+3. 伴走者 → 育成者 → Phase 1b
+
+prod deploy: Walkthrough + 主要 UI 確認後。vercel deploy --prod 禁止。
 
 PLAYER_VISIBLE=true は別 Run。バッジ付与は見届け人以降。
 
