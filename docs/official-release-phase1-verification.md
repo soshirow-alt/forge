@@ -84,8 +84,17 @@ npm run build
 
 ## 6. staging 確認チェックリスト
 
-- [ ] 013 Dashboard 適用
-- [ ] Studio Released / Reopened / 再 Released
-- [ ] events テーブルに 3 行追記（DELETE 不可確認）
-- [ ] 別アカウントでプレイ → Released 後マイページ `#official-release` に表示
-- [ ] プレイ履歴に release 行 + サマリ（条件満たす場合）
+**自動（013 + DB フロー）**
+
+```bash
+npm run verify:official-release:staging
+npm run verify:official-release:staging:flow
+```
+
+**手動（UI）**
+
+- [ ] Studio `#official-release` — Released / Reopened ボタン
+- [ ] `/mypage` `#official-release` — プレイ済み正式版作品
+- [ ] `/mypage` `#play-history` — release 行 + 「正式版到達を見届けた」
+
+**013 未適用時**: 最初のコマンドが exit 2 + Dashboard 手順を表示
