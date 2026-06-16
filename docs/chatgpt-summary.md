@@ -1,5 +1,6 @@
 ■ 現在の状態
-- 本番 URL: https://forge-flame-gamma.vercel.app（本タスク commit push + production deploy 実施）
+- 本番 URL: https://forge-flame-gamma.vercel.app
+- commit: a10f034 / Vercel deployment: dpl_5SWrzqHjf9vopkqFoKKWrv5dYtSG（READY）
 - DB migration: 009/010 適用済み。本タスクは migration なし
 - オーナー判断（2026-06-16）: P0 Studio / P1 更新 UI / pointer は実装 GO。P2 AI 採用体験は設計レビューのみで止める
 - フェーズ: Studio 二重説明解消 + プレイヤー更新の開発者語排除完了。次は P2 GO 判断
