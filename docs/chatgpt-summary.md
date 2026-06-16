@@ -1,10 +1,15 @@
 ■ 現在の状態
 - 見届け人 tier — 設計 GO（Silver/Gold 確定）、T1/T2 実装完了
 - W1–W4 — main 反映済み（771dfe6）、docs 964a452
-- tier コード — main push 前（ローカル build PASS、verify:witness:tier PASS）
+- tier コード — main 反映済み（759b0dd）、Vercel deploy success（2026-06-16T14:58–14:59Z）
 - migration 014 — staging 適用済み、本番 Dashboard 適用 GO（適用はオーナー Run）
 - PLAYER_VISIBLE=false 維持
 - UI 全面レビュー — 将来像デモ環境確認後（ChatGPT 推奨）
+
+■ main反映結果
+- commit: 759b0dd — Add lightweight witness tier on mypage official-release section
+- range: 964a452..759b0dd on main
+- Vercel — both forge / forge-app success（2026-06-16T14:58–14:59Z）
 
 ■ 今回実装したこと
 - ChatGPT レビュー反映 — tier 名称 Silver/Gold 採用、軽量実装方針
@@ -52,12 +57,11 @@
 
 ■ 今すぐ私がやるべきこと
 1. 014 本番 — Supabase Dashboard SQL（GO 済み）
-2. tier コード main push 後 — Vercel deploy 確認
-3. grant 保持アカウントで本番 /mypage#official-release 目視（tier 含む）
+2. grant 保持アカウントで本番 /mypage#official-release 目視（tier + 見届け人カード）
 
 ■ Cursorだけで完了できること
-- tier 実装の main push + Vercel 確認
 - 014 適用後の verify スクリプト実行（staging / 本番 env）
+- UI 全面レビュー準備（将来像デモ環境後）
 
 ■ 次に検討すべきこと
 - UI 全面レビュー — 将来像デモ環境確認後
