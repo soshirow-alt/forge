@@ -18,7 +18,6 @@ import {
 } from "@/lib/mock-games";
 import { isGamePublic } from "@/lib/project-visibility";
 import type { ProjectEditFormData, SubmitFormData } from "@/lib/project-form";
-export type { ProjectEditFormData, SubmitFormData } from "@/lib/project-form";
 import {
   sortDevlogsNewestFirst,
   type DevlogEntry,
@@ -30,6 +29,7 @@ import {
   type Notification,
   type NotificationType,
 } from "@/lib/notifications";
+import { invokeAdoptionMatcherAfterPublish } from "@/lib/voice-adoption/invoke-client";
 import {
   findDeveloperProfileByUserId,
   findDeveloperProfileByCreatorId,
@@ -67,9 +67,10 @@ import {
   fetchUserFeedbackForVersion,
   fetchUserLatestFeedbackVersionKey,
   insertProjectFeedback,
-  recordProjectPlay,
+  recordProjectPlayWithSession,
   removeProjectWatch,
   updateProjectFeedback,
+  type PlaySessionContext,
   type UserEngagementState,
 } from "@/lib/supabase/user-engagement";
 import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
@@ -105,6 +106,11 @@ import {
   notificationRowToNotification,
 } from "@/lib/supabase/user-notifications-db";
 
+export type RecordPlayOptions = {
+  context?: PlaySessionContext;
+  adoptionId?: string | null;
+};
+
 const APPLICANT_STORAGE_KEY = "forge-applicant-counts";
 const FOLLOWERS_STORAGE_KEY = "forge-follower-counts";
 const FOLLOWING_STORAGE_KEY = "forge-following-creators";
@@ -136,7 +142,7 @@ type GamesContextValue = {
   isSupported: (gameId: string) => boolean;
   supportGame: (gameId: string) => Promise<void>;
   hasPlayedGame: (gameId: string) => boolean;
-  recordPlay: (gameId: string) => Promise<void>;
+  recordPlay: (gameId: string, options?: RecordPlayOptions) => Promise<void>;
   submitProjectFeedback: (
     gameId: string,
     feedback: Omit<GameFeedbackItem, "id" | "createdAt" | "versionKey" | "updatedAt">,
@@ -742,8 +748,8 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   );
 
   const recordPlay = useCallback(
-    async (gameId: string) => {
-      if (!user || hasPlayedGame(gameId)) {
+    async (gameId: string, options?: RecordPlayOptions) => {
+      if (!user) {
         return;
       }
 
@@ -752,11 +758,25 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      await recordProjectPlay(supabase, user.id, gameId);
-      setUserEngagement((prev) => ({
-        ...prev,
-        playedProjectIds: [...prev.playedProjectIds, gameId],
-      }));
+      const game = getSubmittedGameById(gameId) ?? getMockGameById(gameId);
+      const versionKey = resolvePlayableVersion(game?.playableVersion);
+      const alreadyPlayed = hasPlayedGame(gameId);
+      const context: PlaySessionContext =
+        options?.context ?? (alreadyPlayed ? "new_version" : "general");
+
+      await recordProjectPlayWithSession(supabase, user.id, {
+        projectId: gameId,
+        versionKey,
+        context,
+        adoptionId: options?.adoptionId,
+      });
+
+      if (!alreadyPlayed) {
+        setUserEngagement((prev) => ({
+          ...prev,
+          playedProjectIds: [...prev.playedProjectIds, gameId],
+        }));
+      }
     },
     [user, hasPlayedGame],
   );
@@ -1272,6 +1292,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
               : item,
           ),
         );
+        invokeAdoptionMatcherAfterPublish(entry.id);
       }
 
       const watcherIds = await fetchWatcherUserIds(supabase, projectId);

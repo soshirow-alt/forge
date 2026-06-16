@@ -1,10 +1,13 @@
 "use client";
 
+import type { AdoptionVerifyContextRow } from "@/lib/adoption-verify-context";
+
 type PlayLaunchDialogProps = {
   open: boolean;
   onClose: () => void;
   onLaunch: () => void;
   launching?: boolean;
+  adoptionContext?: AdoptionVerifyContextRow | null;
 };
 
 export function PlayLaunchDialog({
@@ -12,10 +15,13 @@ export function PlayLaunchDialog({
   onClose,
   onLaunch,
   launching = false,
+  adoptionContext = null,
 }: PlayLaunchDialogProps) {
   if (!open) {
     return null;
   }
+
+  const hasAdoptionContext = Boolean(adoptionContext);
 
   return (
     <div
@@ -39,15 +45,31 @@ export function PlayLaunchDialog({
           id="play-launch-dialog-title"
           className="text-lg font-semibold tracking-tight text-zinc-50"
         >
-          ゲームを起動します
+          {hasAdoptionContext
+            ? `版 ${adoptionContext!.publishedVersion} をプレイ`
+            : "ゲームを起動します"}
         </h2>
 
         <div className="mt-4 space-y-3 text-sm leading-relaxed text-zinc-400">
-          <p>
-            ゲームを遊び終わったら、
-            <span className="text-zinc-200">このタブに戻って、開発者の質問に答えてください。</span>
-          </p>
-          <p>1つ答えるだけでOKです。</p>
+          {hasAdoptionContext ? (
+            <p>
+              「
+              <span className="text-zinc-200">{adoptionContext!.playerQuote}</span>
+              」と答えた点について、「
+              <span className="text-zinc-200">{adoptionContext!.updateSummary}</span>
+              」が本当に変わっているか確かめましょう。
+            </p>
+          ) : (
+            <>
+              <p>
+                ゲームを遊び終わったら、
+                <span className="text-zinc-200">
+                  このタブに戻って、開発者の質問に答えてください。
+                </span>
+              </p>
+              <p>1つ答えるだけでOKです。</p>
+            </>
+          )}
         </div>
 
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

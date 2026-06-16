@@ -1,88 +1,41 @@
 ■ 現在の状態
-- 本番 URL: https://forge-flame-gamma.vercel.app
-- commit: a10f034 / Vercel deployment: dpl_5SWrzqHjf9vopkqFoKKWrv5dYtSG（READY）
-- DB migration: 009/010 適用済み。本タスクは migration なし
-- オーナー判断（2026-06-16）: P0 Studio / P1 更新 UI / pointer は実装 GO。P2 AI 採用体験は設計レビューのみで止める
-- フェーズ: Studio 二重説明解消 + プレイヤー更新の開発者語排除完了。次は P2 GO 判断
+- プレイ履歴 Phase 1 実装完了 — build PASS
+- 012 適用済み — staging 目視完了（play / 再プレイ / マイページ確認 OK）
+- main merge — オーナー GO（staging 目視後反映で問題なし）
+- PLAYER_VISIBLE=false 維持
 
-■ Forge原典コアループ（判断の基準）
-- 投稿 → 発見 → プレイ → フィードバック → 改善 → 再プレイ
-- 今回は開発者側「今どの工程か / 次に何をするか」の明確化（P0）と、プレイヤー側「前回プレイ後に何が変わったか」（P1）を強化。P2 は「自分の意見が採用された」体験の設計のみ
+■ 今回確認したこと
+- 「◯回更新を見届けた」の現行定義をコードベースで確認（実装変更なし）
 
-■ 今回実装したこと
-- P0 Studio: Hero「次にやること」と「育成サイクル」を単一フェーズパネルに統合（rail 上部 + いま: 工程名 + ガイダンス + CTA）
-- buildNurtureDisplayContext を heroTitle 廃止 → phaseLabel / phaseGuidance / secondaryCta へ刷新
-- イベント語（「プレイヤーの回答が届きました」）を Hero・作品カードタイトルから排除。未読はオレンジバッジ「新しい回答 N件」のみ
-- 修正フェーズ: primary「修正の進め方を見る」（モーダル）、secondary「修正が終わった → 変更を記録する」
-- 作品カード・Studio ヘッダー: 「次: …」→「いま: {工程名}」。Studio ヘッダーは voiceRead を正しく参照するよう修正
-- P1 マイページ: セクション「前回プレイ後の更新」。カード構造 — バッジ（新版公開/更新）+ 変更見出し（devlog タイトル）+ 作品名 + primary「もう一度プレイする」+ secondary「更新内容を見る」
-- 禁止導線削除: 「開発の歩みを見る」「作品詳細へ」「変更の要点」ラベル
-- 作品詳細: 「開発の歩み」→「これまでの更新」
-- cursor:pointer: globals.css で a/button 等 + 主要コンポーネント明示
-- P2 設計のみ: docs/player-voice-adoption-ai-design-review.md（フィジビリティ/DB/コスト/誤判定/Forge UX/優先順位/正式機能可否）
+■ 「◯回更新を見届けた」の現行定義
+- A（プレイ後に devlog 公開）でも B（devlog 公開後に再プレイ）でもない
+- 現行: プレイした作品について published_version あり devlog の件数をそのまま数える
+- 実装: lib/player-play-timeline.ts — updateWatchCount = devlogs.filter(publishedVersion).length
+- 再プレイの有無・版一致・プレイ前後の時系列は Phase 1 では未判定
+- タイムラインの devlog 行も同じ（公開イベントを時系列に並べるだけ）
+- 原典の「変化を見る → 再プレイ」に照らすと B の方が自然 — 将来寄せる論点として doc に記録
 
-■ 今回変更した画面
-- 作品 Studio（/projects/{id}/studio）— ページ上部フェーズパネル
-  - 変更前: 「次にやること」大見出し + イベントタイトル + 別ブロック「育成サイクル」
-  - 変更後: 1パネル内に rail → いま: ゲームを修正する 等 → ガイダンス → CTA
-  - 開発者視点: 今の工程と次アクションが1画面で分かる
-  - 確認: 未読回答あり → いま: 回答を見る / 読了後 → いま: ゲームを修正する + secondary 記録導線
-- マイページ 作品管理タブ — 作品カード
-  - 変更前: 次: プレイヤーの回答が届きました
-  - 変更後: いま: 回答を見る / ゲームを修正する 等（工程名のみ）
-- マイページ プレイヤー活動タブ — #updates セクション
-  - 変更前: 「更新を見る」+ 開発日誌/変更の要点 + 重複リンク
-  - 変更後: 「前回プレイ後の更新」+ プレイヤー向けカード + もう一度プレイする / 更新内容を見る
-  - プレイヤー視点: 前回遊んだあと何が変わったかが一目で分かる
-  - 確認: 追跡中作品に devlog/新版通知 → カード表示 → 各 CTA が別目的（プレイ vs 詳細）
-- 作品詳細（/games/{id}）— 履歴セクション見出し「これまでの更新」
+■ merge 判断
+- 012 適用 → session 生成 → 再プレイ行追加 → マイページ目視 — オーナー確認済み
+- main 反映 GO（Run A）
 
 ■ ユーザー目線の変化
-- 開発者: 「回答が届いた」と「修正する」が二重に言われなくなった。常に今の工程名だけ見ればよい
-- プレイヤー: 更新セクションが開発ログ用語ではなく「前回プレイ後の更新」になり、再プレイが primary に
-
-■ なぜこの設計
-- オーナー指摘: Hero とサイクルが同じことを二重に言っていた。知りたいのはフェーズと次アクションのみ
-- イベント（回答届いた）と工程（修正する）を混在させない — イベントはバッジ/ガイダンス1行に降格
-
-■ 他案不採用
-- Hero にイベントタイトルを残し rail だけ工程名: カードと Studio で再び二重化するため不採用
-- 開発者手動「この回答を参考にした」: P2 設計で不採用（面倒・忘れる・スケールしない）
-
-■ In / Out
-- In: フェーズパネル、phaseLabel モデル、プレイヤー更新カード、pointer、P2 設計 doc
-- Out: AI 紐づけ実装、voice_adoptions migration、voice_adopted 通知（P2 GO 待ち）
+- 今回の確認回答のみ — UI 変更なし
 
 ■ 注意事項
-- P2「自分の意見が採用された」は未実装。現状は更新 UI で「何が変わったか」まで
-- improvement メモは引き続き localStorage
-- 通知 type ラベル（開発日誌等）は notifications ページでは未変更 — マイページ更新のみプレイヤー向け
+- サマリの「見届けた」は厳密な「変化を確かめた」ではなく「改版 devlog が N 件ある」に近い
+- Phase 2 で B 定義へ変更する場合はサマリ + タイムライン両方の見直しが必要
 
 ■ 今すぐ私がやるべきこと
-- 本番で Studio フェーズ遷移（未読→読了→修正→記録→公開→待機）を1作品で確認
-- マイページ「前回プレイ後の更新」で追跡作品のカード CTA を確認
-- P2 設計 doc を読み、AI 採用 GO 判断（confidence 閾値・同趣旨複数人通知方針）
+- main へ merge / deploy（オーナー側 git 操作。Cursor は明示指示があれば支援）
 
 ■ Cursorだけで完了できること
-- P2 GO 後: migration 011 草案 + Edge Function 試作 + voice_adopted 通知 UI
-- notifications ページのプレイヤー向けラベル統一（任意）
-- E2E チェックリストにフェーズパネル項目追加
+- B 定義への変更設計（オーナー GO 後）
+- Phase 1b 作品詳細コンパクト履歴
 
 ■ 次に検討すべきこと
-- P2 voice_adoptions + LLM 判定 + 具体引用通知（docs/player-voice-adoption-ai-design-review.md）
-- embedding 事前フィルタ（回答/devlog 量増後）
+- updateWatchCount を B（再プレイで新版）に寄せるタイミング
+- main merge 後の本番目視
 
 ■ ChatGPTに相談したい論点
-- confidence 0.75 案 — 取りこぼしと誤通知のトレードオフ
-- 同趣旨10人が同じ devlog にマッチしたとき全員通知か
-- 「されました」の断定度 — 法的・信頼リスク
-
-■ Cursorの推奨案（P2）
-- publish イベント駆動 + gpt-4o-mini クラス + confidence >= 0.75 のみ voice_adopted 通知
-- 低 confidence は黙る（誤通知より無通知）
-
-■ 推奨理由
-- 開発者手動なしでスケール。P1 更新 UI と併存し採用通知がなくても MVP は成立
-
-■ 懸念点
-- devlog が抽象語のみだと偽陰性。キーワードのみマッチは正式機能として不十分
+- Phase 1 の緩い定義のまま main GO するか、B へ寄せてから GO するか（オーナーは staging 目視後 merge GO 済み）

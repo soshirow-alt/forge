@@ -26,6 +26,8 @@ type GameVoiceSectionProps = {
   onVoiceComplete?: () => void;
   embedded?: boolean;
   showDeepFeedback?: boolean;
+  /** Phase3 — adoption 経由の再プレイ後 voice 前置き */
+  adoptionVerifyActive?: boolean;
 };
 
 export function GameVoiceSection({
@@ -34,6 +36,7 @@ export function GameVoiceSection({
   onVoiceComplete,
   embedded = false,
   showDeepFeedback = true,
+  adoptionVerifyActive = false,
 }: GameVoiceSectionProps) {
   const { user } = useAuth();
   const {
@@ -206,9 +209,15 @@ export function GameVoiceSection({
           <h2 className="text-sm font-medium text-zinc-500">
             v{playableVersion} への回答
           </h2>
-          <p className="mt-1 text-xs leading-relaxed text-zinc-600">
-            開発者からの質問に、短く回答できます。
-          </p>
+          {adoptionVerifyActive ? (
+            <p className="mt-1 text-xs leading-relaxed text-violet-300/80">
+              前回の変更を確かめたあと、新版への感想を教えてください。
+            </p>
+          ) : (
+            <p className="mt-1 text-xs leading-relaxed text-zinc-600">
+              開発者からの質問に、短く回答できます。
+            </p>
+          )}
         </>
       )}
       <p className={`text-xs text-orange-400/80 ${embedded ? "" : "mt-1"}`}>

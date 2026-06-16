@@ -8,6 +8,8 @@ import {
   MyPageDashboardCard,
 } from "@/components/mypage-dashboard-card";
 import { MyPageUpdatesSection } from "@/components/mypage-updates-section";
+import { PlayHistorySection } from "@/components/play-history-section";
+import { VoiceAdoptionsSection } from "@/components/voice-adoptions-section";
 import { PlayTypeLabel } from "@/components/play-type-label";
 import { useGames } from "@/components/games-provider";
 import type { Game } from "@/lib/mock-games";
@@ -68,105 +70,88 @@ export function MyPagePlayerTab() {
     setExpanded((current) => (current === id ? null : id));
   };
 
-  const hasAnyActivity = useMemo(
+  const hasEngagementLists = useMemo(
     () =>
       supportedGames.length > 0 ||
       watchedGames.length > 0 ||
-      bookmarkedGames.length > 0 ||
-      playedGames.length > 0,
-    [
-      bookmarkedGames.length,
-      playedGames.length,
-      supportedGames.length,
-      watchedGames.length,
-    ],
+      bookmarkedGames.length > 0,
+    [bookmarkedGames.length, supportedGames.length, watchedGames.length],
   );
 
-  if (!hasAnyActivity) {
-    return (
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-6 py-16 text-center">
-        <p className="text-zinc-400">まだ関わっている作品がありません。</p>
-        <Link
-          href="/"
-          className="mt-6 inline-block rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
-        >
-          作品を探す
-        </Link>
-      </div>
-    );
-  }
+  const hasPlayedProjects = playedGames.length > 0;
 
   return (
     <div className="space-y-8">
-      <div className="grid gap-5 lg:grid-cols-2">
-        <div className="lg:col-span-2">
-          <MyPageUpdatesSection watchedGames={watchedGames} previewLimit={2} />
+      <VoiceAdoptionsSection />
+      <PlayHistorySection />
+
+      {!hasEngagementLists && !hasPlayedProjects ? (
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-6 py-16 text-center">
+          <p className="text-zinc-400">まだ関わっている作品がありません。</p>
+          <Link
+            href="/"
+            className="mt-6 inline-block rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+          >
+            作品を探す
+          </Link>
         </div>
+      ) : (
+        <div className="grid gap-5 lg:grid-cols-2">
+          {watchedGames.length > 0 ? (
+            <div className="lg:col-span-2">
+              <MyPageUpdatesSection watchedGames={watchedGames} previewLimit={2} />
+            </div>
+          ) : null}
 
-        <MyPageDashboardCard
-          id="supported"
-          title="応援中"
-          description="気に入った作品への、あなたの応援です。"
-          count={supportedGames.length}
-          emptyMessage="応援した作品はまだありません。"
-          accentClassName="border-orange-500"
-          preview={
-            <MyPageCompactGameList games={toCompactGames(supportedGames)} limit={2} />
-          }
-          expanded={<ExpandedGameList games={supportedGames} />}
-          isExpanded={expanded === "supported"}
-          onToggleExpand={() => toggle("supported")}
-          showExpand={supportedGames.length > 2}
-        />
+          <MyPageDashboardCard
+            id="supported"
+            title="応援中"
+            description="気に入った作品への、あなたの応援です。"
+            count={supportedGames.length}
+            emptyMessage="応援した作品はまだありません。"
+            accentClassName="border-orange-500"
+            preview={
+              <MyPageCompactGameList games={toCompactGames(supportedGames)} limit={2} />
+            }
+            expanded={<ExpandedGameList games={supportedGames} />}
+            isExpanded={expanded === "supported"}
+            onToggleExpand={() => toggle("supported")}
+            showExpand={supportedGames.length > 2}
+          />
 
-        <MyPageDashboardCard
-          id="watching"
-          title="更新を追っている"
-          description="開発ログが投稿されると、通知一覧でお知らせします。"
-          count={watchedGames.length}
-          emptyMessage="追跡中の作品はまだありません。"
-          accentClassName="border-amber-500"
-          preview={
-            <MyPageCompactGameList games={toCompactGames(watchedGames)} limit={2} />
-          }
-          expanded={<ExpandedGameList games={watchedGames} />}
-          isExpanded={expanded === "watching"}
-          onToggleExpand={() => toggle("watching")}
-          showExpand={watchedGames.length > 2}
-        />
+          <MyPageDashboardCard
+            id="watching"
+            title="更新を追っている"
+            description="開発ログが投稿されると、通知一覧でお知らせします。"
+            count={watchedGames.length}
+            emptyMessage="追跡中の作品はまだありません。"
+            accentClassName="border-amber-500"
+            preview={
+              <MyPageCompactGameList games={toCompactGames(watchedGames)} limit={2} />
+            }
+            expanded={<ExpandedGameList games={watchedGames} />}
+            isExpanded={expanded === "watching"}
+            onToggleExpand={() => toggle("watching")}
+            showExpand={watchedGames.length > 2}
+          />
 
-        <MyPageDashboardCard
-          id="bookmarks"
-          title="あとで見る"
-          description="後からプレイしたい作品のブックマークです。"
-          count={bookmarkedGames.length}
-          emptyMessage="保存した作品はまだありません。"
-          accentClassName="border-zinc-500"
-          preview={
-            <MyPageCompactGameList games={toCompactGames(bookmarkedGames)} limit={2} />
-          }
-          expanded={<ExpandedGameList games={bookmarkedGames} />}
-          isExpanded={expanded === "bookmarks"}
-          onToggleExpand={() => toggle("bookmarks")}
-          showExpand={bookmarkedGames.length > 2}
-        />
-
-        <MyPageDashboardCard
-          id="played"
-          title="最近プレイした"
-          description="プレイした作品の履歴です（回答した作品もここに含まれます）。"
-          count={playedGames.length}
-          emptyMessage="まだプレイ履歴がありません。"
-          accentClassName="border-sky-500"
-          preview={
-            <MyPageCompactGameList games={toCompactGames(playedGames)} limit={2} />
-          }
-          expanded={<ExpandedGameList games={playedGames} />}
-          isExpanded={expanded === "played"}
-          onToggleExpand={() => toggle("played")}
-          showExpand={playedGames.length > 2}
-        />
-      </div>
+          <MyPageDashboardCard
+            id="bookmarks"
+            title="あとで見る"
+            description="後からプレイしたい作品のブックマークです。"
+            count={bookmarkedGames.length}
+            emptyMessage="保存した作品はまだありません。"
+            accentClassName="border-zinc-500"
+            preview={
+              <MyPageCompactGameList games={toCompactGames(bookmarkedGames)} limit={2} />
+            }
+            expanded={<ExpandedGameList games={bookmarkedGames} />}
+            isExpanded={expanded === "bookmarks"}
+            onToggleExpand={() => toggle("bookmarks")}
+            showExpand={bookmarkedGames.length > 2}
+          />
+        </div>
+      )}
     </div>
   );
 }

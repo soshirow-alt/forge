@@ -7,7 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "copy-summary": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/copy-chatgpt-summary.ps1"
+    "copy-summary": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/copy-chatgpt-summary.ps1",
+    "verify:voice-adoption": "npx --yes tsx scripts/voice-adoption-fixture-verify.ts",
+    "verify:voice-adoption:staging": "npx --yes tsx scripts/voice-adoption-staging-verify.ts",
+    "shadow:adoption-review": "npx --yes tsx scripts/shadow-adoption-review.ts",
+    "shadow:a": "npx --yes tsx scripts/shadow-a-execute.ts",
+    "shadow:b": "npx --yes tsx scripts/shadow-b-execute.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

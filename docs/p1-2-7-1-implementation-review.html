@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>P1-2.7.1 実装レビュー — /my-projects</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Inter, -apple-system, sans-serif;
+      background: #09090b;
+      color: #fafafa;
+      -webkit-font-smoothing: antialiased;
+    }
+    .header {
+      padding: 16px 24px;
+      border-bottom: 1px solid #27272a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      font-weight: 700;
+      background: linear-gradient(to right, #fb923c, #f59e0b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .nav { display: flex; gap: 20px; font-size: 13px; color: #71717a; }
+    .nav .active { color: #fb923c; }
+    main { max-width: 960px; margin: 0 auto; padding: 48px 24px; }
+    .back { font-size: 13px; color: #71717a; margin-bottom: 32px; display: block; }
+    h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.03em; }
+    .subtitle { margin-top: 8px; color: #71717a; font-size: 14px; }
+    .section-title { margin-top: 40px; font-size: 20px; font-weight: 600; }
+    .cards { margin-top: 24px; display: flex; flex-direction: column; gap: 20px; }
+    .card {
+      background: rgba(24, 24, 27, 0.6);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      gap: 24px;
+    }
+    .thumb {
+      width: 80px; height: 64px; border-radius: 8px; flex-shrink: 0; opacity: 0.8;
+      background: linear-gradient(135deg, #3f3f46, #27272a);
+      align-self: flex-start;
+    }
+    .card-main { flex: 1; min-width: 0; }
+    .card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 16px; }
+    .card-title { font-size: 16px; font-weight: 600; color: #d4d4d8; }
+    .badge-new { font-size: 10px; font-weight: 500; color: rgba(251, 146, 60, 0.9); }
+    .card-meta { font-size: 10px; color: #52525b; }
+    .hero-label { font-size: 11px; font-weight: 500; color: #52525b; }
+    .hero-title { font-size: 30px; font-weight: 700; letter-spacing: -0.03em; color: #fafafa; margin-top: 6px; line-height: 1.15; }
+    .hero-sub { font-size: 12px; color: #71717a; margin-top: 4px; }
+    .cta {
+      display: inline-block; margin-top: 20px;
+      background: linear-gradient(to right, #f97316, #f59e0b);
+      color: #09090b; font-size: 14px; font-weight: 600;
+      padding: 12px 20px; border-radius: 8px;
+    }
+    .rail {
+      margin-top: 24px; padding-top: 16px;
+      border-top: 1px solid rgba(39, 39, 42, 0.6);
+      font-size: 11px; color: #52525b; line-height: 1;
+    }
+    .rail .current { color: #a1a1aa; font-weight: 500; }
+    .rail .done { color: #52525b; }
+    .rail .up { color: #3f3f46; }
+    .rail .dot { color: #27272a; margin: 0 4px; }
+    .footer { margin-top: 20px; display: flex; gap: 12px; font-size: 12px; color: #52525b; }
+    .review-note {
+      margin-top: 32px; padding: 16px; border-radius: 8px;
+      background: #18181b; font-size: 12px; color: #71717a; line-height: 1.7;
+    }
+    .review-note strong { color: #a1a1aa; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="logo">Forge</span>
+    <nav class="nav">
+      <span>作品一覧</span>
+      <span class="active">マイ作品</span>
+      <span>通知</span>
+    </nav>
+  </div>
+  <main>
+    <span class="back">← 作品一覧に戻る</span>
+    <h1>開発ダッシュボード</h1>
+    <p class="subtitle">プレイヤーの声をもとに、作品を育てていきましょう。</p>
+
+    <h2 class="section-title">作品一覧</h2>
+    <div class="cards">
+      <article class="card">
+        <div class="thumb"></div>
+        <div class="card-main">
+          <div class="card-head">
+            <span class="card-title">Emberfall</span>
+            <span class="badge-new">新しい声</span>
+            <span class="card-meta">v0.3 · サイクル 2</span>
+          </div>
+          <p class="hero-label">次にやること</p>
+          <p class="hero-title">開発ログを書く</p>
+          <p class="hero-sub">改善中</p>
+          <span class="cta">開発ログを書く</span>
+          <div class="rail">
+            <span class="done">✓ FBを読む</span><span class="dot">·</span>
+            <span class="current">● 改善する</span><span class="dot">·</span>
+            <span class="up">○ 開発ログを書く</span><span class="dot">·</span>
+            <span class="up">○ 新版公開する</span><span class="dot">·</span>
+            <span class="up">○ 反応を待つ</span>
+            <span style="color:#3f3f46;margin-left:6px">↺ 2</span>
+          </div>
+          <div class="footer">
+            <span>作品詳細</span><span>編集</span><span>応援 12</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="thumb"></div>
+        <div class="card-main">
+          <div class="card-head">
+            <span class="card-title">Neon Drift</span>
+            <span class="card-meta">v0.1 · サイクル 1</span>
+          </div>
+          <p class="hero-label">次にやること</p>
+          <p class="hero-title">FBを読む</p>
+          <span class="cta">FBを読む</span>
+          <div class="rail">
+            <span class="current">● FBを読む</span><span class="dot">·</span>
+            <span class="up">○ 改善する</span><span class="dot">·</span>
+            <span class="up">○ 開発ログを書く</span><span class="dot">·</span>
+            <span class="up">○ 新版公開する</span><span class="dot">·</span>
+            <span class="up">○ 反応を待つ</span>
+            <span style="color:#3f3f46;margin-left:6px">↺ 1</span>
+          </div>
+          <div class="footer">
+            <span>作品詳細</span><span>編集</span><span>応援 4</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="thumb"></div>
+        <div class="card-main">
+          <div class="card-head">
+            <span class="card-title">Starbound Tactics</span>
+            <span class="card-meta">v0.2 · サイクル 1</span>
+          </div>
+          <p class="hero-label">次にやること</p>
+          <p class="hero-title">反応を待つ</p>
+          <span class="cta">作品ページを確認する</span>
+          <div class="rail">
+            <span class="done">✓ FBを読む</span><span class="dot">·</span>
+            <span class="done">✓ 改善する</span><span class="dot">·</span>
+            <span class="done">✓ 開発ログを書く</span><span class="dot">·</span>
+            <span class="done">✓ 新版公開する</span><span class="dot">·</span>
+            <span class="current">● 反応を待つ</span>
+            <span style="color:#3f3f46;margin-left:6px">↺ 1</span>
+          </div>
+          <div class="footer">
+            <span>作品詳細</span><span>編集</span><span>応援 28</span>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <div class="review-note">
+      <strong>P1-2.7.1 実装レビュー用</strong> — 配色は現行オレンジ維持。Hero 白・CTA のみ chroma。Rail は 1 行・グレー。枠線削減。アプリ本体: game-growth-cycle.tsx / project-growth-card.tsx
+    </div>
+  </main>
+</body>
+</html>

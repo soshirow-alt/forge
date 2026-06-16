@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>P1-2.7.1 完成版 — 実装レビュー</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Inter, sans-serif; background: #09090b; color: #fafafa; -webkit-font-smoothing: antialiased; }
+    .hdr { padding: 14px 24px; border-bottom: 1px solid #27272a; display: flex; justify-content: space-between; }
+    .logo { font-weight: 700; background: linear-gradient(to right, #fb923c, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    main { max-width: 880px; margin: 0 auto; padding: 40px 24px; }
+    h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; }
+    .sub { margin-top: 8px; color: #71717a; font-size: 14px; }
+    .h2 { margin-top: 36px; font-size: 18px; font-weight: 600; }
+    .cards { margin-top: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .card { background: rgba(24,24,27,0.6); border-radius: 12px; padding: 24px; display: flex; gap: 20px; }
+    .thumb { width: 72px; height: 58px; border-radius: 8px; flex-shrink: 0; opacity: 0.8; background: linear-gradient(135deg,#3f3f46,#27272a); }
+    .main { flex: 1; min-width: 0; }
+    .head { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin-bottom: 16px; }
+    .title { font-size: 16px; font-weight: 600; color: #d4d4d8; }
+    .new { font-size: 10px; color: rgba(251,146,60,0.9); }
+    .meta { font-size: 10px; color: #52525b; }
+    .hero-l { font-size: 11px; color: #52525b; font-weight: 500; }
+    .hero-t { font-size: 28px; font-weight: 700; color: #fafafa; margin-top: 6px; letter-spacing: -0.03em; line-height: 1.15; }
+    .hero-s { font-size: 12px; color: #71717a; margin-top: 6px; max-width: 400px; }
+    .cta { display: inline-block; margin-top: 18px; padding: 11px 20px; border-radius: 8px; background: linear-gradient(to right,#f97316,#f59e0b); color: #09090b; font-size: 13px; font-weight: 600; }
+    .cycle-wrap { margin-top: 22px; padding-top: 16px; border-top: 1px solid rgba(39,39,42,0.5); }
+    .cycle-lbl { font-size: 10px; font-weight: 500; color: #52525b; margin-bottom: 12px; }
+    .track { display: flex; align-items: flex-start; }
+    .node { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; position: relative; }
+    .node:not(:first-child)::before { content: ""; position: absolute; top: 11px; right: 50%; width: 100%; height: 1px; background: #3f3f46; z-index: 0; }
+    .node.upcoming:not(:first-child)::before { background: #27272a; }
+    .box { position: relative; z-index: 1; width: 2.5rem; height: 22px; border-radius: 4px; border: 1px solid #27272a; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+    .node.done .box { background: rgba(24,24,27,0.6); color: #52525b; border-color: #27272a; }
+    .node.current .box { background: rgba(39,39,42,0.8); color: #d4d4d8; border-color: #52525b; }
+    .node.upcoming .box { background: transparent; color: #3f3f46; border-color: rgba(39,39,42,0.8); }
+    .lbl { margin-top: 6px; font-size: 9px; text-align: center; line-height: 1.2; }
+    .node.done .lbl { color: #52525b; }
+    .node.current .lbl { color: #a1a1aa; }
+    .node.upcoming .lbl { color: #3f3f46; }
+    .why { margin-top: 2px; font-size: 8px; color: #3f3f46; }
+    .loop { flex-shrink: 0; padding-left: 6px; text-align: center; font-size: 10px; color: #3f3f46; padding-top: 2px; }
+    .foot { margin-top: 18px; font-size: 11px; color: #52525b; display: flex; gap: 12px; }
+    .note { margin-top: 32px; padding: 14px; background: #18181b; border-radius: 8px; font-size: 11px; color: #71717a; line-height: 1.7; }
+  </style>
+</head>
+<body>
+  <div class="hdr"><span class="logo">Forge</span><span style="font-size:12px;color:#71717a">マイ作品</span></div>
+  <main>
+    <h1>開発ダッシュボード</h1>
+    <p class="sub">プレイヤーの声をもとに、作品を育てていきましょう。</p>
+    <h2 class="h2">作品一覧</h2>
+    <div class="cards">
+      <article class="card">
+        <div class="thumb"></div>
+        <div class="main">
+          <div class="head"><span class="title">Emberfall</span><span class="new">新しい声</span><span class="meta">v0.3 · サイクル 2</span></div>
+          <p class="hero-l">次にやること</p>
+          <p class="hero-t">開発ログを書く</p>
+          <p class="hero-s">改善が終わったら、記録して届けましょう</p>
+          <span class="cta">開発ログを書く</span>
+          <div class="cycle-wrap">
+            <p class="cycle-lbl">育成サイクル</p>
+            <div class="track">
+              <div class="node done"><span class="box">✓</span><span class="lbl">FBを読む</span><span class="why">声を聞く</span></div>
+              <div class="node current"><span class="box">●</span><span class="lbl">改善する</span><span class="why">直す</span></div>
+              <div class="node upcoming"><span class="box">○</span><span class="lbl">開発ログを書く</span><span class="why">記録する</span></div>
+              <div class="node upcoming"><span class="box">○</span><span class="lbl">新版公開する</span><span class="why">届ける</span></div>
+              <div class="node upcoming"><span class="box">○</span><span class="lbl">反応を待つ</span><span class="why">育つ</span></div>
+              <div class="loop">↺<br>2</div>
+            </div>
+          </div>
+          <div class="foot"><span>作品詳細</span><span>編集</span><span>応援 12</span></div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="thumb"></div>
+        <div class="main">
+          <div class="head"><span class="title">Neon Drift</span><span class="meta">v0.1 · サイクル 1</span></div>
+          <p class="hero-l">次にやること</p>
+          <p class="hero-t">FBを読む</p>
+          <p class="hero-s">届いた声が、次の改善の材料になります</p>
+          <span class="cta">FBを読む</span>
+          <div class="cycle-wrap">
+            <p class="cycle-lbl">育成サイクル</p>
+            <div class="track">
+              <div class="node current"><span class="box">●</span><span class="lbl">FBを読む</span><span class="why">声を聞く</span></div>
+              <div class="node upcoming"><span class="box">○</span><span class="lbl">改善する</span><span class="why">直す</span></div>
+              <div class="node upcoming"><span class="box">○</span><span class="lbl">開発ログを書く</span><span class="why">記録する</span></div>
+              <div class="node upcoming"><span class="box">○</span><span class="lbl">新版公開する</span><span class="why">届ける</span></div>
+              <div class="node upcoming"><span class="box">○</span><span class="lbl">反応を待つ</span><span class="why">育つ</span></div>
+              <div class="loop">↺<br>1</div>
+            </div>
+          </div>
+          <div class="foot"><span>作品詳細</span><span>編集</span><span>応援 4</span></div>
+        </div>
+      </article>
+    </div>
+    <div class="note"><strong>P1-2.7.1 完成版</strong> — 視線順: Hero → CTA → 育成サイクル（案A・微調整）。配色現行維持。deploy 後本番と同等の見え方を想定。</div>
+  </main>
+</body>
+</html>

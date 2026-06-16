@@ -68,6 +68,27 @@ export async function insertProjectDevlog(
   return devlogRowToEntry(data as DevlogRow);
 }
 
+export async function fetchProjectDevlogsForProjects(
+  supabase: SupabaseClient,
+  projectIds: string[],
+): Promise<DevlogEntry[]> {
+  if (projectIds.length === 0) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("project_devlogs")
+    .select("*")
+    .in("project_id", projectIds)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return ((data ?? []) as DevlogRow[]).map(devlogRowToEntry);
+}
+
 export async function deleteProjectDevlogsByProjectId(
   supabase: SupabaseClient,
   projectId: string,

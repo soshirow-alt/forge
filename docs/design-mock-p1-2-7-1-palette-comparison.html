@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>P1-2.7.1 配色比較 — /my-projects モック（A/B/C/D）</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #050505;
+      color: #e4e4e7;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(5, 5, 5, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #27272a;
+      padding: 20px 28px;
+    }
+
+    .page-header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .page-header p {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #71717a;
+      max-width: 720px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .legend span {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid #3f3f46;
+      color: #a1a1aa;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      padding: 20px;
+      max-width: 1800px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 1200px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #27272a;
+    }
+
+    .panel-label {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      background: #18181b;
+      border-bottom: 1px solid #27272a;
+    }
+
+    .panel-label strong {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .panel-label em {
+      font-style: normal;
+      font-size: 11px;
+      color: #71717a;
+    }
+
+    /* ─── Shared mock structure ─── */
+    .mock {
+      font-size: 13px;
+      min-height: 680px;
+    }
+
+    .mock-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+    }
+
+    .mock-logo {
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.03em;
+    }
+
+    .mock-nav {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+    }
+
+    .mock-main {
+      padding: 0 20px 24px;
+    }
+
+    .mock-back {
+      font-size: 12px;
+      margin-bottom: 20px;
+      display: inline-block;
+    }
+
+    .mock-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .mock-title-row h2 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .mock-title-row p {
+      margin-top: 6px;
+      font-size: 12px;
+      max-width: 320px;
+    }
+
+    .mock-section-title {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+
+    .mock-section-sub {
+      font-size: 11px;
+      margin-bottom: 16px;
+    }
+
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .project-card {
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+    }
+
+    .thumb {
+      width: 72px;
+      height: 54px;
+      border-radius: 8px;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, #3f3f46 0%, #27272a 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .thumb::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.06) 100%);
+    }
+
+    .card-body { flex: 1; min-width: 0; }
+
+    .card-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .card-phase {
+      font-size: 10px;
+    }
+
+    .card-meta {
+      font-size: 10px;
+      margin-top: 6px;
+    }
+
+    .cycle {
+      margin-top: 14px;
+    }
+
+    .early-steps {
+      font-size: 10px;
+      margin-bottom: 10px;
+    }
+
+    .hero-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+    }
+
+    .hero-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-top: 4px;
+    }
+
+    .hero-sub {
+      font-size: 10px;
+      margin-top: 6px;
+    }
+
+    .cta {
+      display: inline-block;
+      margin-top: 14px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: default;
+    }
+
+    .rail-divider {
+      margin: 16px 0 12px;
+    }
+
+    .rail {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .rail li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      padding: 3px 0;
+    }
+
+    .rail-marker {
+      width: 14px;
+      text-align: center;
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+
+    .card-footer {
+      display: flex;
+      gap: 12px;
+      margin-top: 14px;
+      padding-top: 12px;
+      font-size: 11px;
+    }
+
+    .token-note {
+      padding: 10px 16px 14px;
+      font-size: 10px;
+      line-height: 1.6;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* ═══════════════════════════════════════
+       A — 現状オレンジ
+       ═══════════════════════════════════════ */
+    .theme-a.mock {
+      background: #09090b;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120, 53, 15, 0.18), transparent),
+        radial-gradient(ellipse 50% 30% at 0% 100%, rgba(249, 115, 22, 0.08), transparent);
+      color: #f4f4f5;
+    }
+
+    .theme-a .mock-nav { color: #71717a; }
+    .theme-a .mock-nav .active { color: #fb923c; }
+    .theme-a .mock-back { color: #71717a; }
+    .theme-a .mock-title-row p { color: #71717a; }
+    .theme-a .mock-section-sub { color: #71717a; }
+    .theme-a .btn-secondary {
+      border: 1px solid #3f3f46;
+      color: #a1a1aa;
+      background: transparent;
+      font-size: 11px;
+      padding: 7px 12px;
+      border-radius: 8px;
+    }
+
+    .theme-a .project-card {
+      background: rgba(24, 24, 27, 0.8);
+      border: 1px solid rgba(249, 115, 22, 0.3);
+      border-radius: 12px;
+    }
+
+    .theme-a .project-card.card-muted {
+      border-color: #27272a;
+    }
+
+    .theme-a .card-phase { color: #52525b; }
+    .theme-a .card-meta { color: #71717a; }
+    .theme-a .early-steps { color: #52525b; }
+
+    .theme-a .hero-box {
+      border: 1px solid rgba(39, 39, 42, 0.8);
+      background: rgba(9, 9, 11, 0.4);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+
+    .theme-a .hero-label { color: #71717a; }
+    .theme-a .hero-title { color: #fdba74; }
+    .theme-a .hero-title.alt { color: #fed7aa; }
+    .theme-a .hero-sub { color: #71717a; }
+
+    .theme-a .cta {
+      background: linear-gradient(to right, #f97316, #f59e0b);
+      color: #09090b;
+    }
+
+    .theme-a .rail-divider { border-top: 1px solid #27272a; }
+    .theme-a .rail .done { color: #71717a; }
+    .theme-a .rail .current { color: #fdba74; font-weight: 600; }
+    .theme-a .rail .upcoming { color: #52525b; }
+    .theme-a .card-footer { border-top: 1px solid #27272a; color: #71717a; }
+    .theme-a .token-note { color: #52525b; background: rgba(9,9,11,0.5); }
+
+    /* ═══════════════════════════════════════
+       B — Apple 系
+       ═══════════════════════════════════════ */
+    .theme-b.mock {
+      background: #000000;
+      color: #f5f5f7;
+    }
+
+    .theme-b .mock-header { border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .theme-b .mock-nav { color: rgba(255,255,255,0.45); }
+    .theme-b .mock-nav .active { color: #f5f5f7; }
+    .theme-b .mock-back { color: rgba(255,255,255,0.45); }
+    .theme-b .mock-title-row h2 { font-size: 28px; font-weight: 700; }
+    .theme-b .mock-title-row p { color: rgba(255,255,255,0.45); font-size: 13px; line-height: 1.5; }
+    .theme-b .mock-section-title { font-size: 17px; }
+    .theme-b .mock-section-sub { color: rgba(255,255,255,0.45); margin-bottom: 24px; }
+    .theme-b .mock-main { padding: 0 28px 32px; }
+    .theme-b .mock-title-row { margin-bottom: 36px; }
+    .theme-b .btn-secondary {
+      border: none;
+      color: #0a84ff;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 0;
+    }
+
+    .theme-b .project-card {
+      background: #1c1c1e;
+      border: none;
+      border-radius: 14px;
+      padding: 24px;
+      gap: 20px;
+    }
+
+    .theme-b .card-phase { color: rgba(255,255,255,0.35); }
+    .theme-b .card-meta { color: rgba(255,255,255,0.35); font-size: 11px; }
+    .theme-b .early-steps { display: none; }
+
+    .theme-b .hero-box { padding: 0; border: none; background: none; }
+    .theme-b .hero-label { color: rgba(255,255,255,0.45); font-size: 11px; text-transform: none; }
+    .theme-b .hero-title { color: #f5f5f7; font-size: 26px; font-weight: 700; margin-top: 6px; }
+    .theme-b .hero-sub { color: rgba(255,255,255,0.45); font-size: 12px; margin-top: 8px; }
+
+    .theme-b .cta {
+      background: #0a84ff;
+      color: #ffffff;
+      border-radius: 10px;
+      padding: 11px 22px;
+      font-size: 13px;
+      margin-top: 20px;
+    }
+
+    .theme-b .rail-divider { border-top: 1px solid rgba(255,255,255,0.08); margin: 24px 0 14px; }
+    .theme-b .rail li { padding: 4px 0; font-size: 12px; }
+    .theme-b .rail .done { color: rgba(255,255,255,0.35); }
+    .theme-b .rail .current { color: #f5f5f7; font-weight: 600; }
+    .theme-b .rail .upcoming { color: rgba(255,255,255,0.25); }
+    .theme-b .card-footer { border-top: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.45); padding-top: 16px; margin-top: 20px; }
+    .theme-b .cards { gap: 20px; }
+    .theme-b .token-note { color: rgba(255,255,255,0.35); background: #111; }
+
+    /* ═══════════════════════════════════════
+       C — Linear 系
+       ═══════════════════════════════════════ */
+    .theme-c.mock {
+      background: #0d0d0d;
+      color: #ececec;
+      font-feature-settings: "cv01", "ss01";
+    }
+
+    .theme-c .mock-header { border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .theme-c .mock-logo { color: #ececec; }
+    .theme-c .mock-nav { color: #6b6b6b; font-size: 11px; }
+    .theme-c .mock-nav .active { color: #ececec; }
+    .theme-c .mock-back { color: #6b6b6b; }
+    .theme-c .mock-title-row h2 { font-size: 20px; font-weight: 600; letter-spacing: -0.04em; }
+    .theme-c .mock-title-row p { color: #6b6b6b; font-size: 12px; }
+    .theme-c .mock-section-sub { color: #6b6b6b; }
+
+    .theme-c .btn-secondary {
+      border: 1px solid rgba(255,255,255,0.08);
+      color: #9b9b9b;
+      background: rgba(255,255,255,0.03);
+      font-size: 11px;
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+
+    .theme-c .project-card {
+      background: #141414;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .theme-c .card-phase { color: #555; font-size: 10px; }
+    .theme-c .card-meta { color: #6b6b6b; }
+    .theme-c .early-steps { color: #555; font-size: 10px; margin-bottom: 12px; }
+
+    .theme-c .hero-box {
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.02);
+      border-radius: 6px;
+      padding: 12px 14px;
+    }
+
+    .theme-c .hero-label { color: #6b6b6b; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+    .theme-c .hero-title { color: #ececec; font-size: 20px; font-weight: 600; letter-spacing: -0.04em; }
+    .theme-c .hero-sub { color: #6b6b6b; font-size: 11px; }
+
+    .theme-c .cta {
+      background: #5e6ad2;
+      color: #ffffff;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-top: 12px;
+    }
+
+    .theme-c .rail-divider { border-top: 1px solid rgba(255,255,255,0.06); margin: 14px 0 10px; }
+    .theme-c .rail li { font-size: 11px; gap: 6px; }
+    .theme-c .rail .done { color: #555; }
+    .theme-c .rail .current { color: #8b93eb; font-weight: 500; }
+    .theme-c .rail .upcoming { color: #444; }
+    .theme-c .card-footer { border-top: 1px solid rgba(255,255,255,0.06); color: #6b6b6b; font-size: 10px; }
+    .theme-c .token-note { color: #555; background: #0a0a0a; }
+
+    /* ═══════════════════════════════════════
+       D — Forge Studio Dark
+       ═══════════════════════════════════════ */
+    .theme-d.mock {
+      background: #0a0a0b;
+      color: #e4e4e7;
+    }
+
+    .theme-d .mock-header { border-bottom: none; padding-bottom: 0; }
+    .theme-d .mock-nav { color: #52525b; }
+    .theme-d .mock-nav .active { color: #d4d4d8; }
+    .theme-d .mock-back { color: #52525b; }
+    .theme-d .mock-title-row h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.04em; }
+    .theme-d .mock-title-row p { color: #52525b; font-size: 12px; line-height: 1.6; }
+    .theme-d .mock-section-sub { color: #52525b; margin-bottom: 20px; }
+    .theme-d .mock-main { padding: 0 24px 28px; }
+    .theme-d .mock-title-row { margin-bottom: 32px; }
+
+    .theme-d .btn-secondary {
+      border: 1px solid #27272a;
+      color: #71717a;
+      background: transparent;
+      font-size: 11px;
+      padding: 8px 14px;
+      border-radius: 8px;
+    }
+
+    .theme-d .project-card {
+      background: rgba(24, 24, 27, 0.45);
+      border: none;
+      border-radius: 12px;
+      padding: 22px;
+      gap: 18px;
+    }
+
+    .theme-d .card-phase { color: #3f3f46; }
+    .theme-d .card-meta { color: #52525b; }
+    .theme-d .early-steps { display: none; }
+
+    .theme-d .hero-box { padding: 0; border: none; background: none; }
+    .theme-d .hero-label { color: #52525b; font-size: 10px; font-weight: 500; }
+    .theme-d .hero-title { color: #fafafa; font-size: 24px; font-weight: 700; letter-spacing: -0.04em; margin-top: 6px; }
+    .theme-d .hero-sub { color: #52525b; font-size: 11px; margin-top: 8px; }
+
+    .theme-d .cta {
+      background: #d4a574;
+      color: #1a1208;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 18px;
+    }
+
+    .theme-d .rail-divider { border-top: 1px solid #1f1f23; margin: 22px 0 12px; }
+    .theme-d .rail li { font-size: 11px; padding: 2px 0; }
+    .theme-d .rail .done { color: #52525b; }
+    .theme-d .rail .current { color: #d4d4d8; font-weight: 600; }
+    .theme-d .rail .upcoming { color: #3f3f46; }
+    .theme-d .card-footer { border-top: 1px solid #1f1f23; color: #52525b; padding-top: 14px; margin-top: 18px; }
+    .theme-d .cards { gap: 14px; }
+    .theme-d .token-note { color: #3f3f46; background: #09090b; }
+
+    .open-hint {
+      text-align: center;
+      padding: 16px;
+      font-size: 12px;
+      color: #52525b;
+      border-top: 1px solid #27272a;
+    }
+
+    .open-hint code {
+      background: #18181b;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #a1a1aa;
+    }
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <h1>P1-2.7.1 配色比較 — /my-projects 静的モック</h1>
+    <p>
+      同一画面（開発ダッシュボード + 作品カード2件）を A/B/C/D で並べた比較用モックです。
+      レイアウトは C-1b 確定案（Hero 主役 → CTA → 静かな Rail、5段常時表示）を共通前提としています。
+      アプリ本体への実装は含みません。
+    </p>
+    <div class="legend">
+      <span>A — 現状オレンジ</span>
+      <span>B — Apple 系</span>
+      <span>C — Linear 系</span>
+      <span>D — Forge Studio Dark</span>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- ═══ A ═══ -->
+    <section class="panel">
+      <div class="panel-label">
+        <strong>A — 現状オレンジ</strong>
+        <em>zinc-950 + orange gradient CTA + 枠線多め</em>
+      </div>
+      <div class="mock theme-a">
+        <div class="mock-header">
+          <div class="mock-logo" style="background:linear-gradient(to right,#fb923c,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Forge</div>
+          <nav class="mock-nav"><span>作品一覧</span><span class="active">マイ作品</span><span>通知</span></nav>
+        </div>
+        <main class="mock-main">
+          <span class="mock-back">← 作品一覧に戻る</span>
+          <div class="mock-title-row">
+            <div>
+              <h2>開発ダッシュボード</h2>
+              <p>ゲームを育てる場所です。プレイヤーの声は、次の版を作るための材料です。</p>
+            </div>
+            <button class="btn-secondary">+ 作品を投稿</button>
+          </div>
+          <div class="mock-section-title">作品一覧</div>
+          <div class="mock-section-sub">育てる作品を選び、現在地と次にやることから開発を進めましょう。</div>
+          <div class="cards">
+            <!-- Card 1: improving -->
+            <article class="project-card">
+              <div class="thumb"></div>
+              <div class="card-body">
+                <div class="card-title-row">
+                  <span class="card-title">Emberfall</span>
+                  <span class="card-phase">プロトタイプ</span>
+                </div>
+                <p class="card-meta">最新版 0.3 · 最終更新 2026/06/10 · 応援 12 · 改善サイクル 2 · 新しい声あり</p>
+                <div class="cycle">
+                  <p class="early-steps">✓投稿 · ✓発見 · ✓プレイ</p>
+                  <div class="hero-box">
+                    <p class="hero-label">次にやること</p>
+                    <p class="hero-title">開発ログを書く</p>
+                    <p class="hero-sub">改善中 · 改善が終わったら記録しましょう</p>
+                  </div>
+                  <button class="cta">開発ログを書く</button>
+                  <div class="rail-divider"></div>
+                  <ul class="rail">
+                    <li class="done"><span class="rail-marker">✓</span> FBを読む</li>
+                    <li class="current"><span class="rail-marker">●</span> 改善する</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 開発ログを書く</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 新版公開する</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 反応を待つ</li>
+                  </ul>
+                </div>
+                <div class="card-footer"><span>作品詳細</span><span>投稿を編集</span><span style="color:#f87171">削除</span></div>
+              </div>
+            </article>
+            <!-- Card 2: read FB -->
+            <article class="project-card card-muted">
+              <div class="thumb"></div>
+              <div class="card-body">
+                <div class="card-title-row">
+                  <span class="card-title">Neon Drift</span>
+                  <span class="card-phase">アルファ</span>
+                </div>
+                <p class="card-meta">最新版 0.1 · 最終更新 2026/06/08 · 応援 4 · 改善サイクル 1</p>
+                <div class="cycle">
+                  <p class="early-steps">✓投稿 · ✓発見 · ✓プレイ</p>
+                  <div class="hero-box">
+                    <p class="hero-label">次にやること</p>
+                    <p class="hero-title alt">FBを読む</p>
+                    <p class="hero-sub">プレイヤーの声を読みましょう</p>
+                  </div>
+                  <button class="cta">FBを読む</button>
+                  <div class="rail-divider"></div>
+                  <ul class="rail">
+                    <li class="current"><span class="rail-marker">●</span> FBを読む</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 改善する</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 開発ログを書く</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 新版公開する</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 反応を待つ</li>
+                  </ul>
+                </div>
+                <div class="card-footer"><span>作品詳細</span><span>投稿を編集</span><span style="color:#f87171">削除</span></div>
+              </div>
+            </article>
+          </div>
+        </main>
+      </div>
+      <div class="token-note">
+        配色: zinc-950 + 橙 radial 背景 / Hero orange-300 / Rail ● orange<br>
+        余白: 標準（p-4〜5）/ 枠: カード+Hero 二重枠 / CTA: orange→amber グラデ / タイポ: text-3xl Hero + xs ラベル
+      </div>
+    </section>
+
+    <!-- ═══ B ═══ -->
+    <section class="panel">
+      <div class="panel-label">
+        <strong>B — Apple 系</strong>
+        <em>純黒 + 面レイヤー + System Blue CTA</em>
+      </div>
+      <div class="mock theme-b">
+        <div class="mock-header">
+          <div class="mock-logo">Forge</div>
+          <nav class="mock-nav"><span>作品一覧</span><span class="active">マイ作品</span><span>通知</span></nav>
+        </div>
+        <main class="mock-main">
+          <span class="mock-back">← 作品一覧に戻る</span>
+          <div class="mock-title-row">
+            <div>
+              <h2>開発ダッシュボード</h2>
+              <p>ゲームを育てる場所です。プレイヤーの声は、次の版を作るための材料です。</p>
+            </div>
+            <button class="btn-secondary">+ 作品を投稿</button>
+          </div>
+          <div class="mock-section-title">作品一覧</div>
+          <div class="mock-section-sub">次にやることから開発を進めましょう。</div>
+          <div class="cards">
+            <article class="project-card">
+              <div class="thumb"></div>
+              <div class="card-body">
+                <div class="card-title-row">
+                  <span class="card-title">Emberfall</span>
+                  <span class="card-phase">プロトタイプ</span>
+                </div>
+                <p class="card-meta">v0.3 · 更新 6/10 · 応援 12 · サイクル 2</p>
+                <div class="cycle">
+                  <div class="hero-box">
+                    <p class="hero-label">次にやること</p>
+                    <p class="hero-title">開発ログを書く</p>
+                    <p class="hero-sub">改善中 · 改善が終わったら記録しましょう</p>
+                  </div>
+                  <button class="cta">開発ログを書く</button>
+                  <div class="rail-divider"></div>
+                  <ul class="rail">
+                    <li class="done"><span class="rail-marker">✓</span> FBを読む</li>
+                    <li class="current"><span class="rail-marker">●</span> 改善する</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 開発ログを書く</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 新版公開する</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 反応を待つ</li>
+                  </ul>
+                </div>
+                <div class="card-footer"><span>作品詳細</span><span>投稿を編集</span></div>
+              </div>
+            </article>
+            <article class="project-card">
+              <div class="thumb"></div>
+              <div class="card-body">
+                <div class="card-title-row">
+                  <span class="card-title">Neon Drift</span>
+                  <span class="card-phase">アルファ</span>
+                </div>
+                <p class="card-meta">v0.1 · 更新 6/8 · 応援 4 · サイクル 1</p>
+                <div class="cycle">
+                  <div class="hero-box">
+                    <p class="hero-label">次にやること</p>
+                    <p class="hero-title">FBを読む</p>
+                    <p class="hero-sub">プレイヤーの声を読みましょう</p>
+                  </div>
+                  <button class="cta">FBを読む</button>
+                  <div class="rail-divider"></div>
+                  <ul class="rail">
+                    <li class="current"><span class="rail-marker">●</span> FBを読む</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 改善する</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 開発ログを書く</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 新版公開する</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 反応を待つ</li>
+                  </ul>
+                </div>
+                <div class="card-footer"><span>作品詳細</span><span>投稿を編集</span></div>
+              </div>
+            </article>
+          </div>
+        </main>
+      </div>
+      <div class="token-note">
+        配色: #000 / #1c1c1e 面 / #f5f5f7 文字 / #0A84FF CTA のみ chroma<br>
+        余白: 大（card p-24px, section gap 36px）/ 枠: なし（面の明暗のみ）/ CTA: solid blue / タイポ: 28px page title, 26px Hero, 階層は白+45% gray
+      </div>
+    </section>
+
+    <!-- ═══ C ═══ -->
+    <section class="panel">
+      <div class="panel-label">
+        <strong>C — Linear 系</strong>
+        <em>#0d0d0d + indigo accent + hairline border</em>
+      </div>
+      <div class="mock theme-c">
+        <div class="mock-header">
+          <div class="mock-logo">Forge</div>
+          <nav class="mock-nav"><span>Discover</span><span class="active">Projects</span><span>Inbox</span></nav>
+        </div>
+        <main class="mock-main">
+          <span class="mock-back">← Back</span>
+          <div class="mock-title-row">
+            <div>
+              <h2>開発ダッシュボード</h2>
+              <p>ゲームを育てる場所です。</p>
+            </div>
+            <button class="btn-secondary">+ New project</button>
+          </div>
+          <div class="mock-section-title">作品一覧</div>
+          <div class="mock-section-sub">Active nurture cycles</div>
+          <div class="cards">
+            <article class="project-card">
+              <div class="thumb"></div>
+              <div class="card-body">
+                <div class="card-title-row">
+                  <span class="card-title">Emberfall</span>
+                  <span class="card-phase">Prototype</span>
+                </div>
+                <p class="card-meta">0.3 · Jun 10 · 12 supports · Cycle 2</p>
+                <div class="cycle">
+                  <p class="early-steps">✓ submit · ✓ discover · ✓ play</p>
+                  <div class="hero-box">
+                    <p class="hero-label">Next</p>
+                    <p class="hero-title">開発ログを書く</p>
+                    <p class="hero-sub">改善中 · 改善が終わったら記録しましょう</p>
+                  </div>
+                  <button class="cta">開発ログを書く</button>
+                  <div class="rail-divider"></div>
+                  <ul class="rail">
+                    <li class="done"><span class="rail-marker">✓</span> FBを読む</li>
+                    <li class="current"><span class="rail-marker">●</span> 改善する</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 開発ログを書く</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 新版公開する</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 反応を待つ</li>
+                  </ul>
+                </div>
+                <div class="card-footer"><span>View</span><span>Edit</span></div>
+              </div>
+            </article>
+            <article class="project-card">
+              <div class="thumb"></div>
+              <div class="card-body">
+                <div class="card-title-row">
+                  <span class="card-title">Neon Drift</span>
+                  <span class="card-phase">Alpha</span>
+                </div>
+                <p class="card-meta">0.1 · Jun 8 · 4 supports · Cycle 1</p>
+                <div class="cycle">
+                  <p class="early-steps">✓ submit · ✓ discover · ✓ play</p>
+                  <div class="hero-box">
+                    <p class="hero-label">Next</p>
+                    <p class="hero-title">FBを読む</p>
+                    <p class="hero-sub">プレイヤーの声を読みましょう</p>
+                  </div>
+                  <button class="cta">FBを読む</button>
+                  <div class="rail-divider"></div>
+                  <ul class="rail">
+                    <li class="current"><span class="rail-marker">●</span> FBを読む</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 改善する</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 開発ログを書く</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 新版公開する</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 反応を待つ</li>
+                  </ul>
+                </div>
+                <div class="card-footer"><span>View</span><span>Edit</span></div>
+              </div>
+            </article>
+          </div>
+        </main>
+      </div>
+      <div class="token-note">
+        配色: #0d0d0d / #141414 card / #5e6ad2 indigo CTA+Rail current / 文字 #ececec+#6b6b6b<br>
+        余白: コンパクト / 枠: 1px white/6% / CTA: solid indigo 6px radius / タイポ: 600 weight, tight tracking, uppercase micro labels
+      </div>
+    </section>
+
+    <!-- ═══ D ═══ -->
+    <section class="panel">
+      <div class="panel-label">
+        <strong>D — Forge Studio Dark</strong>
+        <em>charcoal + ember copper CTA + 枠レス Hero</em>
+      </div>
+      <div class="mock theme-d">
+        <div class="mock-header">
+          <div class="mock-logo">Forge</div>
+          <nav class="mock-nav"><span>作品一覧</span><span class="active">マイ作品</span><span>通知</span></nav>
+        </div>
+        <main class="mock-main">
+          <span class="mock-back">← 作品一覧に戻る</span>
+          <div class="mock-title-row">
+            <div>
+              <h2>開発ダッシュボード</h2>
+              <p>ゲームを育てる場所です。プレイヤーの声は、次の版を作るための材料です。</p>
+            </div>
+            <button class="btn-secondary">+ 作品を投稿</button>
+          </div>
+          <div class="mock-section-title">作品一覧</div>
+          <div class="mock-section-sub">次にやることから開発を進めましょう。</div>
+          <div class="cards">
+            <article class="project-card">
+              <div class="thumb"></div>
+              <div class="card-body">
+                <div class="card-title-row">
+                  <span class="card-title">Emberfall</span>
+                  <span class="card-phase">プロトタイプ</span>
+                </div>
+                <p class="card-meta">v0.3 · 6/10 · 応援 12 · サイクル 2</p>
+                <div class="cycle">
+                  <div class="hero-box">
+                    <p class="hero-label">次にやること</p>
+                    <p class="hero-title">開発ログを書く</p>
+                    <p class="hero-sub">改善中 · 改善が終わったら記録しましょう</p>
+                  </div>
+                  <button class="cta">開発ログを書く</button>
+                  <div class="rail-divider"></div>
+                  <ul class="rail">
+                    <li class="done"><span class="rail-marker">✓</span> FBを読む</li>
+                    <li class="current"><span class="rail-marker">●</span> 改善する</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 開発ログを書く</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 新版公開する</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 反応を待つ</li>
+                  </ul>
+                </div>
+                <div class="card-footer"><span>作品詳細</span><span>投稿を編集</span></div>
+              </div>
+            </article>
+            <article class="project-card">
+              <div class="thumb"></div>
+              <div class="card-body">
+                <div class="card-title-row">
+                  <span class="card-title">Neon Drift</span>
+                  <span class="card-phase">アルファ</span>
+                </div>
+                <p class="card-meta">v0.1 · 6/8 · 応援 4 · サイクル 1</p>
+                <div class="cycle">
+                  <div class="hero-box">
+                    <p class="hero-label">次にやること</p>
+                    <p class="hero-title">FBを読む</p>
+                    <p class="hero-sub">プレイヤーの声を読みましょう</p>
+                  </div>
+                  <button class="cta">FBを読む</button>
+                  <div class="rail-divider"></div>
+                  <ul class="rail">
+                    <li class="current"><span class="rail-marker">●</span> FBを読む</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 改善する</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 開発ログを書く</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 新版公開する</li>
+                    <li class="upcoming"><span class="rail-marker">○</span> 反応を待つ</li>
+                  </ul>
+                </div>
+                <div class="card-footer"><span>作品詳細</span><span>投稿を編集</span></div>
+              </div>
+            </article>
+          </div>
+        </main>
+      </div>
+      <div class="token-note">
+        配色: #0a0a0b 無装飾 / zinc-50 Hero / #d4a574 ember CTA のみ chroma / Rail 全て gray<br>
+        余白: やや広（Hero 上下 18-22px）/ 枠: カード面のみ・Hero 枠なし / CTA: solid copper / タイポ: 24px Hero white, 補助 zinc-600
+      </div>
+    </section>
+
+  </div>
+
+  <p class="open-hint">
+    ブラウザで開く: <code>docs/design-mock-p1-2-7-1-palette-comparison.html</code>
+    — ファイルをダブルクリックするか、Live Server / <code>npx serve docs</code> で表示してください。
+  </p>
+</body>
+</html>

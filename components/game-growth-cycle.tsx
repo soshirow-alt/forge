@@ -25,6 +25,7 @@ import {
   ModifyGameExplanationModal,
   shouldShowModifyGameModal,
 } from "@/components/modify-game-explanation-modal";
+import { VoiceAdoptionStudioCount } from "@/components/voice-adoption-studio-count";
 
 const primaryButtonClassName =
   "inline-flex cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90";
@@ -356,6 +357,10 @@ function StepDetailPanel({
               </div>
             )}
           </dl>
+          <VoiceAdoptionStudioCount
+            gameId={game.id}
+            latestPublishedDevlogId={growth.latestPublishedDevlogId}
+          />
           <Link
             href={`/projects/${game.id}/devlog/new`}
             className="cursor-pointer inline-block text-sm text-orange-400 hover:text-orange-300"

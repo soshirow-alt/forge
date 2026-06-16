@@ -112,6 +112,7 @@ export type ProjectGrowthSnapshot = {
   lastUpdatedLabel: string;
   devlogCount: number;
   latestDevlogTitle?: string;
+  latestPublishedDevlogId?: string;
   /** 現行版の project_voice_responses 件数 */
   pendingFeedbackCount: number;
   totalVoiceResponseCount: number;
@@ -384,6 +385,8 @@ export function buildProjectGrowthSnapshot(
   const devlogs = devlogsForProject(game.id, getDevlogsByProject);
   const latestDevlog = devlogs[0];
   const previousDevlog = devlogs[1];
+  const latestPublishedDevlog = devlogs.find((entry) => entry.publishedVersion);
+  const latestPublishedDevlogId = latestPublishedDevlog?.id;
   const playableVersion = resolvePlayableVersion(game.playableVersion);
   const lastUpdatedLabel = game.lastUpdated || game.createdAt || "—";
   const hasVoice = voiceSignal.responseCount > 0;
@@ -407,6 +410,7 @@ export function buildProjectGrowthSnapshot(
       lastUpdatedLabel,
       devlogCount: devlogs.length,
       latestDevlogTitle: latestDevlog?.title,
+      latestPublishedDevlogId,
       pendingFeedbackCount: 0,
       totalVoiceResponseCount: 0,
       needsAttention: false,
@@ -426,6 +430,7 @@ export function buildProjectGrowthSnapshot(
       lastUpdatedLabel,
       devlogCount: devlogs.length,
       latestDevlogTitle: latestDevlog?.title,
+      latestPublishedDevlogId,
       pendingFeedbackCount,
       totalVoiceResponseCount: voiceSignal.responseCount,
       needsAttention: true,
@@ -447,6 +452,7 @@ export function buildProjectGrowthSnapshot(
       lastUpdatedLabel,
       devlogCount: devlogs.length,
       latestDevlogTitle: latestDevlog.title,
+      latestPublishedDevlogId,
       pendingFeedbackCount: 0,
       totalVoiceResponseCount: voiceSignal.responseCount,
       needsAttention: true,
@@ -467,6 +473,7 @@ export function buildProjectGrowthSnapshot(
     lastUpdatedLabel,
     devlogCount: devlogs.length,
     latestDevlogTitle: latestDevlog?.title,
+    latestPublishedDevlogId,
     pendingFeedbackCount: 0,
     totalVoiceResponseCount: voiceSignal.responseCount,
     needsAttention: false,

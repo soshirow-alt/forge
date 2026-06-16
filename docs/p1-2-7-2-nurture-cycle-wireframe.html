@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>P1-2.7.2 育成サイクル — ワイヤ比較（A/B/C）</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Inter, -apple-system, sans-serif;
+      background: #09090b;
+      color: #e4e4e7;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+    .page-head {
+      position: sticky; top: 0; z-index: 5;
+      background: rgba(9,9,11,0.95); backdrop-filter: blur(8px);
+      border-bottom: 1px solid #27272a;
+      padding: 20px 24px;
+    }
+    .page-head h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; }
+    .page-head p { margin-top: 6px; font-size: 12px; color: #71717a; max-width: 800px; }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .tags span {
+      font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 4px 10px; border-radius: 6px; border: 1px solid #3f3f46; color: #a1a1aa;
+    }
+    .tags .rec { border-color: #ea580c; color: #fb923c; }
+    main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+    .section-label {
+      font-size: 11px; font-weight: 600; color: #71717a; text-transform: uppercase;
+      letter-spacing: 0.08em; margin: 32px 0 12px;
+    }
+    .section-label:first-of-type { margin-top: 8px; }
+    .ref-box {
+      border: 1px dashed #52525b; border-radius: 12px; padding: 20px;
+      background: rgba(24,24,27,0.4); max-width: 720px;
+    }
+    .ref-label { font-size: 10px; color: #71717a; margin-bottom: 12px; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 28px; }
+    @media (min-width: 1100px) { .grid.ab { grid-template-columns: 1fr 1fr; } }
+    .panel {
+      border: 1px solid #27272a; border-radius: 12px; overflow: hidden;
+    }
+    .panel-head {
+      padding: 12px 16px; background: #18181b; border-bottom: 1px solid #27272a;
+      display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+    }
+    .panel-head strong { font-size: 14px; }
+    .panel-head em { font-style: normal; font-size: 11px; color: #71717a; }
+    .panel-head .rec-badge {
+      font-size: 9px; font-weight: 700; color: #fb923c; border: 1px solid #ea580c55;
+      padding: 2px 6px; border-radius: 4px;
+    }
+    .card {
+      margin: 16px; padding: 18px; border-radius: 10px;
+      background: rgba(24,24,27,0.55);
+    }
+    .card + .card { margin-top: 0; }
+    .card-title { font-size: 13px; font-weight: 600; color: #a1a1aa; margin-bottom: 14px; }
+    .card-meta { font-size: 10px; color: #52525b; float: right; }
+
+    /* ── P1-2.7.1 ref (tiny rail) ── */
+    .p271-hero-label { font-size: 10px; color: #52525b; }
+    .p271-hero { font-size: 22px; font-weight: 700; color: #fafafa; margin: 4px 0; }
+    .p271-sub { font-size: 11px; color: #71717a; }
+    .p271-cta {
+      display: inline-block; margin-top: 12px; padding: 8px 16px; border-radius: 8px;
+      background: linear-gradient(to right, #f97316, #f59e0b); color: #09090b;
+      font-size: 12px; font-weight: 600;
+    }
+    .p271-rail {
+      margin-top: 16px; padding-top: 12px; border-top: 1px solid #27272a;
+      font-size: 10px; color: #52525b;
+    }
+
+    /* ── Option A: horizontal track ── */
+    .cycle-label { font-size: 10px; font-weight: 600; color: #71717a; margin-bottom: 10px; }
+    .track {
+      display: flex; align-items: flex-start; gap: 0; flex-wrap: nowrap;
+      overflow-x: auto; padding-bottom: 4px;
+    }
+    .track-node {
+      display: flex; flex-direction: column; align-items: center; min-width: 72px; flex: 1;
+      position: relative;
+    }
+    .track-node:not(:last-child)::after {
+      content: ""; position: absolute; top: 14px; left: calc(50% + 18px);
+      width: calc(100% - 36px); height: 2px; background: #27272a; z-index: 0;
+    }
+    .track-node.done:not(:last-child)::after { background: #3f3f46; }
+    .track-node.now-next-bridge:not(:last-child)::after {
+      background: linear-gradient(to right, #52525b, #71717a);
+    }
+    .node-box {
+      width: 36px; height: 28px; border-radius: 6px; display: flex; align-items: center;
+      justify-content: center; font-size: 10px; font-weight: 600; z-index: 1;
+      border: 1px solid #3f3f46; background: #18181b; color: #71717a;
+    }
+    .track-node.done .node-box { background: #27272a; color: #52525b; border-color: #27272a; }
+    .track-node.now .node-box {
+      border-color: #71717a; background: #27272a; color: #e4e4e7;
+      box-shadow: 0 0 0 2px rgba(113,113,122,0.25);
+    }
+    .track-node.next .node-box {
+      border-color: #52525b; background: transparent; color: #a1a1aa;
+      box-shadow: 0 0 0 1px dashed #52525b;
+    }
+    .track-node.future .node-box { border-color: #27272a; background: transparent; color: #3f3f46; }
+    .node-title { margin-top: 6px; font-size: 9px; color: #71717a; text-align: center; line-height: 1.2; }
+    .node-why { font-size: 8px; color: #52525b; text-align: center; margin-top: 2px; }
+    .track-node.now .node-title { color: #d4d4d8; font-weight: 600; }
+    .track-node.next .node-title { color: #a1a1aa; }
+    .now-tag {
+      position: absolute; top: -8px; font-size: 7px; font-weight: 700;
+      color: #71717a; letter-spacing: 0.05em;
+    }
+    .loop-mark { margin-left: 8px; font-size: 11px; color: #52525b; align-self: center; flex-shrink: 0; }
+    .action-zone {
+      margin-top: 16px; padding-top: 14px; border-top: 1px dashed #3f3f46;
+    }
+    .hero-label { font-size: 10px; color: #52525b; }
+    .hero-title { font-size: 20px; font-weight: 700; color: #fafafa; margin-top: 4px; letter-spacing: -0.02em; }
+    .hero-why { font-size: 11px; color: #71717a; margin-top: 6px; max-width: 360px; }
+    .cta {
+      display: inline-block; margin-top: 12px; padding: 9px 18px; border-radius: 8px;
+      background: linear-gradient(to right, #f97316, #f59e0b); color: #09090b;
+      font-size: 12px; font-weight: 600;
+    }
+
+    /* ── Option B: vertical journey ── */
+    .b-layout { display: flex; gap: 16px; }
+    .b-cycle {
+      width: 120px; flex-shrink: 0; border-right: 1px dashed #3f3f46; padding-right: 12px;
+    }
+    .b-step {
+      padding: 6px 0; font-size: 10px; color: #52525b; position: relative;
+      padding-left: 16px;
+    }
+    .b-step::before {
+      content: ""; position: absolute; left: 4px; top: 10px; width: 6px; height: 6px;
+      border-radius: 50%; background: #3f3f46;
+    }
+    .b-step.done { color: #52525b; }
+    .b-step.done::before { background: #52525b; }
+    .b-step.now { color: #e4e4e7; font-weight: 600; }
+    .b-step.now::before { background: #a1a1aa; box-shadow: 0 0 0 2px #52525b; }
+    .b-step.future { color: #3f3f46; }
+    .b-step .why { display: block; font-size: 8px; color: #52525b; font-weight: 400; }
+    .b-arrow { text-align: center; color: #27272a; font-size: 10px; line-height: 1; }
+    .b-loop { text-align: center; font-size: 12px; color: #52525b; margin-top: 4px; }
+    .b-action { flex: 1; min-width: 0; }
+
+    /* ── Option C: compact chips ── */
+    .c-chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+    .c-chip {
+      font-size: 10px; padding: 4px 8px; border-radius: 6px; border: 1px solid #27272a;
+      color: #52525b;
+    }
+    .c-chip.done { background: #27272a; color: #52525b; }
+    .c-chip.now { border-color: #52525b; color: #d4d4d8; background: #27272a; }
+    .c-chip.future { border-style: dashed; color: #3f3f46; }
+    .c-whys { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 4px; font-size: 8px; color: #3f3f46; }
+    .c-divider { border-top: 1px dashed #3f3f46; margin: 12px 0; }
+
+    .eval {
+      padding: 12px 16px; font-size: 10px; color: #71717a; line-height: 1.6;
+      border-top: 1px solid #27272a; background: #0c0c0e;
+    }
+    .foot {
+      margin-top: 32px; padding: 16px; border-radius: 8px; background: #18181b;
+      font-size: 11px; color: #71717a; line-height: 1.7;
+    }
+    .foot strong { color: #a1a1aa; }
+  </style>
+</head>
+<body>
+  <header class="page-head">
+    <h1>P1-2.7.2 育成サイクル再設計 — ワイヤ比較</h1>
+    <p>
+      P1-2.7.1 の文脈不足を補う次案。コード変更・deploy なし。
+      目標: P1-2.6 のサイクル理解 × P1-2.7.1 のスッキリさの中間。
+    </p>
+    <div class="tags">
+      <span class="rec">A 推奨</span>
+      <span>案 A 横トラック</span>
+      <span>案 B 縦ジャーニー</span>
+      <span>案 C コンパクト</span>
+    </div>
+  </header>
+
+  <main>
+    <p class="section-label">参考 — P1-2.7.1（現状・deploy しない）</p>
+    <div class="ref-box">
+      <p class="ref-label">問題: Rail が 1 行テキストで進捗として認識されない。Why が消えた。</p>
+      <p class="card-title">Emberfall <span class="card-meta">v0.3 · サイクル 2</span></p>
+      <p class="p271-hero-label">次にやること</p>
+      <p class="p271-hero">開発ログを書く</p>
+      <p class="p271-sub">改善中</p>
+      <span class="p271-cta">開発ログを書く</span>
+      <p class="p271-rail">✓ FBを読む · ● 改善する · ○ 開発ログを書く · ○ 新版公開する · ○ 反応を待つ ↺2</p>
+    </div>
+
+    <p class="section-label">次案 — 改善中フェーズ（Emberfall）+ FB 未読（Neon Drift）</p>
+
+    <!-- ═══ OPTION A ═══ -->
+    <div class="panel" style="margin-bottom:28px">
+      <div class="panel-head">
+        <div>
+          <strong>案 A — 横型サイクルトラック</strong>
+          <span class="rec-badge">推奨</span>
+        </div>
+        <em>今 / 次 / この先 + Why 常時</em>
+      </div>
+
+      <div class="card">
+        <p class="card-title">Emberfall <span class="card-meta">v0.3 · ↺ サイクル 2</span></p>
+        <p class="cycle-label">育成サイクル</p>
+        <div class="track">
+          <div class="track-node done">
+            <span class="node-box">✓</span>
+            <span class="node-title">FBを読む</span>
+            <span class="node-why">声を聞く</span>
+          </div>
+          <div class="track-node now now-next-bridge">
+            <span class="now-tag">いま</span>
+            <span class="node-box">●</span>
+            <span class="node-title">改善する</span>
+            <span class="node-why">直す</span>
+          </div>
+          <div class="track-node next">
+            <span class="node-box">→</span>
+            <span class="node-title">開発ログ</span>
+            <span class="node-why">記録する</span>
+          </div>
+          <div class="track-node future">
+            <span class="node-box">○</span>
+            <span class="node-title">新版公開</span>
+            <span class="node-why">届ける</span>
+          </div>
+          <div class="track-node future">
+            <span class="node-box">○</span>
+            <span class="node-title">反応待ち</span>
+            <span class="node-why">育つ</span>
+          </div>
+          <span class="loop-mark">↺</span>
+        </div>
+        <div class="action-zone">
+          <p class="hero-label">次にやること</p>
+          <p class="hero-title">開発ログを書く</p>
+          <p class="hero-why">改善が終わったら、記録してプレイヤーに届けましょう</p>
+          <span class="cta">開発ログを書く</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="card-title">Neon Drift <span class="card-meta">v0.1 · ↺ 1</span></p>
+        <p class="cycle-label">育成サイクル</p>
+        <div class="track">
+          <div class="track-node now">
+            <span class="now-tag">いま</span>
+            <span class="node-box">●</span>
+            <span class="node-title">FBを読む</span>
+            <span class="node-why">声を聞く</span>
+          </div>
+          <div class="track-node future"><span class="node-box">○</span><span class="node-title">改善する</span><span class="node-why">直す</span></div>
+          <div class="track-node future"><span class="node-box">○</span><span class="node-title">開発ログ</span><span class="node-why">記録</span></div>
+          <div class="track-node future"><span class="node-box">○</span><span class="node-title">新版公開</span><span class="node-why">届ける</span></div>
+          <div class="track-node future"><span class="node-box">○</span><span class="node-title">反応待ち</span><span class="node-why">育つ</span></div>
+          <span class="loop-mark">↺</span>
+        </div>
+        <div class="action-zone">
+          <p class="hero-label">次にやること</p>
+          <p class="hero-title">FBを読む</p>
+          <p class="hero-why">届いた声が、次の改善の材料になります</p>
+          <span class="cta">FBを読む</span>
+        </div>
+      </div>
+      <div class="eval">
+        今=●改善 / 次=→devlog ring / この先=○公開・待つ が<strong>同時に</strong>見える。Hero は「次のイベント」、トラックは「サイクル全体」。
+      </div>
+    </div>
+
+    <div class="grid ab">
+      <!-- ═══ OPTION B ═══ -->
+      <div class="panel">
+        <div class="panel-head">
+          <strong>案 B — 縦型ジャーニー</strong>
+          <em>左サイクル + 右 Hero</em>
+        </div>
+        <div class="card">
+          <p class="card-title">Emberfall</p>
+          <div class="b-layout">
+            <div class="b-cycle">
+              <div class="b-step done">FBを読む<span class="why">声を聞く</span></div>
+              <div class="b-arrow">↓</div>
+              <div class="b-step now">改善する<span class="why">直す · いま</span></div>
+              <div class="b-arrow">↓</div>
+              <div class="b-step future">開発ログ<span class="why">記録 · 次</span></div>
+              <div class="b-arrow">↓</div>
+              <div class="b-step future">新版公開<span class="why">届ける</span></div>
+              <div class="b-arrow">↓</div>
+              <div class="b-step future">反応待ち<span class="why">育つ</span></div>
+              <div class="b-loop">↺ 2</div>
+            </div>
+            <div class="b-action">
+              <p class="hero-label">次にやること</p>
+              <p class="hero-title">開発ログを書く</p>
+              <p class="hero-why">改善が終わったら、記録して届けましょう</p>
+              <span class="cta">開発ログを書く</span>
+            </div>
+          </div>
+        </div>
+        <div class="eval">育てる感は最強。一覧でカードが縦長になり、Hero Y 位置がブレやすい。</div>
+      </div>
+
+      <!-- ═══ OPTION C ═══ -->
+      <div class="panel">
+        <div class="panel-head">
+          <strong>案 C — コンパクトチップ</strong>
+          <em>P1-2.6 縮小版</em>
+        </div>
+        <div class="card">
+          <p class="card-title">Emberfall</p>
+          <div class="c-chips">
+            <span class="c-chip done">✓ FB</span>
+            <span class="c-chip now">● 改善</span>
+            <span class="c-chip future">○ devlog</span>
+            <span class="c-chip future">○ 公開</span>
+            <span class="c-chip future">○ 待つ</span>
+            <span style="font-size:10px;color:#52525b">↺2</span>
+          </div>
+          <div class="c-whys">
+            <span>声</span><span>直す</span><span>記録</span><span>届ける</span><span>育つ</span>
+          </div>
+          <div class="c-divider"></div>
+          <p class="hero-label">次にやること</p>
+          <p class="hero-title">開発ログを書く</p>
+          <p class="hero-why">改善が終わったら記録</p>
+          <span class="cta">開発ログを書く</span>
+        </div>
+        <div class="eval">実装最小。チップが小さいと P1-2.7.1 と同じ「文字列化」リスクあり。</div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <strong>3 問チェック（各案で確認）</strong><br>
+      ① 今どこにいるか — ノード / チップで即分かるか<br>
+      ② 次は何か — Hero + CTA とサイクルの「次」が一致しているか<br>
+      ③ この先どうなるか — 未完了ステップが右（or 下）に見えるか<br>
+      ④ なぜそれをするか — Why マイクロ + Hero 1 行で足りるか
+    </div>
+  </main>
+</body>
+</html>

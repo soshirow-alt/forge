@@ -160,6 +160,29 @@ deploy URL / commit:
 
 ---
 
+## 5. voice_adoptions（011 — staging / fixture、本番未適用）
+
+**前提**: 011 は Dashboard 未適用の間は `NEXT_PUBLIC_VOICE_ADOPTION_FIXTURE=true` で UI のみ検証。
+
+### fixture（migration 不要）
+
+- [ ] `.env.local` に `NEXT_PUBLIC_VOICE_ADOPTION_FIXTURE=true` / `VOICE_ADOPTION_MATCHER_MODE=fixture`
+- [ ] `npm run verify:voice-adoption` → precision 100% / recall ≥ 60%
+- [ ] `/mypage#voice-adoptions` — player_quote ↔ update_summary の対が表示
+- [ ] `/games/emberfall` — adoption あり時のみ compact セクション
+- [ ] 「この関連は違う」→ カード消失（suppressed）
+- [ ] Studio 公開パネル — fixture 時 Emberfall で採用件数表示
+
+### 011 適用後（staging Dashboard）
+
+- [ ] `011_voice_adoptions.sql` 適用
+- [ ] プレイヤー A: 自分の active adoptions のみ SELECT
+- [ ] プレイヤー B: A の adoption 不可視
+- [ ] disputes INSERT → adoption status=suppressed
+- [ ] 詳細: `docs/voice-adoptions-staging-fixture-guide.md`
+
+---
+
 ## 関連ドキュメント
 
 - migration 適用手順: `docs/migration-009-010-apply.md`

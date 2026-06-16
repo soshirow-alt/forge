@@ -8,6 +8,14 @@ export const NEW_PLAYABLE_VERSION_BANNER_ID = "new-playable-version-banner";
 
 export const MYPAGE_UPDATES_SECTION_ID = "updates";
 
+export const VOICE_ADOPTIONS_SECTION_ID = "voice-adoptions";
+
+export const ADOPTION_VERIFY_SECTION_ID = "adoption-verify";
+
+export function adoptionVerifyHref(projectId: string, adoptionId: string): string {
+  return `/games/${projectId}?adoption=${encodeURIComponent(adoptionId)}#${ADOPTION_VERIFY_SECTION_ID}`;
+}
+
 export function projectStudioPath(projectId: string): string {
   return `/projects/${projectId}/studio`;
 }

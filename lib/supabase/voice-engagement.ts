@@ -377,6 +377,29 @@ export async function fetchUserVoiceResponses(
   return ((data ?? []) as ResponseRow[]).map(responseRowToItem);
 }
 
+export async function fetchUserVoiceResponsesForProjects(
+  supabase: SupabaseClient,
+  userId: string,
+  projectIds: string[],
+): Promise<VoiceResponse[]> {
+  if (projectIds.length === 0) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("project_voice_responses")
+    .select("*")
+    .eq("user_id", userId)
+    .in("project_id", projectIds)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return [];
+  }
+
+  return ((data ?? []) as ResponseRow[]).map(responseRowToItem);
+}
+
 export async function upsertVoiceResponses(
   supabase: SupabaseClient,
   userId: string,

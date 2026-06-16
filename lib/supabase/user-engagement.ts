@@ -1,5 +1,23 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { GameFeedbackItem, ReplayIntent } from "@/lib/game-feedback-storage";
+import {
+  insertProjectPlaySession,
+  type PlaySessionContext,
+  type ProjectPlaySession,
+  fetchPlaySessionsForUser,
+  fetchProjectPlayFirstSeen,
+  isPlaySessionsTableMissingError,
+} from "@/lib/supabase/play-sessions-db";
+
+export type {
+  PlaySessionContext,
+  ProjectPlaySession,
+} from "@/lib/supabase/play-sessions-db";
+export {
+  fetchPlaySessionsForUser,
+  fetchProjectPlayFirstSeen,
+  isPlaySessionsTableMissingError,
+} from "@/lib/supabase/play-sessions-db";
 
 export type UserEngagementState = {
   supportedProjectIds: string[];
@@ -152,6 +170,30 @@ export async function recordProjectPlay(
   if (error) {
     throw error;
   }
+}
+
+export type RecordProjectPlayWithSessionInput = {
+  projectId: string;
+  versionKey: string;
+  context?: PlaySessionContext;
+  adoptionId?: string | null;
+};
+
+export async function recordProjectPlayWithSession(
+  supabase: SupabaseClient,
+  userId: string,
+  input: RecordProjectPlayWithSessionInput,
+): Promise<{ session: ProjectPlaySession | null }> {
+  await recordProjectPlay(supabase, userId, input.projectId);
+
+  const session = await insertProjectPlaySession(supabase, userId, {
+    projectId: input.projectId,
+    versionKey: input.versionKey,
+    context: input.context,
+    adoptionId: input.adoptionId,
+  });
+
+  return { session };
 }
 
 export async function insertProjectFeedback(

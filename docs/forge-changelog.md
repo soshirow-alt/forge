@@ -4,6 +4,317 @@
 
 ---
 
+## 2026-06-16 プレイ履歴 Phase 1 実装
+
+### 今回やったこと
+
+- migration **012** `project_play_sessions` — 最終版 SQL
+- **recordProjectPlayWithSession** — 毎プレイ session INSERT + plays upsert
+- **player-play-timeline** — play / voice / devlog 合成 + 「最初のプレイからN日」
+- マイページ **「プレイ履歴」** セクション（`#play-history`）
+- 「最近プレイした」カードはプレイ履歴に統合
+- doc: `docs/player-play-history-verification.md`
+- **npm run build PASS**
+
+### ユーザー体験の変化
+
+- **012 適用前**: プレイ履歴 UI は表示可。session 行なし（voice/devlog のみ）
+- **012 適用後**: 版ごとのプレイが時系列に残る。プレイのみユーザーも履歴対象
+
+### オーナー確定
+
+- セクション名 **プレイ履歴**
+- バックフィルなし
+- プレイした作品のみ
+- 作品詳細コンパクト → Phase 1b
+
+---
+
+## 2026-06-16 優先順位更新 — プレイ履歴設計 GO
+
+### 方針
+
+- ボトルネックは開発速度。matcher 本番 ∥ プレイ履歴 **並行 GO**
+- 新優先: matcher 本番 → **プレイ履歴** → 正式版 → バッジ
+- PLAYER_VISIBLE=false 維持
+
+### doc / 草案
+
+- `docs/player-play-history-design.md` — コンセプト・DB・UI・原典整合
+- `supabase/migrations/012_project_play_sessions.sql` — 草案
+- `docs/parallel-execution-checklist.md` — Vercel + 並行作業
+
+---
+
+## 2026-06-16 Phase3「変化を確かめる」実装
+
+### 今回やったこと
+
+- **adoptionVerifyHref** + `?adoption=` パース + **useAdoptionVerifyContext** hook
+- **AdoptionVerifyBanner** — 作品詳細 personal 文脈（NewPlayableVersionBanner の上）
+- **VoiceAdoptionsSection** Primary CTA → **「変化を確かめる」**（personal URL）
+- **PlayLaunchDialog** — adoption 経由時 contextual copy
+- **GameVoiceSection** — adoption 経由時 post-play 前置き 1 行
+- **PLAYER_VISIBLE ゲート** — false 中は Phase3 UI も非表示（露出リスクなし）
+- doc: `docs/phase3-player-visible-off-verification.md`
+
+### ユーザー体験の変化
+
+- **現時点（PLAYER_VISIBLE=false）**: プレイヤーには **変化なし**（コードのみ merge）
+- **表示 GO 後**: マイページ adoption →「変化を確かめる」→ 作品詳細バナー → contextual プレイ → 新版 voice
+
+---
+
+## 2026-06-16 matcher 本番 GO（Run [A]）
+
+### オーナー判断
+
+- labeled 60 / shadow A / shadow B PASS、FP=0 — matcher 本番運用へ
+- prompt v2 / 閾値 0.82・0.88 **変更禁止**
+- **`NEXT_PUBLIC_VOICE_ADOPTION_PLAYER_VISIBLE=false` 維持**（Phase2/3 表示 GO まで）
+
+### doc
+
+- `docs/voice-adoptions-matcher-prod-go.md` — Vercel env + 確認手順
+- `docs/phase3-implementation-plan.md` — Phase3 実装 GO
+
+### ユーザー体験
+
+- 本番 devlog 公開後、**裏側で** voice↔更新の自動紐づけが動く（プレイヤー UI はまだ非表示）
+- Phase3「変化を確かめる」が次のプレイヤー体験強化
+
+---
+
+## 2026-06-16 shadow B 実測 PASS
+
+### 結果
+
+- devlogId `a60a5c11-061c-4219-916d-bd864ddc5f95`（消えるかな？、0.5→0.6）
+- mix: direct 2 / indirect 3 / reject 5（計 10 voice）+ 旧 voice で candidate 14
+- matcher completed / adoptions **2**（direct UI + BGM）/ **FP=0**
+- indirect 3 件は conf **0.8** → 不採用（FN 許容）
+- reject 5 件すべて未採用
+
+### 次
+
+- **matcher 本番 GO** 判断（ChatGPT + GPT判断用メモ）
+
+---
+
+## 2026-06-16 shadow A 実測 PASS
+
+### 結果
+
+- devlogId `f45434b3-bd88-435d-8345-82016b3f7e67`（project 消えるかな？）
+- matcher completed / candidates 4 / adoptions 1 / **FP=0**
+- reject（マルチプレイ）未採用。direct 相当ボス声のみ採用
+- indirect（テンポ）conf 0.8 → 不採用（閾値 0.88、FN 許容）
+- 初回試行は版名 `shadow-a-*` で candidate 0 → semver bump（0.5）で再実行
+
+### doc / コマンド
+
+- `npm run shadow:a` — 一括実行
+- `docs/voice-adoptions-shadow-a-runbook.md`
+
+---
+
+## 2026-06-16 shadow A 準備（プレイヤー非表示 + レビュー手段）
+
+### 今回やったこと
+
+- **`NEXT_PUBLIC_VOICE_ADOPTION_PLAYER_VISIBLE=false`** — shadow 中はマイページ・ゲーム詳細の「声が反映」UI を非表示（`isVoiceAdoptionPlayerVisible()`）
+- matcher は live のまま **DB INSERT 継続**。開発者 Studio 件数は表示のまま（マッチャー動作確認用）
+- **`npm run shadow:adoption-review -- <devlogId>`** — 公開後の採用行を FP レビュー用に一覧
+- **`docs/voice-adoptions-shadow-a-runbook.md`** — env チェックリスト・SQL・合格基準
+
+### ユーザー体験の変化
+
+- shadow A 期間中、**プレイヤーは採用通知を見ない**（誤表示リスクゼロ）
+- 開発者は新版公開後、スクリプト/SQL で採用行をレビューして FP=0 を確認してから shadow B へ
+
+---
+
+## 2026-06-16 labeled 60 --live GO → shadow A/B
+
+### 結果
+
+- direct FP=0 FN=0 / indirect FP=0 FN=3 / reject FP=0
+- precision 100% / recall 92.5%
+- **Run判断 A** — shadow A へ。prompt v2 維持（v3 不要、閾値変更禁止）
+- FN 3 件（conf 0.8）対応不要
+
+### doc
+
+- `docs/voice-adoptions-labeled-60-live-results.md`
+
+---
+
+## 2026-06-16 candidate cap 50（precision 保護）
+
+### 今回やったこと
+
+- **`VOICE_ADOPTION_MAX_CANDIDATES = 50`** — `lib/voice-adoption/constants.ts`
+- **`applyVoiceAdoptionCandidateCap`** — Stage A 後、created_at 降順で cap
+- **Future Scalability Note** — matcher design doc + forge-handoff（大規模 voice 時は embedding 等へ再評価）
+
+### ユーザー体験の変化
+
+- 1 作品の voice が 50 件超のとき、**公開直前に近い 50 件だけ** matcher 対象（古い voice は当該公開では未評価）
+
+---
+
+## 2026-06-16 実測フェーズ開始（prompt v2 + shadow + 見届け人）
+
+### 今回やったこと
+
+- **prompt v2**（`adoption-prompt-v2`）: 同一問題判定、indirect/reject few-shot、類似採用 NG
+- **shadow ガイド**: `docs/voice-adoptions-shadow-guide.md`（公開 A/B、FP=0×2、プレイヤー非表示）
+- **見届け人**: 初回 Released 付与、Reopen でも剥奪なし
+- staging verify 出力強化（FP/FN 代表ケース）
+- `--live` 試行 → **OPENAI_API_KEY 未設定**（`.env.local` なし）
+
+### migration / deploy
+
+- なし
+
+---
+
+## 2026-06-16 方針レビュー（FN / Phase3 タイミング / Released Reopen）
+
+### 今回やったこと
+
+- **FN 対応順確定**: prompt → explanation → labeled set → 閾値（最後）。閾値維持
+- **Phase3**: 設計・文言・URL・モックは先行 OK。実装は matcher 本番 GO 後
+- **Released**: 取り消し（Release Reopened）可。`project_release_events` で履歴保持
+- doc 更新: staging-precision-guide, openai-matcher-design, phase3 UX, official-release-design
+
+### migration / deploy
+
+- なし
+
+---
+
+## 2026-06-16 staging labeled set + Phase3 UX 設計 + 正式版方針
+
+### 今回やったこと
+
+- **優先順位確定**: staging 精度 → matcher 本番 GO → Phase3 設計 → Phase3 実装 → 履歴 → 正式版 → バッジ
+- **staging labeled set 60 件**: direct 20 / indirect 20 / reject 20（`lib/voice-adoption/staging-labeled-set/`）
+- **精度評価**: `staging-precision-eval.ts` + `npm run verify:voice-adoption:staging` + `--live`
+- **GO 条件**: 全カテゴリ false positive = 0（recall 低下許容）
+- **doc**: `voice-adoptions-staging-precision-guide.md`
+- **Phase3 UX 設計**: `phase3-adoption-verify-ux-design.md`（変化を確かめる）
+- **正式版方針**: `official-release-design.md`（開発者 Released 宣言、semver NG、正式版後も継続）
+- **バッジ doc 更新**: 件数競争 NG、見届け人は単純 1 プレイ NG
+
+### ユーザー体験の変化
+
+- コード変更なし（設計・評価基盤）。Phase3 実装後に CTA「変化を確かめる」が primary になる予定
+
+### migration / deploy
+
+- なし
+
+---
+
+## 2026-06-16 OpenAI matcher staging + indirect 方針確定 + バッジ設計
+
+### 今回やったこと
+
+- **オーナー方針確定**: indirect 採用 GO（confidence ≥ 0.88）、弱い表現 NG、通常 adoption 表示
+- **matcher パイプライン**: `run-adoption-matcher.ts` + `POST /api/voice-adoption/run` + devlog 公開後 invoke
+- **採用判定**: `adoption-match-eval.ts`（direct 0.82 / indirect 0.88 / 抽象 summary 拒否）
+- **OpenAI matcher**: `openai-matcher.ts`（per-voice update_summary）
+- **service role INSERT**: `voice-adoption-matcher-db.ts` + `createServiceRoleClient`
+- **UI**: `VoiceAdoptionsSection` に AI disclaimer footer
+- **設計 doc**: indirect / disclaimer / staging Next API パスを `voice-adoptions-openai-matcher-design.md` に反映
+- **バッジ**: `docs/player-badges-design-review.md`（設計のみ。実装 Out）
+
+### ユーザー体験の変化
+
+- devlog 新版公開時（staging、fixture off + service role 設定時）に voice↔更新の自動紐づけが走る経路ができた
+- adoption 一覧の下に AI 紐づけの説明と dispute 導線が並ぶ
+- indirect も「あなたの声 → 今回の更新」と同じトーンで見える（「たぶん」表現なし）
+
+### migration / deploy
+
+- なし（011 適用済み。本番 OpenAI / Edge deploy は別 Run）
+
+---
+
+## 2026-06-16 update_summary 1対1 + Phase3 CTA 修正
+
+### 今回やったこと
+
+- **設計修正**: `update_summary` = 回答ごとの対応変更（devlog 全体要約 NG）
+- **Phase3 CTA**: 「変化を確かめる」（将来 `{update_summary}を確かめる`）
+- **コード**: fixture matcher / types / constants をペア別 summary に同期
+
+---
+
+### 今回やったこと
+
+- **migration 011 草案**: `voice_adoptions` / `voice_adoption_matcher_runs` / `voice_adoption_disputes` + RLS + devlog `published_at` / `content_hash` + 公開後本文 immutable trigger
+- **正本データ層**: `lib/voice-adoption/*` + `lib/supabase/voice-adoptions-db.ts` + `lib/supabase/schema.ts` 型
+- **fixture matcher**: 10 ペア（関連5 / 無関連3 / グレー2）、`ADOPTION_THRESHOLD=0.82`、precision 100% / recall 100% を `npm run verify:voice-adoption` で検証
+- **Phase2 UI**: `VoiceAdoptionsSection` —「あなたの回答から変わったこと」。`player_quote` ↔ `update_summary` の対のみ表示（LLM 再呼び出しなし）
+- **統合**: `/mypage#voice-adoptions`（Primary）、`/games/{id}` 条件付き（Secondary）、dispute「この関連は違う」→ suppressed
+- **Studio**: 公開パネルに「あなたの声が反映された件数」
+- **staging 手順**: `docs/voice-adoptions-staging-fixture-guide.md`
+- **Edge Function 草案**: `supabase/functions/voice-adoption-matcher`（fixture stub のみ。live OpenAI は 501）
+- **dev API**: `POST /api/voice-adoption/matcher`（production 403）
+
+### ユーザー体験の変化
+
+- ログイン済みプレイヤー（fixture モード時）が、**自分の声がどの更新に効いたか**を具体的な引用ペアで見られる
+- 0 件のときセクションは非表示（空ブロックなし）
+- dispute で誤関連を自分で消せる
+
+### migration
+
+- **未適用**（011 はリポジトリ草案のみ。Dashboard 本番/staging 適用は別 Run）
+
+---
+
+## 2026-06-16 voice_adoptions 実装前レビュー（Phase1+2 同一テーマ）
+
+### 今回やったこと
+
+- **設計のみ**: Phase1 正本 DB + Phase2 最小プレイヤー表示を 1 テーマで整理
+- 正本 doc: `docs/voice-adoptions-pre-implementation-review.md`（17 項目 + Run 判断用メモ）
+- ADOPTION_THRESHOLD **0.82 確定** / devlog immutable 方針 / 10 ペア precision 手順
+
+### migration
+
+- なし（011 は実装 GO 後）
+
+---
+
+### 今回やったこと
+
+- **設計のみ**: `voice_adoptions` を Forge 正本データとして正式スキーマ化（`docs/voice-adoptions-canonical-design-review.md`）
+- **実装順確定**: Phase1 マッチ基盤 → Phase2 表示 → Phase3 再プレイ → Phase4 レジャー（レジャー先行 NG）
+- **原則**: 事実 → 体験。Phase1 は通知不要
+
+### migration
+
+- なし（011 草案は GO 後）
+
+---
+
+### 今回やったこと
+
+- **設計のみ**: プレイヤー「育てた実感」のコア体験を正式機能前提で整理（`docs/player-nurture-core-experience-design-review.md`）
+- **結論**: 通知単体では不十分。**案A（個人マッチ）+ レジャー + 再プレイ接点**の三層がコア
+- **現状診断**: プレイ→回答→更新→再プレイの形はあるが、**自分の声で変わった**接点はゼロ
+- **案評価**: A が最強。B/C は補助。手動採用 UI は禁止継続
+
+### migration
+
+- なし（設計レビューのみ）
+
+---
+
 ## 2026-06-16 Studio フェーズパネル統合 + プレイヤー更新 UI + AI採用設計レビュー
 
 ### 今回やったこと

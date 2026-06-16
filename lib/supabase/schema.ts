@@ -71,6 +71,57 @@ export type ProjectDevlogRow = {
   title: string;
   content: string;
   published_version: string | null;
+  published_at?: string | null;
+  content_hash?: string | null;
+  created_at: string;
+};
+
+export type VoiceAdoptionMatcherRunRow = {
+  id: string;
+  devlog_id: string;
+  project_id: string;
+  trigger_type: "devlog_published" | "backfill" | "model_upgrade";
+  trigger_version: string;
+  status: "queued" | "running" | "completed" | "failed" | "skipped";
+  candidate_count: number;
+  evaluated_count: number;
+  adopted_count: number;
+  skipped_below_threshold: number;
+  devlog_content_hash: string | null;
+  model: string;
+  prompt_version: string;
+  error_message: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+};
+
+export type VoiceAdoptionRow = {
+  id: string;
+  project_id: string;
+  user_id: string;
+  voice_response_id: string;
+  devlog_id: string;
+  voice_version_key: string;
+  published_version: string;
+  player_quote: string;
+  update_summary: string;
+  prompt_text: string | null;
+  confidence: number;
+  model: string;
+  model_version: string | null;
+  matcher_run_id: string;
+  status: "active" | "suppressed";
+  suppression_reason: "player_dispute" | "devlog_retracted" | "admin" | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type VoiceAdoptionDisputeRow = {
+  id: string;
+  adoption_id: string;
+  user_id: string;
+  note: string | null;
   created_at: string;
 };
 

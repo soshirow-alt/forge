@@ -455,6 +455,41 @@ LS に新版フラグ（却下 — DB 原典）
 版 bump 時 devlog+version 二重通知（却下 — ノイズ）
 
 ================================================================
+■ voice_adoptions / matcher / Phase3（2026-06-16 更新）
+================================================================
+
+matcher 本番 GO — Run [A]（オーナー 2026-06-16）
+
+検証完了:
+- labeled 60 --live PASS（FP=0）
+- shadow A PASS（devlog f45434b3…、adoption 1、FP 0）
+- shadow B PASS（devlog a60a5c11…、adoption 2、FP 0）
+
+維持（変更禁止）:
+- adoption-prompt-v2
+- direct 0.82 / indirect 0.88
+- indirect FN 許容、FP 最優先
+
+PLAYER_VISIBLE:
+- NEXT_PUBLIC_VOICE_ADOPTION_PLAYER_VISIBLE=false を matcher 本番後も維持
+- DB INSERT / matcher は動く。プレイヤー UI（Phase2/3）は非表示 until 別 GO
+
+本番経路:
+- devlog 新版公開 → POST /api/voice-adoption/run → OpenAI live → voice_adoptions INSERT
+- doc: docs/voice-adoptions-matcher-prod-go.md
+
+オーナー次作業:
+- Vercel プロジェクト forge に OPENAI_API_KEY + SUPABASE_SERVICE_ROLE_KEY 設定 + Redeploy
+
+Cursor 次テーマ（優先順位）:
+1. matcher 本番 deploy 支援（doc 済み — オーナー Vercel）
+2. **プレイ履歴** — docs/player-play-history-design.md、migration 012 草案
+3. 正式版
+4. バッジ
+
+Phase3: **実装完了**。PLAYER_VISIBLE=true は別 Run。
+
+================================================================
 ■ 現在のロードマップ
 ================================================================
 

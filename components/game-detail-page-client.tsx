@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { AuthGatedHint } from "@/components/auth-gated-hint";
+import { AdoptionVerifyBanner } from "@/components/adoption-verify-banner";
 import { ForgeHeader } from "@/components/forge-header";
 import { ForgeIdentityBlock } from "@/components/forge-identity-block";
 import { EveryonesVoiceSection } from "@/components/everyones-voice-section";
@@ -17,14 +18,19 @@ import {
 } from "@/components/game-voice-section";
 import { GameProjectHistorySection } from "@/components/game-project-history-section";
 import { NewPlayableVersionBanner } from "@/components/new-playable-version-banner";
+import { VoiceAdoptionsSection } from "@/components/voice-adoptions-section";
 import { PlayLaunchDialog } from "@/components/play-launch-dialog";
 import {
   PostPlayVoiceOverlay,
   type VoiceOverlayMode,
 } from "@/components/post-play-voice-overlay";
 import { useGames } from "@/components/games-provider";
+import { useAdoptionVerifyContext } from "@/hooks/use-adoption-verify-context";
 import { useRequireAuth } from "@/hooks/use-require-auth";
+import { parseAdoptionQueryParam } from "@/lib/adoption-verify-context";
 import { gameDetailReturnPath } from "@/lib/login-return-url";
+import { ADOPTION_VERIFY_SECTION_ID } from "@/lib/project-nurture-links";
+import { isVoiceAdoptionPlayerVisible } from "@/lib/voice-adoption/constants";
 import {
   derivePlayerVoiceFlowState,
   getFirstPromptPreview,
@@ -61,6 +67,7 @@ function writeOverlayDismissed(gameId: string) {
 }
 
 export function GameDetailPageClient({ id }: { id: string }) {
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const {
     getGameById,
@@ -81,6 +88,29 @@ export function GameDetailPageClient({ id }: { id: string }) {
   const [overlayDismissed, setOverlayDismissed] = useState(false);
   const [voiceDataReady, setVoiceDataReady] = useState(false);
   const voiceCompleteKnownRef = useRef(false);
+
+  const adoptionPlayerVisible = isVoiceAdoptionPlayerVisible();
+  const adoptionQueryId = useMemo(
+    () => parseAdoptionQueryParam(searchParams.get("adoption")),
+    [searchParams],
+  );
+  const { context: adoptionVerifyContext, loaded: adoptionVerifyLoaded } =
+    useAdoptionVerifyContext(id, adoptionQueryId);
+
+  useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      !adoptionPlayerVisible ||
+      !adoptionVerifyContext
+    ) {
+      return;
+    }
+
+    if (window.location.hash === `#${ADOPTION_VERIFY_SECTION_ID}`) {
+      const element = document.getElementById(ADOPTION_VERIFY_SECTION_ID);
+      element?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [adoptionPlayerVisible, adoptionVerifyContext, adoptionVerifyLoaded]);
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -165,7 +195,15 @@ export function GameDetailPageClient({ id }: { id: string }) {
 
     setLaunchingGame(true);
     try {
-      await recordPlay(game.id);
+      await recordPlay(
+        game.id,
+        adoptionVerifyContext
+          ? {
+              context: "adoption_verify",
+              adoptionId: adoptionVerifyContext.id,
+            }
+          : undefined,
+      );
       setPlayed(true);
       setOverlayDismissed(false);
       sessionStorage.removeItem(overlayDismissKey(game.id));
@@ -215,6 +253,18 @@ export function GameDetailPageClient({ id }: { id: string }) {
   const userSubmitted = isSubmittedGame(game.id);
   const isOwnerPreview = isProjectOwner(game.id, user?.id);
   const isPrivate = userSubmitted && game.visibility === "private";
+  const showAdoptionVerifyBanner =
+    adoptionPlayerVisible &&
+    adoptionVerifyLoaded &&
+    Boolean(adoptionVerifyContext) &&
+    isLoggedIn &&
+    !isOwnerPreview;
+
+  const playLaunchAdoptionContext =
+    adoptionPlayerVisible && showAdoptionVerifyBanner
+      ? adoptionVerifyContext
+      : null;
+
   const showPlayerVoiceFlow = isLoggedIn && played && !isOwnerPreview;
 
   if (isPrivate && !isOwnerPreview) {
@@ -249,6 +299,7 @@ export function GameDetailPageClient({ id }: { id: string }) {
           void handleLaunchGame();
         }}
         launching={launchingGame}
+        adoptionContext={playLaunchAdoptionContext}
       />
 
       {showPlayerVoiceFlow && voiceFlowState !== "voice_complete" && (
@@ -262,6 +313,7 @@ export function GameDetailPageClient({ id }: { id: string }) {
             gameId={id}
             embedded
             showDeepFeedback={false}
+            adoptionVerifyActive={Boolean(playLaunchAdoptionContext)}
             onFlowStateChange={handleVoiceFlowStateChange}
             onVoiceComplete={handleVoiceComplete}
           />
@@ -294,6 +346,13 @@ export function GameDetailPageClient({ id }: { id: string }) {
               <div className="min-w-0">
                 <GameDetailOverview game={game} />
 
+                {showAdoptionVerifyBanner && adoptionVerifyContext && (
+                  <AdoptionVerifyBanner
+                    context={adoptionVerifyContext}
+                    onPlayRequest={handlePlayRequest}
+                  />
+                )}
+
                 {!isOwnerPreview && <NewPlayableVersionBanner game={game} />}
 
                 <GameDescriptionSection description={game.description} />
@@ -305,6 +364,10 @@ export function GameDetailPageClient({ id }: { id: string }) {
 
                 <GameProjectHistorySection game={game} />
 
+                {isLoggedIn && !isOwnerPreview && (
+                  <VoiceAdoptionsSection projectId={id} compact />
+                )}
+
                 {showPlayerVoiceFlow &&
                   voiceFlowState === "voice_complete" &&
                   voiceDataReady && (
@@ -312,6 +375,7 @@ export function GameDetailPageClient({ id }: { id: string }) {
                       gameId={id}
                       onFlowStateChange={handleVoiceFlowStateChange}
                       showDeepFeedback
+                      adoptionVerifyActive={Boolean(playLaunchAdoptionContext)}
                     />
                   )}
 
