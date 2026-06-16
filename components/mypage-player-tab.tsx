@@ -98,37 +98,6 @@ export function MyPagePlayerTab() {
 
   return (
     <div className="space-y-8">
-      <section
-        aria-label="用語の説明"
-        className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5"
-      >
-        <h2 className="text-sm font-semibold text-zinc-200">
-          3つのリストの違い
-        </h2>
-        <dl className="mt-4 grid gap-4 sm:grid-cols-3">
-          <div>
-            <dt className="text-xs font-medium text-orange-400">応援中</dt>
-            <dd className="mt-1 text-xs leading-relaxed text-zinc-500">
-              気に入った作品への応援（投げ銭ではありません）。開発者への励ましとして残ります。
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium text-amber-400">
-              更新を追っている
-            </dt>
-            <dd className="mt-1 text-xs leading-relaxed text-zinc-500">
-              開発ログや新版公開の通知を受け取りたい作品のリストです。
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium text-emerald-400">更新を見る</dt>
-            <dd className="mt-1 text-xs leading-relaxed text-zinc-500">
-              追跡中作品の devlog / 新版の変更要点をまとめて確認する場所です。
-            </dd>
-          </div>
-        </dl>
-      </section>
-
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="lg:col-span-2">
           <MyPageUpdatesSection watchedGames={watchedGames} previewLimit={2} />

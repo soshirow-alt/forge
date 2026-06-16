@@ -1,7 +1,6 @@
 import { sortDevlogsNewestFirst, type DevlogEntry } from "@/lib/devlogs";
 import type { Game } from "@/lib/mock-games";
 import { resolvePlayableVersion } from "@/lib/playable-version";
-import { projectStudioFeedbackHref } from "@/lib/project-nurture-links";
 import {
   resolveVoiceSignalForGame,
   type ProjectVoiceNurtureSignal,
@@ -15,8 +14,8 @@ export type NurtureStepVisualState = "done" | "now" | "next" | "upcoming";
 export type ProgressRailVisual = "done" | "current" | "upcoming";
 
 export const NURTURE_STEP_WHY: Record<NurtureStepId, string> = {
-  read: "回答を見る",
-  improving: "直す",
+  read: "見る",
+  improving: "修正する",
   devlog: "記録する",
   publish: "届ける",
   wait: "育つ",
@@ -38,16 +37,16 @@ export const NURTURE_STEPS: {
   },
   {
     id: "improving",
-    label: "改善する",
-    railLabel: "改善",
-    shortLabel: "改善",
+    label: "ゲームを修正する",
+    railLabel: "修正",
+    shortLabel: "修正",
     whyLabel: NURTURE_STEP_WHY.improving,
   },
   {
     id: "devlog",
-    label: "開発ログを書く",
-    railLabel: "ログ",
-    shortLabel: "ログ",
+    label: "変更内容を記録する",
+    railLabel: "記録",
+    shortLabel: "記録",
     whyLabel: NURTURE_STEP_WHY.devlog,
   },
   {
@@ -81,7 +80,14 @@ export type GrowthStepChip = {
 
 export type GrowthPrimaryCta = {
   label: string;
-  href: string;
+  href?: string;
+  opensReadPanel?: boolean;
+  opensModifyGameModal?: boolean;
+};
+
+export type ProjectStatusBadge = {
+  label: string;
+  tone: "orange" | "amber" | "sky";
 };
 
 export type PastCycleSummary = {
@@ -116,6 +122,7 @@ export type NurtureDisplayContext = {
   heroSubline?: string;
   primaryCta: GrowthPrimaryCta | null;
   primaryOpensReadPanel: boolean;
+  primaryOpensModifyGameModal: boolean;
   loopActive: boolean;
   newFeedbackArrived: boolean;
 };
@@ -275,6 +282,7 @@ export function buildNurtureDisplayContext(
           href: `/games/${gameId}`,
         },
         primaryOpensReadPanel: false,
+        primaryOpensModifyGameModal: false,
         loopActive: false,
         newFeedbackArrived: false,
       };
@@ -284,15 +292,16 @@ export function buildNurtureDisplayContext(
         return {
           nowStepId: null,
           nextStepId: "read",
-          heroTitle: "回答を見る",
+          heroTitle: "プレイヤーの回答が届きました",
           heroSubline: snapshot.loopActive
-            ? `${snapshot.cycleNumber} 周目 · また回答が届きました`
-            : "届いた回答が、次の改善につながります",
+            ? `${snapshot.cycleNumber} 周目 · まず回答を確認しましょう`
+            : "まず回答を確認しましょう",
           primaryCta: {
             label: "回答を見る",
-            href: projectStudioFeedbackHref(gameId),
+            opensReadPanel: true,
           },
           primaryOpensReadPanel: true,
+          primaryOpensModifyGameModal: false,
           loopActive: snapshot.loopActive,
           newFeedbackArrived: snapshot.loopActive,
         };
@@ -301,13 +310,14 @@ export function buildNurtureDisplayContext(
       return {
         nowStepId: "improving",
         nextStepId: "devlog",
-        heroTitle: "開発ログを書く",
-        heroSubline: "改善が終わったら、記録して届けましょう",
+        heroTitle: "プレイヤーの回答が届きました",
+        heroSubline: "次はゲームを修正しましょう",
         primaryCta: {
-          label: "開発ログを書く",
-          href: `/projects/${gameId}/devlog/new`,
+          label: "ゲームを修正する",
+          opensModifyGameModal: true,
         },
         primaryOpensReadPanel: false,
+        primaryOpensModifyGameModal: true,
         loopActive: snapshot.loopActive,
         newFeedbackArrived: false,
       };
@@ -316,13 +326,14 @@ export function buildNurtureDisplayContext(
       return {
         nowStepId: null,
         nextStepId: "publish",
-        heroTitle: "新版公開する",
-        heroSubline: "記録した改善を、プレイヤーに届けましょう",
+        heroTitle: "新版を公開する",
+        heroSubline: "記録した変更を、プレイヤーに届けましょう",
         primaryCta: {
           label: "新版を公開する",
           href: `/projects/${gameId}/devlog/new`,
         },
         primaryOpensReadPanel: false,
+        primaryOpensModifyGameModal: false,
         loopActive: false,
         newFeedbackArrived: false,
       };
@@ -338,6 +349,7 @@ export function buildNurtureDisplayContext(
           href: `/games/${gameId}`,
         },
         primaryOpensReadPanel: false,
+        primaryOpensModifyGameModal: false,
         loopActive: false,
         newFeedbackArrived: false,
       };
@@ -505,4 +517,38 @@ export function filterDeepFeedbackForVersion(
   return entries.filter(
     (entry) => resolvePlayableVersion(entry.item.versionKey) === version,
   );
+}
+
+export function getProjectStatusBadges(
+  growth: ProjectGrowthSnapshot,
+  voiceRead: boolean,
+): ProjectStatusBadge[] {
+  const badges: ProjectStatusBadge[] = [];
+
+  if (
+    growth.dataPhase === "feedback_pending" &&
+    !voiceRead &&
+    growth.totalVoiceResponseCount > 0
+  ) {
+    badges.push({
+      label: `新しい回答 ${growth.totalVoiceResponseCount}件`,
+      tone: "orange",
+    });
+  }
+
+  if (growth.dataPhase === "feedback_pending" && voiceRead) {
+    badges.push({
+      label: "変更内容の記録待ち",
+      tone: "sky",
+    });
+  }
+
+  if (growth.dataPhase === "devlog_unpublished") {
+    badges.push({
+      label: "新版公開待ち",
+      tone: "amber",
+    });
+  }
+
+  return badges;
 }

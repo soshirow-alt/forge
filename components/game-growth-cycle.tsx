@@ -21,6 +21,10 @@ import type { OwnerVoiceResponseDetail } from "@/lib/supabase/voice-engagement";
 import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
 import { buildVoicePromptAggregates } from "@/lib/voice-aggregates";
 import { useGames } from "@/components/games-provider";
+import {
+  ModifyGameExplanationModal,
+  shouldShowModifyGameModal,
+} from "@/components/modify-game-explanation-modal";
 
 const primaryButtonClassName =
   "inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90";
@@ -198,6 +202,7 @@ function StepDetailPanel({
   improvementNote,
   onImprovementNoteChange,
   voiceResponses,
+  onOpenModifyGameModal,
 }: {
   stepId: NurtureStepId;
   game: Game;
@@ -208,6 +213,7 @@ function StepDetailPanel({
   improvementNote: string;
   onImprovementNoteChange: (value: string) => void;
   voiceResponses: OwnerVoiceResponseDetail[];
+  onOpenModifyGameModal: () => void;
 }) {
   switch (stepId) {
     case "read":
@@ -257,12 +263,19 @@ function StepDetailPanel({
     case "improving":
       return (
         <div className="space-y-3">
-          <h4 className="text-sm font-semibold text-zinc-300">改善する</h4>
-          <p className="text-xs text-zinc-600">
-            改善中 — 終わったら開発ログに記録します。
+          <h4 className="text-sm font-semibold text-zinc-300">ゲームを修正する</h4>
+          <p className="text-xs leading-relaxed text-zinc-600">
+            Forgeではゲーム自体の修正はできません。開発環境で直したあと、変更内容を記録して新版を公開します。
           </p>
+          <button
+            type="button"
+            onClick={onOpenModifyGameModal}
+            className="inline-flex items-center rounded-lg border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-200 transition-colors hover:border-orange-500/40 hover:text-orange-300"
+          >
+            ゲームを修正する
+          </button>
           <label className="block text-xs text-zinc-500">
-            改善メモ（端末内保存）
+            修正メモ（端末内保存）
             <textarea
               value={improvementNote}
               onChange={(event) => onImprovementNoteChange(event.target.value)}
@@ -280,17 +293,17 @@ function StepDetailPanel({
     case "devlog":
       return (
         <div className="space-y-3">
-          <h4 className="text-sm font-semibold text-zinc-300">開発ログ</h4>
+          <h4 className="text-sm font-semibold text-zinc-300">変更内容を記録する</h4>
           <p className="text-sm text-zinc-400">
             {growth.latestDevlogTitle
               ? `最新: 「${growth.latestDevlogTitle}」`
-              : "改善を記録する devlog を書きましょう。"}
+              : "修正した内容を開発ログに記録しましょう。"}
           </p>
           <Link
             href={`/projects/${game.id}/devlog/new`}
             className="inline-block text-sm text-orange-400 hover:text-orange-300"
           >
-            開発ログを書く →
+            変更内容を記録する →
           </Link>
         </div>
       );
@@ -357,6 +370,7 @@ export function GameGrowthCycle({
   const [selectedStep, setSelectedStep] = useState<NurtureStepId | null>(
     initialSelectedStep,
   );
+  const [modifyModalOpen, setModifyModalOpen] = useState(false);
 
   useEffect(() => {
     if (initialSelectedStep) {
@@ -406,9 +420,18 @@ export function GameGrowthCycle({
   ]);
 
   const handlePrimaryRead = useCallback(() => {
-    markRead();
+    void markRead();
     setSelectedStep("read");
   }, [markRead]);
+
+  const handleOpenModifyGameModal = useCallback(() => {
+    if (shouldShowModifyGameModal()) {
+      setModifyModalOpen(true);
+      return;
+    }
+
+    setSelectedStep("improving");
+  }, []);
 
   const handleSelectStep = useCallback((stepId: NurtureStepId) => {
     setSelectedStep((current) => (current === stepId ? null : stepId));
@@ -428,11 +451,19 @@ export function GameGrowthCycle({
             >
               {display.primaryCta.label}
             </button>
-          ) : (
+          ) : display.primaryOpensModifyGameModal ? (
+            <button
+              type="button"
+              onClick={handleOpenModifyGameModal}
+              className={primaryButtonClassName}
+            >
+              {display.primaryCta.label}
+            </button>
+          ) : display.primaryCta.href ? (
             <Link href={display.primaryCta.href} className={primaryButtonClassName}>
               {display.primaryCta.label}
             </Link>
-          )}
+          ) : null}
         </div>
       )}
 
@@ -482,9 +513,15 @@ export function GameGrowthCycle({
             improvementNote={improvementNote}
             onImprovementNoteChange={onImprovementNoteChange}
             voiceResponses={voiceResponses}
+            onOpenModifyGameModal={handleOpenModifyGameModal}
           />
         </div>
       )}
+
+      <ModifyGameExplanationModal
+        open={modifyModalOpen}
+        onClose={() => setModifyModalOpen(false)}
+      />
     </div>
   );
 }

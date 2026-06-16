@@ -84,15 +84,6 @@ function MyPageDeveloperTabContent() {
     [sortedGames, voiceSignals, getDevlogsByProject],
   );
 
-  const attentionGames = useMemo(
-    () =>
-      gamesWithGrowth.filter(
-        ({ growth }) =>
-          growth.pendingFeedbackCount > 0 || growth.needsAttention,
-      ),
-    [gamesWithGrowth],
-  );
-
   const filteredGames = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -142,8 +133,8 @@ function MyPageDeveloperTabContent() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="max-w-2xl text-sm text-zinc-500">
-            投稿した作品の管理・育成はここから。各作品の studio
-            でプレイヤーの回答を確認できます。
+            投稿した作品の管理はここから。各作品の studio
+            で次にやることを進められます。
           </p>
         </div>
         {hasProjects ? (
@@ -174,83 +165,59 @@ function MyPageDeveloperTabContent() {
           </Link>
         </div>
       ) : (
-        <>
-          {attentionGames.length > 0 && filter === "all" && !searchQuery && (
-            <section aria-label="要対応の作品">
-              <h2 className="text-sm font-semibold text-amber-400">
-                要対応（{attentionGames.length}）
-              </h2>
-              <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                {attentionGames.slice(0, 4).map(({ game, growth }) => (
-                  <ProjectListCard
-                    key={game.id}
-                    game={game}
-                    growth={growth}
-                    supportCount={getSupportCount(game.id, 0)}
-                    onDelete={() => deleteSubmittedGame(game.id)}
-                    compact
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-
-          <section aria-label="作品一覧">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <h2 className="text-xl font-semibold tracking-tight">
-                  作品一覧
-                </h2>
-                <p className="mt-1 text-sm text-zinc-500">
-                  {filteredGames.length} / {ownedGames.length} 件
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="作品名で検索"
-                  className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600"
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFilter((current) =>
-                      current === "all" ? "attention" : "all",
-                    )
-                  }
-                  className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                    filter === "attention"
-                      ? "border-amber-500/50 bg-amber-500/10 text-amber-300"
-                      : "border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
-                  }`}
-                >
-                  要対応のみ
-                </button>
-              </div>
-            </div>
-
-            {filteredGames.length === 0 ? (
-              <p className="mt-6 text-sm text-zinc-500">
-                条件に一致する作品がありません。
+        <section aria-label="作品一覧">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight">作品一覧</h2>
+              <p className="mt-1 text-sm text-zinc-500">
+                {filteredGames.length} / {ownedGames.length} 件
               </p>
-            ) : (
-              <div className="mt-6 grid gap-4 lg:grid-cols-2">
-                {filteredGames.map(({ game, growth }) => (
-                  <ProjectListCard
-                    key={game.id}
-                    game={game}
-                    growth={growth}
-                    supportCount={getSupportCount(game.id, 0)}
-                    onDelete={() => deleteSubmittedGame(game.id)}
-                    compact
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-        </>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="作品名で検索"
+                className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600"
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  setFilter((current) =>
+                    current === "all" ? "attention" : "all",
+                  )
+                }
+                className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                  filter === "attention"
+                    ? "border-amber-500/50 bg-amber-500/10 text-amber-300"
+                    : "border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
+                }`}
+              >
+                対応が必要な作品
+              </button>
+            </div>
+          </div>
+
+          {filteredGames.length === 0 ? (
+            <p className="mt-6 text-sm text-zinc-500">
+              条件に一致する作品がありません。
+            </p>
+          ) : (
+            <div className="mt-6 grid gap-4 lg:grid-cols-2">
+              {filteredGames.map(({ game, growth }) => (
+                <ProjectListCard
+                  key={game.id}
+                  game={game}
+                  growth={growth}
+                  supportCount={getSupportCount(game.id, 0)}
+                  onDelete={() => deleteSubmittedGame(game.id)}
+                  compact
+                />
+              ))}
+            </div>
+          )}
+        </section>
       )}
 
       <section>

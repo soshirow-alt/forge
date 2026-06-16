@@ -63,7 +63,7 @@ export const PROJECT_NURTURE_ACTIONS: ProjectNurtureAction[] = [
   },
   {
     id: "edit-prompts",
-    label: "質問を設定する",
+    label: "質問を編集する",
     href: (id) => `/projects/${id}/edit#version-prompts`,
     description: "版ごとの質問",
   },
@@ -87,12 +87,12 @@ export const PROJECT_NURTURE_ACTIONS: ProjectNurtureAction[] = [
   },
 ];
 
-const STUDIO_HIDDEN_ACTION_IDS = new Set(["read-answers", "preview-player"]);
+const STUDIO_ACTION_IDS = new Set(["edit-prompts", "edit-project"]);
 
 export function getProjectNurtureActions(context: "studio" | "default") {
   if (context === "studio") {
-    return PROJECT_NURTURE_ACTIONS.filter(
-      (action) => !STUDIO_HIDDEN_ACTION_IDS.has(action.id),
+    return PROJECT_NURTURE_ACTIONS.filter((action) =>
+      STUDIO_ACTION_IDS.has(action.id),
     );
   }
 

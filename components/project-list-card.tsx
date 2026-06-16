@@ -5,10 +5,20 @@ import { GameThumbnail } from "@/components/game-thumbnail";
 import { useNurtureVoiceRead } from "@/hooks/use-nurture-feedback-read";
 import {
   buildNurtureDisplayContext,
+  getProjectStatusBadges,
   type ProjectGrowthSnapshot,
 } from "@/lib/project-growth-state";
 import { gamePlayHref, projectStudioPath } from "@/lib/project-nurture-links";
 import type { Game } from "@/lib/mock-games";
+
+const BADGE_TONE_CLASS: Record<
+  ReturnType<typeof getProjectStatusBadges>[number]["tone"],
+  string
+> = {
+  orange: "bg-orange-500/10 text-orange-400",
+  amber: "bg-amber-500/10 text-amber-400",
+  sky: "bg-sky-500/10 text-sky-300",
+};
 
 type ProjectListCardProps = {
   game: Game;
@@ -30,6 +40,7 @@ export function ProjectListCard({
     growth.playableVersion,
   );
   const display = buildNurtureDisplayContext(growth, voiceRead, game.id);
+  const statusBadges = getProjectStatusBadges(growth, voiceRead);
 
   return (
     <article
@@ -58,16 +69,14 @@ export function ProjectListCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <h2 className="text-base font-semibold text-zinc-100">{game.title}</h2>
-            {growth.pendingFeedbackCount > 0 && (
-              <span className="rounded-full bg-orange-500/10 px-2 py-0.5 text-[10px] font-medium text-orange-400">
-                新しい回答
+            {statusBadges.map((badge) => (
+              <span
+                key={badge.label}
+                className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${BADGE_TONE_CLASS[badge.tone]}`}
+              >
+                {badge.label}
               </span>
-            )}
-            {growth.needsAttention && growth.pendingFeedbackCount === 0 && (
-              <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400">
-                要対応
-              </span>
-            )}
+            ))}
           </div>
 
           <p className="mt-1 text-xs text-zinc-600">
@@ -93,7 +102,7 @@ export function ProjectListCard({
                 compact ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm"
               }`}
             >
-              この作品を育てる
+              作品を更新する
             </Link>
             {!compact && (
               <Link
