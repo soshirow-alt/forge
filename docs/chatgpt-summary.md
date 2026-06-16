@@ -1,5 +1,7 @@
 ■ 現在の状態
-- プレイ履歴・更新通知 UI 方向修正 — commit / push / staging deploy 実施（本メッセージ時点）
+- commit e6d5fc1 — main push 済み
+- staging preview deploy READY — https://forge-bmcjf6vzw-soshirow-alts-projects.vercel.app（dpl_3eaac2YQwqVCV5dBQVGasduX8Zyt）
+- 本番 prod deploy — 未実施（オーナー GO 待ち）
 - 将来像デモ F1 — staging verify 13/13 PASS
 - Witness + Tier — 014 本番適用済み
 - PLAYER_VISIBLE=false 維持

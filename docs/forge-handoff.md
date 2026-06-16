@@ -1,12 +1,15 @@
 # Forge Handoff
 
-最終更新：**2026-06-16**（プレイヤー UI — プレイ履歴・更新通知 方向修正）
+最終更新：**2026-06-16**（プレイヤー UI 方向修正 — e6d5fc1 staging preview deploy）
 
 ---
 
 ## 現在の状態
 
-- プレイ履歴 Phase 1 — **UI 方向修正済み**（関係性バッジ + プレイヤー視点タイムライン）
+- プレイ履歴 Phase 1 — **UI 方向修正済み**（関係性バッジ + 最低 ▶️ プレイ済み + プレイヤー視点タイムライン）
+- **マイページ更新** — プレイヤー視点見出し（Devlog タイトル非表示）
+- commit **e6d5fc1** — main push 済み
+- **staging preview**: https://forge-bmcjf6vzw-soshirow-alts-projects.vercel.app（deploy `dpl_3eaac2YQwqVCV5dBQVGasduX8Zyt` READY）
 - **正式版 Phase 1** — main 反映済み
 - **見届け人 W1–W4 + tier T1/T2** — main 反映済み
 - migration **014** — staging + 本番適用済み
