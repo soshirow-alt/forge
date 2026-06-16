@@ -69,6 +69,33 @@ async function main() {
     console.log(`  ${key}: ${label}`);
   }
 
+  const { data: counts, error: countError } = await supabase
+    .from("project_witness_grants")
+    .select("user_id");
+
+  if (countError) {
+    console.error(countError.message);
+    process.exit(1);
+  }
+
+  const byUser = new Map<string, number>();
+  for (const row of counts ?? []) {
+    const userId = row.user_id as string;
+    byUser.set(userId, (byUser.get(userId) ?? 0) + 1);
+  }
+
+  const { resolveWitnessTier } = await import("../lib/witness-tier");
+  const sample = [...byUser.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+  if (sample.length > 0) {
+    console.log("\nTier samples (staging grants):");
+    for (const [userId, count] of sample) {
+      const tier = resolveWitnessTier(count);
+      console.log(
+        `  user ${userId.slice(0, 8)}… grants=${count} → ${tier?.label ?? "—"}`,
+      );
+    }
+  }
+
   console.log("\nPASS — W4 data-layer OK (mypage UI requires login)");
 }
 

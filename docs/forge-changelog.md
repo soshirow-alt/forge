@@ -4,6 +4,26 @@
 
 ---
 
+## 2026-06-16 見届け人 tier — T1/T2 実装
+
+### 実装
+
+- `lib/witness-tier.ts` — 1 / 3 / 10 作品、見届け人 / Silver / Gold
+- `/mypage#official-release` — tier バッジ + summary 一行（grant ≥1）
+- `npm run verify:witness:tier` — PASS
+
+### 設計
+
+- ChatGPT レビュー GO — Silver/Gold 名称確定
+- 正本: `docs/witness-phase-t1-tier.md`
+- 014 本番 Dashboard 適用 GO（オーナー Run）
+
+### Out
+
+- プロフィール tier、通知、ランキング、作品詳細
+
+---
+
 ## 2026-06-16 main 反映 — 見届け人 Phase（W1–W4）
 
 ### 含む

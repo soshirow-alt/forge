@@ -17,6 +17,7 @@ import {
 import { RELEASE_STATUS_LABELS } from "@/lib/project-release-state";
 import { formatPlayHistoryDate } from "@/lib/player-play-timeline";
 import type { ProjectWitnessGrant } from "@/lib/supabase/witness-grants-db";
+import { resolveWitnessTier } from "@/lib/witness-tier";
 
 function WitnessGrantDetails({ grant }: { grant: ProjectWitnessGrant }) {
   return (
@@ -124,11 +125,17 @@ function OfficialReleaseOnlyCard({ release }: { release: PlayerOfficialReleaseIt
 export function OfficialReleaseSection() {
   const { items: releaseItems } = usePlayerOfficialReleases();
   const {
+    grants,
     grantByProjectId,
     items: witnessItems,
     loaded: witnessLoaded,
     error: witnessError,
   } = usePlayerWitnessGrants();
+
+  const witnessTier = useMemo(
+    () => resolveWitnessTier(grants.length),
+    [grants.length],
+  );
 
   const { witnessReleases, otherReleases } = useMemo(() => {
     const witnessReleases: Array<{
@@ -174,6 +181,14 @@ export function OfficialReleaseSection() {
             ? " 見届け人として関わった作品には、正式版までの証拠が表示されます。"
             : null}
         </p>
+        {witnessTier && witnessLoaded ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-teal-500/35 bg-teal-500/10 px-2.5 py-0.5 text-xs font-medium text-teal-100">
+              {witnessTier.label}
+            </span>
+            <p className="text-xs leading-relaxed text-zinc-500">{witnessTier.summary}</p>
+          </div>
+        ) : null}
       </div>
 
       {!witnessLoaded ? (

@@ -18,7 +18,8 @@
     "verify:witness:staging": "npx --yes tsx scripts/witness-staging-verify.ts",
     "seed:witness:sandbox": "npx --yes tsx scripts/witness-sandbox-seed.ts",
     "verify:witness:grants:staging": "npx --yes tsx scripts/witness-grants-staging-verify.ts",
-    "verify:witness:ui:staging": "npx --yes tsx scripts/witness-ui-staging-verify.ts"
+    "verify:witness:ui:staging": "npx --yes tsx scripts/witness-ui-staging-verify.ts",
+    "verify:witness:tier": "npx --yes tsx scripts/witness-tier-verify.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

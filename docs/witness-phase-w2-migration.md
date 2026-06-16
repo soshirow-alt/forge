@@ -1,6 +1,6 @@
 # 見届け人 W2 — migration 014
 
-**ステータス**: 草案完了（Dashboard 適用前）  
+**ステータス**: staging 適用済み / **本番 GO**（2026-06-16 — Dashboard 適用待ち）  
 **SQL**: `supabase/migrations/014_project_witness_grants.sql`  
 **前提**: W1 GO、`lib/witness-eligibility.ts` とロジック同期
 

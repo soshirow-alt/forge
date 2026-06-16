@@ -3,7 +3,9 @@
 **ステータス**: 実装完了（2026-06-16）  
 **URL**: `/mypage` → `#official-release`
 
-**Out**: 作品詳細、見届け人数、ランキング、通知、tier、PLAYER_VISIBLE
+**Out**: 作品詳細、見届け人数、ランキング、通知、PLAYER_VISIBLE
+
+**tier**: `#official-release` 見出し下 — `docs/witness-phase-t1-tier.md`
 
 ---
 
