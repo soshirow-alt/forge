@@ -11,6 +11,7 @@ import { ProjectNurtureActions } from "@/components/project-nurture-actions";
 import { useGames } from "@/components/games-provider";
 import { useOwnedProjectFeedback } from "@/hooks/use-owned-project-feedback";
 import { useOwnedProjectVoiceSignals } from "@/hooks/use-owned-project-voice-signals";
+import { useNurtureVoiceRead } from "@/hooks/use-nurture-feedback-read";
 import {
   PROJECT_STUDIO_FEEDBACK_SECTION_ID,
   gamePlayHref,
@@ -48,6 +49,11 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
     );
   }, [game, voiceSignals, getDevlogsByProject]);
 
+  const { isRead: voiceRead } = useNurtureVoiceRead(
+    projectId,
+    growth?.playableVersion ?? "",
+  );
+
   const projectFeedback = useMemo(() => {
     return groupFeedbackByProject(feedbackEntries).get(projectId) ?? [];
   }, [feedbackEntries, projectId]);
@@ -57,8 +63,8 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
       return null;
     }
 
-    return buildNurtureDisplayContext(growth, false, game.id);
-  }, [game, growth]);
+    return buildNurtureDisplayContext(growth, voiceRead, game.id);
+  }, [game, growth, voiceRead]);
 
   useEffect(() => {
     if (hydrated && !user) {
@@ -123,7 +129,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
       <main className="mx-auto max-w-3xl px-6 py-12">
         <Link
           href="/mypage?tab=developer"
-          className="text-sm text-zinc-500 transition-colors hover:text-orange-400"
+          className="cursor-pointer text-sm text-zinc-500 transition-colors hover:text-orange-400"
         >
           ← マイページ（作品管理）
         </Link>
@@ -159,12 +165,11 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
               )}
             </p>
             <p className="mt-1 text-xs text-zinc-600">
-              現在: {display.heroTitle}
-              {display.heroSubline ? ` — ${display.heroSubline}` : ""}
+              いま: {display.phaseLabel}
               {" · "}
               <Link
                 href={gamePlayHref(game.id)}
-                className="text-zinc-500 transition-colors hover:text-orange-400/90"
+                className="cursor-pointer text-zinc-500 transition-colors hover:text-orange-400/90"
               >
                 プレイヤー画面をプレビュー
               </Link>

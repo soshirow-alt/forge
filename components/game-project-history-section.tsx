@@ -53,7 +53,7 @@ export function GameProjectHistorySection({ game }: GameProjectHistorySectionPro
     >
       <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-sm font-medium text-zinc-500">開発の歩み</h2>
+          <h2 className="text-sm font-medium text-zinc-500">これまでの更新</h2>
           <p className="text-xs text-zinc-600">
             前回プレイしたあとに変わった点は、ここで確認できます
           </p>
@@ -64,7 +64,7 @@ export function GameProjectHistorySection({ game }: GameProjectHistorySectionPro
         {canPost && (
           <Link
             href={`/projects/${game.id}/devlog/new`}
-            className="shrink-0 rounded-md border border-zinc-700 px-2.5 py-1 text-xs font-medium text-zinc-200 transition-colors hover:border-orange-500/50 hover:bg-zinc-900 hover:text-orange-400"
+            className="shrink-0 cursor-pointer rounded-md border border-zinc-700 px-2.5 py-1 text-xs font-medium text-zinc-200 transition-colors hover:border-orange-500/50 hover:bg-zinc-900 hover:text-orange-400"
           >
             開発ログを書く
           </Link>

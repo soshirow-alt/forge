@@ -27,7 +27,10 @@ import {
 } from "@/components/modify-game-explanation-modal";
 
 const primaryButtonClassName =
-  "inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90";
+  "inline-flex cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90";
+
+const secondaryButtonClassName =
+  "inline-flex cursor-pointer items-center justify-center rounded-lg border border-zinc-700 px-5 py-3 text-sm font-medium text-zinc-200 transition-colors hover:border-orange-500/40 hover:text-orange-300";
 
 type GameGrowthCycleProps = {
   game: Game;
@@ -37,19 +40,141 @@ type GameGrowthCycleProps = {
   initialSelectedStep?: NurtureStepId | null;
 };
 
-function NurtureHero({ display }: { display: NurtureDisplayContext }) {
+function NurturePhasePanel({
+  display,
+  growth,
+  selectedStep,
+  onSelectStep,
+  onPrimaryRead,
+  onOpenModifyGameModal,
+}: {
+  display: NurtureDisplayContext;
+  growth: ProjectGrowthSnapshot;
+  selectedStep: NurtureStepId | null;
+  onSelectStep: (id: NurtureStepId) => void;
+  onPrimaryRead: () => void;
+  onOpenModifyGameModal: () => void;
+}) {
+  const stepIds = getProgressRailStepIds();
+
   return (
-    <div className="pt-1">
-      <p className="text-[11px] font-medium tracking-wide text-zinc-600">
-        次にやること
+    <section
+      aria-label="育成フェーズ"
+      className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:p-5"
+    >
+      <div className="relative">
+        {growth.cycleNumber > 0 && (
+          <span
+            className="absolute right-0 top-0 text-xs text-zinc-700"
+            title={`改善サイクル ${growth.cycleNumber}`}
+          >
+            ↺ {growth.cycleNumber}
+          </span>
+        )}
+        <div
+          className="pointer-events-none absolute inset-x-[8%] top-[13px] h-px bg-zinc-800"
+          aria-hidden
+        />
+        <nav aria-label="育成サイクル" className="relative">
+          <div className="grid grid-cols-5 gap-x-0">
+            {stepIds.map((stepId) => {
+              const step = NURTURE_STEPS.find((entry) => entry.id === stepId);
+              if (!step) {
+                return null;
+              }
+
+              const visual = getProgressRailVisual(stepId, display);
+              const isSelected = selectedStep === stepId;
+              const labelTone =
+                visual === "current"
+                  ? "font-medium text-zinc-300"
+                  : visual === "done"
+                    ? "text-zinc-500"
+                    : "text-zinc-500";
+
+              return (
+                <div key={stepId} className="min-w-0 px-0.5">
+                  <button
+                    type="button"
+                    onClick={() => onSelectStep(stepId)}
+                    aria-pressed={isSelected}
+                    aria-label={`${step.label}（${step.whyLabel}）`}
+                    title={`${step.label} — ${step.whyLabel}`}
+                    className={`flex w-full cursor-pointer flex-col items-center text-center transition-colors hover:text-zinc-400 ${
+                      isSelected ? "text-zinc-200" : ""
+                    }`}
+                  >
+                    <span
+                      className={`relative z-[1] flex h-6 w-6 shrink-0 items-center justify-center rounded border text-xs font-medium ${
+                        visual === "current"
+                          ? "border-zinc-600 bg-zinc-800/80 text-zinc-300"
+                          : visual === "done"
+                            ? "border-zinc-800 bg-zinc-900/60 text-zinc-500"
+                            : "border-zinc-800/80 bg-zinc-950 text-zinc-500"
+                      }`}
+                    >
+                      {cycleNodeMarker(visual)}
+                    </span>
+                    <span
+                      className={`mt-2 line-clamp-2 text-xs leading-snug md:hidden ${labelTone}`}
+                    >
+                      {step.railLabel}
+                    </span>
+                    <span
+                      className={`mt-2 hidden line-clamp-2 text-xs leading-snug md:block ${labelTone}`}
+                    >
+                      {step.label}
+                    </span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </nav>
+      </div>
+
+      <p className="mt-5 text-sm text-zinc-500">
+        いま:{" "}
+        <span className="font-semibold text-zinc-100">{display.phaseLabel}</span>
       </p>
-      <p className="mt-1.5 text-2xl font-bold tracking-tight text-zinc-50 sm:text-3xl">
-        {display.heroTitle}
+      <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+        {display.phaseGuidance}
       </p>
-      {display.heroSubline && (
-        <p className="mt-1 text-xs text-zinc-500">{display.heroSubline}</p>
+
+      {display.primaryCta && (
+        <div className="mt-4 flex flex-wrap gap-3">
+          {display.primaryOpensReadPanel ? (
+            <button
+              type="button"
+              onClick={onPrimaryRead}
+              className={primaryButtonClassName}
+            >
+              {display.primaryCta.label}
+            </button>
+          ) : display.primaryOpensModifyGameModal ? (
+            <button
+              type="button"
+              onClick={onOpenModifyGameModal}
+              className={primaryButtonClassName}
+            >
+              {display.primaryCta.label}
+            </button>
+          ) : display.primaryCta.href ? (
+            <Link
+              href={display.primaryCta.href}
+              className={primaryButtonClassName}
+            >
+              {display.primaryCta.label}
+            </Link>
+          ) : null}
+          {display.secondaryCta?.href && (
+            <Link href={display.secondaryCta.href} className={secondaryButtonClassName}>
+              {display.secondaryCta.label}
+            </Link>
+          )}
+        </div>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -64,99 +189,6 @@ function cycleNodeMarker(visual: ReturnType<typeof getProgressRailVisual>): stri
   }
 }
 
-function CycleTrack({
-  display,
-  growth,
-  selectedStep,
-  onSelectStep,
-}: {
-  display: NurtureDisplayContext;
-  growth: ProjectGrowthSnapshot;
-  selectedStep: NurtureStepId | null;
-  onSelectStep: (id: NurtureStepId) => void;
-}) {
-  const stepIds = getProgressRailStepIds();
-
-  return (
-    <nav
-      aria-label="育成サイクル"
-      className="mt-6 overflow-hidden border-t border-zinc-800/50 pt-4"
-    >
-      <div className="mb-3 flex items-baseline justify-between gap-2">
-        <p className="text-xs font-medium text-zinc-600">育成サイクル</p>
-        {growth.cycleNumber > 0 && (
-          <span
-            className="shrink-0 text-xs text-zinc-700"
-            title={`改善サイクル ${growth.cycleNumber}`}
-          >
-            ↺ {growth.cycleNumber}
-          </span>
-        )}
-      </div>
-      <div className="relative">
-        <div
-          className="pointer-events-none absolute inset-x-[8%] top-[13px] h-px bg-zinc-800"
-          aria-hidden
-        />
-        <div className="relative grid grid-cols-5 gap-x-0">
-          {stepIds.map((stepId) => {
-            const step = NURTURE_STEPS.find((entry) => entry.id === stepId);
-            if (!step) {
-              return null;
-            }
-
-            const visual = getProgressRailVisual(stepId, display);
-            const isSelected = selectedStep === stepId;
-            const labelTone =
-              visual === "current"
-                ? "font-medium text-zinc-300"
-                : visual === "done"
-                  ? "text-zinc-500"
-                  : "text-zinc-500";
-
-            return (
-              <div key={stepId} className="min-w-0 px-0.5">
-                <button
-                  type="button"
-                  onClick={() => onSelectStep(stepId)}
-                  aria-pressed={isSelected}
-                  aria-label={`${step.label}（${step.whyLabel}）`}
-                  title={`${step.label} — ${step.whyLabel}`}
-                  className={`flex w-full flex-col items-center text-center transition-colors hover:text-zinc-400 ${
-                    isSelected ? "text-zinc-200" : ""
-                  }`}
-                >
-                  <span
-                    className={`relative z-[1] flex h-6 w-6 shrink-0 items-center justify-center rounded border text-xs font-medium ${
-                      visual === "current"
-                        ? "border-zinc-600 bg-zinc-800/80 text-zinc-300"
-                        : visual === "done"
-                          ? "border-zinc-800 bg-zinc-900/60 text-zinc-500"
-                          : "border-zinc-800/80 bg-zinc-950 text-zinc-500"
-                    }`}
-                  >
-                    {cycleNodeMarker(visual)}
-                  </span>
-                  <span
-                    className={`mt-2 line-clamp-2 text-xs leading-snug md:hidden ${labelTone}`}
-                  >
-                    {step.railLabel}
-                  </span>
-                  <span
-                    className={`mt-2 hidden line-clamp-2 text-xs leading-snug md:block ${labelTone}`}
-                  >
-                    {step.label}
-                  </span>
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </nav>
-  );
-}
-
 function PastCyclesPanel({ growth }: { growth: ProjectGrowthSnapshot }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -169,7 +201,7 @@ function PastCyclesPanel({ growth }: { growth: ProjectGrowthSnapshot }) {
       <button
         type="button"
         onClick={() => setExpanded((value) => !value)}
-        className="text-xs text-zinc-600 transition-colors hover:text-zinc-400"
+        className="cursor-pointer text-xs text-zinc-600 transition-colors hover:text-zinc-400"
       >
         過去 {growth.pastCycles.length} サイクル {expanded ? "▲" : "▼"}
       </button>
@@ -228,7 +260,7 @@ function StepDetailPanel({
                 <button
                   type="button"
                   onClick={onMarkRead}
-                  className="text-xs text-orange-400 hover:text-orange-300"
+                  className="cursor-pointer text-xs text-orange-400 hover:text-orange-300"
                 >
                   読了にする
                 </button>
@@ -270,7 +302,7 @@ function StepDetailPanel({
           <button
             type="button"
             onClick={onOpenModifyGameModal}
-            className="inline-flex items-center rounded-lg border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-200 transition-colors hover:border-orange-500/40 hover:text-orange-300"
+            className="cursor-pointer inline-flex items-center rounded-lg border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-200 transition-colors hover:border-orange-500/40 hover:text-orange-300"
           >
             ゲームを修正する
           </button>
@@ -301,7 +333,7 @@ function StepDetailPanel({
           </p>
           <Link
             href={`/projects/${game.id}/devlog/new`}
-            className="inline-block text-sm text-orange-400 hover:text-orange-300"
+            className="cursor-pointer inline-block text-sm text-orange-400 hover:text-orange-300"
           >
             変更内容を記録する →
           </Link>
@@ -326,7 +358,7 @@ function StepDetailPanel({
           </dl>
           <Link
             href={`/projects/${game.id}/devlog/new`}
-            className="inline-block text-sm text-orange-400 hover:text-orange-300"
+            className="cursor-pointer inline-block text-sm text-orange-400 hover:text-orange-300"
           >
             新版を公開する →
           </Link>
@@ -344,7 +376,7 @@ function StepDetailPanel({
           </p>
           <Link
             href={`/games/${game.id}`}
-            className="inline-block text-sm text-orange-400 hover:text-orange-300"
+            className="cursor-pointer inline-block text-sm text-orange-400 hover:text-orange-300"
           >
             作品ページを確認する →
           </Link>
@@ -439,33 +471,14 @@ export function GameGrowthCycle({
 
   return (
     <div>
-      <NurtureHero display={display} />
-
-      {display.primaryCta && (
-        <div className="mt-5">
-          {display.primaryOpensReadPanel ? (
-            <button
-              type="button"
-              onClick={handlePrimaryRead}
-              className={primaryButtonClassName}
-            >
-              {display.primaryCta.label}
-            </button>
-          ) : display.primaryOpensModifyGameModal ? (
-            <button
-              type="button"
-              onClick={handleOpenModifyGameModal}
-              className={primaryButtonClassName}
-            >
-              {display.primaryCta.label}
-            </button>
-          ) : display.primaryCta.href ? (
-            <Link href={display.primaryCta.href} className={primaryButtonClassName}>
-              {display.primaryCta.label}
-            </Link>
-          ) : null}
-        </div>
-      )}
+      <NurturePhasePanel
+        display={display}
+        growth={growth}
+        selectedStep={selectedStep}
+        onSelectStep={handleSelectStep}
+        onPrimaryRead={handlePrimaryRead}
+        onOpenModifyGameModal={handleOpenModifyGameModal}
+      />
 
       <section aria-label="プレイヤーの回答" className="mt-6 space-y-2">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -487,13 +500,6 @@ export function GameGrowthCycle({
       <NurtureDeepFeedbackSection
         feedbackEntries={feedbackEntries}
         playableVersion={growth.playableVersion}
-      />
-
-      <CycleTrack
-        display={display}
-        growth={growth}
-        selectedStep={selectedStep}
-        onSelectStep={handleSelectStep}
       />
 
       <PastCyclesPanel growth={growth} />

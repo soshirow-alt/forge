@@ -85,6 +85,11 @@ export type GrowthPrimaryCta = {
   opensModifyGameModal?: boolean;
 };
 
+export type GrowthSecondaryCta = {
+  label: string;
+  href?: string;
+};
+
 export type ProjectStatusBadge = {
   label: string;
   tone: "orange" | "amber" | "sky";
@@ -116,16 +121,23 @@ export type ProjectGrowthSnapshot = {
 };
 
 export type NurtureDisplayContext = {
-  nowStepId: NurtureStepId | null;
+  nowStepId: NurtureStepId;
   nextStepId: NurtureStepId;
-  heroTitle: string;
-  heroSubline?: string;
+  /** 現在フェーズ名（NURTURE_STEPS の工程名のみ。イベント語は禁止） */
+  phaseLabel: string;
+  /** フェーズで何をするか（Forge 内 / 外の区別を含む） */
+  phaseGuidance: string;
   primaryCta: GrowthPrimaryCta | null;
+  secondaryCta?: GrowthSecondaryCta | null;
   primaryOpensReadPanel: boolean;
   primaryOpensModifyGameModal: boolean;
   loopActive: boolean;
   newFeedbackArrived: boolean;
 };
+
+export function getNurtureStepLabel(stepId: NurtureStepId): string {
+  return NURTURE_STEPS.find((step) => step.id === stepId)?.label ?? stepId;
+}
 
 function devlogsForProject(
   projectId: string,
@@ -275,8 +287,9 @@ export function buildNurtureDisplayContext(
       return {
         nowStepId: "wait",
         nextStepId: "wait",
-        heroTitle: "回答を待つ",
-        heroSubline: "プレイヤーの初声を待っています",
+        phaseLabel: getNurtureStepLabel("wait"),
+        phaseGuidance:
+          "プレイヤーの初声を待っています。作品ページを共有して、最初のプレイヤーを呼び込みましょう。",
         primaryCta: {
           label: "作品ページを確認する",
           href: `/games/${gameId}`,
@@ -290,12 +303,12 @@ export function buildNurtureDisplayContext(
     case "feedback_pending":
       if (!voiceRead) {
         return {
-          nowStepId: null,
-          nextStepId: "read",
-          heroTitle: "プレイヤーの回答が届きました",
-          heroSubline: snapshot.loopActive
-            ? `${snapshot.cycleNumber} 周目 · まず回答を確認しましょう`
-            : "まず回答を確認しましょう",
+          nowStepId: "read",
+          nextStepId: "improving",
+          phaseLabel: getNurtureStepLabel("read"),
+          phaseGuidance: snapshot.loopActive
+            ? `${snapshot.cycleNumber} 周目です。プレイヤーから新しい回答が届いています。内容を確認しましょう。`
+            : "プレイヤーから回答が届いています。内容を確認しましょう。",
           primaryCta: {
             label: "回答を見る",
             opensReadPanel: true,
@@ -310,11 +323,16 @@ export function buildNurtureDisplayContext(
       return {
         nowStepId: "improving",
         nextStepId: "devlog",
-        heroTitle: "プレイヤーの回答が届きました",
-        heroSubline: "次はゲームを修正しましょう",
+        phaseLabel: getNurtureStepLabel("improving"),
+        phaseGuidance:
+          "回答は確認済みです。手元の開発環境でゲームを修正してください。修正後は変更内容を記録し、新版を公開します。",
         primaryCta: {
-          label: "ゲームを修正する",
+          label: "修正の進め方を見る",
           opensModifyGameModal: true,
+        },
+        secondaryCta: {
+          label: "修正が終わった → 変更を記録する",
+          href: `/projects/${gameId}/devlog/new`,
         },
         primaryOpensReadPanel: false,
         primaryOpensModifyGameModal: true,
@@ -324,10 +342,11 @@ export function buildNurtureDisplayContext(
 
     case "devlog_unpublished":
       return {
-        nowStepId: null,
-        nextStepId: "publish",
-        heroTitle: "新版を公開する",
-        heroSubline: "記録した変更を、プレイヤーに届けましょう",
+        nowStepId: "publish",
+        nextStepId: "wait",
+        phaseLabel: getNurtureStepLabel("publish"),
+        phaseGuidance:
+          "記録した変更を、プレイヤーに届けましょう。新版を公開すると、追跡中のプレイヤーに更新が通知されます。",
         primaryCta: {
           label: "新版を公開する",
           href: `/projects/${gameId}/devlog/new`,
@@ -342,8 +361,9 @@ export function buildNurtureDisplayContext(
       return {
         nowStepId: "wait",
         nextStepId: "wait",
-        heroTitle: "回答を待つ",
-        heroSubline: "新しい回答が届いたら、またサイクルが回ります",
+        phaseLabel: getNurtureStepLabel("wait"),
+        phaseGuidance:
+          "新しい回答が届いたら、また回答を見る からサイクルが回ります。",
         primaryCta: {
           label: "作品ページを確認する",
           href: `/games/${gameId}`,
@@ -533,13 +553,6 @@ export function getProjectStatusBadges(
     badges.push({
       label: `新しい回答 ${growth.totalVoiceResponseCount}件`,
       tone: "orange",
-    });
-  }
-
-  if (growth.dataPhase === "feedback_pending" && voiceRead) {
-    badges.push({
-      label: "変更内容の記録待ち",
-      tone: "sky",
     });
   }
 

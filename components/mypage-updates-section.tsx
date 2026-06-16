@@ -4,11 +4,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { useGames } from "@/components/games-provider";
 import { sortDevlogsNewestFirst, type DevlogEntry } from "@/lib/devlogs";
-import {
-  formatNotificationDate,
-  getNotificationTypeLabel,
-  type Notification,
-} from "@/lib/notifications";
+import { formatNotificationDate, type Notification } from "@/lib/notifications";
 import {
   gameHistoryHref,
   gamePlayHref,
@@ -20,21 +16,26 @@ type WatchedUpdateItem = {
   id: string;
   game: Game;
   kind: "devlog" | "version_published";
-  label: string;
-  message: string;
-  summary?: string;
+  badgeLabel: string;
+  headline: string;
   date: string;
-  historyHref: string;
+  detailsHref: string;
   replayHref: string;
 };
 
-function truncateSummary(text: string, maxLength = 72): string {
-  const trimmed = text.trim().replace(/\s+/g, " ");
-  if (trimmed.length <= maxLength) {
-    return trimmed;
+function buildPlayerUpdateHeadline(
+  kind: WatchedUpdateItem["kind"],
+  latestDevlog: DevlogEntry | undefined,
+): string {
+  if (latestDevlog?.title?.trim()) {
+    return latestDevlog.title.trim();
   }
 
-  return `${trimmed.slice(0, maxLength)}…`;
+  if (kind === "version_published") {
+    return "ゲームの内容が更新されました";
+  }
+
+  return "作品が更新されました";
 }
 
 function buildWatchedUpdates(
@@ -66,28 +67,22 @@ function buildWatchedUpdates(
       getDevlogsByProject(notification.projectId),
     )[0];
 
+    const kind =
+      notification.type === "version_published" ? "version_published" : "devlog";
+
     items.set(notification.id, {
       id: notification.id,
       game,
-      kind:
-        notification.type === "version_published"
-          ? "version_published"
-          : "devlog",
-      label: getNotificationTypeLabel(notification.type),
-      message: notification.message,
-      summary:
-        notification.type === "devlog" && latestDevlog?.content
-          ? truncateSummary(latestDevlog.content)
-          : notification.type === "version_published"
-            ? "前回プレイした版から内容が更新されています。再プレイして新しい版向けに回答できます。"
-            : undefined,
+      kind,
+      badgeLabel: kind === "version_published" ? "新版公開" : "更新",
+      headline: buildPlayerUpdateHeadline(kind, latestDevlog),
       date: notification.date,
-      historyHref:
-        notification.type === "version_published"
+      detailsHref:
+        kind === "version_published"
           ? gameVersionBannerHref(notification.projectId)
           : gameHistoryHref(notification.projectId),
       replayHref:
-        notification.type === "version_published"
+        kind === "version_published"
           ? gameVersionBannerHref(notification.projectId)
           : gamePlayHref(notification.projectId),
     });
@@ -111,7 +106,7 @@ function buildWatchedUpdates(
       (item) =>
         item.game.id === game.id &&
         item.kind === "devlog" &&
-        item.message.includes(latestDevlog.title),
+        item.headline === latestDevlog.title,
     );
 
     if (duplicateFromNotification) {
@@ -122,13 +117,10 @@ function buildWatchedUpdates(
       id: fallbackId,
       game,
       kind: "devlog",
-      label: "開発日誌",
-      message: `「${game.title}」— ${latestDevlog.title}`,
-      summary: latestDevlog.content
-        ? truncateSummary(latestDevlog.content)
-        : undefined,
+      badgeLabel: "更新",
+      headline: buildPlayerUpdateHeadline("devlog", latestDevlog),
       date: latestDevlog.date,
-      historyHref: gameHistoryHref(game.id),
+      detailsHref: gameHistoryHref(game.id),
       replayHref: gamePlayHref(game.id),
     });
   }
@@ -137,6 +129,12 @@ function buildWatchedUpdates(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 }
+
+const primaryUpdateButtonClassName =
+  "inline-flex cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2 text-xs font-semibold text-zinc-950 transition-opacity hover:opacity-90 sm:text-sm";
+
+const secondaryUpdateLinkClassName =
+  "inline-flex cursor-pointer items-center text-xs font-medium text-zinc-400 transition-colors hover:text-orange-300 sm:text-sm";
 
 export function MyPageUpdatesSection({
   watchedGames,
@@ -177,7 +175,7 @@ export function MyPageUpdatesSection({
               : "text-xl font-semibold tracking-tight text-zinc-100"
           }
         >
-          更新を見る
+          前回プレイ後の更新
         </h2>
         <p
           className={
@@ -186,7 +184,7 @@ export function MyPageUpdatesSection({
               : "mt-1 text-sm text-zinc-500"
           }
         >
-          追跡中作品の devlog と新版公開の変更要点です。
+          前回遊んだあと、追跡中の作品で何が変わったかを確認できます。
         </p>
       </div>
 
@@ -206,7 +204,7 @@ export function MyPageUpdatesSection({
           </p>
           <Link
             href="/notifications"
-            className="mt-3 inline-block text-sm font-medium text-orange-400 transition-colors hover:text-orange-300"
+            className="mt-3 inline-block cursor-pointer text-sm font-medium text-orange-400 transition-colors hover:text-orange-300"
           >
             通知一覧を見る →
           </Link>
@@ -224,7 +222,7 @@ export function MyPageUpdatesSection({
                         : "rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-400"
                     }
                   >
-                    {update.label}
+                    {update.badgeLabel}
                   </span>
                   <time
                     dateTime={update.date}
@@ -233,31 +231,16 @@ export function MyPageUpdatesSection({
                     {formatNotificationDate(update.date)}
                   </time>
                 </div>
-                <p className="mt-2 text-sm font-medium text-zinc-200">
-                  {update.game.title}
+                <p className="mt-2 text-base font-semibold text-zinc-100">
+                  {update.headline}
                 </p>
-                <p className="mt-1 text-sm text-zinc-500">{update.message}</p>
-                {update.summary && (
-                  <p className="mt-2 text-xs leading-relaxed text-zinc-600">
-                    変更の要点: {update.summary}
-                  </p>
-                )}
-                <div className="mt-3 flex flex-wrap gap-3 text-xs font-medium">
-                  <Link
-                    href={update.historyHref}
-                    className="text-orange-400 transition-colors hover:text-orange-300"
-                  >
-                    {update.kind === "version_published"
-                      ? "新版の内容を見る →"
-                      : "開発の歩みを見る →"}
+                <p className="mt-1 text-sm text-zinc-500">{update.game.title}</p>
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <Link href={update.replayHref} className={primaryUpdateButtonClassName}>
+                    もう一度プレイする
                   </Link>
-                  <Link
-                    href={update.replayHref}
-                    className="text-zinc-400 transition-colors hover:text-zinc-200"
-                  >
-                    {update.kind === "version_published"
-                      ? "新版をプレイして回答 →"
-                      : "作品詳細へ →"}
+                  <Link href={update.detailsHref} className={secondaryUpdateLinkClassName}>
+                    更新内容を見る →
                   </Link>
                 </div>
               </article>
@@ -272,7 +255,7 @@ export function MyPageUpdatesSection({
             <>
               <Link
                 href="/notifications"
-                className="text-orange-400/90 hover:text-orange-300"
+                className="cursor-pointer text-orange-400/90 hover:text-orange-300"
               >
                 通知一覧
               </Link>
@@ -284,7 +267,7 @@ export function MyPageUpdatesSection({
               すべての通知は
               <Link
                 href="/notifications"
-                className="mx-1 text-orange-400/90 hover:text-orange-300"
+                className="mx-1 cursor-pointer text-orange-400/90 hover:text-orange-300"
               >
                 通知一覧
               </Link>
