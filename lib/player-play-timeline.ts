@@ -1,6 +1,5 @@
 import type { DevlogEntry } from "@/lib/devlogs";
 import {
-  formatReleaseTimelineLabel,
   getFirstReleasedEvent,
   type ProjectReleaseEvent,
 } from "@/lib/project-release-state";
@@ -18,13 +17,19 @@ export type PlayHistoryTimelineEvent = {
   releaseEventType?: "released" | "release_reopened";
 };
 
+export type PlayHistoryRelationshipBadge = {
+  id: string;
+  emoji: string;
+  label: string;
+};
+
 export type PlayHistoryProjectSummary = {
   playCount: number;
   voiceCount: number;
   updateWatchCount: number;
   daysSinceFirstPlay: number;
   reachedOfficialRelease: boolean;
-  summaryLines: string[];
+  badges: PlayHistoryRelationshipBadge[];
 };
 
 export type PlayHistoryProjectTimeline = {
@@ -34,19 +39,6 @@ export type PlayHistoryProjectTimeline = {
   summary: PlayHistoryProjectSummary;
   events: PlayHistoryTimelineEvent[];
 };
-
-function truncateQuote(value: string, maxLength = 28): string {
-  const trimmed = value.trim();
-  if (trimmed.length <= maxLength) {
-    return trimmed;
-  }
-  return `${trimmed.slice(0, maxLength)}…`;
-}
-
-function formatVoiceQuote(response: VoiceResponse): string {
-  const label = response.answerLabel?.trim() || response.answerValue.trim();
-  return truncateQuote(label);
-}
 
 export function daysBetween(fromIso: string, toDate = new Date()): number {
   const from = new Date(fromIso);
@@ -60,74 +52,61 @@ export function daysBetween(fromIso: string, toDate = new Date()): number {
   return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 }
 
-export function buildPlayHistorySummary(input: {
-  playCount: number;
+export function buildPlayHistoryRelationshipBadges(input: {
+  hasWitnessGrant: boolean;
   voiceCount: number;
   updateWatchCount: number;
-  firstPlayedAt: string | null;
-  reachedOfficialRelease: boolean;
-}): PlayHistoryProjectSummary {
-  const lines: string[] = [];
+  distinctVersionsPlayed: number;
+  hasPlayed: boolean;
+}): PlayHistoryRelationshipBadge[] {
+  const badges: PlayHistoryRelationshipBadge[] = [];
 
-  if (input.playCount > 0) {
-    lines.push(`${input.playCount}回プレイ`);
+  if (input.hasWitnessGrant) {
+    badges.push({ id: "witness", emoji: "🏅", label: "見届け人" });
   }
 
   if (input.voiceCount > 0) {
-    lines.push(`${input.voiceCount}回声を届けた`);
+    badges.push({ id: "voice", emoji: "💬", label: "声を届けた" });
   }
 
   if (input.updateWatchCount > 0) {
-    lines.push(`${input.updateWatchCount}回更新を見届けた`);
+    badges.push({ id: "update", emoji: "🔄", label: "更新を見た" });
   }
 
-  if (input.reachedOfficialRelease) {
-    lines.push("正式版到達を見届けた");
+  if (input.distinctVersionsPlayed >= 2) {
+    badges.push({ id: "multi-version", emoji: "🎮", label: "複数版プレイ" });
   }
 
-  const daysSinceFirstPlay = input.firstPlayedAt
-    ? daysBetween(input.firstPlayedAt)
-    : 0;
-
-  if (input.firstPlayedAt && daysSinceFirstPlay >= 0) {
-    lines.push(`最初のプレイから${daysSinceFirstPlay}日`);
+  if (badges.length === 0 && input.hasPlayed) {
+    badges.push({ id: "played", emoji: "▶️", label: "プレイ済み" });
   }
 
-  return {
-    playCount: input.playCount,
-    voiceCount: input.voiceCount,
-    updateWatchCount: input.updateWatchCount,
-    daysSinceFirstPlay,
-    reachedOfficialRelease: input.reachedOfficialRelease,
-    summaryLines: lines,
-  };
+  return badges;
+}
+
+function countDistinctVersions(sessions: ProjectPlaySession[]): number {
+  return new Set(sessions.map((session) => session.versionKey)).size;
 }
 
 function playSessionLabel(session: ProjectPlaySession): string {
-  const versionLabel = `版 ${session.versionKey}`;
-
-  if (session.context === "adoption_verify") {
-    return `${versionLabel} をプレイ — 変化を確かめる`;
-  }
-
-  if (session.context === "new_version") {
-    return `${versionLabel} をプレイ — 新版`;
-  }
-
-  return `${versionLabel} をプレイ`;
+  return `版 ${session.versionKey} をプレイ`;
 }
 
 function devlogEventLabel(devlog: DevlogEntry): string {
-  if (devlog.publishedVersion) {
-    const title = devlog.title.trim();
-    if (title) {
-      return `新版 ${devlog.publishedVersion} が公開 — ${title}`;
-    }
-    return `新版 ${devlog.publishedVersion} が公開`;
+  const version = devlog.publishedVersion?.trim();
+  if (version) {
+    return `版 ${version} が公開されました`;
   }
 
-  const title = devlog.title.trim();
-  return title ? `更新 — ${title}` : "更新がありました";
+  return "新バージョンが公開されました";
+}
+
+function playerReleaseTimelineLabel(event: ProjectReleaseEvent): string {
+  if (event.eventType === "released") {
+    return "正式版になりました";
+  }
+
+  return "正式版が再調整されました";
 }
 
 export function buildPlayHistoryTimelineEvents(input: {
@@ -153,7 +132,7 @@ export function buildPlayHistoryTimelineEvents(input: {
       id: `voice:${voice.id}`,
       type: "voice",
       occurredAt: voice.createdAt,
-      label: `「${formatVoiceQuote(voice)}」と声を届けた`,
+      label: "声を届けた",
       versionKey: voice.versionKey,
     });
   }
@@ -177,14 +156,14 @@ export function buildPlayHistoryTimelineEvents(input: {
       id: `release:${releaseEvent.id}`,
       type: "release",
       occurredAt: releaseEvent.createdAt,
-      label: formatReleaseTimelineLabel(releaseEvent),
+      label: playerReleaseTimelineLabel(releaseEvent),
       releaseEventType: releaseEvent.eventType,
     });
   }
 
   events.sort(
     (left, right) =>
-      new Date(right.occurredAt).getTime() - new Date(left.occurredAt).getTime(),
+      new Date(left.occurredAt).getTime() - new Date(right.occurredAt).getTime(),
   );
 
   return events;
@@ -197,6 +176,7 @@ export function buildPlayHistoryProjectTimeline(input: {
   voices: VoiceResponse[];
   devlogs: DevlogEntry[];
   releaseEvents?: ProjectReleaseEvent[];
+  hasWitnessGrant?: boolean;
 }): PlayHistoryProjectTimeline {
   const releaseEvents = input.releaseEvents ?? [];
   const firstReleased = getFirstReleasedEvent(releaseEvents);
@@ -214,26 +194,39 @@ export function buildPlayHistoryProjectTimeline(input: {
     releaseEvents,
   });
 
-  const updateWatchCount = input.devlogs.filter(
-    (devlog) => Boolean(devlog.publishedVersion),
+  const updateWatchCount = input.devlogs.filter((devlog) =>
+    Boolean(devlog.publishedVersion),
   ).length;
 
-  const summary = buildPlayHistorySummary({
-    playCount: input.sessions.length,
+  const daysSinceFirstPlay = input.firstPlayedAt
+    ? daysBetween(input.firstPlayedAt)
+    : 0;
+
+  const badges = buildPlayHistoryRelationshipBadges({
+    hasWitnessGrant: input.hasWitnessGrant ?? false,
     voiceCount: input.voices.length,
     updateWatchCount,
-    firstPlayedAt: input.firstPlayedAt,
-    reachedOfficialRelease,
+    distinctVersionsPlayed: countDistinctVersions(input.sessions),
+    hasPlayed: input.sessions.length > 0 || Boolean(input.firstPlayedAt),
   });
 
   const latestActivityAt =
-    events[0]?.occurredAt ?? input.firstPlayedAt ?? new Date(0).toISOString();
+    events.length > 0
+      ? events[events.length - 1]!.occurredAt
+      : input.firstPlayedAt ?? new Date(0).toISOString();
 
   return {
     projectId: input.projectId,
     firstPlayedAt: input.firstPlayedAt,
     latestActivityAt,
-    summary,
+    summary: {
+      playCount: input.sessions.length,
+      voiceCount: input.voices.length,
+      updateWatchCount,
+      daysSinceFirstPlay,
+      reachedOfficialRelease,
+      badges,
+    },
     events,
   };
 }
@@ -245,11 +238,13 @@ export function buildPlayHistoryForProjects(input: {
   voices: VoiceResponse[];
   devlogs: DevlogEntry[];
   releaseEvents?: ProjectReleaseEvent[];
+  witnessGrantProjectIds?: Set<string>;
 }): PlayHistoryProjectTimeline[] {
   const sessionsByProject = new Map<string, ProjectPlaySession[]>();
   const voicesByProject = new Map<string, VoiceResponse[]>();
   const devlogsByProject = new Map<string, DevlogEntry[]>();
   const releasesByProject = new Map<string, ProjectReleaseEvent[]>();
+  const witnessProjects = input.witnessGrantProjectIds ?? new Set<string>();
 
   for (const session of input.sessions) {
     const list = sessionsByProject.get(session.projectId) ?? [];
@@ -284,6 +279,7 @@ export function buildPlayHistoryForProjects(input: {
         voices: voicesByProject.get(projectId) ?? [],
         devlogs: devlogsByProject.get(projectId) ?? [],
         releaseEvents: releasesByProject.get(projectId) ?? [],
+        hasWitnessGrant: witnessProjects.has(projectId),
       }),
     )
     .sort(

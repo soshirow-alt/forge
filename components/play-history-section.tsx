@@ -36,17 +36,17 @@ function PlayHistoryProjectCard({
       >
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-zinc-100">{game.title}</p>
-          {timeline.summary.summaryLines.length > 0 ? (
-            <ul className="mt-2 space-y-1">
-              {timeline.summary.summaryLines.map((line) => (
-                <li key={line} className="text-xs leading-relaxed text-zinc-500">
-                  {line}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-2 text-xs text-zinc-600">まだ記録がありません</p>
-          )}
+          <ul className="mt-2 flex flex-wrap gap-1.5">
+            {timeline.summary.badges.map((badge) => (
+              <li
+                key={badge.id}
+                className="inline-flex items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900/60 px-2 py-0.5 text-[11px] text-zinc-400"
+              >
+                <span aria-hidden="true">{badge.emoji}</span>
+                <span>{badge.label}</span>
+              </li>
+            ))}
+          </ul>
         </div>
         <span aria-hidden="true" className="shrink-0 pt-0.5 text-zinc-600">
           {expanded ? "▼" : "▶"}
@@ -128,7 +128,7 @@ export function PlayHistorySection() {
             プレイ履歴
           </h2>
           <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-            プレイした作品の、版・声・更新の記録です。声を届けなくてもプレイだけ残ります。
+            プレイした作品との関わり方が、作品ごとにまとまります。
           </p>
         </div>
         <p className="mt-4 text-sm text-zinc-600">まだプレイ履歴がありません。</p>
@@ -146,7 +146,7 @@ export function PlayHistorySection() {
           プレイ履歴
         </h2>
         <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-          プレイした作品について、いつ・どの版・どんな声・どんな更新を辿れます。
+          閉じた状態では関わり方、開くと版ごとの履歴が時系列で見られます。
         </p>
       </div>
 

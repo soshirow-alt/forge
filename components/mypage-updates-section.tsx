@@ -6,6 +6,11 @@ import { useGames } from "@/components/games-provider";
 import { sortDevlogsNewestFirst, type DevlogEntry } from "@/lib/devlogs";
 import { formatNotificationDate, type Notification } from "@/lib/notifications";
 import {
+  buildPlayerUpdateBadgeLabel,
+  buildPlayerUpdateHeadline,
+  isVersionPublishDevlog,
+} from "@/lib/player-update-display";
+import {
   gameHistoryHref,
   gamePlayHref,
   gameVersionBannerHref,
@@ -16,6 +21,7 @@ type WatchedUpdateItem = {
   id: string;
   game: Game;
   kind: "devlog" | "version_published";
+  isVersionPublish: boolean;
   badgeLabel: string;
   headline: string;
   date: string;
@@ -23,19 +29,27 @@ type WatchedUpdateItem = {
   replayHref: string;
 };
 
-function buildPlayerUpdateHeadline(
+function resolvePlayerUpdateContext(
   kind: WatchedUpdateItem["kind"],
+  notification: Notification | undefined,
   latestDevlog: DevlogEntry | undefined,
-): string {
-  if (latestDevlog?.title?.trim()) {
-    return latestDevlog.title.trim();
-  }
-
+): { isVersionPublish: boolean; publishedVersion?: string | null } {
   if (kind === "version_published") {
-    return "ゲームの内容が更新されました";
+    return {
+      isVersionPublish: true,
+      publishedVersion:
+        notification?.publishedVersion ?? latestDevlog?.publishedVersion,
+    };
   }
 
-  return "作品が更新されました";
+  if (isVersionPublishDevlog(latestDevlog)) {
+    return {
+      isVersionPublish: true,
+      publishedVersion: latestDevlog?.publishedVersion,
+    };
+  }
+
+  return { isVersionPublish: false, publishedVersion: latestDevlog?.publishedVersion };
 }
 
 function buildWatchedUpdates(
@@ -70,19 +84,26 @@ function buildWatchedUpdates(
     const kind =
       notification.type === "version_published" ? "version_published" : "devlog";
 
+    const updateContext = resolvePlayerUpdateContext(
+      kind,
+      notification,
+      latestDevlog,
+    );
+
     items.set(notification.id, {
       id: notification.id,
       game,
       kind,
-      badgeLabel: kind === "version_published" ? "新版公開" : "更新",
-      headline: buildPlayerUpdateHeadline(kind, latestDevlog),
+      isVersionPublish: updateContext.isVersionPublish,
+      badgeLabel: buildPlayerUpdateBadgeLabel(updateContext),
+      headline: buildPlayerUpdateHeadline(updateContext),
       date: notification.date,
       detailsHref:
-        kind === "version_published"
+        updateContext.isVersionPublish
           ? gameVersionBannerHref(notification.projectId)
           : gameHistoryHref(notification.projectId),
       replayHref:
-        kind === "version_published"
+        updateContext.isVersionPublish
           ? gameVersionBannerHref(notification.projectId)
           : gamePlayHref(notification.projectId),
     });
@@ -102,11 +123,11 @@ function buildWatchedUpdates(
       continue;
     }
 
+    const updateContext = resolvePlayerUpdateContext("devlog", undefined, latestDevlog);
+    const headline = buildPlayerUpdateHeadline(updateContext);
+
     const duplicateFromNotification = [...items.values()].some(
-      (item) =>
-        item.game.id === game.id &&
-        item.kind === "devlog" &&
-        item.headline === latestDevlog.title,
+      (item) => item.game.id === game.id && item.headline === headline,
     );
 
     if (duplicateFromNotification) {
@@ -117,8 +138,9 @@ function buildWatchedUpdates(
       id: fallbackId,
       game,
       kind: "devlog",
-      badgeLabel: "更新",
-      headline: buildPlayerUpdateHeadline("devlog", latestDevlog),
+      isVersionPublish: updateContext.isVersionPublish,
+      badgeLabel: buildPlayerUpdateBadgeLabel(updateContext),
+      headline,
       date: latestDevlog.date,
       detailsHref: gameHistoryHref(game.id),
       replayHref: gamePlayHref(game.id),
@@ -184,7 +206,7 @@ export function MyPageUpdatesSection({
               : "mt-1 text-sm text-zinc-500"
           }
         >
-          前回遊んだあと、追跡中の作品で何が変わったかを確認できます。
+          前回遊んだあと、あなたに起きた変化を確認できます。
         </p>
       </div>
 
@@ -217,7 +239,7 @@ export function MyPageUpdatesSection({
                 <div className="flex flex-wrap items-center gap-2">
                   <span
                     className={
-                      update.kind === "version_published"
+                      update.isVersionPublish
                         ? "rounded-full bg-orange-500/10 px-2.5 py-0.5 text-[11px] font-medium text-orange-400"
                         : "rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-400"
                     }

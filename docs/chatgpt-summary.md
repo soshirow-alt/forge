@@ -1,83 +1,74 @@
 ■ 現在の状態
-- 将来像デモ世界 F1 — 実装完了、staging seed + verify PASS
-- Witness + Tier — 完了、014 本番適用済み
+- プレイ履歴・更新通知 UI 方向修正 — commit / push / staging deploy 実施（本メッセージ時点）
+- 将来像デモ F1 — staging verify 13/13 PASS
+- Witness + Tier — 014 本番適用済み
 - PLAYER_VISIBLE=false 維持
-- 次 — Veteran 実機 Walkthrough → UI 全面レビュー
+- 次 — Veteran walkthrough → UI 全面レビュー継続
+
+■ Forge原典コアループ（判断の基準）
+- 投稿 → 発見 → プレイ → フィードバック → 改善 → 再プレイ
+- 今回はプレイヤー画面の関係性可視化と「自分に起きた変化」文言。回数・開発者行動を排除
 
 ■ 今回実装したこと
-- scripts/future-demo-lib.ts — 定数、credential、Seeder ヘルパー、hide/show
-- scripts/future-demo-seed.ts — 25 作品・20 auth・engagement・release・reopen
-- scripts/future-demo-verify.ts — 世界密度 + Veteran Gold 断言
-- docs/future-demo-walkthrough.md — 固定 credential、世界戦切替手順
-- npm: seed / verify / hide / show future-demo:staging
+- プレイ履歴 折りたたみ — 回数集計廃止、関係性バッジ（見届け人 / 声 / 更新 / 複数版 / プレイ済み）
+- プレイ履歴 展開 — 古→新タイムライン、プレイヤー視点ラベル（版 X をプレイ、正式版になりました 等）
+- マイページ更新 — Devlog タイトル廃止、「版 X が公開されました」等のプレイヤー視点見出し
+- lib/player-play-timeline.ts / lib/player-update-display.ts — 表示ロジック分離
+- hooks/use-player-play-history.ts — witness grants 連携
+- 追加修正 — 空状態「まだ関わりの記録がありません」廃止。プレイのみでも ▶️ プレイ済み を必ず表示
 
-■ staging seed 結果（verify 13/13 PASS）
-- 作品 25、Devlog 82、Voice 162、Released 12、Reopened 3
-- 世界 witness grants 54、Veteran grants 12、tier Gold
-- Veteran sessions 46、voices 38
-- New User grants 0、sessions 0
-- worldId: world-1781624452091
+■ オーナー判断（確定）
+- 方向修正は妥当 — GO で commit + push + staging deploy
+- /notifications は今回触らない（DB message・過去整合・migration 影響のため別タスク）
+- 最低バッジ ▶️ プレイ済み — プレイ履歴に載る時点で関係性が存在するため空文言は矛盾
 
-■ 固定 credential（毎回同じ）
-- Demo Veteran: veteran@forge-future-demo.local / ForgeDemo!Veteran2026
-- Demo New User: new@forge-future-demo.local / ForgeDemo!New2026
-- 正本: docs/future-demo-walkthrough.md
-- seed 完了時ターミナルにも出力
+■ なぜこの設計
+- Forge の価値は回数ではなくプレイヤーと作品の関係性
+- プレイヤー画面では開発者行動ではなく自分に起きた変化を見せる
+- プレイのみでもバッジが空だと折りたたみが意味を失う
 
-■ seed 手順
-1. staging .env.local 確認（NEXT_PUBLIC_SUPABASE_URL + SERVICE_ROLE_KEY）
-2. npm run seed:future-demo:staging
-3. npm run verify:future-demo:staging
-- 初回のみ --fresh 可。grants 後は --fresh 不可
-- 再 seed 不要時は hide/show で世界戦切替
-
-■ 世界戦切替（元の世界 ↔ デモ世界）
-- 元の世界戦に戻す: npm run hide:future-demo:staging（全 [future-demo] を private）
-- デモ世界戦に戻す: npm run show:future-demo:staging（public）
-- grants は DB に残る — 削除しない（014 append-only）
-- オーナーが「元の世界戦に戻して」→ hide、「デモ世界に戻して」→ show
-
-■ 世界構成サマリ
-- 25 作品（[future-demo] 接頭辞）、6 開発者 NPC、12 プレイヤー NPC
-- 12 Released、3 Reopened
-- Demo Veteran — Gold、12 見届け人、厚いプレイ履歴
-- mock 18 も発見に並ぶ — レビューは [future-demo] を主に見る
-
-■ Walkthrough
-- docs/future-demo-walkthrough.md
-- Veteran: / → 作品詳細 → #play-history → #official-release → Devlog
-- New User: 空状態对比（5 分）
-
-■ 今回変更した画面
-- 該当なし（Seeder のみ、本番 UX 変更なし）
-
-■ ユーザー目線の変化
-- staging で Demo Veteran ログインすれば「成功した Forge 世界」を実機で歩ける
-- 発見・履歴・見届け人 Gold が密度を持って確認可能
-
-■ 注意事項
-- staging のみ — 本番 DB 禁止
-- hide 中は [future-demo] が発見から消える（private）
-- PLAYER_VISIBLE=false — Adoption UI 非表示
-
-■ 今すぐ私がやるべきこと
-1. npm run dev + staging env で Veteran ログイン
-2. docs/future-demo-walkthrough.md のツアー実施
-3. UI 全面レビュー GO 判断
-
-■ Cursorだけで完了できること
-- UI レビュー指摘の copy/レイアウト修正（別フェーズ）
-- hide/show 運用サポート
-
-■ 次に検討すべきこと
-- UI 全面レビュー
-- 伴走者 / 育成者
+■ 他案不採用
+- 空状態文言維持 — プレイ履歴セクションに出ている時点で既にプレイ済みであり事実と矛盾
+- /notifications 同時修正 — スコープ膨張。マイページ優先
 
 ■ In / Out
-- In: F1 Seeder、verify PASS、walkthrough、credential、hide/show
-- Out: 本番 UX、本番 seed、PLAYER_VISIBLE
+- In: マイページ プレイ履歴・更新通知の UI 文言とバッジ、witness 連携、最低バッジ
+- Out: /notifications ページ、DB 保存 message 書き換え、本番 prod deploy（今回は staging のみ）
 
-■ オーナー確認手順
-1. npm run verify:future-demo:staging — 13/13
-2. veteran@ で /login → Walkthrough
-3. hide → 元の世界感確認 → show で復帰
+■ リスク
+- 低 — UI 表示のみ。DB migration なし。PLAYER_VISIBLE 変更なし
+- devlog に publishedVersion がない更新は「更新を見た」バッジ・タイムラインに載らない（既存データ制約）
+
+■ 今回変更した画面
+- /mypage#play-history — 折りたたみ: 関係性バッジ（最低 ▶️ プレイ済み）。展開: 時系列履歴
+- /mypage#updates — 見出し: プレイヤー視点（Devlog タイトル非表示）
+- 確認: Veteran で /mypage → バッジ・展開タイムライン・更新見出し
+
+■ デモ世界 / 元の世界戦について
+- 今回の修正はフロントエンド表示ロジックのみ。Supabase データに依存するが future-demo 専用ではない
+- hide:future-demo:staging で元の世界戦に戻しても、プレイ履歴・更新通知の UI は同じコードパスで適用される
+- 変わるのは表示される作品データのみ（どの project にプレイ/grant/voice があるか）
+
+■ ユーザー目線の変化
+- 数字で評価されず、関わり方が一目で分かる
+- プレイだけでも「プレイ済み」と関係性が見える
+- 更新一覧で開発ログ名ではなく「何が変わったか」が主語
+
+■ 注意事項
+- /notifications の DB message は開発者視点のまま（別タスク）
+
+■ 今すぐ私がやるべきこと
+- staging 反映後 Veteran walkthrough（docs/future-demo-walkthrough.md §5）
+- UI 全面レビュー継続
+
+■ Cursorだけで完了できること
+- player-play-history-design.md 設計 doc 同期
+- /notifications プレイヤー視点化（別タスクとして）
+
+■ 次に検討すべきこと
+- Veteran 実機 Walkthrough
+- UI 全面レビュー（6 観点）
+- /notifications 文言整理
+
+■ ChatGPTに相談したい論点
+- 該当なし（オーナー GO 済み）

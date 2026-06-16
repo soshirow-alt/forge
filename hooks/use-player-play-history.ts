@@ -16,6 +16,7 @@ import {
   isPlaySessionsTableMissingError,
 } from "@/lib/supabase/play-sessions-db";
 import { fetchUserVoiceResponsesForProjects } from "@/lib/supabase/voice-engagement";
+import { fetchWitnessGrantsForUser } from "@/lib/supabase/witness-grants-db";
 
 export function usePlayerPlayHistory() {
   const { user, hydrated } = useAuth();
@@ -53,17 +54,22 @@ export function usePlayerPlayHistory() {
     }
 
     try {
-      const [sessions, firstSeenRows, voices, devlogs, releaseEvents] =
+      const [sessions, firstSeenRows, voices, devlogs, releaseEvents, witnessGrants] =
         await Promise.all([
         fetchPlaySessionsForUser(supabase, user.id),
         fetchProjectPlayFirstSeen(supabase, user.id),
         fetchUserVoiceResponsesForProjects(supabase, user.id, playedProjectIdsList),
         fetchProjectDevlogsForProjects(supabase, playedProjectIdsList),
         fetchReleaseEventsForProjects(supabase, playedProjectIdsList),
+        fetchWitnessGrantsForUser(supabase, user.id),
       ]);
 
       const firstPlayedByProject = new Map(
         firstSeenRows.map((row) => [row.projectId, row.firstPlayedAt]),
+      );
+
+      const witnessGrantProjectIds = new Set(
+        witnessGrants.map((grant) => grant.projectId),
       );
 
       const built = buildPlayHistoryForProjects({
@@ -75,6 +81,7 @@ export function usePlayerPlayHistory() {
         voices,
         devlogs,
         releaseEvents,
+        witnessGrantProjectIds,
       }).filter((timeline) => getGameById(timeline.projectId));
 
       setTimelines(built);

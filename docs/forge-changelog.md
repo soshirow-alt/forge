@@ -4,6 +4,31 @@
 
 ---
 
+## 2026-06-16 プレイヤー画面 UI — プレイ履歴・更新通知（方向修正）
+
+### プレイ履歴（`/mypage#play-history`）
+
+- **折りたたみ**：回数集計（🎮 2プレイ 等）を廃止。作品との**関係性バッジ**に変更
+  - 🏅 見届け人 / 💬 声を届けた / 🔄 更新を見た / 🎮 複数版プレイ / ▶️ プレイ済み（最低バッジ）
+- **展開**：時系列履歴（古→新）。プレイヤー視点のラベル
+  - 例：版 0.1 をプレイ → 声を届けた → 版 0.2 が公開されました → 正式版になりました
+- 見届け人バッジは `project_witness_grants` を参照
+
+### 前回プレイ後の更新（`/mypage#updates`）
+
+- 開発者行動（Devlog タイトル・開発メモ等）を見出しに使わない
+- プレイヤー視点：「版 X が公開されました」「新バージョンが公開されました」「プレイした版の続きが公開されました」
+- 「プレイヤーの声を反映」系の文言は採用しない
+
+### 実装
+
+- `lib/player-play-timeline.ts` — バッジ合成・プレイヤー向けタイムライン文言
+- `lib/player-update-display.ts` — 更新見出しの共通ロジック
+- `components/play-history-section.tsx` / `mypage-updates-section.tsx`
+- `hooks/use-player-play-history.ts` — witness grants 取得
+
+---
+
 ## 2026-06-16 将来像デモ世界 — F1 実装 + staging seed PASS
 
 ### 実装
