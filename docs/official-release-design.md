@@ -142,10 +142,11 @@ Forge は **現在状態** ではなく **育成履歴** を評価する。
 
 ## 5. 見届け人バッジとの接続
 
-`docs/player-badges-design-review.md` 参照。
+`docs/player-badges-design-review.md` 参照。  
+**条件詳細**: `docs/witness-phase-design-review.md`（W0 設計レビュー 2026-06-16）
 
 - 見届け人 = **正式版到達まで伴走**（単純 1 回プレイ NG）
-- 条件候補: 声を届けた / 複数版プレイ / 継続して追っていた
+- 推奨: **候補 D（OR）** — 2 版プレイ / 声 / watch+session（C'）
 - 正式版の定義は **本 doc の開発者宣言** が前提
 
 ---

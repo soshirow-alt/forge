@@ -14,7 +14,11 @@
     "shadow:a": "npx --yes tsx scripts/shadow-a-execute.ts",
     "shadow:b": "npx --yes tsx scripts/shadow-b-execute.ts",
     "verify:official-release:staging": "npx --yes tsx scripts/official-release-staging-verify.ts",
-    "verify:official-release:staging:flow": "npx --yes tsx scripts/official-release-staging-verify.ts --flow"
+    "verify:official-release:staging:flow": "npx --yes tsx scripts/official-release-staging-verify.ts --flow",
+    "verify:witness:staging": "npx --yes tsx scripts/witness-staging-verify.ts",
+    "seed:witness:sandbox": "npx --yes tsx scripts/witness-sandbox-seed.ts",
+    "verify:witness:grants:staging": "npx --yes tsx scripts/witness-grants-staging-verify.ts",
+    "verify:witness:ui:staging": "npx --yes tsx scripts/witness-ui-staging-verify.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

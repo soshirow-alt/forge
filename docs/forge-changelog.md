@@ -4,6 +4,105 @@
 
 ---
 
+## 2026-06-16 main 反映 — 見届け人 Phase（W1–W4）
+
+### 含む
+
+- migration 014 草案、witness-eligibility、W1/W3 verify
+- W4 マイページ `#official-release` 見届け人 UI
+- tier 設計レビュー草案
+
+### 本番
+
+- push 後 Vercel deploy 確認
+
+---
+
+## 2026-06-16 見届け人 W4 — マイページ UI
+
+### 実装
+
+- `/mypage#official-release` — 見届け人カード統合
+- lib/hook/components 追加
+- verify:witness:ui:staging PASS
+- build PASS
+
+---
+
+## 2026-06-16 見届け人 W3 — grant verify PASS
+
+### 結果
+
+- 014 staging 適用済み
+- sandbox + `verify:witness:grants:staging` — A/B/C' 各 1、negative/owner 除外、Reopened/再Released PASS
+
+### doc
+
+- `docs/witness-phase-w3-verification.md`
+
+---
+
+## 2026-06-16 見届け人 W2 — migration 014 草案
+
+### 追加
+
+- `supabase/migrations/014_project_witness_grants.sql`
+- `docs/witness-phase-w2-migration.md` — RLS、trigger、seed 方針
+- append-only grants + 初回 Released trigger + 再 Released スキップ
+
+### 次
+
+- オーナー Dashboard 014 適用
+
+---
+
+## 2026-06-16 見届け人 W1 — 判定 lib + staging verify
+
+### 実装
+
+- `lib/witness-eligibility.ts` — D（OR）A / B / C'
+- `npm run verify:witness:staging`
+- build PASS
+
+### staging 結果
+
+- だもんでとなもんでの冒険 — eligible 0
+- d05c457b — plays のみ（sessions 0）→ 不成立（設計どおり）
+
+### 次
+
+- W2 migration 014 — オーナー GO 後
+
+---
+
+## 2026-06-16 見届け人 Phase — 設計レビュー（W0）
+
+### doc
+
+- `docs/witness-phase-design-review.md` — 目的・候補 A–D 比較・悪用・DB・ロードマップ・推奨 D+C'
+
+### オーナー判断待ち
+
+- D（OR）GO か / C'（watch + session≥2）か / migration 014 タイミング
+
+---
+
+## 2026-06-16 正式版 Phase 1 — staging 検証 PASS
+
+### 検証
+
+- 013 Dashboard 適用済み（オーナー）
+- `verify:official-release:staging` / `:flow` — PASS
+- DB: released → release_reopened → 再 released、events 3 行 append-only
+- witness 候補 1 名 — 初回 Released 前プレイ → 「正式版到達を見届けた」data-layer OK
+- build PASS
+
+### 残り
+
+- Studio / マイページ — ログイン要の目視（任意）
+
+---
+
 ## 2026-06-16 正式版 Phase 1 実装
 
 ### 今回やったこと

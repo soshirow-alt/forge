@@ -93,8 +93,38 @@ npm run verify:official-release:staging:flow
 
 **手動（UI）**
 
-- [ ] Studio `#official-release` — Released / Reopened ボタン
-- [ ] `/mypage` `#official-release` — プレイ済み正式版作品
+- [ ] Studio `#official-release` — Released / Reopened ボタン（オーナーログイン要）
+- [ ] `/mypage` `#official-release` — プレイ済み正式版作品（witness ユーザー要）
 - [ ] `/mypage` `#play-history` — release 行 + 「正式版到達を見届けた」
 
 **013 未適用時**: 最初のコマンドが exit 2 + Dashboard 手順を表示
+
+---
+
+## 7. staging 検証結果（2026-06-16）
+
+**013 適用**: オーナー Dashboard 適用済み
+
+**自動検証**
+
+| コマンド | 結果 |
+|----------|------|
+| `verify:official-release:staging` | PASS |
+| `verify:official-release:staging:flow` | PASS |
+
+**検証プロジェクト**: だもんでとなもんでの冒険 (`17d967a8-60e1-4e56-99bb-c13d4c0d6529`)
+
+**DB フロー後**
+
+- `projects.release_status` = `released`
+- `project_release_events` = 3 行（released → release_reopened → released、append-only）
+- witness 候補: `d05c457b-…`（初回 Released 2026-06-16 より前にプレイ）
+
+**UI data-layer（service role + アプリ同一ロジック）**
+
+- `#official-release` — 上記プロジェクトが一覧対象
+- `#play-history` — release 行 3 件 + サマリ「正式版到達を見届けた」
+
+**ブラウザ目視**: Studio / マイページはログイン必須のため Cursor 未完了。オーナーまたは witness ユーザーで約 2 分の目視推奨。
+
+**build**: 2026-06-16 PASS
