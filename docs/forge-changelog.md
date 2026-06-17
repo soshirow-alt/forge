@@ -4,7 +4,114 @@
 
 ---
 
-## 2026-06-16 UI 全面レビュー P0/P1 — Veteran 開発者 + 標準カード
+## 2026-06-15 01 ランディング — 1画面レイアウト（preview）
+
+- **`/landing` preview** — desktop（lg+）で **100dvh 1画面収め**。下部の空 spacer 削除
+- **手法**: CSS grid 行配分（hero 約1.08fr / 注目 0.38fr / お知らせ・FT auto）+ `clamp(..., vh, ...)` タイポ
+- **価値3行**: `justify-between` で CTA カード高さに揃え。CTA は `h-full` 可変
+- **フォールバック**: モバイル・短い viewport は `min-h-dvh` + 自然スクロール（無理な 1 画面固定なし）
+- prod deploy 禁止 / `/` 差替禁止 — 維持
+
+---
+
+## 2026-06-16 正式リリース初期版方針 + 原典更新
+
+- **方針転換**: 小さな MVP ではなく **正式リリース初期版**として必要機能を初期から盛り込む
+- **in-scope 化**: **月間影響度ランキング** / 実績バッジ / 共感 / 開発者「開発に役立った」/ 影響度スコア
+- **out-of-scope 更新**: 上記を解除。依然 out — 投げ銭・販売・SDK 実装・有料ランキング等
+- **原典**: 応援→フォロー統合（概念の応援は残す、UI はフォロー・開発者単位）
+- **実装**: モック GO 後。prod deploy 禁止継続
+
+---
+
+## 2026-06-16 01 ランディング — ガワ確認 OK（オーナー）
+
+- **`/landing` 方針 OK** — 保持。**`/` 差し替え禁止**（Walkthrough 前）
+- **正式将来**: 未ログイン `/` → 01 / ログイン済 `/` → 04 — **Phase1-B 以降に実装**
+- モック vs 実装ズレ — `docs/ui-mocks/01-landing.md` §ズレ記録
+- prod deploy 禁止継続 / preview OK
+- 他画面 preview route — **01 確認後**に判断
+
+---
+
+- **URL**: `/landing`（本番 `/` は発見ホームのまま）
+- **内容**: モック 01 レイアウト — ヒーロー / 3 価値 / 2 CTA / 注目 5 カード / お知らせ / フッター
+- **背景**: `public/images/landing-hero-bg.png`（生成プレースホルダ）
+- **Studioに入る**: 未実装のため非リンク（ガワのみ）
+- **ゲームを探す / すべて見る**: 現行 `/` へ（発見ホーム）
+
+---
+
+- **Phase1 分割** — 1-A Studio Shell（20–25）**先行** / 1-B Player Shell（09–18）**後**。同時 NG。§19
+- **22 次にやること** — **Task DB 不要**。声→役立った→AI→Devlog から生成。§18
+- **Veteran Walkthrough** — **残す**。全モック完成後・**実装 GO 直前**（Phase1 前ではない）。導線4本。§20
+- **21 入口** — Studio Level1 のみ。global 不要。§17
+- pending **#98 #118** 解決
+
+---
+
+## 2026-06-16 オーナー判断反映（ChatGPT レビュー）
+
+- **Studio Sidebar 正本** — 階層型（Level1: 20/21、Level2: 22–25）。同列 nav 不採用。`forge-ui-product-decisions.md` §17
+- **21 / 22 責務分離** — 22=単一作品運営、21=全作品横断。KPI 重複禁止。§18
+- **実装 GO 順** — Phase1 Shell → Phase2 Studio → Phase3 フォロー → Phase4 23 → Phase5 08 → Phase6 18 ランキング（最後）。§19
+- **Studio 最終構造再確認** — 旧 Studio ホーム廃止、旧リリース/開発ログ管理→24 統合
+- pending **#103 / #132 / #133 / #145** 解決。コード変更なし
+
+---
+
+## 2026-06-16 画面遷移図 v2（オーナー送付）
+
+- **正本更新**: `docs/forge-screen-transition-diagram.md` — 2026-06 最終版 v2
+- **新画像**: `assets/...94a920c0-7c06-4157-9620-1caa38f17186.png`（旧 e5287fc6 は参照のみ）
+- **凡例刷新**: 青実線=メイン / 紫破線=マイページ / 緑実線=Studio 内 / 緑破線=横断参照
+- **図下部**: 主要シナリオ 4 本（作品探索 / 開発者探索 / FB / 開発者改善ループ）+ 重要ルールまとめ
+- inventory（2026-06 最終版）と同期。コード変更なし
+
+---
+
+## 2026-06-16 画面一覧最終版（オーナー確定）
+
+- **正本更新**: `docs/forge-screen-inventory.md` — Studio 階層・番号再編
+- **主な変更**:
+  - 旧 20 Studio ホーム **廃止**
+  - **20** = Studio 作品一覧（モック `21-studio-works-list.md`）
+  - **21** = 分析ダッシュボード（モック未）
+  - **22** = 作品情報（`22-project-home-alt.md` 正本）
+  - **24** = 開発ログ公開（旧 24+25 統合）
+  - **25** = 作品設定（旧 26）
+  - **17** = プレイヤー個人設定（Studio 17 モックは別物）
+- 対照: `docs/ui-mocks/SCREEN-NUMBER-MAP.md`
+- 遷移図・handoff 部分更新。確認事項 **#1–#145**（#136 解決）
+
+---
+
+- **14 あとで遊ぶ** — `docs/ui-mocks/14-play-later.md`（3列 grid / 保存中バッジ / 保存日 / ソート）
+- **15 フォロー中の開発者** — `docs/ui-mocks/15-following-developers.md`（開発者リスト / 代表作品 / 右サイドバー）
+- **16 通知一覧** — `docs/ui-mocks/16-notifications.md`（種別タブ / 未読既読 / 30日保存）
+- **17 設定** — `docs/ui-mocks/17-settings.md`（**Studio シェル初出** / 7タブ / アカウント〜サポート）
+- **18 月間影響度ランキング** — `docs/ui-mocks/18-monthly-influence-ranking.md`（TOP3 / 影響度スコア / 月選択）
+- **20 Studio ホーム** — `docs/ui-mocks/20-studio-home.md`（改善ループ二軌 / 次にやること / 右折りたたみ）
+- **21 Studio 作品一覧** — `docs/ui-mocks/21-studio-works-list.md`（**統合 shell 第三形** / 6作品 grid / 状態タブ）
+- **22 作品ホーム** — `docs/ui-mocks/22-project-home.md`（Studio 専用 / Loop表 / プレイヤーの声埋め込み）
+- **23 プレイヤーの声** — `docs/ui-mocks/23-player-voices.md`（作品内 nav / AI要約 / 開発に役立った）
+- **22 作品ホーム 案 B** — `docs/ui-mocks/22-project-home-alt.md`（オーナー採用候補 — 案 A は改善ループ版を保持）
+- モック累計 **01–18 + 20–23**（22 は A/B 2案）。確認事項 pending **#1–#145**
+- コード変更なし
+
+---
+
+- 正本: `docs/forge-ui-product-decisions.md`（16 項目）
+- 作品カード: 開発中は原則ワッペンなし / 完成品のみ **🏆 完成品**
+- 応援中廃止 → **フォロー中の開発者**（開発者単位）
+- 検索: 作品検索と開発者検索を分離
+- 共感・開発者非公開 FB 評価・月間見届け人ランキング等 — 方向性確定（実装はフェーズ分割）
+- 第2ラウンド UI 案を上記に合わせ部分更新
+- **画面一覧 01–26** — `docs/forge-screen-inventory.md`（目的・機能・現行 URL ギャップ）
+- **画面遷移図（全26）** — `docs/forge-screen-transition-diagram.md`（IA 正本。UI モックではない）
+
+---
+
 
 ### P0 — Demo Veteran 開発者 patch
 

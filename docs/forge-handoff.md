@@ -1,6 +1,6 @@
 # Forge Handoff
 
-最終更新：**2026-06-16**（P0/P1 実装 — verify 18/18 PASS）
+最終更新：**2026-06-16**（オーナー判断 — Studio Sidebar / 21–22 責務 / 実装 GO 順）
 
 ---
 
@@ -15,29 +15,41 @@
 - migration **014** — staging + 本番適用済み
 - **将来像デモ F1** — staging seed + verify 13/13 PASS
 - PLAYER_VISIBLE=false 維持
+- **01 ランディング preview** — ブランチ `preview/landing-01` / commit **a47dcdd** — https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app/landing（**1画面 dvh レイアウト** / prod 未触）
+- **待ちモック** — **21** 分析ダッシュボード / **24** 開発ログ公開 / **25** 作品設定 / **17** プレイヤー個人設定（受領 `17-settings.md` は Studio シェル）
+- **画面一覧 2026-06 最終版** — `docs/forge-screen-inventory.md`（Studio 階層・番号再編の正本）
+- **モック↔番号** — `docs/ui-mocks/SCREEN-NUMBER-MAP.md`
+- **オーナー判断 2026-06-16** — Studio **階層 Sidebar** 正本 / **21↔22 KPI 分離** / **実装 GO Phase1–6**（`forge-ui-product-decisions.md` §17–§19）
+- **pending 解決** — #103 / #132 / #133 / #145
+- **確認事項** — `docs/ui-mocks/pending-owner-questions.md` **#1–#145**（モック batch 完了後に一括提示）
+- **正式リリース初期版方針** — 小さな MVP ではない。ランキング・実績・共感・影響度は初期版対象
+- **原典更新** — 応援→フォロー統合を `forge-principles.md` に反映済み
+- **out-of-scope** — 2026-06 更新（コミュニティ機能 in / 課金・販売 out）
 
 ---
 
-## 優先順位（2026-06-16 更新 — ロードマップ順位変更）
+## 優先順位（2026-06-16 更新 — 実装 GO 順確定）
 
-**prod deploy までの流れ**
+**モック batch 完了 → オーナー GO 後の実装順**（`forge-ui-product-decisions.md` §19–§20）:
 
-1. **Veteran walkthrough** — preview deploy 後、実機確認
-2. **スクリーンショット確認**
-3. **UI 全面レビュー継続**
-4. **prod deploy 判断**
+| Phase | 内容 | 備考 |
+|-------|------|------|
+| **1-A** | **Studio Shell** — 20–25 | **最優先**。階層 nav 含む。**プレイヤー Shell と同時 NG** |
+| **1-B** | **Player Shell** — 09–18 | 1-A 後。`/mypage` タブ分離 |
+| **2** | 開発者フォロー DB | 応援廃止 |
+| **3** | 23 プレイヤーの声 | 開発に役立った / AI / 集計 |
+| **4** | 08 FB | 質問 → 自由記述 |
+| **5** | 18 月間影響度 | **最後** |
 
-**Cursor 推奨 1 位**: Veteran Walkthrough + 実機 UI 確認
+**GO 直前（必須）**: Veteran Walkthrough — 導線4本（§20）。全モック完成後・実装前。
+
+**Cursor 推奨 1 位（GO 後）**: **Phase 1-A Studio Shell**
 
 | 優先 | 論点 | 状態 |
 |------|------|------|
-| **P0** | Demo Veteran 開発者 | **完了** — patch 7 本、verify PASS |
-| **P1** | 正式版 grid | **完了** |
-| **P1** | ForgeGameCard | **完了**（プレイヤー側） |
-| **P1** | サムネ | **完了** — GeneratedThumbnailPoster |
-| **P2** | タブ名称 | **完了** |
-
-**その後**: **開発者タブ ForgeGameCard 化** → 伴走者 → 育成者 → Phase 1b
+| **P0** | Demo Veteran 開発者 | **完了** |
+| **P1** | 正式版 grid / ForgeGameCard | **完了** |
+| **待ち** | UI モック batch + オーナー GO | 24/25/21/17 未着 |
 
 ---
 
