@@ -1,85 +1,88 @@
 ■ 現在の状態
-- 01 `/landing` preview — commit **a47dcdd** push 済み（ブランチ `preview/landing-01`）
-- オーナー指摘「縦が狭い・下が空く」に対応 — **desktop で 1 viewport に収める**レイアウトへ変更
-- `/` は現行発見ホームのまま / **prod deploy 禁止** — 維持
-- DB migration 変更なし
+- 01 `/landing` preview — **レイアウト方針を再整理**して push 予定（ブランチ `preview/landing-01`）
+- 前回の dvh grid + 個別 clamp 伸縮は **オーナー NG 判定** → 廃止
+- 新方針: **1920×1080 固定キャンバス + 全体等倍 scale**
+- `/` 差替禁止 / prod deploy 禁止 — 維持
 
 ■ Forge原典コアループ（判断の基準）
 - 投稿 → 発見 → プレイ → フィードバック → 改善 → 再プレイ
-- 01 LP は **発見前の入口**。縦を画面いっぱい使い、初見で hero・2 CTA・注目作品まで一望できると「育てる場所」の全体像が伝わる
+- 01 LP は入口。モックの密度・視線の流れを崩さず、PC で可能な限り大きく見せる
 
 ■ 今回実装したこと
-- `components/landing-page.tsx` — **100dvh 1画面レイアウト**（lg 以上）
-- ルート: `lg:h-dvh lg:max-h-dvh lg:overflow-hidden` + `grid-rows-[1.08fr / 0.38fr / auto / auto]`
-- ヒーロー: `flex-1 min-h-0` — 背景・ヘッダー・H1・左コピー/3価値/右2CTA を主領域に拡大
-- 3価値リスト: `flex-1 justify-between` — CTA カードの上下に揃える（前回の意図を維持しつつ縦を使う）
-- CTA カード: 固定 `min-h-[248px]` 廃止 → `h-full` + 内部 `clamp(vh)` padding/文字
-- 注目5列: サムネを `flex-1` 可変高 — grid 行の残り高さを占有
-- タイポ・余白: 全体 `clamp(..., vh, ...)` で viewport 高に比例
-- **削除**: ページ最下部 `flex-1 min-h-[10vh]` spacer（上に内容が押し上げられ下が空いていた原因）
-- build OK / preview push 済み
+- **`components/landing-page-scaler.tsx`（新規）**
+  - デザインキャンバス 1920×1080
+  - lg+ で `scale = min(window.innerWidth/1920, window.innerHeight/1080)`
+  - ラッパー高さ = 1080×scale、中身に `transform: scale()` + `origin-top-left`
+  - 水平中央寄せ。縦は上揃え（余白は外側）
+- **`components/landing-page.tsx` 再構成**
+  - `LandingPageCanvas` — キャンバス内は **すべて固定 px**（モック密度）
+  - Hero 548px / コンテンツ幅 1120px / 左右 padding 400px
+  - 3価値: `space-y-3.5`（散らし禁止）
+  - CTA: 固定 `h-[248px]`（縦伸ばし禁止）
+  - 注目: サムネ `aspect-[16/10]`（flex-1 縦伸ばし禁止）
+  - キャンバス下 ~200px は意図的なアートボード余白（要素で埋めない）
+  - `LandingPageMobile` — lg 未満はスケールなし・縦スクロール
+- **廃止**: `h-dvh` grid-rows fr / clamp(vh) / flex-1 justify-between / CTA h-full / サムネ flex-1
 
 ■ ユーザー目線の変化
-- 変更前: コンテンツが画面上部に固まり、下 30〜40% が黒い余白。縦が「狭い」印象
-- 変更後: 1920×1080 等の desktop で **スクロールなし**に hero・CTA・注目・お知らせ・FT が画面高に配分
-- 文字は viewport に応じて少し大きくなり、CTA/注目カードも縦方向に伸びて「画面を使っている」感が出る
-- スマホ・タブレット縦・window 高 720px 未満は従来どおり **自然スクロール**（無理な 1 画面固定はしない）
+- 変更前（dvh 版）: Hero・CTA・サムネが個別に伸び、モックより密度が薄く・視線が散る
+- 変更後: モックと同じ比率のまま、画面サイズに応じて **ページ全体が一括で拡大縮小**
+- 1920×1080 なら scale=1（等倍）。1440×900 なら約 0.75 倍。4K なら約 2 倍まで拡大
+- viewport に余った領域は黒い外側余白 — 中身を引き伸ばして埋めない
 
 ■ 今回変更した画面
-- **01 ランディング** / URL: `/landing`（preview のみ）
-- **画面位置**: 未ログイン LP 全体（ヘッダー → ヒーロー → 注目の開発中ゲーム → お知らせ帯 → フッター）
-- **変更前**: `min-h-screen` + 下部 spacer。hero/CTA がコンパクト、下に大きな空白
-- **変更後**: lg+ で `h-dvh` grid。hero が flex 拡大、注目行が可変高、spacer なし
-- **プレイヤー視点**: ファーストビューで「探す/参加」と注目作品が同時に見える
-- **開発者視点**: 緑 CTA と Studio 導線が CTA 高さ分しっかり見える
+- **01 ランディング** / URL: `/landing`（preview）
+- **画面位置**: LP 全体（ヘッダー〜フッター）
+- **変更前**: 各セクションが viewport 高に合わせて個別伸縮
+- **変更後**: 1920×1080 アートボードとして描画 → PC 表示領域に収まる最大倍率で全体 scale
+- **プレイヤー視点**: 3価値がコンパクトに縦並び、CTA が縦長すぎない、注目サムネ比率が一定
+- **開発者視点**: モック PNG と同じ情報密度でガワ確認可能
 - **確認手順**:
-  1. https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app/landing を desktop 幅で開く
-  2. 1920×1080 前後 — 縦スクロールバーが出ないこと
-  3. 3価値の1行目上端 ≒ CTA 上端、3行目下端 ≒ CTA 下端（おおむね）
-  4. 注目カードのサムネが横一列で縦に伸びていること
-  5. DevTools で高さ 900px / 768px — スクロール許容 or 僅かなはみ出し（極端な潰れなし）
-  6. モバイル幅 — 縦スクロールで全セクション読めること
+  1. preview `/landing` を 1920×1080 で開く — scale≈1、モック密度に近いこと
+  2. 1440×900 — 全体が縮小、パーツ比率は変わらないこと
+  3. 3価値行間が広がりすぎないこと（justify-between なし）
+  4. CTA 高さ 248px 相当、サムネ 16:10 であること
+  5. 下に外側余白があっても Hero/CTA/カードが伸びていないこと
+  6. モバイル幅 — 縦スクロールで読めること
 
 ■ なぜこの設計
-- オーナー要望: 「縦は画面いっぱい」「無駄なスクロールは避けたい」「原則1画面」
-- CSS の viewport 単位（dvh + fr grid + clamp）なら **JS なし・低負荷**で実現可能
-- 固定 px の font/padding だけでは 1080p と 900p で同時に「1画面・読みやすさ」を満たせない
+- オーナー目標は「1画面を要素で埋める」ではなく「**モック密度を保った最大表示**」
+- 個別 responsive 伸縮は密度と視線の流れを壊す
+- 全体 scale はモック=アートボードのメタファに一致。実装コストも低い
 
 ■ 他案不採用
-- **scale transform 全体縮小** — ブラウザズーム相当でぼやけ・クリック領域が不安定
-- **全セクションを absolute 配置** — メンテ困難、レスポンシブ破綻
-- **モバイルも overflow-hidden 強制** — タップ領域不足・法務リンク到達不能
+- dvh grid + fr 配分 — NG 明示
+- clamp(vh) パーツ単位 — 比率が viewport ごとに変わる
+- scale なし固定 px + 下余白 — 小さい画面でスクロール増、大きい画面で小さすぎ
 
 ■ 実装スコープ In / Out
-- In: lg+ 1 viewport 配分、dvh grid、clamp typography、CTA/注目可変高、spacer 削除
-- Out: `/` への反映、prod deploy、実サムネ接続、法務リンク、Studio リンク、短画面専用 @media 微調整（必要なら次タスク）
+- In: 1920×1080 キャンバス、scaler、固定 px レイアウト、mobile フォールバック
+- Out: prod deploy、`/` 反映、実サムネ、リンク接続、scale 時の hover 微調整
 
 ■ リスク
-- 極端に低い desktop 高（例 600px）では lg ブレークポイントでもはみ出しうる — 現状は scroll 許容
-- `dvh` は古い Safari で `vh` フォールバック差 — Forge 想定ブラウザでは許容
-- preview deploy 反映に数分 — Ready 後に再確認
+- transform scale 下のクリック領域 — ブラウザは通常 scale 後の見た目に追従。問題あれば報告
+- 4K で scale>1 のときテキストがややにじむ可能性 — 許容 or max-scale=1 は次判断
+- preview deploy 反映に数分
 
 ■ 注意事項
-- 注目カード・背景は **placeholder のまま**（モック実サムネ未接続）
-- 「Studioに入る」「お知らせ一覧」「フッター法務」は未リンク
-- prod / `/` 切替は Phase1-B または Walkthrough 後 GO
+- キャンバス px 値はモック目視ベース — ピクセル完全一致は再調整可
+- placeholder 背景・注目サムネ・未リンクは従来どおり
 
 ■ 今すぐ私がやるべきこと
-- preview Ready 後、desktop 1920×1080 で `/landing` を目視 — 1画面感・CTA/3価値の揃い・注目高さ
-- まだ「狭い/空く/スクロールが出る」なら解像度とスクショ付きでフィードバック
+- preview Ready 後 `/landing` を 1920×1080 と 1440×900 で比較 — 密度・比率・外側余白
+- モック PNG と並べて「散らばり/縦伸び」が解消したか確認
 
 ■ Cursorだけで完了できること
-- 短 viewport 用 `@media (max-height: …)` 微調整
-- 背景画像差替 / 注目 placeholder 強化
-- 01 OK 後の他画面 preview route 追加
+- キャンバス内 px の微調整（モック目視合わせ）
+- max-scale 上限の追加（必要なら）
+- 背景・サムネ差替
 
 ■ 次に検討すべきこと
-- 01 ガワ OK ライン — 構造一致 vs ピクセル一致
-- 01 OK 後: Phase 1-A Studio Shell mock 残（21/24/25/17）→ Walkthrough → 実装 GO
+- 01 ガワ OK ライン確定
+- scale>1 を許容するか（4K）
 
 ■ ChatGPTに相談したい論点
-- desktop 1画面固定を **lg のみ**にした判断 — tablet 横 1024×768 も 1 画面に含めるべきか
-- 注目5列のサムネ高 — 現状 flex-1 可変 vs モック固定 aspect のどちらを正とするか
+- 4K で scale=2 まで許す vs max 1.0 で中央寄せ — どちらが LP として自然か
 
 ■ Preview URL
 https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app/landing

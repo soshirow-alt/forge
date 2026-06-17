@@ -4,12 +4,12 @@
 
 ---
 
-## 2026-06-15 01 ランディング — 1画面レイアウト（preview）
+## 2026-06-15 01 ランディング — 固定キャンバス + 全体スケール（preview）
 
-- **`/landing` preview** — desktop（lg+）で **100dvh 1画面収め**。下部の空 spacer 削除
-- **手法**: CSS grid 行配分（hero 約1.08fr / 注目 0.38fr / お知らせ・FT auto）+ `clamp(..., vh, ...)` タイポ
-- **価値3行**: `justify-between` で CTA カード高さに揃え。CTA は `h-full` 可変
-- **フォールバック**: モバイル・短い viewport は `min-h-dvh` + 自然スクロール（無理な 1 画面固定なし）
+- **方針転換**: 「100dvh で埋める」→ **1920×1080 アートボードを等倍スケール**（オーナー指示）
+- **`landing-page-scaler.tsx`**: `scale = min(vw/1920, vh/1080)`、`transform-origin: top left`、lg+ のみ
+- **キャンバス内**: 固定 px — CTA `h-[248px]`、3価値 `space-y-3.5`、注目サムネ `aspect-[16/10]`
+- **廃止**: dvh grid / fr 配分 / clamp(vh) 個別伸縮 / justify-between 散らし
 - prod deploy 禁止 / `/` 差替禁止 — 維持
 
 ---
