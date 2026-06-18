@@ -13,16 +13,26 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 
-const sidebarLinks = [
-  { href: "/", label: "ホーム" },
-  { href: "/", label: "作品を探す" },
-  { href: "/", label: "人気ランキング" },
-  { href: "/", label: "新着作品" },
-  { href: "/", label: "最近更新された作品" },
-  { href: "/", label: "ジャンル" },
+const discoverLinks = [
+  { id: "home", href: "/", label: "ホーム" },
+  { id: "search", href: "/search", label: "作品を探す" },
+  { id: "ranking", href: "/search", label: "人気ランキング" },
+  { id: "new", href: "/search", label: "新着作品" },
+  { id: "updated", href: "/search", label: "最近更新された作品" },
+  { id: "genres", href: "/search", label: "ジャンル" },
 ] as const;
 
-export function PlayerShell({ children }: { children: ReactNode }) {
+export type PlayerShellNavId = (typeof discoverLinks)[number]["id"] | "mypage" | "settings";
+
+export function PlayerShell({
+  children,
+  activeNav = "home",
+  headerSearchDefault,
+}: {
+  children: ReactNode;
+  activeNav?: PlayerShellNavId;
+  headerSearchDefault?: string;
+}) {
   return (
     <div className="flex min-h-full bg-[#0a0a0a] text-zinc-100">
       <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-800/80 bg-zinc-950 lg:flex xl:w-60">
@@ -36,22 +46,36 @@ export function PlayerShell({ children }: { children: ReactNode }) {
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">
-          {sidebarLinks.map((link) => (
+          {discoverLinks.map((link) => (
             <Link
               key={link.label}
               href={link.href}
-              className="block rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200"
+              className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
+                activeNav === link.id
+                  ? "bg-violet-600/20 font-medium text-violet-200 ring-1 ring-violet-500/30"
+                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+              }`}
             >
               {link.label}
             </Link>
           ))}
           <Link
             href="/mypage"
-            className="mt-2 block rounded-lg bg-zinc-800/80 px-3 py-2 text-sm font-medium text-white"
+            className={`mt-2 block rounded-lg px-3 py-2 text-sm transition-colors ${
+              activeNav === "mypage"
+                ? "bg-zinc-800/80 font-medium text-white"
+                : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+            }`}
           >
             マイページ
           </Link>
-          <span className="block rounded-lg px-3 py-2 text-sm text-zinc-500">設定</span>
+          <span
+            className={`block rounded-lg px-3 py-2 text-sm ${
+              activeNav === "settings" ? "font-medium text-white" : "text-zinc-500"
+            }`}
+          >
+            設定
+          </span>
         </nav>
 
         <div className="mx-3 mb-4 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
@@ -81,6 +105,7 @@ export function PlayerShell({ children }: { children: ReactNode }) {
             />
             <input
               type="search"
+              defaultValue={headerSearchDefault}
               placeholder="ゲームやジャンルを検索（例：RPG、ピクセルアート）"
               className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-500 focus:border-violet-500/40 focus:outline-none focus:ring-1 focus:ring-violet-500/30"
             />
