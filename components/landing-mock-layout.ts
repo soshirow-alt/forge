@@ -14,17 +14,19 @@ export const MOCK_CONTENT_W = 900;
 
 export const MOCK_HEADER_H = 42;
 
-export const MOCK_LOGO = { x: 62, y: 11 } as const;
-export const MOCK_LOGIN = { x: 776, y: 8, w: 74, h: 28 } as const;
-export const MOCK_SIGNUP = { x: 858, y: 8, w: 84, h: 28 } as const;
+export const MOCK_LOGO = { x: 62, y: 27 } as const;
+export const MOCK_LOGIN = { x: 776, y: 24, w: 74, h: 28 } as const;
+export const MOCK_SIGNUP = { x: 858, y: 24, w: 84, h: 28 } as const;
 
-export const MOCK_H1 = { x: 62, y: 50, size: 27, lineHeight: 32 } as const;
-export const MOCK_LEAD = { x: 62, y: 90, w: 408, size: 11, lineHeight: 17 } as const;
+/** fb505643 overlay — H1 はグラデ被りで自動検出困難、リード y=119 から逆算 */
+export const MOCK_H1 = { x: 62, y: 56, size: 27, lineHeight: 32 } as const;
+export const MOCK_LEAD = { x: 62, y: 119, w: 408, size: 11, lineHeight: 17 } as const;
 
 export const MOCK_VALUES = {
   x: 62,
-  y: 128,
+  y: 131,
   icon: 26,
+  rowH: 36,
   rowGap: 9,
   titleSize: 12,
   bodySize: 10,
@@ -32,11 +34,11 @@ export const MOCK_VALUES = {
 } as const;
 
 export const MOCK_CTA = {
-  y: 92,
+  y: 132,
   leftX: 558,
   rightX: 776,
   w: 204,
-  h: 218,
+  h: 168,
   pad: 14,
   icon: 44,
   titleSize: 14,
@@ -44,11 +46,12 @@ export const MOCK_CTA = {
   btnH: 32,
 } as const;
 
-export const MOCK_HERO_BG_H = 322;
+/** ヒーロー背景 clip = 注目セクション上端（fb505643: 322→326、タイトル帯手前） */
+export const MOCK_HERO_BG_H = 326;
 
 export const MOCK_FEATURED = {
-  y: 322,
-  titleY: 334,
+  y: 326,
+  titleY: 332,
   cardsY: 352,
   cardW: 172,
   /** モック基準 — サムネ主役（圧縮前の計測値に復帰） */

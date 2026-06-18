@@ -286,8 +286,7 @@ export function LandingPageCanvas({ className = "", hideHeroImage = false }: Lan
       </p>
 
       {valueProps.map((item, index) => {
-        const rowH = 36;
-        const y = MOCK_VALUES.y + index * (rowH + MOCK_VALUES.rowGap);
+        const y = MOCK_VALUES.y + index * (MOCK_VALUES.rowH + MOCK_VALUES.rowGap);
         return (
           <div key={item.title} className="absolute z-20 flex gap-2" style={{ left: MOCK_VALUES.x, top: y }}>
             <span
