@@ -12,6 +12,7 @@ import {
   useFeedbackFlowLock,
   type FeedbackFlowStep,
 } from "@/components/feedback-v0-modals";
+import { GameDevlogV0Tab } from "@/components/game-devlog-v0-tab";
 import { GameVoicesV0Tab } from "@/components/game-voices-v0-tab";
 import { GameThumbnail, PlayerShell } from "@/components/player-shell";
 import { getGameDetailV0 } from "@/lib/game-detail-v0-mock-data";
@@ -356,7 +357,13 @@ function GameDetailV0PageContent({ id }: { id: string }) {
             </div>
           )}
 
-          {activeTab === "devlog" && <TabStub label="開発ログ" />}
+          {activeTab === "devlog" && (
+            <GameDevlogV0Tab
+              gameId={game.id}
+              gameTitle={game.title}
+              onPlayLatest={() => setFeedbackStep("play-stub")}
+            />
+          )}
           {activeTab === "voices" && (
             <GameVoicesV0Tab
               gameId={game.id}
