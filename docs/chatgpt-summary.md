@@ -1,69 +1,56 @@
 ■ 現在の状態
-- preview/landing-01、P-19 フィードバック v0 モーダル実装完了（tsc OK）
-- push 実施予定（本タスク）
-- P-06 オーナー OK 済。P-19 は P-06 上のモーダル群（Player Shell 未変更）
+- preview/landing-01、P-06「みんなの声」タブ v0 mock 実装完了（tsc OK）
+- push 実施予定（RUN）
+- 添付は Studio P-23 参考 → プレイヤー向け P-06 タブに適応（開発者専用 CTA 除外）
 
 ■ Forge原典コアループ（判断の基準）
 - 発見 → 詳細 → プレイ → 声 → 変化 → 再プレイ
-- 今回は「プレイ → 声を届ける」の preview 体験を v0 モーダルで試作
+- 今回は詳細上で「他者の声・集計」を見せ、FB 送信（P-19）への動機を補強
 
 ■ 今回実装したこと
-- components/feedback-v0-modals.tsx（新規）
-  - PlayStubV0Modal — プレイ開始 stub
-  - FirstVoiceV0Modal — 初声（1問・5択 + クイック送信 / 詳しく / あとで）
-  - FeedbackFormV0Modal — 深いFB（Q1–Q2 必須5択+理由、Q3–Q4 任意テキスト、右文脈サイド）
-  - FeedbackSuccessV0Modal — 送信完了 → FB履歴リンク
-- lib/feedback-v0-mock-data.ts — 質問定義（モック08準拠）
-- game-detail-v0-page.tsx — フロー接続
-  - 「プレイする」→ play-stub → first-voice → success or full-form
-  - 「声を届ける（フィードバック）」→ full-form 直接
-  - body scroll lock（モーダル表示中）
+- components/game-voices-v0-tab.tsx（新規）
+  - 月次 stats 4枚（届いた声 / 共感 / 質問回答 / 自由記述）
+  - サブタブ: 届いた声（5件 mock）/ 質問別集計 / 自由記述集約（stub）
+  - フィルタ: すべて・自由記述・質問への回答
+  - 声カード: 種別バッジ・本文・タグ・共感トグル（mock）
+  - 右カラム: 今月の要約・質問別棒グラフ・声を届ける CTA
+- lib/game-voices-v0-mock-data.ts — mock データ
+- game-detail-v0-page.tsx — voices タブ差し替え、voices 時は右サイド（開発者/関連）非表示
 
 ■ 今回変更した画面
-- P-06 ゲーム詳細 /games/[id] + P-19 モーダル（オーバーレイ）
-  - 画面位置: Player Shell 内詳細の上に z-50 モーダル。サイドバー・トップバーはそのまま
-  - 変更前: CTA・プレイはすべて stub（クリック無反応）
-  - 変更後: プレイ→初声→深いFB→成功の4段階 mock フロー
-  - 確認手順: /games/seikat-no-tabiji → プレイする → stub → 初声 → 送信 or もっと詳しく → 成功
-  - 別導線: 概要タブ「声を届ける」→ フルフォーム直接
+- P-06 /games/[id] — 「みんなの声」タブ
+  - 画面位置: 詳細タブ4種の3番目。Player Shell 内、Hero/CTA の下
+  - 変更前: stub 1行
+  - 変更後: stats + リスト + 右要約（添付モック準拠・プレイヤー向け）
+  - 確認: /games/seikat-no-tabiji → みんなの声タブ → フィルタ・共感・声を届ける
+  - 触っていない: Player Shell、他3タブ（概要は既存、devlog/版は stub）
 
 ■ ユーザー目線の変化
-- preview 上で「プレイしたあとに声を届ける」体験が一通り試せる
-- 送信後は /mypage?tab=feedback へ誘導（mock 送信、DB 未連携）
+- FB 送信後・詳細上でコミュニティの声と傾向が見える
+- 共感ボタンでインタラクション mock（DB 未連携）
 
 ■ なぜこの設計
-- 全画面08ではなくモーダル — 遷移図点線・P-06 上に載せる試作。Shell を変えない
-- 初声と深いFBを分離 — 原典「プレイ直後は短い返答優先、深い材料は任意」
-- mock 送信 — 写経フェーズ。旧 GameVoiceSection 統合は別 GO
+- Studio P-23 モックをプレイヤー P-06 に適応 — 「開発に役立った」は開発者専用のため除外
+- voices タブ時に右サイド入替 — 要約・集計をモックどおり右に、二重サイドバー回避
+- mock のみ — 旧 EveryonesVoiceSection / Supabase 集計は別 GO
 
 ■ 他案不採用
-- /games/[id]/feedback 独立 URL — 今回は P-06 上モーダルに集中
-- 旧 PostPlayVoiceOverlay 流用 — v0 紫テイストで新規
-- Supabase submitVoiceResponses 接続 — preview mock スコープ外
+- Studio Shell で P-23 独立 URL — 今回スコープは P-06 タブ
+- 開発者 stats（開発に役立った 27件）をプレイヤーに表示 — 原典上 NG
 
 ■ In / Out
-- In: 4モーダル、質問 mock、P-06 フロー接続
-- Out: 実プレイ URL、認証ゲート、DB 保存、Devlog タブ、旧 voice 統合
+- In: みんなの声タブ UI、mock、P-19 CTA 接続
+- Out: 自由記述集約タブ中身、DB、Studio P-23 独立画面
 
-■ リスク
-- 未ログインでもモーダル開く — 本番 GO 時は login 必須に要変更
-- 送信は UI のみ — 成功画面は mock
-
-■ Preview URL
-- https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app/games/seikat-no-tabiji
+■ Preview URL（push 後）
+- https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app/games/seikat-no-tabiji（みんなの声タブ）
 
 ■ 今すぐ私がやるべきこと
-- Preview でプレイ→初声→深いFB フロー目視
-- OK なら P-06「みんなの声」タブ mock or P-18 通知 GO
-
-■ Cursorだけで完了できること
-- ログイン必須ガード（/login へ）
-- 旧 voice API との統合
-- Devlog / みんなの声タブ mock
+- Preview 目視（stats・リスト・右要約・声を届ける）
 
 ■ 次に検討すべきこと
-- mock 送信 → Supabase 連携タイミング
-- 初声のみで閉じた場合の見届け UX
+- P-18 通知 + Shell 🔔
+- P-06 開発ログ / 版の履歴タブ mock
 
 ■ ChatGPTに相談したい論点
-- 初声送信後に深いFBを促すタイミング（即 vs あとで）
+- P-06 みんなの声 vs Studio P-23 の情報開示境界（プレイヤーに見せる集計の上限）

@@ -11,6 +11,7 @@ import {
   useFeedbackFlowLock,
   type FeedbackFlowStep,
 } from "@/components/feedback-v0-modals";
+import { GameVoicesV0Tab } from "@/components/game-voices-v0-tab";
 import { GameThumbnail, PlayerShell } from "@/components/player-shell";
 import { getGameDetailV0 } from "@/lib/game-detail-v0-mock-data";
 import {
@@ -328,10 +329,13 @@ export function GameDetailV0Page({ id }: { id: string }) {
           )}
 
           {activeTab === "devlog" && <TabStub label="開発ログ" />}
-          {activeTab === "voices" && <TabStub label="みんなの声" />}
+          {activeTab === "voices" && (
+            <GameVoicesV0Tab onSendVoice={() => setFeedbackStep("full-form")} />
+          )}
           {activeTab === "versions" && <TabStub label="版の履歴" />}
         </div>
 
+        {activeTab !== "voices" && (
         <aside className="w-full shrink-0 space-y-5 xl:w-72">
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
             <div className="flex items-center gap-3">
@@ -413,6 +417,7 @@ export function GameDetailV0Page({ id }: { id: string }) {
             </Link>
           </section>
         </aside>
+        )}
       </div>
     </PlayerShell>
   );
