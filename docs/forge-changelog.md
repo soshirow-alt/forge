@@ -4,12 +4,11 @@
 
 ---
 
-## 2026-06-15 01 ランディング — 固定キャンバス + 全体スケール（preview）
+## 2026-06-15 01 ランディング — 実コンテンツ高アートボード（preview v3）
 
-- **方針転換**: 「100dvh で埋める」→ **1920×1080 アートボードを等倍スケール**（オーナー指示）
-- **`landing-page-scaler.tsx`**: `scale = min(vw/1920, vh/1080)`、`transform-origin: top left`、lg+ のみ
-- **キャンバス内**: 固定 px — CTA `h-[248px]`、3価値 `space-y-3.5`、注目サムネ `aspect-[16/10]`
-- **廃止**: dvh grid / fr 配分 / clamp(vh) 個別伸縮 / justify-between 散らし
+- **修正**: 1080px / Hero 548px 固定を廃止 — **実コンテンツ高**のみ scale 対象
+- **scaler**: ResizeObserver でキャンバス `offsetHeight` 計測 → `scale = min(vw/1920, vh/実高)`
+- **余白**: キャンバス内の空き箱なし。viewport 外側（下）に出る
 - prod deploy 禁止 / `/` 差替禁止 — 維持
 
 ---

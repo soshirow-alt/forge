@@ -114,7 +114,7 @@ function PlayerCtaCard() {
   return (
     <div className="flex h-[248px] flex-col rounded-lg border border-violet-500/30 bg-[#14141c]/85 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm">
       <p className="text-[10px] font-medium text-violet-300/90">プレイヤーのあなたへ</p>
-      <div className="flex flex-1 flex-col items-center justify-center py-2">
+      <div className="flex flex-col items-center py-3">
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-violet-500/25 text-xl ring-1 ring-violet-400/35">
           🎮
         </span>
@@ -145,7 +145,7 @@ function DeveloperCtaCard() {
   return (
     <div className="flex h-[248px] flex-col rounded-lg border border-emerald-500/30 bg-[#14141c]/85 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm">
       <p className="text-[10px] font-medium text-emerald-300/90">開発者のあなたへ</p>
-      <div className="flex flex-1 flex-col items-center justify-center py-2">
+      <div className="flex flex-col items-center py-3">
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/25 text-xl ring-1 ring-emerald-400/35">
           🔧
         </span>
@@ -172,11 +172,11 @@ function DeveloperCtaCard() {
   );
 }
 
-/** 1920×1080 固定キャンバス — モック密度・比率を px で固定 */
+/** 1920 幅・実コンテンツ高さ — モック密度を px で固定 */
 function LandingPageCanvas({ className = "" }: { className?: string }) {
   return (
-    <div className={`relative h-[1080px] w-[1920px] overflow-hidden bg-[#0a0a0f] text-zinc-100 ${className}`}>
-      <section className="relative h-[548px]">
+    <div className={`relative w-[1920px] bg-[#0a0a0f] text-zinc-100 ${className}`}>
+      <section className="relative">
         <Image
           src="/images/landing-hero-bg.png"
           alt=""
@@ -209,7 +209,7 @@ function LandingPageCanvas({ className = "" }: { className?: string }) {
           </div>
         </header>
 
-        <div className="relative z-10 mx-auto w-[1120px] pt-6">
+        <div className="relative z-10 mx-auto w-[1120px] pb-7 pt-6">
           <h1 className="text-[34px] font-bold leading-[1.12] tracking-tight">
             ゲームを、
             <span className="bg-gradient-to-r from-[#c084fc] via-[#e879f9] to-[#f472b6] bg-clip-text text-transparent">
@@ -249,7 +249,7 @@ function LandingPageCanvas({ className = "" }: { className?: string }) {
         </div>
       </section>
 
-      <section className="border-t border-zinc-800/50 bg-[#0a0a0f] px-[400px] py-5">
+      <section className="border-t border-zinc-800/50 bg-[#0a0a0f] py-5">
         <div className="mx-auto w-[1120px]">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-[13px] font-bold text-white">注目の開発中ゲーム</h2>
@@ -265,8 +265,8 @@ function LandingPageCanvas({ className = "" }: { className?: string }) {
         </div>
       </section>
 
-      <section className="border-y border-zinc-800/60 bg-[#0d0d12] px-[400px]">
-        <div className="mx-auto flex h-[52px] w-[1120px] items-center justify-between gap-4">
+      <section className="border-y border-zinc-800/60 bg-[#0d0d12] py-3">
+        <div className="mx-auto flex w-[1120px] items-center justify-between gap-4">
           <div className="min-w-0">
             <h2 className="text-[11px] font-semibold text-white">Forge からのお知らせ</h2>
             <p className="mt-0.5 truncate text-[11px] text-zinc-500">
@@ -277,7 +277,7 @@ function LandingPageCanvas({ className = "" }: { className?: string }) {
         </div>
       </section>
 
-      <footer className="bg-[#0a0a0f] px-[400px] py-3">
+      <footer className="bg-[#0a0a0f] py-3">
         <div className="mx-auto flex w-[1120px] items-center justify-end gap-5">
           <nav className="flex flex-wrap gap-x-3.5 gap-y-1 text-[10px] text-zinc-600">
             <span>利用規約</span>
