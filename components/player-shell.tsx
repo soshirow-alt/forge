@@ -22,16 +22,22 @@ const discoverLinks = [
   { id: "genres", href: "/search", label: "ジャンル" },
 ] as const;
 
-export type PlayerShellNavId = (typeof discoverLinks)[number]["id"] | "mypage" | "settings";
+export type PlayerShellNavId =
+  | (typeof discoverLinks)[number]["id"]
+  | "mypage"
+  | "notifications"
+  | "settings";
 
 export function PlayerShell({
   children,
   activeNav = "home",
   headerSearchDefault,
+  notificationBadge = 4,
 }: {
   children: ReactNode;
   activeNav?: PlayerShellNavId;
   headerSearchDefault?: string;
+  notificationBadge?: number;
 }) {
   return (
     <div className="flex min-h-full bg-[#0a0a0a] text-zinc-100">
@@ -68,6 +74,21 @@ export function PlayerShell({
             }`}
           >
             マイページ
+          </Link>
+          <Link
+            href="/notifications"
+            className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors ${
+              activeNav === "notifications"
+                ? "bg-violet-600/20 font-medium text-violet-200 ring-1 ring-violet-500/30"
+                : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+            }`}
+          >
+            通知一覧
+            {notificationBadge > 0 && (
+              <span className="flex size-5 items-center justify-center rounded-full bg-violet-600 text-[10px] font-bold text-white">
+                {notificationBadge > 9 ? "9+" : notificationBadge}
+              </span>
+            )}
           </Link>
           <span
             className={`block rounded-lg px-3 py-2 text-sm ${
@@ -110,16 +131,18 @@ export function PlayerShell({
               className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-500 focus:border-violet-500/40 focus:outline-none focus:ring-1 focus:ring-violet-500/30"
             />
           </div>
-          <button
-            type="button"
+          <Link
+            href="/notifications"
             className="relative rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
             aria-label="通知"
           >
             <Bell className="size-5" />
-            <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-              3
-            </span>
-          </button>
+            {notificationBadge > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                {notificationBadge > 9 ? "9+" : notificationBadge}
+              </span>
+            )}
+          </Link>
           <button
             type="button"
             className="rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
