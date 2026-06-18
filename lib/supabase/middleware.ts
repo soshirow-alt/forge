@@ -4,7 +4,6 @@ import { NextResponse, type NextRequest } from "next/server";
 const PROTECTED_PREFIXES = [
   "/submit",
   "/my-projects",
-  "/mypage",
   "/notifications",
   "/bookmarks",
   "/projects/",

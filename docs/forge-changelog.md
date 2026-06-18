@@ -4,7 +4,40 @@
 
 ---
 
-## 2026-06-18 06 ランディング — H1「場所」改行修正（preview）
+## 2026-06-18 10 v0 写経 — login / register / mypage（preview）
+
+- `/login` — v0 Auth Shell 2カラム（P-02）。OAuth UI のみ（stub）
+- `/register` — 新規ルート（P-03）。`/login?mode=signup` → リダイレクト
+- `/mypage` — Player Shell + 横タブ6種（P-16）。見届け中・保存作品は v0 mock。他4タブは空状態
+- `?tab=saved` 等 — 初回レンダーから URL 同期
+- middleware — `/mypage` 保護解除（UI preview 用）
+- prod・`/`・LP 未触。DB 変更なし
+
+---
+
+## 2026-06-18 09 v0 Publish — マイページ「保存作品」タブ確認
+
+- v0 `/mypage` — タブ「保存作品」クリックで P-16-T02 専用 UI（H1・5 作品カード・保存中バッジ）に切替
+- 直 URL `?tab=saved` は初回表示が見届け中のまま（v0 モック制約）。Forge 実装時は初回からタブ同期を正しく行う
+- コード変更なし（v0 参照確認のみ）
+
+---
+
+## 2026-06-18 08 画面設計正本 — forge-screen-definition.md 新規
+
+- `docs/forge-screen-definition.md` — 画面・機能の唯一正本（目的・コアループ・遷移・v0/Cursor 基準）
+- C-01〜07（Shell/Modal/Drawer）、P-01〜27、P-16 タブ、旧番号対照表
+- inventory / SCREEN-NUMBER-MAP は参考扱いに格下げ
+
+---
+
+- オーナー共有: `docs/forge-roadmap-2026-06-canonical.md`（Phase0–8 工程モデル）
+- 主戦場を **Phase2 UX 設計** に。画面番号順ではなくコアループ順
+- 正式フロー: ChatGPT → UX → v0 → Cursor。UX 確定前に実装を進めない
+- 01 LP — **オーナー OK**（v0 正本、overlay 終了）
+- 次優先: プレイヤー初回体験（LP→発見→詳細→プレイ→声→変化→再プレイ）
+
+---
 
 - オーナー目視: LP 全体は好評。「場所」の「所」だけ次行に落ちる改行を修正
 - `場所。` に whitespace-nowrap

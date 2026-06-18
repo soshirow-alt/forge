@@ -3,12 +3,16 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
+import {
+  AuthPageShell,
+  OAuthButtons,
+  OAuthDivider,
+  PasswordInput,
+  authInputClassName,
+} from "@/components/auth-layout";
 import { useAuth } from "@/components/auth-provider";
 import { getAuthErrorMessage } from "@/lib/auth";
 import { resolvePostLoginPath } from "@/lib/login-return-url";
-
-const inputClassName =
-  "mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
 
 export function LoginPage({
   supabaseConfigured,
@@ -17,18 +21,21 @@ export function LoginPage({
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
   const returnParam = searchParams.get("return");
   const callbackError = searchParams.get("error");
 
-  const { user, hydrated, signIn, signUp } = useAuth();
-  const [mode, setMode] = useState<"login" | "signup">(initialMode);
+  const { user, hydrated, signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const [stubMessage, setStubMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("mode") === "signup") {
+      router.replace("/register");
+    }
+  }, [searchParams, router]);
 
   useEffect(() => {
     if (callbackError === "auth_callback") {
@@ -47,85 +54,36 @@ export function LoginPage({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setMessage(null);
+    setStubMessage(null);
     setSubmitting(true);
 
-    if (mode === "login") {
-      try {
-        await signIn(email, password);
-      } catch (caught) {
-        const authError = caught as { message?: string };
-        setError(getAuthErrorMessage(authError.message ?? "認証に失敗しました。"));
-        setSubmitting(false);
-        return;
-      }
-
-      window.location.href = resolvePostLoginPath(returnParam);
-      return;
-    }
-
     try {
-      const hasSession = await signUp(email, password, displayName);
-
-      if (hasSession) {
-        window.location.href = resolvePostLoginPath(returnParam);
-        return;
-      }
-
-      const params = new URLSearchParams({ email });
-      router.push(`/auth/verify-email?${params.toString()}`);
+      await signIn(email, password);
+      window.location.href = resolvePostLoginPath(returnParam);
     } catch (caught) {
       const authError = caught as { message?: string };
       setError(getAuthErrorMessage(authError.message ?? "認証に失敗しました。"));
-    } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-zinc-950 text-zinc-100">
-      <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-6 py-16">
-        <div className="text-center">
-          <Link href="/" className="inline-block text-3xl font-bold tracking-tight">
-            <span className="bg-gradient-to-r from-orange-400 to-amber-500 bg-clip-text text-transparent">
-              Forge
-            </span>
-          </Link>
-          <h1 className="mt-8 text-2xl font-bold tracking-tight">
-            {mode === "login" ? "ログイン" : "新規登録"}
-          </h1>
-          <p className="mt-2 text-sm text-zinc-500">
-            {mode === "login"
-              ? "メールアドレスとパスワードでログインしてください。"
-              : "メールアドレスとパスワードでアカウントを作成してください。"}
-          </p>
-        </div>
+    <AuthPageShell active="login">
+      <div className="mx-auto w-full max-w-md">
+        <h1 className="text-3xl font-bold tracking-tight text-white">ログイン</h1>
+        <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+          あなたのアカウントにログインして、
+          <br />
+          ゲームの世界を広げましょう。
+        </p>
 
         {!supabaseConfigured && (
-          <div className="mt-8 rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+          <div className="mt-6 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
             Supabaseの環境変数が設定されていません。
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="mt-10 space-y-4">
-          {mode === "signup" && (
-            <div>
-              <label htmlFor="displayName" className="text-sm font-medium text-zinc-400">
-                ニックネーム
-              </label>
-              <input
-                id="displayName"
-                type="text"
-                required
-                value={displayName}
-                onChange={(event) => setDisplayName(event.target.value)}
-                className={inputClassName}
-                placeholder="ニックネーム"
-              />
-              <p className="mt-2 text-sm text-zinc-500">サイト内で表示される名前</p>
-            </div>
-          )}
-
+        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
           <div>
             <label htmlFor="email" className="text-sm font-medium text-zinc-400">
               メールアドレス
@@ -137,8 +95,8 @@ export function LoginPage({
               autoComplete="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className={inputClassName}
-              placeholder="you@example.com"
+              className={authInputClassName}
+              placeholder="メールアドレス"
             />
           </div>
 
@@ -146,86 +104,54 @@ export function LoginPage({
             <label htmlFor="password" className="text-sm font-medium text-zinc-400">
               パスワード
             </label>
-            <input
+            <PasswordInput
               id="password"
-              type="password"
-              required
-              minLength={6}
-              autoComplete={mode === "login" ? "current-password" : "new-password"}
-              enterKeyHint="go"
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key !== "Enter" || event.nativeEvent.isComposing) {
-                  return;
-                }
-                event.preventDefault();
-                event.currentTarget.form?.requestSubmit();
-              }}
-              className={inputClassName}
-              placeholder="6文字以上"
+              onChange={setPassword}
+              placeholder="パスワード"
+              autoComplete="current-password"
+              minLength={6}
             />
           </div>
 
+          <div className="text-right">
+            <span className="text-sm text-violet-400">パスワードをお忘れの方</span>
+          </div>
+
           {error && (
-            <div className="rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+            <div className="rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
               {error}
             </div>
           )}
 
-          {message && (
-            <div className="rounded-lg border border-orange-500/30 bg-orange-500/10 px-4 py-3 text-sm text-orange-300">
-              {message}
+          {stubMessage && (
+            <div className="rounded-xl border border-zinc-700 bg-zinc-900/80 px-4 py-3 text-sm text-zinc-300">
+              {stubMessage}
             </div>
           )}
 
           <button
             type="submit"
             disabled={submitting || !supabaseConfigured}
-            className="w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-4 text-base font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-violet-500/20 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {submitting
-              ? "処理中..."
-              : mode === "login"
-                ? "ログイン"
-                : "アカウントを作成"}
+            {submitting ? "処理中..." : "ログイン"}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-zinc-500">
-          {mode === "login" ? (
-            <>
-              アカウントをお持ちでない方は{" "}
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("signup");
-                  setError(null);
-                  setMessage(null);
-                }}
-                className="font-medium text-orange-400 transition-colors hover:text-orange-300"
-              >
-                新規登録
-              </button>
-            </>
-          ) : (
-            <>
-              既にアカウントをお持ちの方は{" "}
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("login");
-                  setError(null);
-                  setMessage(null);
-                }}
-                className="font-medium text-orange-400 transition-colors hover:text-orange-300"
-              >
-                ログイン
-              </button>
-            </>
-          )}
+        <OAuthDivider />
+        <OAuthButtons
+          mode="login"
+          onStub={(label) => setStubMessage(`${label}は準備中です。`)}
+        />
+
+        <p className="mt-8 text-center text-sm text-zinc-500">
+          アカウントをお持ちでない方は{" "}
+          <Link href="/register" className="font-medium text-violet-400 hover:text-violet-300">
+            新規登録
+          </Link>
         </p>
-      </main>
-    </div>
+      </div>
+    </AuthPageShell>
   );
 }
