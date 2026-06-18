@@ -15,7 +15,7 @@
 - migration **014** — staging + 本番適用済み
 - **将来像デモ F1** — staging seed + verify 13/13 PASS
 - PLAYER_VISIBLE=false 維持
-- **01 ランディング preview** — ブランチ `preview/landing-01` — **1920×1080 キャンバス + 全体 scale**（dvh/fr 方式は廃止）/ prod 未触
+- **01 ランディング preview** — ブランチ `preview/landing-01` — **v0 正本写経済**（responsive LP / overlay 廃止）/ prod・`/` 未触
 - **待ちモック** — **21** 分析ダッシュボード / **24** 開発ログ公開 / **25** 作品設定 / **17** プレイヤー個人設定（受領 `17-settings.md` は Studio シェル）
 - **画面一覧 2026-06 最終版** — `docs/forge-screen-inventory.md`（Studio 階層・番号再編の正本）
 - **モック↔番号** — `docs/ui-mocks/SCREEN-NUMBER-MAP.md`

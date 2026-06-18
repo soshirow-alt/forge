@@ -5,10 +5,10 @@
 **URL（正式・将来）**: `/` — 未ログイン → 01 LP / ログイン済 → 04 発見（**Phase1-B または Walkthrough 後 GO**）  
 **画像（モック）**: `assets/c__Users_soshi_...-fb505643....png`  
 **受領**: 2026-06-16  
-**実装**: `components/landing-page.tsx` + `landing-mock-layout.ts` — **preview のみ**。prod deploy 禁止継続  
-**基準画像**: `public/images/landing-mock-reference.jpg` — **正本 fb505643（1024×819）**  
-**非正本**: 55022e3e（1024×496）は使用しない  
-**オーバーレイ**: `/landing/overlay`
+**実装**: `components/landing-page.tsx` — **v0 正本写経・responsive**（preview のみ）。prod deploy 禁止継続  
+**基準 URL**: https://landing-page-recreation-psi.vercel.app/  
+**旧実装（廃止）**: `landing-mock-layout.ts` / canvas / scaler / overlay 座標合わせ  
+**オーバーレイ**: `/landing/overlay` — **終了**（案内ページのみ）
 
 ---
 
@@ -40,16 +40,15 @@
 - **テーマ**: ダーク。背景はファンタジーイラスト（ランtern・城・三日月）
 - **アクセント**: 紫（プレイヤー）/ 緑（開発者）/ 青（登録ボタン）
 
-### PC レイアウト方針（2026-06-18 — 模写再実装）
+### PC レイアウト方針（2026-06-18 — 方針転換）
 
-**ゴール**: 添付モックの模写（微調整ではなくオーバーレイ計測ベース）
+**中止**: overlay 座標合わせ・ピクセル一致（Hero y / カード 118px 等の数値一致）
 
-- **基準**: 正本 fb505643 **1024×819**（55022e3e 496 は非正本）
-- **配置**: `landing-mock-layout.ts` — 座標合わせ中（Hero → … → FT の順）
-- **scale**: `min(vw/1024, vh/実装高)` 均一拡大
-- **作品カード**: **118px 高** — 現状維持（正本 ~122px と同オーダー）
-- **実装アートボード**: 現状 **558px**（Hero/news 等未調整）
-- **overlay**: `/landing/overlay` — 正本 819 vs 実装、上端揃え
+**新ベースライン**: v0 案 — Publish URL: **https://landing-page-recreation-psi.vercel.app/**（v0 chat: landing-page-recreation-oQNL617pobI）
+
+**ゴール**: ユーザーが見たときの**印象再現**（Hero 迫力 / CTA 存在感 / 余白 / 発見体験 / LP 完成度）
+
+**旧方針（参考・凍結）**: fb505643 overlay 模写 — `landing-mock-layout.ts` 座標合わせ
 
 ---
 

@@ -4,11 +4,46 @@
 
 ---
 
-## 2026-06-18 01 ランディング — Hero 座標 overlay 合わせ（preview）
+## 2026-06-18 04 ランディング — v0 正本ベース再実装（preview）
+
+- canvas / scaler / mock-layout / overlay-tool **削除**
+- `components/landing-page.tsx` を v0 Publish 写経（responsive・自然スクロール・白 primary CTA）
+- アセット: `public/images/landing/hero-bg.png`, `game-1`〜`5.png`
+- `/landing/overlay` → 終了案内ページ
+- 依存: `lucide-react` 追加
+- prod / `/` 未触
+
+---
+
+- v0 正本 URL 確定: https://landing-page-recreation-psi.vercel.app/
+- 現行 `/landing`（canvas+scaler）との**実測差分**を 5 評価軸で整理（実装は未着手）
+- 主な差: max-w-1320 responsive / Hero 724px / H1 48px / CTA 2 枚大型 / ゲーム PNG+hover / お知らせ card 化
+
+---
+
+- overlay・座標一致・ピクセル一致作業を**中止**
+- 新ベースライン: v0 案（landing-page-recreation-oQNL617pobI）。評価は Hero 迫力 / CTA 存在感 / 余白 / 発見体験 / LP 完成度
+- 現状 LP（1024px 絶対配置 artboard）は**印象再現向きではない** — 実装前に再設計方針を整理（コード変更は次タスク）
+- `docs/ui-mocks/01-landing.md` を v0 基準の記述に更新
+
+---
+
+## 2026-06-18 01 ランディング — Hero overlay 目視合わせ（preview・ローカル）
+
+- **STOP 対応**: commit 21ffd13 のピクセルスキャン Hero 座標は**不採用・差し戻し**
+- 合格基準: `/landing/overlay` 重ね表示で人が「ほぼ重なっている」と言えること（数値一致は不要）
+- Hero のみ overlay を見ながら Y 調整（CTA **h=218 維持**）。作品カード・お知らせ・フッターは**未変更**
+- 比較スクショ: `docs/overlay-screenshots/hero-before-overlay-clip.png` / `hero-after-overlay-full.png`
+- **push 未実施** — オーナー overlay 目視後
+
+---
+
+## 2026-06-18 01 ランディング — Hero 座標 overlay 合わせ（preview）【不採用】
 
 - fb505643 819 上で Hero 要素をピクセルスキャン
 - ロゴ/リード/3価値/CTA/Hero 下端を更新 — CTA h 218→168、Hero 下端 322→326
 - カード 118px 維持
+- **オーナー STOP — 採用しない**
 
 ---
 
