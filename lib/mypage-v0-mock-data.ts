@@ -281,3 +281,409 @@ export const supportedCreators = [
   { name: "Pixel Knights", initial: "P" },
   { name: "Sky Pirate", initial: "S" },
 ] as const;
+
+// --- FB履歴 ---
+
+export const FEEDBACK_HISTORY_TOTAL = 28;
+
+export const feedbackFilterTabs = [
+  { id: "all", label: "すべて", count: 28 },
+  { id: "free", label: "自由記述", count: 12 },
+  { id: "choice", label: "選択式", count: 16 },
+] as const;
+
+export type FeedbackEntry = {
+  id: string;
+  game: string;
+  version: string;
+  image: string;
+  timestamp: string;
+  type: "free" | "choice";
+  content?: string;
+  choices?: { question: string; answer: string }[];
+  empathyCount?: number;
+  reflected?: { version: string; note: string };
+};
+
+export const feedbackEntries: FeedbackEntry[] = [
+  {
+    id: "fb-1",
+    game: "星灯の旅路",
+    version: "v0.4.0",
+    image: "/images/landing/game-1.png",
+    timestamp: "2025/05/18 22:34",
+    type: "free",
+    content:
+      "マップのワープポイントが分かりにくかったです。序盤で一度迷子になりました。標識かミニマップの強調があると助かります。",
+    empathyCount: 8,
+    reflected: {
+      version: "v0.4.0",
+      note: "チュートリアルにワープの説明を追加しました。",
+    },
+  },
+  {
+    id: "fb-2",
+    game: "星灯の旅路",
+    version: "v0.3.1",
+    image: "/images/landing/game-1.png",
+    timestamp: "2025/05/10 19:12",
+    type: "choice",
+    choices: [
+      { question: "もう一度遊びたい？", answer: "遊びたい" },
+      { question: "難易度は？", answer: "やや難しい" },
+    ],
+  },
+  {
+    id: "fb-3",
+    game: "炉心の残光",
+    version: "v0.3.2",
+    image: "/images/landing/game-2.png",
+    timestamp: "2025/05/14 21:05",
+    type: "free",
+    content:
+      "ストーリーのテンポが良く、最後まで一気に読めました。BGMとの相性も素晴らしいです。",
+    empathyCount: 12,
+    reflected: {
+      version: "v0.3.2",
+      note: "エンディングシーンの演出を調整しました。",
+    },
+  },
+  {
+    id: "fb-4",
+    game: "夏の向こう側",
+    version: "v0.2.4",
+    image: "/images/landing/game-4.png",
+    timestamp: "2025/05/17 18:40",
+    type: "choice",
+    choices: [
+      { question: "印象に残った場面は？", answer: "夕暮れの浜辺" },
+      { question: "もう一度遊びたい？", answer: "ぜひ遊びたい" },
+    ],
+    empathyCount: 5,
+  },
+  {
+    id: "fb-5",
+    game: "空島パイオニア",
+    version: "v0.2.1",
+    image: "/images/landing/game-3.png",
+    timestamp: "2025/05/05 14:22",
+    type: "free",
+    content: "クラフトのレシピ一覧が見づらい。カテゴリ分けがあると探しやすそう。",
+    empathyCount: 3,
+  },
+  {
+    id: "fb-6",
+    game: "深淵ノート",
+    version: "v0.5.0",
+    image: "/images/landing/game-5.png",
+    timestamp: "2025/05/12 23:18",
+    type: "choice",
+    choices: [
+      { question: "ボス戦の難易度は？", answer: "かなり難しい" },
+      { question: "再挑戦したい？", answer: "したい" },
+    ],
+  },
+  {
+    id: "fb-7",
+    game: "森の中の小さな工房",
+    version: "v0.1.5",
+    image: "/images/landing/game-5.png",
+    timestamp: "2025/05/02 16:55",
+    type: "free",
+    content: "作業の手触りが気持ちいい。もう少し家具のバリエーションがあると嬉しい。",
+    empathyCount: 6,
+    reflected: {
+      version: "v0.1.5",
+      note: "新しい家具パーツを3種追加しました。",
+    },
+  },
+  {
+    id: "fb-8",
+    game: "喫茶ケットシー",
+    version: "v0.1.0",
+    image: "/images/landing/game-4.png",
+    timestamp: "2025/05/11 12:30",
+    type: "free",
+    content: "癒し系として最高。猫の動きがかわいくてずっと見ていられる。",
+    empathyCount: 15,
+  },
+];
+
+export const feedbackSidebarFilters = [
+  "作品",
+  "バージョン",
+  "フィードバックの種類",
+  "ステータス",
+  "期間",
+] as const;
+
+export const feedbackStats = [
+  { label: "送信したフィードバック", value: "28件" },
+  { label: "もらった共感", value: "56人" },
+  { label: "改善に反映された", value: "5件" },
+  { label: "返信・反応があった", value: "3件" },
+] as const;
+
+// --- 実績 ---
+
+export const achievementProgress = { earned: 12, total: 48, percent: 25 };
+
+export const achievementCategories = [
+  "すべて",
+  "見届ける",
+  "声を届ける",
+  "つながる",
+  "その他",
+] as const;
+
+export type AchievementItem = {
+  id: string;
+  title: string;
+  description: string;
+  emoji: string;
+  earned: boolean;
+  earnedDate?: string;
+  progress?: { current: number; target: number; unit: string };
+  category: string;
+};
+
+export const recentAchievements: AchievementItem[] = [
+  {
+    id: "a1",
+    title: "初めての声",
+    description: "初めてフィードバックを送信した",
+    emoji: "🌱",
+    earned: true,
+    earnedDate: "2025/05/18",
+    category: "声を届ける",
+  },
+  {
+    id: "a2",
+    title: "共感の輪",
+    description: "フィードバックに10いいねをもらった",
+    emoji: "💜",
+    earned: true,
+    earnedDate: "2025/05/16",
+    category: "つながる",
+  },
+  {
+    id: "a3",
+    title: "見届け人",
+    description: "初めて作品を見届けた",
+    emoji: "👁",
+    earned: true,
+    earnedDate: "2025/05/14",
+    category: "見届ける",
+  },
+  {
+    id: "a4",
+    title: "変化の証人",
+    description: "同じ作品を5回以上プレイした",
+    emoji: "✨",
+    earned: true,
+    earnedDate: "2025/05/12",
+    category: "見届ける",
+  },
+  {
+    id: "a5",
+    title: "応援の始まり",
+    description: "初めて開発者をフォローした",
+    emoji: "📣",
+    earned: true,
+    earnedDate: "2025/05/08",
+    category: "つながる",
+  },
+];
+
+export const allAchievements: AchievementItem[] = [
+  ...recentAchievements,
+  {
+    id: "a6",
+    title: "初版見届け人",
+    description: "v0.1から作品を見届けた",
+    emoji: "🏁",
+    earned: true,
+    earnedDate: "2025/05/10",
+    category: "見届ける",
+  },
+  {
+    id: "a7",
+    title: "育てた人",
+    description: "フィードバックが改善に反映された",
+    emoji: "🌿",
+    earned: true,
+    earnedDate: "2025/05/06",
+    category: "声を届ける",
+  },
+  {
+    id: "a8",
+    title: "応援団",
+    description: "3人以上の開発者をフォローした",
+    emoji: "🎺",
+    earned: true,
+    earnedDate: "2025/05/04",
+    category: "つながる",
+  },
+  {
+    id: "a9",
+    title: "長期の伴走者",
+    description: "同じ作品を3ヶ月見届けた",
+    emoji: "🗓",
+    earned: false,
+    progress: { current: 2, target: 3, unit: "ヶ月" },
+    category: "見届ける",
+  },
+  {
+    id: "a10",
+    title: "信頼の声",
+    description: "「参考になった」を5回もらった",
+    emoji: "🤝",
+    earned: false,
+    progress: { current: 2, target: 5, unit: "回" },
+    category: "声を届ける",
+  },
+  {
+    id: "a11",
+    title: "コミュニティの架け橋",
+    description: "他の人のFBに20いいねした",
+    emoji: "🌉",
+    earned: false,
+    progress: { current: 7, target: 20, unit: "" },
+    category: "つながる",
+  },
+  {
+    id: "a12",
+    title: "レジェンド見届け人",
+    description: "10作品以上を見届けた",
+    emoji: "👑",
+    earned: false,
+    progress: { current: 3, target: 10, unit: "作品" },
+    category: "見届ける",
+  },
+];
+
+// --- フォロー中開発者 ---
+
+export const FOLLOWING_TOTAL = 23;
+
+export const followingFilterTabs = [
+  { id: "all", label: "すべて", count: 23 },
+  { id: "developing", label: "開発中", count: 18 },
+  { id: "released", label: "完成品あり", count: 5 },
+] as const;
+
+export type FollowingDeveloper = {
+  id: string;
+  name: string;
+  initial: string;
+  badge?: string;
+  bio: string;
+  followers: number;
+  watching: number;
+  game: {
+    title: string;
+    image: string;
+    status: "developing" | "released";
+    tags: string[];
+  };
+};
+
+export const followingDevelopers: FollowingDeveloper[] = [
+  {
+    id: "dev-1",
+    name: "Sora Games",
+    initial: "S",
+    badge: "新進開発者",
+    bio: "短編アドベンチャーと、静かな物語を作っています。",
+    followers: 842,
+    watching: 128,
+    game: {
+      title: "星灯の旅路",
+      image: "/images/landing/game-1.png",
+      status: "developing",
+      tags: ["アドベンチャー", "ストーリー"],
+    },
+  },
+  {
+    id: "dev-2",
+    name: "LunaWorks",
+    initial: "L",
+    bio: "SF探索と、星をテーマにした作品を開発中。",
+    followers: 1205,
+    watching: 256,
+    game: {
+      title: "星のかけらを探して",
+      image: "/images/landing/game-1.png",
+      status: "developing",
+      tags: ["SF", "探索"],
+    },
+  },
+  {
+    id: "dev-3",
+    name: "Pixel Jam",
+    initial: "P",
+    bio: "ピクセルアートで作る、レトロ風アクション。",
+    followers: 2340,
+    watching: 512,
+    game: {
+      title: "アルカディアの遺跡",
+      image: "/images/landing/game-4.png",
+      status: "released",
+      tags: ["アクション", "ピクセルアート"],
+    },
+  },
+  {
+    id: "dev-4",
+    name: "GreenSmith",
+    initial: "G",
+    bio: "癒し系シミュレーションと、工房経営ゲーム。",
+    followers: 567,
+    watching: 89,
+    game: {
+      title: "森の中の小さな工房",
+      image: "/images/landing/game-5.png",
+      status: "developing",
+      tags: ["シミュレーション", "癒し系"],
+    },
+  },
+  {
+    id: "dev-5",
+    name: "Studio Aurora",
+    initial: "A",
+    bio: "ダンジョン探索RPGと、ローグライト作品。",
+    followers: 1890,
+    watching: 340,
+    game: {
+      title: "地下迷宮の冒険者",
+      image: "/images/landing/game-2.png",
+      status: "developing",
+      tags: ["RPG", "ローグライク"],
+    },
+  },
+  {
+    id: "dev-6",
+    name: "Sky Pirate Studio",
+    initial: "K",
+    bio: "空を舞台にしたアクションと、協力プレイ。",
+    followers: 723,
+    watching: 156,
+    game: {
+      title: "空賊と風の旅団",
+      image: "/images/landing/game-3.png",
+      status: "developing",
+      tags: ["アクション", "協力プレイ"],
+    },
+  },
+];
+
+export const recentFollowing = [
+  { name: "Sora Games", initial: "S", date: "2025/05/18" },
+  { name: "LunaWorks", initial: "L", date: "2025/05/15" },
+  { name: "Pixel Jam", initial: "P", date: "2025/05/10" },
+] as const;
+
+export const followingAboutPoints = [
+  "新作・更新をいち早くキャッチ",
+  "フィードバックで開発を応援",
+  "作品の成長を一緒に見届ける",
+] as const;

@@ -1,7 +1,11 @@
 "use client";
 
 import {
-  EmptyTabState,
+  AchievementsTabPanel,
+  FeedbackTabPanel,
+  FollowingTabPanel,
+} from "@/components/mypage-v0-extra-tabs";
+import {
   GameThumbnail,
   MyPageTabs,
   PlayerShell,
@@ -496,30 +500,9 @@ function MyPagePageContent() {
         {activeTab === "witnessing" && <WitnessingTabPanel />}
         {activeTab === "saved" && <SavedTabPanel />}
         {activeTab === "play-history" && <PlayHistoryTabPanel />}
-        {activeTab === "feedback" && (
-          <div className="mt-8">
-            <EmptyTabState
-              title="FB履歴"
-              description="送ったフィードバックの履歴がここに表示されます。まだフィードバック履歴はありません。"
-            />
-          </div>
-        )}
-        {activeTab === "achievements" && (
-          <div className="mt-8">
-            <EmptyTabState
-              title="実績"
-              description="プレイやフィードバックで獲得した実績がここに表示されます。"
-            />
-          </div>
-        )}
-        {activeTab === "following" && (
-          <div className="mt-8">
-            <EmptyTabState
-              title="フォロー中開発者"
-              description="フォローしている開発者がここに表示されます。"
-            />
-          </div>
-        )}
+        {activeTab === "feedback" && <FeedbackTabPanel />}
+        {activeTab === "achievements" && <AchievementsTabPanel />}
+        {activeTab === "following" && <FollowingTabPanel />}
       </div>
     </PlayerShell>
   );

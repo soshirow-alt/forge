@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-18 12 マイページ — FB履歴・実績・フォロー中開発者タブ mock UI
+
+- `/mypage?tab=feedback` — モック11。FB 8件 + 右サイド
+- `/mypage?tab=achievements` — モック13。12/48 進捗 + バッジグリッド
+- `/mypage?tab=following` — モック15。開発者 6件 + 右サイド
+- マイページ横タブ6種すべて mock 表示可能に
+
+---
+
 ## 2026-06-18 11 マイページ — プレイ履歴タブ mock UI
 
 - `/mypage?tab=play-history` — モック12 参考。リスト + 右サマリー。mock 4作品

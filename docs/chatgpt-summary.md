@@ -1,26 +1,37 @@
 ■ 現在の状態
-- プレイ履歴タブ mock — 4件→10件に拡充済。build 成功
-- preview push は未実施（前回 push 後の追加分はローカルのみ）
+- マイページ v0 写経 — 6タブすべて mock UI 完成（ローカル build 成功）
+- preview push は未実施（今回分）
 
 ■ 今回実装したこと
-- lib/mypage-v0-mock-data.ts — playHistoryGames を10作品に拡張
-- PlayHistoryGame 型を定義（cleared / memo / updateVersion を optional で統一）
-- PLAY_HISTORY_TOTAL = 30（フィルタ pills の件数と整合）
-- 追加作品: 浮遊ノート / 夏の向こう側 / 深淵ノート / 喫茶ケットシー / 星のかけらを探して / 地下迷宮の冒険者
-- バリエーション: 見届け中+応援 / プレイのみ / 更新あり / クリア済 / FB送信済 / メモあり など混在
-- ページネーション UI 追加「30件中 1–10件」+ 1/2/3 ページ stub
+- FB履歴 /mypage?tab=feedback — モック11参考。8件 mock + 右サイド（フィルター・統計・共感説明）
+  - 自由記述 / 選択式の2タイプ、共感数・改善反映バッジ、28件中1–8件ページネーション
+- 実績 /mypage?tab=achievements — モック13参考。進捗12/48、最近獲得5件、全実績12件（獲得済+進行中）
+- フォロー中開発者 /mypage?tab=following — モック15参考。6開発者 mock + 右サイド（説明・フォロー数・最近フォロー）
+- 新規: components/mypage-v0-extra-tabs.tsx
+- 拡張: lib/mypage-v0-mock-data.ts
 
 ■ 今回変更した画面
-- /mypage?tab=play-history — リスト10件表示 + 下部ページネーション
-- 確認: スクロールして10カード。星灯の旅路・深淵ノート・夏の向こう側などタグ差分
+- P-16 FB履歴 — 空状態→リスト8件+右サイドバー
+- P-16 実績 — 空状態→進捗カード+最近5+グリッド12
+- P-16 フォロー中開発者 — 空状態→開発者カード6+右サイドバー
+- 確認 URL:
+  - /mypage?tab=feedback
+  - /mypage?tab=achievements
+  - /mypage?tab=following
 
 ■ 変更ファイル
+- components/mypage-v0-extra-tabs.tsx（新規）
 - lib/mypage-v0-mock-data.ts
 - components/mypage-page.tsx
 
+■ 注意事項
+- すべて mock データ。フィルタ・ソート・ページネーションは UI stub
+- prod / `/` / LP 未触
+
 ■ 今すぐ私がやるべきこと
-- ローカル or preview で /mypage?tab=play-history 目視
-- OK なら push GO
+- 3タブ目視確認。OK なら push GO
 
 ■ Preview URL（push 後）
-- https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app/mypage?tab=play-history
+- https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app/mypage?tab=feedback
+- https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app/mypage?tab=achievements
+- https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app/mypage?tab=following
