@@ -1,64 +1,72 @@
 ■ 現在の状態
-- 01 `/landing` preview — **push なし**（ローカルのみ）
-- **overlay 正本を fb505643（1024×819）に統一** — `landing-mock-reference.jpg` 差し替え済み
-- 55022e3e（496）は非正本 — コード・docs から除外
-- 実装アートボード: 1024×558（座標は未調整）。カード 118px は維持
-- prod deploy 禁止継続
+- 01 `/landing` preview — `preview/landing-01` / push 済み
+- commit **a354ae3** — 正本 fb505643 819 統一
+- commit **21ffd13** — Hero 座標合わせ（overlay 実測）
+- prod deploy 禁止 / `/` 反映禁止
 
 ■ 今回実装したこと
-1. **正本画像差し替え**
-   - ソース: `assets/...-fb505643-....png`（1024×819）
-   - 出力: `public/images/landing-mock-reference.jpg`（1024×819 JPEG）
-   - 旧 55022e3e（496）由来ファイルを上書き
 
-2. **layout 定数**
-   - `MOCK_REF_IMAGE_H = 819`（正本原寸）
-   - `MOCK_OVERLAY_H = max(実装558, 正本819) = 819`（overlay コンテナ）
-   - `MOCK_H`（実装 558）— 座標合わせ前のまま
-   - カード 118px / Hero y=322 等 — **今回触らない**
+**Push 1 — 正本統一（a354ae3）**
+- `landing-mock-reference.jpg` → fb505643 1024×819
+- 55022e3e 496 非正本化
+- overlay: 正本 819 vs 実装、上端揃え
+- docs 更新
 
-3. **overlay UI（`/landing/overlay`）**
-   - 左右比較: 左 = 正本 819 / 右 = 実装 558、**上端 Y=0 揃え**
-   - 重ね: 正本 50% + 実装 100%、コンテナ高 819
-   - ラベルに fb505643 / 819×558 を明示
+**Push 2 — Hero 座標（21ffd13）** fb505643 ピクセルスキャン + overlay
+- ロゴ y: 11→**27** / ログイン・登録 y: 8→**24**
+- H1 y: 50→**56**（リード y=119 から逆算 — グラデ被りで自動検出不可）
+- リード y: 90→**119**
+- 3価値 y: 128→**131**（rowH 36 定数化）
+- CTA y: 92→**132** / h: 218→**168**（左箱 top~134 bot~303 実測）
+- Hero 下端 / 注目上端: 322→**326**（注目タイトル y~326–333）
+- 作品カード **118px 維持** / cardsY 352 維持
+- 実装 MOCK_H: **558**（Hero 変更のみでは cards 連鎖不変）
 
-4. **docs**
-   - `01-landing.md` / `forge-changelog.md` — 正本 819、496 非正本を記載
-
-■ オーナー判断（反映済み）
-- 正本: **fb505643 819** / 55022e3e 496 は正本にしない
-- カード ~122 vs 実装 118 — 過大ではない。カードサイズは触らない
-- 次フェーズ: Hero（ロゴ→H1→リード→3価値→CTA→Hero高）を overlay で合わせる
-- 特に Hero 下端 y=322 と Hero 内余白の検証
-
-■ ユーザー目線の変化
-- overlay 左右比較で **正本の縦尺（819）** が見える — Hero が実装より長く見える問題を確認しやすい
-- 496 基準による見かけのズレ要因を排除
-
-■ 注意事項
-- ローカル未 push — preview URL は旧 496 基準のまま
-- fb505643 下端 ~570 以降は余白 — アートボード高 819 全体を scale するかは座標合わせ後に判断
-- `/landing` ヒーロー背景も正本 819 画像を clip（MOCK_HERO_BG_H=322）
-
-■ 今すぐ私がやるべきこと
-- ローカル `/landing/overlay` で正本 819 vs 実装 558 を上端揃え確認
-- Hero 領域の違和感（CTA 高・Hero 内余白）を目視
-- OK なら Hero 座標合わせ GO を Cursor に指示（push は別途）
-
-■ Cursorだけで完了できること
-- Hero 座標パス（`landing-mock-layout.ts` — ロゴ/H1/リード/3価値/CTA/MOCK_HERO_BG_H）
-- push 前に overlay で 1 要素ずつ確認
-
-■ 次に検討すべきこと
-- Hero 下端 322 が fb505643 上で正しいか（ピクセル + overlay）
-- 実装 MOCK_H 558 vs 正本コンテンツ高 ~570 前後の関係（news/footer Y 再計測）
-
-■ ChatGPTに相談したい論点
-- 819 正本のうち下端余白を scale 対象に含めるか、コンテンツ高 ~570 で artboard を切るか
+■ Hero 322 について（オーナー確認論点）
+- fb505643 上: 注目タイトル明る行 **y=326–336**、行変化ピーク **y=315–330**
+- **322 は 496 時代の値** — 819 正本では **326** に更新（+4px）
+- 大幅変更は CTA（+40px 下げ・高さ -50px）とリード（+29px）— Hero 縦余白の主因
 
 ■ 今回変更した画面
-- URL: `/landing/overlay`（preview）
-- 画面位置: 比較 UI 全体 — 左列が 819px 正本、右列が 558px 実装
-- 変更前: 496px 非正本 vs 558 実装
-- 変更後: **819px fb505643 正本** vs 558 実装、上端揃え
-- 確認: ローカル lg+ で overlay 左右比較 — Hero 高さ差が視覚的に確認できること
+- `/landing` — Hero 領域（ロゴ/H1/リード/3価値/CTA/背景 clip）
+- `/landing/overlay` — 正本 819 vs 実装 558、Hero 合わせ後比較
+
+■ preview URL（lg+ 推奨）
+- https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app/landing
+- https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app/landing/overlay
+
+■ ユーザー目線の変化
+- Hero が正本に近づき、CTA が上に張り付いた見え方が緩和される想定
+- overlay 左右比較で Hero 高さ・CTA サイズ差を確認可能
+
+■ 注意事項
+- Vercel 反映待ち（数分）
+- H1 y=56 は推定 — overlay で目視微調整余地あり
+- 819 下端余白 — scale 切り出しは news/footer 合わせ後
+
+■ 今すぐ私がやるべきこと
+- preview URL で `/landing/overlay` 左右比較 — Hero・CTA を目視
+- H1 ずれあれば overlay で px 指示
+
+■ Cursorだけで完了できること
+- 作品カード / お知らせ / フッター座標（正本 819 再測定）
+- H1 overlay 微調整
+
+■ 次に検討すべきこと
+- 座標合わせ 7–9: 作品カード位置 → お知らせ → フッター（card 118 維持）
+- コンテンツ実高 ~570 で scale 切るか（Hero 完了後）
+
+■ ChatGPTに相談したい論点
+- H1 自動検出不可時の overlay 合わせ手順（目視 vs グラデ除去スキャン）
+
+■ Forge原典コアループ
+- 01 LP ガワ — 模写精度が発見入口の第一印象に触れる。Hero 優先は妥当
+
+■ Cursorの推奨案
+- 正本 819 固定のまま、残りは overlay 1 要素ずつ — news/footer は fb505643 実測 y~507/558 を次の正本値候補
+
+■ 推奨理由
+- 496 基準を排除済み。Hero 主因は CTA y/h とリード y の 496 時代ズレ
+
+■ 懸念点
+- featured.y +4 だけでは Hero 全体の「大きく見える」問題の大部分は CTA/リード修正で吸収 — 目視確認必須
