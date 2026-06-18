@@ -1,16 +1,12 @@
 /**
- * 01 LP — モック PNG/JPEG オーバーレイ計測値（1024×496）
+ * 01 LP — モック JPEG オーバーレイ計測値（1024×496）
  *
  * 基準: public/images/landing-mock-reference.jpg
- * 計測方法: モック原寸に HTML を重ね、要素境界を合わせて確定
- *
- * 画像素材: ヒーロー背景はモック原画像を使用。
- * 注目カードサムネはモック切り出し不可のため CSS グラデ近似（完全一致不可を doc に明記）
+ * セクション境界: 作品カード下端 + gap → お知らせ → フッター（重なり禁止）
  */
 export const MOCK_W = 1024;
 export const MOCK_H = 496;
 
-/** コンテンツ左右余白 62px / コンテンツ幅 900px */
 export const MOCK_CONTENT_X = 62;
 export const MOCK_CONTENT_W = 900;
 
@@ -46,7 +42,6 @@ export const MOCK_CTA = {
   btnH: 32,
 } as const;
 
-/** ヒーロー背景クリップ高（注目セクション上端まで） */
 export const MOCK_HERO_BG_H = 322;
 
 export const MOCK_FEATURED = {
@@ -54,16 +49,34 @@ export const MOCK_FEATURED = {
   titleY: 334,
   cardsY: 352,
   cardW: 172,
-  thumbH: 64,
-  metaPad: 8,
-  metaH: 38,
+  thumbH: 42,
+  metaH: 22,
   gap: 8,
   titleSize: 11,
   bodySize: 9,
+  /** 作品カード下端 → お知らせ上端までの隙間 */
+  gapBeforeNews: 6,
 } as const;
 
-export const MOCK_NEWS = { y: 418, h: 34, padX: 62, titleSize: 10, bodySize: 10 } as const;
-export const MOCK_FOOTER = { y: 454, h: 42, padX: 62, size: 9 } as const;
+/** 1枚の注目カード高（thumb + meta） */
+export const MOCK_FEATURED_CARD_H = MOCK_FEATURED.thumbH + MOCK_FEATURED.metaH;
 
-/** 旧 LP_REF_WIDTH 互換 */
+/** 作品カード列の下端 Y */
+export const MOCK_FEATURED_CARDS_BOTTOM = MOCK_FEATURED.cardsY + MOCK_FEATURED_CARD_H;
+
+export const MOCK_NEWS = {
+  y: MOCK_FEATURED_CARDS_BOTTOM + MOCK_FEATURED.gapBeforeNews,
+  h: 32,
+  padX: 62,
+  titleSize: 10,
+  bodySize: 10,
+} as const;
+
+export const MOCK_FOOTER = {
+  y: MOCK_NEWS.y + MOCK_NEWS.h,
+  h: MOCK_H - (MOCK_NEWS.y + MOCK_NEWS.h),
+  padX: 62,
+  size: 9,
+} as const;
+
 export const LP_REF_WIDTH = MOCK_W;
