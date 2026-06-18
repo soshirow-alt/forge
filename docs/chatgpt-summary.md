@@ -1,38 +1,87 @@
 ■ 現在の状態
-- 01 `/landing` — セクション重なり修正 + overlay 改善 push 予定（`preview/landing-01`）
-- 模写フェーズ継続。prod deploy 禁止
+- 01 `/landing` preview — ブランチ `preview/landing-01`（**未 commit / 未 push** — ローカル修正済み）
+- prod deploy 禁止継続 / `/` は発見ホームのまま
+- 模写フェーズ: overlay 左右比較で要素ごとに座標合わせ（次はロゴ→H1→…の順）
+- 実装アートボード: 1024×558（モック JPEG 1024×496 より下に伸び — カードサイズ維持のため）
+
+■ Forge原典コアループ（判断の基準）
+- 投稿 → 発見 → プレイ → フィードバック → 改善 → 再プレイ
+- 今回は 01 LP の「発見」入口ガワ。カードを潰して見た目を妥協しない（発見の第一印象）
 
 ■ 今回実装したこと
-1. **① レイアウト崩れ（最優先）**
-   - 原因: 作品カード高（thumb 64 + meta）> お知らせまでの余白（66px）
-   - 修正: `landing-mock-layout.ts` でセクション境界を連鎖定義
-     - カード高 = thumb 42 + meta 22 = 64
-     - カード下端 416 → gap 6 → お知らせ y=422 → フッター y=454
-   - 注目セクション `overflow-hidden` + 高さ = NEWS.y - FEATURED.y
-   - お知らせ z-20 で作品領域へ侵食しない
+1. **作品カード — モック基準サイズに復帰（最優先）**
+   - 撤回: 重なり回避のため thumb 42 + meta 22 = 64px に圧縮していた修正
+   - 復帰値（`landing-mock-layout.ts`）:
+     - thumbH: 64
+     - metaPad: 8（上下）+ metaBodyMinH: 38
+     - MOCK_FEATURED_CARD_H = 118
+     - cardW: 172（変更なし）
+   - カードを縮めて衝突を隠す方式は禁止 — オーナーフィードバック反映
 
-2. **② overlay 改善**
-   - `landing-overlay-tool.tsx` 新規 — 3モード
-     - **左右比較**（デフォルト）
-     - **重ね**: モック 50% + 実装 100%（ヒーロー画像は下層モックのみ）
-     - **表示切替**: モック ⇔ 実装
-   - `/landing/overlay` から利用
+2. **お知らせ・フッター — 下方向配置（②③）**
+   - 作品カード列下端: cardsY 352 + cardH 118 = **470**
+   - gapBeforeNews: 12 → お知らせ y = **482**, h = 34
+   - フッター y = **516**, h = 42
+   - MOCK_H = 558（フッター下端から算出。496 固定は overlay 参照用 MOCK_REF_IMAGE_H のみ）
 
-■ コード構成
-- `landing-page-canvas.tsx` — アートボード本体
-- `landing-overlay-tool.tsx` — 比較 UI
-- `landing-mock-layout.ts` — 座標正本（セクション連鎖）
+3. **キャンバス・overlay 整合**
+   - 注目セクション: 高さ = NEWS.y - FEATURED.y（overflow-hidden によるクリップなし）
+   - ヒーロー背景 Image: 高さ MOCK_REF_IMAGE_H（496）— モック JPEG 原寸
+   - overlay UI: モック 496 vs 実装 558 をラベル表示（左右比較デフォルト維持）
+
+■ なぜこの設計
+- モック模写では「位置関係」と「要素比率」が正本。重なりはセクション Y を動かして解く
+- 496px 固定アートボード内に無理に押し込むと、再びカードか meta を削る必要がある
+- 段階合わせ: まずカードサイズ正 → 次ターン overlay で news/footer Y をモックに近づける
+
+■ 他案不採用
+- カード高圧縮で 496 内収め — オーナー NG（今回のフィードバック）
+- お知らせをカード上に z-index だけで重ね — 可読性・模写両方 NG
+- セクション個別 dvh stretch — 既に廃止済み
+
+■ In / Out
+- In: preview `/landing` + `/landing/overlay` のカードサイズ・セクション連鎖
+- Out: prod deploy / `/` 差替 / 注目サムネ実画像（オーナー素材待ち）
+
+■ リスク
+- 実装 558 vs モック 496 で下段（news/FT）がモックより下 — overlay 比較時に縦ズレが見える（意図的。次フェーズで Y 微調整）
+- preview 未 push のため Vercel 上は旧（圧縮カード）のまま — push 後に再確認
 
 ■ 今回変更した画面
-- `/landing` — 作品/お知らせ/FT の重なり解消
-- `/landing/overlay` — 比較 UI 刷新
+- URL: `/landing`（preview ガワ確認）
+- 画面位置: PC lg+ — 中央のアートボード内「注目の開発中ゲーム」5列カード
+- 変更前: サムネ 42px・meta 22px の潰れたカード（重なり回避の副作用）
+- 変更後: サムネ 64px・meta 読める高さ（118px カード）。お知らせはカード下 12px gap から
+- プレイヤー視点: 作品サムネが主役として目に入る密度に戻る
+- 確認手順:
+  1. lg+ で `/landing` を開く
+  2. 5枚カードのサムネ高さ・タイトル/ stats が読めること
+  3. お知らせ帯がカードと重ならないこと
+  4. `/landing/overlay` → 左右比較でカードサイズがモック左に近いこと（下段 Y は次調整）
 
-■ 次フェーズ（座標合わせ）
-- overlay 左右比較でロゴ → H1 → 3価値 → CTA → 注目 → お知らせ → FT を px 単位で合わせる
+■ ユーザー目線の変化
+- 作品カードに再び「存在感」— サムネが小さく潰れない
+- お知らせ・フッターはページ下部に自然に続く（重なりなし）
+
+■ 注意事項
+- 注目サムネは CSS グラデのみ — モックイラストのピクセル一致不可
+- build ローカル PASS（npm run build）
+- commit/push はオーナー指示待ち
 
 ■ 今すぐ私がやるべきこと
-- `/landing/overlay` 左右比較で重なり解消と比較しやすさを確認
+- lg+ で `/landing` を開き、カード高さ・重なりなしを目視確認
+- OK なら「push して preview 更新」と Cursor に指示
+- overlay 左右比較で、次に合わせる要素（ロゴ / H1 / 3価値 …）の優先を指定
 
-■ Preview URL
-https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app/landing
-https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app/landing/overlay
+■ Cursorだけで完了できること
+- preview ブランチ commit + push（prod 触らない）
+- overlay 座標パス（landing-mock-layout.ts の px 微調整）
+- オーナー提供の注目サムネ素材があれば差し替え
+
+■ 次に検討すべきこと
+- overlay 順: ロゴ → H1 → 3価値 → CTA → 作品カード（サイズ OK 後 Y 微調）→ お知らせ → フッター
+- 558 → 496 に近づけるか、モック下段が実際に 496 内に収まる計測値かを overlay で再計測
+- 01 ガワ OK 後: `/` 出し分けは Phase1-B まで保留
+
+■ ChatGPTに相談したい論点
+- モック JPEG 496px と実装 558px の差 — news/FT を上げて 496 に寄せるか、アートボードを 496+α のまま scale するか（模写優先なら後者も可）

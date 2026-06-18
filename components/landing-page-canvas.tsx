@@ -15,6 +15,7 @@ import {
   MOCK_LOGIN,
   MOCK_LOGO,
   MOCK_NEWS,
+  MOCK_REF_IMAGE_H,
   MOCK_SIGNUP,
   MOCK_VALUES,
   MOCK_W,
@@ -216,10 +217,10 @@ export function LandingPageCanvas({ className = "", hideHeroImage = false }: Lan
             src="/images/landing-mock-reference.jpg"
             alt=""
             width={MOCK_W}
-            height={MOCK_H}
+            height={MOCK_REF_IMAGE_H}
             priority
             className="max-w-none"
-            style={{ width: MOCK_W, height: MOCK_H }}
+            style={{ width: MOCK_W, height: MOCK_REF_IMAGE_H }}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[#08080c]/92 via-[#08080c]/55 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-b from-[#08080c]/25 via-transparent to-[#08080c]" />
@@ -332,9 +333,9 @@ export function LandingPageCanvas({ className = "", hideHeroImage = false }: Lan
         x={MOCK_CTA.rightX}
       />
 
-      {/* 注目作品 — お知らせ上端 MOCK_NEWS.y まで（重なり禁止） */}
+      {/* 注目作品 — カード高はモック基準。セクション高 = お知らせ手前まで */}
       <section
-        className="absolute left-0 z-10 overflow-hidden border-t border-zinc-800/55 bg-[#08080c]"
+        className="absolute left-0 z-10 border-t border-zinc-800/55 bg-[#08080c]"
         style={{ top: MOCK_FEATURED.y, width: MOCK_W, height: featuredSectionH }}
       >
         <div
@@ -359,14 +360,20 @@ export function LandingPageCanvas({ className = "", hideHeroImage = false }: Lan
               style={{ left: x, top: y, width: MOCK_FEATURED.cardW, height: MOCK_FEATURED_CARD_H }}
             >
               <div className={game.thumbClass} style={{ height: MOCK_FEATURED.thumbH }} />
-              <div className="overflow-hidden px-1.5" style={{ height: MOCK_FEATURED.metaH }}>
-                <h3 className="truncate font-semibold leading-none text-white" style={{ fontSize: MOCK_FEATURED.titleSize }}>
+              <div
+                className="space-y-0.5"
+                style={{ padding: MOCK_FEATURED.metaPad, minHeight: MOCK_FEATURED.metaBodyMinH }}
+              >
+                <h3 className="truncate font-semibold text-white" style={{ fontSize: MOCK_FEATURED.titleSize }}>
                   {game.title}
                 </h3>
-                <p className="truncate text-zinc-500" style={{ fontSize: MOCK_FEATURED.bodySize, lineHeight: "10px" }}>
+                <p
+                  className="line-clamp-1 text-zinc-500"
+                  style={{ fontSize: MOCK_FEATURED.bodySize, lineHeight: "12px" }}
+                >
                   {game.description}
                 </p>
-                <div className="flex gap-1.5 text-violet-400/90" style={{ fontSize: 7, lineHeight: "10px" }}>
+                <div className="flex gap-2 text-violet-400/90" style={{ fontSize: MOCK_FEATURED.statsSize }}>
                   <span>💬 {game.feedback}</span>
                   <span className="text-zinc-500">🕒 {game.updated}</span>
                 </div>

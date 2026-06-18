@@ -9,7 +9,7 @@ type LandingPageScalerProps = {
   children: ReactNode;
 };
 
-/** モックアートボード（1024×496）を viewport に max-fit 均一 scale */
+/** モックアートボード（1024 幅・高さはコンテンツ連鎖）を viewport に max-fit 均一 scale */
 export function LandingPageScaler({ children }: LandingPageScalerProps) {
   const measureRef = useRef<HTMLDivElement>(null);
   const [contentHeight, setContentHeight] = useState(0);

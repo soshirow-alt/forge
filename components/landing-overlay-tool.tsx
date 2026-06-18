@@ -6,7 +6,7 @@ import {
   LandingPageCanvas,
   LandingPageCanvasCompare,
 } from "@/components/landing-page-canvas";
-import { MOCK_H, MOCK_W } from "@/components/landing-mock-layout";
+import { MOCK_H, MOCK_REF_IMAGE_H, MOCK_W } from "@/components/landing-mock-layout";
 
 type CompareMode = "side-by-side" | "overlay" | "toggle";
 
@@ -17,7 +17,8 @@ export function LandingOverlayTool() {
   return (
     <div className="flex w-full max-w-[2400px] flex-col items-center gap-4 px-4 py-6">
       <p className="text-center text-xs text-zinc-500">
-        01 LP モック比較（preview のみ）— 原寸 {MOCK_W}×{MOCK_H}
+        01 LP モック比較（preview のみ）— モック画像 {MOCK_W}×{MOCK_REF_IMAGE_H} / 実装アートボード {MOCK_W}×
+        {MOCK_H}
       </p>
 
       <div className="flex flex-wrap justify-center gap-2">
@@ -60,9 +61,9 @@ export function LandingOverlayTool() {
               src="/images/landing-mock-reference.jpg"
               alt="モック"
               width={MOCK_W}
-              height={MOCK_H}
+              height={MOCK_REF_IMAGE_H}
               className="max-w-none border border-zinc-800"
-              style={{ width: MOCK_W, height: MOCK_H }}
+              style={{ width: MOCK_W, height: MOCK_REF_IMAGE_H }}
             />
           </div>
           <div className="flex flex-col items-center gap-1">
@@ -82,9 +83,9 @@ export function LandingOverlayTool() {
               src="/images/landing-mock-reference.jpg"
               alt=""
               width={MOCK_W}
-              height={MOCK_H}
+              height={MOCK_REF_IMAGE_H}
               className="absolute left-0 top-0 max-w-none opacity-50"
-              style={{ width: MOCK_W, height: MOCK_H }}
+              style={{ width: MOCK_W, height: MOCK_REF_IMAGE_H }}
             />
             <div className="absolute left-0 top-0">
               <LandingPageCanvasCompare />
@@ -102,9 +103,9 @@ export function LandingOverlayTool() {
                 src="/images/landing-mock-reference.jpg"
                 alt="モック"
                 width={MOCK_W}
-                height={MOCK_H}
+                height={MOCK_REF_IMAGE_H}
                 className="max-w-none"
-                style={{ width: MOCK_W, height: MOCK_H }}
+                style={{ width: MOCK_W, height: MOCK_REF_IMAGE_H }}
               />
             ) : (
               <LandingPageCanvas />
