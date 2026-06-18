@@ -5,7 +5,9 @@
 **URL（正式・将来）**: `/` — 未ログイン → 01 LP / ログイン済 → 04 発見（**Phase1-B または Walkthrough 後 GO**）  
 **画像（モック）**: `assets/c__Users_soshi_...-fb505643....png`  
 **受領**: 2026-06-16  
-**実装**: `components/landing-page.tsx` + `app/landing/page.tsx` — **preview のみ**。prod deploy 禁止継続
+**実装**: `components/landing-page.tsx` + `landing-mock-layout.ts` — **preview のみ**。prod deploy 禁止継続  
+**基準画像**: `public/images/landing-mock-reference.jpg`（1024×496）  
+**オーバーレイ**: `/landing/overlay`
 
 ---
 
