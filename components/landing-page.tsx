@@ -200,7 +200,7 @@ export function LandingPage() {
               <h1 className="text-4xl font-bold leading-[1.15] tracking-tight text-white sm:text-5xl">
                 ゲームを、
                 <span className="text-violet-300">育てる</span>
-                場所。
+                <span className="whitespace-nowrap">場所。</span>
               </h1>
               <div className="mt-6 space-y-1 text-base leading-relaxed text-zinc-300 sm:mt-8 sm:text-lg">
                 <p>プレイヤーの声が、次の物語をつくる。</p>

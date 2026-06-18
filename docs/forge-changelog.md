@@ -4,7 +4,17 @@
 
 ---
 
-## 2026-06-18 04 ランディング — v0 正本ベース再実装（preview）
+## 2026-06-18 06 ランディング — H1「場所」改行修正（preview）
+
+- オーナー目視: LP 全体は好評。「場所」の「所」だけ次行に落ちる改行を修正
+- `場所。` に whitespace-nowrap
+
+---
+
+- オーナー GO: preview push / 更新 — commit **5e31a52** が preview に反映済（再 push 不要）
+- 確認 URL: https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app/landing
+
+---
 
 - canvas / scaler / mock-layout / overlay-tool **削除**
 - `components/landing-page.tsx` を v0 Publish 写経（responsive・自然スクロール・白 primary CTA）
