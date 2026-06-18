@@ -161,13 +161,13 @@ export function MyPageTabs({
   );
 }
 
-export function SortDropdown() {
+export function SortDropdown({ label = "更新が新しい順" }: { label?: string }) {
   return (
     <button
       type="button"
       className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-800 px-3 py-2 text-sm text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
     >
-      更新が新しい順
+      {label}
       <ChevronDown className="size-4" aria-hidden="true" />
     </button>
   );

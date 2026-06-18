@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-06-18 11 マイページ — プレイ履歴タブ mock UI
+
+- `/mypage?tab=play-history` — モック12 参考。リスト + 右サマリー。mock 4作品
+- 見届け中/保存作品と同型レイアウト。フィルタ・ソートは UI のみ
+
+---
+
 ## 2026-06-18 10 v0 写経 — login / register / mypage（preview）
 
 - `/login` — v0 Auth Shell 2カラム（P-02）。OAuth UI のみ（stub）
