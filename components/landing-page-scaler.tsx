@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { LP_REF_WIDTH } from "@/components/landing-design";
+import { LP_REF_WIDTH } from "@/components/landing-mock-layout";
 
 const SCALE_MIN_WIDTH = 1024;
 
@@ -9,11 +9,7 @@ type LandingPageScalerProps = {
   children: ReactNode;
 };
 
-/**
- * モックアートボードを viewport に max-fit する均一 scale。
- * scale = min(vw / refWidth, vh / artboardHeight)
- * 要素単位の伸縮は行わない。
- */
+/** モックアートボード（1024×496）を viewport に max-fit 均一 scale */
 export function LandingPageScaler({ children }: LandingPageScalerProps) {
   const measureRef = useRef<HTMLDivElement>(null);
   const [contentHeight, setContentHeight] = useState(0);
@@ -56,7 +52,7 @@ export function LandingPageScaler({ children }: LandingPageScalerProps) {
   const ready = contentHeight > 0;
 
   return (
-    <div className="hidden min-h-dvh items-start justify-center overflow-x-hidden bg-[#0a0a0f] lg:flex">
+    <div className="hidden min-h-dvh items-start justify-center overflow-x-hidden bg-[#050508] lg:flex">
       <div
         className="relative shrink-0"
         style={{
