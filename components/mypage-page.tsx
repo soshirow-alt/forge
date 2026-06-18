@@ -24,6 +24,8 @@ import {
   witnessingGames,
   witnessingQuickFilters,
 } from "@/lib/mypage-v0-mock-data";
+import { gameDetailHrefFromTitle } from "@/lib/game-detail-v0-mock-data";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback } from "react";
 import {
@@ -147,7 +149,12 @@ function PlayHistoryTabPanel() {
                   </div>
 
                   <h3 className="mt-2 text-lg font-semibold text-white">
-                    {game.title}{" "}
+                    <Link
+                      href={gameDetailHrefFromTitle(game.title)}
+                      className="transition-colors hover:text-violet-300"
+                    >
+                      {game.title}
+                    </Link>{" "}
                     <span className="text-sm font-normal text-violet-400">{game.version}</span>
                   </h3>
                   <p className="mt-1 text-sm text-zinc-500">{game.description}</p>
@@ -350,19 +357,26 @@ function WitnessingTabPanel() {
               <div className="flex flex-col gap-4 sm:flex-row">
                 <GameThumbnail src={game.image} alt={game.title} />
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-lg font-semibold text-white">{game.title}</h3>
+                  <h3 className="text-lg font-semibold text-white">
+                    <Link
+                      href={gameDetailHrefFromTitle(game.title)}
+                      className="transition-colors hover:text-violet-300"
+                    >
+                      {game.title}
+                    </Link>
+                  </h3>
                   <p className="mt-2 text-sm leading-relaxed text-zinc-400">
                     <span className="text-zinc-500">今回の変化：</span>
                     {game.change}
                   </p>
                   <p className="mt-2 text-xs text-zinc-500">最終更新日： {game.updatedAt}</p>
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <button
-                      type="button"
+                    <Link
+                      href={gameDetailHrefFromTitle(game.title)}
                       className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
                     >
                       詳しく見る
-                    </button>
+                    </Link>
                     <button
                       type="button"
                       disabled={!game.hasUpdate}

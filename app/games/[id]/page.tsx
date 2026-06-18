@@ -1,4 +1,4 @@
-import { GameDetailPageClient } from "@/components/game-detail-page-client";
+import { GameDetailV0Page } from "@/components/game-detail-v0-page";
 
 export default async function GameDetailPage({
   params,
@@ -7,5 +7,5 @@ export default async function GameDetailPage({
 }) {
   const { id } = await params;
 
-  return <GameDetailPageClient id={id} />;
+  return <GameDetailV0Page id={id} />;
 }

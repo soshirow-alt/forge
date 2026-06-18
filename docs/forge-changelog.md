@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-06-18 15 P-06 ゲーム詳細 `/games/[id]` v0 mock UI
+
+- Player Shell 内ヒーロー + CTA + 4タブ（概要 mock / 他 stub）+ 右サイドバー
+- home / search / mypage から詳細リンク接続
+- 旧 `GameDetailPageClient` はコード残存、route は v0 差し替え（preview）
+
+---
+
+## 2026-06-18 14 P-04 発見ホーム `/home` mock UI
+
+- Player Shell + ヒーローカルーセル + 最近更新/人気/新着 + ジャンルピル
+- `/` 未変更。preview は `/home`
+
+---
+
 ## 2026-06-18 13 P-05 作品検索 `/search` mock UI
 
 - Player Shell + リスト8件 + 右絞り込みパネル。?q= 対応

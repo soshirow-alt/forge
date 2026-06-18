@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { GameThumbnail, PlayerShell } from "@/components/player-shell";
+import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import {
   heroSlides,
   homeGenrePills,
@@ -42,7 +43,8 @@ function HorizontalGameCard({
   rank?: number;
 }) {
   return (
-    <article className="w-56 shrink-0 snap-start sm:w-60">
+    <Link href={gameDetailHref(game.id)} className="block w-56 shrink-0 snap-start sm:w-60">
+      <article>
       <div className="relative">
         {rank !== undefined && (
           <span className="absolute left-2 top-2 z-10 flex size-7 items-center justify-center rounded-lg bg-violet-600 text-sm font-bold text-white shadow-lg">
@@ -62,7 +64,8 @@ function HorizontalGameCard({
       <div className="mt-2">
         <StatPills voiceCount={game.voiceCount} witnessCount={game.witnessCount} />
       </div>
-    </article>
+      </article>
+    </Link>
   );
 }
 
@@ -120,12 +123,12 @@ function HeroCarousel() {
           <div className="mt-4">
             <StatPills voiceCount={slide.voiceCount} witnessCount={slide.witnessCount} />
           </div>
-          <button
-            type="button"
-            className="mt-6 w-fit rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+          <Link
+            href={gameDetailHref(slide.id)}
+            className="mt-6 inline-flex w-fit rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
           >
             詳しく見る →
-          </button>
+          </Link>
         </div>
 
         <button

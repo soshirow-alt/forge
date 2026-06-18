@@ -14,6 +14,7 @@ import {
   searchPlatformFilters,
   searchWorkResults,
 } from "@/lib/search-v0-mock-data";
+import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import {
   BadgeCheck,
   ChevronDown,
@@ -74,10 +75,11 @@ function WorksSearchContent() {
 
           <ul className="mt-6 space-y-4">
             {searchWorkResults.map((work) => (
-              <li
-                key={work.id}
-                className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 transition-colors hover:border-zinc-700/80 sm:p-5"
-              >
+              <li key={work.id}>
+                <Link
+                  href={gameDetailHref(work.id)}
+                  className="block rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 transition-colors hover:border-zinc-700/80 sm:p-5"
+                >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
                   <GameThumbnail
                     src={work.image}
@@ -131,6 +133,7 @@ function WorksSearchContent() {
                     <ChevronRight className="size-5" />
                   </button>
                 </div>
+                </Link>
               </li>
             ))}
           </ul>
