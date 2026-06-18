@@ -11,7 +11,7 @@
 - **主戦場**: **Phase2 UX 設計**
 - **正式フロー**: ChatGPT → UX設計 → v0 → Cursor 実装
 - **01 LP**: **オーナー OK** — preview `/landing` v0 正本写経済。overlay 廃止。prod・`/` 未触
-- **v0 写経 UI（preview/landing-01）**: login / register / mypage（6タブ）/ search / home / **games/[id] 詳細** — preview 確認用。`/` 未変更
+- **v0 写経 UI（preview/landing-01）**: login / register / mypage / search / home / games/[id] + **P-19 FB モーダル**
 - **v0 Publish**（参照用）: login / register / mypage 200。マイページ「見届け中」「保存作品」タブは v0 上で切替確認済
 - **P0/P1 UI レビュー** — 実装完了（ForgeGameCard + Veteran developer patch）
 - **verify:future-demo:staging** — **18/18 PASS**

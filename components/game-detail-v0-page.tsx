@@ -3,6 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import {
+  FeedbackFormV0Modal,
+  FeedbackSuccessV0Modal,
+  FirstVoiceV0Modal,
+  PlayStubV0Modal,
+  useFeedbackFlowLock,
+  type FeedbackFlowStep,
+} from "@/components/feedback-v0-modals";
 import { GameThumbnail, PlayerShell } from "@/components/player-shell";
 import { getGameDetailV0 } from "@/lib/game-detail-v0-mock-data";
 import {
@@ -80,6 +88,9 @@ export function GameDetailV0Page({ id }: { id: string }) {
   const game = getGameDetailV0(id);
   const [activeTab, setActiveTab] = useState<DetailTab>("overview");
   const [introExpanded, setIntroExpanded] = useState(false);
+  const [feedbackStep, setFeedbackStep] = useState<FeedbackFlowStep>("closed");
+
+  useFeedbackFlowLock(feedbackStep);
 
   const introPreview =
     game.introduction.length > 120 && !introExpanded
@@ -88,6 +99,32 @@ export function GameDetailV0Page({ id }: { id: string }) {
 
   return (
     <PlayerShell>
+      {feedbackStep === "play-stub" && (
+        <PlayStubV0Modal
+          game={game}
+          onClose={() => setFeedbackStep("closed")}
+          onPlayComplete={() => setFeedbackStep("first-voice")}
+        />
+      )}
+      {feedbackStep === "first-voice" && (
+        <FirstVoiceV0Modal
+          game={game}
+          onClose={() => setFeedbackStep("closed")}
+          onOpenFullForm={() => setFeedbackStep("full-form")}
+          onSubmitQuick={() => setFeedbackStep("success")}
+        />
+      )}
+      {feedbackStep === "full-form" && (
+        <FeedbackFormV0Modal
+          game={game}
+          onClose={() => setFeedbackStep("closed")}
+          onSubmit={() => setFeedbackStep("success")}
+        />
+      )}
+      {feedbackStep === "success" && (
+        <FeedbackSuccessV0Modal game={game} onClose={() => setFeedbackStep("closed")} />
+      )}
+
       <div className="flex flex-col gap-8 xl:flex-row xl:items-start">
         <div className="min-w-0 flex-1 space-y-6">
           <nav className="text-sm text-zinc-500">
@@ -164,6 +201,7 @@ export function GameDetailV0Page({ id }: { id: string }) {
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
+              onClick={() => setFeedbackStep("play-stub")}
               className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
             >
               <Play className="size-4" aria-hidden="true" />
@@ -264,6 +302,7 @@ export function GameDetailV0Page({ id }: { id: string }) {
                   <p className="mt-3 text-sm leading-relaxed text-zinc-400">{game.developerWorry}</p>
                   <button
                     type="button"
+                    onClick={() => setFeedbackStep("full-form")}
                     className="mt-4 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
                   >
                     声を届ける（フィードバック）
