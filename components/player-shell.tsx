@@ -14,7 +14,7 @@ import {
 import type { ReactNode } from "react";
 
 const discoverLinks = [
-  { id: "home", href: "/", label: "ホーム" },
+  { id: "home", href: "/home", label: "ホーム" },
   { id: "search", href: "/search", label: "作品を探す" },
   { id: "ranking", href: "/search", label: "人気ランキング" },
   { id: "new", href: "/search", label: "新着作品" },
@@ -37,7 +37,7 @@ export function PlayerShell({
     <div className="flex min-h-full bg-[#0a0a0a] text-zinc-100">
       <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-800/80 bg-zinc-950 lg:flex xl:w-60">
         <div className="border-b border-zinc-800/80 px-5 py-5">
-          <Link href="/" className="flex items-center gap-2.5">
+          <Link href="/home" className="flex items-center gap-2.5">
             <span className="flex size-9 items-center justify-center rounded-xl bg-white/90 text-zinc-950">
               <Flame className="size-5" aria-hidden="true" />
             </span>

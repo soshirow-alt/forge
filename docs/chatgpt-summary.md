@@ -1,7 +1,7 @@
 ■ 現在の状態
 - P-05 作品検索 `/search` を v0 写経 mock UI で新規追加（ローカル build 成功）
 - Player Shell 共通 — マイページ・作品検索で activeNav 対応
-- preview push は未実施
+- preview push 済 commit 5d1583c（P-05 作品検索 /search）
 
 ■ 今回実装したこと
 - /search — 作品を探す（P-05）。?q= クエリ対応（未指定時「ファンタジー」）

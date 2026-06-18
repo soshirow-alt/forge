@@ -36,7 +36,7 @@ function WorksSearchContent() {
       <div className="flex flex-col gap-8 xl:flex-row">
         <div className="min-w-0 flex-1">
           <nav className="text-sm text-zinc-500">
-            <Link href="/" className="transition-colors hover:text-violet-400">
+            <Link href="/home" className="transition-colors hover:text-violet-400">
               ホーム（発見）
             </Link>
             <span className="mx-2">›</span>
