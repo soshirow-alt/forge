@@ -1,5 +1,30 @@
 import Image from "next/image";
 import Link from "next/link";
+import {
+  LP_CONTENT_WIDTH,
+  LP_CTA_GAP,
+  LP_CTA_HEIGHT,
+  LP_CTA_ICON,
+  LP_FEATURED_GAP,
+  LP_FEATURED_SECTION_Y,
+  LP_FOOTER_Y,
+  LP_HEADER_HEIGHT,
+  LP_H1_SIZE,
+  LP_HERO_BOTTOM,
+  LP_HERO_COL_LEFT,
+  LP_HERO_COL_RIGHT,
+  LP_HERO_GRID_GAP,
+  LP_HERO_GRID_TOP,
+  LP_HERO_TOP,
+  LP_LEAD_SIZE,
+  LP_NEWS_SECTION_Y,
+  LP_REF_WIDTH,
+  LP_THUMB_ASPECT,
+  LP_VALUE_BODY,
+  LP_VALUE_GAP,
+  LP_VALUE_ICON,
+  LP_VALUE_TITLE,
+} from "@/components/landing-design";
 import { LandingPageScaler } from "@/components/landing-page-scaler";
 
 const valueProps = [
@@ -97,7 +122,7 @@ function ForgeLogo() {
 function FeaturedGameCard({ game }: { game: (typeof featuredGames)[number] }) {
   return (
     <article className="overflow-hidden rounded-md border border-zinc-800/60 bg-[#111118]/80">
-      <div className={`aspect-[16/10] bg-gradient-to-br ${game.hue}`} />
+      <div className={`bg-gradient-to-br ${game.hue}`} style={{ aspectRatio: LP_THUMB_ASPECT }} />
       <div className="space-y-1 p-2.5">
         <h3 className="truncate text-xs font-semibold text-white">{game.title}</h3>
         <p className="line-clamp-1 text-[11px] leading-snug text-zinc-500">{game.description}</p>
@@ -112,18 +137,24 @@ function FeaturedGameCard({ game }: { game: (typeof featuredGames)[number] }) {
 
 function PlayerCtaCard() {
   return (
-    <div className="flex h-[248px] flex-col rounded-lg border border-violet-500/30 bg-[#14141c]/85 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm">
+    <div
+      className="flex shrink-0 flex-col rounded-lg border border-violet-500/30 bg-[#14141c]/85 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm"
+      style={{ height: LP_CTA_HEIGHT }}
+    >
       <p className="text-[10px] font-medium text-violet-300/90">プレイヤーのあなたへ</p>
-      <div className="flex flex-col items-center py-3">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-violet-500/25 text-xl ring-1 ring-violet-400/35">
+      <div className="flex flex-col items-center py-2">
+        <span
+          className="flex items-center justify-center rounded-full bg-violet-500/25 text-xl ring-1 ring-violet-400/35"
+          style={{ width: LP_CTA_ICON, height: LP_CTA_ICON }}
+        >
           🎮
         </span>
-        <h3 className="mt-3 text-center text-[15px] font-bold leading-snug text-white">プレイヤーとして参加</h3>
-        <p className="mt-2 max-w-[11rem] text-center text-[11px] leading-relaxed text-zinc-400">
+        <h3 className="mt-2.5 text-center text-[15px] font-bold leading-snug text-white">プレイヤーとして参加</h3>
+        <p className="mt-1.5 max-w-[11rem] text-center text-[11px] leading-snug text-zinc-400">
           ゲームを探してプレイし、開発者にフィードバックを届けましょう。
         </p>
       </div>
-      <div className="space-y-2">
+      <div className="mt-auto space-y-1.5">
         <Link
           href="/"
           className="block rounded-md bg-[#3b82f6] py-2 text-center text-xs font-semibold text-white transition hover:bg-[#2563eb]"
@@ -143,18 +174,24 @@ function PlayerCtaCard() {
 
 function DeveloperCtaCard() {
   return (
-    <div className="flex h-[248px] flex-col rounded-lg border border-emerald-500/30 bg-[#14141c]/85 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm">
+    <div
+      className="flex shrink-0 flex-col rounded-lg border border-emerald-500/30 bg-[#14141c]/85 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm"
+      style={{ height: LP_CTA_HEIGHT }}
+    >
       <p className="text-[10px] font-medium text-emerald-300/90">開発者のあなたへ</p>
-      <div className="flex flex-col items-center py-3">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/25 text-xl ring-1 ring-emerald-400/35">
+      <div className="flex flex-col items-center py-2">
+        <span
+          className="flex items-center justify-center rounded-full bg-emerald-500/25 text-xl ring-1 ring-emerald-400/35"
+          style={{ width: LP_CTA_ICON, height: LP_CTA_ICON }}
+        >
           🔧
         </span>
-        <h3 className="mt-3 text-center text-[15px] font-bold leading-snug text-white">開発者としてはじめる</h3>
-        <p className="mt-2 max-w-[11rem] text-center text-[11px] leading-relaxed text-zinc-400">
+        <h3 className="mt-2.5 text-center text-[15px] font-bold leading-snug text-white">開発者としてはじめる</h3>
+        <p className="mt-1.5 max-w-[11rem] text-center text-[11px] leading-snug text-zinc-400">
           あなたのゲームを公開し、プレイヤーと一緒に育てていきましょう。
         </p>
       </div>
-      <div className="space-y-2">
+      <div className="mt-auto space-y-1.5">
         <span
           title="Studio 画面は未実装"
           className="block cursor-not-allowed rounded-md bg-[#10b981] py-2 text-center text-xs font-semibold text-white/95"
@@ -172,10 +209,16 @@ function DeveloperCtaCard() {
   );
 }
 
-/** 1920 幅・実コンテンツ高さ — モック密度を px で固定 */
+/**
+ * モック基準アートボード（参照幅 LP_REF_WIDTH）。
+ * 個別 responsive 伸縮なし — LandingPageScaler が全体を均一 scale。
+ */
 function LandingPageCanvas({ className = "" }: { className?: string }) {
   return (
-    <div className={`relative w-[1920px] bg-[#0a0a0f] text-zinc-100 ${className}`}>
+    <div
+      className={`relative bg-[#0a0a0f] text-zinc-100 ${className}`}
+      style={{ width: LP_REF_WIDTH }}
+    >
       <section className="relative">
         <Image
           src="/images/landing-hero-bg.png"
@@ -183,14 +226,17 @@ function LandingPageCanvas({ className = "" }: { className?: string }) {
           fill
           priority
           className="object-cover object-[center_22%] opacity-90"
-          sizes="1920px"
+          sizes={`${LP_REF_WIDTH}px`}
         />
         <div className="absolute inset-0 bg-[#0a0a0f]/55" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0f]/95 via-[#0a0a0f]/72 to-[#0a0a0f]/38" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0f]/35 via-transparent to-[#0a0a0f]" />
 
         <header className="relative z-10 border-b border-white/[0.06]">
-          <div className="mx-auto flex h-[52px] w-[1120px] items-center justify-between">
+          <div
+            className="mx-auto flex items-center justify-between"
+            style={{ width: LP_CONTENT_WIDTH, height: LP_HEADER_HEIGHT }}
+          >
             <ForgeLogo />
             <div className="flex items-center gap-2">
               <Link
@@ -209,8 +255,18 @@ function LandingPageCanvas({ className = "" }: { className?: string }) {
           </div>
         </header>
 
-        <div className="relative z-10 mx-auto w-[1120px] pb-7 pt-6">
-          <h1 className="text-[34px] font-bold leading-[1.12] tracking-tight">
+        <div
+          className="relative z-10 mx-auto"
+          style={{
+            width: LP_CONTENT_WIDTH,
+            paddingTop: LP_HERO_TOP,
+            paddingBottom: LP_HERO_BOTTOM,
+          }}
+        >
+          <h1
+            className="font-bold leading-[1.12] tracking-tight"
+            style={{ fontSize: LP_H1_SIZE }}
+          >
             ゲームを、
             <span className="bg-gradient-to-r from-[#c084fc] via-[#e879f9] to-[#f472b6] bg-clip-text text-transparent">
               育てる
@@ -218,30 +274,45 @@ function LandingPageCanvas({ className = "" }: { className?: string }) {
             場所。
           </h1>
 
-          <div className="mt-5 grid grid-cols-[1.05fr_0.95fr] items-start gap-6">
+          <div
+            className="grid items-start"
+            style={{
+              marginTop: LP_HERO_GRID_TOP,
+              gap: LP_HERO_GRID_GAP,
+              gridTemplateColumns: `${LP_HERO_COL_LEFT} ${LP_HERO_COL_RIGHT}`,
+            }}
+          >
             <div>
-              <p className="max-w-[520px] text-sm leading-[1.65] text-zinc-300">
+              <p
+                className="max-w-[520px] leading-[1.65] text-zinc-300"
+                style={{ fontSize: LP_LEAD_SIZE }}
+              >
                 プレイヤーの声が、次の物語をつくる。開発者とプレイヤーが一緒に、最高のゲーム体験を育てていくプラットフォーム。
               </p>
 
-              <ul className="mt-4 space-y-3.5">
+              <ul style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: LP_VALUE_GAP }}>
                 {valueProps.map((item) => (
                   <li key={item.title} className="flex gap-2.5">
                     <span
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1 ${item.iconClass}`}
+                      className={`flex shrink-0 items-center justify-center rounded-full ring-1 ${item.iconClass}`}
+                      style={{ width: LP_VALUE_ICON, height: LP_VALUE_ICON }}
                     >
                       {item.icon}
                     </span>
                     <div className="min-w-0 pt-0.5">
-                      <p className="text-[13px] font-semibold leading-snug text-white">{item.title}</p>
-                      <p className="mt-0.5 text-[11px] leading-relaxed text-zinc-500">{item.body}</p>
+                      <p className="font-semibold leading-snug text-white" style={{ fontSize: LP_VALUE_TITLE }}>
+                        {item.title}
+                      </p>
+                      <p className="mt-0.5 leading-relaxed text-zinc-500" style={{ fontSize: LP_VALUE_BODY }}>
+                        {item.body}
+                      </p>
                     </div>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2" style={{ gap: LP_CTA_GAP }}>
               <PlayerCtaCard />
               <DeveloperCtaCard />
             </div>
@@ -249,15 +320,18 @@ function LandingPageCanvas({ className = "" }: { className?: string }) {
         </div>
       </section>
 
-      <section className="border-t border-zinc-800/50 bg-[#0a0a0f] py-5">
-        <div className="mx-auto w-[1120px]">
+      <section
+        className="border-t border-zinc-800/50 bg-[#0a0a0f]"
+        style={{ paddingTop: LP_FEATURED_SECTION_Y, paddingBottom: LP_FEATURED_SECTION_Y }}
+      >
+        <div className="mx-auto" style={{ width: LP_CONTENT_WIDTH }}>
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-[13px] font-bold text-white">注目の開発中ゲーム</h2>
             <Link href="/" className="text-[11px] text-zinc-500 transition hover:text-zinc-300">
               すべて見る →
             </Link>
           </div>
-          <div className="mt-3 grid grid-cols-5 gap-2.5">
+          <div className="mt-3 grid grid-cols-5" style={{ gap: LP_FEATURED_GAP }}>
             {featuredGames.map((game) => (
               <FeaturedGameCard key={game.title} game={game} />
             ))}
@@ -265,8 +339,11 @@ function LandingPageCanvas({ className = "" }: { className?: string }) {
         </div>
       </section>
 
-      <section className="border-y border-zinc-800/60 bg-[#0d0d12] py-3">
-        <div className="mx-auto flex w-[1120px] items-center justify-between gap-4">
+      <section
+        className="border-y border-zinc-800/60 bg-[#0d0d12]"
+        style={{ paddingTop: LP_NEWS_SECTION_Y, paddingBottom: LP_NEWS_SECTION_Y }}
+      >
+        <div className="mx-auto flex items-center justify-between gap-4" style={{ width: LP_CONTENT_WIDTH }}>
           <div className="min-w-0">
             <h2 className="text-[11px] font-semibold text-white">Forge からのお知らせ</h2>
             <p className="mt-0.5 truncate text-[11px] text-zinc-500">
@@ -277,8 +354,8 @@ function LandingPageCanvas({ className = "" }: { className?: string }) {
         </div>
       </section>
 
-      <footer className="bg-[#0a0a0f] py-3">
-        <div className="mx-auto flex w-[1120px] items-center justify-end gap-5">
+      <footer className="bg-[#0a0a0f]" style={{ paddingTop: LP_FOOTER_Y, paddingBottom: LP_FOOTER_Y }}>
+        <div className="mx-auto flex items-center justify-end gap-5" style={{ width: LP_CONTENT_WIDTH }}>
           <nav className="flex flex-wrap gap-x-3.5 gap-y-1 text-[10px] text-zinc-600">
             <span>利用規約</span>
             <span>プライバシーポリシー</span>
@@ -292,7 +369,7 @@ function LandingPageCanvas({ className = "" }: { className?: string }) {
   );
 }
 
-/** lg 未満 — スケールなし・縦スクロール */
+/** lg 未満 — モック比率は維持しつつ viewport 幅に折り返し */
 function LandingPageMobile() {
   return (
     <div className="min-h-dvh bg-[#0a0a0f] text-zinc-100 lg:hidden">
@@ -300,7 +377,7 @@ function LandingPageMobile() {
         <Image
           src="/images/landing-hero-bg.png"
           alt=""
-          width={1920}
+          width={LP_REF_WIDTH}
           height={1080}
           priority
           className="h-56 w-full object-cover object-[center_22%] opacity-90"

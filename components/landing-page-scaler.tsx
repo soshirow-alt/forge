@@ -1,15 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { LP_REF_WIDTH } from "@/components/landing-design";
 
-/** 01 LP デザインキャンバス幅（モック基準） */
-export const LANDING_DESIGN_WIDTH = 1920;
 const SCALE_MIN_WIDTH = 1024;
 
 type LandingPageScalerProps = {
   children: ReactNode;
 };
 
+/**
+ * モックアートボードを viewport に max-fit する均一 scale。
+ * scale = min(vw / refWidth, vh / artboardHeight)
+ * 要素単位の伸縮は行わない。
+ */
 export function LandingPageScaler({ children }: LandingPageScalerProps) {
   const measureRef = useRef<HTMLDivElement>(null);
   const [contentHeight, setContentHeight] = useState(0);
@@ -29,9 +33,7 @@ export function LandingPageScaler({ children }: LandingPageScalerProps) {
 
     if (height <= 0) return;
 
-    setScale(
-      Math.min(window.innerWidth / LANDING_DESIGN_WIDTH, window.innerHeight / height),
-    );
+    setScale(Math.min(window.innerWidth / LP_REF_WIDTH, window.innerHeight / height));
   }, []);
 
   useEffect(() => {
@@ -49,7 +51,7 @@ export function LandingPageScaler({ children }: LandingPageScalerProps) {
     };
   }, [updateLayout]);
 
-  const scaledWidth = LANDING_DESIGN_WIDTH * scale;
+  const scaledWidth = LP_REF_WIDTH * scale;
   const scaledHeight = contentHeight * scale;
   const ready = contentHeight > 0;
 
@@ -58,7 +60,7 @@ export function LandingPageScaler({ children }: LandingPageScalerProps) {
       <div
         className="relative shrink-0"
         style={{
-          width: ready ? scaledWidth : LANDING_DESIGN_WIDTH,
+          width: ready ? scaledWidth : LP_REF_WIDTH,
           height: ready ? scaledHeight : undefined,
           visibility: ready ? "visible" : "hidden",
         }}
@@ -67,7 +69,7 @@ export function LandingPageScaler({ children }: LandingPageScalerProps) {
           ref={measureRef}
           className="absolute left-0 top-0 origin-top-left"
           style={{
-            width: LANDING_DESIGN_WIDTH,
+            width: LP_REF_WIDTH,
             transform: ready ? `scale(${scale})` : undefined,
           }}
         >
@@ -77,3 +79,5 @@ export function LandingPageScaler({ children }: LandingPageScalerProps) {
     </div>
   );
 }
+
+export { LP_REF_WIDTH as LANDING_DESIGN_WIDTH };
