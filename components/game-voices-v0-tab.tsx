@@ -1,15 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   aiSummaryBullets,
-  communityVoices,
+  freeTextThemes,
+  getCommunityVoicesForGame,
   questionAggregates,
   voiceFilters,
   voiceStatsCards,
   voiceSubTabs,
   VOICES_LIST_TOTAL,
+  VOICES_PREVIEW_SHOWN,
   type CommunityVoiceEntry,
   type VoiceSubTabId,
 } from "@/lib/game-voices-v0-mock-data";
@@ -111,18 +113,24 @@ function AggregateBar({ aggregate }: { aggregate: (typeof questionAggregates)[nu
   );
 }
 
-function SubTabStub({ label }: { label: string }) {
-  return (
-    <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/20 px-6 py-16 text-center">
-      <p className="text-sm text-zinc-500">{label} — preview mock（次 GO）</p>
-    </div>
-  );
-}
-
-export function GameVoicesV0Tab({ onSendVoice }: { onSendVoice: () => void }) {
+export function GameVoicesV0Tab({
+  gameId,
+  onSendVoice,
+  refreshKey = 0,
+}: {
+  gameId: string;
+  onSendVoice: () => void;
+  refreshKey?: number;
+}) {
   const [subTab, setSubTab] = useState<VoiceSubTabId>("received");
   const [filter, setFilter] = useState<(typeof voiceFilters)[number]["id"]>("all");
-  const [voices, setVoices] = useState(communityVoices);
+  const [voices, setVoices] = useState<CommunityVoiceEntry[]>(() =>
+    getCommunityVoicesForGame(gameId),
+  );
+
+  useEffect(() => {
+    setVoices(getCommunityVoicesForGame(gameId));
+  }, [gameId, refreshKey]);
 
   const filteredVoices = voices.filter((voice) => {
     if (filter === "all") return true;
@@ -195,16 +203,22 @@ export function GameVoicesV0Tab({ onSendVoice }: { onSendVoice: () => void }) {
             </div>
 
             <ul className="space-y-4">
-              {filteredVoices.map((voice) => (
-                <li key={voice.id}>
-                  <VoiceCard voice={voice} onToggleEmpathy={toggleEmpathy} />
+              {filteredVoices.length === 0 ? (
+                <li className="rounded-2xl border border-dashed border-zinc-800 px-6 py-12 text-center text-sm text-zinc-500">
+                  この条件に合う声はまだありません。
                 </li>
-              ))}
+              ) : (
+                filteredVoices.map((voice) => (
+                  <li key={voice.id}>
+                    <VoiceCard voice={voice} onToggleEmpathy={toggleEmpathy} />
+                  </li>
+                ))
+              )}
             </ul>
 
             <div className="flex flex-col items-center gap-3 border-t border-zinc-800/80 pt-6">
               <p className="text-xs text-zinc-500">
-                {VOICES_LIST_TOTAL}件中 {filteredVoices.length}件を表示
+                {VOICES_LIST_TOTAL}件中 {Math.min(filteredVoices.length, VOICES_PREVIEW_SHOWN)}件を表示
               </p>
               <button
                 type="button"
@@ -225,7 +239,24 @@ export function GameVoicesV0Tab({ onSendVoice }: { onSendVoice: () => void }) {
           </div>
         )}
 
-        {subTab === "free-text" && <SubTabStub label="自由記述の集約" />}
+        {subTab === "free-text" && (
+          <ul className="space-y-4">
+            {freeTextThemes.map((theme) => (
+              <li
+                key={theme.id}
+                className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-semibold text-white">{theme.theme}</h3>
+                  <span className="shrink-0 rounded-full border border-zinc-700 px-2.5 py-0.5 text-xs text-zinc-500">
+                    {theme.count}件
+                  </span>
+                </div>
+                <p className="mt-3 text-sm leading-relaxed text-zinc-400">{theme.excerpt}</p>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <aside className="w-full shrink-0 space-y-5 xl:w-72">

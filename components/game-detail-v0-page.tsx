@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useState } from "react";
 import {
   FeedbackFormV0Modal,
   FeedbackSuccessV0Modal,
@@ -14,6 +15,10 @@ import {
 import { GameVoicesV0Tab } from "@/components/game-voices-v0-tab";
 import { GameThumbnail, PlayerShell } from "@/components/player-shell";
 import { getGameDetailV0 } from "@/lib/game-detail-v0-mock-data";
+import {
+  appendSessionVoice,
+  createPreviewVoiceEntry,
+} from "@/lib/game-voices-v0-mock-data";
 import {
   Bookmark,
   Check,
@@ -85,11 +90,34 @@ function TabStub({ label }: { label: string }) {
   );
 }
 
-export function GameDetailV0Page({ id }: { id: string }) {
+function parseDetailTab(param: string | null): DetailTab {
+  if (param === "devlog" || param === "voices" || param === "versions") {
+    return param;
+  }
+  return "overview";
+}
+
+function GameDetailV0PageContent({ id }: { id: string }) {
+  const searchParams = useSearchParams();
   const game = getGameDetailV0(id);
-  const [activeTab, setActiveTab] = useState<DetailTab>("overview");
+  const [activeTab, setActiveTab] = useState<DetailTab>(() =>
+    parseDetailTab(searchParams.get("tab")),
+  );
   const [introExpanded, setIntroExpanded] = useState(false);
   const [feedbackStep, setFeedbackStep] = useState<FeedbackFlowStep>("closed");
+  const [voicesRefreshKey, setVoicesRefreshKey] = useState(0);
+
+  const handleFeedbackSuccess = useCallback(() => {
+    appendSessionVoice(
+      game.id,
+      createPreviewVoiceEntry(
+        "（preview 送信）チュートリアルはやや長く感じましたが、世界観はとても良かったです。最終章が楽しみです。",
+      ),
+    );
+    setVoicesRefreshKey((value) => value + 1);
+    setActiveTab("voices");
+    setFeedbackStep("success");
+  }, [game.id]);
 
   useFeedbackFlowLock(feedbackStep);
 
@@ -112,14 +140,14 @@ export function GameDetailV0Page({ id }: { id: string }) {
           game={game}
           onClose={() => setFeedbackStep("closed")}
           onOpenFullForm={() => setFeedbackStep("full-form")}
-          onSubmitQuick={() => setFeedbackStep("success")}
+          onSubmitQuick={handleFeedbackSuccess}
         />
       )}
       {feedbackStep === "full-form" && (
         <FeedbackFormV0Modal
           game={game}
           onClose={() => setFeedbackStep("closed")}
-          onSubmit={() => setFeedbackStep("success")}
+          onSubmit={handleFeedbackSuccess}
         />
       )}
       {feedbackStep === "success" && (
@@ -330,7 +358,11 @@ export function GameDetailV0Page({ id }: { id: string }) {
 
           {activeTab === "devlog" && <TabStub label="開発ログ" />}
           {activeTab === "voices" && (
-            <GameVoicesV0Tab onSendVoice={() => setFeedbackStep("full-form")} />
+            <GameVoicesV0Tab
+              gameId={game.id}
+              refreshKey={voicesRefreshKey}
+              onSendVoice={() => setFeedbackStep("full-form")}
+            />
           )}
           {activeTab === "versions" && <TabStub label="版の履歴" />}
         </div>
@@ -420,5 +452,19 @@ export function GameDetailV0Page({ id }: { id: string }) {
         )}
       </div>
     </PlayerShell>
+  );
+}
+
+export function GameDetailV0Page({ id }: { id: string }) {
+  return (
+    <Suspense
+      fallback={
+        <PlayerShell>
+          <p className="text-sm text-zinc-500">読み込み中...</p>
+        </PlayerShell>
+      }
+    >
+      <GameDetailV0PageContent id={id} />
+    </Suspense>
   );
 }
