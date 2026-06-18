@@ -6,7 +6,12 @@ import {
   LandingPageCanvas,
   LandingPageCanvasCompare,
 } from "@/components/landing-page-canvas";
-import { MOCK_H, MOCK_REF_IMAGE_H, MOCK_W } from "@/components/landing-mock-layout";
+import {
+  MOCK_H,
+  MOCK_OVERLAY_H,
+  MOCK_REF_IMAGE_H,
+  MOCK_W,
+} from "@/components/landing-mock-layout";
 
 type CompareMode = "side-by-side" | "overlay" | "toggle";
 
@@ -16,9 +21,9 @@ export function LandingOverlayTool() {
 
   return (
     <div className="flex w-full max-w-[2400px] flex-col items-center gap-4 px-4 py-6">
-      <p className="text-center text-xs text-zinc-500">
-        01 LP モック比較（preview のみ）— モック画像 {MOCK_W}×{MOCK_REF_IMAGE_H} / 実装アートボード {MOCK_W}×
-        {MOCK_H}
+      <p className="max-w-2xl text-center text-xs text-zinc-500">
+        01 LP モック比較（preview のみ）— 正本 fb505643 {MOCK_W}×{MOCK_REF_IMAGE_H} / 実装アートボード {MOCK_W}×
+        {MOCK_H}（上端揃え・Hero 座標合わせフェーズ）
       </p>
 
       <div className="flex flex-wrap justify-center gap-2">
@@ -56,10 +61,10 @@ export function LandingOverlayTool() {
       {mode === "side-by-side" ? (
         <div className="flex flex-col items-center gap-3 lg:flex-row lg:items-start">
           <div className="flex flex-col items-center gap-1">
-            <span className="text-[10px] text-zinc-500">モック原寸</span>
+            <span className="text-[10px] text-zinc-500">正本モック（fb505643）</span>
             <Image
               src="/images/landing-mock-reference.jpg"
-              alt="モック"
+              alt="モック正本"
               width={MOCK_W}
               height={MOCK_REF_IMAGE_H}
               className="max-w-none border border-zinc-800"
@@ -67,7 +72,7 @@ export function LandingOverlayTool() {
             />
           </div>
           <div className="flex flex-col items-center gap-1">
-            <span className="text-[10px] text-zinc-500">実装</span>
+            <span className="text-[10px] text-zinc-500">実装（上端 Y=0 揃え）</span>
             <div className="border border-zinc-800">
               <LandingPageCanvas />
             </div>
@@ -77,8 +82,10 @@ export function LandingOverlayTool() {
 
       {mode === "overlay" ? (
         <div className="flex flex-col items-center gap-1">
-          <span className="text-[10px] text-zinc-500">下: モック 50% / 上: 実装 100%（ヒーロー背景は下層モックのみ）</span>
-          <div className="relative border border-zinc-800" style={{ width: MOCK_W, height: MOCK_H }}>
+          <span className="text-[10px] text-zinc-500">
+            下: 正本モック 50% / 上: 実装 100%（上端揃え・高さ {MOCK_OVERLAY_H}px）
+          </span>
+          <div className="relative border border-zinc-800" style={{ width: MOCK_W, height: MOCK_OVERLAY_H }}>
             <Image
               src="/images/landing-mock-reference.jpg"
               alt=""
@@ -96,12 +103,18 @@ export function LandingOverlayTool() {
 
       {mode === "toggle" ? (
         <div className="flex flex-col items-center gap-1">
-          <span className="text-[10px] text-zinc-500">{showMock ? "モック表示中" : "実装表示中"}</span>
-          <div className="border border-zinc-800" style={{ width: MOCK_W, height: MOCK_H }}>
+          <span className="text-[10px] text-zinc-500">{showMock ? "正本モック表示中" : "実装表示中"}</span>
+          <div
+            className="relative border border-zinc-800"
+            style={{
+              width: MOCK_W,
+              height: showMock ? MOCK_REF_IMAGE_H : MOCK_H,
+            }}
+          >
             {showMock ? (
               <Image
                 src="/images/landing-mock-reference.jpg"
-                alt="モック"
+                alt="モック正本"
                 width={MOCK_W}
                 height={MOCK_REF_IMAGE_H}
                 className="max-w-none"

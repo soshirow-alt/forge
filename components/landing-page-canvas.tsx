@@ -199,7 +199,7 @@ type LandingPageCanvasProps = {
   hideHeroImage?: boolean;
 };
 
-/** モック 1024×496 原寸アートボード — 絶対配置模写 */
+/** 実装アートボード — 絶対配置（正本 overlay: fb505643 1024×819） */
 export function LandingPageCanvas({ className = "", hideHeroImage = false }: LandingPageCanvasProps) {
   const featuredSectionH = MOCK_NEWS.y - MOCK_FEATURED.y;
 

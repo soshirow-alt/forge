@@ -1,8 +1,11 @@
 /**
- * 01 LP — モック JPEG オーバーレイ計測値（基準幅 1024）
+ * 01 LP — モック overlay 計測値（基準幅 1024）
  *
- * 優先順位: ① 作品カードサイズ（モック基準）→ ② お知らせ Y → ③ フッター Y
- * アートボード高 MOCK_H はフッター下端から算出（カードを縮めない）
+ * 正本画像: fb505643 — 1024×819（public/images/landing-mock-reference.jpg）
+ * 55022e3e（1024×496）は正本にしない
+ *
+ * MOCK_REF_IMAGE_H = 正本 JPEG 原寸高（overlay 比較）
+ * MOCK_H = 実装アートボード高（座標合わせ中 — フッター連鎖）
  */
 export const MOCK_W = 1024;
 
@@ -82,10 +85,13 @@ export const MOCK_FOOTER = {
   size: 9,
 } as const;
 
-/** 実コンテンツ高（カードサイズ維持のため 496 固定は使わない） */
+/** 実装アートボード高（座標合わせ中 — カード118維持・Hero 等は未調整） */
 export const MOCK_H = MOCK_FOOTER.y + MOCK_FOOTER.h;
 
 export const LP_REF_WIDTH = MOCK_W;
 
-/** モック JPEG 原寸（overlay 比較用参照画像の高さ） */
-export const MOCK_REF_IMAGE_H = 496;
+/** 正本モック JPEG 原寸高（fb505643 / 1024×819） */
+export const MOCK_REF_IMAGE_H = 819;
+
+/** overlay 比較コンテナ高 — 正本と実装の長い方 */
+export const MOCK_OVERLAY_H = Math.max(MOCK_H, MOCK_REF_IMAGE_H);
