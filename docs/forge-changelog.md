@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-06-19 23 プレイヤー v0 残画面一括 + 連携整理（preview）
+
+- P-05-2 開発者検索 `/search/creators`
+- P-07 開発者プロフィール v0 `/creators/[id]`
+- P-17 プレイヤー設定 `/settings`
+- P-18 月間影響度 `/rankings/influence`
+- Player Shell: 開発者を探す・ランキング・設定リンク
+- `docs/preview-v0-gaps.md` — stub ボタン・論点整理
+
+---
+
 ## 2026-06-19 22 P-05 検索強化 / P-09 プロフィール / ログイン導線（preview）
 
 - P-05: 絞り込み・キーワード検索を URL 連動、❤️→見届け/声、ヘッダー検索 submit

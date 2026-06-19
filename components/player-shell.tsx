@@ -17,7 +17,8 @@ import { type FormEvent, type ReactNode, useState } from "react";
 const discoverLinks = [
   { id: "home", href: "/home", label: "ホーム" },
   { id: "search", href: "/search", label: "作品を探す" },
-  { id: "ranking", href: "/search?q=人気", label: "人気ランキング" },
+  { id: "developer-search", href: "/search/creators", label: "開発者を探す" },
+  { id: "ranking", href: "/rankings/influence", label: "月間影響度ランキング" },
   { id: "new", href: "/search?q=新着", label: "新着作品" },
   { id: "updated", href: "/search?q=最近更新", label: "最近更新された作品" },
   { id: "genres", href: "/search?q=ジャンル", label: "ジャンル" },
@@ -82,7 +83,12 @@ export function PlayerShell({
   notificationBadge?: number;
 }) {
   const showMypageSection =
-    activeNav === "mypage" || activeNav === "search" || Boolean(activeMypageLink);
+    activeNav === "mypage" ||
+    activeNav === "search" ||
+    activeNav === "developer-search" ||
+    activeNav === "ranking" ||
+    activeNav === "settings" ||
+    Boolean(activeMypageLink);
 
   return (
     <div className="flex min-h-full bg-[#0a0a0a] text-zinc-100">
@@ -153,13 +159,16 @@ export function PlayerShell({
               </span>
             )}
           </Link>
-          <span
-            className={`block rounded-lg px-3 py-2 text-sm ${
-              activeNav === "settings" ? "font-medium text-white" : "text-zinc-500"
+          <Link
+            href="/settings"
+            className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
+              activeNav === "settings"
+                ? "bg-zinc-800/80 font-medium text-white"
+                : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
             }`}
           >
             設定
-          </span>
+          </Link>
         </nav>
 
         <div className="mx-3 mb-4 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
