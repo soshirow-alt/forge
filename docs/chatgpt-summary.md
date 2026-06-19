@@ -1,57 +1,64 @@
 ■ 現在の状態
 - ブランチ: preview/landing-01（preview のみ。本番未反映）
 - Preview URL: https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app
-- 直前 commit: d2fd87d（UX fix batch）。本変更は push 直後に新 commit
-- プレイヤー v0 01–18 mock 完成済み
+- 直前 commit: 05e88ba。本修正は push 直後に新 commit
+- 新規登録二重切替 — 原因特定・修正済み
 
 ■ 今回実装したこと
-- /mypage 全タブ共通 — メイン上部の h1「マイページ」を削除
-- タブ行（見届け中〜フォロー中開発者）がコンテンツ最上部から始まる
-- サイドバー「マイページ」点灯で現在地は十分と判断（オーナー指摘）
+- 原因: LP の「新規登録」が `/login?mode=signup` 経由。login 画面表示後 useEffect で `/register` に replace → 画面が2回切り替わって見える
+- LP ヘッダー・ヒーロー CTA のリンクを `/register` に直接変更（3箇所）
+- middleware: `/login?mode=signup` → `/register` サーバー redirect（return クエリは引き継ぎ）
+- login-page.tsx: client-side router.replace 削除（middleware に一本化）
 
 ■ 今回変更した画面
-- P-10〜15 マイページ /mypage（全 inner tab 共通）
-  - 画面位置: メインコンテンツ最上部、タブ行の直上
-  - 変更前: 大見出し「マイページ」+ その下にタブ行
-  - 変更後: タブ行のみ（見届け中 / 保存作品 / …）
-  - プレイヤー視点: サイドバーと重複ラベルが消え、各タブの見出し（例: 見届け中の作品）が主役に
-  - 開発者視点: IA 変更なし。URL・tab パラメータ同じ
-  - 確認手順:
-    1. preview /mypage を開く — 左上に「マイページ」h1 がない
-    2. 保存作品・プレイ履歴等タブを切替 — どれも h1 なし
-    3. サイドバー「マイページ」が active 表示のまま
+- P-01 LP /landing
+  - 画面位置: ヘッダー右上「新規登録」、ヒーロー内 secondary CTA（2箇所）
+  - 変更前: href=/login?mode=signup → 一度ログイン画面 → 登録画面
+  - 変更後: href=/register → 登録画面に直行
+  - 確認: LP から新規登録クリック — ログイン画面を挟まない
+
+- P-02 ログイン /login?mode=signup（旧 URL）
+  - 変更前: ログイン UI 一瞬表示 → client replace
+  - 変更後: middleware で即 /register（フラッシュなし）
+  - 確認: 旧 URL 直打ちでも登録画面のみ
+
+- P-03 新規登録 /register
+  - 変更なし（遷移経路のみ改善）
 
 ■ ユーザー目線の変化
-- マイページ内で「マイページ」と2回言わない
-- タブと各パネル見出し（見届け中の作品 等）に視線が早く届く
+- 新規登録ボタンを押すと登録フォームが1回で表示される
+- ログイン画面が一瞬映る違和感が消える
 
 ■ なぜこの設計
-- サイドバー activeNav=mypage で現在地が明示済み
-- モバイルでもヘッダー 👤 とタブで文脈は足りる
-- 全タブ同一レイアウトのため h1 削除は1箇所（MyPagePageContent）で完結
+- P-03 は独立ルート化済み。signup 経由 login は legacy 互換のみ
+- サーバー redirect は HTML 返却前に処理 → client replace よりフラッシュ少ない
+- LP は直接 /register が原典の「redirect 複雑化しない」にも合う
 
 ■ 他案不採用
-- h1 をタブ名に差し替え — 各パネルに既にセクション見出しあり、二重化
-- サイドバー点灯を消す — ナビ正本を崩す
+- login-page の replace だけ残す — サーバー HTML が先に届くためフラッシュ残る
+- register を login タブ内に統合 — 既に P-03 分離済み
 
 ■ In / Out
-- In: mypage-page.tsx の header/h1 削除
-- Out: タブ文言変更、/mypage/profile、本番 deploy
+- In: landing links、middleware redirect、login useEffect 削除
+- Out: register の return パラメータ処理（将来必要なら別タスク）
 
 ■ リスク
-- なし（見出し削除のみ。a11y は tablist + 各 panel 内 h2 で維持）
+- ブックマーク `/login?mode=signup` は /register へ 302（意図どおり）
+- docs/ui-mocks の旧 URL 記載は未更新（参照用ドキュメントのみ）
 
 ■ オーナー確認手順
-- preview /mypage と ?tab=saved 等 — h1 なし・タブ動作同じ
+1. /landing → 新規登録 — 1回で /register
+2. /login?mode=signup 直打ち — ログイン UI なしで /register
+3. /register ヘッダー「ログイン」— 通常どおり
 
 ■ 今すぐ私がやるべきこと
-- deploy 後 /mypage 各タブを目視
+- deploy 後 LP から新規登録を目視
 
 ■ Cursorだけで完了できること
-- 他画面でもサイドバー active と重複する h1 があれば同様整理
+- ui-mocks 01-landing.md の URL 表を /register に更新
 
 ■ 次に検討すべきこと
-- Player v0 mock 完了後の次テーマ（Studio / prod GO）
+- register でも return クエリ対応が必要か
 
 ■ ChatGPTに相談したい論点
-- 特になし（小 UI 整理）
+- 特になし（バグ修正）

@@ -171,7 +171,7 @@ export function LandingPage() {
               ログイン
             </Link>
             <Link
-              href="/login?mode=signup"
+              href="/register"
               className="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 shadow-lg shadow-white/20 transition-[filter] hover:brightness-110 sm:px-5"
             >
               新規登録
@@ -243,7 +243,7 @@ export function LandingPage() {
                   primaryLabel="ゲームを探す"
                   primaryHref="/"
                   primaryClass="bg-white text-zinc-950 shadow-white/20"
-                  secondaryHref="/login?mode=signup"
+                  secondaryHref="/register"
                 />
                 <CtaCard
                   accent="developer"
@@ -253,7 +253,7 @@ export function LandingPage() {
                   body={"あなたのゲームを公開し、\nプレイヤーと一緒に育てていきましょう。"}
                   primaryLabel="Studioに入る"
                   primaryClass="bg-emerald-500 text-zinc-950 shadow-emerald-500/30"
-                  secondaryHref="/login?mode=signup"
+                  secondaryHref="/register"
                 />
               </div>
             </div>

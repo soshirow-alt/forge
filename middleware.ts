@@ -10,6 +10,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/home", request.url));
   }
 
+  if (
+    request.nextUrl.pathname === "/login" &&
+    request.nextUrl.searchParams.get("mode") === "signup"
+  ) {
+    const registerUrl = new URL("/register", request.url);
+    const returnParam = request.nextUrl.searchParams.get("return");
+    if (returnParam) {
+      registerUrl.searchParams.set("return", returnParam);
+    }
+    return NextResponse.redirect(registerUrl);
+  }
+
   return updateSession(request);
 }
 

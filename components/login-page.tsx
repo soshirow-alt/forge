@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import {
   AuthPageShell,
@@ -20,7 +20,6 @@ export function LoginPage({
   supabaseConfigured: boolean;
 }) {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const returnParam = searchParams.get("return");
   const callbackError = searchParams.get("error");
 
@@ -30,12 +29,6 @@ export function LoginPage({
   const [error, setError] = useState<string | null>(null);
   const [stubMessage, setStubMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (searchParams.get("mode") === "signup") {
-      router.replace("/register");
-    }
-  }, [searchParams, router]);
 
   useEffect(() => {
     if (callbackError === "auth_callback") {

@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-06-19 27 新規登録の二重画面切替修正（preview）
+
+- LP・CTA の新規登録リンクを `/login?mode=signup` → `/register` に変更
+- middleware で `/login?mode=signup` を `/register` へサーバー redirect（旧 URL 互換、ログイン画面フラッシュ防止）
+- login-page の client-side replace 削除
+
+---
+
 ## 2026-06-19 26 マイページ見出し削除（preview）
 
 - `/mypage` 全タブ — 左上「マイページ」h1 を削除（サイドバー点灯で冗長）
