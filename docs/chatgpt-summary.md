@@ -1,76 +1,72 @@
 ■ 現在の状態
-- ブランチ preview/landing-01。ローカルに S-23 開発者月間ランキング刷新が未コミット
-- npm run build 成功（/studio/rankings ルート含む）
-- Preview URL: https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app（push 後に反映）
-- DB migration 変更なし。v0 mock データのみ
+- preview/landing-01。commit 996c632（S-23 push 済み）
+- 本タスクは実装なし。docs/forge-screen-definition.md の S-22 正本更新 + IA レビューのみ
+- preview の /studio/projects/[id] は旧 6タブ mock のまま（正本と乖離）
 
 ■ Forge原典コアループ（判断の基準）
-- 投稿 → 発見 → プレイ → フィードバック → 改善 → 再プレイ
-- Studio ランキングは「作品を育てた開発者」を称えることで、開発者の改善サイクルを後押しする。量産指標（投稿数等）を主軸にしないのは原典の「育てる」思想に合わせるため
+- 開発者: 投稿 → 声を受け取る → 改善する → 開発ログ公開 → 再プレイ獲得
+- 正式版はコアループ上のイベントのひとつ。専用タブより Devlog 種別が原典の「育てる」思想に合う
 
-■ 今回実装したこと
-- S-23 /studio/rankings を「今月もっとも作品を育てた開発者」画面に作り直し
-- components/studio-rankings-page.tsx — StudioShell activeNav=ranking、パンくず・タイトル・リード・月選択、TOP3カード、4位以下テーブル、右カラム2枚
-- lib/studio-rankings-v0-mock-data.ts — 開発者ランキング用 mock を S-20 ホーム抜粋（studioRankingSnippets）と分離
-- docs/forge-changelog.md — 39 Studio 開発者月間ランキング エントリ追加
+■ 今回実施したこと（設計のみ・実装なし）
+- S-22 を「Player P-06 の編集モード」として正本再定義
+- タブ 6→5（正式版タブ廃止）
+- 正式版公開・Reopen → T04 Devlog 種別へ統合
+- プレイ可能版公開 → T05 のみ（Devlog に版公開機能は持たせない）
+- Player×Studio タブ対応表、T01〜T05 各タブ仕様、preview 暫定との差分表を追記
+- P-06 に横タブ一覧を追記
+
+■ 変更ファイル
+- docs/forge-screen-definition.md（主）
+- docs/forge-changelog.md（40 S-22 方針変更）
+- docs/forge-handoff.md（S-22 正本状態を1行追記）
+- docs/chatgpt-summary.md
+
+■ 方針変更サマリ
+- 従来: Studio 専用管理画面想定、6タブ（正式版あり）
+- 変更後: P-06 と世界観・レイアウト共通、5タブ、正式版は Devlog イベント
+
+■ Player × Studio タブ対応
+- P-06 概要 ↔ S-22-T01 概要（編集 + 次にやること）
+- （Player なし）↔ S-22-T02 声を見る（生の声・AI禁止）
+- P-06 みんなの声 ↔ S-22-T03 みんなの声（Player=見る / Studio=作る）
+- P-06 開発ログ ↔ S-22-T04 Devlog（種別: 通常/メモ/正式版公開/Reopen）
+- P-06 版の履歴 ↔ S-22-T05 バージョン（プレイ可能版公開・質問10問）
+
+■ preview 暫定との主要差分（実装 GO 時の作業見込み）
+- 高: 正式版タブ削除、ヘッダーを P-06 同型化、T03 をダッシュボード化（グラフ・トピック・右カラム）
+- 中: T01 サブタイトル・次にやること、T04 Devlog 種別・画像、T05 更新内容・プレイ URL
+- 低: T03「不満点」→「気になる点」文言
+
+■ 残存論点（GO 前）
+- 正式版フェーズ遷移のトリガー（Devlog 公開時のみか T01/T05 連動か）
+- T03 AI 集約の生成タイミングと Player 表示同期
+- P-06 ヘッダーのコンポーネント共有方針
 
 ■ 今回変更した画面
-- 画面ID: S-23 Studio ランキング
-- URL: /studio/rankings
-- 画面位置: Studio Shell 内メイン。左サイドバー「ランキング」が選択状態（ホーム / プロジェクト一覧 / ランキング ── マイページ / 通知 ── 設定 / はじめてガイド）
-- 変更前: 作品・プレイヤー寄りのランキング文言・構成だった可能性（Player P-17 流用に近い表現）
-- 変更後:
-  - タイトル「今月もっとも作品を育てた開発者」
-  - リード「プレイヤーの声と応援によって、作品を大きく前進させた開発者を称えます。」
-  - TOP3: 順位・開発者アイコン・名前・handle・称号ラベル・影響度スコア・先月比・代表作品
-  - 4位以下テーブル: 順位 / 開発者 / 代表作品 / 影響度スコア / 先月比 / 見届け人増 / 作品フォロー増 / 開発者フォロー増 / 声の増加
-  - 右: ランキングの指標カード + 先月TOP3 + 過去のランキングボタン（v0 未遷移）
-- プレイヤー視点: Player P-17 月間影響度（貢献したプレイヤー称賛）とは別画面・別文言
-- 開発者視点: 自分が今月どれだけ作品を育てたかが分かる指標と順位を確認できる
-- 確認手順: preview で /studio/rankings を開く → サイドバー「ランキング」ハイライト → TOP3・テーブル・右カラム文言を目視
+- 該当なし（コード未変更）。正本のみ S-22 更新
 
 ■ ユーザー目線の変化
-- Studio ランキングが「開発者が作品を育てた結果」の月間称賛画面として明確化
-- 投稿数・更新数・正式版数ではなく、見届け人・フォロー・声の増加が主指標として見える
-- Player 側の影響度ランキングと混同しにくいタイトル・リードに変更
-
-■ ランキング指標の扱い
-- 対象: 開発者単位（作品ランキングでも Player ランキングでもない）
-- 主指標（月間増加）: 見届け人 / 作品フォロー / 開発者フォロー / 声
-- UI 上の要素比重（参考表示）: 見届け人40% / 作品フォロー25% / 開発者フォロー15% / 声20%
-- スコア思想: 絶対数と成長率の両方（目安 絶対数7 : 成長率3）— 右カラム注記のみ。計算式は前面に出さない
-- 評価しないもの: 投稿数・更新数・正式版公開数・売上・人気投票
-- v0: mock 数値。本番は Supabase 集計が将来課題
-
-■ 変更ファイル一覧
-- components/studio-rankings-page.tsx（本体 UI）
-- lib/studio-rankings-v0-mock-data.ts（開発者 mock + S-20 抜粋分離）
-- docs/forge-changelog.md
-- docs/chatgpt-summary.md（本ファイル）
-- 既存ルート app/studio/rankings/page.tsx は変更なし（コンポーネント委譲のみ）
+- まだなし（preview は旧 mock）。GO 後は Player と Studio で同じ作品画面の Read/Write 関係が明確になる
 
 ■ 注意事項
-- 月選択・もっと見る・過去のランキングは v0 で UI のみ（集計 API 未接続）
-- S-20 ホームのランキング抜粋（studioRankingSnippets）は作品向けのまま。S-23 全文とは別データ
-- 白テーマ・新デザイン言語は使っていない。Player v0 ダーク・紫アクセント・Studio Shell 既存パターン準拠
+- docs/ui-mocks/22-project-home.md は KPI ダッシュボード型で本正本非準拠。T03 参考はオーナー添付モック（みんなの声タブ）
+- 実装はオーナー GO まで着手しない
 
 ■ 今すぐ私がやるべきこと
-- preview /studio/rankings を目視確認（TOP3・テーブル列・右カラム文言）
-- push 承認後、Preview URL で再確認
+- 正本 S-22 を ChatGPT と突合し、残存論点（正式版遷移）を決める
+- GO 後に preview S-22 を 5タブ + P-06 ヘッダー寄せで実装指示
 
 ■ Cursorだけで完了できること
-- preview/landing-01 への commit + push（UI のみ、migration なし）
-- 月選択の前後月 mock 切替、過去ランキング画面の v0 スタブ（別タスク）
+- S-22 v0 実装（GO 後）
+- P-06 ヘッダー共有コンポーネント化の調査
 
 ■ 次に検討すべきこと
-- 本番集計ロジック（絶対数7:成長率3 の実装仕様）
-- S-20 ホームと S-23 の導線・データ整合
-- 過去月ランキング一覧画面の要否
+- 正式版状態遷移の確定
+- S-22 実装 GO のタイミング
 
 ■ ChatGPTに相談したい論点
-- 特になし（仕様はオーナー指示どおり実装済み）
+- Devlog「正式版公開」種別を選んだとき、作品フェーズは自動で変わるか、別確認が要るか
 
 ■ Runしてよいか
-- preview ブランチへの commit + push: 可（UI/mock のみ、本番 prod・migration・DB 変更なし）
-- 本番 prod deploy: 保留（従来どおり）
-- 結論: preview push は [A] Run推奨。prod は [D] Run禁止
+- 本タスクは docs のみ。commit/push は任意（コード変更なし）
+- S-22 実装 GO までは preview deploy 不要
