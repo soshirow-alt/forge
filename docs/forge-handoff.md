@@ -1,6 +1,6 @@
 # Forge Handoff
 
-最終更新：**2026-06-19**（preview/landing-01 — Studio ホーム v0）
+最終更新：**2026-06-19**（preview/landing-01 — Studio S-23 開発者月間ランキング）
 
 ---
 
@@ -8,7 +8,7 @@
 
 - **preview/landing-01** — Player v0 01–18 mock 完成 + **Studio S-20 ホーム v0 着手**
 - **Preview URL**: https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app
-- **Studio v0**: S-20〜S-27 mock 完成（`/studio` 一式）。通知設定は `/settings`・`/studio/settings` 共通フォーム
+- **Studio v0**: S-20〜S-27 mock 完成（`/studio` 一式）。**S-23** `/studio/rankings` は開発者月間ランキング（作品を育てた開発者）。通知設定は `/settings`・`/studio/settings` 共通フォーム
 - **本番 prod deploy — 保留**
 - **画面設計正本**: `docs/forge-screen-definition.md`（**Studio S-20〜S-27 ドラフト 2026-06-19**）
 - **主戦場**: **Phase2 UX 設計**
