@@ -4,7 +4,12 @@
 
 ---
 
-## 2026-06-15 40 S-22 設計方針変更（実装前・正本更新）
+## 2026-06-15 41 Preview 設計ドキュメント一括反映
+
+- 画面 inventory・UI mocks・ロードマップ・設計判断 docs を preview/landing-01 に push（3b7f82f）
+- 実装は Studio S-20〜S-27 v0 + S-23 開発者ランキングが preview 上で閲覧可能
+
+---
 
 - `docs/forge-screen-definition.md` — Studio 詳細を **P-06 編集モード** として再定義
 - 正式版タブ（旧 T06）廃止 → Devlog 種別（正式版公開 / Reopen）へ統合

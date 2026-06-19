@@ -1,72 +1,64 @@
 ■ 現在の状態
-- preview/landing-01。commit 996c632（S-23 push 済み）
-- 本タスクは実装なし。docs/forge-screen-definition.md の S-22 正本更新 + IA レビューのみ
-- preview の /studio/projects/[id] は旧 6タブ mock のまま（正本と乖離）
+- preview/landing-01。最新 commit 3b7f82f push 済み
+- Preview URL: https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app
+- npm run build 成功。Vercel 反映待ち数分
+- 本番 prod deploy — 保留
 
-■ Forge原典コアループ（判断の基準）
+■ Forge原典コアループ
+- プレイヤー: 発見 → プレイ → 声を届ける → 変化を見る → 再プレイ
 - 開発者: 投稿 → 声を受け取る → 改善する → 開発ログ公開 → 再プレイ獲得
-- 正式版はコアループ上のイベントのひとつ。専用タブより Devlog 種別が原典の「育てる」思想に合う
 
-■ 今回実施したこと（設計のみ・実装なし）
-- S-22 を「Player P-06 の編集モード」として正本再定義
-- タブ 6→5（正式版タブ廃止）
-- 正式版公開・Reopen → T04 Devlog 種別へ統合
-- プレイ可能版公開 → T05 のみ（Devlog に版公開機能は持たせない）
-- Player×Studio タブ対応表、T01〜T05 各タブ仕様、preview 暫定との差分表を追記
-- P-06 に横タブ一覧を追記
+■ Preview に載っている実装（まとめ）
 
-■ 変更ファイル
-- docs/forge-screen-definition.md（主）
-- docs/forge-changelog.md（40 S-22 方針変更）
-- docs/forge-handoff.md（S-22 正本状態を1行追記）
-- docs/chatgpt-summary.md
+【Player v0 主要画面】
+- /home — ホーム P-04
+- /games/[id] — ゲーム詳細 P-06（概要・開発ログ・みんなの声・版の履歴）
+- /search / /search/creators — 作品・開発者検索
+- /rankings/influence — 月間影響度 P-17
+- /mypage 一式 — マイページ P-16
+- /notifications / /settings — 通知・設定
+- /login / /register — 認証
+- FB モーダル P-19（ゲーム詳細から）
 
-■ 方針変更サマリ
-- 従来: Studio 専用管理画面想定、6タブ（正式版あり）
-- 変更後: P-06 と世界観・レイアウト共通、5タブ、正式版は Devlog イベント
+【Forge Studio S-20〜S-27】
+- /studio — Studio ホーム（作品5件・最近の動き・ランキング抜粋等）
+- /studio/projects — プロジェクト一覧（グリッド/リスト・フィルタ・12件 mock）
+- /studio/projects/[id] — プロジェクト詳細（6タブ mock ※正本は5タブへ変更予定）
+- /studio/rankings — 開発者月間ランキング S-23（今月もっとも作品を育てた開発者）
+- /studio/profile — Studio マイページ S-24
+- /studio/notifications — Studio 通知 S-25
+- /studio/settings — Studio 設定 S-26（Player /settings と共通フォーム）
+- /studio/guide — はじめてガイド S-27（/studio/getting-started はリダイレクト）
 
-■ Player × Studio タブ対応
-- P-06 概要 ↔ S-22-T01 概要（編集 + 次にやること）
-- （Player なし）↔ S-22-T02 声を見る（生の声・AI禁止）
-- P-06 みんなの声 ↔ S-22-T03 みんなの声（Player=見る / Studio=作る）
-- P-06 開発ログ ↔ S-22-T04 Devlog（種別: 通常/メモ/正式版公開/Reopen）
-- P-06 版の履歴 ↔ S-22-T05 バージョン（プレイ可能版公開・質問10問）
+【共通】
+- StudioShell — Player v0 同型ダークテーマ・紫アクセント・Sidebar 正本
+- トップバー「Playerへ戻る」で Player 側へ切替
 
-■ preview 暫定との主要差分（実装 GO 時の作業見込み）
-- 高: 正式版タブ削除、ヘッダーを P-06 同型化、T03 をダッシュボード化（グラフ・トピック・右カラム）
-- 中: T01 サブタイトル・次にやること、T04 Devlog 種別・画像、T05 更新内容・プレイ URL
-- 低: T03「不満点」→「気になる点」文言
+■ 今回 push したもの（3b7f82f）
+- 残っていた設計 docs 一括（forge-screen-inventory、ui-mocks 02〜23、roadmap、product-decisions 等）
+- AGENTS.md / forge-principles 等の更新分
 
-■ 残存論点（GO 前）
-- 正式版フェーズ遷移のトリガー（Devlog 公開時のみか T01/T05 連動か）
-- T03 AI 集約の生成タイミングと Player 表示同期
-- P-06 ヘッダーのコンポーネント共有方針
+■ 直近 commit 履歴（Studio 関連）
+- 3b7f82f — 設計 docs 一括
+- 11ab822 — S-22 正本（P-06 編集モード・正式版タブ廃止）
+- 996c632 — S-23 開発者月間ランキング
+- 5e222d5 — S-21 プロジェクト一覧リデザイン
+- 2b0e40f — Studio S-20〜S-27 v0 初回
 
-■ 今回変更した画面
-- 該当なし（コード未変更）。正本のみ S-22 更新
-
-■ ユーザー目線の変化
-- まだなし（preview は旧 mock）。GO 後は Player と Studio で同じ作品画面の Read/Write 関係が明確になる
-
-■ 注意事項
-- docs/ui-mocks/22-project-home.md は KPI ダッシュボード型で本正本非準拠。T03 参考はオーナー添付モック（みんなの声タブ）
-- 実装はオーナー GO まで着手しない
+■ 正本と preview の差分（要 GO）
+- S-22 /studio/projects/[id] — preview は旧6タブ（正式版あり）。正本は5タブ・P-06 ヘッダー寄せ・T03 ダッシュボード化
 
 ■ 今すぐ私がやるべきこと
-- 正本 S-22 を ChatGPT と突合し、残存論点（正式版遷移）を決める
-- GO 後に preview S-22 を 5タブ + P-06 ヘッダー寄せで実装指示
+- Preview URL を開き、下記を目視確認
+  - /studio — ホーム
+  - /studio/projects — 一覧
+  - /studio/projects/（任意 id）— 詳細6タブ
+  - /studio/rankings — 開発者ランキング
+  - /games/（任意 id）— Player 詳細との世界観比較
 
 ■ Cursorだけで完了できること
-- S-22 v0 実装（GO 後）
-- P-06 ヘッダー共有コンポーネント化の調査
-
-■ 次に検討すべきこと
-- 正式版状態遷移の確定
-- S-22 実装 GO のタイミング
-
-■ ChatGPTに相談したい論点
-- Devlog「正式版公開」種別を選んだとき、作品フェーズは自動で変わるか、別確認が要るか
+- S-22 正本どおりの v0 実装（GO 後）
 
 ■ Runしてよいか
-- 本タスクは docs のみ。commit/push は任意（コード変更なし）
-- S-22 実装 GO までは preview deploy 不要
+- preview push: 完了（3b7f82f）
+- prod: 保留
