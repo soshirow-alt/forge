@@ -13,6 +13,7 @@ import {
   type FeedbackFlowStep,
 } from "@/components/feedback-v0-modals";
 import { GameDevlogV0Tab } from "@/components/game-devlog-v0-tab";
+import { GameVersionsV0Tab } from "@/components/game-versions-v0-tab";
 import { GameVoicesV0Tab } from "@/components/game-voices-v0-tab";
 import { GameThumbnail, PlayerShell } from "@/components/player-shell";
 import { getGameDetailV0, resolveGameDetailId } from "@/lib/game-detail-v0-mock-data";
@@ -79,14 +80,6 @@ function FeatureCard({ title, description }: { title: string; description: strin
       </div>
       <h3 className="mt-3 text-sm font-semibold text-white">{title}</h3>
       <p className="mt-1.5 text-xs leading-relaxed text-zinc-500">{description}</p>
-    </div>
-  );
-}
-
-function TabStub({ label }: { label: string }) {
-  return (
-    <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/20 px-6 py-16 text-center">
-      <p className="text-sm text-zinc-500">{label} — preview mock（実装 GO 待ち）</p>
     </div>
   );
 }
@@ -370,7 +363,12 @@ function GameDetailV0PageContent({ id }: { id: string }) {
               onSendVoice={() => setFeedbackStep("full-form")}
             />
           )}
-          {activeTab === "versions" && <TabStub label="版の履歴" />}
+          {activeTab === "versions" && (
+            <GameVersionsV0Tab
+              gameId={resolveGameDetailId(id)}
+              onPlayLatest={() => setFeedbackStep("play-stub")}
+            />
+          )}
         </div>
 
         {activeTab !== "voices" && (

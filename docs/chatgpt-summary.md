@@ -1,34 +1,38 @@
 ■ 現在の状態
-- P-06 開発ログタブ mock 表示OK。説明文ブロックを削除してタブ直下から stats カード開始
+- preview/landing-01 push 済（版の履歴タブ）
+- P-06 4タブすべて mock 完成
+- 運用変更: preview v0 作業は毎回 push まで実施（RUN 待ち不要）
 
 ■ 今回実装したこと
-- components/game-devlog-v0-tab.tsx
-  - 「{gameTitle} の開発の歩みです…」説明文と header ブロックを削除
-  - 重複していた h2「開発ログ」も削除（タブラベルで十分）
-  - gameTitle prop 廃止
-- components/game-detail-v0-page.tsx — gameTitle 渡しを削除
+- lib/game-versions-v0-mock-data.ts — 星灯 5版 / 炉心 3版
+- components/game-versions-v0-tab.tsx — stats / 最新版 / タイムライン / プレイ stub
+- components/game-detail-v0-page.tsx — versions タブ接続、TabStub 削除
+- .cursor/rules/forge.mdc — preview push 運用を恒久ルール化
 
 ■ ユーザー目線の変化
-- 開発ログタブを開くと、余白の少ないレイアウトで stats 3枚から始まる
+- 版の履歴タブで過去版を一覧・任意版からプレイ stub へ
 
 ■ 今回変更した画面
-- P-06 /games/[id]?tab=devlog
-  - 画面位置: 4タブ「開発ログ」選択後、メイン左カラム先頭
-  - 変更前: 説明文2行＋上下の余白
-  - 変更後: stats カード（現在の版 / ログ件数 / 最終更新）が先頭
-  - 確認: 開発ログタブ → 説明文なし・stats から表示
+- P-06 /games/[id]?tab=versions
+  - stats → 最新版カード → 過去版タイムライン
+  - 「この版でプレイ」→ play stub
+
+■ Preview URL
+- https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app/games/seikat-no-tabiji?tab=versions
 
 ■ 注意事項
-- 前回のテストデータ修正と合わせて push 前
+- mock のみ。prod deploy なし
+- 今後 preview/landing-01 の v0 実装は push まで自動
 
 ■ 今すぐ私がやるべきこと
-- push 許可後 preview で目視確認
+- 上記 URL で版の履歴タブ目視確認
 
 ■ Cursorだけで完了できること
-- commit + push preview ブランチ
+- P-05 作品検索 v0 または P-09 マイページ残タブ
 
 ■ 次に検討すべきこと
-- P-06 版の履歴タブ mock
+- P-05 作品検索 v0
+- プレイ/FB ログイン導線
 
 ■ ChatGPTに相談したい論点
 - 特になし

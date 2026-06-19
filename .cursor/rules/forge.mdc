@@ -15,5 +15,6 @@ Read `docs/forge-principles.md` before product or UX changes. Do not alter the m
 - **`docs/chatgpt-handoff.md`**: update **only** on handoff triggers — major theme done, migration applied, **roadmap priority change**, or owner says 引継ぎ. New GPT thread: paste handoff once, then summary per task. See `docs/chatgpt-summary-format.md` §2ファイル運用.
 - When a **design decision** is involved (DB, auth, notifications, permissions, storage, extensibility): add optional blocks per topic — `■ Cursorの推奨案` / `■ 推奨理由` / `■ 懸念点` (3–5 lines each). Not every task.
 - Before **§10.2 stop conditions only** (billing, new API contracts, prod public launch, PLAYER_VISIBLE=true, destructive DB, data migration,原典 change, roadmap priority change, irreversible ops): output **GPT判断用メモ** from `docs/gpt-run-decision-memo.md`. Task flow through design→impl→build→staging→main prep runs without per-step approval. **`docs/forge-triage-operations.md` §10**.
+- **preview/landing-01 v0 UI 作業**: 実装完了時は **毎回 commit + push まで** 行う（オーナー RUN 待ち不要）。prod deploy・main 反映は別途停止条件。
 
 Full rules: `AGENTS.md`, `docs/forge-principles.md`, `docs/forge-triage-operations.md`.
