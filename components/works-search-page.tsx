@@ -153,12 +153,6 @@ function WorksSearchContent() {
                 <span className="text-zinc-500">（絞り込み {filtered.length}件）</span>
               )}
             </p>
-            <Link
-              href="/search/creators"
-              className="mt-3 inline-flex text-sm text-violet-400 transition-colors hover:text-violet-300"
-            >
-              開発者を探す →
-            </Link>
           </header>
 
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
@@ -369,12 +363,6 @@ function WorksSearchContent() {
             <p className="mt-4 text-xs leading-relaxed text-zinc-600">
               作品名・ジャンルで絞り込めます。
             </p>
-            <Link
-              href="/search/creators"
-              className="mt-4 inline-flex text-xs text-violet-400 transition-colors hover:text-violet-300"
-            >
-              開発者を探す →
-            </Link>
             <button
               type="button"
               onClick={applySearch}

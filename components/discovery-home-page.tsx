@@ -7,7 +7,6 @@ import { GameThumbnail, PlayerShell } from "@/components/player-shell";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import {
   heroSlides,
-  homeGenrePills,
   newGames,
   popularGames,
   recentlyUpdatedGames,
@@ -197,31 +196,6 @@ export function DiscoveryHomePage() {
               <HorizontalGameCard key={game.id} game={game} />
             ))}
           </div>
-        </section>
-
-        <section>
-          <SectionHeader title="ジャンルから探す" />
-          <div className="mt-4 flex flex-wrap gap-2">
-            {homeGenrePills.map((genre, index) => (
-              <Link
-                key={genre}
-                href={`/search?q=${encodeURIComponent(genre)}`}
-                className={`rounded-full px-4 py-2 text-sm transition-colors ${
-                  index === 0
-                    ? "bg-violet-600 text-white hover:bg-violet-500"
-                    : "border border-zinc-700 text-zinc-400 hover:border-violet-500/40 hover:text-violet-200"
-                }`}
-              >
-                {genre}
-              </Link>
-            ))}
-          </div>
-          <Link
-            href="/search/creators"
-            className="mt-6 inline-flex items-center gap-1 text-sm text-violet-400 transition-colors hover:text-violet-300"
-          >
-            開発者を探す →
-          </Link>
         </section>
       </div>
     </PlayerShell>

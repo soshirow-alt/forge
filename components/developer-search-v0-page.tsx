@@ -59,7 +59,7 @@ function DeveloperSearchContent() {
   };
 
   return (
-    <PlayerShell activeNav="search" headerSearchDefault={queryFromUrl}>
+    <PlayerShell activeNav="creator-search" headerSearchDefault={queryFromUrl}>
       <div className="flex flex-col gap-8 xl:flex-row">
         <div className="min-w-0 flex-1">
           <header>

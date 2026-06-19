@@ -18,6 +18,7 @@ import { useAuth } from "@/components/auth-provider";
 const primaryLinks = [
   { id: "home", href: "/home", label: "ホーム" },
   { id: "search", href: "/search", label: "作品を探す" },
+  { id: "creator-search", href: "/search/creators", label: "開発者を探す" },
   { id: "ranking", href: "/rankings/influence", label: "ランキング" },
 ] as const;
 
@@ -102,7 +103,13 @@ export function PlayerShell({
         <nav className="flex min-h-0 flex-1 flex-col px-3 py-4">
           <div className="space-y-1">
             {primaryLinks.map((link) => (
-              <Link key={link.id} href={link.href} className={navLinkClass(activeNav === link.id)}>
+              <Link
+                key={link.id}
+                href={link.href}
+                className={`${navLinkClass(activeNav === link.id)} ${
+                  link.id === "creator-search" ? "ml-3" : ""
+                }`}
+              >
                 {link.label}
               </Link>
             ))}

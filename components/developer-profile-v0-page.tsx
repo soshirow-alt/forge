@@ -30,7 +30,7 @@ export function DeveloperProfileV0Page({ id }: { id: string }) {
   }, [requireAuth, returnPath]);
 
   return (
-    <PlayerShell activeNav="search">
+    <PlayerShell activeNav="creator-search">
       <div className="flex flex-col gap-8 xl:flex-row">
         <div className="min-w-0 flex-1 space-y-6">
           <nav className="text-sm text-zinc-500">
