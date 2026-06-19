@@ -57,6 +57,15 @@ export function AuthProvider({
 
     let active = true;
 
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!active) {
+        return;
+      }
+
+      setUser(session?.user ? mapSupabaseUser(session.user) : null);
+      setHydrated(true);
+    });
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {

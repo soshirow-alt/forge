@@ -153,14 +153,23 @@ export function PlayerShell({
           >
             <User className="size-5" />
           </Link>
-          {hydrated && user && (
+          {user ? (
             <button
               type="button"
               onClick={handleLogout}
-              className="rounded-xl border border-zinc-800 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-100"
+              className="shrink-0 rounded-xl border border-zinc-800 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-100"
             >
               ログアウト
             </button>
+          ) : (
+            hydrated && (
+              <Link
+                href="/login"
+                className="shrink-0 rounded-xl border border-zinc-800 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-100"
+              >
+                ログイン
+              </Link>
+            )
           )}
           <button
             type="button"
