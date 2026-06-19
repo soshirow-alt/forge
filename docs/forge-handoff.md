@@ -1,12 +1,15 @@
 # Forge Handoff
 
-最終更新：**2026-06-18**（オーナー — Forge Roadmap 2026-06 正本 / Phase2 UX 主戦場）
+最終更新：**2026-06-19**（preview/landing-01 — Player v0 UX fix batch push `8b672dc`）
 
 ---
 
 ## 現在の状態
 
-- **工程フェーズ正本**: `docs/forge-roadmap-2026-06-canonical.md`
+- **preview/landing-01** — プレイヤー v0 01–18 mock 完成 + UX fix batch（`/`→`/home`、開発者導線、sort/page、login toggles）
+- **Preview URL**: https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app
+- **最新 commit**: `8b672dc` Preview UX fix batch
+- **本番 prod deploy — 保留**
 - **画面設計正本**: `docs/forge-screen-definition.md`（2026-06-18）
 - **主戦場**: **Phase2 UX 設計**
 - **正式フロー**: ChatGPT → UX設計 → v0 → Cursor 実装
