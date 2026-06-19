@@ -1,5 +1,5 @@
-import type { StudioProjectCard } from "@/lib/studio-home-v0-mock-data";
-import { studioProjects } from "@/lib/studio-home-v0-mock-data";
+import type { StudioProjectCard } from "@/lib/studio-projects-v0-mock-data";
+import { studioProjectsAll } from "@/lib/studio-projects-v0-mock-data";
 
 export type StudioProjectDetail = StudioProjectCard & {
   description: string;
@@ -61,7 +61,7 @@ export type StudioReleaseState = {
 
 const details: Record<string, StudioProjectDetail> = {
   "hoshino-kioku": {
-    ...studioProjects[0],
+    ...studioProjectsAll[0],
     voiceCount: 42,
     description: "星の記憶を辿る短編アドベンチャー。夜の森で失われた物語に触れる。",
     genresList: ["RPG", "ファンタジー"],
@@ -69,14 +69,14 @@ const details: Record<string, StudioProjectDetail> = {
     publishState: "公開中",
   },
   "seito-no-tabiji": {
-    ...studioProjects[1],
+    ...studioProjectsAll.find((p) => p.id === "seito-no-tabiji")!,
     voiceCount: 24,
     description: "夜の森を旅する短編アドベンチャー。ランタンの光を頼りに記憶を辿る。",
     genresList: ["アドベンチャー", "ナラティブ"],
     publishState: "公開中",
   },
   "roshin-no-zanko": {
-    ...studioProjects[2],
+    ...studioProjectsAll.find((p) => p.id === "roshin-no-zanko")!,
     voiceCount: 18,
     description: "廃坑都市を舞台に、灯りと記憶をめぐるナラティブ RPG。",
     genresList: ["RPG", "探索"],

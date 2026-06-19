@@ -4,48 +4,146 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { StudioShell } from "@/components/studio-shell";
 import {
-  StudioFilterPills,
-  StudioShell,
-  StudioSortDropdown,
-} from "@/components/studio-shell";
-import {
+  formatStat,
+  phaseBadgeClass,
+  STUDIO_PROJECTS_PAGE_SIZE,
+  studioPhaseFilterOptions,
   studioProjectHref,
-  studioProjects,
+  studioProjectsAll,
+  studioSortOptions,
   type StudioProjectCard,
-} from "@/lib/studio-home-v0-mock-data";
+  type StudioSortId,
+} from "@/lib/studio-projects-v0-mock-data";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Grid3x3,
+  LayoutList,
+  MessageSquare,
+  MoreHorizontal,
+  Plus,
+  Search,
+  Users,
+} from "lucide-react";
 
-const phaseFilters = [
-  { id: "all", label: "すべて" },
-  { id: "開発中", label: "開発中" },
-  { id: "正式版", label: "正式版" },
-];
+type ViewMode = "grid" | "list";
 
-function ProjectListCard({ project }: { project: StudioProjectCard }) {
+function PhaseBadge({ phase }: { phase: StudioProjectCard["phase"] }) {
+  return (
+    <span
+      className={`absolute left-2 top-2 z-10 rounded-md px-2 py-0.5 text-[10px] font-semibold ${phaseBadgeClass(phase)}`}
+    >
+      {phase}
+    </span>
+  );
+}
+
+function ProjectGridCard({ project }: { project: StudioProjectCard }) {
   return (
     <Link
       href={studioProjectHref(project.id)}
-      className="flex gap-4 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70 sm:p-5"
+      className="group flex flex-col rounded-2xl border border-zinc-800 bg-zinc-900/40 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70"
+    >
+      <div className="relative aspect-[16/10] overflow-hidden rounded-t-2xl bg-zinc-800">
+        <PhaseBadge phase={project.phase} />
+        <Image
+          src={project.image}
+          alt={project.title}
+          fill
+          className="object-cover transition-transform group-hover:scale-[1.02]"
+          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
+        />
+      </div>
+      <div className="flex flex-1 flex-col p-4">
+        <h2 className="truncate font-semibold text-white group-hover:text-violet-100">
+          {project.title}
+        </h2>
+        <p className="mt-1 truncate text-xs text-zinc-500">{project.genres}</p>
+        <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-zinc-400">
+          <span className="inline-flex items-center gap-1.5">
+            <Users className="size-3.5 shrink-0 text-violet-400" aria-hidden="true" />
+            <span>
+              見届け人数 <span className="text-zinc-200">{formatStat(project.witnessCount)}</span>
+            </span>
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <MessageSquare className="size-3.5 shrink-0 text-violet-400" aria-hidden="true" />
+            <span>
+              声の数 <span className="text-zinc-200">{formatStat(project.voiceCount)}</span>
+            </span>
+          </span>
+        </div>
+        <div className="mt-auto flex items-end justify-between gap-2 pt-4">
+          <div className="min-w-0 text-xs text-zinc-500">
+            <p>
+              最新版{" "}
+              <span className="text-zinc-300">{project.version ?? "—"}</span>
+            </p>
+            <p className="mt-0.5">最終更新：{project.updatedLabel}</p>
+          </div>
+          <button
+            type="button"
+            onClick={(e) => e.preventDefault()}
+            className="shrink-0 rounded-lg p-1.5 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300"
+            aria-label="その他の操作"
+          >
+            <MoreHorizontal className="size-4" />
+          </button>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function ProjectListRow({ project }: { project: StudioProjectCard }) {
+  return (
+    <Link
+      href={studioProjectHref(project.id)}
+      className="flex gap-4 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70 sm:items-center"
     >
       <div className="relative size-20 shrink-0 overflow-hidden rounded-xl bg-zinc-800 sm:size-24">
+        <PhaseBadge phase={project.phase} />
         <Image src={project.image} alt={project.title} fill className="object-cover" sizes="96px" />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="font-semibold text-white">{project.title}</h2>
-          <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-300 ring-1 ring-emerald-500/25">
-            {project.phase}
-          </span>
-        </div>
-        <p className="mt-1 text-sm text-zinc-500">{project.genres}</p>
-        <div className="mt-3 flex flex-wrap gap-4 text-xs text-zinc-400">
-          <span>{project.version}</span>
-          <span>声 {project.voiceCount}</span>
-          <span>見届け人 {project.witnessCount}</span>
+        <h2 className="font-semibold text-white">{project.title}</h2>
+        <p className="mt-0.5 text-sm text-zinc-500">{project.genres}</p>
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-400">
+          <span>見届け人数 {formatStat(project.witnessCount)}</span>
+          <span>声の数 {formatStat(project.voiceCount)}</span>
+          <span>最新版 {project.version ?? "—"}</span>
           <span>最終更新 {project.updatedLabel}</span>
         </div>
       </div>
-      <span className="hidden self-center text-sm text-violet-400 sm:inline">開く →</span>
+      <button
+        type="button"
+        onClick={(e) => e.preventDefault()}
+        className="hidden shrink-0 rounded-lg p-2 text-zinc-500 hover:bg-zinc-800 sm:block"
+        aria-label="その他の操作"
+      >
+        <MoreHorizontal className="size-4" />
+      </button>
+    </Link>
+  );
+}
+
+function NewProjectCard({ compact }: { compact?: boolean }) {
+  return (
+    <Link
+      href="/submit"
+      className={`flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/20 text-center transition-colors hover:border-violet-500/40 hover:bg-violet-600/5 ${
+        compact ? "p-6" : "min-h-[280px] px-6 py-10"
+      }`}
+    >
+      <span className="flex size-12 items-center justify-center rounded-full bg-violet-600/20 text-violet-300 ring-1 ring-violet-500/30">
+        <Plus className="size-6" aria-hidden="true" />
+      </span>
+      <p className="mt-4 font-semibold text-zinc-200">新しい作品を投稿</p>
+      <p className="mt-2 max-w-[220px] text-xs leading-relaxed text-zinc-500">
+        まだ誰も見たことのないあなたの作品を投稿しよう。
+      </p>
     </Link>
   );
 }
@@ -55,68 +153,198 @@ export function StudioProjectsPage() {
   const initialQuery = searchParams.get("q") ?? "";
   const [query, setQuery] = useState(initialQuery);
   const [phase, setPhase] = useState("all");
-  const [sortLabel, setSortLabel] = useState("更新が新しい順");
+  const [sortId, setSortId] = useState<StudioSortId>("updated-desc");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
-    let list = [...studioProjects];
+    let list = [...studioProjectsAll];
     if (phase !== "all") {
       list = list.filter((p) => p.phase === phase);
     }
     if (query.trim()) {
       const q = query.trim().toLowerCase();
-      list = list.filter(
-        (p) => p.title.toLowerCase().includes(q) || p.genres.toLowerCase().includes(q),
-      );
+      list = list.filter((p) => p.title.toLowerCase().includes(q));
+    }
+    if (sortId === "title-asc") {
+      list.sort((a, b) => a.title.localeCompare(b.title, "ja"));
+    } else if (sortId === "updated-asc") {
+      list.reverse();
     }
     return list;
-  }, [phase, query]);
+  }, [phase, query, sortId]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / STUDIO_PROJECTS_PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageItems = filtered.slice(
+    (safePage - 1) * STUDIO_PROJECTS_PAGE_SIZE,
+    safePage * STUDIO_PROJECTS_PAGE_SIZE,
+  );
 
   return (
     <StudioShell activeNav="projects" headerSearchDefault={initialQuery}>
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white">プロジェクト一覧</h1>
-            <p className="mt-1 text-sm text-zinc-500">全作品の管理</p>
+            <h1 className="text-2xl font-bold text-white sm:text-3xl">プロジェクト一覧</h1>
+            <p className="mt-2 text-sm text-zinc-400">
+              あなたが投稿したすべての作品を管理できます。
+            </p>
           </div>
           <Link
             href="/submit"
-            className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-violet-500"
+            className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-violet-500"
           >
-            新規投稿
+            <Plus className="size-4" aria-hidden="true" />
+            新しい作品を投稿
           </Link>
         </div>
 
-        <div className="flex flex-col gap-4 rounded-2xl border border-zinc-800 bg-zinc-900/30 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="作品名・ジャンルで検索"
-            className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-4 py-2.5 text-sm text-zinc-200 placeholder:text-zinc-500 focus:border-violet-500/40 focus:outline-none sm:max-w-xs"
-          />
-          <div className="flex flex-wrap items-center gap-3">
-            <StudioFilterPills options={phaseFilters} active={phase} onChange={setPhase} />
-            <StudioSortDropdown
-              label={sortLabel}
-              onClick={() =>
-                setSortLabel((l) =>
-                  l === "更新が新しい順" ? "タイトル順" : "更新が新しい順",
-                )
-              }
-            />
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500"
+                aria-hidden="true"
+              />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="作品名で検索"
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-500 focus:border-violet-500/40 focus:outline-none"
+              />
+            </div>
+            <label className="inline-flex items-center gap-2 text-sm text-zinc-400">
+              <span className="shrink-0">フェーズ:</span>
+              <select
+                value={phase}
+                onChange={(e) => {
+                  setPhase(e.target.value);
+                  setPage(1);
+                }}
+                className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-200 focus:border-violet-500/40 focus:outline-none"
+              >
+                {studioPhaseFilterOptions.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="inline-flex items-center gap-2 text-sm text-zinc-400">
+              <span className="shrink-0">並び替え:</span>
+              <select
+                value={sortId}
+                onChange={(e) => setSortId(e.target.value as StudioSortId)}
+                className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-200 focus:border-violet-500/40 focus:outline-none"
+              >
+                {studioSortOptions.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="flex items-center gap-1 self-end lg:self-auto">
+            <button
+              type="button"
+              onClick={() => setViewMode("grid")}
+              className={`rounded-lg p-2 transition-colors ${
+                viewMode === "grid"
+                  ? "bg-violet-600/20 text-violet-200 ring-1 ring-violet-500/30"
+                  : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
+              }`}
+              aria-label="グリッド表示"
+              aria-pressed={viewMode === "grid"}
+            >
+              <Grid3x3 className="size-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              className={`rounded-lg p-2 transition-colors ${
+                viewMode === "list"
+                  ? "bg-violet-600/20 text-violet-200 ring-1 ring-violet-500/30"
+                  : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
+              }`}
+              aria-label="リスト表示"
+              aria-pressed={viewMode === "list"}
+            >
+              <LayoutList className="size-5" />
+            </button>
           </div>
         </div>
 
-        <div className="space-y-3">
-          {filtered.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center text-sm text-zinc-500">
-              該当する作品がありません
-            </div>
-          ) : (
-            filtered.map((project) => <ProjectListCard key={project.id} project={project} />)
-          )}
-        </div>
+        <p className="text-sm text-zinc-500">
+          全 <span className="font-medium text-zinc-300">{filtered.length}</span> 件のプロジェクト
+        </p>
+
+        {filtered.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
+            <p className="text-sm text-zinc-500">該当する作品がありません</p>
+            <NewProjectCard compact />
+          </div>
+        ) : viewMode === "grid" ? (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {pageItems.map((project) => (
+              <ProjectGridCard key={project.id} project={project} />
+            ))}
+            {safePage === totalPages && <NewProjectCard />}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {pageItems.map((project) => (
+              <ProjectListRow key={project.id} project={project} />
+            ))}
+            {safePage === totalPages && <NewProjectCard compact />}
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <nav
+            className="flex items-center justify-center gap-2 pt-2"
+            aria-label="ページネーション"
+          >
+            <button
+              type="button"
+              disabled={safePage <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="rounded-lg border border-zinc-800 p-2 text-zinc-400 transition-colors hover:border-zinc-700 disabled:opacity-40"
+              aria-label="前のページ"
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setPage(n)}
+                className={`min-w-9 rounded-lg px-3 py-1.5 text-sm transition-colors ${
+                  n === safePage
+                    ? "bg-violet-600/20 font-medium text-violet-200 ring-1 ring-violet-500/30"
+                    : "border border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                }`}
+              >
+                {n}
+              </button>
+            ))}
+            <button
+              type="button"
+              disabled={safePage >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              className="rounded-lg border border-zinc-800 p-2 text-zinc-400 transition-colors hover:border-zinc-700 disabled:opacity-40"
+              aria-label="次のページ"
+            >
+              <ChevronRight className="size-4" />
+            </button>
+          </nav>
+        )}
       </div>
     </StudioShell>
   );

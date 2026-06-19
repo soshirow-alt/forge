@@ -4,7 +4,12 @@
 
 ---
 
-## 2026-06-19 37 Studio v0 全体 mock（preview）
+## 2026-06-19 38 プロジェクト一覧レイアウト刷新（preview）
+
+- `/studio/projects` — グリッドカード・フェーズドロップダウン・並び替え・表示切替・件数表示・ページネーション・新規投稿カード
+- mock 12件（開発中/フェーズ1-2/下書き/アーカイブ/正式版）
+
+---
 
 - S-20〜S-27 実装 — `/studio` ホーム、`/studio/projects`、`/studio/projects/[id]`（6タブ）、`/studio/rankings`、`/studio/profile`、`/studio/notifications`、`/studio/settings`、`/studio/guide`
 - StudioShell — Sidebar 正本（通知追加、URL 統一）。Player v0 同一トーン

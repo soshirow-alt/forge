@@ -1,16 +1,12 @@
-export type StudioProjectCard = {
-  id: string;
-  title: string;
-  genres: string;
-  phase: "開発中" | "正式版";
-  image: string;
-  witnessCount: number;
-  firstVoiceCount: number;
-  voiceCount: number;
-  updatedLabel: string;
-  version: string;
-  progressPercent: number;
-};
+export type {
+  StudioProjectCard,
+  StudioProjectPhase,
+} from "@/lib/studio-projects-v0-mock-data";
+export {
+  phaseBadgeClass,
+  studioProjectHref,
+  studioProjectsAll as studioProjects,
+} from "@/lib/studio-projects-v0-mock-data";
 
 export type StudioActivityItem = {
   id: string;
@@ -41,48 +37,6 @@ export type DevHintCard = {
   title: string;
   tips: string[];
 };
-
-export const studioProjects: StudioProjectCard[] = [
-  {
-    id: "hoshino-kioku",
-    title: "星の記憶",
-    genres: "RPG・ファンタジー",
-    phase: "開発中",
-    image: "/images/landing/hero-bg.png",
-    witnessCount: 128,
-    firstVoiceCount: 42,
-    voiceCount: 56,
-    updatedLabel: "2日前",
-    version: "v0.3.1",
-    progressPercent: 68,
-  },
-  {
-    id: "seito-no-tabiji",
-    title: "星灯の旅路",
-    genres: "アドベンチャー・ナラティブ",
-    phase: "開発中",
-    image: "/images/landing/game-2.png",
-    witnessCount: 86,
-    firstVoiceCount: 24,
-    voiceCount: 31,
-    updatedLabel: "昨日",
-    version: "v0.4.0",
-    progressPercent: 54,
-  },
-  {
-    id: "roshin-no-zanko",
-    title: "炉心の残光",
-    genres: "RPG・探索",
-    phase: "開発中",
-    image: "/images/landing/game-3.png",
-    witnessCount: 51,
-    firstVoiceCount: 18,
-    voiceCount: 22,
-    updatedLabel: "5日前",
-    version: "v0.3.2",
-    progressPercent: 41,
-  },
-];
 
 export const studioActivities: StudioActivityItem[] = [
   {
@@ -234,7 +188,3 @@ export const devHintCards: DevHintCard[] = [
     ],
   },
 ];
-
-export function studioProjectHref(id: string): string {
-  return `/studio/projects/${id}`;
-}

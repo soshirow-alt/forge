@@ -20,23 +20,20 @@ import { studioRankingSnippets } from "@/lib/studio-rankings-v0-mock-data";
 import {
   devHintCards,
   newlyPostedWorks,
+  phaseBadgeClass,
   releasedThisWeek,
   studioActivities,
   studioProjectHref,
   studioProjects,
   trendingWorks,
   type StudioActivityItem,
+  type StudioProjectCard,
 } from "@/lib/studio-home-v0-mock-data";
 
-function PhaseBadge({ phase }: { phase: "開発中" | "正式版" }) {
-  const isDev = phase === "開発中";
+function PhaseBadge({ phase }: { phase: StudioProjectCard["phase"] }) {
   return (
     <span
-      className={`absolute left-2 top-2 z-10 rounded-md px-2 py-0.5 text-[10px] font-semibold ${
-        isDev
-          ? "bg-emerald-500/90 text-white"
-          : "bg-violet-600/90 text-white"
-      }`}
+      className={`absolute left-2 top-2 z-10 rounded-md px-2 py-0.5 text-[10px] font-semibold ${phaseBadgeClass(phase)}`}
     >
       {phase}
     </span>
@@ -44,28 +41,14 @@ function PhaseBadge({ phase }: { phase: "開発中" | "正式版" }) {
 }
 
 function ProjectCard({
-  title,
-  genres,
-  phase,
-  image,
-  witnessCount,
-  firstVoiceCount,
-  updatedLabel,
-  version,
-  progressPercent,
+  project,
   href,
 }: {
-  title: string;
-  genres: string;
-  phase: "開発中" | "正式版";
-  image: string;
-  witnessCount: number;
-  firstVoiceCount: number;
-  updatedLabel: string;
-  version: string;
-  progressPercent: number;
+  project: StudioProjectCard;
   href: string;
 }) {
+  const { title, genres, phase, image, witnessCount, firstVoiceCount, updatedLabel, version, progressPercent } =
+    project;
   return (
     <Link
       href={href}
@@ -84,7 +67,7 @@ function ProjectCard({
       <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-zinc-400">
         <span className="inline-flex items-center gap-1.5">
           <Users className="size-3.5 text-violet-400" aria-hidden="true" />
-          見届け人 {witnessCount}
+          見届け人 {witnessCount ?? "—"}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <MessageSquare className="size-3.5 text-violet-400" aria-hidden="true" />
@@ -99,7 +82,7 @@ function ProjectCard({
       </div>
       <div className="mt-2 flex items-center justify-between text-xs text-zinc-500">
         <span>最終更新：{updatedLabel}</span>
-        <span className="font-medium text-zinc-400">{version}</span>
+        <span className="font-medium text-zinc-400">{version ?? "—"}</span>
       </div>
     </Link>
   );
@@ -287,7 +270,7 @@ export function StudioHomePage() {
           />
           <div className="-mx-1 mt-5 flex gap-4 overflow-x-auto px-1 pb-2 snap-x snap-mandatory">
             {studioProjects.slice(0, 5).map((project) => (
-              <ProjectCard key={project.id} {...project} href={studioProjectHref(project.id)} />
+              <ProjectCard key={project.id} project={project} href={studioProjectHref(project.id)} />
             ))}
             <NewProjectCard />
           </div>

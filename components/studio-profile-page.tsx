@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { StudioSectionHeader, StudioShell } from "@/components/studio-shell";
 import { studioSelfProfile } from "@/lib/studio-profile-v0-mock-data";
-import { studioProjectHref, studioProjects } from "@/lib/studio-home-v0-mock-data";
+import { studioProjectHref, studioProjectsAll } from "@/lib/studio-projects-v0-mock-data";
 
 export function StudioProfilePage() {
   const profile = studioSelfProfile;
@@ -53,7 +53,7 @@ export function StudioProfilePage() {
         <section>
           <StudioSectionHeader title="代表作品" href="/studio/projects" />
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {studioProjects.map((project) => (
+            {studioProjectsAll.slice(0, 3).map((project) => (
               <Link
                 key={project.id}
                 href={studioProjectHref(project.id)}
