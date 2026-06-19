@@ -103,13 +103,7 @@ export function PlayerShell({
         <nav className="flex min-h-0 flex-1 flex-col px-3 py-4">
           <div className="space-y-1">
             {primaryLinks.map((link) => (
-              <Link
-                key={link.id}
-                href={link.href}
-                className={`${navLinkClass(activeNav === link.id)} ${
-                  link.id === "creator-search" ? "ml-3" : ""
-                }`}
-              >
+              <Link key={link.id} href={link.href} className={navLinkClass(activeNav === link.id)}>
                 {link.label}
               </Link>
             ))}
