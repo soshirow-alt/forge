@@ -14,33 +14,21 @@ import {
 } from "lucide-react";
 import { type FormEvent, type ReactNode, useState } from "react";
 
-const discoverLinks = [
+const primaryLinks = [
   { id: "home", href: "/home", label: "ホーム" },
   { id: "search", href: "/search", label: "作品を探す" },
-  { id: "developer-search", href: "/search/creators", label: "開発者を探す" },
-  { id: "ranking", href: "/rankings/influence", label: "月間影響度ランキング" },
-  { id: "new", href: "/search?q=新着", label: "新着作品" },
-  { id: "updated", href: "/search?q=最近更新", label: "最近更新された作品" },
-  { id: "genres", href: "/search?q=ジャンル", label: "ジャンル" },
+  { id: "ranking", href: "/rankings/influence", label: "ランキング" },
 ] as const;
-
-export const mypageLinks = [
-  { id: "profile", href: "/mypage/profile", label: "プロフィール" },
-  { id: "witnessing", href: "/mypage", label: "見届け中" },
-  { id: "saved", href: "/mypage?tab=saved", label: "あとで遊ぶ" },
-  { id: "play-history", href: "/mypage?tab=play-history", label: "プレイ履歴" },
-  { id: "feedback", href: "/mypage?tab=feedback", label: "FB履歴" },
-  { id: "achievements", href: "/mypage?tab=achievements", label: "実績" },
-  { id: "following", href: "/mypage?tab=following", label: "フォロー中開発者" },
-] as const;
-
-export type PlayerShellMypageLinkId = (typeof mypageLinks)[number]["id"];
 
 export type PlayerShellNavId =
-  | (typeof discoverLinks)[number]["id"]
+  | (typeof primaryLinks)[number]["id"]
   | "mypage"
-  | "notifications"
-  | "settings";
+  | "settings"
+  | "notifications";
+
+function SidebarDivider() {
+  return <div className="my-3 border-t border-zinc-800/80" role="separator" />;
+}
 
 function HeaderSearchForm({ defaultValue }: { defaultValue?: string }) {
   const router = useRouter();
@@ -69,31 +57,29 @@ function HeaderSearchForm({ defaultValue }: { defaultValue?: string }) {
   );
 }
 
+function navLinkClass(active: boolean) {
+  return `block rounded-lg px-3 py-2 text-sm transition-colors ${
+    active
+      ? "bg-violet-600/20 font-medium text-violet-200 ring-1 ring-violet-500/30"
+      : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+  }`;
+}
+
 export function PlayerShell({
   children,
   activeNav = "home",
-  activeMypageLink,
   headerSearchDefault,
   notificationBadge = 4,
 }: {
   children: ReactNode;
   activeNav?: PlayerShellNavId;
-  activeMypageLink?: PlayerShellMypageLinkId;
   headerSearchDefault?: string;
   notificationBadge?: number;
 }) {
-  const showMypageSection =
-    activeNav === "mypage" ||
-    activeNav === "search" ||
-    activeNav === "developer-search" ||
-    activeNav === "ranking" ||
-    activeNav === "settings" ||
-    Boolean(activeMypageLink);
-
   return (
-    <div className="flex min-h-full bg-[#0a0a0a] text-zinc-100">
-      <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-800/80 bg-zinc-950 lg:flex xl:w-60">
-        <div className="border-b border-zinc-800/80 px-5 py-5">
+    <div className="flex min-h-screen bg-[#0a0a0a] text-zinc-100">
+      <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r border-zinc-800/80 bg-zinc-950 lg:flex xl:w-60">
+        <div className="shrink-0 border-b border-zinc-800/80 px-5 py-5">
           <Link href="/home" className="flex items-center gap-2.5">
             <span className="flex size-9 items-center justify-center rounded-xl bg-white/90 text-zinc-950">
               <Flame className="size-5" aria-hidden="true" />
@@ -102,91 +88,35 @@ export function PlayerShell({
           </Link>
         </div>
 
-        <nav className="flex-1 space-y-1 px-3 py-4">
-          {discoverLinks.map((link) => (
-            <Link
-              key={link.label}
-              href={link.href}
-              className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
-                activeNav === link.id
-                  ? "bg-violet-600/20 font-medium text-violet-200 ring-1 ring-violet-500/30"
-                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
-          <div className="mt-3 px-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
-              マイページ
-            </p>
-          </div>
-          {showMypageSection ? (
-            mypageLinks.map((link) => (
-              <Link
-                key={link.id}
-                href={link.href}
-                className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
-                  activeMypageLink === link.id ||
-                  (!activeMypageLink && link.id === "witnessing" && activeNav === "mypage")
-                    ? "bg-zinc-800/80 font-medium text-white"
-                    : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
-                }`}
-              >
+        <nav className="flex min-h-0 flex-1 flex-col px-3 py-4">
+          <div className="space-y-1">
+            {primaryLinks.map((link) => (
+              <Link key={link.id} href={link.href} className={navLinkClass(activeNav === link.id)}>
                 {link.label}
               </Link>
-            ))
-          ) : (
-            <Link
-              href="/mypage"
-              className="block rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200"
-            >
-              マイページ
-            </Link>
-          )}
-          <Link
-            href="/notifications"
-            className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors ${
-              activeNav === "notifications"
-                ? "bg-violet-600/20 font-medium text-violet-200 ring-1 ring-violet-500/30"
-                : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
-            }`}
-          >
-            通知一覧
-            {notificationBadge > 0 && (
-              <span className="flex size-5 items-center justify-center rounded-full bg-violet-600 text-[10px] font-bold text-white">
-                {notificationBadge > 9 ? "9+" : notificationBadge}
-              </span>
-            )}
-          </Link>
-          <Link
-            href="/settings"
-            className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
-              activeNav === "settings"
-                ? "bg-zinc-800/80 font-medium text-white"
-                : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
-            }`}
-          >
-            設定
-          </Link>
-        </nav>
+            ))}
+          </div>
 
-        <div className="mx-3 mb-4 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
-          <h3 className="text-sm font-semibold leading-snug text-white">
-            まだ見ぬ名作に
-            <br />
-            出会おう
-          </h3>
-          <p className="mt-2 text-xs leading-relaxed text-zinc-500">
-            開発中のゲームを遊んで、フィードバックで一緒に育てましょう。
-          </p>
-          <button
-            type="button"
-            className="mt-3 w-full rounded-lg border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
-          >
-            はじめてガイド
-          </button>
-        </div>
+          <SidebarDivider />
+
+          <Link href="/mypage" className={navLinkClass(activeNav === "mypage")}>
+            マイページ
+          </Link>
+
+          <SidebarDivider />
+
+          <div className="space-y-1">
+            <Link href="/settings" className={navLinkClass(activeNav === "settings")}>
+              設定
+            </Link>
+            <button
+              type="button"
+              className="block w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200"
+            >
+              はじめてガイド
+            </button>
+          </div>
+        </nav>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">

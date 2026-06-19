@@ -24,7 +24,7 @@ export function PlayerSettingsV0Page() {
   };
 
   return (
-    <PlayerShell activeNav="settings" activeMypageLink={undefined}>
+    <PlayerShell activeNav="settings">
       <div className="mx-auto max-w-3xl space-y-8">
         <header>
           <h1 className="text-2xl font-bold text-white sm:text-3xl">設定</h1>

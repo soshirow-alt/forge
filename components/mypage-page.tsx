@@ -507,7 +507,11 @@ function MyPagePageContent() {
   );
 
   return (
-    <PlayerShell activeNav="mypage" activeMypageLink={activeTab}>
+    <PlayerShell activeNav="mypage">
+      <header className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">マイページ</h1>
+      </header>
+
       <MyPageTabs activeTab={activeTab} onTabChange={(tab) => setTab(tab as MyPageTab)} />
 
       <div role="tabpanel">

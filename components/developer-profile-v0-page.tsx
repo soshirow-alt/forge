@@ -22,7 +22,7 @@ export function DeveloperProfileV0Page({ id }: { id: string }) {
   const [activeTab, setActiveTab] = useState<DevTab>("overview");
 
   return (
-    <PlayerShell activeNav="developer-search">
+    <PlayerShell activeNav="search">
       <div className="flex flex-col gap-8 xl:flex-row">
         <div className="min-w-0 flex-1 space-y-6">
           <nav className="text-sm text-zinc-500">
