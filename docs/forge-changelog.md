@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-06-19 28 Player Shell ログアウト・はじめてガイド修正（preview）
+
+- トップバーに「ログアウト」追加（ログイン時のみ）→ /login
+- はじめてガイド — /landing リンク削除、stub（遷移なし）
+
+---
+
 ## 2026-06-19 27 新規登録の二重画面切替修正（preview）
 
 - LP・CTA の新規登録リンクを `/login?mode=signup` → `/register` に変更

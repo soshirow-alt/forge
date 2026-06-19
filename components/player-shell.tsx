@@ -13,6 +13,7 @@ import {
   User,
 } from "lucide-react";
 import { type FormEvent, type ReactNode, useState } from "react";
+import { useAuth } from "@/components/auth-provider";
 
 const primaryLinks = [
   { id: "home", href: "/home", label: "ホーム" },
@@ -76,6 +77,16 @@ export function PlayerShell({
   headerSearchDefault?: string;
   notificationBadge?: number;
 }) {
+  const router = useRouter();
+  const { user, hydrated, logout } = useAuth();
+
+  function handleLogout() {
+    void logout().then(() => {
+      router.push("/login");
+      router.refresh();
+    });
+  }
+
   return (
     <div className="flex min-h-screen bg-[#0a0a0a] text-zinc-100">
       <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r border-zinc-800/80 bg-zinc-950 lg:flex xl:w-60">
@@ -109,12 +120,12 @@ export function PlayerShell({
             <Link href="/settings" className={navLinkClass(activeNav === "settings")}>
               設定
             </Link>
-            <Link
-              href="/landing"
-              className="block rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200"
+            <button
+              type="button"
+              className="block w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200"
             >
               はじめてガイド
-            </Link>
+            </button>
           </div>
         </nav>
       </aside>
@@ -141,6 +152,15 @@ export function PlayerShell({
           >
             <User className="size-5" />
           </Link>
+          {hydrated && user && (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-xl border border-zinc-800 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-100"
+            >
+              ログアウト
+            </button>
+          )}
           <button
             type="button"
             className="hidden rounded-xl border border-zinc-600 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-500 sm:inline-flex"

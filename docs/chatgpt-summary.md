@@ -1,64 +1,61 @@
 ■ 現在の状態
 - ブランチ: preview/landing-01（preview のみ。本番未反映）
 - Preview URL: https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app
-- 直前 commit: 05e88ba。本修正は push 直後に新 commit
-- 新規登録二重切替 — 原因特定・修正済み
+- 直前 commit: dd0d162。本修正は push 直後に新 commit
 
 ■ 今回実装したこと
-- 原因: LP の「新規登録」が `/login?mode=signup` 経由。login 画面表示後 useEffect で `/register` に replace → 画面が2回切り替わって見える
-- LP ヘッダー・ヒーロー CTA のリンクを `/register` に直接変更（3箇所）
-- middleware: `/login?mode=signup` → `/register` サーバー redirect（return クエリは引き継ぎ）
-- login-page.tsx: client-side router.replace 削除（middleware に一本化）
+- Player Shell トップバーに「ログアウト」ボタン追加（hydrated && user のときのみ）
+  - クリック → auth logout → /login へ遷移 + router.refresh()
+- はじめてガイド — /landing リンクを削除、遷移なしの stub ボタンに変更
+  - 旧挙動: /landing へ遷移 → LP は未ログイン向け UI のため「ログアウトしたように見える」問題
 
 ■ 今回変更した画面
-- P-01 LP /landing
-  - 画面位置: ヘッダー右上「新規登録」、ヒーロー内 secondary CTA（2箇所）
-  - 変更前: href=/login?mode=signup → 一度ログイン画面 → 登録画面
-  - 変更後: href=/register → 登録画面に直行
-  - 確認: LP から新規登録クリック — ログイン画面を挟まない
-
-- P-02 ログイン /login?mode=signup（旧 URL）
-  - 変更前: ログイン UI 一瞬表示 → client replace
-  - 変更後: middleware で即 /register（フラッシュなし）
-  - 確認: 旧 URL 直打ちでも登録画面のみ
-
-- P-03 新規登録 /register
-  - 変更なし（遷移経路のみ改善）
+- Player Shell 全 v0 画面（/home, /search, /mypage 等）共通
+  - サイドバー下部「はじめてガイド」
+    - 変更前: Link href=/landing
+    - 変更後: button（クリックしても遷移なし）
+  - トップバー（検索・通知・プロフィールの右）
+    - 変更前: ログアウト手段なし
+    - 変更後: ログイン中のみ「ログアウト」テキストボタン
+  - 確認手順:
+    1. ログイン状態で /home — トップバーにログアウト表示
+    2. ログアウトクリック — /login へ、再ログイン可能
+    3. はじめてガイド — クリックしても画面遷移しない
 
 ■ ユーザー目線の変化
-- 新規登録ボタンを押すと登録フォームが1回で表示される
-- ログイン画面が一瞬映る違和感が消える
+- ガイドを押して LP に飛ばされず、プレイヤー体験のまま
+- ログアウトはトップバーから明示的にできる
 
 ■ なぜこの設計
-- P-03 は独立ルート化済み。signup 経由 login は legacy 互換のみ
-- サーバー redirect は HTML 返却前に処理 → client replace よりフラッシュ少ない
-- LP は直接 /register が原典の「redirect 複雑化しない」にも合う
+- /landing は LP（未ログイン入口）。ログイン中ユーザーがガイド経由で LP に行くのは IA 的におかしい
+- ログアウトは forge-header と同様 auth-provider.logout を使用
+- ログアウト後 /login — 原典どおりプレイ以降は login 入口
 
 ■ 他案不採用
-- login-page の replace だけ残す — サーバー HTML が先に届くためフラッシュ残る
-- register を login タブ内に統合 — 既に P-03 分離済み
+- はじめてガイドを /landing のまま — オーナー指摘どおり不採用
+- ログアウト後 /home — 公開発見は可能だが、ログアウト明示性のため /login
 
 ■ In / Out
-- In: landing links、middleware redirect、login useEffect 削除
-- Out: register の return パラメータ処理（将来必要なら別タスク）
+- In: player-shell.tsx の logout + guide stub
+- Out: はじめてガイド本文画面、未ログイン時のトップバー login リンク
 
 ■ リスク
-- ブックマーク `/login?mode=signup` は /register へ 302（意図どおり）
-- docs/ui-mocks の旧 URL 記載は未更新（参照用ドキュメントのみ）
+- 未ログイン時トップバーに login リンクはまだなし（別タスク可）
+- はじめてガイド stub は見た目だけ — 将来コンテンツ URL 確定後に接続
 
 ■ オーナー確認手順
-1. /landing → 新規登録 — 1回で /register
-2. /login?mode=signup 直打ち — ログイン UI なしで /register
-3. /register ヘッダー「ログイン」— 通常どおり
+- ログイン → トップバー ログアウト → /login
+- はじめてガイド — 遷移なし
 
 ■ 今すぐ私がやるべきこと
-- deploy 後 LP から新規登録を目視
+- deploy 後上記2点目視
 
 ■ Cursorだけで完了できること
-- ui-mocks 01-landing.md の URL 表を /register に更新
+- 未ログイン時トップバーにログインリンク追加
+- はじめてガイド用プレースホルダーページ
 
 ■ 次に検討すべきこと
-- register でも return クエリ対応が必要か
+- はじめてガイドの正本 URL・コンテンツ
 
 ■ ChatGPTに相談したい論点
-- 特になし（バグ修正）
+- ガイドは LP 再表示か専用 /guide か
