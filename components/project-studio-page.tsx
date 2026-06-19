@@ -9,6 +9,7 @@ import { GameGrowthCycle } from "@/components/game-growth-cycle";
 import { GameThumbnail } from "@/components/game-thumbnail";
 import { ProjectReleaseStudioPanel } from "@/components/project-release-studio-panel";
 import { ProjectNurtureActions } from "@/components/project-nurture-actions";
+import { StudioTopPrioritiesPanel } from "@/components/studio-top-priorities-panel";
 import { useGames } from "@/components/games-provider";
 import { useOwnedProjectFeedback } from "@/hooks/use-owned-project-feedback";
 import { useOwnedProjectVoiceSignals } from "@/hooks/use-owned-project-voice-signals";
@@ -180,6 +181,13 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
             </p>
           </div>
         </header>
+
+        <StudioTopPrioritiesPanel
+          projectId={game.id}
+          growth={growth}
+          feedbackEntries={projectFeedback}
+          voiceRead={voiceRead}
+        />
 
         <section className="mt-10">
           <GameGrowthCycle

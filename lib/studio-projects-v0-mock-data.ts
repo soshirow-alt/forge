@@ -1,3 +1,5 @@
+import { projectStudioPath } from "@/lib/project-nurture-links";
+
 export type StudioProjectPhase =
   | "開発中"
   | "フェーズ2"
@@ -200,7 +202,7 @@ export const studioProjectsAll: StudioProjectCard[] = [
 export const STUDIO_PROJECTS_PAGE_SIZE = 8;
 
 export function studioProjectHref(id: string): string {
-  return `/studio/projects/${id}`;
+  return projectStudioPath(id);
 }
 
 export function phaseBadgeClass(phase: StudioProjectPhase): string {

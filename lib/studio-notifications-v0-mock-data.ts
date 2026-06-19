@@ -1,3 +1,8 @@
+import {
+  PROJECT_STUDIO_FEEDBACK_SECTION_ID,
+  projectStudioPath,
+} from "@/lib/project-nurture-links";
+
 export type StudioNotificationKind =
   | "new_voice"
   | "witness"
@@ -79,6 +84,9 @@ export function countStudioUnread(items: StudioNotificationItem[]): number {
 }
 
 export function studioNotificationHref(item: StudioNotificationItem): string {
-  const base = `/studio/projects/${item.projectId}`;
-  return item.tab ? `${base}?tab=${item.tab}` : base;
+  const base = projectStudioPath(item.projectId);
+  if (item.tab === "voices-raw") {
+    return `${base}#${PROJECT_STUDIO_FEEDBACK_SECTION_ID}`;
+  }
+  return base;
 }

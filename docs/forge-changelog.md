@@ -4,7 +4,18 @@
 
 ---
 
-## 2026-06-15 41 Preview 設計ドキュメント一括反映
+## 2026-06-15 43 P0 Phase A〜B（Studio 一本化・上位3課題）
+
+- `/studio/projects/[id]` → `/projects/[id]/studio` リダイレクト
+- 作品 Studio ヘッダー直下に「次に直すこと」カード（ルールベース最大3件）
+- migration 015 は未適用（草案 `docs/forge-p0-migration-015-draft.sql`）
+
+---
+
+- `docs/forge-p0-improvement-loop-plan.md` — Studio 一本化・上位3課題・版公開・再プレイ人数
+- 旧 studio + growth-state を正。新 Studio v0 詳細は P0 対象外
+
+---
 
 - 画面 inventory・UI mocks・ロードマップ・設計判断 docs を preview/landing-01 に push（3b7f82f）
 - 実装は Studio S-20〜S-27 v0 + S-23 開発者ランキングが preview 上で閲覧可能
