@@ -1,3 +1,5 @@
+import { resolveGameDetailId } from "@/lib/game-detail-v0-mock-data";
+
 export type DevlogEntryKind = "version" | "note";
 
 export type GameDevlogEntry = {
@@ -12,20 +14,7 @@ export type GameDevlogEntry = {
   isLatest?: boolean;
 };
 
-export const devlogStats = {
-  totalPosts: 8,
-  currentVersion: "v0.4.0",
-  lastUpdated: "2025/05/18",
-  witnessingCount: 1248,
-};
-
-export const devlogFilterTabs = [
-  { id: "all", label: "すべて", count: 8 },
-  { id: "version", label: "版の更新", count: 5 },
-  { id: "note", label: "開発メモ", count: 3 },
-] as const;
-
-export type DevlogFilterId = (typeof devlogFilterTabs)[number]["id"];
+export type DevlogFilterId = "all" | "version" | "note";
 
 const seikatDevlogs: GameDevlogEntry[] = [
   {
@@ -118,35 +107,66 @@ const seikatDevlogs: GameDevlogEntry[] = [
   },
 ];
 
-const genericDevlogs: GameDevlogEntry[] = [
+const roshinDevlogs: GameDevlogEntry[] = [
   {
-    id: "g1",
+    id: "r1",
     version: "v0.3.2",
-    publishedAt: "2025/05/12",
-    relativeLabel: "1週間前",
-    title: "バグ修正とバランス調整",
-    excerpt: "コミュニティからの報告を反映した小規模アップデートです。",
-    highlights: ["既知バグ2件を修正"],
+    publishedAt: "2025/05/14",
+    relativeLabel: "5日前",
+    title: "廃坑エリアの照明調整",
+    excerpt: "灯りの届く範囲と影の演出を見直し、探索の緊張感を強めました。",
+    highlights: ["ライト半径の調整", "環境音の追加"],
     kind: "version",
     isLatest: true,
   },
   {
-    id: "g2",
+    id: "r2",
     version: "v0.3.0",
-    publishedAt: "2025/04/30",
+    publishedAt: "2025/04/28",
     relativeLabel: "3週間前",
-    title: "新コンテンツ追加",
-    excerpt: "探索エリアを拡張しました。",
-    highlights: ["新マップ1面"],
+    title: "第1章ボスイベント実装",
+    excerpt: "記憶の守人との遭遇イベントを追加しました。",
+    highlights: ["新イベント1種", "BGM 差し替え"],
     kind: "version",
+  },
+  {
+    id: "r3",
+    version: "—",
+    publishedAt: "2025/05/01",
+    relativeLabel: "2週間前",
+    title: "開発メモ：エンディングのトーン",
+    excerpt: "静かな余韻を残す結末を目指しています。",
+    highlights: [],
+    kind: "note",
   },
 ];
 
+export function getDevlogFilterTabs(entries: GameDevlogEntry[]) {
+  const versionCount = entries.filter((e) => e.kind === "version").length;
+  const noteCount = entries.filter((e) => e.kind === "note").length;
+  return [
+    { id: "all" as const, label: "すべて", count: entries.length },
+    { id: "version" as const, label: "版の更新", count: versionCount },
+    { id: "note" as const, label: "開発メモ", count: noteCount },
+  ];
+}
+
+export function getDevlogStatsForGame(entries: GameDevlogEntry[]) {
+  const latest = entries.find((e) => e.isLatest) ?? entries[0];
+  return {
+    totalPosts: entries.length,
+    currentVersion: latest?.version !== "—" ? latest.version : "v0.4.0",
+    lastUpdated: latest?.publishedAt ?? "2025/05/18",
+  };
+}
+
 export function getDevlogsForGame(gameId: string): GameDevlogEntry[] {
-  if (gameId === "seikat-no-tabiji" || gameId.startsWith("hero-") || gameId === "w1") {
-    return seikatDevlogs;
+  const resolved = resolveGameDetailId(gameId);
+  if (resolved === "roshin-no-zanko") {
+    return roshinDevlogs;
   }
-  return genericDevlogs;
+  // preview — 星灯の旅路を正本に、他作品 URL でも必ず表示
+  return seikatDevlogs;
 }
 
 export function filterDevlogs(

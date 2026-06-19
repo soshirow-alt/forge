@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from "react";
 import {
-  devlogFilterTabs,
-  devlogStats,
   filterDevlogs,
+  getDevlogFilterTabs,
   getDevlogsForGame,
+  getDevlogStatsForGame,
   type DevlogFilterId,
   type GameDevlogEntry,
 } from "@/lib/game-devlog-v0-mock-data";
@@ -137,11 +137,9 @@ function DevlogTimelineItem({
 
 export function GameDevlogV0Tab({
   gameId,
-  gameTitle,
   onPlayLatest,
 }: {
   gameId: string;
-  gameTitle: string;
   onPlayLatest?: () => void;
 }) {
   const [filter, setFilter] = useState<DevlogFilterId>("all");
@@ -149,37 +147,34 @@ export function GameDevlogV0Tab({
 
   const allEntries = useMemo(() => getDevlogsForGame(gameId), [gameId]);
   const filtered = useMemo(() => filterDevlogs(allEntries, filter), [allEntries, filter]);
+  const stats = useMemo(() => getDevlogStatsForGame(allEntries), [allEntries]);
+  const filterTabs = useMemo(() => getDevlogFilterTabs(allEntries), [allEntries]);
   const latest = allEntries.find((e) => e.isLatest) ?? allEntries[0];
   const listEntries =
-    filter === "all" && latest ? filtered.filter((e) => e.id !== latest.id) : filtered;
+    filter === "all" && latest
+      ? filtered.filter((e) => e.id !== latest.id)
+      : filtered;
 
   return (
     <div className="space-y-8">
-      <header>
-        <h2 className="text-lg font-semibold text-white sm:text-xl">開発ログ</h2>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">
-          {gameTitle} の開発の歩みです。更新内容を確認して、最新版のプレイやフィードバックに活かしてください。
-        </p>
-      </header>
-
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4">
           <p className="text-xs text-zinc-500">現在の版</p>
           <p className="mt-1 flex items-center gap-1.5 text-lg font-bold text-white">
             <GitBranch className="size-4 text-violet-400" aria-hidden="true" />
-            {devlogStats.currentVersion}
+            {stats.currentVersion}
           </p>
         </div>
         <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4">
           <p className="text-xs text-zinc-500">ログ件数</p>
           <p className="mt-1 flex items-center gap-1.5 text-lg font-bold text-white">
             <FileText className="size-4 text-violet-400" aria-hidden="true" />
-            {allEntries.length}件
+            {stats.totalPosts}件
           </p>
         </div>
         <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4">
           <p className="text-xs text-zinc-500">最終更新</p>
-          <p className="mt-1 text-lg font-bold text-white">{devlogStats.lastUpdated}</p>
+          <p className="mt-1 text-lg font-bold text-white">{stats.lastUpdated}</p>
         </div>
       </div>
 
@@ -188,7 +183,7 @@ export function GameDevlogV0Tab({
       )}
 
       <div className="flex flex-wrap gap-2">
-        {devlogFilterTabs.map((tab) => (
+        {filterTabs.map((tab) => (
           <button
             key={tab.id}
             type="button"
