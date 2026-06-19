@@ -1,54 +1,73 @@
 ■ 現在の状態
-- ブランチ: preview/landing-01
+- ブランチ preview/landing-01。本番 prod deploy は保留
+- Player v0 01–18 mock 完成済み。Studio S-20 ホーム v0 を今回追加
 - Preview URL: https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app
-- 直前 commit: 9eba05a。本修正 push 直後
+- DB migration 変更なし
+
+■ Forge原典コアループ（判断の基準）
+- 投稿 → 発見 → プレイ → フィードバック → 改善 → 再プレイ
+- Studio ホームは開発者の「育成サイクル」を一望する入口。Steamworks 型管理画面ではなく Player v0 と同一 Forge 内 UI
 
 ■ 今回実装したこと
-- トップバー「ログアウト」— 条件を hydrated && user から user のみに変更
-  - ログイン済みなら hydration 完了前でも表示
-- 未ログイン時 — トップバーに「ログイン」リンク追加（Studio の左）
-- auth-provider — mount 時 getSession() でセッション取得 + setHydrated(true)
+- StudioShell 新規 — PlayerShell と同一 v0 トークン（#0a0a0a 背景、zinc ボーダー、violet アクセント、rounded-xl カード）
+- Sidebar 正本（オーナー指定）: ホーム / プロジェクト一覧 / ランキング ── マイページ ── 設定 / はじめてガイド
+- トップバー: 検索 / 通知 / プロフィール / ログアウト or ログイン / Player 切替（紫アクセント）
+- S-20 /studio — 添付モック準拠の5セクション mock
+  - あなたの作品（横スクロールカード + 新規投稿 dashed カード）
+  - 最近の動き（声・見届け・Devlog・初声）
+  - 今週のスタジオサマリー（5 KPI + 育成サイクル進行度リング）
+  - Forgeで起きていること（正式版 / 伸びている / 新規投稿 3列）
+  - 開発のヒント（3カード）
+- stub ルート: /studio/projects, /studio/projects/[id], /studio/settings, /studio/getting-started
+- PlayerShell Studio ボタン — stub から /studio リンクに変更
+- mock データ: lib/studio-home-v0-mock-data.ts
 
 ■ 今回変更した画面
-- Player Shell トップバー（全 v0 画面）
-  - 画面位置: 通知・プロフィールの右、Studio の左
-  - 変更前: ログイン時のみ hydrated && user でログアウト。未ログイン時は何もなし
-  - 変更後: ログイン中→ログアウト / 未ログイン→ログイン
-  - 確認:
-    1. 未ログイン /home — 「ログイン」表示
-    2. ログイン後 — 「ログアウト」表示、クリックで /login
-    3. ログアウト後 — 再び「ログイン」
+- 画面名: Studio ホーム（S-20）
+- URL: /studio
+- 画面位置: Studio Shell メイン。Sidebar「ホーム」active
+- 変更前: 未実装（Player トップバー Studio は stub ボタン）
+- 変更後: 作品カード一覧 + 動き + 週次サマリー + コミュニティ3列 + ヒント3列
+- プレイヤー視点: Player トップバー Studio → /studio へ遷移可能
+- 開発者視点: 自分の作品の KPI と最近の動きを一覧。カードから /studio/projects/[id] stub へ
+- 確認手順: preview で /studio を開く → 5セクション表示 → Sidebar 各項目 → Player ボタンで /home へ戻る
 
 ■ ユーザー目線の変化
-- トップバー右側に常に認証アクションがある（ログイン or ログアウト）
-- ログイン済みなのにログアウトが出ない、が解消
+- 開発者が Forge 内で Player と同じ質感の Studio に入れる
+- 作品0件相当でも「新しい作品を投稿」カードで /submit へ誘導
+- ランキング・マイページは既存 Player ルートへ（Shell は Player に切替）
 
 ■ なぜこの設計
-- 前実装は hydrated && user の二重条件。SSR initialUser ありでも hydrated=false の間非表示
-- 発見は公開だが原典どおり login ボタンは隠さない
+- 添付モックの情報量を v0 ダークテーマで写経。別デザイン言語は作らない
+- S-20 と S-21 の差別化は次フェーズ（今回 S-21 は一覧 stub のみ）
 
 ■ 他案不採用
-- ログアウトを未ログイン時も常時表示 — ラベルと動作が矛盾
+- 旧 /my-projects + /projects/[id]/studio UI をそのまま流用 — Player v0 トーン不一致のため不採用
+- サイドバーに Playerへ戻る — オーナー指定どおりトップバーのみ
 
 ■ In / Out
-- In: player-shell.tsx, auth-provider.tsx
-- Out: ユーザー名表示、Studio 導線
+- In: Studio Shell, S-20 ホーム mock, 関連 stub, Player↔Studio リンク
+- Out: S-22 プロジェクト詳細タブ、S-23 通知専用、検索フィルタ本実装、Supabase 連携
 
-■ リスク
-- getSession と onAuthStateChange の二重更新 — 同一値なら問題なし
-
-■ オーナー確認手順
-- 未ログイン /home → ログイン表示
-- ログイン → ログアウト表示 → ログアウト動作
+■ 注意事項
+- すべて mock データ。本番 DB 未接続
+- /rankings/influence / /mypage は PlayerShell のまま（Studio Shell 外）
+- /studio/projects/[id] は stub 文言のみ
 
 ■ 今すぐ私がやるべきこと
-- deploy 後上記確認
+- preview URL で /studio を目視確認（カード密度・紫アクセント・Player 切替）
+- 問題なければ次は S-21 一覧本実装 or S-22 タブの優先を ChatGPT と決める
 
 ■ Cursorだけで完了できること
-- 特になし
+- S-21 検索・フィルタ UI mock
+- S-22 プロジェクト詳細 6タブ stub
+- Studio ランキングを StudioShell 内で表示（Player コンポーネント再利用）
+- forge-screen-definition.md への S-20 正本追記
 
 ■ 次に検討すべきこと
-- トップバーにユーザー名表示するか
+- S-20 vs S-21 の役割固定（ダッシュボード vs フルリスト）
+- Studio 通知を /studio/notifications にするか Player P-18 共用か
 
 ■ ChatGPTに相談したい論点
-- 特になし
+- S-22 6タブ実装の優先順（概要 vs 声を見る vs バージョン）
+- Studio ランキングを Player 同一画面にするか Studio 専用にするか

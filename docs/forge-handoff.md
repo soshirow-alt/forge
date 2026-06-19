@@ -1,14 +1,14 @@
 # Forge Handoff
 
-最終更新：**2026-06-19**（preview/landing-01 — Player v0 UX fix batch push `8b672dc`）
+最終更新：**2026-06-19**（preview/landing-01 — Studio ホーム v0）
 
 ---
 
 ## 現在の状態
 
-- **preview/landing-01** — プレイヤー v0 01–18 mock 完成 + UX fix batch（`/`→`/home`、開発者導線、sort/page、login toggles）
+- **preview/landing-01** — Player v0 01–18 mock 完成 + **Studio S-20 ホーム v0 着手**
 - **Preview URL**: https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app
-- **最新 commit**: `8b672dc` Preview UX fix batch
+- **Studio v0**: `/studio`（ホーム mock）、`/studio/projects`（一覧 stub）、Player↔Studio トップバー切替
 - **本番 prod deploy — 保留**
 - **画面設計正本**: `docs/forge-screen-definition.md`（2026-06-18）
 - **主戦場**: **Phase2 UX 設計**

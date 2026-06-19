@@ -4,6 +4,35 @@
 
 ---
 
+## 2026-06-19 35 Studio ホーム v0（preview）
+
+- `/studio` — S-20 Studio ホーム mock（あなたの作品 / 最近の動き / 今週サマリー / Forgeで起きていること / 開発のヒント）
+- `StudioShell` — Player v0 と同一ダークテーマ・紫アクセント。Sidebar: ホーム / プロジェクト一覧 / ランキング / マイページ / 設定 / はじめてガイド
+- トップバー — 検索・通知・プロフィール・Player 切替（Player Shell の Studio ボタン → `/studio`）
+- stub — `/studio/projects`, `/studio/projects/[id]`, `/studio/settings`, `/studio/getting-started`
+
+---
+
+## 2026-06-19 34 GPT 貼付用1ファイル統合
+
+- docs/chatgpt-v0-paste-all.md — 「全文1回貼れば全部伝わる」正本（01–18 + マイページ + stub + 差分 + 未決）
+- chatgpt-player-v0-brief / chatgpt-mypage-brief — paste-all へ誘導
+
+---
+
+## 2026-06-19 33 Player v0 全量 ChatGPT ブリーフ作成
+
+- docs/chatgpt-player-v0-brief.md — 01–18 preview 正本・シェル・遷移・stub・差分・確認手順（1回貼り用）
+- chatgpt-mypage-brief.md — player-v0-brief への参照追記
+
+---
+
+## 2026-06-19 32 マイページ ChatGPT 全量ブリーフ作成
+
+- docs/chatgpt-mypage-brief.md — preview 正本・09–15 差分・stub・未決論点・URL 確認手順（1回貼り用）
+
+---
+
 ## 2026-06-19 31 トップバー認証表示修正（preview）
 
 - ログアウト — user があるとき常時表示（hydrated 待ち不要）

@@ -1,32 +1,54 @@
 ■ ChatGPT 新チャット引継ぎ — 全量スナップショット
-更新日: 2026-06-16
+更新日: 2026-06-18（オーナー — Forge Roadmap 2026-06 正本 / Phase2 UX 主戦場）
 用途: 新 GPT スレッドの最初に1回だけ貼る。以降は docs/chatgpt-summary.md（差分）を毎タスク貼る。
-素材用途: ChatGPT 側で「新チャット用の最終プロンプト」を組み立てるための全量テキスト。
+正本: docs/forge-roadmap-2026-06-canonical.md
 
 ================================================================
-■ 現在の状態（2026-06-16）
+■ 現在の状態（2026-06-18）
 ================================================================
 
-完了:
-- プレイ履歴 + 更新見出し UI 方向修正（e6d5fc1）
-- P0/P1 UI レビュー（42179f3）— ForgeGameCard、正式版 grid、Veteran developer patch 7 本
+工程フェーズ（オーナー正本）:
+- Phase0 原典 100% / Phase1 IA 95% / Phase2 UX 25% ← 主戦場
+- Phase3 UI 10% / Phase4 仕様 60% / Phase5 実装 35%
+- Phase6 Walkthrough 0% / Phase7 β 0% / Phase8 正式公開 0%
+
+正式フロー:
+ChatGPT → UX設計 → v0モック → レビュー → Cursor実装
+（LP overlay・座標合わせ・ピクセル一致は終了。v0を正本にする）
+
+01 LP: オーナー OK 済
+- preview /landing — v0 正本写経（preview/landing-01）
+- prod・/ 反映禁止継続
+
+技術・デプロイ（従来どおり）:
+- staging preview: https://forge-etb0gsaz1-soshirow-alts-projects.vercel.app
+- 本番 prod deploy — 保留
+- migration 014 適用済み / PLAYER_VISIBLE=false
 - verify:future-demo:staging 18/18 PASS
-- 正式版 Phase 1、見届け人 W1–W4 + tier、migration 014 本番適用済み
-- 将来像デモ F1 — staging seed + patch
 
-デプロイ:
-- staging preview: https://forge-etb0gsaz1-soshirow-alts-projects.vercel.app（dpl_4crzKWLk2Ez3Vonnt7D7LFZNEDNR）
-- 本番 prod deploy — **保留**（Walkthrough + 主要 UI 確認後）
+Cursor 推奨 1 位（2026-06-18）:
+Phase2 UX設計 — プレイヤー初回体験を体験として完成させる
+（画面を実装することが次の仕事ではない）
 
-PLAYER_VISIBLE=false 維持。/notifications 未修正。
+最優先導線（プレイヤー初回体験）:
+LP → 作品発見(04) → 作品詳細(06) → プレイ → 声を届ける(08) → 変化を見る → 再プレイ
 
-次スコープ GO:
-- 開発者タブ ProjectListCard → ForgeGameCard 思想（状態バッジ: 公開中/正式版/Reopened/Voice/Devlog/Play）
-- GeneratedThumbnailPoster は Walkthrough で許容確認。実サムネ URL は後回し
+優先順位: 画面番号順ではなくコアループ順
+UX確定前に Phase5 実装を進めない
 
-prod GO 条件: Veteran walkthrough / プレイヤータブ / 開発者タブ / 正式版 grid / UX 破綻なし
+旧実装 GO 順（参考・UX GO 後に再開）:
+1-A Studio Shell → 1-B Player Shell → フォロー DB → 23 → 08 → 18
 
-Cursor 推奨 1 位: Veteran Walkthrough → 開発者タブ統合（Walkthrough で旧 UI 感が強ければ即実装）
+================================================================
+■ 以前のスナップショット（2026-06-16）— 参考
+================================================================
+
+完了（当時）:
+- P0/P1 UI レビュー（42179f3）— ForgeGameCard、正式版 grid、Veteran patch
+- 正式版 Phase 1、見届け人 W1–W4 + tier
+- 将来像デモ F1
+
+当時 Cursor 推奨 1 位: Phase 1-A Studio Shell（→ 2026-06-18 ロードマップで Phase2 UX に変更）
 
 ================================================================
 ■ Forge原典・コンセプト
@@ -61,10 +83,14 @@ Forge原典コアループ（最重要・すべての判断基準）:
 まだ誰も知らないゲームを、一緒に面白くする。
 トーン: ダーク基調 × オレンジアクセント。Steam × Product Hunt × インディーショーケース。
 
-MVP で作らないもの:
-ランキング、バッジ、投げ銭、課金、販売、採用率ゲーミフィケーション、Forge SDK実装（説明UIのみ可）、新しい収益化機能
+正式リリース初期版で含めるもの（2026-06）:
+フォロー（開発者単位）/ 共感 / 開発者 FB 評価「開発に役立った」/ 影響度スコア / **月間影響度ランキング** / 実績バッジ
 
-原典ファイル: docs/forge-principles.md（意味の変更はオーナーのみ）
+依然として作らないもの:
+投げ銭、課金、販売、採用率ゲーミフィケーション、Forge SDK実装（説明UIのみ可）、新しい収益化機能、有料ランキング・バッジ課金
+
+原典ファイル: docs/forge-principles.md（フォロー統合 2026-06 反映済み）
+out-of-scope: docs/out-of-scope.md（2026-06 更新）
 
 ================================================================
 ■ オーナーの役割 / ChatGPTの役割 / Cursorの役割
@@ -80,9 +106,9 @@ Cursor 返答末尾の GPT用メモ（text ブロック）を Copy して ChatGP
 ChatGPT:
 実装者ではなく壁打ち役・**プロダクトレビュー**役（コードレビューではない）。
 敬語。オーナーを「お前」と呼ばない。
-判断優先順位: Forge原典 → ユーザー価値 → 開発者価値 → MVP成立 → 技術的綺麗さ
+判断優先順位: Forge原典 → ユーザー価値 → 開発者価値 → 正式リリース初期版成立 → 技術的綺麗さ
 Forge 原典に照らして議論する。思いつきで機能追加を提案しない。
-MVP を雑に削りすぎない。収益化より「無料でも使いたくなる価値」を優先。
+正式リリース初期版を雑に削りすぎない。収益化より「無料でも使いたくなる価値」を優先。
 Cursor への指示は完成版1本で出す（断片的に出さない）。追記形式・複数レス前提は禁止。
 オーナー判断が必須な論点では Cursor 指示を出さず、判断材料を整理する。
 専門用語は噛み砕く（RLS、migration、CHECK 制約など）。
@@ -282,13 +308,13 @@ migration 002〜005 は空テーブル追加/列追加中心で課金リスク�
 発見: / トップ。タブ（新着/テストプレイ受付中/急上昇）、フィルタ、ソート、ショーケース。
 プレイ: 作品詳細サイドバー「プレイする」。ログイン必須。外部 URL へ。project_plays に記録。
 ログイン: /login。Supabase Auth。returnUrl は /games/{id} のみ（プレイ/外部リンク導線）。
-応援: 1人1回。投げ銭ではない。project_supports（Supabase）。
-更新を追う: project_watches（Supabase）。watch 中ユーザーへ devlog/version 通知。
+応援→フォロー（2026-06）: 作品応援廃止。開発者フォロー（project_follows 等 — 未実装）。旧 project_supports は移行対象。
+更新を追う / 見届ける: project_watches（Supabase）。
 あとで見る: project_bookmarks（Supabase）。/bookmarks 一覧。
 フィードバック: 構造化（良かった点/気になる点/バグ/フォーカス/再プレイ意向）。プレイ後表示。
 開発ログ: project_devlogs。版 bump オプション付き。開発の歩みに表示。
 通知: user_notifications（devlog, version_published 予定）+ LS 混在（非 devlog type）。
-マイページ: /mypage。応援した作品・追跡中・あとで見る・自分の投稿一覧。
+マイページ: /mypage。サイドバー IA 正本 — 見届け中 / フォロー中開発者 / あとで / プレイ履歴 / FB履歴 / 実績 / 通知（docs/forge-screen-inventory.md）
 開発ダッシュボード: /my-projects。作品一覧、FB inbox、応援数、テスター応募数、クイックアクション。
 フェーズ整理: 試作版 / プレイ可能版 / 通しプレイ版 / 公開準備中（4名称統一済み）。
 returnUrl: lib/login-return-url.ts。プレイ/外部リンクからログイン → 作品詳細に戻る。それ以外は /。
@@ -461,6 +487,26 @@ extras DB 化は重要だが次候補 — ループ接続を優先
 通知 type: version_published を devlog と別 — オーナー判断
 GPT用メモ厚い粒度恒久 + 画面変更セクション + handoff 分離
 
+未実装（正式リリース初期版対象）: 共感 / 開発者 FB 評価 / 影響度 / **月間影響度ランキング** / 実績画面 / 開発者フォロー DB / 作品・開発者検索分離 / **Studio 20–25 新 IA**
+
+================================================================
+■ 画面番号（2026-06 最終版 — inventory 正本）
+================================================================
+
+プレイヤー: 01–18（17=個人設定、18=月間影響度ランキング）
+欠番: 19
+Studio: 20 作品一覧 / 21 分析ダッシュボード（全作品横断）
+作品配下: 22 作品情報 / 23 プレイヤーの声 / 24 開発ログ公開（≒新ver）/ 25 作品設定
+
+階層: Level1 20/21 → 作品選択 → Level2 22–25
+Sidebar 正本: forge-ui-product-decisions.md §17（GitHub 型階層、同列不採用）
+21↔22: §18 — KPI 重複禁止
+実装 GO: §19 Phase1-A→1-B→2–5（18 最後）。§20 Walkthrough GO直前
+廃止: 旧 Studio ホーム、旧 リリース管理（24に統合）
+モック対照: docs/ui-mocks/SCREEN-NUMBER-MAP.md
+22 正本モック: 22-project-home-alt.md（クイックアクション hub）
+待ち: 21 分析、24 Devlog公開、25 作品設定、17 プレイヤー設定（Studio 17 モックは別）
+
 ================================================================
 ■ これまで後回し / 却下
 ================================================================
@@ -468,13 +514,13 @@ GPT用メモ厚い粒度恒久 + 画面変更セクション + handoff 分離
 AI 要約 / 開発者自動返信
 アナリティクス / Forge SDK 実装
 Realtime 通知 / Push 通知
-課金 / ランキング / バッジ
+課金 / 有料ランキング・バッジ課金 / 作品販売
 作品 dashboard 新設
 ホームタブ全面再設計
 旧版 FB プレイヤー表示
 extras DB 化（次候補として残す）
 phase CHECK 制約 / status 一括整理
-クリエイターフォロー DB 化
+クリエイターフォロー DB 化 — **正式リリース初期版 in-scope**（モック GO 後実装）
 P1 UX copy（保留中）
 LS に新版フラグ（却下 — DB 原典）
 版 bump 時 devlog+version 二重通知（却下 — ノイズ）
@@ -507,9 +553,10 @@ PLAYER_VISIBLE:
 - Vercel プロジェクト forge に OPENAI_API_KEY + SUPABASE_SERVICE_ROLE_KEY 設定 + Redeploy
 
 Cursor 次テーマ（優先順位）— 2026-06-16 更新:
-1. **Veteran Walkthrough** — preview + staging DB
-2. **開発者タブ ForgeGameCard 化** — ProjectListCard 置換（GO）
-3. 伴走者 → 育成者 → Phase 1b
+1. **残モック** — 21 / 24 / 25 / 17 プレイヤー設定
+2. **Veteran Walkthrough（GO 直前）** — 導線4本 §20
+3. **GO 後 Phase 1-A** — Studio Shell 20–25（Player Shell と同時 NG）
+4. Phase 1-B Player Shell → Phase 2–5
 
 prod deploy: Walkthrough + 主要 UI 確認後。vercel deploy --prod 禁止。
 

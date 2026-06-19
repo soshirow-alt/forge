@@ -1,0 +1,228 @@
+export type StudioProjectCard = {
+  id: string;
+  title: string;
+  genres: string;
+  phase: "開発中" | "正式版";
+  image: string;
+  witnessCount: number;
+  firstVoiceCount: number;
+  updatedLabel: string;
+  version: string;
+  progressPercent: number;
+};
+
+export type StudioActivityItem = {
+  id: string;
+  type: "voice" | "witness" | "devlog" | "first-voice";
+  title: string;
+  description: string;
+  timeLabel: string;
+  badge: number;
+};
+
+export type StudioWeeklyStat = {
+  id: string;
+  label: string;
+  value: string;
+  delta: string;
+};
+
+export type ForgeCommunityItem = {
+  id: string;
+  title: string;
+  image: string;
+  meta: string;
+  subMeta?: string;
+};
+
+export type DevHintCard = {
+  id: string;
+  title: string;
+  tips: string[];
+};
+
+export const studioProjects: StudioProjectCard[] = [
+  {
+    id: "hoshino-kioku",
+    title: "星の記憶",
+    genres: "RPG・ファンタジー",
+    phase: "開発中",
+    image: "/images/landing/hero-bg.png",
+    witnessCount: 128,
+    firstVoiceCount: 42,
+    updatedLabel: "2日前",
+    version: "v0.3.1",
+    progressPercent: 68,
+  },
+  {
+    id: "seito-no-tabiji",
+    title: "星灯の旅路",
+    genres: "アドベンチャー・ナラティブ",
+    phase: "開発中",
+    image: "/images/landing/game-2.png",
+    witnessCount: 86,
+    firstVoiceCount: 24,
+    updatedLabel: "昨日",
+    version: "v0.4.0",
+    progressPercent: 54,
+  },
+  {
+    id: "roshin-no-zanko",
+    title: "炉心の残光",
+    genres: "RPG・探索",
+    phase: "開発中",
+    image: "/images/landing/game-3.png",
+    witnessCount: 51,
+    firstVoiceCount: 18,
+    updatedLabel: "5日前",
+    version: "v0.3.2",
+    progressPercent: 41,
+  },
+];
+
+export const studioActivities: StudioActivityItem[] = [
+  {
+    id: "act-1",
+    type: "voice",
+    title: "新しい声が届きました",
+    description: "「星の記憶」に 3件の新しい声が届いています",
+    timeLabel: "2時間前",
+    badge: 3,
+  },
+  {
+    id: "act-2",
+    type: "witness",
+    title: "見届け人が増えました",
+    description: "「星灯の旅路」の見届け人が 5人増えました",
+    timeLabel: "5時間前",
+    badge: 5,
+  },
+  {
+    id: "act-3",
+    type: "devlog",
+    title: "Devlog に反応がありました",
+    description: "「炉心の残光」の更新報告に 12件の反応",
+    timeLabel: "昨日",
+    badge: 12,
+  },
+  {
+    id: "act-4",
+    type: "first-voice",
+    title: "初声が届きました",
+    description: "「星の記憶」に初声が 1件届きました",
+    timeLabel: "2日前",
+    badge: 1,
+  },
+];
+
+export const studioWeeklyStats: StudioWeeklyStat[] = [
+  { id: "new-voices", label: "新しい声", value: "7", delta: "先週比 +3" },
+  { id: "witness-growth", label: "見届け人増", value: "18", delta: "先週比 +6" },
+  { id: "devlog-reactions", label: "Devlog反応", value: "24", delta: "先週比 +8" },
+  { id: "play-count", label: "プレイ数", value: "156", delta: "先週比 +22" },
+  { id: "first-voices", label: "初声数", value: "9", delta: "先週比 +2" },
+];
+
+export const nurtureCycleProgress = 72;
+
+export const releasedThisWeek: ForgeCommunityItem[] = [
+  {
+    id: "rel-1",
+    title: "空の彼方へ",
+    image: "/images/landing/game-4.png",
+    meta: "by ハルカ",
+    subMeta: "昨日",
+  },
+  {
+    id: "rel-2",
+    title: "静かな灯台",
+    image: "/images/landing/game-5.png",
+    meta: "by ミナト",
+    subMeta: "3日前",
+  },
+  {
+    id: "rel-3",
+    title: "記憶の庭",
+    image: "/images/landing/game-1.png",
+    meta: "by ユキ",
+    subMeta: "5日前",
+  },
+];
+
+export const trendingWorks: ForgeCommunityItem[] = [
+  {
+    id: "tr-1",
+    title: "深淵ノート",
+    image: "/images/landing/game-3.png",
+    meta: "見届け人 +48",
+  },
+  {
+    id: "tr-2",
+    title: "夏の向こう側",
+    image: "/images/landing/game-2.png",
+    meta: "見届け人 +31",
+  },
+  {
+    id: "tr-3",
+    title: "星灯の旅路",
+    image: "/images/landing/hero-bg.png",
+    meta: "見届け人 +22",
+  },
+];
+
+export const newlyPostedWorks: ForgeCommunityItem[] = [
+  {
+    id: "new-1",
+    title: "霧の駅",
+    image: "/images/landing/game-4.png",
+    meta: "by ソラ",
+    subMeta: "2時間前",
+  },
+  {
+    id: "new-2",
+    title: "紙の迷宮",
+    image: "/images/landing/game-5.png",
+    meta: "by アオイ",
+    subMeta: "6時間前",
+  },
+  {
+    id: "new-3",
+    title: "夜明けの手紙",
+    image: "/images/landing/game-1.png",
+    meta: "by レン",
+    subMeta: "1日前",
+  },
+];
+
+export const devHintCards: DevHintCard[] = [
+  {
+    id: "hint-1",
+    title: "見届け人が増えやすい作品の共通点",
+    tips: [
+      "サムネとタイトルで世界観が一瞬で伝わる",
+      "初版から短くプレイできる導線がある",
+      "Devlog で更新の理由を丁寧に伝えている",
+    ],
+  },
+  {
+    id: "hint-2",
+    title: "初声が集まりやすい Devlog の書き方",
+    tips: [
+      "今回の版で試したいことを1つに絞る",
+      "プレイヤーへの問いを版の意図とセットで書く",
+      "変更点より「何を感じてほしいか」を先に書く",
+    ],
+  },
+  {
+    id: "hint-3",
+    title: "今週の Forge Tips",
+    tips: [
+      "声は増やすより、届いた声を次の版に活かすサイクルを回す",
+      "正式版はゴールではなく、育てた記録の区切りとして公開する",
+    ],
+  },
+];
+
+export function studioProjectHref(id: string): string {
+  return `/studio/projects/${id}`;
+}
