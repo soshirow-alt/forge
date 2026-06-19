@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-06-19 26 マイページ見出し削除（preview）
+
+- `/mypage` 全タブ — 左上「マイページ」h1 を削除（サイドバー点灯で冗長）
+
+---
+
 ## 2026-06-19 25 Preview UX fix batch（preview）
 
 - `/` → `/home` リダイレクト（preview/landing-01 のみ。middleware + lib/preview-v0）
