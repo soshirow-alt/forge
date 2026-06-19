@@ -16,6 +16,8 @@ import { GameDevlogV0Tab } from "@/components/game-devlog-v0-tab";
 import { GameVersionsV0Tab } from "@/components/game-versions-v0-tab";
 import { GameVoicesV0Tab } from "@/components/game-voices-v0-tab";
 import { GameThumbnail, PlayerShell } from "@/components/player-shell";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import { gameDetailReturnPath } from "@/lib/login-return-url";
 import { getGameDetailV0, resolveGameDetailId } from "@/lib/game-detail-v0-mock-data";
 import {
   appendSessionVoice,
@@ -94,12 +96,29 @@ function parseDetailTab(param: string | null): DetailTab {
 function GameDetailV0PageContent({ id }: { id: string }) {
   const searchParams = useSearchParams();
   const game = getGameDetailV0(id);
+  const { isLoggedIn, hydrated, requireAuth } = useRequireAuth();
+  const returnPath = gameDetailReturnPath(resolveGameDetailId(id));
   const [activeTab, setActiveTab] = useState<DetailTab>(() =>
     parseDetailTab(searchParams.get("tab")),
   );
   const [introExpanded, setIntroExpanded] = useState(false);
   const [feedbackStep, setFeedbackStep] = useState<FeedbackFlowStep>("closed");
   const [voicesRefreshKey, setVoicesRefreshKey] = useState(0);
+
+  const handlePlay = useCallback(() => {
+    requireAuth(() => setFeedbackStep("play-stub"), returnPath);
+  }, [requireAuth, returnPath]);
+
+  const handleFeedback = useCallback(() => {
+    requireAuth(() => setFeedbackStep("full-form"), returnPath);
+  }, [requireAuth, returnPath]);
+
+  const handleProtectedAction = useCallback(
+    (action: () => void) => {
+      requireAuth(action, returnPath);
+    },
+    [requireAuth, returnPath],
+  );
 
   const handleFeedbackSuccess = useCallback(() => {
     appendSessionVoice(
@@ -224,14 +243,16 @@ function GameDetailV0PageContent({ id }: { id: string }) {
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
-              onClick={() => setFeedbackStep("play-stub")}
-              className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
+              onClick={handlePlay}
+              disabled={!hydrated}
+              className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Play className="size-4" aria-hidden="true" />
-              プレイする
+              {hydrated && !isLoggedIn ? "ログインしてプレイ" : "プレイする"}
             </button>
             <button
               type="button"
+              onClick={() => handleProtectedAction(() => undefined)}
               className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
                 game.watching
                   ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
@@ -243,6 +264,7 @@ function GameDetailV0PageContent({ id }: { id: string }) {
             </button>
             <button
               type="button"
+              onClick={() => handleProtectedAction(() => {})}
               className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
                 game.developer.following
                   ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
@@ -254,6 +276,7 @@ function GameDetailV0PageContent({ id }: { id: string }) {
             </button>
             <button
               type="button"
+              onClick={() => handleProtectedAction(() => {})}
               className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
                 game.saved
                   ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
@@ -325,10 +348,10 @@ function GameDetailV0PageContent({ id }: { id: string }) {
                   <p className="mt-3 text-sm leading-relaxed text-zinc-400">{game.developerWorry}</p>
                   <button
                     type="button"
-                    onClick={() => setFeedbackStep("full-form")}
+                    onClick={handleFeedback}
                     className="mt-4 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
                   >
-                    声を届ける（フィードバック）
+                    {hydrated && !isLoggedIn ? "ログインして声を届ける" : "声を届ける（フィードバック）"}
                   </button>
                 </section>
 
@@ -353,20 +376,20 @@ function GameDetailV0PageContent({ id }: { id: string }) {
           {activeTab === "devlog" && (
             <GameDevlogV0Tab
               gameId={resolveGameDetailId(id)}
-              onPlayLatest={() => setFeedbackStep("play-stub")}
+              onPlayLatest={handlePlay}
             />
           )}
           {activeTab === "voices" && (
             <GameVoicesV0Tab
               gameId={resolveGameDetailId(id)}
               refreshKey={voicesRefreshKey}
-              onSendVoice={() => setFeedbackStep("full-form")}
+              onSendVoice={handleFeedback}
             />
           )}
           {activeTab === "versions" && (
             <GameVersionsV0Tab
               gameId={resolveGameDetailId(id)}
-              onPlayLatest={() => setFeedbackStep("play-stub")}
+              onPlayLatest={handlePlay}
             />
           )}
         </div>

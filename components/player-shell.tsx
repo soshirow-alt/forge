@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Bell,
   Bookmark,
@@ -11,16 +12,28 @@ import {
   Search,
   User,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { type FormEvent, type ReactNode, useState } from "react";
 
 const discoverLinks = [
   { id: "home", href: "/home", label: "ホーム" },
   { id: "search", href: "/search", label: "作品を探す" },
-  { id: "ranking", href: "/search", label: "人気ランキング" },
-  { id: "new", href: "/search", label: "新着作品" },
-  { id: "updated", href: "/search", label: "最近更新された作品" },
-  { id: "genres", href: "/search", label: "ジャンル" },
+  { id: "ranking", href: "/search?q=人気", label: "人気ランキング" },
+  { id: "new", href: "/search?q=新着", label: "新着作品" },
+  { id: "updated", href: "/search?q=最近更新", label: "最近更新された作品" },
+  { id: "genres", href: "/search?q=ジャンル", label: "ジャンル" },
 ] as const;
+
+export const mypageLinks = [
+  { id: "profile", href: "/mypage/profile", label: "プロフィール" },
+  { id: "witnessing", href: "/mypage", label: "見届け中" },
+  { id: "saved", href: "/mypage?tab=saved", label: "あとで遊ぶ" },
+  { id: "play-history", href: "/mypage?tab=play-history", label: "プレイ履歴" },
+  { id: "feedback", href: "/mypage?tab=feedback", label: "FB履歴" },
+  { id: "achievements", href: "/mypage?tab=achievements", label: "実績" },
+  { id: "following", href: "/mypage?tab=following", label: "フォロー中開発者" },
+] as const;
+
+export type PlayerShellMypageLinkId = (typeof mypageLinks)[number]["id"];
 
 export type PlayerShellNavId =
   | (typeof discoverLinks)[number]["id"]
@@ -28,17 +41,49 @@ export type PlayerShellNavId =
   | "notifications"
   | "settings";
 
+function HeaderSearchForm({ defaultValue }: { defaultValue?: string }) {
+  const router = useRouter();
+  const [query, setQuery] = useState(defaultValue ?? "");
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    const trimmed = query.trim();
+    router.push(trimmed ? `/search?q=${encodeURIComponent(trimmed)}` : "/search");
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="relative min-w-0 flex-1">
+      <Search
+        className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500"
+        aria-hidden="true"
+      />
+      <input
+        type="search"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder="ゲームやジャンルを検索（例：RPG、ピクセルアート）"
+        className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-500 focus:border-violet-500/40 focus:outline-none focus:ring-1 focus:ring-violet-500/30"
+      />
+    </form>
+  );
+}
+
 export function PlayerShell({
   children,
   activeNav = "home",
+  activeMypageLink,
   headerSearchDefault,
   notificationBadge = 4,
 }: {
   children: ReactNode;
   activeNav?: PlayerShellNavId;
+  activeMypageLink?: PlayerShellMypageLinkId;
   headerSearchDefault?: string;
   notificationBadge?: number;
 }) {
+  const showMypageSection =
+    activeNav === "mypage" || activeNav === "search" || Boolean(activeMypageLink);
+
   return (
     <div className="flex min-h-full bg-[#0a0a0a] text-zinc-100">
       <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-800/80 bg-zinc-950 lg:flex xl:w-60">
@@ -65,16 +110,34 @@ export function PlayerShell({
               {link.label}
             </Link>
           ))}
-          <Link
-            href="/mypage"
-            className={`mt-2 block rounded-lg px-3 py-2 text-sm transition-colors ${
-              activeNav === "mypage"
-                ? "bg-zinc-800/80 font-medium text-white"
-                : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
-            }`}
-          >
-            マイページ
-          </Link>
+          <div className="mt-3 px-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
+              マイページ
+            </p>
+          </div>
+          {showMypageSection ? (
+            mypageLinks.map((link) => (
+              <Link
+                key={link.id}
+                href={link.href}
+                className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
+                  activeMypageLink === link.id ||
+                  (!activeMypageLink && link.id === "witnessing" && activeNav === "mypage")
+                    ? "bg-zinc-800/80 font-medium text-white"
+                    : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))
+          ) : (
+            <Link
+              href="/mypage"
+              className="block rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200"
+            >
+              マイページ
+            </Link>
+          )}
           <Link
             href="/notifications"
             className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors ${
@@ -119,18 +182,7 @@ export function PlayerShell({
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-zinc-800/80 bg-[#0a0a0a]/95 px-4 py-3 backdrop-blur-md sm:px-6">
-          <div className="relative min-w-0 flex-1">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500"
-              aria-hidden="true"
-            />
-            <input
-              type="search"
-              defaultValue={headerSearchDefault}
-              placeholder="ゲームやジャンルを検索（例：RPG、ピクセルアート）"
-              className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-500 focus:border-violet-500/40 focus:outline-none focus:ring-1 focus:ring-violet-500/30"
-            />
-          </div>
+          <HeaderSearchForm defaultValue={headerSearchDefault} />
           <Link
             href="/notifications"
             className="relative rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
@@ -143,13 +195,13 @@ export function PlayerShell({
               </span>
             )}
           </Link>
-          <button
-            type="button"
+          <Link
+            href="/mypage/profile"
             className="rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
             aria-label="プロフィール"
           >
             <User className="size-5" />
-          </button>
+          </Link>
           <button
             type="button"
             className="hidden rounded-xl border border-zinc-600 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-500 sm:inline-flex"

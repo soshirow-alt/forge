@@ -29,8 +29,8 @@ export type SearchWorkResult = {
   developer: string;
   verified: boolean;
   updatedAgo: string;
-  likes: number;
-  comments: number;
+  witnessCount: number;
+  voiceCount: number;
   platforms: string[];
 };
 
@@ -45,8 +45,8 @@ export const searchWorkResults: SearchWorkResult[] = [
     developer: "Sora Games",
     verified: true,
     updatedAgo: "3日前",
-    likes: 128,
-    comments: 42,
+    witnessCount: 1248,
+    voiceCount: 312,
     platforms: ["Steam", "PC"],
   },
   {
@@ -59,8 +59,8 @@ export const searchWorkResults: SearchWorkResult[] = [
     developer: "LunaWorks",
     verified: true,
     updatedAgo: "5日前",
-    likes: 96,
-    comments: 31,
+    witnessCount: 892,
+    voiceCount: 198,
     platforms: ["PC", "Switch"],
   },
   {
@@ -73,8 +73,8 @@ export const searchWorkResults: SearchWorkResult[] = [
     developer: "Sky Pirate Studio",
     verified: false,
     updatedAgo: "1週間前",
-    likes: 74,
-    comments: 18,
+    witnessCount: 654,
+    voiceCount: 124,
     platforms: ["ブラウザ", "PC"],
   },
   {
@@ -87,8 +87,8 @@ export const searchWorkResults: SearchWorkResult[] = [
     developer: "Studio Aurora",
     verified: true,
     updatedAgo: "2日前",
-    likes: 210,
-    comments: 67,
+    witnessCount: 2104,
+    voiceCount: 567,
     platforms: ["Steam", "PC"],
   },
   {
@@ -101,8 +101,8 @@ export const searchWorkResults: SearchWorkResult[] = [
     developer: "GreenSmith",
     verified: false,
     updatedAgo: "4日前",
-    likes: 55,
-    comments: 22,
+    witnessCount: 421,
+    voiceCount: 89,
     platforms: ["PC", "Switch"],
   },
   {
@@ -115,8 +115,8 @@ export const searchWorkResults: SearchWorkResult[] = [
     developer: "GreenSmith",
     verified: true,
     updatedAgo: "6日前",
-    likes: 88,
-    comments: 29,
+    witnessCount: 738,
+    voiceCount: 156,
     platforms: ["ブラウザ", "PC"],
   },
   {
@@ -129,8 +129,8 @@ export const searchWorkResults: SearchWorkResult[] = [
     developer: "Pixel Knights",
     verified: true,
     updatedAgo: "1日前",
-    likes: 142,
-    comments: 38,
+    witnessCount: 1567,
+    voiceCount: 402,
     platforms: ["Steam", "PC", "Switch"],
   },
   {
@@ -143,8 +143,33 @@ export const searchWorkResults: SearchWorkResult[] = [
     developer: "Catnip Lab",
     verified: false,
     updatedAgo: "2週間前",
-    likes: 63,
-    comments: 15,
+    witnessCount: 312,
+    voiceCount: 67,
     platforms: ["ブラウザ", "スマホ"],
   },
 ];
+
+export function filterSearchResults(
+  results: SearchWorkResult[],
+  query: string,
+  genres: string[],
+): SearchWorkResult[] {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  return results.filter((work) => {
+    const matchesQuery =
+      !normalizedQuery ||
+      work.title.toLowerCase().includes(normalizedQuery) ||
+      work.description.toLowerCase().includes(normalizedQuery) ||
+      work.tags.some((tag) => tag.toLowerCase().includes(normalizedQuery)) ||
+      work.developer.toLowerCase().includes(normalizedQuery);
+
+    const matchesGenre =
+      genres.length === 0 ||
+      genres.some((genre) =>
+        work.tags.some((tag) => tag.toLowerCase().includes(genre.toLowerCase())),
+      );
+
+    return matchesQuery && matchesGenre;
+  });
+}

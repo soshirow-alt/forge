@@ -507,7 +507,7 @@ function MyPagePageContent() {
   );
 
   return (
-    <PlayerShell activeNav="mypage">
+    <PlayerShell activeNav="mypage" activeMypageLink={activeTab}>
       <MyPageTabs activeTab={activeTab} onTabChange={(tab) => setTab(tab as MyPageTab)} />
 
       <div role="tabpanel">
