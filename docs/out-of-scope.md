@@ -1,12 +1,34 @@
-# Out of MVP scope
+# Out of scope — 正式リリース初期版
 
-Documented future ideas. Not implemented in the current MVP.
+**更新**: 2026-06-16 — 方針変更
 
-- Creator rankings
-- User rankings
-- Reputation systems
-- Creator badges
-- Suggestion adoption percentages
-- Gamified community leaderboards
+Forge は **小さな MVP として出すのではなく**、**正式リリース初期版**として必要機能を最初から盛り込む。
 
-Forge MVP focuses on discovery, play, support, observing development activity, and optional post-play feedback. Developers decide what to adopt.
+以下は **依然としてスコープ外**（未実装・設計しない）。  
+**それ以外**（ランキング・実績・共感・開発者評価・影響度等）は **初期版対象**。詳細は `docs/forge-ui-product-decisions.md` / `docs/forge-screen-inventory.md`。
+
+---
+
+## 依然として out of scope
+
+- **投げ銭・課金・作品販売**
+- **ランキング課金・バッジ課金**（有料化）
+- **Forge SDK の実装**（説明 UI のみ可）
+- **採用率のゲーミフィケーション** — 「提案採用 ○%」等の公開表示
+- **新しい収益化機能**（`docs/forge-principles.md` §6 参照）
+- **開発者検索での月間ランキング表示** — 月間影響度ランキングは別画面（サイドバー ランキング / 発見系）
+
+---
+
+## 正式リリース初期版に含む（旧 out-of-scope から解除）
+
+| 機能 | 要点 |
+|------|------|
+| **実績・バッジ** | 活動サマリーではない。獲得済み / 未獲得 / 条件 / 進行 |
+| **共感** | 自由記述 FB のみ。投稿数に加算しない。声の重み・集約に反映 |
+| **開発者 FB 評価** | 「開発に役立った」— 開発者本人のみ非公開 |
+| **月間影響度ランキング** | 毎月リセット。投稿数だけにしない。過去入賞は実績に残す |
+| **影響度スコア** | 信頼される見届け人の可視化。投稿数だけで強く評価しない |
+| **フォロー** | 作品応援機能は廃止。開発者フォロー（概念上の「応援」は残す） |
+
+**実装タイミング**: 画面モック送付 → オーナー GO 後。prod deploy は禁止のまま。

@@ -115,3 +115,20 @@ witness grants 付与後は作品削除不可のため、**visibility トグル*
 - 設計: `docs/future-demo-environment-design.md`
 - Seeder: `scripts/future-demo-seed.ts`, `scripts/future-demo-lib.ts`
 - Verify: `scripts/future-demo-verify.ts`
+
+---
+
+## 9. GO 前導線確認（2026-06-16 オーナー確定 — §20）
+
+**タイミング**: **全 UI モック完成後・実装 GO 直前**（Phase 1-A 前ではない）  
+**目的**: 画面単体ではなく **ループ導線**の最終確認。削除しない。
+
+| # | 導線 | パス | 確認すること |
+|---|------|------|--------------|
+| ① | プレイヤー | 04 → 05 → 06 → 08 → 11 | 発見→プレイ→声→履歴 |
+| ② | 開発者 | 20 → 22 → 23 → 24 → 06 | 改善ループが閉じる |
+| ③ | 通知 | 24 → 16 → 06 | 公開→通知→再プレイ |
+| ④ | 新規開発者 | 05-2 → 07 → 06 | 🌱 発掘→フォロー→プレイ |
+
+**手順**: §5 Veteran ツアー（staging seed）に加え、上記 4 導線を **画面番号ベース**で通す。  
+**正本**: `docs/forge-ui-product-decisions.md` §20
