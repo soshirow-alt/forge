@@ -3,8 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import { PlayerShell, SortDropdown } from "@/components/player-shell";
+import { useRequireAuth } from "@/hooks/use-require-auth";
 import {
   DEVELOPER_SEARCH_TOTAL,
   developerProfileHref,
@@ -16,9 +17,36 @@ import { BadgeCheck, ChevronDown, Sprout, UserPlus } from "lucide-react";
 function DeveloperSearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { requireAuth } = useRequireAuth();
   const queryFromUrl = searchParams.get("q")?.trim() ?? "";
   const [query, setQuery] = useState(queryFromUrl);
   const [newOnly, setNewOnly] = useState(false);
+  const [followingIds, setFollowingIds] = useState<Set<string>>(() => {
+    const initial = new Set<string>();
+    for (const dev of developerSearchResults) {
+      if (dev.following) {
+        initial.add(dev.id);
+      }
+    }
+    return initial;
+  });
+
+  const handleFollow = useCallback(
+    (devId: string) => {
+      requireAuth(() => {
+        setFollowingIds((prev) => {
+          const next = new Set(prev);
+          if (next.has(devId)) {
+            next.delete(devId);
+          } else {
+            next.add(devId);
+          }
+          return next;
+        });
+      }, `/search/creators${queryFromUrl ? `?q=${encodeURIComponent(queryFromUrl)}` : ""}`);
+    },
+    [queryFromUrl, requireAuth],
+  );
 
   const results = useMemo(() => {
     const filtered = filterDevelopers(queryFromUrl);
@@ -104,16 +132,21 @@ function DeveloperSearchContent() {
                         ))}
                       </div>
                     </div>
-                    <span
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        handleFollow(dev.id);
+                      }}
                       className={`inline-flex shrink-0 items-center gap-1.5 self-center rounded-xl border px-4 py-2 text-sm ${
-                        dev.following
+                        followingIds.has(dev.id)
                           ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
-                          : "border-zinc-700 text-zinc-300"
+                          : "border-zinc-700 text-zinc-300 hover:border-zinc-600"
                       }`}
                     >
                       <UserPlus className="size-4" aria-hidden="true" />
-                      {dev.following ? "フォロー中" : "フォロー"}
-                    </span>
+                      {followingIds.has(dev.id) ? "フォロー中" : "フォロー"}
+                    </button>
                   </div>
                 </Link>
               </li>

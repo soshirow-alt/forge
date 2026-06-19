@@ -216,6 +216,12 @@ export function DiscoveryHomePage() {
               </Link>
             ))}
           </div>
+          <Link
+            href="/search/creators"
+            className="mt-6 inline-flex items-center gap-1 text-sm text-violet-400 transition-colors hover:text-violet-300"
+          >
+            開発者を探す →
+          </Link>
         </section>
       </div>
     </PlayerShell>

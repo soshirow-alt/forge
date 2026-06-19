@@ -109,12 +109,12 @@ export function PlayerShell({
             <Link href="/settings" className={navLinkClass(activeNav === "settings")}>
               設定
             </Link>
-            <button
-              type="button"
-              className="block w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200"
+            <Link
+              href="/landing"
+              className="block rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200"
             >
               はじめてガイド
-            </button>
+            </Link>
           </div>
         </nav>
       </aside>

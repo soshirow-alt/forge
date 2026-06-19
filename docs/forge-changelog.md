@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-06-19 25 Preview UX fix batch（preview）
+
+- `/` → `/home` リダイレクト（preview/landing-01 のみ。middleware + lib/preview-v0）
+- はじめてガイド → `/landing` リンク
+- 開発者を探す導線 — /home・/search から `/search/creators`（サイドバー復活なし）
+- P-05 ソート（?sort=）・ページネーション（?page=、5件/ページ）
+- P-06 / P-07 / P-05-2 フォロー・見届け・あとで — ログイン gate + mock toggle
+
+---
+
 ## 2026-06-19 24 Player Shell サイドバー簡素化（preview）
 
 - ホーム / 作品を探す / ランキング ── マイページ ── 設定 / はじめてガイド

@@ -1,7 +1,7 @@
 # Preview v0 — ナビゲーション・未実装整理
 
 **ブランチ**: `preview/landing-01`  
-**更新**: 2026-06-19
+**更新**: 2026-06-19（UX fix batch）
 
 ---
 
@@ -33,31 +33,33 @@
 ### 全画面共通（Player Shell）
 - **Sidebar 正本（2026-06-19）**: ホーム / 作品を探す / ランキング ── マイページ ── 設定 / はじめてガイド（固定表示）
 - **マイページ sub-nav** — サイドバーではなくメイン内タブ（見届け中〜フォロー中開発者）
-- **開発者を探す** — サイドバーから削除（/search/creators は URL 直打ち・検索経由のみ）
+- **開発者を探す** — サイドバーから削除（/home・/search ヘッダー/サイドバーから `/search/creators` へ導線）
 - **通知一覧** — サイドバーから削除（ヘッダー 🔔 のみ）
 - **Studio** — リンクなし
-- **はじめてガイド** — stub（サイドバー下部）
+- **はじめてガイド** — `/landing` へリンク（サイドバー下部）
 
 ### P-04 /home
 - カルーセル自動送り以外の細かいフィルタ — mock のみ
+- **開発者を探す** — ジャンルセクション下に `/search/creators` リンク
 
 ### P-05 /search
 - グリッド表示切替 — 見た目のみ
-- ソート dropdown — 未連動
-- ページネーション 2ページ目以降 — 未連動
-- プレイ環境チェック — 未連動
+- **ソート** — おすすめ順 / 見届けが多い順 / 声が多い順（URL `?sort=` 連動）
+- **ページネーション** — `?page=` 連動（5件/ページ）
+- **開発者を探す** — 結果ヘッダー・絞り込みサイドバーからリンク
+- プレイ環境チェック — 未連動（UI 削除）
 
 ### P-05-2 /search/creators
-- **フォロー** — ログイン導線なし（クリック不可表示のみ）
+- **フォロー** — 未ログイン→`/login?return=...`、ログイン後 toggle（mock state）
 - ソート — 未連動
 
 ### P-06 /games/[id]
-- **見届ける / フォロー / あとで遊ぶ** — 未ログイン→login、ログイン後も toggle 未実装（mock 表示固定）
+- **見届ける / フォロー / あとで遊ぶ** — 未ログイン→login、ログイン後 toggle（mock state）
 - **プレイ** — login 後 play stub モーダル（実ゲーム URL なし）
 - **FB** — mock モーダル（Supabase 保存なし）
 
 ### P-07 /creators/[id]
-- **フォロー** — 未連動
+- **フォロー** — 未ログイン→login、ログイン後 toggle（mock state）
 - 完成品カード — 詳細リンクなし（demo id）
 - 開発ログタブ — mock 3件のみ
 
@@ -76,7 +78,7 @@
 
 ## 実装前に整理すべき論点
 
-1. **入口 URL** — `/` は旧 UI、`/home` が v0 発見。prod 時に `/` を `/home` にするか
+1. **入口 URL** — preview のみ `/` → `/home` リダイレクト（middleware）。prod 反映時に要裁定
 2. **Sidebar 正本** — 04/05/05-2/18 で項目差（#19 オーナー裁定）
 3. **マイページ IA** — tabs（現状）vs sidebar 独立 URL（モック）
 4. **17 設定** — プレイヤー `/settings` vs Studio 設定（別 URL 確定要）
@@ -92,6 +94,7 @@
 
 ```
 /landing → /login /register → /home
+/ (preview only) → /home
 /home ↔ /search ↔ /search/creators ↔ /rankings/influence
 /home → /games/[id] ↔ /creators/[id]
 /mypage/* ↔ /mypage/profile ↔ /settings

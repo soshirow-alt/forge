@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { PlayerShell, GameThumbnail } from "@/components/player-shell";
+import { useRequireAuth } from "@/hooks/use-require-auth";
 import { getDeveloperProfileV0 } from "@/lib/developer-profile-v0-mock-data";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import { BadgeCheck, Globe, MapPin, MessageSquare, Sprout, UserPlus } from "lucide-react";
@@ -19,7 +20,14 @@ const tabs: { id: DevTab; label: string }[] = [
 
 export function DeveloperProfileV0Page({ id }: { id: string }) {
   const dev = getDeveloperProfileV0(id);
+  const { requireAuth } = useRequireAuth();
+  const returnPath = `/creators/${id}`;
   const [activeTab, setActiveTab] = useState<DevTab>("overview");
+  const [following, setFollowing] = useState(dev.following);
+
+  const handleFollow = useCallback(() => {
+    requireAuth(() => setFollowing((value) => !value), returnPath);
+  }, [requireAuth, returnPath]);
 
   return (
     <PlayerShell activeNav="search">
@@ -61,14 +69,15 @@ export function DeveloperProfileV0Page({ id }: { id: string }) {
                 </div>
                 <button
                   type="button"
+                  onClick={handleFollow}
                   className={`mt-5 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold ${
-                    dev.following
+                    following
                       ? "border border-rose-500/40 bg-rose-500/10 text-rose-300"
                       : "bg-violet-600 text-white hover:bg-violet-500"
                   }`}
                 >
                   <UserPlus className="size-4" />
-                  {dev.following ? "フォロー中" : "フォロー"}
+                  {following ? "フォロー中" : "フォロー"}
                 </button>
               </div>
             </div>

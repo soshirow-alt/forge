@@ -6,14 +6,15 @@ import { Suspense, useCallback, useMemo, useState } from "react";
 import {
   GameThumbnail,
   PlayerShell,
-  SortDropdown,
 } from "@/components/player-shell";
 import {
   filterSearchResults,
+  paginateSearchResults,
   SEARCH_RESULTS_TOTAL,
   searchGenreFilters,
-  searchPlatformFilters,
   searchWorkResults,
+  sortSearchResults,
+  type SearchSortId,
 } from "@/lib/search-v0-mock-data";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import {
@@ -27,6 +28,20 @@ import {
 } from "lucide-react";
 
 const DEFAULT_QUERY = "ファンタジー";
+const PAGE_SIZE = 5;
+
+const SORT_OPTIONS: { id: SearchSortId; label: string }[] = [
+  { id: "recommended", label: "おすすめ順" },
+  { id: "witness", label: "見届けが多い順" },
+  { id: "voices", label: "声が多い順" },
+];
+
+function parseSort(param: string | null): SearchSortId {
+  if (param === "witness" || param === "voices") {
+    return param;
+  }
+  return "recommended";
+}
 
 function parseGenres(param: string | null): string[] {
   if (!param?.trim()) {
@@ -44,13 +59,46 @@ function WorksSearchContent() {
   const searchParams = useSearchParams();
   const queryFromUrl = searchParams.get("q")?.trim() || DEFAULT_QUERY;
   const genresFromUrl = parseGenres(searchParams.get("genre"));
+  const sortFromUrl = parseSort(searchParams.get("sort"));
+  const pageFromUrl = Math.max(1, Number.parseInt(searchParams.get("page") ?? "1", 10) || 1);
 
   const [keyword, setKeyword] = useState(queryFromUrl);
   const [selectedGenres, setSelectedGenres] = useState<string[]>(genresFromUrl);
 
-  const results = useMemo(
+  const filtered = useMemo(
     () => filterSearchResults(searchWorkResults, queryFromUrl, genresFromUrl),
     [queryFromUrl, genresFromUrl],
+  );
+  const sorted = useMemo(
+    () => sortSearchResults(filtered, sortFromUrl),
+    [filtered, sortFromUrl],
+  );
+  const pagination = useMemo(
+    () => paginateSearchResults(sorted, pageFromUrl, PAGE_SIZE),
+    [sorted, pageFromUrl],
+  );
+
+  const buildSearchUrl = useCallback(
+    (overrides: { page?: number; sort?: SearchSortId }) => {
+      const params = new URLSearchParams();
+      if (queryFromUrl) {
+        params.set("q", queryFromUrl);
+      }
+      if (genresFromUrl.length > 0) {
+        params.set("genre", genresFromUrl.join(","));
+      }
+      const sort = overrides.sort ?? sortFromUrl;
+      if (sort !== "recommended") {
+        params.set("sort", sort);
+      }
+      const page = overrides.page ?? pageFromUrl;
+      if (page > 1) {
+        params.set("page", String(page));
+      }
+      const qs = params.toString();
+      return qs ? `/search?${qs}` : "/search";
+    },
+    [genresFromUrl, pageFromUrl, queryFromUrl, sortFromUrl],
   );
 
   const applySearch = useCallback(() => {
@@ -101,14 +149,34 @@ function WorksSearchContent() {
             </h1>
             <p className="mt-2 text-sm text-zinc-400">
               {SEARCH_RESULTS_TOTAL.toLocaleString()}件の作品が見つかりました
-              {results.length !== searchWorkResults.length && (
-                <span className="text-zinc-500">（表示 {results.length}件）</span>
+              {filtered.length !== searchWorkResults.length && (
+                <span className="text-zinc-500">（絞り込み {filtered.length}件）</span>
               )}
             </p>
+            <Link
+              href="/search/creators"
+              className="mt-3 inline-flex text-sm text-violet-400 transition-colors hover:text-violet-300"
+            >
+              開発者を探す →
+            </Link>
           </header>
 
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-            <SortDropdown label="おすすめ順" />
+            <div className="flex flex-wrap gap-2">
+              {SORT_OPTIONS.map((option) => (
+                <Link
+                  key={option.id}
+                  href={buildSearchUrl({ sort: option.id, page: 1 })}
+                  className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
+                    sortFromUrl === option.id
+                      ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
+                      : "border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                  }`}
+                >
+                  {option.label}
+                </Link>
+              ))}
+            </div>
             <div className="flex rounded-lg border border-zinc-800 p-0.5">
               <button
                 type="button"
@@ -128,7 +196,7 @@ function WorksSearchContent() {
           </div>
 
           <ul className="mt-6 space-y-4">
-            {results.map((work) => (
+            {pagination.items.map((work) => (
               <li key={work.id}>
                 <Link
                   href={gameDetailHref(work.id)}
@@ -189,7 +257,7 @@ function WorksSearchContent() {
                 </Link>
               </li>
             ))}
-            {results.length === 0 && (
+            {pagination.items.length === 0 && (
               <li className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center text-sm text-zinc-500">
                 条件に合う作品がありません。絞り込みを変更してください。
               </li>
@@ -198,28 +266,47 @@ function WorksSearchContent() {
 
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm text-zinc-500">
             <p>
-              {SEARCH_RESULTS_TOTAL.toLocaleString()}件中 1–{results.length}件
+              {pagination.totalItems}件中 {(pagination.page - 1) * PAGE_SIZE + 1}–
+              {Math.min(pagination.page * PAGE_SIZE, pagination.totalItems)}件
             </p>
             <div className="flex items-center gap-1">
-              <button
-                type="button"
-                disabled
-                className="rounded-lg border border-zinc-800 px-3 py-1.5 text-zinc-600"
-              >
-                前へ
-              </button>
-              <button
-                type="button"
-                className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 text-violet-300"
-              >
-                1
-              </button>
-              <button
-                type="button"
-                className="rounded-lg border border-zinc-800 px-3 py-1.5 transition-colors hover:border-zinc-700 hover:text-zinc-300"
-              >
-                次へ
-              </button>
+              {pagination.page > 1 ? (
+                <Link
+                  href={buildSearchUrl({ page: pagination.page - 1 })}
+                  className="rounded-lg border border-zinc-800 px-3 py-1.5 transition-colors hover:border-zinc-700 hover:text-zinc-300"
+                >
+                  前へ
+                </Link>
+              ) : (
+                <span className="rounded-lg border border-zinc-800 px-3 py-1.5 text-zinc-600">
+                  前へ
+                </span>
+              )}
+              {Array.from({ length: pagination.totalPages }, (_, index) => index + 1).map((page) => (
+                <Link
+                  key={page}
+                  href={buildSearchUrl({ page })}
+                  className={`rounded-lg border px-3 py-1.5 ${
+                    page === pagination.page
+                      ? "border-violet-500/40 bg-violet-500/10 text-violet-300"
+                      : "border-zinc-800 transition-colors hover:border-zinc-700 hover:text-zinc-300"
+                  }`}
+                >
+                  {page}
+                </Link>
+              ))}
+              {pagination.page < pagination.totalPages ? (
+                <Link
+                  href={buildSearchUrl({ page: pagination.page + 1 })}
+                  className="rounded-lg border border-zinc-800 px-3 py-1.5 transition-colors hover:border-zinc-700 hover:text-zinc-300"
+                >
+                  次へ
+                </Link>
+              ) : (
+                <span className="rounded-lg border border-zinc-800 px-3 py-1.5 text-zinc-600">
+                  次へ
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -279,25 +366,15 @@ function WorksSearchContent() {
               </div>
             </fieldset>
 
-            <fieldset className="mt-5">
-              <legend className="text-xs font-medium text-zinc-500">プレイ環境</legend>
-              <div className="mt-2 space-y-2">
-                {searchPlatformFilters.map((platform, index) => (
-                  <label
-                    key={platform}
-                    className="flex cursor-pointer items-center gap-2 text-sm text-zinc-400"
-                  >
-                    <input
-                      type="checkbox"
-                      defaultChecked={index === 0}
-                      className="size-4 rounded border-zinc-600 bg-zinc-900 text-violet-500 focus:ring-violet-500/40"
-                    />
-                    {platform}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-
+            <p className="mt-4 text-xs leading-relaxed text-zinc-600">
+              作品名・ジャンルで絞り込めます。
+            </p>
+            <Link
+              href="/search/creators"
+              className="mt-4 inline-flex text-xs text-violet-400 transition-colors hover:text-violet-300"
+            >
+              開発者を探す →
+            </Link>
             <button
               type="button"
               onClick={applySearch}

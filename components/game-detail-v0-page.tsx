@@ -104,6 +104,9 @@ function GameDetailV0PageContent({ id }: { id: string }) {
   const [introExpanded, setIntroExpanded] = useState(false);
   const [feedbackStep, setFeedbackStep] = useState<FeedbackFlowStep>("closed");
   const [voicesRefreshKey, setVoicesRefreshKey] = useState(0);
+  const [watching, setWatching] = useState(game.watching);
+  const [saved, setSaved] = useState(game.saved);
+  const [following, setFollowing] = useState(game.developer.following);
 
   const handlePlay = useCallback(() => {
     requireAuth(() => setFeedbackStep("play-stub"), returnPath);
@@ -252,39 +255,39 @@ function GameDetailV0PageContent({ id }: { id: string }) {
             </button>
             <button
               type="button"
-              onClick={() => handleProtectedAction(() => undefined)}
+              onClick={() => handleProtectedAction(() => setWatching((value) => !value))}
               className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
-                game.watching
+                watching
                   ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
                   : "border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-white"
               }`}
             >
               <Check className="size-4" aria-hidden="true" />
-              {game.watching ? "見届け中" : "見届ける"}
+              {watching ? "見届け中" : "見届ける"}
             </button>
             <button
               type="button"
-              onClick={() => handleProtectedAction(() => {})}
+              onClick={() => handleProtectedAction(() => setFollowing((value) => !value))}
               className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
-                game.developer.following
+                following
                   ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
                   : "border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-white"
               }`}
             >
               <Heart className="size-4" aria-hidden="true" />
-              {game.developer.following ? "フォロー中" : "フォロー"}
+              {following ? "フォロー中" : "フォロー"}
             </button>
             <button
               type="button"
-              onClick={() => handleProtectedAction(() => {})}
+              onClick={() => handleProtectedAction(() => setSaved((value) => !value))}
               className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
-                game.saved
+                saved
                   ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
                   : "border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-white"
               }`}
             >
               <Bookmark className="size-4" aria-hidden="true" />
-              あとで遊ぶ
+              {saved ? "保存済み" : "あとで遊ぶ"}
             </button>
           </div>
 
@@ -411,13 +414,14 @@ function GameDetailV0PageContent({ id }: { id: string }) {
             <p className="mt-3 text-xs leading-relaxed text-zinc-500">{game.developer.bio}</p>
             <button
               type="button"
+              onClick={() => handleProtectedAction(() => setFollowing((value) => !value))}
               className={`mt-4 w-full rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
-                game.developer.following
+                following
                   ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
                   : "border-zinc-700 text-zinc-300 hover:border-zinc-600"
               }`}
             >
-              {game.developer.following ? "フォロー中" : "フォローする"}
+              {following ? "フォロー中" : "フォローする"}
             </button>
             <Link
               href={`/creators/${game.developer.id}`}

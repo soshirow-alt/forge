@@ -173,3 +173,31 @@ export function filterSearchResults(
     return matchesQuery && matchesGenre;
   });
 }
+
+export type SearchSortId = "recommended" | "witness" | "voices";
+
+export function sortSearchResults(
+  results: SearchWorkResult[],
+  sort: SearchSortId,
+): SearchWorkResult[] {
+  const copy = [...results];
+  if (sort === "witness") {
+    return copy.sort((a, b) => b.witnessCount - a.witnessCount);
+  }
+  if (sort === "voices") {
+    return copy.sort((a, b) => b.voiceCount - a.voiceCount);
+  }
+  return copy;
+}
+
+export function paginateSearchResults<T>(items: T[], page: number, pageSize: number) {
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const start = (safePage - 1) * pageSize;
+  return {
+    items: items.slice(start, start + pageSize),
+    page: safePage,
+    totalPages,
+    totalItems: items.length,
+  };
+}
