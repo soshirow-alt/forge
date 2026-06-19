@@ -15,14 +15,15 @@ import { useAuth } from "@/components/auth-provider";
 const primaryLinks = [
   { id: "home", href: "/studio", label: "ホーム" },
   { id: "projects", href: "/studio/projects", label: "プロジェクト一覧" },
-  { id: "ranking", href: "/rankings/influence", label: "ランキング" },
+  { id: "ranking", href: "/studio/rankings", label: "ランキング" },
 ] as const;
 
 export type StudioShellNavId =
   | (typeof primaryLinks)[number]["id"]
   | "mypage"
+  | "notifications"
   | "settings"
-  | "getting-started";
+  | "guide";
 
 function SidebarDivider() {
   return <div className="my-3 border-t border-zinc-800/80" role="separator" />;
@@ -109,9 +110,14 @@ export function StudioShell({
 
           <SidebarDivider />
 
-          <Link href="/mypage" className={navLinkClass(activeNav === "mypage")}>
-            マイページ
-          </Link>
+          <div className="space-y-1">
+            <Link href="/studio/profile" className={navLinkClass(activeNav === "mypage")}>
+              マイページ
+            </Link>
+            <Link href="/studio/notifications" className={navLinkClass(activeNav === "notifications")}>
+              通知
+            </Link>
+          </div>
 
           <SidebarDivider />
 
@@ -119,10 +125,7 @@ export function StudioShell({
             <Link href="/studio/settings" className={navLinkClass(activeNav === "settings")}>
               設定
             </Link>
-            <Link
-              href="/studio/getting-started"
-              className={navLinkClass(activeNav === "getting-started")}
-            >
+            <Link href="/studio/guide" className={navLinkClass(activeNav === "guide")}>
               はじめてガイド
             </Link>
           </div>
@@ -133,7 +136,7 @@ export function StudioShell({
         <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-zinc-800/80 bg-[#0a0a0a]/95 px-4 py-3 backdrop-blur-md sm:px-6">
           <HeaderSearchForm defaultValue={headerSearchDefault} />
           <Link
-            href="/notifications"
+            href="/studio/notifications"
             className="relative rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
             aria-label="通知"
           >
@@ -145,7 +148,7 @@ export function StudioShell({
             )}
           </Link>
           <Link
-            href="/mypage/profile"
+            href="/studio/profile"
             className="rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
             aria-label="プロフィール"
           >
@@ -207,14 +210,95 @@ export function StudioSectionHeader({
   );
 }
 
-export function StudioSortDropdown({ label = "更新が新しい順" }: { label?: string }) {
+export function StudioSortDropdown({
+  label = "更新が新しい順",
+  onClick,
+}: {
+  label?: string;
+  onClick?: () => void;
+}) {
   return (
     <button
       type="button"
+      onClick={onClick}
       className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-800 px-3 py-2 text-sm text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
     >
       {label}
       <ChevronDown className="size-4" aria-hidden="true" />
     </button>
+  );
+}
+
+export function StudioProjectTabs({
+  activeTab,
+  onTabChange,
+}: {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+}) {
+  const tabs = [
+    { id: "overview", label: "概要" },
+    { id: "voices-raw", label: "声を見る" },
+    { id: "voices-agg", label: "みんなの声" },
+    { id: "devlog", label: "Devlog" },
+    { id: "versions", label: "バージョン" },
+    { id: "release", label: "正式版" },
+  ] as const;
+
+  return (
+    <div
+      role="tablist"
+      aria-label="プロジェクトの表示切替"
+      className="flex gap-1 overflow-x-auto border-b border-zinc-800/80 pb-px"
+    >
+      {tabs.map((tab) => {
+        const selected = activeTab === tab.id;
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={selected}
+            onClick={() => onTabChange(tab.id)}
+            className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+              selected
+                ? "border-violet-400 text-violet-100"
+                : "border-transparent text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            {tab.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export function StudioFilterPills({
+  options,
+  active,
+  onChange,
+}: {
+  options: { id: string; label: string }[];
+  active: string;
+  onChange: (id: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((option) => (
+        <button
+          key={option.id}
+          type="button"
+          onClick={() => onChange(option.id)}
+          className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
+            active === option.id
+              ? "bg-violet-600/20 text-violet-200 ring-1 ring-violet-500/30"
+              : "border border-zinc-800 text-zinc-400 hover:border-zinc-700"
+          }`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
   );
 }

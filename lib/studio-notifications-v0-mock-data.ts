@@ -1,0 +1,84 @@
+export type StudioNotificationKind =
+  | "new_voice"
+  | "witness"
+  | "version_play"
+  | "devlog_reaction"
+  | "release";
+
+export type StudioNotificationItem = {
+  id: string;
+  kind: StudioNotificationKind;
+  title: string;
+  body: string;
+  projectTitle: string;
+  projectId: string;
+  timeLabel: string;
+  unread: boolean;
+  tab?: string;
+};
+
+export const studioNotifications: StudioNotificationItem[] = [
+  {
+    id: "sn-1",
+    kind: "new_voice",
+    title: "新しい声が届きました",
+    body: "3件の新しい声が届いています。未確認の声を確認しましょう。",
+    projectTitle: "星の記憶",
+    projectId: "hoshino-kioku",
+    timeLabel: "2時間前",
+    unread: true,
+    tab: "voices-raw",
+  },
+  {
+    id: "sn-2",
+    kind: "witness",
+    title: "見届け人が増えました",
+    body: "見届け人が 5人増えました。",
+    projectTitle: "星灯の旅路",
+    projectId: "seito-no-tabiji",
+    timeLabel: "5時間前",
+    unread: true,
+  },
+  {
+    id: "sn-3",
+    kind: "version_play",
+    title: "最新版がプレイされました",
+    body: "v0.4.0 が 12回プレイされました。",
+    projectTitle: "星灯の旅路",
+    projectId: "seito-no-tabiji",
+    timeLabel: "昨日",
+    unread: true,
+    tab: "versions",
+  },
+  {
+    id: "sn-4",
+    kind: "devlog_reaction",
+    title: "Devlog に反応がありました",
+    body: "更新報告に 8件の反応があります。",
+    projectTitle: "炉心の残光",
+    projectId: "roshin-no-zanko",
+    timeLabel: "昨日",
+    unread: false,
+    tab: "devlog",
+  },
+  {
+    id: "sn-5",
+    kind: "release",
+    title: "正式版の反応",
+    body: "正式版公開後、見届け人が増え続けています。",
+    projectTitle: "夏の向こう側",
+    projectId: "natsu-no-mukougawa",
+    timeLabel: "3日前",
+    unread: false,
+    tab: "release",
+  },
+];
+
+export function countStudioUnread(items: StudioNotificationItem[]): number {
+  return items.filter((item) => item.unread).length;
+}
+
+export function studioNotificationHref(item: StudioNotificationItem): string {
+  const base = `/studio/projects/${item.projectId}`;
+  return item.tab ? `${base}?tab=${item.tab}` : base;
+}

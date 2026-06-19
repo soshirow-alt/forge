@@ -8,6 +8,7 @@ import {
   FilePlus2,
   Lightbulb,
   MessageSquare,
+  Play,
   Plus,
   Rocket,
   Sparkles,
@@ -15,15 +16,14 @@ import {
   Users,
 } from "lucide-react";
 import { StudioSectionHeader, StudioShell } from "@/components/studio-shell";
+import { studioRankingSnippets } from "@/lib/studio-rankings-v0-mock-data";
 import {
   devHintCards,
   newlyPostedWorks,
-  nurtureCycleProgress,
   releasedThisWeek,
   studioActivities,
   studioProjectHref,
   studioProjects,
-  studioWeeklyStats,
   trendingWorks,
   type StudioActivityItem,
 } from "@/lib/studio-home-v0-mock-data";
@@ -128,11 +128,21 @@ function activityIcon(type: StudioActivityItem["type"]) {
       return "bg-red-500/15 text-red-400 ring-red-500/25";
     case "witness":
       return "bg-orange-500/15 text-orange-400 ring-orange-500/25";
+    case "play":
+      return "bg-sky-500/15 text-sky-400 ring-sky-500/25";
     case "devlog":
       return "bg-emerald-500/15 text-emerald-400 ring-emerald-500/25";
     case "first-voice":
       return "bg-violet-500/15 text-violet-300 ring-violet-500/25";
   }
+}
+
+function ActivityIcon({ type }: { type: StudioActivityItem["type"] }) {
+  const className = "size-4";
+  if (type === "play") {
+    return <Play className={className} aria-hidden="true" />;
+  }
+  return <MessageSquare className={className} aria-hidden="true" />;
 }
 
 function ActivityRow({ item }: { item: StudioActivityItem }) {
@@ -141,7 +151,7 @@ function ActivityRow({ item }: { item: StudioActivityItem }) {
       <span
         className={`mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full ring-1 ${activityIcon(item.type)}`}
       >
-        <MessageSquare className="size-4" aria-hidden="true" />
+        <ActivityIcon type={item.type} />
       </span>
       <div className="min-w-0 flex-1">
         <p className="font-medium text-zinc-200">{item.title}</p>
@@ -157,44 +167,33 @@ function ActivityRow({ item }: { item: StudioActivityItem }) {
   );
 }
 
-function WeeklyStatCell({ label, value, delta }: { label: string; value: string; delta: string }) {
+function RankingSnippetColumn({
+  title,
+  entries,
+}: {
+  title: string;
+  entries: { rank: number; title: string; image: string; meta: string; value: string }[];
+}) {
   return (
-    <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 px-4 py-3">
-      <p className="text-xs text-zinc-500">{label}</p>
-      <p className="mt-1 text-2xl font-bold text-white">{value}</p>
-      <p className="mt-1 text-xs text-emerald-400">{delta}</p>
-    </div>
-  );
-}
-
-function CycleProgressRing({ percent }: { percent: number }) {
-  const radius = 36;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (percent / 100) * circumference;
-
-  return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-zinc-800/80 bg-zinc-900/30 px-4 py-3">
-      <div className="relative size-24">
-        <svg className="size-24 -rotate-90" viewBox="0 0 96 96" aria-hidden="true">
-          <circle cx="48" cy="48" r={radius} fill="none" stroke="rgb(39 39 42)" strokeWidth="8" />
-          <circle
-            cx="48"
-            cy="48"
-            r={radius}
-            fill="none"
-            stroke="rgb(139 92 246)"
-            strokeWidth="8"
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-          />
-        </svg>
-        <span className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white">
-          {percent}%
-        </span>
-      </div>
-      <p className="mt-2 text-center text-xs font-medium text-zinc-300">育成サイクル進行度</p>
-      <p className="mt-0.5 text-center text-[10px] text-zinc-500">今週の改善サイクル</p>
+    <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-4">
+      <h3 className="text-sm font-semibold text-zinc-200">{title}</h3>
+      <ul className="mt-3 space-y-2">
+        {entries.map((entry) => (
+          <li key={entry.rank} className="flex items-center gap-3">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-zinc-800 text-xs font-bold text-zinc-400">
+              {entry.rank}
+            </span>
+            <div className="relative size-8 shrink-0 overflow-hidden rounded-lg bg-zinc-800">
+              <Image src={entry.image} alt="" fill className="object-cover" sizes="32px" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm text-zinc-200">{entry.title}</p>
+              <p className="text-xs text-zinc-500">{entry.meta}</p>
+            </div>
+            <span className="shrink-0 text-xs font-medium text-violet-300">{entry.value}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -287,39 +286,36 @@ export function StudioHomePage() {
             icon={<Sparkles className="size-5 text-violet-400" aria-hidden="true" />}
           />
           <div className="-mx-1 mt-5 flex gap-4 overflow-x-auto px-1 pb-2 snap-x snap-mandatory">
-            {studioProjects.map((project) => (
+            {studioProjects.slice(0, 5).map((project) => (
               <ProjectCard key={project.id} {...project} href={studioProjectHref(project.id)} />
             ))}
             <NewProjectCard />
           </div>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5 sm:p-6">
-            <StudioSectionHeader
-              title="最近の動き"
-              href="/notifications"
-              icon={<Rocket className="size-5 text-violet-400" aria-hidden="true" />}
-            />
-            <div className="mt-5 space-y-3">
-              {studioActivities.map((item) => (
-                <ActivityRow key={item.id} item={item} />
-              ))}
-            </div>
+        <section className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5 sm:p-6">
+          <StudioSectionHeader
+            title="最近の動き"
+            href="/studio/notifications"
+            icon={<Rocket className="size-5 text-violet-400" aria-hidden="true" />}
+          />
+          <div className="mt-5 space-y-3">
+            {studioActivities.map((item) => (
+              <ActivityRow key={item.id} item={item} />
+            ))}
           </div>
+        </section>
 
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5 sm:p-6">
-            <StudioSectionHeader
-              title="今週のスタジオサマリー"
-              href="/studio/projects"
-              icon={<BarChart3 className="size-5 text-violet-400" aria-hidden="true" />}
-            />
-            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {studioWeeklyStats.map((stat) => (
-                <WeeklyStatCell key={stat.id} {...stat} />
-              ))}
-              <CycleProgressRing percent={nurtureCycleProgress} />
-            </div>
+        <section className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5 sm:p-6">
+          <StudioSectionHeader
+            title="Forgeランキング抜粋"
+            href="/studio/rankings"
+            icon={<BarChart3 className="size-5 text-violet-400" aria-hidden="true" />}
+          />
+          <div className="mt-5 grid gap-4 sm:grid-cols-3">
+            <RankingSnippetColumn title="今週の注目作品" entries={studioRankingSnippets.featured} />
+            <RankingSnippetColumn title="今週成長した作品" entries={studioRankingSnippets.growth} />
+            <RankingSnippetColumn title="見届け人数増加" entries={studioRankingSnippets.witnessGain} />
           </div>
         </section>
 
@@ -335,7 +331,7 @@ export function StudioHomePage() {
               items={releasedThisWeek}
             />
             <CommunityColumn
-              title="最近伸びている作品"
+              title="話題の作品"
               icon={<TrendingUp className="size-4" aria-hidden="true" />}
               items={trendingWorks}
             />
@@ -349,7 +345,7 @@ export function StudioHomePage() {
 
         <section>
           <StudioSectionHeader
-            title="開発のヒント"
+            title="開発ヒント"
             icon={<Lightbulb className="size-5 text-violet-400" aria-hidden="true" />}
           />
           <div className="mt-5 grid gap-4 lg:grid-cols-3">

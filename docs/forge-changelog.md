@@ -4,7 +4,22 @@
 
 ---
 
-## 2026-06-19 35 Studio ホーム v0（preview）
+## 2026-06-19 37 Studio v0 全体 mock（preview）
+
+- S-20〜S-27 実装 — `/studio` ホーム、`/studio/projects`、`/studio/projects/[id]`（6タブ）、`/studio/rankings`、`/studio/profile`、`/studio/notifications`、`/studio/settings`、`/studio/guide`
+- StudioShell — Sidebar 正本（通知追加、URL 統一）。Player v0 同一トーン
+- 通知設定 — `/settings` と `/studio/settings` で共通 `ForgeSettingsForm`。Player 向け / Studio 向けを同一画面内で分别トグル
+- S-20 — ランキング抜粋 § に差し替え（週次サマリー廃止）
+
+---
+
+## 2026-06-19 36 Studio 20–27 画面設計ドラフト（正本）
+
+- `docs/forge-screen-definition.md` — Studio 節を S-20〜S-27 ドラフトで整理（Shell / 画面一覧 / URL / タブ / コンポーネント / Player 境界 / IA レビュー）
+- 旧 P-20〜25 Studio 定義は置換予定として参照節へ
+- 実装は未着手（情報設計のみ）
+
+---
 
 - `/studio` — S-20 Studio ホーム mock（あなたの作品 / 最近の動き / 今週サマリー / Forgeで起きていること / 開発のヒント）
 - `StudioShell` — Player v0 と同一ダークテーマ・紫アクセント。Sidebar: ホーム / プロジェクト一覧 / ランキング / マイページ / 設定 / はじめてガイド

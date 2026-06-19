@@ -6,6 +6,7 @@ export type StudioProjectCard = {
   image: string;
   witnessCount: number;
   firstVoiceCount: number;
+  voiceCount: number;
   updatedLabel: string;
   version: string;
   progressPercent: number;
@@ -13,7 +14,7 @@ export type StudioProjectCard = {
 
 export type StudioActivityItem = {
   id: string;
-  type: "voice" | "witness" | "devlog" | "first-voice";
+  type: "voice" | "witness" | "devlog" | "first-voice" | "play";
   title: string;
   description: string;
   timeLabel: string;
@@ -50,6 +51,7 @@ export const studioProjects: StudioProjectCard[] = [
     image: "/images/landing/hero-bg.png",
     witnessCount: 128,
     firstVoiceCount: 42,
+    voiceCount: 56,
     updatedLabel: "2日前",
     version: "v0.3.1",
     progressPercent: 68,
@@ -62,6 +64,7 @@ export const studioProjects: StudioProjectCard[] = [
     image: "/images/landing/game-2.png",
     witnessCount: 86,
     firstVoiceCount: 24,
+    voiceCount: 31,
     updatedLabel: "昨日",
     version: "v0.4.0",
     progressPercent: 54,
@@ -74,6 +77,7 @@ export const studioProjects: StudioProjectCard[] = [
     image: "/images/landing/game-3.png",
     witnessCount: 51,
     firstVoiceCount: 18,
+    voiceCount: 22,
     updatedLabel: "5日前",
     version: "v0.3.2",
     progressPercent: 41,
@@ -99,6 +103,14 @@ export const studioActivities: StudioActivityItem[] = [
   },
   {
     id: "act-3",
+    type: "play",
+    title: "最新版がプレイされました",
+    description: "「星灯の旅路」v0.4.0 が 12回プレイされました",
+    timeLabel: "昨日",
+    badge: 12,
+  },
+  {
+    id: "act-4",
     type: "devlog",
     title: "Devlog に反応がありました",
     description: "「炉心の残光」の更新報告に 12件の反応",
@@ -106,7 +118,7 @@ export const studioActivities: StudioActivityItem[] = [
     badge: 12,
   },
   {
-    id: "act-4",
+    id: "act-5",
     type: "first-voice",
     title: "初声が届きました",
     description: "「星の記憶」に初声が 1件届きました",

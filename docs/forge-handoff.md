@@ -8,9 +8,9 @@
 
 - **preview/landing-01** — Player v0 01–18 mock 完成 + **Studio S-20 ホーム v0 着手**
 - **Preview URL**: https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app
-- **Studio v0**: `/studio`（ホーム mock）、`/studio/projects`（一覧 stub）、Player↔Studio トップバー切替
+- **Studio v0**: S-20〜S-27 mock 完成（`/studio` 一式）。通知設定は `/settings`・`/studio/settings` 共通フォーム
 - **本番 prod deploy — 保留**
-- **画面設計正本**: `docs/forge-screen-definition.md`（2026-06-18）
+- **画面設計正本**: `docs/forge-screen-definition.md`（**Studio S-20〜S-27 ドラフト 2026-06-19**）
 - **主戦場**: **Phase2 UX 設計**
 - **正式フロー**: ChatGPT → UX設計 → v0 → Cursor 実装
 - **01 LP**: **オーナー OK** — preview `/landing` v0 正本写経済。overlay 廃止。prod・`/` 未触
