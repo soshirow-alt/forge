@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { notFound } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { ForgeHeader } from "@/components/forge-header";
+import { StudioShell } from "@/components/studio-shell";
 import { useGames } from "@/components/games-provider";
+import { projectStudioPath } from "@/lib/project-nurture-links";
 import {
   normalizePlayableVersionInput,
   resolvePlayableVersion,
@@ -55,7 +56,7 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
 
     try {
       await addDevlog(projectId, title, content, { publishPlayableVersion });
-      router.push(`/games/${projectId}`);
+      router.push(projectStudioPath(projectId));
     } catch {
       setError(
         "開発ログの投稿に失敗しました。Supabase の設定と migration 004 を確認してください。",
@@ -66,15 +67,13 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
   }
 
   return (
-    <div className="min-h-full bg-zinc-950 text-zinc-100">
-      <ForgeHeader />
-
-      <main className="mx-auto max-w-2xl px-6 py-12">
+    <StudioShell activeNav="projects">
+      <main className="mx-auto max-w-2xl">
         <Link
-          href={`/games/${projectId}`}
-          className="text-sm text-zinc-500 transition-colors hover:text-orange-400"
+          href={projectStudioPath(projectId)}
+          className="text-sm text-zinc-500 transition-colors hover:text-violet-400"
         >
-          ← 作品詳細に戻る
+          ← Studio に戻る
         </Link>
 
         <h1 className="mt-8 text-3xl font-bold tracking-tight">開発ログを書く</h1>
@@ -180,6 +179,6 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
           </button>
         </form>
       </main>
-    </div>
+    </StudioShell>
   );
 }

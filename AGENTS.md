@@ -9,13 +9,14 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Source of truth
 
-- **Forge原典を最優先** — `docs/forge-principles.md` が憲法
-- 原典の**意味を勝手に変更しない**（整理・参照のみ）
+- **プロダクト原典を最優先** — `docs/forge-principles.md`（プロダクト体験）
+- **事業仮説** — `docs/forge-business-hypothesis.md`（マネタイズ・North Star・無料期間の意味）
+- 原典の**意味を勝手に変更しない**（整理・参照のみ。更新はオーナー GO）
 - MVP スコープ外は `docs/out-of-scope.md` を確認（**正式リリース初期版** — 2026-06 方針更新済み）
 
 ## Feature decisions
 
-- 新機能・変更は **「投稿 → 発見 → プレイ → フィードバック → 改善 → 再プレイ」** を強化するかで判断
+- 新機能・変更は **版ごとの学習ループ**（発見→プレイ→初声→次に直すこと→次版）を強化するかで判断。変化を見る・再プレイ・見届け人は増幅
 - **実装都合で仕様を変更しない**
 - **正式リリース初期版** — 小さな MVP ではなく必要機能を初期から盛り込む（`docs/out-of-scope.md`）
 - 投げ銭、販売、SDK 実装（説明 UI 除く）は作らない

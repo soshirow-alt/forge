@@ -1,5 +1,5 @@
-import { BookmarksPage } from "@/components/bookmarks-page";
+import { redirect } from "next/navigation";
 
-export default function Bookmarks() {
-  return <BookmarksPage />;
+export default function BookmarksRoute() {
+  redirect("/mypage?tab=saved");
 }

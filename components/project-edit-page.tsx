@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { notFound } from "next/navigation";
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { ForgeHeader } from "@/components/forge-header";
+import { StudioShell } from "@/components/studio-shell";
 import { ForgeSdkNote } from "@/components/forge-sdk-note";
 import { PlayEnvironmentFormFields } from "@/components/play-environment-form-fields";
 import { VersionPromptEditor } from "@/components/version-prompt-editor";
@@ -17,6 +17,7 @@ import {
   mergePlayEnvironmentIntoTags,
   parsePlayEnvironmentFromTags,
 } from "@/lib/play-environment";
+import { projectStudioPath } from "@/lib/project-nurture-links";
 import type { ProjectVisibility } from "@/lib/project-visibility";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import {
@@ -116,12 +117,9 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
 
   if (!dataReady) {
     return (
-      <div className="min-h-full bg-zinc-950 text-zinc-100">
-        <ForgeHeader />
-        <main className="mx-auto max-w-2xl px-6 py-12">
-          <p className="text-zinc-500">読み込み中...</p>
-        </main>
-      </div>
+      <StudioShell activeNav="projects">
+        <p className="text-zinc-500">読み込み中...</p>
+      </StudioShell>
     );
   }
 
@@ -131,13 +129,11 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
 
   if (authHydrated && !isProjectOwner(projectId, user?.id)) {
     return (
-      <div className="min-h-full bg-zinc-950 text-zinc-100">
-        <ForgeHeader />
-
-        <main className="mx-auto max-w-2xl px-6 py-12">
+      <StudioShell activeNav="projects">
+        <main className="mx-auto max-w-2xl">
           <Link
             href={`/games/${projectId}`}
-            className="text-sm text-zinc-500 transition-colors hover:text-orange-400"
+            className="text-sm text-zinc-500 transition-colors hover:text-violet-400"
           >
             ← 作品詳細に戻る
           </Link>
@@ -146,7 +142,7 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
             <p className="text-zinc-400">この作品を編集する権限がありません</p>
           </div>
         </main>
-      </div>
+      </StudioShell>
     );
   }
 
@@ -219,15 +215,13 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
   }
 
   return (
-    <div className="min-h-full bg-zinc-950 text-zinc-100">
-      <ForgeHeader />
-
-      <main className="mx-auto max-w-2xl px-6 py-12">
+    <StudioShell activeNav="projects">
+      <main className="mx-auto max-w-2xl">
         <Link
-          href={`/games/${projectId}`}
-          className="text-sm text-zinc-500 transition-colors hover:text-orange-400"
+          href={projectStudioPath(projectId)}
+          className="text-sm text-zinc-500 transition-colors hover:text-violet-400"
         >
-          ← 作品詳細に戻る
+          ← Studio に戻る
         </Link>
 
         <h1 className="mt-8 text-3xl font-bold tracking-tight">作品を編集する</h1>
@@ -463,6 +457,6 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
           </button>
         </form>
       </main>
-    </div>
+    </StudioShell>
   );
 }

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { DeveloperProfileSetup } from "@/components/developer-profile-setup";
-import { ForgeHeader } from "@/components/forge-header";
+import { PlayerShell } from "@/components/player-shell";
 import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
 import { ForgeSdkNote } from "@/components/forge-sdk-note";
 import { VersionPromptEditor } from "@/components/version-prompt-editor";
@@ -191,12 +191,11 @@ export function SubmitPage() {
 
   if (!hydrated) {
     return (
-      <div className="min-h-full bg-zinc-950 text-zinc-100">
-        <ForgeHeader />
-        <main className="mx-auto max-w-2xl px-6 py-12">
+      <PlayerShell activeNav="mypage">
+        <main className="mx-auto max-w-2xl">
           <p className="text-zinc-500">読み込み中...</p>
         </main>
-      </div>
+      </PlayerShell>
     );
   }
 
@@ -395,15 +394,13 @@ export function SubmitPage() {
   }
 
   return (
-    <div className="min-h-full bg-zinc-950 text-zinc-100">
-      <ForgeHeader />
-
-      <main className="mx-auto max-w-2xl px-6 py-12">
+    <PlayerShell activeNav="mypage">
+      <main className="mx-auto max-w-2xl">
         <Link
-          href="/"
-          className="text-sm text-zinc-500 transition-colors hover:text-orange-400"
+          href="/home"
+          className="text-sm text-zinc-500 transition-colors hover:text-violet-400"
         >
-          ← 作品一覧に戻る
+          ← ホームに戻る
         </Link>
 
         {!success && (
@@ -888,6 +885,6 @@ export function SubmitPage() {
         </form>
         )}
       </main>
-    </div>
+    </PlayerShell>
   );
 }

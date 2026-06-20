@@ -1,12 +1,43 @@
 # Forge Handoff
 
-最終更新：**2026-06-15**（S-22 方針変更 — P-06 編集モード・正式版タブ廃止）
+最終更新：**2026-06-16**（事業仮説 v2 + 原典コアループ改訂）
+
+---
+
+## 事業仮説 v2（GO 済み）
+
+**正本**: `docs/forge-business-hypothesis.md`
+
+| 項目 | 内容 |
+|------|------|
+| 本命価値 | **版ごとの学習ループ**（初声→次に直すこと→次版） |
+| 無料期間 | 売上放棄ではなく **M1〜M4 因果証明**（半年〜1年想定） |
+| 主論点 | **Good レビュー**をいかに引き出すか（スーパーレビュアーは将来） |
+| 見届け人 | **価値増幅**。必須条件ではない |
+| North Star | プレイ→版に紐づく初声→開発者の優先順位決定 |
+
+原典（`forge-principles.md`）は **学習ループ＝コア、見届け人・再プレイ＝増幅** に同期済み。
+
+---
+
+## P0 改善ループ（GO 済み・Phase A/B 完了）
+
+**正本**: `docs/forge-p0-improvement-loop-plan.md`
+
+| 項目 | 内容 |
+|------|------|
+| Studio 正本 | `/projects/[id]/studio` + `project-growth-state` |
+| 検証仮説 | M3/H1 次に直すこと（上位3）+ M1 初声率 + H2 再プレイ（副次・増幅） |
+| 事業 North Star | P0 計画 §1.5 — `docs/forge-p0-improvement-loop-plan.md` |
+| 保留 | S-20 polish、S-23、ランキング、KPI、課金、BYOP、Discord/Steam |
+
+**Cursor 推奨 1 位**: Phase A — Studio 一本化（リダイレクト）→ Phase B 上位3 → Phase C 再プレイ RPC
 
 ---
 
 ## 現在の状態
 
-- **preview/landing-01** — Player v0 01–18 mock 完成 + **Studio S-20 ホーム v0 着手**
+**Preview v0 全面化（第1波 GO）** — 旧UIルート廃止、StudioShell/PlayerShell 統一、実データゲーム詳細の一部配線。本番・DB削除は未着手。
 - **Preview URL**: https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app
 - **Studio v0**: S-20〜S-27 mock 完成。**S-22** は preview 暫定が 6タブ（正式版あり）— **正本は 5タブ・P-06 編集モード**（2026-06-15 方針変更、実装未着手）
 - **本番 prod deploy — 保留**
@@ -28,21 +59,21 @@
 
 ---
 
-## 優先順位（2026-06-18 — ロードマップ正本）
+## 優先順位（2026-06-15 — 価値仮説検証ベース再整理）
 
-**画面番号順ではなくコアループ順。UX 確定前に Phase5 実装を進めない。**
+**前提**: Forge の本質は「感想収集」ではなく **学習ループ支援**（`docs/forge-business-hypothesis.md`）。開発者が払うのは将来・版ベースの意思決定支援。課金は無料期間後。
 
-| 優先 | 内容 |
-|------|------|
-| **P0** | **プレイヤー初回体験 UX** — LP→発見→詳細→プレイ→声→変化→再プレイ |
-| P1 | 開発者初回体験 UX（登録→投稿→声→改善→devlog→再プレイ獲得） |
-| P2 | 継続利用 UX（通知→戻る→再プレイ） |
-| P3 | Phase3 UI（v0）→ Phase5 実装（Cursor） |
-| 後 | Walkthrough（Phase6）→ β → 正式公開 |
+**旧 P0（プレイヤー初回 UX 全体）を分解** — プレイヤー導線は必要だが、仮説検証のボトルネックは **開発者の意思決定** 側。
 
-**Cursor 推奨 1 位（現時点）**: Phase2 — **プレイヤー初回体験の UX 設計・ギャップ整理**（実装 GO 待ち）
+| 層 | 内容 |
+|----|------|
+| **P0** | **改善ループ 1 本** — 声が届く → 開発者が「次に直すこと」を確定できる → 変更を公開 → プレイヤーが変化を見る → 再プレイが追える |
+| **P1** | 仮説検証の質を上げる — T02/T03 分離の実データ化、採用候補、版間比較、voice adoption（声→変化の因果）、通知 deep link |
+| **P2** | モチベ・発見・周辺 — Studio ランキング S-23、Player P-17、S-20 KPI/発見セクション、バッジ、正式版 UI、新 Studio v0 の見た目統一、BYOP 外部取込 |
 
-**旧方針（参考・実装 GO 時に再開）**: Studio Shell 1-A → Player Shell 1-B → フォロー DB → 23 → 08 → 18
+**Cursor 推奨 1 位（変更）**: **P0 改善ループ** — 既存バックエンド（`/projects/[id]/studio` + `project-growth-state`）を正とし、新 Studio v0 mock の先走りを止める。次は **「上位3課題」提示の最小実装**（ルールベース可）。
+
+**旧方針（参考）**: Phase2 プレイヤー初回体験 UX 全体最優先 / Studio Shell v0 先行 — 画面数拡大は仮説検証を遅らせる
 
 ---
 

@@ -1,10 +1,6 @@
-import { Suspense } from "react";
-import { HomePage } from "@/components/home-page";
+import { redirect } from "next/navigation";
 
-export default function Home() {
-  return (
-    <Suspense>
-      <HomePage />
-    </Suspense>
-  );
+/** 旧トップ廃止 — v0 発見ホームへ */
+export default function RootPage() {
+  redirect("/home");
 }

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useState } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import {
   FeedbackFormV0Modal,
   FeedbackSuccessV0Modal,
@@ -16,9 +16,14 @@ import { GameDevlogV0Tab } from "@/components/game-devlog-v0-tab";
 import { GameVersionsV0Tab } from "@/components/game-versions-v0-tab";
 import { GameVoicesV0Tab } from "@/components/game-voices-v0-tab";
 import { GameThumbnail, PlayerShell } from "@/components/player-shell";
+import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { gameDetailReturnPath } from "@/lib/login-return-url";
 import { getGameDetailV0, resolveGameDetailId } from "@/lib/game-detail-v0-mock-data";
+import {
+  gameToDetailV0,
+  isSupabaseProjectId,
+} from "@/lib/submitted-game-v0-adapter";
 import {
   appendSessionVoice,
   createPreviewVoiceEntry,
@@ -95,9 +100,19 @@ function parseDetailTab(param: string | null): DetailTab {
 
 function GameDetailV0PageContent({ id }: { id: string }) {
   const searchParams = useSearchParams();
-  const game = getGameDetailV0(id);
+  const { getSubmittedGameById, dataReady, recordPlay } = useGames();
+  const submittedGame = dataReady ? getSubmittedGameById(id) : undefined;
+  const game = useMemo(() => {
+    if (submittedGame && isSupabaseProjectId(submittedGame.id)) {
+      return gameToDetailV0(submittedGame);
+    }
+    return getGameDetailV0(id);
+  }, [id, submittedGame]);
+  const hasRealPlayUrl = Boolean(submittedGame?.playUrl?.trim());
   const { isLoggedIn, hydrated, requireAuth } = useRequireAuth();
-  const returnPath = gameDetailReturnPath(resolveGameDetailId(id));
+  const returnPath = gameDetailReturnPath(
+    isSupabaseProjectId(id) ? id : resolveGameDetailId(id),
+  );
   const [activeTab, setActiveTab] = useState<DetailTab>(() =>
     parseDetailTab(searchParams.get("tab")),
   );
@@ -109,8 +124,16 @@ function GameDetailV0PageContent({ id }: { id: string }) {
   const [following, setFollowing] = useState(game.developer.following);
 
   const handlePlay = useCallback(() => {
-    requireAuth(() => setFeedbackStep("play-stub"), returnPath);
-  }, [requireAuth, returnPath]);
+    requireAuth(async () => {
+      if (hasRealPlayUrl && submittedGame?.playUrl) {
+        await recordPlay(submittedGame.id);
+        window.open(submittedGame.playUrl, "_blank", "noopener,noreferrer");
+        setFeedbackStep("first-voice");
+        return;
+      }
+      setFeedbackStep("play-stub");
+    }, returnPath);
+  }, [requireAuth, returnPath, hasRealPlayUrl, submittedGame, recordPlay]);
 
   const handleFeedback = useCallback(() => {
     requireAuth(() => setFeedbackStep("full-form"), returnPath);

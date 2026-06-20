@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound, useRouter } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { ForgeHeader } from "@/components/forge-header";
+import { StudioShell } from "@/components/studio-shell";
 import { GameGrowthCycle } from "@/components/game-growth-cycle";
 import { GameThumbnail } from "@/components/game-thumbnail";
 import { ProjectReleaseStudioPanel } from "@/components/project-release-studio-panel";
@@ -104,12 +104,9 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
 
   if (!hydrated || !dataReady) {
     return (
-      <div className="min-h-full bg-zinc-950 text-zinc-100">
-        <ForgeHeader />
-        <main className="mx-auto max-w-3xl px-6 py-12">
-          <p className="text-zinc-500">読み込み中...</p>
-        </main>
-      </div>
+      <StudioShell activeNav="projects">
+        <p className="text-zinc-500">読み込み中...</p>
+      </StudioShell>
     );
   }
 
@@ -142,18 +139,13 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
     );
 
   return (
-    <div
-      className="min-h-full bg-zinc-950 text-zinc-100"
-      data-forge-studio-mode="growth"
-    >
-      <ForgeHeader />
-
-      <main className="mx-auto max-w-3xl px-6 py-12">
+    <StudioShell activeNav="projects">
+      <div className="mx-auto max-w-3xl">
         <Link
           href="/mypage?tab=developer"
-          className="cursor-pointer text-sm text-zinc-500 transition-colors hover:text-orange-400"
+          className="cursor-pointer text-sm text-zinc-500 transition-colors hover:text-violet-400"
         >
-          ← マイページ（作品管理）
+          ← 作品管理（マイページ）
         </Link>
 
         <header className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
@@ -233,8 +225,8 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
           context="studio"
           className="mt-8"
         />
-      </main>
-    </div>
+      </div>
+    </StudioShell>
   );
 }
 
@@ -242,12 +234,9 @@ export function ProjectStudioPage({ projectId }: { projectId: string }) {
   return (
     <Suspense
       fallback={
-        <div className="min-h-full bg-zinc-950 text-zinc-100">
-          <ForgeHeader />
-          <main className="mx-auto max-w-3xl px-6 py-12">
-            <p className="text-zinc-500">読み込み中...</p>
-          </main>
-        </div>
+        <StudioShell activeNav="projects">
+          <p className="text-zinc-500">読み込み中...</p>
+        </StudioShell>
       }
     >
       <ProjectStudioPageContent projectId={projectId} />

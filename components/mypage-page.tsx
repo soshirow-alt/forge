@@ -5,6 +5,7 @@ import {
   FeedbackTabPanel,
   FollowingTabPanel,
 } from "@/components/mypage-v0-extra-tabs";
+import { MyPageDeveloperTab } from "@/components/mypage-developer-tab";
 import {
   GameThumbnail,
   MyPageTabs,
@@ -45,7 +46,8 @@ export type MyPageTab =
   | "play-history"
   | "feedback"
   | "achievements"
-  | "following";
+  | "following"
+  | "developer";
 
 const TAB_IDS: MyPageTab[] = [
   "witnessing",
@@ -54,11 +56,15 @@ const TAB_IDS: MyPageTab[] = [
   "feedback",
   "achievements",
   "following",
+  "developer",
 ];
 
 function parseTab(param: string | null): MyPageTab {
   if (!param || param === "witnessing") {
     return "witnessing";
+  }
+  if (param === "developer") {
+    return "developer";
   }
   return TAB_IDS.includes(param as MyPageTab) ? (param as MyPageTab) : "witnessing";
 }
@@ -517,6 +523,7 @@ function MyPagePageContent() {
         {activeTab === "feedback" && <FeedbackTabPanel />}
         {activeTab === "achievements" && <AchievementsTabPanel />}
         {activeTab === "following" && <FollowingTabPanel />}
+        {activeTab === "developer" && <MyPageDeveloperTab />}
       </div>
     </PlayerShell>
   );

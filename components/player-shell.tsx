@@ -199,6 +199,7 @@ export function MyPageTabs({
     { id: "feedback", label: "FB履歴" },
     { id: "achievements", label: "実績" },
     { id: "following", label: "フォロー中開発者" },
+    { id: "developer", label: "作品管理" },
   ] as const;
 
   return (

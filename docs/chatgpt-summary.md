@@ -1,57 +1,61 @@
 ■ 現在の状態
-- ブランチ preview/landing-01。P0 実データ Studio で「次に直すこと」カードが常時見えるよう修正済み（build 成功、push 予定）
-- migration 015 / Phase C は引き続き保留（オーナー GO まで DB 変更なし）
-- オーナー報告: 実データ Studio を開いたつもりが、タブ付き旧 v0 画面（概要/声を見る/…/正式版）のみで P0 カードが見えない
+- オーナー GO 済み: 案1〜3 すべて実施（コード変更なし・ドキュメントのみ）
+- 新規 docs/forge-business-hypothesis.md（事業仮説 v2 正本）
+- docs/forge-principles.md コアループ改訂（学習ループ＝コア、見届け人・再プレイ＝増幅）
+- docs/forge-p0-improvement-loop-plan.md §1.5 事業 North Star 追記
+- AGENTS.md / .cursor/rules/forge.mdc 二正本表現に同期
+- P0 Phase A/B 実装済み。Phase C migration 015 は引き続き GO 待ち
+- 本番 prod deploy 保留。PLAYER_VISIBLE=false
 
-■ 原因（調査結果）
-- スクショの UI は StudioProjectDetailPage（mock v0）の特徴。ForgeHeader ではなく StudioShell、6 タブ、概要編集フォーム
-- 正本の ProjectStudioPage は ForgeHeader、「改善ループ Studio · 実データ」ラベル、GameGrowthCycle、「次に直すこと」カード（data-forge-p0=top-priorities）
-- よくある誤り: /studio/projects 一覧のサンプルカード → /studio/projects/hoshino-kioku 等（mock、P0 カードなし）
-- 正しい URL: /projects/{Supabase UUID}/studio（ログイン + オーナー）。マイページ作品管理・投稿完了・新設の「あなたの作品 — 改善ループ」からも同 URL
+■ Forge原典コアループ（判断の基準）
+- 投稿→発見→プレイ→フィードバック→改善→再プレイ から、学習ループ中心へ更新
+- コア: 発見→プレイ→初声→次に直すこと→次版
+- 増幅: 変化を見る、再プレイ、見届け人、影響力可視化
+- 事業の問い: どうマネタイズか → 何を売るか → どう Good レビューを引き出すか
 
-■ 今回実装・修正したこと
-1. app/projects/[id]/studio/page.tsx — 常に ProjectStudioPage のみ（mock フォールバック削除。正本 URL は実データ専用）
-2. components/project-studio-page.tsx — ヘッダー直下に StudioTopPrioritiesPanel を維持。読み込みゲートを緩和（feedback/voice 待ちでページ全体をブロックしない）。ヘッダーに「改善ループ Studio · 実データ」と /projects/{id}/studio を表示
-3. components/studio-top-priorities-panel.tsx — 空でもカード表示。「まだ次に直すことはありません」「声が届くとここに表示されます」。data-forge-p0=top-priorities
-4. components/studio-owned-projects-section.tsx — 新規。ログインオーナーの Supabase 作品を /projects/{id}/studio へ直リンク
-5. components/studio-home-page.tsx / studio-projects-page.tsx — 実データリンクを最上部に配置。mock 一覧は「サンプル作品（プレビュー）」と明示
-
-■ 今回変更した画面
-【実データ Studio】URL /projects/{作品ID}/studio
-- 画面位置: ログイン後、ForgeHeader 下。作品サムネ+タイトルヘッダーの直下
-- 変更前: 404 や mock 混在の可能性、カードが見えない報告
-- 変更後: オレンジ枠「次に直すこと」がヘッダー直下に常時表示（中身ゼロでも空状態コピー）
-- 開発者視点: 声・FB 未着でも「次に何を直すか」の場所が常にある
-- 確認手順: ログイン → マイページ作品管理の Studio リンク、または /studio/projects 上部「あなたの作品 — 改善ループ」→ オレンジカードと data-forge-p0 属性を確認
-
-【Studio ホーム / プロジェクト一覧】/studio / /studio/projects
-- 変更前: mock カードのみで実データ Studio への導線が弱い
-- 変更後: 上部に実データ作品リンク、下に「サンプル作品（プレビュー）」注記
-- 確認: mock カードを開くと従来タブ UI（P0 対象外）。実データリンクで P0 カード
+■ 今回実装したこと（ドキュメント）
+1. forge-business-hypothesis.md 新規作成
+   - 学習ループ本命、無料期間＝因果証明、A/B/C 層、3層価値構造
+   - レビュアー / Good / スーパーレビュアー分離
+   - Good 生成の最低条件4つ（導線・問い・承認・影響力可視化）
+   - 経済インセンティブは増幅・後回し
+   - North Star M1〜M4、棄却仮説一覧
+2. forge-principles.md 改訂（オーナー GO）
+   - タイトル: プロダクト原典（憲法表現を緩和）
+   - コアループ図・プレイヤーサイクル表・コア/増幅/非コア
+   - 見届け人独立小節、§5 開発者が問いを決める・Good 評価主体
+   - §6 学習ループが最初の価値
+3. forge-p0-improvement-loop-plan.md
+   - 目的行を学習ループ表現に
+   - §1.5 事業 North Star、M1/M3 主要・H2 副次
+   - KPI 表に M1/M2 列、015 は North Star 非必須の注記
+4. forge-handoff.md / forge-changelog.md / AGENTS.md / forge.mdc 同期
 
 ■ ユーザー目線の変化
-- /studio から mock を開いても「これが Studio 全部」と誤解しにくくなった
-- 自分の作品は明示的に /projects/.../studio に誘導され、P0「次に直すこと」を検証できる
-- 声がまだなくても空状態メッセージで「ここが優先候補の場所」と分かる
+- ドキュメント上の「Forge とは何か」がテスター代替・見届け人必須から学習ループ＋Good レビュー生成に統一
+- 実装判断: 再プレイ・見届け人だけの機能は後回し可、初声と次に直すことを優先
+- プレイヤー動機: 発掘が入口、Good レビューには承認・影響力可視化が土台（金銭はまだ）
 
 ■ 注意事項
-- mock（/studio/projects/{slug}）には P0 カードは意図的に未実装。正式版タブも P0 では触らない
-- /projects/ 配下は middleware でログイン必須。未ログインは /login
-- 実データ Studio はオーナーのみ（非オーナーは /games/{id} へ）
+- コード・UI 文言の一括変更はしていない（見届け人ラベル等は別タスク）
+- chatgpt-handoff.md 全量更新は未実施（事業仮説は大テーマだがオーナーが引継ぎ指示なし。handoff は差分更新のみ）
+- 原典改訂は GO 済みで反映済み。以降 Cursor は学習ループ基準で判断
 
 ■ 今すぐ私がやるべきこと
-- preview デプロイ後、自分の Supabase 作品 ID で /projects/{id}/studio を直接開く
-- ヘッダー直下の「次に直すこと」と「改善ループ Studio · 実データ」ラベルを確認
-- mock（例 hoshino-kioku）と実データ URL の見た目差を一度比較し、以降は実データ URL のみ P0 検証に使う
+- docs/forge-business-hypothesis.md を一読し、Good レビュー4条件が現行プロダクトとズレないか確認
+- P0 検証時 M1（プレイ→初声率）を手動でもよいので記録開始
+- 新 GPT スレッドなら forge-handoff.md 全量貼りを検討（事業定義が大きく変わったため）
 
 ■ Cursorだけで完了できること
-- push 後の preview URL 共有
-- マイページ・通知・submit 完了導線の studio リンクがすべて projectStudioPath か再点検
-- Phase C（migration 015）草案の GO 待ち整理
+- Good レビュー4条件と現行 UI のギャップ洗い出し（影響力可視化は未実装の可能性大）
+- M1 計測の staging 手順書
+- Phase C 015 GO 判断用メモ（H2 副次化を明記したうえで）
 
 ■ 次に検討すべきこと
-- mock Studio を P0 検証から完全に外すか、バナーで「プレビューのみ」と全画面表示するか
-- S-22 5 タブ化は P0 後。現状 mock 6 タブはそのまま
+- 影響力可視化（読まれた・採用・改善に繋がった）の P1 スコープ
+- 開発者 FB 評価（M2）の実装タイミング
+- chatgpt-handoff.md 全量更新のタイミング
 
 ■ ChatGPTに相談したい論点
-- P0 検証期間中、/studio/projects の mock カードを非表示 or 折りたたみにするか（混乱防止 vs デモ需要）
+- M1 目標 20% 仮置きの妥当性（A層パイロット人数）
+- 承認・影響力可視化だけで Good レビューが足りるか、いつ経済層を足すか

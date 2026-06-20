@@ -4,6 +4,26 @@
 
 ---
 
+## 2026-06-16 47 Preview v0 全面化（第1波）
+
+- `/` → `/home`、旧ルート `/bookmarks` `/demo` `/my-projects` を v0 へリダイレクト
+- マイページに **作品管理** タブ（実データ `MyPageDeveloperTab`）
+- 開発者画面を **StudioShell** に統一（`/projects/.../studio`、編集、devlog）
+- `/submit` を **PlayerShell** に
+- `/games/[id]` — Supabase 作品 ID のとき実データ表示・実プレイ URL 対応
+- 旧 `ForgeHeader` トップ（`home-page`）はルートから切り離し
+
+---
+
+- **新規** `docs/forge-business-hypothesis.md` — 事業・マネタイズ・North Star・Good レビュアー定義の正本
+- **原典** — 学習ループをコア、見届け人・再プレイ・変化を見るを**増幅**に格下げ
+- **P0 計画** — §1.5 事業 North Star（M1〜M4）、H2 再プレイを副次指標に明記
+- **Good / スーパーレビュアー** — 別概念。主論点は Good レビュー生成（導線・問い・承認・影響力可視化）
+- **経済インセンティブ** — 最低条件ではない。承認・影響力可視化を先に検証
+- **AGENTS.md / forge.mdc** — プロダクト原典 + 事業仮説の二正本に同期
+
+---
+
 ## 2026-06-15 45 P0 実データ Studio「次に直すこと」常時表示
 
 - `/projects/{id}/studio` — 常に growth-state 正本（mock フォールバック廃止）
