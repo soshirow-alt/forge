@@ -115,8 +115,9 @@ export function StudioTopPrioritiesPanel({
 
   return (
     <section
-      className="mt-8 rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:p-5"
+      className="mt-8 rounded-xl border border-orange-500/25 bg-zinc-900/40 p-4 sm:p-5 ring-1 ring-orange-500/10"
       aria-labelledby="studio-top-priorities-heading"
+      data-forge-p0="top-priorities"
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
@@ -141,9 +142,12 @@ export function StudioTopPrioritiesPanel({
       {!loaded ? (
         <p className="mt-3 text-sm text-zinc-600">集計を読み込み中…</p>
       ) : priorities.length === 0 ? (
-        <p className="mt-3 text-sm text-zinc-500">
-          この版への回答はまだありません。プレイヤーの声が届くと、ここに優先候補が表示されます。
-        </p>
+        <div className="mt-3 rounded-lg border border-dashed border-zinc-800 bg-zinc-950/30 px-4 py-3">
+          <p className="text-sm font-medium text-zinc-400">まだ次に直すことはありません</p>
+          <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+            プレイヤーの声が届くと、ここに優先候補が最大3件表示されます。
+          </p>
+        </div>
       ) : (
         <PriorityList priorities={priorities} />
       )}

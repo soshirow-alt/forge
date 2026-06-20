@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { StudioShell } from "@/components/studio-shell";
+import { StudioOwnedProjectsSection } from "@/components/studio-owned-projects-section";
 import {
   formatStat,
   phaseBadgeClass,
@@ -198,6 +199,16 @@ export function StudioProjectsPage() {
             <Plus className="size-4" aria-hidden="true" />
             新しい作品を投稿
           </Link>
+        </div>
+
+        <StudioOwnedProjectsSection />
+
+        <div className="border-t border-zinc-800/80 pt-6">
+          <h2 className="text-sm font-semibold text-zinc-400">サンプル作品（プレビュー）</h2>
+          <p className="mt-1 text-xs text-zinc-600">
+            タブ付き v0 画面です。P0 の「次に直すこと」は上の実データリンク、または
+            /projects/&#123;作品ID&#125;/studio から開いてください。
+          </p>
         </div>
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

@@ -16,6 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import { StudioSectionHeader, StudioShell } from "@/components/studio-shell";
+import { StudioOwnedProjectsSection } from "@/components/studio-owned-projects-section";
 import { studioRankingSnippets } from "@/lib/studio-rankings-v0-mock-data";
 import {
   devHintCards,
@@ -262,12 +263,17 @@ export function StudioHomePage() {
   return (
     <StudioShell activeNav="home">
       <div className="mx-auto max-w-7xl space-y-10">
+        <StudioOwnedProjectsSection />
+
         <section>
           <StudioSectionHeader
-            title="あなたの作品"
+            title="サンプル作品（プレビュー）"
             href="/studio/projects"
             icon={<Sparkles className="size-5 text-violet-400" aria-hidden="true" />}
           />
+          <p className="mt-2 text-xs text-zinc-600">
+            実データの改善ループ Studio は、上の「あなたの作品 — 改善ループ」から開いてください。
+          </p>
           <div className="-mx-1 mt-5 flex gap-4 overflow-x-auto px-1 pb-2 snap-x snap-mandatory">
             {studioProjects.slice(0, 5).map((project) => (
               <ProjectCard key={project.id} project={project} href={studioProjectHref(project.id)} />

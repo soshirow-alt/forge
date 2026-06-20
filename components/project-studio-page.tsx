@@ -102,7 +102,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
     element?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [feedbackLoaded, voiceLoaded, growth, openFeedbackPanel]);
 
-  if (!hydrated || !dataReady || !feedbackLoaded || !voiceLoaded) {
+  if (!hydrated || !dataReady) {
     return (
       <div className="min-h-full bg-zinc-950 text-zinc-100">
         <ForgeHeader />
@@ -117,7 +117,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
     return null;
   }
 
-  if (!game || !growth || !display) {
+  if (!game) {
     notFound();
   }
 
@@ -125,8 +125,27 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
     return null;
   }
 
+  const growthSnapshot =
+    growth ??
+    buildProjectGrowthSnapshot(
+      game,
+      resolveVoiceSignalForGame(game, voiceSignals),
+      getDevlogsByProject,
+    );
+
+  const displayContext =
+    display ??
+    buildNurtureDisplayContext(
+      growthSnapshot,
+      voiceRead,
+      game.id,
+    );
+
   return (
-    <div className="min-h-full bg-zinc-950 text-zinc-100">
+    <div
+      className="min-h-full bg-zinc-950 text-zinc-100"
+      data-forge-studio-mode="growth"
+    >
       <ForgeHeader />
 
       <main className="mx-auto max-w-3xl px-6 py-12">
@@ -151,24 +170,28 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
             />
           </div>
           <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium text-orange-400/90">改善ループ Studio · 実データ</p>
             <p className="text-xs font-medium text-zinc-600">作品育成</p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-zinc-50 sm:text-3xl">
               {game.title}
             </h1>
+            <p className="mt-2 font-mono text-[10px] text-zinc-600">
+              /projects/{game.id}/studio
+            </p>
             <p className="mt-2 text-sm text-zinc-500">
-              v{growth.playableVersion}
-              {growth.cycleNumber > 0 && ` · サイクル ${growth.cycleNumber}`}
-              {growth.totalVoiceResponseCount > 0 && (
+              v{growthSnapshot.playableVersion}
+              {growthSnapshot.cycleNumber > 0 && ` · サイクル ${growthSnapshot.cycleNumber}`}
+              {growthSnapshot.totalVoiceResponseCount > 0 && (
                 <span className="ml-2 text-zinc-400">
-                  回答 {growth.totalVoiceResponseCount}件
+                  回答 {growthSnapshot.totalVoiceResponseCount}件
                 </span>
               )}
-              {growth.pendingFeedbackCount > 0 && (
+              {growthSnapshot.pendingFeedbackCount > 0 && (
                 <span className="ml-2 text-orange-400/90">新しい回答あり</span>
               )}
             </p>
             <p className="mt-1 text-xs text-zinc-600">
-              いま: {display.phaseLabel}
+              いま: {displayContext.phaseLabel}
               {" · "}
               {RELEASE_STATUS_LABELS[game.releaseStatus ?? "in_development"]}
               {" · "}
@@ -184,7 +207,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
 
         <StudioTopPrioritiesPanel
           projectId={game.id}
-          growth={growth}
+          growth={growthSnapshot}
           feedbackEntries={projectFeedback}
           voiceRead={voiceRead}
         />
@@ -192,7 +215,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
         <section className="mt-10">
           <GameGrowthCycle
             game={game}
-            growth={growth}
+            growth={growthSnapshot}
             feedbackEntries={projectFeedback}
             detailPanelId={PROJECT_STUDIO_FEEDBACK_SECTION_ID}
             initialSelectedStep={openFeedbackPanel ? "read" : null}
@@ -202,7 +225,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
         <ProjectReleaseStudioPanel
           projectId={game.id}
           devlogCount={getDevlogsByProject(game.id).length}
-          playableVersion={growth.playableVersion}
+          playableVersion={growthSnapshot.playableVersion}
         />
 
         <ProjectNurtureActions

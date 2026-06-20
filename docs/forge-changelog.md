@@ -4,12 +4,21 @@
 
 ---
 
+## 2026-06-15 45 P0 実データ Studio「次に直すこと」常時表示
+
+- `/projects/{id}/studio` — 常に growth-state 正本（mock フォールバック廃止）
+- ヘッダー直下「次に直すこと」— データ空でもカード表示（空状態コピー）
+- ヘッダーに「改善ループ Studio · 実データ」と正本 URL を表示
+- `/studio`・`/studio/projects` — 上部にオーナー実データリンク、「サンプル作品（プレビュー）」と mock を分離
+- mock `/studio/projects/{slug}` は従来 v0 タブ UI（P0 カードなし・正式版タブは未変更）
+
+---
+
 ## 2026-06-15 44 P0 Phase A 404 修正（mock / 実データ分岐）
 
 - `/studio/projects/{mockId}` — v0 mock 詳細を表示（リダイレクトしない）
 - `/studio/projects/{realId}` — `/projects/{id}/studio` へリダイレクト
-- `/projects/{mockId}/studio` — mock 時も v0 詳細（ログイン要）
-- `/projects/{realId}/studio` — growth-state 正本 + 上位3課題
+- `/projects/{id}/studio` — 常に growth-state 正本 + 上位3課題（mock フォールバックなし）
 - 一覧カード href: mock → `/studio/projects/{id}`、実データ → `/projects/{id}/studio`
 
 ---
