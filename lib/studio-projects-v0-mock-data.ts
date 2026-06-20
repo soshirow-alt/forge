@@ -202,7 +202,16 @@ export const studioProjectsAll: StudioProjectCard[] = [
 export const STUDIO_PROJECTS_PAGE_SIZE = 8;
 
 export function studioProjectHref(id: string): string {
+  // mock は /studio/projects（ログイン不要）。実データは正本 studio へ
+  if (isStudioMockProjectId(id)) {
+    return `/studio/projects/${id}`;
+  }
   return projectStudioPath(id);
+}
+
+/** preview v0 mock 作品 ID（Supabase 未登録） */
+export function isStudioMockProjectId(id: string): boolean {
+  return studioProjectsAll.some((project) => project.id === id);
 }
 
 export function phaseBadgeClass(phase: StudioProjectPhase): string {

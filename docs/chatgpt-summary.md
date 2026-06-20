@@ -1,49 +1,45 @@
 ■ 現在の状態
-- P0 Phase A〜B 実装完了。build 成功
-- Phase C migration 015 は GO 待ち（SQL 草案のみ）
+- P0 Phase A 404 修正完了。build 成功。push 予定
+- 原因: mock ID を Supabase 実データ studio に渡して notFound()
 
-■ 今回実装したこと
-- Phase A: /studio/projects/[id] → /projects/[id]/studio リダイレクト
-- Phase A: studioProjectHref・通知 mock リンクを正本 URL に統一
-- Phase B: lib/top-priorities.ts（ルールベース上位3）
-- Phase B: StudioTopPrioritiesPanel を旧 studio ヘッダー直下に配置
+■ 404 の原因（調査結果）
+1. /studio/projects のカード ID は studioProjectsAll の mock（例 hoshino-kioku）
+2. Phase A で /projects/{mockId}/studio に飛ばすと ProjectStudioPage が getSubmittedGameById で未検出 → notFound()
+3. /projects/[id]/studio ルート自体は preview に存在する
+4. redirect は動いていたが、先の正本ページが 404
+5. 旧 studio route は削除されていない（app/projects/[id]/studio/page.tsx 存続）
+6. mock 用 StudioProjectDetailPage も存続（studio-project-detail-page.tsx）
 
-■ 今回変更した画面
-- 画面: 作品 Studio（/projects/[id]/studio）
-- 画面位置: ヘッダー直下に「次に直すこと」カード（最大3件）
-- 変更前: 育成サイクルのみ。優先課題の明示なし
-- 変更後: バグ/気になる点/回答傾向からルールベースで最大3件表示
-- 確認: ログイン済みオーナーで /projects/{id}/studio を開く
-- /studio/projects/{id} は正本へリダイレクトされること
+■ 修正内容
+- isStudioMockProjectId() で mock / 実データを分岐
+- mock: /studio/projects/{id} で v0 詳細（ログイン不要）
+- 実データ: /projects/{id}/studio で growth-state + 上位3課題（ログイン要）
+
+■ preview で確認できる URL
+【mock — ログイン不要】
+- /studio/projects/hoshino-kioku（星の記憶）
+- /studio/projects/seito-no-tabiji（星灯の旅路）
+- /studio/projects/roshin-no-zanko（炉心の残光）
+- 一覧: /studio/projects
+
+【実データ — ログイン + オーナー必須】
+- /projects/{Supabaseのproject id}/studio
+- 取得: /my-projects または /submit 完了後の作品 ID
+- 上位3課題カードはこちらのみ（mock 詳細には未表示）
 
 ■ 変更ファイル
-- app/studio/projects/[id]/page.tsx（リダイレクト）
 - lib/studio-projects-v0-mock-data.ts
+- app/studio/projects/[id]/page.tsx
+- app/projects/[id]/studio/page.tsx
 - lib/studio-notifications-v0-mock-data.ts
-- lib/top-priorities.ts（新規）
-- components/studio-top-priorities-panel.tsx（新規）
-- components/project-studio-page.tsx
-- docs/forge-p0-migration-015-draft.sql（Phase C 草案・未適用）
-- docs/forge-p0-improvement-loop-plan.md
 
-■ 確認 URL（preview push 後）
-- /projects/{作品id}/studio — 正本（次に直すことカード）
-- /studio/projects/{作品id} — リダイレクト先確認
-- /studio/projects — 一覧（カードリンクは正本へ）
-
-■ Phase C（未着手・GO 待ち）
-- docs/forge-p0-migration-015-draft.sql
-- RPC get_owner_version_play_stats + Studio 再プレイ人数表示
-- 適用前に GPT判断用メモ推奨
-
-■ 上位3のルール（P0）
-- 優先: バグ報告 → 気になる点 → 否定的な初声集計 → 未読フォールバック
-- AI なし
+■ migration 015
+- 引き続き保留
 
 ■ 今すぐ私がやるべきこと
-- preview で /projects/{id}/studio をオーナーアカウントで確認
-- Phase C migration 015 の GO 判断
+- preview で /studio/projects/hoshino-kioku が開くか確認
+- 実データ検証は staging + 自分の作品 ID で /projects/{id}/studio
 
 ■ Runしてよいか
-- preview push: 可（migration なし）
-- migration 015: 別途 GO 後のみ
+- preview push: 可
+- migration 015: 保留

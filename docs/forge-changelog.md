@@ -4,7 +4,15 @@
 
 ---
 
-## 2026-06-15 43 P0 Phase A〜B（Studio 一本化・上位3課題）
+## 2026-06-15 44 P0 Phase A 404 修正（mock / 実データ分岐）
+
+- `/studio/projects/{mockId}` — v0 mock 詳細を表示（リダイレクトしない）
+- `/studio/projects/{realId}` — `/projects/{id}/studio` へリダイレクト
+- `/projects/{mockId}/studio` — mock 時も v0 詳細（ログイン要）
+- `/projects/{realId}/studio` — growth-state 正本 + 上位3課題
+- 一覧カード href: mock → `/studio/projects/{id}`、実データ → `/projects/{id}/studio`
+
+---
 
 - `/studio/projects/[id]` → `/projects/[id]/studio` リダイレクト
 - 作品 Studio ヘッダー直下に「次に直すこと」カード（ルールベース最大3件）
