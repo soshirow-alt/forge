@@ -1,6 +1,12 @@
 "use client";
 
 import { ListControlsBar } from "@/components/list-controls-bar";
+import {
+  FilterRadioGroup,
+  MyPageFilterPanel,
+  StatusFilterPills,
+  type GenreFilter,
+} from "@/components/mypage-filters";
 import { type ViewMode } from "@/components/view-mode-toggle";
 import {
   GameThumbnail,
@@ -13,20 +19,19 @@ import {
   FEEDBACK_HISTORY_TOTAL,
   feedbackEntries,
   feedbackFilterTabs,
-  feedbackSidebarFilters,
+  feedbackReflectionFilters,
   feedbackSortOptions,
   feedbackStats,
   FOLLOWING_TOTAL,
-  followingAboutPoints,
   followingDevelopers,
   followingFilterTabs,
   followingSortOptions,
   recentAchievements,
   recentFollowing,
 } from "@/lib/mypage-v0-mock-data";
+import { feedbackTypeCounts, filterFeedbackEntries } from "@/lib/mypage-list-filters";
 import {
   Check,
-  ChevronDown,
   ChevronRight,
   Heart,
   Send,
@@ -79,12 +84,35 @@ function TabPaginationFooter({ total, shown }: { total: number; shown: number })
 }
 
 export function FeedbackTabPanel() {
+  const [typeFilter, setTypeFilter] = useState<(typeof feedbackFilterTabs)[number]["id"]>(
+    feedbackFilterTabs[0].id,
+  );
+  const [reflectionId, setReflectionId] = useState<
+    (typeof feedbackReflectionFilters)[number]["id"]
+  >("all");
+  const [genre, setGenre] = useState<GenreFilter>("すべて");
   const [sortId, setSortId] = useState<(typeof feedbackSortOptions)[number]["id"]>(
     feedbackSortOptions[0].id,
   );
   const [viewMode, setViewMode] = useState<ViewMode>("list");
 
-  const sortedEntries = useMemo(() => [...feedbackEntries], [sortId]);
+  const typeOptions = useMemo(() => feedbackTypeCounts(feedbackEntries), []);
+
+  const filteredEntries = useMemo(() => {
+    let list = filterFeedbackEntries(feedbackEntries, typeFilter, reflectionId, genre);
+    if (sortId === "oldest") {
+      list = [...list].reverse();
+    } else if (sortId === "game-asc") {
+      list = [...list].sort((a, b) => a.game.localeCompare(b.game, "ja"));
+    }
+    return list;
+  }, [typeFilter, reflectionId, genre, sortId]);
+
+  function resetFilters() {
+    setTypeFilter("all");
+    setReflectionId("all");
+    setGenre("すべて");
+  }
 
   return (
     <div className="mt-8 flex flex-col gap-8 xl:flex-row">
@@ -93,27 +121,13 @@ export function FeedbackTabPanel() {
           <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
             フィードバック履歴
           </h1>
-          <p className="mt-2 text-sm text-zinc-400">
-            あなたが送信したフィードバックの履歴です。
-          </p>
         </header>
 
-        <div className="mt-6 flex flex-wrap gap-2">
-          {feedbackFilterTabs.map((filter, index) => (
-            <button
-              key={filter.id}
-              type="button"
-              className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:text-sm ${
-                index === 0
-                  ? "bg-violet-600 text-white"
-                  : "border border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
-              }`}
-            >
-              {filter.label}
-              <span className="ml-1 opacity-70">{filter.count}</span>
-            </button>
-          ))}
-        </div>
+        <StatusFilterPills
+          options={typeOptions}
+          activeId={typeFilter}
+          onChange={setTypeFilter}
+        />
 
         <div className="mt-4">
           <ListControlsBar
@@ -127,7 +141,7 @@ export function FeedbackTabPanel() {
 
         {viewMode === "grid" ? (
           <ul className="mt-6 grid gap-4 sm:grid-cols-2">
-            {sortedEntries.map((entry) => (
+            {filteredEntries.map((entry) => (
               <li
                 key={entry.id}
                 className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4"
@@ -145,7 +159,7 @@ export function FeedbackTabPanel() {
           </ul>
         ) : (
         <ul className="mt-6 space-y-4">
-          {sortedEntries.map((entry) => (
+          {filteredEntries.map((entry) => (
             <li
               key={entry.id}
               className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:p-5"
@@ -217,31 +231,22 @@ export function FeedbackTabPanel() {
         </ul>
         )}
 
-        <TabPaginationFooter total={FEEDBACK_HISTORY_TOTAL} shown={sortedEntries.length} />
+        <TabPaginationFooter total={FEEDBACK_HISTORY_TOTAL} shown={filteredEntries.length} />
       </div>
 
       <aside className="w-full shrink-0 space-y-6 xl:w-72">
-        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-          <h2 className="text-sm font-semibold text-white">フィルター</h2>
-          <div className="mt-4 space-y-2">
-            {feedbackSidebarFilters.map((filter) => (
-              <button
-                key={filter}
-                type="button"
-                className="flex w-full items-center justify-between rounded-lg border border-zinc-800 px-3 py-2 text-left text-sm text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
-              >
-                {filter}
-                <ChevronDown className="size-4 shrink-0" aria-hidden="true" />
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            className="mt-3 text-xs text-violet-400 transition-colors hover:text-violet-300"
-          >
-            フィルターをリセット
-          </button>
-        </section>
+        <MyPageFilterPanel
+          selectedGenre={genre}
+          onGenreChange={setGenre}
+          onReset={resetFilters}
+        >
+          <FilterRadioGroup
+            label="反映状況"
+            options={feedbackReflectionFilters}
+            value={reflectionId}
+            onChange={setReflectionId}
+          />
+        </MyPageFilterPanel>
 
         <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
           <h2 className="text-sm font-semibold text-white">あなたのフィードバック統計</h2>
@@ -253,19 +258,6 @@ export function FeedbackTabPanel() {
               </li>
             ))}
           </ul>
-        </section>
-
-        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-          <h2 className="text-sm font-semibold text-white">共感とは？</h2>
-          <p className="mt-3 text-sm leading-relaxed text-zinc-500">
-            他のプレイヤーがあなたのフィードバックに共感すると、カウントされます。
-          </p>
-          <button
-            type="button"
-            className="mt-3 text-xs text-violet-400 transition-colors hover:text-violet-300"
-          >
-            詳しく見る
-          </button>
         </section>
       </aside>
     </div>
@@ -283,12 +275,9 @@ export function AchievementsTabPanel() {
 
   return (
     <div className="mt-8 space-y-8">
-      <header>
-        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">実績</h1>
-        <p className="mt-2 text-sm text-zinc-400">
-          Forgeでのあなたの挑戦と歩みの証です。
-        </p>
-      </header>
+        <header>
+          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">実績</h1>
+        </header>
 
       <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -505,9 +494,6 @@ export function FollowingTabPanel() {
               {FOLLOWING_TOTAL}人
             </span>
           </div>
-          <p className="mt-2 text-sm text-zinc-400">
-            あなたがフォローしている開発者の一覧です。
-          </p>
         </header>
 
         <div className="mt-6 flex flex-wrap gap-2">
@@ -648,18 +634,6 @@ export function FollowingTabPanel() {
       </div>
 
       <aside className="w-full shrink-0 space-y-6 xl:w-72">
-        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-          <h2 className="text-sm font-semibold text-white">フォロー中の開発者について</h2>
-          <ul className="mt-4 space-y-2">
-            {followingAboutPoints.map((point) => (
-              <li key={point} className="flex gap-2 text-sm text-zinc-500">
-                <span className="text-violet-400">·</span>
-                {point}
-              </li>
-            ))}
-          </ul>
-        </section>
-
         <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 text-center">
           <p className="text-sm text-zinc-500">フォロー数</p>
           <p className="mt-1 text-3xl font-bold text-white">{FOLLOWING_TOTAL}人</p>

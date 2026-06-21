@@ -26,7 +26,8 @@ export type PlayerShellNavId =
   | (typeof primaryLinks)[number]["id"]
   | "mypage"
   | "settings"
-  | "notifications";
+  | "notifications"
+  | "guide";
 
 function SidebarDivider() {
   return <div className="my-3 border-t border-zinc-800/80" role="separator" />;
@@ -121,12 +122,9 @@ export function PlayerShell({
             <Link href="/settings" className={navLinkClass(activeNav === "settings")}>
               設定
             </Link>
-            <button
-              type="button"
-              className="block w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200"
-            >
+            <Link href="/guide" className={navLinkClass(activeNav === "guide")}>
               はじめてガイド
-            </button>
+            </Link>
           </div>
         </nav>
       </aside>
@@ -199,7 +197,6 @@ export function MyPageTabs({
     { id: "feedback", label: "FB履歴" },
     { id: "achievements", label: "実績" },
     { id: "following", label: "フォロー中開発者" },
-    { id: "developer", label: "作品管理" },
   ] as const;
 
   return (

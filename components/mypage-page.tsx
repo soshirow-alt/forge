@@ -1,13 +1,19 @@
 "use client";
 
 import { ListControlsBar } from "@/components/list-controls-bar";
-import { ViewModeToggle, type ViewMode } from "@/components/view-mode-toggle";
+import {
+  FilterRadioGroup,
+  MyPageFilterPanel,
+  MyPageFilterSidebar,
+  StatusFilterPills,
+  type GenreFilter,
+} from "@/components/mypage-filters";
+import { type ViewMode } from "@/components/view-mode-toggle";
 import {
   AchievementsTabPanel,
   FeedbackTabPanel,
   FollowingTabPanel,
 } from "@/components/mypage-v0-extra-tabs";
-import { MyPageDeveloperTab } from "@/components/mypage-developer-tab";
 import {
   GameThumbnail,
   MyPageTabs,
@@ -17,27 +23,32 @@ import {
 import {
   genreFilters,
   playHistoryFilterTabs,
+  playHistoryPeriodFilters,
   playHistorySortOptions,
   PLAY_HISTORY_TOTAL,
   playHistoryGames,
-  playHistorySidebarFilters,
   playHistorySummary,
+  savedFilterTabs,
   savedGames,
-  savedQuickFilters,
   savedSortOptions,
-  savedSummary,
-  supportedCreators,
+  witnessingFilterTabs,
   witnessingGames,
-  witnessingQuickFilters,
   witnessingSortOptions,
 } from "@/lib/mypage-v0-mock-data";
+import {
+  filterPlayHistoryGames,
+  filterSavedGames,
+  filterWitnessingGames,
+  playHistoryStatusCounts,
+  savedStatusCounts,
+  witnessingStatusCounts,
+} from "@/lib/mypage-list-filters";
 import { gameDetailHrefFromTitle } from "@/lib/game-detail-v0-mock-data";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo, useState } from "react";
 import {
   Check,
-  ChevronDown,
   MessageSquare,
   MoreVertical,
   Pencil,
@@ -50,8 +61,7 @@ export type MyPageTab =
   | "play-history"
   | "feedback"
   | "achievements"
-  | "following"
-  | "developer";
+  | "following";
 
 const TAB_IDS: MyPageTab[] = [
   "witnessing",
@@ -60,15 +70,11 @@ const TAB_IDS: MyPageTab[] = [
   "feedback",
   "achievements",
   "following",
-  "developer",
 ];
 
 function parseTab(param: string | null): MyPageTab {
   if (!param || param === "witnessing") {
     return "witnessing";
-  }
-  if (param === "developer") {
-    return "developer";
   }
   return TAB_IDS.includes(param as MyPageTab) ? (param as MyPageTab) : "witnessing";
 }
@@ -87,46 +93,43 @@ function PlayHistoryTabPanel() {
   const [activeFilter, setActiveFilter] = useState<(typeof playHistoryFilterTabs)[number]["id"]>(
     playHistoryFilterTabs[0].id,
   );
+  const [periodId, setPeriodId] = useState<(typeof playHistoryPeriodFilters)[number]["id"]>("all");
+  const [genre, setGenre] = useState<GenreFilter>("すべて");
   const [sortId, setSortId] = useState<(typeof playHistorySortOptions)[number]["id"]>(
     playHistorySortOptions[0].id,
   );
   const [viewMode, setViewMode] = useState<ViewMode>("list");
 
+  const statusOptions = useMemo(() => playHistoryStatusCounts(playHistoryGames), []);
+
   const filteredGames = useMemo(() => {
-    let list = [...playHistoryGames];
+    let list = filterPlayHistoryGames(playHistoryGames, activeFilter, genre, periodId);
     if (sortId === "title-asc") {
-      list.sort((a, b) => a.title.localeCompare(b.title, "ja"));
+      list = [...list].sort((a, b) => a.title.localeCompare(b.title, "ja"));
     } else if (sortId === "played-asc") {
-      list.reverse();
+      list = [...list].reverse();
     }
     return list;
-  }, [sortId]);
+  }, [activeFilter, genre, periodId, sortId]);
+
+  function resetFilters() {
+    setActiveFilter("all");
+    setPeriodId("all");
+    setGenre("すべて");
+  }
 
   return (
     <div className="mt-8 flex flex-col gap-8 xl:flex-row">
       <div className="min-w-0 flex-1">
         <header>
           <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">プレイ履歴</h1>
-          <p className="mt-2 text-sm text-zinc-400">あなたがプレイしたゲームの記録です。</p>
         </header>
 
-        <div className="mt-6 flex flex-wrap gap-2">
-          {playHistoryFilterTabs.map((filter) => (
-            <button
-              key={filter.id}
-              type="button"
-              onClick={() => setActiveFilter(filter.id)}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:text-sm ${
-                activeFilter === filter.id
-                  ? "bg-violet-600 text-white"
-                  : "border border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
-              }`}
-            >
-              {filter.label}
-              <span className="ml-1 opacity-70">{filter.count}</span>
-            </button>
-          ))}
-        </div>
+        <StatusFilterPills
+          options={statusOptions}
+          activeId={activeFilter}
+          onChange={setActiveFilter}
+        />
 
         <div className="mt-4">
           <ListControlsBar
@@ -309,92 +312,66 @@ function PlayHistoryTabPanel() {
           </ul>
         </section>
 
-        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-          <h2 className="text-sm font-semibold text-white">フィルター</h2>
-          <div className="mt-4 space-y-2">
-            {playHistorySidebarFilters.map((filter) => (
-              <button
-                key={filter}
-                type="button"
-                className="flex w-full items-center justify-between rounded-lg border border-zinc-800 px-3 py-2 text-left text-sm text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
-              >
-                {filter}
-                <ChevronDown className="size-4 shrink-0" aria-hidden="true" />
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            className="mt-3 text-xs text-violet-400 transition-colors hover:text-violet-300"
-          >
-            フィルターをリセット
-          </button>
-        </section>
-
-        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">応援中の作者</h2>
-            <button
-              type="button"
-              className="text-xs text-violet-400 transition-colors hover:text-violet-300"
-            >
-              すべて見る →
-            </button>
-          </div>
-          <p className="mt-1 text-xs text-zinc-500">12人</p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            {supportedCreators.map((creator) => (
-              <div key={creator.name} className="flex flex-col items-center gap-1">
-                <span className="flex size-10 items-center justify-center rounded-full bg-zinc-800 text-xs font-medium text-zinc-300">
-                  {creator.initial}
-                </span>
-                <span className="max-w-[4.5rem] truncate text-[10px] text-zinc-500">
-                  {creator.name}
-                </span>
-              </div>
-            ))}
-            <span className="flex size-10 items-center justify-center rounded-full border border-dashed border-zinc-700 text-xs text-zinc-500">
-              +7
-            </span>
-          </div>
-          <p className="mt-4 text-xs leading-relaxed text-zinc-600">
-            応援中の作者の新作・更新は通知でお知らせします。
-          </p>
-        </section>
+        <MyPageFilterPanel
+          selectedGenre={genre}
+          onGenreChange={setGenre}
+          onReset={resetFilters}
+        >
+          <FilterRadioGroup
+            label="プレイ期間"
+            options={playHistoryPeriodFilters}
+            value={periodId}
+            onChange={setPeriodId}
+          />
+        </MyPageFilterPanel>
       </aside>
     </div>
   );
 }
 
 function WitnessingTabPanel() {
+  const [activeFilter, setActiveFilter] = useState<(typeof witnessingFilterTabs)[number]["id"]>(
+    witnessingFilterTabs[0].id,
+  );
+  const [genre, setGenre] = useState<GenreFilter>("すべて");
   const [sortId, setSortId] = useState<(typeof witnessingSortOptions)[number]["id"]>(
     witnessingSortOptions[0].id,
   );
   const [viewMode, setViewMode] = useState<ViewMode>("list");
 
-  const sortedGames = useMemo(() => {
-    const list = [...witnessingGames];
+  const statusOptions = useMemo(() => witnessingStatusCounts(witnessingGames), []);
+
+  const filteredGames = useMemo(() => {
+    let list = filterWitnessingGames(witnessingGames, activeFilter, genre);
     if (sortId === "title-asc") {
-      list.sort((a, b) => a.title.localeCompare(b.title, "ja"));
+      list = [...list].sort((a, b) => a.title.localeCompare(b.title, "ja"));
+    } else if (sortId === "updated-desc") {
+      list = [...list].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
     }
     return list;
-  }, [sortId]);
+  }, [activeFilter, genre, sortId]);
+
+  function resetFilters() {
+    setActiveFilter("all");
+    setGenre("すべて");
+  }
 
   return (
     <div className="mt-8 flex flex-col gap-8 xl:flex-row">
       <div className="min-w-0 flex-1">
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-              見届け中の作品
-            </h1>
-            <p className="mt-2 text-sm text-zinc-400">
-              あなたが声を届けた作品の変化を追いかけています。
-            </p>
-          </div>
+        <header>
+          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            見届け中の作品
+          </h1>
         </header>
 
-        <div className="mt-6">
+        <StatusFilterPills
+          options={statusOptions}
+          activeId={activeFilter}
+          onChange={setActiveFilter}
+        />
+
+        <div className="mt-4">
           <ListControlsBar
             sortId={sortId}
             sortOptions={witnessingSortOptions}
@@ -406,7 +383,7 @@ function WitnessingTabPanel() {
 
         {viewMode === "grid" ? (
           <ul className="mt-8 grid gap-4 sm:grid-cols-2">
-            {sortedGames.map((game) => (
+            {filteredGames.map((game) => (
               <li
                 key={game.title}
                 className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4"
@@ -419,7 +396,7 @@ function WitnessingTabPanel() {
           </ul>
         ) : (
         <ul className="mt-8 space-y-4">
-          {sortedGames.map((game) => (
+          {filteredGames.map((game) => (
             <li
               key={game.title}
               className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:p-5"
@@ -463,108 +440,52 @@ function WitnessingTabPanel() {
         )}
       </div>
 
-      <aside className="w-full shrink-0 space-y-6 xl:w-72">
-        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-          <h2 className="text-sm font-semibold text-white">クイックフィルター</h2>
-          <ul className="mt-4 space-y-2">
-            {witnessingQuickFilters.map((filter) => (
-              <li key={filter.label}>
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm text-zinc-400 transition-colors hover:bg-zinc-800/60 hover:text-zinc-200"
-                >
-                  <span>{filter.label}</span>
-                  <span className="text-xs text-zinc-500">{filter.count}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-          <h2 className="text-sm font-semibold text-white">ジャンルで絞り込む</h2>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {genreFilters.map((genre, index) => (
-              <button
-                key={genre}
-                type="button"
-                className={`rounded-full px-3 py-1.5 text-xs transition-colors ${
-                  index === 0
-                    ? "bg-white text-zinc-950"
-                    : "border border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
-                }`}
-              >
-                {genre}
-                {genre === "ストーリー" ? " ▾" : ""}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-          <h2 className="text-sm font-semibold text-white">見届け中の作品とは？</h2>
-          <p className="mt-3 text-sm leading-relaxed text-zinc-500">
-            あなたが声を届けた作品や、継続的に変化を追っている作品です。
-          </p>
-          <p className="mt-2 text-sm leading-relaxed text-zinc-500">
-            開発ログや更新内容を確認して、作品の成長を見届けましょう。
-          </p>
-          <button
-            type="button"
-            className="mt-4 text-sm font-medium text-violet-400 transition-colors hover:text-violet-300"
-          >
-            詳しく見る
-          </button>
-        </section>
-      </aside>
+      <MyPageFilterSidebar
+        selectedGenre={genre}
+        onGenreChange={setGenre}
+        onReset={resetFilters}
+      />
     </div>
   );
 }
 
 function SavedTabPanel() {
-  const [activeFilter, setActiveFilter] = useState<(typeof savedQuickFilters)[number]["id"]>(
-    savedQuickFilters[0].id,
+  const [activeFilter, setActiveFilter] = useState<(typeof savedFilterTabs)[number]["id"]>(
+    savedFilterTabs[0].id,
   );
+  const [genre, setGenre] = useState<GenreFilter>("すべて");
   const [sortId, setSortId] = useState<(typeof savedSortOptions)[number]["id"]>(
     savedSortOptions[0].id,
   );
   const [viewMode, setViewMode] = useState<ViewMode>("list");
 
-  const sortedGames = useMemo(() => {
-    const list = [...savedGames];
+  const statusOptions = useMemo(() => savedStatusCounts(savedGames), []);
+
+  const filteredGames = useMemo(() => {
+    let list = filterSavedGames(savedGames, activeFilter, genre);
     if (sortId === "title-asc") {
-      list.sort((a, b) => a.title.localeCompare(b.title, "ja"));
+      list = [...list].sort((a, b) => a.title.localeCompare(b.title, "ja"));
     }
     return list;
-  }, [sortId]);
+  }, [activeFilter, genre, sortId]);
+
+  function resetFilters() {
+    setActiveFilter("all");
+    setGenre("すべて");
+  }
 
   return (
     <div className="mt-8 flex flex-col gap-8 xl:flex-row">
       <div className="min-w-0 flex-1">
         <header>
           <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">保存作品</h1>
-          <p className="mt-2 text-sm text-zinc-400">
-            あとでプレイしたり、追いかけたい作品を保存できます。
-          </p>
         </header>
 
-        <div className="mt-6 flex flex-wrap gap-2">
-          {savedQuickFilters.map((filter) => (
-            <button
-              key={filter.id}
-              type="button"
-              onClick={() => setActiveFilter(filter.id)}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:text-sm ${
-                activeFilter === filter.id
-                  ? "bg-violet-600 text-white"
-                  : "border border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
-              }`}
-            >
-              {filter.label}
-              <span className="ml-1 opacity-70">{filter.count}</span>
-            </button>
-          ))}
-        </div>
+        <StatusFilterPills
+          options={statusOptions}
+          activeId={activeFilter}
+          onChange={setActiveFilter}
+        />
 
         <div className="mt-4">
           <ListControlsBar
@@ -578,7 +499,7 @@ function SavedTabPanel() {
 
         {viewMode === "grid" ? (
           <ul className="mt-8 grid gap-4 sm:grid-cols-2">
-            {sortedGames.map((game) => (
+            {filteredGames.map((game) => (
               <li
                 key={game.title}
                 className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4"
@@ -594,7 +515,7 @@ function SavedTabPanel() {
           </ul>
         ) : (
           <ul className="mt-8 space-y-3">
-            {sortedGames.map((game) => (
+            {filteredGames.map((game) => (
               <li
                 key={game.title}
                 className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:p-5"
@@ -623,57 +544,12 @@ function SavedTabPanel() {
         )}
       </div>
 
-      <aside className="w-full shrink-0 space-y-6 xl:w-72">
-        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-          <h2 className="text-sm font-semibold text-white">保存サマリー</h2>
-          <ul className="mt-4 space-y-3">
-            <li className="flex items-center justify-between text-sm">
-              <span className="text-zinc-500">保存作品</span>
-              <span className="font-medium text-zinc-200">{savedSummary.total}</span>
-            </li>
-            <li className="flex items-center justify-between text-sm">
-              <span className="text-zinc-500">あとでプレイ</span>
-              <span className="font-medium text-zinc-200">{savedSummary.later}</span>
-            </li>
-            <li className="flex items-center justify-between text-sm">
-              <span className="text-zinc-500">見届け候補</span>
-              <span className="font-medium text-zinc-200">{savedSummary.witnessing}</span>
-            </li>
-            <li className="flex items-center justify-between text-sm">
-              <span className="text-zinc-500">更新あり</span>
-              <span className="font-medium text-zinc-200">{savedSummary.withUpdate}</span>
-            </li>
-          </ul>
-        </section>
-
-        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-          <h2 className="text-sm font-semibold text-white">クイックフィルター</h2>
-          <ul className="mt-4 space-y-2">
-            {savedQuickFilters.map((filter) => (
-              <li key={filter.id}>
-                <button
-                  type="button"
-                  onClick={() => setActiveFilter(filter.id)}
-                  className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                    activeFilter === filter.id
-                      ? "bg-violet-600/15 text-violet-200"
-                      : "text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200"
-                  }`}
-                >
-                  <span>{filter.label}</span>
-                  <span className="text-xs text-zinc-500">{filter.count}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-          <h2 className="text-sm font-semibold text-white">保存作品とは？</h2>
-          <p className="mt-3 text-sm leading-relaxed text-zinc-500">
-            気になった作品をあとで遊ぶためにストックできます。見届け開始前の候補リストとしても使えます。
-          </p>
-        </section>
+      <aside className="w-full shrink-0 xl:w-72">
+        <MyPageFilterPanel
+          selectedGenre={genre}
+          onGenreChange={setGenre}
+          onReset={resetFilters}
+        />
       </aside>
     </div>
   );
@@ -702,7 +578,6 @@ function MyPagePageContent() {
         {activeTab === "feedback" && <FeedbackTabPanel />}
         {activeTab === "achievements" && <AchievementsTabPanel />}
         {activeTab === "following" && <FollowingTabPanel />}
-        {activeTab === "developer" && <MyPageDeveloperTab />}
       </div>
     </PlayerShell>
   );

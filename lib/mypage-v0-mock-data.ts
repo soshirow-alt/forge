@@ -5,6 +5,8 @@ export const witnessingGames = [
     updatedAt: "2024/05/12",
     image: "/images/landing/game-1.png",
     hasUpdate: true,
+    voiceReflected: true,
+    genre: "アドベンチャー",
   },
   {
     title: "空島パイオニア",
@@ -12,6 +14,8 @@ export const witnessingGames = [
     updatedAt: "2024/05/08",
     image: "/images/landing/game-3.png",
     hasUpdate: true,
+    voiceReflected: false,
+    genre: "シミュレーション",
   },
   {
     title: "炉心の残光",
@@ -19,6 +23,8 @@ export const witnessingGames = [
     updatedAt: "2024/04/28",
     image: "/images/landing/game-2.png",
     hasUpdate: true,
+    voiceReflected: true,
+    genre: "RPG",
   },
   {
     title: "喫茶ケットシー",
@@ -26,8 +32,10 @@ export const witnessingGames = [
     updatedAt: "2024/04/15",
     image: "/images/landing/game-4.png",
     hasUpdate: false,
+    voiceReflected: false,
+    genre: "ストーリー",
   },
-] as const;
+];
 
 export const savedGames = [
   {
@@ -35,32 +43,47 @@ export const savedGames = [
     developer: "GreenSmith",
     tags: ["シミュレーション", "癒し系"],
     image: "/images/landing/game-5.png",
+    genre: "シミュレーション",
+    listCategory: "later" as const,
+    hasUpdate: false,
   },
   {
     title: "星のかけらを探して",
     developer: "Luna Labs",
     tags: ["SF", "探索"],
     image: "/images/landing/game-1.png",
+    genre: "探索",
+    listCategory: "later" as const,
+    hasUpdate: true,
   },
   {
     title: "地下迷宮の冒険者",
     developer: "Studio Aurora",
     tags: ["RPG", "ダンジョン", "ローグライク"],
     image: "/images/landing/game-2.png",
+    genre: "RPG",
+    listCategory: "default" as const,
+    hasUpdate: false,
   },
   {
     title: "空賊と風の旅団",
     developer: "Sky Pirate Studio",
     tags: ["アクション", "空戦", "協力プレイ"],
     image: "/images/landing/game-3.png",
+    genre: "アクション",
+    listCategory: "later" as const,
+    hasUpdate: false,
   },
   {
     title: "アルカディアの遺跡",
     developer: "Pixel Knights",
     tags: ["アクション", "探索", "ピクセルアート"],
     image: "/images/landing/game-4.png",
+    genre: "探索",
+    listCategory: "default" as const,
+    hasUpdate: false,
   },
-] as const;
+];
 
 export const savedSortOptions = [
   { id: "saved-desc", label: "保存日が新しい順" },
@@ -69,19 +92,13 @@ export const savedSortOptions = [
 
 export type SavedSortId = (typeof savedSortOptions)[number]["id"];
 
-export const savedQuickFilters = [
-  { id: "all", label: "すべて", count: 5 },
-  { id: "later", label: "あとでプレイ", count: 3 },
-  { id: "witnessing", label: "見届け候補", count: 2 },
-  { id: "update", label: "更新あり", count: 1 },
+export const savedFilterTabs = [
+  { id: "all", label: "すべて" },
+  { id: "later", label: "あとでプレイ" },
+  { id: "update", label: "更新あり" },
 ] as const;
 
-export const savedSummary = {
-  total: 5,
-  later: 3,
-  witnessing: 2,
-  withUpdate: 1,
-} as const;
+export type SavedFilterId = (typeof savedFilterTabs)[number]["id"];
 
 export const witnessingSortOptions = [
   { id: "updated-desc", label: "更新が新しい順" },
@@ -98,12 +115,14 @@ export const playHistorySortOptions = [
 
 export type PlayHistorySortId = (typeof playHistorySortOptions)[number]["id"];
 
-export const witnessingQuickFilters = [
-  { label: "更新があった作品", count: 4 },
-  { label: "まもなく更新されそう", count: 2 },
-  { label: "更新がない作品", count: 2 },
-  { label: "あなたの声が反映された作品", count: 3 },
+export const witnessingFilterTabs = [
+  { id: "all", label: "すべて" },
+  { id: "has-update", label: "更新あり" },
+  { id: "no-update", label: "更新なし" },
+  { id: "voice-reflected", label: "声が反映された" },
 ] as const;
+
+export type WitnessingFilterId = (typeof witnessingFilterTabs)[number]["id"];
 
 export const genreFilters = [
   "すべて",
@@ -144,6 +163,8 @@ export type PlayHistoryGame = {
   memo?: string;
   cleared?: boolean;
   feedbackSent: boolean;
+  genre: string;
+  playPeriod: "7d" | "30d" | "older";
 };
 
 export const PLAY_HISTORY_TOTAL = 30;
@@ -167,6 +188,8 @@ export const playHistoryGames: PlayHistoryGame[] = [
     memo: "序盤のチュートリアルが分かりやすくなった。",
     cleared: true,
     feedbackSent: true,
+    genre: "アドベンチャー",
+    playPeriod: "7d",
   },
   {
     title: "炉心の残光",
@@ -180,6 +203,8 @@ export const playHistoryGames: PlayHistoryGame[] = [
     lastPlay: "2025/05/14",
     hasUpdate: false,
     feedbackSent: true,
+    genre: "RPG",
+    playPeriod: "30d",
   },
   {
     title: "空島パイオニア",
@@ -193,6 +218,8 @@ export const playHistoryGames: PlayHistoryGame[] = [
     lastPlay: "2025/05/05",
     hasUpdate: false,
     feedbackSent: false,
+    genre: "シミュレーション",
+    playPeriod: "older",
   },
   {
     title: "森の中の小さな工房",
@@ -207,6 +234,8 @@ export const playHistoryGames: PlayHistoryGame[] = [
     hasUpdate: true,
     updateVersion: "v0.1.5",
     feedbackSent: false,
+    genre: "シミュレーション",
+    playPeriod: "30d",
   },
   {
     title: "浮遊ノート",
@@ -220,6 +249,8 @@ export const playHistoryGames: PlayHistoryGame[] = [
     lastPlay: "2025/05/16",
     hasUpdate: false,
     feedbackSent: false,
+    genre: "アドベンチャー",
+    playPeriod: "7d",
   },
   {
     title: "夏の向こう側",
@@ -239,6 +270,8 @@ export const playHistoryGames: PlayHistoryGame[] = [
     memo: "エンディング前のイベントが追加された。",
     cleared: true,
     feedbackSent: true,
+    genre: "RPG",
+    playPeriod: "7d",
   },
   {
     title: "深淵ノート",
@@ -253,6 +286,8 @@ export const playHistoryGames: PlayHistoryGame[] = [
     hasUpdate: false,
     memo: "ボス戦がかなり難しい。",
     feedbackSent: true,
+    genre: "RPG",
+    playPeriod: "30d",
   },
   {
     title: "喫茶ケットシー",
@@ -266,6 +301,8 @@ export const playHistoryGames: PlayHistoryGame[] = [
     lastPlay: "2025/05/11",
     hasUpdate: false,
     feedbackSent: false,
+    genre: "シミュレーション",
+    playPeriod: "7d",
   },
   {
     title: "星のかけらを探して",
@@ -280,6 +317,8 @@ export const playHistoryGames: PlayHistoryGame[] = [
     hasUpdate: true,
     updateVersion: "v0.2.0",
     feedbackSent: true,
+    genre: "探索",
+    playPeriod: "30d",
   },
   {
     title: "地下迷宮の冒険者",
@@ -293,6 +332,8 @@ export const playHistoryGames: PlayHistoryGame[] = [
     lastPlay: "2025/05/15",
     hasUpdate: false,
     feedbackSent: false,
+    genre: "RPG",
+    playPeriod: "7d",
   },
 ];
 
@@ -304,19 +345,22 @@ export const playHistorySummary = [
   { label: "最多プレイ日", value: "2025/05/18" },
 ] as const;
 
-export const playHistorySidebarFilters = [
-  "見届け中 / プレイのみ",
-  "応援中作者の作品",
-  "プレイ期間",
+export type PlayHistoryPeriodId = (typeof playHistoryPeriodFilters)[number]["id"];
+
+export const playHistoryPeriodFilters = [
+  { id: "all", label: "すべての期間" },
+  { id: "7d", label: "直近7日" },
+  { id: "30d", label: "直近30日" },
+  { id: "older", label: "それ以前" },
 ] as const;
 
-export const supportedCreators = [
-  { name: "GreenSmith", initial: "G" },
-  { name: "Luna Labs", initial: "L" },
-  { name: "Studio Aurora", initial: "S" },
-  { name: "Pixel Knights", initial: "P" },
-  { name: "Sky Pirate", initial: "S" },
+export const feedbackReflectionFilters = [
+  { id: "all", label: "すべて" },
+  { id: "reflected", label: "改善に反映された" },
+  { id: "not-reflected", label: "未反映" },
 ] as const;
+
+export type FeedbackReflectionFilterId = (typeof feedbackReflectionFilters)[number]["id"];
 
 // --- FB履歴 ---
 
@@ -343,6 +387,7 @@ export type FeedbackEntry = {
   image: string;
   timestamp: string;
   type: "free" | "choice";
+  genre: string;
   content?: string;
   choices?: { question: string; answer: string }[];
   empathyCount?: number;
@@ -357,6 +402,7 @@ export const feedbackEntries: FeedbackEntry[] = [
     image: "/images/landing/game-1.png",
     timestamp: "2025/05/18 22:34",
     type: "free",
+    genre: "アドベンチャー",
     content:
       "マップのワープポイントが分かりにくかったです。序盤で一度迷子になりました。標識かミニマップの強調があると助かります。",
     empathyCount: 8,
@@ -372,6 +418,7 @@ export const feedbackEntries: FeedbackEntry[] = [
     image: "/images/landing/game-1.png",
     timestamp: "2025/05/10 19:12",
     type: "choice",
+    genre: "RPG",
     choices: [
       { question: "もう一度遊びたい？", answer: "遊びたい" },
       { question: "難易度は？", answer: "やや難しい" },
@@ -384,6 +431,7 @@ export const feedbackEntries: FeedbackEntry[] = [
     image: "/images/landing/game-2.png",
     timestamp: "2025/05/14 21:05",
     type: "free",
+    genre: "アドベンチャー",
     content:
       "ストーリーのテンポが良く、最後まで一気に読めました。BGMとの相性も素晴らしいです。",
     empathyCount: 12,
@@ -399,6 +447,7 @@ export const feedbackEntries: FeedbackEntry[] = [
     image: "/images/landing/game-4.png",
     timestamp: "2025/05/17 18:40",
     type: "choice",
+    genre: "RPG",
     choices: [
       { question: "印象に残った場面は？", answer: "夕暮れの浜辺" },
       { question: "もう一度遊びたい？", answer: "ぜひ遊びたい" },
@@ -412,6 +461,7 @@ export const feedbackEntries: FeedbackEntry[] = [
     image: "/images/landing/game-3.png",
     timestamp: "2025/05/05 14:22",
     type: "free",
+    genre: "アドベンチャー",
     content: "クラフトのレシピ一覧が見づらい。カテゴリ分けがあると探しやすそう。",
     empathyCount: 3,
   },
@@ -422,6 +472,7 @@ export const feedbackEntries: FeedbackEntry[] = [
     image: "/images/landing/game-5.png",
     timestamp: "2025/05/12 23:18",
     type: "choice",
+    genre: "RPG",
     choices: [
       { question: "ボス戦の難易度は？", answer: "かなり難しい" },
       { question: "再挑戦したい？", answer: "したい" },
@@ -434,6 +485,7 @@ export const feedbackEntries: FeedbackEntry[] = [
     image: "/images/landing/game-5.png",
     timestamp: "2025/05/02 16:55",
     type: "free",
+    genre: "アドベンチャー",
     content: "作業の手触りが気持ちいい。もう少し家具のバリエーションがあると嬉しい。",
     empathyCount: 6,
     reflected: {
@@ -448,17 +500,15 @@ export const feedbackEntries: FeedbackEntry[] = [
     image: "/images/landing/game-4.png",
     timestamp: "2025/05/11 12:30",
     type: "free",
+    genre: "アドベンチャー",
     content: "癒し系として最高。猫の動きがかわいくてずっと見ていられる。",
     empathyCount: 15,
   },
 ];
 
 export const feedbackSidebarFilters = [
-  "作品",
-  "バージョン",
-  "フィードバックの種類",
-  "ステータス",
-  "期間",
+  { id: "reflection", label: "反映状況" },
+  { id: "genre", label: "ジャンル" },
 ] as const;
 
 export const feedbackStats = [
