@@ -197,10 +197,15 @@ export function NotificationsV0Page() {
     <PlayerShell activeNav="notifications" notificationBadge={unreadCount}>
       <div className="mx-auto max-w-3xl">
         <header>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-            <Bell className="size-7 text-violet-400" aria-hidden="true" />
-            通知（プレイヤー）
-          </h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              <Bell className="size-7 text-violet-400" aria-hidden="true" />
+              通知
+            </h1>
+            <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-xs font-medium text-violet-200">
+              プレイヤー
+            </span>
+          </div>
         </header>
 
         <div className="mt-6 flex gap-2 overflow-x-auto pb-1">
