@@ -10,7 +10,7 @@ export function ProfileSelfV0Page() {
   const profile = profileSelfMock;
 
   return (
-    <PlayerShell activeNav="mypage">
+    <PlayerShell>
       <div className="mx-auto max-w-4xl space-y-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>

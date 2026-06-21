@@ -1,10 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+// Preview: /notifications は v0 mock のため未保護。本番 GO 時はログイン必須に戻す（原典: プレイ以降はログイン）。
 const PROTECTED_PREFIXES = [
   "/submit",
   "/my-projects",
-  "/notifications",
   "/bookmarks",
   "/projects/",
 ];

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
   Bookmark,
@@ -68,6 +68,37 @@ function navLinkClass(active: boolean) {
   }`;
 }
 
+function subNavLinkClass(active: boolean) {
+  return `block rounded-lg px-3 py-2 text-sm transition-colors ${
+    active
+      ? "bg-violet-600/20 font-medium text-violet-200 ring-1 ring-violet-500/30"
+      : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
+  }`;
+}
+
+function MypageSidebarGroup() {
+  const pathname = usePathname();
+  const isMypageProfile = pathname === "/mypage/profile";
+  const isMypageHub = pathname === "/mypage";
+
+  return (
+    <div className="space-y-1">
+      <Link href="/mypage" className={navLinkClass(isMypageHub)}>
+        マイページ
+      </Link>
+      <div className="flex gap-2 pl-3">
+        <span className="flex w-3 shrink-0 flex-col items-center pt-2" aria-hidden="true">
+          <span className="h-3 w-px bg-zinc-700" />
+          <span className="h-px w-3 -translate-x-1 bg-zinc-700" />
+        </span>
+        <Link href="/mypage/profile" className={`min-w-0 flex-1 ${subNavLinkClass(isMypageProfile)}`}>
+          マイプロフィール
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export function PlayerShell({
   children,
   activeNav = "home",
@@ -112,9 +143,7 @@ export function PlayerShell({
 
           <SidebarDivider />
 
-          <Link href="/mypage" className={navLinkClass(activeNav === "mypage")}>
-            マイページ
-          </Link>
+          <MypageSidebarGroup />
 
           <SidebarDivider />
 
@@ -147,7 +176,7 @@ export function PlayerShell({
           <Link
             href="/mypage/profile"
             className="rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
-            aria-label="プロフィール"
+            aria-label="マイプロフィール"
           >
             <User className="size-5" />
           </Link>
