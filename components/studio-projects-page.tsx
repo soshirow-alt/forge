@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { StudioShell } from "@/components/studio-shell";
-import { StudioOwnedProjectsSection } from "@/components/studio-owned-projects-section";
+import { ViewModeToggle, type ViewMode } from "@/components/view-mode-toggle";
 import {
   formatStat,
   phaseBadgeClass,
@@ -20,16 +20,12 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
-  Grid3x3,
-  LayoutList,
   MessageSquare,
   MoreHorizontal,
   Plus,
   Search,
   Users,
 } from "lucide-react";
-
-type ViewMode = "grid" | "list";
 
 function PhaseBadge({ phase }: { phase: StudioProjectCard["phase"] }) {
   return (
@@ -42,13 +38,23 @@ function PhaseBadge({ phase }: { phase: StudioProjectCard["phase"] }) {
 }
 
 function ProjectGridCard({ project }: { project: StudioProjectCard }) {
+  const hasNotification = (project.notificationCount ?? 0) > 0;
   return (
     <Link
       href={studioProjectHref(project.id)}
-      className="group flex flex-col rounded-2xl border border-zinc-800 bg-zinc-900/40 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70"
+      className={`group flex flex-col rounded-2xl border bg-zinc-900/40 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70 ${
+        hasNotification
+          ? "border-orange-500/50 ring-1 ring-orange-500/25"
+          : "border-zinc-800"
+      }`}
     >
       <div className="relative aspect-[16/10] overflow-hidden rounded-t-2xl bg-zinc-800">
         <PhaseBadge phase={project.phase} />
+        {hasNotification && (
+          <span className="absolute right-2 top-2 z-10 rounded-md bg-orange-500/90 px-2 py-0.5 text-[10px] font-semibold text-zinc-950">
+            新着 {project.notificationCount}
+          </span>
+        )}
         <Image
           src={project.image}
           alt={project.title}
@@ -99,17 +105,29 @@ function ProjectGridCard({ project }: { project: StudioProjectCard }) {
 }
 
 function ProjectListRow({ project }: { project: StudioProjectCard }) {
+  const hasNotification = (project.notificationCount ?? 0) > 0;
   return (
     <Link
       href={studioProjectHref(project.id)}
-      className="flex gap-4 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70 sm:items-center"
+      className={`flex gap-4 rounded-2xl border bg-zinc-900/40 p-4 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70 sm:items-center ${
+        hasNotification
+          ? "border-orange-500/50 ring-1 ring-orange-500/25"
+          : "border-zinc-800"
+      }`}
     >
       <div className="relative size-20 shrink-0 overflow-hidden rounded-xl bg-zinc-800 sm:size-24">
         <PhaseBadge phase={project.phase} />
         <Image src={project.image} alt={project.title} fill className="object-cover" sizes="96px" />
       </div>
       <div className="min-w-0 flex-1">
-        <h2 className="font-semibold text-white">{project.title}</h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="font-semibold text-white">{project.title}</h2>
+          {hasNotification && (
+            <span className="rounded-md bg-orange-500/15 px-2 py-0.5 text-[10px] font-semibold text-orange-300 ring-1 ring-orange-500/30">
+              新着 {project.notificationCount}
+            </span>
+          )}
+        </div>
         <p className="mt-0.5 text-sm text-zinc-500">{project.genres}</p>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-400">
           <span>見届け人数 {formatStat(project.witnessCount)}</span>
@@ -201,13 +219,10 @@ export function StudioProjectsPage() {
           </Link>
         </div>
 
-        <StudioOwnedProjectsSection />
-
         <div className="border-t border-zinc-800/80 pt-6">
           <h2 className="text-sm font-semibold text-zinc-400">サンプル作品（プレビュー）</h2>
           <p className="mt-1 text-xs text-zinc-600">
-            タブ付き v0 画面です。P0 の「次に直すこと」は上の実データリンク、または
-            /projects/&#123;作品ID&#125;/studio から開いてください。
+            新着バッジ付きの作品は、未読の声やコメントがあります。オレンジ枠の作品を優先して確認してください。
           </p>
         </div>
 
@@ -262,34 +277,7 @@ export function StudioProjectsPage() {
             </label>
           </div>
 
-          <div className="flex items-center gap-1 self-end lg:self-auto">
-            <button
-              type="button"
-              onClick={() => setViewMode("grid")}
-              className={`rounded-lg p-2 transition-colors ${
-                viewMode === "grid"
-                  ? "bg-violet-600/20 text-violet-200 ring-1 ring-violet-500/30"
-                  : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
-              }`}
-              aria-label="グリッド表示"
-              aria-pressed={viewMode === "grid"}
-            >
-              <Grid3x3 className="size-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("list")}
-              className={`rounded-lg p-2 transition-colors ${
-                viewMode === "list"
-                  ? "bg-violet-600/20 text-violet-200 ring-1 ring-violet-500/30"
-                  : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
-              }`}
-              aria-label="リスト表示"
-              aria-pressed={viewMode === "list"}
-            >
-              <LayoutList className="size-5" />
-            </button>
-          </div>
+          <ViewModeToggle value={viewMode} onChange={setViewMode} />
         </div>
 
         <p className="text-sm text-zinc-500">

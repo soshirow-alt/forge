@@ -20,6 +20,8 @@ export type StudioProjectCard = {
   updatedLabel: string;
   version: string | null;
   progressPercent: number;
+  /** 未読の声・コメントなど（PJ一覧で強調） */
+  notificationCount?: number;
 };
 
 export const studioPhaseFilterOptions = [
@@ -53,6 +55,7 @@ export const studioProjectsAll: StudioProjectCard[] = [
     updatedLabel: "2日前",
     version: "v0.3.1",
     progressPercent: 68,
+    notificationCount: 3,
   },
   {
     id: "kioku-no-kakera",
@@ -66,6 +69,7 @@ export const studioProjectsAll: StudioProjectCard[] = [
     updatedLabel: "5日前",
     version: "v0.2.0",
     progressPercent: 52,
+    notificationCount: 1,
   },
   {
     id: "hikari-no-tabibito",

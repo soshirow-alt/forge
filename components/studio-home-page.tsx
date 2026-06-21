@@ -16,7 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import { StudioSectionHeader, StudioShell } from "@/components/studio-shell";
-import { StudioOwnedProjectsSection } from "@/components/studio-owned-projects-section";
+import { HorizontalCardPager } from "@/components/horizontal-card-pager";
 import { studioRankingSnippets } from "@/lib/studio-rankings-v0-mock-data";
 import {
   devHintCards,
@@ -53,7 +53,7 @@ function ProjectCard({
   return (
     <Link
       href={href}
-      className="group block w-64 shrink-0 snap-start rounded-2xl border border-zinc-800 bg-zinc-900/40 p-3 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70 sm:w-72"
+      className="group block w-full rounded-2xl border border-zinc-800 bg-zinc-900/40 p-3 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70"
     >
       <div className="relative overflow-hidden rounded-xl bg-zinc-800">
         <PhaseBadge phase={phase} />
@@ -93,7 +93,7 @@ function NewProjectCard() {
   return (
     <Link
       href="/submit"
-      className="flex w-64 shrink-0 snap-start flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/20 px-6 py-10 text-center transition-colors hover:border-violet-500/40 hover:bg-violet-600/5 sm:w-72"
+      className="flex w-full flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/20 px-6 py-10 text-center transition-colors hover:border-violet-500/40 hover:bg-violet-600/5"
     >
       <span className="flex size-12 items-center justify-center rounded-full bg-violet-600/20 text-violet-300 ring-1 ring-violet-500/30">
         <Plus className="size-6" aria-hidden="true" />
@@ -260,11 +260,17 @@ function DevHintCard({
 }
 
 export function StudioHomePage() {
+  const carouselItems = [
+    ...studioProjects.slice(0, 5).map((project) => ({
+      kind: "project" as const,
+      project,
+    })),
+    { kind: "new" as const },
+  ];
+
   return (
     <StudioShell activeNav="home">
       <div className="mx-auto max-w-7xl space-y-10">
-        <StudioOwnedProjectsSection />
-
         <section>
           <StudioSectionHeader
             title="サンプル作品（プレビュー）"
@@ -272,13 +278,24 @@ export function StudioHomePage() {
             icon={<Sparkles className="size-5 text-violet-400" aria-hidden="true" />}
           />
           <p className="mt-2 text-xs text-zinc-600">
-            実データの改善ループ Studio は、上の「あなたの作品 — 改善ループ」から開いてください。
+            UIプレビュー用のサンプルです。実データの管理はプロジェクト一覧から開けます。
           </p>
-          <div className="-mx-1 mt-5 flex gap-4 overflow-x-auto px-1 pb-2 snap-x snap-mandatory">
-            {studioProjects.slice(0, 5).map((project) => (
-              <ProjectCard key={project.id} project={project} href={studioProjectHref(project.id)} />
-            ))}
-            <NewProjectCard />
+          <div className="mt-5 px-2">
+            <HorizontalCardPager
+              items={carouselItems}
+              getKey={(item) => (item.kind === "new" ? "__new__" : item.project.id)}
+              pageSize={3}
+              renderItem={(item) =>
+                item.kind === "new" ? (
+                  <NewProjectCard />
+                ) : (
+                  <ProjectCard
+                    project={item.project}
+                    href={studioProjectHref(item.project.id)}
+                  />
+                )
+              }
+            />
           </div>
         </section>
 

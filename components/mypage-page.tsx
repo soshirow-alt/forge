@@ -1,5 +1,7 @@
 "use client";
 
+import { ListControlsBar } from "@/components/list-controls-bar";
+import { ViewModeToggle, type ViewMode } from "@/components/view-mode-toggle";
 import {
   AchievementsTabPanel,
   FeedbackTabPanel,
@@ -11,29 +13,31 @@ import {
   MyPageTabs,
   PlayerShell,
   SavedBadge,
-  SortDropdown,
 } from "@/components/player-shell";
 import {
   genreFilters,
   playHistoryFilterTabs,
+  playHistorySortOptions,
   PLAY_HISTORY_TOTAL,
   playHistoryGames,
   playHistorySidebarFilters,
   playHistorySummary,
   savedGames,
+  savedQuickFilters,
+  savedSortOptions,
+  savedSummary,
   supportedCreators,
   witnessingGames,
   witnessingQuickFilters,
+  witnessingSortOptions,
 } from "@/lib/mypage-v0-mock-data";
 import { gameDetailHrefFromTitle } from "@/lib/game-detail-v0-mock-data";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import {
   Check,
   ChevronDown,
-  LayoutGrid,
-  List,
   MessageSquare,
   MoreVertical,
   Pencil,
@@ -80,6 +84,24 @@ const playHistoryTagClass = {
 } as const;
 
 function PlayHistoryTabPanel() {
+  const [activeFilter, setActiveFilter] = useState<(typeof playHistoryFilterTabs)[number]["id"]>(
+    playHistoryFilterTabs[0].id,
+  );
+  const [sortId, setSortId] = useState<(typeof playHistorySortOptions)[number]["id"]>(
+    playHistorySortOptions[0].id,
+  );
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+
+  const filteredGames = useMemo(() => {
+    let list = [...playHistoryGames];
+    if (sortId === "title-asc") {
+      list.sort((a, b) => a.title.localeCompare(b.title, "ja"));
+    } else if (sortId === "played-asc") {
+      list.reverse();
+    }
+    return list;
+  }, [sortId]);
+
   return (
     <div className="mt-8 flex flex-col gap-8 xl:flex-row">
       <div className="min-w-0 flex-1">
@@ -89,12 +111,13 @@ function PlayHistoryTabPanel() {
         </header>
 
         <div className="mt-6 flex flex-wrap gap-2">
-          {playHistoryFilterTabs.map((filter, index) => (
+          {playHistoryFilterTabs.map((filter) => (
             <button
               key={filter.id}
               type="button"
+              onClick={() => setActiveFilter(filter.id)}
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:text-sm ${
-                index === 0
+                activeFilter === filter.id
                   ? "bg-violet-600 text-white"
                   : "border border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
               }`}
@@ -105,28 +128,32 @@ function PlayHistoryTabPanel() {
           ))}
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <SortDropdown label="プレイ日時：新しい順" />
-          <div className="flex rounded-lg border border-zinc-800 p-0.5">
-            <button
-              type="button"
-              className="rounded-md bg-violet-600 p-2 text-white"
-              aria-label="リスト表示"
-            >
-              <List className="size-4" />
-            </button>
-            <button
-              type="button"
-              className="rounded-md p-2 text-zinc-500 transition-colors hover:text-zinc-300"
-              aria-label="グリッド表示"
-            >
-              <LayoutGrid className="size-4" />
-            </button>
-          </div>
+        <div className="mt-4">
+          <ListControlsBar
+            sortId={sortId}
+            sortOptions={playHistorySortOptions}
+            onSortChange={setSortId}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
         </div>
 
+        {viewMode === "grid" ? (
+          <ul className="mt-6 grid gap-4 sm:grid-cols-2">
+            {filteredGames.map((game) => (
+              <li
+                key={game.title}
+                className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4"
+              >
+                <GameThumbnail src={game.image} alt={game.title} className="w-full aspect-video" />
+                <h3 className="mt-3 font-semibold text-white">{game.title}</h3>
+                <p className="mt-1 text-xs text-zinc-500">最終プレイ {game.lastPlay}</p>
+              </li>
+            ))}
+          </ul>
+        ) : (
         <ul className="mt-6 space-y-4">
-          {playHistoryGames.map((game) => (
+          {filteredGames.map((game) => (
             <li
               key={game.title}
               className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:p-5"
@@ -227,10 +254,11 @@ function PlayHistoryTabPanel() {
             </li>
           ))}
         </ul>
+        )}
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm text-zinc-500">
           <p>
-            {PLAY_HISTORY_TOTAL}件中 1–{playHistoryGames.length}件
+            {PLAY_HISTORY_TOTAL}件中 1–{filteredGames.length}件
           </p>
           <div className="flex items-center gap-1">
             <button
@@ -339,6 +367,19 @@ function PlayHistoryTabPanel() {
 }
 
 function WitnessingTabPanel() {
+  const [sortId, setSortId] = useState<(typeof witnessingSortOptions)[number]["id"]>(
+    witnessingSortOptions[0].id,
+  );
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+
+  const sortedGames = useMemo(() => {
+    const list = [...witnessingGames];
+    if (sortId === "title-asc") {
+      list.sort((a, b) => a.title.localeCompare(b.title, "ja"));
+    }
+    return list;
+  }, [sortId]);
+
   return (
     <div className="mt-8 flex flex-col gap-8 xl:flex-row">
       <div className="min-w-0 flex-1">
@@ -351,11 +392,34 @@ function WitnessingTabPanel() {
               あなたが声を届けた作品の変化を追いかけています。
             </p>
           </div>
-          <SortDropdown />
         </header>
 
+        <div className="mt-6">
+          <ListControlsBar
+            sortId={sortId}
+            sortOptions={witnessingSortOptions}
+            onSortChange={setSortId}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
+        </div>
+
+        {viewMode === "grid" ? (
+          <ul className="mt-8 grid gap-4 sm:grid-cols-2">
+            {sortedGames.map((game) => (
+              <li
+                key={game.title}
+                className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4"
+              >
+                <GameThumbnail src={game.image} alt={game.title} className="w-full aspect-video" />
+                <h3 className="mt-3 text-lg font-semibold text-white">{game.title}</h3>
+                <p className="mt-2 text-sm text-zinc-400">{game.change}</p>
+              </li>
+            ))}
+          </ul>
+        ) : (
         <ul className="mt-8 space-y-4">
-          {witnessingGames.map((game) => (
+          {sortedGames.map((game) => (
             <li
               key={game.title}
               className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:p-5"
@@ -396,6 +460,7 @@ function WitnessingTabPanel() {
             </li>
           ))}
         </ul>
+        )}
       </div>
 
       <aside className="w-full shrink-0 space-y-6 xl:w-72">
@@ -457,45 +522,159 @@ function WitnessingTabPanel() {
 }
 
 function SavedTabPanel() {
+  const [activeFilter, setActiveFilter] = useState<(typeof savedQuickFilters)[number]["id"]>(
+    savedQuickFilters[0].id,
+  );
+  const [sortId, setSortId] = useState<(typeof savedSortOptions)[number]["id"]>(
+    savedSortOptions[0].id,
+  );
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+
+  const sortedGames = useMemo(() => {
+    const list = [...savedGames];
+    if (sortId === "title-asc") {
+      list.sort((a, b) => a.title.localeCompare(b.title, "ja"));
+    }
+    return list;
+  }, [sortId]);
+
   return (
-    <div className="mt-8">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+    <div className="mt-8 flex flex-col gap-8 xl:flex-row">
+      <div className="min-w-0 flex-1">
+        <header>
           <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">保存作品</h1>
           <p className="mt-2 text-sm text-zinc-400">
             あとでプレイしたり、追いかけたい作品を保存できます。
           </p>
-        </div>
-        <SortDropdown />
-      </header>
+        </header>
 
-      <ul className="mt-8 space-y-3">
-        {savedGames.map((game) => (
-          <li
-            key={game.title}
-            className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:p-5"
-          >
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <GameThumbnail src={game.image} alt={game.title} />
-              <div className="min-w-0 flex-1">
-                <h3 className="text-lg font-semibold text-white">{game.title}</h3>
+        <div className="mt-6 flex flex-wrap gap-2">
+          {savedQuickFilters.map((filter) => (
+            <button
+              key={filter.id}
+              type="button"
+              onClick={() => setActiveFilter(filter.id)}
+              className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:text-sm ${
+                activeFilter === filter.id
+                  ? "bg-violet-600 text-white"
+                  : "border border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
+              }`}
+            >
+              {filter.label}
+              <span className="ml-1 opacity-70">{filter.count}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-4">
+          <ListControlsBar
+            sortId={sortId}
+            sortOptions={savedSortOptions}
+            onSortChange={setSortId}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
+        </div>
+
+        {viewMode === "grid" ? (
+          <ul className="mt-8 grid gap-4 sm:grid-cols-2">
+            {sortedGames.map((game) => (
+              <li
+                key={game.title}
+                className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4"
+              >
+                <GameThumbnail src={game.image} alt={game.title} className="w-full aspect-video" />
+                <h3 className="mt-3 text-lg font-semibold text-white">{game.title}</h3>
                 <p className="mt-1 text-sm text-zinc-500">開発者： {game.developer}</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {game.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-md border border-zinc-700/80 bg-zinc-800/60 px-2.5 py-1 text-xs text-zinc-400"
-                    >
-                      {tag}
-                    </span>
-                  ))}
+                <div className="mt-3">
+                  <SavedBadge />
                 </div>
-              </div>
-              <SavedBadge />
-            </div>
-          </li>
-        ))}
-      </ul>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <ul className="mt-8 space-y-3">
+            {sortedGames.map((game) => (
+              <li
+                key={game.title}
+                className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:p-5"
+              >
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <GameThumbnail src={game.image} alt={game.title} />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-lg font-semibold text-white">{game.title}</h3>
+                    <p className="mt-1 text-sm text-zinc-500">開発者： {game.developer}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {game.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-md border border-zinc-700/80 bg-zinc-800/60 px-2.5 py-1 text-xs text-zinc-400"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <SavedBadge />
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <aside className="w-full shrink-0 space-y-6 xl:w-72">
+        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
+          <h2 className="text-sm font-semibold text-white">保存サマリー</h2>
+          <ul className="mt-4 space-y-3">
+            <li className="flex items-center justify-between text-sm">
+              <span className="text-zinc-500">保存作品</span>
+              <span className="font-medium text-zinc-200">{savedSummary.total}</span>
+            </li>
+            <li className="flex items-center justify-between text-sm">
+              <span className="text-zinc-500">あとでプレイ</span>
+              <span className="font-medium text-zinc-200">{savedSummary.later}</span>
+            </li>
+            <li className="flex items-center justify-between text-sm">
+              <span className="text-zinc-500">見届け候補</span>
+              <span className="font-medium text-zinc-200">{savedSummary.witnessing}</span>
+            </li>
+            <li className="flex items-center justify-between text-sm">
+              <span className="text-zinc-500">更新あり</span>
+              <span className="font-medium text-zinc-200">{savedSummary.withUpdate}</span>
+            </li>
+          </ul>
+        </section>
+
+        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
+          <h2 className="text-sm font-semibold text-white">クイックフィルター</h2>
+          <ul className="mt-4 space-y-2">
+            {savedQuickFilters.map((filter) => (
+              <li key={filter.id}>
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter(filter.id)}
+                  className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                    activeFilter === filter.id
+                      ? "bg-violet-600/15 text-violet-200"
+                      : "text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200"
+                  }`}
+                >
+                  <span>{filter.label}</span>
+                  <span className="text-xs text-zinc-500">{filter.count}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
+          <h2 className="text-sm font-semibold text-white">保存作品とは？</h2>
+          <p className="mt-3 text-sm leading-relaxed text-zinc-500">
+            気になった作品をあとで遊ぶためにストックできます。見届け開始前の候補リストとしても使えます。
+          </p>
+        </section>
+      </aside>
     </div>
   );
 }

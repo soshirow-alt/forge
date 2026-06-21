@@ -1,22 +1,26 @@
 "use client";
 
+import { ListControlsBar } from "@/components/list-controls-bar";
+import { type ViewMode } from "@/components/view-mode-toggle";
 import {
   GameThumbnail,
-  SortDropdown,
 } from "@/components/player-shell";
 import {
   achievementCategories,
   achievementProgress,
+  achievementSortOptions,
   allAchievements,
   FEEDBACK_HISTORY_TOTAL,
   feedbackEntries,
   feedbackFilterTabs,
   feedbackSidebarFilters,
+  feedbackSortOptions,
   feedbackStats,
   FOLLOWING_TOTAL,
   followingAboutPoints,
   followingDevelopers,
   followingFilterTabs,
+  followingSortOptions,
   recentAchievements,
   recentFollowing,
 } from "@/lib/mypage-v0-mock-data";
@@ -25,12 +29,11 @@ import {
   ChevronDown,
   ChevronRight,
   Heart,
-  LayoutGrid,
-  List,
   Send,
   Trophy,
   Users,
 } from "lucide-react";
+import { useMemo, useState } from "react";
 
 function TabPaginationFooter({ total, shown }: { total: number; shown: number }) {
   return (
@@ -76,6 +79,13 @@ function TabPaginationFooter({ total, shown }: { total: number; shown: number })
 }
 
 export function FeedbackTabPanel() {
+  const [sortId, setSortId] = useState<(typeof feedbackSortOptions)[number]["id"]>(
+    feedbackSortOptions[0].id,
+  );
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+
+  const sortedEntries = useMemo(() => [...feedbackEntries], [sortId]);
+
   return (
     <div className="mt-8 flex flex-col gap-8 xl:flex-row">
       <div className="min-w-0 flex-1">
@@ -105,28 +115,37 @@ export function FeedbackTabPanel() {
           ))}
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <SortDropdown label="新しい順" />
-          <div className="flex rounded-lg border border-zinc-800 p-0.5">
-            <button
-              type="button"
-              className="rounded-md bg-violet-600 p-2 text-white"
-              aria-label="リスト表示"
-            >
-              <List className="size-4" />
-            </button>
-            <button
-              type="button"
-              className="rounded-md p-2 text-zinc-500 transition-colors hover:text-zinc-300"
-              aria-label="グリッド表示"
-            >
-              <LayoutGrid className="size-4" />
-            </button>
-          </div>
+        <div className="mt-4">
+          <ListControlsBar
+            sortId={sortId}
+            sortOptions={feedbackSortOptions}
+            onSortChange={setSortId}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
         </div>
 
+        {viewMode === "grid" ? (
+          <ul className="mt-6 grid gap-4 sm:grid-cols-2">
+            {sortedEntries.map((entry) => (
+              <li
+                key={entry.id}
+                className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4"
+              >
+                <GameThumbnail src={entry.image} alt={entry.game} className="w-full aspect-video" />
+                <h3 className="mt-3 font-semibold text-white">{entry.game}</h3>
+                <p className="mt-1 text-xs text-zinc-500">
+                  {entry.version} · {entry.timestamp}
+                </p>
+                <p className="mt-2 line-clamp-2 text-sm text-zinc-400">
+                  {entry.type === "free" ? entry.content : entry.choices?.[0]?.answer}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
         <ul className="mt-6 space-y-4">
-          {feedbackEntries.map((entry) => (
+          {sortedEntries.map((entry) => (
             <li
               key={entry.id}
               className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:p-5"
@@ -196,8 +215,9 @@ export function FeedbackTabPanel() {
             </li>
           ))}
         </ul>
+        )}
 
-        <TabPaginationFooter total={FEEDBACK_HISTORY_TOTAL} shown={feedbackEntries.length} />
+        <TabPaginationFooter total={FEEDBACK_HISTORY_TOTAL} shown={sortedEntries.length} />
       </div>
 
       <aside className="w-full shrink-0 space-y-6 xl:w-72">
@@ -254,6 +274,12 @@ export function FeedbackTabPanel() {
 
 export function AchievementsTabPanel() {
   const inProgress = allAchievements.filter((item) => !item.earned);
+  const [sortId, setSortId] = useState<(typeof achievementSortOptions)[number]["id"]>(
+    achievementSortOptions[0].id,
+  );
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+
+  const sortedAchievements = useMemo(() => [...allAchievements], [sortId]);
 
   return (
     <div className="mt-8 space-y-8">
@@ -325,7 +351,6 @@ export function AchievementsTabPanel() {
       <section>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold text-white">すべての実績</h2>
-          <SortDropdown label="進行状況順" />
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
@@ -344,8 +369,55 @@ export function AchievementsTabPanel() {
           ))}
         </div>
 
+        <div className="mt-4">
+          <ListControlsBar
+            sortId={sortId}
+            sortOptions={achievementSortOptions}
+            onSortChange={setSortId}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
+        </div>
+
+        {viewMode === "list" ? (
+          <ul className="mt-6 space-y-3">
+            {sortedAchievements.map((item) => (
+              <li
+                key={item.id}
+                className={`rounded-2xl border p-4 sm:p-5 ${
+                  item.earned
+                    ? "border-violet-500/30 bg-violet-500/5"
+                    : "border-zinc-800/80 bg-zinc-900/40"
+                }`}
+              >
+                <div className="flex gap-4">
+                  <span
+                    className={`flex size-12 shrink-0 items-center justify-center rounded-xl text-2xl ${
+                      item.earned ? "bg-violet-500/20" : "bg-zinc-800 grayscale"
+                    }`}
+                    role="img"
+                    aria-hidden="true"
+                  >
+                    {item.emoji}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-semibold text-white">{item.title}</h3>
+                      {item.earned && (
+                        <span className="rounded-md bg-violet-500/20 px-2 py-0.5 text-[10px] font-medium text-violet-300">
+                          獲得済み
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-sm text-zinc-500">{item.description}</p>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          {allAchievements.map((item) => (
+          {sortedAchievements.map((item) => (
             <div
               key={item.id}
               className={`rounded-2xl border p-4 sm:p-5 ${
@@ -401,6 +473,7 @@ export function AchievementsTabPanel() {
             </div>
           ))}
         </div>
+        )}
 
         {inProgress.length > 0 && (
           <p className="mt-6 text-center text-xs text-zinc-600">
@@ -413,6 +486,13 @@ export function AchievementsTabPanel() {
 }
 
 export function FollowingTabPanel() {
+  const [sortId, setSortId] = useState<(typeof followingSortOptions)[number]["id"]>(
+    followingSortOptions[0].id,
+  );
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+
+  const sortedDevelopers = useMemo(() => [...followingDevelopers], [sortId]);
+
   return (
     <div className="mt-8 flex flex-col gap-8 xl:flex-row">
       <div className="min-w-0 flex-1">
@@ -448,11 +528,47 @@ export function FollowingTabPanel() {
         </div>
 
         <div className="mt-4">
-          <SortDropdown label="フォローした順" />
+          <ListControlsBar
+            sortId={sortId}
+            sortOptions={followingSortOptions}
+            onSortChange={setSortId}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
         </div>
 
+        {viewMode === "grid" ? (
+          <ul className="mt-6 grid gap-4 sm:grid-cols-2">
+            {sortedDevelopers.map((dev) => (
+              <li
+                key={dev.id}
+                className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-zinc-300">
+                    {dev.initial}
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-white">{dev.name}</h3>
+                    <p className="text-xs text-zinc-500">
+                      フォロワー {dev.followers.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 flex gap-3 rounded-xl border border-zinc-800/80 bg-zinc-950/50 p-3">
+                  <GameThumbnail
+                    src={dev.game.image}
+                    alt={dev.game.title}
+                    className="size-14 shrink-0"
+                  />
+                  <p className="text-sm font-medium text-white">{dev.game.title}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
         <ul className="mt-6 space-y-4">
-          {followingDevelopers.map((dev) => (
+          {sortedDevelopers.map((dev) => (
             <li
               key={dev.id}
               className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:p-5"
@@ -521,6 +637,7 @@ export function FollowingTabPanel() {
             </li>
           ))}
         </ul>
+        )}
 
         <button
           type="button"

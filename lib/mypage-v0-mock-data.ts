@@ -62,6 +62,42 @@ export const savedGames = [
   },
 ] as const;
 
+export const savedSortOptions = [
+  { id: "saved-desc", label: "保存日が新しい順" },
+  { id: "title-asc", label: "タイトル順" },
+] as const;
+
+export type SavedSortId = (typeof savedSortOptions)[number]["id"];
+
+export const savedQuickFilters = [
+  { id: "all", label: "すべて", count: 5 },
+  { id: "later", label: "あとでプレイ", count: 3 },
+  { id: "witnessing", label: "見届け候補", count: 2 },
+  { id: "update", label: "更新あり", count: 1 },
+] as const;
+
+export const savedSummary = {
+  total: 5,
+  later: 3,
+  witnessing: 2,
+  withUpdate: 1,
+} as const;
+
+export const witnessingSortOptions = [
+  { id: "updated-desc", label: "更新が新しい順" },
+  { id: "title-asc", label: "タイトル順" },
+] as const;
+
+export type WitnessingSortId = (typeof witnessingSortOptions)[number]["id"];
+
+export const playHistorySortOptions = [
+  { id: "played-desc", label: "プレイ日時：新しい順" },
+  { id: "played-asc", label: "プレイ日時：古い順" },
+  { id: "title-asc", label: "タイトル順" },
+] as const;
+
+export type PlayHistorySortId = (typeof playHistorySortOptions)[number]["id"];
+
 export const witnessingQuickFilters = [
   { label: "更新があった作品", count: 4 },
   { label: "まもなく更新されそう", count: 2 },
@@ -292,6 +328,14 @@ export const feedbackFilterTabs = [
   { id: "choice", label: "選択式", count: 16 },
 ] as const;
 
+export const feedbackSortOptions = [
+  { id: "newest", label: "新しい順" },
+  { id: "oldest", label: "古い順" },
+  { id: "game-asc", label: "作品名順" },
+] as const;
+
+export type FeedbackSortId = (typeof feedbackSortOptions)[number]["id"];
+
 export type FeedbackEntry = {
   id: string;
   game: string;
@@ -436,6 +480,14 @@ export const achievementCategories = [
   "その他",
 ] as const;
 
+export const achievementSortOptions = [
+  { id: "progress", label: "進行状況順" },
+  { id: "earned-desc", label: "獲得日が新しい順" },
+  { id: "title-asc", label: "タイトル順" },
+] as const;
+
+export type AchievementSortId = (typeof achievementSortOptions)[number]["id"];
+
 export type AchievementItem = {
   id: string;
   title: string;
@@ -571,6 +623,14 @@ export const followingFilterTabs = [
   { id: "developing", label: "開発中", count: 18 },
   { id: "released", label: "完成品あり", count: 5 },
 ] as const;
+
+export const followingSortOptions = [
+  { id: "followed-desc", label: "フォローした順" },
+  { id: "name-asc", label: "名前順" },
+  { id: "followers-desc", label: "フォロワー数順" },
+] as const;
+
+export type FollowingSortId = (typeof followingSortOptions)[number]["id"];
 
 export type FollowingDeveloper = {
   id: string;

@@ -114,9 +114,6 @@ export function StudioShell({
             <Link href="/studio/profile" className={navLinkClass(activeNav === "mypage")}>
               マイページ
             </Link>
-            <Link href="/studio/notifications" className={navLinkClass(activeNav === "notifications")}>
-              通知
-            </Link>
           </div>
 
           <SidebarDivider />

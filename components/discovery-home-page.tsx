@@ -1,5 +1,6 @@
 "use client";
 
+import { HorizontalCardPager } from "@/components/horizontal-card-pager";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -42,7 +43,7 @@ function HorizontalGameCard({
   rank?: number;
 }) {
   return (
-    <Link href={gameDetailHref(game.id)} className="block w-56 shrink-0 snap-start sm:w-60">
+    <Link href={gameDetailHref(game.id)} className="block w-full">
       <article>
       <div className="relative">
         {rank !== undefined && (
@@ -173,28 +174,39 @@ export function DiscoveryHomePage() {
 
         <section>
           <SectionHeader title="最近更新された作品" href="/search" />
-          <div className="-mx-1 mt-4 flex gap-4 overflow-x-auto px-1 pb-2 snap-x snap-mandatory">
-            {recentlyUpdatedGames.map((game) => (
-              <HorizontalGameCard key={game.id} game={game} />
-            ))}
+          <div className="mt-4 px-2">
+            <HorizontalCardPager
+              items={[...recentlyUpdatedGames]}
+              getKey={(game) => game.id}
+              pageSize={4}
+              renderItem={(game) => <HorizontalGameCard game={game} />}
+            />
           </div>
         </section>
 
         <section>
           <SectionHeader title="今週人気の作品" href="/search" />
-          <div className="-mx-1 mt-4 flex gap-4 overflow-x-auto px-1 pb-2 snap-x snap-mandatory">
-            {popularGames.map((game, index) => (
-              <HorizontalGameCard key={game.id} game={game} rank={index + 1} />
-            ))}
+          <div className="mt-4 px-2">
+            <HorizontalCardPager
+              items={popularGames.map((game, index) => ({ game, rank: index + 1 }))}
+              getKey={({ game }) => game.id}
+              pageSize={4}
+              renderItem={({ game, rank }) => (
+                <HorizontalGameCard game={game} rank={rank} />
+              )}
+            />
           </div>
         </section>
 
         <section>
           <SectionHeader title="新着作品" href="/search" />
-          <div className="-mx-1 mt-4 flex gap-4 overflow-x-auto px-1 pb-2 snap-x snap-mandatory">
-            {newGames.map((game) => (
-              <HorizontalGameCard key={game.id} game={game} />
-            ))}
+          <div className="mt-4 px-2">
+            <HorizontalCardPager
+              items={[...newGames]}
+              getKey={(game) => game.id}
+              pageSize={4}
+              renderItem={(game) => <HorizontalGameCard game={game} />}
+            />
           </div>
         </section>
       </div>
