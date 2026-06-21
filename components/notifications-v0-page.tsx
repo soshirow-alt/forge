@@ -178,12 +178,24 @@ export function NotificationsV0Page() {
     <PlayerShell activeNav="notifications" notificationBadge={unreadCount}>
       <div className="mx-auto max-w-3xl">
         <header>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-            <Bell className="size-7 text-violet-400" aria-hidden="true" />
-            通知一覧
-          </h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              <Bell className="size-7 text-violet-400" aria-hidden="true" />
+              プレイヤー通知
+            </h1>
+            <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-xs font-medium text-violet-200">
+              Player
+            </span>
+          </div>
           <p className="mt-2 text-sm text-zinc-400">
-            あなたに関係のある最新の通知をまとめています。
+            フォロー作品の更新、あなたのフィードバックへの反応、実績など、プレイヤーとしてのお知らせです。
+          </p>
+          <p className="mt-2 text-xs text-zinc-600">
+            開発者向けの通知（届いたフィードバックの確認など）は{" "}
+            <Link href="/studio/notifications" className="text-violet-400 hover:text-violet-300">
+              Studio 通知
+            </Link>
+            です。
           </p>
         </header>
 

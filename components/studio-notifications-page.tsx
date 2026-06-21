@@ -57,8 +57,14 @@ export function StudioNotificationsPage() {
       <div className="mx-auto max-w-3xl">
         <header className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white">Studio 通知</h1>
-            <p className="mt-1 text-sm text-zinc-500">次にやることを知る</p>
+            <h1 className="text-2xl font-bold text-white">Studio 通知（開発者向け）</h1>
+            <p className="mt-1 text-sm text-zinc-500">
+              届いたフィードバック・版のプレイ状況など。プレイヤー向けは{" "}
+              <Link href="/notifications" className="text-violet-400 hover:text-violet-300">
+                プレイヤー通知
+              </Link>
+              です。
+            </p>
           </div>
           {unread > 0 && (
             <span className="rounded-full bg-violet-600/20 px-3 py-1 text-xs font-medium text-violet-200 ring-1 ring-violet-500/30">

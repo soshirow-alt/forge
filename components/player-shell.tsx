@@ -76,6 +76,21 @@ function subNavLinkClass(active: boolean) {
   }`;
 }
 
+function isPrimaryLinkActive(linkId: (typeof primaryLinks)[number]["id"], pathname: string): boolean {
+  switch (linkId) {
+    case "home":
+      return pathname === "/home";
+    case "search":
+      return pathname === "/search";
+    case "creator-search":
+      return pathname.startsWith("/search/creators");
+    case "ranking":
+      return pathname.startsWith("/rankings");
+    default:
+      return false;
+  }
+}
+
 function MypageSidebarGroup() {
   const pathname = usePathname();
   const isMypageProfile = pathname === "/mypage/profile";
@@ -86,15 +101,12 @@ function MypageSidebarGroup() {
       <Link href="/mypage" className={navLinkClass(isMypageHub)}>
         マイページ
       </Link>
-      <div className="flex gap-2 pl-3">
-        <span className="flex w-3 shrink-0 flex-col items-center pt-2" aria-hidden="true">
-          <span className="h-3 w-px bg-zinc-700" />
-          <span className="h-px w-3 -translate-x-1 bg-zinc-700" />
-        </span>
-        <Link href="/mypage/profile" className={`min-w-0 flex-1 ${subNavLinkClass(isMypageProfile)}`}>
-          マイプロフィール
-        </Link>
-      </div>
+      <Link
+        href="/mypage/profile"
+        className={`ml-4 block border-l-2 border-zinc-700/80 pl-4 ${subNavLinkClass(isMypageProfile)}`}
+      >
+        マイプロフィール
+      </Link>
     </div>
   );
 }
@@ -111,6 +123,7 @@ export function PlayerShell({
   notificationBadge?: number;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, hydrated, logout } = useAuth();
 
   function handleLogout() {
@@ -135,7 +148,11 @@ export function PlayerShell({
         <nav className="flex min-h-0 flex-1 flex-col px-3 py-4">
           <div className="space-y-1">
             {primaryLinks.map((link) => (
-              <Link key={link.id} href={link.href} className={navLinkClass(activeNav === link.id)}>
+              <Link
+                key={link.id}
+                href={link.href}
+                className={navLinkClass(isPrimaryLinkActive(link.id, pathname))}
+              >
                 {link.label}
               </Link>
             ))}
@@ -148,10 +165,10 @@ export function PlayerShell({
           <SidebarDivider />
 
           <div className="space-y-1">
-            <Link href="/settings" className={navLinkClass(activeNav === "settings")}>
+            <Link href="/settings" className={navLinkClass(pathname === "/settings")}>
               設定
             </Link>
-            <Link href="/guide" className={navLinkClass(activeNav === "guide")}>
+            <Link href="/guide" className={navLinkClass(pathname === "/guide")}>
               はじめてガイド
             </Link>
           </div>
