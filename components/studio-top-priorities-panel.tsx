@@ -145,7 +145,7 @@ export function StudioTopPrioritiesPanel({
         <div className="mt-3 rounded-lg border border-dashed border-zinc-800 bg-zinc-950/30 px-4 py-3">
           <p className="text-sm font-medium text-zinc-400">まだ次に直すことはありません</p>
           <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-            プレイヤーの声が届くと、ここに優先候補が最大3件表示されます。
+            プレイヤーのフィードバックが届くと、ここに優先候補が最大3件表示されます。
           </p>
         </div>
       ) : (

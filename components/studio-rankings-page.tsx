@@ -118,7 +118,7 @@ export function StudioRankingsPage() {
               今月もっとも作品を育てた開発者
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">
-              プレイヤーの声と応援によって、作品を大きく前進させた開発者を称えます。
+              プレイヤーのフィードバックと応援によって、作品を大きく前進させた開発者を称えます。
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <div className="inline-flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/40 px-3 py-2 text-sm text-zinc-300">
@@ -152,7 +152,7 @@ export function StudioRankingsPage() {
                   <th className="px-4 py-3">見届け人増</th>
                   <th className="px-4 py-3">作品フォロー増</th>
                   <th className="px-4 py-3">開発者フォロー増</th>
-                  <th className="px-4 py-3">声の増加</th>
+                  <th className="px-4 py-3">FBの増加</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/80">

@@ -17,6 +17,8 @@ export type GameDetailV0 = {
   lead: string;
   tags: string[];
   heroImage: string;
+  galleryImages: string[];
+  currentVersion: string;
   developer: {
     id: string;
     name: string;
@@ -45,6 +47,13 @@ const primaryGame: GameDetailV0 = {
   lead: "失われた星の記憶を探す、夜の森の旅。ランタンの光を頼りに、静かな物語を辿る。",
   tags: ["RPG", "Adventure", "Fantasy", "Single Play"],
   heroImage: "/images/landing/game-1.png",
+  galleryImages: [
+    "/images/landing/game-1.png",
+    "/images/landing/game-2.png",
+    "/images/landing/game-3.png",
+    "/images/landing/game-4.png",
+  ],
+  currentVersion: "v0.3.2",
   developer: {
     id: "sora-games",
     name: "Sora Games",
@@ -68,7 +77,7 @@ const primaryGame: GameDetailV0 = {
     { title: "シングルプレイ", description: "一人で没入できる、静かな夜の旅" },
   ],
   developerWorry:
-    "チュートリアルが長すぎると感じるプレイヤーがいるかもしれません。序盤の説明量と、最初の「旅の実感」が出るまでの tempo について、率直な声が欲しいです。",
+    "チュートリアルが長すぎると感じるプレイヤーがいるかもしれません。序盤の説明量と、最初の「旅の実感」が出るまでの tempo について、率直なフィードバックが欲しいです。",
   wantedVoices: [
     "チュートリアルの長さは適切でしたか？",
     "バトル（遭遇イベント）のテンポはどう感じましたか？",

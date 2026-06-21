@@ -1,19 +1,20 @@
 "use client";
 
-import { genreFilters } from "@/lib/mypage-v0-mock-data";
+import {
+  gameMatchesGenreFilter,
+  genreFilterOptions,
+  type GenreFilterOption,
+} from "@/lib/genre-filters-v0";
 import type { ReactNode } from "react";
 
-export type GenreFilter = (typeof genreFilters)[number];
+export type GenreFilter = GenreFilterOption;
 
 export function matchesGenre(
   selected: GenreFilter,
-  primaryGenre: string,
+  primaryGenre: string | undefined | null,
   extraTags: readonly string[] = [],
 ) {
-  if (selected === "すべて") {
-    return true;
-  }
-  return primaryGenre === selected || extraTags.includes(selected);
+  return gameMatchesGenreFilter(selected, primaryGenre, extraTags);
 }
 
 export function StatusFilterPills<T extends string>({
@@ -46,7 +47,7 @@ export function StatusFilterPills<T extends string>({
   );
 }
 
-function GenreChips({
+function GenreSelect({
   selected,
   onChange,
 }: {
@@ -54,22 +55,17 @@ function GenreChips({
   onChange: (genre: GenreFilter) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
-      {genreFilters.map((genre) => (
-        <button
-          key={genre}
-          type="button"
-          onClick={() => onChange(genre)}
-          className={`rounded-full px-3 py-1.5 text-xs transition-colors ${
-            selected === genre
-              ? "bg-white text-zinc-950"
-              : "border border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
-          }`}
-        >
+    <select
+      value={selected}
+      onChange={(event) => onChange(event.target.value as GenreFilter)}
+      className="w-full rounded-lg border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-sm text-zinc-200 focus:border-violet-500/40 focus:outline-none"
+    >
+      {genreFilterOptions.map((genre) => (
+        <option key={genre} value={genre}>
           {genre}
-        </button>
+        </option>
       ))}
-    </div>
+    </select>
   );
 }
 
@@ -94,7 +90,7 @@ export function MyPageFilterPanel({
         <div className={children ? "mt-4 border-t border-zinc-800/80 pt-4" : "mt-4"}>
           <p className="text-xs font-medium text-zinc-500">ジャンル</p>
           <div className="mt-3">
-            <GenreChips selected={selectedGenre} onChange={onGenreChange} />
+            <GenreSelect selected={selectedGenre} onChange={onGenreChange} />
           </div>
         </div>
       )}

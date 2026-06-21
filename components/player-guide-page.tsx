@@ -47,7 +47,7 @@ export function PlayerGuidePage() {
       <div className="mx-auto max-w-3xl">
         <h1 className="text-2xl font-bold text-white">はじめてガイド</h1>
         <p className="mt-2 text-sm leading-relaxed text-zinc-500">
-          Forge での遊び方 — 作品を見つけ、声を届け、育つ過程を一緒に楽しみましょう。
+          Forge での遊び方 — 作品を見つけ、フィードバックし、育つ過程を一緒に楽しみましょう。
         </p>
 
         <section className="mt-8">

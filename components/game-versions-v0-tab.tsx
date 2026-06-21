@@ -54,12 +54,10 @@ function VersionTimelineItem({
   entry,
   expanded,
   onToggle,
-  onPlay,
 }: {
   entry: GameVersionEntry;
   expanded: boolean;
   onToggle: () => void;
-  onPlay?: () => void;
 }) {
   const hasChanges = entry.changes.length > 0;
 
@@ -109,16 +107,6 @@ function VersionTimelineItem({
               />
             </button>
           )}
-          {onPlay && (
-            <button
-              type="button"
-              onClick={onPlay}
-              className="inline-flex items-center gap-1.5 text-sm text-zinc-400 transition-colors hover:text-violet-300"
-            >
-              <Play className="size-3.5" aria-hidden="true" />
-              この版でプレイ
-            </button>
-          )}
         </div>
       </div>
     </article>
@@ -128,11 +116,9 @@ function VersionTimelineItem({
 export function GameVersionsV0Tab({
   gameId,
   onPlayLatest,
-  onPlayVersion,
 }: {
   gameId: string;
   onPlayLatest?: () => void;
-  onPlayVersion?: (version: string) => void;
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -140,14 +126,6 @@ export function GameVersionsV0Tab({
   const stats = useMemo(() => getVersionStatsForGame(allEntries), [allEntries]);
   const latest = allEntries.find((e) => e.isLatest) ?? allEntries[0];
   const listEntries = latest ? allEntries.filter((e) => e.id !== latest.id) : allEntries;
-
-  const handlePlayVersion = (version: string) => {
-    if (onPlayVersion) {
-      onPlayVersion(version);
-      return;
-    }
-    onPlayLatest?.();
-  };
 
   return (
     <div className="space-y-8">
@@ -183,7 +161,6 @@ export function GameVersionsV0Tab({
             onToggle={() =>
               setExpandedId((current) => (current === entry.id ? null : entry.id))
             }
-            onPlay={() => handlePlayVersion(entry.version)}
           />
         ))}
         {listEntries.length === 0 && (

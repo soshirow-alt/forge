@@ -42,8 +42,8 @@ export const studioActivities: StudioActivityItem[] = [
   {
     id: "act-1",
     type: "voice",
-    title: "新しい声が届きました",
-    description: "「星の記憶」に 3件の新しい声が届いています",
+    title: "新しいフィードバックが届きました",
+    description: "「星の記憶」に 3件の新しいフィードバックが届いています",
     timeLabel: "2時間前",
     badge: 3,
   },
@@ -74,19 +74,19 @@ export const studioActivities: StudioActivityItem[] = [
   {
     id: "act-5",
     type: "first-voice",
-    title: "初声が届きました",
-    description: "「星の記憶」に初声が 1件届きました",
+    title: "初回フィードバックが届きました",
+    description: "「星の記憶」に初回フィードバックが 1件届きました",
     timeLabel: "2日前",
     badge: 1,
   },
 ];
 
 export const studioWeeklyStats: StudioWeeklyStat[] = [
-  { id: "new-voices", label: "新しい声", value: "7", delta: "先週比 +3" },
+  { id: "new-voices", label: "新しいフィードバック", value: "7", delta: "先週比 +3" },
   { id: "witness-growth", label: "見届け人増", value: "18", delta: "先週比 +6" },
   { id: "devlog-reactions", label: "Devlog反応", value: "24", delta: "先週比 +8" },
   { id: "play-count", label: "プレイ数", value: "156", delta: "先週比 +22" },
-  { id: "first-voices", label: "初声数", value: "9", delta: "先週比 +2" },
+  { id: "first-voices", label: "初回FB数", value: "9", delta: "先週比 +2" },
 ];
 
 export const nurtureCycleProgress = 72;
@@ -172,7 +172,7 @@ export const devHintCards: DevHintCard[] = [
   },
   {
     id: "hint-2",
-    title: "初声が集まりやすい Devlog の書き方",
+    title: "初回フィードバックが集まりやすい Devlog の書き方",
     tips: [
       "今回の版で試したいことを1つに絞る",
       "プレイヤーへの問いを版の意図とセットで書く",
@@ -183,7 +183,7 @@ export const devHintCards: DevHintCard[] = [
     id: "hint-3",
     title: "今週の Forge Tips",
     tips: [
-      "声は増やすより、届いた声を次の版に活かすサイクルを回す",
+      "フィードバックは増やすより、届いた内容を次の版に活かすサイクルを回す",
       "正式版はゴールではなく、育てた記録の区切りとして公開する",
     ],
   },

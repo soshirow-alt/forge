@@ -19,7 +19,7 @@ export function VoiceAdoptionStudioCount({
 
   return (
     <p className="text-sm text-violet-300">
-      あなたの声が反映された件数: <span className="font-semibold">{count}</span>
+      あなたのフィードバックが反映された件数: <span className="font-semibold">{count}</span>
       件
     </p>
   );

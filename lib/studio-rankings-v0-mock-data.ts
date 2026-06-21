@@ -194,7 +194,7 @@ export const studioDeveloperRankingMetrics = [
   { id: "witness", label: "見届け人の増加", weight: "40%", icon: "users", color: "text-emerald-400" },
   { id: "work-follow", label: "作品フォローの増加", weight: "25%", icon: "heart", color: "text-rose-400" },
   { id: "dev-follow", label: "開発者フォローの増加", weight: "15%", icon: "user-plus", color: "text-violet-400" },
-  { id: "voice", label: "声の増加", weight: "20%", icon: "message", color: "text-sky-400" },
+  { id: "voice", label: "FBの増加", weight: "20%", icon: "message", color: "text-sky-400" },
 ] as const;
 
 export function formatMonthOverMonth(delta: number): string {

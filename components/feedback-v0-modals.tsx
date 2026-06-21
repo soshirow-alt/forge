@@ -111,21 +111,12 @@ function ContextSidebar({ game }: { game: GameDetailV0 }) {
       <section className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4">
         <h3 className="text-sm font-semibold text-white">フィードバックについて</h3>
         <p className="mt-2 text-xs leading-relaxed text-zinc-500">
-          あなたの声は開発のヒントになります。公開され、コミュニティの参考にもなります。
+          あなたのフィードバックは開発のヒントになります。公開され、コミュニティの参考にもなります。
         </p>
       </section>
       <section className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4">
-        <h3 className="text-sm font-semibold text-white">開発者の今の悩み</h3>
+        <h3 className="text-sm font-semibold text-white">開発者が聞きたいこと</h3>
         <p className="mt-2 text-xs leading-relaxed text-zinc-400">{game.developerWorry}</p>
-        <button
-          type="button"
-          className="mt-3 rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200"
-        >
-          開発ログを見る
-        </button>
-      </section>
-      <section className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4">
-        <h3 className="text-sm font-semibold text-white">現在ほしい声</h3>
         <ul className="mt-3 space-y-2">
           {game.wantedVoices.map((voice) => (
             <li
@@ -137,6 +128,12 @@ function ContextSidebar({ game }: { game: GameDetailV0 }) {
             </li>
           ))}
         </ul>
+        <button
+          type="button"
+          className="mt-3 rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200"
+        >
+          開発ログを見る
+        </button>
       </section>
     </aside>
   );
@@ -306,7 +303,7 @@ export function FeedbackFormV0Modal({
   return (
     <ModalShell
       title="フィードバックを送る"
-      subtitle="あなたの声が、開発のヒントになります。"
+      subtitle="あなたのフィードバックが、開発のヒントになります。"
       onClose={onClose}
       size="xl"
     >
@@ -411,7 +408,7 @@ export function FeedbackSuccessV0Modal({
   onClose: () => void;
 }) {
   return (
-    <ModalShell title="声を届けました" subtitle={game.title} onClose={onClose} size="md">
+    <ModalShell title="フィードバックを送信しました" subtitle={game.title} onClose={onClose} size="md">
       <div className="space-y-5 px-5 py-6 text-center sm:px-6">
         <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-violet-600/15 text-violet-300">
           <MessageSquare className="size-7" aria-hidden="true" />

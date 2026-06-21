@@ -15,7 +15,7 @@ const valueProps = [
   {
     icon: MessageSquare,
     iconClass: "bg-violet-500/20 text-violet-300",
-    title: "プレイして、声を届ける",
+    title: "プレイして、フィードバックする",
     body: "あなたのフィードバックがゲームを進化させます。",
   },
   {
@@ -203,7 +203,7 @@ export function LandingPage() {
                 <span className="whitespace-nowrap">場所。</span>
               </h1>
               <div className="mt-6 space-y-1 text-base leading-relaxed text-zinc-300 sm:mt-8 sm:text-lg">
-                <p>プレイヤーの声が、次の物語をつくる。</p>
+                <p>プレイヤーのフィードバックが、次の物語をつくる。</p>
                 <p>開発者とプレイヤーが一緒に、</p>
                 <p>最高のゲーム体験を育てていくプラットフォーム。</p>
               </div>

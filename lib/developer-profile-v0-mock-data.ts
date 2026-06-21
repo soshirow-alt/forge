@@ -99,7 +99,7 @@ const soraProfile: DeveloperProfileV0 = {
   badges: [
     { id: "b1", label: "新規開発者", emoji: "🌱" },
     { id: "b2", label: "継続更新", emoji: "🔄" },
-    { id: "b3", label: "声を受け取る", emoji: "💬" },
+    { id: "b3", label: "フィードバックを受け取る", emoji: "💬" },
   ],
 };
 

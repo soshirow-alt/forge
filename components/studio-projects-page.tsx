@@ -78,7 +78,7 @@ function ProjectGridCard({ project }: { project: StudioProjectCard }) {
           <span className="inline-flex items-center gap-1.5">
             <MessageSquare className="size-3.5 shrink-0 text-violet-400" aria-hidden="true" />
             <span>
-              声の数 <span className="text-zinc-200">{formatStat(project.voiceCount)}</span>
+              フィードバック数 <span className="text-zinc-200">{formatStat(project.voiceCount)}</span>
             </span>
           </span>
         </div>
@@ -131,7 +131,7 @@ function ProjectListRow({ project }: { project: StudioProjectCard }) {
         <p className="mt-0.5 text-sm text-zinc-500">{project.genres}</p>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-400">
           <span>見届け人数 {formatStat(project.witnessCount)}</span>
-          <span>声の数 {formatStat(project.voiceCount)}</span>
+          <span>フィードバック数 {formatStat(project.voiceCount)}</span>
           <span>最新版 {project.version ?? "—"}</span>
           <span>最終更新 {project.updatedLabel}</span>
         </div>
@@ -222,7 +222,7 @@ export function StudioProjectsPage() {
         <div className="border-t border-zinc-800/80 pt-6">
           <h2 className="text-sm font-semibold text-zinc-400">サンプル作品（プレビュー）</h2>
           <p className="mt-1 text-xs text-zinc-600">
-            新着バッジ付きの作品は、未読の声やコメントがあります。オレンジ枠の作品を優先して確認してください。
+            新着バッジ付きの作品は、未読のフィードバックやコメントがあります。オレンジ枠の作品を優先して確認してください。
           </p>
         </div>
 

@@ -4,6 +4,7 @@ export type CommunityVoiceEntry = {
   id: string;
   kind: VoiceEntryKind;
   kindLabel: string;
+  version: string;
   postedAt: string;
   avatar: string;
   body: string;
@@ -44,17 +45,26 @@ export type FreeTextTheme = {
 };
 
 export const voiceStatsCards: VoiceStatsCard[] = [
-  { id: "total", label: "届いた声", value: "41", delta: "前月比 +24%" },
+  { id: "total", label: "届いたフィードバック", value: "41", delta: "前月比 +24%" },
   { id: "empathy", label: "共感された回数", value: "132", delta: "前月比 +18%" },
   { id: "answers", label: "質問への回答", value: "18", delta: "開発者の質問に回答" },
   { id: "free", label: "自由記述", value: "23", delta: "改善のヒントが集まっています" },
 ];
 
 export const voiceSubTabs = [
-  { id: "received", label: "届いた声" },
+  { id: "received", label: "届いたフィードバック" },
   { id: "by-question", label: "質問別の集計" },
   { id: "free-text", label: "自由記述の集約" },
 ] as const;
+
+export const voiceVersionFilters = [
+  { id: "all", label: "すべての版" },
+  { id: "v0.3.2", label: "v0.3.2（現行）" },
+  { id: "v0.3.0", label: "v0.3.0" },
+  { id: "v0.2.4", label: "v0.2.4" },
+] as const;
+
+export type VoiceVersionFilterId = (typeof voiceVersionFilters)[number]["id"];
 
 export type VoiceSubTabId = (typeof voiceSubTabs)[number]["id"];
 
@@ -77,6 +87,7 @@ export const communityVoices: CommunityVoiceEntry[] = [
     id: "v1",
     kind: "free",
     kindLabel: "自由記述",
+    version: "v0.3.2",
     postedAt: "2025/05/18 10:12",
     avatar: avatars[1],
     body: "夜の森の雰囲気がとても好きです。BGM とランタンの光の演出が世界観に入り込めました。序盤のチュートリアルはもう少し短くても良いかも。",
@@ -88,6 +99,7 @@ export const communityVoices: CommunityVoiceEntry[] = [
     id: "v2",
     kind: "choice",
     kindLabel: "質問への回答",
+    version: "v0.3.2",
     postedAt: "2025/05/17 21:34",
     avatar: avatars[2],
     body: "チュートリアルの長さ：やや長い。操作説明は分かりやすいですが、最初の「旅の実感」が出るまで少し時間がかかりました。",
@@ -99,6 +111,7 @@ export const communityVoices: CommunityVoiceEntry[] = [
     id: "v3",
     kind: "free",
     kindLabel: "自由記述",
+    version: "v0.3.2",
     postedAt: "2025/05/17 18:02",
     avatar: avatars[3],
     body: "戦闘（遭遇イベント）のテンポがちょうどよく、緊張感と探索のバランスが良い。ボス前の演出も好印象でした。",
@@ -110,6 +123,7 @@ export const communityVoices: CommunityVoiceEntry[] = [
     id: "v4",
     kind: "choice",
     kindLabel: "質問への回答",
+    version: "v0.3.2",
     postedAt: "2025/05/17 14:20",
     avatar: avatars[4],
     body: "バトル難易度：ちょうどよい。失敗してもやり直しやすく、ストーリーの没入を妨げませんでした。",
@@ -121,6 +135,7 @@ export const communityVoices: CommunityVoiceEntry[] = [
     id: "v5",
     kind: "free",
     kindLabel: "自由記述",
+    version: "v0.3.0",
     postedAt: "2025/05/16 22:11",
     avatar: avatars[0],
     body: "キャラクターとの会話シーンが印象的。選択肢の結果が後の展開に繋がっている感じがして、もう一度プレイしたくなりました。",
@@ -132,6 +147,7 @@ export const communityVoices: CommunityVoiceEntry[] = [
     id: "v6",
     kind: "free",
     kindLabel: "自由記述",
+    version: "v0.3.0",
     postedAt: "2025/05/16 09:45",
     avatar: avatars[2],
     body: "ピクセルアートとライティングの組み合わせが美しい。スクリーンショットを撮りたくなる場面が多かったです。",
@@ -143,6 +159,7 @@ export const communityVoices: CommunityVoiceEntry[] = [
     id: "v7",
     kind: "choice",
     kindLabel: "質問への回答",
+    version: "v0.3.2",
     postedAt: "2025/05/15 19:30",
     avatar: avatars[1],
     body: "ストーリーへの没入感：とても高い。途中で一度止めても、また続きが気になって戻ってきました。",
@@ -154,6 +171,7 @@ export const communityVoices: CommunityVoiceEntry[] = [
     id: "v8",
     kind: "free",
     kindLabel: "自由記述",
+    version: "v0.2.4",
     postedAt: "2025/05/15 11:08",
     avatar: avatars[4],
     body: "マップの迷いやすさは探索ゲーとしてはちょうどよい。ただ、最初の30分だけは目印をもう一つあると助かるかも。",
@@ -165,6 +183,7 @@ export const communityVoices: CommunityVoiceEntry[] = [
     id: "v9",
     kind: "choice",
     kindLabel: "質問への回答",
+    version: "v0.3.2",
     postedAt: "2025/05/14 20:55",
     avatar: avatars[3],
     body: "チュートリアルの長さ：ちょうどよい。説明を飛ばせるオプションがあると、2周目以降はさらに快適そう。",
@@ -176,6 +195,7 @@ export const communityVoices: CommunityVoiceEntry[] = [
     id: "v10",
     kind: "free",
     kindLabel: "自由記述",
+    version: "v0.2.4",
     postedAt: "2025/05/14 08:22",
     avatar: avatars[0],
     body: "短編ながら余韻が残る良い作品。開発中とのことなので、最終章の展開が楽しみです。",
@@ -187,6 +207,7 @@ export const communityVoices: CommunityVoiceEntry[] = [
     id: "v11",
     kind: "free",
     kindLabel: "自由記述",
+    version: "v0.2.4",
     postedAt: "2025/05/13 16:40",
     avatar: avatars[1],
     body: "UI のフォントとアイコンが統一されていて見やすい。インベントリ操作だけ、もう少しショートカットがあると嬉しい。",
@@ -198,6 +219,7 @@ export const communityVoices: CommunityVoiceEntry[] = [
     id: "v12",
     kind: "choice",
     kindLabel: "質問への回答",
+    version: "v0.2.4",
     postedAt: "2025/05/12 23:18",
     avatar: avatars[2],
     body: "バトルテンポ：やや速い。アクション好きには合うが、じっくり派は調整オプションがあるとうれしい。",
@@ -230,7 +252,7 @@ export const freeTextThemes: FreeTextTheme[] = [
     id: "ft4",
     theme: "ストーリー・キャラクター・選択肢",
     count: 9,
-    excerpt: "没入感・余韻・再プレイ意欲。会話シーンと分岐の手応えへの好意的な声。",
+    excerpt: "没入感・余韻・再プレイ意欲。会話シーンと分岐の手応えへの好意的なフィードバック。",
   },
   {
     id: "ft5",
@@ -254,7 +276,7 @@ export const aiSummaryBullets: AiSummaryBullet[] = [
   {
     id: "s3",
     tone: "positive",
-    text: "戦闘テンポ・爽快感への好意的な声",
+    text: "戦闘テンポ・爽快感への好意的なフィードバック",
   },
   {
     id: "s4",
@@ -332,6 +354,7 @@ export function createPreviewVoiceEntry(body: string): CommunityVoiceEntry {
     id: `session-${Date.now()}`,
     kind: "free",
     kindLabel: "自由記述",
+    version: "v0.3.2",
     postedAt: new Date().toLocaleString("ja-JP", {
       year: "numeric",
       month: "2-digit",
@@ -341,7 +364,7 @@ export function createPreviewVoiceEntry(body: string): CommunityVoiceEntry {
     }),
     avatar: avatars[0],
     body,
-    tags: ["あなたの声"],
+    tags: ["あなたのフィードバック"],
     empathyCount: 0,
     empathized: false,
   };

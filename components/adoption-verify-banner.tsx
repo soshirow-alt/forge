@@ -18,7 +18,7 @@ export function AdoptionVerifyBanner({
       className="mt-4 scroll-mt-24 rounded-xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-zinc-950/40 to-zinc-950/40 px-4 py-4 sm:px-5"
     >
       <p className="text-sm font-semibold text-violet-200">
-        あなたの声が、今回の更新に届いています
+        あなたのフィードバックが、今回の更新に届いています
       </p>
       <div className="mt-3 space-y-2 text-sm leading-relaxed text-zinc-400">
         <p>

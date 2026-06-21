@@ -33,7 +33,7 @@ const PAGE_SIZE = 5;
 const SORT_OPTIONS: { id: SearchSortId; label: string }[] = [
   { id: "recommended", label: "おすすめ順" },
   { id: "witness", label: "見届けが多い順" },
-  { id: "voices", label: "声が多い順" },
+  { id: "voices", label: "フィードバックが多い順" },
 ];
 
 function parseSort(param: string | null): SearchSortId {

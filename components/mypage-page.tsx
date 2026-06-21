@@ -21,7 +21,6 @@ import {
   SavedBadge,
 } from "@/components/player-shell";
 import {
-  genreFilters,
   playHistoryFilterTabs,
   playHistoryPeriodFilters,
   playHistorySortOptions,

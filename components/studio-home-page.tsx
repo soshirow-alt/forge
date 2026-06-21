@@ -72,7 +72,7 @@ function ProjectCard({
         </span>
         <span className="inline-flex items-center gap-1.5">
           <MessageSquare className="size-3.5 text-violet-400" aria-hidden="true" />
-          初声 {firstVoiceCount}
+          フィードバック {firstVoiceCount}
         </span>
       </div>
       <div className="mt-3 h-1 overflow-hidden rounded-full bg-zinc-800">
@@ -100,7 +100,7 @@ function NewProjectCard() {
       </span>
       <p className="mt-4 font-semibold text-zinc-200">新しい作品を投稿</p>
       <p className="mt-2 text-xs leading-relaxed text-zinc-500">
-        最初のプレイ可能版を公開して、声を集め始めましょう
+        最初のプレイ可能版を公開して、フィードバックを集め始めましょう
       </p>
     </Link>
   );

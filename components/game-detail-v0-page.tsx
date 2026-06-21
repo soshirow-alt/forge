@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { GameDetailHeroGallery } from "@/components/game-detail-hero-gallery";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo, useState } from "react";
 import {
@@ -47,7 +48,7 @@ type DetailTab = "overview" | "devlog" | "voices" | "versions";
 const tabs: { id: DetailTab; label: string }[] = [
   { id: "overview", label: "概要" },
   { id: "devlog", label: "開発ログ" },
-  { id: "voices", label: "みんなの声" },
+  { id: "voices", label: "みんなのフィードバック" },
   { id: "versions", label: "版の履歴" },
 ];
 
@@ -209,16 +210,7 @@ function GameDetailV0PageContent({ id }: { id: string }) {
 
           <section className="overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/30">
             <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-              <div className="relative min-h-[220px] lg:min-h-[320px]">
-                <Image
-                  src={game.heroImage}
-                  alt=""
-                  fill
-                  className="object-cover"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/80 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-transparent lg:to-[#0a0a0a]/40" />
-              </div>
+              <GameDetailHeroGallery images={game.galleryImages} />
 
               <div className="flex flex-col justify-center p-6 lg:p-8">
                 <div className="flex flex-wrap gap-2">
@@ -248,7 +240,7 @@ function GameDetailV0PageContent({ id }: { id: string }) {
                   />
                   <StatItem
                     icon={<MessageSquare className="size-4" aria-hidden="true" />}
-                    label="声"
+                    label="フィードバック"
                     value={game.voiceCount.toLocaleString()}
                   />
                   <StatItem
@@ -290,18 +282,6 @@ function GameDetailV0PageContent({ id }: { id: string }) {
             </button>
             <button
               type="button"
-              onClick={() => handleProtectedAction(() => setFollowing((value) => !value))}
-              className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
-                following
-                  ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
-                  : "border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-white"
-              }`}
-            >
-              <Heart className="size-4" aria-hidden="true" />
-              {following ? "フォロー中" : "フォロー"}
-            </button>
-            <button
-              type="button"
               onClick={() => handleProtectedAction(() => setSaved((value) => !value))}
               className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
                 saved
@@ -311,6 +291,18 @@ function GameDetailV0PageContent({ id }: { id: string }) {
             >
               <Bookmark className="size-4" aria-hidden="true" />
               {saved ? "保存済み" : "あとで遊ぶ"}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleProtectedAction(() => setFollowing((value) => !value))}
+              className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
+                following
+                  ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
+                  : "border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-white"
+              }`}
+            >
+              <Heart className="size-4" aria-hidden="true" />
+              {following ? "開発者フォロー中" : "開発者をフォロー"}
             </button>
           </div>
 
@@ -370,20 +362,10 @@ function GameDetailV0PageContent({ id }: { id: string }) {
 
               <div className="space-y-6">
                 <section className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-5 sm:p-6">
-                  <h2 className="text-base font-semibold text-white">開発者の今の悩み</h2>
+                  <h2 className="text-base font-semibold text-white">開発者が聞きたいこと</h2>
                   <p className="mt-3 text-sm leading-relaxed text-zinc-400">{game.developerWorry}</p>
-                  <button
-                    type="button"
-                    onClick={handleFeedback}
-                    className="mt-4 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
-                  >
-                    {hydrated && !isLoggedIn ? "ログインして声を届ける" : "声を届ける（フィードバック）"}
-                  </button>
-                </section>
-
-                <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
-                  <h2 className="text-base font-semibold text-white">現在ほしい声</h2>
-                  <ul className="mt-4 space-y-3">
+                  <h3 className="mt-5 text-sm font-medium text-zinc-300">回答してほしい項目</h3>
+                  <ul className="mt-3 space-y-3">
                     {game.wantedVoices.map((voice) => (
                       <li
                         key={voice}
@@ -394,6 +376,13 @@ function GameDetailV0PageContent({ id }: { id: string }) {
                       </li>
                     ))}
                   </ul>
+                  <button
+                    type="button"
+                    onClick={handleFeedback}
+                    className="mt-5 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
+                  >
+                    {hydrated && !isLoggedIn ? "ログインしてフィードバックする" : "フィードバックする"}
+                  </button>
                 </section>
               </div>
             </div>
@@ -408,6 +397,7 @@ function GameDetailV0PageContent({ id }: { id: string }) {
           {activeTab === "voices" && (
             <GameVoicesV0Tab
               gameId={resolveGameDetailId(id)}
+              currentVersion={game.currentVersion}
               refreshKey={voicesRefreshKey}
               onSendVoice={handleFeedback}
             />
@@ -444,7 +434,7 @@ function GameDetailV0PageContent({ id }: { id: string }) {
                   : "border-zinc-700 text-zinc-300 hover:border-zinc-600"
               }`}
             >
-              {following ? "フォロー中" : "フォローする"}
+              {following ? "開発者フォロー中" : "開発者をフォローする"}
             </button>
             <Link
               href={`/creators/${game.developer.id}`}

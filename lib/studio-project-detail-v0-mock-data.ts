@@ -136,7 +136,7 @@ export const studioAggregatedSections: StudioAggregatedSection[] = [
     title: "不満点",
     count: 3,
     percent: 7,
-    summary: "テンポが遅いという声が少数",
+    summary: "テンポが遅いというフィードバックが少数",
     interpretation: "全体の少数意見。優先度は中程度。",
   },
   {
@@ -154,14 +154,14 @@ export const studioDevlogItems: StudioDevlogItem[] = [
     id: "sd1",
     title: "序盤チュートリアルを短縮",
     date: "2025/06/12",
-    excerpt: "プレイヤーの声を反映し、最初の15分の導線を整理しました。",
+    excerpt: "プレイヤーのフィードバックを反映し、最初の15分の導線を整理しました。",
     status: "公開",
   },
   {
     id: "sd2",
     title: "森マップに目印を追加（下書き）",
     date: "2025/06/15",
-    excerpt: "道に迷いやすいという声への対応案をまとめています。",
+    excerpt: "道に迷いやすいというフィードバックへの対応案をまとめています。",
     status: "下書き",
   },
 ];
@@ -189,8 +189,8 @@ export const studioReleaseState: StudioReleaseState = {
 
 export const studioProjectTabs = [
   { id: "overview", label: "概要" },
-  { id: "voices-raw", label: "声を見る" },
-  { id: "voices-agg", label: "みんなの声" },
+  { id: "voices-raw", label: "フィードバックを見る" },
+  { id: "voices-agg", label: "みんなのフィードバック" },
   { id: "devlog", label: "Devlog" },
   { id: "versions", label: "バージョン" },
   { id: "release", label: "正式版" },

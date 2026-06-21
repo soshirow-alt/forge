@@ -115,7 +115,7 @@ function VoicesRawTab() {
       <StudioFilterPills options={voiceFilters} active={filter} onChange={setFilter} />
 
       <section>
-        <h3 className="text-sm font-semibold text-zinc-300">初声一覧</h3>
+        <h3 className="text-sm font-semibold text-zinc-300">フィードバック一覧</h3>
         <ul className="mt-4 space-y-3">
           {firstVoices.map((voice) => (
             <li
@@ -411,7 +411,7 @@ function StudioProjectDetailContent({ id }: { id: string }) {
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <MessageSquare className="size-4 text-violet-400" />
-                声 {project.voiceCount}
+                フィードバック {project.voiceCount}
               </span>
             </div>
           </div>

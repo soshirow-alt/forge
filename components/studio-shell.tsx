@@ -235,8 +235,8 @@ export function StudioProjectTabs({
 }) {
   const tabs = [
     { id: "overview", label: "概要" },
-    { id: "voices-raw", label: "声を見る" },
-    { id: "voices-agg", label: "みんなの声" },
+    { id: "voices-raw", label: "フィードバックを見る" },
+    { id: "voices-agg", label: "みんなのフィードバック" },
     { id: "devlog", label: "Devlog" },
     { id: "versions", label: "バージョン" },
     { id: "release", label: "正式版" },

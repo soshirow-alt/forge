@@ -23,6 +23,8 @@ export function gameToDetailV0(game: Game): GameDetailV0 {
         : game.description || game.title,
     tags,
     heroImage: game.thumbnailUrl || DEFAULT_HERO,
+    galleryImages: [game.thumbnailUrl || DEFAULT_HERO],
+    currentVersion: game.playableVersion || "v0.1.0",
     developer: {
       id: game.ownerId || game.creator,
       name: game.ownerName || game.creator,

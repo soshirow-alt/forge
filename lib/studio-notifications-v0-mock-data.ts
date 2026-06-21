@@ -27,8 +27,8 @@ export const studioNotifications: StudioNotificationItem[] = [
   {
     id: "sn-1",
     kind: "new_voice",
-    title: "新しい声が届きました",
-    body: "3件の新しい声が届いています。未確認の声を確認しましょう。",
+    title: "新しいフィードバックが届きました",
+    body: "3件の新しいフィードバックが届いています。未確認のフィードバックを確認しましょう。",
     projectTitle: "星の記憶",
     projectId: "hoshino-kioku",
     timeLabel: "2時間前",

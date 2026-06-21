@@ -6,7 +6,7 @@ import { StudioShell } from "@/components/studio-shell";
 const steps = [
   { label: "投稿", description: "最初の作品を登録する" },
   { label: "公開", description: "プレイ可能版を届ける" },
-  { label: "声を見る", description: "届いた声を読み、材料にする" },
+  { label: "フィードバックを見る", description: "届いたフィードバックを読み、材料にする" },
   { label: "改善する", description: "次の版で何を直すか決める" },
   { label: "新版公開", description: "Devlog で変化を伝える" },
   { label: "正式版公開", description: "育てた記録の区切りとして Released に" },
@@ -18,7 +18,7 @@ export function StudioGuidePage() {
       <div className="mx-auto max-w-3xl">
         <h1 className="text-2xl font-bold text-white">はじめてガイド</h1>
         <p className="mt-2 text-sm leading-relaxed text-zinc-500">
-          Forge の育成サイクル — ゲームを短いサイクルで育て、声を活かし、正式版へつなげます。
+          Forge の育成サイクル — ゲームを短いサイクルで育て、フィードバックを活かし、正式版へつなげます。
         </p>
 
         <ol className="mt-8 space-y-0">

@@ -1,7 +1,7 @@
 export const playerGuideSteps = [
   { label: "作品を探す", description: "気になる作品を検索・発見する" },
   { label: "プレイする", description: "短いサイクルで遊び、感想を持ち帰る" },
-  { label: "声を届ける", description: "フィードバックで開発者に届ける" },
+  { label: "フィードバックする", description: "感想や気づきを開発者に送る" },
   { label: "見届ける", description: "更新や改善の変化を追いかける" },
   { label: "保存する", description: "あとで遊びたい作品をストックする" },
 ] as const;
@@ -11,7 +11,7 @@ export const playerGuideFaq = [
     id: "witnessing",
     question: "見届け中の作品とは？",
     answer:
-      "あなたが声を届けた作品や、継続的に変化を追っている作品です。開発ログや更新内容を確認して、作品の成長を見届けましょう。",
+      "あなたがフィードバックした作品や、継続的に変化を追っている作品です。開発ログや更新内容を確認して、作品の成長を見届けましょう。",
   },
   {
     id: "saved",
@@ -35,7 +35,7 @@ export const playerGuideFaq = [
     id: "empathy",
     question: "共感とは？",
     answer:
-      "他のプレイヤーがあなたのフィードバックに共感すると、カウントされます。役立つ声が広がりやすくなります。",
+      "他のプレイヤーがあなたのフィードバックに共感すると、カウントされます。役立つフィードバックが広がりやすくなります。",
   },
   {
     id: "following",

@@ -66,7 +66,7 @@ export function VoiceAdoptionsSection({
         </h2>
         {!compact && (
           <p className="mt-1 text-sm text-zinc-500">
-            あなたの声と、今回の更新内容の対応関係です。
+            あなたのフィードバックと、今回の更新内容の対応関係です。
           </p>
         )}
       </div>
@@ -77,7 +77,7 @@ export function VoiceAdoptionsSection({
             <article className="rounded-xl border border-violet-500/20 bg-zinc-900/60 p-4 sm:p-5">
               <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-600">
                 <span className="rounded-full bg-violet-500/10 px-2.5 py-0.5 font-medium text-violet-300">
-                  あなたの声
+                  あなたのフィードバック
                 </span>
                 <span>v{adoption.publishedVersion}</span>
                 <time dateTime={adoption.createdAt}>

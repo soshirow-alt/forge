@@ -78,13 +78,13 @@ const loginValues = [
     icon: MessageSquare,
     iconClass: "bg-violet-500/20 text-violet-300",
     title: "フィードバックする",
-    body: "プレイして、開発に声を届けよう",
+    body: "プレイして、開発にフィードバックしよう",
   },
   {
     icon: TrendingUp,
     iconClass: "bg-emerald-500/20 text-emerald-300",
     title: "ゲームが育つ",
-    body: "あなたの声で、ゲームが進化する",
+    body: "あなたのフィードバックで、ゲームが進化する",
   },
   {
     icon: Gamepad2,
@@ -104,7 +104,7 @@ const registerValues = [
   {
     icon: MessageSquare,
     iconClass: "bg-violet-500/20 text-violet-300",
-    title: "プレイして、声を届ける",
+    title: "プレイして、フィードバックする",
     body: "あなたのフィードバックがゲームを進化させます。",
   },
   {

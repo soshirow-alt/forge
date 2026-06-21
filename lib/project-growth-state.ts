@@ -290,7 +290,7 @@ export function buildNurtureDisplayContext(
         nextStepId: "wait",
         phaseLabel: getNurtureStepLabel("wait"),
         phaseGuidance:
-          "プレイヤーの初声を待っています。作品ページを共有して、最初のプレイヤーを呼び込みましょう。",
+          "プレイヤーの初回フィードバックを待っています。作品ページを共有して、最初のプレイヤーを呼び込みましょう。",
         primaryCta: {
           label: "作品ページを確認する",
           href: `/games/${gameId}`,

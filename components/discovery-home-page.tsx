@@ -25,7 +25,7 @@ function StatPills({ voiceCount, witnessCount }: { voiceCount: number; witnessCo
     <div className="flex flex-wrap gap-3 text-sm text-zinc-400">
       <span className="inline-flex items-center gap-1.5">
         <MessageSquare className="size-4 text-violet-400" aria-hidden="true" />
-        声 {voiceCount}
+        フィードバック {voiceCount}
       </span>
       <span className="inline-flex items-center gap-1.5">
         <Users className="size-4 text-violet-400" aria-hidden="true" />

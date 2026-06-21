@@ -19,7 +19,7 @@ const seikatVersions: GameVersionEntry[] = [
     publishedAt: "2025/05/18",
     relativeLabel: "3日前",
     title: "チュートリアル短縮と序盤イベント調整",
-    summary: "プレイヤーの声を反映し、序盤の導線を見直した版です。",
+    summary: "プレイヤーのフィードバックを反映し、序盤の導線を見直した版です。",
     changes: [
       "チュートリアルテキストを約30%短縮",
       "序盤の森マップに目印を追加",

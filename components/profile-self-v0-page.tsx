@@ -52,7 +52,7 @@ export function ProfileSelfV0Page() {
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { label: "届けた声", value: profile.stats.feedbackCount },
+              { label: "送ったFB", value: profile.stats.feedbackCount },
               { label: "共感された回数", value: profile.stats.voicesReceived },
               { label: "フォロー中開発者", value: profile.stats.followingDevelopers },
               { label: "見届け中", value: profile.stats.witnessingGames },

@@ -110,12 +110,12 @@ export function InfluenceRankingV0Page() {
               フィードバックが作品・開発者に与えた良い影響を評価します。
             </p>
             <ul className="mt-4 space-y-2 text-xs text-zinc-500">
-              <li>💬 役立つ声 — 開発者が「役立った」と評価</li>
-              <li>💗 共感を集めた声</li>
+              <li>💬 役立つフィードバック — 開発者が「役立った」と評価</li>
+              <li>💗 共感を集めたフィードバック</li>
               <li>🌱 新人への貢献</li>
-              <li>🔄 継続して見届けた声</li>
+              <li>🔄 継続して見届けたフィードバック</li>
             </ul>
-            <p className="mt-4 text-xs text-violet-300">あなたの声が、ゲームの未来をつくる。</p>
+            <p className="mt-4 text-xs text-violet-300">あなたのフィードバックが、ゲームの未来をつくる。</p>
           </section>
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
             <h2 className="text-sm font-semibold text-white">先月の TOP3</h2>

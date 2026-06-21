@@ -376,7 +376,7 @@ function StepDetailPanel({
           <h4 className="text-sm font-semibold text-zinc-300">回答待ち</h4>
           <p className="text-sm leading-relaxed text-zinc-400">
             {growth.dataPhase === "no_feedback"
-              ? "プレイヤーの初声を待っています。"
+              ? "プレイヤーの初回フィードバックを待っています。"
               : "新しい回答が届いたら、また回答を見る から始まります。"}
           </p>
           <Link

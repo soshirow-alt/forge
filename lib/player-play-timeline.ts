@@ -66,7 +66,7 @@ export function buildPlayHistoryRelationshipBadges(input: {
   }
 
   if (input.voiceCount > 0) {
-    badges.push({ id: "voice", emoji: "💬", label: "声を届けた" });
+    badges.push({ id: "voice", emoji: "💬", label: "フィードバック済" });
   }
 
   if (input.updateWatchCount > 0) {
@@ -132,7 +132,7 @@ export function buildPlayHistoryTimelineEvents(input: {
       id: `voice:${voice.id}`,
       type: "voice",
       occurredAt: voice.createdAt,
-      label: "声を届けた",
+      label: "フィードバック済",
       versionKey: voice.versionKey,
     });
   }

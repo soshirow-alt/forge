@@ -10,10 +10,12 @@ import {
   voiceFilters,
   voiceStatsCards,
   voiceSubTabs,
+  voiceVersionFilters,
   VOICES_LIST_TOTAL,
   VOICES_PREVIEW_SHOWN,
   type CommunityVoiceEntry,
   type VoiceSubTabId,
+  type VoiceVersionFilterId,
 } from "@/lib/game-voices-v0-mock-data";
 import { BarChart3, ChevronDown, Heart, Lightbulb } from "lucide-react";
 
@@ -55,7 +57,9 @@ function VoiceCard({
         </span>
         <div>
           <KindBadge kind={voice.kind} label={voice.kindLabel} />
-          <p className="mt-1 text-xs text-zinc-500">{voice.postedAt}</p>
+          <p className="mt-1 text-xs text-zinc-500">
+            {voice.version} · {voice.postedAt}
+          </p>
         </div>
       </div>
       <p className="mt-4 text-sm leading-relaxed text-zinc-300">{voice.body}</p>
@@ -115,15 +119,18 @@ function AggregateBar({ aggregate }: { aggregate: (typeof questionAggregates)[nu
 
 export function GameVoicesV0Tab({
   gameId,
+  currentVersion,
   onSendVoice,
   refreshKey = 0,
 }: {
   gameId: string;
+  currentVersion: string;
   onSendVoice: () => void;
   refreshKey?: number;
 }) {
   const [subTab, setSubTab] = useState<VoiceSubTabId>("received");
   const [filter, setFilter] = useState<(typeof voiceFilters)[number]["id"]>("all");
+  const [versionFilter, setVersionFilter] = useState<VoiceVersionFilterId>("all");
   const [voices, setVoices] = useState<CommunityVoiceEntry[]>(() =>
     getCommunityVoicesForGame(gameId),
   );
@@ -133,6 +140,9 @@ export function GameVoicesV0Tab({
   }, [gameId, refreshKey]);
 
   const filteredVoices = voices.filter((voice) => {
+    if (versionFilter !== "all" && voice.version !== versionFilter) {
+      return false;
+    }
     if (filter === "all") return true;
     if (filter === "free") return voice.kind === "free";
     return voice.kind === "choice";
@@ -193,19 +203,25 @@ export function GameVoicesV0Tab({
                   </button>
                 ))}
               </div>
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-lg border border-zinc-800 px-3 py-2 text-sm text-zinc-400"
+              <select
+                value={versionFilter}
+                onChange={(event) =>
+                  setVersionFilter(event.target.value as typeof versionFilter)
+                }
+                className="rounded-lg border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-200 focus:border-violet-500/40 focus:outline-none"
               >
-                新しい順
-                <ChevronDown className="size-4" aria-hidden="true" />
-              </button>
+                {voiceVersionFilters.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <ul className="space-y-4">
               {filteredVoices.length === 0 ? (
                 <li className="rounded-2xl border border-dashed border-zinc-800 px-6 py-12 text-center text-sm text-zinc-500">
-                  この条件に合う声はまだありません。
+                  この条件に合うフィードバックはまだありません。
                 </li>
               ) : (
                 filteredVoices.map((voice) => (
@@ -263,7 +279,7 @@ export function GameVoicesV0Tab({
         <section className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-5">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
             <BarChart3 className="size-4 text-violet-400" aria-hidden="true" />
-            今月の声の要約
+            {currentVersion} のフィードバック要約
           </h2>
           <ul className="mt-4 space-y-3">
             {aiSummaryBullets.map((item) => (
@@ -296,7 +312,7 @@ export function GameVoicesV0Tab({
           <div className="flex gap-3">
             <Lightbulb className="size-5 shrink-0 text-violet-400" aria-hidden="true" />
             <p className="text-xs leading-relaxed text-zinc-500">
-              あなたの声も開発の参考になります。プレイ後にフィードバックを送ってみましょう。
+              あなたのフィードバックも開発の参考になります。プレイ後に送ってみましょう。
             </p>
           </div>
           <button
@@ -304,7 +320,7 @@ export function GameVoicesV0Tab({
             onClick={onSendVoice}
             className="mt-4 w-full rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
           >
-            声を届ける
+            フィードバックする
           </button>
         </section>
       </aside>

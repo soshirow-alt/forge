@@ -79,7 +79,7 @@ export const savedGames = [
     developer: "Pixel Knights",
     tags: ["アクション", "探索", "ピクセルアート"],
     image: "/images/landing/game-4.png",
-    genre: "探索",
+    genre: "",
     listCategory: "default" as const,
     hasUpdate: false,
   },
@@ -119,22 +119,12 @@ export const witnessingFilterTabs = [
   { id: "all", label: "すべて" },
   { id: "has-update", label: "更新あり" },
   { id: "no-update", label: "更新なし" },
-  { id: "voice-reflected", label: "声が反映された" },
+  { id: "voice-reflected", label: "フィードバックが反映された" },
 ] as const;
 
 export type WitnessingFilterId = (typeof witnessingFilterTabs)[number]["id"];
 
-export const genreFilters = [
-  "すべて",
-  "アドベンチャー",
-  "RPG",
-  "サバイバル",
-  "シミュレーション",
-  "クラフト",
-  "探索",
-  "経営",
-  "ストーリー",
-] as const;
+export { genreFilterOptions as genreFilters } from "@/lib/genre-filters-v0";
 
 export const playHistoryFilterTabs = [
   { id: "all", label: "すべて", count: 30 },
@@ -341,8 +331,6 @@ export const playHistorySummary = [
   { label: "見届け中作品", value: "5" },
   { label: "応援中作者", value: "12" },
   { label: "プレイ作品合計", value: "30" },
-  { label: "合計プレイ時間", value: "41時間56分" },
-  { label: "最多プレイ日", value: "2025/05/18" },
 ] as const;
 
 export type PlayHistoryPeriodId = (typeof playHistoryPeriodFilters)[number]["id"];
@@ -525,7 +513,7 @@ export const achievementProgress = { earned: 12, total: 48, percent: 25 };
 export const achievementCategories = [
   "すべて",
   "見届ける",
-  "声を届ける",
+  "フィードバック",
   "つながる",
   "その他",
 ] as const;
@@ -552,12 +540,12 @@ export type AchievementItem = {
 export const recentAchievements: AchievementItem[] = [
   {
     id: "a1",
-    title: "初めての声",
+    title: "初めてのフィードバック",
     description: "初めてフィードバックを送信した",
     emoji: "🌱",
     earned: true,
     earnedDate: "2025/05/18",
-    category: "声を届ける",
+    category: "フィードバック",
   },
   {
     id: "a2",
@@ -615,7 +603,7 @@ export const allAchievements: AchievementItem[] = [
     emoji: "🌿",
     earned: true,
     earnedDate: "2025/05/06",
-    category: "声を届ける",
+    category: "フィードバック",
   },
   {
     id: "a8",
@@ -637,12 +625,12 @@ export const allAchievements: AchievementItem[] = [
   },
   {
     id: "a10",
-    title: "信頼の声",
+    title: "信頼のフィードバック",
     description: "「参考になった」を5回もらった",
     emoji: "🤝",
     earned: false,
     progress: { current: 2, target: 5, unit: "回" },
-    category: "声を届ける",
+    category: "フィードバック",
   },
   {
     id: "a11",

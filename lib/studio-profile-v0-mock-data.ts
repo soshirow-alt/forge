@@ -19,7 +19,7 @@ export const studioSelfProfile = {
   genres: ["アドベンチャー", "ナラティブ", "RPG"],
   milestones: [
     { id: "m1", label: "初めての作品投稿", date: "2024/11/02" },
-    { id: "m2", label: "初声 100件到達", date: "2025/03/18" },
+    { id: "m2", label: "フィードバック 100件到達", date: "2025/03/18" },
     { id: "m3", label: "初の正式版公開", date: "2025/05/20" },
   ] as StudioProfileMilestone[],
   activity: [
