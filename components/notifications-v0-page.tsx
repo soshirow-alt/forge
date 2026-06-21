@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PlayerShell } from "@/components/player-shell";
 import {
   countUnread,
@@ -156,9 +156,28 @@ function NotificationSection({
 
 export function NotificationsV0Page() {
   const [filter, setFilter] = useState<NotificationFilterId>("all");
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const [items, setItems] = useState(mockNotifications);
+  const sortMenuRef = useRef<HTMLDivElement>(null);
 
-  const filtered = useMemo(() => filterNotifications(items, filter), [items, filter]);
+  useEffect(() => {
+    if (!sortMenuOpen) {
+      return;
+    }
+    function handlePointerDown(event: MouseEvent) {
+      if (!sortMenuRef.current?.contains(event.target as Node)) {
+        setSortMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [sortMenuOpen]);
+
+  const filtered = useMemo(() => {
+    const list = filterNotifications(items, filter);
+    return sortOrder === "oldest" ? [...list].reverse() : list;
+  }, [items, filter, sortOrder]);
   const unread = filtered.filter((item) => !item.read);
   const read = filtered.filter((item) => item.read);
 
@@ -178,25 +197,10 @@ export function NotificationsV0Page() {
     <PlayerShell activeNav="notifications" notificationBadge={unreadCount}>
       <div className="mx-auto max-w-3xl">
         <header>
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-              <Bell className="size-7 text-violet-400" aria-hidden="true" />
-              プレイヤー通知
-            </h1>
-            <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-xs font-medium text-violet-200">
-              Player
-            </span>
-          </div>
-          <p className="mt-2 text-sm text-zinc-400">
-            フォロー作品の更新、あなたのフィードバックへの反応、実績など、プレイヤーとしてのお知らせです。
-          </p>
-          <p className="mt-2 text-xs text-zinc-600">
-            開発者向けの通知（届いたフィードバックの確認など）は{" "}
-            <Link href="/studio/notifications" className="text-violet-400 hover:text-violet-300">
-              Studio 通知
-            </Link>
-            です。
-          </p>
+          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            <Bell className="size-7 text-violet-400" aria-hidden="true" />
+            通知（プレイヤー）
+          </h1>
         </header>
 
         <div className="mt-6 flex gap-2 overflow-x-auto pb-1">
@@ -225,13 +229,53 @@ export function NotificationsV0Page() {
             <CheckCheck className="size-4" aria-hidden="true" />
             すべて既読にする
           </button>
-          <button
-            type="button"
-            className="rounded-lg border border-zinc-800 p-2 text-zinc-500 transition-colors hover:border-zinc-700 hover:text-zinc-300"
-            aria-label="フィルタ"
-          >
-            <SlidersHorizontal className="size-4" />
-          </button>
+          <div className="relative" ref={sortMenuRef}>
+            <button
+              type="button"
+              onClick={() => setSortMenuOpen((open) => !open)}
+              className={`rounded-lg border p-2 transition-colors ${
+                sortMenuOpen
+                  ? "border-violet-500/40 bg-violet-500/10 text-violet-300"
+                  : "border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
+              }`}
+              aria-label="表示オプション"
+              aria-expanded={sortMenuOpen}
+            >
+              <SlidersHorizontal className="size-4" />
+            </button>
+            {sortMenuOpen && (
+              <div
+                className="absolute right-0 z-20 mt-2 w-48 rounded-xl border border-zinc-800 bg-zinc-950 py-2 shadow-xl"
+                role="menu"
+              >
+                <p className="px-3 py-1.5 text-xs font-medium text-zinc-500">並び替え</p>
+                {(
+                  [
+                    { id: "newest" as const, label: "新しい順" },
+                    { id: "oldest" as const, label: "古い順" },
+                  ] as const
+                ).map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={sortOrder === option.id}
+                    onClick={() => {
+                      setSortOrder(option.id);
+                      setSortMenuOpen(false);
+                    }}
+                    className={`block w-full px-3 py-2 text-left text-sm transition-colors ${
+                      sortOrder === option.id
+                        ? "bg-violet-600/15 text-violet-200"
+                        : "text-zinc-300 hover:bg-zinc-900"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="mt-8 space-y-8">
