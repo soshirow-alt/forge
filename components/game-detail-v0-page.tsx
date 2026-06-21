@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { GameDetailHeroGallery } from "@/components/game-detail-hero-gallery";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import {
   FeedbackFormV0Modal,
   FeedbackSuccessV0Modal,
@@ -20,7 +20,6 @@ import { GameThumbnail, PlayerShell } from "@/components/player-shell";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { gameDetailReturnPath } from "@/lib/login-return-url";
-import { usePreviewV0 } from "@/hooks/use-preview-v0";
 import { getGameDetailV0, resolveGameDetailId } from "@/lib/game-detail-v0-mock-data";
 import {
   gameToDetailV0,
@@ -114,13 +113,7 @@ function GameDetailV0PageContent({ id }: { id: string }) {
   const hasRealPlayUrl = Boolean(submittedGame?.playUrl?.trim());
   const resolvedId = isSupabaseProjectId(id) ? id : resolveGameDetailId(id);
   const { isLoggedIn, hydrated, requireAuth } = useRequireAuth();
-  const previewDemoWithoutLogin = usePreviewV0();
-  const canPlayWithoutLogin = isLoggedIn || previewDemoWithoutLogin;
   const returnPath = gameDetailReturnPath(resolvedId);
-  const playReturnPath = gameDetailReturnPath(resolvedId, { play: true });
-  const feedbackReturnPath = gameDetailReturnPath(resolvedId, { feedback: true });
-  const playAutoStarted = useRef(false);
-  const feedbackAutoStarted = useRef(false);
   const [activeTab, setActiveTab] = useState<DetailTab>(() =>
     parseDetailTab(searchParams.get("tab")),
   );
@@ -131,43 +124,27 @@ function GameDetailV0PageContent({ id }: { id: string }) {
   const [saved, setSaved] = useState(game.saved);
   const [following, setFollowing] = useState(game.developer.following);
 
-  const runProtected = useCallback(
-    (action: () => void, authReturnPath: string = returnPath) => {
-      if (!hydrated) {
-        return;
-      }
-      if (previewDemoWithoutLogin) {
-        action();
-        return;
-      }
-      requireAuth(action, authReturnPath);
-    },
-    [hydrated, previewDemoWithoutLogin, requireAuth, returnPath],
-  );
-
-  const startPlayFlow = useCallback(async () => {
-    if (hasRealPlayUrl && submittedGame?.playUrl) {
-      await recordPlay(submittedGame.id);
-      window.open(submittedGame.playUrl, "_blank", "noopener,noreferrer");
-      setFeedbackStep("first-voice");
-      return;
-    }
-    setFeedbackStep("play-stub");
-  }, [hasRealPlayUrl, submittedGame, recordPlay]);
-
   const handlePlay = useCallback(() => {
-    runProtected(() => void startPlayFlow(), playReturnPath);
-  }, [runProtected, startPlayFlow, playReturnPath]);
+    requireAuth(async () => {
+      if (hasRealPlayUrl && submittedGame?.playUrl) {
+        await recordPlay(submittedGame.id);
+        window.open(submittedGame.playUrl, "_blank", "noopener,noreferrer");
+        setFeedbackStep("first-voice");
+        return;
+      }
+      setFeedbackStep("play-stub");
+    }, returnPath);
+  }, [requireAuth, returnPath, hasRealPlayUrl, submittedGame, recordPlay]);
 
   const handleFeedback = useCallback(() => {
-    runProtected(() => setFeedbackStep("full-form"), feedbackReturnPath);
-  }, [runProtected, feedbackReturnPath]);
+    requireAuth(() => setFeedbackStep("full-form"), returnPath);
+  }, [requireAuth, returnPath]);
 
   const handleProtectedAction = useCallback(
     (action: () => void) => {
-      runProtected(action, returnPath);
+      requireAuth(action, returnPath);
     },
-    [runProtected, returnPath],
+    [requireAuth, returnPath],
   );
 
   const handleFeedbackSuccess = useCallback(
@@ -180,40 +157,6 @@ function GameDetailV0PageContent({ id }: { id: string }) {
     },
     [game.id],
   );
-
-  useEffect(() => {
-    if (!hydrated || playAutoStarted.current) {
-      return;
-    }
-    if (searchParams.get("play") !== "1" || feedbackStep !== "closed") {
-      return;
-    }
-    if (!canPlayWithoutLogin) {
-      return;
-    }
-    playAutoStarted.current = true;
-    void startPlayFlow();
-  }, [
-    hydrated,
-    searchParams,
-    feedbackStep,
-    canPlayWithoutLogin,
-    startPlayFlow,
-  ]);
-
-  useEffect(() => {
-    if (!hydrated || feedbackAutoStarted.current) {
-      return;
-    }
-    if (searchParams.get("feedback") !== "1" || feedbackStep !== "closed") {
-      return;
-    }
-    if (!canPlayWithoutLogin) {
-      return;
-    }
-    feedbackAutoStarted.current = true;
-    setFeedbackStep("full-form");
-  }, [hydrated, searchParams, feedbackStep, canPlayWithoutLogin]);
 
   useFeedbackFlowLock(feedbackStep);
 
@@ -326,7 +269,7 @@ function GameDetailV0PageContent({ id }: { id: string }) {
               className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Play className="size-4" aria-hidden="true" />
-              {hydrated && !canPlayWithoutLogin ? "ログインしてプレイ" : "プレイする"}
+              {hydrated && !isLoggedIn ? "ログインしてプレイ" : "プレイする"}
             </button>
             <button
               type="button"
@@ -441,7 +384,7 @@ function GameDetailV0PageContent({ id }: { id: string }) {
                     onClick={handleFeedback}
                     className="mt-5 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
                   >
-                    {hydrated && !canPlayWithoutLogin
+                    {hydrated && !isLoggedIn
                       ? "ログインしてフィードバックする"
                       : "フィードバックする"}
                   </button>

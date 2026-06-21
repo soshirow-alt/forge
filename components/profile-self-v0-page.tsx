@@ -2,15 +2,146 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { PlayerShell } from "@/components/player-shell";
+import { V0SimpleModal } from "@/components/v0-simple-modal";
 import { profileSelfMock } from "@/lib/profile-v0-mock-data";
 import { MapPin, Pencil, Sparkles } from "lucide-react";
 
+const genreOptions = ["RPG", "アドベンチャー", "ファンタジー", "ストーリー重視", "アクション", "ホラー"];
+
 export function ProfileSelfV0Page() {
-  const profile = profileSelfMock;
+  const [profile, setProfile] = useState(profileSelfMock);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({
+    displayName: profile.displayName,
+    bio: profile.bio,
+    location: profile.location,
+    favoriteGenres: [...profile.favoriteGenres],
+  });
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  function openEdit() {
+    setDraft({
+      displayName: profile.displayName,
+      bio: profile.bio,
+      location: profile.location,
+      favoriteGenres: [...profile.favoriteGenres],
+    });
+    setEditing(true);
+  }
+
+  function toggleGenre(genre: string) {
+    setDraft((current) => ({
+      ...current,
+      favoriteGenres: current.favoriteGenres.includes(genre)
+        ? current.favoriteGenres.filter((value) => value !== genre)
+        : [...current.favoriteGenres, genre],
+    }));
+  }
+
+  function saveProfile() {
+    const displayName = draft.displayName.trim();
+    if (!displayName) {
+      return;
+    }
+    setProfile((current) => ({
+      ...current,
+      displayName,
+      bio: draft.bio.trim() || current.bio,
+      location: draft.location.trim() || current.location,
+      favoriteGenres: draft.favoriteGenres.length > 0 ? draft.favoriteGenres : current.favoriteGenres,
+    }));
+    setEditing(false);
+    setSaveMessage("プロフィールを更新しました（preview mock）。");
+  }
 
   return (
     <PlayerShell>
+      {editing && (
+        <V0SimpleModal title="プロフィールを編集" onClose={() => setEditing(false)}>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-zinc-500" htmlFor="profile-name">
+                表示名
+              </label>
+              <input
+                id="profile-name"
+                type="text"
+                value={draft.displayName}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, displayName: event.target.value }))
+                }
+                className="mt-2 w-full rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-2.5 text-sm text-zinc-200 focus:border-violet-500/40 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-500" htmlFor="profile-bio">
+                自己紹介
+              </label>
+              <textarea
+                id="profile-bio"
+                rows={4}
+                value={draft.bio}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, bio: event.target.value }))
+                }
+                className="mt-2 w-full rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-2.5 text-sm text-zinc-200 focus:border-violet-500/40 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-500" htmlFor="profile-location">
+                所在地
+              </label>
+              <input
+                id="profile-location"
+                type="text"
+                value={draft.location}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, location: event.target.value }))
+                }
+                className="mt-2 w-full rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-2.5 text-sm text-zinc-200 focus:border-violet-500/40 focus:outline-none"
+              />
+            </div>
+            <fieldset>
+              <legend className="text-xs font-medium text-zinc-500">好きなジャンル</legend>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {genreOptions.map((genre) => (
+                  <button
+                    key={genre}
+                    type="button"
+                    onClick={() => toggleGenre(genre)}
+                    className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                      draft.favoriteGenres.includes(genre)
+                        ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
+                        : "border-zinc-700 text-zinc-500 hover:border-zinc-600"
+                    }`}
+                  >
+                    {genre}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          </div>
+          <div className="mt-5 flex gap-2">
+            <button
+              type="button"
+              onClick={saveProfile}
+              className="flex-1 rounded-xl bg-violet-600 py-2.5 text-sm font-semibold text-white hover:bg-violet-500"
+            >
+              保存
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="rounded-xl border border-zinc-700 px-4 py-2.5 text-sm text-zinc-400 hover:border-zinc-600"
+            >
+              キャンセル
+            </button>
+          </div>
+        </V0SimpleModal>
+      )}
+
       <div className="mx-auto max-w-4xl space-y-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -19,12 +150,19 @@ export function ProfileSelfV0Page() {
           </div>
           <button
             type="button"
+            onClick={openEdit}
             className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
           >
             <Pencil className="size-4" aria-hidden="true" />
             プロフィールを編集
           </button>
         </div>
+
+        {saveMessage && (
+          <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+            {saveMessage}
+          </p>
+        )}
 
         <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 sm:p-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
@@ -104,7 +242,7 @@ export function ProfileSelfV0Page() {
             <div className="mt-4 grid grid-cols-4 gap-3">
               {profile.highlightBadges.map((badge) => (
                 <div key={badge.id} className="text-center">
-                  <span className="flex size-12 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800/60 text-lg mx-auto">
+                  <span className="mx-auto flex size-12 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800/60 text-lg">
                     {badge.emoji}
                   </span>
                   <p className="mt-2 text-[10px] leading-tight text-zinc-500">{badge.label}</p>

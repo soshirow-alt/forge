@@ -1,18 +1,11 @@
 /**
  * Post-login return URL for play / external-link flows only.
- * Whitelist: /games/{id} (+ optional ?play=1 / ?feedback=1) — rejects open redirects.
+ * Whitelist: /games/{id} — rejects open redirects and non-game paths.
  */
-
-import { isAllowedGameDetailDemoQuery } from "@/lib/preview-demo-loop";
 
 export const LOGIN_PATH = "/login";
 
 const GAME_DETAIL_PATH = /^\/games\/[a-zA-Z0-9_-]+$/;
-
-export type GameDetailReturnOptions = {
-  play?: boolean;
-  feedback?: boolean;
-};
 
 export function sanitizeLoginReturnUrl(
   value: string | null | undefined,
@@ -28,17 +21,11 @@ export function sanitizeLoginReturnUrl(
       return null;
     }
 
-    if (decoded.includes("#")) {
+    if (decoded.includes("?") || decoded.includes("#")) {
       return null;
     }
 
-    const [pathname, searchPart] = decoded.split("?", 2);
-
-    if (!GAME_DETAIL_PATH.test(pathname)) {
-      return null;
-    }
-
-    if (searchPart !== undefined && !isAllowedGameDetailDemoQuery(`?${searchPart}`)) {
+    if (!GAME_DETAIL_PATH.test(decoded)) {
       return null;
     }
 
@@ -63,18 +50,6 @@ export function buildLoginUrlWithReturn(returnPath: string): string {
   return `${LOGIN_PATH}?return=${encodeURIComponent(safe)}`;
 }
 
-export function gameDetailReturnPath(
-  gameId: string,
-  options?: GameDetailReturnOptions,
-): string {
-  const path = `/games/${gameId}`;
-  const params = new URLSearchParams();
-  if (options?.play) {
-    params.set("play", "1");
-  }
-  if (options?.feedback) {
-    params.set("feedback", "1");
-  }
-  const query = params.toString();
-  return query ? `${path}?${query}` : path;
+export function gameDetailReturnPath(gameId: string): string {
+  return `/games/${gameId}`;
 }
