@@ -203,7 +203,7 @@ export function NotificationsV0Page() {
               通知
             </h1>
             <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-xs font-medium text-violet-200">
-              プレイヤー
+              Player
             </span>
           </div>
         </header>
