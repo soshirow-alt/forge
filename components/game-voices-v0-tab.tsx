@@ -11,13 +11,13 @@ import {
   voiceStatsCards,
   voiceSubTabs,
   voiceVersionFilters,
-  VOICES_LIST_TOTAL,
-  VOICES_PREVIEW_SHOWN,
   type CommunityVoiceEntry,
   type VoiceSubTabId,
   type VoiceVersionFilterId,
 } from "@/lib/game-voices-v0-mock-data";
 import { BarChart3, ChevronDown, Heart, Lightbulb } from "lucide-react";
+
+const VOICES_INITIAL_SHOWN = 5;
 
 function StatCard({ label, value, delta, hint }: (typeof voiceStatsCards)[number]) {
   return (
@@ -134,10 +134,15 @@ export function GameVoicesV0Tab({
   const [voices, setVoices] = useState<CommunityVoiceEntry[]>(() =>
     getCommunityVoicesForGame(gameId),
   );
+  const [showAllVoices, setShowAllVoices] = useState(false);
 
   useEffect(() => {
     setVoices(getCommunityVoicesForGame(gameId));
   }, [gameId, refreshKey]);
+
+  useEffect(() => {
+    setShowAllVoices(false);
+  }, [filter, versionFilter, gameId]);
 
   const filteredVoices = voices.filter((voice) => {
     if (versionFilter !== "all" && voice.version !== versionFilter) {
@@ -147,6 +152,11 @@ export function GameVoicesV0Tab({
     if (filter === "free") return voice.kind === "free";
     return voice.kind === "choice";
   });
+
+  const visibleVoices = showAllVoices
+    ? filteredVoices
+    : filteredVoices.slice(0, VOICES_INITIAL_SHOWN);
+  const hasMoreVoices = filteredVoices.length > VOICES_INITIAL_SHOWN && !showAllVoices;
 
   function toggleEmpathy(id: string) {
     setVoices((current) =>
@@ -219,12 +229,12 @@ export function GameVoicesV0Tab({
             </div>
 
             <ul className="space-y-4">
-              {filteredVoices.length === 0 ? (
+              {visibleVoices.length === 0 ? (
                 <li className="rounded-2xl border border-dashed border-zinc-800 px-6 py-12 text-center text-sm text-zinc-500">
                   この条件に合うフィードバックはまだありません。
                 </li>
               ) : (
-                filteredVoices.map((voice) => (
+                visibleVoices.map((voice) => (
                   <li key={voice.id}>
                     <VoiceCard voice={voice} onToggleEmpathy={toggleEmpathy} />
                   </li>
@@ -232,18 +242,23 @@ export function GameVoicesV0Tab({
               )}
             </ul>
 
+            {filteredVoices.length > 0 && (
             <div className="flex flex-col items-center gap-3 border-t border-zinc-800/80 pt-6">
               <p className="text-xs text-zinc-500">
-                {VOICES_LIST_TOTAL}件中 {Math.min(filteredVoices.length, VOICES_PREVIEW_SHOWN)}件を表示
+                {filteredVoices.length}件中 {visibleVoices.length}件を表示
               </p>
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200"
-              >
-                もっと見る
-                <ChevronDown className="size-4" aria-hidden="true" />
-              </button>
+              {hasMoreVoices && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllVoices(true)}
+                  className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200"
+                >
+                  もっと見る
+                  <ChevronDown className="size-4" aria-hidden="true" />
+                </button>
+              )}
             </div>
+            )}
           </>
         )}
 

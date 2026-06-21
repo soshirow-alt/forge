@@ -28,11 +28,17 @@ import {
 
 const PAGE_SIZE = 5;
 
+type SearchViewMode = "list" | "grid";
+
 const SORT_OPTIONS: { id: SearchSortId; label: string }[] = [
   { id: "recommended", label: "おすすめ順" },
   { id: "witness", label: "見届けが多い順" },
   { id: "voices", label: "フィードバックが多い順" },
 ];
+
+function parseView(param: string | null): SearchViewMode {
+  return param === "grid" ? "grid" : "list";
+}
 
 function parseSort(param: string | null): SearchSortId {
   if (param === "witness" || param === "voices") {
@@ -58,6 +64,7 @@ function WorksSearchContent() {
   const queryFromUrl = searchParams.get("q")?.trim() ?? "";
   const genresFromUrl = parseGenres(searchParams.get("genre"));
   const sortFromUrl = parseSort(searchParams.get("sort"));
+  const viewFromUrl = parseView(searchParams.get("view"));
   const pageFromUrl = Math.max(1, Number.parseInt(searchParams.get("page") ?? "1", 10) || 1);
 
   const [keyword, setKeyword] = useState(queryFromUrl);
@@ -84,7 +91,7 @@ function WorksSearchContent() {
   );
 
   const buildSearchUrl = useCallback(
-    (overrides: { page?: number; sort?: SearchSortId }) => {
+    (overrides: { page?: number; sort?: SearchSortId; view?: SearchViewMode }) => {
       const params = new URLSearchParams();
       if (queryFromUrl) {
         params.set("q", queryFromUrl);
@@ -96,6 +103,10 @@ function WorksSearchContent() {
       if (sort !== "recommended") {
         params.set("sort", sort);
       }
+      const view = overrides.view ?? viewFromUrl;
+      if (view === "grid") {
+        params.set("view", "grid");
+      }
       const page = overrides.page ?? pageFromUrl;
       if (page > 1) {
         params.set("page", String(page));
@@ -103,7 +114,7 @@ function WorksSearchContent() {
       const qs = params.toString();
       return qs ? `/search?${qs}` : "/search";
     },
-    [genresFromUrl, pageFromUrl, queryFromUrl, sortFromUrl],
+    [genresFromUrl, pageFromUrl, queryFromUrl, sortFromUrl, viewFromUrl],
   );
 
   const applySearch = useCallback(() => {
@@ -131,6 +142,9 @@ function WorksSearchContent() {
       }
       if (sortFromUrl !== "recommended") {
         params.set("sort", sortFromUrl);
+      }
+      if (viewFromUrl === "grid") {
+        params.set("view", "grid");
       }
       const qs = params.toString();
       router.push(qs ? `/search?${qs}` : "/search");
@@ -199,23 +213,34 @@ function WorksSearchContent() {
               ))}
             </div>
             <div className="flex rounded-lg border border-zinc-800 p-0.5">
-              <button
-                type="button"
-                className="rounded-md bg-violet-600 p-2 text-white"
+              <Link
+                href={buildSearchUrl({ view: "list", page: 1 })}
+                className={`rounded-md p-2 transition-colors ${
+                  viewFromUrl === "list"
+                    ? "bg-violet-600 text-white"
+                    : "text-zinc-500 hover:text-zinc-300"
+                }`}
                 aria-label="リスト表示"
+                aria-current={viewFromUrl === "list" ? "true" : undefined}
               >
                 <List className="size-4" />
-              </button>
-              <button
-                type="button"
-                className="rounded-md p-2 text-zinc-500 transition-colors hover:text-zinc-300"
+              </Link>
+              <Link
+                href={buildSearchUrl({ view: "grid", page: 1 })}
+                className={`rounded-md p-2 transition-colors ${
+                  viewFromUrl === "grid"
+                    ? "bg-violet-600 text-white"
+                    : "text-zinc-500 hover:text-zinc-300"
+                }`}
                 aria-label="グリッド表示"
+                aria-current={viewFromUrl === "grid" ? "true" : undefined}
               >
                 <LayoutGrid className="size-4" />
-              </button>
+              </Link>
             </div>
           </div>
 
+          {viewFromUrl === "list" ? (
           <ul className="mt-6 space-y-4">
             {pagination.items.map((work) => (
               <li key={work.id}>
@@ -284,6 +309,46 @@ function WorksSearchContent() {
               </li>
             )}
           </ul>
+          ) : (
+          <ul className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {pagination.items.map((work) => (
+              <li key={work.id}>
+                <Link
+                  href={gameDetailHref(work.id)}
+                  className="flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/40 transition-colors hover:border-zinc-700/80"
+                >
+                  <GameThumbnail
+                    src={work.image}
+                    alt={work.title}
+                    className="h-36 w-full rounded-none"
+                  />
+                  <div className="flex flex-1 flex-col p-4">
+                    <h2 className="font-semibold text-white">{work.title}</h2>
+                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-zinc-500">
+                      {work.description}
+                    </p>
+                    <p className="mt-2 text-xs text-zinc-500">{work.updatedAgo}</p>
+                    <div className="mt-auto flex items-center gap-3 pt-3 text-xs text-zinc-500">
+                      <span className="inline-flex items-center gap-1">
+                        <Users className="size-3.5" aria-hidden="true" />
+                        {work.witnessCount.toLocaleString()}
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <MessageSquare className="size-3.5" aria-hidden="true" />
+                        {work.voiceCount}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              </li>
+            ))}
+            {pagination.items.length === 0 && (
+              <li className="col-span-full rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center text-sm text-zinc-500">
+                条件に合う作品がありません。絞り込みを変更してください。
+              </li>
+            )}
+          </ul>
+          )}
 
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm text-zinc-500">
             <p>
