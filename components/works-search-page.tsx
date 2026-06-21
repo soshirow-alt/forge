@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
   GameThumbnail,
   PlayerShell,
@@ -10,7 +10,6 @@ import {
 import {
   filterSearchResults,
   paginateSearchResults,
-  SEARCH_RESULTS_TOTAL,
   searchGenreFilters,
   searchWorkResults,
   sortSearchResults,
@@ -27,7 +26,6 @@ import {
   Users,
 } from "lucide-react";
 
-const DEFAULT_QUERY = "ファンタジー";
 const PAGE_SIZE = 5;
 
 const SORT_OPTIONS: { id: SearchSortId; label: string }[] = [
@@ -57,13 +55,20 @@ function parseGenres(param: string | null): string[] {
 function WorksSearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const queryFromUrl = searchParams.get("q")?.trim() || DEFAULT_QUERY;
+  const queryFromUrl = searchParams.get("q")?.trim() ?? "";
   const genresFromUrl = parseGenres(searchParams.get("genre"));
   const sortFromUrl = parseSort(searchParams.get("sort"));
   const pageFromUrl = Math.max(1, Number.parseInt(searchParams.get("page") ?? "1", 10) || 1);
 
   const [keyword, setKeyword] = useState(queryFromUrl);
   const [selectedGenres, setSelectedGenres] = useState<string[]>(genresFromUrl);
+
+  const genreParam = searchParams.get("genre");
+
+  useEffect(() => {
+    setKeyword(queryFromUrl);
+    setSelectedGenres(parseGenres(genreParam));
+  }, [queryFromUrl, genreParam]);
 
   const filtered = useMemo(
     () => filterSearchResults(searchWorkResults, queryFromUrl, genresFromUrl),
@@ -113,22 +118,41 @@ function WorksSearchContent() {
     router.push(qs ? `/search?${qs}` : "/search");
   }, [keyword, router, selectedGenres]);
 
+  const pushSearch = useCallback(
+    (next: { q?: string; genres?: string[] }) => {
+      const params = new URLSearchParams();
+      const q = (next.q ?? queryFromUrl).trim();
+      if (q) {
+        params.set("q", q);
+      }
+      const genres = next.genres ?? genresFromUrl;
+      if (genres.length > 0) {
+        params.set("genre", genres.join(","));
+      }
+      if (sortFromUrl !== "recommended") {
+        params.set("sort", sortFromUrl);
+      }
+      const qs = params.toString();
+      router.push(qs ? `/search?${qs}` : "/search");
+    },
+    [genresFromUrl, queryFromUrl, router, sortFromUrl],
+  );
+
   const clearFilters = useCallback(() => {
-    setKeyword(DEFAULT_QUERY);
+    setKeyword("");
     setSelectedGenres([]);
     router.push("/search");
   }, [router]);
 
   const toggleGenre = (genre: string) => {
-    if (genre === "すべてのジャンル") {
-      setSelectedGenres([]);
-      return;
-    }
-    setSelectedGenres((current) =>
-      current.includes(genre)
-        ? current.filter((value) => value !== genre)
-        : [...current, genre],
-    );
+    const nextGenres =
+      genre === "すべてのジャンル"
+        ? []
+        : selectedGenres.includes(genre)
+          ? selectedGenres.filter((value) => value !== genre)
+          : [...selectedGenres, genre];
+    setSelectedGenres(nextGenres);
+    pushSearch({ genres: nextGenres });
   };
 
   return (
@@ -145,12 +169,15 @@ function WorksSearchContent() {
 
           <header className="mt-4">
             <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-              「{queryFromUrl}」の検索結果
+              {queryFromUrl ? `「${queryFromUrl}」の検索結果` : "作品を探す"}
             </h1>
             <p className="mt-2 text-sm text-zinc-400">
-              {SEARCH_RESULTS_TOTAL.toLocaleString()}件の作品が見つかりました
-              {filtered.length !== searchWorkResults.length && (
-                <span className="text-zinc-500">（絞り込み {filtered.length}件）</span>
+              {filtered.length}件の作品が見つかりました
+              {genresFromUrl.length > 0 && (
+                <span className="text-zinc-500">
+                  {" "}
+                  （ジャンル: {genresFromUrl.join("・")}）
+                </span>
               )}
             </p>
           </header>

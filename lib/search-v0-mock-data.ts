@@ -149,6 +149,38 @@ export const searchWorkResults: SearchWorkResult[] = [
   },
 ];
 
+/** フィルター表記（日本語）とモックタグ（英語混在）を同一ジャンルとして扱う */
+const GENRE_MATCH_ALIASES: Record<string, readonly string[]> = {
+  ファンタジー: ["fantasy", "ファンタジー"],
+  rpg: ["rpg"],
+  アクション: ["アクション", "action"],
+  アドベンチャー: ["アドベンチャー", "adventure"],
+  シミュレーション: ["シミュレーション", "simulation"],
+  パズル: ["パズル", "puzzle"],
+  ストラテジー: ["ストラテジー", "strategy"],
+  ホラー: ["ホラー", "horror"],
+};
+
+function normalizeGenreKey(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function tagMatchesGenreFilter(tag: string, genreFilter: string): boolean {
+  const tagKey = normalizeGenreKey(tag);
+  const filterKey = normalizeGenreKey(genreFilter);
+
+  if (tagKey.includes(filterKey) || filterKey.includes(tagKey)) {
+    return true;
+  }
+
+  const aliases = GENRE_MATCH_ALIASES[filterKey] ?? GENRE_MATCH_ALIASES[genreFilter];
+  if (aliases) {
+    return aliases.some((alias) => normalizeGenreKey(alias) === tagKey);
+  }
+
+  return false;
+}
+
 export function filterSearchResults(
   results: SearchWorkResult[],
   query: string,
@@ -161,14 +193,16 @@ export function filterSearchResults(
       !normalizedQuery ||
       work.title.toLowerCase().includes(normalizedQuery) ||
       work.description.toLowerCase().includes(normalizedQuery) ||
-      work.tags.some((tag) => tag.toLowerCase().includes(normalizedQuery)) ||
+      work.tags.some(
+        (tag) =>
+          tag.toLowerCase().includes(normalizedQuery) ||
+          tagMatchesGenreFilter(tag, normalizedQuery),
+      ) ||
       work.developer.toLowerCase().includes(normalizedQuery);
 
     const matchesGenre =
       genres.length === 0 ||
-      genres.some((genre) =>
-        work.tags.some((tag) => tag.toLowerCase().includes(genre.toLowerCase())),
-      );
+      genres.some((genre) => work.tags.some((tag) => tagMatchesGenreFilter(tag, genre)));
 
     return matchesQuery && matchesGenre;
   });
