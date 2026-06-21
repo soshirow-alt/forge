@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { PlayerShell } from "@/components/player-shell";
+import { ProfileAvatar } from "@/components/profile-avatar";
 import {
   getInfluenceRankingMonth,
   influenceRankingMonths,
@@ -94,9 +94,7 @@ function InfluenceRankingContent() {
                 <p className="text-2xl">
                   {entry.rank === 1 ? "🥇" : entry.rank === 2 ? "🥈" : "🥉"}
                 </p>
-                <span className="relative mx-auto mt-3 block size-16 overflow-hidden rounded-full bg-zinc-800">
-                  <Image src={entry.avatar} alt="" fill className="object-cover" />
-                </span>
+                <ProfileAvatar src={entry.avatar} className="mx-auto mt-3 size-16" size={64} />
                 <p className="mt-3 font-semibold text-white">{entry.name}</p>
                 <p className="text-xs text-zinc-500">@{entry.handle}</p>
                 <p className={`mt-2 text-sm font-medium ${entry.titleColor}`}>{entry.title}</p>
@@ -123,9 +121,7 @@ function InfluenceRankingContent() {
                     <td className="px-4 py-3 font-medium text-zinc-400">{entry.rank}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <span className="relative size-8 overflow-hidden rounded-full bg-zinc-800">
-                          <Image src={entry.avatar} alt="" fill className="object-cover" />
-                        </span>
+                        <ProfileAvatar src={entry.avatar} className="size-8" size={32} />
                         <div>
                           <p className="font-medium text-white">{entry.name}</p>
                           <p className="text-xs text-zinc-500">@{entry.handle}</p>
@@ -154,11 +150,6 @@ function InfluenceRankingContent() {
             >
               もっと見る
             </button>
-          )}
-          {showAll && month.list.length > RANKING_LIST_INITIAL && (
-            <p className="mt-3 text-center text-xs text-zinc-500">
-              {month.list.length}位まで表示中
-            </p>
           )}
         </div>
 

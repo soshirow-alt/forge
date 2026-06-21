@@ -1,42 +1,33 @@
 ■ 現在の状態
-- preview/landing-01。体験デモ機能はオーナー指示で削除済み
-- ランキング月切替・もっと見る、設定変更、プロフィール編集を配線（push 予定）
-- 次フェーズ（未着手）: Studio 本番ルート整理
+- preview/landing-01。ランキング・プロフ・ジャンル拡充を push 予定
 
 ■ 今回実装したこと
-- 体験デモ削除: lib/preview-demo-loop.ts、hooks/use-preview-v0.ts 削除
-- discovery-home-page: デモバナー・プレイしてFB CTA 削除
-- game-detail-v0-page: Preview ログイン省略・?play=1/?feedback=1 自動開始を削除。requireAuth に戻す
-- login-return-url: ?play= 等のクエリ許可を廃止
-- influence-ranking-v0-page + mock: 月 ◀▶（?month=）、もっと見る（4位以下）
-- forge-settings-form: メール/パスワード「変更」モーダル
-- profile-self-v0-page: 「プロフィールを編集」モーダル
-- components/v0-simple-modal.tsx 新設（設定・プロフィール共通）
+- ランキング: スコア>0のみ掲載、最大50位。もっと見る後の「XX位まで表示中」文言削除
+- mock 60人プールから月ごとに38/32/24人がランクイン（点数0は除外）
+- lib/forge-genre-options.ts — 25ジャンル（検索・投稿・プロフ・マイページフィルタで共用）
+- lib/profile-avatar-presets.ts — 50アイコン候補（ランディング5+絵文字45）
+- profile-avatar-picker: 候補選択 + 画像アップロード（preview は data URL）
 
 ■ 今回変更した画面
-- /home — 体験デモバナー・第2 CTA なし（ヒーローは詳しく見るのみ）
-- /games/[id] — URL に ?play=1 してもモーダル自動開始しない。未ログインは login へ
-- /rankings/influence — ◀▶ で 2025年5月/4月/3月。表下もっと見るで15位まで
-- /settings — アカウントの変更 → モーダル保存 → 一覧の表示更新
-- /mypage/profile — プロフィールを編集 → 表示名等更新
+- /rankings/influence — もっと見るで4位以降全員（最大50位）。誤った件数表示を削除
+- /mypage/profile — ジャンル25種、アイコン50+アップロード
+- /search, /submit — ジャンル選択を25種に拡張
 
 ■ ユーザー目線の変化
-- 勝手にプレイモーダルが開かなくなった
-- ランキング・設定・プロフィールでボタンが動く
+- ランキングが50位まで見える（mock では38位程度まで）
+- プロフ編集が実用的な選択肢に
 
 ■ 注意事項
-- 設定/プロフィール/ランキングは mock のクライアント state のみ
-- 体験デモは将来ちゃんと作り込む前提で一旦全撤去
+- ランキング・プロフは mock。アップロード画像は端末内のみ
 
 ■ 今すぐ私がやるべきこと
-- Preview で上記5画面を確認
-- 問題なければ次は Studio 本番ルート整理を Cursor に依頼
+- Preview でランキングもっと見る（38位付近まで）とプロフアイコン・ジャンルを確認
 
 ■ Cursorだけで完了できること
 - Studio 本番ルート整理（次タスク）
 
 ■ 次に検討すべきこと
-- 体験デモ再実装のタイミングと仕様（ログイン必須・自動開始なし等）
+- 本番 Supabase へのプロフアイコン永続化（Storage）
 
 ■ ChatGPTに相談したい論点
-- なし（オーナー指示どおり実施）
+- なし

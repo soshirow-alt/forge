@@ -1,26 +1,11 @@
+import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
+
 export const UNSPECIFIED_GENRE = "ジャンル未設定" as const;
 
 export const genreFilterOptions = [
   "すべて",
   UNSPECIFIED_GENRE,
-  "アクション",
-  "アドベンチャー",
-  "RPG",
-  "シミュレーション",
-  "サバイバル",
-  "パズル",
-  "ホラー",
-  "ノベル",
-  "ストラテジー",
-  "クラフト",
-  "探索",
-  "経営",
-  "ストーリー",
-  "癒し系",
-  "ローグライク",
-  "SF",
-  "ファンタジー",
-  "インディー",
+  ...FORGE_GENRE_OPTIONS,
 ] as const;
 
 export type GenreFilterOption = (typeof genreFilterOptions)[number];

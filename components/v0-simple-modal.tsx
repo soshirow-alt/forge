@@ -8,9 +8,18 @@ type V0SimpleModalProps = {
   subtitle?: string;
   onClose: () => void;
   children: ReactNode;
+  size?: "md" | "lg";
 };
 
-export function V0SimpleModal({ title, subtitle, onClose, children }: V0SimpleModalProps) {
+export function V0SimpleModal({
+  title,
+  subtitle,
+  onClose,
+  children,
+  size = "md",
+}: V0SimpleModalProps) {
+  const widthClass = size === "lg" ? "max-w-lg" : "max-w-md";
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center sm:p-6">
       <button
@@ -23,7 +32,7 @@ export function V0SimpleModal({ title, subtitle, onClose, children }: V0SimpleMo
         role="dialog"
         aria-modal="true"
         aria-labelledby="v0-modal-title"
-        className="relative w-full max-w-md overflow-hidden rounded-2xl border border-zinc-800 bg-[#0a0a0a] shadow-2xl shadow-black/50"
+        className={`relative flex max-h-[min(92vh,820px)] w-full ${widthClass} flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-[#0a0a0a] shadow-2xl shadow-black/50`}
       >
         <div className="flex items-start justify-between gap-3 border-b border-zinc-800/80 px-5 py-4">
           <div>
@@ -41,7 +50,7 @@ export function V0SimpleModal({ title, subtitle, onClose, children }: V0SimpleMo
             <X className="size-5" />
           </button>
         </div>
-        <div className="px-5 py-5">{children}</div>
+        <div className="overflow-y-auto px-5 py-5">{children}</div>
       </div>
     </div>
   );

@@ -1,14 +1,14 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { PlayerShell } from "@/components/player-shell";
+import { ProfileAvatar } from "@/components/profile-avatar";
+import { ProfileAvatarPicker } from "@/components/profile-avatar-picker";
 import { V0SimpleModal } from "@/components/v0-simple-modal";
+import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
 import { profileSelfMock } from "@/lib/profile-v0-mock-data";
 import { MapPin, Pencil, Sparkles } from "lucide-react";
-
-const genreOptions = ["RPG", "アドベンチャー", "ファンタジー", "ストーリー重視", "アクション", "ホラー"];
 
 export function ProfileSelfV0Page() {
   const [profile, setProfile] = useState(profileSelfMock);
@@ -17,6 +17,7 @@ export function ProfileSelfV0Page() {
     displayName: profile.displayName,
     bio: profile.bio,
     location: profile.location,
+    avatar: profile.avatar,
     favoriteGenres: [...profile.favoriteGenres],
   });
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -26,6 +27,7 @@ export function ProfileSelfV0Page() {
       displayName: profile.displayName,
       bio: profile.bio,
       location: profile.location,
+      avatar: profile.avatar,
       favoriteGenres: [...profile.favoriteGenres],
     });
     setEditing(true);
@@ -50,6 +52,7 @@ export function ProfileSelfV0Page() {
       displayName,
       bio: draft.bio.trim() || current.bio,
       location: draft.location.trim() || current.location,
+      avatar: draft.avatar,
       favoriteGenres: draft.favoriteGenres.length > 0 ? draft.favoriteGenres : current.favoriteGenres,
     }));
     setEditing(false);
@@ -59,8 +62,12 @@ export function ProfileSelfV0Page() {
   return (
     <PlayerShell>
       {editing && (
-        <V0SimpleModal title="プロフィールを編集" onClose={() => setEditing(false)}>
+        <V0SimpleModal title="プロフィールを編集" onClose={() => setEditing(false)} size="lg">
           <div className="space-y-4">
+            <ProfileAvatarPicker
+              value={draft.avatar}
+              onChange={(avatar) => setDraft((current) => ({ ...current, avatar }))}
+            />
             <div>
               <label className="block text-xs font-medium text-zinc-500" htmlFor="profile-name">
                 表示名
@@ -105,8 +112,9 @@ export function ProfileSelfV0Page() {
             </div>
             <fieldset>
               <legend className="text-xs font-medium text-zinc-500">好きなジャンル</legend>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {genreOptions.map((genre) => (
+              <div className="mt-2 max-h-32 overflow-y-auto rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-2">
+                <div className="flex flex-wrap gap-2">
+                {FORGE_GENRE_OPTIONS.map((genre) => (
                   <button
                     key={genre}
                     type="button"
@@ -120,6 +128,7 @@ export function ProfileSelfV0Page() {
                     {genre}
                   </button>
                 ))}
+                </div>
               </div>
             </fieldset>
           </div>
@@ -166,9 +175,7 @@ export function ProfileSelfV0Page() {
 
         <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 sm:p-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-            <span className="relative mx-auto size-24 shrink-0 overflow-hidden rounded-full bg-zinc-800 sm:mx-0 sm:size-28">
-              <Image src={profile.avatar} alt="" fill className="object-cover" />
-            </span>
+            <ProfileAvatar src={profile.avatar} className="mx-auto size-24 sm:mx-0 sm:size-28" size={112} />
             <div className="min-w-0 flex-1 text-center sm:text-left">
               <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                 <h2 className="text-xl font-bold text-white">{profile.displayName}</h2>

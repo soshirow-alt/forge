@@ -1,16 +1,8 @@
+import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
+
 export const SEARCH_RESULTS_TOTAL = 1248;
 
-export const searchGenreFilters = [
-  "すべてのジャンル",
-  "RPG",
-  "アクション",
-  "アドベンチャー",
-  "シミュレーション",
-  "パズル",
-  "ストラテジー",
-  "ホラー",
-  "ファンタジー",
-] as const;
+export const searchGenreFilters = ["すべてのジャンル", ...FORGE_GENRE_OPTIONS] as const;
 
 export const searchPlatformFilters = [
   "すべて",

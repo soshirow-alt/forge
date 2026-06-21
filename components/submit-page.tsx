@@ -26,19 +26,9 @@ import {
   type DeveloperPromptDraft,
 } from "@/lib/version-prompt-form";
 
-const phaseOptions = DEVELOPMENT_PHASE_OPTIONS;
+import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
 
-const genreOptions = [
-  "アクション",
-  "RPG",
-  "ADV",
-  "シミュレーション",
-  "パズル",
-  "ホラー",
-  "シューティング",
-  "ノベル",
-  "その他",
-] as const;
+const phaseOptions = DEVELOPMENT_PHASE_OPTIONS;
 
 const featureTags = [
   "協力プレイ",
@@ -572,7 +562,7 @@ export function SubmitPage() {
           <fieldset>
             <legend className="text-sm font-medium text-zinc-400">ジャンル</legend>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {genreOptions.map((option) => (
+              {FORGE_GENRE_OPTIONS.map((option) => (
                 <label
                   key={option}
                   className={`flex cursor-pointer items-center justify-center rounded-lg border px-3 py-2 text-sm transition-colors ${
