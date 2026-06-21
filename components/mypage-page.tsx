@@ -14,6 +14,12 @@ import {
   FeedbackTabPanel,
   FollowingTabPanel,
 } from "@/components/mypage-v0-extra-tabs";
+import { MyPageGameActionsMenu } from "@/components/mypage-game-actions-menu";
+import {
+  MYPAGE_LIST_PAGE_SIZE,
+  MyPageListPagination,
+  useMyPageListPagination,
+} from "@/components/mypage-list-pagination";
 import {
   GameThumbnail,
   MyPageTabs,
@@ -24,7 +30,6 @@ import {
   playHistoryFilterTabs,
   playHistoryPeriodFilters,
   playHistorySortOptions,
-  PLAY_HISTORY_TOTAL,
   playHistoryGames,
   playHistorySummary,
   savedFilterTabs,
@@ -43,13 +48,16 @@ import {
   witnessingStatusCounts,
 } from "@/lib/mypage-list-filters";
 import { gameDetailHrefFromTitle } from "@/lib/game-detail-v0-mock-data";
+import {
+  gamePlayEntryHref,
+  gameUpdateDevlogHref,
+} from "@/lib/mypage-navigation";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo, useState } from "react";
 import {
   Check,
   MessageSquare,
-  MoreVertical,
   Pencil,
   Sparkles,
 } from "lucide-react";
@@ -111,6 +119,13 @@ function PlayHistoryTabPanel() {
     return list;
   }, [activeFilter, genre, periodId, sortId]);
 
+  const paginationResetKey = `${activeFilter}-${periodId}-${genre}-${sortId}`;
+  const { pagination, page, setPage } = useMyPageListPagination(
+    filteredGames,
+    paginationResetKey,
+  );
+  const visibleGames = pagination.items;
+
   function resetFilters() {
     setActiveFilter("all");
     setPeriodId("all");
@@ -142,20 +157,24 @@ function PlayHistoryTabPanel() {
 
         {viewMode === "grid" ? (
           <ul className="mt-6 grid gap-4 sm:grid-cols-2">
-            {filteredGames.map((game) => (
+            {visibleGames.map((game) => (
               <li
                 key={game.title}
                 className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4"
               >
-                <GameThumbnail src={game.image} alt={game.title} className="w-full aspect-video" />
-                <h3 className="mt-3 font-semibold text-white">{game.title}</h3>
+                <Link href={gameDetailHrefFromTitle(game.title)}>
+                  <GameThumbnail src={game.image} alt={game.title} className="w-full aspect-video" />
+                  <h3 className="mt-3 font-semibold text-white transition-colors hover:text-violet-300">
+                    {game.title}
+                  </h3>
+                </Link>
                 <p className="mt-1 text-xs text-zinc-500">最終プレイ {game.lastPlay}</p>
               </li>
             ))}
           </ul>
         ) : (
         <ul className="mt-6 space-y-4">
-          {filteredGames.map((game) => (
+          {visibleGames.map((game) => (
             <li
               key={game.title}
               className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:p-5"
@@ -174,13 +193,7 @@ function PlayHistoryTabPanel() {
                         </span>
                       ))}
                     </div>
-                    <button
-                      type="button"
-                      className="rounded-lg p-1 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300"
-                      aria-label="その他"
-                    >
-                      <MoreVertical className="size-4" />
-                    </button>
+                    <MyPageGameActionsMenu title={game.title} />
                   </div>
 
                   <h3 className="mt-2 text-lg font-semibold text-white">
@@ -244,12 +257,12 @@ function PlayHistoryTabPanel() {
                     {game.updateVersion && (
                       <p className="mt-1 text-sm text-zinc-300">{game.updateVersion}</p>
                     )}
-                    <button
-                      type="button"
-                      className="mt-3 w-full rounded-lg border border-violet-500/40 px-3 py-2 text-xs text-violet-300 transition-colors hover:bg-violet-500/10"
+                    <Link
+                      href={gameUpdateDevlogHref(game.title)}
+                      className="mt-3 block w-full rounded-lg border border-violet-500/40 px-3 py-2 text-center text-xs text-violet-300 transition-colors hover:bg-violet-500/10"
                     >
                       更新内容を見る
-                    </button>
+                    </Link>
                   </div>
                 )}
               </div>
@@ -258,44 +271,12 @@ function PlayHistoryTabPanel() {
         </ul>
         )}
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm text-zinc-500">
-          <p>
-            {PLAY_HISTORY_TOTAL}件中 1–{filteredGames.length}件
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              disabled
-              className="rounded-lg border border-zinc-800 px-3 py-1.5 text-zinc-600"
-            >
-              前へ
-            </button>
-            <button
-              type="button"
-              className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 text-violet-300"
-            >
-              1
-            </button>
-            <button
-              type="button"
-              className="rounded-lg border border-zinc-800 px-3 py-1.5 transition-colors hover:border-zinc-700 hover:text-zinc-300"
-            >
-              2
-            </button>
-            <button
-              type="button"
-              className="rounded-lg border border-zinc-800 px-3 py-1.5 transition-colors hover:border-zinc-700 hover:text-zinc-300"
-            >
-              3
-            </button>
-            <button
-              type="button"
-              className="rounded-lg border border-zinc-800 px-3 py-1.5 transition-colors hover:border-zinc-700 hover:text-zinc-300"
-            >
-              次へ
-            </button>
-          </div>
-        </div>
+        <MyPageListPagination
+          totalItems={filteredGames.length}
+          page={page}
+          pageSize={MYPAGE_LIST_PAGE_SIZE}
+          onPageChange={setPage}
+        />
       </div>
 
       <aside className="w-full shrink-0 space-y-6 xl:w-72">
@@ -423,13 +404,18 @@ function WitnessingTabPanel() {
                     >
                       詳しく見る
                     </Link>
-                    <button
-                      type="button"
-                      disabled={!game.hasUpdate}
-                      className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-950 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                    <Link
+                      href={gamePlayEntryHref(game.title)}
+                      className={`rounded-lg px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90 ${
+                        game.hasUpdate
+                          ? "bg-white text-zinc-950"
+                          : "pointer-events-none cursor-not-allowed bg-zinc-800 text-zinc-500 opacity-40"
+                      }`}
+                      aria-disabled={!game.hasUpdate}
+                      tabIndex={game.hasUpdate ? 0 : -1}
                     >
                       {game.hasUpdate ? "今すぐ遊ぶ" : "アップデート待ち"}
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -522,7 +508,14 @@ function SavedTabPanel() {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                   <GameThumbnail src={game.image} alt={game.title} />
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-lg font-semibold text-white">{game.title}</h3>
+                    <h3 className="text-lg font-semibold text-white">
+                      <Link
+                        href={gameDetailHrefFromTitle(game.title)}
+                        className="transition-colors hover:text-violet-300"
+                      >
+                        {game.title}
+                      </Link>
+                    </h3>
                     <p className="mt-1 text-sm text-zinc-500">開発者： {game.developer}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {game.tags.map((tag) => (

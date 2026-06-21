@@ -688,7 +688,7 @@ export type FollowingDeveloper = {
 
 export const followingDevelopers: FollowingDeveloper[] = [
   {
-    id: "dev-1",
+    id: "sora-games",
     name: "Sora Games",
     initial: "S",
     badge: "新進開発者",
@@ -703,7 +703,7 @@ export const followingDevelopers: FollowingDeveloper[] = [
     },
   },
   {
-    id: "dev-2",
+    id: "lunaworks",
     name: "LunaWorks",
     initial: "L",
     bio: "SF探索と、星をテーマにした作品を開発中。",
@@ -717,7 +717,7 @@ export const followingDevelopers: FollowingDeveloper[] = [
     },
   },
   {
-    id: "dev-3",
+    id: "pixel-knights",
     name: "Pixel Jam",
     initial: "P",
     bio: "ピクセルアートで作る、レトロ風アクション。",
@@ -731,7 +731,7 @@ export const followingDevelopers: FollowingDeveloper[] = [
     },
   },
   {
-    id: "dev-4",
+    id: "greensmith",
     name: "GreenSmith",
     initial: "G",
     bio: "癒し系シミュレーションと、工房経営ゲーム。",
@@ -745,7 +745,7 @@ export const followingDevelopers: FollowingDeveloper[] = [
     },
   },
   {
-    id: "dev-5",
+    id: "studio-aurora",
     name: "Studio Aurora",
     initial: "A",
     bio: "ダンジョン探索RPGと、ローグライト作品。",
@@ -759,7 +759,7 @@ export const followingDevelopers: FollowingDeveloper[] = [
     },
   },
   {
-    id: "dev-6",
+    id: "sky-pirate",
     name: "Sky Pirate Studio",
     initial: "K",
     bio: "空を舞台にしたアクションと、協力プレイ。",

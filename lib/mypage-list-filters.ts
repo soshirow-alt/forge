@@ -109,3 +109,33 @@ export function feedbackTypeCounts(entries: FeedbackEntry[]) {
     count: filterFeedbackEntries(entries, tab.id, "all", "すべて").length,
   }));
 }
+
+export function filterFollowingDevelopers<
+  T extends { game: { status: "developing" | "released" } },
+>(developers: T[], statusId: "all" | "developing" | "released") {
+  if (statusId === "developing") {
+    return developers.filter((dev) => dev.game.status === "developing");
+  }
+  if (statusId === "released") {
+    return developers.filter((dev) => dev.game.status === "released");
+  }
+  return developers;
+}
+
+export function followingStatusCounts<
+  T extends { game: { status: "developing" | "released" } },
+>(developers: T[]) {
+  return [
+    { id: "all" as const, label: "すべて", count: developers.length },
+    {
+      id: "developing" as const,
+      label: "開発中",
+      count: filterFollowingDevelopers(developers, "developing").length,
+    },
+    {
+      id: "released" as const,
+      label: "完成品あり",
+      count: filterFollowingDevelopers(developers, "released").length,
+    },
+  ];
+}

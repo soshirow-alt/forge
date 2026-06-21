@@ -7,6 +7,11 @@ import {
   StatusFilterPills,
   type GenreFilter,
 } from "@/components/mypage-filters";
+import {
+  MYPAGE_LIST_PAGE_SIZE,
+  MyPageListPagination,
+  useMyPageListPagination,
+} from "@/components/mypage-list-pagination";
 import { type ViewMode } from "@/components/view-mode-toggle";
 import {
   GameThumbnail,
@@ -16,7 +21,6 @@ import {
   achievementProgress,
   achievementSortOptions,
   allAchievements,
-  FEEDBACK_HISTORY_TOTAL,
   feedbackEntries,
   feedbackFilterTabs,
   feedbackReflectionFilters,
@@ -24,12 +28,21 @@ import {
   feedbackStats,
   FOLLOWING_TOTAL,
   followingDevelopers,
-  followingFilterTabs,
   followingSortOptions,
   recentAchievements,
   recentFollowing,
 } from "@/lib/mypage-v0-mock-data";
-import { feedbackTypeCounts, filterFeedbackEntries } from "@/lib/mypage-list-filters";
+import {
+  feedbackTypeCounts,
+  filterFeedbackEntries,
+  filterFollowingDevelopers,
+  followingStatusCounts,
+} from "@/lib/mypage-list-filters";
+import {
+  creatorProfileHref,
+  gameDetailHrefWithTab,
+  gamePlayEntryHref,
+} from "@/lib/mypage-navigation";
 import {
   Check,
   ChevronRight,
@@ -38,50 +51,10 @@ import {
   Trophy,
   Users,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useMemo, useRef, useState } from "react";
 
-function TabPaginationFooter({ total, shown }: { total: number; shown: number }) {
-  return (
-    <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm text-zinc-500">
-      <p>
-        {total}件中 1–{shown}件
-      </p>
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
-          disabled
-          className="rounded-lg border border-zinc-800 px-3 py-1.5 text-zinc-600"
-        >
-          前へ
-        </button>
-        <button
-          type="button"
-          className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 text-violet-300"
-        >
-          1
-        </button>
-        <button
-          type="button"
-          className="rounded-lg border border-zinc-800 px-3 py-1.5 transition-colors hover:border-zinc-700 hover:text-zinc-300"
-        >
-          2
-        </button>
-        <button
-          type="button"
-          className="rounded-lg border border-zinc-800 px-3 py-1.5 transition-colors hover:border-zinc-700 hover:text-zinc-300"
-        >
-          3
-        </button>
-        <button
-          type="button"
-          className="rounded-lg border border-zinc-800 px-3 py-1.5 transition-colors hover:border-zinc-700 hover:text-zinc-300"
-        >
-          次へ
-        </button>
-      </div>
-    </div>
-  );
-}
+const FOLLOWING_LOAD_STEP = 4;
 
 export function FeedbackTabPanel() {
   const [typeFilter, setTypeFilter] = useState<(typeof feedbackFilterTabs)[number]["id"]>(
@@ -107,6 +80,13 @@ export function FeedbackTabPanel() {
     }
     return list;
   }, [typeFilter, reflectionId, genre, sortId]);
+
+  const paginationResetKey = `${typeFilter}-${reflectionId}-${genre}-${sortId}`;
+  const { pagination, page, setPage } = useMyPageListPagination(
+    filteredEntries,
+    paginationResetKey,
+  );
+  const visibleEntries = pagination.items;
 
   function resetFilters() {
     setTypeFilter("all");
@@ -141,7 +121,7 @@ export function FeedbackTabPanel() {
 
         {viewMode === "grid" ? (
           <ul className="mt-6 grid gap-4 sm:grid-cols-2">
-            {filteredEntries.map((entry) => (
+            {visibleEntries.map((entry) => (
               <li
                 key={entry.id}
                 className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4"
@@ -159,7 +139,7 @@ export function FeedbackTabPanel() {
           </ul>
         ) : (
         <ul className="mt-6 space-y-4">
-          {filteredEntries.map((entry) => (
+          {visibleEntries.map((entry) => (
             <li
               key={entry.id}
               className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:p-5"
@@ -218,20 +198,25 @@ export function FeedbackTabPanel() {
                     <p className="mt-2 text-xs text-zinc-500">{entry.reflected.note}</p>
                   )}
                 </div>
-                <button
-                  type="button"
+                <Link
+                  href={gameDetailHrefWithTab(entry.game, "voices")}
                   className="self-start rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300 lg:self-center"
-                  aria-label="詳細"
+                  aria-label={`${entry.game}のフィードバックを見る`}
                 >
                   <ChevronRight className="size-5" />
-                </button>
+                </Link>
               </div>
             </li>
           ))}
         </ul>
         )}
 
-        <TabPaginationFooter total={FEEDBACK_HISTORY_TOTAL} shown={filteredEntries.length} />
+        <MyPageListPagination
+          totalItems={filteredEntries.length}
+          page={page}
+          pageSize={MYPAGE_LIST_PAGE_SIZE}
+          onPageChange={setPage}
+        />
       </div>
 
       <aside className="w-full shrink-0 space-y-6 xl:w-72">
@@ -266,12 +251,39 @@ export function FeedbackTabPanel() {
 
 export function AchievementsTabPanel() {
   const inProgress = allAchievements.filter((item) => !item.earned);
+  const [category, setCategory] = useState<string>("すべて");
   const [sortId, setSortId] = useState<(typeof achievementSortOptions)[number]["id"]>(
     achievementSortOptions[0].id,
   );
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const allAchievementsRef = useRef<HTMLElement>(null);
 
-  const sortedAchievements = useMemo(() => [...allAchievements], [sortId]);
+  const sortedAchievements = useMemo(() => {
+    let list = [...allAchievements];
+    if (category !== "すべて") {
+      list = list.filter((item) => item.category === category);
+    }
+    if (sortId === "title-asc") {
+      list.sort((a, b) => a.title.localeCompare(b.title, "ja"));
+    } else if (sortId === "earned-desc") {
+      list.sort((a, b) => {
+        if (a.earned !== b.earned) {
+          return Number(b.earned) - Number(a.earned);
+        }
+        return (b.earnedDate ?? "").localeCompare(a.earnedDate ?? "");
+      });
+    } else if (sortId === "progress") {
+      list.sort((a, b) => {
+        if (a.earned !== b.earned) {
+          return Number(a.earned) - Number(b.earned);
+        }
+        const aRatio = a.progress ? a.progress.current / a.progress.target : 1;
+        const bRatio = b.progress ? b.progress.current / b.progress.target : 1;
+        return bRatio - aRatio;
+      });
+    }
+    return list;
+  }, [category, sortId]);
 
   return (
     <div className="mt-8 space-y-8">
@@ -313,6 +325,9 @@ export function AchievementsTabPanel() {
           <h2 className="text-lg font-semibold text-white">最近獲得した実績</h2>
           <button
             type="button"
+            onClick={() =>
+              allAchievementsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
             className="text-sm text-violet-400 transition-colors hover:text-violet-300"
           >
             すべて見る →
@@ -337,23 +352,24 @@ export function AchievementsTabPanel() {
         </div>
       </section>
 
-      <section>
+      <section ref={allAchievementsRef}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold text-white">すべての実績</h2>
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          {achievementCategories.map((category, index) => (
+          {["すべて", ...achievementCategories].map((item) => (
             <button
-              key={category}
+              key={item}
               type="button"
+              onClick={() => setCategory(item)}
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:text-sm ${
-                index === 0
+                category === item
                   ? "bg-violet-600 text-white"
                   : "border border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
               }`}
             >
-              {category}
+              {item}
             </button>
           ))}
         </div>
@@ -475,12 +491,41 @@ export function AchievementsTabPanel() {
 }
 
 export function FollowingTabPanel() {
+  const [statusFilter, setStatusFilter] = useState<"all" | "developing" | "released">("all");
   const [sortId, setSortId] = useState<(typeof followingSortOptions)[number]["id"]>(
     followingSortOptions[0].id,
   );
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [visibleCount, setVisibleCount] = useState(FOLLOWING_LOAD_STEP);
+  const listTopRef = useRef<HTMLDivElement>(null);
 
-  const sortedDevelopers = useMemo(() => [...followingDevelopers], [sortId]);
+  const statusOptions = useMemo(() => followingStatusCounts(followingDevelopers), []);
+
+  const filteredDevelopers = useMemo(() => {
+    let list = filterFollowingDevelopers(followingDevelopers, statusFilter);
+    if (sortId === "name-asc") {
+      list = [...list].sort((a, b) => a.name.localeCompare(b.name, "ja"));
+    } else if (sortId === "followers-desc") {
+      list = [...list].sort((a, b) => b.followers - a.followers);
+    }
+    return list;
+  }, [sortId, statusFilter]);
+
+  const visibleDevelopers = filteredDevelopers.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredDevelopers.length;
+
+  function handleStatusChange(id: "all" | "developing" | "released") {
+    setStatusFilter(id);
+    setVisibleCount(FOLLOWING_LOAD_STEP);
+  }
+
+  function handleLoadMore() {
+    setVisibleCount((current) => Math.min(current + FOLLOWING_LOAD_STEP, filteredDevelopers.length));
+  }
+
+  function scrollToListTop() {
+    listTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   return (
     <div className="mt-8 flex flex-col gap-8 xl:flex-row">
@@ -496,21 +541,12 @@ export function FollowingTabPanel() {
           </div>
         </header>
 
-        <div className="mt-6 flex flex-wrap gap-2">
-          {followingFilterTabs.map((filter, index) => (
-            <button
-              key={filter.id}
-              type="button"
-              className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:text-sm ${
-                index === 0
-                  ? "bg-violet-600 text-white"
-                  : "border border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
-              }`}
-            >
-              {filter.label}
-              <span className="ml-1 opacity-70">{filter.count}</span>
-            </button>
-          ))}
+        <div ref={listTopRef}>
+          <StatusFilterPills
+            options={statusOptions}
+            activeId={statusFilter}
+            onChange={handleStatusChange}
+          />
         </div>
 
         <div className="mt-4">
@@ -525,7 +561,7 @@ export function FollowingTabPanel() {
 
         {viewMode === "grid" ? (
           <ul className="mt-6 grid gap-4 sm:grid-cols-2">
-            {sortedDevelopers.map((dev) => (
+            {visibleDevelopers.map((dev) => (
               <li
                 key={dev.id}
                 className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4"
@@ -554,7 +590,7 @@ export function FollowingTabPanel() {
           </ul>
         ) : (
         <ul className="mt-6 space-y-4">
-          {sortedDevelopers.map((dev) => (
+          {visibleDevelopers.map((dev) => (
             <li
               key={dev.id}
               className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:p-5"
@@ -612,12 +648,18 @@ export function FollowingTabPanel() {
                 </div>
 
                 <div className="flex shrink-0 gap-2 lg:flex-col">
-                  <button
-                    type="button"
-                    className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
+                  <Link
+                    href={creatorProfileHref(dev.id)}
+                    className="rounded-lg border border-zinc-700 px-4 py-2 text-center text-sm text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
                   >
                     プロフィールへ
-                  </button>
+                  </Link>
+                  <Link
+                    href={gamePlayEntryHref(dev.game.title)}
+                    className="rounded-lg border border-zinc-800 px-4 py-2 text-center text-sm text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
+                  >
+                    作品を見る
+                  </Link>
                 </div>
               </div>
             </li>
@@ -625,12 +667,19 @@ export function FollowingTabPanel() {
         </ul>
         )}
 
-        <button
-          type="button"
-          className="mt-6 w-full rounded-xl border border-zinc-800 py-3 text-sm text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
-        >
-          さらに読み込む
-        </button>
+        {hasMore ? (
+          <button
+            type="button"
+            onClick={handleLoadMore}
+            className="mt-6 w-full rounded-xl border border-zinc-800 py-3 text-sm text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
+          >
+            さらに読み込む（残り {filteredDevelopers.length - visibleCount}人）
+          </button>
+        ) : (
+          <p className="mt-6 text-center text-xs text-zinc-600">
+            {filteredDevelopers.length}人を表示中
+          </p>
+        )}
       </div>
 
       <aside className="w-full shrink-0 space-y-6 xl:w-72">
@@ -656,6 +705,7 @@ export function FollowingTabPanel() {
           </ul>
           <button
             type="button"
+            onClick={scrollToListTop}
             className="mt-4 text-xs text-violet-400 transition-colors hover:text-violet-300"
           >
             すべてのフォロー履歴を見る →
@@ -663,10 +713,13 @@ export function FollowingTabPanel() {
         </section>
 
         <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-          <div className="flex items-center gap-2 text-sm text-zinc-400">
+          <Link
+            href="/search/creators"
+            className="flex items-center gap-2 text-sm text-zinc-400 transition-colors hover:text-violet-300"
+          >
             <Users className="size-4 text-violet-400" aria-hidden="true" />
             <span>開発者を探す</span>
-          </div>
+          </Link>
           <p className="mt-2 text-xs leading-relaxed text-zinc-600">
             気になる開発者をフォローして、新作や更新を逃さないようにしましょう。
           </p>
