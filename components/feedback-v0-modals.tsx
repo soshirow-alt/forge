@@ -192,9 +192,8 @@ export function PlayStubV0Modal({
     <ModalShell title="プレイを開始" subtitle={game.title} onClose={onClose} size="md">
       <div className="space-y-4 px-5 py-5 sm:px-6 sm:py-6">
         <GameSummaryCard game={game} />
-        <p className="text-sm text-zinc-400">
-          preview では外部プレイリンクの stub です。実際の Forge ではブラウザまたは Steam
-          等でプレイが始まります。
+        <p className="text-sm leading-relaxed text-zinc-400">
+          この画面でプレイ体験を始めます。本番ではブラウザや Steam など、作品ごとのプレイ環境に移動します。
         </p>
         <div className="flex flex-col gap-2 sm:flex-row">
           <button
@@ -202,7 +201,7 @@ export function PlayStubV0Modal({
             onClick={onPlayComplete}
             className="rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
           >
-            プレイを開始（stub）
+            プレイをはじめる
           </button>
           <button
             type="button"
@@ -226,9 +225,11 @@ export function FirstVoiceV0Modal({
   game: GameDetailV0;
   onClose: () => void;
   onOpenFullForm: () => void;
-  onSubmitQuick: () => void;
+  onSubmitQuick: (answerLabel: string) => void;
 }) {
   const [answer, setAnswer] = useState("just-right");
+  const selectedLabel =
+    firstVoiceQuestion.options.find((option) => option.id === answer)?.label ?? "";
 
   return (
     <ModalShell
@@ -254,7 +255,7 @@ export function FirstVoiceV0Modal({
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <button
             type="button"
-            onClick={onSubmitQuick}
+            onClick={() => onSubmitQuick(selectedLabel)}
             className="rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
           >
             この回答を送信

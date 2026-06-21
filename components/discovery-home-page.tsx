@@ -7,6 +7,10 @@ import { useState } from "react";
 import { GameThumbnail, PlayerShell } from "@/components/player-shell";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import {
+  canPreviewDemoWithoutLogin,
+  demoGameDetailHref,
+} from "@/lib/preview-demo-loop";
+import {
   heroSlides,
   newGames,
   popularGames,
@@ -123,12 +127,22 @@ function HeroCarousel() {
           <div className="mt-4">
             <StatPills voiceCount={slide.voiceCount} witnessCount={slide.witnessCount} />
           </div>
-          <Link
-            href={gameDetailHref(slide.id)}
-            className="mt-6 inline-flex w-fit rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
-          >
-            詳しく見る →
-          </Link>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              href={gameDetailHref(slide.id)}
+              className="inline-flex w-fit rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+            >
+              詳しく見る →
+            </Link>
+            {canPreviewDemoWithoutLogin() && slide.id === "hero-1" && (
+              <Link
+                href={demoGameDetailHref({ play: true })}
+                className="inline-flex w-fit rounded-xl border border-violet-400/50 bg-violet-500/15 px-5 py-2.5 text-sm font-semibold text-violet-100 transition-colors hover:bg-violet-500/25"
+              >
+                プレイしてフィードバック →
+              </Link>
+            )}
+          </div>
         </div>
 
         <button
@@ -167,9 +181,28 @@ function HeroCarousel() {
 }
 
 export function DiscoveryHomePage() {
+  const showDemoStrip = canPreviewDemoWithoutLogin();
+
   return (
     <PlayerShell activeNav="home">
       <div className="space-y-10">
+        {showDemoStrip && (
+          <section className="rounded-2xl border border-violet-500/30 bg-violet-500/10 px-5 py-4 sm:px-6">
+            <p className="text-sm font-medium text-violet-100">
+              体験デモ — 発見 → プレイ → フィードバックの流れを試せます
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-violet-200/80">
+              Preview ではログインなしで「星灯の旅路」のプレイ stub から最初のフィードバックまで体験できます。
+            </p>
+            <Link
+              href={demoGameDetailHref({ play: true })}
+              className="mt-3 inline-flex rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
+            >
+              デモをはじめる →
+            </Link>
+          </section>
+        )}
+
         <HeroCarousel />
 
         <section>

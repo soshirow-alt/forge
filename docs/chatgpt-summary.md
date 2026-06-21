@@ -1,61 +1,73 @@
 ■ 現在の状態
-- オーナー GO 済み: 案1〜3 すべて実施（コード変更なし・ドキュメントのみ）
-- 新規 docs/forge-business-hypothesis.md（事業仮説 v2 正本）
-- docs/forge-principles.md コアループ改訂（学習ループ＝コア、見届け人・再プレイ＝増幅）
-- docs/forge-p0-improvement-loop-plan.md §1.5 事業 North Star 追記
-- AGENTS.md / .cursor/rules/forge.mdc 二正本表現に同期
-- P0 Phase A/B 実装済み。Phase C migration 015 は引き続き GO 待ち
-- 本番 prod deploy 保留。PLAYER_VISIBLE=false
+- ブランチ preview/landing-01。Preview URL で UI 確認前提
+- 優先1「発見→プレイ→フィードバックの1本デモ」を実装済み（コミット・push 予定）
+- 正本デモゲームは星灯の旅路（slug: seikat-no-tabiji）
+- Preview ではログインなしでプレイ stub から初声 FB まで通せる（本番マージ時は要無効化）
+- ホーム hero-1 / 検索カードは gameDetailIdAliases で詳細に解決済み
 
-■ Forge原典コアループ（判断の基準）
-- 投稿→発見→プレイ→フィードバック→改善→再プレイ から、学習ループ中心へ更新
-- コア: 発見→プレイ→初声→次に直すこと→次版
-- 増幅: 変化を見る、再プレイ、見届け人、影響力可視化
-- 事業の問い: どうマネタイズか → 何を売るか → どう Good レビューを引き出すか
+■ 今回実装したこと
+- lib/preview-demo-loop.ts 新設（DEMO_GAME_ID、demoGameDetailHref、Preview ログイン省略判定）
+- lib/login-return-url.ts: return に ?play=1 / ?feedback=1 を許可。gameDetailReturnPath にオプション追加
+- components/game-detail-v0-page.tsx: Preview では requireAuth をバイパスしてプレイ・FB 開始
+- ?play=1 でマウント時に play stub 自動開始（ログイン済み or Preview）
+- ?feedback=1 でフル FB フォーム自動開始
+- 初声送信時は選択肢ラベルを session voice 本文に反映
+- components/feedback-v0-modals.tsx: Play stub 文言を体験向けに整理（stub 表記削除）
+- components/discovery-home-page.tsx: 体験デモストリップ + ヒーロー hero-1 に「プレイしてフィードバック」CTA
+- docs/forge-changelog.md / preview-v0-gaps.md 更新
 
-■ 今回実装したこと（ドキュメント）
-1. forge-business-hypothesis.md 新規作成
-   - 学習ループ本命、無料期間＝因果証明、A/B/C 層、3層価値構造
-   - レビュアー / Good / スーパーレビュアー分離
-   - Good 生成の最低条件4つ（導線・問い・承認・影響力可視化）
-   - 経済インセンティブは増幅・後回し
-   - North Star M1〜M4、棄却仮説一覧
-2. forge-principles.md 改訂（オーナー GO）
-   - タイトル: プロダクト原典（憲法表現を緩和）
-   - コアループ図・プレイヤーサイクル表・コア/増幅/非コア
-   - 見届け人独立小節、§5 開発者が問いを決める・Good 評価主体
-   - §6 学習ループが最初の価値
-3. forge-p0-improvement-loop-plan.md
-   - 目的行を学習ループ表現に
-   - §1.5 事業 North Star、M1/M3 主要・H2 副次
-   - KPI 表に M1/M2 列、015 は North Star 非必須の注記
-4. forge-handoff.md / forge-changelog.md / AGENTS.md / forge.mdc 同期
+■ 今回変更した画面
+- 画面名: 発見ホーム / URL: /home / 位置: PlayerShell メイン上部
+  - 変更前: ヒーローのみ
+  - 変更後: Preview 時のみ紫の体験デモバナー「デモをはじめる」、hero-1 に第2 CTA
+  - プレイヤー視点: 1クリックでデモループに入れる
+  - 確認: Preview を開く → バナー or ヒーロー CTA → 詳細で play stub が開く
+
+- 画面名: ゲーム詳細（星灯の旅路） / URL: /games/seikat-no-tabiji?play=1
+  - 変更前: 未ログインは「ログインしてプレイ」→ login のみ。return 後は手動で再クリック
+  - 変更後: Preview 未ログインでも「プレイする」→ stub → 初声 → 送信 → みんなのフィードバックタブに自分の投稿
+  - 開発者視点: sessionStorage 追加分が voices 一覧先頭に出る（Supabase 未保存）
+  - 確認: プレイをはじめる → この回答を送信 → success → voices タブに新規1件
 
 ■ ユーザー目線の変化
-- ドキュメント上の「Forge とは何か」がテスター代替・見届け人必須から学習ループ＋Good レビュー生成に統一
-- 実装判断: 再プレイ・見届け人だけの機能は後回し可、初声と次に直すことを優先
-- プレイヤー動機: 発掘が入口、Good レビューには承認・影響力可視化が土台（金銭はまだ）
+- 初見デモ担当が /home からログインなしで「Forge のコアループ」を30秒で見せられる
+- ログインありフローでも ?play=1 return でプレイ再開が自動化された
+- stub 文言が開発用から体験用に読みやすくなった
+
+■ なぜこの設計
+- 原典: 発見は公開、プレイ以降はログイン必須。Preview は UI レビューと外部デモのため一時的に例外
+- デモ正本を1ゲームに固定し、散在する mock ID は既存 alias で詳細に集約（新規データ増やさない）
+- return URL は ?play=1 のみ許可しオープンリダイレクトは防ぐ
+
+■ 他案不採用
+- 全ゲームでログイン省略: デモの意味が薄れ本番挙動と乖離しすぎるため Preview 全体フラグのみ
+- localStorage に FB 永続化: 原典違反。sessionStorage の既存 voices 追加分を継続
+- ホーム以外に専用 /demo ルートのみ: 発見→詳細の自然な導線を優先し /home バナーを採用
+
+■ In / Out
+- In: Preview デモループ、return クエリ、ホーム CTA、stub 文言、docs
+- Out: Supabase FB 保存、recordPlay on mock、本番でのログイン省略、他画面の死んだ UI
 
 ■ 注意事項
-- コード・UI 文言の一括変更はしていない（見届け人ラベル等は別タスク）
-- chatgpt-handoff.md 全量更新は未実施（事業仮説は大テーマだがオーナーが引継ぎ指示なし。handoff は差分更新のみ）
-- 原典改訂は GO 済みで反映済み。以降 Cursor は学習ループ基準で判断
+- Preview デプロイでのみ canPreviewDemoWithoutLogin が true（VERCEL_GIT_COMMIT_REF または env）
+- 本番マージ前に Preview ログイン省略を必ず外す（preview-v0-gaps に明記）
+- FB は session のみ。リロード後も同一タブ内では voices に残るがアカウント横断共有ではない
 
 ■ 今すぐ私がやるべきこと
-- docs/forge-business-hypothesis.md を一読し、Good レビュー4条件が現行プロダクトとズレないか確認
-- P0 検証時 M1（プレイ→初声率）を手動でもよいので記録開始
-- 新 GPT スレッドなら forge-handoff.md 全量貼りを検討（事業定義が大きく変わったため）
+- Preview デプロイ完了後、/home → デモをはじめる → 初声送信まで実機確認
+- ログインユーザーで ?play=1 return（login クリック→戻る→自動 stub）も1回確認
+- 問題なければこのデモ URL を営業・開発者説明の正本にする
 
 ■ Cursorだけで完了できること
-- Good レビュー4条件と現行 UI のギャップ洗い出し（影響力可視化は未実装の可能性大）
-- M1 計測の staging 手順書
-- Phase C 015 GO 判断用メモ（H2 副次化を明記したうえで）
+- /search グリッド切替など残 dead UI
+- フル FB フォーム送信文の動的化
+- mypage FB 履歴と session voice の連携（スコープ要判断）
 
 ■ 次に検討すべきこと
-- 影響力可視化（読まれた・採用・改善に繋がった）の P1 スコープ
-- 開発者 FB 評価（M2）の実装タイミング
-- chatgpt-handoff.md 全量更新のタイミング
+- 外部向けデモ用の短い説明コピー（バナー文言）
+- mock → Supabase 切替タイミングと初声率計測
+- 本番 merge 時の認証・middleware 復元チェックリスト
 
 ■ ChatGPTに相談したい論点
-- M1 目標 20% 仮置きの妥当性（A層パイロット人数）
-- 承認・影響力可視化だけで Good レビューが足りるか、いつ経済層を足すか
+- Preview ログイン省略を「デモ専用1 URL のみ」に狭めるべきか、現状の Preview 全体でよいか
+- 営業デモでログイン必須に戻すタイミング（見込み客向け vs 社内 UI 確認）

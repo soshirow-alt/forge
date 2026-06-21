@@ -63,8 +63,8 @@
 
 ### P-06 /games/[id]
 - **見届ける / フォロー / あとで遊ぶ** — 未ログイン→login、ログイン後 toggle（mock state）
-- **プレイ** — login 後 play stub モーダル（実ゲーム URL なし）
-- **FB** — mock モーダル（Supabase 保存なし）
+- **プレイ → FB デモ** — Preview: ログインなし可（`seikat-no-tabiji?play=1`）。stub → 初声 → session 反映。本番は login 必須
+- **FB** — mock モーダル（Supabase 保存なし）。`?feedback=1` でログイン後フォーム再開
 
 ### P-07 /creators/[id]
 - **フォロー** — 未ログイン→login、ログイン後 toggle（mock state）
@@ -95,7 +95,7 @@
 2. **Sidebar 正本** — 04/05/05-2/18 で項目差（#19 オーナー裁定）
 3. **マイページ IA** — tabs（現状）vs sidebar 独立 URL（モック）
 4. **17 設定** — プレイヤー `/settings` vs Studio 設定（別 URL 確定要）
-5. **ログイン後プレイ再開** — return のみ。自動で play stub を開くか（原典: redirect 複雑化しない）
+5. **ログイン後プレイ再開** — `?play=1` / `?feedback=1` を return に許可（Preview デモ配線済）。本番マージ時に Preview 専用ログイン省略を外すこと
 6. **09 活動タイムライン vs 11/12/16** — MECE 裁定（#36）
 7. **Studio 20–25** — Player preview 完了後の次フェーズ
 8. **mock → Supabase** — いつ切替するか（preview は mock 継続方針）
