@@ -20,8 +20,8 @@ import { GameThumbnail, PlayerShell } from "@/components/player-shell";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { gameDetailReturnPath } from "@/lib/login-return-url";
+import { usePreviewV0 } from "@/hooks/use-preview-v0";
 import { getGameDetailV0, resolveGameDetailId } from "@/lib/game-detail-v0-mock-data";
-import { canPreviewDemoWithoutLogin } from "@/lib/preview-demo-loop";
 import {
   gameToDetailV0,
   isSupabaseProjectId,
@@ -114,7 +114,7 @@ function GameDetailV0PageContent({ id }: { id: string }) {
   const hasRealPlayUrl = Boolean(submittedGame?.playUrl?.trim());
   const resolvedId = isSupabaseProjectId(id) ? id : resolveGameDetailId(id);
   const { isLoggedIn, hydrated, requireAuth } = useRequireAuth();
-  const previewDemoWithoutLogin = canPreviewDemoWithoutLogin();
+  const previewDemoWithoutLogin = usePreviewV0();
   const canPlayWithoutLogin = isLoggedIn || previewDemoWithoutLogin;
   const returnPath = gameDetailReturnPath(resolvedId);
   const playReturnPath = gameDetailReturnPath(resolvedId, { play: true });

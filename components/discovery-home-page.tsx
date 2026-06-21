@@ -6,8 +6,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { GameThumbnail, PlayerShell } from "@/components/player-shell";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
+import { usePreviewV0 } from "@/hooks/use-preview-v0";
 import {
-  canPreviewDemoWithoutLogin,
   demoGameDetailHref,
 } from "@/lib/preview-demo-loop";
 import {
@@ -86,7 +86,7 @@ function SectionHeader({ title, href }: { title: string; href?: string }) {
   );
 }
 
-function HeroCarousel() {
+function HeroCarousel({ showDemoCta }: { showDemoCta: boolean }) {
   const [index, setIndex] = useState(0);
   const slide = heroSlides[index];
 
@@ -134,7 +134,7 @@ function HeroCarousel() {
             >
               詳しく見る →
             </Link>
-            {canPreviewDemoWithoutLogin() && slide.id === "hero-1" && (
+            {showDemoCta && slide.id === "hero-1" && (
               <Link
                 href={demoGameDetailHref({ play: true })}
                 className="inline-flex w-fit rounded-xl border border-violet-400/50 bg-violet-500/15 px-5 py-2.5 text-sm font-semibold text-violet-100 transition-colors hover:bg-violet-500/25"
@@ -181,7 +181,7 @@ function HeroCarousel() {
 }
 
 export function DiscoveryHomePage() {
-  const showDemoStrip = canPreviewDemoWithoutLogin();
+  const showDemoStrip = usePreviewV0();
 
   return (
     <PlayerShell activeNav="home">
@@ -203,7 +203,7 @@ export function DiscoveryHomePage() {
           </section>
         )}
 
-        <HeroCarousel />
+        <HeroCarousel showDemoCta={showDemoStrip} />
 
         <section>
           <SectionHeader title="最近更新された作品" href="/search" />
