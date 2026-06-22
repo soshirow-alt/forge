@@ -4,23 +4,48 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo, useState } from "react";
-import { PlayerShell, SortDropdown } from "@/components/player-shell";
+import { PlayerShell } from "@/components/player-shell";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import {
   DEVELOPER_SEARCH_TOTAL,
   developerProfileHref,
   developerSearchResults,
+  developerSearchSortOptions,
   filterDevelopers,
+  parseDeveloperSort,
+  sortDevelopers,
+  type DeveloperSearchSortId,
 } from "@/lib/developer-search-v0-mock-data";
-import { BadgeCheck, ChevronDown, Sprout, UserPlus } from "lucide-react";
+import { BadgeCheck, Sprout, UserPlus } from "lucide-react";
+
+function buildCreatorsSearchUrl(
+  query: string,
+  sort: DeveloperSearchSortId,
+  newOnly: boolean,
+): string {
+  const params = new URLSearchParams();
+  if (query.trim()) {
+    params.set("q", query.trim());
+  }
+  if (sort !== "recommended") {
+    params.set("sort", sort);
+  }
+  if (newOnly) {
+    params.set("new", "1");
+  }
+  const qs = params.toString();
+  return qs ? `/search/creators?${qs}` : "/search/creators";
+}
 
 function DeveloperSearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { requireAuth } = useRequireAuth();
   const queryFromUrl = searchParams.get("q")?.trim() ?? "";
+  const sortFromUrl = parseDeveloperSort(searchParams.get("sort"));
+  const newOnlyFromUrl = searchParams.get("new") === "1";
   const [query, setQuery] = useState(queryFromUrl);
-  const [newOnly, setNewOnly] = useState(false);
+  const [newOnly, setNewOnly] = useState(newOnlyFromUrl);
   const [followingIds, setFollowingIds] = useState<Set<string>>(() => {
     const initial = new Set<string>();
     for (const dev of developerSearchResults) {
@@ -43,19 +68,24 @@ function DeveloperSearchContent() {
           }
           return next;
         });
-      }, `/search/creators${queryFromUrl ? `?q=${encodeURIComponent(queryFromUrl)}` : ""}`);
+      }, buildCreatorsSearchUrl(queryFromUrl, sortFromUrl, newOnlyFromUrl));
     },
-    [queryFromUrl, requireAuth],
+    [newOnlyFromUrl, queryFromUrl, requireAuth, sortFromUrl],
   );
 
   const results = useMemo(() => {
     const filtered = filterDevelopers(queryFromUrl);
-    return newOnly ? filtered.filter((dev) => dev.isNew) : filtered;
-  }, [queryFromUrl, newOnly]);
+    const scoped = newOnlyFromUrl ? filtered.filter((dev) => dev.isNew) : filtered;
+    return sortDevelopers(scoped, sortFromUrl);
+  }, [queryFromUrl, newOnlyFromUrl, sortFromUrl]);
 
   const applySearch = () => {
-    const trimmed = query.trim();
-    router.push(trimmed ? `/search/creators?q=${encodeURIComponent(trimmed)}` : "/search/creators");
+    router.push(buildCreatorsSearchUrl(query, sortFromUrl, newOnlyFromUrl));
+  };
+
+  const toggleNewOnly = (checked: boolean) => {
+    setNewOnly(checked);
+    router.push(buildCreatorsSearchUrl(queryFromUrl, sortFromUrl, checked));
   };
 
   return (
@@ -89,7 +119,21 @@ function DeveloperSearchContent() {
             <p className="text-sm text-zinc-500">
               検索結果: {DEVELOPER_SEARCH_TOTAL}人（表示 {results.length}人）
             </p>
-            <SortDropdown label="おすすめ順" />
+            <div className="flex flex-wrap gap-2">
+              {developerSearchSortOptions.map((option) => (
+                <Link
+                  key={option.id}
+                  href={buildCreatorsSearchUrl(queryFromUrl, option.id, newOnlyFromUrl)}
+                  className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
+                    sortFromUrl === option.id
+                      ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
+                      : "border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                  }`}
+                >
+                  {option.label}
+                </Link>
+              ))}
+            </div>
           </div>
 
           <ul className="mt-6 space-y-4">
@@ -160,8 +204,8 @@ function DeveloperSearchContent() {
             <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm text-zinc-400">
               <input
                 type="checkbox"
-                checked={newOnly}
-                onChange={(e) => setNewOnly(e.target.checked)}
+                checked={newOnlyFromUrl}
+                onChange={(e) => toggleNewOnly(e.target.checked)}
                 className="size-4 rounded border-zinc-600 bg-zinc-900 text-violet-500"
               />
               🌱 新規開発者のみ

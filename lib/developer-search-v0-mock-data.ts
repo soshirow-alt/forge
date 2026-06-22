@@ -113,6 +113,41 @@ export function filterDevelopers(query: string): DeveloperSearchResult[] {
   );
 }
 
+export type DeveloperSearchSortId = "recommended" | "followers" | "works";
+
+export const developerSearchSortOptions: {
+  id: DeveloperSearchSortId;
+  label: string;
+}[] = [
+  { id: "recommended", label: "おすすめ順" },
+  { id: "followers", label: "フォロワーが多い順" },
+  { id: "works", label: "作品数が多い順" },
+];
+
+export function sortDevelopers(
+  results: DeveloperSearchResult[],
+  sort: DeveloperSearchSortId,
+): DeveloperSearchResult[] {
+  const copy = [...results];
+  if (sort === "followers") {
+    return copy.sort((a, b) => b.followers - a.followers);
+  }
+  if (sort === "works") {
+    return copy.sort(
+      (a, b) =>
+        b.inDevelopment + b.completed - (a.inDevelopment + a.completed),
+    );
+  }
+  return copy;
+}
+
+export function parseDeveloperSort(param: string | null): DeveloperSearchSortId {
+  if (param === "followers" || param === "works") {
+    return param;
+  }
+  return "recommended";
+}
+
 export function developerProfileHref(id: string): string {
   return `/creators/${encodeURIComponent(id)}`;
 }

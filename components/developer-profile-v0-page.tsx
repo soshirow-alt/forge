@@ -5,8 +5,11 @@ import Link from "next/link";
 import { useCallback, useState } from "react";
 import { PlayerShell, GameThumbnail } from "@/components/player-shell";
 import { useRequireAuth } from "@/hooks/use-require-auth";
-import { getDeveloperProfileV0 } from "@/lib/developer-profile-v0-mock-data";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
+import {
+  developerDevlogHref,
+  getDeveloperProfileV0,
+} from "@/lib/developer-profile-v0-mock-data";
 import { BadgeCheck, Globe, MapPin, MessageSquare, Sprout, UserPlus } from "lucide-react";
 
 type DevTab = "overview" | "devlog" | "achievements" | "followers";
@@ -128,14 +131,18 @@ export function DeveloperProfileV0Page({ id }: { id: string }) {
                   <ul className="mt-4 space-y-4">
                     {dev.completedGames.map((game) => (
                       <li key={game.id}>
-                        <div className="flex gap-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4">
+                        <Link
+                          href={gameDetailHref(game.id)}
+                          className="flex gap-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 transition-colors hover:border-zinc-700"
+                        >
                           <GameThumbnail src={game.image} alt={game.title} className="size-24 shrink-0" />
                           <div>
                             <span className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs text-amber-300">🏆 完成品</span>
                             <h3 className="mt-2 font-semibold text-white">{game.title}</h3>
-                            <p className="mt-2 text-xs text-zinc-500">見届け {game.witnessCount.toLocaleString()}</p>
+                            <p className="mt-1 text-sm text-zinc-400">{game.description}</p>
+                            <p className="mt-2 text-xs text-zinc-500">見届け {game.witnessCount.toLocaleString()} · 作品詳細を見る</p>
                           </div>
-                        </div>
+                        </Link>
                       </li>
                     ))}
                   </ul>
@@ -145,12 +152,18 @@ export function DeveloperProfileV0Page({ id }: { id: string }) {
                 <h2 className="text-base font-semibold text-white">最近の開発ログ</h2>
                 <ul className="mt-4 space-y-3">
                   {dev.recentDevlogs.map((log) => (
-                    <li key={log.id} className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3">
-                      <p className="text-xs text-zinc-500">{log.date} · {log.gameTitle}</p>
-                      <p className="mt-1 text-sm font-medium text-white">{log.title}</p>
-                      <p className="mt-1 inline-flex items-center gap-1 text-xs text-zinc-500">
-                        <MessageSquare className="size-3" /> {log.commentCount}
-                      </p>
+                    <li key={log.id}>
+                      <Link
+                        href={developerDevlogHref(log)}
+                        className="block rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 transition-colors hover:border-zinc-700"
+                      >
+                        <p className="text-xs text-zinc-500">{log.date} · {log.gameTitle}</p>
+                        <p className="mt-1 text-sm font-medium text-white">{log.title}</p>
+                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-zinc-500">{log.excerpt}</p>
+                        <p className="mt-2 inline-flex items-center gap-1 text-xs text-zinc-500">
+                          <MessageSquare className="size-3" /> {log.commentCount} · 開発ログタブを見る
+                        </p>
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -160,9 +173,16 @@ export function DeveloperProfileV0Page({ id }: { id: string }) {
           {activeTab === "devlog" && (
             <ul className="space-y-3">
               {dev.recentDevlogs.map((log) => (
-                <li key={log.id} className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3">
-                  <p className="text-xs text-zinc-500">{log.date}</p>
-                  <p className="mt-1 font-medium text-white">{log.title}</p>
+                <li key={log.id}>
+                  <Link
+                    href={developerDevlogHref(log)}
+                    className="block rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-4 transition-colors hover:border-zinc-700"
+                  >
+                    <p className="text-xs text-zinc-500">{log.date} · {log.gameTitle}</p>
+                    <p className="mt-1 font-medium text-white">{log.title}</p>
+                    <p className="mt-2 text-sm leading-relaxed text-zinc-400">{log.excerpt}</p>
+                    <p className="mt-3 text-xs text-violet-300">作品の開発ログタブへ →</p>
+                  </Link>
                 </li>
               ))}
             </ul>

@@ -1,8 +1,11 @@
 import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
+import { FORGE_FEATURE_TAG_OPTIONS } from "@/lib/forge-feature-tag-options";
 
 export const SEARCH_RESULTS_TOTAL = 1248;
 
 export const searchGenreFilters = ["すべてのジャンル", ...FORGE_GENRE_OPTIONS] as const;
+
+export const searchFeatureTagFilters = [...FORGE_FEATURE_TAG_OPTIONS] as const;
 
 export const searchPlatformFilters = [
   "すべて",
@@ -173,10 +176,27 @@ function tagMatchesGenreFilter(tag: string, genreFilter: string): boolean {
   return false;
 }
 
+function tagMatchesFeatureFilter(tag: string, featureFilter: string): boolean {
+  const tagKey = normalizeGenreKey(tag);
+  const filterKey = normalizeGenreKey(featureFilter);
+
+  if (tagKey.includes(filterKey) || filterKey.includes(tagKey)) {
+    return true;
+  }
+
+  const aliases = GENRE_MATCH_ALIASES[filterKey] ?? GENRE_MATCH_ALIASES[featureFilter];
+  if (aliases) {
+    return aliases.some((alias) => normalizeGenreKey(alias) === tagKey);
+  }
+
+  return false;
+}
+
 export function filterSearchResults(
   results: SearchWorkResult[],
   query: string,
   genres: string[],
+  features: string[] = [],
 ): SearchWorkResult[] {
   const normalizedQuery = query.trim().toLowerCase();
 
@@ -188,7 +208,8 @@ export function filterSearchResults(
       work.tags.some(
         (tag) =>
           tag.toLowerCase().includes(normalizedQuery) ||
-          tagMatchesGenreFilter(tag, normalizedQuery),
+          tagMatchesGenreFilter(tag, normalizedQuery) ||
+          tagMatchesFeatureFilter(tag, normalizedQuery),
       ) ||
       work.developer.toLowerCase().includes(normalizedQuery);
 
@@ -196,7 +217,13 @@ export function filterSearchResults(
       genres.length === 0 ||
       genres.some((genre) => work.tags.some((tag) => tagMatchesGenreFilter(tag, genre)));
 
-    return matchesQuery && matchesGenre;
+    const matchesFeature =
+      features.length === 0 ||
+      features.some((feature) =>
+        work.tags.some((tag) => tagMatchesFeatureFilter(tag, feature)),
+      );
+
+    return matchesQuery && matchesGenre && matchesFeature;
   });
 }
 

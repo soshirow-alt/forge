@@ -10,6 +10,7 @@ import {
 import {
   filterSearchResults,
   paginateSearchResults,
+  searchFeatureTagFilters,
   searchGenreFilters,
   searchWorkResults,
   sortSearchResults,
@@ -58,28 +59,42 @@ function parseGenres(param: string | null): string[] {
     .filter((value) => value !== "すべてのジャンル");
 }
 
+function parseFeatures(param: string | null): string[] {
+  if (!param?.trim()) {
+    return [];
+  }
+  return param
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
 function WorksSearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryFromUrl = searchParams.get("q")?.trim() ?? "";
   const genresFromUrl = parseGenres(searchParams.get("genre"));
+  const featuresFromUrl = parseFeatures(searchParams.get("tag"));
   const sortFromUrl = parseSort(searchParams.get("sort"));
   const viewFromUrl = parseView(searchParams.get("view"));
   const pageFromUrl = Math.max(1, Number.parseInt(searchParams.get("page") ?? "1", 10) || 1);
 
   const [keyword, setKeyword] = useState(queryFromUrl);
   const [selectedGenres, setSelectedGenres] = useState<string[]>(genresFromUrl);
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>(featuresFromUrl);
 
   const genreParam = searchParams.get("genre");
+  const featureParam = searchParams.get("tag");
 
   useEffect(() => {
     setKeyword(queryFromUrl);
     setSelectedGenres(parseGenres(genreParam));
-  }, [queryFromUrl, genreParam]);
+    setSelectedFeatures(parseFeatures(featureParam));
+  }, [queryFromUrl, genreParam, featureParam]);
 
   const filtered = useMemo(
-    () => filterSearchResults(searchWorkResults, queryFromUrl, genresFromUrl),
-    [queryFromUrl, genresFromUrl],
+    () => filterSearchResults(searchWorkResults, queryFromUrl, genresFromUrl, featuresFromUrl),
+    [queryFromUrl, genresFromUrl, featuresFromUrl],
   );
   const sorted = useMemo(
     () => sortSearchResults(filtered, sortFromUrl),
@@ -99,6 +114,9 @@ function WorksSearchContent() {
       if (genresFromUrl.length > 0) {
         params.set("genre", genresFromUrl.join(","));
       }
+      if (featuresFromUrl.length > 0) {
+        params.set("tag", featuresFromUrl.join(","));
+      }
       const sort = overrides.sort ?? sortFromUrl;
       if (sort !== "recommended") {
         params.set("sort", sort);
@@ -114,7 +132,7 @@ function WorksSearchContent() {
       const qs = params.toString();
       return qs ? `/search?${qs}` : "/search";
     },
-    [genresFromUrl, pageFromUrl, queryFromUrl, sortFromUrl, viewFromUrl],
+    [featuresFromUrl, genresFromUrl, pageFromUrl, queryFromUrl, sortFromUrl, viewFromUrl],
   );
 
   const applySearch = useCallback(() => {
@@ -125,12 +143,21 @@ function WorksSearchContent() {
     if (selectedGenres.length > 0) {
       params.set("genre", selectedGenres.join(","));
     }
+    if (selectedFeatures.length > 0) {
+      params.set("tag", selectedFeatures.join(","));
+    }
+    if (sortFromUrl !== "recommended") {
+      params.set("sort", sortFromUrl);
+    }
+    if (viewFromUrl === "grid") {
+      params.set("view", "grid");
+    }
     const qs = params.toString();
     router.push(qs ? `/search?${qs}` : "/search");
-  }, [keyword, router, selectedGenres]);
+  }, [keyword, router, selectedFeatures, selectedGenres, sortFromUrl, viewFromUrl]);
 
   const pushSearch = useCallback(
-    (next: { q?: string; genres?: string[] }) => {
+    (next: { q?: string; genres?: string[]; features?: string[] }) => {
       const params = new URLSearchParams();
       const q = (next.q ?? queryFromUrl).trim();
       if (q) {
@@ -139,6 +166,10 @@ function WorksSearchContent() {
       const genres = next.genres ?? genresFromUrl;
       if (genres.length > 0) {
         params.set("genre", genres.join(","));
+      }
+      const features = next.features ?? featuresFromUrl;
+      if (features.length > 0) {
+        params.set("tag", features.join(","));
       }
       if (sortFromUrl !== "recommended") {
         params.set("sort", sortFromUrl);
@@ -149,12 +180,13 @@ function WorksSearchContent() {
       const qs = params.toString();
       router.push(qs ? `/search?${qs}` : "/search");
     },
-    [genresFromUrl, queryFromUrl, router, sortFromUrl],
+    [featuresFromUrl, genresFromUrl, queryFromUrl, router, sortFromUrl, viewFromUrl],
   );
 
   const clearFilters = useCallback(() => {
     setKeyword("");
     setSelectedGenres([]);
+    setSelectedFeatures([]);
     router.push("/search");
   }, [router]);
 
@@ -167,6 +199,14 @@ function WorksSearchContent() {
           : [...selectedGenres, genre];
     setSelectedGenres(nextGenres);
     pushSearch({ genres: nextGenres });
+  };
+
+  const toggleFeature = (feature: string) => {
+    const nextFeatures = selectedFeatures.includes(feature)
+      ? selectedFeatures.filter((value) => value !== feature)
+      : [...selectedFeatures, feature];
+    setSelectedFeatures(nextFeatures);
+    pushSearch({ features: nextFeatures });
   };
 
   return (
@@ -191,6 +231,12 @@ function WorksSearchContent() {
                 <span className="text-zinc-500">
                   {" "}
                   （ジャンル: {genresFromUrl.join("・")}）
+                </span>
+              )}
+              {featuresFromUrl.length > 0 && (
+                <span className="text-zinc-500">
+                  {" "}
+                  （特徴: {featuresFromUrl.join("・")}）
                 </span>
               )}
             </p>
@@ -452,8 +498,28 @@ function WorksSearchContent() {
               </div>
             </fieldset>
 
+            <fieldset className="mt-5">
+              <legend className="text-xs font-medium text-zinc-500">特徴タグ</legend>
+              <div className="mt-2 max-h-40 space-y-2 overflow-y-auto pr-1">
+                {searchFeatureTagFilters.map((feature) => (
+                  <label
+                    key={feature}
+                    className="flex cursor-pointer items-center gap-2 text-sm text-zinc-400"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedFeatures.includes(feature)}
+                      onChange={() => toggleFeature(feature)}
+                      className="size-4 rounded border-zinc-600 bg-zinc-900 text-violet-500 focus:ring-violet-500/40"
+                    />
+                    {feature}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
             <p className="mt-4 text-xs leading-relaxed text-zinc-600">
-              作品名・ジャンルで絞り込めます。
+              作品名・ジャンル・特徴タグで絞り込めます。
             </p>
             <button
               type="button"

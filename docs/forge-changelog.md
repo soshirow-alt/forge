@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-06-19 60 Player stub — P-07 / P-05-2 / 検索特徴タグ
+
+- `/creators/[id]` — 完成品→ゲーム詳細リンク。開発ログ→`?tab=devlog`
+- `/search/creators` — ソート `?sort=`（フォロワー/作品数）、新規 `?new=1`
+- `/search` — 特徴タグ `?tag=` 絞り込み（forge-feature-tag-options 共用）
+
+---
+
 ## 2026-06-19 59 投稿フォーム — ジャンル/特徴タグ分離・問い設定 UX
 
 - ジャンルから特徴系（ストーリー重視・癒し系・インディー等）を除去 → `forge-feature-tag-options.ts` へ
