@@ -1,6 +1,7 @@
 ■ 現在の状態
-- ブランチ preview/landing-01。Studio 本番ルート整理（第1波）はローカル実装済・push 待ち
-- 今回: 作品投稿フォーム（/submit）のジャンル/特徴タグ整理 + プレイヤー問い設定 UX を実装（未 push）
+- ブランチ preview/landing-01。commit 17b574f を origin に push 済
+- Preview URL: https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app（Vercel 反映待ち数分）
+- 同コミットに含む: Studio 本番ルート整理第1波 + 投稿フォーム（ジャンル/特徴タグ/問い UX）
 
 ■ 今回実装したこと
 - lib/forge-genre-options.ts — 18ジャンルに整理（RPG・アクション…メトロイドヴァニア）。特徴系7項目を削除
@@ -33,8 +34,7 @@
 - プレイヤー: はい/いいえ + 短い補足が可能
 
 ■ 注意事項
-- 未 push。Studio 整理と合わせて RUN 可能
-- /projects/{id}/edit も VersionPromptEditor 共用で同様
+- Preview 反映後に実機確認。Studio + /submit + 初声の3系統
 
 ■ オーナー確認手順
 1. /submit — ジャンルにストーリー重視・癒し系なし。特徴タグがジャンル直下
@@ -43,7 +43,7 @@
 4. ゲーム詳細初声 — 任意コメント欄
 
 ■ 今すぐ私がやるべきこと
-- 確認後 RUN 指示
+- Preview 反映後、下記 URL で実機確認
 
 ■ Cursorだけで完了できること
 - push、微調整
