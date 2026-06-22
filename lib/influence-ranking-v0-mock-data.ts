@@ -27,8 +27,8 @@ export type InfluenceRankingMonth = {
 /** ランキングに載せる最大人数（1〜50位） */
 export const RANKING_MAX = 50;
 
-/** 4位以下の初回表示件数 */
-export const RANKING_LIST_INITIAL = 4;
+/** 4位〜10位を初回表示（1〜3位は top3 カード）。11位以降はもっと見る */
+export const RANKING_LIST_INITIAL = 7;
 
 const TITLES: { title: string; titleColor: string }[] = [
   { title: "未来を動かした人", titleColor: "text-amber-300" },
