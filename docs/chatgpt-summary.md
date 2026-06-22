@@ -4,7 +4,8 @@
 - 同コミットに含む: Studio 本番ルート整理第1波 + 投稿フォーム（ジャンル/特徴タグ/問い UX）
 
 ■ 今回実装したこと
-- lib/forge-genre-options.ts — 18ジャンルに整理（RPG・アクション…メトロイドヴァニア）。特徴系7項目を削除
+- Studio 本番ルート整理 — /studio 上部「あなたの作品」、mock にサンプルバナー、サイドバー「サンプル一覧」
+- lib/forge-genre-options.ts — 18ジャンルに整理
 - lib/forge-feature-tag-options.ts 新規 — ストーリー重視・癒し系・インディー・ピクセルアート・レトロ・協力プレイ等12タグ
 - /submit — 特徴タグをジャンル直下へ移動。問い設定・関連リンクより上
 - version-prompt-editor — テンプレ選択時は質問文欄を非表示（テンプレ＝質問文）。カスタムのみ質問文入力
@@ -50,7 +51,7 @@
 
 ■ 次に検討すべきこと
 - 検索への特徴タグフィルタ
-- Studio 整理 push
+- P-07 creators 残 stub
 
 ■ ChatGPTに相談したい論点
 - 特になし
