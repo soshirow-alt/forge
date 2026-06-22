@@ -27,18 +27,9 @@ import {
 } from "@/lib/version-prompt-form";
 
 import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
+import { FORGE_FEATURE_TAG_OPTIONS } from "@/lib/forge-feature-tag-options";
 
 const phaseOptions = DEVELOPMENT_PHASE_OPTIONS;
-
-const featureTags = [
-  "協力プレイ",
-  "ソロ向け",
-  "短時間プレイ",
-  "高難度",
-  "ストーリー重視",
-  "PvP",
-  "PvE",
-] as const;
 
 const distributionOptions: {
   value: DistributionType;
@@ -587,6 +578,29 @@ export function SubmitPage() {
           </fieldset>
 
           <div>
+            <p className="text-sm font-medium text-zinc-400">特徴タグ</p>
+            <p className="mt-1 text-xs text-zinc-600">
+              ジャンル以外のプレイ特性や見た目。複数選べます。
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {FORGE_FEATURE_TAG_OPTIONS.map((tag) => (
+                <label
+                  key={tag}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedTags.includes(tag)}
+                    onChange={() => toggleTag(tag)}
+                    className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+                  />
+                  <span className="text-sm text-zinc-300">{tag}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div>
             <label
               htmlFor="description"
               className="text-sm font-medium text-zinc-400"
@@ -730,26 +744,6 @@ export function SubmitPage() {
             showValidation={showPromptValidation}
             versionLabel="初回のプレイ可能版"
           />
-
-          <div>
-            <p className="text-sm font-medium text-zinc-400">特徴タグ</p>
-            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {featureTags.map((tag) => (
-                <label
-                  key={tag}
-                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedTags.includes(tag)}
-                    onChange={() => toggleTag(tag)}
-                    className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
-                  />
-                  <span className="text-sm text-zinc-300">{tag}</span>
-                </label>
-              ))}
-            </div>
-          </div>
 
           <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
             <div>

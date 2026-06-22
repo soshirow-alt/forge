@@ -2,11 +2,14 @@
 
 import type { VersionPrompt, VersionPromptOption } from "@/lib/version-prompt-types";
 import { YES_NO_OPTIONS } from "@/lib/version-prompt-types";
+import { supportsOptionalFreeTextComment } from "@/lib/version-prompt-form";
 
 type VoicePromptCardProps = {
   prompt: VersionPrompt;
   value?: string;
+  optionalComment?: string;
   onChange: (answerValue: string, answerLabel: string) => void;
+  onOptionalCommentChange?: (comment: string) => void;
   answered?: boolean;
 };
 
@@ -52,12 +55,18 @@ function OptionButtons({
 export function VoicePromptCard({
   prompt,
   value,
+  optionalComment = "",
   onChange,
+  onOptionalCommentChange,
   answered = false,
 }: VoicePromptCardProps) {
   const options =
     prompt.options ??
     (prompt.responseKind === "yes_no" ? YES_NO_OPTIONS : []);
+
+  const showOptionalComment =
+    supportsOptionalFreeTextComment(prompt.responseKind) &&
+    onOptionalCommentChange;
 
   return (
     <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3.5 py-3">
@@ -83,7 +92,25 @@ export function VoicePromptCard({
           <p className="mt-1 text-[11px] text-zinc-600">200文字以内</p>
         </>
       ) : (
-        <OptionButtons options={options} value={value} onChange={onChange} />
+        <>
+          <OptionButtons options={options} value={value} onChange={onChange} />
+          {showOptionalComment && (
+            <div className="mt-3">
+              <label className="text-xs text-zinc-500">
+                ひと言コメント{" "}
+                <span className="text-zinc-600">（任意）</span>
+              </label>
+              <textarea
+                rows={2}
+                value={optionalComment}
+                maxLength={200}
+                placeholder="はい/いいえ以外の感想や理由があれば"
+                onChange={(event) => onOptionalCommentChange(event.target.value)}
+                className="mt-1.5 w-full resize-y rounded-lg border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/40 focus:outline-none focus:ring-1 focus:ring-orange-500/30"
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   );

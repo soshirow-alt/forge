@@ -1,6 +1,7 @@
 /**
  * Forge 共通ジャンル一覧（preview v0 正本）
  * プレイヤー好きなジャンル・作品検索・投稿フォームで共用
+ * 特徴タグ（ストーリー重視・癒し系等）は forge-feature-tag-options.ts
  */
 export const FORGE_GENRE_OPTIONS = [
   "RPG",
@@ -19,14 +20,7 @@ export const FORGE_GENRE_OPTIONS = [
   "クラフト",
   "探索",
   "経営",
-  "ストーリー",
-  "ストーリー重視",
-  "癒し系",
-  "インディー",
-  "ピクセルアート",
-  "レトロ",
   "カジュアル",
-  "協力プレイ",
   "メトロイドヴァニア",
 ] as const;
 

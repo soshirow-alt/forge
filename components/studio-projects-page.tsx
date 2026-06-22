@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { StudioOwnedProjectsSection } from "@/components/studio-owned-projects-section";
+import { StudioPreviewSampleBanner } from "@/components/studio-preview-sample-banner";
 import { StudioShell } from "@/components/studio-shell";
 import { ViewModeToggle, type ViewMode } from "@/components/view-mode-toggle";
 import {
@@ -203,11 +205,13 @@ export function StudioProjectsPage() {
   return (
     <StudioShell activeNav="projects" headerSearchDefault={initialQuery}>
       <div className="mx-auto max-w-7xl space-y-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+        <StudioOwnedProjectsSection variant="list" />
+
+        <div className="flex flex-wrap items-start justify-between gap-4 border-t border-zinc-800/80 pt-8">
           <div>
-            <h1 className="text-2xl font-bold text-white sm:text-3xl">プロジェクト一覧</h1>
+            <h1 className="text-2xl font-bold text-white sm:text-3xl">サンプル作品一覧</h1>
             <p className="mt-2 text-sm text-zinc-400">
-              あなたが投稿したすべての作品を管理できます。
+              Preview 用の架空作品です。UI の見た目確認専用です。
             </p>
           </div>
           <Link
@@ -219,12 +223,7 @@ export function StudioProjectsPage() {
           </Link>
         </div>
 
-        <div className="border-t border-zinc-800/80 pt-6">
-          <h2 className="text-sm font-semibold text-zinc-400">サンプル作品（プレビュー）</h2>
-          <p className="mt-1 text-xs text-zinc-600">
-            新着バッジ付きの作品は、未読のフィードバックやコメントがあります。オレンジ枠の作品を優先して確認してください。
-          </p>
-        </div>
+        <StudioPreviewSampleBanner compact />
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">

@@ -15,6 +15,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
+import { StudioOwnedProjectsSection } from "@/components/studio-owned-projects-section";
 import { StudioSectionHeader, StudioShell } from "@/components/studio-shell";
 import { HorizontalCardPager } from "@/components/horizontal-card-pager";
 import { studioRankingSnippets } from "@/lib/studio-rankings-v0-mock-data";
@@ -271,6 +272,8 @@ export function StudioHomePage() {
   return (
     <StudioShell activeNav="home">
       <div className="mx-auto max-w-7xl space-y-10">
+        <StudioOwnedProjectsSection variant="home" />
+
         <section>
           <StudioSectionHeader
             title="サンプル作品（プレビュー）"
@@ -278,7 +281,7 @@ export function StudioHomePage() {
             icon={<Sparkles className="size-5 text-violet-400" aria-hidden="true" />}
           />
           <p className="mt-2 text-xs text-zinc-600">
-            UIプレビュー用のサンプルです。実データの管理はプロジェクト一覧から開けます。
+            UIプレビュー用の架空作品です。自分の作品の改善ループは上の「あなたの作品」から開いてください。
           </p>
           <div className="mt-5 px-2">
             <HorizontalCardPager

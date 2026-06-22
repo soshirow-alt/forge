@@ -51,17 +51,17 @@ export const DEVELOPER_RESPONSE_FORMAT_OPTIONS: {
   {
     value: "yes_no",
     label: "はい / いいえ",
-    hint: "シンプルな可否確認",
+    hint: "シンプルな可否確認。プレイヤーは任意でひと言コメントも添えられます",
   },
   {
     value: "scale_3",
     label: "3段階",
-    hint: "低・普通・高（難易度や満足度など）",
+    hint: "低・普通・高。プレイヤーは任意でひと言コメントも添えられます",
   },
   {
     value: "choice",
     label: "選択式",
-    hint: "2〜4個の選択肢を設定",
+    hint: "2〜4個の選択肢。プレイヤーは任意でひと言コメントも添えられます",
   },
   {
     value: "short_text",
@@ -202,20 +202,54 @@ export function applyQuestionTemplate(
   };
 }
 
-export function getFormatLabelForDraft(draft: DeveloperPromptDraft): string {
+export const OPTIONAL_FREE_TEXT_FORMAT_LABEL = "自由記述（任意）";
+
+/** プレイヤーが構造化回答に添えられる任意コメント（集計は answer_value、開発者表示は answer_label） */
+export function supportsOptionalFreeTextComment(
+  responseKind: VersionPromptResponseKind,
+): boolean {
+  return responseKind !== "short_text";
+}
+
+export function buildVoiceAnswerLabel(
+  primaryLabel: string,
+  optionalComment?: string,
+): string {
+  const comment = optionalComment?.trim();
+  if (!comment) {
+    return primaryLabel;
+  }
+  return `${primaryLabel} — ${comment}`;
+}
+
+export function getFormatDisplayLinesForDraft(
+  draft: DeveloperPromptDraft,
+): string[] {
   const templateId = inferTemplateFromDraft(draft);
   if (templateId !== "custom") {
-    return (
+    const base =
       DEVELOPER_QUESTION_TEMPLATES.find((entry) => entry.id === templateId)
-        ?.formatLabel ?? ""
-    );
+        ?.formatLabel ?? "";
+    if (supportsOptionalFreeTextComment(draft.responseKind)) {
+      return [base, OPTIONAL_FREE_TEXT_FORMAT_LABEL];
+    }
+    return [base];
   }
 
-  return (
+  const customLabel =
     DEVELOPER_RESPONSE_FORMAT_OPTIONS.find(
       (option) => option.value === draft.responseKind,
-    )?.label ?? draft.responseKind
-  );
+    )?.label ?? draft.responseKind;
+
+  if (supportsOptionalFreeTextComment(draft.responseKind)) {
+    return [customLabel, OPTIONAL_FREE_TEXT_FORMAT_LABEL];
+  }
+
+  return [customLabel];
+}
+
+export function getFormatLabelForDraft(draft: DeveloperPromptDraft): string {
+  return getFormatDisplayLinesForDraft(draft).join(" · ");
 }
 
 export function createDefaultChoiceDraftPatch(): Pick<

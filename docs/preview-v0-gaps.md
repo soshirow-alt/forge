@@ -24,7 +24,7 @@
 | 17 | 設定（プレイヤー） | `/settings` | ✅ mock |
 | 18 | 月間影響度 | `/rankings/influence` | ✅ mock |
 
-**Studio 20–25**: preview スコープ — **第1波**で `/projects/.../studio` を StudioShell 化。mock `/studio/projects` はサンプル存続
+**Studio 20–25**: preview スコープ — **正本** `/projects/…/studio`（あなたの作品）。mock `/studio` 以下は **UI サンプル専用**（2026-06-19 整理済）
 
 ---
 

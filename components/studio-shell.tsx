@@ -14,7 +14,7 @@ import { useAuth } from "@/components/auth-provider";
 
 const primaryLinks = [
   { id: "home", href: "/studio", label: "ホーム" },
-  { id: "projects", href: "/studio/projects", label: "プロジェクト一覧" },
+  { id: "projects", href: "/studio/projects", label: "サンプル一覧" },
   { id: "ranking", href: "/studio/rankings", label: "ランキング" },
 ] as const;
 

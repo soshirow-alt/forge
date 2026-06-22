@@ -7,12 +7,16 @@ import { useAuth } from "@/components/auth-provider";
 import { useGames } from "@/components/games-provider";
 import { GAME_DEEP_FEEDBACK_ENTRY_ID } from "@/lib/game-feedback-ui";
 import { resolvePlayableVersion } from "@/lib/playable-version";
+import { buildVoiceAnswerLabel } from "@/lib/version-prompt-form";
 import type { VoiceAnswerDraft } from "@/lib/version-prompt-types";
 import type { VersionPrompt } from "@/lib/version-prompt-types";
 import type { VoiceResponse } from "@/lib/version-prompt-types";
 import { hasInitialVoiceComplete } from "@/lib/supabase/voice-engagement";
 
-type DraftAnswers = Record<string, { value: string; label: string }>;
+type DraftAnswers = Record<
+  string,
+  { value: string; label: string; comment?: string }
+>;
 
 export type GameVoiceFlowMeta = {
   voiceComplete: boolean;
@@ -105,7 +109,7 @@ export function GameVoiceSection({
         answers.push({
           promptId: prompt.id,
           answerValue: draft.value.trim(),
-          answerLabel: draft.label,
+          answerLabel: buildVoiceAnswerLabel(draft.label, draft.comment),
         });
       }
     }
@@ -144,7 +148,22 @@ export function GameVoiceSection({
   ) {
     setDrafts((prev) => ({
       ...prev,
-      [promptId]: { value: answerValue, label: answerLabel },
+      [promptId]: {
+        value: answerValue,
+        label: answerLabel,
+        comment: prev[promptId]?.comment,
+      },
+    }));
+  }
+
+  function handleOptionalCommentChange(promptId: string, comment: string) {
+    setDrafts((prev) => ({
+      ...prev,
+      [promptId]: {
+        value: prev[promptId]?.value ?? "",
+        label: prev[promptId]?.label ?? "",
+        comment,
+      },
     }));
   }
 
@@ -233,9 +252,13 @@ export function GameVoiceSection({
               key={prompt.id}
               prompt={prompt}
               value={draft?.value}
+              optionalComment={draft?.comment ?? ""}
               answered={Boolean(saved)}
               onChange={(value, label) =>
                 handleDraftChange(prompt.id, value, label)
+              }
+              onOptionalCommentChange={(comment) =>
+                handleOptionalCommentChange(prompt.id, comment)
               }
             />
           );

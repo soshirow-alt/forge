@@ -217,6 +217,7 @@ export function PlayerShell({
           )}
           <Link
             href="/studio"
+            title="作品の改善ループ Studio（あなたの作品は Studio ホーム上部）"
             className="hidden rounded-xl border border-zinc-600 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-500 sm:inline-flex"
           >
             Studio

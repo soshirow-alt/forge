@@ -9,7 +9,7 @@ import {
   createEmptyPromptDraft,
   DEVELOPER_QUESTION_TEMPLATES,
   DEVELOPER_RESPONSE_FORMAT_OPTIONS,
-  getFormatLabelForDraft,
+  getFormatDisplayLinesForDraft,
   inferTemplateFromDraft,
   resolveOptionsForDraft,
   type DeveloperPromptDraft,
@@ -175,30 +175,29 @@ export function VersionPromptEditor({
                   </select>
                 </div>
 
-                <div>
-                  <label
-                    htmlFor={`prompt-text-${draft.clientId}`}
-                    className="text-xs font-medium text-zinc-500"
-                  >
-                    質問文
-                  </label>
-                  <input
-                    id={`prompt-text-${draft.clientId}`}
-                    type="text"
-                    value={draft.promptText}
-                    readOnly={!isCustomTemplate}
-                    maxLength={200}
-                    onChange={(event) =>
-                      updateDraft(draft.clientId, {
-                        promptText: event.target.value,
-                      })
-                    }
-                    className={`${inputClassName} ${
-                      !isCustomTemplate ? "cursor-default text-zinc-400" : ""
-                    }`}
-                    placeholder="例：チュートリアルは分かりやすかった？"
-                  />
-                </div>
+                {isCustomTemplate && (
+                  <div>
+                    <label
+                      htmlFor={`prompt-text-${draft.clientId}`}
+                      className="text-xs font-medium text-zinc-500"
+                    >
+                      質問文
+                    </label>
+                    <input
+                      id={`prompt-text-${draft.clientId}`}
+                      type="text"
+                      value={draft.promptText}
+                      maxLength={200}
+                      onChange={(event) =>
+                        updateDraft(draft.clientId, {
+                          promptText: event.target.value,
+                        })
+                      }
+                      className={inputClassName}
+                      placeholder="例：チュートリアルは分かりやすかった？"
+                    />
+                  </div>
+                )}
 
                 <div>
                   <p className="text-xs font-medium text-zinc-500">回答形式</p>
@@ -238,9 +237,11 @@ export function VersionPromptEditor({
                       </p>
                     </>
                   ) : (
-                    <p className="mt-2 rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2 text-sm text-zinc-400">
-                      {getFormatLabelForDraft(draft)}
-                    </p>
+                    <div className="mt-2 space-y-1 rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2 text-sm text-zinc-400">
+                      {getFormatDisplayLinesForDraft(draft).map((line) => (
+                        <p key={line}>{line}</p>
+                      ))}
+                    </div>
                   )}
                 </div>
 

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+import { StudioPreviewSampleBanner } from "@/components/studio-preview-sample-banner";
 import {
   StudioFilterPills,
   StudioProjectTabs,
@@ -392,8 +393,12 @@ function StudioProjectDetailContent({ id }: { id: string }) {
           href="/studio/projects"
           className="text-sm text-zinc-500 hover:text-violet-400"
         >
-          ← プロジェクト一覧
+          ← サンプル作品一覧
         </Link>
+
+        <div className="mt-4">
+          <StudioPreviewSampleBanner compact />
+        </div>
 
         <header className="mt-4 flex flex-col gap-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5 sm:flex-row sm:items-center">
           <div className="relative size-24 shrink-0 overflow-hidden rounded-xl bg-zinc-800">

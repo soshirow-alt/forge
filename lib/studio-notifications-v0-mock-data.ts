@@ -1,8 +1,8 @@
+import { PROJECT_STUDIO_FEEDBACK_SECTION_ID } from "@/lib/project-nurture-links";
 import {
-  PROJECT_STUDIO_FEEDBACK_SECTION_ID,
-  projectStudioPath,
-} from "@/lib/project-nurture-links";
-import { isStudioMockProjectId } from "@/lib/studio-projects-v0-mock-data";
+  isStudioMockProjectId,
+  studioProjectHref,
+} from "@/lib/studio-projects-v0-mock-data";
 
 export type StudioNotificationKind =
   | "new_voice"
@@ -85,11 +85,15 @@ export function countStudioUnread(items: StudioNotificationItem[]): number {
 }
 
 export function studioNotificationHref(item: StudioNotificationItem): string {
-  const base = isStudioMockProjectId(item.projectId)
-    ? `/studio/projects/${item.projectId}`
-    : projectStudioPath(item.projectId);
+  const base = studioProjectHref(item.projectId);
   if (item.tab === "voices-raw") {
+    if (isStudioMockProjectId(item.projectId)) {
+      return `${base}?tab=voices-raw`;
+    }
     return `${base}#${PROJECT_STUDIO_FEEDBACK_SECTION_ID}`;
+  }
+  if (item.tab && isStudioMockProjectId(item.projectId)) {
+    return `${base}?tab=${item.tab}`;
   }
   return base;
 }
