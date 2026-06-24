@@ -6,7 +6,11 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { StudioOwnedProjectsSection } from "@/components/studio-owned-projects-section";
 import { StudioPreviewSampleBanner } from "@/components/studio-preview-sample-banner";
-import { StudioShell } from "@/components/studio-shell";
+import {
+  StudioFilterPills,
+  StudioInlineSelect,
+  StudioShell,
+} from "@/components/studio-shell";
 import { ViewModeToggle, type ViewMode } from "@/components/view-mode-toggle";
 import {
   formatStat,
@@ -225,8 +229,8 @@ export function StudioProjectsPage() {
 
         <StudioPreviewSampleBanner compact />
 
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
               <Search
                 className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500"
@@ -243,40 +247,28 @@ export function StudioProjectsPage() {
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-500 focus:border-violet-500/40 focus:outline-none"
               />
             </div>
-            <label className="inline-flex items-center gap-2 text-sm text-zinc-400">
-              <span className="shrink-0">フェーズ:</span>
-              <select
-                value={phase}
-                onChange={(e) => {
-                  setPhase(e.target.value);
-                  setPage(1);
-                }}
-                className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-200 focus:border-violet-500/40 focus:outline-none"
-              >
-                {studioPhaseFilterOptions.map((opt) => (
-                  <option key={opt.id} value={opt.id}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="inline-flex items-center gap-2 text-sm text-zinc-400">
-              <span className="shrink-0">並び替え:</span>
-              <select
+            <div className="flex flex-wrap items-center gap-3">
+              <StudioInlineSelect
+                label="並び替え"
                 value={sortId}
-                onChange={(e) => setSortId(e.target.value as StudioSortId)}
-                className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-200 focus:border-violet-500/40 focus:outline-none"
-              >
-                {studioSortOptions.map((opt) => (
-                  <option key={opt.id} value={opt.id}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+                options={[...studioSortOptions]}
+                onChange={(id) => setSortId(id as StudioSortId)}
+              />
+              <ViewModeToggle value={viewMode} onChange={setViewMode} />
+            </div>
           </div>
 
-          <ViewModeToggle value={viewMode} onChange={setViewMode} />
+          <div>
+            <p className="mb-2 text-xs font-medium text-zinc-500">開発フェーズ</p>
+            <StudioFilterPills
+              options={[...studioPhaseFilterOptions]}
+              active={phase}
+              onChange={(id) => {
+                setPhase(id);
+                setPage(1);
+              }}
+            />
+          </div>
         </div>
 
         <p className="text-sm text-zinc-500">

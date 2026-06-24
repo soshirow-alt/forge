@@ -15,9 +15,9 @@ const BADGE_TONE_CLASS: Record<
   ReturnType<typeof getProjectStatusBadges>[number]["tone"],
   string
 > = {
-  orange: "bg-orange-500/10 text-orange-400",
-  amber: "bg-amber-500/10 text-amber-400",
-  sky: "bg-sky-500/10 text-sky-300",
+  orange: "bg-orange-500/10 text-orange-400 ring-1 ring-orange-500/30",
+  amber: "bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/30",
+  sky: "bg-sky-500/10 text-sky-300 ring-1 ring-sky-500/30",
 };
 
 type ProjectListCardProps = {
@@ -26,6 +26,8 @@ type ProjectListCardProps = {
   supportCount: number;
   onDelete: () => void;
   compact?: boolean;
+  /** home = 次やること付き。directory = 一覧用（ワッペンのみ） */
+  layout?: "hub" | "directory";
 };
 
 export function ProjectListCard({
@@ -34,6 +36,7 @@ export function ProjectListCard({
   supportCount,
   onDelete,
   compact = false,
+  layout = "hub",
 }: ProjectListCardProps) {
   const { isRead: voiceRead } = useNurtureVoiceRead(
     game.id,
@@ -41,6 +44,62 @@ export function ProjectListCard({
   );
   const display = buildNurtureDisplayContext(growth, voiceRead, game.id);
   const statusBadges = getProjectStatusBadges(growth, voiceRead);
+  const hasHighlight = statusBadges.length > 0;
+
+  if (layout === "directory") {
+    return (
+      <Link
+        href={projectStudioPath(game.id)}
+        className={`block rounded-xl border bg-zinc-900/60 transition-colors hover:border-zinc-700 hover:bg-zinc-900/80 ${
+          hasHighlight ? "border-orange-500/40 ring-1 ring-orange-500/15" : "border-zinc-800"
+        } ${compact ? "p-4" : "p-5"}`}
+      >
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <div
+            className={`shrink-0 overflow-hidden rounded-lg border border-zinc-800/80 ${
+              compact ? "h-14 w-20" : "h-16 w-24"
+            }`}
+          >
+            <GameThumbnail
+              thumbnailUrl={game.thumbnailUrl}
+              status={game.status}
+              projectId={game.id}
+              title={game.title}
+              genre={game.genre}
+              phase={game.phase}
+              aspectClassName="aspect-[4/3] h-full w-full"
+              showStatus={false}
+            />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <h2 className="text-base font-semibold text-zinc-100">{game.title}</h2>
+              {statusBadges.map((badge) => (
+                <span
+                  key={badge.label}
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${BADGE_TONE_CLASS[badge.tone]}`}
+                >
+                  {badge.label}
+                </span>
+              ))}
+            </div>
+
+            <p className="mt-1 text-xs text-zinc-600">
+              v{growth.playableVersion}
+              {growth.cycleNumber > 0 && ` · サイクル ${growth.cycleNumber}`}
+              {growth.totalVoiceResponseCount > 0 &&
+                ` · 回答 ${growth.totalVoiceResponseCount}件`}
+              {" · "}
+              応援 {supportCount}
+              {" · "}
+              最終更新 {game.lastUpdated}
+            </p>
+          </div>
+        </div>
+      </Link>
+    );
+  }
 
   return (
     <article
@@ -99,7 +158,7 @@ export function ProjectListCard({
                 compact ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm"
               }`}
             >
-              作品を更新する
+              作品 Studio を開く
             </Link>
             {!compact && (
               <Link

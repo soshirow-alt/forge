@@ -1,111 +1,23 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import {
   BarChart3,
   Check,
-  FilePlus2,
   Lightbulb,
   MessageSquare,
   Play,
-  Plus,
   Rocket,
-  Sparkles,
-  TrendingUp,
-  Users,
 } from "lucide-react";
 import { StudioOwnedProjectsSection } from "@/components/studio-owned-projects-section";
 import { StudioSectionHeader, StudioShell } from "@/components/studio-shell";
-import { HorizontalCardPager } from "@/components/horizontal-card-pager";
 import { studioRankingSnippets } from "@/lib/studio-rankings-v0-mock-data";
 import {
   devHintCards,
-  newlyPostedWorks,
-  phaseBadgeClass,
-  releasedThisWeek,
   studioActivities,
-  studioProjectHref,
-  studioProjects,
-  trendingWorks,
   type StudioActivityItem,
-  type StudioProjectCard,
 } from "@/lib/studio-home-v0-mock-data";
-
-function PhaseBadge({ phase }: { phase: StudioProjectCard["phase"] }) {
-  return (
-    <span
-      className={`absolute left-2 top-2 z-10 rounded-md px-2 py-0.5 text-[10px] font-semibold ${phaseBadgeClass(phase)}`}
-    >
-      {phase}
-    </span>
-  );
-}
-
-function ProjectCard({
-  project,
-  href,
-}: {
-  project: StudioProjectCard;
-  href: string;
-}) {
-  const { title, genres, phase, image, witnessCount, firstVoiceCount, updatedLabel, version, progressPercent } =
-    project;
-  return (
-    <Link
-      href={href}
-      className="group block w-full rounded-2xl border border-zinc-800 bg-zinc-900/40 p-3 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70"
-    >
-      <div className="relative overflow-hidden rounded-xl bg-zinc-800">
-        <PhaseBadge phase={phase} />
-        <div className="relative aspect-[16/10] w-full">
-          <Image src={image} alt={title} fill className="object-cover" sizes="288px" />
-        </div>
-      </div>
-      <h3 className="mt-3 truncate font-semibold text-white group-hover:text-violet-100">
-        {title}
-      </h3>
-      <p className="mt-1 text-xs text-zinc-500">{genres}</p>
-      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-zinc-400">
-        <span className="inline-flex items-center gap-1.5">
-          <Users className="size-3.5 text-violet-400" aria-hidden="true" />
-          見届け人 {witnessCount ?? "—"}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <MessageSquare className="size-3.5 text-violet-400" aria-hidden="true" />
-          フィードバック {firstVoiceCount}
-        </span>
-      </div>
-      <div className="mt-3 h-1 overflow-hidden rounded-full bg-zinc-800">
-        <div
-          className="h-full rounded-full bg-emerald-500/80"
-          style={{ width: `${progressPercent}%` }}
-        />
-      </div>
-      <div className="mt-2 flex items-center justify-between text-xs text-zinc-500">
-        <span>最終更新：{updatedLabel}</span>
-        <span className="font-medium text-zinc-400">{version ?? "—"}</span>
-      </div>
-    </Link>
-  );
-}
-
-function NewProjectCard() {
-  return (
-    <Link
-      href="/submit"
-      className="flex w-full flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/20 px-6 py-10 text-center transition-colors hover:border-violet-500/40 hover:bg-violet-600/5"
-    >
-      <span className="flex size-12 items-center justify-center rounded-full bg-violet-600/20 text-violet-300 ring-1 ring-violet-500/30">
-        <Plus className="size-6" aria-hidden="true" />
-      </span>
-      <p className="mt-4 font-semibold text-zinc-200">新しい作品を投稿</p>
-      <p className="mt-2 text-xs leading-relaxed text-zinc-500">
-        最初のプレイ可能版を公開して、フィードバックを集め始めましょう
-      </p>
-    </Link>
-  );
-}
+import Image from "next/image";
 
 function activityIcon(type: StudioActivityItem["type"]) {
   switch (type) {
@@ -183,55 +95,6 @@ function RankingSnippetColumn({
   );
 }
 
-function CommunityListItem({
-  title,
-  image,
-  meta,
-  subMeta,
-}: {
-  title: string;
-  image: string;
-  meta: string;
-  subMeta?: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-lg px-1 py-2 transition-colors hover:bg-zinc-900/50">
-      <div className="relative size-10 shrink-0 overflow-hidden rounded-lg bg-zinc-800">
-        <Image src={image} alt={title} fill className="object-cover" sizes="40px" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-zinc-200">{title}</p>
-        <p className="truncate text-xs text-zinc-500">{meta}</p>
-      </div>
-      {subMeta && <span className="shrink-0 text-xs text-zinc-600">{subMeta}</span>}
-    </div>
-  );
-}
-
-function CommunityColumn({
-  title,
-  icon,
-  items,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  items: { id: string; title: string; image: string; meta: string; subMeta?: string }[];
-}) {
-  return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/30 p-4 sm:p-5">
-      <div className="mb-4 flex items-center gap-2">
-        <span className="text-violet-400">{icon}</span>
-        <h3 className="text-sm font-semibold text-zinc-200">{title}</h3>
-      </div>
-      <div className="space-y-1">
-        {items.map((item) => (
-          <CommunityListItem key={item.id} {...item} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function DevHintCard({
   title,
   tips,
@@ -261,46 +124,10 @@ function DevHintCard({
 }
 
 export function StudioHomePage() {
-  const carouselItems = [
-    ...studioProjects.slice(0, 5).map((project) => ({
-      kind: "project" as const,
-      project,
-    })),
-    { kind: "new" as const },
-  ];
-
   return (
     <StudioShell activeNav="home">
       <div className="mx-auto max-w-7xl space-y-10">
         <StudioOwnedProjectsSection variant="home" />
-
-        <section>
-          <StudioSectionHeader
-            title="サンプル作品（プレビュー）"
-            href="/studio/projects"
-            icon={<Sparkles className="size-5 text-violet-400" aria-hidden="true" />}
-          />
-          <p className="mt-2 text-xs text-zinc-600">
-            UIプレビュー用の架空作品です。自分の作品の改善ループは上の「あなたの作品」から開いてください。
-          </p>
-          <div className="mt-5 px-2">
-            <HorizontalCardPager
-              items={carouselItems}
-              getKey={(item) => (item.kind === "new" ? "__new__" : item.project.id)}
-              pageSize={3}
-              renderItem={(item) =>
-                item.kind === "new" ? (
-                  <NewProjectCard />
-                ) : (
-                  <ProjectCard
-                    project={item.project}
-                    href={studioProjectHref(item.project.id)}
-                  />
-                )
-              }
-            />
-          </div>
-        </section>
 
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5 sm:p-6">
           <StudioSectionHeader
@@ -325,30 +152,6 @@ export function StudioHomePage() {
             <RankingSnippetColumn title="今週の注目作品" entries={studioRankingSnippets.featured} />
             <RankingSnippetColumn title="今週成長した作品" entries={studioRankingSnippets.growth} />
             <RankingSnippetColumn title="見届け人数増加" entries={studioRankingSnippets.witnessGain} />
-          </div>
-        </section>
-
-        <section>
-          <StudioSectionHeader
-            title="Forgeで起きていること"
-            icon={<TrendingUp className="size-5 text-violet-400" aria-hidden="true" />}
-          />
-          <div className="mt-5 grid gap-4 lg:grid-cols-3">
-            <CommunityColumn
-              title="今週正式版になった作品"
-              icon={<Sparkles className="size-4" aria-hidden="true" />}
-              items={releasedThisWeek}
-            />
-            <CommunityColumn
-              title="話題の作品"
-              icon={<TrendingUp className="size-4" aria-hidden="true" />}
-              items={trendingWorks}
-            />
-            <CommunityColumn
-              title="新しく投稿された作品"
-              icon={<FilePlus2 className="size-4" aria-hidden="true" />}
-              items={newlyPostedWorks}
-            />
           </div>
         </section>
 

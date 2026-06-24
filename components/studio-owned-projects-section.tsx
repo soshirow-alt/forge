@@ -102,12 +102,22 @@ export function StudioOwnedProjectsSection({
     <section className="rounded-2xl border border-orange-500/30 bg-orange-500/5 p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-medium text-orange-400/90">改善ループ Studio · 実データ</p>
-          <h2 className="mt-1 text-lg font-semibold text-zinc-100">あなたの作品</h2>
-          <p className="mt-2 text-sm text-zinc-400">
-            フィードバック確認・devlog・版公開はここから。URL は{" "}
-            <span className="font-mono text-xs text-zinc-500">/projects/…/studio</span>
+          <p className="text-xs font-medium text-orange-400/90">
+            {variant === "home" ? "改善ループ Studio · 実データ" : "あなたの作品"}
           </p>
+          <h2 className="mt-1 text-lg font-semibold text-zinc-100">
+            {variant === "home" ? "あなたの作品" : `${ownedGames.length}件`}
+          </h2>
+          {variant === "home" && (
+            <p className="mt-2 text-sm text-zinc-400">
+              フィードバック確認・devlog・版公開はここから。
+            </p>
+          )}
+          {variant === "list" && (
+            <p className="mt-2 text-sm text-zinc-500">
+              新着の回答や公開待ちがある作品にワッペンが付きます。
+            </p>
+          )}
         </div>
         {variant === "home" && topGame && (
           <Link
@@ -131,6 +141,7 @@ export function StudioOwnedProjectsSection({
               supportCount={getSupportCount(game.id)}
               onDelete={() => deleteSubmittedGame(game.id)}
               compact
+              layout={variant === "list" ? "directory" : "hub"}
             />
           ),
         )}

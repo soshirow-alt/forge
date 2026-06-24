@@ -299,3 +299,60 @@ export function StudioFilterPills({
     </div>
   );
 }
+
+export function StudioInlineSelect({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: { id: string; label: string }[];
+  onChange: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((option) => option.id === value);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-700"
+        aria-expanded={open}
+      >
+        <span className="text-zinc-500">{label}</span>
+        <span>{selected?.label ?? value}</span>
+        <ChevronDown className="size-4 text-zinc-500" aria-hidden="true" />
+      </button>
+      {open && (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-20 cursor-default"
+            aria-label="メニューを閉じる"
+            onClick={() => setOpen(false)}
+          />
+          <div className="absolute left-0 z-30 mt-1 min-w-[12rem] rounded-xl border border-zinc-800 bg-zinc-950 py-1 shadow-xl">
+            {options.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => {
+                  onChange(option.id);
+                  setOpen(false);
+                }}
+                className={`block w-full px-3 py-2 text-left text-sm transition-colors hover:bg-zinc-900 ${
+                  option.id === value ? "text-violet-200" : "text-zinc-300"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

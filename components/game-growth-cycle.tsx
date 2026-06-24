@@ -19,14 +19,17 @@ import {
   getProgressRailStepIds,
   getStudioActionHeadline,
   getStudioCycleBanner,
+  getStudioVisualMode,
   type NurtureDisplayContext,
   type NurtureStepId,
   type ProjectGrowthSnapshot,
+  type StudioVisualMode,
 } from "@/lib/project-growth-state";
 import type { OwnerVoiceResponseDetail } from "@/lib/supabase/voice-engagement";
 import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
 import { buildVoicePromptAggregates } from "@/lib/voice-aggregates";
 import { gamePlayHref } from "@/lib/project-nurture-links";
+import { Check, Copy, Link2, MessageSquare, Play, Upload, Wrench } from "lucide-react";
 
 const primaryButtonClassName =
   "inline-flex w-full cursor-pointer items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3.5 text-base font-semibold text-zinc-950 transition-opacity hover:opacity-90 sm:w-auto";
@@ -51,6 +54,118 @@ function cycleDotMarker(visual: ReturnType<typeof getProgressRailVisual>): strin
     case "upcoming":
       return "·";
   }
+}
+
+function PreCycleVisual() {
+  const nodes = [
+    { label: "投稿", state: "done" as const },
+    { label: "プレイ", state: "current" as const },
+    { label: "回答", state: "upcoming" as const },
+  ];
+
+  return (
+    <div className="mt-5" aria-label="ループ前 — プレイヤーの訪問を待っています">
+      <div className="flex items-center gap-0">
+        {nodes.map((node, index) => (
+          <div key={node.label} className="flex min-w-0 flex-1 items-center">
+            <div className="flex flex-1 flex-col items-center gap-2">
+              <span
+                className={`flex size-9 items-center justify-center rounded-full text-sm font-semibold ${
+                  node.state === "done"
+                    ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30"
+                    : node.state === "current"
+                      ? "bg-orange-500/20 text-orange-300 ring-2 ring-orange-500/50"
+                      : "bg-zinc-900 text-zinc-600 ring-1 ring-zinc-800"
+                }`}
+              >
+                {node.state === "done" ? (
+                  <Check className="size-4" aria-hidden="true" />
+                ) : node.state === "current" ? (
+                  <Play className="size-4" aria-hidden="true" />
+                ) : (
+                  <MessageSquare className="size-4" aria-hidden="true" />
+                )}
+              </span>
+              <span
+                className={`text-xs ${
+                  node.state === "current" ? "font-medium text-orange-300" : "text-zinc-500"
+                }`}
+              >
+                {node.label}
+              </span>
+            </div>
+            {index < nodes.length - 1 && (
+              <div
+                className={`mx-1 h-0.5 flex-1 rounded-full ${
+                  node.state === "done" ? "bg-emerald-500/40" : "bg-zinc-800"
+                }`}
+                aria-hidden="true"
+              />
+            )}
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-center text-xs text-zinc-500">
+        改善ループは、最初の回答が届いてから始まります
+      </p>
+    </div>
+  );
+}
+
+function CycleCompleteVisual() {
+  return (
+    <div
+      className="mt-5 flex flex-col items-center rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-5"
+      aria-label="この版の改善ループは完了"
+    >
+      <span className="flex size-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-300 ring-2 ring-emerald-500/25">
+        <Check className="size-6" aria-hidden="true" />
+      </span>
+      <p className="mt-3 text-sm font-medium text-zinc-200">この版のループ完了</p>
+      <p className="mt-1 flex items-center gap-1.5 text-xs text-zinc-500">
+        <span className="inline-block size-1.5 animate-pulse rounded-full bg-orange-400" />
+        新しい回答が届いたら再開
+      </p>
+    </div>
+  );
+}
+
+function CopyGamePageUrlButton({ gameId }: { gameId: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(async () => {
+    const path = gamePlayHref(gameId);
+    const url =
+      typeof window !== "undefined" ? `${window.location.origin}${path}` : path;
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard unavailable */
+    }
+  }, [gameId]);
+
+  return (
+    <button
+      type="button"
+      onClick={() => void handleCopy()}
+      className={secondaryButtonClassName}
+    >
+      {copied ? (
+        <>
+          <Check className="mr-1.5 size-4" aria-hidden="true" />
+          URLをコピーしました
+        </>
+      ) : (
+        <>
+          <Copy className="mr-1.5 size-4" aria-hidden="true" />
+          ページURLをコピー
+        </>
+      )}
+    </button>
+  );
 }
 
 function CompactCycleProgress({
@@ -120,7 +235,7 @@ function CompactCycleProgress({
       </div>
       {waitComplete && (
         <p className="mt-3 text-center text-xs text-zinc-500">
-          ↺ 新しい反応が届いたら「回答」から次のサイクルが始まります
+          新しい回答 → 回答から再開
         </p>
       )}
     </div>
@@ -144,9 +259,27 @@ function StudioHeroPanel({
   onPrimaryRead: () => void;
   onOpenModifyGameModal: () => void;
 }) {
+  const visualMode = getStudioVisualMode(growth);
   const cycleBanner = getStudioCycleBanner(growth, display);
-  const actionHeadline = getStudioActionHeadline(display);
+  const actionHeadline = getStudioActionHeadline(display, growth);
   const studioActions = getProjectNurtureActions("studio");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const stepIcon = (stepId: NurtureStepId) => {
+    switch (stepId) {
+      case "read":
+        return MessageSquare;
+      case "improving":
+        return Wrench;
+      case "devlog":
+      case "publish":
+        return Upload;
+      default:
+        return Link2;
+    }
+  };
+
+  const CurrentStepIcon = stepIcon(display.nowStepId);
 
   return (
     <section
@@ -161,21 +294,38 @@ function StudioHeroPanel({
           className={`rounded-md px-2 py-0.5 text-xs font-medium ${
             display.newFeedbackArrived
               ? "bg-orange-500/15 text-orange-300"
-              : display.nowStepId === "wait"
-                ? "bg-zinc-800 text-zinc-400"
-                : "bg-violet-500/10 text-violet-300"
+              : visualMode === "pre_cycle"
+                ? "bg-sky-500/10 text-sky-300"
+                : visualMode === "cycle_complete"
+                  ? "bg-emerald-500/10 text-emerald-300"
+                  : "bg-violet-500/10 text-violet-300"
           }`}
         >
           {cycleBanner}
         </span>
       </div>
 
-      <p className="mt-4 text-xs font-medium uppercase tracking-wide text-zinc-500">
-        今やること
-      </p>
-      <h2 className="mt-1 text-xl font-bold text-zinc-50 sm:text-2xl">
-        {actionHeadline}
-      </h2>
+      <div className="mt-5 flex items-start gap-4">
+        <span
+          className={`flex size-14 shrink-0 items-center justify-center rounded-2xl ${
+            visualMode === "pre_cycle"
+              ? "bg-sky-500/10 text-sky-300 ring-1 ring-sky-500/25"
+              : visualMode === "cycle_complete"
+                ? "bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/25"
+                : "bg-orange-500/10 text-orange-300 ring-1 ring-orange-500/25"
+          }`}
+        >
+          <CurrentStepIcon className="size-7" aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-xl font-bold text-zinc-50 sm:text-2xl">{actionHeadline}</h2>
+          {visualMode === "pre_cycle" && (
+            <p className="mt-1 text-sm text-zinc-500">
+              Forge外 — URLを貼ればプレイヤーが来ます
+            </p>
+          )}
+        </div>
+      </div>
 
       {display.primaryCta && (
         <div className="mt-5 flex flex-wrap gap-3">
@@ -200,7 +350,8 @@ function StudioHeroPanel({
               {display.primaryCta.label}
             </Link>
           ) : null}
-          {display.secondaryCta?.href && (
+          {visualMode === "pre_cycle" && <CopyGamePageUrlButton gameId={game.id} />}
+          {display.secondaryCta?.href && visualMode !== "pre_cycle" && (
             <Link
               href={display.secondaryCta.href}
               className={secondaryButtonClassName}
@@ -211,29 +362,46 @@ function StudioHeroPanel({
         </div>
       )}
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        {studioActions.map((action) => (
-          <Link
-            key={action.id}
-            href={action.href(game.id)}
-            className="rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
-          >
-            {action.label}
-          </Link>
-        ))}
-        <Link
-          href={gamePlayHref(game.id)}
-          className="rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
-        >
-          プレイヤー画面を見る
-        </Link>
-      </div>
+      {visualMode === "pre_cycle" ? (
+        <PreCycleVisual />
+      ) : visualMode === "cycle_complete" ? (
+        <CycleCompleteVisual />
+      ) : (
+        <CompactCycleProgress
+          display={display}
+          selectedStep={selectedStep}
+          onSelectStep={onSelectStep}
+        />
+      )}
 
-      <CompactCycleProgress
-        display={display}
-        selectedStep={selectedStep}
-        onSelectStep={onSelectStep}
-      />
+      <div className="mt-4 border-t border-zinc-800/60 pt-3">
+        <button
+          type="button"
+          onClick={() => setSettingsOpen((value) => !value)}
+          className="text-xs text-zinc-600 transition-colors hover:text-zinc-400"
+        >
+          作品の設定 {settingsOpen ? "▲" : "▼"}
+        </button>
+        {settingsOpen && (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {studioActions.map((action) => (
+              <Link
+                key={action.id}
+                href={action.href(game.id)}
+                className="rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
+              >
+                {action.label}
+              </Link>
+            ))}
+            <Link
+              href={gamePlayHref(game.id)}
+              className="rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
+            >
+              プレイヤー画面を見る
+            </Link>
+          </div>
+        )}
+      </div>
     </section>
   );
 }
@@ -391,16 +559,21 @@ function StepDetailPanel({
   }
 }
 
-function PlayerVoiceEmptyState({ gameId }: { gameId: string }) {
+function PlayerVoiceEmptyState({
+  gameId,
+  visualMode,
+}: {
+  gameId: string;
+  visualMode: StudioVisualMode;
+}) {
+  if (visualMode === "pre_cycle") {
+    return null;
+  }
+
   return (
-    <div className="mt-6 rounded-xl border border-dashed border-zinc-800 bg-zinc-950/30 px-5 py-8 text-center">
-      <p className="text-sm font-medium text-zinc-400">まだプレイヤーの声がありません</p>
-      <Link
-        href={gamePlayHref(gameId)}
-        className={`${primaryButtonClassName} mt-4`}
-      >
-        作品ページを共有する
-      </Link>
+    <div className="mt-6 rounded-xl border border-dashed border-zinc-800 bg-zinc-950/30 px-5 py-6 text-center">
+      <MessageSquare className="mx-auto size-8 text-zinc-600" aria-hidden="true" />
+      <p className="mt-2 text-sm text-zinc-500">この版の声はまだありません</p>
     </div>
   );
 }
@@ -434,6 +607,7 @@ export function GameGrowthCycle({
     () => buildNurtureDisplayContext(growth, voiceRead, game.id),
     [growth, voiceRead, game.id],
   );
+  const visualMode = getStudioVisualMode(growth);
 
   const { getOwnerVoiceAggregates, getOwnerVoiceResponseDetails } = useGames();
   const [voiceAggregates, setVoiceAggregates] = useState(
@@ -526,7 +700,7 @@ export function GameGrowthCycle({
           />
         </section>
       ) : (
-        <PlayerVoiceEmptyState gameId={game.id} />
+        <PlayerVoiceEmptyState gameId={game.id} visualMode={visualMode} />
       )}
 
       <PastCyclesPanel growth={growth} />

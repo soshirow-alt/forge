@@ -1,65 +1,71 @@
 ■ 現在の状態
-- ブランチ preview/landing-01。実 Studio UX 大改修を commit + push 済（本番 deploy は未）
-- Preview: https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app
-- オーナー承認済み: ①イベント駆動サイクル ②正式版宣言の履歴は折りたたみ ③RUN
-- 次: オーナーが Preview で /projects/{自分の作品id}/studio を実機レビュー
-- 保留: S-22 mock 6→5タブ、S-20 polish、Studio ルート整理第2波
+- ブランチ preview/landing-01。Studio ヒーロー視覚整理 + ホーム/一覧整理を Preview に push 済み（オーナー RUN 指示）
+- Preview URL: https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app
+- 前回 push: 実 Studio UX 大改修（88d89ae）。今回 push: ヒーロー3モード + ホーム/一覧整理
+- 本番 prod deploy — 保留。DB migration 変更なし
 
-■ 今回実装したこと
-- game-growth-cycle.tsx 全面再構成 — 5列ステッパー廃止。「今やること」ヒーロー + 大きな主CTA + 副CTA + インライン studio アクション（旧「その他のやること」統合）
-- CompactCycleProgress — 5ドット進捗。「反応を待つ」完了時は ↺ 新回答で再開の一文のみ（ループアニメなし）
-- lib/project-growth-state.ts — getStudioActionHeadline / getStudioCycleBanner 追加（ヒーロー文言・サイクルバナー）
-- developer-voice-insights — 回答0件は null（空ボックス非表示）
-- nurture-deep-feedback-section — 当版の詳しい感想0件は null
-- project-release-studio-panel — 見出し「正式版として宣言する」。過去の宣言は折りたたみ（デフォルト閉）
-- project-studio-page — ProjectNurtureActions 削除、ヘッダー簡素化（mono URL・いま:行削除）
-- studio-top-priorities-panel — 「次に直すこと」下の説明文削除
+■ 今回実装したこと（RUN 済み）
+- getStudioVisualMode で pre_cycle / in_cycle / cycle_complete を分岐
+  - pre_cycle: 3段ビジュアル（投稿✓ プレイ● 回答·）+「ループ前」バッジ。5段ステッパー非表示
+  - cycle_complete: 完了リング + 点滅「新回答で再開」。5段の ✓ 羅列を廃止
+  - in_cycle: 従来の5ドット（現在地のみ強調）
+- 「作品ページを共有する」廃止 — 主CTA: プレイヤー向けページを見る。副: ページURLをコピー
+- ヒーロー内ボタン — 主CTAのみ常時。質問編集・作品情報編集は「作品の設定」折りたたみ
+- 空の声セクション — ループ前はヒーローと重複するため非表示
+- ホーム — サンプルカルーセル・Forgeで起きていること 削除
+- 一覧 — フェーズピル、実作品は新着FB/公開待ちワッペンのみ
+
+■ Forge原典コアループ（判断の基準）
+- 版ごとの学習ループ（発見→プレイ→初声→次に直すこと→次版）
+- 今回は開発者 Studio の「今どのフェーズか」を視覚で正しく伝える改善。初回待ちで完了に見える混乱を解消
 
 ■ なぜこの設計
-- オーナー指摘: 5段ステッパーは「反応を待つ」で行き止まりに見える。初見では何をすればよいか不明
-- 原典の改善ループは「イベントでサイクルが進む」もの。常時ループ演出は誤解を招く
-- 空の集計カードは意味がなくノイズ。データがあるときだけ「プレイヤーの声」を出す
-- 正式版は「宣言する」行為が主。履歴は補助なので折りたたみ
+- Forge で開発者が能動的にやることは実質4つ（読む/直す/記録・公開/待つ）。初回はループ前で別フェーズ
+- 5段 UI を常時出すとプロセスと無関係なボタンが同列に見え混乱する
+- 「共有」は製品機能ではなく URL 配布の口語 — UI に嘘のボタンを置かない
 
 ■ 他案不採用
-- ステッパーを残してハイライトだけ変える — 行き止まり感は残るため不採用
-- 正式版履歴を常時表示 — オーナー「折りたたみ」指示のため不採用
-- phaseGuidance 小文字説明を残す — Player 側と揃えて削除
+- 5段を残して wait だけ別色 — 依然として ✓ が多く完了に見える
+- ボタンを物理的に削るだけ — プロセスとの対応が伝わらないため折りたたみ + モード分岐
 
 ■ スコープ In / Out
-- In: 実 Studio /projects/{id}/studio の UI・文言・空状態・宣言パネル
-- Out: mock /studio/* の S-22 タブ数変更、Supabase migration、本番 prod deploy
+- In: game-growth-cycle, project-growth-state, studio-home/projects/shell, project-list-card, mock-data
+- Out: 本番 deploy、SNS シェア API、目標 FB インセンティブ
 
 ■ 今回変更した画面
-- 実 Studio /projects/{id}/studio — 画面上部
-  - 変更前: 5列ステッパー、phaseGuidance 説明、下部「その他のやること」、正式版の履歴常時、空の「プレイヤーの回答」ボックス
-  - 変更後: オレンジ枠ヒーロー「今やること」+ 主ボタン1本、5ドット進捗、インラインリンク、声なし時は共有CTA、宣言は折りたたみ履歴
-  - 開発者視点: 開いた瞬間に次アクションが1つ分かる。待機中はサイクル完了と再開条件が明示
-  - 確認: Preview にログイン → マイページ → 作品 → Studio。新回答あり/なし、宣言済み/未宣言を各1回
+- 実 Studio /projects/{id}/studio — ヒーロー領域（画面上部・改善ループカード）
+  - ループ前: 3段図 + URLコピー + 設定は折りたたみ
+  - ループ完了: 完了アイコン + 待機
+  - 改善中: 5ドット + 現在地
+  - 変更前: no_feedback でも5段ステッパーが ✓ だらけで「終わった」印象
+- Studio ホーム /studio — サンプルカルーセル・Forgeで起きていること 削除
+- Studio 一覧 /studio/projects — フェーズピル、ワッペンのみの実作品行
 
 ■ ユーザー目線の変化
-- 開発者が Studio を開くと「今やること」が大きく1つ見える（回答を読む / 修正する / 記録する 等）
-- 反応待ちは行き止まりではなく「この版のサイクル完了」。新回答で自動的に次サイクル開始の説明
-- まだ声がない作品は空カードではなく「作品ページを共有する」CTA
-- 正式版はボタンが主役。過去の宣言は必要なときだけ展開
+- 初回は「まだループが始まっていない」と視覚的に分かる
+- 共有したいときは URL コピーで何をすればよいか明確
+- ヒーローが主役、設定系は必要時だけ開く
+- ホームが実作品中心になり、一覧はフェーズで絞れる
 
 ■ 注意事項
-- mock /studio は今回触っていない（実データ Studio のみ）
-- 修正メモは引き続き端末内 localStorage
-- Preview デプロイ反映まで数分かかる場合あり
+- Vercel Preview デプロイ完了まで数分かかる場合あり
+- ループ前/中/完了の見え方は作品の FB・devlog 状態で変わる。複数作品で確認推奨
 
 ■ 今すぐ私がやるべきこと
-- Preview で自分の作品の Studio を開き、ヒーローCTA・サイクル文言・宣言折りたたみを実機確認
-- 違和感があれば画面位置つきでフィードバック（次の Cursor タスク化）
+- Preview でループ前の作品 Studio を実機確認（3段図・URLコピー・設定折りたたみ）
+- in_cycle / cycle_complete の作品があればヒーロー切替も確認
+- /studio ホーム・/studio/projects 一覧の整理後 UI を実機で見る
+- 違和感があればフィードバック
 
 ■ Cursorだけで完了できること
-- S-22 mock 5タブ化（オーナー GO 後）
-- Studio ルート整理第2波（レビューメモ反映）
-- 実 Studio の細部 polish（文言・余白）
+- フィードバック反映の修正
+- in_cycle 時のステップとボタン対応のさらなる視覚化（検討）
 
 ■ 次に検討すべきこと
-- オーナー実機レビュー結果を踏まえた微調整
-- mock Studio と実 Studio の見た目統一（S-20）
+- in_cycle 時もステップとボタンの対応をさらに視覚化するか
+- UX-FB-TARGET（目標 FB ボーナス）
+- S-22 mock 5タブ / S-20 polish（GO 後）
 
 ■ ChatGPTに相談したい論点
-- ヒーローCTA と「次に直すこと」パネルの役割分担が重複していないか（実機レビュー後）
+- ループ前/中/完了の3モード表現で十分か
+- 実機レビュー後の polish 優先度

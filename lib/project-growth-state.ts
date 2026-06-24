@@ -140,10 +140,29 @@ export function getNurtureStepLabel(stepId: NurtureStepId): string {
   return NURTURE_STEPS.find((step) => step.id === stepId)?.label ?? stepId;
 }
 
+export type StudioVisualMode = "pre_cycle" | "in_cycle" | "cycle_complete";
+
+/** Studio ヒーローの表示モード — 初回待ちと改善ループ中で UI を分ける */
+export function getStudioVisualMode(
+  snapshot: ProjectGrowthSnapshot,
+): StudioVisualMode {
+  if (snapshot.dataPhase === "no_feedback") {
+    return "pre_cycle";
+  }
+  if (snapshot.dataPhase === "published_waiting") {
+    return "cycle_complete";
+  }
+  return "in_cycle";
+}
+
 /** Studio ヒーロー — 今やること（短文・動詞） */
 export function getStudioActionHeadline(
   display: NurtureDisplayContext,
+  snapshot: ProjectGrowthSnapshot,
 ): string {
+  if (getStudioVisualMode(snapshot) === "pre_cycle") {
+    return "プレイヤーの訪問を待つ";
+  }
   if (display.primaryOpensReadPanel) {
     return "回答を確認する";
   }
@@ -153,8 +172,8 @@ export function getStudioActionHeadline(
   if (display.nowStepId === "publish" || display.nowStepId === "devlog") {
     return "変更を記録して公開する";
   }
-  if (display.nowStepId === "wait") {
-    return "プレイヤーを呼び込む";
+  if (getStudioVisualMode(snapshot) === "cycle_complete") {
+    return "反応を待つ";
   }
   return display.phaseLabel;
 }
@@ -165,21 +184,18 @@ export function getStudioCycleBanner(
   display: NurtureDisplayContext,
 ): string {
   if (display.newFeedbackArrived) {
-    return "新しい回答 — サイクル再開";
+    return "新しい回答";
   }
-  if (
-    display.nowStepId === "wait" &&
-    snapshot.dataPhase === "published_waiting"
-  ) {
-    return "この版のサイクル完了";
+  if (getStudioVisualMode(snapshot) === "pre_cycle") {
+    return "ループ前";
   }
-  if (display.nowStepId === "wait" && snapshot.dataPhase === "no_feedback") {
-    return "初めてのプレイヤーを待っています";
+  if (getStudioVisualMode(snapshot) === "cycle_complete") {
+    return "この版は完了";
   }
   if (snapshot.cycleNumber > 1) {
-    return `第 ${snapshot.cycleNumber} 回の改善`;
+    return `第 ${snapshot.cycleNumber} 回`;
   }
-  return "改善サイクル";
+  return "改善中";
 }
 
 function devlogsForProject(
@@ -334,7 +350,7 @@ export function buildNurtureDisplayContext(
         phaseGuidance:
           "プレイヤーの初回フィードバックを待っています。作品ページを共有して、最初のプレイヤーを呼び込みましょう。",
         primaryCta: {
-          label: "作品ページを確認する",
+          label: "プレイヤー向けページを見る",
           href: `/games/${gameId}`,
         },
         primaryOpensReadPanel: false,
