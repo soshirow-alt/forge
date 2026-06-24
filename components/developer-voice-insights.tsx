@@ -19,16 +19,7 @@ export function DeveloperVoiceInsights({
   const withResponses = aggregates.filter((item) => item.totalResponses > 0);
 
   if (withResponses.length === 0) {
-    return (
-      <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3.5 py-3">
-        <p className="text-xs font-medium text-zinc-500">
-          集計（v{versionKey}）
-        </p>
-        <p className="mt-1 text-sm text-zinc-600">
-          この版への回答はまだありません。
-        </p>
-      </div>
-    );
+    return null;
   }
 
   return (

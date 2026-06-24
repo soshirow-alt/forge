@@ -8,7 +8,6 @@ import { StudioShell } from "@/components/studio-shell";
 import { GameGrowthCycle } from "@/components/game-growth-cycle";
 import { GameThumbnail } from "@/components/game-thumbnail";
 import { ProjectReleaseStudioPanel } from "@/components/project-release-studio-panel";
-import { ProjectNurtureActions } from "@/components/project-nurture-actions";
 import { StudioTopPrioritiesPanel } from "@/components/studio-top-priorities-panel";
 import { useGames } from "@/components/games-provider";
 import { useOwnedProjectFeedback } from "@/hooks/use-owned-project-feedback";
@@ -16,15 +15,12 @@ import { useOwnedProjectVoiceSignals } from "@/hooks/use-owned-project-voice-sig
 import { useNurtureVoiceRead } from "@/hooks/use-nurture-feedback-read";
 import {
   PROJECT_STUDIO_FEEDBACK_SECTION_ID,
-  gamePlayHref,
 } from "@/lib/project-nurture-links";
 import {
-  buildNurtureDisplayContext,
   buildProjectGrowthSnapshot,
   groupFeedbackByProject,
 } from "@/lib/project-growth-state";
 import { resolveVoiceSignalForGame } from "@/lib/project-voice-nurture";
-import { RELEASE_STATUS_LABELS } from "@/lib/project-release-state";
 
 function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   const router = useRouter();
@@ -60,14 +56,6 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   const projectFeedback = useMemo(() => {
     return groupFeedbackByProject(feedbackEntries).get(projectId) ?? [];
   }, [feedbackEntries, projectId]);
-
-  const display = useMemo(() => {
-    if (!game || !growth) {
-      return null;
-    }
-
-    return buildNurtureDisplayContext(growth, voiceRead, game.id);
-  }, [game, growth, voiceRead]);
 
   useEffect(() => {
     if (hydrated && !user) {
@@ -130,14 +118,6 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
       getDevlogsByProject,
     );
 
-  const displayContext =
-    display ??
-    buildNurtureDisplayContext(
-      growthSnapshot,
-      voiceRead,
-      game.id,
-    );
-
   return (
     <StudioShell activeNav="projects">
       <div className="mx-auto max-w-3xl">
@@ -162,37 +142,16 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
             />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium text-orange-400/90">改善ループ Studio · 実データ</p>
-            <p className="text-xs font-medium text-zinc-600">作品育成</p>
+            <p className="text-xs font-medium text-orange-400/90">改善ループ Studio</p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-zinc-50 sm:text-3xl">
               {game.title}
             </h1>
-            <p className="mt-2 font-mono text-[10px] text-zinc-600">
-              /projects/{game.id}/studio
-            </p>
             <p className="mt-2 text-sm text-zinc-500">
               v{growthSnapshot.playableVersion}
               {growthSnapshot.cycleNumber > 0 && ` · サイクル ${growthSnapshot.cycleNumber}`}
-              {growthSnapshot.totalVoiceResponseCount > 0 && (
-                <span className="ml-2 text-zinc-400">
-                  回答 {growthSnapshot.totalVoiceResponseCount}件
-                </span>
-              )}
               {growthSnapshot.pendingFeedbackCount > 0 && (
                 <span className="ml-2 text-orange-400/90">新しい回答あり</span>
               )}
-            </p>
-            <p className="mt-1 text-xs text-zinc-600">
-              いま: {displayContext.phaseLabel}
-              {" · "}
-              {RELEASE_STATUS_LABELS[game.releaseStatus ?? "in_development"]}
-              {" · "}
-              <Link
-                href={gamePlayHref(game.id)}
-                className="cursor-pointer text-zinc-500 transition-colors hover:text-orange-400/90"
-              >
-                プレイヤー画面をプレビュー
-              </Link>
             </p>
           </div>
         </header>
@@ -218,12 +177,6 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
           projectId={game.id}
           devlogCount={getDevlogsByProject(game.id).length}
           playableVersion={growthSnapshot.playableVersion}
-        />
-
-        <ProjectNurtureActions
-          projectId={game.id}
-          context="studio"
-          className="mt-8"
         />
       </div>
     </StudioShell>

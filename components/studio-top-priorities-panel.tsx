@@ -127,9 +127,6 @@ export function StudioTopPrioritiesPanel({
           >
             次に直すこと
           </h2>
-          <p className="mt-1 text-xs text-zinc-500">
-            v{growth.playableVersion} の回答から、優先度の高い候補を最大3件表示します。
-          </p>
         </div>
         <Link
           href={feedbackHref}

@@ -34,6 +34,7 @@ export function ProjectReleaseStudioPanel({
 
   const [note, setNote] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
+  const [historyExpanded, setHistoryExpanded] = useState(false);
 
   const releasedValidation = useMemo(
     () =>
@@ -83,7 +84,7 @@ export function ProjectReleaseStudioPanel({
   if (!loaded) {
     return (
       <section className="mt-10 rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
-        <p className="text-sm text-zinc-500">正式版情報を読み込み中…</p>
+        <p className="text-sm text-zinc-500">読み込み中…</p>
       </section>
     );
   }
@@ -93,24 +94,13 @@ export function ProjectReleaseStudioPanel({
       id="official-release"
       className="mt-10 scroll-mt-24 rounded-xl border border-zinc-800 bg-zinc-900/60 p-5"
     >
-      <div className="border-l-2 border-emerald-500 pl-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-semibold tracking-tight text-zinc-100">
-          正式版
+          正式版として宣言する
         </h2>
-        <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-          Forge は品質審査しません。開発者が Released を宣言することが正本です。
-        </p>
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center gap-2">
         <span className="rounded-full border border-zinc-700 bg-zinc-950/60 px-3 py-1 text-xs font-medium text-zinc-200">
-          現在: {RELEASE_STATUS_LABELS[releaseStatus]}
+          {RELEASE_STATUS_LABELS[releaseStatus]}
         </span>
-        {events.length > 0 ? (
-          <span className="text-xs text-zinc-600">
-            イベント {events.length} 件（履歴は削除しません）
-          </span>
-        ) : null}
       </div>
 
       {(error || actionError) && (
@@ -134,19 +124,21 @@ export function ProjectReleaseStudioPanel({
             type="button"
             disabled={busy || !releasedValidation.ok}
             onClick={() => void handleReleased()}
-            className="rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            正式版として宣言（Released）
+            正式版として宣言する
           </button>
 
-          <button
-            type="button"
-            disabled={busy || !reopenedValidation.ok}
-            onClick={() => void handleReopened()}
-            className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-200 transition-colors hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            正式版を再調整（Release Reopened）
-          </button>
+          {releaseStatus === "released" && (
+            <button
+              type="button"
+              disabled={busy || !reopenedValidation.ok}
+              onClick={() => void handleReopened()}
+              className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-sm font-medium text-amber-200 transition-colors hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              再調整を始める
+            </button>
+          )}
         </div>
 
         {!releasedValidation.ok && releaseStatus !== "released" ? (
@@ -155,31 +147,39 @@ export function ProjectReleaseStudioPanel({
       </div>
 
       {events.length > 0 ? (
-        <div className="mt-6 border-t border-zinc-800/80 pt-4">
-          <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-            履歴
-          </h3>
-          <ol className="mt-3 space-y-2">
-            {events.map((event) => (
-              <li
-                key={event.id}
-                className="flex flex-col gap-1 rounded-lg border border-zinc-800/60 bg-zinc-950/40 px-3 py-2 text-sm sm:flex-row sm:items-start sm:gap-3"
-              >
-                <time
-                  dateTime={event.createdAt}
-                  className="shrink-0 text-xs text-zinc-600"
+        <div className="mt-5 border-t border-zinc-800/80 pt-4">
+          <button
+            type="button"
+            onClick={() => setHistoryExpanded((value) => !value)}
+            className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
+          >
+            過去の宣言を見る（{events.length}件）{historyExpanded ? " ▲" : " ▼"}
+          </button>
+          {historyExpanded && (
+            <ol className="mt-3 space-y-2">
+              {events.map((event) => (
+                <li
+                  key={event.id}
+                  className="flex flex-col gap-1 rounded-lg border border-zinc-800/60 bg-zinc-950/40 px-3 py-2 text-sm sm:flex-row sm:items-start sm:gap-3"
                 >
-                  {formatPlayHistoryDate(event.createdAt)}
-                </time>
-                <div className="min-w-0">
-                  <p className="text-zinc-200">{RELEASE_EVENT_LABELS[event.eventType]}</p>
-                  {event.note ? (
-                    <p className="mt-1 text-xs text-zinc-500">{event.note}</p>
-                  ) : null}
-                </div>
-              </li>
-            ))}
-          </ol>
+                  <time
+                    dateTime={event.createdAt}
+                    className="shrink-0 text-xs text-zinc-600"
+                  >
+                    {formatPlayHistoryDate(event.createdAt)}
+                  </time>
+                  <div className="min-w-0">
+                    <p className="text-zinc-200">
+                      {RELEASE_EVENT_LABELS[event.eventType]}
+                    </p>
+                    {event.note ? (
+                      <p className="mt-1 text-xs text-zinc-500">{event.note}</p>
+                    ) : null}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
         </div>
       ) : null}
     </section>

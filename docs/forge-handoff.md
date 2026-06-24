@@ -1,6 +1,6 @@
 # Forge Handoff
 
-最終更新：**2026-06-16**（事業仮説 v2 + 原典コアループ改訂）
+最終更新：**2026-06-19**（実 Studio UX 大改修）
 
 ---
 
@@ -31,7 +31,15 @@
 | 事業 North Star | P0 計画 §1.5 — `docs/forge-p0-improvement-loop-plan.md` |
 | 保留 | S-20 polish、S-23、ランキング、KPI、課金、BYOP、Discord/Steam |
 
-**Cursor 推奨 1 位（preview/landing-01）**: Studio 実機レビュー（オーナー）→ S-22 5タブ / mock polish は GO 後
+**Cursor 推奨 1 位（preview/landing-01）**: オーナー実機レビュー（Preview `/projects/{id}/studio`）→ S-22 mock 5タブ / S-20 polish は GO 後
+
+---
+
+## 直近完了（2026-06-19）
+
+- **実 Studio UX 大改修** — ヒーローCTA・イベント駆動サイクル・空ボックス非表示・正式版宣言折りたたみ
+- Player stub P-07 / P-05-2 / 検索特徴タグ
+- Studio ルート整理第1波（正本 `/projects/{id}/studio`）
 
 ---
 

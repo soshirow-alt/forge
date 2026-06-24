@@ -140,6 +140,48 @@ export function getNurtureStepLabel(stepId: NurtureStepId): string {
   return NURTURE_STEPS.find((step) => step.id === stepId)?.label ?? stepId;
 }
 
+/** Studio ヒーロー — 今やること（短文・動詞） */
+export function getStudioActionHeadline(
+  display: NurtureDisplayContext,
+): string {
+  if (display.primaryOpensReadPanel) {
+    return "回答を確認する";
+  }
+  if (display.primaryOpensModifyGameModal) {
+    return "ゲームを直す";
+  }
+  if (display.nowStepId === "publish" || display.nowStepId === "devlog") {
+    return "変更を記録して公開する";
+  }
+  if (display.nowStepId === "wait") {
+    return "プレイヤーを呼び込む";
+  }
+  return display.phaseLabel;
+}
+
+/** サイクル状態バナー（イベント型ループ — 完了と再開を明示） */
+export function getStudioCycleBanner(
+  snapshot: ProjectGrowthSnapshot,
+  display: NurtureDisplayContext,
+): string {
+  if (display.newFeedbackArrived) {
+    return "新しい回答 — サイクル再開";
+  }
+  if (
+    display.nowStepId === "wait" &&
+    snapshot.dataPhase === "published_waiting"
+  ) {
+    return "この版のサイクル完了";
+  }
+  if (display.nowStepId === "wait" && snapshot.dataPhase === "no_feedback") {
+    return "初めてのプレイヤーを待っています";
+  }
+  if (snapshot.cycleNumber > 1) {
+    return `第 ${snapshot.cycleNumber} 回の改善`;
+  }
+  return "改善サイクル";
+}
+
 function devlogsForProject(
   projectId: string,
   getDevlogsByProject: (projectId: string) => DevlogEntry[],

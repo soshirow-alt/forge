@@ -3,16 +3,22 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DeveloperVoiceInsights } from "@/components/developer-voice-insights";
+import { ModifyGameExplanationModal, shouldShowModifyGameModal } from "@/components/modify-game-explanation-modal";
 import { NurtureDeepFeedbackSection } from "@/components/nurture-deep-feedback-section";
 import { OwnerVoiceResponseList } from "@/components/owner-voice-response-list";
-import { useNurtureVoiceRead } from "@/hooks/use-nurture-feedback-read";
+import { VoiceAdoptionStudioCount } from "@/components/voice-adoption-studio-count";
+import { useGames } from "@/components/games-provider";
 import { useNurtureImprovementNote } from "@/hooks/use-nurture-improvement-note";
+import { useNurtureVoiceRead } from "@/hooks/use-nurture-feedback-read";
 import type { Game } from "@/lib/mock-games";
+import { getProjectNurtureActions } from "@/lib/project-nurture-links";
 import {
   NURTURE_STEPS,
   buildNurtureDisplayContext,
-  getProgressRailStepIds,
   getProgressRailVisual,
+  getProgressRailStepIds,
+  getStudioActionHeadline,
+  getStudioCycleBanner,
   type NurtureDisplayContext,
   type NurtureStepId,
   type ProjectGrowthSnapshot,
@@ -20,18 +26,13 @@ import {
 import type { OwnerVoiceResponseDetail } from "@/lib/supabase/voice-engagement";
 import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
 import { buildVoicePromptAggregates } from "@/lib/voice-aggregates";
-import { useGames } from "@/components/games-provider";
-import {
-  ModifyGameExplanationModal,
-  shouldShowModifyGameModal,
-} from "@/components/modify-game-explanation-modal";
-import { VoiceAdoptionStudioCount } from "@/components/voice-adoption-studio-count";
+import { gamePlayHref } from "@/lib/project-nurture-links";
 
 const primaryButtonClassName =
-  "inline-flex cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90";
+  "inline-flex w-full cursor-pointer items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3.5 text-base font-semibold text-zinc-950 transition-opacity hover:opacity-90 sm:w-auto";
 
 const secondaryButtonClassName =
-  "inline-flex cursor-pointer items-center justify-center rounded-lg border border-zinc-700 px-5 py-3 text-sm font-medium text-zinc-200 transition-colors hover:border-orange-500/40 hover:text-orange-300";
+  "inline-flex cursor-pointer items-center justify-center rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-200 transition-colors hover:border-orange-500/40 hover:text-orange-300";
 
 type GameGrowthCycleProps = {
   game: Game;
@@ -41,7 +42,93 @@ type GameGrowthCycleProps = {
   initialSelectedStep?: NurtureStepId | null;
 };
 
-function NurturePhasePanel({
+function cycleDotMarker(visual: ReturnType<typeof getProgressRailVisual>): string {
+  switch (visual) {
+    case "done":
+      return "✓";
+    case "current":
+      return "●";
+    case "upcoming":
+      return "·";
+  }
+}
+
+function CompactCycleProgress({
+  display,
+  onSelectStep,
+  selectedStep,
+}: {
+  display: NurtureDisplayContext;
+  onSelectStep: (id: NurtureStepId) => void;
+  selectedStep: NurtureStepId | null;
+}) {
+  const stepIds = getProgressRailStepIds();
+  const waitComplete =
+    display.nowStepId === "wait" && !display.newFeedbackArrived;
+
+  return (
+    <div className="mt-5">
+      <div className="flex items-start justify-between gap-0.5">
+        {stepIds.map((stepId, index) => {
+          const step = NURTURE_STEPS.find((entry) => entry.id === stepId);
+          if (!step) {
+            return null;
+          }
+          const visual = getProgressRailVisual(stepId, display);
+          const isCurrent = visual === "current";
+          const isSelected = selectedStep === stepId;
+
+          return (
+            <div key={stepId} className="flex min-w-0 flex-1 flex-col items-center">
+              {index > 0 && (
+                <span
+                  className="pointer-events-none absolute hidden"
+                  aria-hidden
+                />
+              )}
+              <button
+                type="button"
+                onClick={() => onSelectStep(stepId)}
+                aria-pressed={isSelected}
+                aria-label={step.label}
+                className={`flex flex-col items-center gap-1.5 transition-colors ${
+                  isSelected ? "text-zinc-200" : "text-zinc-500 hover:text-zinc-400"
+                }`}
+              >
+                <span
+                  className={`flex size-7 items-center justify-center rounded-full text-xs font-medium ${
+                    isCurrent
+                      ? "bg-orange-500/20 text-orange-300 ring-2 ring-orange-500/50"
+                      : visual === "done"
+                        ? "bg-zinc-800 text-zinc-400"
+                        : "bg-zinc-900 text-zinc-600"
+                  }`}
+                >
+                  {cycleDotMarker(visual)}
+                </span>
+                <span
+                  className={`line-clamp-2 text-center text-[10px] leading-tight sm:text-xs ${
+                    isCurrent ? "font-medium text-zinc-300" : ""
+                  }`}
+                >
+                  {step.railLabel}
+                </span>
+              </button>
+            </div>
+          );
+        })}
+      </div>
+      {waitComplete && (
+        <p className="mt-3 text-center text-xs text-zinc-500">
+          ↺ 新しい反応が届いたら「回答」から次のサイクルが始まります
+        </p>
+      )}
+    </div>
+  );
+}
+
+function StudioHeroPanel({
+  game,
   display,
   growth,
   selectedStep,
@@ -49,6 +136,7 @@ function NurturePhasePanel({
   onPrimaryRead,
   onOpenModifyGameModal,
 }: {
+  game: Game;
   display: NurtureDisplayContext;
   growth: ProjectGrowthSnapshot;
   selectedStep: NurtureStepId | null;
@@ -56,94 +144,41 @@ function NurturePhasePanel({
   onPrimaryRead: () => void;
   onOpenModifyGameModal: () => void;
 }) {
-  const stepIds = getProgressRailStepIds();
+  const cycleBanner = getStudioCycleBanner(growth, display);
+  const actionHeadline = getStudioActionHeadline(display);
+  const studioActions = getProjectNurtureActions("studio");
 
   return (
     <section
-      aria-label="育成フェーズ"
-      className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:p-5"
+      aria-label="今やること"
+      className="rounded-xl border border-orange-500/30 bg-gradient-to-b from-orange-500/5 to-zinc-900/40 p-5 sm:p-6"
     >
-      <div className="relative">
-        {growth.cycleNumber > 0 && (
-          <span
-            className="absolute right-0 top-0 text-xs text-zinc-700"
-            title={`改善サイクル ${growth.cycleNumber}`}
-          >
-            ↺ {growth.cycleNumber}
-          </span>
-        )}
-        <div
-          className="pointer-events-none absolute inset-x-[8%] top-[13px] h-px bg-zinc-800"
-          aria-hidden
-        />
-        <nav aria-label="育成サイクル" className="relative">
-          <div className="grid grid-cols-5 gap-x-0">
-            {stepIds.map((stepId) => {
-              const step = NURTURE_STEPS.find((entry) => entry.id === stepId);
-              if (!step) {
-                return null;
-              }
-
-              const visual = getProgressRailVisual(stepId, display);
-              const isSelected = selectedStep === stepId;
-              const labelTone =
-                visual === "current"
-                  ? "font-medium text-zinc-300"
-                  : visual === "done"
-                    ? "text-zinc-500"
-                    : "text-zinc-500";
-
-              return (
-                <div key={stepId} className="min-w-0 px-0.5">
-                  <button
-                    type="button"
-                    onClick={() => onSelectStep(stepId)}
-                    aria-pressed={isSelected}
-                    aria-label={`${step.label}（${step.whyLabel}）`}
-                    title={`${step.label} — ${step.whyLabel}`}
-                    className={`flex w-full cursor-pointer flex-col items-center text-center transition-colors hover:text-zinc-400 ${
-                      isSelected ? "text-zinc-200" : ""
-                    }`}
-                  >
-                    <span
-                      className={`relative z-[1] flex h-6 w-6 shrink-0 items-center justify-center rounded border text-xs font-medium ${
-                        visual === "current"
-                          ? "border-zinc-600 bg-zinc-800/80 text-zinc-300"
-                          : visual === "done"
-                            ? "border-zinc-800 bg-zinc-900/60 text-zinc-500"
-                            : "border-zinc-800/80 bg-zinc-950 text-zinc-500"
-                      }`}
-                    >
-                      {cycleNodeMarker(visual)}
-                    </span>
-                    <span
-                      className={`mt-2 line-clamp-2 text-xs leading-snug md:hidden ${labelTone}`}
-                    >
-                      {step.railLabel}
-                    </span>
-                    <span
-                      className={`mt-2 hidden line-clamp-2 text-xs leading-snug md:block ${labelTone}`}
-                    >
-                      {step.label}
-                    </span>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </nav>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded-md bg-zinc-800/80 px-2 py-0.5 text-xs font-medium text-zinc-300">
+          v{growth.playableVersion}
+        </span>
+        <span
+          className={`rounded-md px-2 py-0.5 text-xs font-medium ${
+            display.newFeedbackArrived
+              ? "bg-orange-500/15 text-orange-300"
+              : display.nowStepId === "wait"
+                ? "bg-zinc-800 text-zinc-400"
+                : "bg-violet-500/10 text-violet-300"
+          }`}
+        >
+          {cycleBanner}
+        </span>
       </div>
 
-      <p className="mt-5 text-sm text-zinc-500">
-        いま:{" "}
-        <span className="font-semibold text-zinc-100">{display.phaseLabel}</span>
+      <p className="mt-4 text-xs font-medium uppercase tracking-wide text-zinc-500">
+        今やること
       </p>
-      <p className="mt-2 text-sm leading-relaxed text-zinc-400">
-        {display.phaseGuidance}
-      </p>
+      <h2 className="mt-1 text-xl font-bold text-zinc-50 sm:text-2xl">
+        {actionHeadline}
+      </h2>
 
       {display.primaryCta && (
-        <div className="mt-4 flex flex-wrap gap-3">
+        <div className="mt-5 flex flex-wrap gap-3">
           {display.primaryOpensReadPanel ? (
             <button
               type="button"
@@ -161,33 +196,46 @@ function NurturePhasePanel({
               {display.primaryCta.label}
             </button>
           ) : display.primaryCta.href ? (
-            <Link
-              href={display.primaryCta.href}
-              className={primaryButtonClassName}
-            >
+            <Link href={display.primaryCta.href} className={primaryButtonClassName}>
               {display.primaryCta.label}
             </Link>
           ) : null}
           {display.secondaryCta?.href && (
-            <Link href={display.secondaryCta.href} className={secondaryButtonClassName}>
+            <Link
+              href={display.secondaryCta.href}
+              className={secondaryButtonClassName}
+            >
               {display.secondaryCta.label}
             </Link>
           )}
         </div>
       )}
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {studioActions.map((action) => (
+          <Link
+            key={action.id}
+            href={action.href(game.id)}
+            className="rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
+          >
+            {action.label}
+          </Link>
+        ))}
+        <Link
+          href={gamePlayHref(game.id)}
+          className="rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
+        >
+          プレイヤー画面を見る
+        </Link>
+      </div>
+
+      <CompactCycleProgress
+        display={display}
+        selectedStep={selectedStep}
+        onSelectStep={onSelectStep}
+      />
     </section>
   );
-}
-
-function cycleNodeMarker(visual: ReturnType<typeof getProgressRailVisual>): string {
-  switch (visual) {
-    case "done":
-      return "✓";
-    case "current":
-      return "●";
-    case "upcoming":
-      return "○";
-  }
 }
 
 function PastCyclesPanel({ growth }: { growth: ProjectGrowthSnapshot }) {
@@ -252,39 +300,28 @@ function StepDetailPanel({
     case "read":
       return (
         <div className="space-y-4">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <h4 className="text-sm font-semibold text-zinc-300">
-                プレイヤーの回答
-              </h4>
-              {growth.totalVoiceResponseCount > 0 && !voiceRead && (
-                <button
-                  type="button"
-                  onClick={onMarkRead}
-                  className="cursor-pointer text-xs text-orange-400 hover:text-orange-300"
-                >
-                  読了にする
-                </button>
-              )}
-              {voiceRead && growth.totalVoiceResponseCount > 0 && (
-                <span className="text-xs text-zinc-600">読了済み</span>
-              )}
-            </div>
-            {growth.totalVoiceResponseCount === 0 ? (
-              <p className="text-sm text-zinc-500">
-                この版への回答はまだありません。
-              </p>
-            ) : (
-              <>
-                <p className="text-sm text-zinc-400">
-                  v{growth.playableVersion} に回答 {growth.totalVoiceResponseCount}
-                  件。集計と解釈は上の「プレイヤーの回答」セクションを参照してください。
-                </p>
-                <OwnerVoiceResponseList responses={voiceResponses} />
-              </>
-            )}
-          </div>
-
+          {growth.totalVoiceResponseCount > 0 && (
+            <>
+              <div className="flex items-center justify-between gap-2">
+                <h4 className="text-sm font-semibold text-zinc-300">
+                  個別の回答
+                </h4>
+                {!voiceRead && (
+                  <button
+                    type="button"
+                    onClick={onMarkRead}
+                    className="cursor-pointer text-xs text-orange-400 hover:text-orange-300"
+                  >
+                    読了にする
+                  </button>
+                )}
+                {voiceRead && (
+                  <span className="text-xs text-zinc-600">読了済み</span>
+                )}
+              </div>
+              <OwnerVoiceResponseList responses={voiceResponses} />
+            </>
+          )}
           <NurtureDeepFeedbackSection
             feedbackEntries={feedbackEntries}
             playableVersion={growth.playableVersion}
@@ -296,19 +333,15 @@ function StepDetailPanel({
     case "improving":
       return (
         <div className="space-y-3">
-          <h4 className="text-sm font-semibold text-zinc-300">ゲームを修正する</h4>
-          <p className="text-xs leading-relaxed text-zinc-600">
-            Forgeではゲーム自体の修正はできません。開発環境で直したあと、変更内容を記録して新版を公開します。
-          </p>
           <button
             type="button"
             onClick={onOpenModifyGameModal}
-            className="cursor-pointer inline-flex items-center rounded-lg border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-200 transition-colors hover:border-orange-500/40 hover:text-orange-300"
+            className="cursor-pointer inline-flex items-center rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-orange-500/40 hover:text-orange-300"
           >
-            ゲームを修正する
+            修正の進め方を見る
           </button>
           <label className="block text-xs text-zinc-500">
-            修正メモ（端末内保存）
+            修正メモ（端末内）
             <textarea
               value={improvementNote}
               onChange={(event) => onImprovementNoteChange(event.target.value)}
@@ -317,53 +350,29 @@ function StepDetailPanel({
               className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600"
             />
           </label>
-          {growth.cyclePrevious && (
-            <p className="text-xs text-zinc-600">前回: {growth.cyclePrevious}</p>
-          )}
         </div>
       );
 
     case "devlog":
       return (
-        <div className="space-y-3">
-          <h4 className="text-sm font-semibold text-zinc-300">変更内容を記録する</h4>
-          <p className="text-sm text-zinc-400">
-            {growth.latestDevlogTitle
-              ? `最新: 「${growth.latestDevlogTitle}」`
-              : "修正した内容を開発ログに記録しましょう。"}
-          </p>
-          <Link
-            href={`/projects/${game.id}/devlog/new`}
-            className="cursor-pointer inline-block text-sm text-orange-400 hover:text-orange-300"
-          >
-            変更内容を記録する →
-          </Link>
-        </div>
+        <Link
+          href={`/projects/${game.id}/devlog/new`}
+          className="cursor-pointer inline-flex items-center rounded-lg bg-violet-600/20 px-4 py-2 text-sm font-medium text-violet-200 ring-1 ring-violet-500/30 hover:bg-violet-600/30"
+        >
+          変更内容を記録する →
+        </Link>
       );
 
     case "publish":
       return (
         <div className="space-y-3">
-          <h4 className="text-sm font-semibold text-zinc-300">新版公開</h4>
-          <dl className="space-y-2 text-sm">
-            <div className="flex gap-3">
-              <dt className="w-16 shrink-0 text-zinc-500">最新版</dt>
-              <dd className="text-zinc-200">{growth.playableVersion}</dd>
-            </div>
-            {growth.latestDevlogTitle && (
-              <div className="flex gap-3">
-                <dt className="w-16 shrink-0 text-zinc-500">記録</dt>
-                <dd className="text-zinc-300">{growth.latestDevlogTitle}</dd>
-              </div>
-            )}
-          </dl>
           <VoiceAdoptionStudioCount
             gameId={game.id}
             latestPublishedDevlogId={growth.latestPublishedDevlogId}
           />
           <Link
             href={`/projects/${game.id}/devlog/new`}
-            className="cursor-pointer inline-block text-sm text-orange-400 hover:text-orange-300"
+            className="cursor-pointer inline-flex items-center rounded-lg bg-violet-600/20 px-4 py-2 text-sm font-medium text-violet-200 ring-1 ring-violet-500/30 hover:bg-violet-600/30"
           >
             新版を公開する →
           </Link>
@@ -372,22 +381,28 @@ function StepDetailPanel({
 
     case "wait":
       return (
-        <div className="space-y-3">
-          <h4 className="text-sm font-semibold text-zinc-300">回答待ち</h4>
-          <p className="text-sm leading-relaxed text-zinc-400">
-            {growth.dataPhase === "no_feedback"
-              ? "プレイヤーの初回フィードバックを待っています。"
-              : "新しい回答が届いたら、また回答を見る から始まります。"}
-          </p>
-          <Link
-            href={`/games/${game.id}`}
-            className="cursor-pointer inline-block text-sm text-orange-400 hover:text-orange-300"
-          >
-            作品ページを確認する →
-          </Link>
-        </div>
+        <Link
+          href={gamePlayHref(game.id)}
+          className="cursor-pointer inline-flex items-center rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 hover:border-orange-500/40"
+        >
+          作品ページを開く →
+        </Link>
       );
   }
+}
+
+function PlayerVoiceEmptyState({ gameId }: { gameId: string }) {
+  return (
+    <div className="mt-6 rounded-xl border border-dashed border-zinc-800 bg-zinc-950/30 px-5 py-8 text-center">
+      <p className="text-sm font-medium text-zinc-400">まだプレイヤーの声がありません</p>
+      <Link
+        href={gamePlayHref(gameId)}
+        className={`${primaryButtonClassName} mt-4`}
+      >
+        作品ページを共有する
+      </Link>
+    </div>
+  );
 }
 
 export function GameGrowthCycle({
@@ -427,6 +442,13 @@ export function GameGrowthCycle({
   const [voiceResponses, setVoiceResponses] = useState<OwnerVoiceResponseDetail[]>(
     [],
   );
+
+  const hasVoiceAggregates = voiceAggregates.some((item) => item.totalResponses > 0);
+  const hasDeepFeedback = feedbackEntries.some(
+    (entry) => entry.item.versionKey === growth.playableVersion,
+  );
+  const showVoiceSection =
+    growth.totalVoiceResponseCount > 0 || hasVoiceAggregates || hasDeepFeedback;
 
   useEffect(() => {
     void getOwnerVoiceAggregates(game.id, growth.playableVersion)
@@ -476,7 +498,8 @@ export function GameGrowthCycle({
 
   return (
     <div>
-      <NurturePhasePanel
+      <StudioHeroPanel
+        game={game}
         display={display}
         growth={growth}
         selectedStep={selectedStep}
@@ -485,35 +508,37 @@ export function GameGrowthCycle({
         onOpenModifyGameModal={handleOpenModifyGameModal}
       />
 
-      <section aria-label="プレイヤーの回答" className="mt-6 space-y-2">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-            プレイヤーの回答
+      {showVoiceSection ? (
+        <section aria-label="プレイヤーの声" className="mt-6 space-y-3">
+          <h3 className="text-sm font-semibold text-zinc-200">
+            プレイヤーの声
+            <span className="ml-2 text-xs font-normal text-zinc-500">
+              v{growth.playableVersion}
+            </span>
           </h3>
-          {growth.totalVoiceResponseCount > 0 && (
-            <p className="text-xs text-zinc-600">
-              v{growth.playableVersion} · 回答 {growth.totalVoiceResponseCount}件
-            </p>
-          )}
-        </div>
-        <DeveloperVoiceInsights
-          aggregates={voiceAggregates}
-          versionKey={growth.playableVersion}
-        />
-      </section>
-
-      <NurtureDeepFeedbackSection
-        feedbackEntries={feedbackEntries}
-        playableVersion={growth.playableVersion}
-      />
+          <DeveloperVoiceInsights
+            aggregates={voiceAggregates}
+            versionKey={growth.playableVersion}
+          />
+          <NurtureDeepFeedbackSection
+            feedbackEntries={feedbackEntries}
+            playableVersion={growth.playableVersion}
+          />
+        </section>
+      ) : (
+        <PlayerVoiceEmptyState gameId={game.id} />
+      )}
 
       <PastCyclesPanel growth={growth} />
 
       {selectedStep && (
         <div
           id={detailPanelId}
-          className="mt-4 rounded-lg bg-zinc-950/50 p-4"
+          className="mt-4 rounded-lg border border-zinc-800/80 bg-zinc-950/50 p-4"
         >
+          <p className="mb-3 text-xs font-medium text-zinc-500">
+            {NURTURE_STEPS.find((s) => s.id === selectedStep)?.label}
+          </p>
           <StepDetailPanel
             stepId={selectedStep}
             game={game}

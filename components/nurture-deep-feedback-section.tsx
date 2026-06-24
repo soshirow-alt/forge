@@ -28,6 +28,11 @@ export function NurtureDeepFeedbackSection({
     [feedbackEntries, playableVersion],
   );
   const latestFeedback = versionFeedback[0];
+
+  if (versionFeedback.length === 0) {
+    return null;
+  }
+
   const pastFeedback = versionFeedback.slice(1);
 
   return (
@@ -38,13 +43,15 @@ export function NurtureDeepFeedbackSection({
       }`}
     >
       <h3 className="text-xs font-medium text-zinc-500">{summary.title}</h3>
-      <ul className="mt-2 space-y-1">
-        {summary.lines.map((line) => (
-          <li key={line} className="text-xs leading-relaxed text-zinc-600">
-            · {line}
-          </li>
-        ))}
-      </ul>
+      {summary.lines.length > 0 && (
+        <ul className="mt-2 space-y-1">
+          {summary.lines.map((line) => (
+            <li key={line} className="text-xs leading-relaxed text-zinc-600">
+              · {line}
+            </li>
+          ))}
+        </ul>
+      )}
 
       {latestFeedback && (
         <div className="mt-3 border-t border-zinc-800/50 pt-3">
