@@ -1,7 +1,7 @@
 ■ 現在の状態
 - ブランチ preview/landing-01。Studio ヒーロー視覚整理 + ホーム/一覧整理を Preview に push 済み（オーナー RUN 指示）
 - Preview URL: https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app
-- 前回 push: 実 Studio UX 大改修（88d89ae）。今回 push: ヒーロー3モード + ホーム/一覧整理
+- 前回 push: 実 Studio UX 大改修（88d89ae）。今回 push: 2fc65ce（ヒーロー3モード + ホーム/一覧整理）
 - 本番 prod deploy — 保留。DB migration 変更なし
 
 ■ 今回実装したこと（RUN 済み）
