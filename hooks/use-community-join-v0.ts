@@ -5,7 +5,7 @@ import {
   applyToCommunity,
   approveJoinRequest,
   getCommunityJoinServerSnapshot,
-  getCommunityJoinState,
+  getCommunityJoinSnapshot,
   getCommunityMembers,
   getPendingRequests,
   getPlayerCommunityStatus,
@@ -15,7 +15,7 @@ import {
 } from "@/lib/community-join-v0-store";
 
 function getSnapshot() {
-  return getCommunityJoinState();
+  return getCommunityJoinSnapshot();
 }
 
 function getServerSnapshot() {

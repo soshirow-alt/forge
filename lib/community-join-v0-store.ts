@@ -109,7 +109,17 @@ export function getCommunityJoinServerSnapshot(): CommunityJoinState {
   return serverSnapshot;
 }
 
-function readState(): CommunityJoinState {
+let cachedClientSnapshot: CommunityJoinState | null = null;
+
+function cloneState(state: CommunityJoinState): CommunityJoinState {
+  return {
+    requests: [...state.requests],
+    members: [...state.members],
+    playerStatusByCommunity: { ...state.playerStatusByCommunity },
+  };
+}
+
+function readFromStorage(): CommunityJoinState {
   if (typeof window === "undefined") {
     return defaultState();
   }
@@ -133,11 +143,37 @@ function readState(): CommunityJoinState {
   }
 }
 
+function refreshClientSnapshot(state?: CommunityJoinState): CommunityJoinState {
+  cachedClientSnapshot = cloneState(state ?? readFromStorage());
+  return cachedClientSnapshot;
+}
+
+/** useSyncExternalStore 用。参照が変わるのは store 更新時のみ */
+export function getCommunityJoinClientSnapshot(): CommunityJoinState {
+  if (cachedClientSnapshot === null) {
+    return refreshClientSnapshot();
+  }
+  return cachedClientSnapshot;
+}
+
+export function getCommunityJoinSnapshot(): CommunityJoinState {
+  if (typeof window === "undefined") {
+    return getCommunityJoinServerSnapshot();
+  }
+  return getCommunityJoinClientSnapshot();
+}
+
+function readState(): CommunityJoinState {
+  return cloneState(readFromStorage());
+}
+
 function writeState(state: CommunityJoinState) {
   if (typeof window === "undefined") {
     return;
   }
-  localStorage.setItem(JOIN_STORAGE_KEY, JSON.stringify(state));
+  const next = cloneState(state);
+  localStorage.setItem(JOIN_STORAGE_KEY, JSON.stringify(next));
+  cachedClientSnapshot = next;
   window.dispatchEvent(new Event("forge-community-join-change"));
 }
 
@@ -310,8 +346,12 @@ export function subscribeCommunityJoin(listener: () => void): () => void {
   if (typeof window === "undefined") {
     return () => {};
   }
-  window.addEventListener("forge-community-join-change", listener);
-  return () => window.removeEventListener("forge-community-join-change", listener);
+  const onStoreChange = () => {
+    refreshClientSnapshot();
+    listener();
+  };
+  window.addEventListener("forge-community-join-change", onStoreChange);
+  return () => window.removeEventListener("forge-community-join-change", onStoreChange);
 }
 
 export function subscribeV0Notifications(listener: () => void): () => void {
