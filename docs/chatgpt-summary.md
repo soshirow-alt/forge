@@ -1,5 +1,5 @@
 ■ 現在の状態
-- ブランチ preview/landing-01。開発者検索の昇降順・ガチャ・ジャンル絞り込みをローカル実装（未 push）
+- ブランチ preview/landing-01。開発者検索の昇降順・ガチャ・ジャンル絞り込みを Preview push 済み（677f37b）
 - 前回 Preview RUN: b575d0e（改善ループ Studio 再構成）
 
 ■ 今回実装したこと
