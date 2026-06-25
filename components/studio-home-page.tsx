@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import {
   BarChart3,
   Check,
@@ -11,7 +12,7 @@ import {
 } from "lucide-react";
 import { StudioOwnedProjectsSection } from "@/components/studio-owned-projects-section";
 import { StudioSectionHeader, StudioShell } from "@/components/studio-shell";
-import { studioRankingSnippets } from "@/lib/studio-rankings-v0-mock-data";
+import { studioHomeGrowthRankings } from "@/lib/studio-rankings-v0-mock-data";
 import {
   devHintCards,
   studioActivities,
@@ -64,19 +65,22 @@ function ActivityRow({ item }: { item: StudioActivityItem }) {
   );
 }
 
-function RankingSnippetColumn({
+function WorkGrowthColumn({
   title,
+  metricLabel,
   entries,
 }: {
   title: string;
-  entries: { rank: number; title: string; image: string; meta: string; value: string }[];
+  metricLabel: string;
+  entries: { rank: number; id: string; title: string; image: string; creator: string; growthRate: string }[];
 }) {
   return (
     <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-4">
       <h3 className="text-sm font-semibold text-zinc-200">{title}</h3>
+      <p className="mt-0.5 text-xs text-zinc-600">{metricLabel}</p>
       <ul className="mt-3 space-y-2">
         {entries.map((entry) => (
-          <li key={entry.rank} className="flex items-center gap-3">
+          <li key={entry.id} className="flex items-center gap-3">
             <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-zinc-800 text-xs font-bold text-zinc-400">
               {entry.rank}
             </span>
@@ -85,9 +89,43 @@ function RankingSnippetColumn({
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm text-zinc-200">{entry.title}</p>
-              <p className="text-xs text-zinc-500">{entry.meta}</p>
+              <p className="text-xs text-zinc-500">{entry.creator}</p>
             </div>
-            <span className="shrink-0 text-xs font-medium text-violet-300">{entry.value}</span>
+            <span className="shrink-0 text-xs font-medium text-violet-300">{entry.growthRate}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function DeveloperGrowthColumn({
+  title,
+  metricLabel,
+  entries,
+}: {
+  title: string;
+  metricLabel: string;
+  entries: { rank: number; id: string; name: string; avatar: string; handle: string; growthRate: string }[];
+}) {
+  return (
+    <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-4">
+      <h3 className="text-sm font-semibold text-zinc-200">{title}</h3>
+      <p className="mt-0.5 text-xs text-zinc-600">{metricLabel}</p>
+      <ul className="mt-3 space-y-2">
+        {entries.map((entry) => (
+          <li key={entry.id} className="flex items-center gap-3">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-zinc-800 text-xs font-bold text-zinc-400">
+              {entry.rank}
+            </span>
+            <div className="relative size-8 shrink-0 overflow-hidden rounded-full bg-zinc-800">
+              <Image src={entry.avatar} alt="" fill className="object-cover" sizes="32px" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm text-zinc-200">{entry.name}</p>
+              <p className="text-xs text-zinc-500">@{entry.handle}</p>
+            </div>
+            <span className="shrink-0 text-xs font-medium text-violet-300">{entry.growthRate}</span>
           </li>
         ))}
       </ul>
@@ -123,6 +161,48 @@ function DevHintCard({
   );
 }
 
+function RankingSnippetsSection() {
+  const [expanded, setExpanded] = useState(false);
+  const limit = expanded ? 10 : 3;
+
+  return (
+    <section className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5 sm:p-6">
+      <StudioSectionHeader
+        title="今週の伸び"
+        icon={<BarChart3 className="size-5 text-violet-400" aria-hidden="true" />}
+      />
+      <div className="mt-5 grid gap-4 sm:grid-cols-3">
+        <WorkGrowthColumn
+          title="見届け人が伸びた作品"
+          metricLabel="見届け人 · 前週比"
+          entries={studioHomeGrowthRankings.witnessGrowthWorks.slice(0, limit)}
+        />
+        <WorkGrowthColumn
+          title="FBが増えた作品"
+          metricLabel="フィードバック · 前週比"
+          entries={studioHomeGrowthRankings.feedbackGrowthWorks.slice(0, limit)}
+        />
+        <DeveloperGrowthColumn
+          title="フォロワーが増えた開発者"
+          metricLabel="フォロワー · 前週比"
+          entries={studioHomeGrowthRankings.followerGrowthDevelopers.slice(0, limit)}
+        />
+      </div>
+      {!expanded && (
+        <div className="mt-5 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="rounded-xl border border-zinc-700 bg-zinc-900/60 px-5 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-violet-500/40 hover:text-violet-200"
+          >
+            もっと見る
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function StudioHomePage() {
   return (
     <StudioShell activeNav="home">
@@ -142,18 +222,7 @@ export function StudioHomePage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5 sm:p-6">
-          <StudioSectionHeader
-            title="参考になるかもしれない作品"
-            href="/studio/rankings"
-            icon={<BarChart3 className="size-5 text-violet-400" aria-hidden="true" />}
-          />
-          <div className="mt-5 grid gap-4 sm:grid-cols-3">
-            <RankingSnippetColumn title="今週の注目作品" entries={studioRankingSnippets.featured} />
-            <RankingSnippetColumn title="今週成長した作品" entries={studioRankingSnippets.growth} />
-            <RankingSnippetColumn title="見届け人数増加" entries={studioRankingSnippets.witnessGain} />
-          </div>
-        </section>
+        <RankingSnippetsSection />
 
         <section>
           <StudioSectionHeader

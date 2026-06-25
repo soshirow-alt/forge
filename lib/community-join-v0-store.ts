@@ -12,6 +12,7 @@ export type CommunityJoinRequest = {
   playerHandle: string;
   playerAvatar: string;
   requestedAt: string;
+  message?: string;
   status: "pending" | "approved" | "rejected";
 };
 
@@ -39,20 +40,28 @@ const CURRENT_PLAYER_ID = "player_you";
 
 const initialMembers: CommunityMember[] = [
   {
+    id: "m-sora",
+    communityId: "shaneco",
+    name: "そら",
+    handle: "sora_player",
+    avatar: "/images/landing/game-2.png",
+    joinedAt: "2025/06/10",
+  },
+  {
     id: "m-yuki",
     communityId: "shaneco",
     name: "ゆき",
     handle: "yuki_plays",
-    avatar: "/images/landing/game-2.png",
-    joinedAt: "2025/05/10",
+    avatar: "/images/landing/game-4.png",
+    joinedAt: "2025/06/08",
   },
   {
-    id: "m-haruka",
+    id: "m-umi",
     communityId: "shaneco",
-    name: "ハルカ",
-    handle: "haruka_dev",
+    name: "うみ",
+    handle: "umi_game",
     avatar: "/images/landing/game-3.png",
-    joinedAt: "2025/06/01",
+    joinedAt: "2025/06/05",
   },
   {
     id: "m-ren",
@@ -66,14 +75,15 @@ const initialMembers: CommunityMember[] = [
 
 const initialRequests: CommunityJoinRequest[] = [
   {
-    id: "req-luna",
+    id: "req-hikari",
     communityId: "shaneco",
     communityName: "しゃねこ",
-    playerId: "lunaworks",
-    playerName: "LunaWorks",
-    playerHandle: "lunaworks",
-    playerAvatar: "/images/landing/game-3.png",
-    requestedAt: "1時間前",
+    playerId: "hikari_7",
+    playerName: "星野ひかり",
+    playerHandle: "hikari_7",
+    playerAvatar: "/images/landing/game-5.png",
+    requestedAt: "30分前",
+    message: "しゃねこさんのゲームが大好きです！コミュニティに参加させてください。",
     status: "pending",
   },
 ];

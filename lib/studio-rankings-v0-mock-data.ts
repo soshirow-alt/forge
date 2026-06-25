@@ -1,29 +1,62 @@
-/** S-20 ホーム用の作品抜粋（開発者ランキングとは別） */
-export type StudioRankingSnippet = {
+/** S-20 ホーム用ランキング抜粋（作品2列 + 開発者1列） */
+export type StudioWorkGrowthSnippet = {
   rank: number;
   id: string;
   title: string;
   image: string;
-  meta: string;
-  value: string;
+  creator: string;
+  growthRate: string;
 };
 
-export const studioRankingSnippets = {
-  featured: [
-    { rank: 1, id: "r1", title: "星の記憶", image: "/images/landing/hero-bg.png", meta: "by しゃねこ", value: "見届け人 +86" },
-    { rank: 2, id: "r2", title: "深淵ノート", image: "/images/landing/game-3.png", meta: "by ミカン", value: "見届け人 +48" },
-    { rank: 3, id: "r3", title: "星灯の旅路", image: "/images/landing/game-2.png", meta: "by ソラ", value: "見届け人 +22" },
-  ] as StudioRankingSnippet[],
-  growth: [
-    { rank: 1, id: "g1", title: "霧の駅", image: "/images/landing/game-5.png", meta: "今月", value: "+312%" },
-    { rank: 2, id: "g2", title: "光の旅人", image: "/images/landing/game-3.png", meta: "今月", value: "+186%" },
-    { rank: 3, id: "g3", title: "紙の迷宮", image: "/images/landing/game-1.png", meta: "今月", value: "+124%" },
-  ] as StudioRankingSnippet[],
-  witnessGain: [
-    { rank: 1, id: "wg1", title: "深淵ノート", image: "/images/landing/game-3.png", meta: "今週", value: "+48" },
-    { rank: 2, id: "wg2", title: "星灯の旅路", image: "/images/landing/hero-bg.png", meta: "今週", value: "+22" },
-    { rank: 3, id: "wg3", title: "炉心の残光", image: "/images/landing/game-1.png", meta: "今週", value: "+15" },
-  ] as StudioRankingSnippet[],
+export type StudioDeveloperGrowthSnippet = {
+  rank: number;
+  id: string;
+  name: string;
+  avatar: string;
+  handle: string;
+  growthRate: string;
+};
+
+export const studioHomeGrowthRankings = {
+  /** 作品 — 見届け人の伸び率（前週比） */
+  witnessGrowthWorks: [
+    { rank: 1, id: "wg1", title: "霧の駅", image: "/images/landing/game-5.png", creator: "ハルカ", growthRate: "+312%" },
+    { rank: 2, id: "wg2", title: "光の旅人", image: "/images/landing/game-3.png", creator: "ミナト", growthRate: "+186%" },
+    { rank: 3, id: "wg3", title: "紙の迷宮", image: "/images/landing/game-1.png", creator: "アオイ", growthRate: "+124%" },
+    { rank: 4, id: "wg4", title: "深淵ノート", image: "/images/landing/game-3.png", creator: "ミカン", growthRate: "+98%" },
+    { rank: 5, id: "wg5", title: "星灯の旅路", image: "/images/landing/game-2.png", creator: "ソラ", growthRate: "+76%" },
+    { rank: 6, id: "wg6", title: "炉心の残光", image: "/images/landing/game-1.png", creator: "レン", growthRate: "+64%" },
+    { rank: 7, id: "wg7", title: "星の記憶", image: "/images/landing/hero-bg.png", creator: "しゃねこ", growthRate: "+52%" },
+    { rank: 8, id: "wg8", title: "風の駅", image: "/images/landing/game-2.png", creator: "ゆき", growthRate: "+41%" },
+    { rank: 9, id: "wg9", title: "夜明けの手紙", image: "/images/landing/game-1.png", creator: "レン", growthRate: "+33%" },
+    { rank: 10, id: "wg10", title: "静かな灯台", image: "/images/landing/game-5.png", creator: "ミナト", growthRate: "+28%" },
+  ] as StudioWorkGrowthSnippet[],
+  /** 作品 — フィードバックの伸び率（前週比） */
+  feedbackGrowthWorks: [
+    { rank: 1, id: "fg1", title: "深淵ノート", image: "/images/landing/game-3.png", creator: "ミカン", growthRate: "+245%" },
+    { rank: 2, id: "fg2", title: "星灯の旅路", image: "/images/landing/game-2.png", creator: "ソラ", growthRate: "+178%" },
+    { rank: 3, id: "fg3", title: "星の記憶", image: "/images/landing/hero-bg.png", creator: "しゃねこ", growthRate: "+142%" },
+    { rank: 4, id: "fg4", title: "霧の駅", image: "/images/landing/game-5.png", creator: "ハルカ", growthRate: "+118%" },
+    { rank: 5, id: "fg5", title: "炉心の残光", image: "/images/landing/game-1.png", creator: "レン", growthRate: "+96%" },
+    { rank: 6, id: "fg6", title: "光の旅人", image: "/images/landing/game-3.png", creator: "ミナト", growthRate: "+84%" },
+    { rank: 7, id: "fg7", title: "紙の迷宮", image: "/images/landing/game-1.png", creator: "アオイ", growthRate: "+71%" },
+    { rank: 8, id: "fg8", title: "夏の向こう側", image: "/images/landing/game-4.png", creator: "しゃねこ", growthRate: "+58%" },
+    { rank: 9, id: "fg9", title: "空島パイオニア", image: "/images/landing/game-4.png", creator: "ソラ", growthRate: "+44%" },
+    { rank: 10, id: "fg10", title: "風の駅", image: "/images/landing/game-2.png", creator: "ゆき", growthRate: "+36%" },
+  ] as StudioWorkGrowthSnippet[],
+  /** 開発者 — フォロワーの伸び率（前週比） */
+  followerGrowthDevelopers: [
+    { rank: 1, id: "mikan", name: "ミカン", avatar: "/images/landing/game-5.png", handle: "mikan_game", growthRate: "+128%" },
+    { rank: 2, id: "sora", name: "ソラ", avatar: "/images/landing/game-2.png", handle: "soragames", growthRate: "+96%" },
+    { rank: 3, id: "haruka", name: "ハルカ", avatar: "/images/landing/game-3.png", handle: "haruka_dev", growthRate: "+84%" },
+    { rank: 4, id: "shaneco", name: "しゃねこ", avatar: "/images/landing/game-1.png", handle: "shaneco", growthRate: "+72%" },
+    { rank: 5, id: "lunaworks", name: "LunaWorks", avatar: "/images/landing/game-3.png", handle: "lunaworks", growthRate: "+61%" },
+    { rank: 6, id: "minato", name: "ミナト", avatar: "/images/landing/game-4.png", handle: "minato_lab", growthRate: "+48%" },
+    { rank: 7, id: "ren", name: "レン", avatar: "/images/landing/game-2.png", handle: "ren_voice", growthRate: "+39%" },
+    { rank: 8, id: "aoi", name: "アオイ", avatar: "/images/landing/hero-bg.png", handle: "aoi_create", growthRate: "+31%" },
+    { rank: 9, id: "yuki", name: "ゆき", avatar: "/images/landing/game-3.png", handle: "yuki_plays", growthRate: "+24%" },
+    { rank: 10, id: "greensmith", name: "GreenSmith", avatar: "/images/landing/game-5.png", handle: "greensmith", growthRate: "+18%" },
+  ] as StudioDeveloperGrowthSnippet[],
 };
 
 /** S-23 開発者月間ランキング */

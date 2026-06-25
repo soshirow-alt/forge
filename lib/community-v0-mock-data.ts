@@ -3,6 +3,10 @@ export type DevlogQuoteRef = {
   version: string;
   title: string;
   excerpt: string;
+  image?: string;
+  publishedAt?: string;
+  likeCount?: number;
+  commentCount?: number;
 };
 
 export type CommunityPost = {
@@ -19,24 +23,45 @@ export type CommunityPost = {
 export const developerDevlogQuoteOptions: DevlogQuoteRef[] = [
   {
     id: "dq1",
-    version: "v0.4.0",
-    title: "チュートリアル短縮と序盤イベント調整",
-    excerpt:
-      "プレイヤーのフィードバックを反映し、チュートリアルを約30%短くしました。",
+    version: "v0.3",
+    title: "バトル調整と新敵追加",
+    excerpt: "バトルテンポを改善し、新しい敵キャラクターを2体追加しました。",
+    image: "/images/landing/hero-bg.png",
+    publishedAt: "2025/06/15",
+    likeCount: 12,
+    commentCount: 8,
   },
   {
     id: "dq2",
-    version: "v0.3.2",
-    title: "遭遇イベントのテンポ改善",
-    excerpt: "戦闘前後のフェードと待ち時間を調整しました。",
+    version: "v0.2",
+    title: "UI刷新とチュートリアル改善",
+    excerpt: "UIを整理し、チュートリアルの導線を短くしました。",
+    image: "/images/landing/game-2.png",
+    publishedAt: "2025/06/01",
+    likeCount: 9,
+    commentCount: 5,
   },
   {
     id: "dq3",
     version: "v0.3.0",
     title: "v0.3.0 — 森の奥へ",
     excerpt: "新エリア「記憶の泉」を追加。フィードバックをお待ちしています。",
+    image: "/images/landing/game-3.png",
+    publishedAt: "2025/05/20",
+    likeCount: 6,
+    commentCount: 3,
   },
 ];
+
+export const studioCommunityProfile = {
+  id: "shaneco",
+  name: "しゃねこコミュニティ",
+  avatar: "/images/landing/game-1.png",
+  handle: "shaneco_dev",
+  description: "フォロワーと交流し、一緒にゲームを育てましょう",
+  /** v0 表示用（mock 正本） */
+  memberCountLabel: 128,
+};
 
 /** 開発者がフォロワーへ送った掲示板投稿 */
 export const studioCommunityPostsMock: CommunityPost[] = [
@@ -44,9 +69,9 @@ export const studioCommunityPostsMock: CommunityPost[] = [
     id: "sp1",
     authorName: "しゃねこ",
     authorAvatar: "/images/landing/game-1.png",
-    authorHandle: "shaneco",
+    authorHandle: "shaneco_dev",
     body: "みなさんぜひプレイお願いします！序盤の導線、特に気になる点があれば教えてください。",
-    postedAt: "2日前",
+    postedAt: "2時間前",
     audienceLabel: "フォロワー全員",
     devlogQuote: developerDevlogQuoteOptions[0],
   },
