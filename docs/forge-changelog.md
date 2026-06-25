@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-06-25 72 Preview RUN — コミュニティ〜4ピル一括反映（3a11c50）
+
+- preview/landing-01 へ fe5a805〜a93b81d の実装 + docs RUN マーカーを push。Vercel Preview 再デプロイ
+
+---
+
 ## 2026-06-25 71 コミュニティ参加申請・承認フロー（Preview RUN）
 
 - 開発者プロフィール `/creators/[id]` — **コミュニティの参加申請**ボタン（申請中 / 参加中 / 再申請）

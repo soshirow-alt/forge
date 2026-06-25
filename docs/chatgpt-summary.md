@@ -1,70 +1,40 @@
 ■ 現在の状態
-- ブランチ preview/landing-01。commit a93b81d push 済み
-- build 成功。v0 mock は localStorage で申請状態・通知を永続（デモ用）
+- ブランチ preview/landing-01。HEAD 3a11c50 push 済み（Vercel Preview デプロイ待ち/反映中）
+- Preview URL: https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app
+- 未 push の実装なし。今回の RUN は残ドキュメント + デプロイトリガーのみ
 
-■ 今回実装したこと
-- 開発者プロフィールに「コミュニティの参加申請」ボタン（フォロー横）
-  - 状態: 未申請 / 申請中 / 参加中（コミュニティへリンク）/ 拒否後は再申請
-- マイコミュニティ `/studio/community` にタブ追加
-  - 掲示板（従来）| 参加者（一覧 + 新規申請の許可・拒否）
-- 参加コミュニティ `/mypage/community` にタブ・コミュニティ選択
-  - 参加中コミュニティをチップで切替、参加者タブでメンバー閲覧
-- 通知連携（v0 mock）
-  - プレイヤー `/notifications`: 参加承認・拒否
-  - 開発者 `/studio/notifications`: 新規参加申請（参加者タブへリンク）
-- `lib/community-join-v0-store.ts` + `hooks/use-community-join-v0.ts`
+■ 今回確認・実施したこと
+- git status: 実装はすべて origin/preview/landing-01 に反映済みだった
+- 未 commit だった docs（RUN マーカー）を commit 3a11c50 で push → Preview 再デプロイ
 
-■ 今回変更した画面
-- 開発者プロフィール `/creators/lunaworks` 等
-  - 画面位置: ヘッダー内フォローボタン横
-  - 変更前: フォローのみ
-  - 変更後: コミュニティの参加申請ボタン（ログイン必須）
-  - プレイヤー視点: 開発者コミュニティへの入口
-  - 確認: 申請 → 申請中表示 → Studio で許可 → 参加中リンク
-- Studio マイコミュニティ `/studio/community?tab=members`
-  - 画面位置: 参加者タブ
-  - 変更前: 掲示板のみ
-  - 変更後: LunaWorks 等の新規申請に許可/拒否ボタン、参加者一覧
-  - 開発者視点: 申請管理の正本
-  - 確認: 初期 mock で LunaWorks 申請あり。許可で一覧に追加
-- プレイヤー通知 `/notifications`
-  - 許可/拒否後に新着通知が追加される
-- Studio 通知 `/studio/notifications`
-  - プレイヤー申請時に開発者へ通知（しゃねこコミュニティのみ v0 配信）
+■ Preview に含まれるバッチ（fe5a805〜3a11c50）
+- マイコミュニティ / 参加コミュニティ / フォロワータブ（fe5a805）
+- マイページ絞り込み4ピル（すべて・公開中・下書き・正式版）+ /submit 公開中・下書き（81066c8）
+- コミュニティ参加申請・参加者タブ・許可拒否・通知 mock（a93b81d）
+
+■ Preview 実機確認手順（オーナー向け）
+1. /studio/mypage — フォロワータブ、4ピル絞り込み
+2. /studio/community?tab=members — LunaWorks 申請の許可/拒否
+3. /creators/lunaworks — コミュニティ参加申請ボタン
+4. /mypage/community — 参加コミュニティ・参加者タブ
+5. /submit — 公開中/下書き選択
+6. /notifications と /studio/notifications — 申請・承認後の通知
 
 ■ ユーザー目線の変化
-- プレイヤー: 開発者ページからコミュニティ参加を申請でき、結果が通知される
-- 開発者: マイコミュニティの参加者タブで申請を処理できる
-
-■ なぜこの設計
-- 参加申請は開発者プロフィール（発見文脈）、審査はコミュニティ画面（運営文脈）に分離
-- v0 は localStorage + mock。本番は Supabase + リアル通知
-
-■ 他案不採用
-- 申請処理を通知画面だけで完結 — 参加者一覧とセットの方が文脈が明確
-
-■ In / Out
-- In: 申請ボタン、参加者タブ、許可/拒否、通知 mock、再申請
-- Out: 全開発者の Studio 申請受信箱（v0 はしゃねこ communityId のみ開発者通知）、Supabase、push
-
-■ リスク
-- localStorage のため別ブラウザでは状態がずれる
-- greensmith 等プロフィール未整備の開発者 ID は申請のみ動作
+- 上記バッチが Preview 環境で一括確認可能になる
 
 ■ 注意事項
-- commit a93b81d push 済み
+- コミュニティ申請状態は v0 localStorage。別ブラウザ/シークレットでは初期状態
+- 本番 deploy・DB 変更なし
 
 ■ 今すぐ私がやるべきこと
-- Preview 実機: lunaworks プロフィールで申請 → Studio 参加者タブで許可 → プレイヤー通知確認
+- Vercel Preview デプロイ完了後、上記6点を実機でざっと確認
 
 ■ Cursorだけで完了できること
-- commit + push
-- サイドバー通知バッジを動的 unread に連動
+- デプロイ完了後の build ログ確認（必要なら）
 
 ■ 次に検討すべきこと
-- 参加申請のメッセージ（任意コメント）
-- 正式版コミュニティとフォロワーコミュニティの関係
+- Preview 確認後の polish 指摘取り込み
 
 ■ ChatGPTに相談したい論点
-- 参加申請をフォローと独立させるか、フォロー必須にするか
-- 拒否後の再申請クールダウン要否
+- 特になし（RUN 完了待ち）
