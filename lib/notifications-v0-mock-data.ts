@@ -6,6 +6,8 @@ export type NotificationKind =
   | "milestone"
   | "developer_post"
   | "new_feedback"
+  | "community_join_approved"
+  | "community_join_rejected"
   | "system";
 
 export type NotificationFilterId =
@@ -46,7 +48,7 @@ const kindFilterMap: Record<NotificationFilterId, NotificationKind[] | "unread" 
   empathy: ["empathy"],
   update: ["update", "developer_post"],
   follow: ["follow"],
-  system: ["system", "milestone"],
+  system: ["system", "milestone", "community_join_approved", "community_join_rejected"],
 };
 
 export const mockNotifications: NotificationV0Item[] = [

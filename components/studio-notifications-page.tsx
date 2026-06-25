@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StudioShell } from "@/components/studio-shell";
+import { getExtraStudioNotifications, subscribeV0Notifications } from "@/lib/community-join-v0-store";
 import {
   countStudioUnread,
   studioNotificationHref,
@@ -24,6 +25,8 @@ function kindIcon(kind: StudioNotificationItem["kind"]) {
       return <TrendingUp className={className} aria-hidden="true" />;
     case "release":
       return <Bell className={className} aria-hidden="true" />;
+    case "community_join_request":
+      return <Users className={className} aria-hidden="true" />;
   }
 }
 
@@ -39,11 +42,29 @@ function kindClass(kind: StudioNotificationItem["kind"]): string {
       return "bg-emerald-500/15 text-emerald-400 ring-emerald-500/25";
     case "release":
       return "bg-violet-500/15 text-violet-300 ring-violet-500/25";
+    case "community_join_request":
+      return "bg-amber-500/15 text-amber-300 ring-amber-500/25";
   }
 }
 
 export function StudioNotificationsPage() {
   const [items, setItems] = useState(studioNotifications);
+
+  useEffect(() => {
+    function mergeExtras() {
+      const extras = getExtraStudioNotifications();
+      if (extras.length === 0) {
+        return;
+      }
+      setItems((current) => {
+        const ids = new Set(current.map((item) => item.id));
+        return [...extras.filter((item) => !ids.has(item.id)), ...current];
+      });
+    }
+    mergeExtras();
+    return subscribeV0Notifications(mergeExtras);
+  }, []);
+
   const unread = countStudioUnread(items);
 
   function markRead(id: string) {

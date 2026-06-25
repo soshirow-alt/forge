@@ -91,7 +91,16 @@ export const playerCommunityFeedMock: CommunityPost[] = [
 ];
 
 export const playerJoinedCommunities = [
-  { id: "shaneco", name: "しゃねこ", memberCount: 128 },
-  { id: "soragames", name: "Sora Games", memberCount: 2341 },
-  { id: "greensmith", name: "GreenSmith", memberCount: 1567 },
+  { id: "shaneco", name: "しゃねこ", memberCount: 128, avatar: "/images/landing/game-1.png" },
+  { id: "sora-games", name: "Sora Games", memberCount: 2341, avatar: "/images/landing/game-2.png" },
+  { id: "greensmith", name: "GreenSmith", memberCount: 1567, avatar: "/images/landing/game-5.png" },
+];
+
+export const studioOwnCommunityId = "shaneco";
+
+export const allPlayerCommunities = [
+  { id: "shaneco", name: "しゃねこ", avatar: "/images/landing/game-1.png" },
+  { id: "sora-games", name: "Sora Games", avatar: "/images/landing/game-2.png" },
+  { id: "lunaworks", name: "LunaWorks", avatar: "/images/landing/game-3.png" },
+  { id: "greensmith", name: "GreenSmith", avatar: "/images/landing/game-5.png" },
 ];

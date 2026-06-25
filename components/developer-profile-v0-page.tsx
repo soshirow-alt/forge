@@ -5,12 +5,14 @@ import Link from "next/link";
 import { useCallback, useState } from "react";
 import { PlayerShell, GameThumbnail } from "@/components/player-shell";
 import { useRequireAuth } from "@/hooks/use-require-auth";
+import { useCommunityJoinV0 } from "@/hooks/use-community-join-v0";
+import { communityIdFromDeveloperId, applyToCommunity } from "@/lib/community-join-v0-store";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import {
   developerDevlogHref,
   getDeveloperProfileV0,
 } from "@/lib/developer-profile-v0-mock-data";
-import { BadgeCheck, Globe, MapPin, MessageSquare, Sprout, UserPlus } from "lucide-react";
+import { BadgeCheck, Globe, MapPin, MessageSquare, Sprout, UserPlus, Users } from "lucide-react";
 
 type DevTab = "overview" | "devlog" | "achievements" | "followers";
 
@@ -27,10 +29,23 @@ export function DeveloperProfileV0Page({ id }: { id: string }) {
   const returnPath = `/creators/${id}`;
   const [activeTab, setActiveTab] = useState<DevTab>("overview");
   const [following, setFollowing] = useState(dev.following);
+  const { getStatus } = useCommunityJoinV0();
+  const communityId = communityIdFromDeveloperId(id);
+  const communityStatus = getStatus(communityId);
 
   const handleFollow = useCallback(() => {
     requireAuth(() => setFollowing((value) => !value), returnPath);
   }, [requireAuth, returnPath]);
+
+  const handleCommunityJoin = useCallback(() => {
+    requireAuth(() => {
+      applyToCommunity({
+        communityId,
+        communityName: dev.name,
+        communityAvatar: dev.avatar,
+      });
+    }, returnPath);
+  }, [requireAuth, returnPath, communityId, dev.name, dev.avatar]);
 
   return (
     <PlayerShell activeNav="creator-search">
@@ -70,18 +85,47 @@ export function DeveloperProfileV0Page({ id }: { id: string }) {
                     <span className="inline-flex items-center gap-1"><Globe className="size-3.5" />公式サイト</span>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={handleFollow}
-                  className={`mt-5 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold ${
-                    following
-                      ? "border border-rose-500/40 bg-rose-500/10 text-rose-300"
-                      : "bg-violet-600 text-white hover:bg-violet-500"
-                  }`}
-                >
-                  <UserPlus className="size-4" />
-                  {following ? "フォロー中" : "フォロー"}
-                </button>
+                <div className="mt-5 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
+                  <button
+                    type="button"
+                    onClick={handleFollow}
+                    className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold ${
+                      following
+                        ? "border border-rose-500/40 bg-rose-500/10 text-rose-300"
+                        : "bg-violet-600 text-white hover:bg-violet-500"
+                    }`}
+                  >
+                    <UserPlus className="size-4" />
+                    {following ? "フォロー中" : "フォロー"}
+                  </button>
+                  {communityStatus === "approved" ? (
+                    <Link
+                      href={`/mypage/community?community=${communityId}`}
+                      className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-300"
+                    >
+                      <Users className="size-4" />
+                      コミュニティ参加中
+                    </Link>
+                  ) : communityStatus === "pending" ? (
+                    <span className="inline-flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-5 py-2.5 text-sm font-semibold text-amber-300">
+                      <Users className="size-4" />
+                      参加申請中
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleCommunityJoin}
+                      className={`inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-semibold ${
+                        communityStatus === "rejected"
+                          ? "border-zinc-700 text-zinc-400 hover:border-zinc-600"
+                          : "border-violet-500/40 bg-violet-600/10 text-violet-200 hover:bg-violet-600/20"
+                      }`}
+                    >
+                      <Users className="size-4" />
+                      {communityStatus === "rejected" ? "再申請する" : "コミュニティの参加申請"}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </section>

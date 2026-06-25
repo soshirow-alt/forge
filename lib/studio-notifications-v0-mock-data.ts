@@ -9,7 +9,8 @@ export type StudioNotificationKind =
   | "witness"
   | "version_play"
   | "devlog_reaction"
-  | "release";
+  | "release"
+  | "community_join_request";
 
 export type StudioNotificationItem = {
   id: string;
@@ -85,6 +86,9 @@ export function countStudioUnread(items: StudioNotificationItem[]): number {
 }
 
 export function studioNotificationHref(item: StudioNotificationItem): string {
+  if (item.kind === "community_join_request") {
+    return "/studio/community?tab=members";
+  }
   const base = studioProjectHref(item.projectId);
   if (item.tab === "voices-raw") {
     if (isStudioMockProjectId(item.projectId)) {

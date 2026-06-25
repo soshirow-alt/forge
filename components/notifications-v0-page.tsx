@@ -14,6 +14,10 @@ import {
   type NotificationV0Item,
 } from "@/lib/notifications-v0-mock-data";
 import {
+  getExtraPlayerNotifications,
+  subscribeV0Notifications,
+} from "@/lib/community-join-v0-store";
+import {
   Bell,
   CheckCheck,
   Flag,
@@ -24,6 +28,7 @@ import {
   Star,
   TrendingUp,
   UserPlus,
+  Users,
 } from "lucide-react";
 
 function kindIcon(kind: NotificationKind) {
@@ -42,6 +47,9 @@ function kindIcon(kind: NotificationKind) {
       return <Star className={className} aria-hidden="true" />;
     case "developer_post":
       return <Megaphone className={className} aria-hidden="true" />;
+    case "community_join_approved":
+    case "community_join_rejected":
+      return <Users className={className} aria-hidden="true" />;
     case "system":
       return <Flag className={className} aria-hidden="true" />;
     default:
@@ -64,6 +72,10 @@ function kindIconClass(kind: NotificationKind): string {
       return "bg-amber-500/15 text-amber-300 ring-amber-500/30";
     case "developer_post":
       return "bg-indigo-500/15 text-indigo-300 ring-indigo-500/30";
+    case "community_join_approved":
+      return "bg-emerald-500/15 text-emerald-300 ring-emerald-500/30";
+    case "community_join_rejected":
+      return "bg-zinc-700/50 text-zinc-400 ring-zinc-600/50";
     case "system":
       return "bg-zinc-700/50 text-zinc-400 ring-zinc-600/50";
     default:
@@ -158,8 +170,24 @@ export function NotificationsV0Page() {
   const [filter, setFilter] = useState<NotificationFilterId>("all");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
-  const [items, setItems] = useState(mockNotifications);
+  const [items, setItems] = useState<NotificationV0Item[]>(mockNotifications);
   const sortMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function mergeExtras() {
+      const extras = getExtraPlayerNotifications();
+      if (extras.length === 0) {
+        return;
+      }
+      setItems((current) => {
+        const ids = new Set(current.map((item) => item.id));
+        const merged = [...extras.filter((item) => !ids.has(item.id)), ...current];
+        return merged;
+      });
+    }
+    mergeExtras();
+    return subscribeV0Notifications(mergeExtras);
+  }, []);
 
   useEffect(() => {
     if (!sortMenuOpen) {
