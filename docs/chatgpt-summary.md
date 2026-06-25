@@ -1,5 +1,5 @@
 ■ 現在の状態
-- ブランチ preview/landing-01。コミュニティ参加申請フロー実装（ローカル、未 push）
+- ブランチ preview/landing-01。commit a93b81d push 済み
 - build 成功。v0 mock は localStorage で申請状態・通知を永続（デモ用）
 
 ■ 今回実装したこと
@@ -52,7 +52,7 @@
 - greensmith 等プロフィール未整備の開発者 ID は申請のみ動作
 
 ■ 注意事項
-- 未 push
+- commit a93b81d push 済み
 
 ■ 今すぐ私がやるべきこと
 - Preview 実機: lunaworks プロフィールで申請 → Studio 参加者タブで許可 → プレイヤー通知確認
