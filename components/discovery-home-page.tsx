@@ -54,7 +54,7 @@ function HorizontalGameCard({
         <GameThumbnail
           src={game.image}
           alt={game.title}
-          className="h-32 w-full sm:h-36"
+          className="w-full aspect-[4/3]"
         />
       </div>
       <h3 className="mt-3 truncate font-semibold text-white">{game.title}</h3>
@@ -178,7 +178,7 @@ export function DiscoveryHomePage() {
             <HorizontalCardPager
               items={[...recentlyUpdatedGames]}
               getKey={(game) => game.id}
-              pageSize={4}
+              pageSize={3}
               renderItem={(game) => <HorizontalGameCard game={game} />}
             />
           </div>
@@ -190,7 +190,7 @@ export function DiscoveryHomePage() {
             <HorizontalCardPager
               items={popularGames.map((game, index) => ({ game, rank: index + 1 }))}
               getKey={({ game }) => game.id}
-              pageSize={4}
+              pageSize={3}
               renderItem={({ game, rank }) => (
                 <HorizontalGameCard game={game} rank={rank} />
               )}
@@ -204,7 +204,7 @@ export function DiscoveryHomePage() {
             <HorizontalCardPager
               items={[...newGames]}
               getKey={(game) => game.id}
-              pageSize={4}
+              pageSize={3}
               renderItem={(game) => <HorizontalGameCard game={game} />}
             />
           </div>

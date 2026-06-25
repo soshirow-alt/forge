@@ -1,40 +1,46 @@
 ■ 現在の状態
-- ブランチ preview/landing-01。HEAD 3a11c50 push 済み（Vercel Preview デプロイ待ち/反映中）
-- Preview URL: https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app
-- 未 push の実装なし。今回の RUN は残ドキュメント + デプロイトリガーのみ
+- プレイヤーホーム `/home` のゲームカードサムネ比率を修正（build 成功、未 push）
 
-■ 今回確認・実施したこと
-- git status: 実装はすべて origin/preview/landing-01 に反映済みだった
-- 未 commit だった docs（RUN マーカー）を commit 3a11c50 で push → Preview 再デプロイ
+■ 今回実装したこと
+- `HorizontalGameCard` のサムネ: 固定高 h-32/h-36 → `aspect-[4/3]`（ForgeGameCard・一覧と同型）
+- `HorizontalCardPager` の pageSize: 4 → 3（最近更新・人気・新着の3セクション）
 
-■ Preview に含まれるバッチ（fe5a805〜3a11c50）
-- マイコミュニティ / 参加コミュニティ / フォロワータブ（fe5a805）
-- マイページ絞り込み4ピル（すべて・公開中・下書き・正式版）+ /submit 公開中・下書き（81066c8）
-- コミュニティ参加申請・参加者タブ・許可拒否・通知 mock（a93b81d）
-
-■ Preview 実機確認手順（オーナー向け）
-1. /studio/mypage — フォロワータブ、4ピル絞り込み
-2. /studio/community?tab=members — LunaWorks 申請の許可/拒否
-3. /creators/lunaworks — コミュニティ参加申請ボタン
-4. /mypage/community — 参加コミュニティ・参加者タブ
-5. /submit — 公開中/下書き選択
-6. /notifications と /studio/notifications — 申請・承認後の通知
+■ 今回変更した画面
+- プレイヤーホーム `/home`
+  - 画面位置: ヒーロー下の「最近更新された作品」「今週人気の作品」「新着作品」カルーセル
+  - 変更前: 横長の薄いサムネ（object-cover で上下が強く切れる）
+  - 変更後: 4:3 比率。1行3枚でカード幅もやや狭く
+  - プレイヤー視点: 開発者登録サムネの主要部分が見えやすい
+  - 確認: /home を開き、3セクションのサムネ高さが以前より自然か
 
 ■ ユーザー目線の変化
-- 上記バッチが Preview 環境で一括確認可能になる
+- ホームの作品サムネが他画面と同じバランスで表示される
+
+■ なぜこの設計
+- 固定高+全幅は極端な横長になり見切れが大きい。4:3 はアプリ内標準
+- 列数を3に減らし、縦の増加を抑えつつサムネ面積を確保
+
+■ 他案不採用
+- aspect-video（16:9）— マイページ等は16:9もあるが、ForgeGameCard 正本は 4:3
+
+■ In / Out
+- In: discovery-home-page のみ
+- Out: 作品検索グリッド（別レイアウト。要望あれば同様対応可）
+
+■ リスク
+- 1行3枚で横スクロールページ数がやや増える
 
 ■ 注意事項
-- コミュニティ申請状態は v0 localStorage。別ブラウザ/シークレットでは初期状態
-- 本番 deploy・DB 変更なし
+- 未 push。RUN 指示で push 可
 
 ■ 今すぐ私がやるべきこと
-- Vercel Preview デプロイ完了後、上記6点を実機でざっと確認
+- Preview 反映後 /home でサムネ確認
 
 ■ Cursorだけで完了できること
-- デプロイ完了後の build ログ確認（必要なら）
+- commit + push preview/landing-01
 
 ■ 次に検討すべきこと
-- Preview 確認後の polish 指摘取り込み
+- 作品検索グリッド表示の h-36 固定も 4:3 に揃えるか
 
 ■ ChatGPTに相談したい論点
-- 特になし（RUN 完了待ち）
+- なし
