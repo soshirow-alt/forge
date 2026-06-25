@@ -1,60 +1,37 @@
 ■ 現在の状態
-- ブランチ preview/landing-01。ローカル未 push。build 通過済み
+- ブランチ preview/landing-01。Preview RUN 完了（aadb74e push 済み）
+- Preview URL: https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app
+- 前回 push からの一括コミット: Studio マイページ再構成・ゲーム詳細同型化・ホーム/プロフィール/版→ver 等
 
-■ 今回実装したこと
-- Studio ゲーム詳細 `/studio/projects/[id]` をプレイヤー `/games/[id]` と同型に再構成
-  - タブ: 概要 / みんなのフィードバック / verの履歴（6タブ→3タブ）
-  - 概要・FB・ver履歴はプレイヤーと同じ v0 コンポーネントを共有
-  - Studio 差分: 概要は編集可（保存ボタン）、FBタブに「フィードバックする」CTAなし、verタブに正式ver操作を統合
-- 新規共有コンポーネント
-  - `GameDetailOverviewV0Tab` — プレイヤー/Studio 共用（editable  prop）
-  - `GameVerHistoryV0Tab` — 開発ログ + ver履歴 + 正式ver（studioMode）
-- ヒーロー — ギャラリー・タグ・stats をプレイヤー詳細に近づけ、「Studioで改善ループ」「プレイヤー視点で見る」リンク追加
-- 旧タブ URL（voices-raw, devlog, release 等）は parse で新タブへマップ
+■ 今回実装したこと（RUN 同梱）
+- 上記セッションのローカル変更をすべて commit + push
+- build 通過済み（push 前確認）
 
-■ Forge原典コアループ（判断の基準）
-- 開発者もプレイヤーと同じ作品像を見ながら編集する。UI が違いすぎると「別物」に感じて学習ループが途切れる
+■ オーナー判断待ち — 実装ブロッカーなし
+- 以下は Preview 目視後の GO/調整候補。RUN を止める理由にはしていない
+  1. プレイヤー側も devlog+ver を1タブに統合するか（今は Studio のみ）
+  2. マイページ3タブ目に「活動履歴」を足すか（現状2タブで十分という Cursor 見解）
+  3. 開発ジャンルラベル「開発ジャンル（3つまで）」で確定か短縮するか（文言のみ）
+  4. 概要の公開状態・外部URL編集をどこに置くか（改善ループ vs 概要タブ）
+  5. 設計ドキュメントの「版」表記を UI の ver に揃えるか（docs のみ、機能影響なし）
 
-■ なぜこの設計
-- オーナー FB — 共有タブは同じ中身。違いは編集可否と Studio 向け表示だけ
-- Devlog / ver / 正式ver 分割は開発者にとって冗長。1つの「verの履歴」に時系列でまとめる
-- 旧 Studio 独自タブ（生FB一覧・集計FB別タブ）はプレイヤーの「みんなのフィードバック」と役割重複
+■ オーナー判断待ち — なし（機能 GO 済みで push したもの）
+- マイページ＝プロジェクト一覧、サイドバー構成、プロフィール同型+開発ジャンル3つ、Studio 詳細3タブ、ver統合、ホーム文言、Forge Tips 削除、所在地削除、版→ver — すべてオーナー指示どおり実装済み
 
-■ 他案不採用
-- Studio だけ別 UI を維持 — オーナー指示でプレイヤー同型へ
-- プレイヤー側も devlog+ver 統合 — 今回は Studio のみ（プレイヤーは従来4タブ維持）
-
-■ スコープ In / Out
-- In: studio-project-detail-page, game-detail-overview-v0-tab, game-ver-history-v0-tab, studio-shell tabs, game-voices-v0-tab（onSendVoice 任意化）
-- Out: 実データ編集 API、プレイヤー側タブ統合、本番 deploy
-
-■ 今回変更した画面
-- Studio プロジェクト詳細 /studio/projects/{id}
-  - 変更前: 6タブ・独自レイアウト・独自FB/devlog/ver/正式ver UI
-  - 変更後: 3タブ・プレイヤー同型ヒーロー+タブ中身。verタブに開発ログ+履歴+正式ver
-  - 確認: 各タブがプレイヤー `/games/{id}` と見た目一致（概要は編集フィールド）
-- プレイヤー作品詳細 /games/{id}
-  - 概要タブのみ共有コンポーネント化（見た目は同じ）
-
-■ ユーザー目線の変化
-- Studio で作品を見たとき「プレイヤーが見ているのと同じページ」+ 編集できると分かる
-- ver 関連情報が1タブに集約され迷わない
-
-■ 注意事項
-- 未 commit / 未 push
-- mock プロジェクト id と game detail id のマッピングは resolveGameDetailId 依存
+■ 今回変更した画面（Preview 確認推奨）
+- /studio — 参考作品見出し、開発ヒント2カード、あなたの作品（マイページと重複なし）
+- /studio/mypage — プロジェクト一覧・実績タブ。一覧上部に「あなたの作品」なし
+- /studio/profile — プレイヤー同型マイプロフィール、開発ジャンル3つ上限
+- /studio/projects/{id} — 概要/みんなのFB/verの履歴（プレイヤー同型+編集）
+- /mypage/profile — 所在地なし
+- 全画面 — UI 文言「版」→「ver」
 
 ■ 今すぐ私がやるべきこと
-- `/studio/projects/hoshino-kioku` と `/games/seikat-no-tabiji` を並べてタブ比較
-- RUN 指示で push
+- Preview デプロイ完了後、上記 URL を実機でざっと確認
+- 気になる点があれば次タスクで指示（ブロッカーなし）
 
 ■ Cursorだけで完了できること
-- プレイヤー側も devlog+ver 統合（GO あれば）
-- commit + push（RUN 時）
-
-■ 次に検討すべきこと
-- Studio 概要の「公開状態・外部URL」等メタ編集をどこに置くか（改善ループ Studio か概要タブか）
-- 生FB管理（未確認/採用候補）は改善ループ `/projects/{id}/studio` 専用のままか
+- 上記「判断候補」いずれか GO 後の追従実装
 
 ■ ChatGPTに相談したい論点
-- プレイヤーも devlog+ver を1タブに揃えるべきか（今は Studio のみ統合）
+- Preview 目視後、プレイヤー devlog+ver 統合をやるかどうかだけ
