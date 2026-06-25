@@ -1,3 +1,5 @@
+import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
+
 export type DeveloperSearchResult = {
   id: string;
   name: string;
@@ -9,11 +11,14 @@ export type DeveloperSearchResult = {
   inDevelopment: number;
   completed: number;
   followers: number;
+  genres: string[];
   gameThumbs: string[];
   following: boolean;
 };
 
 export const DEVELOPER_SEARCH_TOTAL = 128;
+
+export const developerGenreFilters = [...FORGE_GENRE_OPTIONS] as const;
 
 export const developerSearchResults: DeveloperSearchResult[] = [
   {
@@ -27,6 +32,7 @@ export const developerSearchResults: DeveloperSearchResult[] = [
     inDevelopment: 2,
     completed: 1,
     followers: 2341,
+    genres: ["ファンタジー", "アドベンチャー", "ノベル"],
     gameThumbs: ["/images/landing/game-1.png", "/images/landing/game-4.png"],
     following: true,
   },
@@ -41,6 +47,7 @@ export const developerSearchResults: DeveloperSearchResult[] = [
     inDevelopment: 1,
     completed: 0,
     followers: 1820,
+    genres: ["ホラー", "探索", "アドベンチャー"],
     gameThumbs: ["/images/landing/game-2.png"],
     following: false,
   },
@@ -55,6 +62,7 @@ export const developerSearchResults: DeveloperSearchResult[] = [
     inDevelopment: 1,
     completed: 0,
     followers: 892,
+    genres: ["サバイバル", "クラフト", "アクション"],
     gameThumbs: ["/images/landing/game-3.png"],
     following: false,
   },
@@ -69,6 +77,7 @@ export const developerSearchResults: DeveloperSearchResult[] = [
     inDevelopment: 2,
     completed: 1,
     followers: 1567,
+    genres: ["シミュレーション", "カジュアル", "経営"],
     gameThumbs: ["/images/landing/game-5.png", "/images/landing/game-4.png"],
     following: false,
   },
@@ -83,6 +92,7 @@ export const developerSearchResults: DeveloperSearchResult[] = [
     inDevelopment: 1,
     completed: 2,
     followers: 3204,
+    genres: ["アクション", "探索", "ローグライク"],
     gameThumbs: ["/images/landing/game-4.png", "/images/landing/game-1.png", "/images/landing/game-2.png"],
     following: true,
   },
@@ -97,45 +107,57 @@ export const developerSearchResults: DeveloperSearchResult[] = [
     inDevelopment: 1,
     completed: 0,
     followers: 412,
+    genres: ["シミュレーション", "カジュアル"],
     gameThumbs: ["/images/landing/game-2.png"],
     following: false,
   },
 ];
 
-export function filterDevelopers(query: string): DeveloperSearchResult[] {
+export function filterDevelopers(query: string, genres: string[] = []): DeveloperSearchResult[] {
+  let list = developerSearchResults;
+
+  if (genres.length > 0) {
+    list = list.filter((dev) => dev.genres.some((genre) => genres.includes(genre)));
+  }
+
   const q = query.trim().toLowerCase();
   if (!q) {
-    return developerSearchResults;
+    return list;
   }
-  return developerSearchResults.filter(
+
+  return list.filter(
     (dev) =>
       dev.name.toLowerCase().includes(q) || dev.handle.toLowerCase().includes(q),
   );
 }
 
 export type DeveloperSearchSortId = "recommended" | "followers" | "works";
+export type DeveloperSearchSortOrder = "asc" | "desc";
 
 export const developerSearchSortOptions: {
   id: DeveloperSearchSortId;
   label: string;
 }[] = [
   { id: "recommended", label: "おすすめ順" },
-  { id: "followers", label: "フォロワーが多い順" },
-  { id: "works", label: "作品数が多い順" },
+  { id: "followers", label: "フォロワー数" },
+  { id: "works", label: "作品数" },
 ];
 
 export function sortDevelopers(
   results: DeveloperSearchResult[],
   sort: DeveloperSearchSortId,
+  order: DeveloperSearchSortOrder = "desc",
 ): DeveloperSearchResult[] {
   const copy = [...results];
+  const direction = order === "asc" ? 1 : -1;
+
   if (sort === "followers") {
-    return copy.sort((a, b) => b.followers - a.followers);
+    return copy.sort((a, b) => (a.followers - b.followers) * direction);
   }
   if (sort === "works") {
     return copy.sort(
       (a, b) =>
-        b.inDevelopment + b.completed - (a.inDevelopment + a.completed),
+        (a.inDevelopment + a.completed - (b.inDevelopment + b.completed)) * direction,
     );
   }
   return copy;
@@ -146,6 +168,10 @@ export function parseDeveloperSort(param: string | null): DeveloperSearchSortId 
     return param;
   }
   return "recommended";
+}
+
+export function parseDeveloperSortOrder(param: string | null): DeveloperSearchSortOrder {
+  return param === "asc" ? "asc" : "desc";
 }
 
 export function developerProfileHref(id: string): string {

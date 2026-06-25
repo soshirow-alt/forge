@@ -3,36 +3,66 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { DeveloperGachaModal } from "@/components/developer-gacha-modal";
 import { PlayerShell } from "@/components/player-shell";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import {
   DEVELOPER_SEARCH_TOTAL,
+  developerGenreFilters,
   developerProfileHref,
   developerSearchResults,
   developerSearchSortOptions,
   filterDevelopers,
   parseDeveloperSort,
+  parseDeveloperSortOrder,
   sortDevelopers,
+  type DeveloperSearchResult,
   type DeveloperSearchSortId,
+  type DeveloperSearchSortOrder,
 } from "@/lib/developer-search-v0-mock-data";
-import { BadgeCheck, Sprout, UserPlus } from "lucide-react";
+import { BadgeCheck, Dices, Sprout, UserPlus } from "lucide-react";
 
-function buildCreatorsSearchUrl(
-  query: string,
-  sort: DeveloperSearchSortId,
-  newOnly: boolean,
-): string {
+function parseGenres(param: string | null): string[] {
+  if (!param?.trim()) {
+    return [];
+  }
+  return param
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
+function buildCreatorsSearchUrl(options: {
+  query?: string;
+  sort?: DeveloperSearchSortId;
+  order?: DeveloperSearchSortOrder;
+  newOnly?: boolean;
+  genres?: string[];
+}): string {
   const params = new URLSearchParams();
-  if (query.trim()) {
-    params.set("q", query.trim());
+  const query = options.query?.trim() ?? "";
+  const sort = options.sort ?? "recommended";
+  const order = options.order ?? "desc";
+  const newOnly = options.newOnly ?? false;
+  const genres = options.genres ?? [];
+
+  if (query) {
+    params.set("q", query);
   }
   if (sort !== "recommended") {
     params.set("sort", sort);
   }
+  if (sort !== "recommended" && order === "asc") {
+    params.set("order", "asc");
+  }
   if (newOnly) {
     params.set("new", "1");
   }
+  if (genres.length > 0) {
+    params.set("genre", genres.join(","));
+  }
+
   const qs = params.toString();
   return qs ? `/search/creators?${qs}` : "/search/creators";
 }
@@ -43,9 +73,16 @@ function DeveloperSearchContent() {
   const { requireAuth } = useRequireAuth();
   const queryFromUrl = searchParams.get("q")?.trim() ?? "";
   const sortFromUrl = parseDeveloperSort(searchParams.get("sort"));
+  const orderFromUrl = parseDeveloperSortOrder(searchParams.get("order"));
   const newOnlyFromUrl = searchParams.get("new") === "1";
+  const genresFromUrl = parseGenres(searchParams.get("genre"));
+  const genreParam = searchParams.get("genre");
+
   const [query, setQuery] = useState(queryFromUrl);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>(genresFromUrl);
   const [newOnly, setNewOnly] = useState(newOnlyFromUrl);
+  const [gachaOpen, setGachaOpen] = useState(false);
+  const [gachaPick, setGachaPick] = useState<DeveloperSearchResult | null>(null);
   const [followingIds, setFollowingIds] = useState<Set<string>>(() => {
     const initial = new Set<string>();
     for (const dev of developerSearchResults) {
@@ -55,6 +92,12 @@ function DeveloperSearchContent() {
     }
     return initial;
   });
+
+  useEffect(() => {
+    setQuery(queryFromUrl);
+    setSelectedGenres(parseGenres(genreParam));
+    setNewOnly(newOnlyFromUrl);
+  }, [genreParam, newOnlyFromUrl, queryFromUrl]);
 
   const handleFollow = useCallback(
     (devId: string) => {
@@ -68,28 +111,118 @@ function DeveloperSearchContent() {
           }
           return next;
         });
-      }, buildCreatorsSearchUrl(queryFromUrl, sortFromUrl, newOnlyFromUrl));
+      }, buildCreatorsSearchUrl({
+        query: queryFromUrl,
+        sort: sortFromUrl,
+        order: orderFromUrl,
+        newOnly: newOnlyFromUrl,
+        genres: genresFromUrl,
+      }));
     },
-    [newOnlyFromUrl, queryFromUrl, requireAuth, sortFromUrl],
+    [genresFromUrl, newOnlyFromUrl, orderFromUrl, queryFromUrl, requireAuth, sortFromUrl],
   );
 
   const results = useMemo(() => {
-    const filtered = filterDevelopers(queryFromUrl);
+    const filtered = filterDevelopers(queryFromUrl, genresFromUrl);
     const scoped = newOnlyFromUrl ? filtered.filter((dev) => dev.isNew) : filtered;
-    return sortDevelopers(scoped, sortFromUrl);
-  }, [queryFromUrl, newOnlyFromUrl, sortFromUrl]);
+    return sortDevelopers(scoped, sortFromUrl, orderFromUrl);
+  }, [genresFromUrl, newOnlyFromUrl, orderFromUrl, queryFromUrl, sortFromUrl]);
 
   const applySearch = () => {
-    router.push(buildCreatorsSearchUrl(query, sortFromUrl, newOnlyFromUrl));
+    router.push(
+      buildCreatorsSearchUrl({
+        query,
+        sort: sortFromUrl,
+        order: orderFromUrl,
+        newOnly: newOnlyFromUrl,
+        genres: selectedGenres,
+      }),
+    );
   };
 
   const toggleNewOnly = (checked: boolean) => {
     setNewOnly(checked);
-    router.push(buildCreatorsSearchUrl(queryFromUrl, sortFromUrl, checked));
+    router.push(
+      buildCreatorsSearchUrl({
+        query: queryFromUrl,
+        sort: sortFromUrl,
+        order: orderFromUrl,
+        newOnly: checked,
+        genres: genresFromUrl,
+      }),
+    );
   };
+
+  const toggleGenre = (genre: string) => {
+    const nextGenres = selectedGenres.includes(genre)
+      ? selectedGenres.filter((value) => value !== genre)
+      : [...selectedGenres, genre];
+    setSelectedGenres(nextGenres);
+    router.push(
+      buildCreatorsSearchUrl({
+        query: queryFromUrl,
+        sort: sortFromUrl,
+        order: orderFromUrl,
+        newOnly: newOnlyFromUrl,
+        genres: nextGenres,
+      }),
+    );
+  };
+
+  const clearGenreFilters = () => {
+    setSelectedGenres([]);
+    router.push(
+      buildCreatorsSearchUrl({
+        query: queryFromUrl,
+        sort: sortFromUrl,
+        order: orderFromUrl,
+        newOnly: newOnlyFromUrl,
+        genres: [],
+      }),
+    );
+  };
+
+  const toggleSortOrder = () => {
+    const nextOrder: DeveloperSearchSortOrder = orderFromUrl === "desc" ? "asc" : "desc";
+    router.push(
+      buildCreatorsSearchUrl({
+        query: queryFromUrl,
+        sort: sortFromUrl,
+        order: nextOrder,
+        newOnly: newOnlyFromUrl,
+        genres: genresFromUrl,
+      }),
+    );
+  };
+
+  const runGacha = () => {
+    if (results.length === 0) {
+      return;
+    }
+    const pick = results[Math.floor(Math.random() * results.length)];
+    setGachaPick(pick);
+    setGachaOpen(true);
+  };
+
+  const sortOrderLabel =
+    sortFromUrl === "followers"
+      ? orderFromUrl === "desc"
+        ? "フォロワーが多い順"
+        : "フォロワーが少ない順"
+      : sortFromUrl === "works"
+        ? orderFromUrl === "desc"
+          ? "作品数が多い順"
+          : "作品数が少ない順"
+        : null;
 
   return (
     <PlayerShell activeNav="creator-search" headerSearchDefault={queryFromUrl}>
+      <DeveloperGachaModal
+        open={gachaOpen}
+        developer={gachaPick}
+        onClose={() => setGachaOpen(false)}
+      />
+
       <div className="flex flex-col gap-8 xl:flex-row">
         <div className="min-w-0 flex-1">
           <header>
@@ -113,17 +246,32 @@ function DeveloperSearchContent() {
             >
               検索
             </button>
+            <button
+              type="button"
+              onClick={runGacha}
+              disabled={results.length === 0}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-fuchsia-500/40 bg-fuchsia-500/10 px-5 py-2.5 text-sm font-semibold text-fuchsia-200 transition-colors hover:bg-fuchsia-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Dices className="size-4" aria-hidden="true" />
+              ガチャ
+            </button>
           </div>
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-zinc-500">
               検索結果: {DEVELOPER_SEARCH_TOTAL}人（表示 {results.length}人）
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {developerSearchSortOptions.map((option) => (
                 <Link
                   key={option.id}
-                  href={buildCreatorsSearchUrl(queryFromUrl, option.id, newOnlyFromUrl)}
+                  href={buildCreatorsSearchUrl({
+                    query: queryFromUrl,
+                    sort: option.id,
+                    order: orderFromUrl,
+                    newOnly: newOnlyFromUrl,
+                    genres: genresFromUrl,
+                  })}
                   className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
                     sortFromUrl === option.id
                       ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
@@ -133,6 +281,16 @@ function DeveloperSearchContent() {
                   {option.label}
                 </Link>
               ))}
+              {sortFromUrl !== "recommended" && (
+                <button
+                  type="button"
+                  onClick={toggleSortOrder}
+                  className="rounded-lg border border-zinc-700 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-300 transition-colors hover:border-violet-500/40 hover:text-violet-200"
+                  aria-label={`並び順を切り替え（現在: ${sortOrderLabel}）`}
+                >
+                  {orderFromUrl === "desc" ? "↓ 多い順" : "↑ 少ない順"}
+                </button>
+              )}
             </div>
           </div>
 
@@ -161,6 +319,18 @@ function DeveloperSearchContent() {
                         )}
                       </div>
                       <p className="mt-2 text-sm text-zinc-400">{dev.bio}</p>
+                      {dev.genres.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {dev.genres.map((genre) => (
+                            <span
+                              key={genre}
+                              className="rounded-full border border-zinc-700/80 bg-zinc-950/50 px-2 py-0.5 text-[10px] text-zinc-500"
+                            >
+                              {genre}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       <p className="mt-2 text-xs text-zinc-500">
                         開発中 {dev.inDevelopment} / 完成品 {dev.completed} / フォロワー{" "}
                         {dev.followers.toLocaleString()}
@@ -195,12 +365,29 @@ function DeveloperSearchContent() {
                 </Link>
               </li>
             ))}
+            {results.length === 0 && (
+              <li className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center text-sm text-zinc-500">
+                条件に合う開発者がいません。絞り込みを変更してください。
+              </li>
+            )}
           </ul>
         </div>
 
         <aside className="w-full shrink-0 xl:w-72">
           <section className="sticky top-24 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-            <h2 className="text-sm font-semibold text-white">絞り込み</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-white">絞り込み</h2>
+              {selectedGenres.length > 0 && (
+                <button
+                  type="button"
+                  onClick={clearGenreFilters}
+                  className="text-xs text-violet-400 transition-colors hover:text-violet-300"
+                >
+                  ジャンルをクリア
+                </button>
+              )}
+            </div>
+
             <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm text-zinc-400">
               <input
                 type="checkbox"
@@ -210,8 +397,29 @@ function DeveloperSearchContent() {
               />
               🌱 新規開発者のみ
             </label>
+
+            <fieldset className="mt-5">
+              <legend className="text-xs font-medium text-zinc-500">ジャンル</legend>
+              <div className="mt-2 max-h-48 space-y-2 overflow-y-auto pr-1">
+                {developerGenreFilters.map((genre) => (
+                  <label
+                    key={genre}
+                    className="flex cursor-pointer items-center gap-2 text-sm text-zinc-400"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedGenres.includes(genre)}
+                      onChange={() => toggleGenre(genre)}
+                      className="size-4 rounded border-zinc-600 bg-zinc-900 text-violet-500 focus:ring-violet-500/40"
+                    />
+                    {genre}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
             <p className="mt-4 text-xs leading-relaxed text-zinc-600">
-              開発者名のみ検索対象です。作品名・ジャンル・自己紹介文は検索しません。
+              開発者名で検索し、登録ジャンルで絞り込めます。ガチャは表示中の開発者から1人をランダム表示します。
             </p>
           </section>
         </aside>
