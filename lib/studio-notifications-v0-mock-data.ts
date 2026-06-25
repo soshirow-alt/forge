@@ -55,7 +55,7 @@ export const studioNotifications: StudioNotificationItem[] = [
     projectId: "seito-no-tabiji",
     timeLabel: "昨日",
     unread: true,
-    tab: "versions",
+    tab: "devlog",
   },
   {
     id: "sn-4",

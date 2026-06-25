@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useCommunityJoinV0 } from "@/hooks/use-community-join-v0";
@@ -11,10 +12,17 @@ import {
   studioCommunityPostsMock,
   studioCommunityProfile,
   studioOwnCommunityId,
+  allPlayerCommunities,
+  devlogQuoteHref,
   type CommunityPost,
+  type CommunityReply,
   type DevlogQuoteRef,
 } from "@/lib/community-v0-mock-data";
 import type { CommunityJoinRequest, CommunityMember } from "@/lib/community-join-v0-store";
+import {
+  communityJoinRequestProfileHref,
+  communityMemberProfileHref,
+} from "@/lib/community-member-profile";
 import {
   Check,
   Heart,
@@ -25,54 +33,86 @@ import {
   Settings,
   Users,
   X,
+  ChevronDown,
 } from "lucide-react";
+
+const DEVLOG_QUOTE_SELECT_MAX_VISIBLE = 4;
 
 const COMMUNITY_MESSAGE_MAX = 1000;
 
 type CommunityTab = "board" | "members";
 
-function DevlogCitationCard({ quote }: { quote: DevlogQuoteRef }) {
-  return (
-    <div className="mt-3 overflow-hidden rounded-xl border border-zinc-700/80 bg-zinc-950/60">
-      <div className="flex gap-3 p-3">
-        {quote.image && (
-          <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-zinc-800">
-            <Image src={quote.image} alt="" fill className="object-cover" sizes="64px" />
-          </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 text-xs text-violet-300">
-            <Quote className="size-3.5" aria-hidden="true" />
-            Devlog {quote.version}
-            {quote.publishedAt && (
-              <span className="text-zinc-600">· {quote.publishedAt}</span>
+function DevlogCitationCard({
+  quote,
+  linkable = true,
+}: {
+  quote: DevlogQuoteRef;
+  linkable?: boolean;
+}) {
+  const inner = (
+    <div className="flex gap-3 p-3">
+      {quote.image && (
+        <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-zinc-800">
+          <Image src={quote.image} alt="" fill className="object-cover" sizes="64px" />
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5 text-xs text-violet-300">
+          <Quote className="size-3.5" aria-hidden="true" />
+          Devlog {quote.version}
+          {quote.publishedAt && <span className="text-zinc-600">· {quote.publishedAt}</span>}
+        </div>
+        <p className="mt-1 text-sm font-medium text-zinc-200">{quote.title}</p>
+        <p className="mt-1 text-xs text-zinc-500 line-clamp-2">{quote.excerpt}</p>
+        {(quote.likeCount !== undefined || quote.commentCount !== undefined) && (
+          <div className="mt-2 flex gap-3 text-xs text-zinc-500">
+            {quote.likeCount !== undefined && (
+              <span className="inline-flex items-center gap-1">
+                <Heart className="size-3.5" aria-hidden="true" />
+                {quote.likeCount}
+              </span>
+            )}
+            {quote.commentCount !== undefined && (
+              <span className="inline-flex items-center gap-1">
+                <MessageCircle className="size-3.5" aria-hidden="true" />
+                {quote.commentCount}
+              </span>
             )}
           </div>
-          <p className="mt-1 text-sm font-medium text-zinc-200">{quote.title}</p>
-          <p className="mt-1 text-xs text-zinc-500 line-clamp-2">{quote.excerpt}</p>
-          {(quote.likeCount !== undefined || quote.commentCount !== undefined) && (
-            <div className="mt-2 flex gap-3 text-xs text-zinc-500">
-              {quote.likeCount !== undefined && (
-                <span className="inline-flex items-center gap-1">
-                  <Heart className="size-3.5" aria-hidden="true" />
-                  {quote.likeCount}
-                </span>
-              )}
-              {quote.commentCount !== undefined && (
-                <span className="inline-flex items-center gap-1">
-                  <MessageCircle className="size-3.5" aria-hidden="true" />
-                  {quote.commentCount}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );
+
+  const className =
+    "mt-3 overflow-hidden rounded-xl border border-zinc-700/80 bg-zinc-950/60 transition-colors";
+
+  if (!linkable) {
+    return <div className={className}>{inner}</div>;
+  }
+
+  return (
+    <Link
+      href={devlogQuoteHref(quote)}
+      className={`${className} block hover:border-violet-500/50 hover:bg-zinc-900/60`}
+    >
+      {inner}
+    </Link>
+  );
 }
 
-function CommunityPostCard({ post }: { post: CommunityPost }) {
+function CommunityPostCard({
+  post,
+  canReply,
+  onReply,
+}: {
+  post: CommunityPost;
+  canReply?: boolean;
+  onReply?: (body: string) => void;
+}) {
+  const [replyBody, setReplyBody] = useState("");
+  const [replyOpen, setReplyOpen] = useState(false);
+
   return (
     <article className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
       <div className="flex items-start gap-3">
@@ -88,6 +128,81 @@ function CommunityPostCard({ post }: { post: CommunityPost }) {
           <p className="mt-0.5 text-xs text-violet-400/90">{post.audienceLabel}</p>
           {post.devlogQuote && <DevlogCitationCard quote={post.devlogQuote} />}
           <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-zinc-300">{post.body}</p>
+
+          {(post.replies?.length ?? 0) > 0 && (
+            <ul className="mt-4 space-y-3 border-t border-zinc-800/80 pt-4">
+              {post.replies?.map((reply) => (
+                <li key={reply.id} className="flex gap-3">
+                  <span className="relative size-8 shrink-0 overflow-hidden rounded-full bg-zinc-800">
+                    <Image src={reply.authorAvatar} alt="" fill className="object-cover" sizes="32px" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <Link
+                        href={communityMemberProfileHref({ handle: reply.authorHandle })}
+                        className="font-medium text-zinc-200 hover:text-violet-300"
+                      >
+                        {reply.authorName}
+                      </Link>
+                      <span className="text-zinc-600">@{reply.authorHandle}</span>
+                      <span className="text-zinc-600">· {reply.postedAt}</span>
+                    </div>
+                    <p className="mt-1 text-sm text-zinc-400">{reply.body}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {canReply && onReply && (
+            <div className="mt-4 border-t border-zinc-800/80 pt-4">
+              {replyOpen ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={replyBody}
+                    onChange={(e) => setReplyBody(e.target.value)}
+                    rows={3}
+                    placeholder="開発者スレッドへ返信…"
+                    className="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReplyOpen(false);
+                        setReplyBody("");
+                      }}
+                      className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400"
+                    >
+                      キャンセル
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!replyBody.trim()}
+                      onClick={() => {
+                        onReply(replyBody.trim());
+                        setReplyBody("");
+                        setReplyOpen(false);
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
+                    >
+                      <MessageCircle className="size-3.5" aria-hidden="true" />
+                      返信する
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setReplyOpen(true)}
+                  className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300"
+                >
+                  <MessageCircle className="size-3.5" aria-hidden="true" />
+                  返信する
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </article>
@@ -96,14 +211,19 @@ function CommunityPostCard({ post }: { post: CommunityPost }) {
 
 function MemberRow({ member }: { member: CommunityMember }) {
   return (
-    <li className="flex items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3">
-      <span className="relative size-10 shrink-0 overflow-hidden rounded-full bg-zinc-800">
-        <Image src={member.avatar} alt="" fill className="object-cover" sizes="40px" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-zinc-200">{member.name}</p>
-        <p className="text-xs text-zinc-500">@{member.handle} · 参加：{member.joinedAt}</p>
-      </div>
+    <li>
+      <Link
+        href={communityMemberProfileHref(member)}
+        className="flex items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 transition-colors hover:border-zinc-700 hover:bg-zinc-900/60"
+      >
+        <span className="relative size-10 shrink-0 overflow-hidden rounded-full bg-zinc-800">
+          <Image src={member.avatar} alt="" fill className="object-cover" sizes="40px" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-zinc-200">{member.name}</p>
+          <p className="text-xs text-zinc-500">@{member.handle} · 参加：{member.joinedAt}</p>
+        </div>
+      </Link>
     </li>
   );
 }
@@ -120,11 +240,21 @@ function PendingRequestRow({
   return (
     <li className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
       <div className="flex items-start gap-3">
-        <span className="relative size-10 shrink-0 overflow-hidden rounded-full bg-zinc-800">
+        <Link
+          href={communityJoinRequestProfileHref(request)}
+          className="relative size-10 shrink-0 overflow-hidden rounded-full bg-zinc-800"
+        >
           <Image src={request.playerAvatar} alt="" fill className="object-cover" sizes="40px" />
-        </span>
+        </Link>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-zinc-200">{request.playerName}</p>
+          <p className="text-sm font-medium text-zinc-200">
+            <Link
+              href={communityJoinRequestProfileHref(request)}
+              className="hover:text-violet-300"
+            >
+              {request.playerName}
+            </Link>
+          </p>
           <p className="text-xs text-zinc-500">
             @{request.playerHandle} · {request.requestedAt}
           </p>
@@ -155,6 +285,83 @@ function PendingRequestRow({
   );
 }
 
+function DevlogQuoteSelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (quoteId: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = developerDevlogQuoteOptions.find((q) => q.id === value);
+  const label = selected ? `${selected.version} — ${selected.title}` : "引用しない";
+
+  return (
+    <div className="relative">
+      <label className="block text-xs text-zinc-500">
+        Devlog を引用
+        <button
+          type="button"
+          onClick={() => setOpen((current) => !current)}
+          className="mt-1 flex w-full items-center justify-between rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-left text-sm text-zinc-200 hover:border-zinc-600"
+          aria-expanded={open}
+          aria-haspopup="listbox"
+        >
+          <span className="truncate">{label}</span>
+          <ChevronDown className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+        </button>
+      </label>
+      {open && (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-20 cursor-default"
+            aria-label="メニューを閉じる"
+            onClick={() => setOpen(false)}
+          />
+          <ul
+            role="listbox"
+            aria-label="Devlog を引用"
+            className="absolute left-0 right-0 z-30 mt-1 overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-950 py-1 shadow-xl"
+            style={{ maxHeight: `${DEVLOG_QUOTE_SELECT_MAX_VISIBLE * 2.5}rem` }}
+          >
+            <li role="option" aria-selected={value === ""}>
+              <button
+                type="button"
+                onClick={() => {
+                  onChange("");
+                  setOpen(false);
+                }}
+                className={`block w-full px-3 py-2 text-left text-sm transition-colors hover:bg-zinc-900 ${
+                  value === "" ? "text-violet-200" : "text-zinc-300"
+                }`}
+              >
+                引用しない
+              </button>
+            </li>
+            {developerDevlogQuoteOptions.map((q) => (
+              <li key={q.id} role="option" aria-selected={value === q.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChange(q.id);
+                    setOpen(false);
+                  }}
+                  className={`block w-full px-3 py-2 text-left text-sm transition-colors hover:bg-zinc-900 ${
+                    value === q.id ? "text-violet-200" : "text-zinc-300"
+                  }`}
+                >
+                  {q.version} — {q.title}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}
+
 function DeveloperComposePanel({
   onPost,
 }: {
@@ -179,42 +386,17 @@ function DeveloperComposePanel({
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
       >
         <Megaphone className="size-4" aria-hidden="true" />
-        フォロワーへ連絡
+        スレッドを作成
       </button>
     );
   }
 
   return (
     <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block text-xs text-zinc-500">
-          宛先
-          <select
-            defaultValue="all"
-            className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200"
-          >
-            <option value="all">フォロワー全員</option>
-          </select>
-        </label>
-        <label className="block text-xs text-zinc-500">
-          Devlog を引用
-          <select
-            value={quoteId}
-            onChange={(e) => setQuoteId(e.target.value)}
-            className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200"
-          >
-            <option value="">引用しない</option>
-            {developerDevlogQuoteOptions.map((q) => (
-              <option key={q.id} value={q.id}>
-                {q.version} — {q.title}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+      <DevlogQuoteSelect value={quoteId} onChange={setQuoteId} />
       {selectedQuote && (
         <div className="mt-3">
-          <DevlogCitationCard quote={selectedQuote} />
+          <DevlogCitationCard quote={selectedQuote} linkable={false} />
         </div>
       )}
       <label className="mt-4 block text-xs text-zinc-500">
@@ -248,10 +430,27 @@ function DeveloperComposePanel({
           className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
         >
           <Send className="size-4" aria-hidden="true" />
-          フォロワーへ連絡
+          スレッドを作成
         </button>
       </div>
     </section>
+  );
+}
+
+function CommunityJoinPrompt({ communityId }: { communityId: string }) {
+  return (
+    <div className="rounded-xl border border-dashed border-zinc-800 bg-zinc-900/20 px-6 py-10 text-center">
+      <p className="text-sm font-medium text-zinc-400">コミュニティに参加すると閲覧・返信できます</p>
+      <p className="mt-2 text-xs leading-relaxed text-zinc-600">
+        掲示板と参加者一覧は、承認済みのメンバーだけが見られます。
+      </p>
+      <Link
+        href={`/creators/${communityId}`}
+        className="mt-4 inline-flex rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
+      >
+        開発者プロフィールから参加申請
+      </Link>
+    </div>
   );
 }
 
@@ -267,41 +466,16 @@ function ApplicationsEmptyState() {
   );
 }
 
-function PlayerComposePanel({ onPost }: { onPost: (body: string) => void }) {
-  const [body, setBody] = useState("");
-
-  return (
-    <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-      <div className="flex items-center gap-2 text-sm font-medium text-white">
-        <Megaphone className="size-4 text-emerald-400" aria-hidden="true" />
-        コミュニティへ投稿
-      </div>
-      <p className="mt-1 text-xs text-zinc-500">
-        参加中の開発者コミュニティへメッセージを送れます（Devlog 引用は開発者のみ）。
-      </p>
-      <label className="mt-4 block text-xs text-zinc-500">
-        メッセージ
-        <textarea
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          rows={4}
-          placeholder="プレイの感想や応援メッセージを…"
-          className="mt-1 w-full resize-none rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600"
-        />
-      </label>
-      <button
-        type="button"
-        disabled={!body.trim()}
-        onClick={() => {
-          onPost(body.trim());
-          setBody("");
-        }}
-        className="mt-3 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
-      >
-        <Send className="size-4" aria-hidden="true" />
-        投稿する
-      </button>
-    </section>
+function filterVisibleThreads(
+  posts: CommunityPost[],
+  communityId: string,
+  isDeveloper: boolean,
+): CommunityPost[] {
+  if (isDeveloper) {
+    return posts.filter((post) => post.communityId === studioOwnCommunityId);
+  }
+  return posts.filter(
+    (post) => post.communityId === communityId && post.authorRole === "developer",
   );
 }
 
@@ -358,9 +532,15 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
     useCommunityJoinV0();
 
   const activeTab = (searchParams.get("tab") === "members" ? "members" : "board") as CommunityTab;
+
+  const joinedCommunities = playerJoinedCommunities.filter(
+    (c) => getStatus(c.id) === "approved",
+  );
+
+  const communityParam = searchParams.get("community");
   const selectedCommunityId = isDeveloper
     ? studioOwnCommunityId
-    : (searchParams.get("community") ?? playerJoinedCommunities[0]?.id ?? "shaneco");
+    : (communityParam ?? joinedCommunities[0]?.id ?? "");
 
   const [posts, setPosts] = useState<CommunityPost[]>(
     isDeveloper ? studioCommunityPostsMock : playerCommunityFeedMock,
@@ -369,9 +549,32 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
   const pending = pendingFor(isDeveloper ? studioOwnCommunityId : selectedCommunityId);
   const members = membersFor(isDeveloper ? studioOwnCommunityId : selectedCommunityId);
 
-  const joinedCommunities = playerJoinedCommunities.filter(
-    (c) => getStatus(c.id) === "approved",
+  const canViewCommunity =
+    isDeveloper || (selectedCommunityId !== "" && getStatus(selectedCommunityId) === "approved");
+
+  const visibleThreads = filterVisibleThreads(
+    posts,
+    selectedCommunityId,
+    isDeveloper,
   );
+
+  function addReply(postId: string, body: string) {
+    const reply: CommunityReply = {
+      id: `reply-${Date.now()}`,
+      authorName: "あなた",
+      authorAvatar: "/images/landing/game-4.png",
+      authorHandle: "player_you",
+      body,
+      postedAt: "たった今",
+    };
+    setPosts((prev) =>
+      prev.map((post) =>
+        post.id === postId
+          ? { ...post, replies: [...(post.replies ?? []), reply] }
+          : post,
+      ),
+    );
+  }
 
   function setTab(tab: CommunityTab) {
     const params = new URLSearchParams(searchParams.toString());
@@ -395,9 +598,11 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
   const title = isDeveloper ? "マイコミュニティ" : "参加コミュニティ";
   const description = isDeveloper
     ? studioCommunityProfile.description
-    : "参加中の開発者コミュニティの掲示板。お知らせを受け取り、メッセージを送れます。";
+    : "参加中の開発者コミュニティの掲示板。開発者のスレッドを閲覧し、返信できます。";
 
-  const selectedCommunity = playerJoinedCommunities.find((c) => c.id === selectedCommunityId);
+  const selectedCommunity =
+    allPlayerCommunities.find((c) => c.id === selectedCommunityId) ??
+    playerJoinedCommunities.find((c) => c.id === selectedCommunityId);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -470,10 +675,20 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
       {!isDeveloper && selectedCommunity && (
         <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3">
           <p className="text-sm font-medium text-white">{selectedCommunity.name}</p>
-          <p className="mt-0.5 text-xs text-zinc-500">参加者 {members.length}人</p>
+          <p className="mt-0.5 text-xs text-zinc-500">
+            {canViewCommunity ? `参加者 ${members.length}人` : "未参加 — 閲覧には参加が必要です"}
+          </p>
         </div>
       )}
 
+      {!isDeveloper && !selectedCommunityId && (
+        <p className="rounded-xl border border-dashed border-zinc-800 px-4 py-6 text-center text-sm text-zinc-500">
+          参加中のコミュニティがありません。開発者プロフィールから参加申請してください。
+        </p>
+      )}
+
+      {selectedCommunityId && (
+        <>
       <CommunityTabs
         activeTab={activeTab}
         onTabChange={setTab}
@@ -481,6 +696,9 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
       />
 
       {activeTab === "members" ? (
+        !canViewCommunity ? (
+          <CommunityJoinPrompt communityId={selectedCommunityId} />
+        ) : (
         <section className="space-y-6">
           {isDeveloper && (
             <div>
@@ -520,54 +738,51 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
             </ul>
           </div>
         </section>
+        )
+      ) : !canViewCommunity ? (
+        <CommunityJoinPrompt communityId={selectedCommunityId} />
       ) : (
         <>
-          {isDeveloper ? (
+          {isDeveloper && (
             <DeveloperComposePanel
               onPost={(body, quote) => {
                 setPosts((prev) => [
                   {
                     id: `new-${Date.now()}`,
+                    communityId: studioOwnCommunityId,
+                    authorRole: "developer",
                     authorName: "しゃねこ",
                     authorAvatar: "/images/landing/game-1.png",
                     authorHandle: "shaneco_dev",
                     body,
                     postedAt: "たった今",
-                    audienceLabel: "フォロワー全員",
+                    audienceLabel: "コミュニティ全員",
                     devlogQuote: quote,
+                    replies: [],
                   },
                   ...prev,
                 ]);
               }}
             />
-          ) : getStatus(selectedCommunityId) === "approved" ? (
-            <PlayerComposePanel
-              onPost={(body) => {
-                setPosts((prev) => [
-                  {
-                    id: `new-${Date.now()}`,
-                    authorName: "あなた",
-                    authorAvatar: "/images/landing/game-4.png",
-                    authorHandle: "player_you",
-                    body,
-                    postedAt: "たった今",
-                    audienceLabel: selectedCommunity?.name ?? "参加コミュニティ",
-                  },
-                  ...prev,
-                ]);
-              }}
-            />
-          ) : (
-            <p className="rounded-xl border border-dashed border-zinc-800 px-4 py-6 text-center text-sm text-zinc-500">
-              このコミュニティに参加すると掲示板へ投稿できます。
-            </p>
           )}
 
           <section className="space-y-4">
-            {posts.map((post) => (
-              <CommunityPostCard key={post.id} post={post} />
+            {visibleThreads.map((post) => (
+              <CommunityPostCard
+                key={post.id}
+                post={post}
+                canReply={!isDeveloper && canViewCommunity}
+                onReply={(body) => addReply(post.id, body)}
+              />
             ))}
+            {visibleThreads.length === 0 && (
+              <p className="rounded-xl border border-dashed border-zinc-800 px-4 py-8 text-center text-sm text-zinc-500">
+                まだスレッドがありません
+              </p>
+            )}
           </section>
+        </>
+      )}
         </>
       )}
     </div>

@@ -63,10 +63,12 @@ export function GameVerHistoryV0Tab({
         <GameDevlogV0Tab gameId={gameId} onPlayLatest={onPlayLatest} embedded />
       </section>
 
-      <section className="border-t border-zinc-800/80 pt-10">
-        <h2 className="mb-6 text-base font-semibold text-white">verの履歴</h2>
-        <GameVersionsV0Tab gameId={gameId} onPlayLatest={onPlayLatest} embedded />
-      </section>
+      {!studioMode && (
+        <section className="border-t border-zinc-800/80 pt-10">
+          <h2 className="mb-6 text-base font-semibold text-white">verの履歴</h2>
+          <GameVersionsV0Tab gameId={gameId} onPlayLatest={onPlayLatest} embedded />
+        </section>
+      )}
 
       {studioMode && (
         <section className="border-t border-zinc-800/80 pt-10">

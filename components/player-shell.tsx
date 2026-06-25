@@ -308,14 +308,23 @@ export function GameThumbnail({
   src,
   alt,
   className = "size-28 shrink-0 sm:size-32",
+  contain = false,
 }: {
   src: string;
   alt: string;
   className?: string;
+  /** true のときサムネ全体を表示（余白は letterbox） */
+  contain?: boolean;
 }) {
   return (
     <div className={`relative overflow-hidden rounded-xl bg-zinc-800 ${className}`}>
-      <Image src={src} alt={alt} fill className="object-cover" sizes="128px" />
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        className={contain ? "object-contain" : "object-cover"}
+        sizes="128px"
+      />
     </div>
   );
 }

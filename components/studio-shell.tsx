@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { type FormEvent, type ReactNode, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { studioProjectTabs } from "@/lib/studio-project-detail-v0-mock-data";
 
 const primaryLinks = [
   { id: "home", href: "/studio", label: "ホーム" },
@@ -326,11 +327,7 @@ export function StudioProjectTabs({
   activeTab: string;
   onTabChange: (tab: string) => void;
 }) {
-  const tabs = [
-    { id: "overview", label: "概要" },
-    { id: "voices", label: "みんなのフィードバック" },
-    { id: "versions", label: "verの履歴" },
-  ] as const;
+  const tabs = studioProjectTabs;
 
   return (
     <div

@@ -68,7 +68,7 @@ export function HorizontalCardPager<T>({
   return (
     <div className={`relative ${className}`}>
       <div
-        className="grid gap-4"
+        className="grid gap-3"
         style={{
           gridTemplateColumns: `repeat(${responsivePageSize}, minmax(0, 1fr))`,
         }}

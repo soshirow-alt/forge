@@ -189,8 +189,8 @@ export const studioReleaseState: StudioReleaseState = {
 
 export const studioProjectTabs = [
   { id: "overview", label: "概要" },
+  { id: "devlog", label: "開発ログ" },
   { id: "voices", label: "みんなのフィードバック" },
-  { id: "versions", label: "verの履歴" },
 ] as const;
 
 export type StudioProjectTabId = (typeof studioProjectTabs)[number]["id"];
@@ -198,8 +198,8 @@ export type StudioProjectTabId = (typeof studioProjectTabs)[number]["id"];
 const studioProjectTabAliases: Record<string, StudioProjectTabId> = {
   "voices-raw": "voices",
   "voices-agg": "voices",
-  devlog: "versions",
-  release: "versions",
+  versions: "devlog",
+  release: "devlog",
 };
 
 export function parseStudioProjectTab(param: string | null): StudioProjectTabId {

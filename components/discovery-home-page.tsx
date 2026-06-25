@@ -20,7 +20,30 @@ import {
   Users,
 } from "lucide-react";
 
-function StatPills({ voiceCount, witnessCount }: { voiceCount: number; witnessCount: number }) {
+function StatPills({
+  voiceCount,
+  witnessCount,
+  compact = false,
+}: {
+  voiceCount: number;
+  witnessCount: number;
+  compact?: boolean;
+}) {
+  if (compact) {
+    return (
+      <div className="flex flex-wrap gap-x-2 gap-y-1 text-xs text-zinc-400">
+        <span className="inline-flex items-center gap-1">
+          <MessageSquare className="size-3.5 text-violet-400" aria-hidden="true" />
+          フィードバック {voiceCount}
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <Users className="size-3.5 text-violet-400" aria-hidden="true" />
+          見届け人 {witnessCount}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-wrap gap-3 text-sm text-zinc-400">
       <span className="inline-flex items-center gap-1.5">
@@ -38,16 +61,20 @@ function StatPills({ voiceCount, witnessCount }: { voiceCount: number; witnessCo
 function HorizontalGameCard({
   game,
   rank,
+  compact = false,
 }: {
   game: HomeGameCard;
   rank?: number;
+  compact?: boolean;
 }) {
   return (
     <Link href={gameDetailHref(game.id)} className="block w-full">
       <article>
       <div className="relative">
         {rank !== undefined && (
-          <span className="absolute left-2 top-2 z-10 flex size-7 items-center justify-center rounded-lg bg-violet-600 text-sm font-bold text-white shadow-lg">
+          <span className={`absolute left-1.5 top-1.5 z-10 flex items-center justify-center rounded-md bg-violet-600 font-bold text-white shadow-lg ${
+            compact ? "size-6 text-xs" : "left-2 top-2 size-7 text-sm"
+          }`}>
             {rank}
           </span>
         )}
@@ -55,14 +82,17 @@ function HorizontalGameCard({
           src={game.image}
           alt={game.title}
           className="w-full aspect-[4/3]"
+          contain
         />
       </div>
-      <h3 className="mt-3 truncate font-semibold text-white">{game.title}</h3>
-      <p className="mt-1 text-xs text-zinc-500">
+      <h3 className={`truncate font-semibold text-white ${compact ? "mt-2 text-sm" : "mt-3"}`}>
+        {game.title}
+      </h3>
+      <p className="mt-0.5 text-xs text-zinc-500">
         {game.version} · {game.updatedLabel}
       </p>
-      <div className="mt-2">
-        <StatPills voiceCount={game.voiceCount} witnessCount={game.witnessCount} />
+      <div className={compact ? "mt-1.5" : "mt-2"}>
+        <StatPills voiceCount={game.voiceCount} witnessCount={game.witnessCount} compact={compact} />
       </div>
       </article>
     </Link>
@@ -178,8 +208,8 @@ export function DiscoveryHomePage() {
             <HorizontalCardPager
               items={[...recentlyUpdatedGames]}
               getKey={(game) => game.id}
-              pageSize={3}
-              renderItem={(game) => <HorizontalGameCard game={game} />}
+              pageSize={4}
+              renderItem={(game) => <HorizontalGameCard game={game} compact />}
             />
           </div>
         </section>
@@ -190,9 +220,9 @@ export function DiscoveryHomePage() {
             <HorizontalCardPager
               items={popularGames.map((game, index) => ({ game, rank: index + 1 }))}
               getKey={({ game }) => game.id}
-              pageSize={3}
+              pageSize={4}
               renderItem={({ game, rank }) => (
-                <HorizontalGameCard game={game} rank={rank} />
+                <HorizontalGameCard game={game} rank={rank} compact />
               )}
             />
           </div>
@@ -204,8 +234,8 @@ export function DiscoveryHomePage() {
             <HorizontalCardPager
               items={[...newGames]}
               getKey={(game) => game.id}
-              pageSize={3}
-              renderItem={(game) => <HorizontalGameCard game={game} />}
+              pageSize={4}
+              renderItem={(game) => <HorizontalGameCard game={game} compact />}
             />
           </div>
         </section>
