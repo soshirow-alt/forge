@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { useState } from "react";
 import { useCommunityJoinV0 } from "@/hooks/use-community-join-v0";
 import {
   developerDevlogQuoteOptions,
@@ -575,15 +575,5 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
 }
 
 export function CommunityHubPage({ variant }: { variant: "developer" | "player" }) {
-  return (
-    <Suspense
-      fallback={
-        <div className="mx-auto max-w-3xl">
-          <p className="text-zinc-500">読み込み中…</p>
-        </div>
-      }
-    >
-      <CommunityHubContent variant={variant} />
-    </Suspense>
-  );
+  return <CommunityHubContent variant={variant} />;
 }

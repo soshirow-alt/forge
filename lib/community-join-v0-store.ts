@@ -102,6 +102,13 @@ function defaultState(): CommunityJoinState {
   };
 }
 
+const serverSnapshot: CommunityJoinState = defaultState();
+
+/** SSR / hydration 用。localStorage を読まない固定スナップショット */
+export function getCommunityJoinServerSnapshot(): CommunityJoinState {
+  return serverSnapshot;
+}
+
 function readState(): CommunityJoinState {
   if (typeof window === "undefined") {
     return defaultState();
@@ -111,12 +118,15 @@ function readState(): CommunityJoinState {
     if (!raw) {
       return defaultState();
     }
-    const parsed = JSON.parse(raw) as CommunityJoinState;
+    const parsed = JSON.parse(raw) as Partial<CommunityJoinState>;
+    const fallback = defaultState();
     return {
-      requests: parsed.requests ?? defaultState().requests,
-      members: parsed.members ?? defaultState().members,
+      requests: Array.isArray(parsed.requests) ? parsed.requests : fallback.requests,
+      members: Array.isArray(parsed.members) ? parsed.members : fallback.members,
       playerStatusByCommunity:
-        parsed.playerStatusByCommunity ?? defaultState().playerStatusByCommunity,
+        parsed.playerStatusByCommunity && typeof parsed.playerStatusByCommunity === "object"
+          ? parsed.playerStatusByCommunity
+          : fallback.playerStatusByCommunity,
     };
   } catch {
     return defaultState();

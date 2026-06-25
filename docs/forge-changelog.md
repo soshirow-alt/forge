@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-06-26 コミュニティ画面 — サイドバーからの遷移失敗を修正
+
+- `/mypage/community`・`/studio/community` — 他画面からリンクで開くと「ページを読み込めませんでした」になる不具合を修正
+- 原因 — `useSearchParams` 利用箇所にページレベルの `Suspense` がなく、クライアント遷移（RSC）が失敗していた（直接 URL 入力は通るがサイドバー遷移で落ちる）
+- 対応 — `studio/mypage` と同様にページ + シェル全体を `Suspense` で包む構成に変更。参加申請 store の SSR スナップショットも固定化
+
+---
+
 ## 2026-06-25 75 Preview RUN — マイコミュニティ mock UI + Studio ホーム伸びランキング（d3a3540）
 
 - preview/landing-01 へコミュニティ UI mock 準拠 + Studio ホーム「今週の伸び」ランキング + 開発ヒント文言修正を push。Vercel Preview 再デプロイ

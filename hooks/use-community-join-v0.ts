@@ -4,6 +4,7 @@ import { useCallback, useSyncExternalStore } from "react";
 import {
   applyToCommunity,
   approveJoinRequest,
+  getCommunityJoinServerSnapshot,
   getCommunityJoinState,
   getCommunityMembers,
   getPendingRequests,
@@ -18,7 +19,7 @@ function getSnapshot() {
 }
 
 function getServerSnapshot() {
-  return getCommunityJoinState();
+  return getCommunityJoinServerSnapshot();
 }
 
 export function useCommunityJoinV0() {
