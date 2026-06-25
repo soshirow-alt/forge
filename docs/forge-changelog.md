@@ -4,7 +4,13 @@
 
 ---
 
-## 2026-06-25 74 マイコミュニティ UI — GPT mock 準拠（Preview ローカル）
+## 2026-06-25 75 Preview RUN — マイコミュニティ mock UI + Studio ホーム伸びランキング（d3a3540）
+
+- preview/landing-01 へコミュニティ UI mock 準拠 + Studio ホーム「今週の伸び」ランキング + 開発ヒント文言修正を push。Vercel Preview 再デプロイ
+
+---
+
+## 2026-06-25 74 マイコミュニティ UI — GPT mock 準拠（Preview RUN d3a3540）
 
 - `/studio/community` — 開発者マイコミュニティを GPT mock（A-1〜A-4）に寄せて再構成
 - コミュニティヘッダーカード — アバター・名称・参加者数・コミュニティ設定（v0 準備中）
