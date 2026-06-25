@@ -21,6 +21,7 @@ export type StudioShellNavId =
   | (typeof primaryLinks)[number]["id"]
   | "mypage"
   | "profile"
+  | "community"
   | "notifications"
   | "settings"
   | "guide";
@@ -84,6 +85,7 @@ function StudioMypageSidebarGroup() {
     pathname.startsWith("/studio/projects") ||
     (pathname.startsWith("/projects/") && pathname.endsWith("/studio"));
   const isProfile = pathname === "/studio/profile";
+  const isCommunity = pathname.startsWith("/studio/community");
 
   return (
     <div className="space-y-1">
@@ -96,6 +98,12 @@ function StudioMypageSidebarGroup() {
       >
         マイプロフィール
       </Link>
+      <Link
+        href="/studio/community"
+        className={`ml-4 block ${subNavLinkClass(isCommunity)}`}
+      >
+        マイコミュニティ
+      </Link>
     </div>
   );
 }
@@ -105,11 +113,12 @@ export function StudioMyPageTabs({
   onTabChange,
 }: {
   activeTab: string;
-  onTabChange: (tab: "projects" | "achievements") => void;
+  onTabChange: (tab: "projects" | "achievements" | "followers") => void;
 }) {
   const tabs = [
     { id: "projects", label: "プロジェクト一覧" },
     { id: "achievements", label: "実績" },
+    { id: "followers", label: "フォロワー" },
   ] as const;
 
   return (

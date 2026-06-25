@@ -1,16 +1,15 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { DeveloperGachaModal } from "@/components/developer-gacha-modal";
+import { DeveloperListCard } from "@/components/developer-list-card";
 import { PlayerShell } from "@/components/player-shell";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import {
   DEVELOPER_SEARCH_TOTAL,
   developerGenreFilters,
-  developerProfileHref,
   developerSearchResults,
   developerSearchSortOptions,
   filterDevelopers,
@@ -21,7 +20,7 @@ import {
   type DeveloperSearchSortId,
   type DeveloperSearchSortOrder,
 } from "@/lib/developer-search-v0-mock-data";
-import { BadgeCheck, Dices, Sprout, UserPlus } from "lucide-react";
+import { Dices } from "lucide-react";
 
 function parseGenres(param: string | null): string[] {
   if (!param?.trim()) {
@@ -297,72 +296,11 @@ function DeveloperSearchContent() {
           <ul className="mt-6 space-y-4">
             {results.map((dev) => (
               <li key={dev.id}>
-                <Link
-                  href={developerProfileHref(dev.id)}
-                  className="block rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 transition-colors hover:border-zinc-700"
-                >
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                    <span className="relative mx-auto size-16 shrink-0 overflow-hidden rounded-full bg-zinc-800 sm:mx-0">
-                      <Image src={dev.avatar} alt="" fill className="object-cover" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-lg font-semibold text-white">{dev.name}</h2>
-                        {dev.verified && (
-                          <BadgeCheck className="size-4 text-violet-400" aria-label="認証済み" />
-                        )}
-                        {dev.isNew && (
-                          <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-300">
-                            <Sprout className="size-3" aria-hidden="true" />
-                            新規開発者
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-2 text-sm text-zinc-400">{dev.bio}</p>
-                      {dev.genres.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          {dev.genres.map((genre) => (
-                            <span
-                              key={genre}
-                              className="rounded-full border border-zinc-700/80 bg-zinc-950/50 px-2 py-0.5 text-[10px] text-zinc-500"
-                            >
-                              {genre}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      <p className="mt-2 text-xs text-zinc-500">
-                        開発中 {dev.inDevelopment} / 完成品 {dev.completed} / フォロワー{" "}
-                        {dev.followers.toLocaleString()}
-                      </p>
-                      <div className="mt-3 flex gap-2">
-                        {dev.gameThumbs.map((thumb) => (
-                          <span
-                            key={thumb}
-                            className="relative size-12 overflow-hidden rounded-lg bg-zinc-800"
-                          >
-                            <Image src={thumb} alt="" fill className="object-cover" />
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.preventDefault();
-                        handleFollow(dev.id);
-                      }}
-                      className={`inline-flex shrink-0 items-center gap-1.5 self-center rounded-xl border px-4 py-2 text-sm ${
-                        followingIds.has(dev.id)
-                          ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
-                          : "border-zinc-700 text-zinc-300 hover:border-zinc-600"
-                      }`}
-                    >
-                      <UserPlus className="size-4" aria-hidden="true" />
-                      {followingIds.has(dev.id) ? "フォロー中" : "フォロー"}
-                    </button>
-                  </div>
-                </Link>
+                <DeveloperListCard
+                  dev={dev}
+                  following={followingIds.has(dev.id)}
+                  onFollow={handleFollow}
+                />
               </li>
             ))}
             {results.length === 0 && (

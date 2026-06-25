@@ -25,6 +25,7 @@ const primaryLinks = [
 export type PlayerShellNavId =
   | (typeof primaryLinks)[number]["id"]
   | "mypage"
+  | "community"
   | "settings"
   | "notifications"
   | "guide";
@@ -95,6 +96,7 @@ function MypageSidebarGroup() {
   const pathname = usePathname();
   const isMypageProfile = pathname === "/mypage/profile";
   const isMypageHub = pathname === "/mypage";
+  const isCommunity = pathname.startsWith("/mypage/community");
 
   return (
     <div className="space-y-1">
@@ -106,6 +108,12 @@ function MypageSidebarGroup() {
         className={`ml-4 block ${subNavLinkClass(isMypageProfile)}`}
       >
         マイプロフィール
+      </Link>
+      <Link
+        href="/mypage/community"
+        className={`ml-4 block ${subNavLinkClass(isCommunity)}`}
+      >
+        参加コミュニティ
       </Link>
     </div>
   );

@@ -3,12 +3,13 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback } from "react";
 import { StudioAchievementsTabPanel } from "@/components/studio-achievements-tab-panel";
+import { StudioFollowersTabPanel } from "@/components/studio-followers-tab-panel";
 import { StudioProjectsTabPanel } from "@/components/studio-projects-page";
 import { StudioMyPageTabs, StudioShell } from "@/components/studio-shell";
 
-export type StudioMypageTab = "projects" | "achievements";
+export type StudioMypageTab = "projects" | "achievements" | "followers";
 
-const TAB_IDS: StudioMypageTab[] = ["projects", "achievements"];
+const TAB_IDS: StudioMypageTab[] = ["projects", "achievements", "followers"];
 
 function parseTab(param: string | null): StudioMypageTab {
   if (!param || param === "projects") {
@@ -48,8 +49,10 @@ function StudioMypagePageContent() {
         <StudioMyPageTabs activeTab={activeTab} onTabChange={handleTabChange} />
         {activeTab === "projects" ? (
           <StudioProjectsTabPanel initialQuery={initialQuery} />
-        ) : (
+        ) : activeTab === "achievements" ? (
           <StudioAchievementsTabPanel />
+        ) : (
+          <StudioFollowersTabPanel />
         )}
       </div>
     </StudioShell>
