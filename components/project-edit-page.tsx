@@ -291,7 +291,7 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
                   onChange={() => setVisibility("public")}
                   className="h-4 w-4 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
                 />
-                <span className="text-sm text-zinc-300">公開</span>
+                <span className="text-sm text-zinc-300">公開中</span>
               </label>
               <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950/50 px-4 py-3">
                 <input
@@ -302,7 +302,7 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
                   onChange={() => setVisibility("private")}
                   className="h-4 w-4 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
                 />
-                <span className="text-sm text-zinc-300">非公開</span>
+                <span className="text-sm text-zinc-300">下書き</span>
               </label>
             </div>
           </div>

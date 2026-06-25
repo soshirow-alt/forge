@@ -37,7 +37,7 @@
 
 ## 直近完了（2026-06-25）
 
-- **マイコミュニティ / 参加コミュニティ** — Studio `/studio/community`、Player `/mypage/community`、フォロワータブ（ローカル）
+- **マイコミュニティ / 参加コミュニティ** — Studio `/studio/community`、Player `/mypage/community`、フォロワータブ（Preview RUN fe5a805）
 - **開発者マイページ再構成** — サイドバー統一、/studio/mypage、マイプロフィール同型化（Preview RUN aadb74e）
 - **Studio ホーム** — 参考作品見出し、開発ヒント、Forge Tips 削除、版→ver 統一（ローカル）
 - **マイプロフィール** — 所在地フィールド削除（ローカル）

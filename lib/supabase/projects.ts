@@ -63,7 +63,7 @@ function submitFormToInsertRow(
     github_url: data.githubUrl ?? null,
     discord_url: data.discordUrl ?? null,
     official_url: data.officialUrl ?? null,
-    visibility: "public" as const,
+    visibility: data.visibility ?? ("public" as const),
     playable_version: DEFAULT_PLAYABLE_VERSION,
   };
 }

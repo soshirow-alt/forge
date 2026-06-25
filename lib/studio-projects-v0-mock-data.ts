@@ -26,14 +26,32 @@ export type StudioProjectCard = {
 
 export const studioPhaseFilterOptions = [
   { id: "all", label: "すべて" },
-  { id: "試作ver", label: "試作ver" },
-  { id: "プレイ可能ver", label: "プレイ可能ver" },
-  { id: "通しプレイver", label: "通しプレイver" },
-  { id: "公開準備中", label: "公開準備中" },
-  { id: "下書き", label: "下書き" },
-  { id: "アーカイブ", label: "アーカイブ" },
-  { id: "正式ver", label: "正式ver" },
+  { id: "published", label: "公開中" },
+  { id: "draft", label: "下書き" },
+  { id: "official", label: "正式版" },
 ] as const;
+
+export type StudioPhaseFilterId = (typeof studioPhaseFilterOptions)[number]["id"];
+
+/** 一覧ピル用 — カードバッジの細かいフェーズはそのまま、絞り込みだけ集約 */
+export function matchesStudioPhaseFilter(
+  phase: StudioProjectPhase,
+  filterId: string,
+): boolean {
+  if (filterId === "all") {
+    return true;
+  }
+  if (filterId === "draft") {
+    return phase === "下書き";
+  }
+  if (filterId === "official") {
+    return phase === "正式ver" || phase === "アーカイブ";
+  }
+  if (filterId === "published") {
+    return phase !== "下書き" && phase !== "正式ver" && phase !== "アーカイブ";
+  }
+  return true;
+}
 
 export const studioSortOptions = [
   { id: "updated-desc", label: "更新日が新しい順" },

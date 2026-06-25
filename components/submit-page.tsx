@@ -16,6 +16,7 @@ import {
   type DistributionType,
 } from "@/lib/play-environment";
 import { projectStudioPath } from "@/lib/project-nurture-links";
+import type { ProjectVisibility } from "@/lib/project-visibility";
 import { DEVELOPMENT_PHASE_OPTIONS } from "@/lib/development-phases";
 import { PLAY_TIME_OPTIONS } from "@/lib/play-time-options";
 import { resolvePlayableVersion } from "@/lib/playable-version";
@@ -127,6 +128,7 @@ export function SubmitPage() {
   const [genre, setGenre] = useState("");
   const [description, setDescription] = useState("");
   const [phase, setPhase] = useState("");
+  const [visibility, setVisibility] = useState<ProjectVisibility>("public");
   const [estimatedPlayTime, setEstimatedPlayTime] = useState("");
   const [playUrl, setPlayUrl] = useState("");
   const [distribution, setDistribution] = useState<DistributionType>("");
@@ -323,6 +325,7 @@ export function SubmitPage() {
       githubUrl: githubUrl || undefined,
       discordUrl: discordUrl || undefined,
       officialUrl: officialUrl || undefined,
+      visibility,
     };
 
     setSubmitting(true);
@@ -343,6 +346,7 @@ export function SubmitPage() {
       setGenre("");
       setDescription("");
       setPhase("");
+      setVisibility("public");
       setEstimatedPlayTime("");
       setPlayUrl("");
       setDistribution("");
@@ -419,7 +423,9 @@ export function SubmitPage() {
               投稿が完了しました
             </h1>
             <p className="mt-2 text-zinc-500">
-              作品一覧の「新着作品」に表示されます
+              {visibility === "private"
+                ? "下書きとして保存しました。公開するには作品設定から公開中に切り替えてください。"
+                : "作品一覧の「新着作品」に表示されます"}
             </p>
 
             {submittedGameId && (
@@ -429,18 +435,20 @@ export function SubmitPage() {
                   投稿 → 発見 → プレイ → 回答の流れに沿って進められます。
                 </p>
                 <ul className="mt-4 space-y-3">
-                  <li>
-                    <Link
-                      href={`/?highlight=${submittedGameId}#discover`}
-                      className="flex w-full items-center justify-between rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3.5 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
-                    >
-                      新着作品で表示を確認
-                      <span aria-hidden="true">→</span>
-                    </Link>
-                    <p className="mt-1.5 text-xs text-zinc-600">
-                      ホームの新着作品に載っているか確認しましょう。
-                    </p>
-                  </li>
+                  {visibility === "public" && (
+                    <li>
+                      <Link
+                        href={`/?highlight=${submittedGameId}#discover`}
+                        className="flex w-full items-center justify-between rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3.5 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+                      >
+                        新着作品で表示を確認
+                        <span aria-hidden="true">→</span>
+                      </Link>
+                      <p className="mt-1.5 text-xs text-zinc-600">
+                        ホームの新着作品に載っているか確認しましょう。
+                      </p>
+                    </li>
+                  )}
                   <li>
                     <Link
                       href={`/games/${submittedGameId}`}
@@ -548,6 +556,47 @@ export function SubmitPage() {
               className={inputClassName}
               placeholder="ゲームのタイトル"
             />
+          </div>
+
+          <div>
+            <p className="text-sm font-medium text-zinc-400">公開状態</p>
+            <p className="mt-1 text-xs text-zinc-600">
+              投稿時点では公開中か下書きを選べます。正式版は後から Studio で宣言します。
+            </p>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <label className="flex flex-1 cursor-pointer items-start gap-3 rounded-lg border border-zinc-800 bg-zinc-950/50 px-4 py-3">
+                <input
+                  type="radio"
+                  name="submit-visibility"
+                  value="public"
+                  checked={visibility === "public"}
+                  onChange={() => setVisibility("public")}
+                  className="mt-0.5 h-4 w-4 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-zinc-200">公開中</span>
+                  <span className="mt-0.5 block text-xs text-zinc-500">
+                    プレイヤーが発見・プレイできる状態で掲載
+                  </span>
+                </span>
+              </label>
+              <label className="flex flex-1 cursor-pointer items-start gap-3 rounded-lg border border-zinc-800 bg-zinc-950/50 px-4 py-3">
+                <input
+                  type="radio"
+                  name="submit-visibility"
+                  value="private"
+                  checked={visibility === "private"}
+                  onChange={() => setVisibility("private")}
+                  className="mt-0.5 h-4 w-4 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-zinc-200">下書き</span>
+                  <span className="mt-0.5 block text-xs text-zinc-500">
+                    自分だけ。準備ができたら公開中に切り替え
+                  </span>
+                </span>
+              </label>
+            </div>
           </div>
 
           <fieldset>

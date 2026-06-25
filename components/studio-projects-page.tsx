@@ -11,6 +11,7 @@ import {
 import { ViewModeToggle, type ViewMode } from "@/components/view-mode-toggle";
 import {
   formatStat,
+  matchesStudioPhaseFilter,
   phaseBadgeClass,
   STUDIO_PROJECTS_PAGE_SIZE,
   studioPhaseFilterOptions,
@@ -180,7 +181,7 @@ export function StudioProjectsTabPanel({ initialQuery = "" }: { initialQuery?: s
   const filtered = useMemo(() => {
     let list = [...studioProjectsAll];
     if (phase !== "all") {
-      list = list.filter((p) => p.phase === phase);
+      list = list.filter((p) => matchesStudioPhaseFilter(p.phase, phase));
     }
     if (query.trim()) {
       const q = query.trim().toLowerCase();
@@ -249,7 +250,7 @@ export function StudioProjectsTabPanel({ initialQuery = "" }: { initialQuery?: s
           </div>
 
           <div>
-            <p className="mb-2 text-xs font-medium text-zinc-500">開発フェーズ</p>
+            <p className="mb-2 text-xs font-medium text-zinc-500">公開状態</p>
             <StudioFilterPills
               options={[...studioPhaseFilterOptions]}
               active={phase}
