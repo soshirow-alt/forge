@@ -51,7 +51,7 @@ export const NURTURE_STEPS: {
   },
   {
     id: "publish",
-    label: "新版公開する",
+    label: "新ver公開する",
     railLabel: "公開",
     shortLabel: "公開",
     whyLabel: NURTURE_STEP_WHY.publish,
@@ -113,7 +113,7 @@ export type ProjectGrowthSnapshot = {
   devlogCount: number;
   latestDevlogTitle?: string;
   latestPublishedDevlogId?: string;
-  /** 現行版の project_voice_responses 件数 */
+  /** 現行verの project_voice_responses 件数 */
   pendingFeedbackCount: number;
   totalVoiceResponseCount: number;
   needsAttention: boolean;
@@ -190,7 +190,7 @@ export function getStudioCycleBanner(
     return "ループ前";
   }
   if (getStudioVisualMode(snapshot) === "cycle_complete") {
-    return "この版は完了";
+    return "このverは完了";
   }
   if (snapshot.cycleNumber > 1) {
     return `第 ${snapshot.cycleNumber} 回`;
@@ -384,7 +384,7 @@ export function buildNurtureDisplayContext(
         nextStepId: "devlog",
         phaseLabel: getNurtureStepLabel("improving"),
         phaseGuidance:
-          "回答は確認済みです。手元の開発環境でゲームを修正してください。修正後は変更内容を記録し、新版を公開します。",
+          "回答は確認済みです。手元の開発環境でゲームを修正してください。修正後は変更内容を記録し、新verを公開します。",
         primaryCta: {
           label: "修正の進め方を見る",
           opensModifyGameModal: true,
@@ -405,9 +405,9 @@ export function buildNurtureDisplayContext(
         nextStepId: "wait",
         phaseLabel: getNurtureStepLabel("publish"),
         phaseGuidance:
-          "記録した変更を、プレイヤーに届けましょう。新版を公開すると、追跡中のプレイヤーに更新が通知されます。",
+          "記録した変更を、プレイヤーに届けましょう。新verを公開すると、追跡中のプレイヤーに更新が通知されます。",
         primaryCta: {
-          label: "新版を公開する",
+          label: "新verを公開する",
           href: `/projects/${gameId}/devlog/new`,
         },
         primaryOpensReadPanel: false,
@@ -623,7 +623,7 @@ export function getProjectStatusBadges(
 
   if (growth.dataPhase === "devlog_unpublished") {
     badges.push({
-      label: "新版公開待ち",
+      label: "新ver公開待ち",
       tone: "amber",
     });
   }

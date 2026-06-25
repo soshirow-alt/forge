@@ -1,5 +1,5 @@
 /**
- * 013 適用確認 + 正式版フロー API 検証（staging）
+ * 013 適用確認 + 正式verフロー API 検証（staging）
  *
  * Usage:
  *   npm run verify:official-release:staging          # 013 適用チェックのみ

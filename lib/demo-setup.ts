@@ -40,9 +40,9 @@ function createDemoProjectForms(ownerName: string): SubmitFormData[] {
       title: "星詠みの廃都",
       genre: "アクションRPG",
       creator: ownerName,
-      phase: "試作版",
+      phase: "試作ver",
       description:
-        "星の欠片で魔法を紡ぐ探索アクションRPG。廃都を巡り、失われた詠唱を集めて世界の均衡を取り戻すデモ版です。",
+        "星の欠片で魔法を紡ぐ探索アクションRPG。廃都を巡り、失われた詠唱を集めて世界の均衡を取り戻すデモverです。",
       lookingForTesters: true,
       testerSlots: 12,
       thumbnailUrl: createDemoThumbnail("星詠みの廃都", "#ea580c"),
@@ -55,7 +55,7 @@ function createDemoProjectForms(ownerName: string): SubmitFormData[] {
       title: "ネオン・アーカイブ",
       genre: "パズル",
       creator: ownerName,
-      phase: "試作版",
+      phase: "試作ver",
       description:
         "ネオンに彩られたデータ迷宮を解き明かすローグライク・パズル。記憶の断片を組み合わせ、失われた都市の真実に迫ります。",
       lookingForTesters: true,
@@ -69,7 +69,7 @@ function createDemoProjectForms(ownerName: string): SubmitFormData[] {
       title: "群青の境界",
       genre: "ホラー",
       creator: ownerName,
-      phase: "プレイ可能版",
+      phase: "プレイ可能ver",
       description:
         "霧に包まれた離島で起きる協力型ホラー体験。仲間と連携しながら、境界の向こうから迫る存在から逃げ延びるサバイバルデモ。",
       lookingForTesters: true,
@@ -90,9 +90,9 @@ function createDemoDevlogs(projectIds: string[]): DevlogEntry[] {
     {
       id: "demo-devlog-1-1",
       projectId: project1,
-      title: "試作版デモを公開しました",
+      title: "試作verデモを公開しました",
       content:
-        "星詠みの廃都の試作版を公開しました。テスターの皆さんからの回答をお待ちしています。",
+        "星詠みの廃都の試作verを公開しました。テスターの皆さんからの回答をお待ちしています。",
       date: "2026-06-10",
     },
     {
@@ -113,9 +113,9 @@ function createDemoDevlogs(projectIds: string[]): DevlogEntry[] {
     {
       id: "demo-devlog-3-1",
       projectId: project3,
-      title: "α版テスト開始のお知らせ",
+      title: "αverテスト開始のお知らせ",
       content:
-        "群青の境界のα版テストを開始しました。3人協力プレイでの回答を募集しています。",
+        "群青の境界のαverテストを開始しました。3人協力プレイでの回答を募集しています。",
       date: "2026-06-05",
     },
     {

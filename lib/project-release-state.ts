@@ -16,13 +16,13 @@ export type ProjectReleaseEvent = {
 
 export const RELEASE_STATUS_LABELS: Record<ProjectReleaseStatus, string> = {
   in_development: "開発中",
-  released: "正式版",
-  release_reopened: "正式版再調整中",
+  released: "正式ver",
+  release_reopened: "正式ver再調整中",
 };
 
 export const RELEASE_EVENT_LABELS: Record<ProjectReleaseEventType, string> = {
-  released: "Released — 正式版として宣言",
-  release_reopened: "Release Reopened — 正式版を再調整",
+  released: "Released — 正式verとして宣言",
+  release_reopened: "Release Reopened — 正式verを再調整",
 };
 
 export function releaseStatusAfterEvent(
@@ -74,7 +74,7 @@ export function validateReleasedDeclaration(input: {
   currentStatus: ProjectReleaseStatus;
 }): ReleaseDeclarationValidation {
   if (!input.playableVersion?.trim()) {
-    return { ok: false, reason: "プレイ可能版が設定されていません。" };
+    return { ok: false, reason: "プレイ可能verが設定されていません。" };
   }
 
   if (input.devlogCount < 1) {
@@ -85,7 +85,7 @@ export function validateReleasedDeclaration(input: {
   }
 
   if (input.currentStatus === "released") {
-    return { ok: false, reason: "すでに正式版として宣言済みです。" };
+    return { ok: false, reason: "すでに正式verとして宣言済みです。" };
   }
 
   return { ok: true };
@@ -97,7 +97,7 @@ export function validateReleaseReopenedDeclaration(input: {
   if (input.currentStatus !== "released") {
     return {
       ok: false,
-      reason: "正式版として宣言されている作品のみ、再調整を開始できます。",
+      reason: "正式verとして宣言されている作品のみ、再調整を開始できます。",
     };
   }
 
@@ -106,10 +106,10 @@ export function validateReleaseReopenedDeclaration(input: {
 
 export function formatReleaseTimelineLabel(event: ProjectReleaseEvent): string {
   if (event.eventType === "released") {
-    return "正式版に到達 — 開発者が Released を宣言";
+    return "正式verに到達 — 開発者が Released を宣言";
   }
 
-  return "正式版を再調整 — Release Reopened";
+  return "正式verを再調整 — Release Reopened";
 }
 
 /** 見届け人判定用 — 初回 Released より前にプレイしていたか */

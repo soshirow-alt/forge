@@ -84,7 +84,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
 
   if (!hydrated || !dataReady) {
     return (
-      <StudioShell activeNav="projects">
+      <StudioShell activeNav="mypage">
         <p className="text-zinc-500">読み込み中...</p>
       </StudioShell>
     );
@@ -117,7 +117,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   ).length;
 
   return (
-    <StudioShell activeNav="projects">
+    <StudioShell activeNav="mypage">
       <div className="mx-auto max-w-6xl">
         <Link
           href="/studio"
@@ -191,7 +191,7 @@ export function ProjectStudioPage({ projectId }: { projectId: string }) {
   return (
     <Suspense
       fallback={
-        <StudioShell activeNav="projects">
+        <StudioShell activeNav="mypage">
           <p className="text-zinc-500">読み込み中...</p>
         </StudioShell>
       }

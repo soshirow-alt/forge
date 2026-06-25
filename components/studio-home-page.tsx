@@ -144,7 +144,7 @@ export function StudioHomePage() {
 
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5 sm:p-6">
           <StudioSectionHeader
-            title="Forgeランキング抜粋"
+            title="参考になるかもしれない作品"
             href="/studio/rankings"
             icon={<BarChart3 className="size-5 text-violet-400" aria-hidden="true" />}
           />
@@ -160,7 +160,7 @@ export function StudioHomePage() {
             title="開発ヒント"
             icon={<Lightbulb className="size-5 text-violet-400" aria-hidden="true" />}
           />
-          <div className="mt-5 grid gap-4 lg:grid-cols-3">
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
             {devHintCards.map((card) => (
               <DevHintCard key={card.id} title={card.title} tips={card.tips} />
             ))}

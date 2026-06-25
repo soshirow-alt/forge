@@ -41,7 +41,7 @@ export function buildDeepFeedbackSummary(
   if (currentVersionEntries.length === 0) {
     return {
       title: "詳しい感想（任意）",
-      lines: ["この版向けの詳しい感想はまだありません。"],
+      lines: ["このver向けの詳しい感想はまだありません。"],
     };
   }
 

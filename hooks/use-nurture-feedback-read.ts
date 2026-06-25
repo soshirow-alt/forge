@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * 現行版 voice の読了状態 hook（Supabase project_voice_reads）。
+ * 現行ver voice の読了状態 hook（Supabase project_voice_reads）。
  *
  * キー: projectId + playableVersion + source_type=voice
  */

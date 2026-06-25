@@ -95,9 +95,9 @@ async function seedVeteranOwnedDevlogs(
       author_id: project.ownerId,
       title:
         index === 0
-          ? "試作版を公開しました"
+          ? "試作verを公開しました"
           : index === 1
-            ? "版 0.2 を公開しました"
+            ? "ver 0.2 を公開しました"
             : `開発メモ #${index + 1}`,
       content: `${project.title} の更新です。${FUTURE_DEMO_MARKER} world=${meta.worldId}`,
       published_version: publishedVersion,
@@ -213,8 +213,8 @@ async function patchVeteranDeveloperProjects() {
         creator: VETERAN_DEVELOPER_CREATOR,
         genre: GENRES[index % GENRES.length],
         description: `${blurb}\n\n${FUTURE_DEMO_MARKER}\n${JSON.stringify({ ...meta, veteranOwned: true })}`,
-        phase: index < 3 ? "試作版" : "プレイ可能版",
-        status: "プレイ可能版",
+        phase: index < 3 ? "試作ver" : "プレイ可能ver",
+        status: "プレイ可能ver",
         looking_for_testers: index === 0,
         tester_slots: index === 0 ? 8 : null,
         section: index < 2 ? "new" : index < 5 ? "beta" : "testers",
@@ -268,7 +268,7 @@ async function patchVeteranDeveloperProjects() {
       project.id,
       veteranId,
       "released",
-      `${project.title} を正式版として公開しました。`,
+      `${project.title} を正式verとして公開しました。`,
       releaseAt,
     );
     meta.releasedProjectIds.push(project.id);
@@ -308,7 +308,7 @@ async function seedDevlogs(project: SeededProject, base: Date, meta: FutureDemoW
       author_id: project.ownerId,
       title:
         index === 0
-          ? "試作版を公開しました"
+          ? "試作verを公開しました"
           : index === 1
             ? "プレイヤーの声を反映しました"
             : `開発メモ #${index + 1}`,
@@ -651,8 +651,8 @@ async function runSeed() {
         creator: dev.creator,
         genre: GENRES[projectIndex % GENRES.length],
         description,
-        phase: projectIndex < 8 ? "試作版" : "プレイ可能版",
-        status: projectIndex % 4 === 0 ? "テスター募集中" : "プレイ可能版",
+        phase: projectIndex < 8 ? "試作ver" : "プレイ可能ver",
+        status: projectIndex % 4 === 0 ? "テスター募集中" : "プレイ可能ver",
         looking_for_testers: projectIndex % 4 === 0,
         tester_slots: projectIndex % 4 === 0 ? 10 : null,
         section: projectIndex < 6 ? "new" : projectIndex < 14 ? "beta" : "testers",
@@ -715,7 +715,7 @@ async function runSeed() {
       project.id,
       project.ownerId,
       "released",
-      `${project.title} を正式版として公開しました。`,
+      `${project.title} を正式verとして公開しました。`,
       releaseAt,
     );
     metaDraft.releasedProjectIds.push(project.id);

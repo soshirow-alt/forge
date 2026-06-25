@@ -59,7 +59,7 @@ export function StudioNotificationsPage() {
           <div>
             <h1 className="text-2xl font-bold text-white">Studio 通知（開発者向け）</h1>
             <p className="mt-1 text-sm text-zinc-500">
-              届いたフィードバック・版のプレイ状況など。プレイヤー向けは{" "}
+              届いたフィードバック・verのプレイ状況など。プレイヤー向けは{" "}
               <Link href="/notifications" className="text-violet-400 hover:text-violet-300">
                 プレイヤー通知
               </Link>

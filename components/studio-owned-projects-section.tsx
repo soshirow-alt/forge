@@ -128,7 +128,7 @@ export function StudioOwnedProjectsSection({
           </h2>
           {variant === "home" && (
             <p className="mt-2 text-sm text-zinc-400">
-              フィードバック確認・devlog・版公開はここから。
+              フィードバック確認・devlog・ver公開はここから。
             </p>
           )}
           {variant === "list" && (
@@ -167,7 +167,7 @@ export function StudioOwnedProjectsSection({
 
       {variant === "home" && ownedGames.length > 3 && (
         <p className="mt-4 text-center text-sm text-zinc-500">
-          <Link href="/studio/projects" className="text-violet-300 hover:text-violet-200">
+          <Link href="/studio/mypage" className="text-violet-300 hover:text-violet-200">
             すべての作品を見る（{ownedGames.length}件）
           </Link>
         </p>

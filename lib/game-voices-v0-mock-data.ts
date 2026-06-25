@@ -58,7 +58,7 @@ export const voiceSubTabs = [
 ] as const;
 
 export const voiceVersionFilters = [
-  { id: "all", label: "すべての版" },
+  { id: "all", label: "すべてのver" },
   { id: "v0.3.2", label: "v0.3.2（現行）" },
   { id: "v0.3.0", label: "v0.3.0" },
   { id: "v0.2.4", label: "v0.2.4" },

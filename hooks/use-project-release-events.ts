@@ -39,7 +39,7 @@ export function useProjectReleaseEvents(projectId: string) {
         setError(null);
       } else {
         setEvents([]);
-        setError("正式版情報の読み込みに失敗しました。");
+        setError("正式ver情報の読み込みに失敗しました。");
       }
     } finally {
       setLoaded(true);
@@ -68,7 +68,7 @@ export function useProjectReleaseEvents(projectId: string) {
         await reload();
       } catch (caught) {
         const message =
-          caught instanceof Error ? caught.message : "正式版宣言に失敗しました。";
+          caught instanceof Error ? caught.message : "正式ver宣言に失敗しました。";
         setError(message);
         throw caught;
       } finally {

@@ -103,7 +103,7 @@ function MypageSidebarGroup() {
       </Link>
       <Link
         href="/mypage/profile"
-        className={`ml-4 block border-l-2 border-zinc-700/80 pl-4 ${subNavLinkClass(isMypageProfile)}`}
+        className={`ml-4 block ${subNavLinkClass(isMypageProfile)}`}
       >
         マイプロフィール
       </Link>

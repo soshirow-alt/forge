@@ -116,12 +116,12 @@ function CycleCompleteVisual() {
   return (
     <div
       className="mt-5 flex flex-col items-center rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-5"
-      aria-label="この版の改善ループは完了"
+      aria-label="このverの改善ループは完了"
     >
       <span className="flex size-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-300 ring-2 ring-emerald-500/25">
         <Check className="size-6" aria-hidden="true" />
       </span>
-      <p className="mt-3 text-sm font-medium text-zinc-200">この版のループ完了</p>
+      <p className="mt-3 text-sm font-medium text-zinc-200">このverのループ完了</p>
       <p className="mt-1 flex items-center gap-1.5 text-xs text-zinc-500">
         <span className="inline-block size-1.5 animate-pulse rounded-full bg-orange-400" />
         新しい回答が届いたら再開
@@ -542,7 +542,7 @@ function StepDetailPanel({
             href={`/projects/${game.id}/devlog/new`}
             className="cursor-pointer inline-flex items-center rounded-lg bg-violet-600/20 px-4 py-2 text-sm font-medium text-violet-200 ring-1 ring-violet-500/30 hover:bg-violet-600/30"
           >
-            新版を公開する →
+            新verを公開する →
           </Link>
         </div>
       );
@@ -573,7 +573,7 @@ function PlayerVoiceEmptyState({
   return (
     <div className="mt-6 rounded-xl border border-dashed border-zinc-800 bg-zinc-950/30 px-5 py-6 text-center">
       <MessageSquare className="mx-auto size-8 text-zinc-600" aria-hidden="true" />
-      <p className="mt-2 text-sm text-zinc-500">この版の声はまだありません</p>
+      <p className="mt-2 text-sm text-zinc-500">このverの声はまだありません</p>
     </div>
   );
 }

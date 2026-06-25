@@ -742,7 +742,7 @@ export function SubmitPage() {
             drafts={promptDrafts}
             onDraftsChange={setPromptDrafts}
             showValidation={showPromptValidation}
-            versionLabel="初回のプレイ可能版"
+            versionLabel="初回のプレイ可能ver"
           />
 
           <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">

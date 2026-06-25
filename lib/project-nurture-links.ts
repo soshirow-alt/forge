@@ -73,7 +73,7 @@ export const PROJECT_NURTURE_ACTIONS: ProjectNurtureAction[] = [
     id: "edit-prompts",
     label: "質問を編集する",
     href: (id) => `/projects/${id}/edit#version-prompts`,
-    description: "版ごとの質問",
+    description: "verごとの質問",
   },
   {
     id: "write-devlog",

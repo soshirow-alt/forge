@@ -1,13 +1,13 @@
 import { projectStudioPath } from "@/lib/project-nurture-links";
 
 export type StudioProjectPhase =
-  | "試作版"
-  | "プレイ可能版"
-  | "通しプレイ版"
+  | "試作ver"
+  | "プレイ可能ver"
+  | "通しプレイver"
   | "公開準備中"
   | "下書き"
   | "アーカイブ"
-  | "正式版";
+  | "正式ver";
 
 export type StudioProjectCard = {
   id: string;
@@ -26,13 +26,13 @@ export type StudioProjectCard = {
 
 export const studioPhaseFilterOptions = [
   { id: "all", label: "すべて" },
-  { id: "試作版", label: "試作版" },
-  { id: "プレイ可能版", label: "プレイ可能版" },
-  { id: "通しプレイ版", label: "通しプレイ版" },
+  { id: "試作ver", label: "試作ver" },
+  { id: "プレイ可能ver", label: "プレイ可能ver" },
+  { id: "通しプレイver", label: "通しプレイver" },
   { id: "公開準備中", label: "公開準備中" },
   { id: "下書き", label: "下書き" },
   { id: "アーカイブ", label: "アーカイブ" },
-  { id: "正式版", label: "正式版" },
+  { id: "正式ver", label: "正式ver" },
 ] as const;
 
 export const studioSortOptions = [
@@ -48,7 +48,7 @@ export const studioProjectsAll: StudioProjectCard[] = [
     id: "hoshino-kioku",
     title: "星の記憶",
     genres: "RPG・ファンタジー",
-    phase: "通しプレイ版",
+    phase: "通しプレイver",
     image: "/images/landing/hero-bg.png",
     witnessCount: 128,
     voiceCount: 42,
@@ -61,7 +61,7 @@ export const studioProjectsAll: StudioProjectCard[] = [
     id: "kioku-no-kakera",
     title: "記憶の欠片たち",
     genres: "アドベンチャー・ミステリー",
-    phase: "プレイ可能版",
+    phase: "プレイ可能ver",
     image: "/images/landing/game-2.png",
     witnessCount: 87,
     voiceCount: 31,
@@ -74,7 +74,7 @@ export const studioProjectsAll: StudioProjectCard[] = [
     id: "hikari-no-tabibito",
     title: "光の旅人",
     genres: "パズル・アクション",
-    phase: "プレイ可能版",
+    phase: "プレイ可能ver",
     image: "/images/landing/game-3.png",
     witnessCount: 56,
     voiceCount: 18,
@@ -86,7 +86,7 @@ export const studioProjectsAll: StudioProjectCard[] = [
     id: "sorashima-pioneer",
     title: "空島パイオニア",
     genres: "シミュレーション・サンドボックス",
-    phase: "試作版",
+    phase: "試作ver",
     image: "/images/landing/game-4.png",
     witnessCount: 34,
     voiceCount: 12,
@@ -98,7 +98,7 @@ export const studioProjectsAll: StudioProjectCard[] = [
     id: "roshin-no-zanko",
     title: "炉心の残光",
     genres: "ダークファンタジー・アクション",
-    phase: "試作版",
+    phase: "試作ver",
     image: "/images/landing/game-5.png",
     witnessCount: 23,
     voiceCount: 7,
@@ -146,7 +146,7 @@ export const studioProjectsAll: StudioProjectCard[] = [
     id: "shinkai-no-uta",
     title: "深海の詩",
     genres: "ナラティブ・探索",
-    phase: "プレイ可能版",
+    phase: "プレイ可能ver",
     image: "/images/landing/hero-bg.png",
     witnessCount: 45,
     voiceCount: 14,
@@ -158,7 +158,7 @@ export const studioProjectsAll: StudioProjectCard[] = [
     id: "natsu-no-mukougawa",
     title: "夏の向こう側",
     genres: "ビジュアルノベル",
-    phase: "正式版",
+    phase: "正式ver",
     image: "/images/landing/game-4.png",
     witnessCount: 176,
     voiceCount: 62,
@@ -170,7 +170,7 @@ export const studioProjectsAll: StudioProjectCard[] = [
     id: "kaze-no-eki",
     title: "風の駅",
     genres: "アドベンチャー",
-    phase: "試作版",
+    phase: "試作ver",
     image: "/images/landing/game-5.png",
     witnessCount: 19,
     voiceCount: 5,
@@ -182,7 +182,7 @@ export const studioProjectsAll: StudioProjectCard[] = [
     id: "yoru-no-tegami",
     title: "夜明けの手紙",
     genres: "ミステリー・短編",
-    phase: "試作版",
+    phase: "試作ver",
     image: "/images/landing/game-1.png",
     witnessCount: 8,
     voiceCount: 2,
@@ -207,11 +207,11 @@ export function isStudioMockProjectId(id: string): boolean {
 
 export function phaseBadgeClass(phase: StudioProjectPhase): string {
   switch (phase) {
-    case "試作版":
+    case "試作ver":
       return "bg-sky-600/90 text-white";
-    case "プレイ可能版":
+    case "プレイ可能ver":
       return "bg-emerald-600/90 text-white";
-    case "通しプレイ版":
+    case "通しプレイver":
       return "bg-violet-600/90 text-white";
     case "公開準備中":
       return "bg-orange-500/90 text-white";
@@ -219,7 +219,7 @@ export function phaseBadgeClass(phase: StudioProjectPhase): string {
       return "bg-zinc-600/90 text-zinc-100";
     case "アーカイブ":
       return "bg-zinc-700/90 text-zinc-300";
-    case "正式版":
+    case "正式ver":
       return "bg-amber-500/90 text-white";
   }
 }

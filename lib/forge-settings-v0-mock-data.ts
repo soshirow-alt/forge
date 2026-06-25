@@ -30,9 +30,9 @@ export const forgeNotificationPlayerItems: SettingsToggleItem[] = [
 export const forgeNotificationStudioItems: SettingsToggleItem[] = [
   { id: "new-voice", label: "新しいフィードバック", description: "作品にフィードバックが届いたとき", enabled: true },
   { id: "witness", label: "見届け人の増加", description: "見届け人が増えたとき", enabled: true },
-  { id: "version-play", label: "最新版のプレイ", description: "公開中の版がプレイされたとき", enabled: true },
+  { id: "version-play", label: "最新verのプレイ", description: "公開中のverがプレイされたとき", enabled: true },
   { id: "devlog-reaction", label: "Devlog の反応", description: "開発ログに反応があったとき", enabled: true },
-  { id: "release", label: "正式版関連", description: "正式版公開・Reopen の記録", enabled: true },
+  { id: "release", label: "正式ver関連", description: "正式ver公開・Reopen の記録", enabled: true },
 ];
 
 export const forgeSettingsSections: ForgeSettingsSection[] = [
@@ -65,7 +65,7 @@ export const forgeSettingsSections: ForgeSettingsSection[] = [
     items: [
       { id: "dev-profile", label: "開発者プロフィールを公開", description: "作品ページから辿れる", enabled: true },
       { id: "follower-list", label: "フォロワー一覧を公開", description: "Studio マイページに表示", enabled: true },
-      { id: "activity-log", label: "活動履歴を公開", description: "投稿・Devlog・正式版の履歴", enabled: true },
+      { id: "activity-log", label: "活動履歴を公開", description: "投稿・Devlog・正式verの履歴", enabled: true },
     ],
   },
 ];

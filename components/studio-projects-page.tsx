@@ -3,13 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { StudioOwnedProjectsSection } from "@/components/studio-owned-projects-section";
 import { StudioPreviewSampleBanner } from "@/components/studio-preview-sample-banner";
 import {
   StudioFilterPills,
   StudioInlineSelect,
-  StudioShell,
 } from "@/components/studio-shell";
 import { ViewModeToggle, type ViewMode } from "@/components/view-mode-toggle";
 import {
@@ -91,7 +88,7 @@ function ProjectGridCard({ project }: { project: StudioProjectCard }) {
         <div className="mt-auto flex items-end justify-between gap-2 pt-4">
           <div className="min-w-0 text-xs text-zinc-500">
             <p>
-              最新版{" "}
+              最新ver{" "}
               <span className="text-zinc-300">{project.version ?? "—"}</span>
             </p>
             <p className="mt-0.5">最終更新：{project.updatedLabel}</p>
@@ -138,7 +135,7 @@ function ProjectListRow({ project }: { project: StudioProjectCard }) {
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-400">
           <span>見届け人数 {formatStat(project.witnessCount)}</span>
           <span>フィードバック数 {formatStat(project.voiceCount)}</span>
-          <span>最新版 {project.version ?? "—"}</span>
+          <span>最新ver {project.version ?? "—"}</span>
           <span>最終更新 {project.updatedLabel}</span>
         </div>
       </div>
@@ -173,9 +170,7 @@ function NewProjectCard({ compact }: { compact?: boolean }) {
   );
 }
 
-export function StudioProjectsPage() {
-  const searchParams = useSearchParams();
-  const initialQuery = searchParams.get("q") ?? "";
+export function StudioProjectsTabPanel({ initialQuery = "" }: { initialQuery?: string }) {
   const [query, setQuery] = useState(initialQuery);
   const [phase, setPhase] = useState("all");
   const [sortId, setSortId] = useState<StudioSortId>("updated-desc");
@@ -207,25 +202,20 @@ export function StudioProjectsPage() {
   );
 
   return (
-    <StudioShell activeNav="projects" headerSearchDefault={initialQuery}>
-      <div className="mx-auto max-w-7xl space-y-6">
-        <StudioOwnedProjectsSection variant="list" />
-
-        <div className="flex flex-wrap items-start justify-between gap-4 border-t border-zinc-800/80 pt-8">
-          <div>
-            <h1 className="text-2xl font-bold text-white sm:text-3xl">サンプル作品一覧</h1>
-            <p className="mt-2 text-sm text-zinc-400">
-              Preview 用の架空作品です。UI の見た目確認専用です。
-            </p>
-          </div>
-          <Link
-            href="/submit"
-            className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-violet-500"
-          >
-            <Plus className="size-4" aria-hidden="true" />
-            新しい作品を投稿
-          </Link>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white sm:text-3xl">プロジェクト一覧</h1>
+          <p className="mt-2 text-sm text-zinc-400">あなたの作品を管理し、Studio で改善ループを回します。</p>
         </div>
+        <Link
+          href="/submit"
+          className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-violet-500"
+        >
+          <Plus className="size-4" aria-hidden="true" />
+          新しい作品を投稿
+        </Link>
+      </div>
 
         <StudioPreviewSampleBanner compact />
 
@@ -335,7 +325,6 @@ export function StudioProjectsPage() {
             </button>
           </nav>
         )}
-      </div>
-    </StudioShell>
+    </div>
   );
 }

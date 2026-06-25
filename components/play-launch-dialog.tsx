@@ -46,7 +46,7 @@ export function PlayLaunchDialog({
           className="text-lg font-semibold tracking-tight text-zinc-50"
         >
           {hasAdoptionContext
-            ? `版 ${adoptionContext!.publishedVersion} をプレイ`
+            ? `ver ${adoptionContext!.publishedVersion} をプレイ`
             : "ゲームを起動します"}
         </h2>
 

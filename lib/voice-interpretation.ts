@@ -11,7 +11,7 @@ export function interpretVoiceAggregate(
   aggregate: VoicePromptAggregate,
 ): string[] {
   if (aggregate.totalResponses === 0) {
-    return ["この版ではまだ回答が届いていません。"];
+    return ["このverではまだ回答が届いていません。"];
   }
 
   const lines: string[] = [];
@@ -54,7 +54,7 @@ export function interpretVoiceAggregate(
         );
       } else {
         lines.push(
-          `継続意向は控えめ。次版で「戻る理由」を作る改善が有効かもしれません。`,
+          `継続意向は控えめ。次verで「戻る理由」を作る改善が有効かもしれません。`,
         );
       }
       break;

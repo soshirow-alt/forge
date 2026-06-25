@@ -54,7 +54,7 @@ export type StudioVersionItem = {
 };
 
 export type StudioReleaseState = {
-  phase: "開発中" | "正式版";
+  phase: "開発中" | "正式ver";
   releasedAt?: string;
   history: { id: string; label: string; date: string }[];
 };
@@ -101,7 +101,7 @@ export const studioDeepFeedbacks: StudioDeepFeedback[] = [
     date: "2025/06/10",
     good: "探索のテンポが良い",
     concern: "マップが少し分かりにくい",
-    freeform: "次の版でもう少し灯りの演出が欲しい",
+    freeform: "次のverでもう少し灯りの演出が欲しい",
     status: "unread",
   },
   {
@@ -129,7 +129,7 @@ export const studioAggregatedSections: StudioAggregatedSection[] = [
     count: 12,
     percent: 27,
     summary: "チュートリアルとマップの分かりやすさ",
-    interpretation: "約3割が導線の不明瞭さを感じている。次版で目印追加を検討。",
+    interpretation: "約3割が導線の不明瞭さを感じている。次verで目印追加を検討。",
   },
   {
     id: "negative",
@@ -189,19 +189,26 @@ export const studioReleaseState: StudioReleaseState = {
 
 export const studioProjectTabs = [
   { id: "overview", label: "概要" },
-  { id: "voices-raw", label: "フィードバックを見る" },
-  { id: "voices-agg", label: "みんなのフィードバック" },
-  { id: "devlog", label: "Devlog" },
-  { id: "versions", label: "バージョン" },
-  { id: "release", label: "正式版" },
+  { id: "voices", label: "みんなのフィードバック" },
+  { id: "versions", label: "verの履歴" },
 ] as const;
 
 export type StudioProjectTabId = (typeof studioProjectTabs)[number]["id"];
+
+const studioProjectTabAliases: Record<string, StudioProjectTabId> = {
+  "voices-raw": "voices",
+  "voices-agg": "voices",
+  devlog: "versions",
+  release: "versions",
+};
 
 export function parseStudioProjectTab(param: string | null): StudioProjectTabId {
   const ids = studioProjectTabs.map((t) => t.id);
   if (param && ids.includes(param as StudioProjectTabId)) {
     return param as StudioProjectTabId;
+  }
+  if (param && param in studioProjectTabAliases) {
+    return studioProjectTabAliases[param];
   }
   return "overview";
 }

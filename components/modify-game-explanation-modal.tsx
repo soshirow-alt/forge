@@ -53,7 +53,7 @@ export function ModifyGameExplanationModal({
             プレイヤーの回答を参考に、あなたの開発環境でゲームを修正してください。
           </p>
           <p>
-            修正が終わったらForgeに戻り、変更内容を記録して新版を公開しましょう。
+            修正が終わったらForgeに戻り、変更内容を記録して新verを公開しましょう。
           </p>
         </div>
 

@@ -23,7 +23,7 @@ export function projectFeedbackReadKey(
   return `${NURTURE_PERSISTENCE_TABLES.project_feedback_reads}:${projectId}:${feedbackId}`;
 }
 
-/** 現行版 voice の読了（projectId + playableVersion） */
+/** 現行ver voice の読了（projectId + playableVersion） */
 export function projectVoiceReadKey(
   projectId: string,
   versionKey: string,

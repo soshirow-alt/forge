@@ -74,7 +74,7 @@ export function buildPlayHistoryRelationshipBadges(input: {
   }
 
   if (input.distinctVersionsPlayed >= 2) {
-    badges.push({ id: "multi-version", emoji: "🎮", label: "複数版プレイ" });
+    badges.push({ id: "multi-version", emoji: "🎮", label: "複数verプレイ" });
   }
 
   if (badges.length === 0 && input.hasPlayed) {
@@ -89,13 +89,13 @@ function countDistinctVersions(sessions: ProjectPlaySession[]): number {
 }
 
 function playSessionLabel(session: ProjectPlaySession): string {
-  return `版 ${session.versionKey} をプレイ`;
+  return `ver ${session.versionKey} をプレイ`;
 }
 
 function devlogEventLabel(devlog: DevlogEntry): string {
   const version = devlog.publishedVersion?.trim();
   if (version) {
-    return `版 ${version} が公開されました`;
+    return `ver ${version} が公開されました`;
   }
 
   return "新バージョンが公開されました";
@@ -103,10 +103,10 @@ function devlogEventLabel(devlog: DevlogEntry): string {
 
 function playerReleaseTimelineLabel(event: ProjectReleaseEvent): string {
   if (event.eventType === "released") {
-    return "正式版になりました";
+    return "正式verになりました";
   }
 
-  return "正式版が再調整されました";
+  return "正式verが再調整されました";
 }
 
 export function buildPlayHistoryTimelineEvents(input: {

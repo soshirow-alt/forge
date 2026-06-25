@@ -14,13 +14,13 @@ export const WITNESS_TIER_DEFINITIONS: readonly WitnessTier[] = [
     level: 0,
     minProjects: 1,
     label: "見届け人",
-    summary: "正式版まで見届けた作品があります",
+    summary: "正式verまで見届けた作品があります",
   },
   {
     level: 1,
     minProjects: 3,
     label: "見届け人 Silver",
-    summary: "複数の作品の正式版を見届けてきました",
+    summary: "複数の作品の正式verを見届けてきました",
   },
   {
     level: 2,

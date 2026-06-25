@@ -15,7 +15,6 @@ export const profileSelfMock = {
   level: 8,
   avatar: "/images/landing/game-4.png",
   bio: "インディーゲームが大好きです。開発中の作品にフィードバックして、一緒に育てるのが楽しみ。RPGとストーリー重視作品が特に好き。",
-  location: "日本・東京",
   joinedAt: "2024/12/10",
   lastLogin: "たった今",
   stats: {

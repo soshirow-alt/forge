@@ -1,5 +1,5 @@
 /**
- * shadow A/B — 新版公開後の voice_adoptions をオーナー向けに一覧（FP レビュー用）。
+ * shadow A/B — 新ver公開後の voice_adoptions をオーナー向けに一覧（FP レビュー用）。
  *
  * Usage:
  *   npm run shadow:adoption-review -- <devlogId>

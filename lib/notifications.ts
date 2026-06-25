@@ -30,7 +30,7 @@ export function getNotificationTypeLabel(type: NotificationType): string {
     case "devlog":
       return "開発日誌";
     case "version_published":
-      return "新しいプレイ可能版";
+      return "新しいプレイ可能ver";
   }
 }
 
@@ -50,7 +50,7 @@ export function createNotificationMessage(
     case "devlog":
       return `「${projectTitle}」が更新されました — 開発ログを公開`;
     case "version_published":
-      return `「${projectTitle}」の新しいプレイ可能版が公開されました — 再プレイして回答できます`;
+      return `「${projectTitle}」の新しいプレイ可能verが公開されました — 再プレイして回答できます`;
   }
 }
 
@@ -68,7 +68,7 @@ export function getNotificationActionHint(type: NotificationType): string {
     case "devlog":
       return "開発の歩みを見る →";
     case "version_published":
-      return "新版を確認して再プレイ →";
+      return "新verを確認して再プレイ →";
   }
 }
 
@@ -76,7 +76,7 @@ export function createVersionPublishedMessage(
   projectTitle: string,
   publishedVersion: string,
 ): string {
-  return `「${projectTitle}」のプレイ可能版 ${publishedVersion} が公開されました。もう一度プレイして、新しい版向けに回答できます。`;
+  return `「${projectTitle}」のプレイ可能ver ${publishedVersion} が公開されました。もう一度プレイして、新しいver向けに回答できます。`;
 }
 
 export function sortNotificationsNewestFirst(

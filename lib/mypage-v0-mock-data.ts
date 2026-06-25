@@ -589,7 +589,7 @@ export const allAchievements: AchievementItem[] = [
   ...recentAchievements,
   {
     id: "a6",
-    title: "初版見届け人",
+    title: "初ver見届け人",
     description: "v0.1から作品を見届けた",
     emoji: "🏁",
     earned: true,

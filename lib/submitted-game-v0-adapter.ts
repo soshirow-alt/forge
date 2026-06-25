@@ -39,16 +39,16 @@ export function gameToDetailV0(game: Game): GameDetailV0 {
     lastUpdated: game.lastUpdated,
     watching: false,
     saved: false,
-    introduction: game.description || `${game.title}のテストプレイ版です。`,
+    introduction: game.description || `${game.title}のテストプレイverです。`,
     features: tags.slice(0, 4).map((tag) => ({
       title: tag,
       description: `${game.title}の特徴のひとつ`,
     })),
     developerWorry:
       game.focusNotes?.trim() ||
-      "この版を遊んだ感想や、気になった点を教えてください。",
+      "このverを遊んだ感想や、気になった点を教えてください。",
     wantedVoices: [
-      "この版は全体の雰囲気はいかがでしたか？",
+      "このverは全体の雰囲気はいかがでしたか？",
       "もう一度遊びたいと思いましたか？",
     ],
     relatedTags: tags,

@@ -34,7 +34,7 @@ export function VersionPromptEditor({
   onModeChange,
   drafts,
   onDraftsChange,
-  versionLabel = "現在のプレイ可能版",
+  versionLabel = "現在のプレイ可能ver",
   showValidation = false,
 }: VersionPromptEditorProps) {
   const activeCount = drafts.filter((draft) => draft.promptText.trim()).length;

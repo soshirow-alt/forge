@@ -2,22 +2,27 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { PlayerShell } from "@/components/player-shell";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { ProfileAvatarPicker } from "@/components/profile-avatar-picker";
+import { StudioShell } from "@/components/studio-shell";
 import { V0SimpleModal } from "@/components/v0-simple-modal";
 import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
-import { profileSelfMock } from "@/lib/profile-v0-mock-data";
+import {
+  STUDIO_DEVELOPMENT_GENRE_MAX,
+  studioDeveloperSelfProfile,
+} from "@/lib/studio-developer-profile-v0-mock-data";
 import { Pencil, Sparkles } from "lucide-react";
 
-export function ProfileSelfV0Page() {
-  const [profile, setProfile] = useState(profileSelfMock);
+export function StudioProfileSelfPage() {
+  const [profile, setProfile] = useState(studioDeveloperSelfProfile);
   const [editing, setEditing] = useState(false);
+  const [genreLimitMessage, setGenreLimitMessage] = useState<string | null>(null);
   const [draft, setDraft] = useState({
     displayName: profile.displayName,
     bio: profile.bio,
     avatar: profile.avatar,
     favoriteGenres: [...profile.favoriteGenres],
+    developmentGenres: [...profile.developmentGenres],
   });
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
@@ -27,17 +32,39 @@ export function ProfileSelfV0Page() {
       bio: profile.bio,
       avatar: profile.avatar,
       favoriteGenres: [...profile.favoriteGenres],
+      developmentGenres: [...profile.developmentGenres],
     });
+    setGenreLimitMessage(null);
     setEditing(true);
   }
 
-  function toggleGenre(genre: string) {
+  function toggleFavoriteGenre(genre: string) {
     setDraft((current) => ({
       ...current,
       favoriteGenres: current.favoriteGenres.includes(genre)
         ? current.favoriteGenres.filter((value) => value !== genre)
         : [...current.favoriteGenres, genre],
     }));
+  }
+
+  function toggleDevelopmentGenre(genre: string) {
+    setGenreLimitMessage(null);
+    setDraft((current) => {
+      if (current.developmentGenres.includes(genre)) {
+        return {
+          ...current,
+          developmentGenres: current.developmentGenres.filter((value) => value !== genre),
+        };
+      }
+      if (current.developmentGenres.length >= STUDIO_DEVELOPMENT_GENRE_MAX) {
+        setGenreLimitMessage(`開発ジャンルは${STUDIO_DEVELOPMENT_GENRE_MAX}つまでです。`);
+        return current;
+      }
+      return {
+        ...current,
+        developmentGenres: [...current.developmentGenres, genre],
+      };
+    });
   }
 
   function saveProfile() {
@@ -51,13 +78,15 @@ export function ProfileSelfV0Page() {
       bio: draft.bio.trim() || current.bio,
       avatar: draft.avatar,
       favoriteGenres: draft.favoriteGenres.length > 0 ? draft.favoriteGenres : current.favoriteGenres,
+      developmentGenres:
+        draft.developmentGenres.length > 0 ? draft.developmentGenres : current.developmentGenres,
     }));
     setEditing(false);
     setSaveMessage("プロフィールを更新しました（preview mock）。");
   }
 
   return (
-    <PlayerShell>
+    <StudioShell activeNav="profile">
       {editing && (
         <V0SimpleModal title="プロフィールを編集" onClose={() => setEditing(false)} size="lg">
           <div className="space-y-4">
@@ -66,11 +95,11 @@ export function ProfileSelfV0Page() {
               onChange={(avatar) => setDraft((current) => ({ ...current, avatar }))}
             />
             <div>
-              <label className="block text-xs font-medium text-zinc-500" htmlFor="profile-name">
+              <label className="block text-xs font-medium text-zinc-500" htmlFor="studio-profile-name">
                 表示名
               </label>
               <input
-                id="profile-name"
+                id="studio-profile-name"
                 type="text"
                 value={draft.displayName}
                 onChange={(event) =>
@@ -80,11 +109,11 @@ export function ProfileSelfV0Page() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-500" htmlFor="profile-bio">
+              <label className="block text-xs font-medium text-zinc-500" htmlFor="studio-profile-bio">
                 自己紹介
               </label>
               <textarea
-                id="profile-bio"
+                id="studio-profile-bio"
                 rows={4}
                 value={draft.bio}
                 onChange={(event) =>
@@ -94,23 +123,53 @@ export function ProfileSelfV0Page() {
               />
             </div>
             <fieldset>
-              <legend className="text-xs font-medium text-zinc-500">好きなジャンル</legend>
+              <legend className="text-xs font-medium text-zinc-500">
+                開発ジャンル（{STUDIO_DEVELOPMENT_GENRE_MAX}つまで）
+              </legend>
+              <p className="mt-1 text-[11px] text-zinc-600">
+                開発者を探すの絞り込みに使われます。
+              </p>
               <div className="mt-2 max-h-32 overflow-y-auto rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-2">
                 <div className="flex flex-wrap gap-2">
-                {FORGE_GENRE_OPTIONS.map((genre) => (
-                  <button
-                    key={genre}
-                    type="button"
-                    onClick={() => toggleGenre(genre)}
-                    className={`rounded-full border px-3 py-1 text-xs transition-colors ${
-                      draft.favoriteGenres.includes(genre)
-                        ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
-                        : "border-zinc-700 text-zinc-500 hover:border-zinc-600"
-                    }`}
-                  >
-                    {genre}
-                  </button>
-                ))}
+                  {FORGE_GENRE_OPTIONS.map((genre) => (
+                    <button
+                      key={genre}
+                      type="button"
+                      onClick={() => toggleDevelopmentGenre(genre)}
+                      className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                        draft.developmentGenres.includes(genre)
+                          ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
+                          : "border-zinc-700 text-zinc-500 hover:border-zinc-600"
+                      }`}
+                    >
+                      {genre}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {genreLimitMessage && (
+                <p className="mt-2 text-xs text-amber-300">{genreLimitMessage}</p>
+              )}
+            </fieldset>
+            <fieldset>
+              <legend className="text-xs font-medium text-zinc-500">好きなジャンル</legend>
+              <p className="mt-1 text-[11px] text-zinc-600">プレイヤーとしての嗜好（公開プロフィール用）。</p>
+              <div className="mt-2 max-h-32 overflow-y-auto rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-2">
+                <div className="flex flex-wrap gap-2">
+                  {FORGE_GENRE_OPTIONS.map((genre) => (
+                    <button
+                      key={genre}
+                      type="button"
+                      onClick={() => toggleFavoriteGenre(genre)}
+                      className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                        draft.favoriteGenres.includes(genre)
+                          ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
+                          : "border-zinc-700 text-zinc-500 hover:border-zinc-600"
+                      }`}
+                    >
+                      {genre}
+                    </button>
+                  ))}
                 </div>
               </div>
             </fieldset>
@@ -166,6 +225,7 @@ export function ProfileSelfV0Page() {
                   Lv.{profile.level}
                 </span>
               </div>
+              <p className="mt-1 text-sm text-zinc-500">@{profile.handle}</p>
               <p className="mt-3 text-sm leading-relaxed text-zinc-400">{profile.bio}</p>
               <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-zinc-500 sm:justify-start">
                 <span>Forge参加 {profile.joinedAt}</span>
@@ -176,10 +236,10 @@ export function ProfileSelfV0Page() {
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { label: "送ったFB", value: profile.stats.feedbackCount },
-              { label: "共感された回数", value: profile.stats.voicesReceived },
-              { label: "フォロー中開発者", value: profile.stats.followingDevelopers },
-              { label: "見届け中", value: profile.stats.witnessingGames },
+              { label: "作品数", value: profile.stats.projectCount },
+              { label: "届いたFB", value: profile.stats.feedbackReceived },
+              { label: "見届け人累計", value: profile.stats.witnessTotal },
+              { label: "Devlog", value: profile.stats.devlogCount },
             ].map((stat) => (
               <div
                 key={stat.label}
@@ -198,6 +258,21 @@ export function ProfileSelfV0Page() {
             <p className="mt-3 text-sm leading-relaxed text-zinc-400">{profile.bio}</p>
           </section>
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
+            <h3 className="text-sm font-semibold text-white">
+              開発ジャンル（{STUDIO_DEVELOPMENT_GENRE_MAX}つまで）
+            </h3>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {profile.developmentGenres.map((genre) => (
+                <span
+                  key={genre}
+                  className="rounded-md border border-violet-500/30 bg-violet-500/10 px-2.5 py-1 text-xs text-violet-200"
+                >
+                  {genre}
+                </span>
+              ))}
+            </div>
+          </section>
+          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
             <h3 className="text-sm font-semibold text-white">好きなジャンル</h3>
             <div className="mt-3 flex flex-wrap gap-2">
               {profile.favoriteGenres.map((genre) => (
@@ -211,21 +286,8 @@ export function ProfileSelfV0Page() {
             </div>
           </section>
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-            <h3 className="text-sm font-semibold text-white">よく使うタグ</h3>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {profile.frequentTags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-md border border-violet-500/20 bg-violet-500/5 px-2.5 py-1 text-xs text-violet-200"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </section>
-          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
             <h3 className="text-sm font-semibold text-white">ハイライト実績</h3>
-            <div className="mt-4 grid grid-cols-4 gap-3">
+            <div className="mt-4 grid grid-cols-3 gap-3">
               {profile.highlightBadges.map((badge) => (
                 <div key={badge.id} className="text-center">
                   <span className="mx-auto flex size-12 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800/60 text-lg">
@@ -236,7 +298,7 @@ export function ProfileSelfV0Page() {
               ))}
             </div>
             <Link
-              href="/mypage?tab=achievements"
+              href="/studio/mypage?tab=achievements"
               className="mt-4 inline-block text-xs text-violet-400 transition-colors hover:text-violet-300"
             >
               すべて見る →
@@ -248,10 +310,10 @@ export function ProfileSelfV0Page() {
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-white">最近の活動</h3>
             <Link
-              href="/mypage?tab=feedback"
+              href="/studio/mypage?tab=projects"
               className="text-xs text-violet-400 transition-colors hover:text-violet-300"
             >
-              すべて見る
+              プロジェクト一覧
             </Link>
           </div>
           <ul className="mt-4 divide-y divide-zinc-800/80">
@@ -270,6 +332,6 @@ export function ProfileSelfV0Page() {
           </ul>
         </section>
       </div>
-    </PlayerShell>
+    </StudioShell>
   );
 }

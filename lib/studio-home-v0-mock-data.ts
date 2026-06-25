@@ -58,7 +58,7 @@ export const studioActivities: StudioActivityItem[] = [
   {
     id: "act-3",
     type: "play",
-    title: "最新版がプレイされました",
+    title: "最新verがプレイされました",
     description: "「星灯の旅路」v0.4.0 が 12回プレイされました",
     timeLabel: "昨日",
     badge: 12,
@@ -166,7 +166,7 @@ export const devHintCards: DevHintCard[] = [
     title: "見届け人が増えやすい作品の共通点",
     tips: [
       "サムネとタイトルで世界観が一瞬で伝わる",
-      "初版から短くプレイできる導線がある",
+      "verごとに「いま聞きたいこと」がはっきり書いてある",
       "Devlog で更新の理由を丁寧に伝えている",
     ],
   },
@@ -174,17 +174,9 @@ export const devHintCards: DevHintCard[] = [
     id: "hint-2",
     title: "初回フィードバックが集まりやすい Devlog の書き方",
     tips: [
-      "今回の版で試したいことを1つに絞る",
-      "プレイヤーへの問いを版の意図とセットで書く",
-      "変更点より「何を感じてほしいか」を先に書く",
-    ],
-  },
-  {
-    id: "hint-3",
-    title: "今週の Forge Tips",
-    tips: [
-      "フィードバックは増やすより、届いた内容を次の版に活かすサイクルを回す",
-      "正式版はゴールではなく、育てた記録の区切りとして公開する",
+      "今回のverで試したいことを端的に示す",
+      "プレイヤーへの問いをverの意図とセットで書く",
+      "どういう意図の変更か明確にする",
     ],
   },
 ];

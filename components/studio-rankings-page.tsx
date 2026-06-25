@@ -226,7 +226,7 @@ export function StudioRankingsPage() {
               絶対数と成長率の両方を加味します（目安: 絶対数 7 : 成長率 3）。
             </p>
             <p className="mt-3 text-xs leading-relaxed text-zinc-600">
-              投稿数・更新数・正式版公開数だけでは評価しません。
+              投稿数・更新数・正式ver公開数だけでは評価しません。
             </p>
           </section>
 

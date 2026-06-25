@@ -8,12 +8,12 @@ export function buildPlayerUpdateHeadline(input: {
   if (input.isVersionPublish) {
     const version = input.publishedVersion?.trim();
     if (version) {
-      return `版 ${version} が公開されました`;
+      return `ver ${version} が公開されました`;
     }
     return "新バージョンが公開されました";
   }
 
-  return "プレイした版の続きが公開されました";
+  return "プレイしたverの続きが公開されました";
 }
 
 export function buildPlayerUpdateBadgeLabel(input: {

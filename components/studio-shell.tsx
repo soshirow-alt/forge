@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
   ChevronDown,
@@ -14,13 +14,13 @@ import { useAuth } from "@/components/auth-provider";
 
 const primaryLinks = [
   { id: "home", href: "/studio", label: "ホーム" },
-  { id: "projects", href: "/studio/projects", label: "サンプル一覧" },
   { id: "ranking", href: "/studio/rankings", label: "ランキング" },
 ] as const;
 
 export type StudioShellNavId =
   | (typeof primaryLinks)[number]["id"]
   | "mypage"
+  | "profile"
   | "notifications"
   | "settings"
   | "guide";
@@ -37,7 +37,7 @@ function HeaderSearchForm({ defaultValue }: { defaultValue?: string }) {
     event.preventDefault();
     const trimmed = query.trim();
     router.push(
-      trimmed ? `/studio/projects?q=${encodeURIComponent(trimmed)}` : "/studio/projects",
+      trimmed ? `/studio/mypage?q=${encodeURIComponent(trimmed)}` : "/studio/mypage",
     );
   }
 
@@ -55,6 +55,89 @@ function HeaderSearchForm({ defaultValue }: { defaultValue?: string }) {
         className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-500 focus:border-violet-500/40 focus:outline-none focus:ring-1 focus:ring-violet-500/30"
       />
     </form>
+  );
+}
+
+function subNavLinkClass(active: boolean) {
+  return `block rounded-lg px-3 py-2 text-sm transition-colors ${
+    active
+      ? "bg-violet-600/20 font-medium text-violet-200 ring-1 ring-violet-500/30"
+      : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
+  }`;
+}
+
+function isPrimaryLinkActive(linkId: (typeof primaryLinks)[number]["id"], pathname: string): boolean {
+  switch (linkId) {
+    case "home":
+      return pathname === "/studio";
+    case "ranking":
+      return pathname.startsWith("/studio/rankings");
+    default:
+      return false;
+  }
+}
+
+function StudioMypageSidebarGroup() {
+  const pathname = usePathname();
+  const isMypageHub =
+    pathname.startsWith("/studio/mypage") ||
+    pathname.startsWith("/studio/projects") ||
+    (pathname.startsWith("/projects/") && pathname.endsWith("/studio"));
+  const isProfile = pathname === "/studio/profile";
+
+  return (
+    <div className="space-y-1">
+      <Link href="/studio/mypage" className={navLinkClass(isMypageHub)}>
+        マイページ
+      </Link>
+      <Link
+        href="/studio/profile"
+        className={`ml-4 block ${subNavLinkClass(isProfile)}`}
+      >
+        マイプロフィール
+      </Link>
+    </div>
+  );
+}
+
+export function StudioMyPageTabs({
+  activeTab,
+  onTabChange,
+}: {
+  activeTab: string;
+  onTabChange: (tab: "projects" | "achievements") => void;
+}) {
+  const tabs = [
+    { id: "projects", label: "プロジェクト一覧" },
+    { id: "achievements", label: "実績" },
+  ] as const;
+
+  return (
+    <div
+      role="tablist"
+      aria-label="マイページの表示切替"
+      className="flex gap-1 overflow-x-auto border-b border-zinc-800/80 pb-px"
+    >
+      {tabs.map((tab) => {
+        const selected = activeTab === tab.id;
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={selected}
+            onClick={() => onTabChange(tab.id)}
+            className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+              selected
+                ? "border-white text-white"
+                : "border-transparent text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            {tab.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -78,6 +161,7 @@ export function StudioShell({
   notificationBadge?: number;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, hydrated, logout } = useAuth();
 
   function handleLogout() {
@@ -102,7 +186,11 @@ export function StudioShell({
         <nav className="flex min-h-0 flex-1 flex-col px-3 py-4">
           <div className="space-y-1">
             {primaryLinks.map((link) => (
-              <Link key={link.id} href={link.href} className={navLinkClass(activeNav === link.id)}>
+              <Link
+                key={link.id}
+                href={link.href}
+                className={navLinkClass(isPrimaryLinkActive(link.id, pathname))}
+              >
                 {link.label}
               </Link>
             ))}
@@ -110,19 +198,15 @@ export function StudioShell({
 
           <SidebarDivider />
 
-          <div className="space-y-1">
-            <Link href="/studio/profile" className={navLinkClass(activeNav === "mypage")}>
-              マイページ
-            </Link>
-          </div>
+          <StudioMypageSidebarGroup />
 
           <SidebarDivider />
 
           <div className="space-y-1">
-            <Link href="/studio/settings" className={navLinkClass(activeNav === "settings")}>
+            <Link href="/studio/settings" className={navLinkClass(pathname === "/studio/settings")}>
               設定
             </Link>
-            <Link href="/studio/guide" className={navLinkClass(activeNav === "guide")}>
+            <Link href="/studio/guide" className={navLinkClass(pathname === "/studio/guide")}>
               はじめてガイド
             </Link>
           </div>
@@ -147,7 +231,7 @@ export function StudioShell({
           <Link
             href="/studio/profile"
             className="rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
-            aria-label="プロフィール"
+            aria-label="マイプロフィール"
           >
             <User className="size-5" />
           </Link>
@@ -235,11 +319,8 @@ export function StudioProjectTabs({
 }) {
   const tabs = [
     { id: "overview", label: "概要" },
-    { id: "voices-raw", label: "フィードバックを見る" },
-    { id: "voices-agg", label: "みんなのフィードバック" },
-    { id: "devlog", label: "Devlog" },
-    { id: "versions", label: "バージョン" },
-    { id: "release", label: "正式版" },
+    { id: "voices", label: "みんなのフィードバック" },
+    { id: "versions", label: "verの履歴" },
   ] as const;
 
   return (

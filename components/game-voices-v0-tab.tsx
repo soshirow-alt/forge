@@ -125,7 +125,7 @@ export function GameVoicesV0Tab({
 }: {
   gameId: string;
   currentVersion: string;
-  onSendVoice: () => void;
+  onSendVoice?: () => void;
   refreshKey?: number;
 }) {
   const [subTab, setSubTab] = useState<VoiceSubTabId>("received");
@@ -323,6 +323,7 @@ export function GameVoicesV0Tab({
           </div>
         </section>
 
+        {onSendVoice && (
         <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4">
           <div className="flex gap-3">
             <Lightbulb className="size-5 shrink-0 text-violet-400" aria-hidden="true" />
@@ -338,6 +339,7 @@ export function GameVoicesV0Tab({
             フィードバックする
           </button>
         </section>
+        )}
       </aside>
     </div>
   );

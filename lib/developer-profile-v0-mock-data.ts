@@ -97,13 +97,13 @@ const soraProfile: DeveloperProfileV0 = {
   completedGames: [
     {
       id: "seikat-no-tabiji",
-      title: "星灯の旅路 完成版",
+      title: "星灯の旅路 完成ver",
       tags: ["RPG", "完成品"],
       status: "completed",
       witnessCount: 892,
       lastUpdated: "2024/12/01",
       image: "/images/landing/game-1.png",
-      description: "正式リリース版。",
+      description: "正式リリースver。",
     },
   ],
   recentDevlogs: [
@@ -193,7 +193,7 @@ export function getDeveloperProfileV0(id: string): DeveloperProfileV0 {
                 witnessCount: 520,
                 lastUpdated: "2024/11/01",
                 image: fromSearch.gameThumbs[0] ?? "/images/landing/game-1.png",
-                description: "正式版として公開中の作品です。",
+                description: "正式verとして公開中の作品です。",
               },
             ]
           : [],
@@ -204,7 +204,7 @@ export function getDeveloperProfileV0(id: string): DeveloperProfileV0 {
           gameId: "seikat-no-tabiji",
           date: "2025/05/12",
           title: "最新ビルドを公開",
-          excerpt: "フィードバックを反映した更新版です。",
+          excerpt: "フィードバックを反映した更新verです。",
           commentCount: 8,
         },
         {

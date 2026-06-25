@@ -20,12 +20,12 @@ export const studioSelfProfile = {
   milestones: [
     { id: "m1", label: "初めての作品投稿", date: "2024/11/02" },
     { id: "m2", label: "フィードバック 100件到達", date: "2025/03/18" },
-    { id: "m3", label: "初の正式版公開", date: "2025/05/20" },
+    { id: "m3", label: "初の正式ver公開", date: "2025/05/20" },
   ] as StudioProfileMilestone[],
   activity: [
     { id: "a1", label: "「星の記憶」を投稿", date: "2025/01/10" },
     { id: "a2", label: "Devlog「序盤改善」を公開", date: "2025/06/12" },
-    { id: "a3", label: "「夏の向こう側」を正式版公開", date: "2025/05/20" },
+    { id: "a3", label: "「夏の向こう側」を正式ver公開", date: "2025/05/20" },
   ] as StudioProfileMilestone[],
   followers: [
     { id: "f1", name: "ゆき", handle: "yuki_plays", avatar: "/images/landing/game-2.png" },

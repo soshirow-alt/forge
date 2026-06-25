@@ -13,6 +13,7 @@ import {
   useFeedbackFlowLock,
   type FeedbackFlowStep,
 } from "@/components/feedback-v0-modals";
+import { GameDetailOverviewV0Tab } from "@/components/game-detail-overview-v0-tab";
 import { GameDevlogV0Tab } from "@/components/game-devlog-v0-tab";
 import { GameVersionsV0Tab } from "@/components/game-versions-v0-tab";
 import { GameVoicesV0Tab } from "@/components/game-voices-v0-tab";
@@ -33,14 +34,11 @@ import { firstVoiceQuestion } from "@/lib/feedback-v0-mock-data";
 import {
   Bookmark,
   Check,
-  ChevronDown,
   Clock,
-  Compass,
   FileText,
   Heart,
   MessageSquare,
   Play,
-  Sparkles,
   Users,
 } from "lucide-react";
 
@@ -50,7 +48,7 @@ const tabs: { id: DetailTab; label: string }[] = [
   { id: "overview", label: "概要" },
   { id: "devlog", label: "開発ログ" },
   { id: "voices", label: "みんなのフィードバック" },
-  { id: "versions", label: "版の履歴" },
+  { id: "versions", label: "verの履歴" },
 ];
 
 function TagPill({ children }: { children: React.ReactNode }) {
@@ -81,18 +79,6 @@ function StatItem({
   );
 }
 
-function FeatureCard({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4">
-      <div className="flex size-9 items-center justify-center rounded-lg bg-violet-600/15 text-violet-300">
-        <Sparkles className="size-4" aria-hidden="true" />
-      </div>
-      <h3 className="mt-3 text-sm font-semibold text-white">{title}</h3>
-      <p className="mt-1.5 text-xs leading-relaxed text-zinc-500">{description}</p>
-    </div>
-  );
-}
-
 function parseDetailTab(param: string | null): DetailTab {
   if (param === "devlog" || param === "voices" || param === "versions") {
     return param;
@@ -117,7 +103,6 @@ function GameDetailV0PageContent({ id }: { id: string }) {
   const [activeTab, setActiveTab] = useState<DetailTab>(() =>
     parseDetailTab(searchParams.get("tab")),
   );
-  const [introExpanded, setIntroExpanded] = useState(false);
   const [feedbackStep, setFeedbackStep] = useState<FeedbackFlowStep>("closed");
   const [voicesRefreshKey, setVoicesRefreshKey] = useState(0);
   const [watching, setWatching] = useState(game.watching);
@@ -159,11 +144,6 @@ function GameDetailV0PageContent({ id }: { id: string }) {
   );
 
   useFeedbackFlowLock(feedbackStep);
-
-  const introPreview =
-    game.introduction.length > 120 && !introExpanded
-      ? `${game.introduction.slice(0, 120)}…`
-      : game.introduction;
 
   return (
     <PlayerShell>
@@ -329,68 +309,15 @@ function GameDetailV0PageContent({ id }: { id: string }) {
           </div>
 
           {activeTab === "overview" && (
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div className="space-y-6">
-                <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
-                  <h2 className="text-base font-semibold text-white">作品紹介</h2>
-                  <p className="mt-3 text-sm leading-relaxed text-zinc-400">{introPreview}</p>
-                  {game.introduction.length > 120 && (
-                    <button
-                      type="button"
-                      onClick={() => setIntroExpanded((value) => !value)}
-                      className="mt-2 inline-flex items-center gap-1 text-sm text-violet-400 transition-colors hover:text-violet-300"
-                    >
-                      {introExpanded ? "閉じる" : "もっと見る"}
-                      <ChevronDown
-                        className={`size-4 transition-transform ${introExpanded ? "rotate-180" : ""}`}
-                        aria-hidden="true"
-                      />
-                    </button>
-                  )}
-                </section>
-
-                <section>
-                  <h2 className="text-base font-semibold text-white">作品の特徴</h2>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    {game.features.map((feature) => (
-                      <FeatureCard
-                        key={feature.title}
-                        title={feature.title}
-                        description={feature.description}
-                      />
-                    ))}
-                  </div>
-                </section>
-              </div>
-
-              <div className="space-y-6">
-                <section className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-5 sm:p-6">
-                  <h2 className="text-base font-semibold text-white">開発者が聞きたいこと</h2>
-                  <p className="mt-3 text-sm leading-relaxed text-zinc-400">{game.developerWorry}</p>
-                  <h3 className="mt-5 text-sm font-medium text-zinc-300">回答してほしい項目</h3>
-                  <ul className="mt-3 space-y-3">
-                    {game.wantedVoices.map((voice) => (
-                      <li
-                        key={voice}
-                        className="flex items-start gap-3 rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-3 text-sm text-zinc-300"
-                      >
-                        <Compass className="mt-0.5 size-4 shrink-0 text-violet-400" aria-hidden="true" />
-                        {voice}
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    type="button"
-                    onClick={handleFeedback}
-                    className="mt-5 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
-                  >
-                    {hydrated && !isLoggedIn
-                      ? "ログインしてフィードバックする"
-                      : "フィードバックする"}
-                  </button>
-                </section>
-              </div>
-            </div>
+            <GameDetailOverviewV0Tab
+              game={game}
+              onFeedback={handleFeedback}
+              feedbackCtaLabel={
+                hydrated && !isLoggedIn
+                  ? "ログインしてフィードバックする"
+                  : "フィードバックする"
+              }
+            />
           )}
 
           {activeTab === "devlog" && (

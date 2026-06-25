@@ -96,7 +96,7 @@ export function ProjectReleaseStudioPanel({
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-semibold tracking-tight text-zinc-100">
-          正式版として宣言する
+          正式verとして宣言する
         </h2>
         <span className="rounded-full border border-zinc-700 bg-zinc-950/60 px-3 py-1 text-xs font-medium text-zinc-200">
           {RELEASE_STATUS_LABELS[releaseStatus]}
@@ -126,7 +126,7 @@ export function ProjectReleaseStudioPanel({
             onClick={() => void handleReleased()}
             className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            正式版として宣言する
+            正式verとして宣言する
           </button>
 
           {releaseStatus === "released" && (

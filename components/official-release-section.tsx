@@ -22,7 +22,7 @@ function buildReleaseBadges(
     badges.push({ id: "witness", emoji: "🏅", label: "見届け人" });
   }
 
-  badges.push({ id: "official", label: "正式版" });
+  badges.push({ id: "official", label: "正式ver" });
 
   return badges;
 }
@@ -50,10 +50,10 @@ export function OfficialReleaseSection() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold tracking-tight text-zinc-100">
-              正式版に到達した作品
+              正式verに到達した作品
             </h2>
             <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-              プレイした作品のうち、正式版（Released）に到達したものです。
+              プレイした作品のうち、正式ver（Released）に到達したものです。
             </p>
           </div>
           {witnessTier && witnessLoaded ? (
@@ -74,7 +74,7 @@ export function OfficialReleaseSection() {
 
       {showEmpty ? (
         <p className="mt-4 text-sm text-zinc-600">
-          まだ正式版に到達したプレイ作品がありません。
+          まだ正式verに到達したプレイ作品がありません。
         </p>
       ) : hasAnyRelease ? (
         <div className="mt-4">
@@ -103,7 +103,7 @@ export function OfficialReleaseSection() {
                       badges={buildReleaseBadges(release, hasWitnessGrant)}
                       meta={
                         release.firstReleasedLabel
-                          ? `正式版 ${release.firstReleasedLabel}`
+                          ? `正式ver ${release.firstReleasedLabel}`
                           : undefined
                       }
                       detailLabel="詳細 →"

@@ -43,17 +43,17 @@ export function NewPlayableVersionBanner({ game }: NewPlayableVersionBannerProps
       className="mt-4 scroll-mt-24 rounded-xl border border-orange-500/30 bg-gradient-to-br from-orange-500/10 via-zinc-950/40 to-zinc-950/40 px-4 py-4 sm:px-5"
     >
       <p className="text-sm font-semibold text-orange-300">
-        新しいプレイ可能版 {currentVersion} が公開されました
+        新しいプレイ可能ver {currentVersion} が公開されました
       </p>
       <p className="mt-2 text-sm leading-relaxed text-zinc-400">
         {priorVersion ? (
           <>
-            以前の版（{priorVersion}）向けに回答を送っています。もう一度プレイして、版{" "}
+            以前のver（{priorVersion}）向けに回答を送っています。もう一度プレイして、ver{" "}
             {currentVersion} 向けの新しい回答を送れます。
           </>
         ) : (
           <>
-            もう一度プレイして、版 {currentVersion} 向けの質問に答えられます。
+            もう一度プレイして、ver {currentVersion} 向けの質問に答えられます。
           </>
         )}
       </p>

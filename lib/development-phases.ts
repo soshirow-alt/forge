@@ -1,23 +1,23 @@
 export const DEVELOPMENT_PHASE_OPTIONS = [
   {
-    value: "試作版",
+    value: "試作ver",
     hint: "操作感や面白さの確認向け。章やステージの一部だけ遊べる段階",
     playerDescription: "一部だけ遊べます",
   },
   {
-    value: "プレイ可能版",
+    value: "プレイ可能ver",
     hint: "コアは遊べるが、通しではない。主要部分の体験ができる段階",
     playerDescription: "主要部分は遊べますが、通しではありません",
   },
   {
-    value: "通しプレイ版",
+    value: "通しプレイver",
     hint: "最後までクリア可能。バランス・バグ・UX のテスト向け",
     playerDescription: "最後まで遊べます。調整・バグ修正中です",
   },
   {
     value: "公開準備中",
     hint: "ほぼ完成。最終調整と仕上げのテスト向け",
-    playerDescription: "ほぼ完成版に近い体験ができます",
+    playerDescription: "ほぼ完成verに近い体験ができます",
   },
 ] as const;
 
@@ -51,11 +51,11 @@ export function normalizePhase(phase: string): DevelopmentPhase | string {
   }
   if (
     value.includes("通し") ||
-    value.includes("テスト版") ||
+    value.includes("テストver") ||
     value.includes("β") ||
     value.includes("beta")
   ) {
-    return "通しプレイ版";
+    return "通しプレイver";
   }
   if (
     value.includes("プレイ可能") ||
@@ -64,7 +64,7 @@ export function normalizePhase(phase: string): DevelopmentPhase | string {
     value.includes("alpha") ||
     value.includes("early access")
   ) {
-    return "プレイ可能版";
+    return "プレイ可能ver";
   }
   if (
     value.includes("試作") ||
@@ -72,7 +72,7 @@ export function normalizePhase(phase: string): DevelopmentPhase | string {
     value.includes("企画") ||
     value.includes("初期開発")
   ) {
-    return "試作版";
+    return "試作ver";
   }
 
   return phase;

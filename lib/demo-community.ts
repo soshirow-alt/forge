@@ -113,7 +113,7 @@ const DEMO_COMMUNITY: Record<string, DemoCommunityData> = {
     communityComments: [
       {
         id: "aether-c1",
-        text: "雲の海を航海する感覚が新しい。β版でも十分遊べるボリューム。",
+        text: "雲の海を航海する感覚が新しい。βverでも十分遊べるボリューム。",
         funRating: 5,
         date: "2026-05-29",
       },

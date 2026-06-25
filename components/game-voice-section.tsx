@@ -230,7 +230,7 @@ export function GameVoiceSection({
           </h2>
           {adoptionVerifyActive ? (
             <p className="mt-1 text-xs leading-relaxed text-violet-300/80">
-              前回の変更を確かめたあと、新版への感想を教えてください。
+              前回の変更を確かめたあと、新verへの感想を教えてください。
             </p>
           ) : (
             <p className="mt-1 text-xs leading-relaxed text-zinc-600">

@@ -213,8 +213,8 @@ function CurrentStepPanel({
         : activeStepId === "improve"
           ? "Forge外でゲームを直し、終わったら変更を記録します。"
           : activeStepId === "publish"
-            ? "Devlogを書いて、プレイ可能版を公開しましょう。"
-            : "この版のループは一通り完了です。新しいFBが届いたら再開します。";
+            ? "Devlogを書いて、プレイ可能verを公開しましょう。"
+            : "このverのループは一通り完了です。新しいFBが届いたら再開します。";
 
   return (
     <section
@@ -392,14 +392,14 @@ function StudioPlayerFeedbackPanel({
       <div className="mt-4">
         {tab === "quick" && (
           quickFbCount === 0 ? (
-            <p className="text-sm text-zinc-500">この版のかんたんFBはまだありません。</p>
+            <p className="text-sm text-zinc-500">このverのかんたんFBはまだありません。</p>
           ) : (
             <OwnerVoiceResponseList responses={voiceResponses} showToggle={false} />
           )
         )}
         {tab === "detailed" && (
           detailedFbCount === 0 ? (
-            <p className="text-sm text-zinc-500">この版の詳しいFBはまだありません。</p>
+            <p className="text-sm text-zinc-500">このverの詳しいFBはまだありません。</p>
           ) : (
             <NurtureDeepFeedbackSection
               feedbackEntries={feedbackEntries}

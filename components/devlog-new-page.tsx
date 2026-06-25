@@ -42,12 +42,12 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
     if (publishNewVersion) {
       const trimmed = normalizePlayableVersionInput(newVersion);
       if (!trimmed) {
-        setError("新しいプレイ可能版のバージョン名を入力してください。");
+        setError("新しいプレイ可能verのバージョン名を入力してください。");
         setSubmitting(false);
         return;
       }
       if (trimmed === currentVersion) {
-        setError("現在のプレイ可能版と同じバージョン名は使えません。");
+        setError("現在のプレイ可能verと同じバージョン名は使えません。");
         setSubmitting(false);
         return;
       }
@@ -67,7 +67,7 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
   }
 
   return (
-    <StudioShell activeNav="projects">
+    <StudioShell activeNav="mypage">
       <main className="mx-auto max-w-2xl">
         <Link
           href={projectStudioPath(projectId)}
@@ -138,10 +138,10 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
               />
               <span>
                 <span className="block text-sm font-medium text-zinc-300">
-                  今回の更新を新しいプレイ可能版として公開する
+                  今回の更新を新しいプレイ可能verとして公開する
                 </span>
                 <span className="mt-1 block text-xs text-zinc-600">
-                  チェックすると、プレイヤーは新しい版向けに回答を送れるようになります。
+                  チェックすると、プレイヤーは新しいver向けに回答を送れるようになります。
                 </span>
               </span>
             </label>
@@ -152,7 +152,7 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
                   htmlFor="newVersion"
                   className="text-xs font-medium text-zinc-500"
                 >
-                  プレイ可能版のバージョン名
+                  プレイ可能verのバージョン名
                 </label>
                 <input
                   id="newVersion"
@@ -164,7 +164,7 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
                   placeholder="例: 0.2"
                 />
                 <p className="mt-1.5 text-xs text-zinc-600">
-                  現在のプレイ可能版: {currentVersion}
+                  現在のプレイ可能ver: {currentVersion}
                 </p>
               </div>
             )}

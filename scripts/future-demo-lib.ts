@@ -354,7 +354,7 @@ export async function ensureVersionPrompt(
     .insert({
       project_id: projectIdText,
       version_key: versionKey,
-      prompt_text: "この版をプレイした感想を教えてください。",
+      prompt_text: "このverをプレイした感想を教えてください。",
       response_kind: "yes_no",
       options: [
         { value: "yes", label: "はい" },

@@ -38,13 +38,13 @@ export const IMPROVEMENT_LOOP_STEPS: {
     id: "publish",
     number: 4,
     label: "記録・公開する",
-    sublabel: "Devlogと版を公開",
+    sublabel: "Devlogとverを公開",
   },
   {
     id: "wait",
     number: 5,
     label: "次のFBを待つ",
-    sublabel: "この版を完了",
+    sublabel: "このverを完了",
   },
 ];
 

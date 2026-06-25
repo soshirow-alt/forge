@@ -76,7 +76,7 @@ export const STAGING_REJECT_CASES: StagingLabeledCase[] = [
     category: "reject",
     index: 9,
     label: "reject-09 販売",
-    voiceLabel: "Steam版が欲しい",
+    voiceLabel: "Steamverが欲しい",
     devlogTitle: "v0.2 — ゲーム内",
     devlogContent: "新ステージ「氷の洞窟」を追加しました。",
   }),

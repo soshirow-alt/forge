@@ -21,7 +21,7 @@ function KindBadge({ kind }: { kind: GameDevlogEntry["kind"] }) {
   if (kind === "version") {
     return (
       <span className="rounded-md border border-violet-500/30 bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-300">
-        版の更新
+        verの更新
       </span>
     );
   }
@@ -69,7 +69,7 @@ function LatestDevlogCard({
           className="mt-5 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
         >
           <Play className="size-4" aria-hidden="true" />
-          最新版でプレイ
+          最新verでプレイ
         </button>
       )}
     </section>
@@ -138,9 +138,11 @@ function DevlogTimelineItem({
 export function GameDevlogV0Tab({
   gameId,
   onPlayLatest,
+  embedded = false,
 }: {
   gameId: string;
   onPlayLatest?: () => void;
+  embedded?: boolean;
 }) {
   const [filter, setFilter] = useState<DevlogFilterId>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -157,9 +159,10 @@ export function GameDevlogV0Tab({
 
   return (
     <div className="space-y-8">
+      {!embedded && (
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4">
-          <p className="text-xs text-zinc-500">現在の版</p>
+          <p className="text-xs text-zinc-500">現在のver</p>
           <p className="mt-1 flex items-center gap-1.5 text-lg font-bold text-white">
             <GitBranch className="size-4 text-violet-400" aria-hidden="true" />
             {stats.currentVersion}
@@ -177,6 +180,7 @@ export function GameDevlogV0Tab({
           <p className="mt-1 text-lg font-bold text-white">{stats.lastUpdated}</p>
         </div>
       </div>
+      )}
 
       {latest && filter !== "note" && (
         <LatestDevlogCard entry={latest} onPlay={onPlayLatest} />

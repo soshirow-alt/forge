@@ -34,7 +34,7 @@ export function AdoptionVerifyBanner({
           」されました。
         </p>
         <p className="text-zinc-500">
-          版 {context.publishedVersion} で、変わったか確かめに行きましょう。
+          ver {context.publishedVersion} で、変わったか確かめに行きましょう。
         </p>
       </div>
       <button

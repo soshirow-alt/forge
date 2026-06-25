@@ -1,52 +1,60 @@
 ■ 現在の状態
-- ブランチ preview/landing-01。開発者検索の昇降順・ガチャ・ジャンル絞り込みを Preview push 済み（677f37b）
-- 前回 Preview RUN: b575d0e（改善ループ Studio 再構成）
+- ブランチ preview/landing-01。ローカル未 push。build 通過済み
 
 ■ 今回実装したこと
-- `/search/creators` ソート — フォロワー数・作品数で「↓ 多い順」「↑ 少ない順」切替（URL `order=asc`）
-- ガチャボタン — 現在の検索結果から1人をランダム。DeveloperGachaModal で約1.5秒の開封アニメ
-- ジャンル絞り込み — 作品検索と同型のチェックボックス（FORGE_GENRE_OPTIONS）。URL `genre=RPG,アクション`
-- mock 開発者に genres 配列を追加。カードにジャンルタグ表示
+- Studio ゲーム詳細 `/studio/projects/[id]` をプレイヤー `/games/[id]` と同型に再構成
+  - タブ: 概要 / みんなのフィードバック / verの履歴（6タブ→3タブ）
+  - 概要・FB・ver履歴はプレイヤーと同じ v0 コンポーネントを共有
+  - Studio 差分: 概要は編集可（保存ボタン）、FBタブに「フィードバックする」CTAなし、verタブに正式ver操作を統合
+- 新規共有コンポーネント
+  - `GameDetailOverviewV0Tab` — プレイヤー/Studio 共用（editable  prop）
+  - `GameVerHistoryV0Tab` — 開発ログ + ver履歴 + 正式ver（studioMode）
+- ヒーロー — ギャラリー・タグ・stats をプレイヤー詳細に近づけ、「Studioで改善ループ」「プレイヤー視点で見る」リンク追加
+- 旧タブ URL（voices-raw, devlog, release 等）は parse で新タブへマップ
 
 ■ Forge原典コアループ（判断の基準）
-- 発見の幅を広げる。有名集中を避けつつ、遊び心で新しい開発者と出会える導線
+- 開発者もプレイヤーと同じ作品像を見ながら編集する。UI が違いすぎると「別物」に感じて学習ループが途切れる
 
 ■ なぜこの設計
-- 多い順だけだと有名どころに偏る — 少ない順で新参発見も可能に
-- ガチャは完全ランダム（フィルタ後のプール内）。ログイン不要で体験可能
-- ジャンル UI は作品検索 `/search` サイドバーと統一
+- オーナー FB — 共有タブは同じ中身。違いは編集可否と Studio 向け表示だけ
+- Devlog / ver / 正式ver 分割は開発者にとって冗長。1つの「verの履歴」に時系列でまとめる
+- 旧 Studio 独自タブ（生FB一覧・集計FB別タブ）はプレイヤーの「みんなのフィードバック」と役割重複
 
 ■ 他案不採用
-- ガチャを全128人プール — 表示中のみが条件と実装が一致しやすい
+- Studio だけ別 UI を維持 — オーナー指示でプレイヤー同型へ
+- プレイヤー側も devlog+ver 統合 — 今回は Studio のみ（プレイヤーは従来4タブ維持）
 
 ■ スコープ In / Out
-- In: developer-search-v0-page, developer-gacha-modal, developer-search-v0-mock-data, globals.css
-- Out: 本番 deploy、実 Supabase 開発者ジャンル
+- In: studio-project-detail-page, game-detail-overview-v0-tab, game-ver-history-v0-tab, studio-shell tabs, game-voices-v0-tab（onSendVoice 任意化）
+- Out: 実データ編集 API、プレイヤー側タブ統合、本番 deploy
 
 ■ 今回変更した画面
-- 開発者を探す /search/creators
-  - 検索行に「ガチャ」ボタン追加
-  - ソート行に昇降順トグル（おすすめ順では非表示）
-  - 右サイドバーにジャンルチェックボックス
-  - 開発者カードにジャンルタグ
+- Studio プロジェクト詳細 /studio/projects/{id}
+  - 変更前: 6タブ・独自レイアウト・独自FB/devlog/ver/正式ver UI
+  - 変更後: 3タブ・プレイヤー同型ヒーロー+タブ中身。verタブに開発ログ+履歴+正式ver
+  - 確認: 各タブがプレイヤー `/games/{id}` と見た目一致（概要は編集フィールド）
+- プレイヤー作品詳細 /games/{id}
+  - 概要タブのみ共有コンポーネント化（見た目は同じ）
 
 ■ ユーザー目線の変化
-- フォロワー少ない順で埋もれた開発者も見つけやすい
-- ガチャで気軽に1人と出会える
-- 好きなジャンルの開発者だけ絞れる
+- Studio で作品を見たとき「プレイヤーが見ているのと同じページ」+ 編集できると分かる
+- ver 関連情報が1タブに集約され迷わない
 
 ■ 注意事項
-- ジャンル・ガチャは preview mock データのみ
+- 未 commit / 未 push
+- mock プロジェクト id と game detail id のマッピングは resolveGameDetailId 依存
 
 ■ 今すぐ私がやるべきこと
-- Preview RUN 指示で push 後、実機でガチャ・昇降順・ジャンル絞り込みを確認
+- `/studio/projects/hoshino-kioku` と `/games/seikat-no-tabiji` を並べてタブ比較
+- RUN 指示で push
 
 ■ Cursorだけで完了できること
-- Preview push
-- ガチャアニメ polish
+- プレイヤー側も devlog+ver 統合（GO あれば）
+- commit + push（RUN 時）
 
 ■ 次に検討すべきこと
-- 実データ開発者プロフィールのジャンルと検索 API 接続
+- Studio 概要の「公開状態・外部URL」等メタ編集をどこに置くか（改善ループ Studio か概要タブか）
+- 生FB管理（未確認/採用候補）は改善ループ `/projects/{id}/studio` 専用のままか
 
 ■ ChatGPTに相談したい論点
-- ガチャをログイン必須にするか（現状は不要）
+- プレイヤーも devlog+ver を1タブに揃えるべきか（今は Studio のみ統合）

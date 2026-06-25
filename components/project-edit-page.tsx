@@ -117,7 +117,7 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
 
   if (!dataReady) {
     return (
-      <StudioShell activeNav="projects">
+      <StudioShell activeNav="mypage">
         <p className="text-zinc-500">読み込み中...</p>
       </StudioShell>
     );
@@ -129,7 +129,7 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
 
   if (authHydrated && !isProjectOwner(projectId, user?.id)) {
     return (
-      <StudioShell activeNav="projects">
+      <StudioShell activeNav="mypage">
         <main className="mx-auto max-w-2xl">
           <Link
             href={`/games/${projectId}`}
@@ -215,7 +215,7 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
   }
 
   return (
-    <StudioShell activeNav="projects">
+    <StudioShell activeNav="mypage">
       <main className="mx-auto max-w-2xl">
         <Link
           href={projectStudioPath(projectId)}

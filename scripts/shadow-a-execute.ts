@@ -1,5 +1,5 @@
 /**
- * shadow A — テスト voice 投入 → devlog 新版公開 → live matcher → FP レビュー報告
+ * shadow A — テスト voice 投入 → devlog 新ver公開 → live matcher → FP レビュー報告
  *
  * Usage:
  *   npm run shadow:a -- [--project-id <id>]

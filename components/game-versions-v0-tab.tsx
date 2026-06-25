@@ -19,7 +19,7 @@ function LatestVersionCard({
     <section className="rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 to-zinc-900/40 p-5 sm:p-6">
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-full border border-violet-400/40 bg-violet-500/15 px-2.5 py-0.5 text-xs font-semibold text-violet-200">
-          最新版
+          最新ver
         </span>
         <span className="text-sm font-medium text-white">{entry.version}</span>
         <span className="text-xs text-zinc-500">{entry.relativeLabel}</span>
@@ -43,7 +43,7 @@ function LatestVersionCard({
           className="mt-5 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
         >
           <Play className="size-4" aria-hidden="true" />
-          最新版でプレイ
+          最新verでプレイ
         </button>
       )}
     </section>
@@ -116,9 +116,11 @@ function VersionTimelineItem({
 export function GameVersionsV0Tab({
   gameId,
   onPlayLatest,
+  embedded = false,
 }: {
   gameId: string;
   onPlayLatest?: () => void;
+  embedded?: boolean;
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -129,19 +131,20 @@ export function GameVersionsV0Tab({
 
   return (
     <div className="space-y-8">
+      {!embedded && (
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4">
-          <p className="text-xs text-zinc-500">現在の版</p>
+          <p className="text-xs text-zinc-500">現在のver</p>
           <p className="mt-1 flex items-center gap-1.5 text-lg font-bold text-white">
             <GitBranch className="size-4 text-violet-400" aria-hidden="true" />
             {stats.currentVersion}
           </p>
         </div>
         <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4">
-          <p className="text-xs text-zinc-500">公開版数</p>
+          <p className="text-xs text-zinc-500">公開ver数</p>
           <p className="mt-1 flex items-center gap-1.5 text-lg font-bold text-white">
             <History className="size-4 text-violet-400" aria-hidden="true" />
-            {stats.totalVersions}版
+            {stats.totalVersions}ver
           </p>
         </div>
         <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4">
@@ -149,6 +152,7 @@ export function GameVersionsV0Tab({
           <p className="mt-1 text-lg font-bold text-white">{stats.firstPublished}</p>
         </div>
       </div>
+      )}
 
       {latest && <LatestVersionCard entry={latest} onPlay={onPlayLatest} />}
 
@@ -165,7 +169,7 @@ export function GameVersionsV0Tab({
         ))}
         {listEntries.length === 0 && (
           <p className="rounded-2xl border border-dashed border-zinc-800 px-6 py-12 text-center text-sm text-zinc-500">
-            過去の版はありません。
+            過去のverはありません。
           </p>
         )}
       </div>

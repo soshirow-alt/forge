@@ -72,7 +72,7 @@ function PlayHistoryProjectCard({
         <div className="border-t border-zinc-800/80 px-4 py-3">
           {timeline.events.length === 0 ? (
             <p className="text-sm text-zinc-600">
-              次にプレイすると、版ごとの履歴がここに残ります。
+              次にプレイすると、verごとの履歴がここに残ります。
             </p>
           ) : (
             <ol className="space-y-3">
@@ -161,7 +161,7 @@ export function PlayHistorySection() {
           プレイ履歴
         </h2>
         <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-          閉じた状態では関わり方、開くと版ごとの履歴が時系列で見られます。
+          閉じた状態では関わり方、開くとverごとの履歴が時系列で見られます。
         </p>
       </div>
 

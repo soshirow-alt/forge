@@ -1,6 +1,6 @@
 import { resolvePlayableVersion } from "@/lib/playable-version";
 
-/** 現行プレイ可能版向けの voice シグナル（studio / my-projects 用） */
+/** 現行プレイ可能ver向けの voice シグナル（studio / my-projects 用） */
 export type ProjectVoiceNurtureSignal = {
   projectId: string;
   playableVersion: string;

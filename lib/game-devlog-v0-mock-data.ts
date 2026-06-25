@@ -146,7 +146,7 @@ export function getDevlogFilterTabs(entries: GameDevlogEntry[]) {
   const noteCount = entries.filter((e) => e.kind === "note").length;
   return [
     { id: "all" as const, label: "すべて", count: entries.length },
-    { id: "version" as const, label: "版の更新", count: versionCount },
+    { id: "version" as const, label: "verの更新", count: versionCount },
     { id: "note" as const, label: "開発メモ", count: noteCount },
   ];
 }

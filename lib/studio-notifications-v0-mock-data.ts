@@ -48,7 +48,7 @@ export const studioNotifications: StudioNotificationItem[] = [
   {
     id: "sn-3",
     kind: "version_play",
-    title: "最新版がプレイされました",
+    title: "最新verがプレイされました",
     body: "v0.4.0 が 12回プレイされました。",
     projectTitle: "星灯の旅路",
     projectId: "seito-no-tabiji",
@@ -70,8 +70,8 @@ export const studioNotifications: StudioNotificationItem[] = [
   {
     id: "sn-5",
     kind: "release",
-    title: "正式版の反応",
-    body: "正式版公開後、見届け人が増え続けています。",
+    title: "正式verの反応",
+    body: "正式ver公開後、見届け人が増え続けています。",
     projectTitle: "夏の向こう側",
     projectId: "natsu-no-mukougawa",
     timeLabel: "3日前",

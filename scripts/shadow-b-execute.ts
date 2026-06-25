@@ -1,5 +1,5 @@
 /**
- * shadow B — 実運用寄せ voice mix → devlog 新版公開 → live matcher → FP レビュー
+ * shadow B — 実運用寄せ voice mix → devlog 新ver公開 → live matcher → FP レビュー
  *
  * mix: direct 2 / indirect 3 / reject 5（計 10）
  *
@@ -464,7 +464,7 @@ async function main() {
       if (unrelated) {
         legacyFpRows.push({
           voice: label,
-          reason: "旧版 voice が今回 devlog と無関係に見える",
+          reason: "旧ver voice が今回 devlog と無関係に見える",
           summary: row.update_summary,
         });
       }

@@ -13,13 +13,13 @@ export const mockDevlogs: DevlogEntry[] = [
     projectId: "emberfall",
     title: "戦闘プロトタイプを公開",
     content:
-      "剣戟コンボと回避アクションの初期版を実装しました。プレイヤーの回答をお待ちしています。",
+      "剣戟コンボと回避アクションの初期verを実装しました。プレイヤーの回答をお待ちしています。",
     date: "2026-06-01",
   },
   {
     id: "devlog-rift-runner-1",
     projectId: "rift-runner",
-    title: "α版テスト開始",
+    title: "αverテスト開始",
     content:
       "次元切り替えの操作性を改善しました。テスター募集にご協力ください。",
     date: "2026-06-07",
@@ -27,7 +27,7 @@ export const mockDevlogs: DevlogEntry[] = [
   {
     id: "devlog-aetherborn-1",
     projectId: "aetherborn",
-    title: "β版アップデート",
+    title: "βverアップデート",
     content: "ギルド機能と雲の海エリアを追加しました。",
     date: "2026-05-28",
   },

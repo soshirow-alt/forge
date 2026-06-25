@@ -95,7 +95,7 @@ export function NotificationsPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">通知</h1>
             <p className="mt-2 text-zinc-500">
-              追跡中の作品の更新（開発ログ・新版公開）や、あなたの作品への応援などを確認できます。
+              追跡中の作品の更新（開発ログ・新ver公開）や、あなたの作品への応援などを確認できます。
             </p>
             <Link
               href={mypageUpdatesHref()}
