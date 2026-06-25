@@ -26,7 +26,7 @@ type ProjectListCardProps = {
   supportCount: number;
   onDelete: () => void;
   compact?: boolean;
-  /** home = 次やること付き。directory = 一覧用（ワッペンのみ） */
+  /** home = 改善ループ入口はホームの CTA。directory = 一覧用（ワッペンのみ） */
   layout?: "hub" | "directory";
 };
 

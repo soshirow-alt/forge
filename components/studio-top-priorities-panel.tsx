@@ -59,11 +59,13 @@ export function StudioTopPrioritiesPanel({
   growth,
   feedbackEntries,
   voiceRead,
+  embedded = false,
 }: {
   projectId: string;
   growth: ProjectGrowthSnapshot;
   feedbackEntries: ProjectFeedbackEntry[];
   voiceRead: boolean;
+  embedded?: boolean;
 }) {
   const { getOwnerVoiceAggregates } = useGames();
   const [loaded, setLoaded] = useState(false);
@@ -115,7 +117,9 @@ export function StudioTopPrioritiesPanel({
 
   return (
     <section
-      className="mt-8 rounded-xl border border-orange-500/25 bg-zinc-900/40 p-4 sm:p-5 ring-1 ring-orange-500/10"
+      className={`rounded-xl border border-orange-500/25 bg-zinc-900/40 p-4 sm:p-5 ring-1 ring-orange-500/10 ${
+        embedded ? "" : "mt-8"
+      }`}
       aria-labelledby="studio-top-priorities-heading"
       data-forge-p0="top-priorities"
     >
@@ -132,7 +136,7 @@ export function StudioTopPrioritiesPanel({
           href={feedbackHref}
           className="text-xs text-orange-400/90 transition-colors hover:text-orange-300"
         >
-          回答を見る →
+          FBを見る →
         </Link>
       </div>
 
@@ -152,7 +156,7 @@ export function StudioTopPrioritiesPanel({
       {priorities.some((item) => item.category === "action") && (
         <p className="mt-3 text-xs text-zinc-600">
           <Link href={`#${PROJECT_STUDIO_FEEDBACK_SECTION_ID}`} className="hover:text-zinc-400">
-            下の「プレイヤーの回答」
+            下の「プレイヤーのFBを読む」
           </Link>
           から内容を確認してください。
         </p>

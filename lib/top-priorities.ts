@@ -162,7 +162,7 @@ function unreadCandidate(
   const count = Math.max(pendingFeedbackCount, 1);
   return {
     id: "unread-voices",
-    title: "新しい回答を確認する",
+    title: "新しいFBを確認する",
     reason: hasUnreadVoice
       ? `未読の回答があります`
       : `未処理のフィードバックがあります`,

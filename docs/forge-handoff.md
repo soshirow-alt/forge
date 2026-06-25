@@ -31,7 +31,7 @@
 | 事業 North Star | P0 計画 §1.5 — `docs/forge-p0-improvement-loop-plan.md` |
 | 保留 | S-20 polish、S-23、ランキング、KPI、課金、BYOP、Discord/Steam |
 
-**Cursor 推奨 1 位（preview/landing-01）**: オーナー実機レビュー（Preview `/projects/{id}/studio`）→ S-22 mock 5タブ / S-20 polish は GO 後
+**Cursor 推奨 1 位（preview/landing-01）**: Preview 実機レビュー（改善ループ Studio `/projects/{id}/studio`）→ polish / S-22 mock は GO 後
 
 ---
 

@@ -164,7 +164,7 @@ export function getStudioActionHeadline(
     return "プレイヤーの訪問を待つ";
   }
   if (display.primaryOpensReadPanel) {
-    return "回答を確認する";
+    return "FBを確認する";
   }
   if (display.primaryOpensModifyGameModal) {
     return "ゲームを直す";
@@ -184,7 +184,7 @@ export function getStudioCycleBanner(
   display: NurtureDisplayContext,
 ): string {
   if (display.newFeedbackArrived) {
-    return "新しい回答";
+    return "新しいFB";
   }
   if (getStudioVisualMode(snapshot) === "pre_cycle") {
     return "ループ前";
@@ -369,7 +369,7 @@ export function buildNurtureDisplayContext(
             ? `${snapshot.cycleNumber} 周目です。プレイヤーから新しい回答が届いています。内容を確認しましょう。`
             : "プレイヤーから回答が届いています。内容を確認しましょう。",
           primaryCta: {
-            label: "回答を見る",
+            label: "FBを見る",
             opensReadPanel: true,
           },
           primaryOpensReadPanel: true,

@@ -64,7 +64,13 @@ export function StudioOwnedProjectsSection({
 
   if (!user) {
     return (
-      <section className="rounded-2xl border border-orange-500/30 bg-orange-500/5 p-5 sm:p-6">
+      <section
+        className={`rounded-2xl border p-5 sm:p-6 ${
+          variant === "home"
+            ? "border-orange-500/30 bg-orange-500/5"
+            : "border-zinc-800 bg-zinc-900/20"
+        }`}
+      >
         <h2 className="text-lg font-semibold text-zinc-100">あなたの作品</h2>
         <p className="mt-2 text-sm text-zinc-400">
           ログインすると、投稿した作品の改善ループ Studio がここに表示されます。
@@ -81,7 +87,13 @@ export function StudioOwnedProjectsSection({
 
   if (ownedGames.length === 0) {
     return (
-      <section className="rounded-2xl border border-orange-500/30 bg-orange-500/5 p-5 sm:p-6">
+      <section
+        className={`rounded-2xl border p-5 sm:p-6 ${
+          variant === "home"
+            ? "border-orange-500/30 bg-orange-500/5"
+            : "border-zinc-800 bg-zinc-900/20"
+        }`}
+      >
         <h2 className="text-lg font-semibold text-zinc-100">あなたの作品</h2>
         <p className="mt-2 text-sm text-zinc-400">
           まだ投稿した作品がありません。投稿後、ここから改善ループ Studio を開けます。
@@ -99,7 +111,13 @@ export function StudioOwnedProjectsSection({
   const topGame = gamesWithGrowth[0];
 
   return (
-    <section className="rounded-2xl border border-orange-500/30 bg-orange-500/5 p-5 sm:p-6">
+    <section
+      className={`rounded-2xl border p-5 sm:p-6 ${
+        variant === "home"
+          ? "border-orange-500/30 bg-orange-500/5"
+          : "border-zinc-800 bg-zinc-900/20"
+      }`}
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-medium text-orange-400/90">
@@ -141,7 +159,7 @@ export function StudioOwnedProjectsSection({
               supportCount={getSupportCount(game.id)}
               onDelete={() => deleteSubmittedGame(game.id)}
               compact
-              layout={variant === "list" ? "directory" : "hub"}
+              layout="directory"
             />
           ),
         )}
