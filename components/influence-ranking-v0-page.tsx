@@ -22,6 +22,7 @@ function InfluenceRankingContent() {
   const canGoPrev = monthIndex < influenceRankingMonths.length - 1;
   const canGoNext = monthIndex > 0;
   const [showAll, setShowAll] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
     setShowAll(false);
@@ -53,8 +54,20 @@ function InfluenceRankingContent() {
           <header className="mt-4">
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-white sm:text-3xl">月間影響度ランキング</h1>
-              <HelpCircle className="size-5 text-zinc-500" aria-hidden="true" />
+              <button
+                type="button"
+                onClick={() => setShowHelp((value) => !value)}
+                className="text-zinc-500 transition-colors hover:text-violet-300"
+                aria-label="影響度ランキングの説明"
+              >
+                <HelpCircle className="size-5" aria-hidden="true" />
+              </button>
             </div>
+            {showHelp && (
+              <p className="mt-3 max-w-2xl rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm leading-relaxed text-zinc-400">
+                質の高いフィードバックで作品の成長を支えたプレイヤーを紹介します。開発者の「役立った」評価・共感・継続見届けなどを組み合わせ、投稿数だけでは決めません。
+              </p>
+            )}
             <p className="mt-2 max-w-2xl text-sm text-zinc-400">
               質の高いフィードバックでゲームの成長を支えたプレイヤーを紹介します。
             </p>

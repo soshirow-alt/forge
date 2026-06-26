@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import {
   BarChart3,
@@ -13,12 +14,13 @@ import {
 import { StudioOwnedProjectsSection } from "@/components/studio-owned-projects-section";
 import { StudioSectionHeader, StudioShell } from "@/components/studio-shell";
 import { studioHomeGrowthRankings } from "@/lib/studio-rankings-v0-mock-data";
+import { developerProfileHref } from "@/lib/developer-search-v0-mock-data";
+import { gameDetailHrefFromTitle } from "@/lib/game-detail-v0-mock-data";
 import {
   devHintCards,
   studioActivities,
   type StudioActivityItem,
 } from "@/lib/studio-home-v0-mock-data";
-import Image from "next/image";
 
 function activityIcon(type: StudioActivityItem["type"]) {
   switch (type) {
@@ -45,7 +47,10 @@ function ActivityIcon({ type }: { type: StudioActivityItem["type"] }) {
 
 function ActivityRow({ item }: { item: StudioActivityItem }) {
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/30 px-4 py-3">
+    <Link
+      href={item.href}
+      className="flex items-start gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/30 px-4 py-3 transition-colors hover:border-violet-500/30 hover:bg-violet-500/5"
+    >
       <span
         className={`mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full ring-1 ${activityIcon(item.type)}`}
       >
@@ -61,7 +66,7 @@ function ActivityRow({ item }: { item: StudioActivityItem }) {
           {item.badge}
         </span>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -80,18 +85,25 @@ function WorkGrowthColumn({
       <p className="mt-0.5 text-xs text-zinc-600">{metricLabel}</p>
       <ul className="mt-3 space-y-2">
         {entries.map((entry) => (
-          <li key={entry.id} className="flex items-center gap-3">
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-zinc-800 text-xs font-bold text-zinc-400">
-              {entry.rank}
-            </span>
-            <div className="relative size-8 shrink-0 overflow-hidden rounded-lg bg-zinc-800">
-              <Image src={entry.image} alt="" fill className="object-cover" sizes="32px" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm text-zinc-200">{entry.title}</p>
-              <p className="text-xs text-zinc-500">{entry.creator}</p>
-            </div>
-            <span className="shrink-0 text-xs font-medium text-violet-300">{entry.growthRate}</span>
+          <li key={entry.id}>
+            <Link
+              href={gameDetailHrefFromTitle(entry.title)}
+              className="flex items-center gap-3 rounded-lg px-1 py-0.5 transition-colors hover:bg-zinc-800/40"
+            >
+              <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-zinc-800 text-xs font-bold text-zinc-400">
+                {entry.rank}
+              </span>
+              <div className="relative size-8 shrink-0 overflow-hidden rounded-lg bg-zinc-800">
+                <Image src={entry.image} alt="" fill className="object-cover" sizes="32px" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm text-zinc-200">{entry.title}</p>
+                <p className="text-xs text-zinc-500">{entry.creator}</p>
+              </div>
+              <span className="shrink-0 text-xs font-medium text-violet-300">
+                {entry.growthRate}
+              </span>
+            </Link>
           </li>
         ))}
       </ul>
@@ -114,18 +126,25 @@ function DeveloperGrowthColumn({
       <p className="mt-0.5 text-xs text-zinc-600">{metricLabel}</p>
       <ul className="mt-3 space-y-2">
         {entries.map((entry) => (
-          <li key={entry.id} className="flex items-center gap-3">
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-zinc-800 text-xs font-bold text-zinc-400">
-              {entry.rank}
-            </span>
-            <div className="relative size-8 shrink-0 overflow-hidden rounded-full bg-zinc-800">
-              <Image src={entry.avatar} alt="" fill className="object-cover" sizes="32px" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm text-zinc-200">{entry.name}</p>
-              <p className="text-xs text-zinc-500">@{entry.handle}</p>
-            </div>
-            <span className="shrink-0 text-xs font-medium text-violet-300">{entry.growthRate}</span>
+          <li key={entry.id}>
+            <Link
+              href={developerProfileHref(entry.id, { from: "studio-home" })}
+              className="flex items-center gap-3 rounded-lg px-1 py-0.5 transition-colors hover:bg-zinc-800/40"
+            >
+              <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-zinc-800 text-xs font-bold text-zinc-400">
+                {entry.rank}
+              </span>
+              <div className="relative size-8 shrink-0 overflow-hidden rounded-full bg-zinc-800">
+                <Image src={entry.avatar} alt="" fill className="object-cover" sizes="32px" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm text-zinc-200">{entry.name}</p>
+                <p className="text-xs text-zinc-500">@{entry.handle}</p>
+              </div>
+              <span className="shrink-0 text-xs font-medium text-violet-300">
+                {entry.growthRate}
+              </span>
+            </Link>
           </li>
         ))}
       </ul>
@@ -134,9 +153,11 @@ function DeveloperGrowthColumn({
 }
 
 function DevHintCard({
+  id,
   title,
   tips,
 }: {
+  id: string;
   title: string;
   tips: string[];
 }) {
@@ -151,12 +172,12 @@ function DevHintCard({
           </li>
         ))}
       </ul>
-      <button
-        type="button"
+      <Link
+        href={`/studio/guide#${id}`}
         className="mt-4 self-end text-sm text-violet-400 transition-colors hover:text-violet-300"
       >
         詳しく見る →
-      </button>
+      </Link>
     </article>
   );
 }
@@ -169,6 +190,7 @@ function RankingSnippetsSection() {
     <section className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5 sm:p-6">
       <StudioSectionHeader
         title="今週の伸び"
+        href="/studio/rankings"
         icon={<BarChart3 className="size-5 text-violet-400" aria-hidden="true" />}
       />
       <div className="mt-5 grid gap-4 sm:grid-cols-3">
@@ -188,8 +210,8 @@ function RankingSnippetsSection() {
           entries={studioHomeGrowthRankings.followerGrowthDevelopers.slice(0, limit)}
         />
       </div>
-      {!expanded && (
-        <div className="mt-5 flex justify-center">
+      <div className="mt-5 flex flex-wrap justify-center gap-3">
+        {!expanded && (
           <button
             type="button"
             onClick={() => setExpanded(true)}
@@ -197,8 +219,14 @@ function RankingSnippetsSection() {
           >
             もっと見る
           </button>
-        </div>
-      )}
+        )}
+        <Link
+          href="/studio/rankings"
+          className="rounded-xl border border-violet-500/30 bg-violet-500/10 px-5 py-2.5 text-sm font-medium text-violet-200 transition-colors hover:bg-violet-500/15"
+        >
+          月間ランキングを見る
+        </Link>
+      </div>
     </section>
   );
 }
@@ -227,11 +255,12 @@ export function StudioHomePage() {
         <section>
           <StudioSectionHeader
             title="開発ヒント"
+            href="/studio/guide"
             icon={<Lightbulb className="size-5 text-violet-400" aria-hidden="true" />}
           />
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
             {devHintCards.map((card) => (
-              <DevHintCard key={card.id} title={card.title} tips={card.tips} />
+              <DevHintCard key={card.id} id={card.id} title={card.title} tips={card.tips} />
             ))}
           </div>
         </section>

@@ -174,6 +174,7 @@ export const gameDetailIdAliases: Record<string, string> = {
   w6: "mori-no-kobana-kobo",
   w7: "arcadia-iseki",
   w8: "kissaten-catsea",
+  "seito-no-tabiji": "seikat-no-tabiji",
 };
 
 export function resolveGameDetailId(id: string): string {
@@ -201,6 +202,13 @@ const titleToDetailId: Record<string, string> = {
   "夏の向こう側": "natsu-no-mukougawa",
   "森の中の小さな工房": "mori-no-kobana-kobo",
   "アルカディアの遺跡": "arcadia-iseki",
+  "霧の駅": "seikat-no-tabiji",
+  "光の旅人": "sorashima-pioneer",
+  "紙の迷宮": "mori-no-kobana-kobo",
+  "星の記憶": "seikat-no-tabiji",
+  "風の駅": "seikat-no-tabiji",
+  "夜明けの手紙": "roshin-no-zanko",
+  "静かな灯台": "natsu-no-mukougawa",
 };
 
 export function gameDetailHrefFromTitle(title: string): string {

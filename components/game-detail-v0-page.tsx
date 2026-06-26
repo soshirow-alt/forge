@@ -36,6 +36,8 @@ import {
   createPreviewVoiceEntry,
 } from "@/lib/game-voices-v0-mock-data";
 import { firstVoiceQuestion } from "@/lib/feedback-v0-mock-data";
+import { applyProjectOverviewV0 } from "@/lib/project-overview-v0-store";
+import { useProjectOverviewV0 } from "@/hooks/use-project-overview-v0";
 import {
   Bookmark,
   Check,
@@ -103,6 +105,11 @@ function GameDetailV0PageContent({ id }: { id: string }) {
   }, [id, submittedGame]);
   const hasRealPlayUrl = Boolean(submittedGame?.playUrl?.trim());
   const resolvedId = isSupabaseProjectId(id) ? id : resolveGameDetailId(id);
+  const { revision: overviewRevision } = useProjectOverviewV0(resolvedId);
+  const displayGame = useMemo(() => {
+    const base = game;
+    return applyProjectOverviewV0(base, resolvedId);
+  }, [game, resolvedId, overviewRevision]);
   const { isLoggedIn, hydrated, requireAuth } = useRequireAuth();
   const returnPath = gameDetailReturnPath(resolvedId);
   const [activeTab, setActiveTab] = useState<DetailTab>(() =>
@@ -336,7 +343,7 @@ function GameDetailV0PageContent({ id }: { id: string }) {
 
           {activeTab === "overview" && (
             <GameDetailOverviewV0Tab
-              game={game}
+              game={displayGame}
               onFeedback={handleFeedback}
               feedbackCtaLabel={
                 hydrated && !isLoggedIn

@@ -8,6 +8,8 @@ export {
   studioProjectsAll as studioProjects,
 } from "@/lib/studio-projects-v0-mock-data";
 
+import { studioProjectHref } from "@/lib/studio-projects-v0-mock-data";
+
 export type StudioActivityItem = {
   id: string;
   type: "voice" | "witness" | "devlog" | "first-voice" | "play";
@@ -15,6 +17,7 @@ export type StudioActivityItem = {
   description: string;
   timeLabel: string;
   badge: number;
+  href: string;
 };
 
 export type StudioWeeklyStat = {
@@ -46,6 +49,7 @@ export const studioActivities: StudioActivityItem[] = [
     description: "「星の記憶」に 3件の新しいフィードバックが届いています",
     timeLabel: "2時間前",
     badge: 3,
+    href: `${studioProjectHref("hoshino-kioku")}?tab=voices`,
   },
   {
     id: "act-2",
@@ -54,6 +58,7 @@ export const studioActivities: StudioActivityItem[] = [
     description: "「星灯の旅路」の見届け人が 5人増えました",
     timeLabel: "5時間前",
     badge: 5,
+    href: studioProjectHref("seito-no-tabiji"),
   },
   {
     id: "act-3",
@@ -62,6 +67,7 @@ export const studioActivities: StudioActivityItem[] = [
     description: "「星灯の旅路」v0.4.0 が 12回プレイされました",
     timeLabel: "昨日",
     badge: 12,
+    href: `${studioProjectHref("seito-no-tabiji")}?tab=devlog`,
   },
   {
     id: "act-4",
@@ -70,6 +76,7 @@ export const studioActivities: StudioActivityItem[] = [
     description: "「炉心の残光」の更新報告に 12件の反応",
     timeLabel: "昨日",
     badge: 12,
+    href: `${studioProjectHref("roshin-no-zanko")}?tab=devlog`,
   },
   {
     id: "act-5",
@@ -78,6 +85,7 @@ export const studioActivities: StudioActivityItem[] = [
     description: "「星の記憶」に初回フィードバックが 1件届きました",
     timeLabel: "2日前",
     badge: 1,
+    href: `${studioProjectHref("hoshino-kioku")}?tab=voices`,
   },
 ];
 
@@ -180,3 +188,25 @@ export const devHintCards: DevHintCard[] = [
     ],
   },
 ];
+
+export const devHintGuideSections: Record<
+  string,
+  { lead: string; paragraphs: string[] }
+> = {
+  "hint-1": {
+    lead: "見届け人は「この作品を追いかけたい」と思ったプレイヤーです。発見の瞬間と、更新のたびの納得感が鍵になります。",
+    paragraphs: [
+      "サムネとタイトルだけで世界観が伝わる作品は、一覧でも詳細でも止まりやすくなります。",
+      "版ごとのプレイヤー問いを設定すると、プレイ後に何を伝えればよいかが分かり、初声の質が上がります。",
+      "Devlog では「なぜ直したか」を短く書くと、見届け人が変化を追いやすくなります。",
+    ],
+  },
+  "hint-2": {
+    lead: "Devlog は宣伝ではなく、プレイヤーへの「今回の確認依頼」です。短く、意図が伝わる書き方が有効です。",
+    paragraphs: [
+      "タイトルは変更の見出しに留め、本文で「何を試してほしいか」を1〜3文で書きます。",
+      "版プレイヤー問いは Devlog 投稿時に一緒に設定できます。意図と問いをセットにすると FB の質が上がります。",
+      "大きな変更ほど、所要時間（例: 5分だけ）を添えると戻りやすくなります。",
+    ],
+  },
+};

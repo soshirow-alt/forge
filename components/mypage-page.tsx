@@ -1,6 +1,7 @@
 "use client";
 
 import { ListControlsBar } from "@/components/list-controls-bar";
+import { V0ExpandableHelp } from "@/components/v0-expandable-help";
 import {
   FilterRadioGroup,
   MyPageFilterPanel,
@@ -343,6 +344,19 @@ function WitnessingTabPanel() {
           <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
             見届け中の作品
           </h1>
+          <V0ExpandableHelp
+            prompt="詳しく見る"
+            teaser="見届け中の作品とは？ — 気になる作品を追い、更新や変化を見届けるリストです。"
+          >
+            <p>
+              見届け人は、同じ作品を継続して追うプレイヤーのことです。Forge
+              の必須条件ではありませんが、いると「変化を見る」「再プレイ」が起きやすくなります。
+            </p>
+            <p className="mt-2">
+              この一覧では、見届け中の作品の更新や Devlog
+              をまとめて確認できます。気になったら詳細からプレイやフィードバックへ進めます。
+            </p>
+          </V0ExpandableHelp>
         </header>
 
         <StatusFilterPills

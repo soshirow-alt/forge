@@ -2,16 +2,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import { StudioShell } from "@/components/studio-shell";
+import { developerProfileHref } from "@/lib/developer-search-v0-mock-data";
 import {
   formatMonthOverMonth,
-  studioDeveloperLastMonthTop3,
-  studioDeveloperRankingList,
+  getStudioDeveloperRankingMonth,
+  parseStudioRankingMonthId,
   studioDeveloperRankingMetrics,
-  studioDeveloperRankingMonth,
-  studioDeveloperRankingPeriod,
-  studioDeveloperRankingTop3,
+  studioDeveloperRankingMonths,
   type StudioDeveloperRankingEntry,
 } from "@/lib/studio-rankings-v0-mock-data";
 import {
@@ -40,8 +40,9 @@ function MetricIcon({ icon }: { icon: string }) {
 function Top3Card({ entry }: { entry: StudioDeveloperRankingEntry }) {
   const isFirst = entry.rank === 1;
   return (
-    <article
-      className={`flex flex-col rounded-2xl border p-5 text-center ${
+    <Link
+      href={developerProfileHref(entry.id, { from: "studio-ranking" })}
+      className={`flex flex-col rounded-2xl border p-5 text-center transition-colors hover:border-violet-500/30 ${
         isFirst
           ? "border-amber-500/40 bg-gradient-to-b from-amber-500/10 to-zinc-900/40 sm:scale-[1.02]"
           : "border-zinc-800/80 bg-zinc-900/40"
@@ -77,13 +78,16 @@ function Top3Card({ entry }: { entry: StudioDeveloperRankingEntry }) {
           </p>
         </div>
       </div>
-    </article>
+    </Link>
   );
 }
 
 function DeveloperCell({ entry }: { entry: StudioDeveloperRankingEntry }) {
   return (
-    <div className="flex items-center gap-3">
+    <Link
+      href={developerProfileHref(entry.id, { from: "studio-ranking" })}
+      className="flex items-center gap-3 transition-colors hover:text-violet-200"
+    >
       <span className="relative size-8 shrink-0 overflow-hidden rounded-full bg-zinc-800">
         <Image src={entry.avatar} alt="" fill className="object-cover" sizes="32px" />
       </span>
@@ -91,15 +95,30 @@ function DeveloperCell({ entry }: { entry: StudioDeveloperRankingEntry }) {
         <p className="font-medium text-white">{entry.name}</p>
         <p className="text-xs text-zinc-500">@{entry.handle}</p>
       </div>
-    </div>
+    </Link>
   );
 }
 
-export function StudioRankingsPage() {
+function StudioRankingsContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const monthId = parseStudioRankingMonthId(searchParams.get("month"));
+  const month = useMemo(() => getStudioDeveloperRankingMonth(monthId), [monthId]);
+  const monthIndex = studioDeveloperRankingMonths.findIndex((item) => item.id === monthId);
+  const canGoPrev = monthIndex < studioDeveloperRankingMonths.length - 1;
+  const canGoNext = monthIndex > 0;
   const [showAll, setShowAll] = useState(false);
-  const visibleList = showAll
-    ? studioDeveloperRankingList
-    : studioDeveloperRankingList.slice(0, 5);
+  const [showArchive, setShowArchive] = useState(false);
+
+  const visibleList = showAll ? month.list : month.list.slice(0, 5);
+
+  const goMonth = useCallback(
+    (targetId: string) => {
+      setShowAll(false);
+      router.push(`/studio/rankings?month=${encodeURIComponent(targetId)}`);
+    },
+    [router],
+  );
 
   return (
     <StudioShell activeNav="ranking">
@@ -118,30 +137,42 @@ export function StudioRankingsPage() {
               今月もっとも作品を育てた開発者
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">
-              プレイヤーのフィードバックと応援によって、作品を大きく前進させた開発者を称えます。
+              プレイヤーのフィードバックとフォローによって、作品を大きく前進させた開発者を称えます。
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <div className="inline-flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/40 px-3 py-2 text-sm text-zinc-300">
-                <button type="button" className="text-zinc-500 hover:text-zinc-300" aria-label="前月">
+                <button
+                  type="button"
+                  disabled={!canGoPrev}
+                  onClick={() => goMonth(studioDeveloperRankingMonths[monthIndex + 1]!.id)}
+                  className="text-zinc-500 transition-colors hover:text-zinc-300 disabled:cursor-not-allowed disabled:opacity-30"
+                  aria-label="前月"
+                >
                   <ChevronLeft className="size-4" />
                 </button>
-                {studioDeveloperRankingMonth}
-                <button type="button" className="text-zinc-500 hover:text-zinc-300" aria-label="次月">
+                {month.label}
+                <button
+                  type="button"
+                  disabled={!canGoNext}
+                  onClick={() => goMonth(studioDeveloperRankingMonths[monthIndex - 1]!.id)}
+                  className="text-zinc-500 transition-colors hover:text-zinc-300 disabled:cursor-not-allowed disabled:opacity-30"
+                  aria-label="次月"
+                >
                   <ChevronRight className="size-4" />
                 </button>
               </div>
-              <span className="text-xs text-zinc-600">{studioDeveloperRankingPeriod}</span>
+              <span className="text-xs text-zinc-600">{month.period}</span>
             </div>
           </header>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            {studioDeveloperRankingTop3.map((entry) => (
+            {month.top3.map((entry) => (
               <Top3Card key={entry.id} entry={entry} />
             ))}
           </div>
 
           <div className="mt-8 overflow-x-auto rounded-2xl border border-zinc-800/80">
-            <table className="w-full min-w-[880px] text-sm">
+            <table className="w-full min-w-[720px] text-sm">
               <thead className="bg-zinc-900/60 text-left text-xs text-zinc-500">
                 <tr>
                   <th className="px-4 py-3">順位</th>
@@ -150,7 +181,6 @@ export function StudioRankingsPage() {
                   <th className="px-4 py-3">影響度スコア</th>
                   <th className="px-4 py-3">先月比</th>
                   <th className="px-4 py-3">見届け人増</th>
-                  <th className="px-4 py-3">作品フォロー増</th>
                   <th className="px-4 py-3">開発者フォロー増</th>
                   <th className="px-4 py-3">FBの増加</th>
                 </tr>
@@ -183,7 +213,6 @@ export function StudioRankingsPage() {
                       {formatMonthOverMonth(entry.monthOverMonth)}
                     </td>
                     <td className="px-4 py-3 text-zinc-400">+{entry.witnessGrowth}</td>
-                    <td className="px-4 py-3 text-zinc-400">+{entry.workFollowGrowth}</td>
                     <td className="px-4 py-3 text-zinc-400">+{entry.devFollowGrowth}</td>
                     <td className="px-4 py-3 text-zinc-400">+{entry.voiceGrowth}</td>
                   </tr>
@@ -192,7 +221,7 @@ export function StudioRankingsPage() {
             </table>
           </div>
 
-          {!showAll && studioDeveloperRankingList.length > 5 && (
+          {!showAll && month.list.length > 5 && (
             <button
               type="button"
               onClick={() => setShowAll(true)}
@@ -210,17 +239,21 @@ export function StudioRankingsPage() {
               このランキングは、開発者が今月どれだけ作品を育てたかを評価します。
             </p>
             <ul className="mt-4 space-y-3">
-              {studioDeveloperRankingMetrics.map((metric) => (
-                <li key={metric.id} className="flex items-start gap-2.5 text-xs">
-                  <span className={`mt-0.5 ${metric.color}`}>
-                    <MetricIcon icon={metric.icon} />
-                  </span>
-                  <div>
-                    <p className="font-medium text-zinc-300">{metric.label}</p>
-                    <p className="text-zinc-600">比重 {metric.weight}</p>
-                  </div>
-                </li>
-              ))}
+              {studioDeveloperRankingMetrics
+                .filter((metric) => metric.id !== "work-follow")
+                .map((metric) => (
+                  <li key={metric.id} className="flex items-start gap-2.5 text-xs">
+                    <span className={`mt-0.5 ${metric.color}`}>
+                      <MetricIcon icon={metric.icon} />
+                    </span>
+                    <div>
+                      <p className="font-medium text-zinc-300">
+                        {metric.id === "dev-follow" ? "開発者フォローの増加" : metric.label}
+                      </p>
+                      <p className="text-zinc-600">比重 {metric.weight}</p>
+                    </div>
+                  </li>
+                ))}
             </ul>
             <p className="mt-4 text-xs leading-relaxed text-zinc-500">
               絶対数と成長率の両方を加味します（目安: 絶対数 7 : 成長率 3）。
@@ -233,7 +266,7 @@ export function StudioRankingsPage() {
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
             <h2 className="text-sm font-semibold text-white">先月の TOP3</h2>
             <ul className="mt-3 space-y-2">
-              {studioDeveloperLastMonthTop3.map((entry) => (
+              {month.lastMonthTop3.map((entry) => (
                 <li key={entry.rank} className="flex justify-between text-sm">
                   <span className="text-zinc-400">
                     {entry.rank}位 {entry.name}
@@ -244,14 +277,50 @@ export function StudioRankingsPage() {
             </ul>
             <button
               type="button"
+              onClick={() => setShowArchive((value) => !value)}
               className="mt-4 flex w-full items-center justify-center gap-1 rounded-xl border border-zinc-800 py-2.5 text-xs text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-300"
             >
               過去のランキング
-              <ChevronRight className="size-3.5" />
+              <ChevronRight
+                className={`size-3.5 transition-transform ${showArchive ? "rotate-90" : ""}`}
+              />
             </button>
+            {showArchive && (
+              <ul className="mt-3 space-y-2 border-t border-zinc-800/80 pt-3">
+                {studioDeveloperRankingMonths.map((archiveMonth) => (
+                  <li key={archiveMonth.id}>
+                    <button
+                      type="button"
+                      onClick={() => goMonth(archiveMonth.id)}
+                      className={`w-full rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-zinc-800/60 ${
+                        archiveMonth.id === monthId
+                          ? "text-violet-300"
+                          : "text-zinc-400"
+                      }`}
+                    >
+                      {archiveMonth.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         </aside>
       </div>
     </StudioShell>
+  );
+}
+
+export function StudioRankingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <StudioShell activeNav="ranking">
+          <p className="text-sm text-zinc-500">読み込み中...</p>
+        </StudioShell>
+      }
+    >
+      <StudioRankingsContent />
+    </Suspense>
   );
 }

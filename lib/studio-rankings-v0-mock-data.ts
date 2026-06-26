@@ -234,3 +234,80 @@ export function formatMonthOverMonth(delta: number): string {
   const sign = delta >= 0 ? "+" : "";
   return `${sign}${delta.toLocaleString()}`;
 }
+
+export type StudioRankingMonth = {
+  id: string;
+  label: string;
+  period: string;
+  top3: StudioDeveloperRankingEntry[];
+  list: StudioDeveloperRankingEntry[];
+  lastMonthTop3: { rank: number; name: string; score: number }[];
+};
+
+function scaleRanking(
+  entries: StudioDeveloperRankingEntry[],
+  factor: number,
+): StudioDeveloperRankingEntry[] {
+  return entries.map((entry) => ({
+    ...entry,
+    score: Math.round(entry.score * factor),
+    monthOverMonth: Math.round(entry.monthOverMonth * factor),
+    witnessGrowth: Math.round(entry.witnessGrowth * factor),
+    workFollowGrowth: Math.round(entry.workFollowGrowth * factor),
+    devFollowGrowth: Math.round(entry.devFollowGrowth * factor),
+    voiceGrowth: Math.round(entry.voiceGrowth * factor),
+  }));
+}
+
+const mayTop3 = studioDeveloperRankingTop3;
+const mayList = studioDeveloperRankingList;
+
+export const studioDeveloperRankingMonths: StudioRankingMonth[] = [
+  {
+    id: "2025-05",
+    label: studioDeveloperRankingMonth,
+    period: studioDeveloperRankingPeriod,
+    top3: mayTop3,
+    list: mayList,
+    lastMonthTop3: studioDeveloperLastMonthTop3,
+  },
+  {
+    id: "2025-04",
+    label: "2025年4月",
+    period: "集計期間: 2025/04/01 – 2025/04/30",
+    top3: scaleRanking(mayTop3, 0.88),
+    list: scaleRanking(mayList, 0.86),
+    lastMonthTop3: [
+      { rank: 1, name: "しゃねこ", score: 4812 },
+      { rank: 2, name: "ミカン", score: 4520 },
+      { rank: 3, name: "ハルカ", score: 4201 },
+    ],
+  },
+  {
+    id: "2025-03",
+    label: "2025年3月",
+    period: "集計期間: 2025/03/01 – 2025/03/31",
+    top3: scaleRanking(mayTop3, 0.76),
+    list: scaleRanking(mayList, 0.74),
+    lastMonthTop3: [
+      { rank: 1, name: "ソラ", score: 3988 },
+      { rank: 2, name: "ミナト", score: 3610 },
+      { rank: 3, name: "レン", score: 3294 },
+    ],
+  },
+];
+
+export function parseStudioRankingMonthId(param: string | null): string {
+  const ids = studioDeveloperRankingMonths.map((month) => month.id);
+  if (param && ids.includes(param)) {
+    return param;
+  }
+  return ids[0]!;
+}
+
+export function getStudioDeveloperRankingMonth(id: string): StudioRankingMonth {
+  return (
+    studioDeveloperRankingMonths.find((month) => month.id === id) ??
+    studioDeveloperRankingMonths[0]!
+  );
+}

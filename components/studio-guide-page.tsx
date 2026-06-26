@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { StudioShell } from "@/components/studio-shell";
+import {
+  devHintCards,
+  devHintGuideSections,
+} from "@/lib/studio-home-v0-mock-data";
 
 const steps = [
   { label: "投稿", description: "最初の作品を登録する" },
@@ -40,6 +44,46 @@ export function StudioGuidePage() {
             </li>
           ))}
         </ol>
+
+        <section className="mt-12 space-y-8">
+          <div>
+            <h2 className="text-lg font-semibold text-white">開発ヒント</h2>
+            <p className="mt-2 text-sm text-zinc-500">
+              Studio ホームのカードからも辿れます。
+            </p>
+          </div>
+          {devHintCards.map((card) => {
+            const detail = devHintGuideSections[card.id];
+            return (
+              <article
+                key={card.id}
+                id={card.id}
+                className="scroll-mt-24 rounded-2xl border border-zinc-800 bg-zinc-900/30 p-6"
+              >
+                <h3 className="text-base font-semibold text-white">{card.title}</h3>
+                {detail && (
+                  <p className="mt-3 text-sm leading-relaxed text-zinc-400">{detail.lead}</p>
+                )}
+                <ul className="mt-4 space-y-2">
+                  {card.tips.map((tip) => (
+                    <li key={tip} className="text-sm text-zinc-400">
+                      · {tip}
+                    </li>
+                  ))}
+                </ul>
+                {detail && (
+                  <div className="mt-4 space-y-2 border-t border-zinc-800/80 pt-4">
+                    {detail.paragraphs.map((paragraph) => (
+                      <p key={paragraph} className="text-sm leading-relaxed text-zinc-500">
+                        {paragraph}
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </section>
 
         <div className="mt-10 flex flex-wrap gap-3">
           <Link

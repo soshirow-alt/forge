@@ -1,6 +1,7 @@
 "use client";
 
 import { ListControlsBar } from "@/components/list-controls-bar";
+import { V0ExpandableHelp } from "@/components/v0-expandable-help";
 import {
   FilterRadioGroup,
   MyPageFilterPanel,
@@ -101,6 +102,18 @@ export function FeedbackTabPanel() {
           <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
             フィードバック履歴
           </h1>
+          <V0ExpandableHelp
+            prompt="共感とは？ 詳しく見る"
+            teaser="共感は、自由記述フィードバックへの「いいね」です。投稿数には加算されません。"
+          >
+            <p>
+              共感は自由記述のフィードバックにだけ付けられます。1件の投稿に複数人が共感しても、投稿数は
+              1 のままです。
+            </p>
+            <p className="mt-2">
+              開発者の意思決定や影響度スコアでは、共感の重みが反映されます。あなたの言葉が多くの人に刺さったとき、ここに表示されます。
+            </p>
+          </V0ExpandableHelp>
         </header>
 
         <StatusFilterPills

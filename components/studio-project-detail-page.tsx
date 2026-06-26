@@ -9,6 +9,11 @@ import { GameVerHistoryV0Tab } from "@/components/game-ver-history-v0-tab";
 import { GameVoicesV0Tab } from "@/components/game-voices-v0-tab";
 import { StudioPreviewSampleBanner } from "@/components/studio-preview-sample-banner";
 import { StudioProjectTabs, StudioShell } from "@/components/studio-shell";
+import { useProjectOverviewV0 } from "@/hooks/use-project-overview-v0";
+import {
+  applyProjectOverviewV0,
+  saveProjectOverview,
+} from "@/lib/project-overview-v0-store";
 import {
   gameDetailHref,
   getGameDetailV0,
@@ -38,23 +43,24 @@ function StudioProjectDetailContent({ id }: { id: string }) {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   const gameId = resolveGameDetailId(id);
+  const { revision: overviewRevision } = useProjectOverviewV0(gameId);
   const game = useMemo(() => {
     const detail = getGameDetailV0(id);
-    if (!project) {
-      return detail;
-    }
-    return {
-      ...detail,
-      title: project.title,
-      introduction: project.description,
-      currentVersion: project.version ?? detail.currentVersion,
-      witnessCount: project.witnessCount ?? detail.witnessCount,
-      voiceCount: project.voiceCount,
-      heroImage: project.image,
-      galleryImages: [project.image, ...detail.galleryImages.slice(1)],
-      tags: project.genresList,
-    };
-  }, [id, project]);
+    const base = !project
+      ? detail
+      : {
+          ...detail,
+          title: project.title,
+          introduction: project.description,
+          currentVersion: project.version ?? detail.currentVersion,
+          witnessCount: project.witnessCount ?? detail.witnessCount,
+          voiceCount: project.voiceCount,
+          heroImage: project.image,
+          galleryImages: [project.image, ...detail.galleryImages.slice(1)],
+          tags: project.genresList,
+        };
+    return applyProjectOverviewV0(base, gameId);
+  }, [id, project, gameId, overviewRevision]);
 
   if (!project) {
     return (
@@ -151,7 +157,10 @@ function StudioProjectDetailContent({ id }: { id: string }) {
               game={game}
               editable
               hideVersionQuestions
-              onSave={() => setSaveMessage("概要を保存しました（preview mock）。")}
+              onSave={(payload) => {
+                saveProjectOverview(gameId, payload);
+                setSaveMessage("概要を保存しました。");
+              }}
             />
           )}
           {activeTab === "voices" && (
