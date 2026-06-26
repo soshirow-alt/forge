@@ -237,11 +237,17 @@ function CommunityPostCard({
   );
 }
 
-function MemberRow({ member }: { member: CommunityMember }) {
+function MemberRow({
+  member,
+  returnTo,
+}: {
+  member: CommunityMember;
+  returnTo: string;
+}) {
   return (
     <li>
       <Link
-        href={communityMemberProfileHref(member)}
+        href={communityMemberProfileHref(member, { returnTo })}
         className="flex items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 transition-colors hover:border-zinc-700 hover:bg-zinc-900/60"
       >
         <span className="relative size-10 shrink-0 overflow-hidden rounded-full bg-zinc-800">
@@ -260,16 +266,18 @@ function PendingRequestRow({
   request,
   onApprove,
   onReject,
+  returnTo,
 }: {
   request: CommunityJoinRequest;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
+  returnTo: string;
 }) {
   return (
     <li className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
       <div className="flex items-start gap-3">
         <Link
-          href={communityJoinRequestProfileHref(request)}
+          href={communityJoinRequestProfileHref(request, { returnTo })}
           className="relative size-10 shrink-0 overflow-hidden rounded-full bg-zinc-800"
         >
           <Image src={request.playerAvatar} alt="" fill className="object-cover" sizes="40px" />
@@ -277,7 +285,7 @@ function PendingRequestRow({
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-zinc-200">
             <Link
-              href={communityJoinRequestProfileHref(request)}
+              href={communityJoinRequestProfileHref(request, { returnTo })}
               className="hover:text-violet-300"
             >
               {request.playerName}
@@ -885,6 +893,12 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
     ? developerCommunityId
     : (communityParam ?? joinedCommunities[0]?.id ?? "");
 
+  const memberProfileReturnTo = isDeveloper
+    ? "/studio/community?tab=members"
+    : selectedCommunityId
+      ? `/mypage/community?tab=members&community=${encodeURIComponent(selectedCommunityId)}`
+      : "/mypage/community?tab=members";
+
   const mockPosts = isDeveloper ? studioCommunityPostsMock : playerCommunityFeedMock;
   const {
     posts,
@@ -1147,6 +1161,7 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
                       request={request}
                       onApprove={handleApproveJoin}
                       onReject={rejectJoinRequest}
+                      returnTo={memberProfileReturnTo}
                     />
                   ))}
                 </ul>
@@ -1164,7 +1179,11 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
             </h2>
             <ul className="mt-3 space-y-2">
               {members.map((member) => (
-                <MemberRow key={member.id} member={member} />
+                <MemberRow
+                  key={member.id}
+                  member={member}
+                  returnTo={memberProfileReturnTo}
+                />
               ))}
               {members.length === 0 && (
                 <li className="rounded-xl border border-dashed border-zinc-800 px-4 py-8 text-center text-sm text-zinc-500">
