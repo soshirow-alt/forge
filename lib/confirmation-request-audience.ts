@@ -5,6 +5,7 @@ export type ConfirmationNotifyAudienceKey =
   | "related_feedback"
   | "watchers"
   | "bookmarks"
+  | "community_members"
   | "all";
 
 export type ConfirmationNotifyAudienceOption = {
@@ -34,6 +35,11 @@ export const CONFIRMATION_NOTIFY_AUDIENCE_OPTIONS: ConfirmationNotifyAudienceOpt
       key: "bookmarks",
       label: "保存している人",
       description: "作品を保存している人",
+    },
+    {
+      key: "community_members",
+      label: "コミュニティ参加者",
+      description: "あなたのコミュニティに参加承認されている人",
     },
     {
       key: "all",

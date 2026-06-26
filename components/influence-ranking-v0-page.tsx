@@ -2,17 +2,17 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { PlayerShell } from "@/components/player-shell";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import {
-  getInfluenceRankingMonth,
   influenceRankingMetricWeights,
   influenceRankingMonths,
   parseRankingMonthId,
   type InfluenceRankingEntry,
   type InfluenceRankingMetrics,
 } from "@/lib/influence-ranking-v0-mock-data";
+import { useInfluenceRankingMonth } from "@/hooks/use-influence-ranking-month";
 import { playerRankingProfileHref } from "@/lib/player-ranking-profile";
 import { RANKING_LIST_INITIAL } from "@/lib/ranking-v0-shared";
 import { ChevronLeft, ChevronRight, HelpCircle } from "lucide-react";
@@ -81,7 +81,7 @@ function InfluenceRankingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const monthId = parseRankingMonthId(searchParams.get("month"));
-  const month = useMemo(() => getInfluenceRankingMonth(monthId), [monthId]);
+  const { month, loaded: rankingLoaded, dataSource } = useInfluenceRankingMonth(monthId);
   const monthIndex = influenceRankingMonths.findIndex((item) => item.id === monthId);
   const canGoPrev = monthIndex < influenceRankingMonths.length - 1;
   const canGoNext = monthIndex > 0;
@@ -135,6 +135,11 @@ function InfluenceRankingContent() {
             )}
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">
               今月、開発者の意思決定・作品改善・確認依頼に対して良い影響を与えたプレイヤーを称えます。
+              {rankingLoaded && dataSource === "live" ? (
+                <span className="mt-1 block text-xs text-emerald-400/90">
+                  実データ集計を表示中（役立った評価・採用・確認依頼への貢献など）
+                </span>
+              ) : null}
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <div className="inline-flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/40 px-3 py-2 text-sm text-zinc-300">

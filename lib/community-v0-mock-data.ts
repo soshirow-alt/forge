@@ -1,4 +1,5 @@
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
+import type { ConfirmationRequestQuoteRef } from "@/lib/community-types";
 
 export type DevlogQuoteRef = {
   id: string;
@@ -33,6 +34,7 @@ export type CommunityPost = {
   postedAt: string;
   audienceLabel: string;
   devlogQuote?: DevlogQuoteRef;
+  confirmationQuote?: ConfirmationRequestQuoteRef;
   replies?: CommunityReply[];
 };
 
@@ -101,6 +103,19 @@ export const studioCommunityPostsMock: CommunityPost[] = [
     postedAt: "2時間前",
     audienceLabel: "コミュニティ全員",
     devlogQuote: developerDevlogQuoteOptions[0],
+    confirmationQuote: {
+      id: "cq-mock-1",
+      confirmationRequestId: "mock-confirmation-1",
+      devlogId: "mock-devlog-1",
+      gameId: SHANECO_GAME_ID,
+      version: "v0.3.1",
+      title: "バトル調整と新敵追加",
+      changesSummary: "ボス戦の難易度を調整しました",
+      askSummary: "前より理不尽に感じないか確認してほしい",
+      estimatedDuration: "5分",
+      linkedPriorityTitles: ["ボス戦が理不尽に感じる"],
+      publishedAt: "2025/06/15",
+    },
     replies: [
       {
         id: "rp1",

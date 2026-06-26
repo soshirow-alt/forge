@@ -3,11 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { ConfirmationCitationCard } from "@/components/confirmation-citation-card";
+import { useCommunityBoard } from "@/hooks/use-community-board";
 import { useCommunityJoinV0 } from "@/hooks/use-community-join-v0";
 import { useDeveloperCommunitiesV0 } from "@/hooks/use-developer-communities-v0";
 import { findOwnCommunityInList } from "@/lib/developer-community-v0-store";
+import type { ConfirmationRequestQuoteRef } from "@/lib/community-types";
 import {
   developerDevlogQuoteOptions,
   playerCommunityFeedMock,
@@ -26,6 +29,13 @@ import {
   communityJoinRequestProfileHref,
   communityMemberProfileHref,
 } from "@/lib/community-member-profile";
+import { getOptionalSupabaseClient } from "@/lib/supabase/client";
+import {
+  ensureDeveloperCommunity,
+  fetchCommunityMembershipStatus,
+  fetchConfirmationQuoteOptionsForOwner,
+  setCommunityMembershipStatus,
+} from "@/lib/supabase/community-db";
 import {
   Check,
   Heart,
@@ -130,6 +140,9 @@ function CommunityPostCard({
           </div>
           <p className="mt-0.5 text-xs text-violet-400/90">{post.audienceLabel}</p>
           {post.devlogQuote && <DevlogCitationCard quote={post.devlogQuote} />}
+          {post.confirmationQuote && (
+            <ConfirmationCitationCard quote={post.confirmationQuote} />
+          )}
           <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-zinc-300">{post.body}</p>
 
           {(post.replies?.length ?? 0) > 0 && (
@@ -366,18 +379,47 @@ function DevlogQuoteSelect({
 }
 
 function DeveloperComposePanel({
+  ownerId,
   onPost,
 }: {
-  onPost: (body: string, quote?: DevlogQuoteRef) => void;
+  ownerId?: string;
+  onPost: (
+    body: string,
+    quote?:
+      | { kind: "devlog"; ref: DevlogQuoteRef }
+      | { kind: "confirmation"; ref: ConfirmationRequestQuoteRef },
+  ) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [body, setBody] = useState("");
-  const [quoteId, setQuoteId] = useState<string>("");
-  const selectedQuote = developerDevlogQuoteOptions.find((q) => q.id === quoteId);
+  const [quoteKind, setQuoteKind] = useState<"none" | "devlog" | "confirmation">("none");
+  const [devlogQuoteId, setDevlogQuoteId] = useState("");
+  const [confirmationQuoteId, setConfirmationQuoteId] = useState("");
+  const [confirmationOptions, setConfirmationOptions] = useState<ConfirmationRequestQuoteRef[]>(
+    [],
+  );
+
+  useEffect(() => {
+    if (!ownerId) {
+      return;
+    }
+
+    const supabase = getOptionalSupabaseClient();
+    if (!supabase) {
+      return;
+    }
+
+    void fetchConfirmationQuoteOptionsForOwner(supabase, ownerId).then(setConfirmationOptions);
+  }, [ownerId]);
+
+  const selectedDevlogQuote = developerDevlogQuoteOptions.find((q) => q.id === devlogQuoteId);
+  const selectedConfirmationQuote = confirmationOptions.find((q) => q.id === confirmationQuoteId);
 
   function reset() {
     setBody("");
-    setQuoteId("");
+    setQuoteKind("none");
+    setDevlogQuoteId("");
+    setConfirmationQuoteId("");
     setOpen(false);
   }
 
@@ -396,10 +438,72 @@ function DeveloperComposePanel({
 
   return (
     <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-      <DevlogQuoteSelect value={quoteId} onChange={setQuoteId} />
-      {selectedQuote && (
+      <div className="flex flex-wrap gap-2">
+        {(
+          [
+            ["none", "引用しない"],
+            ["devlog", "Devlog"],
+            ["confirmation", "確認依頼"],
+          ] as const
+        ).map(([kind, label]) => (
+          <button
+            key={kind}
+            type="button"
+            onClick={() => {
+              setQuoteKind(kind);
+              setDevlogQuoteId("");
+              setConfirmationQuoteId("");
+            }}
+            className={
+              quoteKind === kind
+                ? "rounded-full border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-200"
+                : "rounded-full border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:border-zinc-600"
+            }
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {quoteKind === "devlog" && (
         <div className="mt-3">
-          <DevlogCitationCard quote={selectedQuote} linkable={false} />
+          <DevlogQuoteSelect value={devlogQuoteId} onChange={setDevlogQuoteId} />
+        </div>
+      )}
+
+      {quoteKind === "confirmation" && (
+        <div className="mt-3">
+          <label className="block text-xs text-zinc-500">
+            確認依頼を引用
+            <select
+              value={confirmationQuoteId}
+              onChange={(event) => setConfirmationQuoteId(event.target.value)}
+              className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200"
+            >
+              <option value="">選択してください</option>
+              {confirmationOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.version} — {option.changesSummary || option.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          {confirmationOptions.length === 0 && (
+            <p className="mt-2 text-xs text-zinc-600">
+              確認依頼付きの開発ログがまだありません。先に devlog 公開時に確認依頼を追加してください。
+            </p>
+          )}
+        </div>
+      )}
+
+      {selectedDevlogQuote && (
+        <div className="mt-3">
+          <DevlogCitationCard quote={selectedDevlogQuote} linkable={false} />
+        </div>
+      )}
+      {selectedConfirmationQuote && (
+        <div className="mt-3">
+          <ConfirmationCitationCard quote={selectedConfirmationQuote} linkable={false} />
         </div>
       )}
       <label className="mt-4 block text-xs text-zinc-500">
@@ -427,7 +531,13 @@ function DeveloperComposePanel({
           type="button"
           disabled={!body.trim()}
           onClick={() => {
-            onPost(body.trim(), selectedQuote);
+            const quote =
+              quoteKind === "devlog" && selectedDevlogQuote
+                ? { kind: "devlog" as const, ref: selectedDevlogQuote }
+                : quoteKind === "confirmation" && selectedConfirmationQuote
+                  ? { kind: "confirmation" as const, ref: selectedConfirmationQuote }
+                  : undefined;
+            onPost(body.trim(), quote);
             reset();
           }}
           className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
@@ -555,15 +665,63 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
     ? developerCommunityId
     : (communityParam ?? joinedCommunities[0]?.id ?? "");
 
-  const [posts, setPosts] = useState<CommunityPost[]>(
-    isDeveloper ? studioCommunityPostsMock : playerCommunityFeedMock,
-  );
+  const mockPosts = isDeveloper ? studioCommunityPostsMock : playerCommunityFeedMock;
+  const {
+    posts,
+    prependPost,
+    appendReply,
+    persistPost,
+    persistReply,
+  } = useCommunityBoard(selectedCommunityId, mockPosts);
+
+  const [dbMembershipStatus, setDbMembershipStatus] = useState<
+    "none" | "pending" | "approved" | "rejected" | null
+  >(null);
+
+  useEffect(() => {
+    if (!user || !selectedCommunityId) {
+      setDbMembershipStatus(null);
+      return;
+    }
+
+    const supabase = getOptionalSupabaseClient();
+    if (!supabase) {
+      setDbMembershipStatus(null);
+      return;
+    }
+
+    if (isDeveloper) {
+      void ensureDeveloperCommunity(supabase, {
+        id: developerCommunityId,
+        ownerId: user.id,
+        name: developerCommunityProfile.name,
+        description: developerCommunityProfile.description,
+        avatarUrl: developerCommunityProfile.avatar,
+        handle: developerCommunityProfile.handle,
+      });
+    }
+
+    void fetchCommunityMembershipStatus(supabase, selectedCommunityId, user.id).then(
+        setDbMembershipStatus,
+      );
+  }, [
+    user,
+    selectedCommunityId,
+    isDeveloper,
+    developerCommunityId,
+    developerCommunityProfile,
+  ]);
 
   const pending = pendingFor(selectedCommunityId);
   const members = membersFor(selectedCommunityId);
 
+  const membershipStatus =
+    dbMembershipStatus && dbMembershipStatus !== "none"
+      ? dbMembershipStatus
+      : getStatus(selectedCommunityId);
+
   const canViewCommunity =
-    isDeveloper || (selectedCommunityId !== "" && getStatus(selectedCommunityId) === "approved");
+    isDeveloper || (selectedCommunityId !== "" && membershipStatus === "approved");
 
   const visibleThreads = filterVisibleThreads(
     posts,
@@ -574,19 +732,44 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
   function addReply(postId: string, body: string) {
     const reply: CommunityReply = {
       id: `reply-${Date.now()}`,
-      authorName: "あなた",
+      authorName: user?.name ?? "あなた",
       authorAvatar: "/images/landing/game-4.png",
       authorHandle: "player_you",
       body,
       postedAt: "たった今",
     };
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === postId
-          ? { ...post, replies: [...(post.replies ?? []), reply] }
-          : post,
-      ),
-    );
+    appendReply(postId, reply);
+
+    if (user) {
+      void persistReply({
+        postId,
+        authorId: user.id,
+        body,
+        author: {
+          name: user.name ?? "あなた",
+          handle: "player_you",
+          avatar: "/images/landing/game-4.png",
+        },
+      });
+    }
+  }
+
+  async function handleApproveJoin(requestId: string) {
+    const request = pending.find((item) => item.id === requestId);
+    approveJoinRequest(requestId);
+    if (!request) {
+      return;
+    }
+
+    const supabase = getOptionalSupabaseClient();
+    if (supabase) {
+      await setCommunityMembershipStatus(
+        supabase,
+        selectedCommunityId,
+        request.playerId,
+        "approved",
+      );
+    }
   }
 
   function setTab(tab: CommunityTab) {
@@ -722,7 +905,7 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
                     <PendingRequestRow
                       key={request.id}
                       request={request}
-                      onApprove={approveJoinRequest}
+                      onApprove={handleApproveJoin}
                       onReject={rejectJoinRequest}
                     />
                   ))}
@@ -758,23 +941,42 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
         <>
           {isDeveloper && (
             <DeveloperComposePanel
+              ownerId={user?.id}
               onPost={(body, quote) => {
-                setPosts((prev) => [
-                  {
-                    id: `new-${Date.now()}`,
+                const localPost: CommunityPost = {
+                  id: `new-${Date.now()}`,
+                  communityId: developerCommunityId,
+                  authorRole: "developer",
+                  authorName: user?.name ?? "あなた",
+                  authorAvatar: developerCommunityProfile.avatar,
+                  authorHandle: developerCommunityProfile.handle,
+                  body,
+                  postedAt: "たった今",
+                  audienceLabel: "コミュニティ全員",
+                  devlogQuote: quote?.kind === "devlog" ? quote.ref : undefined,
+                  confirmationQuote:
+                    quote?.kind === "confirmation" ? quote.ref : undefined,
+                  replies: [],
+                };
+                prependPost(localPost);
+
+                if (user) {
+                  void persistPost({
                     communityId: developerCommunityId,
+                    authorId: user.id,
                     authorRole: "developer",
-                    authorName: user?.name ?? "あなた",
-                    authorAvatar: developerCommunityProfile.avatar,
-                    authorHandle: developerCommunityProfile.handle,
                     body,
-                    postedAt: "たった今",
-                    audienceLabel: "コミュニティ全員",
-                    devlogQuote: quote,
-                    replies: [],
-                  },
-                  ...prev,
-                ]);
+                    devlogQuote: quote?.kind === "devlog" ? quote.ref : undefined,
+                    confirmationQuote:
+                      quote?.kind === "confirmation" ? quote.ref : undefined,
+                    confirmationRequestId:
+                      quote?.kind === "confirmation"
+                        ? quote.ref.confirmationRequestId
+                        : null,
+                    devlogId:
+                      quote?.kind === "confirmation" ? quote.ref.devlogId : null,
+                  });
+                }
               }}
             />
           )}

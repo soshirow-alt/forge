@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-06-26 コミュニティ確認依頼引用 + 参加者ターゲティング + 影響度ランキング実データ
+
+- **migration 018** — `developer_communities` / `community_memberships` / `community_posts`（確認依頼引用 `confirmation_quote` 含む）/ `community_replies`。確認通知 RPC に **コミュニティ参加者** セグメント追加
+- **migration 019** — `get_monthly_player_influence_ranking` RPC（§9 の5指標・最低条件）
+- `/studio/community` — スレッド作成で **Devlog** または **確認依頼** を引用。投稿・返信は Supabase 永続化（未適用時は mock 継続）
+- `/projects/{id}/devlog/new` — 対象者に **コミュニティ参加者** を追加
+- `/rankings/influence` — 実データがあれば RPC 集計を表示（なければ従来 mock）。指標: 開発者評価35% / 改善連動25% / 確認貢献20% / 継続見届け10% / 低声作品10%
+- **オーナー**: `018`・`019` を Dashboard 適用後、確認依頼付き devlog → コミュニティ引用・対象者通知・ランキングを確認
+
+---
+
 ## 2026-06-26 確認依頼ループ — 課題紐付け・対象者・通知
 
 - **migration 017** — `confirmation_requests` に課題紐付け・対象者選択、`user_notifications` に `confirmation_request` 型と RPC `get_confirmation_notify_recipients`
