@@ -220,12 +220,7 @@ export function StudioProfileSelfPage() {
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
             <ProfileAvatar src={profile.avatar} className="mx-auto size-24 sm:mx-0 sm:size-28" size={112} />
             <div className="min-w-0 flex-1 text-center sm:text-left">
-              <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                <h2 className="text-xl font-bold text-white">{profile.displayName}</h2>
-                <span className="rounded-full border border-violet-500/40 bg-violet-500/10 px-2.5 py-0.5 text-xs font-semibold text-violet-200">
-                  Lv.{profile.level}
-                </span>
-              </div>
+              <h2 className="text-xl font-bold text-white">{profile.displayName}</h2>
               <p className="mt-1 text-sm text-zinc-500">@{profile.handle}</p>
               <p className="mt-3 text-sm leading-relaxed text-zinc-400">{profile.bio}</p>
               <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-zinc-500 sm:justify-start">
