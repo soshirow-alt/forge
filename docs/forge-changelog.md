@@ -4,12 +4,20 @@
 
 ---
 
+## 2026-06-26 開発ログ投稿 — 版プレイヤー問い（VersionPromptEditor）
+
+- `/projects/{id}/devlog/new` — 投稿フォームに **版プレイヤー問い**（`VersionPromptEditor`）を追加。はい/いいえ・3段階・再プレイ意向・短文・カスタム選択肢など、作品編集・投稿と同じ UI
+- 問いは **対象 ver** に紐づく。新 ver 公開チェック時は入力した ver、未チェック時は現在のプレイ可能 ver。投稿成功時に `project_version_prompts` へ保存
+- `/studio/projects/[id]/devlog/new`（preview mock）— 同 UI を追加。問いは端末内 localStorage（`forge-v0-studio-version-prompts`）に ver ごと保存
+- 開発ログ投稿から「開発者が聞きたいこと」「回答してほしい項目」の自由記述欄を削除（版問いに一本化）
+
+---
+
 ## 2026-06-26 Studio mock プロジェクト — 開発ログ新規投稿
 
 - `/studio/projects/[id]?tab=devlog` — 「開発ログを書く」ボタンを追加（mock 作品向け）
 - `/studio/projects/[id]/devlog/new` — タイトル・本文・ver 公開チェック付きの投稿フォーム（preview mock、localStorage に追記）
 - 投稿後は開発ログタブに戻り、先頭に「たった今」のエントリが表示される
-- **追補** — 「開発者が聞きたいこと」「回答してほしい項目」は作品概要ではなく **ver ごとの開発ログ投稿**で設定。概要タブは作品紹介のみ編集可
 
 ---
 

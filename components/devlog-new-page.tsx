@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { notFound } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useCallback, useState, type FormEvent } from "react";
 import { DevlogConfirmationRequestPanel } from "@/components/devlog-confirmation-request-panel";
 import { StudioShell } from "@/components/studio-shell";
+import { VersionPromptEditor } from "@/components/version-prompt-editor";
 import { useGames } from "@/components/games-provider";
+import { useDevlogComposePrompts } from "@/hooks/use-devlog-compose-prompts";
 import {
   EMPTY_CONFIRMATION_REQUEST_DRAFT,
   type ConfirmationRequestDraft,
@@ -22,7 +24,8 @@ const inputClassName =
 
 export function DevlogNewPage({ projectId }: { projectId: string }) {
   const router = useRouter();
-  const { getGameById, addDevlog } = useGames();
+  const { getGameById, addDevlog, getDeveloperVersionPrompts, saveDeveloperVersionPrompts } =
+    useGames();
   const game = getGameById(projectId);
   const currentVersion = resolvePlayableVersion(game?.playableVersion);
 
@@ -36,6 +39,19 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
   const [confirmationDraft, setConfirmationDraft] =
     useState<ConfirmationRequestDraft>(EMPTY_CONFIRMATION_REQUEST_DRAFT);
 
+  const loadPrompts = useCallback(
+    (pid: string, versionKey: string) => getDeveloperVersionPrompts(pid, versionKey),
+    [getDeveloperVersionPrompts],
+  );
+
+  const prompts = useDevlogComposePrompts({
+    projectId,
+    currentVersionKey: currentVersion,
+    publishNewVersion,
+    newVersionInput: newVersion,
+    loadPrompts,
+  });
+
   if (!game) {
     notFound();
   }
@@ -45,15 +61,17 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
     setSubmitting(true);
     setError(null);
 
+    const promptResult = prompts.resolvePromptsForSave();
+    if (!promptResult.ok) {
+      setError(promptResult.message);
+      setSubmitting(false);
+      return;
+    }
+
     let publishPlayableVersion: string | undefined;
 
     if (publishNewVersion) {
       const trimmed = normalizePlayableVersionInput(newVersion);
-      if (!trimmed) {
-        setError("新しいプレイ可能verのバージョン名を入力してください。");
-        setSubmitting(false);
-        return;
-      }
       if (trimmed === currentVersion) {
         setError("現在のプレイ可能verと同じバージョン名は使えません。");
         setSubmitting(false);
@@ -64,6 +82,11 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
 
     try {
       await addDevlog(projectId, title, content, { publishPlayableVersion });
+      await saveDeveloperVersionPrompts(
+        projectId,
+        promptResult.versionKey,
+        promptResult.prompts,
+      );
       router.push(projectStudioPath(projectId));
     } catch {
       setError(
@@ -177,6 +200,17 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
               </div>
             )}
           </div>
+
+          {!prompts.loading && (
+            <VersionPromptEditor
+              mode={prompts.promptMode}
+              onModeChange={prompts.setPromptMode}
+              drafts={prompts.promptDrafts}
+              onDraftsChange={prompts.setPromptDrafts}
+              versionLabel={prompts.versionLabel}
+              showValidation={prompts.showValidation}
+            />
+          )}
 
           <DevlogConfirmationRequestPanel
             open={confirmationOpen}

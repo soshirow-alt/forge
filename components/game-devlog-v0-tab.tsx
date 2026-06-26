@@ -52,19 +52,6 @@ function LatestDevlogCard({
       </div>
       <h2 className="mt-3 text-lg font-semibold text-white">{entry.title}</h2>
       <p className="mt-2 text-sm leading-relaxed text-zinc-400">{entry.excerpt}</p>
-      {entry.developerWorry && (
-        <p className="mt-3 rounded-xl border border-violet-500/20 bg-violet-500/5 px-3 py-2 text-sm text-violet-100/90">
-          <span className="font-medium text-violet-200">聞きたいこと: </span>
-          {entry.developerWorry}
-        </p>
-      )}
-      {entry.wantedVoices && entry.wantedVoices.length > 0 && (
-        <ul className="mt-2 space-y-1 text-sm text-zinc-400">
-          {entry.wantedVoices.map((voice) => (
-            <li key={voice}>· {voice}</li>
-          ))}
-        </ul>
-      )}
       {entry.highlights.length > 0 && (
         <ul className="mt-4 space-y-1.5">
           {entry.highlights.map((item) => (
@@ -98,10 +85,7 @@ function DevlogTimelineItem({
   expanded: boolean;
   onToggle: () => void;
 }) {
-  const hasMore =
-    entry.highlights.length > 0 ||
-    Boolean(entry.developerWorry) ||
-    (entry.wantedVoices?.length ?? 0) > 0;
+  const hasMore = entry.highlights.length > 0;
 
   return (
     <article className="relative pl-8">
@@ -124,16 +108,8 @@ function DevlogTimelineItem({
         </div>
         <h3 className="mt-3 font-semibold text-white">{entry.title}</h3>
         <p className="mt-2 text-sm leading-relaxed text-zinc-400">{entry.excerpt}</p>
-        {entry.developerWorry && (
-          <p className="mt-2 text-sm text-violet-200/80">{entry.developerWorry}</p>
-        )}
         {hasMore && expanded && (
           <ul className="mt-3 space-y-1 border-t border-zinc-800/80 pt-3">
-            {entry.wantedVoices?.map((item) => (
-              <li key={item} className="text-sm text-zinc-500">
-                · {item}
-              </li>
-            ))}
             {entry.highlights.map((item) => (
               <li key={item} className="text-sm text-zinc-500">
                 · {item}

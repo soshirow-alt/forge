@@ -2,17 +2,28 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useCallback, useState, type FormEvent } from "react";
 import { StudioShell } from "@/components/studio-shell";
 import { StudioPreviewSampleBanner } from "@/components/studio-preview-sample-banner";
+import { VersionPromptEditor } from "@/components/version-prompt-editor";
+import { useDevlogComposePrompts } from "@/hooks/use-devlog-compose-prompts";
 import {
   addStudioDevlogExtra,
   buildStudioDevlogEntry,
 } from "@/lib/studio-devlog-draft-v0-store";
 import { getStudioProjectDetail } from "@/lib/studio-project-detail-v0-mock-data";
+import {
+  getStudioVersionPromptInputs,
+  saveStudioVersionPromptInputs,
+} from "@/lib/studio-version-prompt-v0-store";
+import { resolvePlayableVersion } from "@/lib/playable-version";
 
 const inputClassName =
   "mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/50";
+
+function studioDisplayVersionToKey(version: string): string {
+  return resolvePlayableVersion(version.replace(/^v/i, ""));
+}
 
 export function StudioDevlogNewPage({ projectId }: { projectId: string }) {
   const router = useRouter();
@@ -21,9 +32,23 @@ export function StudioDevlogNewPage({ projectId }: { projectId: string }) {
   const [content, setContent] = useState("");
   const [publishNewVersion, setPublishNewVersion] = useState(false);
   const [newVersion, setNewVersion] = useState("");
-  const [developerWorry, setDeveloperWorry] = useState("");
-  const [wantedVoices, setWantedVoices] = useState("");
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  const currentVersionKey = studioDisplayVersionToKey(project?.version ?? "v0.3.1");
+
+  const loadPrompts = useCallback(
+    async (pid: string, versionKey: string) =>
+      getStudioVersionPromptInputs(pid, versionKey),
+    [],
+  );
+
+  const prompts = useDevlogComposePrompts({
+    projectId,
+    currentVersionKey,
+    publishNewVersion,
+    newVersionInput: newVersion,
+    loadPrompts,
+  });
 
   if (!project) {
     return (
@@ -38,21 +63,23 @@ export function StudioDevlogNewPage({ projectId }: { projectId: string }) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (publishNewVersion && !newVersion.trim()) {
-      setSaveMessage("新しい ver のバージョン名を入力してください。");
+    const promptResult = prompts.resolvePromptsForSave();
+    if (!promptResult.ok) {
+      setSaveMessage(promptResult.message);
       return;
     }
+
+    saveStudioVersionPromptInputs(
+      projectId,
+      promptResult.versionKey,
+      promptResult.prompts,
+    );
 
     const entry = buildStudioDevlogEntry({
       title,
       content,
       publishNewVersion,
       newVersion: newVersion.trim() || undefined,
-      developerWorry,
-      wantedVoices: wantedVoices
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean),
     });
     addStudioDevlogExtra(projectId, entry);
     router.push(`/studio/projects/${projectId}?tab=devlog`);
@@ -162,48 +189,16 @@ export function StudioDevlogNewPage({ projectId }: { projectId: string }) {
             )}
           </div>
 
-          <section className="space-y-4 rounded-lg border border-violet-500/20 bg-violet-500/5 p-4">
-            <div>
-              <h2 className="text-sm font-semibold text-violet-100">
-                この ver でプレイヤーに聞きたいこと
-              </h2>
-              <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-                質問は作品全体ではなく、今回の ver ごとに設定します。プレイヤーが FB
-                するときのガイドになります。
-              </p>
-            </div>
-
-            <div>
-              <label
-                htmlFor="developerWorry"
-                className="text-sm font-medium text-zinc-400"
-              >
-                開発者が聞きたいこと
-              </label>
-              <textarea
-                id="developerWorry"
-                rows={3}
-                value={developerWorry}
-                onChange={(event) => setDeveloperWorry(event.target.value)}
-                className={`${inputClassName} resize-y`}
-                placeholder="例: チュートリアルは長すぎませんか？序盤のテンポはどう感じましたか？"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="wantedVoices" className="text-sm font-medium text-zinc-400">
-                回答してほしい項目
-              </label>
-              <textarea
-                id="wantedVoices"
-                rows={5}
-                value={wantedVoices}
-                onChange={(event) => setWantedVoices(event.target.value)}
-                className={`${inputClassName} resize-y`}
-                placeholder={"1行に1項目\n例: チュートリアルの長さは適切でしたか？\n例: 最初のランタン取得まで迷いませんでしたか？"}
-              />
-            </div>
-          </section>
+          {!prompts.loading && (
+            <VersionPromptEditor
+              mode={prompts.promptMode}
+              onModeChange={prompts.setPromptMode}
+              drafts={prompts.promptDrafts}
+              onDraftsChange={prompts.setPromptDrafts}
+              versionLabel={prompts.versionLabel}
+              showValidation={prompts.showValidation}
+            />
+          )}
 
           <button
             type="submit"
