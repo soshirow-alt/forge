@@ -4,7 +4,8 @@ export type NotificationType =
   | "feedback"
   | "devlog"
   | "version_published"
-  | "voice_received";
+  | "voice_received"
+  | "confirmation_request";
 
 export type Notification = {
   id: string;
@@ -31,6 +32,8 @@ export function getNotificationTypeLabel(type: NotificationType): string {
       return "開発日誌";
     case "version_published":
       return "新しいプレイ可能ver";
+    case "confirmation_request":
+      return "確認依頼";
   }
 }
 
@@ -51,6 +54,8 @@ export function createNotificationMessage(
       return `「${projectTitle}」が更新されました — 開発ログを公開`;
     case "version_published":
       return `「${projectTitle}」の新しいプレイ可能verが公開されました — 再プレイして回答できます`;
+    case "confirmation_request":
+      return `「${projectTitle}」から確認依頼が届きました`;
   }
 }
 
@@ -69,6 +74,8 @@ export function getNotificationActionHint(type: NotificationType): string {
       return "開発の歩みを見る →";
     case "version_published":
       return "新verを確認して再プレイ →";
+    case "confirmation_request":
+      return "変化を確認する →";
   }
 }
 

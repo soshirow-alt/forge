@@ -87,7 +87,8 @@ export function buildPlayerUpdates(input: {
 
     if (
       notification.type !== "devlog" &&
-      notification.type !== "version_published"
+      notification.type !== "version_published" &&
+      notification.type !== "confirmation_request"
     ) {
       continue;
     }
@@ -102,17 +103,22 @@ export function buildPlayerUpdates(input: {
     )[0];
 
     const kind =
-      notification.type === "version_published" ? "version_published" : "devlog";
+      notification.type === "version_published"
+        ? "version_published"
+        : notification.type === "confirmation_request"
+          ? "devlog"
+          : "devlog";
 
     const updateContext = resolvePlayerUpdateContext(
-      kind,
+      notification.type === "version_published" ? "version_published" : "devlog",
       notification,
       latestDevlog,
     );
     const confirmation = latestDevlog
       ? draftFromRecord(input.confirmationsByDevlogId.get(latestDevlog.id))
       : null;
-    const hasConfirmationRequest = Boolean(confirmation);
+    const hasConfirmationRequest =
+      notification.type === "confirmation_request" || Boolean(confirmation);
 
     items.set(notification.id, {
       id: notification.id,
@@ -125,10 +131,13 @@ export function buildPlayerUpdates(input: {
         isVersionPublish: updateContext.isVersionPublish,
         hasConfirmationRequest,
       }),
-      headline: buildPlayerUpdateHeadline({
-        ...updateContext,
-        confirmation,
-      }),
+      headline:
+        notification.type === "confirmation_request"
+          ? notification.message
+          : buildPlayerUpdateHeadline({
+              ...updateContext,
+              confirmation,
+            }),
       date: notification.date,
       detailsHref: hasConfirmationRequest
         ? `/games/${notification.projectId}#${CHANGE_CHECK_SECTION_ID}`

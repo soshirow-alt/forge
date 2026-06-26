@@ -19,7 +19,7 @@ export function GameChangeCheckCard({
   onTryVersion,
 }: GameChangeCheckCardProps) {
   if (state.kind === "confirmed") {
-    const { changeLine, askLine } = formatChangeCheckConfirmedBody(
+    const { changeLine, askLine, priorityLine } = formatChangeCheckConfirmedBody(
       state.confirmation,
     );
 
@@ -30,10 +30,15 @@ export function GameChangeCheckCard({
         aria-label="前回からの変化"
       >
         <p className="text-xs font-medium text-orange-300/90">前回からの変化</p>
-        <p className="mt-2 text-sm leading-relaxed text-zinc-200">
-          {changeLine}
-          {changeLine && !changeLine.endsWith("。") ? "。" : ""}
-        </p>
+        {changeLine ? (
+          <p className="mt-2 text-sm leading-relaxed text-zinc-200">
+            {changeLine}
+            {!changeLine.endsWith("。") ? "。" : ""}
+          </p>
+        ) : null}
+        {priorityLine ? (
+          <p className="mt-1.5 text-sm leading-relaxed text-zinc-300">{priorityLine}</p>
+        ) : null}
         {askLine && (
           <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">{askLine}</p>
         )}

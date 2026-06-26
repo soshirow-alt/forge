@@ -12,6 +12,7 @@ export function buildPlayerUpdateHeadline(input: {
     const ask = input.confirmation.askSummary.trim();
     const changes = input.confirmation.changesSummary.trim();
     const duration = input.confirmation.estimatedDuration.trim();
+    const priorityTitle = input.confirmation.linkedPriorities[0]?.title;
 
     if (ask) {
       const suffix =
@@ -21,6 +22,10 @@ export function buildPlayerUpdateHeadline(input: {
 
     if (changes) {
       return `${changes}について、確認してほしいそうです`;
+    }
+
+    if (priorityTitle) {
+      return `「${priorityTitle}」への対応について、確認してほしいそうです`;
     }
 
     return "開発者から確認依頼が届いています";

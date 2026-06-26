@@ -5,11 +5,16 @@ import { resolvePlayableVersion } from "@/lib/playable-version";
 type NotificationRow = {
   id: string;
   user_id: string;
-  type: "devlog" | "version_published" | "voice_received";
+  type:
+    | "devlog"
+    | "version_published"
+    | "voice_received"
+    | "confirmation_request";
   project_id: string;
   devlog_id: string | null;
   published_version: string | null;
   version_key: string | null;
+  confirmation_request_id: string | null;
   message: string;
   read_at: string | null;
   created_at: string;
@@ -96,6 +101,38 @@ export async function insertDevlogNotifications(
     type: "devlog" as const,
     project_id: input.projectId,
     devlog_id: input.devlogId,
+    message: input.message,
+  }));
+
+  const { error } = await supabase.from("user_notifications").insert(rows);
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function insertConfirmationRequestNotifications(
+  supabase: SupabaseClient,
+  input: {
+    recipientUserIds: string[];
+    projectId: string;
+    devlogId: string;
+    confirmationRequestId: string;
+    publishedVersion?: string | null;
+    message: string;
+  },
+): Promise<void> {
+  if (input.recipientUserIds.length === 0) {
+    return;
+  }
+
+  const rows = input.recipientUserIds.map((userId) => ({
+    user_id: userId,
+    type: "confirmation_request" as const,
+    project_id: input.projectId,
+    devlog_id: input.devlogId,
+    confirmation_request_id: input.confirmationRequestId,
+    published_version: input.publishedVersion ?? null,
     message: input.message,
   }));
 

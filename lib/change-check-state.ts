@@ -91,6 +91,9 @@ export async function resolveChangeCheckState(
       changesSummary: confirmationRecord.changesSummary,
       askSummary: confirmationRecord.askSummary,
       estimatedDuration: confirmationRecord.estimatedDuration,
+      linkedPriorities: confirmationRecord.linkedPriorities,
+      notifyAudience: confirmationRecord.notifyAudience,
+      notifyEnabled: confirmationRecord.notifyEnabled,
     })
   ) {
     return {
@@ -100,6 +103,9 @@ export async function resolveChangeCheckState(
         changesSummary: confirmationRecord.changesSummary,
         askSummary: confirmationRecord.askSummary,
         estimatedDuration: confirmationRecord.estimatedDuration,
+        linkedPriorities: confirmationRecord.linkedPriorities,
+        notifyAudience: confirmationRecord.notifyAudience,
+        notifyEnabled: confirmationRecord.notifyEnabled,
       },
     };
   }

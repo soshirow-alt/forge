@@ -23,6 +23,11 @@ const MOCK_BY_GAME: Record<string, ChangeCheckState> = {
       changesSummary: "ボス戦の難易度を調整しました",
       askSummary: "前より理不尽に感じないか確認してほしい",
       estimatedDuration: "5分",
+      linkedPriorities: [
+        { id: "concern-summary", title: "ボス戦が理不尽に感じる" },
+      ],
+      notifyAudience: [],
+      notifyEnabled: true,
     },
   },
   "roshin-no-zanko": {

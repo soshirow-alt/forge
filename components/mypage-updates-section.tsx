@@ -49,7 +49,11 @@ export function MyPageUpdatesSection({
       }
     }
     for (const notification of getNotifications()) {
-      if (notification.type !== "devlog" && notification.type !== "version_published") {
+      if (
+        notification.type !== "devlog" &&
+        notification.type !== "version_published" &&
+        notification.type !== "confirmation_request"
+      ) {
         continue;
       }
       const latest = sortDevlogsNewestFirst(
@@ -84,6 +88,9 @@ export function MyPageUpdatesSection({
           changesSummary: record.changesSummary,
           askSummary: record.askSummary,
           estimatedDuration: record.estimatedDuration,
+          linkedPriorities: record.linkedPriorities,
+          notifyAudience: record.notifyAudience,
+          notifyEnabled: record.notifyEnabled,
         });
       }
       setConfirmationsByDevlogId(map);

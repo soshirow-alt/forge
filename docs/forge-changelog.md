@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-06-26 確認依頼ループ — 課題紐付け・対象者・通知
+
+- **migration 017** — `confirmation_requests` に課題紐付け・対象者選択、`user_notifications` に `confirmation_request` 型と RPC `get_confirmation_notify_recipients`
+- `/projects/{id}/devlog/new` — 確認依頼パネルに **対応した課題**（Studio上位3から最大3件）、**誰に届けるか**、**通知する/履歴だけ** を追加
+- 確認依頼ありの公開時 — 対象者へ **確認依頼** 通知（未選択時は前verプレイ済み＋見届け中）。通知オフ時は履歴・マイページ・ゲーム詳細のみ
+- `/games/[id]` 変化チェック — 紐付けた課題名を表示
+- `/notifications`・`/mypage` — `confirmation_request` 通知を表示し、変化チェックへ誘導
+- **オーナー**: `015`・`016`・`017` を Dashboard 適用後、devlog+確認依頼+課題紐付けで投稿 → 対象プレイヤーの通知・マイページ・ゲーム詳細を確認
+
+---
+
 ## 2026-06-26 開発に役立った評価 + マイページ確認依頼表示
 
 - **migration 016** — `developer_feedback_helpful_marks`（開発者のみ・非公開トグル）

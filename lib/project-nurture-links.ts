@@ -48,6 +48,8 @@ export function mypageUpdatesHref(): string {
 
 export function notificationTargetHref(notification: Notification): string {
   switch (notification.type) {
+    case "confirmation_request":
+      return gameChangeCheckHref(notification.projectId);
     case "version_published":
       return gameVersionBannerHref(notification.projectId);
     case "devlog":

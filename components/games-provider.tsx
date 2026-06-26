@@ -96,11 +96,14 @@ import {
   fetchWatcherUserIds,
   insertProjectDevlog,
 } from "@/lib/supabase/project-devlogs";
-import { insertConfirmationRequest } from "@/lib/supabase/confirmation-requests-db";
+import { insertConfirmationRequest, linkedPriorityIds } from "@/lib/supabase/confirmation-requests-db";
 import {
   hasConfirmationRequestContent,
+  shouldPersistConfirmationRequest,
   type ConfirmationRequestDraft,
 } from "@/lib/confirmation-request-draft";
+import { createConfirmationRequestNotificationMessage } from "@/lib/confirmation-request-messages";
+import { fetchConfirmationNotifyRecipientIds } from "@/lib/supabase/confirmation-request-targeting-db";
 import { resolveChangeCheckState } from "@/lib/change-check-state";
 import type { ChangeCheckState } from "@/lib/change-check-types";
 import {
@@ -124,6 +127,7 @@ import {
 import {
   fetchUserNotifications,
   insertDevlogNotifications,
+  insertConfirmationRequestNotifications,
   insertVersionPublishedNotifications,
   isDatabaseNotificationId,
   markAllUserNotificationsAsRead,
@@ -1509,15 +1513,17 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       );
       setDevlogs((prev) => [entry, ...prev]);
 
-      if (
-        options?.confirmationRequest &&
-        hasConfirmationRequestContent(options.confirmationRequest)
-      ) {
-        await insertConfirmationRequest(supabase, {
+      const confirmationDraft = options?.confirmationRequest;
+      const persistConfirmation =
+        confirmationDraft && shouldPersistConfirmationRequest(confirmationDraft);
+
+      let confirmationRecord = null;
+      if (persistConfirmation && confirmationDraft) {
+        confirmationRecord = await insertConfirmationRequest(supabase, {
           devlogId: entry.id,
           projectId,
           publishedVersion: publishVersion ?? null,
-          draft: options.confirmationRequest,
+          draft: confirmationDraft,
         });
       }
 
@@ -1535,6 +1541,44 @@ export function GamesProvider({ children }: { children: ReactNode }) {
           ),
         );
         invokeAdoptionMatcherAfterPublish(entry.id);
+      }
+
+      const hasConfirmationPayload =
+        confirmationDraft && hasConfirmationRequestContent(confirmationDraft);
+      const useConfirmationNotifications =
+        Boolean(confirmationRecord) &&
+        confirmationDraft?.notifyEnabled !== false &&
+        hasConfirmationPayload;
+
+      if (useConfirmationNotifications && confirmationRecord && confirmationDraft) {
+        const recipientIds = (
+          await fetchConfirmationNotifyRecipientIds(supabase, {
+            projectId,
+            notifyAudience: confirmationDraft.notifyAudience,
+            versionKey: publishVersion ?? game?.playableVersion ?? null,
+            linkedPriorityIds: linkedPriorityIds(confirmationDraft),
+          })
+        ).filter((recipientId) => recipientId !== user.id);
+
+        if (recipientIds.length > 0) {
+          const message = createConfirmationRequestNotificationMessage(
+            projectTitle,
+            confirmationDraft,
+          );
+          await insertConfirmationRequestNotifications(supabase, {
+            recipientUserIds: recipientIds,
+            projectId,
+            devlogId: entry.id,
+            confirmationRequestId: confirmationRecord.id,
+            publishedVersion: publishVersion ?? null,
+            message,
+          });
+        }
+        return;
+      }
+
+      if (confirmationDraft?.notifyEnabled === false) {
+        return;
       }
 
       const watcherIds = await fetchWatcherUserIds(supabase, projectId);

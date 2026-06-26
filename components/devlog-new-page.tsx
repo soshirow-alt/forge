@@ -11,9 +11,10 @@ import { useGames } from "@/components/games-provider";
 import { useDevlogComposePrompts } from "@/hooks/use-devlog-compose-prompts";
 import {
   EMPTY_CONFIRMATION_REQUEST_DRAFT,
-  hasConfirmationRequestContent,
+  shouldPersistConfirmationRequest,
   type ConfirmationRequestDraft,
 } from "@/lib/confirmation-request-draft";
+import { useDevlogTopPriorities } from "@/hooks/use-devlog-top-priorities";
 import { projectStudioPath } from "@/lib/project-nurture-links";
 import {
   normalizePlayableVersionInput,
@@ -29,6 +30,8 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
     useGames();
   const game = getGameById(projectId);
   const currentVersion = resolvePlayableVersion(game?.playableVersion);
+  const { priorities: topPriorities, loaded: prioritiesLoaded } =
+    useDevlogTopPriorities(projectId, currentVersion);
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -84,7 +87,7 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
     try {
       await addDevlog(projectId, title, content, {
         publishPlayableVersion,
-        confirmationRequest: hasConfirmationRequestContent(confirmationDraft)
+        confirmationRequest: shouldPersistConfirmationRequest(confirmationDraft)
           ? confirmationDraft
           : undefined,
       });
@@ -223,6 +226,8 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
             onOpenChange={setConfirmationOpen}
             draft={confirmationDraft}
             onDraftChange={setConfirmationDraft}
+            topPriorities={topPriorities}
+            prioritiesLoaded={prioritiesLoaded}
           />
 
           <button
