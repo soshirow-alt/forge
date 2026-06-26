@@ -21,42 +21,43 @@ export function MyPageLoopPanel() {
   const playedGames = getPlayedGames();
   const bookmarkedGames = getBookmarkedGames();
 
-  const loopGames = useMemo(() => {
-    const map = new Map<string, (typeof playedGames)[number]>();
-    for (const game of [...playedGames, ...watchedGames, ...bookmarkedGames]) {
-      map.set(game.id, game);
-    }
-    return [...map.values()];
-  }, [bookmarkedGames, playedGames, watchedGames]);
+  const hasAnyActivity = useMemo(
+    () =>
+      watchedGames.length > 0 ||
+      playedGames.length > 0 ||
+      bookmarkedGames.length > 0,
+    [bookmarkedGames.length, playedGames.length, watchedGames.length],
+  );
 
-  const hasLoopActivity =
-    loopGames.length > 0 ||
-    watchedGames.length > 0 ||
-    playedGames.length > 0;
-
-  return (
-    <div className="space-y-8">
-      <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/30 p-5 sm:p-6">
-        <h2 className="text-lg font-semibold text-white">あなたの学習ループ</h2>
-        <p className="mt-2 text-sm leading-relaxed text-zinc-500">
-          遊んだ作品・初声を送った作品・変化があった作品・確認依頼をここに集約します。
+  if (!hasAnyActivity) {
+    return (
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-6 py-16 text-center">
+        <h2 className="text-lg font-semibold text-zinc-200">
+          見届けている作品はまだありません
+        </h2>
+        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-500">
+          作品をプレイして「見届ける」と、開発者の更新や確認依頼がここに届きます。
         </p>
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
             href="/home"
-            className="rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-violet-500/40 hover:text-violet-200"
+            className="inline-block rounded-lg bg-violet-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
           >
             作品を探す
           </Link>
           <Link
             href="/mypage?tab=developer"
-            className="rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-2 text-sm text-violet-200 transition-colors hover:bg-violet-500/15"
+            className="inline-block rounded-lg border border-zinc-700 px-6 py-3 text-sm text-zinc-300 transition-colors hover:border-violet-500/40 hover:text-violet-200"
           >
-            開発作品を管理
+            自分の作品を管理
           </Link>
         </div>
-      </section>
+      </div>
+    );
+  }
 
+  return (
+    <div className="space-y-8">
       {(watchedGames.length > 0 || playedGames.length > 0) && (
         <MyPageUpdatesSection
           watchedGames={watchedGames}
@@ -88,18 +89,6 @@ export function MyPageLoopPanel() {
             detailLabel="詳細 →"
           />
         </section>
-      ) : null}
-
-      {!hasLoopActivity ? (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-6 py-16 text-center">
-          <p className="text-zinc-400">まだループに関わる作品がありません。</p>
-          <Link
-            href="/home"
-            className="mt-6 inline-block rounded-lg bg-violet-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
-          >
-            作品を探す
-          </Link>
-        </div>
       ) : null}
     </div>
   );
