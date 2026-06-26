@@ -8,6 +8,7 @@
 
 - Preview デプロイ（`preview/landing-01`）では Player ヘッダーの **Studio** ボタン・`/studio` 直アクセスでログインを要求しない（mock UI 確認用）
 - Studio ホーム「あなたの作品」も Preview では未ログイン時にログイン CTA を出さず、空状態を表示
+- **追補** — オンボーディング導入で Studio ボタンが `attemptStudioEntry` 化し、認証 hydrate 前は無反応・本番では `/login` へ飛ぶ問題を修正。Preview では `Link` 直遷移に戻し、オンボーディングモーダルも出さない。`NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF` で Preview 判定を安定化
 
 ---
 

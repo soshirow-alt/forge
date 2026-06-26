@@ -77,14 +77,15 @@ export function StudioEntryGateProvider({ children }: { children: ReactNode }) {
 
   const attemptStudioEntry = useCallback(
     (href = "/studio") => {
+      // Preview — 認証 hydrate 前でも直接遷移（オンボーディング導入前と同じ）
+      if (shouldBypassStudioLoginOnPreview()) {
+        router.push(href);
+        return;
+      }
       if (!hydrated) {
         return;
       }
       if (!user) {
-        if (shouldBypassStudioLoginOnPreview()) {
-          router.push(href);
-          return;
-        }
         router.push("/login?return=/studio");
         return;
       }
@@ -131,6 +132,9 @@ export function StudioDirectAccessGuard() {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
+    if (shouldBypassStudioLoginOnPreview()) {
+      return;
+    }
     if (!hydrated || checked) {
       return;
     }

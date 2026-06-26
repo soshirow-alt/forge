@@ -7,6 +7,14 @@ function hostLooksLikePreviewV0(host: string | undefined): boolean {
   return Boolean(host?.includes("preview-landing-01"));
 }
 
+function gitRefIsPreviewV0(): boolean {
+  const refs = [
+    process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF,
+    process.env.VERCEL_GIT_COMMIT_REF,
+  ];
+  return refs.some((ref) => ref === "preview/landing-01");
+}
+
 export function isPreviewV0Deployment(host?: string): boolean {
   if (hostLooksLikePreviewV0(host)) {
     return true;
@@ -16,8 +24,7 @@ export function isPreviewV0Deployment(host?: string): boolean {
     return true;
   }
 
-  const ref = process.env.VERCEL_GIT_COMMIT_REF;
-  if (ref === "preview/landing-01") {
+  if (gitRefIsPreviewV0()) {
     return true;
   }
 
@@ -28,7 +35,7 @@ export function shouldRedirectRootToDiscoveryHome(host?: string): boolean {
   return isPreviewV0Deployment(host);
 }
 
-/** Preview v0 — Studio 入場・閲覧はログイン不要（mock UI 確認用） */
+/** Preview v0 — Studio 入場でログイン・オンボーディングゲートを出さない（mock UI 確認用） */
 export function shouldBypassStudioLoginOnPreview(host?: string): boolean {
   return isPreviewV0Deployment(host);
 }
