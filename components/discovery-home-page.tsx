@@ -82,7 +82,6 @@ function HorizontalGameCard({
           src={game.image}
           alt={game.title}
           className="w-full aspect-[4/3]"
-          contain
         />
       </div>
       <h3 className={`truncate font-semibold text-white ${compact ? "mt-2 text-sm" : "mt-3"}`}>
