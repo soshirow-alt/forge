@@ -1,3 +1,4 @@
+import { AppGateProviders } from "@/components/app-gate-providers";
 import { AuthProvider } from "@/components/auth-provider";
 import { GamesProvider } from "@/components/games-provider";
 import { mapSupabaseUser } from "@/lib/auth";
@@ -23,7 +24,9 @@ export async function AppProviders({
 
   return (
     <AuthProvider initialUser={initialUser}>
-      <GamesProvider>{children}</GamesProvider>
+      <GamesProvider>
+        <AppGateProviders>{children}</AppGateProviders>
+      </GamesProvider>
     </AuthProvider>
   );
 }

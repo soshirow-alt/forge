@@ -11,6 +11,7 @@ import {
   authInputClassName,
 } from "@/components/auth-layout";
 import { useAuth } from "@/components/auth-provider";
+import { markNewRegistrationPending } from "@/lib/developer-onboarding-v0-store";
 import { getAuthErrorMessage } from "@/lib/auth";
 import { resolvePostLoginPath } from "@/lib/login-return-url";
 
@@ -55,6 +56,7 @@ export function RegisterPage({
 
     try {
       const hasSession = await signUp(email, password, username);
+      markNewRegistrationPending();
 
       if (hasSession) {
         window.location.href = resolvePostLoginPath(null);

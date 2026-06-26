@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-06-26 新規登録後 — Studio オンボーディング & 開発者プロフィール修正
+
+- 新規登録後、Player ナビの **Studio** 押下時に「開発者ページを作成しますか？」モーダル（**はい** → Studio 遷移 + マイコミュニティ自動開設 / **いいえ** → 閉じるのみ・遷移なし。はいを選ぶまで毎回表示）
+- `/studio` 直打ち時も同モーダル。いいえで Player ホームへ戻る
+- 新規: `lib/developer-onboarding-v0-store.ts`, `lib/developer-community-v0-store.ts`, `components/developer-page-onboarding-modal.tsx`, `components/studio-entry-gate-provider.tsx`
+- `/studio/community` — オンボーディング承諾後は自分のコミュニティ名・アバターを動的表示
+- `/creators/[id]` — コミュニティ未開設の開発者には参加申請ボタンを非表示。Studio フォロワー一覧からの遷移はパンくず `Studio › フォロワー`、フォロワー ID のプロフィール名を正しく表示
+
+---
+
 ## 2026-06-26 Studio マイページ — プロジェクトカードのフェーズワッペンを正本用語に
 
 - `/studio/mypage`（プロジェクト一覧）— サムネ左上ワッペンを **試作版 / プレイ可能版 / 通しプレイ版 / 公開準備中 / 正式版** に更新（旧 `〇〇ver` 表記を廃止）

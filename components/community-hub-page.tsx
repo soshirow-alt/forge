@@ -4,7 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "@/components/auth-provider";
 import { useCommunityJoinV0 } from "@/hooks/use-community-join-v0";
+import { useDeveloperCommunitiesV0 } from "@/hooks/use-developer-communities-v0";
+import { getOwnCommunityForUser } from "@/lib/developer-community-v0-store";
 import {
   developerDevlogQuoteOptions,
   playerCommunityFeedMock,
@@ -472,7 +475,7 @@ function filterVisibleThreads(
   isDeveloper: boolean,
 ): CommunityPost[] {
   if (isDeveloper) {
-    return posts.filter((post) => post.communityId === studioOwnCommunityId);
+    return posts.filter((post) => post.communityId === communityId);
   }
   return posts.filter(
     (post) => post.communityId === communityId && post.authorRole === "developer",
@@ -527,9 +530,18 @@ function CommunityTabs({
 function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
+  useDeveloperCommunitiesV0();
   const isDeveloper = variant === "developer";
   const { pendingFor, membersFor, approveJoinRequest, rejectJoinRequest, getStatus } =
     useCommunityJoinV0();
+
+  const ownCommunity =
+    isDeveloper && user
+      ? getOwnCommunityForUser(user.id, user.name)
+      : null;
+  const developerCommunityId = ownCommunity?.id ?? studioOwnCommunityId;
+  const developerCommunityProfile = ownCommunity ?? studioCommunityProfile;
 
   const activeTab = (searchParams.get("tab") === "members" ? "members" : "board") as CommunityTab;
 
@@ -539,15 +551,15 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
 
   const communityParam = searchParams.get("community");
   const selectedCommunityId = isDeveloper
-    ? studioOwnCommunityId
+    ? developerCommunityId
     : (communityParam ?? joinedCommunities[0]?.id ?? "");
 
   const [posts, setPosts] = useState<CommunityPost[]>(
     isDeveloper ? studioCommunityPostsMock : playerCommunityFeedMock,
   );
 
-  const pending = pendingFor(isDeveloper ? studioOwnCommunityId : selectedCommunityId);
-  const members = membersFor(isDeveloper ? studioOwnCommunityId : selectedCommunityId);
+  const pending = pendingFor(selectedCommunityId);
+  const members = membersFor(selectedCommunityId);
 
   const canViewCommunity =
     isDeveloper || (selectedCommunityId !== "" && getStatus(selectedCommunityId) === "approved");
@@ -597,7 +609,7 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
 
   const title = isDeveloper ? "マイコミュニティ" : "参加コミュニティ";
   const description = isDeveloper
-    ? studioCommunityProfile.description
+    ? developerCommunityProfile.description
     : "参加中の開発者コミュニティの掲示板。開発者のスレッドを閲覧し、返信できます。";
 
   const selectedCommunity =
@@ -646,7 +658,7 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
           <div className="flex items-center gap-3">
             <span className="relative size-12 shrink-0 overflow-hidden rounded-full bg-zinc-800">
               <Image
-                src={studioCommunityProfile.avatar}
+                src={developerCommunityProfile.avatar}
                 alt=""
                 fill
                 className="object-cover"
@@ -654,9 +666,9 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
               />
             </span>
             <div>
-              <p className="font-semibold text-white">{studioCommunityProfile.name}</p>
+              <p className="font-semibold text-white">{developerCommunityProfile.name}</p>
               <p className="text-sm text-zinc-500">
-                参加者 {studioCommunityProfile.memberCountLabel}人
+                参加者 {developerCommunityProfile.memberCountLabel}人
               </p>
             </div>
           </div>
@@ -749,11 +761,11 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
                 setPosts((prev) => [
                   {
                     id: `new-${Date.now()}`,
-                    communityId: studioOwnCommunityId,
+                    communityId: developerCommunityId,
                     authorRole: "developer",
-                    authorName: "しゃねこ",
-                    authorAvatar: "/images/landing/game-1.png",
-                    authorHandle: "shaneco_dev",
+                    authorName: user?.name ?? "あなた",
+                    authorAvatar: developerCommunityProfile.avatar,
+                    authorHandle: developerCommunityProfile.handle,
                     body,
                     postedAt: "たった今",
                     audienceLabel: "コミュニティ全員",

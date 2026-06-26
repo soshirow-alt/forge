@@ -2,11 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useState } from "react";
 import { PlayerShell, GameThumbnail } from "@/components/player-shell";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { useCommunityJoinV0 } from "@/hooks/use-community-join-v0";
 import { communityIdFromDeveloperId, applyToCommunity } from "@/lib/community-join-v0-store";
+import { hasDeveloperOpenCommunity } from "@/lib/developer-community-v0-store";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import {
   developerDevlogHref,
@@ -24,6 +26,16 @@ const tabs: { id: DevTab; label: string }[] = [
 ];
 
 export function DeveloperProfileV0Page({ id }: { id: string }) {
+  return (
+    <Suspense fallback={<DeveloperProfileV0PageContent id={id} />}>
+      <DeveloperProfileV0PageContent id={id} />
+    </Suspense>
+  );
+}
+
+function DeveloperProfileV0PageContent({ id }: { id: string }) {
+  const searchParams = useSearchParams();
+  const fromStudioFollowers = searchParams.get("from") === "studio-followers";
   const dev = getDeveloperProfileV0(id);
   const { requireAuth } = useRequireAuth();
   const returnPath = `/creators/${id}`;
@@ -32,6 +44,7 @@ export function DeveloperProfileV0Page({ id }: { id: string }) {
   const { getStatus } = useCommunityJoinV0();
   const communityId = communityIdFromDeveloperId(id);
   const communityStatus = getStatus(communityId);
+  const hasOpenCommunity = hasDeveloperOpenCommunity(id);
 
   const handleFollow = useCallback(() => {
     requireAuth(() => setFollowing((value) => !value), returnPath);
@@ -52,9 +65,21 @@ export function DeveloperProfileV0Page({ id }: { id: string }) {
       <div className="flex flex-col gap-8 xl:flex-row">
         <div className="min-w-0 flex-1 space-y-6">
           <nav className="text-sm text-zinc-500">
-            <Link href="/home" className="hover:text-violet-400">ホーム</Link>
-            <span className="mx-2">›</span>
-            <Link href="/search/creators" className="hover:text-violet-400">開発者を探す</Link>
+            {fromStudioFollowers ? (
+              <>
+                <Link href="/studio" className="hover:text-violet-400">Studio</Link>
+                <span className="mx-2">›</span>
+                <Link href="/studio/mypage?tab=followers" className="hover:text-violet-400">
+                  フォロワー
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/home" className="hover:text-violet-400">ホーム</Link>
+                <span className="mx-2">›</span>
+                <Link href="/search/creators" className="hover:text-violet-400">開発者を探す</Link>
+              </>
+            )}
             <span className="mx-2">›</span>
             <span className="text-zinc-400">{dev.name}</span>
           </nav>
@@ -98,32 +123,34 @@ export function DeveloperProfileV0Page({ id }: { id: string }) {
                     <UserPlus className="size-4" />
                     {following ? "フォロー中" : "フォロー"}
                   </button>
-                  {communityStatus === "approved" ? (
-                    <Link
-                      href={`/mypage/community?community=${communityId}`}
-                      className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-300"
-                    >
-                      <Users className="size-4" />
-                      コミュニティ参加中
-                    </Link>
-                  ) : communityStatus === "pending" ? (
-                    <span className="inline-flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-5 py-2.5 text-sm font-semibold text-amber-300">
-                      <Users className="size-4" />
-                      参加申請中
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleCommunityJoin}
-                      className={`inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-semibold ${
-                        communityStatus === "rejected"
-                          ? "border-zinc-700 text-zinc-400 hover:border-zinc-600"
-                          : "border-violet-500/40 bg-violet-600/10 text-violet-200 hover:bg-violet-600/20"
-                      }`}
-                    >
-                      <Users className="size-4" />
-                      {communityStatus === "rejected" ? "再申請する" : "コミュニティの参加申請"}
-                    </button>
+                  {hasOpenCommunity && (
+                    communityStatus === "approved" ? (
+                      <Link
+                        href={`/mypage/community?community=${communityId}`}
+                        className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-300"
+                      >
+                        <Users className="size-4" />
+                        コミュニティ参加中
+                      </Link>
+                    ) : communityStatus === "pending" ? (
+                      <span className="inline-flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-5 py-2.5 text-sm font-semibold text-amber-300">
+                        <Users className="size-4" />
+                        参加申請中
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleCommunityJoin}
+                        className={`inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-semibold ${
+                          communityStatus === "rejected"
+                            ? "border-zinc-700 text-zinc-400 hover:border-zinc-600"
+                            : "border-violet-500/40 bg-violet-600/10 text-violet-200 hover:bg-violet-600/20"
+                        }`}
+                      >
+                        <Users className="size-4" />
+                        {communityStatus === "rejected" ? "再申請する" : "コミュニティの参加申請"}
+                      </button>
+                    )
                   )}
                 </div>
               </div>

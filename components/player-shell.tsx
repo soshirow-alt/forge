@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { type FormEvent, type ReactNode, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { useStudioEntryGate } from "@/components/studio-entry-gate-provider";
 
 const primaryLinks = [
   { id: "home", href: "/home", label: "ホーム" },
@@ -133,6 +134,7 @@ export function PlayerShell({
   const router = useRouter();
   const pathname = usePathname();
   const { user, hydrated, logout } = useAuth();
+  const { attemptStudioEntry } = useStudioEntryGate();
 
   function handleLogout() {
     void logout().then(() => {
@@ -223,13 +225,14 @@ export function PlayerShell({
               </Link>
             )
           )}
-          <Link
-            href="/studio"
+          <button
+            type="button"
+            onClick={() => attemptStudioEntry("/studio")}
             title="作品の改善ループ Studio（あなたの作品は Studio ホーム上部）"
             className="hidden rounded-xl border border-zinc-600 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-500 sm:inline-flex"
           >
             Studio
-          </Link>
+          </button>
         </header>
 
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>

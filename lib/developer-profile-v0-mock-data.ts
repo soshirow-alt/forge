@@ -1,3 +1,4 @@
+import { studioFollowersMock } from "@/lib/studio-followers-v0-mock-data";
 import { developerSearchResults } from "@/lib/developer-search-v0-mock-data";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 
@@ -146,78 +147,88 @@ const profiles: Record<string, DeveloperProfileV0> = {
   "sora-games": soraProfile,
 };
 
+function buildProfileFromSearchResult(
+  fromSearch: (typeof developerSearchResults)[number],
+): DeveloperProfileV0 {
+  return {
+    ...soraProfile,
+    id: fromSearch.id,
+    name: fromSearch.name,
+    handle: fromSearch.handle,
+    avatar: fromSearch.avatar,
+    bio: fromSearch.bio,
+    isNew: fromSearch.isNew,
+    verified: fromSearch.verified,
+    followers: fromSearch.followers,
+    following: fromSearch.following,
+    stats: {
+      inDevelopment: fromSearch.inDevelopment,
+      completed: fromSearch.completed,
+      followers: fromSearch.followers,
+      totalPlays: 4200,
+    },
+    inDevGames: fromSearch.gameThumbs.map((thumb, index) => {
+      const gameId = previewGameIds[index % previewGameIds.length]!;
+      return {
+        id: gameId,
+        title: `${fromSearch.name} 作品 ${index + 1}`,
+        tags: ["開発中"],
+        status: "in-dev" as const,
+        witnessCount: 300 + index * 100,
+        lastUpdated: "2025/05/01",
+        image: thumb,
+        description: "開発中の作品です。",
+      };
+    }),
+    completedGames:
+      fromSearch.completed > 0
+        ? [
+            {
+              id: previewGameIds[(fromSearch.id.length + 1) % previewGameIds.length]!,
+              title: `${fromSearch.name} 完成作品`,
+              tags: ["完成品"],
+              status: "completed" as const,
+              witnessCount: 520,
+              lastUpdated: "2024/11/01",
+              image: fromSearch.gameThumbs[0] ?? "/images/landing/game-1.png",
+              description: "正式verとして公開中の作品です。",
+            },
+          ]
+        : [],
+    recentDevlogs: [
+      {
+        id: `${fromSearch.id}-dl1`,
+        gameTitle: "星灯の旅路",
+        gameId: "seikat-no-tabiji",
+        date: "2025/05/12",
+        title: "最新ビルドを公開",
+        excerpt: "フィードバックを反映した更新verです。",
+        commentCount: 8,
+      },
+      {
+        id: `${fromSearch.id}-dl2`,
+        gameTitle: "炉心の残光",
+        gameId: "roshin-no-zanko",
+        date: "2025/04/20",
+        title: "UI を調整",
+        excerpt: "マップ画面の視認性を改善しました。",
+        commentCount: 5,
+      },
+    ],
+  };
+}
+
 export function getDeveloperProfileV0(id: string): DeveloperProfileV0 {
   if (profiles[id]) {
     return profiles[id];
   }
   const fromSearch = developerSearchResults.find((d) => d.id === id);
   if (fromSearch) {
-    return {
-      ...soraProfile,
-      id: fromSearch.id,
-      name: fromSearch.name,
-      handle: fromSearch.handle,
-      avatar: fromSearch.avatar,
-      bio: fromSearch.bio,
-      isNew: fromSearch.isNew,
-      verified: fromSearch.verified,
-      followers: fromSearch.followers,
-      following: fromSearch.following,
-      stats: {
-        inDevelopment: fromSearch.inDevelopment,
-        completed: fromSearch.completed,
-        followers: fromSearch.followers,
-        totalPlays: 4200,
-      },
-      inDevGames: fromSearch.gameThumbs.map((thumb, index) => {
-        const gameId = previewGameIds[index % previewGameIds.length]!;
-        return {
-          id: gameId,
-          title: `${fromSearch.name} 作品 ${index + 1}`,
-          tags: ["開発中"],
-          status: "in-dev" as const,
-          witnessCount: 300 + index * 100,
-          lastUpdated: "2025/05/01",
-          image: thumb,
-          description: "開発中の作品です。",
-        };
-      }),
-      completedGames:
-        fromSearch.completed > 0
-          ? [
-              {
-                id: previewGameIds[(fromSearch.id.length + 1) % previewGameIds.length]!,
-                title: `${fromSearch.name} 完成作品`,
-                tags: ["完成品"],
-                status: "completed" as const,
-                witnessCount: 520,
-                lastUpdated: "2024/11/01",
-                image: fromSearch.gameThumbs[0] ?? "/images/landing/game-1.png",
-                description: "正式verとして公開中の作品です。",
-              },
-            ]
-          : [],
-      recentDevlogs: [
-        {
-          id: `${fromSearch.id}-dl1`,
-          gameTitle: "星灯の旅路",
-          gameId: "seikat-no-tabiji",
-          date: "2025/05/12",
-          title: "最新ビルドを公開",
-          excerpt: "フィードバックを反映した更新verです。",
-          commentCount: 8,
-        },
-        {
-          id: `${fromSearch.id}-dl2`,
-          gameTitle: "炉心の残光",
-          gameId: "roshin-no-zanko",
-          date: "2025/04/20",
-          title: "UI を調整",
-          excerpt: "マップ画面の視認性を改善しました。",
-          commentCount: 5,
-        },
-      ],
-    };
+    return buildProfileFromSearchResult(fromSearch);
   }
-  return soraProfile;
+  const fromFollowers = studioFollowersMock.find((d) => d.id === id);
+  if (fromFollowers) {
+    return buildProfileFromSearchResult(fromFollowers);
+  }
+  return { ...soraProfile, id, name: id, handle: id };
 }

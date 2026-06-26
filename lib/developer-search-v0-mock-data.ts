@@ -174,6 +174,13 @@ export function parseDeveloperSortOrder(param: string | null): DeveloperSearchSo
   return param === "asc" ? "asc" : "desc";
 }
 
-export function developerProfileHref(id: string): string {
-  return `/creators/${encodeURIComponent(id)}`;
+export function developerProfileHref(
+  id: string,
+  options?: { from?: string },
+): string {
+  const base = `/creators/${encodeURIComponent(id)}`;
+  if (!options?.from) {
+    return base;
+  }
+  return `${base}?from=${encodeURIComponent(options.from)}`;
 }

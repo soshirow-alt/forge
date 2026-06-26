@@ -1,6 +1,7 @@
 "use client";
 
 import { DeveloperListCard } from "@/components/developer-list-card";
+import { developerProfileHref } from "@/lib/developer-search-v0-mock-data";
 import {
   STUDIO_FOLLOWER_COUNT,
   studioFollowersMock,
@@ -18,7 +19,11 @@ export function StudioFollowersTabPanel() {
       <ul className="space-y-4">
         {studioFollowersMock.map((dev) => (
           <li key={dev.id}>
-            <DeveloperListCard dev={dev} showFollowButton={false} />
+            <DeveloperListCard
+              dev={dev}
+              showFollowButton={false}
+              href={developerProfileHref(dev.id, { from: "studio-followers" })}
+            />
           </li>
         ))}
       </ul>
