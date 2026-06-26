@@ -157,7 +157,11 @@ function StudioProjectDetailContent({ id }: { id: string }) {
             <GameVoicesV0Tab gameId={gameId} currentVersion={game.currentVersion} />
           )}
           {activeTab === "devlog" && (
-            <GameVerHistoryV0Tab gameId={gameId} studioMode />
+            <GameVerHistoryV0Tab
+              gameId={gameId}
+              projectId={id}
+              studioMode
+            />
           )}
         </div>
       </div>

@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-06-26 Studio mock プロジェクト — 開発ログ新規投稿
+
+- `/studio/projects/[id]?tab=devlog` — 「開発ログを書く」ボタンを追加（mock 作品向け）
+- `/studio/projects/[id]/devlog/new` — タイトル・本文・ver 公開チェック付きの投稿フォーム（preview mock、localStorage に追記）
+- 投稿後は開発ログタブに戻り、先頭に「たった今」のエントリが表示される
+
+---
+
 ## 2026-06-26 Preview — Studio 入場のログイン省略
 
 - Preview デプロイ（`preview/landing-01`）では Player ヘッダーの **Studio** ボタン・`/studio` 直アクセスでログインを要求しない（mock UI 確認用）

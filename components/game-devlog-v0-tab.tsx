@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useGameDevlogsV0 } from "@/hooks/use-game-devlogs-v0";
 import {
   filterDevlogs,
   getDevlogFilterTabs,
-  getDevlogsForGame,
   getDevlogStatsForGame,
   type DevlogFilterId,
   type GameDevlogEntry,
@@ -137,17 +137,19 @@ function DevlogTimelineItem({
 
 export function GameDevlogV0Tab({
   gameId,
+  projectId,
   onPlayLatest,
   embedded = false,
 }: {
   gameId: string;
+  projectId?: string;
   onPlayLatest?: () => void;
   embedded?: boolean;
 }) {
   const [filter, setFilter] = useState<DevlogFilterId>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const allEntries = useMemo(() => getDevlogsForGame(gameId), [gameId]);
+  const { entries: allEntries } = useGameDevlogsV0(gameId, projectId);
   const filtered = useMemo(() => filterDevlogs(allEntries, filter), [allEntries, filter]);
   const stats = useMemo(() => getDevlogStatsForGame(allEntries), [allEntries]);
   const filterTabs = useMemo(() => getDevlogFilterTabs(allEntries), [allEntries]);

@@ -1,8 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { GameDevlogV0Tab } from "@/components/game-devlog-v0-tab";
 import { GameVersionsV0Tab } from "@/components/game-versions-v0-tab";
+import { studioProjectDevlogNewHref } from "@/lib/studio-devlog-draft-v0-store";
 import { studioReleaseState } from "@/lib/studio-project-detail-v0-mock-data";
+import { Pencil } from "lucide-react";
 
 function StudioReleaseSection() {
   const release = studioReleaseState;
@@ -49,18 +52,36 @@ function StudioReleaseSection() {
 
 export function GameVerHistoryV0Tab({
   gameId,
+  projectId,
   studioMode = false,
   onPlayLatest,
 }: {
   gameId: string;
+  projectId?: string;
   studioMode?: boolean;
   onPlayLatest?: () => void;
 }) {
   return (
     <div className="space-y-12">
       <section>
-        <h2 className="mb-6 text-base font-semibold text-white">開発ログ</h2>
-        <GameDevlogV0Tab gameId={gameId} onPlayLatest={onPlayLatest} embedded />
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-base font-semibold text-white">開発ログ</h2>
+          {studioMode && projectId && (
+            <Link
+              href={studioProjectDevlogNewHref(projectId)}
+              className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
+            >
+              <Pencil className="size-4" aria-hidden="true" />
+              開発ログを書く
+            </Link>
+          )}
+        </div>
+        <GameDevlogV0Tab
+          gameId={gameId}
+          projectId={projectId}
+          onPlayLatest={onPlayLatest}
+          embedded
+        />
       </section>
 
       {!studioMode && (
