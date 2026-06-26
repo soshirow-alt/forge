@@ -14,7 +14,7 @@ import {
   developerDevlogHref,
   getDeveloperProfileV0,
 } from "@/lib/developer-profile-v0-mock-data";
-import { BadgeCheck, Globe, MapPin, MessageSquare, Sprout, UserPlus, Users } from "lucide-react";
+import { BadgeCheck, Globe, MapPin, Sprout, UserPlus, Users } from "lucide-react";
 
 type DevTab = "overview" | "devlog" | "achievements" | "followers";
 
@@ -219,26 +219,6 @@ function DeveloperProfileV0PageContent({ id }: { id: string }) {
                   </ul>
                 </section>
               )}
-              <section>
-                <h2 className="text-base font-semibold text-white">最近の開発ログ</h2>
-                <ul className="mt-4 space-y-3">
-                  {dev.recentDevlogs.map((log) => (
-                    <li key={log.id}>
-                      <Link
-                        href={developerDevlogHref(log)}
-                        className="block rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 transition-colors hover:border-zinc-700"
-                      >
-                        <p className="text-xs text-zinc-500">{log.date} · {log.gameTitle}</p>
-                        <p className="mt-1 text-sm font-medium text-white">{log.title}</p>
-                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-zinc-500">{log.excerpt}</p>
-                        <p className="mt-2 inline-flex items-center gap-1 text-xs text-zinc-500">
-                          <MessageSquare className="size-3" /> {log.commentCount} · 開発ログタブを見る
-                        </p>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
             </div>
           )}
           {activeTab === "devlog" && (
