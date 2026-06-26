@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
-  GameThumbnail,
+  DiscoveryGameThumbnail,
+} from "@/components/discovery-game-thumbnail";
+import {
   PlayerShell,
 } from "@/components/player-shell";
 import {
@@ -309,10 +311,13 @@ function WorksSearchContent() {
                   className="block rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 transition-colors hover:border-zinc-700/80 sm:p-5"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-                    <GameThumbnail
-                      src={work.image}
-                      alt={work.title}
+                    <DiscoveryGameThumbnail
+                      id={work.id}
+                      title={work.title}
+                      genre={work.tags[0]}
+                      image={work.image}
                       className="h-28 w-full shrink-0 sm:h-32 sm:w-48"
+                      sizes="192px"
                     />
                     <div className="min-w-0 flex-1">
                       <h2 className="text-lg font-semibold text-white">{work.title}</h2>
@@ -377,10 +382,13 @@ function WorksSearchContent() {
                   href={gameDetailHref(work.id)}
                   className="flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/40 transition-colors hover:border-zinc-700/80"
                 >
-                  <GameThumbnail
-                    src={work.image}
-                    alt={work.title}
+                  <DiscoveryGameThumbnail
+                    id={work.id}
+                    title={work.title}
+                    genre={work.tags[0]}
+                    image={work.image}
                     className="h-36 w-full rounded-none"
+                    sizes="(max-width: 640px) 100vw, 33vw"
                   />
                   <div className="flex flex-1 flex-col p-4">
                     <h2 className="font-semibold text-white">{work.title}</h2>

@@ -4,6 +4,7 @@ export type HomeGameCard = {
   version: string;
   description: string;
   image: string;
+  genre?: string;
   updatedLabel: string;
   voiceCount: number;
   witnessCount: number;

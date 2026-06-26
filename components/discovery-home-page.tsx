@@ -1,11 +1,13 @@
 "use client";
 
 import { HorizontalCardPager } from "@/components/horizontal-card-pager";
+import { DiscoveryGameThumbnail } from "@/components/discovery-game-thumbnail";
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useGames } from "@/components/games-provider";
-import { GameThumbnail, PlayerShell } from "@/components/player-shell";
+import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
+import { PlayerShell } from "@/components/player-shell";
 import {
   gameToHomeCard,
   getPublicSubmittedGames,
@@ -86,9 +88,12 @@ function HorizontalGameCard({
             {rank}
           </span>
         )}
-        <GameThumbnail
-          src={game.image}
-          alt={game.title}
+        <DiscoveryGameThumbnail
+          id={game.id}
+          title={game.title}
+          genre={game.genre}
+          version={game.version}
+          image={game.image}
           className="w-full aspect-[4/3]"
           sizes="(max-width: 640px) 50vw, (max-width: 1280px) 25vw, 360px"
         />
@@ -139,13 +144,24 @@ function HeroCarousel({ slides }: { slides: HomeGameCard[] }) {
   return (
     <section className="relative overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/40">
       <div className="relative min-h-[280px] sm:min-h-[320px]">
-        <Image
-          src={slide.image}
-          alt=""
-          fill
-          className="object-cover opacity-50"
-          priority
-        />
+        {slide.image ? (
+          <Image
+            src={slide.image}
+            alt=""
+            fill
+            className="object-cover opacity-50"
+            priority
+          />
+        ) : (
+          <div className="absolute inset-0 opacity-50">
+            <GeneratedThumbnailPoster
+              projectId={slide.id}
+              title={slide.title}
+              genre={slide.genre ?? ""}
+              phase={slide.version}
+            />
+          </div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/90 via-transparent to-transparent" />
 

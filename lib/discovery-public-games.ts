@@ -5,8 +5,6 @@ import { resolvePlayableVersion } from "@/lib/playable-version";
 import { isGamePublic } from "@/lib/project-visibility";
 import type { SearchWorkResult } from "@/lib/search-v0-mock-data";
 
-const DEFAULT_THUMBNAIL = "/images/landing/game-1.png";
-
 export function getPublicSubmittedGames(games: Game[]): Game[] {
   return games.filter(isGamePublic);
 }
@@ -70,7 +68,8 @@ export function gameToHomeCard(
     title: game.title,
     version: resolvePlayableVersion(game.playableVersion),
     description: game.description,
-    image: game.thumbnailUrl || DEFAULT_THUMBNAIL,
+    image: game.thumbnailUrl?.trim() ?? "",
+    genre: game.genre,
     updatedLabel: formatRelativeUpdateLabel(game.lastUpdated),
     voiceCount,
     witnessCount,
@@ -89,7 +88,7 @@ export function gameToSearchResult(
     id: game.id,
     title: game.title,
     description: game.description,
-    image: game.thumbnailUrl || DEFAULT_THUMBNAIL,
+    image: game.thumbnailUrl?.trim() ?? "",
     tags,
     developer: game.ownerName || game.creator,
     verified: Boolean(game.ownerId),
