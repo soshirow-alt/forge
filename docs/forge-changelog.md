@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-26 確認依頼 — DB永続化 + ゲーム詳細の変化チェック接続
+
+- **migration 015** — `confirmation_requests` テーブル（devlog に 1:1、任意3フィールド）
+- `/projects/{id}/devlog/new` — 確認依頼入力を公開時に Supabase へ保存（未入力・migration未適用時は従来どおり devlog のみ）
+- `/games/[id]` — プレイ済みプレイヤー向け **変化チェック** カードを実データ接続（確認依頼あり/なしの2パターン）。mock プレビュー `?returning=` は v0 詳細で継続
+- **オーナー**: `supabase/migrations/015_confirmation_requests.sql` を Dashboard で適用後、devlog 投稿 → ゲーム詳細でカード表示を確認
+
+---
+
 ## 2026-06-26 ランキング画面 — UI統一 + プレイヤー影響度定義改訂
 
 - **開発者** `/studio/rankings` — 画面名を **月間開発ランキング** に変更。TOP3は左から1・2・3。初回テーブル7件・最大50位・ヘルプ・過去月アーカイブ

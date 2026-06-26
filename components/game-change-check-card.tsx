@@ -1,14 +1,12 @@
 "use client";
 
-import {
-  formatChangeCheckConfirmedBody,
-  type ChangeCheckPreviewState,
-} from "@/lib/change-check-preview-mock";
+import { formatChangeCheckConfirmedBody } from "@/lib/change-check-display";
+import type { ChangeCheckState } from "@/lib/change-check-types";
 
 export const CHANGE_CHECK_SECTION_ID = "change-check-card";
 
 type GameChangeCheckCardProps = {
-  state: ChangeCheckPreviewState;
+  state: ChangeCheckState;
   currentVersion: string;
   onViewUpdate: () => void;
   onTryVersion: () => void;

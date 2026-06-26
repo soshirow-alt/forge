@@ -1,4 +1,4 @@
-/** Step 1 mock — 確認依頼の任意入力（永続化なし） */
+/** 確認依頼の任意入力（Devlog 公開時に confirmation_requests へ保存） */
 
 export type ConfirmationRequestDraft = {
   changesSummary: string;

@@ -17,6 +17,7 @@ import {
   type GameVoiceFlowMeta,
 } from "@/components/game-voice-section";
 import { GameProjectHistorySection } from "@/components/game-project-history-section";
+import { GameChangeCheckSection } from "@/components/game-change-check-section";
 import { NewPlayableVersionBanner } from "@/components/new-playable-version-banner";
 import { VoiceAdoptionsSection } from "@/components/voice-adoptions-section";
 import { PlayLaunchDialog } from "@/components/play-launch-dialog";
@@ -350,6 +351,14 @@ export function GameDetailPageClient({ id }: { id: string }) {
                   <AdoptionVerifyBanner
                     context={adoptionVerifyContext}
                     onPlayRequest={handlePlayRequest}
+                  />
+                )}
+
+                {!isOwnerPreview && (
+                  <GameChangeCheckSection
+                    gameId={id}
+                    playableVersion={game.playableVersion}
+                    onTryVersion={handlePlayRequest}
                   />
                 )}
 

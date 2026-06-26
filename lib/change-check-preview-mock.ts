@@ -1,25 +1,21 @@
 import type { ConfirmationRequestDraft } from "@/lib/confirmation-request-draft";
 import { hasConfirmationRequestContent } from "@/lib/confirmation-request-draft";
+import type {
+  ChangeCheckGeneric,
+  ChangeCheckState,
+  ChangeCheckWithConfirmation,
+} from "@/lib/change-check-types";
 
-/** プレイヤー向け変化チェック — 確認依頼あり */
-export type ChangeCheckWithConfirmation = {
-  kind: "confirmed";
-  priorPlayedVersion: string;
-  confirmation: ConfirmationRequestDraft;
+export type {
+  ChangeCheckGeneric,
+  ChangeCheckState,
+  ChangeCheckWithConfirmation,
 };
 
-/** プレイヤー向け変化チェック — 確認依頼なし */
-export type ChangeCheckGeneric = {
-  kind: "generic";
-  priorPlayedVersion: string;
-  updateKind: "devlog" | "version";
-};
+/** @deprecated use ChangeCheckState */
+export type ChangeCheckPreviewState = ChangeCheckState;
 
-export type ChangeCheckPreviewState =
-  | ChangeCheckWithConfirmation
-  | ChangeCheckGeneric;
-
-const MOCK_BY_GAME: Record<string, ChangeCheckPreviewState> = {
+const MOCK_BY_GAME: Record<string, ChangeCheckState> = {
   "seikat-no-tabiji": {
     kind: "confirmed",
     priorPlayedVersion: "v0.3.1",
@@ -41,7 +37,7 @@ export type ChangeCheckPreviewOverride = "confirmed" | "generic" | "off";
 export function resolveChangeCheckPreviewState(
   gameId: string,
   override: ChangeCheckPreviewOverride | null,
-): ChangeCheckPreviewState | null {
+): ChangeCheckState | null {
   if (override === "off") {
     return null;
   }
@@ -66,26 +62,10 @@ export function parseChangeCheckPreviewOverride(
   return null;
 }
 
-export function formatChangeCheckConfirmedBody(
-  confirmation: ConfirmationRequestDraft,
-): { changeLine: string; askLine: string | null } {
-  const changeLine = confirmation.changesSummary.trim();
-  const ask = confirmation.askSummary.trim();
-  const duration = confirmation.estimatedDuration.trim();
-
-  if (!ask && !duration) {
-    return { changeLine, askLine: null };
-  }
-
-  const durationPrefix = duration ? `${duration}ほど遊んで、` : "";
-  const askCore = ask || "変更を確認してほしい";
-  const askLine = `${durationPrefix}${askCore}${ask.endsWith("。") || ask.endsWith("？") || ask.endsWith("?") ? "" : "そうです。"}`;
-
-  return { changeLine, askLine };
-}
+export { formatChangeCheckConfirmedBody } from "@/lib/change-check-display";
 
 export function isConfirmationRequestFilled(
-  state: ChangeCheckPreviewState,
+  state: ChangeCheckState,
 ): state is ChangeCheckWithConfirmation {
   if (state.kind !== "confirmed") {
     return false;

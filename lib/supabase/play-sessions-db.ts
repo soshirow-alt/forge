@@ -87,6 +87,34 @@ export async function insertProjectPlaySession(
   return rowToSession(data as PlaySessionRow);
 }
 
+export async function fetchLatestPlaySessionForProject(
+  supabase: SupabaseClient,
+  userId: string,
+  projectId: string,
+): Promise<ProjectPlaySession | null> {
+  const { data, error } = await supabase
+    .from("project_play_sessions")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("project_id", projectId)
+    .order("played_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    if (isPlaySessionsTableMissingError(error)) {
+      return null;
+    }
+    throw error;
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return rowToSession(data as PlaySessionRow);
+}
+
 export async function fetchPlaySessionsForUser(
   supabase: SupabaseClient,
   userId: string,

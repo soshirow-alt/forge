@@ -11,6 +11,7 @@ import { useGames } from "@/components/games-provider";
 import { useDevlogComposePrompts } from "@/hooks/use-devlog-compose-prompts";
 import {
   EMPTY_CONFIRMATION_REQUEST_DRAFT,
+  hasConfirmationRequestContent,
   type ConfirmationRequestDraft,
 } from "@/lib/confirmation-request-draft";
 import { projectStudioPath } from "@/lib/project-nurture-links";
@@ -81,7 +82,12 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
     }
 
     try {
-      await addDevlog(projectId, title, content, { publishPlayableVersion });
+      await addDevlog(projectId, title, content, {
+        publishPlayableVersion,
+        confirmationRequest: hasConfirmationRequestContent(confirmationDraft)
+          ? confirmationDraft
+          : undefined,
+      });
       await saveDeveloperVersionPrompts(
         projectId,
         promptResult.versionKey,

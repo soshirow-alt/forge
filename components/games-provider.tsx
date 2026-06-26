@@ -96,6 +96,13 @@ import {
   fetchWatcherUserIds,
   insertProjectDevlog,
 } from "@/lib/supabase/project-devlogs";
+import { insertConfirmationRequest } from "@/lib/supabase/confirmation-requests-db";
+import {
+  hasConfirmationRequestContent,
+  type ConfirmationRequestDraft,
+} from "@/lib/confirmation-request-draft";
+import { resolveChangeCheckState } from "@/lib/change-check-state";
+import type { ChangeCheckState } from "@/lib/change-check-types";
 import {
   fetchAllProjectReleaseEvents,
   insertProjectReleaseEvent,
@@ -162,6 +169,7 @@ type GamesContextValue = {
     priorVersion?: string;
     currentVersion?: string;
   }>;
+  getChangeCheckState: (gameId: string) => Promise<ChangeCheckState | null>;
   getProjectFeedback: (gameId: string) => Promise<GameFeedbackItem[]>;
   getOwnedProjectFeedback: (
     userId: string | undefined,
@@ -227,7 +235,10 @@ type GamesContextValue = {
     projectId: string,
     title: string,
     content: string,
-    options?: { publishPlayableVersion?: string },
+    options?: {
+      publishPlayableVersion?: string;
+      confirmationRequest?: ConfirmationRequestDraft;
+    },
   ) => Promise<void>;
   getNotifications: () => Notification[];
   getUnreadNotificationCount: () => number;
@@ -907,6 +918,31 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     [user, userEngagement.watchedProjectIds, getSubmittedGameById],
   );
 
+  const getChangeCheckState = useCallback(
+    async (gameId: string): Promise<ChangeCheckState | null> => {
+      if (!user || !userEngagement.playedProjectIds.includes(gameId)) {
+        return null;
+      }
+
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return null;
+      }
+
+      const game = getSubmittedGameById(gameId) ?? getMockGameById(gameId);
+      const currentVersion = resolvePlayableVersion(game?.playableVersion);
+
+      return resolveChangeCheckState(supabase, {
+        userId: user.id,
+        projectId: gameId,
+        currentVersion,
+        hasPlayed: true,
+        devlogs,
+      });
+    },
+    [user, userEngagement.playedProjectIds, getSubmittedGameById, devlogs],
+  );
+
   const getProjectFeedback = useCallback(async (gameId: string) => {
     const supabase = getOptionalSupabaseClient();
     if (!supabase) {
@@ -1352,7 +1388,10 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       projectId: string,
       title: string,
       content: string,
-      options?: { publishPlayableVersion?: string },
+      options?: {
+        publishPlayableVersion?: string;
+        confirmationRequest?: ConfirmationRequestDraft;
+      },
     ) => {
       if (!user) {
         throw new Error("Login required");
@@ -1378,6 +1417,18 @@ export function GamesProvider({ children }: { children: ReactNode }) {
           : undefined,
       );
       setDevlogs((prev) => [entry, ...prev]);
+
+      if (
+        options?.confirmationRequest &&
+        hasConfirmationRequestContent(options.confirmationRequest)
+      ) {
+        await insertConfirmationRequest(supabase, {
+          devlogId: entry.id,
+          projectId,
+          publishedVersion: publishVersion ?? null,
+          draft: options.confirmationRequest,
+        });
+      }
 
       if (publishVersion && isSubmittedGame(projectId)) {
         const updated = await updateProjectPlayableVersion(
@@ -1497,6 +1548,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       submitProjectFeedback,
       getMyFeedbackForProject,
       getNewPlayableVersionBannerState,
+      getChangeCheckState,
       getProjectFeedback,
       getOwnedProjectFeedback,
       getOwnedProjectVoiceSignals,
@@ -1562,6 +1614,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       submitProjectFeedback,
       getMyFeedbackForProject,
       getNewPlayableVersionBannerState,
+      getChangeCheckState,
       getProjectFeedback,
       getOwnedProjectFeedback,
       getOwnedProjectVoiceSignals,
