@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-27 REL-2-01 — 外部リンク（設計草案）
+
+- migration **021** SQL 草案（`x_url`, `youtube_url`）
+- 設計詳細: `docs/rel-2-01-external-links-design.md`
+- 表示順: Steam → itch → Discord → X → 公式 → YouTube → GitHub
+- v0 作品詳細への外部リンク UI 追加を実装タスクに含める
+
+---
+
 ## 2026-06-27 REL-2-02 — 作品概要・見どころ Supabase 配線
 
 - migration **022** 適用後 — `overview_introduction` / `overview_features` を DB 正本化

@@ -301,11 +301,13 @@ Phase 3 — 初期版周辺（③）※ 通報・共感・実績・ランキン�
 | | |
 |--|--|
 | **分類** | ② |
-| **Supabase** | **要** — `projects` に `x_url`, `youtube_url`（migration 021 案） |
-| **概要** | submit / edit / 表示で **Steam → itch → Discord → X → 公式 → YouTube → GitHub** の順。未設定は非表示。GitHub は後方 |
-| **受け入れ** | 全経路で保存・表示一貫。ダミー URL を出さない |
-| **主なファイル** | `components/submit-page.tsx`, `components/project-edit-page.tsx`, `lib/game-links.ts`, `components/game-external-links.tsx`, `lib/supabase/projects.ts` |
-| **RUN** | ❌ migration GO 後 |
+| **Supabase** | **要** — migration **021** 案（`projects.x_url`, `projects.youtube_url`） |
+| **概要** | submit / edit / 表示で **Steam → itch → Discord → X → 公式 → YouTube → GitHub** の順。未設定は非表示 |
+| **受け入れ** | 全経路で保存・表示一貫。ダミー URL を出さない。v0 作品詳細に外部リンク UI 追加 |
+| **設計** | `docs/rel-2-01-external-links-design.md` + `supabase/migrations/021_project_external_links.sql`（草案） |
+| **GO** | ❌ 設計 GO 待ち — migration 適用・実装は別 |
+| **主なファイル** | `lib/game-links.ts`, `components/submit-page.tsx`, `components/project-edit-page.tsx`, `components/game-detail-v0-page.tsx`, `lib/supabase/projects.ts` |
+| **RUN** | ❌ migration 適用 GO 後 |
 
 ### REL-2-02 作品概要・見どころの Supabase 永続化
 
@@ -405,7 +407,7 @@ Phase 3 — 初期版周辺（③）※ 通報・共感・実績・ランキン�
 | **019** | 影響度 RPC | ③（中身隠し中は未使用） | Phase 3 |
 | **020** | `community_posts.title` | ② | REL-2-06 |
 
-**新規 migration 案（Phase 2）**: 021 外部リンク（`x_url`, `youtube_url`）、**022 作品概要（GO 済・設計後 SQL 化）**、023 フォロー — 021 は migration GO 待ち。
+**新規 migration 案（Phase 2）**: **021 外部リンク（設計草案）**、022 作品概要（✅ 適用・実装済み）、023 フォロー
 
 ---
 
