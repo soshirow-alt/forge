@@ -69,6 +69,9 @@ export function GameDetailOverviewV0Tab({
   const visibleFeatures = features.filter(
     (feature) => feature.title.trim() || feature.description.trim(),
   );
+  const displayFeatures =
+    visibleFeatures.length > 0 ? visibleFeatures : game.features;
+  const showFeaturesSection = editable || displayFeatures.length > 0;
 
   function updateFeature(index: number, patch: Partial<GameDetailFeature>) {
     setFeatures((current) =>
@@ -140,6 +143,7 @@ export function GameDetailOverviewV0Tab({
           )}
         </section>
 
+        {showFeaturesSection ? (
         <section>
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-base font-semibold text-white">作品の特徴</h2>
@@ -202,18 +206,17 @@ export function GameDetailOverviewV0Tab({
             </div>
           ) : (
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {(visibleFeatures.length > 0 ? visibleFeatures : game.features).map(
-                (feature) => (
-                  <FeatureCard
-                    key={feature.title}
-                    title={feature.title}
-                    description={feature.description}
-                  />
-                ),
-              )}
+              {displayFeatures.map((feature) => (
+                <FeatureCard
+                  key={feature.title}
+                  title={feature.title}
+                  description={feature.description}
+                />
+              ))}
             </div>
           )}
         </section>
+        ) : null}
 
         {editable && (
           <button

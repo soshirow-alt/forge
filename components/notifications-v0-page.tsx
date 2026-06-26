@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { useGames } from "@/components/games-provider";
 import { PlayerShell } from "@/components/player-shell";
 import {
@@ -11,6 +12,7 @@ import {
   subscribeV0Notifications,
 } from "@/lib/community-join-v0-store";
 import { notificationToV0Item } from "@/lib/notification-v0-adapter";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 import {
   countUnread,
   filterNotifications,
@@ -170,6 +172,7 @@ function NotificationSection({
 
 export function NotificationsV0Page() {
   const { user, hydrated } = useAuth();
+  const hideV0Mock = shouldHideV0MockContent();
   const {
     getNotifications,
     markNotificationAsRead,
@@ -191,19 +194,25 @@ export function NotificationsV0Page() {
   }, [hydrated, user, reloadNotifications]);
 
   useEffect(() => {
+    if (hideV0Mock) {
+      return;
+    }
     function mergeExtras() {
       setCommunityExtras(getExtraPlayerNotifications());
     }
     mergeExtras();
     return subscribeV0Notifications(mergeExtras);
-  }, []);
+  }, [hideV0Mock]);
 
   const items = useMemo(() => {
     const dbItems = getNotifications().map(notificationToV0Item);
+    if (hideV0Mock) {
+      return dbItems;
+    }
     const ids = new Set(dbItems.map((item) => item.id));
     const extras = communityExtras.filter((item) => !ids.has(item.id));
     return [...extras, ...dbItems];
-  }, [communityExtras, getNotifications]);
+  }, [communityExtras, getNotifications, hideV0Mock]);
 
   useEffect(() => {
     if (!sortMenuOpen) {

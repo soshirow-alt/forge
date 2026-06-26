@@ -369,16 +369,20 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                 </Link>
 
                 <div className="mt-5 grid gap-2 sm:grid-cols-2">
-                  <StatItem
-                    icon={<Users className="size-4" aria-hidden="true" />}
-                    label="見届け"
-                    value={game.witnessCount.toLocaleString()}
-                  />
-                  <StatItem
-                    icon={<MessageSquare className="size-4" aria-hidden="true" />}
-                    label="フィードバック"
-                    value={game.voiceCount.toLocaleString()}
-                  />
+                  {!isRealProject ? (
+                    <>
+                      <StatItem
+                        icon={<Users className="size-4" aria-hidden="true" />}
+                        label="見届け"
+                        value={game.witnessCount.toLocaleString()}
+                      />
+                      <StatItem
+                        icon={<MessageSquare className="size-4" aria-hidden="true" />}
+                        label="フィードバック"
+                        value={game.voiceCount.toLocaleString()}
+                      />
+                    </>
+                  ) : null}
                   <StatItem
                     icon={<FileText className="size-4" aria-hidden="true" />}
                     label="Devlog"
@@ -463,7 +467,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
               <Bookmark className="size-4" aria-hidden="true" />
               {saved ? "保存済み" : "あとで遊ぶ"}
             </button>
-            {!isOwnerPreview ? (
+            {!isOwnerPreview && !hideV0Mock ? (
               <button
                 type="button"
                 onClick={() => handleProtectedAction(() => setFollowing((value) => !value))}
@@ -559,13 +563,17 @@ function GameDetailV0PageBody({ id }: { id: string }) {
               </span>
               <div className="min-w-0">
                 <p className="truncate font-semibold text-white">{game.developer.name}</p>
-                <p className="text-xs text-zinc-500">
-                  フォロワー {game.developer.followers.toLocaleString()}
-                </p>
+                {!isRealProject && game.developer.followers > 0 ? (
+                  <p className="text-xs text-zinc-500">
+                    フォロワー {game.developer.followers.toLocaleString()}
+                  </p>
+                ) : null}
               </div>
             </div>
-            <p className="mt-3 text-xs leading-relaxed text-zinc-500">{game.developer.bio}</p>
-            {!isOwnerPreview ? (
+            {game.developer.bio ? (
+              <p className="mt-3 text-xs leading-relaxed text-zinc-500">{game.developer.bio}</p>
+            ) : null}
+            {!isOwnerPreview && !hideV0Mock ? (
               <button
                 type="button"
                 onClick={() => handleProtectedAction(() => setFollowing((value) => !value))}
@@ -601,6 +609,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
             </div>
           </section>
 
+          {game.relatedGames.length > 0 ? (
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
             <h2 className="text-sm font-semibold text-white">関連作品</h2>
             <ul className="mt-4 space-y-4">
@@ -634,6 +643,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
               関連作品をすべて見る →
             </Link>
           </section>
+          ) : null}
         </aside>
         )}
       </div>

@@ -15,6 +15,7 @@ import {
   FeedbackTabPanel,
   FollowingTabPanel,
 } from "@/components/mypage-v0-extra-tabs";
+import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { MyPageLoopPanel } from "@/components/mypage-loop-panel";
 import {
   MyPageSavedRealPanel,
@@ -54,6 +55,7 @@ import {
   witnessingStatusCounts,
 } from "@/lib/mypage-list-filters";
 import { gameDetailHrefFromTitle } from "@/lib/game-detail-v0-mock-data";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 import {
   gamePlayEntryHref,
   gameUpdateDevlogHref,
@@ -578,6 +580,7 @@ function MyPagePageContent() {
   }, [router, tabParam]);
 
   const activeTab = parseTab(tabParam);
+  const hideV0Mock = shouldHideV0MockContent();
 
   const setTab = useCallback(
     (tab: MyPageTab) => {
@@ -602,9 +605,33 @@ function MyPagePageContent() {
         {activeTab === "witnessing" && <MyPageLoopPanel />}
         {activeTab === "saved" && <MyPageSavedRealPanel />}
         {activeTab === "play-history" && <PlayHistorySection />}
-        {activeTab === "feedback" && <FeedbackTabPanel />}
-        {activeTab === "achievements" && <AchievementsTabPanel />}
-        {activeTab === "following" && <FollowingTabPanel />}
+        {activeTab === "feedback" &&
+          (hideV0Mock ? (
+            <FeatureComingSoonPanel
+              title="FB履歴"
+              description="あなたが届けたフィードバックの履歴は準備中です。"
+            />
+          ) : (
+            <FeedbackTabPanel />
+          ))}
+        {activeTab === "achievements" &&
+          (hideV0Mock ? (
+            <FeatureComingSoonPanel
+              title="実績"
+              description="プレイヤー実績バッジの表示は準備中です。"
+            />
+          ) : (
+            <AchievementsTabPanel />
+          ))}
+        {activeTab === "following" &&
+          (hideV0Mock ? (
+            <FeatureComingSoonPanel
+              title="フォロー中の開発者"
+              description="開発者フォロー一覧は準備中です。"
+            />
+          ) : (
+            <FollowingTabPanel />
+          ))}
       </div>
     </PlayerShell>
   );

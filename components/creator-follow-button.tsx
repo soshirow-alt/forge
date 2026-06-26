@@ -1,11 +1,19 @@
 "use client";
 
 import { useGames } from "@/components/games-provider";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 
 export function CreatorFollowButton({ creatorId }: { creatorId: string }) {
   const { isFollowing, followCreator, getFollowerCount } = useGames();
+  const hideV0Mock = shouldHideV0MockContent();
   const following = isFollowing(creatorId);
   const followerCount = getFollowerCount(creatorId, 0);
+
+  if (hideV0Mock) {
+    return (
+      <p className="mt-4 text-sm text-zinc-500">開発者フォローは追って機能追加予定です。</p>
+    );
+  }
 
   function handleFollow() {
     if (!following) {
@@ -15,9 +23,7 @@ export function CreatorFollowButton({ creatorId }: { creatorId: string }) {
 
   return (
     <div>
-      <p className="text-lg text-zinc-300">
-        フォロワー数: {followerCount}人
-      </p>
+      <p className="text-lg text-zinc-300">フォロワー数: {followerCount}人</p>
       <button
         type="button"
         onClick={handleFollow}

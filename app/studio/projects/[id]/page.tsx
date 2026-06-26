@@ -1,5 +1,6 @@
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { StudioProjectDetailPage } from "@/components/studio-project-detail-page";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { isStudioMockProjectId } from "@/lib/studio-projects-v0-mock-data";
 
 /**
@@ -16,6 +17,9 @@ export default async function StudioProjectDetailRoute({
   const { id } = await params;
 
   if (isStudioMockProjectId(id)) {
+    if (shouldHideV0MockContent()) {
+      notFound();
+    }
     return <StudioProjectDetailPage id={id} />;
   }
 

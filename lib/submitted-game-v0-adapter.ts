@@ -40,10 +40,7 @@ export function gameToDetailV0(game: Game): GameDetailV0 {
     watching: false,
     saved: false,
     introduction: game.description || `${game.title}のテストプレイverです。`,
-    features: tags.slice(0, 4).map((tag) => ({
-      title: tag,
-      description: `${game.title}の特徴のひとつ`,
-    })),
+    features: [],
     developerWorry:
       game.focusNotes?.trim() ||
       "このverを遊んだ感想や、気になった点を教えてください。",
