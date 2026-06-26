@@ -1,14 +1,17 @@
 /**
- * REL-0-00 — Forge deployment mode (preview / local / production).
+ * REL-0-00 / REL-0-02 — Forge deployment mode (preview / local / production).
  *
  * Phase 0+ issues branch on `isProductionReleaseMode()` / `shouldHideV0MockContent()`.
  *
  * | Mode       | Typical host / signal              | Mock UI | Studio login bypass |
  * |------------|------------------------------------|---------|---------------------|
- * | preview    | preview-landing-01 URL, git ref,   | yes     | yes                 |
- * |            | NEXT_PUBLIC_FORGE_PREVIEW_V0=true  |         |                     |
+ * | preview    | preview-landing-01 URL, Vercel     | yes     | yes                 |
+ * |            | preview slot + preview branch      |         |                     |
  * | local      | localhost / 127.0.0.1              | yes     | yes                 |
- * | production | Other deployed hosts               | no      | no                  |
+ * | production | Production hostname / VERCEL_ENV   | no      | no                  |
+ * |            | =production, or force override     |         |                     |
+ *
+ * Safety: git ref alone never enables preview on a production hostname.
  *
  * Override (E2E / prod-behavior testing on preview or local):
  *   NEXT_PUBLIC_FORGE_PRODUCTION_MODE=true
@@ -36,6 +39,14 @@ function isForceProductionMode(): boolean {
   );
 }
 
+function isVercelProductionDeployment(): boolean {
+  return process.env.VERCEL_ENV === "production";
+}
+
+function isVercelPreviewDeployment(): boolean {
+  return process.env.VERCEL_ENV === "preview";
+}
+
 function resolveHost(host?: string): string | undefined {
   if (host) {
     return host;
@@ -60,29 +71,48 @@ function isLocalHost(host: string | undefined): boolean {
   );
 }
 
-/** Preview / landing-01 deployment (Vercel preview, git ref, or explicit env). */
+/**
+ * Preview / landing-01 deployment surface only.
+ * Never true on production hostname or VERCEL_ENV=production — even if git ref is preview/landing-01.
+ */
 export function isPreviewV0Deployment(host?: string): boolean {
   if (isForceProductionMode()) {
     return false;
   }
 
-  if (hostLooksLikePreviewV0(host)) {
+  if (isVercelProductionDeployment()) {
+    return false;
+  }
+
+  const resolved = resolveHost(host);
+
+  if (hostLooksLikePreviewV0(host) || hostLooksLikePreviewV0(resolved)) {
     return true;
   }
 
-  if (hostLooksLikePreviewV0(resolveHost())) {
-    return true;
+  if (isLocalHost(resolved)) {
+    return (
+      gitRefIsPreviewV0() ||
+      process.env.NEXT_PUBLIC_FORGE_PREVIEW_V0 === "true"
+    );
   }
 
-  if (gitRefIsPreviewV0()) {
-    return true;
+  if (isVercelPreviewDeployment()) {
+    return (
+      gitRefIsPreviewV0() ||
+      process.env.NEXT_PUBLIC_FORGE_PREVIEW_V0 === "true"
+    );
   }
 
-  return process.env.NEXT_PUBLIC_FORGE_PREVIEW_V0 === "true";
+  return false;
 }
 
 export function getForgeDeploymentMode(host?: string): ForgeDeploymentMode {
   if (isForceProductionMode()) {
+    return "production";
+  }
+
+  if (isVercelProductionDeployment()) {
     return "production";
   }
 
@@ -112,7 +142,12 @@ export function shouldRedirectRootToDiscoveryHome(host?: string): boolean {
   return isPreviewV0Deployment(host);
 }
 
-/** Preview + local: Studio login / onboarding gate bypass for v0 UI review. */
+/** Preview + local only — Studio login bypass for v0 UI review. Never on production. */
 export function shouldBypassStudioLoginGate(host?: string): boolean {
   return !isProductionReleaseMode(host);
+}
+
+/** Middleware — routes that require Supabase session in production release mode. */
+export function getProductionAuthProtectedPrefixes(): readonly string[] {
+  return ["/studio", "/mypage", "/notifications"];
 }

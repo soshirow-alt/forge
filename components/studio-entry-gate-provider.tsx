@@ -22,7 +22,8 @@ import {
   communityIdFromUser,
   openDeveloperCommunity,
 } from "@/lib/developer-community-v0-store";
-import { shouldBypassStudioLoginOnPreview } from "@/lib/preview-v0";
+import { buildLoginUrlWithReturn } from "@/lib/login-return-url";
+import { shouldBypassStudioLoginGate } from "@/lib/production-mode";
 
 type StudioEntryGateContextValue = {
   attemptStudioEntry: (href?: string) => void;
@@ -77,8 +78,8 @@ export function StudioEntryGateProvider({ children }: { children: ReactNode }) {
 
   const attemptStudioEntry = useCallback(
     (href = "/studio") => {
-      // Preview — 認証 hydrate 前でも直接遷移（オンボーディング導入前と同じ）
-      if (shouldBypassStudioLoginOnPreview()) {
+      // Preview / local — 認証 hydrate 前でも直接遷移（v0 UI レビュー用）
+      if (shouldBypassStudioLoginGate()) {
         router.push(href);
         return;
       }
@@ -124,28 +125,34 @@ export function useStudioEntryGate() {
   return context;
 }
 
-/** Studio URL 直打ち時 — 未承諾ならモーダルを出し、いいえで Player 側へ戻す */
+/** Studio URL 直打ち時 — 本番は未ログインを /login へ。未承諾ならモーダル */
 export function StudioDirectAccessGuard() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, hydrated } = useAuth();
   const { attemptStudioEntry } = useStudioEntryGate();
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    if (shouldBypassStudioLoginOnPreview()) {
+    if (shouldBypassStudioLoginGate()) {
       return;
     }
-    if (!hydrated || checked) {
+    if (!hydrated) {
+      return;
+    }
+    if (!user) {
+      const returnPath = pathname.startsWith("/studio") ? pathname : "/studio";
+      router.replace(buildLoginUrlWithReturn(returnPath));
+      return;
+    }
+    if (checked) {
       return;
     }
     setChecked(true);
-    if (!user) {
-      return;
-    }
     if (shouldPromptDeveloperPage(user.id)) {
-      attemptStudioEntry("/studio");
+      attemptStudioEntry(pathname.startsWith("/studio") ? pathname : "/studio");
     }
-  }, [hydrated, user, checked, attemptStudioEntry]);
+  }, [hydrated, user, checked, attemptStudioEntry, pathname, router]);
 
   return null;
 }

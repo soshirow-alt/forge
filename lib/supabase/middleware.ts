@@ -1,13 +1,25 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  getProductionAuthProtectedPrefixes,
+  isProductionReleaseMode,
+} from "@/lib/production-mode";
+import { buildLoginUrlWithReturn } from "@/lib/login-return-url";
 
-// Preview: /notifications は v0 mock のため未保護。本番 GO 時はログイン必須に戻す（原典: プレイ以降はログイン）。
-const PROTECTED_PREFIXES = [
+const ALWAYS_PROTECTED_PREFIXES = [
   "/submit",
   "/my-projects",
   "/bookmarks",
   "/projects/",
 ];
+
+function resolveProtectedPrefixes(hostname: string): string[] {
+  if (!isProductionReleaseMode(hostname)) {
+    return [...ALWAYS_PROTECTED_PREFIXES];
+  }
+
+  return [...ALWAYS_PROTECTED_PREFIXES, ...getProductionAuthProtectedPrefixes()];
+}
 
 export async function updateSession(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -41,15 +53,15 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  const isProtected = PROTECTED_PREFIXES.some((prefix) =>
+  const protectedPrefixes = resolveProtectedPrefixes(request.nextUrl.hostname);
+  const isProtected = protectedPrefixes.some((prefix) =>
     pathname.startsWith(prefix),
   );
 
   if (!user && isProtected) {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/login";
-    redirectUrl.search = "";
-    return NextResponse.redirect(redirectUrl);
+    const returnPath = `${pathname}${request.nextUrl.search}`;
+    const loginPath = buildLoginUrlWithReturn(returnPath);
+    return NextResponse.redirect(new URL(loginPath, request.url));
   }
 
   return supabaseResponse;

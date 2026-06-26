@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-27 REL-0-02 — 本番で preview 専用挙動を無効化（追補）
+
+- **production-mode** — git ref だけでは preview 判定しない。本番 hostname / `VERCEL_ENV=production` は常に production
+- **middleware** — 本番モードで `/studio` `/mypage` `/notifications` を未ログイン拒否（`/login?return=` 付き）
+- **StudioDirectAccessGuard** — 本番で Studio 直打ち → 未ログインは `/login` へ（クライアント二重ガード）
+- **検証** — `npm run verify:production-auth-guards`
+
+---
+
 ## 2026-06-27 REL-1-02〜1-08 — 本番で嘘 UI を整理（Phase 1）
 
 - **Studio** — 本番モードの `/studio/mypage` 作品一覧を実 owned projects に差し替え。mock `/studio/projects/[id]` は 404
