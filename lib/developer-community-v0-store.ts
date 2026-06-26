@@ -83,6 +83,40 @@ export function openDeveloperCommunity(profile: DeveloperCommunityProfile) {
   }
 }
 
+export function ensureOwnDeveloperCommunity(
+  userId: string,
+  userName: string,
+  defaults?: Partial<Pick<DeveloperCommunityProfile, "name" | "avatar" | "handle" | "description">>,
+): DeveloperCommunityProfile {
+  const existing = getOwnCommunityForUser(userId, userName);
+  if (existing) {
+    return existing;
+  }
+
+  const id = communityIdFromUser(userId, userName);
+  const profile: DeveloperCommunityProfile = {
+    id,
+    name: defaults?.name ?? `${userName}コミュニティ`,
+    avatar: defaults?.avatar ?? "/images/landing/game-1.png",
+    handle: defaults?.handle ?? id,
+    description: defaults?.description ?? "フォロワーと交流し、一緒にゲームを育てましょう",
+    memberCountLabel: 0,
+  };
+  openDeveloperCommunity(profile);
+  return profile;
+}
+
+export function updateDeveloperCommunity(profile: DeveloperCommunityProfile) {
+  const list = readOpened();
+  const next = list.some((item) => item.id === profile.id)
+    ? list.map((item) => (item.id === profile.id ? profile : item))
+    : [...list, profile];
+  writeOpened(next);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("forge-developer-community-change"));
+  }
+}
+
 /** useSyncExternalStore 用。参照が変わるのは store 更新時のみ */
 export function getOpenedDeveloperCommunities(): DeveloperCommunityProfile[] {
   if (typeof window === "undefined") {

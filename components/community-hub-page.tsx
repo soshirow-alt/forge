@@ -9,7 +9,12 @@ import { ConfirmationCitationCard } from "@/components/confirmation-citation-car
 import { useCommunityBoard } from "@/hooks/use-community-board";
 import { useCommunityJoinV0 } from "@/hooks/use-community-join-v0";
 import { useDeveloperCommunitiesV0 } from "@/hooks/use-developer-communities-v0";
-import { findOwnCommunityInList } from "@/lib/developer-community-v0-store";
+import {
+  ensureOwnDeveloperCommunity,
+  findOwnCommunityInList,
+  updateDeveloperCommunity,
+  type DeveloperCommunityProfile,
+} from "@/lib/developer-community-v0-store";
 import type { ConfirmationRequestQuoteRef } from "@/lib/community-types";
 import {
   developerConfirmationQuoteOptions,
@@ -54,6 +59,8 @@ const DEVLOG_QUOTE_SELECT_MAX_VISIBLE = 4;
 
 const COMMUNITY_MESSAGE_MAX = 1000;
 const COMMUNITY_TITLE_MAX = 80;
+const COMMUNITY_NAME_MAX = 40;
+const COMMUNITY_DESCRIPTION_MAX = 160;
 
 type CommunityTab = "board" | "members";
 
@@ -605,6 +612,161 @@ function DeveloperComposePanel({
   );
 }
 
+function CommunitySettingsModal({
+  open,
+  profile,
+  ownerId,
+  onClose,
+}: {
+  open: boolean;
+  profile: DeveloperCommunityProfile;
+  ownerId: string;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(profile.name);
+  const [description, setDescription] = useState(profile.description);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    setName(profile.name);
+    setDescription(profile.description);
+    setSaveMessage(null);
+  }, [open, profile]);
+
+  if (!open) {
+    return null;
+  }
+
+  async function handleSave() {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      return;
+    }
+
+    setSaving(true);
+    const updated: DeveloperCommunityProfile = {
+      ...profile,
+      name: trimmedName,
+      description: description.trim(),
+    };
+    updateDeveloperCommunity(updated);
+
+    const supabase = getOptionalSupabaseClient();
+    if (supabase) {
+      try {
+        await ensureDeveloperCommunity(supabase, {
+          id: updated.id,
+          ownerId,
+          name: updated.name,
+          description: updated.description,
+          avatarUrl: updated.avatar,
+          handle: updated.handle,
+        });
+        setSaveMessage("保存しました。");
+      } catch {
+        setSaveMessage("ローカルに保存しました（サーバー同期は後で再試行してください）。");
+      }
+    } else {
+      setSaveMessage("保存しました。");
+    }
+
+    setSaving(false);
+    window.setTimeout(() => onClose(), 600);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/70"
+        aria-label="閉じる"
+        onClick={onClose}
+      />
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="community-settings-title"
+        className="relative z-10 w-full max-w-lg rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-xl"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 id="community-settings-title" className="text-lg font-semibold text-white">
+              コミュニティ設定
+            </h2>
+            <p className="mt-1 text-xs text-zinc-500">
+              参加者に見えるコミュニティ名と説明を編集できます。
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-zinc-700 p-1.5 text-zinc-400 hover:border-zinc-600 hover:text-white"
+            aria-label="閉じる"
+          >
+            <X className="size-4" aria-hidden="true" />
+          </button>
+        </div>
+
+        <label className="mt-5 block text-xs text-zinc-500">
+          コミュニティ名
+          <input
+            type="text"
+            value={name}
+            onChange={(event) => setName(event.target.value.slice(0, COMMUNITY_NAME_MAX))}
+            className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200"
+          />
+          <span className="mt-1 block text-right text-xs text-zinc-600">
+            {name.length}/{COMMUNITY_NAME_MAX}
+          </span>
+        </label>
+
+        <label className="mt-3 block text-xs text-zinc-500">
+          説明
+          <textarea
+            value={description}
+            onChange={(event) =>
+              setDescription(event.target.value.slice(0, COMMUNITY_DESCRIPTION_MAX))
+            }
+            rows={3}
+            className="mt-1 w-full resize-none rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200"
+          />
+          <span className="mt-1 block text-right text-xs text-zinc-600">
+            {description.length}/{COMMUNITY_DESCRIPTION_MAX}
+          </span>
+        </label>
+
+        <p className="mt-3 text-xs text-zinc-600">ID: @{profile.handle}</p>
+
+        {saveMessage ? (
+          <p className="mt-4 text-sm text-emerald-300">{saveMessage}</p>
+        ) : null}
+
+        <div className="mt-6 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-400 hover:border-zinc-600"
+          >
+            キャンセル
+          </button>
+          <button
+            type="button"
+            disabled={!name.trim() || saving}
+            onClick={() => void handleSave()}
+            className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
+          >
+            保存する
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function CommunityJoinPrompt({ communityId }: { communityId: string }) {
   return (
     <div className="rounded-xl border border-dashed border-zinc-800 bg-zinc-900/20 px-6 py-10 text-center">
@@ -708,6 +870,9 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
       : null;
   const developerCommunityId = ownCommunity?.id ?? studioOwnCommunityId;
   const developerCommunityProfile = ownCommunity ?? studioCommunityProfile;
+
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsProfile, setSettingsProfile] = useState<DeveloperCommunityProfile | null>(null);
 
   const activeTab = (searchParams.get("tab") === "members" ? "members" : "board") as CommunityTab;
 
@@ -913,15 +1078,35 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
           </div>
           <button
             type="button"
-            className="inline-flex items-center gap-2 self-start rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-400 sm:self-center"
-            disabled
-            title="v0 では準備中"
+            onClick={() => {
+              if (!user) {
+                return;
+              }
+              const profile = ensureOwnDeveloperCommunity(user.id, user.name, {
+                name: developerCommunityProfile.name,
+                avatar: developerCommunityProfile.avatar,
+                handle: developerCommunityProfile.handle,
+                description: developerCommunityProfile.description,
+              });
+              setSettingsProfile(profile);
+              setSettingsOpen(true);
+            }}
+            className="inline-flex items-center gap-2 self-start rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-violet-500/40 hover:text-white sm:self-center"
           >
             <Settings className="size-4" aria-hidden="true" />
             コミュニティ設定
           </button>
         </div>
       )}
+
+      {isDeveloper && settingsProfile && user ? (
+        <CommunitySettingsModal
+          open={settingsOpen}
+          profile={settingsProfile}
+          ownerId={user.id}
+          onClose={() => setSettingsOpen(false)}
+        />
+      ) : null}
 
       {!isDeveloper && selectedCommunity && (
         <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3">
