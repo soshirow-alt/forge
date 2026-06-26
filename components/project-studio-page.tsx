@@ -141,7 +141,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
               />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-orange-400/90">改善ループ Studio</p>
+              <p className="text-xs font-medium text-orange-400/90">作品 Studio</p>
               <h1 className="mt-1 text-xl font-bold tracking-tight text-zinc-50 sm:text-2xl">
                 {game.title}
               </h1>

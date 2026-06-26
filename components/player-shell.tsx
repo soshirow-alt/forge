@@ -232,7 +232,7 @@ export function PlayerShell({
           {previewStudioBypass ? (
             <Link
               href="/studio"
-              title="作品の改善ループ Studio（あなたの作品は Studio ホーム上部）"
+              title="開発者向け Studio（投稿した作品の管理）"
               className={studioButtonClassName}
             >
               Studio
@@ -241,7 +241,7 @@ export function PlayerShell({
             <button
               type="button"
               onClick={() => attemptStudioEntry("/studio")}
-              title="作品の改善ループ Studio（あなたの作品は Studio ホーム上部）"
+              title="開発者向け Studio（投稿した作品の管理）"
               className={studioButtonClassName}
             >
               Studio

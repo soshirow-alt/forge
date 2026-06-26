@@ -209,7 +209,9 @@ export function StudioProjectsTabPanel({ initialQuery = "" }: { initialQuery?: s
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white sm:text-3xl">プロジェクト一覧</h1>
-          <p className="mt-2 text-sm text-zinc-400">あなたの作品を管理し、Studio で改善ループを回します。</p>
+          <p className="mt-2 text-sm text-zinc-400">
+            あなたの作品を管理し、届いたフィードバックをもとに改善を進められます。
+          </p>
         </div>
         <Link
           href="/submit"

@@ -108,10 +108,10 @@ function LoopStepper({
 }) {
   return (
     <section
-      aria-label="改善ループの進行状況"
+      aria-label="このverの進め方"
       className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5"
     >
-      <h2 className="text-sm font-semibold text-zinc-200">改善ループの進行状況</h2>
+      <h2 className="text-sm font-semibold text-zinc-200">このverの進め方</h2>
       <ol className="mt-4 grid gap-2 sm:grid-cols-5">
         {IMPROVEMENT_LOOP_STEPS.map((step, index) => {
           const state = stepStates[index];
@@ -214,7 +214,7 @@ function CurrentStepPanel({
           ? "Forge外でゲームを直し、終わったら変更を記録します。"
           : activeStepId === "publish"
             ? "Devlogを書いて、プレイ可能verを公開しましょう。"
-            : "このverのループは一通り完了です。新しいFBが届いたら再開します。";
+            : "このverは一通り完了です。新しいフィードバックが届いたら再開します。";
 
   return (
     <section

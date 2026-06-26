@@ -64,7 +64,7 @@ function PreCycleVisual() {
   ];
 
   return (
-    <div className="mt-5" aria-label="ループ前 — プレイヤーの訪問を待っています">
+    <div className="mt-5" aria-label="フィードバック待ち — プレイヤーの訪問を待っています">
       <div className="flex items-center gap-0">
         {nodes.map((node, index) => (
           <div key={node.label} className="flex min-w-0 flex-1 items-center">
@@ -106,7 +106,7 @@ function PreCycleVisual() {
         ))}
       </div>
       <p className="mt-3 text-center text-xs text-zinc-500">
-        改善ループは、最初の回答が届いてから始まります
+        最初のフィードバックが届いてから始まります
       </p>
     </div>
   );
@@ -116,12 +116,12 @@ function CycleCompleteVisual() {
   return (
     <div
       className="mt-5 flex flex-col items-center rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-5"
-      aria-label="このverの改善ループは完了"
+      aria-label="このverは一通り完了"
     >
       <span className="flex size-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-300 ring-2 ring-emerald-500/25">
         <Check className="size-6" aria-hidden="true" />
       </span>
-      <p className="mt-3 text-sm font-medium text-zinc-200">このverのループ完了</p>
+      <p className="mt-3 text-sm font-medium text-zinc-200">このverは一通り完了</p>
       <p className="mt-1 flex items-center gap-1.5 text-xs text-zinc-500">
         <span className="inline-block size-1.5 animate-pulse rounded-full bg-orange-400" />
         新しい回答が届いたら再開

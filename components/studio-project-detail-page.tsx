@@ -133,7 +133,7 @@ function StudioProjectDetailContent({ id }: { id: string }) {
                   className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
                 >
                   <Pencil className="size-4" aria-hidden="true" />
-                  Studio で改善ループ
+                  作品 Studio を開く
                 </Link>
                 <Link
                   href={gameDetailHref(gameId)}
