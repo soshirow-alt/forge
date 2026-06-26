@@ -24,7 +24,6 @@ export const profileSelfMock = {
     witnessingGames: 4,
   },
   favoriteGenres: ["RPG", "アドベンチャー", "ファンタジー", "ストーリー重視"],
-  frequentTags: ["#ストーリーが良い", "#世界観", "#チュートリアル", "#探索"],
   highlightBadges: [
     { id: "w1", label: "見届け人", emoji: "👀" },
     { id: "w2", label: "FBマスター", emoji: "💬" },

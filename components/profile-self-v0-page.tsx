@@ -211,19 +211,6 @@ export function ProfileSelfV0Page() {
             </div>
           </section>
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-            <h3 className="text-sm font-semibold text-white">よく使うタグ</h3>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {profile.frequentTags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-md border border-violet-500/20 bg-violet-500/5 px-2.5 py-1 text-xs text-violet-200"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </section>
-          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
             <h3 className="text-sm font-semibold text-white">ハイライト実績</h3>
             <div className="mt-4 grid grid-cols-4 gap-3">
               {profile.highlightBadges.map((badge) => (

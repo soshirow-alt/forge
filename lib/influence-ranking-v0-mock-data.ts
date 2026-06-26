@@ -1,4 +1,15 @@
 import { profileAvatarPresets } from "@/lib/profile-avatar-presets";
+import { RANKING_LIST_INITIAL, RANKING_MAX } from "@/lib/ranking-v0-shared";
+
+export { RANKING_LIST_INITIAL, RANKING_MAX };
+
+export type InfluenceRankingMetrics = {
+  devEvalCount: number;
+  improvementLinkedCount: number;
+  verificationContributionCount: number;
+  continuedWitnessCount: number;
+  lowVoiceContributionCount: number;
+};
 
 export type InfluenceRankingEntry = {
   rank: number;
@@ -8,6 +19,7 @@ export type InfluenceRankingEntry = {
   score: number;
   title: string;
   titleColor: string;
+  metrics: InfluenceRankingMetrics;
 };
 
 export type InfluenceLastMonthEntry = {
@@ -19,16 +31,11 @@ export type InfluenceLastMonthEntry = {
 export type InfluenceRankingMonth = {
   id: string;
   label: string;
+  period: string;
   top3: InfluenceRankingEntry[];
   list: InfluenceRankingEntry[];
   lastMonthTop3: InfluenceLastMonthEntry[];
 };
-
-/** ランキングに載せる最大人数（1〜50位） */
-export const RANKING_MAX = 50;
-
-/** 4位〜10位を初回表示（1〜3位は top3 カード）。11位以降はもっと見る */
-export const RANKING_LIST_INITIAL = 7;
 
 const TITLES: { title: string; titleColor: string }[] = [
   { title: "未来を動かした人", titleColor: "text-amber-300" },
@@ -59,13 +66,24 @@ function avatarForIndex(index: number): string {
   return profileAvatarPresets[index % profileAvatarPresets.length].src;
 }
 
+function buildMetrics(score: number, index: number): InfluenceRankingMetrics {
+  const tier = Math.max(1, Math.round(score / 180));
+  const mod = (index * 7 + 3) % 5;
+  return {
+    devEvalCount: Math.max(1, Math.round(tier * 0.35) + mod),
+    improvementLinkedCount: Math.max(0, Math.round(tier * 0.22) + (mod % 3)),
+    verificationContributionCount: Math.max(0, Math.round(tier * 0.18) + (mod % 2)),
+    continuedWitnessCount: Math.max(1, Math.round(tier * 0.1) + (index % 3)),
+    lowVoiceContributionCount: Math.max(0, Math.round(tier * 0.08) + (index % 2)),
+  };
+}
+
 function buildCandidates(monthSeed: number, activeCount: number): RawCandidate[] {
   return PLAYER_NAMES.map((name, index) => {
-    const handle = `player${index + 1}`;
+    const handle = index === 0 ? "shaneco" : `player${index + 1}`;
     const base = Math.max(0, 2400 - index * 38 - monthSeed * 90);
     const jitter = (index * 17 + monthSeed * 31) % 40;
-    const score =
-      index < activeCount ? Math.max(1, base - jitter) : 0;
+    const score = index < activeCount ? Math.max(1, base - jitter) : 0;
     return {
       name,
       handle,
@@ -90,6 +108,7 @@ function toRankedEntries(candidates: RawCandidate[]): InfluenceRankingEntry[] {
         score: candidate.score,
         title: title.title,
         titleColor: title.titleColor,
+        metrics: buildMetrics(candidate.score, index),
       };
     });
 }
@@ -97,6 +116,7 @@ function toRankedEntries(candidates: RawCandidate[]): InfluenceRankingEntry[] {
 function buildMonth(
   id: string,
   label: string,
+  period: string,
   monthSeed: number,
   activeCount: number,
   lastMonthTop3: InfluenceLastMonthEntry[],
@@ -105,6 +125,7 @@ function buildMonth(
   return {
     id,
     label,
+    period,
     top3: ranked.slice(0, 3),
     list: ranked.slice(3),
     lastMonthTop3,
@@ -112,17 +133,17 @@ function buildMonth(
 }
 
 export const influenceRankingMonths: InfluenceRankingMonth[] = [
-  buildMonth("2025-05", "2025年5月", 0, 38, [
+  buildMonth("2025-05", "2025年5月", "集計期間: 2025/05/01 – 2025/05/31", 0, 42, [
     { rank: 1, name: "しゃねこ", score: 2301 },
     { rank: 2, name: "みかん", score: 1890 },
     { rank: 3, name: "クロノス", score: 1654 },
   ]),
-  buildMonth("2025-04", "2025年4月", 1, 32, [
+  buildMonth("2025-04", "2025年4月", "集計期間: 2025/04/01 – 2025/04/30", 1, 36, [
     { rank: 1, name: "みかん", score: 2102 },
     { rank: 2, name: "クロノス", score: 1920 },
     { rank: 3, name: "しゃねこ", score: 1855 },
   ]),
-  buildMonth("2025-03", "2025年3月", 2, 24, [
+  buildMonth("2025-03", "2025年3月", "集計期間: 2025/03/01 – 2025/03/31", 2, 28, [
     { rank: 1, name: "クロノス", score: 1988 },
     { rank: 2, name: "ゆき", score: 1622 },
     { rank: 3, name: "たろう", score: 1540 },
@@ -147,7 +168,14 @@ export function getInfluenceRankingMonth(id: string): InfluenceRankingMonth {
   return influenceRankingMonths.find((month) => month.id === id) ?? influenceRankingMonths[0];
 }
 
-/** スコア > 0 の人数（最大50）。UI の「もっと見る」判定用 */
 export function getRankedPlayerCount(month: InfluenceRankingMonth): number {
   return month.top3.length + month.list.length;
 }
+
+export const influenceRankingMetricWeights = [
+  { id: "dev-eval", label: "開発者が「役立った」と評価したFB", weight: "35%" },
+  { id: "improvement", label: "改善・変更に繋がったFB", weight: "25%" },
+  { id: "verification", label: "確認依頼・変化チェックへの貢献", weight: "20%" },
+  { id: "continued", label: "継続して見届けた貢献", weight: "10%" },
+  { id: "low-voice", label: "声が少ない作品への貢献", weight: "10%" },
+] as const;

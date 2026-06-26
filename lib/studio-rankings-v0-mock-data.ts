@@ -1,3 +1,5 @@
+import { RANKING_MAX } from "@/lib/ranking-v0-shared";
+
 /** S-20 ホーム用ランキング抜粋（作品2列 + 開発者1列） */
 export type StudioWorkGrowthSnippet = {
   rank: number;
@@ -134,88 +136,84 @@ export const studioDeveloperRankingTop3: StudioDeveloperRankingEntry[] = [
   },
 ];
 
-export const studioDeveloperRankingList: StudioDeveloperRankingEntry[] = [
-  {
-    rank: 4,
-    id: "haruka",
-    name: "ハルカ",
-    handle: "haruka_dev",
-    avatar: "/images/landing/game-3.png",
-    epithet: "世界を育てる人",
-    epithetColor: "text-amber-300",
-    score: 5824,
-    monthOverMonth: 1420,
-    representativeWork: { title: "空の彼方へ", image: "/images/landing/game-4.png" },
-    witnessGrowth: 198,
-    workFollowGrowth: 52,
-    devFollowGrowth: 24,
-    voiceGrowth: 98,
-  },
-  {
-    rank: 5,
-    id: "minato",
-    name: "ミナト",
-    handle: "minato_lab",
-    avatar: "/images/landing/game-4.png",
-    epithet: "物語を届ける人",
-    epithetColor: "text-violet-300",
-    score: 5102,
-    monthOverMonth: 1186,
-    representativeWork: { title: "静かな灯台", image: "/images/landing/game-5.png" },
-    witnessGrowth: 176,
-    workFollowGrowth: 44,
-    devFollowGrowth: 21,
-    voiceGrowth: 86,
-  },
-  {
-    rank: 6,
-    id: "ren",
-    name: "レン",
-    handle: "ren_voice",
-    avatar: "/images/landing/game-2.png",
-    epithet: "挑戦を育てる人",
-    epithetColor: "text-sky-300",
-    score: 4688,
-    monthOverMonth: 982,
-    representativeWork: { title: "夜明けの手紙", image: "/images/landing/game-1.png" },
-    witnessGrowth: 142,
-    workFollowGrowth: 38,
-    devFollowGrowth: 18,
-    voiceGrowth: 72,
-  },
-  {
-    rank: 7,
-    id: "aoi",
-    name: "アオイ",
-    handle: "aoi_create",
-    avatar: "/images/landing/hero-bg.png",
-    epithet: "物語を届ける人",
-    epithetColor: "text-violet-300",
-    score: 4215,
-    monthOverMonth: 864,
-    representativeWork: { title: "紙の迷宮", image: "/images/landing/game-5.png" },
-    witnessGrowth: 128,
-    workFollowGrowth: 31,
-    devFollowGrowth: 15,
-    voiceGrowth: 64,
-  },
-  {
-    rank: 8,
-    id: "yuki",
-    name: "ゆき",
-    handle: "yuki_plays",
-    avatar: "/images/landing/game-3.png",
-    epithet: "挑戦を育てる人",
-    epithetColor: "text-sky-300",
-    score: 3892,
-    monthOverMonth: 712,
-    representativeWork: { title: "風の駅", image: "/images/landing/game-2.png" },
-    witnessGrowth: 112,
-    workFollowGrowth: 28,
-    devFollowGrowth: 12,
-    voiceGrowth: 58,
-  },
-];
+const EPITHETS = [
+  { epithet: "世界を育てる人", epithetColor: "text-amber-300" },
+  { epithet: "物語を届ける人", epithetColor: "text-violet-300" },
+  { epithet: "挑戦を育てる人", epithetColor: "text-sky-300" },
+] as const;
+
+const WORK_SNIPPETS = [
+  { title: "空の彼方へ", image: "/images/landing/game-4.png" },
+  { title: "静かな灯台", image: "/images/landing/game-5.png" },
+  { title: "夜明けの手紙", image: "/images/landing/game-1.png" },
+  { title: "紙の迷宮", image: "/images/landing/game-5.png" },
+  { title: "風の駅", image: "/images/landing/game-2.png" },
+  { title: "霧の駅", image: "/images/landing/game-5.png" },
+  { title: "光の旅人", image: "/images/landing/game-3.png" },
+  { title: "夏の向こう側", image: "/images/landing/game-4.png" },
+] as const;
+
+const EXTRA_DEV_SEEDS = [
+  { id: "haruka", name: "ハルカ", handle: "haruka_dev", avatar: "/images/landing/game-3.png" },
+  { id: "minato", name: "ミナト", handle: "minato_lab", avatar: "/images/landing/game-4.png" },
+  { id: "ren", name: "レン", handle: "ren_voice", avatar: "/images/landing/game-2.png" },
+  { id: "aoi", name: "アオイ", handle: "aoi_create", avatar: "/images/landing/hero-bg.png" },
+  { id: "yuki", name: "ゆき", handle: "yuki_plays", avatar: "/images/landing/game-3.png" },
+  { id: "lunaworks", name: "LunaWorks", handle: "lunaworks", avatar: "/images/landing/game-3.png" },
+  { id: "greensmith", name: "GreenSmith", handle: "greensmith", avatar: "/images/landing/game-5.png" },
+  { id: "kaito", name: "カイト", handle: "kaito_dev", avatar: "/images/landing/game-1.png" },
+  { id: "nagi", name: "ナギ", handle: "nagi_studio", avatar: "/images/landing/game-2.png" },
+  { id: "hina", name: "ヒナ", handle: "hina_create", avatar: "/images/landing/game-4.png" },
+] as const;
+
+function buildDeveloperRankingList(
+  top3LastScore: number,
+  monthSeed: number,
+  listCount: number,
+): StudioDeveloperRankingEntry[] {
+  return Array.from({ length: listCount }, (_, index) => {
+    const rank = index + 4;
+    const seed = EXTRA_DEV_SEEDS[index % EXTRA_DEV_SEEDS.length];
+    const epithet = EPITHETS[index % EPITHETS.length];
+    const work = WORK_SNIPPETS[index % WORK_SNIPPETS.length];
+    const decay = 1 - index * 0.028;
+    const score = Math.max(120, Math.round(top3LastScore * 0.94 * decay - monthSeed * 40));
+    const mom = Math.max(40, Math.round(score * 0.22));
+    return {
+      rank,
+      id: rank <= 8 ? seed.id : `${seed.id}-${rank}`,
+      name: rank > 12 ? `${seed.name}${rank - 12}` : seed.name,
+      handle: rank > 12 ? `${seed.handle}_${rank}` : seed.handle,
+      avatar: seed.avatar,
+      epithet: epithet.epithet,
+      epithetColor: epithet.epithetColor,
+      score,
+      monthOverMonth: mom,
+      representativeWork: work,
+      witnessGrowth: Math.max(8, Math.round(score * 0.034)),
+      workFollowGrowth: Math.max(4, Math.round(score * 0.009)),
+      devFollowGrowth: Math.max(2, Math.round(score * 0.004)),
+      voiceGrowth: Math.max(6, Math.round(score * 0.017)),
+    };
+  });
+}
+
+function buildFullMonthRanking(
+  top3: StudioDeveloperRankingEntry[],
+  monthSeed: number,
+  activeTotal: number,
+): { top3: StudioDeveloperRankingEntry[]; list: StudioDeveloperRankingEntry[] } {
+  const capped = Math.min(activeTotal, RANKING_MAX);
+  const listCount = Math.max(0, capped - 3);
+  const list = buildDeveloperRankingList(top3[2]?.score ?? 5000, monthSeed, listCount);
+  return { top3, list };
+}
+
+export const studioDeveloperRankingList: StudioDeveloperRankingEntry[] = buildDeveloperRankingList(
+  studioDeveloperRankingTop3[2]!.score,
+  0,
+  5,
+);
 
 export const studioDeveloperLastMonthTop3 = [
   { rank: 1, name: "ミカン", score: 5236 },
@@ -259,24 +257,25 @@ function scaleRanking(
   }));
 }
 
-const mayTop3 = studioDeveloperRankingTop3;
-const mayList = studioDeveloperRankingList;
+const mayRanking = buildFullMonthRanking(studioDeveloperRankingTop3, 0, 50);
 
 export const studioDeveloperRankingMonths: StudioRankingMonth[] = [
   {
     id: "2025-05",
     label: studioDeveloperRankingMonth,
     period: studioDeveloperRankingPeriod,
-    top3: mayTop3,
-    list: mayList,
+    top3: mayRanking.top3,
+    list: mayRanking.list,
     lastMonthTop3: studioDeveloperLastMonthTop3,
   },
   {
     id: "2025-04",
     label: "2025年4月",
     period: "集計期間: 2025/04/01 – 2025/04/30",
-    top3: scaleRanking(mayTop3, 0.88),
-    list: scaleRanking(mayList, 0.86),
+    ...(() => {
+      const scaled = buildFullMonthRanking(scaleRanking(studioDeveloperRankingTop3, 0.88), 1, 40);
+      return { top3: scaled.top3, list: scaled.list };
+    })(),
     lastMonthTop3: [
       { rank: 1, name: "しゃねこ", score: 4812 },
       { rank: 2, name: "ミカン", score: 4520 },
@@ -287,8 +286,10 @@ export const studioDeveloperRankingMonths: StudioRankingMonth[] = [
     id: "2025-03",
     label: "2025年3月",
     period: "集計期間: 2025/03/01 – 2025/03/31",
-    top3: scaleRanking(mayTop3, 0.76),
-    list: scaleRanking(mayList, 0.74),
+    ...(() => {
+      const scaled = buildFullMonthRanking(scaleRanking(studioDeveloperRankingTop3, 0.76), 2, 32);
+      return { top3: scaled.top3, list: scaled.list };
+    })(),
     lastMonthTop3: [
       { rank: 1, name: "ソラ", score: 3988 },
       { rank: 2, name: "ミナト", score: 3610 },

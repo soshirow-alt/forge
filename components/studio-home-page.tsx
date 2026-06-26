@@ -190,7 +190,6 @@ function RankingSnippetsSection() {
     <section className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5 sm:p-6">
       <StudioSectionHeader
         title="今週の伸び"
-        href="/studio/rankings"
         icon={<BarChart3 className="size-5 text-violet-400" aria-hidden="true" />}
       />
       <div className="mt-5 grid gap-4 sm:grid-cols-3">
@@ -255,7 +254,6 @@ export function StudioHomePage() {
         <section>
           <StudioSectionHeader
             title="開発ヒント"
-            href="/studio/guide"
             icon={<Lightbulb className="size-5 text-violet-400" aria-hidden="true" />}
           />
           <div className="mt-5 grid gap-4 lg:grid-cols-2">

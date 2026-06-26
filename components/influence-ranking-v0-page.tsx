@@ -7,11 +7,75 @@ import { PlayerShell } from "@/components/player-shell";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import {
   getInfluenceRankingMonth,
+  influenceRankingMetricWeights,
   influenceRankingMonths,
   parseRankingMonthId,
-  RANKING_LIST_INITIAL,
+  type InfluenceRankingEntry,
+  type InfluenceRankingMetrics,
 } from "@/lib/influence-ranking-v0-mock-data";
+import { playerRankingProfileHref } from "@/lib/player-ranking-profile";
+import { RANKING_LIST_INITIAL } from "@/lib/ranking-v0-shared";
 import { ChevronLeft, ChevronRight, HelpCircle } from "lucide-react";
+
+function RankingMetricSummary({ metrics }: { metrics: InfluenceRankingMetrics }) {
+  const items = [
+    { label: "開発者評価", value: `${metrics.devEvalCount}件` },
+    { label: "改善に繋がったFB", value: `${metrics.improvementLinkedCount}件` },
+    { label: "確認依頼への回答", value: `${metrics.verificationContributionCount}件` },
+    { label: "継続見届け中の作品", value: `${metrics.continuedWitnessCount}件` },
+    { label: "声が少ない作品への貢献", value: `${metrics.lowVoiceContributionCount}件` },
+  ];
+
+  return (
+    <ul className="mt-4 space-y-1.5 text-left text-[11px] leading-relaxed text-zinc-500">
+      {items.map((item) => (
+        <li key={item.label} className="flex justify-between gap-2">
+          <span>{item.label}</span>
+          <span className="shrink-0 font-medium text-zinc-400">{item.value}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function Top3Card({ entry }: { entry: InfluenceRankingEntry }) {
+  const isFirst = entry.rank === 1;
+  return (
+    <Link
+      href={playerRankingProfileHref(entry.handle)}
+      className={`flex flex-col rounded-2xl border p-5 text-center transition-colors hover:border-violet-500/30 ${
+        isFirst
+          ? "border-amber-500/40 bg-gradient-to-b from-amber-500/10 to-zinc-900/40"
+          : "border-zinc-800/80 bg-zinc-900/40"
+      }`}
+    >
+      <p className="text-2xl" aria-hidden="true">
+        {entry.rank === 1 ? "🥇" : entry.rank === 2 ? "🥈" : "🥉"}
+      </p>
+      <ProfileAvatar src={entry.avatar} className="mx-auto mt-3 size-16" size={64} />
+      <p className="mt-3 font-semibold text-white">{entry.name}</p>
+      <p className="text-xs text-zinc-500">@{entry.handle}</p>
+      <p className={`mt-2 text-sm font-medium ${entry.titleColor}`}>{entry.title}</p>
+      <p className="mt-2 text-lg font-bold text-violet-300">月間影響度 {entry.score.toLocaleString()}</p>
+      <RankingMetricSummary metrics={entry.metrics} />
+    </Link>
+  );
+}
+
+function PlayerCell({ entry }: { entry: InfluenceRankingEntry }) {
+  return (
+    <Link
+      href={playerRankingProfileHref(entry.handle)}
+      className="flex items-center gap-3 transition-colors hover:text-violet-200"
+    >
+      <ProfileAvatar src={entry.avatar} className="size-8" size={32} />
+      <div className="min-w-0">
+        <p className="font-medium text-white">{entry.name}</p>
+        <p className="text-xs text-zinc-500">@{entry.handle}</p>
+      </div>
+    </Link>
+  );
+}
 
 function InfluenceRankingContent() {
   const router = useRouter();
@@ -23,6 +87,7 @@ function InfluenceRankingContent() {
   const canGoNext = monthIndex > 0;
   const [showAll, setShowAll] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showArchive, setShowArchive] = useState(false);
 
   useEffect(() => {
     setShowAll(false);
@@ -65,56 +130,41 @@ function InfluenceRankingContent() {
             </div>
             {showHelp && (
               <p className="mt-3 max-w-2xl rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm leading-relaxed text-zinc-400">
-                質の高いフィードバックで作品の成長を支えたプレイヤーを紹介します。開発者の「役立った」評価・共感・継続見届けなどを組み合わせ、投稿数だけでは決めません。
+                今月、開発者の意思決定・改善・確認依頼に対して実際に役立つFBを届けたプレイヤーを称えるランキングです。FB投稿数・共感数・プレイ回数だけでは決まりません。
               </p>
             )}
-            <p className="mt-2 max-w-2xl text-sm text-zinc-400">
-              質の高いフィードバックでゲームの成長を支えたプレイヤーを紹介します。
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">
+              今月、開発者の意思決定・作品改善・確認依頼に対して良い影響を与えたプレイヤーを称えます。
             </p>
-            <div className="mt-4 inline-flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/40 px-3 py-2 text-sm text-zinc-300">
-              <button
-                type="button"
-                disabled={!canGoPrev}
-                onClick={() => goMonth(influenceRankingMonths[monthIndex + 1].id)}
-                className="text-zinc-500 transition-colors hover:text-zinc-300 disabled:cursor-not-allowed disabled:opacity-30"
-                aria-label="前月"
-              >
-                <ChevronLeft className="size-4" />
-              </button>
-              {month.label}
-              <button
-                type="button"
-                disabled={!canGoNext}
-                onClick={() => goMonth(influenceRankingMonths[monthIndex - 1].id)}
-                className="text-zinc-500 transition-colors hover:text-zinc-300 disabled:cursor-not-allowed disabled:opacity-30"
-                aria-label="次月"
-              >
-                <ChevronRight className="size-4" />
-              </button>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <div className="inline-flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/40 px-3 py-2 text-sm text-zinc-300">
+                <button
+                  type="button"
+                  disabled={!canGoPrev}
+                  onClick={() => goMonth(influenceRankingMonths[monthIndex + 1]!.id)}
+                  className="text-zinc-500 transition-colors hover:text-zinc-300 disabled:cursor-not-allowed disabled:opacity-30"
+                  aria-label="前月"
+                >
+                  <ChevronLeft className="size-4" />
+                </button>
+                {month.label}
+                <button
+                  type="button"
+                  disabled={!canGoNext}
+                  onClick={() => goMonth(influenceRankingMonths[monthIndex - 1]!.id)}
+                  className="text-zinc-500 transition-colors hover:text-zinc-300 disabled:cursor-not-allowed disabled:opacity-30"
+                  aria-label="次月"
+                >
+                  <ChevronRight className="size-4" />
+                </button>
+              </div>
+              <span className="text-xs text-zinc-600">{month.period}</span>
             </div>
           </header>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-3">
             {month.top3.map((entry) => (
-              <div
-                key={entry.rank}
-                className={`rounded-2xl border p-5 text-center ${
-                  entry.rank === 1
-                    ? "border-amber-500/40 bg-gradient-to-b from-amber-500/10 to-zinc-900/40"
-                    : "border-zinc-800/80 bg-zinc-900/40"
-                }`}
-              >
-                <p className="text-2xl">
-                  {entry.rank === 1 ? "🥇" : entry.rank === 2 ? "🥈" : "🥉"}
-                </p>
-                <ProfileAvatar src={entry.avatar} className="mx-auto mt-3 size-16" size={64} />
-                <p className="mt-3 font-semibold text-white">{entry.name}</p>
-                <p className="text-xs text-zinc-500">@{entry.handle}</p>
-                <p className={`mt-2 text-sm font-medium ${entry.titleColor}`}>{entry.title}</p>
-                <p className="mt-2 text-lg font-bold text-violet-300">
-                  {entry.score.toLocaleString()}
-                </p>
-              </div>
+              <Top3Card key={entry.rank} entry={entry} />
             ))}
           </div>
 
@@ -133,13 +183,7 @@ function InfluenceRankingContent() {
                   <tr key={entry.rank} className="bg-zinc-900/30">
                     <td className="px-4 py-3 font-medium text-zinc-400">{entry.rank}</td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <ProfileAvatar src={entry.avatar} className="size-8" size={32} />
-                        <div>
-                          <p className="font-medium text-white">{entry.name}</p>
-                          <p className="text-xs text-zinc-500">@{entry.handle}</p>
-                        </div>
-                      </div>
+                      <PlayerCell entry={entry} />
                     </td>
                     <td className="px-4 py-3 font-semibold text-violet-300">
                       {entry.score.toLocaleString()}
@@ -168,19 +212,27 @@ function InfluenceRankingContent() {
 
         <aside className="w-full shrink-0 space-y-5 xl:w-72">
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-            <h2 className="text-sm font-semibold text-white">影響度ランキングとは</h2>
+            <h2 className="text-sm font-semibold text-white">このランキングについて</h2>
             <p className="mt-3 text-xs leading-relaxed text-zinc-400">
-              フィードバックが作品・開発者に与えた良い影響を評価します。
+              今月、開発者の意思決定や作品改善に良い影響を与えたプレイヤーを称えるランキングです。
+              FB投稿数や共感数だけでは決まりません。
             </p>
-            <ul className="mt-4 space-y-2 text-xs text-zinc-500">
-              <li>💬 役立つフィードバック — 開発者が「役立った」と評価</li>
-              <li>💗 共感を集めたフィードバック</li>
-              <li>🌱 新人への貢献</li>
-              <li>🔄 継続して見届けたフィードバック</li>
+            <p className="mt-4 text-xs font-medium text-zinc-300">評価に含まれるもの</p>
+            <ul className="mt-2 space-y-2 text-xs text-zinc-500">
+              {influenceRankingMetricWeights.map((metric) => (
+                <li key={metric.id}>
+                  {metric.label}
+                  <span className="ml-1 text-zinc-600">({metric.weight})</span>
+                </li>
+              ))}
             </ul>
-            <p className="mt-4 text-xs text-violet-300">
-              あなたのフィードバックが、ゲームの未来をつくる。
-            </p>
+            <p className="mt-4 text-xs font-medium text-zinc-300">評価に含まれないもの</p>
+            <ul className="mt-2 space-y-1.5 text-xs text-zinc-600">
+              <li>FB投稿数だけ</li>
+              <li>プレイ回数だけ</li>
+              <li>共感数</li>
+              <li>身内評価や水増し</li>
+            </ul>
           </section>
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
             <h2 className="text-sm font-semibold text-white">先月の TOP3</h2>
@@ -194,6 +246,33 @@ function InfluenceRankingContent() {
                 </li>
               ))}
             </ul>
+            <button
+              type="button"
+              onClick={() => setShowArchive((value) => !value)}
+              className="mt-4 flex w-full items-center justify-center gap-1 rounded-xl border border-zinc-800 py-2.5 text-xs text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-300"
+            >
+              過去のランキング
+              <ChevronRight
+                className={`size-3.5 transition-transform ${showArchive ? "rotate-90" : ""}`}
+              />
+            </button>
+            {showArchive && (
+              <ul className="mt-3 space-y-2 border-t border-zinc-800/80 pt-3">
+                {influenceRankingMonths.map((archiveMonth) => (
+                  <li key={archiveMonth.id}>
+                    <button
+                      type="button"
+                      onClick={() => goMonth(archiveMonth.id)}
+                      className={`w-full rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-zinc-800/60 ${
+                        archiveMonth.id === monthId ? "text-violet-300" : "text-zinc-400"
+                      }`}
+                    >
+                      {archiveMonth.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         </aside>
       </div>

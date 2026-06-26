@@ -3,9 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { StudioShell } from "@/components/studio-shell";
 import { developerProfileHref } from "@/lib/developer-search-v0-mock-data";
+import { RANKING_LIST_INITIAL } from "@/lib/ranking-v0-shared";
 import {
   formatMonthOverMonth,
   getStudioDeveloperRankingMonth,
@@ -18,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Heart,
+  HelpCircle,
   MessageSquare,
   UserPlus,
   Users,
@@ -41,12 +43,12 @@ function Top3Card({ entry }: { entry: StudioDeveloperRankingEntry }) {
   const isFirst = entry.rank === 1;
   return (
     <Link
-      href={developerProfileHref(entry.id, { from: "studio-ranking" })}
+      href={developerProfileHref(entry.id.split("-")[0]!, { from: "studio-ranking" })}
       className={`flex flex-col rounded-2xl border p-5 text-center transition-colors hover:border-violet-500/30 ${
         isFirst
-          ? "border-amber-500/40 bg-gradient-to-b from-amber-500/10 to-zinc-900/40 sm:scale-[1.02]"
+          ? "border-amber-500/40 bg-gradient-to-b from-amber-500/10 to-zinc-900/40"
           : "border-zinc-800/80 bg-zinc-900/40"
-      } ${entry.rank === 1 ? "sm:order-2" : entry.rank === 2 ? "sm:order-1" : "sm:order-3"}`}
+      }`}
     >
       <p className="text-2xl" aria-hidden="true">
         {entry.rank === 1 ? "🥇" : entry.rank === 2 ? "🥈" : "🥉"}
@@ -85,7 +87,7 @@ function Top3Card({ entry }: { entry: StudioDeveloperRankingEntry }) {
 function DeveloperCell({ entry }: { entry: StudioDeveloperRankingEntry }) {
   return (
     <Link
-      href={developerProfileHref(entry.id, { from: "studio-ranking" })}
+      href={developerProfileHref(entry.id.split("-")[0]!, { from: "studio-ranking" })}
       className="flex items-center gap-3 transition-colors hover:text-violet-200"
     >
       <span className="relative size-8 shrink-0 overflow-hidden rounded-full bg-zinc-800">
@@ -109,8 +111,14 @@ function StudioRankingsContent() {
   const canGoNext = monthIndex > 0;
   const [showAll, setShowAll] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
-  const visibleList = showAll ? month.list : month.list.slice(0, 5);
+  useEffect(() => {
+    setShowAll(false);
+  }, [monthId]);
+
+  const visibleList = showAll ? month.list : month.list.slice(0, RANKING_LIST_INITIAL);
+  const hasMore = month.list.length > RANKING_LIST_INITIAL && !showAll;
 
   const goMonth = useCallback(
     (targetId: string) => {
@@ -129,13 +137,26 @@ function StudioRankingsContent() {
               ホーム
             </Link>
             <span className="mx-2">›</span>
-            <span className="text-zinc-400">ランキング</span>
+            <span className="text-zinc-400">月間開発ランキング</span>
           </nav>
 
           <header className="mt-4">
-            <h1 className="text-2xl font-bold text-white sm:text-3xl">
-              今月もっとも作品を育てた開発者
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-white sm:text-3xl">月間開発ランキング</h1>
+              <button
+                type="button"
+                onClick={() => setShowHelp((value) => !value)}
+                className="text-zinc-500 transition-colors hover:text-violet-300"
+                aria-label="月間開発ランキングの説明"
+              >
+                <HelpCircle className="size-5" aria-hidden="true" />
+              </button>
+            </div>
+            {showHelp && (
+              <p className="mt-3 max-w-2xl rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm leading-relaxed text-zinc-400">
+                今月、プレイヤーのフィードバックとフォローによって作品を大きく前進させた開発者を称えるランキングです。投稿数・更新数だけでは決まりません。
+              </p>
+            )}
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">
               プレイヤーのフィードバックとフォローによって、作品を大きく前進させた開発者を称えます。
             </p>
@@ -221,7 +242,7 @@ function StudioRankingsContent() {
             </table>
           </div>
 
-          {!showAll && month.list.length > 5 && (
+          {hasMore && (
             <button
               type="button"
               onClick={() => setShowAll(true)}
@@ -234,9 +255,9 @@ function StudioRankingsContent() {
 
         <aside className="w-full shrink-0 space-y-5 xl:w-72">
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-            <h2 className="text-sm font-semibold text-white">ランキングの指標</h2>
+            <h2 className="text-sm font-semibold text-white">このランキングについて</h2>
             <p className="mt-3 text-xs leading-relaxed text-zinc-400">
-              このランキングは、開発者が今月どれだけ作品を育てたかを評価します。
+              今月、プレイヤーの反応によって作品を大きく育てた開発者を称えるランキングです。
             </p>
             <ul className="mt-4 space-y-3">
               {studioDeveloperRankingMetrics
@@ -293,9 +314,7 @@ function StudioRankingsContent() {
                       type="button"
                       onClick={() => goMonth(archiveMonth.id)}
                       className={`w-full rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-zinc-800/60 ${
-                        archiveMonth.id === monthId
-                          ? "text-violet-300"
-                          : "text-zinc-400"
+                        archiveMonth.id === monthId ? "text-violet-300" : "text-zinc-400"
                       }`}
                     >
                       {archiveMonth.label}
