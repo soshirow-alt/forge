@@ -21,6 +21,8 @@ export function StudioDevlogNewPage({ projectId }: { projectId: string }) {
   const [content, setContent] = useState("");
   const [publishNewVersion, setPublishNewVersion] = useState(false);
   const [newVersion, setNewVersion] = useState("");
+  const [developerWorry, setDeveloperWorry] = useState("");
+  const [wantedVoices, setWantedVoices] = useState("");
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   if (!project) {
@@ -46,6 +48,11 @@ export function StudioDevlogNewPage({ projectId }: { projectId: string }) {
       content,
       publishNewVersion,
       newVersion: newVersion.trim() || undefined,
+      developerWorry,
+      wantedVoices: wantedVoices
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean),
     });
     addStudioDevlogExtra(projectId, entry);
     router.push(`/studio/projects/${projectId}?tab=devlog`);
@@ -154,6 +161,49 @@ export function StudioDevlogNewPage({ projectId }: { projectId: string }) {
               </div>
             )}
           </div>
+
+          <section className="space-y-4 rounded-lg border border-violet-500/20 bg-violet-500/5 p-4">
+            <div>
+              <h2 className="text-sm font-semibold text-violet-100">
+                この ver でプレイヤーに聞きたいこと
+              </h2>
+              <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+                質問は作品全体ではなく、今回の ver ごとに設定します。プレイヤーが FB
+                するときのガイドになります。
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="developerWorry"
+                className="text-sm font-medium text-zinc-400"
+              >
+                開発者が聞きたいこと
+              </label>
+              <textarea
+                id="developerWorry"
+                rows={3}
+                value={developerWorry}
+                onChange={(event) => setDeveloperWorry(event.target.value)}
+                className={`${inputClassName} resize-y`}
+                placeholder="例: チュートリアルは長すぎませんか？序盤のテンポはどう感じましたか？"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="wantedVoices" className="text-sm font-medium text-zinc-400">
+                回答してほしい項目
+              </label>
+              <textarea
+                id="wantedVoices"
+                rows={5}
+                value={wantedVoices}
+                onChange={(event) => setWantedVoices(event.target.value)}
+                className={`${inputClassName} resize-y`}
+                placeholder={"1行に1項目\n例: チュートリアルの長さは適切でしたか？\n例: 最初のランタン取得まで迷いませんでしたか？"}
+              />
+            </div>
+          </section>
 
           <button
             type="submit"

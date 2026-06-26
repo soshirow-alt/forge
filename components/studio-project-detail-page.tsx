@@ -150,6 +150,7 @@ function StudioProjectDetailContent({ id }: { id: string }) {
             <GameDetailOverviewV0Tab
               game={game}
               editable
+              hideVersionQuestions
               onSave={() => setSaveMessage("概要を保存しました（preview mock）。")}
             />
           )}

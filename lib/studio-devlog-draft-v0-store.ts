@@ -105,6 +105,8 @@ export function buildStudioDevlogEntry(input: {
   content: string;
   publishNewVersion: boolean;
   newVersion?: string;
+  developerWorry?: string;
+  wantedVoices?: string[];
 }): GameDevlogEntry {
   const version =
     input.publishNewVersion && input.newVersion?.trim()
@@ -112,6 +114,9 @@ export function buildStudioDevlogEntry(input: {
         ? input.newVersion.trim()
         : `v${input.newVersion.trim()}`
       : "—";
+
+  const wantedVoices =
+    input.wantedVoices?.map((line) => line.trim()).filter(Boolean) ?? [];
 
   return {
     id: `session-${Date.now()}`,
@@ -123,5 +128,7 @@ export function buildStudioDevlogEntry(input: {
     highlights: [],
     kind: input.publishNewVersion ? "version" : "note",
     isLatest: true,
+    developerWorry: input.developerWorry?.trim() || undefined,
+    wantedVoices: wantedVoices.length > 0 ? wantedVoices : undefined,
   };
 }

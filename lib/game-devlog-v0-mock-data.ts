@@ -12,6 +12,9 @@ export type GameDevlogEntry = {
   highlights: string[];
   kind: DevlogEntryKind;
   isLatest?: boolean;
+  /** この ver でプレイヤーに聞きたいこと（開発ログ投稿時に設定） */
+  developerWorry?: string;
+  wantedVoices?: string[];
 };
 
 export type DevlogFilterId = "all" | "version" | "note";

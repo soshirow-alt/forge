@@ -19,12 +19,15 @@ function FeatureCard({ title, description }: { title: string; description: strin
 export function GameDetailOverviewV0Tab({
   game,
   editable = false,
+  hideVersionQuestions = false,
   onSave,
   onFeedback,
   feedbackCtaLabel = "フィードバックする",
 }: {
   game: GameDetailV0;
   editable?: boolean;
+  /** Studio 概要など — 質問は ver ごとの開発ログ投稿で設定する */
+  hideVersionQuestions?: boolean;
   onSave?: () => void;
   onFeedback?: () => void;
   feedbackCtaLabel?: string;
@@ -39,8 +42,14 @@ export function GameDetailOverviewV0Tab({
       ? `${introduction.slice(0, 120)}…`
       : introduction;
 
+  const showVersionQuestions = !hideVersionQuestions;
+
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div
+      className={
+        showVersionQuestions ? "grid gap-6 lg:grid-cols-2" : "mx-auto max-w-3xl space-y-6"
+      }
+    >
       <div className="space-y-6">
         <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
           <h2 className="text-base font-semibold text-white">作品紹介</h2>
@@ -69,6 +78,15 @@ export function GameDetailOverviewV0Tab({
               )}
             </>
           )}
+          {editable && hideVersionQuestions && (
+            <button
+              type="button"
+              onClick={onSave}
+              className="mt-4 w-full rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
+            >
+              概要を保存
+            </button>
+          )}
         </section>
 
         <section>
@@ -85,6 +103,7 @@ export function GameDetailOverviewV0Tab({
         </section>
       </div>
 
+      {showVersionQuestions && (
       <div className="space-y-6">
         <section className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-5 sm:p-6">
           <h2 className="text-base font-semibold text-white">開発者が聞きたいこと</h2>
@@ -142,6 +161,7 @@ export function GameDetailOverviewV0Tab({
           </button>
         )}
       </div>
+      )}
     </div>
   );
 }
