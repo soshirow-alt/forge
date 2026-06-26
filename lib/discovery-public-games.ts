@@ -10,7 +10,7 @@ export function getPublicSubmittedGames(games: Game[]): Game[] {
   return games.filter(isGamePublic);
 }
 
-function formatRelativeUpdateLabel(value: string): string {
+export function formatRelativeUpdateLabel(value: string): string {
   const parsed = Date.parse(value);
   if (Number.isNaN(parsed)) {
     return value.includes("更新") ? value : `${value}更新`;

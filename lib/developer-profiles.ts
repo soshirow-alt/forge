@@ -42,6 +42,42 @@ export function findDeveloperProfileByCreatorId(
   return profiles.find((profile) => profile.creatorId === creatorId);
 }
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** `/creators/[id]` — creator_id, user uuid, or `dev-{uuid}` */
+export function findDeveloperProfileByRouteId(
+  profiles: DeveloperProfile[],
+  routeId: string,
+): DeveloperProfile | undefined {
+  const byCreator = findDeveloperProfileByCreatorId(profiles, routeId);
+  if (byCreator) {
+    return byCreator;
+  }
+
+  const byUser = findDeveloperProfileByUserId(profiles, routeId);
+  if (byUser) {
+    return byUser;
+  }
+
+  if (routeId.startsWith("dev-")) {
+    return findDeveloperProfileByUserId(profiles, routeId.slice(4));
+  }
+
+  return undefined;
+}
+
+export function resolveOwnerUserIdFromRouteId(routeId: string): string | null {
+  if (UUID_RE.test(routeId)) {
+    return routeId;
+  }
+  if (routeId.startsWith("dev-")) {
+    const userId = routeId.slice(4);
+    return UUID_RE.test(userId) ? userId : null;
+  }
+  return null;
+}
+
 export function findDeveloperProfileByPublicName(
   profiles: DeveloperProfile[],
   publicName: string,

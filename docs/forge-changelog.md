@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-06-27 REL-2-03 / 2-04 — 開発者ページ実データ化・作品詳細統計
+
+- **REL-2-03** — `/creators/[id]` を `developer_profiles` + 公開作品に接続。X・website 表示。本番で未登録 ID は 404
+- **REL-2-04** — 実作品詳細の見届け・FB 件数を Supabase 集計（0 は非表示）。Devlog 更新は最新 devlog から相対表示
+
+---
+
 ## 2026-06-27 REL-0-02 — 本番で preview 専用挙動を無効化（追補）
 
 - **production-mode** — git ref だけでは preview 判定しない。本番 hostname / `VERCEL_ENV=production` は常に production

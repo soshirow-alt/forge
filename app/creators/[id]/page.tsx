@@ -1,4 +1,4 @@
-import { DeveloperProfileV0Page } from "@/components/developer-profile-v0-page";
+import { CreatorProfilePage } from "@/components/creator-profile-page";
 
 export default async function CreatorPage({
   params,
@@ -6,5 +6,5 @@ export default async function CreatorPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <DeveloperProfileV0Page id={id} />;
+  return <CreatorProfilePage id={id} />;
 }

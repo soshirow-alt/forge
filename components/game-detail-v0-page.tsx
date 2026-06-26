@@ -46,7 +46,9 @@ import { firstVoiceQuestion } from "@/lib/feedback-v0-mock-data";
 import { applyProjectOverviewV0 } from "@/lib/project-overview-v0-store";
 import { projectStudioPath } from "@/lib/project-nurture-links";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
+import { formatRelativeUpdateLabel } from "@/lib/discovery-public-games";
 import { useProjectOverviewV0 } from "@/hooks/use-project-overview-v0";
+import { useProjectPublicStats } from "@/hooks/use-project-public-stats";
 import {
   Bookmark,
   Check,
@@ -142,6 +144,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   } = useGames();
   const submittedGame = dataReady ? getSubmittedGameById(id) : undefined;
   const hideV0Mock = shouldHideV0MockContent();
+  const resolvedId = isSupabaseProjectId(id) ? id : resolveGameDetailId(id);
   const isRealProject = Boolean(
     submittedGame && isSupabaseProjectId(submittedGame.id),
   );
@@ -151,8 +154,18 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     }
     return getGameDetailV0(id);
   }, [id, submittedGame]);
+  const { stats: publicStats, loaded: publicStatsLoaded } = useProjectPublicStats(
+    isRealProject ? resolvedId : null,
+  );
+  const showWitnessStat =
+    !isRealProject || (publicStatsLoaded && publicStats.witnessCount > 0);
+  const showVoiceStat =
+    !isRealProject || (publicStatsLoaded && publicStats.voiceCount > 0);
+  const devlogUpdatedLabel =
+    isRealProject && publicStats.latestDevlogAt
+      ? formatRelativeUpdateLabel(publicStats.latestDevlogAt)
+      : game.devlogUpdatedAgo;
   const hasRealPlayUrl = Boolean(submittedGame?.playUrl?.trim());
-  const resolvedId = isSupabaseProjectId(id) ? id : resolveGameDetailId(id);
   const { revision: overviewRevision } = useProjectOverviewV0(resolvedId);
   const displayGame = useMemo(() => {
     const base = game;
@@ -369,24 +382,32 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                 </Link>
 
                 <div className="mt-5 grid gap-2 sm:grid-cols-2">
-                  {!isRealProject ? (
-                    <>
-                      <StatItem
-                        icon={<Users className="size-4" aria-hidden="true" />}
-                        label="見届け"
-                        value={game.witnessCount.toLocaleString()}
-                      />
-                      <StatItem
-                        icon={<MessageSquare className="size-4" aria-hidden="true" />}
-                        label="フィードバック"
-                        value={game.voiceCount.toLocaleString()}
-                      />
-                    </>
+                  {showWitnessStat ? (
+                    <StatItem
+                      icon={<Users className="size-4" aria-hidden="true" />}
+                      label="見届け"
+                      value={
+                        isRealProject
+                          ? publicStats.witnessCount.toLocaleString()
+                          : game.witnessCount.toLocaleString()
+                      }
+                    />
+                  ) : null}
+                  {showVoiceStat ? (
+                    <StatItem
+                      icon={<MessageSquare className="size-4" aria-hidden="true" />}
+                      label="フィードバック"
+                      value={
+                        isRealProject
+                          ? publicStats.voiceCount.toLocaleString()
+                          : game.voiceCount.toLocaleString()
+                      }
+                    />
                   ) : null}
                   <StatItem
                     icon={<FileText className="size-4" aria-hidden="true" />}
                     label="Devlog"
-                    value={game.devlogUpdatedAgo}
+                    value={devlogUpdatedLabel}
                   />
                   <StatItem
                     icon={<Clock className="size-4" aria-hidden="true" />}

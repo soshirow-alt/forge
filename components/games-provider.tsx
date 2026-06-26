@@ -34,6 +34,7 @@ import {
   findDeveloperProfileByUserId,
   findDeveloperProfileByCreatorId,
   findDeveloperProfileByPublicName,
+  findDeveloperProfileByRouteId,
   type DeveloperProfile,
   type DeveloperProfileInput,
 } from "@/lib/developer-profiles";
@@ -271,6 +272,7 @@ type GamesContextValue = {
   reloadNotifications: () => Promise<void>;
   reloadFromStorage: () => Promise<void>;
   getDeveloperProfileByUserId: (userId: string) => DeveloperProfile | undefined;
+  getDeveloperProfileByRouteId: (routeId: string) => DeveloperProfile | undefined;
   saveDeveloperProfile: (
     userId: string,
     input: DeveloperProfileInput,
@@ -1639,6 +1641,12 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     [developerProfiles],
   );
 
+  const getDeveloperProfileByRouteId = useCallback(
+    (routeId: string) =>
+      findDeveloperProfileByRouteId(developerProfiles, routeId),
+    [developerProfiles],
+  );
+
   const saveDeveloperProfile = useCallback(
     async (userId: string, input: DeveloperProfileInput) => {
       const supabase = getOptionalSupabaseClient();
@@ -1670,7 +1678,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
 
   const resolveCreatorById = useCallback(
     (id: string) => {
-      const stored = findDeveloperProfileByCreatorId(developerProfiles, id);
+      const stored = findDeveloperProfileByRouteId(developerProfiles, id);
       if (stored) {
         return {
           id: stored.creatorId,
@@ -1753,6 +1761,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       reloadNotifications,
       reloadFromStorage,
       getDeveloperProfileByUserId,
+      getDeveloperProfileByRouteId,
       saveDeveloperProfile,
       getCreatorIdForName,
       resolveCreatorById,
@@ -1823,6 +1832,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       reloadNotifications,
       reloadFromStorage,
       getDeveloperProfileByUserId,
+      getDeveloperProfileByRouteId,
       saveDeveloperProfile,
       getCreatorIdForName,
       resolveCreatorById,
