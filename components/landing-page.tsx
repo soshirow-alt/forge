@@ -10,6 +10,7 @@ import {
   TrendingUp,
   Wrench,
 } from "lucide-react";
+import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal-routes";
 
 const valueProps = [
   {
@@ -330,10 +331,14 @@ export function LandingPage() {
           </p>
         </div>
         <div className="mt-10 flex flex-col items-center justify-between gap-4 text-sm text-zinc-500 md:flex-row">
-          <p className="md:order-1">© 2025 Forge. All rights reserved.</p>
+          <p className="md:order-1">© 2026 Forge. All rights reserved.</p>
           <nav className="flex flex-wrap items-center justify-center gap-6 md:order-2 md:gap-8">
-            <span className="text-zinc-600">利用規約</span>
-            <span className="text-zinc-600">プライバシーポリシー</span>
+            <Link href={TERMS_PATH} className="transition-colors hover:text-zinc-300">
+              利用規約
+            </Link>
+            <Link href={PRIVACY_PATH} className="transition-colors hover:text-zinc-300">
+              プライバシーポリシー
+            </Link>
             <span className="text-zinc-600">ヘルプ</span>
             <span className="text-zinc-600">お問い合わせ</span>
           </nav>

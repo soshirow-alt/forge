@@ -4,6 +4,38 @@
 
 ---
 
+## 2026-06-27 REL-0-00 — 本番モード判定ヘルパー
+
+- `lib/production-mode.ts` — `preview` / `local` / `production` の3態。`isProductionReleaseMode()` / `shouldHideV0MockContent()` を正本に
+- `lib/preview-v0.ts` — 上記へ委譲。Studio ログインバイパスは本番モードでのみ無効
+- ローカル・preview 検証用: `NEXT_PUBLIC_FORGE_PRODUCTION_MODE=true` で本番挙動を強制
+
+---
+
+- `/privacy` — プライバシーポリシー全文（2026-06-27 制定版）を掲載
+- 利用規約と合わせ、登録同意の法務導線が完成
+
+---
+
+## 2026-06-27 利用規約 — 本文掲載と導線（REL-0-01）
+
+- `/terms` — 利用規約全文（2026-06-27 制定版）を掲載
+- `/privacy` — プライバシーポリシー全文（2026-06-27 制定版）を掲載
+- 登録画面・LP・auth フッターからリンク
+
+---
+
+- **みんなの FB タブ** — 初期版は中身を非表示（タブは残し「追って機能追加予定」）。実集計・AI 集約まで個別 FB / mock は出さない
+- **月間影響度ランキング** — 同様に項目は残し中身を非表示。mock 順位は本番に出さない
+- **用語** — 画面・ドキュメントを徐々に「声」から **FB** へ
+- **外部リンク優先度** — 必須寄り: Steam / itch / Discord / **X** / 公式。あるとよい: YouTube / GitHub（X より下）
+- **実装計画** — `docs/official-release-wiring-plan.md`（Phase 0〜1 を Issue 粒度、RUN 順序付き）
+- **補正** — REL-0-00（本番モード判定）を最優先。REL-0-01 は導線のみ Cursor RUN可・条文はオーナー別タスク
+- **RUN 判断** — Phase 0〜1 コード [A] 条件付き / migration 015〜020 [C] / prod・main・PLAYER_VISIBLE [D]
+- **migration レビュー** — `docs/migration-015-020-pre-apply-review.md`
+
+---
+
 ## 2026-06-26 コミュニティ — 確認依頼を開発ログ引用に統合
 
 - `/studio/community` スレッド作成 — 引用タブを **引用しない / 開発ログ** の2つに戻し、**確認依頼** タブを廃止

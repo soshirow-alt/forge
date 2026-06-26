@@ -87,3 +87,38 @@ button:disabled,
     transform: scale(1) translateY(0);
   }
 }
+
+.legal-prose {
+  color: rgb(161 161 170);
+  font-size: 0.875rem;
+  line-height: 1.75;
+}
+
+.legal-prose > * + * {
+  margin-top: 1.25rem;
+}
+
+.legal-prose section > * + * {
+  margin-top: 0.75rem;
+}
+
+.legal-prose h2 {
+  color: rgb(244 244 245);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 2rem;
+}
+
+.legal-prose ol {
+  list-style: decimal;
+  padding-left: 1.5rem;
+}
+
+.legal-prose ol > li + li {
+  margin-top: 0.5rem;
+}
+
+.legal-prose a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

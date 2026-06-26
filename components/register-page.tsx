@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal-routes";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import {
@@ -158,8 +159,24 @@ export function RegisterPage({
               className="mt-1 size-4 rounded border-zinc-600 bg-zinc-900 text-violet-500 focus:ring-violet-500/40"
             />
             <span>
-              <span className="text-violet-400">利用規約</span> と{" "}
-              <span className="text-violet-400">プライバシーポリシー</span> に同意します
+              <Link
+                href={TERMS_PATH}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-violet-400 hover:text-violet-300"
+              >
+                利用規約
+              </Link>{" "}
+              と{" "}
+              <Link
+                href={PRIVACY_PATH}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-violet-400 hover:text-violet-300"
+              >
+                プライバシーポリシー
+              </Link>{" "}
+              に同意します
             </span>
           </label>
 

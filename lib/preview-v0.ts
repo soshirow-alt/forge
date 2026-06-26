@@ -1,41 +1,20 @@
 /**
- * Preview v0 helpers — preview/landing-01 branch only.
- * Prod merge 時は / リダイレクト等を見直すこと。
+ * Preview v0 helpers — preview/landing-01 branch.
+ * Core mode detection: `lib/production-mode.ts` (REL-0-00).
  */
 
-function hostLooksLikePreviewV0(host: string | undefined): boolean {
-  return Boolean(host?.includes("preview-landing-01"));
-}
+export {
+  getForgeDeploymentMode,
+  isPreviewV0Deployment,
+  isProductionReleaseMode,
+  shouldHideV0MockContent,
+  shouldRedirectRootToDiscoveryHome,
+  type ForgeDeploymentMode,
+} from "@/lib/production-mode";
 
-function gitRefIsPreviewV0(): boolean {
-  const refs = [
-    process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF,
-    process.env.VERCEL_GIT_COMMIT_REF,
-  ];
-  return refs.some((ref) => ref === "preview/landing-01");
-}
+import { shouldBypassStudioLoginGate } from "@/lib/production-mode";
 
-export function isPreviewV0Deployment(host?: string): boolean {
-  if (hostLooksLikePreviewV0(host)) {
-    return true;
-  }
-
-  if (typeof window !== "undefined" && hostLooksLikePreviewV0(window.location.hostname)) {
-    return true;
-  }
-
-  if (gitRefIsPreviewV0()) {
-    return true;
-  }
-
-  return process.env.NEXT_PUBLIC_FORGE_PREVIEW_V0 === "true";
-}
-
-export function shouldRedirectRootToDiscoveryHome(host?: string): boolean {
-  return isPreviewV0Deployment(host);
-}
-
-/** Preview v0 — Studio 入場でログイン・オンボーディングゲートを出さない（mock UI 確認用） */
+/** @deprecated Prefer `shouldBypassStudioLoginGate` — name kept for call sites. */
 export function shouldBypassStudioLoginOnPreview(host?: string): boolean {
-  return isPreviewV0Deployment(host);
+  return shouldBypassStudioLoginGate(host);
 }

@@ -13,6 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal-routes";
 
 export const authInputClassName =
   "mt-2 w-full rounded-xl border border-zinc-700/80 bg-zinc-900/80 px-4 py-3 text-zinc-100 placeholder:text-zinc-500 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/40";
@@ -63,12 +64,16 @@ export function AuthFooter() {
   return (
     <footer className="flex flex-col gap-3 border-t border-zinc-800/80 px-6 py-5 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between lg:px-10">
       <div className="flex flex-wrap gap-x-4 gap-y-1">
-        <span>利用規約</span>
-        <span>プライバシーポリシー</span>
+        <Link href={TERMS_PATH} className="transition-colors hover:text-zinc-300">
+          利用規約
+        </Link>
+        <Link href={PRIVACY_PATH} className="transition-colors hover:text-zinc-300">
+          プライバシーポリシー
+        </Link>
         <span>クッキーポリシー</span>
         <span>運営会社</span>
       </div>
-      <p>© 2025 Forge. All rights reserved.</p>
+      <p>© 2026 Forge. All rights reserved.</p>
     </footer>
   );
 }
