@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { PlayerShell } from "@/components/player-shell";
+import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import {
   influenceRankingMetricWeights,
@@ -14,6 +15,7 @@ import {
 } from "@/lib/influence-ranking-v0-mock-data";
 import { useInfluenceRankingMonth } from "@/hooks/use-influence-ranking-month";
 import { playerRankingProfileHref } from "@/lib/player-ranking-profile";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { RANKING_LIST_INITIAL } from "@/lib/ranking-v0-shared";
 import { ChevronLeft, ChevronRight, HelpCircle } from "lucide-react";
 
@@ -77,7 +79,41 @@ function PlayerCell({ entry }: { entry: InfluenceRankingEntry }) {
   );
 }
 
+function InfluenceRankingComingSoon() {
+  return (
+    <PlayerShell activeNav="ranking">
+      <nav className="text-sm text-zinc-500">
+        <Link href="/home" className="hover:text-violet-400">
+          ホーム
+        </Link>
+        <span className="mx-2">›</span>
+        <span className="text-zinc-400">月間影響度ランキング</span>
+      </nav>
+      <header className="mt-4">
+        <h1 className="text-2xl font-bold text-white sm:text-3xl">月間影響度ランキング</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">
+          今月、開発者の意思決定・作品改善・確認依頼に対して良い影響を与えたプレイヤーを称えます。
+        </p>
+      </header>
+      <div className="mt-8">
+        <FeatureComingSoonPanel
+          title="月間影響度ランキング"
+          description="ランキングの集計・表示は準備中です。公開をお待ちください。"
+        />
+      </div>
+    </PlayerShell>
+  );
+}
+
 function InfluenceRankingContent() {
+  if (shouldHideV0MockContent()) {
+    return <InfluenceRankingComingSoon />;
+  }
+
+  return <InfluenceRankingLive />;
+}
+
+function InfluenceRankingLive() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const monthId = parseRankingMonthId(searchParams.get("month"));

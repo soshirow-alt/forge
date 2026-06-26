@@ -1,6 +1,7 @@
 import type { HomeGameCard } from "@/lib/home-v0-mock-data";
 import { getGameCreatedTimestamp } from "@/lib/game-timestamp";
 import type { Game } from "@/lib/mock-games";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import { isGamePublic } from "@/lib/project-visibility";
 import type { SearchWorkResult } from "@/lib/search-v0-mock-data";
@@ -103,6 +104,10 @@ export function mergeHomeCards(
   primary: HomeGameCard[],
   secondary: HomeGameCard[],
 ): HomeGameCard[] {
+  if (shouldHideV0MockContent()) {
+    return [...primary];
+  }
+
   const seen = new Set(primary.map((game) => game.id));
   const merged = [...primary];
   for (const game of secondary) {
@@ -118,6 +123,10 @@ export function mergeSearchResults(
   primary: SearchWorkResult[],
   secondary: SearchWorkResult[],
 ): SearchWorkResult[] {
+  if (shouldHideV0MockContent()) {
+    return [...primary];
+  }
+
   const seen = new Set(primary.map((game) => game.id));
   const merged = [...primary];
   for (const game of secondary) {

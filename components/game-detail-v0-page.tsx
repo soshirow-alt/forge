@@ -23,6 +23,8 @@ import {
 import { GameDetailOverviewV0Tab } from "@/components/game-detail-overview-v0-tab";
 import { GameDevlogV0Tab } from "@/components/game-devlog-v0-tab";
 import { GameVoicesV0Tab } from "@/components/game-voices-v0-tab";
+import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
+import { GameNotFoundPanel } from "@/components/game-not-found-panel";
 import { GameThumbnail, PlayerShell } from "@/components/player-shell";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
@@ -43,6 +45,7 @@ import {
 import { firstVoiceQuestion } from "@/lib/feedback-v0-mock-data";
 import { applyProjectOverviewV0 } from "@/lib/project-overview-v0-store";
 import { projectStudioPath } from "@/lib/project-nurture-links";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { useProjectOverviewV0 } from "@/hooks/use-project-overview-v0";
 import {
   Bookmark,
@@ -102,6 +105,32 @@ function parseDetailTab(param: string | null): DetailTab {
 }
 
 function GameDetailV0PageContent({ id }: { id: string }) {
+  const { getSubmittedGameById, dataReady } = useGames();
+  const hideV0Mock = shouldHideV0MockContent();
+  const submittedGame = dataReady ? getSubmittedGameById(id) : undefined;
+
+  if (hideV0Mock) {
+    if (!dataReady) {
+      return (
+        <PlayerShell>
+          <p className="text-sm text-zinc-500">読み込み中...</p>
+        </PlayerShell>
+      );
+    }
+    const hasRealProject = Boolean(
+      isSupabaseProjectId(id) &&
+        submittedGame &&
+        isSupabaseProjectId(submittedGame.id),
+    );
+    if (!hasRealProject) {
+      return <GameNotFoundPanel />;
+    }
+  }
+
+  return <GameDetailV0PageBody id={id} />;
+}
+
+function GameDetailV0PageBody({ id }: { id: string }) {
   const searchParams = useSearchParams();
   const {
     getSubmittedGameById,
@@ -112,6 +141,7 @@ function GameDetailV0PageContent({ id }: { id: string }) {
     getOwnedProjects,
   } = useGames();
   const submittedGame = dataReady ? getSubmittedGameById(id) : undefined;
+  const hideV0Mock = shouldHideV0MockContent();
   const isRealProject = Boolean(
     submittedGame && isSupabaseProjectId(submittedGame.id),
   );
@@ -504,14 +534,20 @@ function GameDetailV0PageContent({ id }: { id: string }) {
               onPlayLatest={handlePlay}
             />
           )}
-          {activeTab === "voices" && (
-            <GameVoicesV0Tab
-              gameId={resolveGameDetailId(id)}
-              currentVersion={game.currentVersion}
-              refreshKey={voicesRefreshKey}
-              onSendVoice={handleFeedback}
-            />
-          )}
+          {activeTab === "voices" &&
+            (hideV0Mock ? (
+              <FeatureComingSoonPanel
+                title="みんなのフィードバック"
+                description="他のプレイヤーのフィードバックを見る機能は準備中です。"
+              />
+            ) : (
+              <GameVoicesV0Tab
+                gameId={resolveGameDetailId(id)}
+                currentVersion={game.currentVersion}
+                refreshKey={voicesRefreshKey}
+                onSendVoice={handleFeedback}
+              />
+            ))}
         </div>
 
         {activeTab !== "voices" && (

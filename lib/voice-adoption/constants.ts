@@ -1,4 +1,6 @@
 /** Forge voice↔update adoption threshold — DB CHECK と一致 */
+import { shouldHideV0MockContent } from "@/lib/production-mode";
+
 export const ADOPTION_THRESHOLD = 0.82;
 
 /** indirect 採用 — 偽陽性回避のため direct より厳格 */
@@ -75,11 +77,15 @@ export function resolveServerMatcherMode(): "fixture" | "live" {
 
 /**
  * shadow A/B 中は false — DB INSERT は行うがプレイヤー UI には出さない。
- * matcher 本番 GO 後もオーナー方針（2026-06-16）で false 維持 — Phase2/3 表示 GO まで。
- * NEXT_PUBLIC_VOICE_ADOPTION_PLAYER_VISIBLE=false
+ * 本番モードでは明示的 true のみ表示。preview / local は false 明示時のみ非表示。
  */
 export function isVoiceAdoptionPlayerVisible(): boolean {
   const raw = process.env.NEXT_PUBLIC_VOICE_ADOPTION_PLAYER_VISIBLE?.trim().toLowerCase();
+
+  if (shouldHideV0MockContent()) {
+    return raw === "true" || raw === "1" || raw === "yes";
+  }
+
   if (raw === "false" || raw === "0" || raw === "no") {
     return false;
   }

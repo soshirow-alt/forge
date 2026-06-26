@@ -224,6 +224,14 @@ function HeroCarousel({ slides }: { slides: HomeGameCard[] }) {
   );
 }
 
+function DiscoverySectionEmpty({ message }: { message: string }) {
+  return (
+    <div className="mt-4 rounded-xl border border-dashed border-zinc-800 px-4 py-8 text-center text-sm text-zinc-500">
+      {message}
+    </div>
+  );
+}
+
 export function DiscoveryHomePage() {
   const { submittedGames, getSupportCount } = useGames();
 
@@ -275,44 +283,60 @@ export function DiscoveryHomePage() {
   return (
     <PlayerShell activeNav="home">
       <div className="space-y-10">
-        <HeroCarousel slides={heroItems} />
+        {heroItems.length > 0 ? (
+          <HeroCarousel slides={heroItems} />
+        ) : (
+          <DiscoverySectionEmpty message="まだ公開中の作品がありません" />
+        )}
 
         <section>
           <SectionHeader title="最近更新された作品" href="/search" />
-          <div className="mt-4 px-2">
-            <HorizontalCardPager
-              items={updatedItems}
-              getKey={(game) => game.id}
-              pageSize={4}
-              renderItem={(game) => <HorizontalGameCard game={game} compact />}
-            />
-          </div>
+          {updatedItems.length > 0 ? (
+            <div className="mt-4 px-2">
+              <HorizontalCardPager
+                items={updatedItems}
+                getKey={(game) => game.id}
+                pageSize={4}
+                renderItem={(game) => <HorizontalGameCard game={game} compact />}
+              />
+            </div>
+          ) : (
+            <DiscoverySectionEmpty message="更新された作品はまだありません" />
+          )}
         </section>
 
         <section>
           <SectionHeader title="今週人気の作品" href="/search" />
-          <div className="mt-4 px-2">
-            <HorizontalCardPager
-              items={popularItems.map((game, index) => ({ game, rank: index + 1 }))}
-              getKey={({ game }) => game.id}
-              pageSize={4}
-              renderItem={({ game, rank }) => (
-                <HorizontalGameCard game={game} rank={rank} compact />
-              )}
-            />
-          </div>
+          {popularItems.length > 0 ? (
+            <div className="mt-4 px-2">
+              <HorizontalCardPager
+                items={popularItems.map((game, index) => ({ game, rank: index + 1 }))}
+                getKey={({ game }) => game.id}
+                pageSize={4}
+                renderItem={({ game, rank }) => (
+                  <HorizontalGameCard game={game} rank={rank} compact />
+                )}
+              />
+            </div>
+          ) : (
+            <DiscoverySectionEmpty message="人気の作品はまだありません" />
+          )}
         </section>
 
         <section>
           <SectionHeader title="新着作品" href="/search" />
-          <div className="mt-4 px-2">
-            <HorizontalCardPager
-              items={newItems}
-              getKey={(game) => game.id}
-              pageSize={4}
-              renderItem={(game) => <HorizontalGameCard game={game} compact />}
-            />
-          </div>
+          {newItems.length > 0 ? (
+            <div className="mt-4 px-2">
+              <HorizontalCardPager
+                items={newItems}
+                getKey={(game) => game.id}
+                pageSize={4}
+                renderItem={(game) => <HorizontalGameCard game={game} compact />}
+              />
+            </div>
+          ) : (
+            <DiscoverySectionEmpty message="新着作品はまだありません" />
+          )}
         </section>
       </div>
     </PlayerShell>

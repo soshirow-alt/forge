@@ -120,6 +120,10 @@ function WorksSearchContent() {
     () => paginateSearchResults(sorted, pageFromUrl, PAGE_SIZE),
     [sorted, pageFromUrl],
   );
+  const emptyResultsMessage =
+    catalog.length === 0
+      ? "まだ公開中の作品がありません"
+      : "条件に合う作品がありません。絞り込みを変更してください。";
 
   const buildSearchUrl = useCallback(
     (overrides: { page?: number; sort?: SearchSortId; view?: SearchViewMode }) => {
@@ -370,7 +374,7 @@ function WorksSearchContent() {
             ))}
             {pagination.items.length === 0 && (
               <li className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center text-sm text-zinc-500">
-                条件に合う作品がありません。絞り込みを変更してください。
+                {emptyResultsMessage}
               </li>
             )}
           </ul>

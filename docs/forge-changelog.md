@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-06-27 REL-0-02〜0-07 — 本番モードで mock を隠す（Phase 0 完了）
+
+- **発見** — 本番モードで `/home`・`/search` の mock 作品を混ぜない。実作品 0 件は空状態メッセージ
+- **作品詳細** — 本番モードで非 UUID / 未登録 ID は「作品が見つかりません」。みんなの FB タブは「追って機能追加予定」
+- **月間影響度ランキング** — 本番モードでナビ項目は残し中身のみ Coming Soon
+- **採用 UI** — 本番モードでは `NEXT_PUBLIC_VOICE_ADOPTION_PLAYER_VISIBLE=true` 明示時のみ表示
+- 検証: `NEXT_PUBLIC_FORGE_PRODUCTION_MODE=true` で本番挙動をローカル再現
+
+---
+
 ## 2026-06-27 REL-0-00 — 本番モード判定ヘルパー
 
 - `lib/production-mode.ts` — `preview` / `local` / `production` の3態。`isProductionReleaseMode()` / `shouldHideV0MockContent()` を正本に
