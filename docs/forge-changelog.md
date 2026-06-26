@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-06-26 Preview — Studio 入場のログイン省略
+
+- Preview デプロイ（`preview/landing-01`）では Player ヘッダーの **Studio** ボタン・`/studio` 直アクセスでログインを要求しない（mock UI 確認用）
+- Studio ホーム「あなたの作品」も Preview では未ログイン時にログイン CTA を出さず、空状態を表示
+
+---
+
 ## 2026-06-26 コミュニティ画面クラッシュ修正
 
 - `/studio/community`・`/mypage/community` — オンボーディング後に localStorage のコミュニティをレンダー中に直接読んでいたため SSR と不一致 → 画面クラッシュ。`useDeveloperCommunitiesV0` + `hydrated` 後のみ自分のコミュニティを反映するよう修正

@@ -12,6 +12,7 @@ import {
 } from "@/lib/project-growth-state";
 import { resolveVoiceSignalForGame } from "@/lib/project-voice-nurture";
 import { projectStudioPath } from "@/lib/project-nurture-links";
+import { shouldBypassStudioLoginOnPreview } from "@/lib/preview-v0";
 
 type StudioOwnedProjectsSectionProps = {
   /** 一覧ページでは検索 UI を出さない */
@@ -62,7 +63,7 @@ export function StudioOwnedProjectsSection({
     return null;
   }
 
-  if (!user) {
+  if (!user && !shouldBypassStudioLoginOnPreview()) {
     return (
       <section
         className={`rounded-2xl border p-5 sm:p-6 ${

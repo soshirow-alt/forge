@@ -22,6 +22,7 @@ import {
   communityIdFromUser,
   openDeveloperCommunity,
 } from "@/lib/developer-community-v0-store";
+import { shouldBypassStudioLoginOnPreview } from "@/lib/preview-v0";
 
 type StudioEntryGateContextValue = {
   attemptStudioEntry: (href?: string) => void;
@@ -80,6 +81,10 @@ export function StudioEntryGateProvider({ children }: { children: ReactNode }) {
         return;
       }
       if (!user) {
+        if (shouldBypassStudioLoginOnPreview()) {
+          router.push(href);
+          return;
+        }
         router.push("/login?return=/studio");
         return;
       }

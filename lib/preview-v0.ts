@@ -27,3 +27,8 @@ export function isPreviewV0Deployment(host?: string): boolean {
 export function shouldRedirectRootToDiscoveryHome(host?: string): boolean {
   return isPreviewV0Deployment(host);
 }
+
+/** Preview v0 — Studio 入場・閲覧はログイン不要（mock UI 確認用） */
+export function shouldBypassStudioLoginOnPreview(host?: string): boolean {
+  return isPreviewV0Deployment(host);
+}
