@@ -66,11 +66,19 @@ export function getOpenedDeveloperCommunities(): DeveloperCommunityProfile[] {
 
 export function getOwnCommunityForUser(
   userId: string,
-  displayName: string,
-  handle?: string,
+  slugSource?: string,
 ): DeveloperCommunityProfile | null {
-  const id = communityIdFromUser(userId, handle);
+  const id = communityIdFromUser(userId, slugSource);
   return readOpened().find((item) => item.id === id) ?? null;
+}
+
+export function findOwnCommunityInList(
+  userId: string,
+  slugSource: string | undefined,
+  opened: DeveloperCommunityProfile[],
+): DeveloperCommunityProfile | null {
+  const id = communityIdFromUser(userId, slugSource);
+  return opened.find((item) => item.id === id) ?? null;
 }
 
 export function hasDeveloperOpenCommunity(developerId: string): boolean {

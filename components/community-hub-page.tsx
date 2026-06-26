@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useCommunityJoinV0 } from "@/hooks/use-community-join-v0";
 import { useDeveloperCommunitiesV0 } from "@/hooks/use-developer-communities-v0";
-import { getOwnCommunityForUser } from "@/lib/developer-community-v0-store";
+import { findOwnCommunityInList } from "@/lib/developer-community-v0-store";
 import {
   developerDevlogQuoteOptions,
   playerCommunityFeedMock,
@@ -530,15 +530,16 @@ function CommunityTabs({
 function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
-  useDeveloperCommunitiesV0();
+  const { user, hydrated } = useAuth();
+  const { opened } = useDeveloperCommunitiesV0();
   const isDeveloper = variant === "developer";
   const { pendingFor, membersFor, approveJoinRequest, rejectJoinRequest, getStatus } =
     useCommunityJoinV0();
 
+  // localStorage はクライアント確定後のみ参照（SSR との不一致でクラッシュするのを防ぐ）
   const ownCommunity =
-    isDeveloper && user
-      ? getOwnCommunityForUser(user.id, user.name)
+    isDeveloper && hydrated && user
+      ? findOwnCommunityInList(user.id, user.name, opened)
       : null;
   const developerCommunityId = ownCommunity?.id ?? studioOwnCommunityId;
   const developerCommunityProfile = ownCommunity ?? studioCommunityProfile;
