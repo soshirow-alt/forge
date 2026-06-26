@@ -1,9 +1,9 @@
 "use client";
 
 import { formatChangeCheckConfirmedBody } from "@/lib/change-check-display";
-import type { ChangeCheckState } from "@/lib/change-check-types";
+import { CHANGE_CHECK_SECTION_ID, type ChangeCheckState } from "@/lib/change-check-types";
 
-export const CHANGE_CHECK_SECTION_ID = "change-check-card";
+export { CHANGE_CHECK_SECTION_ID };
 
 type GameChangeCheckCardProps = {
   state: ChangeCheckState;

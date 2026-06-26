@@ -12,6 +12,12 @@ export const VOICE_ADOPTIONS_SECTION_ID = "voice-adoptions";
 
 export const ADOPTION_VERIFY_SECTION_ID = "adoption-verify";
 
+export { CHANGE_CHECK_SECTION_ID } from "@/lib/change-check-types";
+
+export function gameChangeCheckHref(projectId: string): string {
+  return `/games/${projectId}#change-check-card`;
+}
+
 export function adoptionVerifyHref(projectId: string, adoptionId: string): string {
   return `/games/${projectId}?adoption=${encodeURIComponent(adoptionId)}#${ADOPTION_VERIFY_SECTION_ID}`;
 }

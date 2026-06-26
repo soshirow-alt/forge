@@ -107,3 +107,30 @@ export async function fetchConfirmationRequestByDevlogId(
 
   return rowToRecord(data as ConfirmationRequestRow);
 }
+
+export async function fetchConfirmationRequestsByDevlogIds(
+  supabase: SupabaseClient,
+  devlogIds: string[],
+): Promise<Map<string, ConfirmationRequestRecord>> {
+  if (devlogIds.length === 0) {
+    return new Map();
+  }
+
+  const { data, error } = await supabase
+    .from("confirmation_requests")
+    .select("*")
+    .in("devlog_id", devlogIds);
+
+  if (error) {
+    if (isConfirmationRequestsTableMissingError(error)) {
+      return new Map();
+    }
+    throw error;
+  }
+
+  const map = new Map<string, ConfirmationRequestRecord>();
+  for (const row of (data ?? []) as ConfirmationRequestRow[]) {
+    map.set(row.devlog_id, rowToRecord(row));
+  }
+  return map;
+}

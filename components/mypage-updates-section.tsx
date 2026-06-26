@@ -1,181 +1,123 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useGames } from "@/components/games-provider";
 import { ForgeGameCard } from "@/components/forge-game-card";
-import { sortDevlogsNewestFirst, type DevlogEntry } from "@/lib/devlogs";
-import { formatNotificationDate, type Notification } from "@/lib/notifications";
+import { getOptionalSupabaseClient } from "@/lib/supabase/client";
+import { fetchConfirmationRequestsByDevlogIds } from "@/lib/supabase/confirmation-requests-db";
 import {
-  buildPlayerUpdateBadgeLabel,
-  buildPlayerUpdateHeadline,
-  isVersionPublishDevlog,
-} from "@/lib/player-update-display";
-import {
-  gameHistoryHref,
-  gamePlayHref,
-  gameVersionBannerHref,
-} from "@/lib/project-nurture-links";
+  buildPlayerUpdates,
+  formatNotificationDate,
+  type PlayerUpdateItem,
+} from "@/lib/mypage-updates-builder";
+import { sortDevlogsNewestFirst } from "@/lib/devlogs";
 import type { Game } from "@/lib/mock-games";
 
-type WatchedUpdateItem = {
-  id: string;
-  game: Game;
-  kind: "devlog" | "version_published";
-  isVersionPublish: boolean;
-  badgeLabel: string;
-  headline: string;
-  date: string;
-  detailsHref: string;
-  replayHref: string;
-};
-
-function resolvePlayerUpdateContext(
-  kind: WatchedUpdateItem["kind"],
-  notification: Notification | undefined,
-  latestDevlog: DevlogEntry | undefined,
-): { isVersionPublish: boolean; publishedVersion?: string | null } {
-  if (kind === "version_published") {
-    return {
-      isVersionPublish: true,
-      publishedVersion:
-        notification?.publishedVersion ?? latestDevlog?.publishedVersion,
-    };
+function badgeClassName(update: PlayerUpdateItem): string {
+  if (update.hasConfirmationRequest) {
+    return "rounded-full bg-orange-500/10 px-2.5 py-0.5 text-[11px] font-medium text-orange-300";
   }
 
-  if (isVersionPublishDevlog(latestDevlog)) {
-    return {
-      isVersionPublish: true,
-      publishedVersion: latestDevlog?.publishedVersion,
-    };
-  }
-
-  return { isVersionPublish: false, publishedVersion: latestDevlog?.publishedVersion };
+  return update.isVersionPublish
+    ? "rounded-full bg-orange-500/10 px-2.5 py-0.5 text-[11px] font-medium text-orange-400"
+    : "rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-400";
 }
-
-function buildWatchedUpdates(
-  watchedGames: Game[],
-  notifications: Notification[],
-  getDevlogsByProject: (projectId: string) => DevlogEntry[],
-): WatchedUpdateItem[] {
-  const watchedIds = new Set(watchedGames.map((game) => game.id));
-  const items = new Map<string, WatchedUpdateItem>();
-
-  for (const notification of notifications) {
-    if (!watchedIds.has(notification.projectId)) {
-      continue;
-    }
-
-    if (
-      notification.type !== "devlog" &&
-      notification.type !== "version_published"
-    ) {
-      continue;
-    }
-
-    const game = watchedGames.find((entry) => entry.id === notification.projectId);
-    if (!game) {
-      continue;
-    }
-
-    const latestDevlog = sortDevlogsNewestFirst(
-      getDevlogsByProject(notification.projectId),
-    )[0];
-
-    const kind =
-      notification.type === "version_published" ? "version_published" : "devlog";
-
-    const updateContext = resolvePlayerUpdateContext(
-      kind,
-      notification,
-      latestDevlog,
-    );
-
-    items.set(notification.id, {
-      id: notification.id,
-      game,
-      kind,
-      isVersionPublish: updateContext.isVersionPublish,
-      badgeLabel: buildPlayerUpdateBadgeLabel(updateContext),
-      headline: buildPlayerUpdateHeadline(updateContext),
-      date: notification.date,
-      detailsHref:
-        updateContext.isVersionPublish
-          ? gameVersionBannerHref(notification.projectId)
-          : gameHistoryHref(notification.projectId),
-      replayHref:
-        updateContext.isVersionPublish
-          ? gameVersionBannerHref(notification.projectId)
-          : gamePlayHref(notification.projectId),
-    });
-  }
-
-  for (const game of watchedGames) {
-    const latestDevlog = sortDevlogsNewestFirst(
-      getDevlogsByProject(game.id),
-    )[0];
-
-    if (!latestDevlog) {
-      continue;
-    }
-
-    const fallbackId = `devlog-${game.id}-${latestDevlog.id}`;
-    if (items.has(fallbackId)) {
-      continue;
-    }
-
-    const updateContext = resolvePlayerUpdateContext("devlog", undefined, latestDevlog);
-    const headline = buildPlayerUpdateHeadline(updateContext);
-
-    const duplicateFromNotification = [...items.values()].some(
-      (item) => item.game.id === game.id && item.headline === headline,
-    );
-
-    if (duplicateFromNotification) {
-      continue;
-    }
-
-    items.set(fallbackId, {
-      id: fallbackId,
-      game,
-      kind: "devlog",
-      isVersionPublish: updateContext.isVersionPublish,
-      badgeLabel: buildPlayerUpdateBadgeLabel(updateContext),
-      headline,
-      date: latestDevlog.date,
-      detailsHref: gameHistoryHref(game.id),
-      replayHref: gamePlayHref(game.id),
-    });
-  }
-
-  return [...items.values()].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-  );
-}
-
 
 export function MyPageUpdatesSection({
   watchedGames,
+  playedGames = [],
   previewLimit,
 }: {
   watchedGames: Game[];
+  playedGames?: Game[];
   previewLimit?: number;
 }) {
   const { getNotifications, getDevlogsByProject } = useGames();
+  const [confirmationsLoaded, setConfirmationsLoaded] = useState(false);
+  const [confirmationsByDevlogId, setConfirmationsByDevlogId] = useState(
+    () => new Map(),
+  );
+
+  const devlogIds = useMemo(() => {
+    const ids = new Set<string>();
+    const games = [...watchedGames, ...playedGames];
+    for (const game of games) {
+      const latest = sortDevlogsNewestFirst(getDevlogsByProject(game.id))[0];
+      if (latest?.id) {
+        ids.add(latest.id);
+      }
+    }
+    for (const notification of getNotifications()) {
+      if (notification.type !== "devlog" && notification.type !== "version_published") {
+        continue;
+      }
+      const latest = sortDevlogsNewestFirst(
+        getDevlogsByProject(notification.projectId),
+      )[0];
+      if (latest?.id) {
+        ids.add(latest.id);
+      }
+    }
+    return [...ids];
+  }, [watchedGames, playedGames, getDevlogsByProject, getNotifications]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setConfirmationsLoaded(false);
+
+    const supabase = getOptionalSupabaseClient();
+    if (!supabase || devlogIds.length === 0) {
+      setConfirmationsByDevlogId(new Map());
+      setConfirmationsLoaded(true);
+      return;
+    }
+
+    void fetchConfirmationRequestsByDevlogIds(supabase, devlogIds).then((records) => {
+      if (cancelled) {
+        return;
+      }
+
+      const map = new Map();
+      for (const [devlogId, record] of records.entries()) {
+        map.set(devlogId, {
+          changesSummary: record.changesSummary,
+          askSummary: record.askSummary,
+          estimatedDuration: record.estimatedDuration,
+        });
+      }
+      setConfirmationsByDevlogId(map);
+      setConfirmationsLoaded(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [devlogIds]);
 
   const updates = useMemo(
     () =>
-      buildWatchedUpdates(
+      buildPlayerUpdates({
         watchedGames,
-        getNotifications(),
+        playedGames,
+        notifications: getNotifications(),
         getDevlogsByProject,
-      ),
-    [watchedGames, getNotifications, getDevlogsByProject],
+        confirmationsByDevlogId,
+      }),
+    [
+      watchedGames,
+      playedGames,
+      getNotifications,
+      getDevlogsByProject,
+      confirmationsByDevlogId,
+    ],
   );
 
   const displayUpdates = previewLimit
     ? updates.slice(0, previewLimit)
     : updates.slice(0, 8);
+
+  const hasSourceGames = watchedGames.length > 0 || playedGames.length > 0;
 
   return (
     <section id="updates" className="scroll-mt-24">
@@ -202,17 +144,19 @@ export function MyPageUpdatesSection({
               : "mt-1 text-sm text-zinc-500"
           }
         >
-          前回遊んだあと、あなたに起きた変化を確認できます。
+          プレイした作品の更新と、確認依頼があればここに表示されます。
         </p>
       </div>
 
-      {watchedGames.length === 0 ? (
+      {!confirmationsLoaded ? (
+        <p className="mt-5 text-sm text-zinc-600">更新を読み込み中...</p>
+      ) : !hasSourceGames ? (
         <div className="mt-5 rounded-xl border border-dashed border-zinc-800 bg-zinc-900/40 px-5 py-10 text-center">
           <p className="text-sm text-zinc-500">
-            追跡中の作品がないため、更新は表示されません。
+            プレイまたは追跡中の作品がないため、更新は表示されません。
           </p>
           <p className="mt-2 text-xs text-zinc-600">
-            気になる作品の詳細から「更新を追う」を押すと、ここに表示されます。
+            作品をプレイするか、詳細から「更新を追う」を押すとここに表示されます。
           </p>
         </div>
       ) : updates.length === 0 ? (
@@ -233,19 +177,8 @@ export function MyPageUpdatesSection({
             <li key={update.id}>
               <article className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className={
-                      update.isVersionPublish
-                        ? "rounded-full bg-orange-500/10 px-2.5 py-0.5 text-[11px] font-medium text-orange-400"
-                        : "rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-400"
-                    }
-                  >
-                    {update.badgeLabel}
-                  </span>
-                  <time
-                    dateTime={update.date}
-                    className="text-xs text-zinc-600"
-                  >
+                  <span className={badgeClassName(update)}>{update.badgeLabel}</span>
+                  <time dateTime={update.date} className="text-xs text-zinc-600">
                     {formatNotificationDate(update.date)}
                   </time>
                 </div>
@@ -256,13 +189,25 @@ export function MyPageUpdatesSection({
                   <ForgeGameCard
                     game={update.game}
                     variant="row"
-                    badges={[{ id: "watching", emoji: "🔄", label: "更新を追う" }]}
+                    badges={[
+                      {
+                        id: update.hasConfirmationRequest ? "confirmation" : "update",
+                        emoji: update.hasConfirmationRequest ? "📌" : "🔄",
+                        label: update.hasConfirmationRequest ? "確認依頼" : "更新",
+                      },
+                    ]}
                     primaryAction={{
-                      label: "もう一度プレイする",
+                      label: update.hasConfirmationRequest
+                        ? "変化を確認する"
+                        : "もう一度プレイする",
                       href: update.replayHref,
                     }}
                     detailHref={update.detailsHref}
-                    detailLabel="更新内容を見る →"
+                    detailLabel={
+                      update.hasConfirmationRequest
+                        ? "確認ポイントを見る →"
+                        : "更新内容を見る →"
+                    }
                     className="border-zinc-800/60"
                   />
                 </div>
@@ -272,7 +217,7 @@ export function MyPageUpdatesSection({
         </ul>
       )}
 
-      {updates.length > 0 && (
+      {confirmationsLoaded && updates.length > 0 && (
         <p className={previewLimit ? "mt-3 text-xs text-zinc-600" : "mt-4 text-xs text-zinc-600"}>
           {previewLimit && updates.length > (previewLimit ?? 0) && (
             <>

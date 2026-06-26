@@ -15,3 +15,5 @@ export type ChangeCheckGeneric = {
 };
 
 export type ChangeCheckState = ChangeCheckWithConfirmation | ChangeCheckGeneric;
+
+export const CHANGE_CHECK_SECTION_ID = "change-check-card";

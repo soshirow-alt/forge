@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { DeveloperHelpfulMarkButton } from "@/components/developer-helpful-mark-button";
 import { FeedbackStructuredCard } from "@/components/feedback-structured-card";
 import { formatFeedbackDate } from "@/lib/feedback-display";
+import type { HelpfulMarkSourceType } from "@/lib/developer-helpful-mark";
 import { buildDeepFeedbackSummary } from "@/lib/feedback-voice-summary";
 import { filterDeepFeedbackForVersion } from "@/lib/project-growth-state";
 import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
@@ -11,12 +13,40 @@ type NurtureDeepFeedbackSectionProps = {
   feedbackEntries: ProjectFeedbackEntry[];
   playableVersion: string;
   compact?: boolean;
+  helpfulMarks?: Set<string>;
+  onToggleHelpful?: (sourceType: HelpfulMarkSourceType, sourceId: string, marked: boolean) => void;
 };
+
+function DeepFeedbackRow({
+  item,
+  marked,
+  onToggleHelpful,
+}: {
+  item: ProjectFeedbackEntry["item"];
+  marked: boolean;
+  onToggleHelpful?: (sourceType: HelpfulMarkSourceType, sourceId: string, marked: boolean) => void;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <div className="min-w-0 flex-1">
+        <FeedbackStructuredCard item={item} showDate={false} />
+      </div>
+      {onToggleHelpful && (
+        <DeveloperHelpfulMarkButton
+          marked={marked}
+          onToggle={() => onToggleHelpful("project_feedback", item.id, !marked)}
+        />
+      )}
+    </div>
+  );
+}
 
 export function NurtureDeepFeedbackSection({
   feedbackEntries,
   playableVersion,
   compact = false,
+  helpfulMarks,
+  onToggleHelpful,
 }: NurtureDeepFeedbackSectionProps) {
   const [showPastFeedback, setShowPastFeedback] = useState(false);
   const versionFeedback = useMemo(
@@ -34,6 +64,7 @@ export function NurtureDeepFeedbackSection({
   }
 
   const pastFeedback = versionFeedback.slice(1);
+  const isMarked = (id: string) => helpfulMarks?.has(`project_feedback:${id}`) ?? false;
 
   return (
     <section
@@ -59,9 +90,10 @@ export function NurtureDeepFeedbackSection({
             最新 · {formatFeedbackDate(latestFeedback.item.createdAt)}
           </p>
           <div className="mt-2">
-            <FeedbackStructuredCard
+            <DeepFeedbackRow
               item={latestFeedback.item}
-              showDate={false}
+              marked={isMarked(latestFeedback.item.id)}
+              onToggleHelpful={onToggleHelpful}
             />
           </div>
           {pastFeedback.length > 0 && (
@@ -85,7 +117,11 @@ export function NurtureDeepFeedbackSection({
                         {formatFeedbackDate(item.createdAt)}
                       </p>
                       <div className="mt-2">
-                        <FeedbackStructuredCard item={item} showDate={false} />
+                        <DeepFeedbackRow
+                          item={item}
+                          marked={isMarked(item.id)}
+                          onToggleHelpful={onToggleHelpful}
+                        />
                       </div>
                     </div>
                   ))}

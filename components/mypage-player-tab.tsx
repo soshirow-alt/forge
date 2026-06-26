@@ -80,7 +80,11 @@ export function MyPagePlayerTab() {
         <div className="grid gap-5 lg:grid-cols-2">
           {watchedGames.length > 0 ? (
             <div className="lg:col-span-2">
-              <MyPageUpdatesSection watchedGames={watchedGames} previewLimit={2} />
+              <MyPageUpdatesSection
+                watchedGames={watchedGames}
+                playedGames={playedGames}
+                previewLimit={2}
+              />
             </div>
           ) : null}
 

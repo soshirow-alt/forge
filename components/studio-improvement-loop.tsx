@@ -326,7 +326,13 @@ function StudioPlayerFeedbackPanel({
   quickFbCount: number;
   detailPanelId: string;
 }) {
-  const { getOwnerVoiceAggregates, getOwnerVoiceResponseDetails } = useGames();
+  const {
+    getOwnerVoiceAggregates,
+    getOwnerVoiceResponseDetails,
+    loadHelpfulMarksForProject,
+    getHelpfulMarksForProject,
+    toggleFeedbackHelpful,
+  } = useGames();
   const [tab, setTab] = useState<FeedbackTabId>("quick");
   const [voiceAggregates, setVoiceAggregates] = useState(
     buildVoicePromptAggregates([]),
@@ -334,6 +340,13 @@ function StudioPlayerFeedbackPanel({
   const [voiceResponses, setVoiceResponses] = useState<OwnerVoiceResponseDetail[]>(
     [],
   );
+
+  useEffect(() => {
+    void loadHelpfulMarksForProject(gameId);
+  }, [gameId, loadHelpfulMarksForProject]);
+
+  const helpfulMarks = getHelpfulMarksForProject(gameId);
+  const helpfulCount = helpfulMarks.size;
 
   const detailedFb = useMemo(
     () => filterDeepFeedbackForVersion(feedbackEntries, playableVersion),
@@ -369,7 +382,14 @@ function StudioPlayerFeedbackPanel({
       aria-label="プレイヤーのFBを読む"
       className="scroll-mt-24 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5"
     >
-      <h2 className="text-sm font-semibold text-zinc-200">プレイヤーのFBを読む</h2>
+      <h2 className="text-sm font-semibold text-zinc-200">
+        プレイヤーのFBを読む
+        {helpfulCount > 0 && (
+          <span className="ml-2 text-xs font-normal text-violet-300">
+            役立った {helpfulCount}件
+          </span>
+        )}
+      </h2>
 
       <div className="mt-4 flex flex-wrap gap-2 border-b border-zinc-800 pb-3">
         {tabs.map((item) => (
@@ -394,7 +414,14 @@ function StudioPlayerFeedbackPanel({
           quickFbCount === 0 ? (
             <p className="text-sm text-zinc-500">このverのかんたんFBはまだありません。</p>
           ) : (
-            <OwnerVoiceResponseList responses={voiceResponses} showToggle={false} />
+            <OwnerVoiceResponseList
+              responses={voiceResponses}
+              showToggle={false}
+              helpfulMarks={helpfulMarks}
+              onToggleHelpful={(sourceType, sourceId, marked) =>
+                void toggleFeedbackHelpful(gameId, sourceType, sourceId, marked)
+              }
+            />
           )
         )}
         {tab === "detailed" && (
@@ -405,6 +432,10 @@ function StudioPlayerFeedbackPanel({
               feedbackEntries={feedbackEntries}
               playableVersion={playableVersion}
               compact
+              helpfulMarks={helpfulMarks}
+              onToggleHelpful={(sourceType, sourceId, marked) =>
+                void toggleFeedbackHelpful(gameId, sourceType, sourceId, marked)
+              }
             />
           )
         )}

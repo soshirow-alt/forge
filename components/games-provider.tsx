@@ -104,6 +104,15 @@ import {
 import { resolveChangeCheckState } from "@/lib/change-check-state";
 import type { ChangeCheckState } from "@/lib/change-check-types";
 import {
+  helpfulMarkKey,
+  type HelpfulMarkSourceType,
+} from "@/lib/developer-helpful-mark";
+import {
+  fetchHelpfulMarksForProject,
+  markFeedbackHelpful,
+  unmarkFeedbackHelpful,
+} from "@/lib/supabase/developer-feedback-helpful-db";
+import {
   fetchAllProjectReleaseEvents,
   insertProjectReleaseEvent,
 } from "@/lib/supabase/project-release-events-db";
@@ -170,6 +179,14 @@ type GamesContextValue = {
     currentVersion?: string;
   }>;
   getChangeCheckState: (gameId: string) => Promise<ChangeCheckState | null>;
+  loadHelpfulMarksForProject: (projectId: string) => Promise<void>;
+  getHelpfulMarksForProject: (projectId: string) => Set<string>;
+  toggleFeedbackHelpful: (
+    projectId: string,
+    sourceType: HelpfulMarkSourceType,
+    sourceId: string,
+    marked: boolean,
+  ) => Promise<void>;
   getProjectFeedback: (gameId: string) => Promise<GameFeedbackItem[]>;
   getOwnedProjectFeedback: (
     userId: string | undefined,
@@ -313,6 +330,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   const [followerCounts, setFollowerCounts] = useState<Counts>({});
   const [followedCreators, setFollowedCreators] = useState<string[]>([]);
   const [devlogs, setDevlogs] = useState<DevlogEntry[]>([]);
+  const [helpfulMarksByProject, setHelpfulMarksByProject] = useState<
+    Record<string, string[]>
+  >({});
   const [releaseEvents, setReleaseEvents] = useState<ProjectReleaseEvent[]>([]);
   const [localNotifications, setLocalNotifications] = useState<Notification[]>(
     [],
@@ -943,6 +963,77 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     [user, userEngagement.playedProjectIds, getSubmittedGameById, devlogs],
   );
 
+  const loadHelpfulMarksForProject = useCallback(
+    async (projectId: string) => {
+      if (!user || !isProjectOwner(projectId, user.id)) {
+        return;
+      }
+
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return;
+      }
+
+      const marks = await fetchHelpfulMarksForProject(supabase, user.id, projectId);
+      setHelpfulMarksByProject((prev) => ({
+        ...prev,
+        [projectId]: [...marks],
+      }));
+    },
+    [user, isProjectOwner],
+  );
+
+  const getHelpfulMarksForProject = useCallback(
+    (projectId: string) => new Set(helpfulMarksByProject[projectId] ?? []),
+    [helpfulMarksByProject],
+  );
+
+  const toggleFeedbackHelpful = useCallback(
+    async (
+      projectId: string,
+      sourceType: HelpfulMarkSourceType,
+      sourceId: string,
+      marked: boolean,
+    ) => {
+      if (!user || !isProjectOwner(projectId, user.id)) {
+        return;
+      }
+
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return;
+      }
+
+      const key = helpfulMarkKey(sourceType, sourceId);
+
+      if (marked) {
+        await markFeedbackHelpful(supabase, {
+          developerId: user.id,
+          projectId,
+          sourceType,
+          sourceId,
+        });
+        setHelpfulMarksByProject((prev) => {
+          const current = new Set(prev[projectId] ?? []);
+          current.add(key);
+          return { ...prev, [projectId]: [...current] };
+        });
+        return;
+      }
+
+      await unmarkFeedbackHelpful(supabase, {
+        developerId: user.id,
+        sourceType,
+        sourceId,
+      });
+      setHelpfulMarksByProject((prev) => ({
+        ...prev,
+        [projectId]: (prev[projectId] ?? []).filter((entry) => entry !== key),
+      }));
+    },
+    [user, isProjectOwner],
+  );
+
   const getProjectFeedback = useCallback(async (gameId: string) => {
     const supabase = getOptionalSupabaseClient();
     if (!supabase) {
@@ -1549,6 +1640,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       getMyFeedbackForProject,
       getNewPlayableVersionBannerState,
       getChangeCheckState,
+      loadHelpfulMarksForProject,
+      getHelpfulMarksForProject,
+      toggleFeedbackHelpful,
       getProjectFeedback,
       getOwnedProjectFeedback,
       getOwnedProjectVoiceSignals,
@@ -1615,6 +1709,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       getMyFeedbackForProject,
       getNewPlayableVersionBannerState,
       getChangeCheckState,
+      loadHelpfulMarksForProject,
+      getHelpfulMarksForProject,
+      toggleFeedbackHelpful,
       getProjectFeedback,
       getOwnedProjectFeedback,
       getOwnedProjectVoiceSignals,
