@@ -24,6 +24,7 @@ import { GameDetailOverviewV0Tab } from "@/components/game-detail-overview-v0-ta
 import { GameDevlogV0Tab } from "@/components/game-devlog-v0-tab";
 import { GameVoicesV0Tab } from "@/components/game-voices-v0-tab";
 import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
+import { GameExternalLinks } from "@/components/game-external-links";
 import { GameNotFoundPanel } from "@/components/game-not-found-panel";
 import { GameThumbnail, PlayerShell } from "@/components/player-shell";
 import { useGames } from "@/components/games-provider";
@@ -136,6 +137,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   const searchParams = useSearchParams();
   const {
     getSubmittedGameById,
+    getGameById,
     dataReady,
     recordPlay,
     hasPlayedGame,
@@ -148,6 +150,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   const isRealProject = Boolean(
     submittedGame && isSupabaseProjectId(submittedGame.id),
   );
+  const externalLinkGame = getGameById(resolvedId) ?? submittedGame;
   const game = useMemo(() => {
     if (submittedGame && isSupabaseProjectId(submittedGame.id)) {
       return gameToDetailV0(submittedGame);
@@ -421,6 +424,21 @@ function GameDetailV0PageBody({ id }: { id: string }) {
               </div>
             </div>
           </section>
+
+          {externalLinkGame ? (
+            <GameExternalLinks
+              gameId={resolvedId}
+              playUrl={externalLinkGame.playUrl}
+              steamUrl={externalLinkGame.steamUrl}
+              itchUrl={externalLinkGame.itchUrl}
+              discordUrl={externalLinkGame.discordUrl}
+              xUrl={externalLinkGame.xUrl}
+              officialUrl={externalLinkGame.officialUrl}
+              youtubeUrl={externalLinkGame.youtubeUrl}
+              githubUrl={externalLinkGame.githubUrl}
+              tags={externalLinkGame.tags}
+            />
+          ) : null}
 
           {isOwnerPreview ? (
             <div className="rounded-xl border border-orange-500/25 bg-orange-500/5 px-4 py-3 sm:px-5">

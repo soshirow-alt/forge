@@ -1,6 +1,6 @@
 # REL-2-01 — 外部リンク（X / YouTube / 表示順整理）
 
-**ステータス**: 設計 GO 待ち — **migration 021 Dashboard 適用・実装は別 GO**  
+**ステータス**: migration 021 適用済み — **アプリ実装済み（2026-06-27）**  
 **SQL 草案**: `supabase/migrations/021_project_external_links.sql`  
 **適用方法**: Supabase Dashboard SQL（`docs/supabase-dashboard-migration-guide.md`）  
 **適用後**: `docs/supabase-post-migration-checklist.md`
@@ -11,9 +11,9 @@
 
 | GO 種別 | 状態 | 意味 |
 |---------|------|------|
-| **設計 GO** | ❌ 未 | 本 doc + SQL 草案の方向で進めてよい |
-| **migration 021 適用 GO** | ❌ 未 | Dashboard で SQL を流す許可 |
-| **実装 GO** | ❌ 未 | 適用確認後にアプリ配線 |
+| **設計 GO** | ✅ 2026-06-27 |
+| **migration 021 適用 GO** | ✅ 2026-06-27 |
+| **実装 GO** | ✅ 2026-06-27 |
 
 本番 deploy / main merge / `PLAYER_VISIBLE=true` は引き続き禁止。
 

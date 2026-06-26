@@ -21,6 +21,8 @@ export type Game = {
   githubUrl?: string;
   discordUrl?: string;
   officialUrl?: string;
+  xUrl?: string;
+  youtubeUrl?: string;
   ownerId?: string;
   ownerName?: string;
   visibility?: "public" | "private";

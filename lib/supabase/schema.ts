@@ -21,6 +21,8 @@ export type ProjectRow = {
   github_url: string | null;
   discord_url: string | null;
   official_url: string | null;
+  x_url?: string | null;
+  youtube_url?: string | null;
   visibility: "public" | "private";
   playable_version?: string;
   release_status?: "in_development" | "released" | "release_reopened";

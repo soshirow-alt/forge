@@ -182,9 +182,11 @@ export function GameDetailSidebar({
           playUrl={game.playUrl}
           steamUrl={game.steamUrl}
           itchUrl={game.itchUrl}
-          githubUrl={game.githubUrl}
           discordUrl={game.discordUrl}
+          xUrl={game.xUrl}
           officialUrl={game.officialUrl}
+          youtubeUrl={game.youtubeUrl}
+          githubUrl={game.githubUrl}
           tags={game.tags}
           compact
         />

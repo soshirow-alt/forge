@@ -4,7 +4,7 @@ import { AuthGatedHint } from "@/components/auth-gated-hint";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { gameDetailReturnPath } from "@/lib/login-return-url";
-import { getExternalLinks } from "@/lib/game-links";
+import { getExternalLinks, type ProjectExternalLinksInput } from "@/lib/game-links";
 import type { Game } from "@/lib/mock-games";
 import { gameHasDownloadDistribution } from "@/lib/play-environment";
 import {
@@ -14,14 +14,9 @@ import {
 
 type GameExternalLinksProps = Pick<
   Game,
-  | "playUrl"
-  | "steamUrl"
-  | "itchUrl"
-  | "githubUrl"
-  | "discordUrl"
-  | "officialUrl"
-  | "tags"
-> & {
+  "playUrl" | "tags"
+> &
+  ProjectExternalLinksInput & {
   compact?: boolean;
   gameId: string;
 };
@@ -34,6 +29,8 @@ export function GameExternalLinks({
   githubUrl,
   discordUrl,
   officialUrl,
+  xUrl,
+  youtubeUrl,
   tags = [],
   compact = false,
 }: GameExternalLinksProps) {
@@ -45,6 +42,8 @@ export function GameExternalLinks({
     githubUrl,
     discordUrl,
     officialUrl,
+    xUrl,
+    youtubeUrl,
   });
 
   if (links.length === 0) {

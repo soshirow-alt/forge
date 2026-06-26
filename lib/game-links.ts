@@ -30,29 +30,100 @@ export type ExternalLink = {
   url: string;
 };
 
-export function getExternalLinks(game: {
+/** Display order: Steam → itch → Discord → X → 公式 → YouTube → GitHub */
+export type ProjectExternalLinksInput = {
   steamUrl?: string;
   itchUrl?: string;
-  githubUrl?: string;
   discordUrl?: string;
+  xUrl?: string;
   officialUrl?: string;
-}): ExternalLink[] {
+  youtubeUrl?: string;
+  githubUrl?: string;
+};
+
+export const PROJECT_EXTERNAL_LINK_SPECS = [
+  {
+    field: "steamUrl",
+    label: "Steam",
+    placeholder: "https://store.steampowered.com/...",
+  },
+  {
+    field: "itchUrl",
+    label: "itch.io",
+    placeholder: "https://example.itch.io/...",
+  },
+  {
+    field: "discordUrl",
+    label: "Discord",
+    placeholder: "https://discord.gg/...",
+  },
+  {
+    field: "xUrl",
+    label: "X",
+    placeholder: "https://x.com/...",
+  },
+  {
+    field: "officialUrl",
+    label: "公式サイト",
+    placeholder: "https://example.com",
+  },
+  {
+    field: "youtubeUrl",
+    label: "YouTube",
+    placeholder: "https://www.youtube.com/...",
+  },
+  {
+    field: "githubUrl",
+    label: "GitHub",
+    placeholder: "https://github.com/...",
+  },
+] as const satisfies ReadonlyArray<{
+  field: keyof ProjectExternalLinksInput;
+  label: string;
+  placeholder: string;
+}>;
+
+export type ExternalLinkFormKey =
+  | "steam"
+  | "itch"
+  | "discord"
+  | "x"
+  | "official"
+  | "youtube"
+  | "github";
+
+export const EXTERNAL_LINK_FORM_SPECS: {
+  key: ExternalLinkFormKey;
+  field: keyof ProjectExternalLinksInput;
+  label: string;
+  placeholder: string;
+}[] = [
+  { key: "steam", field: "steamUrl", label: "Steam", placeholder: "https://store.steampowered.com/..." },
+  { key: "itch", field: "itchUrl", label: "itch.io", placeholder: "https://example.itch.io/..." },
+  { key: "discord", field: "discordUrl", label: "Discord", placeholder: "https://discord.gg/..." },
+  { key: "x", field: "xUrl", label: "X", placeholder: "https://x.com/..." },
+  { key: "official", field: "officialUrl", label: "公式サイト", placeholder: "https://example.com" },
+  { key: "youtube", field: "youtubeUrl", label: "YouTube", placeholder: "https://www.youtube.com/..." },
+  { key: "github", field: "githubUrl", label: "GitHub", placeholder: "https://github.com/..." },
+];
+
+function trimUrl(url: string | undefined): string | undefined {
+  const trimmed = url?.trim();
+  return trimmed || undefined;
+}
+
+export function normalizeExternalUrlForDb(url: string | undefined): string | null {
+  return trimUrl(url) ?? null;
+}
+
+export function getExternalLinks(game: ProjectExternalLinksInput): ExternalLink[] {
   const links: ExternalLink[] = [];
 
-  if (game.steamUrl) {
-    links.push({ label: "Steam", url: game.steamUrl });
-  }
-  if (game.itchUrl) {
-    links.push({ label: "itch.io", url: game.itchUrl });
-  }
-  if (game.githubUrl) {
-    links.push({ label: "GitHub", url: game.githubUrl });
-  }
-  if (game.discordUrl) {
-    links.push({ label: "Discord", url: game.discordUrl });
-  }
-  if (game.officialUrl) {
-    links.push({ label: "公式サイト", url: game.officialUrl });
+  for (const spec of PROJECT_EXTERNAL_LINK_SPECS) {
+    const url = trimUrl(game[spec.field]);
+    if (url) {
+      links.push({ label: spec.label, url });
+    }
   }
 
   return links;

@@ -25,6 +25,7 @@ import { projectStudioPath } from "@/lib/project-nurture-links";
 import { normalizeOverviewIntroduction } from "@/lib/project-overview";
 import type { ProjectVisibility } from "@/lib/project-visibility";
 import { gameToDetailV0 } from "@/lib/submitted-game-v0-adapter";
+import { PROJECT_EXTERNAL_LINK_SPECS, type ProjectExternalLinksInput } from "@/lib/game-links";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import {
   createEmptyPromptDraft,
@@ -36,6 +37,18 @@ import {
 
 const inputClassName =
   "mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
+
+function emptyExternalUrls(): Record<keyof ProjectExternalLinksInput, string> {
+  return {
+    steamUrl: "",
+    itchUrl: "",
+    discordUrl: "",
+    xUrl: "",
+    officialUrl: "",
+    youtubeUrl: "",
+    githubUrl: "",
+  };
+}
 
 function readImageAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -60,11 +73,7 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
   const [lookingForTesters, setLookingForTesters] = useState(false);
   const [testerSlots, setTesterSlots] = useState(10);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [steamUrl, setSteamUrl] = useState("");
-  const [itchUrl, setItchUrl] = useState("");
-  const [githubUrl, setGithubUrl] = useState("");
-  const [discordUrl, setDiscordUrl] = useState("");
-  const [officialUrl, setOfficialUrl] = useState("");
+  const [externalUrls, setExternalUrls] = useState(emptyExternalUrls);
   const [visibility, setVisibility] = useState<ProjectVisibility>("public");
   const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>();
   const [thumbnailPreview, setThumbnailPreview] = useState<string | undefined>();
@@ -100,11 +109,15 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
     setTesterSlots(game.testerSlots ?? 10);
     setSelectedTags(getPublicGameTags(game.tags));
     setPlayEnvironment(parsePlayEnvironmentFromTags(game.tags ?? []));
-    setSteamUrl(game.steamUrl ?? "");
-    setItchUrl(game.itchUrl ?? "");
-    setGithubUrl(game.githubUrl ?? "");
-    setDiscordUrl(game.discordUrl ?? "");
-    setOfficialUrl(game.officialUrl ?? "");
+    setExternalUrls({
+      steamUrl: game.steamUrl ?? "",
+      itchUrl: game.itchUrl ?? "",
+      discordUrl: game.discordUrl ?? "",
+      xUrl: game.xUrl ?? "",
+      officialUrl: game.officialUrl ?? "",
+      youtubeUrl: game.youtubeUrl ?? "",
+      githubUrl: game.githubUrl ?? "",
+    });
     setVisibility(game.visibility ?? "public");
     setThumbnailUrl(game.thumbnailUrl);
     setThumbnailPreview(game.thumbnailUrl);
@@ -192,11 +205,13 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
         testerSlots: lookingForTesters ? testerSlots : undefined,
         tags: mergePlayEnvironmentIntoTags(selectedTags, playEnvironment),
         thumbnailUrl,
-        steamUrl: steamUrl || undefined,
-        itchUrl: itchUrl || undefined,
-        githubUrl: githubUrl || undefined,
-        discordUrl: discordUrl || undefined,
-        officialUrl: officialUrl || undefined,
+        steamUrl: externalUrls.steamUrl || undefined,
+        itchUrl: externalUrls.itchUrl || undefined,
+        discordUrl: externalUrls.discordUrl || undefined,
+        xUrl: externalUrls.xUrl || undefined,
+        officialUrl: externalUrls.officialUrl || undefined,
+        youtubeUrl: externalUrls.youtubeUrl || undefined,
+        githubUrl: externalUrls.githubUrl || undefined,
         visibility,
       });
 
@@ -358,71 +373,26 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
 
           <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
             <p className="text-sm font-medium text-zinc-400">外部リンク（任意）</p>
-            <div>
-              <label htmlFor="steamUrl" className="text-sm text-zinc-500">
-                Steam URL
-              </label>
-              <input
-                id="steamUrl"
-                type="url"
-                value={steamUrl}
-                onChange={(event) => setSteamUrl(event.target.value)}
-                className={inputClassName}
-                placeholder="https://store.steampowered.com/..."
-              />
-            </div>
-            <div>
-              <label htmlFor="itchUrl" className="text-sm text-zinc-500">
-                itch.io URL
-              </label>
-              <input
-                id="itchUrl"
-                type="url"
-                value={itchUrl}
-                onChange={(event) => setItchUrl(event.target.value)}
-                className={inputClassName}
-                placeholder="https://example.itch.io/..."
-              />
-            </div>
-            <div>
-              <label htmlFor="githubUrl" className="text-sm text-zinc-500">
-                GitHub URL
-              </label>
-              <input
-                id="githubUrl"
-                type="url"
-                value={githubUrl}
-                onChange={(event) => setGithubUrl(event.target.value)}
-                className={inputClassName}
-                placeholder="https://github.com/..."
-              />
-            </div>
-            <div>
-              <label htmlFor="discordUrl" className="text-sm text-zinc-500">
-                Discord URL
-              </label>
-              <input
-                id="discordUrl"
-                type="url"
-                value={discordUrl}
-                onChange={(event) => setDiscordUrl(event.target.value)}
-                className={inputClassName}
-                placeholder="https://discord.gg/..."
-              />
-            </div>
-            <div>
-              <label htmlFor="officialUrl" className="text-sm text-zinc-500">
-                公式サイトURL
-              </label>
-              <input
-                id="officialUrl"
-                type="url"
-                value={officialUrl}
-                onChange={(event) => setOfficialUrl(event.target.value)}
-                className={inputClassName}
-                placeholder="https://example.com"
-              />
-            </div>
+            {PROJECT_EXTERNAL_LINK_SPECS.map((spec) => (
+              <div key={spec.field}>
+                <label htmlFor={spec.field} className="text-sm text-zinc-500">
+                  {spec.label} URL
+                </label>
+                <input
+                  id={spec.field}
+                  type="url"
+                  value={externalUrls[spec.field]}
+                  onChange={(event) =>
+                    setExternalUrls((current) => ({
+                      ...current,
+                      [spec.field]: event.target.value,
+                    }))
+                  }
+                  className={inputClassName}
+                  placeholder={spec.placeholder}
+                />
+              </div>
+            ))}
           </div>
 
           <div>

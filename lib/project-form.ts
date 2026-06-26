@@ -16,6 +16,8 @@ export type SubmitFormData = {
   githubUrl?: string;
   discordUrl?: string;
   officialUrl?: string;
+  xUrl?: string;
+  youtubeUrl?: string;
   visibility?: "public" | "private";
 };
 
@@ -32,5 +34,7 @@ export type ProjectEditFormData = {
   githubUrl?: string;
   discordUrl?: string;
   officialUrl?: string;
+  xUrl?: string;
+  youtubeUrl?: string;
   visibility: "public" | "private";
 };

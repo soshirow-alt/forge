@@ -29,6 +29,7 @@ import {
 
 import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
 import { FORGE_FEATURE_TAG_OPTIONS } from "@/lib/forge-feature-tag-options";
+import { EXTERNAL_LINK_FORM_SPECS, type ExternalLinkFormKey } from "@/lib/game-links";
 
 const phaseOptions = DEVELOPMENT_PHASE_OPTIONS;
 
@@ -79,24 +80,6 @@ function getAccessUrlField(distribution: DistributionType) {
   }
 }
 
-type ExternalLinkKey = "steam" | "itch" | "discord" | "github" | "official";
-
-const externalLinkOptions: { key: ExternalLinkKey; label: string }[] = [
-  { key: "steam", label: "Steam" },
-  { key: "itch", label: "itch.io" },
-  { key: "discord", label: "Discord" },
-  { key: "github", label: "GitHub" },
-  { key: "official", label: "公式サイト" },
-];
-
-const externalLinkPlaceholders: Record<ExternalLinkKey, string> = {
-  steam: "https://store.steampowered.com/...",
-  itch: "https://example.itch.io/...",
-  discord: "https://discord.gg/...",
-  github: "https://github.com/...",
-  official: "https://example.com",
-};
-
 const inputClassName =
   "mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
 
@@ -140,13 +123,15 @@ export function SubmitPage() {
   ]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [enabledExternalLinks, setEnabledExternalLinks] = useState<
-    ExternalLinkKey[]
+    ExternalLinkFormKey[]
   >([]);
   const [steamUrl, setSteamUrl] = useState("");
   const [itchUrl, setItchUrl] = useState("");
-  const [githubUrl, setGithubUrl] = useState("");
   const [discordUrl, setDiscordUrl] = useState("");
+  const [xUrl, setXUrl] = useState("");
   const [officialUrl, setOfficialUrl] = useState("");
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [githubUrl, setGithubUrl] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>();
   const [thumbnailPreview, setThumbnailPreview] = useState<string | undefined>();
   const [fileInputKey, setFileInputKey] = useState(0);
@@ -203,7 +188,7 @@ export function SubmitPage() {
     );
   }
 
-  function toggleExternalLink(key: ExternalLinkKey) {
+  function toggleExternalLink(key: ExternalLinkFormKey) {
     setEnabledExternalLinks((prev) => {
       if (prev.includes(key)) {
         switch (key) {
@@ -216,11 +201,17 @@ export function SubmitPage() {
           case "discord":
             setDiscordUrl("");
             break;
-          case "github":
-            setGithubUrl("");
+          case "x":
+            setXUrl("");
             break;
           case "official":
             setOfficialUrl("");
+            break;
+          case "youtube":
+            setYoutubeUrl("");
+            break;
+          case "github":
+            setGithubUrl("");
             break;
         }
         return prev.filter((item) => item !== key);
@@ -229,7 +220,7 @@ export function SubmitPage() {
     });
   }
 
-  function getExternalLinkUrl(key: ExternalLinkKey): string {
+  function getExternalLinkUrl(key: ExternalLinkFormKey): string {
     switch (key) {
       case "steam":
         return steamUrl;
@@ -237,14 +228,18 @@ export function SubmitPage() {
         return itchUrl;
       case "discord":
         return discordUrl;
-      case "github":
-        return githubUrl;
+      case "x":
+        return xUrl;
       case "official":
         return officialUrl;
+      case "youtube":
+        return youtubeUrl;
+      case "github":
+        return githubUrl;
     }
   }
 
-  function setExternalLinkUrl(key: ExternalLinkKey, value: string) {
+  function setExternalLinkUrl(key: ExternalLinkFormKey, value: string) {
     switch (key) {
       case "steam":
         setSteamUrl(value);
@@ -255,11 +250,17 @@ export function SubmitPage() {
       case "discord":
         setDiscordUrl(value);
         break;
-      case "github":
-        setGithubUrl(value);
+      case "x":
+        setXUrl(value);
         break;
       case "official":
         setOfficialUrl(value);
+        break;
+      case "youtube":
+        setYoutubeUrl(value);
+        break;
+      case "github":
+        setGithubUrl(value);
         break;
     }
   }
@@ -322,9 +323,11 @@ export function SubmitPage() {
       estimatedPlayTime: estimatedPlayTime || undefined,
       steamUrl: steamUrl || undefined,
       itchUrl: itchUrl || undefined,
-      githubUrl: githubUrl || undefined,
       discordUrl: discordUrl || undefined,
+      xUrl: xUrl || undefined,
       officialUrl: officialUrl || undefined,
+      youtubeUrl: youtubeUrl || undefined,
+      githubUrl: githubUrl || undefined,
       visibility,
     };
 
@@ -806,7 +809,7 @@ export function SubmitPage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              {externalLinkOptions.map((option) => (
+              {EXTERNAL_LINK_FORM_SPECS.map((option) => (
                 <label
                   key={option.key}
                   className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
@@ -827,7 +830,7 @@ export function SubmitPage() {
             </div>
             {enabledExternalLinks.map((key) => {
               const label =
-                externalLinkOptions.find((option) => option.key === key)
+                EXTERNAL_LINK_FORM_SPECS.find((option) => option.key === key)
                   ?.label ?? key;
               return (
                 <div key={key}>
@@ -845,7 +848,10 @@ export function SubmitPage() {
                       setExternalLinkUrl(key, event.target.value)
                     }
                     className={inputClassName}
-                    placeholder={externalLinkPlaceholders[key]}
+                    placeholder={
+                      EXTERNAL_LINK_FORM_SPECS.find((option) => option.key === key)
+                        ?.placeholder
+                    }
                   />
                 </div>
               );

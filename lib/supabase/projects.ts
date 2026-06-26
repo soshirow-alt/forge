@@ -8,6 +8,7 @@ import {
 } from "@/lib/project-overview";
 import type { ProjectRow } from "@/lib/supabase/schema";
 import type { ProjectEditFormData, SubmitFormData } from "@/lib/project-form";
+import { normalizeExternalUrlForDb } from "@/lib/game-links";
 
 function formatDateOnly(iso: string) {
   return iso.split("T")[0];
@@ -37,6 +38,8 @@ export function projectRowToGame(row: ProjectRow): Game {
     githubUrl: row.github_url ?? undefined,
     discordUrl: row.discord_url ?? undefined,
     officialUrl: row.official_url ?? undefined,
+    xUrl: row.x_url ?? undefined,
+    youtubeUrl: row.youtube_url ?? undefined,
     ownerId: row.owner_id,
     ownerName: row.owner_name,
     visibility: row.visibility,
@@ -64,11 +67,13 @@ function submitFormToInsertRow(
     thumbnail_url: data.thumbnailUrl ?? null,
     tags: mergeTagsWithRecruitment(data.tags, data.lookingForTesters),
     play_url: data.playUrl,
-    steam_url: data.steamUrl ?? null,
-    itch_url: data.itchUrl ?? null,
-    github_url: data.githubUrl ?? null,
-    discord_url: data.discordUrl ?? null,
-    official_url: data.officialUrl ?? null,
+    steam_url: normalizeExternalUrlForDb(data.steamUrl),
+    itch_url: normalizeExternalUrlForDb(data.itchUrl),
+    github_url: normalizeExternalUrlForDb(data.githubUrl),
+    discord_url: normalizeExternalUrlForDb(data.discordUrl),
+    official_url: normalizeExternalUrlForDb(data.officialUrl),
+    x_url: normalizeExternalUrlForDb(data.xUrl),
+    youtube_url: normalizeExternalUrlForDb(data.youtubeUrl),
     visibility: data.visibility ?? ("public" as const),
     playable_version: DEFAULT_PLAYABLE_VERSION,
   };
@@ -143,11 +148,13 @@ export async function updateProjectFromSubmitForm(
       thumbnail_url: data.thumbnailUrl ?? null,
       tags: mergeTagsWithRecruitment(data.tags, data.lookingForTesters),
       play_url: data.playUrl,
-      steam_url: data.steamUrl ?? null,
-      itch_url: data.itchUrl ?? null,
-      github_url: data.githubUrl ?? null,
-      discord_url: data.discordUrl ?? null,
-      official_url: data.officialUrl ?? null,
+    steam_url: normalizeExternalUrlForDb(data.steamUrl),
+    itch_url: normalizeExternalUrlForDb(data.itchUrl),
+    github_url: normalizeExternalUrlForDb(data.githubUrl),
+    discord_url: normalizeExternalUrlForDb(data.discordUrl),
+    official_url: normalizeExternalUrlForDb(data.officialUrl),
+    x_url: normalizeExternalUrlForDb(data.xUrl),
+    youtube_url: normalizeExternalUrlForDb(data.youtubeUrl),
     })
     .eq("id", id)
     .select("*")
@@ -177,11 +184,13 @@ export async function updateProjectDetailsInDb(
       tester_slots: data.lookingForTesters ? (data.testerSlots ?? null) : null,
       thumbnail_url: data.thumbnailUrl ?? null,
       tags: mergeTagsWithRecruitment(data.tags, data.lookingForTesters),
-      steam_url: data.steamUrl ?? null,
-      itch_url: data.itchUrl ?? null,
-      github_url: data.githubUrl ?? null,
-      discord_url: data.discordUrl ?? null,
-      official_url: data.officialUrl ?? null,
+    steam_url: normalizeExternalUrlForDb(data.steamUrl),
+    itch_url: normalizeExternalUrlForDb(data.itchUrl),
+    github_url: normalizeExternalUrlForDb(data.githubUrl),
+    discord_url: normalizeExternalUrlForDb(data.discordUrl),
+    official_url: normalizeExternalUrlForDb(data.officialUrl),
+    x_url: normalizeExternalUrlForDb(data.xUrl),
+    youtube_url: normalizeExternalUrlForDb(data.youtubeUrl),
       visibility: data.visibility,
     })
     .eq("id", id)

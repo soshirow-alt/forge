@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-27 REL-2-01 — 外部リンク Supabase 配線
+
+- migration **021** 適用後 — `x_url` / `youtube_url` を DB 正本化
+- 表示順: Steam → itch → Discord → X → 公式 → YouTube → GitHub（`lib/game-links.ts` 単一正本）
+- submit / edit / `/games/[id]` v0 で保存・表示一貫。未設定は非表示
+- 作品 X と開発者 `x_account` はフォールバックしない
+
+---
+
 ## 2026-06-27 REL-2-01 — 外部リンク（設計草案）
 
 - migration **021** SQL 草案（`x_url`, `youtube_url`）
