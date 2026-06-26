@@ -215,3 +215,7 @@ export function gameDetailHrefFromTitle(title: string): string {
   const id = titleToDetailId[title] ?? "seikat-no-tabiji";
   return `/games/${encodeURIComponent(id)}`;
 }
+
+export function gameDetailIdFromTitle(title: string): string {
+  return titleToDetailId[title] ?? title;
+}

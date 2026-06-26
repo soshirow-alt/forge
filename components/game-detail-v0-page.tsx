@@ -31,7 +31,7 @@ import {
   parseChangeCheckPreviewOverride,
   resolveChangeCheckPreviewState,
 } from "@/lib/change-check-preview-mock";
-import { getGameDetailV0, resolveGameDetailId } from "@/lib/game-detail-v0-mock-data";
+import { getGameDetailV0, gameDetailIdFromTitle, resolveGameDetailId } from "@/lib/game-detail-v0-mock-data";
 import {
   gameToDetailV0,
   isSupabaseProjectId,
@@ -42,6 +42,7 @@ import {
 } from "@/lib/game-voices-v0-mock-data";
 import { firstVoiceQuestion } from "@/lib/feedback-v0-mock-data";
 import { applyProjectOverviewV0 } from "@/lib/project-overview-v0-store";
+import { projectStudioPath } from "@/lib/project-nurture-links";
 import { useProjectOverviewV0 } from "@/hooks/use-project-overview-v0";
 import {
   Bookmark,
@@ -102,7 +103,14 @@ function parseDetailTab(param: string | null): DetailTab {
 
 function GameDetailV0PageContent({ id }: { id: string }) {
   const searchParams = useSearchParams();
-  const { getSubmittedGameById, dataReady, recordPlay, hasPlayedGame } = useGames();
+  const {
+    getSubmittedGameById,
+    dataReady,
+    recordPlay,
+    hasPlayedGame,
+    isProjectOwner,
+    getOwnedProjects,
+  } = useGames();
   const submittedGame = dataReady ? getSubmittedGameById(id) : undefined;
   const isRealProject = Boolean(
     submittedGame && isSupabaseProjectId(submittedGame.id),
@@ -120,8 +128,34 @@ function GameDetailV0PageContent({ id }: { id: string }) {
     const base = game;
     return applyProjectOverviewV0(base, resolvedId);
   }, [game, resolvedId, overviewRevision]);
-  const { isLoggedIn, hydrated, requireAuth } = useRequireAuth();
+  const { isLoggedIn, hydrated, requireAuth, user } = useRequireAuth();
   const returnPath = gameDetailReturnPath(resolvedId);
+  const detailId = resolveGameDetailId(id);
+  const ownerProjectId = useMemo(() => {
+    if (!user?.id) {
+      return null;
+    }
+    if (isProjectOwner(resolvedId, user.id)) {
+      return resolvedId;
+    }
+    if (isProjectOwner(id, user.id)) {
+      return id;
+    }
+    const owned = getOwnedProjects(user.id);
+    const match = owned.find((project) => {
+      if (project.id === id || project.id === resolvedId) {
+        return true;
+      }
+      return gameDetailIdFromTitle(project.title) === detailId;
+    });
+    return match?.id ?? null;
+  }, [user?.id, isProjectOwner, getOwnedProjects, resolvedId, id, detailId]);
+  const isOwnerPreview = ownerProjectId !== null;
+  const ownerStudioHref = ownerProjectId
+    ? isSupabaseProjectId(ownerProjectId)
+      ? projectStudioPath(ownerProjectId)
+      : `/studio/projects/${encodeURIComponent(ownerProjectId)}`
+    : null;
   const [activeTab, setActiveTab] = useState<DetailTab>(() =>
     parseDetailTab(searchParams.get("tab")),
   );
@@ -330,6 +364,25 @@ function GameDetailV0PageContent({ id }: { id: string }) {
             </div>
           </section>
 
+          {isOwnerPreview ? (
+            <div className="rounded-xl border border-orange-500/25 bg-orange-500/5 px-4 py-3 sm:px-5">
+              <p className="text-sm font-medium text-orange-200">
+                プレイヤー向けページのプレビュー
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+                公開中の見え方を確認しています。フォローなどプレイヤー向け操作は別アカウントで試してください。
+              </p>
+              {ownerStudioHref ? (
+                <Link
+                  href={ownerStudioHref}
+                  className="mt-3 inline-flex rounded-xl border border-zinc-700 bg-zinc-950/60 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-orange-500/40 hover:text-white"
+                >
+                  作品を更新する
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
+
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
@@ -380,21 +433,23 @@ function GameDetailV0PageContent({ id }: { id: string }) {
               <Bookmark className="size-4" aria-hidden="true" />
               {saved ? "保存済み" : "あとで遊ぶ"}
             </button>
-            <button
-              type="button"
-              onClick={() => handleProtectedAction(() => setFollowing((value) => !value))}
-              className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
-                following
-                  ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
-                  : "border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-white"
-              }`}
-            >
-              <Heart className="size-4" aria-hidden="true" />
-              {following ? "開発者フォロー中" : "開発者をフォロー"}
-            </button>
+            {!isOwnerPreview ? (
+              <button
+                type="button"
+                onClick={() => handleProtectedAction(() => setFollowing((value) => !value))}
+                className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
+                  following
+                    ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
+                    : "border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-white"
+                }`}
+              >
+                <Heart className="size-4" aria-hidden="true" />
+                {following ? "開発者フォロー中" : "開発者をフォロー"}
+              </button>
+            ) : null}
           </div>
 
-          {isRealProject ? (
+          {isRealProject && !isOwnerPreview ? (
             <GameChangeCheckSection
               gameId={resolvedId}
               playableVersion={submittedGame?.playableVersion}
@@ -474,17 +529,19 @@ function GameDetailV0PageContent({ id }: { id: string }) {
               </div>
             </div>
             <p className="mt-3 text-xs leading-relaxed text-zinc-500">{game.developer.bio}</p>
-            <button
-              type="button"
-              onClick={() => handleProtectedAction(() => setFollowing((value) => !value))}
-              className={`mt-4 w-full rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
-                following
-                  ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
-                  : "border-zinc-700 text-zinc-300 hover:border-zinc-600"
-              }`}
-            >
-              {following ? "開発者フォロー中" : "開発者をフォローする"}
-            </button>
+            {!isOwnerPreview ? (
+              <button
+                type="button"
+                onClick={() => handleProtectedAction(() => setFollowing((value) => !value))}
+                className={`mt-4 w-full rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
+                  following
+                    ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
+                    : "border-zinc-700 text-zinc-300 hover:border-zinc-600"
+                }`}
+              >
+                {following ? "開発者フォロー中" : "開発者をフォローする"}
+              </button>
+            ) : null}
             <Link
               href={`/creators/${game.developer.id}`}
               className="mt-2 block text-center text-xs text-violet-400 transition-colors hover:text-violet-300"
