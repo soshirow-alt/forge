@@ -80,6 +80,34 @@ export const developerDevlogQuoteOptions: DevlogQuoteRef[] = [
   },
 ];
 
+export const developerConfirmationQuoteOptions: ConfirmationRequestQuoteRef[] = [
+  {
+    id: "cq-mock-1",
+    confirmationRequestId: "mock-confirmation-1",
+    devlogId: "mock-devlog-1",
+    gameId: SHANECO_GAME_ID,
+    version: "v0.3.1",
+    title: "バトル調整と新敵追加",
+    changesSummary: "ボス戦の難易度を調整しました",
+    askSummary: "前より理不尽に感じないか確認してほしい",
+    estimatedDuration: "5分",
+    linkedPriorityTitles: ["ボス戦が理不尽に感じる"],
+    publishedAt: "2025/06/15",
+  },
+  {
+    id: "cq-mock-2",
+    confirmationRequestId: "mock-confirmation-2",
+    devlogId: "mock-devlog-2",
+    gameId: SHANECO_GAME_ID,
+    version: "v0.3.0",
+    title: "v0.3.0 — 森の奥へ",
+    changesSummary: "新エリア「記憶の泉」を追加",
+    askSummary: "序盤の導線が分かりやすいか見てほしい",
+    estimatedDuration: "10分",
+    publishedAt: "2025/05/20",
+  },
+];
+
 export const studioCommunityProfile = {
   id: "shaneco",
   name: "しゃねこコミュニティ",
@@ -103,19 +131,7 @@ export const studioCommunityPostsMock: CommunityPost[] = [
     postedAt: "2時間前",
     audienceLabel: "コミュニティ全員",
     devlogQuote: developerDevlogQuoteOptions[0],
-    confirmationQuote: {
-      id: "cq-mock-1",
-      confirmationRequestId: "mock-confirmation-1",
-      devlogId: "mock-devlog-1",
-      gameId: SHANECO_GAME_ID,
-      version: "v0.3.1",
-      title: "バトル調整と新敵追加",
-      changesSummary: "ボス戦の難易度を調整しました",
-      askSummary: "前より理不尽に感じないか確認してほしい",
-      estimatedDuration: "5分",
-      linkedPriorityTitles: ["ボス戦が理不尽に感じる"],
-      publishedAt: "2025/06/15",
-    },
+    confirmationQuote: developerConfirmationQuoteOptions[0],
     replies: [
       {
         id: "rp1",

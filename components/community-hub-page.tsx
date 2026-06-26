@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { ConfirmationCitationCard } from "@/components/confirmation-citation-card";
 import { useCommunityBoard } from "@/hooks/use-community-board";
@@ -12,6 +12,7 @@ import { useDeveloperCommunitiesV0 } from "@/hooks/use-developer-communities-v0"
 import { findOwnCommunityInList } from "@/lib/developer-community-v0-store";
 import type { ConfirmationRequestQuoteRef } from "@/lib/community-types";
 import {
+  developerConfirmationQuoteOptions,
   developerDevlogQuoteOptions,
   playerCommunityFeedMock,
   playerJoinedCommunities,
@@ -395,22 +396,40 @@ function DeveloperComposePanel({
   const [quoteKind, setQuoteKind] = useState<"none" | "devlog" | "confirmation">("none");
   const [devlogQuoteId, setDevlogQuoteId] = useState("");
   const [confirmationQuoteId, setConfirmationQuoteId] = useState("");
-  const [confirmationOptions, setConfirmationOptions] = useState<ConfirmationRequestQuoteRef[]>(
-    [],
-  );
+  const [confirmationOptionsFromDb, setConfirmationOptionsFromDb] = useState<
+    ConfirmationRequestQuoteRef[]
+  >([]);
+  const [confirmationOptionsLoaded, setConfirmationOptionsLoaded] = useState(false);
 
   useEffect(() => {
     if (!ownerId) {
+      setConfirmationOptionsLoaded(true);
       return;
     }
 
     const supabase = getOptionalSupabaseClient();
     if (!supabase) {
+      setConfirmationOptionsLoaded(true);
       return;
     }
 
-    void fetchConfirmationQuoteOptionsForOwner(supabase, ownerId).then(setConfirmationOptions);
+    void fetchConfirmationQuoteOptionsForOwner(supabase, ownerId)
+      .then(setConfirmationOptionsFromDb)
+      .finally(() => setConfirmationOptionsLoaded(true));
   }, [ownerId]);
+
+  const confirmationOptions = useMemo(() => {
+    if (confirmationOptionsFromDb.length > 0) {
+      return confirmationOptionsFromDb;
+    }
+    if (!getOptionalSupabaseClient()) {
+      return developerConfirmationQuoteOptions;
+    }
+    return [];
+  }, [confirmationOptionsFromDb]);
+
+  const confirmationOptionsEmpty =
+    confirmationOptionsLoaded && confirmationOptions.length === 0;
 
   const selectedDevlogQuote = developerDevlogQuoteOptions.find((q) => q.id === devlogQuoteId);
   const selectedConfirmationQuote = confirmationOptions.find((q) => q.id === confirmationQuoteId);
@@ -472,26 +491,41 @@ function DeveloperComposePanel({
       )}
 
       {quoteKind === "confirmation" && (
-        <div className="mt-3">
-          <label className="block text-xs text-zinc-500">
-            確認依頼を引用
-            <select
-              value={confirmationQuoteId}
-              onChange={(event) => setConfirmationQuoteId(event.target.value)}
-              className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200"
-            >
-              <option value="">選択してください</option>
-              {confirmationOptions.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.version} — {option.changesSummary || option.title}
-                </option>
-              ))}
-            </select>
-          </label>
-          {confirmationOptions.length === 0 && (
-            <p className="mt-2 text-xs text-zinc-600">
-              確認依頼付きの開発ログがまだありません。先に devlog 公開時に確認依頼を追加してください。
-            </p>
+        <div className="mt-3 space-y-3">
+          <p className="text-xs leading-relaxed text-zinc-500">
+            開発ログ公開時に付けた「今回見てほしいこと」です。プレイヤーへ「この変更を確認してほしい」と伝えるときに引用します。
+          </p>
+          {confirmationOptionsEmpty ? (
+            <div className="rounded-xl border border-dashed border-zinc-800 bg-zinc-900/30 px-4 py-4">
+              <p className="text-sm font-medium text-zinc-300">
+                引用できる確認依頼がまだありません
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-zinc-500">
+                作品の開発ログを公開するとき、「確認依頼を追加（任意）」から今回変わったこと・見てほしい点を書けます。付けた依頼だけがここに並びます。
+              </p>
+              <Link
+                href="/studio/mypage"
+                className="mt-3 inline-flex text-xs font-medium text-violet-400 transition-colors hover:text-violet-300"
+              >
+                作品一覧から開発ログを書く →
+              </Link>
+            </div>
+          ) : (
+            <label className="block text-xs text-zinc-500">
+              確認依頼を引用
+              <select
+                value={confirmationQuoteId}
+                onChange={(event) => setConfirmationQuoteId(event.target.value)}
+                className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200"
+              >
+                <option value="">選んでください</option>
+                {confirmationOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.version} — {option.changesSummary || option.title}
+                  </option>
+                ))}
+              </select>
+            </label>
           )}
         </div>
       )}
