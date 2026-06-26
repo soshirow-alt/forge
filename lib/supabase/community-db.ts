@@ -237,8 +237,20 @@ function mapPostRow(
     body: row.body,
     postedAt: formatRelativeTime(row.created_at),
     audienceLabel: row.audience_label,
-    devlogQuote: row.devlog_quote ?? undefined,
-    confirmationQuote: row.confirmation_quote ?? undefined,
+    devlogQuote: (() => {
+      const rawDevlog = row.devlog_quote ?? undefined;
+      const rawConfirmation = row.confirmation_quote ?? undefined;
+      if (!rawDevlog) {
+        return undefined;
+      }
+      return {
+        ...rawDevlog,
+        confirmation: rawDevlog.confirmation ?? rawConfirmation ?? undefined,
+      };
+    })(),
+    confirmationQuote: row.devlog_quote
+      ? undefined
+      : (row.confirmation_quote ?? undefined),
     replies,
   };
 }

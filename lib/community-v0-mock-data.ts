@@ -12,6 +12,8 @@ export type DevlogQuoteRef = {
   publishedAt?: string;
   likeCount?: number;
   commentCount?: number;
+  /** 開発ログに付いた確認依頼（任意） */
+  confirmation?: ConfirmationRequestQuoteRef;
 };
 
 export type CommunityReply = {
@@ -109,6 +111,46 @@ export const developerConfirmationQuoteOptions: ConfirmationRequestQuoteRef[] = 
   },
 ];
 
+function devlogMatchesConfirmation(
+  devlog: DevlogQuoteRef,
+  confirmation: ConfirmationRequestQuoteRef,
+): boolean {
+  return (
+    confirmation.devlogId === devlog.id ||
+    (confirmation.gameId === devlog.gameId &&
+      (confirmation.version === devlog.version || confirmation.title === devlog.title))
+  );
+}
+
+/** DB の確認依頼を開発ログ引用候補へマージ（確認依頼付きは confirmation を内包） */
+export function mergeDevlogQuoteOptions(
+  confirmations: ConfirmationRequestQuoteRef[],
+  base: DevlogQuoteRef[] = developerDevlogQuoteOptions,
+): DevlogQuoteRef[] {
+  const merged = base.map((devlog) => {
+    const confirmation = confirmations.find((item) => devlogMatchesConfirmation(devlog, item));
+    return confirmation ? { ...devlog, confirmation } : devlog;
+  });
+
+  const unmatched = confirmations.filter(
+    (item) => !merged.some((devlog) => devlog.confirmation?.id === item.id),
+  );
+
+  for (const confirmation of unmatched) {
+    merged.unshift({
+      id: `dq-${confirmation.devlogId}`,
+      gameId: confirmation.gameId,
+      version: confirmation.version,
+      title: confirmation.title,
+      excerpt: confirmation.changesSummary || confirmation.askSummary || "",
+      publishedAt: confirmation.publishedAt,
+      confirmation,
+    });
+  }
+
+  return merged;
+}
+
 export const studioCommunityProfile = {
   id: "shaneco",
   name: "しゃねこコミュニティ",
@@ -132,8 +174,7 @@ export const studioCommunityPostsMock: CommunityPost[] = [
     body: "みなさんぜひプレイお願いします！序盤の導線、特に気になる点があれば教えてください。",
     postedAt: "2時間前",
     audienceLabel: "コミュニティ全員",
-    devlogQuote: developerDevlogQuoteOptions[0],
-    confirmationQuote: developerConfirmationQuoteOptions[0],
+    devlogQuote: mergeDevlogQuoteOptions(developerConfirmationQuoteOptions)[0],
     replies: [
       {
         id: "rp1",

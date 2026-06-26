@@ -16,9 +16,10 @@ import {
   type DeveloperCommunityProfile,
 } from "@/lib/developer-community-v0-store";
 import type { ConfirmationRequestQuoteRef } from "@/lib/community-types";
+import { confirmationQuoteHref } from "@/lib/community-types";
 import {
   developerConfirmationQuoteOptions,
-  developerDevlogQuoteOptions,
+  mergeDevlogQuoteOptions,
   playerCommunityFeedMock,
   playerJoinedCommunities,
   studioCommunityPostsMock,
@@ -102,22 +103,54 @@ function DevlogCitationCard({
             )}
           </div>
         )}
+        {quote.confirmation && (
+          <div className="mt-3 border-t border-orange-500/20 pt-3">
+            <div className="flex items-center gap-1.5 text-xs text-orange-300/90">
+              <Quote className="size-3.5" aria-hidden="true" />
+              確認依頼
+              {quote.confirmation.estimatedDuration ? (
+                <span className="text-zinc-600">· 目安 {quote.confirmation.estimatedDuration}</span>
+              ) : null}
+            </div>
+            {quote.confirmation.changesSummary ? (
+              <p className="mt-1 text-xs text-zinc-400 line-clamp-2">
+                {quote.confirmation.changesSummary}
+              </p>
+            ) : null}
+            {quote.confirmation.askSummary ? (
+              <p className="mt-1 text-xs text-zinc-500 line-clamp-2">
+                見てほしいこと: {quote.confirmation.askSummary}
+              </p>
+            ) : null}
+            {quote.confirmation.linkedPriorityTitles &&
+            quote.confirmation.linkedPriorityTitles.length > 0 ? (
+              <p className="mt-2 text-xs text-orange-300/80">
+                対応課題: {quote.confirmation.linkedPriorityTitles.join("、")}
+              </p>
+            ) : null}
+          </div>
+        )}
       </div>
     </div>
   );
 
-  const className =
-    "mt-3 overflow-hidden rounded-xl border border-zinc-700/80 bg-zinc-950/60 transition-colors";
+  const className = quote.confirmation
+    ? "mt-3 overflow-hidden rounded-xl border border-orange-500/25 bg-orange-500/[0.06] transition-colors"
+    : "mt-3 overflow-hidden rounded-xl border border-zinc-700/80 bg-zinc-950/60 transition-colors";
 
   if (!linkable) {
     return <div className={className}>{inner}</div>;
   }
 
+  const href = quote.confirmation
+    ? confirmationQuoteHref(quote.confirmation)
+    : devlogQuoteHref(quote);
+  const hoverClass = quote.confirmation
+    ? "block hover:border-orange-500/40 hover:bg-orange-500/10"
+    : "block hover:border-violet-500/50 hover:bg-zinc-900/60";
+
   return (
-    <Link
-      href={devlogQuoteHref(quote)}
-      className={`${className} block hover:border-violet-500/50 hover:bg-zinc-900/60`}
-    >
+    <Link href={href} className={`${className} ${hoverClass}`}>
       {inner}
     </Link>
   );
@@ -152,7 +185,7 @@ function CommunityPostCard({
             <h3 className="mt-2 text-base font-semibold text-white">{post.title}</h3>
           ) : null}
           {post.devlogQuote && <DevlogCitationCard quote={post.devlogQuote} />}
-          {post.confirmationQuote && (
+          {!post.devlogQuote && post.confirmationQuote && (
             <ConfirmationCitationCard quote={post.confirmationQuote} />
           )}
           <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-zinc-300">{post.body}</p>
@@ -324,18 +357,22 @@ function PendingRequestRow({
 function DevlogQuoteSelect({
   value,
   onChange,
+  options,
 }: {
   value: string;
   onChange: (quoteId: string) => void;
+  options: DevlogQuoteRef[];
 }) {
   const [open, setOpen] = useState(false);
-  const selected = developerDevlogQuoteOptions.find((q) => q.id === value);
-  const label = selected ? `${selected.version} — ${selected.title}` : "引用しない";
+  const selected = options.find((q) => q.id === value);
+  const label = selected
+    ? `${selected.version} — ${selected.title}${selected.confirmation ? "（確認依頼付き）" : ""}`
+    : "選んでください";
 
   return (
     <div className="relative">
       <label className="block text-xs text-zinc-500">
-        Devlog を引用
+        開発ログを引用
         <button
           type="button"
           onClick={() => setOpen((current) => !current)}
@@ -357,7 +394,7 @@ function DevlogQuoteSelect({
           />
           <ul
             role="listbox"
-            aria-label="Devlog を引用"
+            aria-label="開発ログを引用"
             className="absolute left-0 right-0 z-30 mt-1 overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-950 py-1 shadow-xl"
             style={{ maxHeight: `${DEVLOG_QUOTE_SELECT_MAX_VISIBLE * 2.5}rem` }}
           >
@@ -375,7 +412,7 @@ function DevlogQuoteSelect({
                 引用しない
               </button>
             </li>
-            {developerDevlogQuoteOptions.map((q) => (
+            {options.map((q) => (
               <li key={q.id} role="option" aria-selected={value === q.id}>
                 <button
                   type="button"
@@ -388,6 +425,9 @@ function DevlogQuoteSelect({
                   }`}
                 >
                   {q.version} — {q.title}
+                  {q.confirmation ? (
+                    <span className="ml-1 text-orange-300/80">（確認依頼付き）</span>
+                  ) : null}
                 </button>
               </li>
             ))}
@@ -403,20 +443,13 @@ function DeveloperComposePanel({
   onPost,
 }: {
   ownerId?: string;
-  onPost: (
-    title: string,
-    body: string,
-    quote?:
-      | { kind: "devlog"; ref: DevlogQuoteRef }
-      | { kind: "confirmation"; ref: ConfirmationRequestQuoteRef },
-  ) => void;
+  onPost: (title: string, body: string, quote?: { kind: "devlog"; ref: DevlogQuoteRef }) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [quoteKind, setQuoteKind] = useState<"none" | "devlog" | "confirmation">("none");
+  const [quoteKind, setQuoteKind] = useState<"none" | "devlog">("none");
   const [devlogQuoteId, setDevlogQuoteId] = useState("");
-  const [confirmationQuoteId, setConfirmationQuoteId] = useState("");
   const [confirmationOptionsFromDb, setConfirmationOptionsFromDb] = useState<
     ConfirmationRequestQuoteRef[]
   >([]);
@@ -449,18 +482,20 @@ function DeveloperComposePanel({
     return [];
   }, [confirmationOptionsFromDb]);
 
-  const confirmationOptionsEmpty =
-    confirmationOptionsLoaded && confirmationOptions.length === 0;
+  const devlogOptions = useMemo(
+    () => mergeDevlogQuoteOptions(confirmationOptions),
+    [confirmationOptions],
+  );
 
-  const selectedDevlogQuote = developerDevlogQuoteOptions.find((q) => q.id === devlogQuoteId);
-  const selectedConfirmationQuote = confirmationOptions.find((q) => q.id === confirmationQuoteId);
+  const devlogOptionsEmpty = confirmationOptionsLoaded && devlogOptions.length === 0;
+
+  const selectedDevlogQuote = devlogOptions.find((q) => q.id === devlogQuoteId);
 
   function reset() {
     setTitle("");
     setBody("");
     setQuoteKind("none");
     setDevlogQuoteId("");
-    setConfirmationQuoteId("");
     setOpen(false);
   }
 
@@ -497,8 +532,7 @@ function DeveloperComposePanel({
         {(
           [
             ["none", "引用しない"],
-            ["devlog", "Devlog"],
-            ["confirmation", "確認依頼"],
+            ["devlog", "開発ログ"],
           ] as const
         ).map(([kind, label]) => (
           <button
@@ -507,7 +541,6 @@ function DeveloperComposePanel({
             onClick={() => {
               setQuoteKind(kind);
               setDevlogQuoteId("");
-              setConfirmationQuoteId("");
             }}
             className={
               quoteKind === kind
@@ -521,23 +554,15 @@ function DeveloperComposePanel({
       </div>
 
       {quoteKind === "devlog" && (
-        <div className="mt-3">
-          <DevlogQuoteSelect value={devlogQuoteId} onChange={setDevlogQuoteId} />
-        </div>
-      )}
-
-      {quoteKind === "confirmation" && (
         <div className="mt-3 space-y-3">
           <p className="text-xs leading-relaxed text-zinc-500">
-            開発ログ公開時に付けた「今回見てほしいこと」です。プレイヤーへ「この変更を確認してほしい」と伝えるときに引用します。
+            開発ログを引用します。公開時に確認依頼を付けたログは、カード内に「見てほしいこと」も一緒に表示されます。
           </p>
-          {confirmationOptionsEmpty ? (
+          {devlogOptionsEmpty ? (
             <div className="rounded-xl border border-dashed border-zinc-800 bg-zinc-900/30 px-4 py-4">
-              <p className="text-sm font-medium text-zinc-300">
-                引用できる確認依頼がまだありません
-              </p>
+              <p className="text-sm font-medium text-zinc-300">引用できる開発ログがまだありません</p>
               <p className="mt-2 text-xs leading-relaxed text-zinc-500">
-                作品の開発ログを公開するとき、「確認依頼を追加（任意）」から今回変わったこと・見てほしい点を書けます。付けた依頼だけがここに並びます。
+                作品の開発ログを公開すると、ここに引用候補が並びます。確認依頼を付けたログは「確認依頼付き」として表示されます。
               </p>
               <Link
                 href="/studio/mypage"
@@ -547,21 +572,11 @@ function DeveloperComposePanel({
               </Link>
             </div>
           ) : (
-            <label className="block text-xs text-zinc-500">
-              確認依頼を引用
-              <select
-                value={confirmationQuoteId}
-                onChange={(event) => setConfirmationQuoteId(event.target.value)}
-                className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200"
-              >
-                <option value="">選んでください</option>
-                {confirmationOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.version} — {option.changesSummary || option.title}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <DevlogQuoteSelect
+              value={devlogQuoteId}
+              onChange={setDevlogQuoteId}
+              options={devlogOptions}
+            />
           )}
         </div>
       )}
@@ -569,11 +584,6 @@ function DeveloperComposePanel({
       {selectedDevlogQuote && (
         <div className="mt-3">
           <DevlogCitationCard quote={selectedDevlogQuote} linkable={false} />
-        </div>
-      )}
-      {selectedConfirmationQuote && (
-        <div className="mt-3">
-          <ConfirmationCitationCard quote={selectedConfirmationQuote} linkable={false} />
         </div>
       )}
       <label className="mt-4 block text-xs text-zinc-500">
@@ -604,9 +614,7 @@ function DeveloperComposePanel({
             const quote =
               quoteKind === "devlog" && selectedDevlogQuote
                 ? { kind: "devlog" as const, ref: selectedDevlogQuote }
-                : quoteKind === "confirmation" && selectedConfirmationQuote
-                  ? { kind: "confirmation" as const, ref: selectedConfirmationQuote }
-                  : undefined;
+                : undefined;
             onPost(title.trim(), body.trim(), quote);
             reset();
           }}
@@ -1214,8 +1222,6 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
                   postedAt: "たった今",
                   audienceLabel: "コミュニティ全員",
                   devlogQuote: quote?.kind === "devlog" ? quote.ref : undefined,
-                  confirmationQuote:
-                    quote?.kind === "confirmation" ? quote.ref : undefined,
                   replies: [],
                 };
                 prependPost(localPost);
@@ -1228,14 +1234,9 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
                     title,
                     body,
                     devlogQuote: quote?.kind === "devlog" ? quote.ref : undefined,
-                    confirmationQuote:
-                      quote?.kind === "confirmation" ? quote.ref : undefined,
-                    confirmationRequestId:
-                      quote?.kind === "confirmation"
-                        ? quote.ref.confirmationRequestId
-                        : null,
-                    devlogId:
-                      quote?.kind === "confirmation" ? quote.ref.devlogId : null,
+                    confirmationQuote: quote?.ref?.confirmation,
+                    confirmationRequestId: quote?.ref?.confirmation?.confirmationRequestId ?? null,
+                    devlogId: quote?.ref?.confirmation?.devlogId ?? null,
                   });
                 }
               }}
