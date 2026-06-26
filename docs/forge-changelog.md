@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-27 REL-2-04 追補 — FB統計ラベル
+
+- 実作品詳細の FB 指標は **distinct user_id（人数）** — UI ラベル **「FBした人」**（「フィードバック N件」ではない）
+- 見届けは **「見届け人」**（grant 人数）
+- **REL-PRE-01** — production GO 前の lint 棚卸しを `docs/official-release-wiring-plan.md` に登録
+- **REL-2-02** — オーナー GO（migration 022 設計後に実装）
+
+---
+
 ## 2026-06-27 REL-2-03 / 2-04 — 開発者ページ実データ化・作品詳細統計
 
 - **REL-2-03** — `/creators/[id]` を `developer_profiles` + 公開作品に接続。X・website 表示。本番で未登録 ID は 404

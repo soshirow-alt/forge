@@ -33,7 +33,7 @@ Dashboard 適用 GO は **まだ出さない**。適用前レビュー: `docs/mi
 - main merge  
 - `PLAYER_VISIBLE=true`  
 
-**解禁条件**: Phase 0〜1 が Preview で通過し、E2E 確認後（別 GO）
+**解禁条件**: Phase 0〜1 が Preview で通過し、E2E 確認後（別 GO）。あわせて **REL-PRE-01**（lint 棚卸し）を production GO 前に実施。
 
 ---
 
@@ -312,9 +312,10 @@ Phase 3 — 初期版周辺（③）※ 通報・共感・実績・ランキン�
 | | |
 |--|--|
 | **分類** | ② |
-| **Supabase** | **要** — `project_overview` or projects JSON 列（migration 案） |
-| **概要** | `project-overview-v0-store`（localStorage）を廃止し DB 正本化。未設定フィールドは非表示 |
-| **RUN** | ❌ |
+| **Supabase** | **要** — migration **022** 案（`projects.overview_introduction`, `projects.overview_features jsonb`） |
+| **概要** | `description` は既存 `projects.description` のまま。localStorage `project-overview-v0-store` の **introduction + features** を DB 正本化。未設定は非表示 |
+| **スコープ外** | `developerWorry` / `wantedVoices`（版ごと devlog 側） |
+| **RUN** | ✅ **オーナー GO（2026-06-27）** — migration 022 設計後に実装 |
 
 ### REL-2-03 開発者プロフィール `/creators/[id]` 実データ化
 
@@ -332,7 +333,8 @@ Phase 3 — 初期版周辺（③）※ 通報・共感・実績・ランキン�
 |--|--|
 | **分類** | ② |
 | **Supabase** | 不要（集計クエリ既存テーブル） |
-| **概要** | 見届け・FB 件数・devlog 更新を実集計。取れない間は REL-1-03 のとおり非表示 |
+| **概要** | 見届け人・**FBした人**・devlog 更新を実集計。0 は非表示（REL-1-03） |
+| **集計定義** | 見届け = `project_witness_grants` 件数（人数）。FB = `project_voice_responses` ∪ `project_feedback` の **distinct user_id**（投稿件数ではない）→ UI ラベル **「FBした人」** |
 | **RUN** | ✅（集計のみ） |
 
 ### REL-2-05 開発者フォロー Supabase 化
@@ -363,6 +365,21 @@ Phase 3 — 初期版周辺（③）※ 通報・共感・実績・ランキン�
 
 ---
 
+## Pre-release — production GO 前 blocker 候補
+
+### REL-PRE-01 ESLint 既存エラー棚卸し
+
+| | |
+|--|--|
+| **分類** | リリース品質（コード変更必須ではないが GO 前に要対応） |
+| **現状** | `npm run lint` — **71 errors**（2026-06-27 時点。直近 Feature 差分起因ではない） |
+| **build** | `npm run build` は PASS — **開発続行は可** |
+| **方針** | production GO 前にエラー一覧を分類（重大 / 警告扱い / ルール調整）。少なくとも **React hooks 規則違反・render 中 impure** 等の重大項は潰す |
+| **確認** | `npm run lint` の error 件数を 0 に近づけるか、許容リストをオーナー GO |
+| **RUN** | ❌ **production GO 前必須**（今すぐ全件修正は不要） |
+
+---
+
 ## Phase 3 — 概要のみ（今回 Issue 化しない）
 
 - みんなの FB タブ **本開放**（集計・AI 集約）
@@ -387,7 +404,7 @@ Phase 3 — 初期版周辺（③）※ 通報・共感・実績・ランキン�
 | **019** | 影響度 RPC | ③（中身隠し中は未使用） | Phase 3 |
 | **020** | `community_posts.title` | ② | REL-2-06 |
 
-**新規 migration 案（Phase 2）**: 021 外部リンク（`x_url`, `youtube_url`）、022 作品概要、023 フォロー — **設計 GO 後に SQL 化**。
+**新規 migration 案（Phase 2）**: 021 外部リンク（`x_url`, `youtube_url`）、**022 作品概要（GO 済・設計後 SQL 化）**、023 フォロー — 021 は migration GO 待ち。
 
 ---
 

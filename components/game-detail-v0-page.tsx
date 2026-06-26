@@ -159,8 +159,9 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   );
   const showWitnessStat =
     !isRealProject || (publicStatsLoaded && publicStats.witnessCount > 0);
-  const showVoiceStat =
-    !isRealProject || (publicStatsLoaded && publicStats.voiceCount > 0);
+  const showFeedbackParticipantStat =
+    !isRealProject ||
+    (publicStatsLoaded && publicStats.feedbackParticipantCount > 0);
   const devlogUpdatedLabel =
     isRealProject && publicStats.latestDevlogAt
       ? formatRelativeUpdateLabel(publicStats.latestDevlogAt)
@@ -385,7 +386,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                   {showWitnessStat ? (
                     <StatItem
                       icon={<Users className="size-4" aria-hidden="true" />}
-                      label="見届け"
+                      label={isRealProject ? "見届け人" : "見届け"}
                       value={
                         isRealProject
                           ? publicStats.witnessCount.toLocaleString()
@@ -393,13 +394,13 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                       }
                     />
                   ) : null}
-                  {showVoiceStat ? (
+                  {showFeedbackParticipantStat ? (
                     <StatItem
                       icon={<MessageSquare className="size-4" aria-hidden="true" />}
-                      label="フィードバック"
+                      label={isRealProject ? "FBした人" : "フィードバック"}
                       value={
                         isRealProject
-                          ? publicStats.voiceCount.toLocaleString()
+                          ? publicStats.feedbackParticipantCount.toLocaleString()
                           : game.voiceCount.toLocaleString()
                       }
                     />

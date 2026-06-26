@@ -2,14 +2,16 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { isWitnessGrantsTableMissingError } from "@/lib/supabase/witness-grants-db";
 
 export type ProjectPublicStats = {
+  /** `project_witness_grants` — 見届け人の人数 */
   witnessCount: number;
-  voiceCount: number;
+  /** voice_responses + feedback の distinct user_id — 投稿件数ではない */
+  feedbackParticipantCount: number;
   latestDevlogAt: string | null;
 };
 
 const EMPTY_STATS: ProjectPublicStats = {
   witnessCount: 0,
-  voiceCount: 0,
+  feedbackParticipantCount: 0,
   latestDevlogAt: null,
 };
 
@@ -96,7 +98,7 @@ export async function fetchProjectPublicStatsMap(
   }
   for (const [projectId, users] of voiceUsersByProject) {
     if (result[projectId]) {
-      result[projectId].voiceCount = users.size;
+      result[projectId].feedbackParticipantCount = users.size;
     }
   }
 

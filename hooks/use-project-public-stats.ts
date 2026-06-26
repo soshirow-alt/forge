@@ -9,7 +9,7 @@ import {
 
 const EMPTY_STATS: ProjectPublicStats = {
   witnessCount: 0,
-  voiceCount: 0,
+  feedbackParticipantCount: 0,
   latestDevlogAt: null,
 };
 
