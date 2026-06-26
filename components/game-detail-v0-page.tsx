@@ -22,7 +22,6 @@ import {
 } from "@/components/feedback-v0-modals";
 import { GameDetailOverviewV0Tab } from "@/components/game-detail-overview-v0-tab";
 import { GameDevlogV0Tab } from "@/components/game-devlog-v0-tab";
-import { GameVersionsV0Tab } from "@/components/game-versions-v0-tab";
 import { GameVoicesV0Tab } from "@/components/game-voices-v0-tab";
 import { GameThumbnail, PlayerShell } from "@/components/player-shell";
 import { useGames } from "@/components/games-provider";
@@ -55,13 +54,12 @@ import {
   Users,
 } from "lucide-react";
 
-type DetailTab = "overview" | "devlog" | "voices" | "versions";
+type DetailTab = "overview" | "devlog" | "voices";
 
 const tabs: { id: DetailTab; label: string }[] = [
   { id: "overview", label: "概要" },
   { id: "devlog", label: "開発ログ" },
   { id: "voices", label: "みんなのフィードバック" },
-  { id: "versions", label: "verの履歴" },
 ];
 
 function TagPill({ children }: { children: React.ReactNode }) {
@@ -93,7 +91,10 @@ function StatItem({
 }
 
 function parseDetailTab(param: string | null): DetailTab {
-  if (param === "devlog" || param === "voices" || param === "versions") {
+  if (param === "versions") {
+    return "devlog";
+  }
+  if (param === "devlog" || param === "voices") {
     return param;
   }
   return "overview";
@@ -454,12 +455,6 @@ function GameDetailV0PageContent({ id }: { id: string }) {
               currentVersion={game.currentVersion}
               refreshKey={voicesRefreshKey}
               onSendVoice={handleFeedback}
-            />
-          )}
-          {activeTab === "versions" && (
-            <GameVersionsV0Tab
-              gameId={resolveGameDetailId(id)}
-              onPlayLatest={handlePlay}
             />
           )}
         </div>

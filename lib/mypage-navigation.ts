@@ -2,7 +2,7 @@ import { gameDetailHrefFromTitle } from "@/lib/game-detail-v0-mock-data";
 
 export function gameDetailHrefWithTab(
   title: string,
-  tab: "overview" | "devlog" | "voices" | "versions",
+  tab: "overview" | "devlog" | "voices",
 ): string {
   const base = gameDetailHrefFromTitle(title);
   return tab === "overview" ? base : `${base}?tab=${tab}`;

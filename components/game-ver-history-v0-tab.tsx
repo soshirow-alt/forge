@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { GameDevlogV0Tab } from "@/components/game-devlog-v0-tab";
-import { GameVersionsV0Tab } from "@/components/game-versions-v0-tab";
 import { studioProjectDevlogNewHref } from "@/lib/studio-devlog-draft-v0-store";
 import { studioReleaseState } from "@/lib/studio-project-detail-v0-mock-data";
 import { Pencil } from "lucide-react";
@@ -83,13 +82,6 @@ export function GameVerHistoryV0Tab({
           embedded
         />
       </section>
-
-      {!studioMode && (
-        <section className="border-t border-zinc-800/80 pt-10">
-          <h2 className="mb-6 text-base font-semibold text-white">verの履歴</h2>
-          <GameVersionsV0Tab gameId={gameId} onPlayLatest={onPlayLatest} embedded />
-        </section>
-      )}
 
       {studioMode && (
         <section className="border-t border-zinc-800/80 pt-10">
