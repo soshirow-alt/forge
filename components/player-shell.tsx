@@ -109,7 +109,7 @@ function MypageSidebarGroup() {
         href="/mypage/profile"
         className={`ml-4 block ${subNavLinkClass(isMypageProfile)}`}
       >
-        マイプロフィール
+        プレイヤー・プロフィール
       </Link>
       <Link
         href="/mypage/community"
@@ -207,7 +207,7 @@ export function PlayerShell({
           <Link
             href="/mypage/profile"
             className="rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
-            aria-label="マイプロフィール"
+            aria-label="プレイヤー・マイプロフィール"
           >
             <User className="size-5" />
           </Link>

@@ -196,8 +196,9 @@ export function StudioProfileSelfPage() {
       <div className="mx-auto max-w-4xl space-y-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-medium text-violet-300">プロフィール</p>
+            <p className="text-xs font-medium text-violet-300">開発者・プロフィール</p>
             <h1 className="mt-1 text-2xl font-bold text-white sm:text-3xl">マイプロフィール</h1>
+            <p className="mt-2 text-sm text-zinc-500">開発者として公開される自己紹介です。</p>
           </div>
           <button
             type="button"
