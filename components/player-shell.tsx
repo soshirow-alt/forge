@@ -267,7 +267,6 @@ export function MyPageTabs({
     { id: "saved", label: "保存作品" },
     { id: "play-history", label: "プレイ履歴" },
     { id: "feedback", label: "FB履歴" },
-    { id: "developer", label: "作品管理" },
     { id: "achievements", label: "実績" },
     { id: "following", label: "フォロー中開発者" },
   ] as const;

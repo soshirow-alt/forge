@@ -46,10 +46,10 @@ export function MyPageLoopPanel() {
             作品を探す
           </Link>
           <Link
-            href="/mypage?tab=developer"
+            href="/studio/mypage"
             className="inline-block rounded-lg border border-zinc-700 px-6 py-3 text-sm text-zinc-300 transition-colors hover:border-violet-500/40 hover:text-violet-200"
           >
-            自分の作品を管理
+            Studioで作品を管理
           </Link>
         </div>
       </div>

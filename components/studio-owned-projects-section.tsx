@@ -173,16 +173,6 @@ export function StudioOwnedProjectsSection({
           </Link>
         </p>
       )}
-
-      {variant === "home" && (
-        <p className="mt-4 text-xs text-zinc-600">
-          マイページからも同じ Studio に入れます（
-          <Link href="/mypage?tab=developer" className="text-zinc-500 hover:text-violet-300">
-            開発者タブ
-          </Link>
-          ）。
-        </p>
-      )}
     </section>
   );
 }

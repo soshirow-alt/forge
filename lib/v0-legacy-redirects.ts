@@ -4,7 +4,7 @@
 export const V0_LEGACY_REDIRECTS: Readonly<Record<string, string>> = {
   "/bookmarks": "/mypage?tab=saved",
   "/demo": "/home",
-  "/my-projects": "/mypage?tab=developer",
+  "/my-projects": "/studio/mypage",
 };
 
 export function resolveV0LegacyRedirect(pathname: string): string | null {

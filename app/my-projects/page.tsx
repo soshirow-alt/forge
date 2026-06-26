@@ -6,9 +6,10 @@ export default async function MyProjectsRoute({
   searchParams: Promise<{ focus?: string }>;
 }) {
   const sp = await searchParams;
-  const params = new URLSearchParams({ tab: "developer" });
+
   if (sp.focus) {
-    params.set("focus", sp.focus);
+    redirect(`/projects/${encodeURIComponent(sp.focus)}/studio`);
   }
-  redirect(`/mypage?${params.toString()}`);
+
+  redirect("/studio/mypage");
 }

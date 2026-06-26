@@ -15,7 +15,6 @@ import {
   FeedbackTabPanel,
   FollowingTabPanel,
 } from "@/components/mypage-v0-extra-tabs";
-import { MyPageDeveloperTab } from "@/components/mypage-developer-tab";
 import { MyPageLoopPanel } from "@/components/mypage-loop-panel";
 import {
   MyPageSavedRealPanel,
@@ -61,7 +60,7 @@ import {
 } from "@/lib/mypage-navigation";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Check,
   MessageSquare,
@@ -75,15 +74,13 @@ export type MyPageTab =
   | "play-history"
   | "feedback"
   | "achievements"
-  | "following"
-  | "developer";
+  | "following";
 
 const TAB_IDS: MyPageTab[] = [
   "witnessing",
   "saved",
   "play-history",
   "feedback",
-  "developer",
   "achievements",
   "following",
 ];
@@ -572,7 +569,15 @@ function SavedTabPanel() {
 function MyPagePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const activeTab = parseTab(searchParams.get("tab"));
+  const tabParam = searchParams.get("tab");
+
+  useEffect(() => {
+    if (tabParam === "developer") {
+      router.replace("/studio/mypage");
+    }
+  }, [router, tabParam]);
+
+  const activeTab = parseTab(tabParam);
 
   const setTab = useCallback(
     (tab: MyPageTab) => {
@@ -580,6 +585,14 @@ function MyPagePageContent() {
     },
     [router],
   );
+
+  if (tabParam === "developer") {
+    return (
+      <PlayerShell activeNav="mypage">
+        <p className="text-zinc-500">Studio へ移動しています…</p>
+      </PlayerShell>
+    );
+  }
 
   return (
     <PlayerShell activeNav="mypage">
@@ -590,7 +603,6 @@ function MyPagePageContent() {
         {activeTab === "saved" && <MyPageSavedRealPanel />}
         {activeTab === "play-history" && <PlayHistorySection />}
         {activeTab === "feedback" && <FeedbackTabPanel />}
-        {activeTab === "developer" && <MyPageDeveloperTab />}
         {activeTab === "achievements" && <AchievementsTabPanel />}
         {activeTab === "following" && <FollowingTabPanel />}
       </div>

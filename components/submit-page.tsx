@@ -466,7 +466,7 @@ export function SubmitPage() {
                       href={
                         submittedGameId
                           ? projectStudioPath(submittedGameId)
-                          : "/my-projects"
+                          : "/studio/mypage"
                       }
                       className="flex w-full items-center justify-between rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3.5 text-sm font-semibold text-zinc-100 transition-colors hover:border-orange-500/50 hover:text-orange-400"
                     >
@@ -506,7 +506,7 @@ export function SubmitPage() {
                 href={
                   submittedGameId
                     ? projectStudioPath(submittedGameId)
-                    : "/my-projects"
+                    : "/studio/mypage"
                 }
                 className="rounded-lg border border-zinc-700 bg-zinc-900 px-6 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-orange-500/50 hover:text-orange-400"
               >

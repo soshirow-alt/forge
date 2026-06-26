@@ -42,7 +42,7 @@ export function DemoPage() {
 
       await setupDemoEnvironment(supabase, user.id, profile.publicName);
       await reloadFromStorage();
-      router.push("/my-projects");
+      router.push("/studio/mypage");
     } catch {
       setError("デモ環境の作成に失敗しました。");
     } finally {
