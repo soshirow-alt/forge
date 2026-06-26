@@ -24,6 +24,7 @@ type PostRow = {
   community_id: string;
   author_id: string;
   author_role: "developer" | "player";
+  title: string | null;
   body: string;
   audience_label: string;
   devlog_id: string | null;
@@ -55,6 +56,23 @@ export function isCommunitiesTableMissingError(error: unknown): boolean {
     (message.includes("developer_communities") ||
       message.includes("community_posts") ||
       message.includes("community_memberships")) &&
+    (message.includes("does not exist") || message.includes("Could not find"))
+  );
+}
+
+function isCommunityPostTitleColumnMissingError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const message =
+    "message" in error && typeof error.message === "string"
+      ? error.message
+      : String(error);
+
+  return (
+    message.includes("title") &&
+    (message.includes("community_posts") || message.includes("schema cache")) &&
     (message.includes("does not exist") || message.includes("Could not find"))
   );
 }
@@ -215,6 +233,7 @@ function mapPostRow(
     authorName: author.name,
     authorAvatar: author.avatar,
     authorHandle: author.handle,
+    title: row.title?.trim() || undefined,
     body: row.body,
     postedAt: formatRelativeTime(row.created_at),
     audienceLabel: row.audience_label,
@@ -288,6 +307,7 @@ export async function insertCommunityPost(
     communityId: string;
     authorId: string;
     authorRole: "developer" | "player";
+    title: string;
     body: string;
     audienceLabel?: string;
     devlogQuote?: DevlogQuoteRef;
@@ -296,21 +316,30 @@ export async function insertCommunityPost(
     confirmationRequestId?: string | null;
   },
 ): Promise<CommunityPost | null> {
-  const { data, error } = await supabase
-    .from("community_posts")
-    .insert({
-      community_id: input.communityId,
-      author_id: input.authorId,
-      author_role: input.authorRole,
-      body: input.body,
-      audience_label: input.audienceLabel ?? "コミュニティ全員",
-      devlog_id: input.devlogId ?? null,
-      confirmation_request_id: input.confirmationRequestId ?? null,
-      devlog_quote: input.devlogQuote ?? null,
-      confirmation_quote: input.confirmationQuote ?? null,
-    })
-    .select("*")
-    .single();
+  const baseRow = {
+    community_id: input.communityId,
+    author_id: input.authorId,
+    author_role: input.authorRole,
+    body: input.body,
+    audience_label: input.audienceLabel ?? "コミュニティ全員",
+    devlog_id: input.devlogId ?? null,
+    confirmation_request_id: input.confirmationRequestId ?? null,
+    devlog_quote: input.devlogQuote ?? null,
+    confirmation_quote: input.confirmationQuote ?? null,
+  };
+
+  const fullRow = {
+    ...baseRow,
+    title: input.title.trim(),
+  };
+
+  let result = await supabase.from("community_posts").insert(fullRow).select("*").single();
+
+  if (result.error && isCommunityPostTitleColumnMissingError(result.error)) {
+    result = await supabase.from("community_posts").insert(baseRow).select("*").single();
+  }
+
+  const { data, error } = result;
 
   if (error) {
     if (isCommunitiesTableMissingError(error)) {
@@ -321,7 +350,7 @@ export async function insertCommunityPost(
 
   const row = data as PostRow;
   return mapPostRow(
-    row,
+    { ...row, title: row.title ?? input.title.trim() },
     { name: "あなた", handle: "you", avatar: "/images/landing/game-4.png" },
     [],
   );

@@ -53,6 +53,7 @@ import {
 const DEVLOG_QUOTE_SELECT_MAX_VISIBLE = 4;
 
 const COMMUNITY_MESSAGE_MAX = 1000;
+const COMMUNITY_TITLE_MAX = 80;
 
 type CommunityTab = "board" | "members";
 
@@ -140,6 +141,9 @@ function CommunityPostCard({
             <span className="text-xs text-zinc-600">· {post.postedAt}</span>
           </div>
           <p className="mt-0.5 text-xs text-violet-400/90">{post.audienceLabel}</p>
+          {post.title ? (
+            <h3 className="mt-2 text-base font-semibold text-white">{post.title}</h3>
+          ) : null}
           {post.devlogQuote && <DevlogCitationCard quote={post.devlogQuote} />}
           {post.confirmationQuote && (
             <ConfirmationCitationCard quote={post.confirmationQuote} />
@@ -385,6 +389,7 @@ function DeveloperComposePanel({
 }: {
   ownerId?: string;
   onPost: (
+    title: string,
     body: string,
     quote?:
       | { kind: "devlog"; ref: DevlogQuoteRef }
@@ -392,6 +397,7 @@ function DeveloperComposePanel({
   ) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [quoteKind, setQuoteKind] = useState<"none" | "devlog" | "confirmation">("none");
   const [devlogQuoteId, setDevlogQuoteId] = useState("");
@@ -435,6 +441,7 @@ function DeveloperComposePanel({
   const selectedConfirmationQuote = confirmationOptions.find((q) => q.id === confirmationQuoteId);
 
   function reset() {
+    setTitle("");
     setBody("");
     setQuoteKind("none");
     setDevlogQuoteId("");
@@ -457,7 +464,21 @@ function DeveloperComposePanel({
 
   return (
     <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-      <div className="flex flex-wrap gap-2">
+      <label className="block text-xs text-zinc-500">
+        タイトル
+        <input
+          type="text"
+          value={title}
+          onChange={(event) => setTitle(event.target.value.slice(0, COMMUNITY_TITLE_MAX))}
+          placeholder="例: 序盤の導線について聞きたいです"
+          className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600"
+        />
+        <span className="mt-1 block text-right text-xs text-zinc-600">
+          {title.length}/{COMMUNITY_TITLE_MAX}
+        </span>
+      </label>
+
+      <div className="mt-4 flex flex-wrap gap-2">
         {(
           [
             ["none", "引用しない"],
@@ -563,7 +584,7 @@ function DeveloperComposePanel({
         </button>
         <button
           type="button"
-          disabled={!body.trim()}
+          disabled={!title.trim() || !body.trim()}
           onClick={() => {
             const quote =
               quoteKind === "devlog" && selectedDevlogQuote
@@ -571,7 +592,7 @@ function DeveloperComposePanel({
                 : quoteKind === "confirmation" && selectedConfirmationQuote
                   ? { kind: "confirmation" as const, ref: selectedConfirmationQuote }
                   : undefined;
-            onPost(body.trim(), quote);
+            onPost(title.trim(), body.trim(), quote);
             reset();
           }}
           className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
@@ -976,7 +997,7 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
           {isDeveloper && (
             <DeveloperComposePanel
               ownerId={user?.id}
-              onPost={(body, quote) => {
+              onPost={(title, body, quote) => {
                 const localPost: CommunityPost = {
                   id: `new-${Date.now()}`,
                   communityId: developerCommunityId,
@@ -984,6 +1005,7 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
                   authorName: user?.name ?? "あなた",
                   authorAvatar: developerCommunityProfile.avatar,
                   authorHandle: developerCommunityProfile.handle,
+                  title,
                   body,
                   postedAt: "たった今",
                   audienceLabel: "コミュニティ全員",
@@ -999,6 +1021,7 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
                     communityId: developerCommunityId,
                     authorId: user.id,
                     authorRole: "developer",
+                    title,
                     body,
                     devlogQuote: quote?.kind === "devlog" ? quote.ref : undefined,
                     confirmationQuote:

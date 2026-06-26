@@ -30,6 +30,7 @@ export type CommunityPost = {
   authorName: string;
   authorAvatar: string;
   authorHandle: string;
+  title?: string;
   body: string;
   postedAt: string;
   audienceLabel: string;
@@ -127,6 +128,7 @@ export const studioCommunityPostsMock: CommunityPost[] = [
     authorName: "しゃねこ",
     authorAvatar: "/images/landing/game-1.png",
     authorHandle: "shaneco_dev",
+    title: "序盤の導線について聞きたいです",
     body: "みなさんぜひプレイお願いします！序盤の導線、特に気になる点があれば教えてください。",
     postedAt: "2時間前",
     audienceLabel: "コミュニティ全員",
@@ -150,6 +152,7 @@ export const studioCommunityPostsMock: CommunityPost[] = [
     authorName: "しゃねこ",
     authorAvatar: "/images/landing/game-1.png",
     authorHandle: "shaneco_dev",
+    title: "週末のバグ修正に向けて",
     body: "今週末はバグ修正に集中します。再プレイして気づいたことがあれば歓迎です。",
     postedAt: "1週間前",
     audienceLabel: "コミュニティ全員",
@@ -166,6 +169,7 @@ export const playerCommunityFeedMock: CommunityPost[] = [
     authorName: "Sora Games",
     authorAvatar: "/images/landing/game-2.png",
     authorHandle: "soragames",
+    title: "新作デモの世界観について",
     body: "新作デモを公開しました。世界観の感想をもらえると嬉しいです。",
     postedAt: "3日前",
     audienceLabel: "参加コミュニティ",
@@ -184,6 +188,7 @@ export const playerCommunityFeedMock: CommunityPost[] = [
     authorName: "GreenSmith",
     authorAvatar: "/images/landing/game-5.png",
     authorHandle: "greensmith",
+    title: "癒し系シミュのテスト版です",
     body: "癒し系シミュのテスト版です。ゆっくり遊んでフィードバックください。",
     postedAt: "5日前",
     audienceLabel: "参加コミュニティ",
