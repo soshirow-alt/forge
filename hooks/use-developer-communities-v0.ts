@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import {
+  getDeveloperCommunitiesServerSnapshot,
   getOpenedDeveloperCommunities,
   subscribeDeveloperCommunities,
   type DeveloperCommunityProfile,
@@ -12,7 +13,7 @@ function getSnapshot(): DeveloperCommunityProfile[] {
 }
 
 function getServerSnapshot(): DeveloperCommunityProfile[] {
-  return [];
+  return getDeveloperCommunitiesServerSnapshot();
 }
 
 export function useDeveloperCommunitiesV0() {

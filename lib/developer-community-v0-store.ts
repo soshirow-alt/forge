@@ -19,6 +19,16 @@ const BUILTIN_OPEN_COMMUNITY_IDS = new Set([
   "greensmith",
 ]);
 
+const serverSnapshot: DeveloperCommunityProfile[] = [];
+
+let cachedClientSnapshot: DeveloperCommunityProfile[] | null = null;
+
+function cloneCommunities(
+  communities: DeveloperCommunityProfile[],
+): DeveloperCommunityProfile[] {
+  return communities.map((item) => ({ ...item }));
+}
+
 function readOpened(): DeveloperCommunityProfile[] {
   if (typeof window === "undefined") {
     return [];
@@ -34,11 +44,24 @@ function readOpened(): DeveloperCommunityProfile[] {
   }
 }
 
+function refreshClientSnapshot(
+  communities?: DeveloperCommunityProfile[],
+): DeveloperCommunityProfile[] {
+  cachedClientSnapshot = cloneCommunities(communities ?? readOpened());
+  return cachedClientSnapshot;
+}
+
+/** SSR / hydration 用。localStorage を読まない固定スナップショット */
+export function getDeveloperCommunitiesServerSnapshot(): DeveloperCommunityProfile[] {
+  return serverSnapshot;
+}
+
 function writeOpened(communities: DeveloperCommunityProfile[]) {
   if (typeof window === "undefined") {
     return;
   }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(communities));
+  refreshClientSnapshot(communities);
 }
 
 export function communityIdFromUser(userId: string, handle?: string): string {
@@ -60,8 +83,15 @@ export function openDeveloperCommunity(profile: DeveloperCommunityProfile) {
   }
 }
 
+/** useSyncExternalStore 用。参照が変わるのは store 更新時のみ */
 export function getOpenedDeveloperCommunities(): DeveloperCommunityProfile[] {
-  return readOpened();
+  if (typeof window === "undefined") {
+    return getDeveloperCommunitiesServerSnapshot();
+  }
+  if (cachedClientSnapshot === null) {
+    return refreshClientSnapshot();
+  }
+  return cachedClientSnapshot;
 }
 
 export function getOwnCommunityForUser(
@@ -92,7 +122,10 @@ export function subscribeDeveloperCommunities(listener: () => void): () => void 
   if (typeof window === "undefined") {
     return () => {};
   }
-  const handler = () => listener();
+  const handler = () => {
+    refreshClientSnapshot();
+    listener();
+  };
   window.addEventListener("forge-developer-community-change", handler);
   return () => window.removeEventListener("forge-developer-community-change", handler);
 }
