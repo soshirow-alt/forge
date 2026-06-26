@@ -3,20 +3,22 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "@/components/auth-provider";
+import { useGames } from "@/components/games-provider";
 import { PlayerShell } from "@/components/player-shell";
+import {
+  getExtraPlayerNotifications,
+  subscribeV0Notifications,
+} from "@/lib/community-join-v0-store";
+import { notificationToV0Item } from "@/lib/notification-v0-adapter";
 import {
   countUnread,
   filterNotifications,
-  mockNotifications,
   notificationFilterTabs,
   type NotificationFilterId,
   type NotificationKind,
   type NotificationV0Item,
 } from "@/lib/notifications-v0-mock-data";
-import {
-  getExtraPlayerNotifications,
-  subscribeV0Notifications,
-} from "@/lib/community-join-v0-store";
 import {
   Bell,
   CheckCheck,
@@ -167,27 +169,41 @@ function NotificationSection({
 }
 
 export function NotificationsV0Page() {
+  const { user, hydrated } = useAuth();
+  const {
+    getNotifications,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+    reloadNotifications,
+    getUnreadNotificationCount,
+  } = useGames();
   const [filter, setFilter] = useState<NotificationFilterId>("all");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
-  const [items, setItems] = useState<NotificationV0Item[]>(mockNotifications);
+  const [communityExtras, setCommunityExtras] = useState<NotificationV0Item[]>([]);
   const sortMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!hydrated || !user) {
+      return;
+    }
+    void reloadNotifications();
+  }, [hydrated, user, reloadNotifications]);
+
+  useEffect(() => {
     function mergeExtras() {
-      const extras = getExtraPlayerNotifications();
-      if (extras.length === 0) {
-        return;
-      }
-      setItems((current) => {
-        const ids = new Set(current.map((item) => item.id));
-        const merged = [...extras.filter((item) => !ids.has(item.id)), ...current];
-        return merged;
-      });
+      setCommunityExtras(getExtraPlayerNotifications());
     }
     mergeExtras();
     return subscribeV0Notifications(mergeExtras);
   }, []);
+
+  const items = useMemo(() => {
+    const dbItems = getNotifications().map(notificationToV0Item);
+    const ids = new Set(dbItems.map((item) => item.id));
+    const extras = communityExtras.filter((item) => !ids.has(item.id));
+    return [...extras, ...dbItems];
+  }, [communityExtras, getNotifications]);
 
   useEffect(() => {
     if (!sortMenuOpen) {
@@ -210,16 +226,14 @@ export function NotificationsV0Page() {
   const read = filtered.filter((item) => item.read);
 
   function markRead(id: string) {
-    setItems((current) =>
-      current.map((item) => (item.id === id ? { ...item, read: true } : item)),
-    );
+    markNotificationAsRead(id);
   }
 
   function markAllRead() {
-    setItems((current) => current.map((item) => ({ ...item, read: true })));
+    markAllNotificationsAsRead();
   }
 
-  const unreadCount = countUnread(items);
+  const unreadCount = user ? getUnreadNotificationCount() : countUnread(items);
 
   return (
     <PlayerShell activeNav="notifications" notificationBadge={unreadCount}>

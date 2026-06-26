@@ -126,6 +126,22 @@ export async function addProjectBookmark(
   }
 }
 
+export async function removeProjectBookmark(
+  supabase: SupabaseClient,
+  userId: string,
+  projectId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("project_bookmarks")
+    .delete()
+    .eq("user_id", userId)
+    .eq("project_id", projectId);
+
+  if (error) {
+    throw error;
+  }
+}
+
 export async function removeProjectWatch(
   supabase: SupabaseClient,
   userId: string,

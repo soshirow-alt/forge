@@ -8,12 +8,18 @@ import {
   PlayerShell,
 } from "@/components/player-shell";
 import {
-  filterSearchResults,
+  filterSearchWorks,
+  gameToSearchResult,
+  getPublicSubmittedGames,
+  mergeSearchResults,
+  sortSearchWorks,
+} from "@/lib/discovery-public-games";
+import { useGames } from "@/components/games-provider";
+import {
   paginateSearchResults,
   searchFeatureTagFilters,
   searchGenreFilters,
   searchWorkResults,
-  sortSearchResults,
   type SearchSortId,
 } from "@/lib/search-v0-mock-data";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
@@ -70,6 +76,7 @@ function parseFeatures(param: string | null): string[] {
 }
 
 function WorksSearchContent() {
+  const { submittedGames, getSupportCount } = useGames();
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryFromUrl = searchParams.get("q")?.trim() ?? "";
@@ -92,12 +99,19 @@ function WorksSearchContent() {
     setSelectedFeatures(parseFeatures(featureParam));
   }, [queryFromUrl, genreParam, featureParam]);
 
+  const catalog = useMemo(() => {
+    const realWorks = getPublicSubmittedGames(submittedGames).map((game) =>
+      gameToSearchResult(game, getSupportCount(game.id)),
+    );
+    return mergeSearchResults(realWorks, searchWorkResults);
+  }, [submittedGames, getSupportCount]);
+
   const filtered = useMemo(
-    () => filterSearchResults(searchWorkResults, queryFromUrl, genresFromUrl, featuresFromUrl),
-    [queryFromUrl, genresFromUrl, featuresFromUrl],
+    () => filterSearchWorks(catalog, queryFromUrl, genresFromUrl, featuresFromUrl),
+    [catalog, queryFromUrl, genresFromUrl, featuresFromUrl],
   );
   const sorted = useMemo(
-    () => sortSearchResults(filtered, sortFromUrl),
+    () => sortSearchWorks(filtered, sortFromUrl),
     [filtered, sortFromUrl],
   );
   const pagination = useMemo(

@@ -11,12 +11,14 @@ type GameChangeCheckSectionProps = {
   gameId: string;
   playableVersion: string | undefined;
   onTryVersion: () => void;
+  onViewUpdate?: () => void;
 };
 
 export function GameChangeCheckSection({
   gameId,
   playableVersion,
   onTryVersion,
+  onViewUpdate,
 }: GameChangeCheckSectionProps) {
   const { getChangeCheckState } = useGames();
   const [state, setState] = useState<ChangeCheckState | null>(null);
@@ -44,6 +46,10 @@ export function GameChangeCheckSection({
   }
 
   function handleViewUpdate() {
+    if (onViewUpdate) {
+      onViewUpdate();
+      return;
+    }
     const element = document.getElementById(GAME_PROJECT_HISTORY_SECTION_ID);
     element?.scrollIntoView({ behavior: "smooth", block: "start" });
   }

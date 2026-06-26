@@ -15,6 +15,12 @@ import {
   FeedbackTabPanel,
   FollowingTabPanel,
 } from "@/components/mypage-v0-extra-tabs";
+import { MyPageDeveloperTab } from "@/components/mypage-developer-tab";
+import { MyPageLoopPanel } from "@/components/mypage-loop-panel";
+import {
+  MyPageSavedRealPanel,
+} from "@/components/mypage-real-panels";
+import { PlayHistorySection } from "@/components/play-history-section";
 import { MyPageGameActionsMenu } from "@/components/mypage-game-actions-menu";
 import {
   MYPAGE_LIST_PAGE_SIZE,
@@ -69,13 +75,15 @@ export type MyPageTab =
   | "play-history"
   | "feedback"
   | "achievements"
-  | "following";
+  | "following"
+  | "developer";
 
 const TAB_IDS: MyPageTab[] = [
   "witnessing",
   "saved",
   "play-history",
   "feedback",
+  "developer",
   "achievements",
   "following",
 ];
@@ -578,10 +586,11 @@ function MyPagePageContent() {
       <MyPageTabs activeTab={activeTab} onTabChange={(tab) => setTab(tab as MyPageTab)} />
 
       <div role="tabpanel">
-        {activeTab === "witnessing" && <WitnessingTabPanel />}
-        {activeTab === "saved" && <SavedTabPanel />}
-        {activeTab === "play-history" && <PlayHistoryTabPanel />}
+        {activeTab === "witnessing" && <MyPageLoopPanel />}
+        {activeTab === "saved" && <MyPageSavedRealPanel />}
+        {activeTab === "play-history" && <PlayHistorySection />}
         {activeTab === "feedback" && <FeedbackTabPanel />}
+        {activeTab === "developer" && <MyPageDeveloperTab />}
         {activeTab === "achievements" && <AchievementsTabPanel />}
         {activeTab === "following" && <FollowingTabPanel />}
       </div>

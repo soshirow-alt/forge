@@ -3,8 +3,16 @@
 import { HorizontalCardPager } from "@/components/horizontal-card-pager";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useGames } from "@/components/games-provider";
 import { GameThumbnail, PlayerShell } from "@/components/player-shell";
+import {
+  gameToHomeCard,
+  getPublicSubmittedGames,
+  mergeHomeCards,
+  sortGamesByNewest,
+  sortGamesByUpdated,
+} from "@/lib/discovery-public-games";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import {
   heroSlides,
@@ -112,16 +120,20 @@ function SectionHeader({ title, href }: { title: string; href?: string }) {
   );
 }
 
-function HeroCarousel() {
+function HeroCarousel({ slides }: { slides: HomeGameCard[] }) {
   const [index, setIndex] = useState(0);
-  const slide = heroSlides[index];
+  const slide = slides[index] ?? slides[0];
+
+  if (!slide) {
+    return null;
+  }
 
   function goPrev() {
-    setIndex((current) => (current === 0 ? heroSlides.length - 1 : current - 1));
+    setIndex((current) => (current === 0 ? slides.length - 1 : current - 1));
   }
 
   function goNext() {
-    setIndex((current) => (current === heroSlides.length - 1 ? 0 : current + 1));
+    setIndex((current) => (current === slides.length - 1 ? 0 : current + 1));
   }
 
   return (
@@ -180,7 +192,7 @@ function HeroCarousel() {
       </div>
 
       <div className="flex justify-center gap-2 border-t border-zinc-800/80 py-3">
-        {heroSlides.map((item, dotIndex) => (
+        {slides.map((item, dotIndex) => (
           <button
             key={item.id}
             type="button"
@@ -197,16 +209,63 @@ function HeroCarousel() {
 }
 
 export function DiscoveryHomePage() {
+  const { submittedGames, getSupportCount } = useGames();
+
+  const publicGames = useMemo(
+    () => getPublicSubmittedGames(submittedGames),
+    [submittedGames],
+  );
+
+  const realNewGames = useMemo(
+    () =>
+      sortGamesByNewest(publicGames).map((game) =>
+        gameToHomeCard(game, getSupportCount(game.id)),
+      ),
+    [publicGames, getSupportCount],
+  );
+
+  const realUpdatedGames = useMemo(
+    () =>
+      sortGamesByUpdated(publicGames).map((game) =>
+        gameToHomeCard(game, getSupportCount(game.id)),
+      ),
+    [publicGames, getSupportCount],
+  );
+
+  const heroItems = useMemo(
+    () => mergeHomeCards(realUpdatedGames.slice(0, 3), heroSlides),
+    [realUpdatedGames],
+  );
+
+  const newItems = useMemo(
+    () => mergeHomeCards(realNewGames, newGames),
+    [realNewGames],
+  );
+
+  const updatedItems = useMemo(
+    () => mergeHomeCards(realUpdatedGames, recentlyUpdatedGames),
+    [realUpdatedGames],
+  );
+
+  const popularItems = useMemo(() => {
+    const realPopular = [...publicGames]
+      .sort(
+        (a, b) => getSupportCount(b.id) - getSupportCount(a.id),
+      )
+      .map((game) => gameToHomeCard(game, getSupportCount(game.id)));
+    return mergeHomeCards(realPopular, popularGames);
+  }, [publicGames, getSupportCount]);
+
   return (
     <PlayerShell activeNav="home">
       <div className="space-y-10">
-        <HeroCarousel />
+        <HeroCarousel slides={heroItems} />
 
         <section>
           <SectionHeader title="最近更新された作品" href="/search" />
           <div className="mt-4 px-2">
             <HorizontalCardPager
-              items={[...recentlyUpdatedGames]}
+              items={updatedItems}
               getKey={(game) => game.id}
               pageSize={4}
               renderItem={(game) => <HorizontalGameCard game={game} compact />}
@@ -218,7 +277,7 @@ export function DiscoveryHomePage() {
           <SectionHeader title="今週人気の作品" href="/search" />
           <div className="mt-4 px-2">
             <HorizontalCardPager
-              items={popularGames.map((game, index) => ({ game, rank: index + 1 }))}
+              items={popularItems.map((game, index) => ({ game, rank: index + 1 }))}
               getKey={({ game }) => game.id}
               pageSize={4}
               renderItem={({ game, rank }) => (
@@ -232,7 +291,7 @@ export function DiscoveryHomePage() {
           <SectionHeader title="新着作品" href="/search" />
           <div className="mt-4 px-2">
             <HorizontalCardPager
-              items={[...newGames]}
+              items={newItems}
               getKey={(game) => game.id}
               pageSize={4}
               renderItem={(game) => <HorizontalGameCard game={game} compact />}

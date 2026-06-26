@@ -3,9 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { GameChangeCheckCard } from "@/components/game-change-check-card";
+import { GameChangeCheckSection } from "@/components/game-change-check-section";
+import {
+  GameDetailRealVoiceLayer,
+  useGameDetailEngagement,
+  type GameDetailRealVoiceHandle,
+} from "@/components/game-detail-real-voice-layer";
 import { GameDetailHeroGallery } from "@/components/game-detail-hero-gallery";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FeedbackFormV0Modal,
   FeedbackSuccessV0Modal,
@@ -97,6 +103,9 @@ function GameDetailV0PageContent({ id }: { id: string }) {
   const searchParams = useSearchParams();
   const { getSubmittedGameById, dataReady, recordPlay, hasPlayedGame } = useGames();
   const submittedGame = dataReady ? getSubmittedGameById(id) : undefined;
+  const isRealProject = Boolean(
+    submittedGame && isSupabaseProjectId(submittedGame.id),
+  );
   const game = useMemo(() => {
     if (submittedGame && isSupabaseProjectId(submittedGame.id)) {
       return gameToDetailV0(submittedGame);
@@ -117,37 +126,73 @@ function GameDetailV0PageContent({ id }: { id: string }) {
   );
   const [feedbackStep, setFeedbackStep] = useState<FeedbackFlowStep>("closed");
   const [voicesRefreshKey, setVoicesRefreshKey] = useState(0);
-  const [watching, setWatching] = useState(game.watching);
-  const [saved, setSaved] = useState(game.saved);
   const [following, setFollowing] = useState(game.developer.following);
+  const [mockWatching, setMockWatching] = useState(game.watching);
+  const [mockSaved, setMockSaved] = useState(game.saved);
+  const [played, setPlayed] = useState(false);
+  const voiceLayerRef = useRef<GameDetailRealVoiceHandle>(null);
+  const {
+    watching: realWatching,
+    saved: realSaved,
+    toggleWatch,
+    toggleSaved,
+  } = useGameDetailEngagement(resolvedId, isRealProject);
+  const watching = isRealProject ? realWatching : mockWatching;
+  const saved = isRealProject ? realSaved : mockSaved;
 
   const changeCheckOverride = parseChangeCheckPreviewOverride(
     searchParams.get("changeCheck"),
   );
-  const changeCheckState = resolveChangeCheckPreviewState(
+  const previewChangeCheckState = resolveChangeCheckPreviewState(
     resolvedId,
     changeCheckOverride,
   );
   const returningPreview = searchParams.get("returning") === "1";
   const isReturningPlayer =
     returningPreview || (hydrated && isLoggedIn && hasPlayedGame(resolvedId));
-  const showChangeCheck = Boolean(isReturningPlayer && changeCheckState);
+  const showPreviewChangeCheck = Boolean(
+    !isRealProject && isReturningPlayer && previewChangeCheckState,
+  );
+
+  useEffect(() => {
+    if (isRealProject && hydrated && isLoggedIn) {
+      setPlayed(hasPlayedGame(resolvedId));
+    }
+  }, [isRealProject, hydrated, isLoggedIn, hasPlayedGame, resolvedId]);
 
   const handlePlay = useCallback(() => {
     requireAuth(async () => {
       if (hasRealPlayUrl && submittedGame?.playUrl) {
         await recordPlay(submittedGame.id);
         window.open(submittedGame.playUrl, "_blank", "noopener,noreferrer");
+        if (isRealProject) {
+          setPlayed(true);
+          voiceLayerRef.current?.notifyPlayComplete();
+          return;
+        }
         setFeedbackStep("first-voice");
         return;
       }
       setFeedbackStep("play-stub");
     }, returnPath);
-  }, [requireAuth, returnPath, hasRealPlayUrl, submittedGame, recordPlay]);
+  }, [
+    requireAuth,
+    returnPath,
+    hasRealPlayUrl,
+    submittedGame,
+    recordPlay,
+    isRealProject,
+  ]);
 
   const handleFeedback = useCallback(() => {
-    requireAuth(() => setFeedbackStep("full-form"), returnPath);
-  }, [requireAuth, returnPath]);
+    requireAuth(() => {
+      if (isRealProject) {
+        voiceLayerRef.current?.openForm();
+        return;
+      }
+      setFeedbackStep("full-form");
+    }, returnPath);
+  }, [requireAuth, returnPath, isRealProject]);
 
   const handleProtectedAction = useCallback(
     (action: () => void) => {
@@ -158,47 +203,66 @@ function GameDetailV0PageContent({ id }: { id: string }) {
 
   const handleFeedbackSuccess = useCallback(
     (body?: string) => {
+      if (isRealProject) {
+        return;
+      }
       const defaultBody = `${firstVoiceQuestion.question}：ちょうどよい。世界観がとても良かったです。最終章が楽しみです。`;
       appendSessionVoice(game.id, createPreviewVoiceEntry(body?.trim() || defaultBody));
       setVoicesRefreshKey((value) => value + 1);
       setActiveTab("voices");
       setFeedbackStep("success");
     },
-    [game.id],
+    [game.id, isRealProject],
   );
 
-  useFeedbackFlowLock(feedbackStep);
+  const handleRealVoiceComplete = useCallback(() => {
+    setVoicesRefreshKey((value) => value + 1);
+    setActiveTab("voices");
+  }, []);
+
+  useFeedbackFlowLock(isRealProject ? "closed" : feedbackStep);
 
   return (
     <PlayerShell>
-      {feedbackStep === "play-stub" && (
-        <PlayStubV0Modal
-          game={game}
-          onClose={() => setFeedbackStep("closed")}
-          onPlayComplete={() => setFeedbackStep("first-voice")}
+      {isRealProject ? (
+        <GameDetailRealVoiceLayer
+          ref={voiceLayerRef}
+          gameId={resolvedId}
+          played={played}
+          onVoiceComplete={handleRealVoiceComplete}
         />
-      )}
-      {feedbackStep === "first-voice" && (
-        <FirstVoiceV0Modal
-          game={game}
-          onClose={() => setFeedbackStep("closed")}
-          onOpenFullForm={() => setFeedbackStep("full-form")}
-          onSubmitQuick={(answerLabel) =>
-            handleFeedbackSuccess(
-              `${firstVoiceQuestion.question}：${answerLabel}。プレイしてみて感じたことを開発者に届けました。`,
-            )
-          }
-        />
-      )}
-      {feedbackStep === "full-form" && (
-        <FeedbackFormV0Modal
-          game={game}
-          onClose={() => setFeedbackStep("closed")}
-          onSubmit={handleFeedbackSuccess}
-        />
-      )}
-      {feedbackStep === "success" && (
-        <FeedbackSuccessV0Modal game={game} onClose={() => setFeedbackStep("closed")} />
+      ) : (
+        <>
+          {feedbackStep === "play-stub" && (
+            <PlayStubV0Modal
+              game={game}
+              onClose={() => setFeedbackStep("closed")}
+              onPlayComplete={() => setFeedbackStep("first-voice")}
+            />
+          )}
+          {feedbackStep === "first-voice" && (
+            <FirstVoiceV0Modal
+              game={game}
+              onClose={() => setFeedbackStep("closed")}
+              onOpenFullForm={() => setFeedbackStep("full-form")}
+              onSubmitQuick={(answerLabel) =>
+                handleFeedbackSuccess(
+                  `${firstVoiceQuestion.question}：${answerLabel}。プレイしてみて感じたことを開発者に届けました。`,
+                )
+              }
+            />
+          )}
+          {feedbackStep === "full-form" && (
+            <FeedbackFormV0Modal
+              game={game}
+              onClose={() => setFeedbackStep("closed")}
+              onSubmit={handleFeedbackSuccess}
+            />
+          )}
+          {feedbackStep === "success" && (
+            <FeedbackSuccessV0Modal game={game} onClose={() => setFeedbackStep("closed")} />
+          )}
+        </>
       )}
 
       <div className="flex flex-col gap-8 xl:flex-row xl:items-start">
@@ -277,7 +341,15 @@ function GameDetailV0PageContent({ id }: { id: string }) {
             </button>
             <button
               type="button"
-              onClick={() => handleProtectedAction(() => setWatching((value) => !value))}
+              onClick={() =>
+                handleProtectedAction(() => {
+                  if (isRealProject) {
+                    void toggleWatch();
+                    return;
+                  }
+                  setMockWatching((value) => !value);
+                })
+              }
               className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
                 watching
                   ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
@@ -289,7 +361,15 @@ function GameDetailV0PageContent({ id }: { id: string }) {
             </button>
             <button
               type="button"
-              onClick={() => handleProtectedAction(() => setSaved((value) => !value))}
+              onClick={() =>
+                handleProtectedAction(() => {
+                  if (isRealProject) {
+                    void toggleSaved();
+                    return;
+                  }
+                  setMockSaved((value) => !value);
+                })
+              }
               className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
                 saved
                   ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
@@ -313,14 +393,23 @@ function GameDetailV0PageContent({ id }: { id: string }) {
             </button>
           </div>
 
-          {showChangeCheck && changeCheckState && (
+          {isRealProject ? (
+            <GameChangeCheckSection
+              gameId={resolvedId}
+              playableVersion={submittedGame?.playableVersion}
+              onTryVersion={handlePlay}
+              onViewUpdate={() => setActiveTab("devlog")}
+            />
+          ) : null}
+
+          {showPreviewChangeCheck && previewChangeCheckState ? (
             <GameChangeCheckCard
-              state={changeCheckState}
+              state={previewChangeCheckState}
               currentVersion={game.currentVersion}
               onViewUpdate={() => setActiveTab("devlog")}
               onTryVersion={handlePlay}
             />
-          )}
+          ) : null}
 
           <div className="border-b border-zinc-800/80">
             <div className="flex gap-1 overflow-x-auto">

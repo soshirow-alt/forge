@@ -58,6 +58,7 @@ import type { ProjectVoiceNurtureSignal } from "@/lib/project-voice-nurture";
 
 import {
   addProjectBookmark,
+  removeProjectBookmark,
   addProjectSupport,
   addProjectWatch,
   fetchProjectFeedback,
@@ -240,6 +241,7 @@ type GamesContextValue = {
   followCreator: (creatorId: string) => void;
   isBookmarked: (gameId: string) => boolean;
   bookmarkGame: (gameId: string) => void;
+  unbookmarkGame: (gameId: string) => void;
   getBookmarkedGames: () => Game[];
   getPlayedGames: () => Game[];
   getSupportedGames: () => Game[];
@@ -1303,6 +1305,26 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     [user, isBookmarked],
   );
 
+  const unbookmarkGame = useCallback(
+    async (gameId: string) => {
+      if (!user || !isBookmarked(gameId)) {
+        return;
+      }
+
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return;
+      }
+
+      await removeProjectBookmark(supabase, user.id, gameId);
+      setUserEngagement((prev) => ({
+        ...prev,
+        bookmarkedProjectIds: prev.bookmarkedProjectIds.filter((id) => id !== gameId),
+      }));
+    },
+    [user, isBookmarked],
+  );
+
   const getBookmarkedGames = useCallback(() => {
     return userEngagement.bookmarkedProjectIds
       .map((id) => getSubmittedGameById(id) ?? getMockGameById(id))
@@ -1709,6 +1731,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       followCreator,
       isBookmarked,
       bookmarkGame,
+      unbookmarkGame,
       getBookmarkedGames,
       getPlayedGames,
       getSupportedGames,
@@ -1778,6 +1801,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       followCreator,
       isBookmarked,
       bookmarkGame,
+      unbookmarkGame,
       getBookmarkedGames,
       getPlayedGames,
       getSupportedGames,
