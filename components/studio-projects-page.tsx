@@ -16,6 +16,7 @@ import {
   STUDIO_PROJECTS_PAGE_SIZE,
   studioPhaseFilterOptions,
   studioProjectHref,
+  studioProjectPhaseLabel,
   studioProjectsAll,
   studioSortOptions,
   type StudioProjectCard,
@@ -32,11 +33,12 @@ import {
 } from "lucide-react";
 
 function PhaseBadge({ phase }: { phase: StudioProjectCard["phase"] }) {
+  const label = studioProjectPhaseLabel(phase);
   return (
     <span
       className={`absolute left-2 top-2 z-10 rounded-md px-2 py-0.5 text-[10px] font-semibold ${phaseBadgeClass(phase)}`}
     >
-      {phase}
+      {label}
     </span>
   );
 }

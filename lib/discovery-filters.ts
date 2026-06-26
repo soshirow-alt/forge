@@ -85,14 +85,14 @@ export function matchesPhaseFilter(game: Game, phase: PhaseFilter): boolean {
   const value = `${game.phase} ${game.status}`.toLowerCase();
 
   switch (phase) {
-    case "試作ver":
+    case "試作版":
       return (
         value.includes("試作") ||
         value.includes("プロトタイプ") ||
         value.includes("企画") ||
         value.includes("初期開発")
       );
-    case "プレイ可能ver":
+    case "プレイ可能版":
       return (
         value.includes("プレイ可能") ||
         value.includes("開発中") ||
@@ -100,7 +100,7 @@ export function matchesPhaseFilter(game: Game, phase: PhaseFilter): boolean {
         value.includes("alpha") ||
         value.includes("early access")
       );
-    case "通しプレイver":
+    case "通しプレイ版":
       return (
         value.includes("通し") ||
         value.includes("テストver") ||

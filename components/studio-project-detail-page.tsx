@@ -15,6 +15,7 @@ import {
   resolveGameDetailId,
 } from "@/lib/game-detail-v0-mock-data";
 import { projectStudioPath } from "@/lib/project-nurture-links";
+import { studioProjectPhaseLabel } from "@/lib/studio-projects-v0-mock-data";
 import {
   getStudioProjectDetail,
   parseStudioProjectTab,
@@ -102,7 +103,7 @@ function StudioProjectDetailContent({ id }: { id: string }) {
               </h1>
               <p className="mt-2 text-sm leading-relaxed text-zinc-400">{game.lead}</p>
               <p className="mt-2 text-xs text-zinc-500">
-                {project.phase} · {game.currentVersion}
+                {studioProjectPhaseLabel(project.phase)} · {game.currentVersion}
               </p>
 
               <div className="mt-5 flex flex-wrap gap-4 text-sm text-zinc-400">
