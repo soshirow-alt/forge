@@ -4,12 +4,19 @@
 
 ---
 
+## 2026-06-27 REL-2-02 — 作品概要・見どころ（設計確定）
+
+- migration **022** SQL 草案 + `docs/rel-2-02-project-overview-design.md`
+- オーナー確定: 紹介フォールバック（introduction → description）、概要は edit のみ、空カード保存ルール、localStorage 二重正本禁止
+- **migration 022 Dashboard 適用 GO**（2026-06-27）— アプリ実装は適用確認後
+
+---
+
 ## 2026-06-27 REL-2-04 追補 — FB統計ラベル
 
 - 実作品詳細の FB 指標は **distinct user_id（人数）** — UI ラベル **「FBした人」**（「フィードバック N件」ではない）
 - 見届けは **「見届け人」**（grant 人数）
 - **REL-PRE-01** — production GO 前の lint 棚卸しを `docs/official-release-wiring-plan.md` に登録
-- **REL-2-02** — オーナー GO（migration 022 設計後に実装）
 
 ---
 
