@@ -4,8 +4,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { notFound } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { DevlogConfirmationRequestPanel } from "@/components/devlog-confirmation-request-panel";
 import { StudioShell } from "@/components/studio-shell";
 import { useGames } from "@/components/games-provider";
+import {
+  EMPTY_CONFIRMATION_REQUEST_DRAFT,
+  type ConfirmationRequestDraft,
+} from "@/lib/confirmation-request-draft";
 import { projectStudioPath } from "@/lib/project-nurture-links";
 import {
   normalizePlayableVersionInput,
@@ -27,6 +32,9 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
   const [newVersion, setNewVersion] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const [confirmationDraft, setConfirmationDraft] =
+    useState<ConfirmationRequestDraft>(EMPTY_CONFIRMATION_REQUEST_DRAFT);
 
   if (!game) {
     notFound();
@@ -169,6 +177,13 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
               </div>
             )}
           </div>
+
+          <DevlogConfirmationRequestPanel
+            open={confirmationOpen}
+            onOpenChange={setConfirmationOpen}
+            draft={confirmationDraft}
+            onDraftChange={setConfirmationDraft}
+          />
 
           <button
             type="submit"

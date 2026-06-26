@@ -3,6 +3,9 @@
 **migration**: `005_version_published_notifications.sql`  
 **状態**: コード実装済み。本番は **005 適用 → deploy** の順。
 
+> **2026-06-26 以降の上位設計**: watch 全員通知・再プレイバナーは現行実装の正本。  
+> 今後の拡張（確認依頼・変化チェック・任意ターゲティング）は **`docs/change-check-confirmation-loop.md`** を参照。
+
 ---
 
 ## 設計判断の回答

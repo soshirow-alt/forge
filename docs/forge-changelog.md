@@ -4,6 +4,31 @@
 
 ---
 
+## 2026-06-26 ゲーム詳細 — 変化チェックカード（Step 2 preview mock）
+
+- `/games/[id]`（P-06 v0）— 前回プレイ済み時のみ、ヒーロー下・タブ上に変化チェックを表示（初見には非表示）
+- パターンA（確認依頼あり）: `/games/seikat-no-tabiji?returning=1`
+- パターンB（確認依頼なし）: `/games/roshin-no-zanko?returning=1`
+- 新規: `components/game-change-check-card.tsx`, `lib/change-check-preview-mock.ts`
+
+---
+
+## 2026-06-26 開発ログ公開 — 確認依頼の任意入力 UI（Step 1 mock）
+
+- `/projects/[id]/devlog/new` — 折りたたみ「確認依頼を追加（任意）」セクション（今回変わったこと / 見てほしいこと / 所要時間）
+- 各ラベル横にヒントワッペン（ホバーでツールチップ）。未入力でも投稿可能（永続化・通知連携は未実装）
+- 新規: `components/devlog-confirmation-request-panel.tsx`, `components/input-hint-badge.tsx`, `lib/confirmation-request-draft.ts`
+
+---
+
+## 2026-06-26 確認依頼 / 変化チェック — 設計正本化
+
+- 新規 `docs/change-check-confirmation-loop.md` — 再プレイ通知から「確認依頼・変化チェック」への設計整理（任意入力・変更内容起点・表示理由最大2・採用断定の慎重化）
+- `docs/version-published-loop-design.md` / `docs/forge-p0-improvement-loop-plan.md` — 上位設計への参照を追加
+- 実装は未着手（UI mock → DB はオーナー GO 後）
+
+---
+
 ## 2026-06-26 マイコミュニティ — スレッド作成 UI 整理
 
 - `/studio/community` — 宛先選択を削除（常にコミュニティ全員へ配信）

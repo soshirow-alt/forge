@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { GameChangeCheckCard } from "@/components/game-change-check-card";
 import { GameDetailHeroGallery } from "@/components/game-detail-hero-gallery";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo, useState } from "react";
@@ -21,6 +22,10 @@ import { GameThumbnail, PlayerShell } from "@/components/player-shell";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { gameDetailReturnPath } from "@/lib/login-return-url";
+import {
+  parseChangeCheckPreviewOverride,
+  resolveChangeCheckPreviewState,
+} from "@/lib/change-check-preview-mock";
 import { getGameDetailV0, resolveGameDetailId } from "@/lib/game-detail-v0-mock-data";
 import {
   gameToDetailV0,
@@ -88,7 +93,7 @@ function parseDetailTab(param: string | null): DetailTab {
 
 function GameDetailV0PageContent({ id }: { id: string }) {
   const searchParams = useSearchParams();
-  const { getSubmittedGameById, dataReady, recordPlay } = useGames();
+  const { getSubmittedGameById, dataReady, recordPlay, hasPlayedGame } = useGames();
   const submittedGame = dataReady ? getSubmittedGameById(id) : undefined;
   const game = useMemo(() => {
     if (submittedGame && isSupabaseProjectId(submittedGame.id)) {
@@ -108,6 +113,18 @@ function GameDetailV0PageContent({ id }: { id: string }) {
   const [watching, setWatching] = useState(game.watching);
   const [saved, setSaved] = useState(game.saved);
   const [following, setFollowing] = useState(game.developer.following);
+
+  const changeCheckOverride = parseChangeCheckPreviewOverride(
+    searchParams.get("changeCheck"),
+  );
+  const changeCheckState = resolveChangeCheckPreviewState(
+    resolvedId,
+    changeCheckOverride,
+  );
+  const returningPreview = searchParams.get("returning") === "1";
+  const isReturningPlayer =
+    returningPreview || (hydrated && isLoggedIn && hasPlayedGame(resolvedId));
+  const showChangeCheck = Boolean(isReturningPlayer && changeCheckState);
 
   const handlePlay = useCallback(() => {
     requireAuth(async () => {
@@ -288,6 +305,15 @@ function GameDetailV0PageContent({ id }: { id: string }) {
               {following ? "開発者フォロー中" : "開発者をフォロー"}
             </button>
           </div>
+
+          {showChangeCheck && changeCheckState && (
+            <GameChangeCheckCard
+              state={changeCheckState}
+              currentVersion={game.currentVersion}
+              onViewUpdate={() => setActiveTab("devlog")}
+              onTryVersion={handlePlay}
+            />
+          )}
 
           <div className="border-b border-zinc-800/80">
             <div className="flex gap-1 overflow-x-auto">
