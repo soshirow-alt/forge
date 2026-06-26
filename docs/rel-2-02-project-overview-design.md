@@ -13,7 +13,7 @@
 |---------|------|------|
 | **設計 GO** | ✅ 2026-06-27 | 本 doc + SQL 草案の方向で進めてよい |
 | **migration 022 適用 GO** | ✅ 2026-06-27 | Dashboard で `022_project_overview.sql` を適用してよい |
-| **実装 GO** | ❌ 未 | Dashboard 適用確認後にアプリ配線 |
+| **実装 GO** | ✅ 2026-06-27（migration 022 適用済み） |
 
 本番 deploy / main merge / `PLAYER_VISIBLE=true` は引き続き禁止。
 

@@ -1,4 +1,5 @@
 import { getBuiltInThumbnailUrl, isBuiltInThumbnailId } from "@/lib/demo-thumbnails";
+import type { ProjectOverviewFeature } from "@/lib/project-overview";
 
 export type Game = {
   id: string;
@@ -28,6 +29,8 @@ export type Game = {
   focusNotes?: string;
   playableVersion?: string;
   releaseStatus?: "in_development" | "released" | "release_reopened";
+  overviewIntroduction?: string | null;
+  overviewFeatures?: ProjectOverviewFeature[] | null;
 };
 
 export const games: Game[] = [

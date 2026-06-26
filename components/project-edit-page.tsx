@@ -3,8 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { notFound } from "next/navigation";
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import { useAuth } from "@/components/auth-provider";
+import {
+  GameDetailOverviewV0Tab,
+  type GameOverviewSavePayload,
+} from "@/components/game-detail-overview-v0-tab";
 import { StudioShell } from "@/components/studio-shell";
 import { ForgeSdkNote } from "@/components/forge-sdk-note";
 import { PlayEnvironmentFormFields } from "@/components/play-environment-form-fields";
@@ -18,7 +22,9 @@ import {
   parsePlayEnvironmentFromTags,
 } from "@/lib/play-environment";
 import { projectStudioPath } from "@/lib/project-nurture-links";
+import { normalizeOverviewIntroduction } from "@/lib/project-overview";
 import type { ProjectVisibility } from "@/lib/project-visibility";
+import { gameToDetailV0 } from "@/lib/submitted-game-v0-adapter";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import {
   createEmptyPromptDraft,
@@ -43,7 +49,7 @@ function readImageAsDataUrl(file: File): Promise<string> {
 export function ProjectEditPage({ projectId }: { projectId: string }) {
   const router = useRouter();
   const { user, hydrated: authHydrated } = useAuth();
-  const { getSubmittedGameById, isProjectOwner, updateProjectDetails, getDeveloperVersionPrompts, saveDeveloperVersionPrompts, dataReady } =
+  const { getSubmittedGameById, isProjectOwner, updateProjectDetails, updateProjectOverview, getDeveloperVersionPrompts, saveDeveloperVersionPrompts, dataReady } =
     useGames();
 
   const game = getSubmittedGameById(projectId);
@@ -73,6 +79,14 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showPromptValidation, setShowPromptValidation] = useState(false);
+  const [overviewSaveMessage, setOverviewSaveMessage] = useState<string | null>(null);
+  const [overviewSaveError, setOverviewSaveError] = useState<string | null>(null);
+  const [overviewSaving, setOverviewSaving] = useState(false);
+
+  const overviewDisplayGame = useMemo(
+    () => (game ? gameToDetailV0(game) : null),
+    [game],
+  );
 
   useEffect(() => {
     if (!game || formLoaded) {
@@ -211,6 +225,27 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
       setSaveError(message);
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleOverviewSave(payload: GameOverviewSavePayload) {
+    setOverviewSaveError(null);
+    setOverviewSaveMessage(null);
+    setOverviewSaving(true);
+    try {
+      await updateProjectOverview(projectId, {
+        overviewIntroduction: normalizeOverviewIntroduction(payload.introduction),
+        overviewFeatures: payload.features.length > 0 ? payload.features : null,
+      });
+      setOverviewSaveMessage("作品紹介・見どころを保存しました。");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "保存に失敗しました。時間をおいて再度お試しください。";
+      setOverviewSaveError(message);
+    } finally {
+      setOverviewSaving(false);
     }
   }
 
@@ -456,6 +491,46 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
             {isSaving ? "保存中..." : "更新する"}
           </button>
         </form>
+
+        <section id="overview" className="mt-10 scroll-mt-8">
+          <h2 className="text-xl font-semibold tracking-tight text-white">
+            作品紹介・見どころ
+          </h2>
+          <p className="mt-2 text-sm text-zinc-500">
+            プレイヤー向け作品詳細に表示する長めの紹介文と、見どころカード（最大4件）を設定できます。
+            短い説明は上の「説明」欄で編集してください。
+          </p>
+
+          {overviewSaveMessage ? (
+            <p className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+              {overviewSaveMessage}
+            </p>
+          ) : null}
+
+          {overviewSaveError ? (
+            <p
+              role="alert"
+              className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+            >
+              {overviewSaveError}
+            </p>
+          ) : null}
+
+          {overviewDisplayGame ? (
+            <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-900/80 p-6 sm:p-8">
+              <GameDetailOverviewV0Tab
+                game={overviewDisplayGame}
+                editable
+                hideVersionQuestions
+                editIntroduction={game?.overviewIntroduction ?? ""}
+                onSave={handleOverviewSave}
+              />
+              {overviewSaving ? (
+                <p className="mt-3 text-center text-sm text-zinc-500">保存中…</p>
+              ) : null}
+            </div>
+          ) : null}
+        </section>
       </main>
     </StudioShell>
   );

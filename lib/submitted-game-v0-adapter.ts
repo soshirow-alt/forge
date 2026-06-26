@@ -1,5 +1,9 @@
 import type { GameDetailV0 } from "@/lib/game-detail-v0-mock-data";
 import type { Game } from "@/lib/mock-games";
+import {
+  resolveDetailIntroduction,
+  sanitizeOverviewFeatures,
+} from "@/lib/project-overview";
 
 const DEFAULT_HERO = "/images/landing/game-1.png";
 
@@ -39,8 +43,11 @@ export function gameToDetailV0(game: Game): GameDetailV0 {
     lastUpdated: game.lastUpdated,
     watching: false,
     saved: false,
-    introduction: game.description || `${game.title}のテストプレイverです。`,
-    features: [],
+    introduction: resolveDetailIntroduction(
+      game.overviewIntroduction,
+      game.description,
+    ),
+    features: sanitizeOverviewFeatures(game.overviewFeatures) ?? [],
     developerWorry:
       game.focusNotes?.trim() ||
       "このverを遊んだ感想や、気になった点を教えてください。",

@@ -45,7 +45,7 @@ import {
 import { firstVoiceQuestion } from "@/lib/feedback-v0-mock-data";
 import { applyProjectOverviewV0 } from "@/lib/project-overview-v0-store";
 import { projectStudioPath } from "@/lib/project-nurture-links";
-import { shouldHideV0MockContent } from "@/lib/production-mode";
+import { shouldHideV0MockContent, isProductionReleaseMode } from "@/lib/production-mode";
 import { formatRelativeUpdateLabel } from "@/lib/discovery-public-games";
 import { useProjectOverviewV0 } from "@/hooks/use-project-overview-v0";
 import { useProjectPublicStats } from "@/hooks/use-project-public-stats";
@@ -169,9 +169,11 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   const hasRealPlayUrl = Boolean(submittedGame?.playUrl?.trim());
   const { revision: overviewRevision } = useProjectOverviewV0(resolvedId);
   const displayGame = useMemo(() => {
-    const base = game;
-    return applyProjectOverviewV0(base, resolvedId);
-  }, [game, resolvedId, overviewRevision]);
+    if (isRealProject || isProductionReleaseMode()) {
+      return game;
+    }
+    return applyProjectOverviewV0(game, resolvedId);
+  }, [game, resolvedId, overviewRevision, isRealProject]);
   const { isLoggedIn, hydrated, requireAuth, user } = useRequireAuth();
   const returnPath = gameDetailReturnPath(resolvedId);
   const detailId = resolveGameDetailId(id);

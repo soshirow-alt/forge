@@ -52,7 +52,9 @@ import {
   insertProject,
   updateProjectDetailsInDb,
   updateProjectFromSubmitForm,
+  updateProjectOverviewInDb,
   updateProjectPlayableVersion,
+  type ProjectOverviewUpdate,
 } from "@/lib/supabase/projects";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import type { ProjectVoiceNurtureSignal } from "@/lib/project-voice-nurture";
@@ -165,6 +167,7 @@ type GamesContextValue = {
   ) => Promise<Game>;
   updateSubmittedGame: (id: string, data: SubmitFormData) => Promise<void>;
   updateProjectDetails: (id: string, data: ProjectEditFormData) => Promise<void>;
+  updateProjectOverview: (id: string, data: ProjectOverviewUpdate) => Promise<void>;
   deleteSubmittedGame: (id: string) => Promise<void>;
   getSubmittedGameById: (id: string) => Game | undefined;
   getGameById: (id: string) => Game | undefined;
@@ -535,6 +538,21 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       );
     },
     [submittedGames],
+  );
+
+  const updateProjectOverview = useCallback(
+    async (id: string, data: ProjectOverviewUpdate) => {
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      const game = await updateProjectOverviewInDb(supabase, id, data);
+      setSubmittedGames((prev) =>
+        prev.map((item) => (item.id === id ? game : item)),
+      );
+    },
+    [],
   );
 
   const deleteSubmittedGame = useCallback(async (id: string) => {
@@ -1701,6 +1719,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       addSubmittedGame,
       updateSubmittedGame,
       updateProjectDetails,
+      updateProjectOverview,
       deleteSubmittedGame,
       getSubmittedGameById,
       getGameById,
@@ -1772,6 +1791,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       addSubmittedGame,
       updateSubmittedGame,
       updateProjectDetails,
+      updateProjectOverview,
       deleteSubmittedGame,
       getSubmittedGameById,
       getGameById,

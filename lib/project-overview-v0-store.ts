@@ -1,5 +1,9 @@
 import type { GameDetailFeature } from "@/lib/game-detail-v0-mock-data";
 import { resolveGameDetailId, type GameDetailV0 } from "@/lib/game-detail-v0-mock-data";
+import {
+  MAX_PROJECT_OVERVIEW_FEATURES,
+  prepareOverviewFeaturesForSave,
+} from "@/lib/project-overview";
 
 const STORAGE_KEY = "forge-v0-project-overview";
 const CHANGE_EVENT = "forge-project-overview-change";
@@ -50,21 +54,21 @@ export function getProjectOverview(id: string): ProjectOverviewDraft | null {
 export function saveProjectOverview(
   id: string,
   draft: ProjectOverviewDraft,
-): void {
+): { ok: true } | { ok: false; error: string } {
   const key = overviewStorageKey(id);
   const store = readStore();
-  const trimmedFeatures =
-    draft.features
-      ?.map((feature) => ({
-        title: feature.title.trim(),
-        description: feature.description.trim(),
-      }))
-      .filter((feature) => feature.title.length > 0)
-      .slice(0, 4) ?? [];
+
+  const featureResult = draft.features
+    ? prepareOverviewFeaturesForSave(draft.features)
+    : { ok: true as const, features: [] };
+  if (!featureResult.ok) {
+    return featureResult;
+  }
 
   const next: ProjectOverviewDraft = {
     introduction: draft.introduction?.trim() || undefined,
-    features: trimmedFeatures.length > 0 ? trimmedFeatures : undefined,
+    features:
+      featureResult.features.length > 0 ? featureResult.features : undefined,
   };
 
   if (!next.introduction && !next.features?.length) {
@@ -74,6 +78,7 @@ export function saveProjectOverview(
   }
 
   writeStore(store);
+  return { ok: true };
 }
 
 export function applyProjectOverviewV0(
@@ -104,7 +109,7 @@ export function subscribeProjectOverview(listener: () => void): () => void {
   return () => window.removeEventListener(CHANGE_EVENT, handler);
 }
 
-export const MAX_PROJECT_FEATURES = 4;
+export const MAX_PROJECT_FEATURES = MAX_PROJECT_OVERVIEW_FEATURES;
 
 export function emptyFeatureDraft(): GameDetailFeature {
   return { title: "", description: "" };

@@ -158,7 +158,11 @@ function StudioProjectDetailContent({ id }: { id: string }) {
               editable
               hideVersionQuestions
               onSave={(payload) => {
-                saveProjectOverview(gameId, payload);
+                const result = saveProjectOverview(gameId, payload);
+                if (!result.ok) {
+                  setSaveMessage(result.error);
+                  return;
+                }
                 setSaveMessage("概要を保存しました。");
               }}
             />

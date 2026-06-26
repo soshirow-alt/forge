@@ -316,8 +316,7 @@ Phase 3 — 初期版周辺（③）※ 通報・共感・実績・ランキン�
 | **概要** | `description` は既存 `projects.description` のまま。localStorage `project-overview-v0-store` の **introduction + features** を DB 正本化。未設定は非表示 |
 | **スコープ外** | `developerWorry` / `wantedVoices`（版ごと devlog 側） |
 | **設計** | `docs/rel-2-02-project-overview-design.md` + `supabase/migrations/022_project_overview.sql`（草案） |
-| **GO** | ✅ **設計 GO**（2026-06-27）— ✅ **migration 022 Dashboard 適用 GO**（2026-06-27）— **実装は適用確認後** |
-| **RUN** | ❌ アプリ実装は migration 適用確認後 |
+| **RUN** | ✅ アプリ実装済み（2026-06-27） |
 
 ### REL-2-03 開発者プロフィール `/creators/[id]` 実データ化
 

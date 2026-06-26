@@ -167,6 +167,21 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
           </dl>
         </header>
 
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link
+            href={`/projects/${projectId}/edit#overview`}
+            className="inline-flex items-center rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-violet-500/40 hover:text-violet-300"
+          >
+            作品紹介・見どころを編集
+          </Link>
+          <Link
+            href={`/projects/${projectId}/edit`}
+            className="inline-flex items-center rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-500/40 hover:text-zinc-200"
+          >
+            作品情報を編集
+          </Link>
+        </div>
+
         <div className="mt-8">
           <StudioImprovementLoop
             game={game}

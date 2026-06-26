@@ -2,6 +2,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { mergeTagsWithRecruitment } from "@/lib/game-tags";
 import type { Game } from "@/lib/mock-games";
 import { DEFAULT_PLAYABLE_VERSION } from "@/lib/playable-version";
+import {
+  sanitizeOverviewFeatures,
+  type ProjectOverviewFeature,
+} from "@/lib/project-overview";
 import type { ProjectRow } from "@/lib/supabase/schema";
 import type { ProjectEditFormData, SubmitFormData } from "@/lib/project-form";
 
@@ -16,6 +20,8 @@ export function projectRowToGame(row: ProjectRow): Game {
     creator: row.creator,
     genre: row.genre,
     description: row.description,
+    overviewIntroduction: row.overview_introduction ?? null,
+    overviewFeatures: sanitizeOverviewFeatures(row.overview_features),
     phase: row.phase,
     status: row.status,
     lookingForTesters: row.looking_for_testers,
@@ -177,6 +183,33 @@ export async function updateProjectDetailsInDb(
       discord_url: data.discordUrl ?? null,
       official_url: data.officialUrl ?? null,
       visibility: data.visibility,
+    })
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return projectRowToGame(row as ProjectRow);
+}
+
+export type ProjectOverviewUpdate = {
+  overviewIntroduction: string | null;
+  overviewFeatures: ProjectOverviewFeature[] | null;
+};
+
+export async function updateProjectOverviewInDb(
+  supabase: SupabaseClient,
+  id: string,
+  data: ProjectOverviewUpdate,
+): Promise<Game> {
+  const { data: row, error } = await supabase
+    .from("projects")
+    .update({
+      overview_introduction: data.overviewIntroduction,
+      overview_features: data.overviewFeatures,
     })
     .eq("id", id)
     .select("*")

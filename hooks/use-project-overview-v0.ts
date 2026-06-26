@@ -17,8 +17,12 @@ export function useProjectOverviewV0(projectId: string) {
 
   const save = useCallback(
     (next: ProjectOverviewDraft) => {
-      saveProjectOverview(projectId, next);
+      const result = saveProjectOverview(projectId, next);
+      if (!result.ok) {
+        return result;
+      }
       setRevision((n) => n + 1);
+      return result;
     },
     [projectId],
   );

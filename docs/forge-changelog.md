@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-06-27 REL-2-02 — 作品概要・見どころ Supabase 配線
+
+- migration **022** 適用後 — `overview_introduction` / `overview_features` を DB 正本化
+- **読み取り**: `/games/[id]` 実作品は DB のみ（本番・実 UUID で localStorage overlay 無効）。紹介は introduction → description フォールバック
+- **書き込み**: `/projects/[id]/edit#overview`（正本）。Studio から編集リンク
+- 特徴カード: 片方のみ入力時は保存拒否（「タイトルと説明の両方を入れてください」）
+- submit フォームには概要欄を追加しない（edit のみ）
+
+---
+
 ## 2026-06-27 REL-2-02 — 作品概要・見どころ（設計確定）
 
 - migration **022** SQL 草案 + `docs/rel-2-02-project-overview-design.md`

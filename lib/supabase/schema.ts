@@ -6,6 +6,8 @@ export type ProjectRow = {
   creator: string;
   genre: string;
   description: string;
+  overview_introduction?: string | null;
+  overview_features?: unknown;
   phase: string;
   status: string;
   looking_for_testers: boolean;

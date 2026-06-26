@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { Compass, ChevronDown, Plus, Sparkles, Trash2 } from "lucide-react";
 import type { GameDetailFeature, GameDetailV0 } from "@/lib/game-detail-v0-mock-data";
 import {
+  MAX_PROJECT_OVERVIEW_FEATURES,
+  prepareOverviewFeaturesForSave,
+} from "@/lib/project-overview";
+import {
   emptyFeatureDraft,
   MAX_PROJECT_FEATURES,
   type ProjectOverviewDraft,
@@ -36,6 +40,7 @@ export function GameDetailOverviewV0Tab({
   onSave,
   onFeedback,
   feedbackCtaLabel = "フィードバックする",
+  editIntroduction,
 }: {
   game: GameDetailV0;
   editable?: boolean;
@@ -44,21 +49,26 @@ export function GameDetailOverviewV0Tab({
   onSave?: (payload: GameOverviewSavePayload) => void;
   onFeedback?: () => void;
   feedbackCtaLabel?: string;
+  /** 編集時 — DB の overview_introduction（未設定は空。description フォールバックは含めない） */
+  editIntroduction?: string;
 }) {
   const [introExpanded, setIntroExpanded] = useState(false);
-  const [introduction, setIntroduction] = useState(game.introduction);
+  const [introduction, setIntroduction] = useState(
+    editable ? (editIntroduction ?? "") : game.introduction,
+  );
   const [features, setFeatures] = useState<GameDetailFeature[]>(game.features);
   const [developerWorry, setDeveloperWorry] = useState(game.developerWorry);
   const [wantedVoices, setWantedVoices] = useState(game.wantedVoices.join("\n"));
+  const [saveValidationError, setSaveValidationError] = useState<string | null>(null);
 
   useEffect(() => {
-    setIntroduction(game.introduction);
+    setIntroduction(editable ? (editIntroduction ?? "") : game.introduction);
     setFeatures(
       game.features.length > 0
         ? game.features.map((feature) => ({ ...feature }))
         : [emptyFeatureDraft()],
     );
-  }, [game.id, game.introduction, game.features]);
+  }, [game.id, game.introduction, game.features, editable, editIntroduction]);
 
   const introPreview =
     introduction.length > 120 && !introExpanded
@@ -72,6 +82,7 @@ export function GameDetailOverviewV0Tab({
   const displayFeatures =
     visibleFeatures.length > 0 ? visibleFeatures : game.features;
   const showFeaturesSection = editable || displayFeatures.length > 0;
+  const showIntroSection = editable || introduction.trim().length > 0;
 
   function updateFeature(index: number, patch: Partial<GameDetailFeature>) {
     setFeatures((current) =>
@@ -94,16 +105,17 @@ export function GameDetailOverviewV0Tab({
   }
 
   function handleSave() {
-    const payload: GameOverviewSavePayload = {
+    const featureResult = prepareOverviewFeaturesForSave(features);
+    if (!featureResult.ok) {
+      setSaveValidationError(featureResult.error);
+      return;
+    }
+
+    setSaveValidationError(null);
+    onSave?.({
       introduction,
-      features: features
-        .map((feature) => ({
-          title: feature.title.trim(),
-          description: feature.description.trim(),
-        }))
-        .filter((feature) => feature.title.length > 0),
-    };
-    onSave?.(payload);
+      features: featureResult.features,
+    });
   }
 
   return (
@@ -113,6 +125,7 @@ export function GameDetailOverviewV0Tab({
       }
     >
       <div className="space-y-6">
+        {showIntroSection ? (
         <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
           <h2 className="text-base font-semibold text-white">作品紹介</h2>
           {editable ? (
@@ -142,6 +155,7 @@ export function GameDetailOverviewV0Tab({
             </>
           )}
         </section>
+        ) : null}
 
         {showFeaturesSection ? (
         <section>
@@ -216,6 +230,12 @@ export function GameDetailOverviewV0Tab({
             </div>
           )}
         </section>
+        ) : null}
+
+        {saveValidationError ? (
+          <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {saveValidationError}
+          </p>
         ) : null}
 
         {editable && (
