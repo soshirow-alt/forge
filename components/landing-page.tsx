@@ -71,9 +71,9 @@ const featuredGames = [
   },
 ] as const;
 
-function ForgeLogo() {
+function ForgeLogo({ href = "/" }: { href?: string }) {
   return (
-    <Link href="/landing" className="flex items-center gap-3">
+    <Link href={href} className="flex items-center gap-3">
       <span className="flex size-9 items-center justify-center rounded-xl bg-white/90 text-zinc-950 shadow-lg shadow-white/20">
         <Flame className="size-5" aria-hidden="true" />
       </span>
@@ -158,12 +158,12 @@ function CtaCard({
   );
 }
 
-export function LandingPage() {
+export function LandingPage({ logoHref = "/" }: { logoHref?: string }) {
   return (
     <main className="relative min-h-screen bg-[#0a0a0a] text-zinc-100">
       <header className="absolute inset-x-0 top-0 z-20">
         <div className="mx-auto flex max-w-[1320px] items-center justify-between px-6 py-6 sm:px-8">
-          <ForgeLogo />
+          <ForgeLogo href={logoHref} />
           <nav className="flex items-center gap-3">
             <Link
               href="/login"
@@ -242,7 +242,7 @@ export function LandingPage() {
                   title="プレイヤーとして参加"
                   body={"ゲームを探してプレイし、\n開発者にフィードバックを届けましょう。"}
                   primaryLabel="ゲームを探す"
-                  primaryHref="/"
+                  primaryHref="/home"
                   primaryClass="bg-white text-zinc-950 shadow-white/20"
                   secondaryHref="/register"
                 />
@@ -253,6 +253,7 @@ export function LandingPage() {
                   title="開発者としてはじめる"
                   body={"あなたのゲームを公開し、\nプレイヤーと一緒に育てていきましょう。"}
                   primaryLabel="Studioに入る"
+                  primaryHref="/login"
                   primaryClass="bg-emerald-500 text-zinc-950 shadow-emerald-500/30"
                   secondaryHref="/register"
                 />
@@ -266,7 +267,7 @@ export function LandingPage() {
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-white">注目の開発中ゲーム</h2>
           <Link
-            href="/"
+            href="/search"
             className="flex items-center gap-1.5 text-sm font-medium text-violet-300 transition-colors hover:text-violet-200"
           >
             すべて見る
@@ -277,7 +278,7 @@ export function LandingPage() {
           {featuredGames.map((game) => (
             <Link
               key={game.title}
-              href="/"
+              href="/search"
               className="group overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/70 transition-colors hover:border-violet-500/40"
             >
               <div className="relative aspect-[4/3] overflow-hidden">
