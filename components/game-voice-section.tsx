@@ -183,7 +183,7 @@ export function GameVoiceSection({
     if (embedded) {
       return (
         <section className={sectionClassName}>
-          <p className="text-sm font-medium text-orange-300">回答を送信しました</p>
+          <p className="text-sm font-medium text-violet-300">回答を送信しました</p>
           <p className="mt-1 text-xs text-zinc-500">
             あなたの回答は v{playableVersion} 向けに開発者に届きます。
           </p>
@@ -239,7 +239,9 @@ export function GameVoiceSection({
           )}
         </>
       )}
-      <p className={`text-xs text-orange-400/80 ${embedded ? "" : "mt-1"}`}>
+      <p
+        className={`text-xs ${embedded ? "text-zinc-500" : "mt-1 text-orange-400/80"}`}
+      >
         1つ答えるだけでOK。全部答える必要はありません。
       </p>
 
@@ -271,7 +273,11 @@ export function GameVoiceSection({
         onClick={() => {
           void handleSubmitVoice();
         }}
-        className="mt-4 w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:opacity-50"
+        className={
+          embedded
+            ? "mt-4 w-full rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:opacity-50"
+            : "mt-4 w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:opacity-50"
+        }
       >
         {submitting ? "送信中..." : "回答する"}
       </button>

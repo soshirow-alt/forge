@@ -4,6 +4,25 @@
 
 ---
 
+## 2026-06-27 — モーダル配置・初声 UI の v0 統一（全体確認）
+
+- **実作品**（`PostPlayVoiceOverlay`）— 画面下段のオレンジボトムシート → v0 同型の **中央モーダル**（backdrop・紫 CTA・× 閉じる）
+- **v0 モーダル共通** — `feedback-v0-modals` の `ModalShell`・`V0SimpleModal` もモバイルで下段 (`items-end`) だったのを **常に中央** に統一
+- **オーバーレイ内フォーム** — `GameVoiceSection` の `embedded` 時の送信ボタン・完了文言を紫 v0 トーンに（モーダル内だけ）
+- **確認済みで問題なし** — 通報・コミュニティ申請・Gacha・ModifyGame・PlayLaunch 等の他ダイアログはもともと中央配置
+- **未使用** — `game-detail-page-client.tsx`（旧詳細）はルート未接続のまま（`/games/[id]` は `GameDetailV0Page`）
+- **別テーマ** — ページ内 CTA のオレンジグラデ（ホーム・Studio・サイドバー等）は v0 全面移行の別作業
+
+---
+
+## 2026-06-27 — future-demo 作品を非公開化（オーナー依頼）
+
+- `npm run hide:future-demo:staging` — 本番 Supabase の `[future-demo]` 32 件を `visibility: private` に変更
+- 発見ホーム（本番モード Preview 含む）から遠雷の譜・琥珀の回廊等が消える
+- 復元: `npm run show:future-demo:staging`
+
+---
+
 ## 2026-06-27 — 登録済みメールの新規登録エラー表示
 
 - Supabase は登録済みメールでも error を返さず `identities: []` で成功扱いすることがある → `/auth/verify-email` へ誤遷移していた

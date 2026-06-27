@@ -38,7 +38,7 @@ function ModalShell({ title, subtitle, onClose, children, size = "md" }: ModalSh
     size === "xl" ? "max-w-5xl" : size === "lg" ? "max-w-2xl" : "max-w-lg";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center sm:p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       <ModalBackdrop onClose={onClose} />
       <div
         role="dialog"

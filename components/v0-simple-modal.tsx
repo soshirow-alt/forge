@@ -21,7 +21,7 @@ export function V0SimpleModal({
   const widthClass = size === "lg" ? "max-w-lg" : "max-w-md";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center sm:p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       <button
         type="button"
         className="absolute inset-0 bg-black/75 backdrop-blur-sm"
