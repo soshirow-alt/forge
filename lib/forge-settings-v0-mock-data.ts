@@ -53,8 +53,8 @@ export const forgeNotificationPlayerItems: SettingsToggleItem[] = [
 export const forgeNotificationStudioItems: SettingsToggleItem[] = [
   {
     id: "voice",
-    label: "プレイヤーの声",
-    description: "作品に初声・選択式・自由記述が届いたとき",
+    label: "届いたフィードバック",
+    description: "作品にフィードバックが届いたとき",
     enabled: true,
   },
   {
