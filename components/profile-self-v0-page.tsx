@@ -1,17 +1,61 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useAuth } from "@/components/auth-provider";
+import { useGames } from "@/components/games-provider";
 import { PlayerShell } from "@/components/player-shell";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { ProfileAvatarPicker } from "@/components/profile-avatar-picker";
 import { V0SimpleModal } from "@/components/v0-simple-modal";
 import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
+import { profileAvatarPresets } from "@/lib/profile-avatar-presets";
 import { profileSelfMock } from "@/lib/profile-v0-mock-data";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { Pencil, Sparkles } from "lucide-react";
 
+function defaultAvatarForUser(userId: string): string {
+  const index =
+    userId.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) %
+    profileAvatarPresets.length;
+  return profileAvatarPresets[index]!.src;
+}
+
 export function ProfileSelfV0Page() {
+  const hideV0Mock = shouldHideV0MockContent();
+  const { user } = useAuth();
+  const { getFollowedDevelopers, getWatchedGames } = useGames();
   const [profile, setProfile] = useState(profileSelfMock);
+  const displayProfile = useMemo(() => {
+    if (!hideV0Mock || !user) {
+      return profile;
+    }
+
+    return {
+      ...profile,
+      displayName: user.name,
+      avatar:
+        profile.avatar === profileSelfMock.avatar
+          ? defaultAvatarForUser(user.id)
+          : profile.avatar,
+      bio: profile.bio === profileSelfMock.bio ? "" : profile.bio,
+      joinedAt: "",
+      lastLogin: "",
+      stats: {
+        feedbackCount: 0,
+        voicesReceived: 0,
+        followingDevelopers: getFollowedDevelopers().length,
+        witnessingGames: getWatchedGames().length,
+      },
+      favoriteGenres:
+        profile.favoriteGenres.length === profileSelfMock.favoriteGenres.length &&
+        profile.favoriteGenres.every((genre, index) => genre === profileSelfMock.favoriteGenres[index])
+          ? []
+          : profile.favoriteGenres,
+      highlightBadges: [],
+      recentActivity: [],
+    };
+  }, [getFollowedDevelopers, getWatchedGames, hideV0Mock, profile, user]);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({
     displayName: profile.displayName,
@@ -23,10 +67,10 @@ export function ProfileSelfV0Page() {
 
   function openEdit() {
     setDraft({
-      displayName: profile.displayName,
-      bio: profile.bio,
-      avatar: profile.avatar,
-      favoriteGenres: [...profile.favoriteGenres],
+      displayName: displayProfile.displayName,
+      bio: displayProfile.bio,
+      avatar: displayProfile.avatar,
+      favoriteGenres: [...displayProfile.favoriteGenres],
     });
     setEditing(true);
   }
@@ -50,10 +94,15 @@ export function ProfileSelfV0Page() {
       displayName,
       bio: draft.bio.trim() || current.bio,
       avatar: draft.avatar,
-      favoriteGenres: draft.favoriteGenres.length > 0 ? draft.favoriteGenres : current.favoriteGenres,
+      favoriteGenres:
+        draft.favoriteGenres.length > 0 ? draft.favoriteGenres : current.favoriteGenres,
     }));
     setEditing(false);
-    setSaveMessage("プロフィールを更新しました（preview mock）。");
+    setSaveMessage(
+      hideV0Mock
+        ? "プロフィールを更新しました（この端末の表示のみ）。"
+        : "プロフィールを更新しました（preview mock）。",
+    );
   }
 
   return (
@@ -97,20 +146,20 @@ export function ProfileSelfV0Page() {
               <legend className="text-xs font-medium text-zinc-500">好きなジャンル</legend>
               <div className="mt-2 max-h-32 overflow-y-auto rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-2">
                 <div className="flex flex-wrap gap-2">
-                {FORGE_GENRE_OPTIONS.map((genre) => (
-                  <button
-                    key={genre}
-                    type="button"
-                    onClick={() => toggleGenre(genre)}
-                    className={`rounded-full border px-3 py-1 text-xs transition-colors ${
-                      draft.favoriteGenres.includes(genre)
-                        ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
-                        : "border-zinc-700 text-zinc-500 hover:border-zinc-600"
-                    }`}
-                  >
-                    {genre}
-                  </button>
-                ))}
+                  {FORGE_GENRE_OPTIONS.map((genre) => (
+                    <button
+                      key={genre}
+                      type="button"
+                      onClick={() => toggleGenre(genre)}
+                      className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                        draft.favoriteGenres.includes(genre)
+                          ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
+                          : "border-zinc-700 text-zinc-500 hover:border-zinc-600"
+                      }`}
+                    >
+                      {genre}
+                    </button>
+                  ))}
                 </div>
               </div>
             </fieldset>
@@ -159,23 +208,32 @@ export function ProfileSelfV0Page() {
 
         <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 sm:p-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-            <ProfileAvatar src={profile.avatar} className="mx-auto size-24 sm:mx-0 sm:size-28" size={112} />
+            <ProfileAvatar
+              src={displayProfile.avatar}
+              className="mx-auto size-24 sm:mx-0 sm:size-28"
+              size={112}
+            />
             <div className="min-w-0 flex-1 text-center sm:text-left">
-              <h2 className="text-xl font-bold text-white">{profile.displayName}</h2>
-              <p className="mt-3 text-sm leading-relaxed text-zinc-400">{profile.bio}</p>
-              <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-zinc-500 sm:justify-start">
-                <span>Forge参加 {profile.joinedAt}</span>
-                <span>最終ログイン {profile.lastLogin}</span>
-              </div>
+              <h2 className="text-xl font-bold text-white">{displayProfile.displayName}</h2>
+              <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+                {displayProfile.bio ||
+                  (hideV0Mock ? "自己紹介はまだ未設定です。" : displayProfile.bio)}
+              </p>
+              {!hideV0Mock && (
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-zinc-500 sm:justify-start">
+                  <span>Forge参加 {displayProfile.joinedAt}</span>
+                  <span>最終ログイン {displayProfile.lastLogin}</span>
+                </div>
+              )}
             </div>
           </div>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { label: "送ったFB", value: profile.stats.feedbackCount },
-              { label: "共感された回数", value: profile.stats.voicesReceived },
-              { label: "フォロー中開発者", value: profile.stats.followingDevelopers },
-              { label: "見届け中", value: profile.stats.witnessingGames },
+              { label: "送ったFB", value: displayProfile.stats.feedbackCount },
+              { label: "共感された回数", value: displayProfile.stats.voicesReceived },
+              { label: "フォロー中開発者", value: displayProfile.stats.followingDevelopers },
+              { label: "見届け中", value: displayProfile.stats.witnessingGames },
             ].map((stat) => (
               <div
                 key={stat.label}
@@ -188,15 +246,50 @@ export function ProfileSelfV0Page() {
           </div>
         </section>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-            <h3 className="text-sm font-semibold text-white">自己紹介</h3>
-            <p className="mt-3 text-sm leading-relaxed text-zinc-400">{profile.bio}</p>
-          </section>
+        {!hideV0Mock ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
+              <h3 className="text-sm font-semibold text-white">自己紹介</h3>
+              <p className="mt-3 text-sm leading-relaxed text-zinc-400">{displayProfile.bio}</p>
+            </section>
+            <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
+              <h3 className="text-sm font-semibold text-white">好きなジャンル</h3>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {displayProfile.favoriteGenres.map((genre) => (
+                  <span
+                    key={genre}
+                    className="rounded-md border border-zinc-700/80 bg-zinc-800/60 px-2.5 py-1 text-xs text-zinc-300"
+                  >
+                    {genre}
+                  </span>
+                ))}
+              </div>
+            </section>
+            <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
+              <h3 className="text-sm font-semibold text-white">ハイライト実績</h3>
+              <div className="mt-4 grid grid-cols-4 gap-3">
+                {displayProfile.highlightBadges.map((badge) => (
+                  <div key={badge.id} className="text-center">
+                    <span className="mx-auto flex size-12 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800/60 text-lg">
+                      {badge.emoji}
+                    </span>
+                    <p className="mt-2 text-[10px] leading-tight text-zinc-500">{badge.label}</p>
+                  </div>
+                ))}
+              </div>
+              <Link
+                href="/mypage?tab=achievements"
+                className="mt-4 inline-block text-xs text-violet-400 transition-colors hover:text-violet-300"
+              >
+                すべて見る →
+              </Link>
+            </section>
+          </div>
+        ) : displayProfile.favoriteGenres.length > 0 ? (
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
             <h3 className="text-sm font-semibold text-white">好きなジャンル</h3>
             <div className="mt-3 flex flex-wrap gap-2">
-              {profile.favoriteGenres.map((genre) => (
+              {displayProfile.favoriteGenres.map((genre) => (
                 <span
                   key={genre}
                   className="rounded-md border border-zinc-700/80 bg-zinc-800/60 px-2.5 py-1 text-xs text-zinc-300"
@@ -206,52 +299,35 @@ export function ProfileSelfV0Page() {
               ))}
             </div>
           </section>
-          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-            <h3 className="text-sm font-semibold text-white">ハイライト実績</h3>
-            <div className="mt-4 grid grid-cols-4 gap-3">
-              {profile.highlightBadges.map((badge) => (
-                <div key={badge.id} className="text-center">
-                  <span className="mx-auto flex size-12 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800/60 text-lg">
-                    {badge.emoji}
-                  </span>
-                  <p className="mt-2 text-[10px] leading-tight text-zinc-500">{badge.label}</p>
-                </div>
-              ))}
-            </div>
-            <Link
-              href="/mypage?tab=achievements"
-              className="mt-4 inline-block text-xs text-violet-400 transition-colors hover:text-violet-300"
-            >
-              すべて見る →
-            </Link>
-          </section>
-        </div>
+        ) : null}
 
-        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-white">最近の活動</h3>
-            <Link
-              href="/mypage?tab=feedback"
-              className="text-xs text-violet-400 transition-colors hover:text-violet-300"
-            >
-              すべて見る
-            </Link>
-          </div>
-          <ul className="mt-4 divide-y divide-zinc-800/80">
-            {profile.recentActivity.map((entry) => (
-              <li
-                key={entry.id}
-                className="flex items-start gap-3 py-3 first:pt-0 last:pb-0"
+        {!hideV0Mock ? (
+          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-white">最近の活動</h3>
+              <Link
+                href="/mypage?tab=feedback"
+                className="text-xs text-violet-400 transition-colors hover:text-violet-300"
               >
-                <Sparkles className="mt-0.5 size-4 shrink-0 text-violet-400" aria-hidden="true" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm text-zinc-300">{entry.label}</p>
-                  <p className="mt-0.5 text-xs text-zinc-600">{entry.relativeTime}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
+                すべて見る
+              </Link>
+            </div>
+            <ul className="mt-4 divide-y divide-zinc-800/80">
+              {displayProfile.recentActivity.map((entry) => (
+                <li
+                  key={entry.id}
+                  className="flex items-start gap-3 py-3 first:pt-0 last:pb-0"
+                >
+                  <Sparkles className="mt-0.5 size-4 shrink-0 text-violet-400" aria-hidden="true" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-zinc-300">{entry.label}</p>
+                    <p className="mt-0.5 text-xs text-zinc-600">{entry.relativeTime}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
       </div>
     </PlayerShell>
   );
