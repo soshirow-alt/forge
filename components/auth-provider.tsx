@@ -9,9 +9,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { getEmailConfirmRedirectUrl } from "@/lib/auth-redirect";
+import { getEmailConfirmRedirectUrl, getOAuthRedirectUrl } from "@/lib/auth-redirect";
 import { mapSupabaseUser, type User } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/client";
+import type { Provider } from "@supabase/supabase-js";
 
 type AuthContextValue = {
   user: User | null;
@@ -22,6 +23,7 @@ type AuthContextValue = {
     password: string,
     displayName: string,
   ) => Promise<boolean>;
+  signInWithOAuth: (provider: Provider, nextPath?: string | null) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -142,6 +144,30 @@ export function AuthProvider({
     [supabase],
   );
 
+  const signInWithOAuth = useCallback(
+    async (provider: Provider, nextPath?: string | null) => {
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: getOAuthRedirectUrl(nextPath),
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.url) {
+        window.location.assign(data.url);
+      }
+    },
+    [supabase],
+  );
+
   const logout = useCallback(async () => {
     if (supabase) {
       await supabase.auth.signOut();
@@ -151,8 +177,8 @@ export function AuthProvider({
   }, [supabase]);
 
   const value = useMemo(
-    () => ({ user, hydrated, signIn, signUp, logout }),
-    [user, hydrated, signIn, signUp, logout],
+    () => ({ user, hydrated, signIn, signUp, signInWithOAuth, logout }),
+    [user, hydrated, signIn, signUp, signInWithOAuth, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

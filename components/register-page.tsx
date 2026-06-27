@@ -8,6 +8,7 @@ import {
   AuthPageShell,
   OAuthButtons,
   OAuthDivider,
+  type OAuthProviderId,
   PasswordInput,
   authInputClassName,
 } from "@/components/auth-layout";
@@ -22,14 +23,15 @@ export function RegisterPage({
   supabaseConfigured: boolean;
 }) {
   const router = useRouter();
-  const { user, hydrated, signUp } = useAuth();
+  const { user, hydrated, signUp, signInWithOAuth } = useAuth();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [stubMessage, setStubMessage] = useState<string | null>(null);
+  const [oauthError, setOauthError] = useState<string | null>(null);
+  const [oauthLoading, setOauthLoading] = useState<OAuthProviderId | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export function RegisterPage({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setStubMessage(null);
+    setOauthError(null);
 
     if (password !== passwordConfirm) {
       setError("パスワード（確認）が一致しません。");
@@ -71,6 +73,27 @@ export function RegisterPage({
       setError(getAuthErrorMessage(authError.message ?? "登録に失敗しました。"));
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleOAuth(provider: OAuthProviderId) {
+    setError(null);
+    setOauthError(null);
+
+    if (!agreed) {
+      setOauthError("利用規約とプライバシーポリシーへの同意が必要です。");
+      return;
+    }
+
+    setOauthLoading(provider);
+
+    try {
+      markNewRegistrationPending();
+      await signInWithOAuth(provider, "/auth/welcome");
+    } catch (caught) {
+      const authError = caught as { message?: string };
+      setOauthError(getAuthErrorMessage(authError.message ?? "登録に失敗しました。"));
+      setOauthLoading(null);
     }
   }
 
@@ -186,12 +209,6 @@ export function RegisterPage({
             </div>
           )}
 
-          {stubMessage && (
-            <div className="rounded-xl border border-zinc-700 bg-zinc-900/80 px-4 py-3 text-sm text-zinc-300">
-              {stubMessage}
-            </div>
-          )}
-
           <button
             type="submit"
             disabled={submitting || !supabaseConfigured}
@@ -202,9 +219,16 @@ export function RegisterPage({
         </form>
 
         <OAuthDivider />
+        {oauthError && (
+          <div className="mb-3 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+            {oauthError}
+          </div>
+        )}
         <OAuthButtons
           mode="register"
-          onStub={(label) => setStubMessage(`${label}は準備中です。`)}
+          disabled={!supabaseConfigured}
+          loadingProvider={oauthLoading}
+          onOAuth={handleOAuth}
         />
 
         <p className="mt-8 text-center text-sm text-zinc-500">

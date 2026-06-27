@@ -36,7 +36,12 @@ export function getAuthErrorMessage(message: string): string {
       return "メールアドレスの確認が完了していません。登録時の確認メールをご確認ください。";
     case "auth_callback":
       return "メール確認リンクが無効または期限切れです。確認メールを再送するか、ログインをお試しください。";
+    case "Provider is not enabled":
+      return "このログイン方法は現在利用できません。メールアドレスで登録・ログインしてください。";
     default:
+      if (message.includes("provider is not enabled")) {
+        return "このログイン方法は現在利用できません。メールアドレスで登録・ログインしてください。";
+      }
       return message;
   }
 }

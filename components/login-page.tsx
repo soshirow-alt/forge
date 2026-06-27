@@ -7,6 +7,7 @@ import {
   AuthPageShell,
   OAuthButtons,
   OAuthDivider,
+  type OAuthProviderId,
   PasswordInput,
   authInputClassName,
 } from "@/components/auth-layout";
@@ -23,11 +24,12 @@ export function LoginPage({
   const returnParam = searchParams.get("return");
   const callbackError = searchParams.get("error");
 
-  const { user, hydrated, signIn } = useAuth();
+  const { user, hydrated, signIn, signInWithOAuth } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [stubMessage, setStubMessage] = useState<string | null>(null);
+  const [oauthError, setOauthError] = useState<string | null>(null);
+  const [oauthLoading, setOauthLoading] = useState<OAuthProviderId | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export function LoginPage({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setStubMessage(null);
+    setOauthError(null);
     setSubmitting(true);
 
     try {
@@ -57,6 +59,20 @@ export function LoginPage({
       const authError = caught as { message?: string };
       setError(getAuthErrorMessage(authError.message ?? "認証に失敗しました。"));
       setSubmitting(false);
+    }
+  }
+
+  async function handleOAuth(provider: OAuthProviderId) {
+    setError(null);
+    setOauthError(null);
+    setOauthLoading(provider);
+
+    try {
+      await signInWithOAuth(provider, resolvePostLoginPath(returnParam));
+    } catch (caught) {
+      const authError = caught as { message?: string };
+      setOauthError(getAuthErrorMessage(authError.message ?? "ログインに失敗しました。"));
+      setOauthLoading(null);
     }
   }
 
@@ -117,12 +133,6 @@ export function LoginPage({
             </div>
           )}
 
-          {stubMessage && (
-            <div className="rounded-xl border border-zinc-700 bg-zinc-900/80 px-4 py-3 text-sm text-zinc-300">
-              {stubMessage}
-            </div>
-          )}
-
           <button
             type="submit"
             disabled={submitting || !supabaseConfigured}
@@ -133,9 +143,16 @@ export function LoginPage({
         </form>
 
         <OAuthDivider />
+        {oauthError && (
+          <div className="mb-3 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+            {oauthError}
+          </div>
+        )}
         <OAuthButtons
           mode="login"
-          onStub={(label) => setStubMessage(`${label}は準備中です。`)}
+          disabled={!supabaseConfigured}
+          loadingProvider={oauthLoading}
+          onOAuth={handleOAuth}
         />
 
         <p className="mt-8 text-center text-sm text-zinc-500">

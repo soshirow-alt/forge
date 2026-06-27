@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-27 — ログイン/新規登録 OAuth 配線
+
+- `/login`・`/register` の Google / Discord / GitHub ボタンを Supabase OAuth に接続（従来は stub で反応なし）
+- コールバック: 既存 `/auth/callback` → ログイン後は return 先、新規登録は `/auth/welcome`
+- 新規登録の SNS は規約同意チェック必須。未設定プロバイダーはボタン直下にエラー表示
+- **オーナー作業**: Supabase Dashboard で各プロバイダー有効化 + Redirect URL に Preview/本番の `/auth/callback` を登録
+
+---
+
 ## 2026-06-27 REL-2-07 — 通報導線（最低限）
 
 - migration **024** — `content_reports`（理由コード + 補足 + 対象種別）

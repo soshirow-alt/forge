@@ -278,32 +278,44 @@ export function OAuthDivider() {
   );
 }
 
+export type OAuthProviderId = "google" | "discord" | "github";
+
 export function OAuthButtons({
   mode,
-  onStub,
+  disabled = false,
+  loadingProvider = null,
+  onOAuth,
 }: {
   mode: "login" | "register";
-  onStub: (provider: string) => void;
+  disabled?: boolean;
+  loadingProvider?: OAuthProviderId | null;
+  onOAuth: (provider: OAuthProviderId) => void | Promise<void>;
 }) {
   const verb = mode === "login" ? "続ける" : "登録";
-  const providers = [
+  const providers: ReadonlyArray<{ id: OAuthProviderId; label: string }> = [
     { id: "google", label: `Googleで${verb}` },
     { id: "discord", label: `Discordで${verb}` },
     { id: "github", label: `GitHubで${verb}` },
-  ] as const;
+  ];
 
   return (
     <div className="space-y-3">
-      {providers.map((provider) => (
-        <button
-          key={provider.id}
-          type="button"
-          onClick={() => onStub(provider.label)}
-          className="w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 py-3 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-800/80"
-        >
-          {provider.label}
-        </button>
-      ))}
+      {providers.map((provider) => {
+        const isLoading = loadingProvider === provider.id;
+        const isBusy = disabled || loadingProvider !== null;
+
+        return (
+          <button
+            key={provider.id}
+            type="button"
+            disabled={isBusy}
+            onClick={() => void onOAuth(provider.id)}
+            className="w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 py-3 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-800/80 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isLoading ? "リダイレクト中..." : provider.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
