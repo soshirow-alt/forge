@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { shouldRedirectRootToDiscoveryHome } from "@/lib/preview-v0";
 import { updateSession } from "@/lib/supabase/middleware";
 import { resolveV0LegacyRedirect } from "@/lib/v0-legacy-redirects";
 
@@ -7,13 +6,6 @@ export async function middleware(request: NextRequest) {
   const legacyTarget = resolveV0LegacyRedirect(request.nextUrl.pathname);
   if (legacyTarget) {
     return NextResponse.redirect(new URL(legacyTarget, request.url));
-  }
-
-  if (
-    request.nextUrl.pathname === "/" &&
-    shouldRedirectRootToDiscoveryHome(request.nextUrl.hostname)
-  ) {
-    return NextResponse.redirect(new URL("/home", request.url));
   }
 
   if (

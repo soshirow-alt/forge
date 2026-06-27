@@ -137,9 +137,9 @@ export function shouldHideV0MockContent(host?: string): boolean {
   return isProductionReleaseMode(host);
 }
 
-/** Preview-only: `/` → `/home` (middleware). Disabled when `FORGE_PRODUCTION_MODE=true`. */
-export function shouldRedirectRootToDiscoveryHome(host?: string): boolean {
-  return isPreviewV0Deployment(host);
+/** @deprecated Root routing is handled in `app/page.tsx` (always LP when logged out). */
+export function shouldRedirectRootToDiscoveryHome(_host?: string): boolean {
+  return false;
 }
 
 /** Preview + local only — Studio login bypass for v0 UI review. Never on production. */

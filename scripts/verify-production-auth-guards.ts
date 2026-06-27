@@ -53,7 +53,7 @@ const CASES: Case[] = [
     name: "preview-landing-01 hostname allows bypass",
     host: "forge-preview-landing-01.vercel.app",
     env: { VERCEL_GIT_COMMIT_REF: "preview/landing-01" },
-    expect: { mode: "preview", bypass: true, rootRedirect: true },
+    expect: { mode: "preview", bypass: true, rootRedirect: false },
   },
   {
     name: "Vercel preview slot + preview branch allows bypass",
@@ -62,7 +62,7 @@ const CASES: Case[] = [
       VERCEL_ENV: "preview",
       VERCEL_GIT_COMMIT_REF: "preview/landing-01",
     },
-    expect: { mode: "preview", bypass: true, rootRedirect: true },
+    expect: { mode: "preview", bypass: true, rootRedirect: false },
   },
   {
     name: "localhost default is local with bypass",
@@ -79,7 +79,7 @@ const CASES: Case[] = [
     name: "localhost + preview branch is preview with bypass",
     host: "localhost",
     env: { VERCEL_GIT_COMMIT_REF: "preview/landing-01" },
-    expect: { mode: "preview", bypass: true, rootRedirect: true },
+    expect: { mode: "preview", bypass: true, rootRedirect: false },
   },
 ];
 
