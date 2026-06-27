@@ -8,6 +8,7 @@ import {
 } from "@/lib/game-devlog-v0-mock-data";
 import { sortDevlogsNewestFirst, type DevlogEntry } from "@/lib/devlogs";
 import { isVersionPublishDevlog } from "@/lib/player-update-display";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { isSupabaseProjectId } from "@/lib/submitted-game-v0-adapter";
 import {
   getStudioDevlogExtrasForProject,
@@ -61,8 +62,26 @@ function mergeDevlogEntries(
   projectId: string | undefined,
   realDevlogs: GameDevlogEntry[] | null,
 ): GameDevlogEntry[] {
-  if (realDevlogs && realDevlogs.length > 0) {
-    return realDevlogs;
+  if (realDevlogs !== null) {
+    if (realDevlogs.length > 0) {
+      return realDevlogs;
+    }
+
+    if (!shouldHideV0MockContent() && projectId) {
+      const extras = getStudioDevlogExtrasForProject(projectId);
+      if (extras.length > 0) {
+        return extras.map((entry, index) => ({
+          ...entry,
+          isLatest: index === 0,
+        }));
+      }
+    }
+
+    return [];
+  }
+
+  if (shouldHideV0MockContent()) {
+    return [];
   }
 
   const base = getDevlogsForGame(gameId);

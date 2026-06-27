@@ -159,6 +159,17 @@ export function GameDevlogV0Tab({
       ? filtered.filter((e) => e.id !== latest.id)
       : filtered;
 
+  if (allEntries.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-12 text-center">
+        <p className="text-sm font-medium text-zinc-300">開発ログはまだありません</p>
+        <p className="mt-2 text-sm text-zinc-500">
+          開発者が更新を記録すると、ここに表示されます。
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       {!embedded && (

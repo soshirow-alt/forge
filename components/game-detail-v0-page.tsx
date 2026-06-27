@@ -173,7 +173,9 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   const devlogUpdatedLabel =
     isRealProject && publicStats.latestDevlogAt
       ? formatRelativeUpdateLabel(publicStats.latestDevlogAt)
-      : game.devlogUpdatedAgo;
+      : isRealProject
+        ? "—"
+        : game.devlogUpdatedAgo;
   const hasRealPlayUrl = Boolean(submittedGame?.playUrl?.trim());
   const { revision: overviewRevision } = useProjectOverviewV0(resolvedId);
   const displayGame = useMemo(() => {
