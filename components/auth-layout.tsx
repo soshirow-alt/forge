@@ -18,6 +18,12 @@ import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal-routes";
 export const authInputClassName =
   "mt-2 w-full rounded-xl border border-zinc-700/80 bg-zinc-900/80 px-4 py-3 text-zinc-100 placeholder:text-zinc-500 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/40";
 
+export const authPrimaryButtonClassName =
+  "w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-violet-500/20 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
+
+export const authSecondaryButtonClassName =
+  "block w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-6 py-3.5 text-center text-base font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-800/80";
+
 export function AuthHeader({ active }: { active: "login" | "register" }) {
   return (
     <header className="flex items-center justify-between border-b border-zinc-800/80 px-6 py-4 lg:px-10">

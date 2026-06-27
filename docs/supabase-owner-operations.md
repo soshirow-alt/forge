@@ -83,9 +83,19 @@ Forge MVP 初期（ユーザー数十〜数百）では **DB サイズ・MAU と
 **Authentication → URL Configuration → Redirect URLs** に追加:
 
 - `https://forge-flame-gamma.vercel.app/auth/callback`
+- `https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app/auth/callback`（Preview）
 - `http://localhost:3000/auth/callback`（ローカル dev）
 
-未設定時: メール確認リンククリック後に `/login?error=auth_callback` へ落ちる。
+未設定時: メール確認リンククリック後に `/login?error=auth_callback` へ落ちる。Preview で登録した場合は **Preview の callback URL も必須**。
+
+### 確認メールが届かないとき（オーナー）
+
+1. **Supabase Dashboard → Authentication → Logs** — `signup` / `user_confirmation_requested` が出ているか
+2. **Authentication → Providers → Email** — 「Confirm email」が有効か
+3. **Redirect URLs** — 登録したサイト（Preview / 本番）の `/auth/callback` が登録済みか
+4. **迷惑メール** — Yahoo 等は Supabase 既定送信元を弾くことがある
+5. **送信制限** — 無料枠は同一アドレスへの再送にクールダウンあり。画面の「再送」でエラーが出ていないか
+6. 本番運用前は **Authentication → Email → Custom SMTP**（Resend 等）の検討を推奨
 
 ---
 

@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-27 — 確認メール待ち / welcome を v0 Auth Shell に統一
+
+- `/auth/verify-email`・`/auth/welcome` — 旧オレンジ単体画面から `/register` 同型の **2 カラム Auth Shell**（紫グラデ・ヘッダー/フッター）へ
+- welcome の CTA を `/home` に（発見ホーム）
+- 確認メール再送のレート制限エラーを日本語表示
+- `docs/supabase-owner-operations.md` — Preview callback URL とメール未着チェックリスト追記
+
+---
+
 ## 2026-06-27 — ログイン/新規登録 OAuth 配線
 
 - `/login`・`/register` の Google / Discord / GitHub ボタンを Supabase OAuth に接続（従来は stub で反応なし）

@@ -38,9 +38,17 @@ export function getAuthErrorMessage(message: string): string {
       return "メール確認リンクが無効または期限切れです。確認メールを再送するか、ログインをお試しください。";
     case "Provider is not enabled":
       return "このログイン方法は現在利用できません。メールアドレスで登録・ログインしてください。";
+    case "Email rate limit exceeded":
+      return "確認メールの送信回数が上限に達しました。しばらく待ってから再送してください。";
     default:
       if (message.includes("provider is not enabled")) {
         return "このログイン方法は現在利用できません。メールアドレスで登録・ログインしてください。";
+      }
+      if (message.includes("rate limit")) {
+        return "確認メールの送信回数が上限に達しました。しばらく待ってから再送してください。";
+      }
+      if (message.includes("only request this after")) {
+        return "確認メールの再送は少し間隔を空けてお試しください。";
       }
       return message;
   }
