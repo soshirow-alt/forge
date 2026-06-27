@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { StudioShell } from "@/components/studio-shell";
-import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { developerProfileHref } from "@/lib/developer-search-v0-mock-data";
 import { RANKING_LIST_INITIAL } from "@/lib/ranking-v0-shared";
 import {
@@ -107,21 +106,26 @@ function StudioRankingsComingSoon() {
   return (
     <StudioShell activeNav="ranking" notificationBadge={0}>
       <div className="mx-auto max-w-3xl">
-        <FeatureComingSoonPanel
-          title="月間開発ランキング"
-          description="開発者ランキングの集計・表示は準備中です。公開をお待ちください。"
-        />
+        <nav className="text-sm text-zinc-500">
+          <Link href="/studio" className="transition-colors hover:text-violet-400">
+            ホーム
+          </Link>
+          <span className="mx-2">›</span>
+          <span className="text-zinc-400">月間開発ランキング</span>
+        </nav>
+        <div className="mt-6">
+          <FeatureComingSoonPanel
+            title="月間開発ランキング"
+            description="開発者ランキングの集計・表示は準備中です。公開をお待ちください。"
+          />
+        </div>
       </div>
     </StudioShell>
   );
 }
 
-function StudioRankingsContent() {
-  if (shouldHideV0MockContent()) {
-    return <StudioRankingsComingSoon />;
-  }
-
-  return <StudioRankingsLive />;
+export function StudioRankingsComingSoonPage() {
+  return <StudioRankingsComingSoon />;
 }
 
 function StudioRankingsLive() {
@@ -353,16 +357,16 @@ function StudioRankingsLive() {
   );
 }
 
-export function StudioRankingsPage() {
+export function StudioRankingsLivePage() {
   return (
     <Suspense
       fallback={
-        <StudioShell activeNav="ranking">
+        <StudioShell activeNav="ranking" notificationBadge={0}>
           <p className="text-sm text-zinc-500">読み込み中...</p>
         </StudioShell>
       }
     >
-      <StudioRankingsContent />
+      <StudioRankingsLive />
     </Suspense>
   );
 }
