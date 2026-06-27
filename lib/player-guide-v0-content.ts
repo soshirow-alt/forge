@@ -1,9 +1,12 @@
+/** プレイヤーの学習ループ（発見→プレイ→初声→更新を追う）。保存は別軸 — FAQ 参照。 */
 export const playerGuideSteps = [
   { label: "作品を探す", description: "気になる作品を検索・発見する" },
   { label: "プレイする", description: "短いサイクルで遊び、感想を持ち帰る" },
   { label: "フィードバックする", description: "感想や気づきを開発者に送る" },
-  { label: "更新を追う", description: "更新や改善の変化を追いかける" },
-  { label: "保存する", description: "あとで遊びたい作品をストックする" },
+  {
+    label: "更新を追う",
+    description: "開発ログ・新版・確認依頼の通知を受け取り、変化を見届ける",
+  },
 ] as const;
 
 export const playerGuideFaq = [
@@ -17,7 +20,7 @@ export const playerGuideFaq = [
     id: "saved",
     question: "保存作品とは？",
     answer:
-      "気になった作品をあとで遊ぶためにストックできます。プレイ前のウィッシュリストとして使えます。",
+      "まだプレイする前に、気になった作品をストックできます。上の流れ（プレイ→フィードバック→更新を追う）とは別の、ウィッシュリスト的な機能です。",
   },
   {
     id: "play-history",
