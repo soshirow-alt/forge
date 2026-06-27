@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-06-27 — 登録済みメールの新規登録エラー表示
+
+- Supabase は登録済みメールでも error を返さず `identities: []` で成功扱いすることがある → `/auth/verify-email` へ誤遷移していた
+- `signUp` で `identities` 空を検知し **「このメールアドレスは既に登録されています。」** + ログインリンクを表示
+
+---
+
 ## 2026-06-27 — community_memberships RLS 無限再帰 fixup（025）
 
 - **症状** — Supabase Logs: `infinite recursion detected in policy for relation "community_memberships"` / GET `community_memberships` が 500

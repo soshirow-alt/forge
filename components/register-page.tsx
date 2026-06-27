@@ -14,7 +14,7 @@ import {
 } from "@/components/auth-layout";
 import { useAuth } from "@/components/auth-provider";
 import { markNewRegistrationPending } from "@/lib/developer-onboarding-v0-store";
-import { getAuthErrorMessage } from "@/lib/auth";
+import { AUTH_ALREADY_REGISTERED_MESSAGE, getAuthErrorMessage } from "@/lib/auth";
 import { resolvePostLoginPath } from "@/lib/login-return-url";
 
 export function RegisterPage({
@@ -69,8 +69,13 @@ export function RegisterPage({
       const params = new URLSearchParams({ email });
       router.push(`/auth/verify-email?${params.toString()}`);
     } catch (caught) {
-      const authError = caught as { message?: string };
-      setError(getAuthErrorMessage(authError.message ?? "登録に失敗しました。"));
+      const authError = caught as { message?: string; code?: string };
+      setError(
+        getAuthErrorMessage(
+          authError.message ?? "登録に失敗しました。",
+          authError.code,
+        ),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -205,7 +210,14 @@ export function RegisterPage({
 
           {error && (
             <div className="rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
-              {error}
+              <p>{error}</p>
+              {error === AUTH_ALREADY_REGISTERED_MESSAGE ? (
+                <p className="mt-2">
+                  <Link href="/login" className="font-medium text-violet-300 hover:text-violet-200">
+                    ログイン画面へ
+                  </Link>
+                </p>
+              ) : null}
             </div>
           )}
 

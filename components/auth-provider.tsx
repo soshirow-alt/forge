@@ -135,6 +135,11 @@ export function AuthProvider({
         throw error;
       }
 
+      // Confirm email ON 時、登録済みメールは error なし + identities 空で返る（列挙防止）
+      if (data.user && (data.user.identities?.length ?? 0) === 0) {
+        throw new Error("User already registered");
+      }
+
       if (data.session?.user) {
         setUser(mapSupabaseUser(data.session.user));
       }

@@ -22,12 +22,23 @@ export function mapSupabaseUser(supabaseUser: SupabaseUser): User {
   };
 }
 
-export function getAuthErrorMessage(message: string): string {
+export const AUTH_ALREADY_REGISTERED_MESSAGE =
+  "このメールアドレスは既に登録されています。";
+
+export function getAuthErrorMessage(message: string, code?: string): string {
+  if (
+    code === "user_already_exists" ||
+    code === "email_exists" ||
+    code === "user_already_registered"
+  ) {
+    return AUTH_ALREADY_REGISTERED_MESSAGE;
+  }
+
   switch (message) {
     case "Invalid login credentials":
       return "メールアドレスまたはパスワードが正しくありません。";
     case "User already registered":
-      return "このメールアドレスは既に登録されています。";
+      return AUTH_ALREADY_REGISTERED_MESSAGE;
     case "Password should be at least 6 characters":
       return "パスワードは6文字以上で入力してください。";
     case "Unable to validate email address: invalid format":
@@ -49,6 +60,13 @@ export function getAuthErrorMessage(message: string): string {
       }
       if (message.includes("only request this after")) {
         return "確認メールの再送は少し間隔を空けてお試しください。";
+      }
+      if (
+        message.toLowerCase().includes("already registered") ||
+        message.toLowerCase().includes("already been registered") ||
+        message.toLowerCase().includes("user already exists")
+      ) {
+        return AUTH_ALREADY_REGISTERED_MESSAGE;
       }
       return message;
   }
