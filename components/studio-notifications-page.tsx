@@ -12,7 +12,7 @@ import {
   studioNotifications,
   type StudioNotificationItem,
 } from "@/lib/studio-notifications-v0-mock-data";
-import { Bell, MessageSquare, Play, TrendingUp, Users } from "lucide-react";
+import { MessageSquare, Play, Users } from "lucide-react";
 
 function kindIcon(kind: StudioNotificationItem["kind"]) {
   const className = "size-4";
@@ -23,10 +23,6 @@ function kindIcon(kind: StudioNotificationItem["kind"]) {
       return <Users className={className} aria-hidden="true" />;
     case "version_play":
       return <Play className={className} aria-hidden="true" />;
-    case "devlog_reaction":
-      return <TrendingUp className={className} aria-hidden="true" />;
-    case "release":
-      return <Bell className={className} aria-hidden="true" />;
     case "community_join_request":
       return <Users className={className} aria-hidden="true" />;
   }
@@ -40,10 +36,6 @@ function kindClass(kind: StudioNotificationItem["kind"]): string {
       return "bg-orange-500/15 text-orange-400 ring-orange-500/25";
     case "version_play":
       return "bg-sky-500/15 text-sky-400 ring-sky-500/25";
-    case "devlog_reaction":
-      return "bg-emerald-500/15 text-emerald-400 ring-emerald-500/25";
-    case "release":
-      return "bg-violet-500/15 text-violet-300 ring-violet-500/25";
     case "community_join_request":
       return "bg-amber-500/15 text-amber-300 ring-amber-500/25";
   }

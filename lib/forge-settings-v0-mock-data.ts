@@ -19,20 +19,62 @@ export type ForgeSettingsSection = {
   items: SettingsToggleItem[] | SettingsActionItem[];
 };
 
-/** 通知は1画面・Player / Studio をそれぞれ設定（preview mock 初期値） */
+/**
+ * 通知は1画面・Player / Studio をそれぞれ設定（preview mock 初期値）。
+ * 種別は重ならないよう整理。実配信は Supabase + v0 拡張（コミュニティ等）に対応予定。
+ */
 export const forgeNotificationPlayerItems: SettingsToggleItem[] = [
-  { id: "devlog", label: "開発ログの公開", description: "更新を追っている作品が更新されたとき", enabled: true },
-  { id: "follow", label: "フォロー中の開発者", description: "新しい作品や更新があったとき", enabled: true },
-  { id: "empathy", label: "共感", description: "あなたのフィードバックに共感が付いたとき", enabled: true },
-  { id: "system", label: "システム", description: "Forge からのお知らせ", enabled: false },
+  {
+    id: "watch-updates",
+    label: "更新を追っている作品",
+    description: "「更新を追う」をONにした作品の開発ログ・新版公開・確認依頼",
+    enabled: true,
+  },
+  {
+    id: "developer-follow",
+    label: "フォロー中の開発者",
+    description: "フォローした開発者が新作を公開したとき",
+    enabled: true,
+  },
+  {
+    id: "community",
+    label: "参加コミュニティ",
+    description: "参加申請の承認・却下、承認済みコミュニティからのお知らせ",
+    enabled: true,
+  },
+  {
+    id: "system",
+    label: "Forge からのお知らせ",
+    description: "利用規約の更新、実績バッジなど",
+    enabled: false,
+  },
 ];
 
 export const forgeNotificationStudioItems: SettingsToggleItem[] = [
-  { id: "new-voice", label: "新しいフィードバック", description: "作品にフィードバックが届いたとき", enabled: true },
-  { id: "witness", label: "見届け人の増加", description: "見届け人が増えたとき", enabled: true },
-  { id: "version-play", label: "最新verのプレイ", description: "公開中のverがプレイされたとき", enabled: true },
-  { id: "devlog-reaction", label: "Devlog の反応", description: "開発ログに反応があったとき", enabled: true },
-  { id: "release", label: "正式ver関連", description: "正式ver公開・Reopen の記録", enabled: true },
+  {
+    id: "voice",
+    label: "プレイヤーの声",
+    description: "作品に初声・選択式・自由記述が届いたとき",
+    enabled: true,
+  },
+  {
+    id: "witness",
+    label: "見届け人",
+    description: "作品の見届け人が増えたとき",
+    enabled: true,
+  },
+  {
+    id: "version-play",
+    label: "プレイ",
+    description: "公開中のverがプレイされたとき",
+    enabled: true,
+  },
+  {
+    id: "community",
+    label: "コミュニティ",
+    description: "参加申請・メンバー管理に関するお知らせ",
+    enabled: true,
+  },
 ];
 
 export const forgeSettingsSections: ForgeSettingsSection[] = [

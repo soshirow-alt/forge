@@ -11,10 +11,30 @@ export const playerSettingsSections: SettingsSection[] = [
     title: "通知",
     description: "どの変化を知らせるかを選べます。",
     items: [
-      { id: "devlog", label: "開発ログの公開", description: "更新を追っている作品が更新されたとき", enabled: true },
-      { id: "follow", label: "フォロー中の開発者", description: "新しい作品や更新があったとき", enabled: true },
-      { id: "empathy", label: "共感", description: "あなたのフィードバックに共感が付いたとき", enabled: true },
-      { id: "system", label: "システム", description: "Forge からのお知らせ", enabled: false },
+      {
+        id: "watch-updates",
+        label: "更新を追っている作品",
+        description: "「更新を追う」をONにした作品の開発ログ・新版公開・確認依頼",
+        enabled: true,
+      },
+      {
+        id: "developer-follow",
+        label: "フォロー中の開発者",
+        description: "フォローした開発者が新作を公開したとき",
+        enabled: true,
+      },
+      {
+        id: "community",
+        label: "参加コミュニティ",
+        description: "参加申請の承認・却下、承認済みコミュニティからのお知らせ",
+        enabled: true,
+      },
+      {
+        id: "system",
+        label: "Forge からのお知らせ",
+        description: "利用規約の更新、実績バッジなど",
+        enabled: false,
+      },
     ],
   },
   {

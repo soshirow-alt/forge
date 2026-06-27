@@ -8,8 +8,6 @@ export type StudioNotificationKind =
   | "new_voice"
   | "witness"
   | "version_play"
-  | "devlog_reaction"
-  | "release"
   | "community_join_request";
 
 export type StudioNotificationItem = {
@@ -28,8 +26,8 @@ export const studioNotifications: StudioNotificationItem[] = [
   {
     id: "sn-1",
     kind: "new_voice",
-    title: "新しいフィードバックが届きました",
-    body: "3件の新しいフィードバックが届いています。未確認のフィードバックを確認しましょう。",
+    title: "プレイヤーの声が届きました",
+    body: "3件の声が届いています。未確認の声を確認しましょう。",
     projectTitle: "星の記憶",
     projectId: "hoshino-kioku",
     timeLabel: "2時間前",
@@ -56,28 +54,6 @@ export const studioNotifications: StudioNotificationItem[] = [
     timeLabel: "昨日",
     unread: true,
     tab: "devlog",
-  },
-  {
-    id: "sn-4",
-    kind: "devlog_reaction",
-    title: "Devlog に反応がありました",
-    body: "更新報告に 8件の反応があります。",
-    projectTitle: "炉心の残光",
-    projectId: "roshin-no-zanko",
-    timeLabel: "昨日",
-    unread: false,
-    tab: "devlog",
-  },
-  {
-    id: "sn-5",
-    kind: "release",
-    title: "正式verの反応",
-    body: "正式ver公開後、見届け人が増え続けています。",
-    projectTitle: "夏の向こう側",
-    projectId: "natsu-no-mukougawa",
-    timeLabel: "3日前",
-    unread: false,
-    tab: "release",
   },
 ];
 
