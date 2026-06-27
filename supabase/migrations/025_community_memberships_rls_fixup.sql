@@ -6,7 +6,7 @@
 BEGIN;
 
 CREATE OR REPLACE FUNCTION public.is_approved_community_member(
-  p_community_id uuid,
+  p_community_id text,
   p_user_id uuid
 )
 RETURNS boolean
@@ -24,8 +24,8 @@ AS $$
   );
 $$;
 
-REVOKE ALL ON FUNCTION public.is_approved_community_member(uuid, uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.is_approved_community_member(uuid, uuid) TO anon, authenticated;
+REVOKE ALL ON FUNCTION public.is_approved_community_member(text, uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_approved_community_member(text, uuid) TO anon, authenticated;
 
 DROP POLICY IF EXISTS "Approved members read memberships in same community"
   ON public.community_memberships;
