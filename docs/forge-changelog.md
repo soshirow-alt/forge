@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-06-27 — community_memberships RLS 無限再帰 fixup（025）
+
+- **症状** — Supabase Logs: `infinite recursion detected in policy for relation "community_memberships"` / GET `community_memberships` が 500
+- **原因** — migration 018 の approved 同士 SELECT ポリシーが `community_memberships` を RLS 下で再参照
+- **fix** — `025_community_memberships_rls_fixup.sql`（`is_approved_community_member` SECURITY DEFINER + ポリシー差し替え）
+- **オーナー** — Supabase Dashboard SQL で 025 を本番適用（018 再 RUN 不要）
+- **確認メール未着** — 本件とは別経路（Auth ログの signup を確認）。ただしコミュニティ系 500 はログイン後 E2E を止める
+
+---
+
 ## 2026-06-27 — 確認メール待ち / welcome を v0 Auth Shell に統一
 
 - `/auth/verify-email`・`/auth/welcome` — 旧オレンジ単体画面から `/register` 同型の **2 カラム Auth Shell**（紫グラデ・ヘッダー/フッター）へ
