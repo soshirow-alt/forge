@@ -164,7 +164,7 @@ export function StudioShell({
   children,
   activeNav = "home",
   headerSearchDefault,
-  notificationBadge = 3,
+  notificationBadge = 0,
 }: {
   children: ReactNode;
   activeNav?: StudioShellNavId;

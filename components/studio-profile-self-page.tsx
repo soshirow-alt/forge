@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useAuth } from "@/components/auth-provider";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { ProfileAvatarPicker } from "@/components/profile-avatar-picker";
 import { StudioShell } from "@/components/studio-shell";
+import { useGames } from "@/components/games-provider";
 import { V0SimpleModal } from "@/components/v0-simple-modal";
 import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 import {
   STUDIO_DEVELOPMENT_GENRE_MAX,
   studioDeveloperSelfProfile,
@@ -14,7 +17,38 @@ import {
 import { Pencil, Sparkles } from "lucide-react";
 
 export function StudioProfileSelfPage() {
+  const hideV0Mock = shouldHideV0MockContent();
+  const { user } = useAuth();
+  const { getOwnedProjects } = useGames();
   const [profile, setProfile] = useState(studioDeveloperSelfProfile);
+  const displayProfile = useMemo(() => {
+    if (!hideV0Mock || !user) {
+      return profile;
+    }
+
+    const ownedCount = getOwnedProjects(user.id).length;
+    const handle = user.email.split("@")[0] ?? "developer";
+
+    return {
+      ...profile,
+      displayName: user.name,
+      handle,
+      avatar: profile.avatar,
+      bio: profile.bio === studioDeveloperSelfProfile.bio ? "" : profile.bio,
+      stats: {
+        ...profile.stats,
+        projectCount: ownedCount,
+        feedbackReceived: 0,
+        witnessTotal: 0,
+        devlogCount: 0,
+      },
+      recentActivity: [],
+      milestones: [],
+      highlightBadges: [],
+      developmentGenres: [],
+      favoriteGenres: [],
+    };
+  }, [getOwnedProjects, hideV0Mock, profile, user]);
   const [editing, setEditing] = useState(false);
   const [genreLimitMessage, setGenreLimitMessage] = useState<string | null>(null);
   const [draft, setDraft] = useState({
@@ -82,7 +116,11 @@ export function StudioProfileSelfPage() {
         draft.developmentGenres.length > 0 ? draft.developmentGenres : current.developmentGenres,
     }));
     setEditing(false);
-    setSaveMessage("プロフィールを更新しました（preview mock）。");
+    setSaveMessage(
+      hideV0Mock
+        ? "プロフィールを更新しました。"
+        : "プロフィールを更新しました（preview mock）。",
+    );
   }
 
   return (
@@ -218,24 +256,28 @@ export function StudioProfileSelfPage() {
 
         <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 sm:p-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-            <ProfileAvatar src={profile.avatar} className="mx-auto size-24 sm:mx-0 sm:size-28" size={112} />
+            <ProfileAvatar src={displayProfile.avatar} className="mx-auto size-24 sm:mx-0 sm:size-28" size={112} />
             <div className="min-w-0 flex-1 text-center sm:text-left">
-              <h2 className="text-xl font-bold text-white">{profile.displayName}</h2>
-              <p className="mt-1 text-sm text-zinc-500">@{profile.handle}</p>
-              <p className="mt-3 text-sm leading-relaxed text-zinc-400">{profile.bio}</p>
-              <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-zinc-500 sm:justify-start">
-                <span>Forge参加 {profile.joinedAt}</span>
-                <span>最終ログイン {profile.lastLogin}</span>
-              </div>
+              <h2 className="text-xl font-bold text-white">{displayProfile.displayName}</h2>
+              <p className="mt-1 text-sm text-zinc-500">@{displayProfile.handle}</p>
+              <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+                {displayProfile.bio || (hideV0Mock ? "自己紹介はまだ未設定です。" : displayProfile.bio)}
+              </p>
+              {!hideV0Mock ? (
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-zinc-500 sm:justify-start">
+                  <span>Forge参加 {displayProfile.joinedAt}</span>
+                  <span>最終ログイン {displayProfile.lastLogin}</span>
+                </div>
+              ) : null}
             </div>
           </div>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { label: "作品数", value: profile.stats.projectCount },
-              { label: "届いたFB", value: profile.stats.feedbackReceived },
-              { label: "見届け人累計", value: profile.stats.witnessTotal },
-              { label: "Devlog", value: profile.stats.devlogCount },
+              { label: "作品数", value: displayProfile.stats.projectCount },
+              { label: "届いたFB", value: displayProfile.stats.feedbackReceived },
+              { label: "見届け人累計", value: displayProfile.stats.witnessTotal },
+              { label: "Devlog", value: displayProfile.stats.devlogCount },
             ].map((stat) => (
               <div
                 key={stat.label}
@@ -248,85 +290,89 @@ export function StudioProfileSelfPage() {
           </div>
         </section>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-            <h3 className="text-sm font-semibold text-white">自己紹介</h3>
-            <p className="mt-3 text-sm leading-relaxed text-zinc-400">{profile.bio}</p>
-          </section>
-          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-            <h3 className="text-sm font-semibold text-white">
-              開発ジャンル（{STUDIO_DEVELOPMENT_GENRE_MAX}つまで）
-            </h3>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {profile.developmentGenres.map((genre) => (
-                <span
-                  key={genre}
-                  className="rounded-md border border-violet-500/30 bg-violet-500/10 px-2.5 py-1 text-xs text-violet-200"
-                >
-                  {genre}
-                </span>
-              ))}
-            </div>
-          </section>
-          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-            <h3 className="text-sm font-semibold text-white">好きなジャンル</h3>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {profile.favoriteGenres.map((genre) => (
-                <span
-                  key={genre}
-                  className="rounded-md border border-zinc-700/80 bg-zinc-800/60 px-2.5 py-1 text-xs text-zinc-300"
-                >
-                  {genre}
-                </span>
-              ))}
-            </div>
-          </section>
-          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-            <h3 className="text-sm font-semibold text-white">ハイライト実績</h3>
-            <div className="mt-4 grid grid-cols-3 gap-3">
-              {profile.highlightBadges.map((badge) => (
-                <div key={badge.id} className="text-center">
-                  <span className="mx-auto flex size-12 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800/60 text-lg">
-                    {badge.emoji}
+        {!hideV0Mock ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
+              <h3 className="text-sm font-semibold text-white">自己紹介</h3>
+              <p className="mt-3 text-sm leading-relaxed text-zinc-400">{displayProfile.bio}</p>
+            </section>
+            <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
+              <h3 className="text-sm font-semibold text-white">
+                開発ジャンル（{STUDIO_DEVELOPMENT_GENRE_MAX}つまで）
+              </h3>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {displayProfile.developmentGenres.map((genre) => (
+                  <span
+                    key={genre}
+                    className="rounded-md border border-violet-500/30 bg-violet-500/10 px-2.5 py-1 text-xs text-violet-200"
+                  >
+                    {genre}
                   </span>
-                  <p className="mt-2 text-[10px] leading-tight text-zinc-500">{badge.label}</p>
-                </div>
-              ))}
-            </div>
-            <Link
-              href="/studio/mypage?tab=achievements"
-              className="mt-4 inline-block text-xs text-violet-400 transition-colors hover:text-violet-300"
-            >
-              すべて見る →
-            </Link>
-          </section>
-        </div>
-
-        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-white">最近の活動</h3>
-            <Link
-              href="/studio/mypage?tab=projects"
-              className="text-xs text-violet-400 transition-colors hover:text-violet-300"
-            >
-              プロジェクト一覧
-            </Link>
-          </div>
-          <ul className="mt-4 divide-y divide-zinc-800/80">
-            {profile.recentActivity.map((entry) => (
-              <li
-                key={entry.id}
-                className="flex items-start gap-3 py-3 first:pt-0 last:pb-0"
+                ))}
+              </div>
+            </section>
+            <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
+              <h3 className="text-sm font-semibold text-white">好きなジャンル</h3>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {displayProfile.favoriteGenres.map((genre) => (
+                  <span
+                    key={genre}
+                    className="rounded-md border border-zinc-700/80 bg-zinc-800/60 px-2.5 py-1 text-xs text-zinc-300"
+                  >
+                    {genre}
+                  </span>
+                ))}
+              </div>
+            </section>
+            <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
+              <h3 className="text-sm font-semibold text-white">ハイライト実績</h3>
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                {displayProfile.highlightBadges.map((badge) => (
+                  <div key={badge.id} className="text-center">
+                    <span className="mx-auto flex size-12 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800/60 text-lg">
+                      {badge.emoji}
+                    </span>
+                    <p className="mt-2 text-[10px] leading-tight text-zinc-500">{badge.label}</p>
+                  </div>
+                ))}
+              </div>
+              <Link
+                href="/studio/mypage?tab=achievements"
+                className="mt-4 inline-block text-xs text-violet-400 transition-colors hover:text-violet-300"
               >
-                <Sparkles className="mt-0.5 size-4 shrink-0 text-violet-400" aria-hidden="true" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm text-zinc-300">{entry.label}</p>
-                  <p className="mt-0.5 text-xs text-zinc-600">{entry.relativeTime}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
+                すべて見る →
+              </Link>
+            </section>
+          </div>
+        ) : null}
+
+        {!hideV0Mock ? (
+          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-white">最近の活動</h3>
+              <Link
+                href="/studio/mypage?tab=projects"
+                className="text-xs text-violet-400 transition-colors hover:text-violet-300"
+              >
+                プロジェクト一覧
+              </Link>
+            </div>
+            <ul className="mt-4 divide-y divide-zinc-800/80">
+              {displayProfile.recentActivity.map((entry) => (
+                <li
+                  key={entry.id}
+                  className="flex items-start gap-3 py-3 first:pt-0 last:pb-0"
+                >
+                  <Sparkles className="mt-0.5 size-4 shrink-0 text-violet-400" aria-hidden="true" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-zinc-300">{entry.label}</p>
+                    <p className="mt-0.5 text-xs text-zinc-600">{entry.relativeTime}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
       </div>
     </StudioShell>
   );

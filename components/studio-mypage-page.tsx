@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback } from "react";
 import { StudioAchievementsTabPanel } from "@/components/studio-achievements-tab-panel";
+import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { StudioFollowersTabPanel } from "@/components/studio-followers-tab-panel";
 import { StudioOwnedProjectsSection } from "@/components/studio-owned-projects-section";
 import { StudioProjectsTabPanel } from "@/components/studio-projects-page";
@@ -66,6 +67,7 @@ function StudioMypageProjectsPanel({ initialQuery = "" }: { initialQuery?: strin
 function StudioMypagePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const hideV0Mock = shouldHideV0MockContent();
   const activeTab = parseTab(searchParams.get("tab"));
   const initialQuery = searchParams.get("q") ?? "";
 
@@ -83,7 +85,19 @@ function StudioMypagePageContent() {
         {activeTab === "projects" ? (
           <StudioMypageProjectsPanel initialQuery={initialQuery} />
         ) : activeTab === "achievements" ? (
-          <StudioAchievementsTabPanel />
+          hideV0Mock ? (
+            <FeatureComingSoonPanel
+              title="実績"
+              description="開発者実績の集計・表示は準備中です。公開をお待ちください。"
+            />
+          ) : (
+            <StudioAchievementsTabPanel />
+          )
+        ) : hideV0Mock ? (
+          <FeatureComingSoonPanel
+            title="フォロワー"
+            description="フォロワー一覧の表示は準備中です。公開をお待ちください。"
+          />
         ) : (
           <StudioFollowersTabPanel />
         )}

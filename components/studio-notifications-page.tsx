@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { StudioShell } from "@/components/studio-shell";
 import { getExtraStudioNotifications, subscribeV0Notifications } from "@/lib/community-join-v0-store";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 import {
   countStudioUnread,
   studioNotificationHref,
@@ -48,9 +50,15 @@ function kindClass(kind: StudioNotificationItem["kind"]): string {
 }
 
 export function StudioNotificationsPage() {
-  const [items, setItems] = useState(studioNotifications);
+  const hideV0Mock = shouldHideV0MockContent();
+  const [items, setItems] = useState<StudioNotificationItem[]>(
+    hideV0Mock ? [] : studioNotifications,
+  );
 
   useEffect(() => {
+    if (hideV0Mock) {
+      return;
+    }
     function mergeExtras() {
       const extras = getExtraStudioNotifications();
       if (extras.length === 0) {
@@ -63,7 +71,7 @@ export function StudioNotificationsPage() {
     }
     mergeExtras();
     return subscribeV0Notifications(mergeExtras);
-  }, []);
+  }, [hideV0Mock]);
 
   const unread = countStudioUnread(items);
 
@@ -94,8 +102,20 @@ export function StudioNotificationsPage() {
           )}
         </header>
 
-        <ul className="mt-8 space-y-3">
-          {items.map((item) => (
+        {items.length === 0 ? (
+          <div className="mt-8">
+            <FeatureComingSoonPanel
+              title="通知はまだありません"
+              description={
+                hideV0Mock
+                  ? "届いたフィードバックやプレイ状況は、ここに表示されます。"
+                  : "プレビューではサンプル通知が表示されます。"
+              }
+            />
+          </div>
+        ) : (
+          <ul className="mt-8 space-y-3">
+            {items.map((item) => (
             <li key={item.id}>
               <Link
                 href={studioNotificationHref(item)}
@@ -126,7 +146,8 @@ export function StudioNotificationsPage() {
               </Link>
             </li>
           ))}
-        </ul>
+          </ul>
+        )}
       </div>
     </StudioShell>
   );

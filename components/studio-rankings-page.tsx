@@ -4,7 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { StudioShell } from "@/components/studio-shell";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { developerProfileHref } from "@/lib/developer-search-v0-mock-data";
 import { RANKING_LIST_INITIAL } from "@/lib/ranking-v0-shared";
 import {
@@ -101,7 +103,28 @@ function DeveloperCell({ entry }: { entry: StudioDeveloperRankingEntry }) {
   );
 }
 
+function StudioRankingsComingSoon() {
+  return (
+    <StudioShell activeNav="ranking" notificationBadge={0}>
+      <div className="mx-auto max-w-3xl">
+        <FeatureComingSoonPanel
+          title="月間開発ランキング"
+          description="開発者ランキングの集計・表示は準備中です。公開をお待ちください。"
+        />
+      </div>
+    </StudioShell>
+  );
+}
+
 function StudioRankingsContent() {
+  if (shouldHideV0MockContent()) {
+    return <StudioRankingsComingSoon />;
+  }
+
+  return <StudioRankingsLive />;
+}
+
+function StudioRankingsLive() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const monthId = parseStudioRankingMonthId(searchParams.get("month"));

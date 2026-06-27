@@ -12,7 +12,9 @@ import {
   Rocket,
 } from "lucide-react";
 import { StudioOwnedProjectsSection } from "@/components/studio-owned-projects-section";
+import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { StudioSectionHeader, StudioShell } from "@/components/studio-shell";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { studioHomeGrowthRankings } from "@/lib/studio-rankings-v0-mock-data";
 import { developerProfileHref } from "@/lib/developer-search-v0-mock-data";
 import { gameDetailHrefFromTitle } from "@/lib/game-detail-v0-mock-data";
@@ -231,25 +233,44 @@ function RankingSnippetsSection() {
 }
 
 export function StudioHomePage() {
+  const hideV0Mock = shouldHideV0MockContent();
+
   return (
-    <StudioShell activeNav="home">
+    <StudioShell activeNav="home" notificationBadge={0}>
       <div className="mx-auto max-w-7xl space-y-10">
         <StudioOwnedProjectsSection variant="home" />
 
-        <section className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5 sm:p-6">
-          <StudioSectionHeader
-            title="最近の動き"
-            href="/studio/notifications"
-            icon={<Rocket className="size-5 text-violet-400" aria-hidden="true" />}
-          />
-          <div className="mt-5 space-y-3">
-            {studioActivities.map((item) => (
-              <ActivityRow key={item.id} item={item} />
-            ))}
-          </div>
-        </section>
+        {!hideV0Mock ? (
+          <section className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5 sm:p-6">
+            <StudioSectionHeader
+              title="最近の動き"
+              href="/studio/notifications"
+              icon={<Rocket className="size-5 text-violet-400" aria-hidden="true" />}
+            />
+            <div className="mt-5 space-y-3">
+              {studioActivities.map((item) => (
+                <ActivityRow key={item.id} item={item} />
+              ))}
+            </div>
+          </section>
+        ) : null}
 
-        <RankingSnippetsSection />
+        {hideV0Mock ? (
+          <section className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5 sm:p-6">
+            <StudioSectionHeader
+              title="今週の伸び"
+              icon={<BarChart3 className="size-5 text-violet-400" aria-hidden="true" />}
+            />
+            <div className="mt-5">
+              <FeatureComingSoonPanel
+                title="今週の伸び"
+                description="週次ランキングの集計・表示は準備中です。公開をお待ちください。"
+              />
+            </div>
+          </section>
+        ) : (
+          <RankingSnippetsSection />
+        )}
 
         <section>
           <StudioSectionHeader
