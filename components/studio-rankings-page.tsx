@@ -106,14 +106,7 @@ function StudioRankingsComingSoon() {
   return (
     <StudioShell activeNav="ranking" notificationBadge={0}>
       <div className="mx-auto max-w-3xl">
-        <nav className="text-sm text-zinc-500">
-          <Link href="/studio" className="transition-colors hover:text-violet-400">
-            ホーム
-          </Link>
-          <span className="mx-2">›</span>
-          <span className="text-zinc-400">月間開発ランキング</span>
-        </nav>
-        <div className="mt-6">
+        <div>
           <FeatureComingSoonPanel
             title="月間開発ランキング"
             description="開発者ランキングの集計・表示は準備中です。公開をお待ちください。"
@@ -159,15 +152,7 @@ function StudioRankingsLive() {
     <StudioShell activeNav="ranking">
       <div className="flex flex-col gap-8 xl:flex-row">
         <div className="min-w-0 flex-1">
-          <nav className="text-sm text-zinc-500">
-            <Link href="/studio" className="transition-colors hover:text-violet-400">
-              ホーム
-            </Link>
-            <span className="mx-2">›</span>
-            <span className="text-zinc-400">月間開発ランキング</span>
-          </nav>
-
-          <header className="mt-4">
+          <header>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-white sm:text-3xl">月間開発ランキング</h1>
               <button

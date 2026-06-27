@@ -54,18 +54,6 @@ export function CreatorProfileRealView({ profile }: { profile: CreatorProfileRes
     <PlayerShell activeNav="creator-search">
       <div className="flex flex-col gap-8 xl:flex-row">
         <div className="min-w-0 flex-1 space-y-6">
-          <nav className="text-sm text-zinc-500">
-            <Link href="/home" className="hover:text-violet-400">
-              ホーム
-            </Link>
-            <span className="mx-2">›</span>
-            <Link href="/search/creators" className="hover:text-violet-400">
-              開発者を探す
-            </Link>
-            <span className="mx-2">›</span>
-            <span className="text-zinc-400">{profile.name}</span>
-          </nav>
-
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 sm:p-8">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
               <span className="relative mx-auto size-24 shrink-0 overflow-hidden rounded-full bg-zinc-800 sm:mx-0">

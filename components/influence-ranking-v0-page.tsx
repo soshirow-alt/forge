@@ -82,14 +82,7 @@ function PlayerCell({ entry }: { entry: InfluenceRankingEntry }) {
 function InfluenceRankingComingSoon() {
   return (
     <PlayerShell activeNav="ranking">
-      <nav className="text-sm text-zinc-500">
-        <Link href="/home" className="hover:text-violet-400">
-          ホーム
-        </Link>
-        <span className="mx-2">›</span>
-        <span className="text-zinc-400">月間影響度ランキング</span>
-      </nav>
-      <header className="mt-4">
+      <header>
         <h1 className="text-2xl font-bold text-white sm:text-3xl">月間影響度ランキング</h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">
           今月、開発者の意思決定・作品改善・確認依頼に対して良い影響を与えたプレイヤーを称えます。
@@ -144,15 +137,7 @@ function InfluenceRankingLive() {
     <PlayerShell activeNav="ranking">
       <div className="flex flex-col gap-8 xl:flex-row">
         <div className="min-w-0 flex-1">
-          <nav className="text-sm text-zinc-500">
-            <Link href="/home" className="hover:text-violet-400">
-              ホーム
-            </Link>
-            <span className="mx-2">›</span>
-            <span className="text-zinc-400">月間影響度ランキング</span>
-          </nav>
-
-          <header className="mt-4">
+          <header>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-white sm:text-3xl">月間影響度ランキング</h1>
               <button

@@ -410,18 +410,6 @@ function GameDetailV0PageBody({ id }: { id: string }) {
 
       <div className="flex flex-col gap-8 xl:flex-row xl:items-start">
         <div className="min-w-0 flex-1 space-y-6">
-          <nav className="text-sm text-zinc-500">
-            <Link href="/home" className="transition-colors hover:text-violet-400">
-              ホーム
-            </Link>
-            <span className="mx-2">›</span>
-            <Link href="/search" className="transition-colors hover:text-violet-400">
-              作品を探す
-            </Link>
-            <span className="mx-2">›</span>
-            <span className="text-zinc-400">{game.title}</span>
-          </nav>
-
           <section className="overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/30">
             <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
               <GameDetailHeroGallery images={game.galleryImages} />

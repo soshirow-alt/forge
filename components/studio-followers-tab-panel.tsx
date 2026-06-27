@@ -22,7 +22,7 @@ export function StudioFollowersTabPanel() {
             <DeveloperListCard
               dev={dev}
               showFollowButton={false}
-              href={developerProfileHref(dev.id, { from: "studio-followers" })}
+              href={developerProfileHref(dev.id)}
             />
           </li>
         ))}

@@ -2,8 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { PlayerShell, GameThumbnail } from "@/components/player-shell";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { useCommunityJoinV0 } from "@/hooks/use-community-join-v0";
@@ -26,16 +25,10 @@ const tabs: { id: DevTab; label: string }[] = [
 ];
 
 export function DeveloperProfileV0Page({ id }: { id: string }) {
-  return (
-    <Suspense fallback={<DeveloperProfileV0PageContent id={id} />}>
-      <DeveloperProfileV0PageContent id={id} />
-    </Suspense>
-  );
+  return <DeveloperProfileV0PageContent id={id} />;
 }
 
 function DeveloperProfileV0PageContent({ id }: { id: string }) {
-  const searchParams = useSearchParams();
-  const fromStudioFollowers = searchParams.get("from") === "studio-followers";
   const dev = getDeveloperProfileV0(id);
   const { requireAuth } = useRequireAuth();
   const returnPath = `/creators/${id}`;
@@ -64,26 +57,6 @@ function DeveloperProfileV0PageContent({ id }: { id: string }) {
     <PlayerShell activeNav="creator-search">
       <div className="flex flex-col gap-8 xl:flex-row">
         <div className="min-w-0 flex-1 space-y-6">
-          <nav className="text-sm text-zinc-500">
-            {fromStudioFollowers ? (
-              <>
-                <Link href="/studio" className="hover:text-violet-400">Studio</Link>
-                <span className="mx-2">›</span>
-                <Link href="/studio/mypage?tab=followers" className="hover:text-violet-400">
-                  フォロワー
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link href="/home" className="hover:text-violet-400">ホーム</Link>
-                <span className="mx-2">›</span>
-                <Link href="/search/creators" className="hover:text-violet-400">開発者を探す</Link>
-              </>
-            )}
-            <span className="mx-2">›</span>
-            <span className="text-zinc-400">{dev.name}</span>
-          </nav>
-
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 sm:p-8">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
               <span className="relative mx-auto size-24 shrink-0 overflow-hidden rounded-full bg-zinc-800 sm:mx-0">
