@@ -152,3 +152,9 @@ export type DeveloperProfileRow = {
   created_at: string;
   updated_at: string;
 };
+
+export type DeveloperFollowRow = {
+  follower_id: string;
+  developer_user_id: string;
+  created_at: string;
+};

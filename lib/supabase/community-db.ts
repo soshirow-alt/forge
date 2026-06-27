@@ -204,6 +204,210 @@ export async function fetchApprovedCommunityMemberIds(
   return (data ?? []).map((row) => (row as { user_id: string }).user_id);
 }
 
+export type DeveloperCommunityRecord = {
+  id: string;
+  ownerId: string;
+  name: string;
+  description: string;
+  avatarUrl: string | null;
+  handle: string | null;
+};
+
+export type JoinedCommunitySummary = {
+  id: string;
+  name: string;
+  avatar: string;
+  memberCount: number;
+};
+
+export type CommunityMembershipRecord = {
+  id: string;
+  communityId: string;
+  userId: string;
+  status: "pending" | "approved" | "rejected";
+  joinedAt: string;
+};
+
+const DEFAULT_COMMUNITY_AVATAR = "/images/landing/game-1.png";
+
+function mapCommunityRow(row: CommunityRow): DeveloperCommunityRecord {
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    name: row.name,
+    description: row.description,
+    avatarUrl: row.avatar_url,
+    handle: row.handle,
+  };
+}
+
+export async function fetchDeveloperCommunityByOwner(
+  supabase: SupabaseClient,
+  ownerId: string,
+): Promise<DeveloperCommunityRecord | null> {
+  const { data, error } = await supabase
+    .from("developer_communities")
+    .select("*")
+    .eq("owner_id", ownerId)
+    .maybeSingle();
+
+  if (error) {
+    if (isCommunitiesTableMissingError(error)) {
+      return null;
+    }
+    throw error;
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return mapCommunityRow(data as CommunityRow);
+}
+
+export async function fetchDeveloperCommunityById(
+  supabase: SupabaseClient,
+  communityId: string,
+): Promise<DeveloperCommunityRecord | null> {
+  const { data, error } = await supabase
+    .from("developer_communities")
+    .select("*")
+    .eq("id", communityId)
+    .maybeSingle();
+
+  if (error) {
+    if (isCommunitiesTableMissingError(error)) {
+      return null;
+    }
+    throw error;
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return mapCommunityRow(data as CommunityRow);
+}
+
+export async function updateDeveloperCommunityProfile(
+  supabase: SupabaseClient,
+  communityId: string,
+  input: { name: string; description: string },
+): Promise<void> {
+  const { error } = await supabase
+    .from("developer_communities")
+    .update({
+      name: input.name.trim(),
+      description: input.description.trim(),
+    })
+    .eq("id", communityId);
+
+  if (error && !isCommunitiesTableMissingError(error)) {
+    throw error;
+  }
+}
+
+export async function countApprovedCommunityMembers(
+  supabase: SupabaseClient,
+  communityId: string,
+): Promise<number> {
+  const { count, error } = await supabase
+    .from("community_memberships")
+    .select("id", { count: "exact", head: true })
+    .eq("community_id", communityId)
+    .eq("status", "approved");
+
+  if (error) {
+    if (isCommunitiesTableMissingError(error)) {
+      return 0;
+    }
+    throw error;
+  }
+
+  return count ?? 0;
+}
+
+export async function fetchCommunityMemberships(
+  supabase: SupabaseClient,
+  communityId: string,
+  status: "pending" | "approved",
+): Promise<CommunityMembershipRecord[]> {
+  const { data, error } = await supabase
+    .from("community_memberships")
+    .select("id, community_id, user_id, status, joined_at")
+    .eq("community_id", communityId)
+    .eq("status", status)
+    .order("joined_at", { ascending: false });
+
+  if (error) {
+    if (isCommunitiesTableMissingError(error)) {
+      return [];
+    }
+    throw error;
+  }
+
+  return (data ?? []).map((row) => {
+    const record = row as MembershipRow & { id: string };
+    return {
+      id: record.id,
+      communityId: record.community_id,
+      userId: record.user_id,
+      status: record.status,
+      joinedAt: record.joined_at,
+    };
+  });
+}
+
+export async function fetchJoinedCommunitiesForUser(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<JoinedCommunitySummary[]> {
+  const { data: memberships, error: membershipError } = await supabase
+    .from("community_memberships")
+    .select("community_id")
+    .eq("user_id", userId)
+    .eq("status", "approved");
+
+  if (membershipError) {
+    if (isCommunitiesTableMissingError(membershipError)) {
+      return [];
+    }
+    throw membershipError;
+  }
+
+  const communityIds = (memberships ?? []).map(
+    (row) => (row as { community_id: string }).community_id,
+  );
+  if (communityIds.length === 0) {
+    return [];
+  }
+
+  const { data: communities, error: communityError } = await supabase
+    .from("developer_communities")
+    .select("*")
+    .in("id", communityIds);
+
+  if (communityError) {
+    if (isCommunitiesTableMissingError(communityError)) {
+      return [];
+    }
+    throw communityError;
+  }
+
+  const summaries: JoinedCommunitySummary[] = [];
+  for (const row of (communities ?? []) as CommunityRow[]) {
+    const memberCount = await countApprovedCommunityMembers(supabase, row.id);
+    summaries.push({
+      id: row.id,
+      name: row.name,
+      avatar: row.avatar_url?.trim() || DEFAULT_COMMUNITY_AVATAR,
+      memberCount,
+    });
+  }
+
+  return summaries;
+}
+
 function formatRelativeTime(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
   const minutes = Math.floor(diffMs / 60000);

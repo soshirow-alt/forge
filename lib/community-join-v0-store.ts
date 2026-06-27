@@ -1,5 +1,6 @@
 import type { NotificationV0Item } from "@/lib/notifications-v0-mock-data";
 import type { StudioNotificationItem } from "@/lib/studio-notifications-v0-mock-data";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 
 export type CommunityJoinStatus = "none" | "pending" | "approved" | "rejected";
 
@@ -94,7 +95,18 @@ const initialPlayerStatus: Record<string, CommunityJoinStatus> = {
   greensmith: "approved",
 };
 
+function emptyState(): CommunityJoinState {
+  return {
+    requests: [],
+    members: [],
+    playerStatusByCommunity: {},
+  };
+}
+
 function defaultState(): CommunityJoinState {
+  if (shouldHideV0MockContent()) {
+    return emptyState();
+  }
   return {
     requests: [...initialRequests],
     members: [...initialMembers],
@@ -120,6 +132,9 @@ function cloneState(state: CommunityJoinState): CommunityJoinState {
 }
 
 function readFromStorage(): CommunityJoinState {
+  if (shouldHideV0MockContent()) {
+    return emptyState();
+  }
   if (typeof window === "undefined") {
     return defaultState();
   }
@@ -168,6 +183,9 @@ function readState(): CommunityJoinState {
 }
 
 function writeState(state: CommunityJoinState) {
+  if (shouldHideV0MockContent()) {
+    return;
+  }
   if (typeof window === "undefined") {
     return;
   }

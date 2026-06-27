@@ -27,6 +27,71 @@
 
 ---
 
+## 015 を再 RUN したとき（policy already exists）
+
+**症状**: `policy "Confirmation requests are publicly readable" for table "confirmation_requests" already exists`
+
+**意味**: **015 は既に適用済み**。テーブルと RLS ポリシーが Dashboard に存在する。再 RUN は不要。
+
+**やること**
+
+1. **015 はスキップ** — 016 以降だけ未適用分を順に RUN
+2. 下の「適用状況確認 SQL」でどこまで入っているか確認
+3. どうしても 015 を再実行したい場合 — リポジトリ最新の `015_confirmation_requests.sql`（`DROP POLICY IF EXISTS` 付き）を使えば再 RUN 可（テーブルは `IF NOT EXISTS` のまま）
+
+### 適用状況確認 SQL（Dashboard で一括実行）
+
+```sql
+SELECT '015 confirmation_requests' AS check_item,
+  EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'confirmation_requests'
+  ) AS ok;
+
+SELECT '016 helpful_marks' AS check_item,
+  EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'developer_feedback_helpful_marks'
+  ) AS ok;
+
+SELECT '017 notify_audience column' AS check_item,
+  EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'confirmation_requests'
+      AND column_name = 'notify_audience'
+  ) AS ok;
+
+SELECT '018 developer_communities' AS check_item,
+  EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'developer_communities'
+  ) AS ok;
+
+SELECT '020 community_posts.title' AS check_item,
+  EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'community_posts'
+      AND column_name = 'title'
+  ) AS ok;
+
+SELECT '019 influence RPC' AS check_item,
+  EXISTS (
+    SELECT 1 FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'get_monthly_player_influence_ranking'
+  ) AS ok;
+```
+
+| `ok = true` | 次に RUN するファイル |
+|-------------|----------------------|
+| 015 のみ | `016_developer_feedback_helpful_marks.sql` |
+| 016 まで | `017_confirmation_request_targeting.sql` |
+| 017 まで | `018_communities_and_confirmation_quotes.sql` |
+| 018 まで | `020_community_post_title.sql` |
+| 020 まで | `019_player_influence_ranking.sql` |
+
+---
+
 ## 015 — confirmation_requests
 
 **ファイル**: `supabase/migrations/015_confirmation_requests.sql`  

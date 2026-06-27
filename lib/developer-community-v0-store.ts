@@ -1,5 +1,7 @@
 /** v0 — 開発者が開設したコミュニティ（localStorage + 既存 mock 併用） */
 
+import { shouldHideV0MockContent } from "@/lib/production-mode";
+
 export type DeveloperCommunityProfile = {
   id: string;
   name: string;
@@ -30,6 +32,9 @@ function cloneCommunities(
 }
 
 function readOpened(): DeveloperCommunityProfile[] {
+  if (shouldHideV0MockContent()) {
+    return [];
+  }
   if (typeof window === "undefined") {
     return [];
   }
@@ -57,6 +62,9 @@ export function getDeveloperCommunitiesServerSnapshot(): DeveloperCommunityProfi
 }
 
 function writeOpened(communities: DeveloperCommunityProfile[]) {
+  if (shouldHideV0MockContent()) {
+    return;
+  }
   if (typeof window === "undefined") {
     return;
   }
@@ -146,6 +154,9 @@ export function findOwnCommunityInList(
 }
 
 export function hasDeveloperOpenCommunity(developerId: string): boolean {
+  if (shouldHideV0MockContent()) {
+    return false;
+  }
   if (BUILTIN_OPEN_COMMUNITY_IDS.has(developerId)) {
     return true;
   }

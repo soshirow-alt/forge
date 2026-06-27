@@ -6,7 +6,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { ConfirmationCitationCard } from "@/components/confirmation-citation-card";
+import { ContentReportButton } from "@/components/content-report-button";
 import { useCommunityBoard } from "@/hooks/use-community-board";
+import { useCommunityHubSupabase } from "@/hooks/use-community-hub-supabase";
 import { useCommunityJoinV0 } from "@/hooks/use-community-join-v0";
 import { useDeveloperCommunitiesV0 } from "@/hooks/use-developer-communities-v0";
 import {
@@ -37,11 +39,14 @@ import {
   communityMemberProfileHref,
 } from "@/lib/community-member-profile";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
+import { isReportableContentId } from "@/lib/content-reports";
 import {
   ensureDeveloperCommunity,
   fetchCommunityMembershipStatus,
   fetchConfirmationQuoteOptionsForOwner,
   setCommunityMembershipStatus,
+  updateDeveloperCommunityProfile,
 } from "@/lib/supabase/community-db";
 import {
   Check,
@@ -160,13 +165,17 @@ function CommunityPostCard({
   post,
   canReply,
   onReply,
+  reportReturnPath,
 }: {
   post: CommunityPost;
   canReply?: boolean;
   onReply?: (body: string) => void;
+  reportReturnPath: string;
 }) {
   const [replyBody, setReplyBody] = useState("");
   const [replyOpen, setReplyOpen] = useState(false);
+  const showReport =
+    shouldHideV0MockContent() && isReportableContentId(post.id);
 
   return (
     <article className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
@@ -189,6 +198,19 @@ function CommunityPostCard({
             <ConfirmationCitationCard quote={post.confirmationQuote} />
           )}
           <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-zinc-300">{post.body}</p>
+
+          {showReport ? (
+            <div className="mt-3">
+              <ContentReportButton
+                target={{
+                  targetType: "community_post",
+                  targetId: post.id,
+                  contextLabel: post.title ?? post.body.slice(0, 40),
+                }}
+                returnPath={reportReturnPath}
+              />
+            </div>
+          ) : null}
 
           {(post.replies?.length ?? 0) > 0 && (
             <ul className="mt-4 space-y-3 border-t border-zinc-800/80 pt-4">
@@ -669,7 +691,9 @@ function CommunitySettingsModal({
       name: trimmedName,
       description: description.trim(),
     };
-    updateDeveloperCommunity(updated);
+    if (!shouldHideV0MockContent()) {
+      updateDeveloperCommunity(updated);
+    }
 
     const supabase = getOptionalSupabaseClient();
     if (supabase) {
@@ -681,6 +705,10 @@ function CommunitySettingsModal({
           description: updated.description,
           avatarUrl: updated.avatar,
           handle: updated.handle,
+        });
+        await updateDeveloperCommunityProfile(supabase, updated.id, {
+          name: updated.name,
+          description: updated.description,
         });
         setSaveMessage("保存しました。");
       } catch {
@@ -874,27 +902,43 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, hydrated } = useAuth();
+  const hideV0Mock = shouldHideV0MockContent();
   const { opened } = useDeveloperCommunitiesV0();
+  const supabaseHub = useCommunityHubSupabase(variant === "developer");
   const isDeveloper = variant === "developer";
   const { pendingFor, membersFor, approveJoinRequest, rejectJoinRequest, getStatus } =
     useCommunityJoinV0();
 
   // localStorage はクライアント確定後のみ参照（SSR との不一致でクラッシュするのを防ぐ）
   const ownCommunity =
-    isDeveloper && hydrated && user
+    isDeveloper && hydrated && user && !hideV0Mock
       ? findOwnCommunityInList(user.id, user.name, opened)
       : null;
-  const developerCommunityId = ownCommunity?.id ?? studioOwnCommunityId;
-  const developerCommunityProfile = ownCommunity ?? studioCommunityProfile;
+  const developerCommunityId =
+    hideV0Mock && supabaseHub.developerProfile
+      ? supabaseHub.developerProfile.id
+      : ownCommunity?.id ?? studioOwnCommunityId;
+  const developerCommunityProfile =
+    hideV0Mock && supabaseHub.developerProfile
+      ? supabaseHub.developerProfile
+      : ownCommunity ?? studioCommunityProfile;
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsProfile, setSettingsProfile] = useState<DeveloperCommunityProfile | null>(null);
 
   const activeTab = (searchParams.get("tab") === "members" ? "members" : "board") as CommunityTab;
 
-  const joinedCommunities = playerJoinedCommunities.filter(
+  const mockJoinedCommunities = playerJoinedCommunities.filter(
     (c) => getStatus(c.id) === "approved",
   );
+  const joinedCommunities = hideV0Mock
+    ? supabaseHub.joinedCommunities.map((c) => ({
+        id: c.id,
+        name: c.name,
+        avatar: c.avatar,
+        memberCount: c.memberCount,
+      }))
+    : mockJoinedCommunities;
 
   const communityParam = searchParams.get("community");
   const selectedCommunityId = isDeveloper
@@ -914,15 +958,17 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
     appendReply,
     persistPost,
     persistReply,
-  } = useCommunityBoard(selectedCommunityId, mockPosts);
+  } = useCommunityBoard(selectedCommunityId, hideV0Mock ? [] : mockPosts);
 
   const [dbMembershipStatus, setDbMembershipStatus] = useState<
     "none" | "pending" | "approved" | "rejected" | null
   >(null);
 
   useEffect(() => {
-    if (!user || !selectedCommunityId) {
-      setDbMembershipStatus(null);
+    if (hideV0Mock || !user || !selectedCommunityId) {
+      if (!hideV0Mock) {
+        setDbMembershipStatus(null);
+      }
       return;
     }
 
@@ -952,13 +998,22 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
     isDeveloper,
     developerCommunityId,
     developerCommunityProfile,
+    hideV0Mock,
   ]);
 
-  const pending = pendingFor(selectedCommunityId);
-  const members = membersFor(selectedCommunityId);
+  useEffect(() => {
+    if (!hideV0Mock || !selectedCommunityId) {
+      return;
+    }
+    void supabaseHub.reloadMembershipData(selectedCommunityId);
+  }, [hideV0Mock, selectedCommunityId, supabaseHub.reloadMembershipData]);
 
-  const membershipStatus =
-    dbMembershipStatus && dbMembershipStatus !== "none"
+  const pending = hideV0Mock ? supabaseHub.pending : pendingFor(selectedCommunityId);
+  const members = hideV0Mock ? supabaseHub.members : membersFor(selectedCommunityId);
+
+  const membershipStatus = hideV0Mock
+    ? supabaseHub.membershipStatus
+    : dbMembershipStatus && dbMembershipStatus !== "none"
       ? dbMembershipStatus
       : getStatus(selectedCommunityId);
 
@@ -998,6 +1053,10 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
 
   async function handleApproveJoin(requestId: string) {
     const request = pending.find((item) => item.id === requestId);
+    if (hideV0Mock && request) {
+      await supabaseHub.approveJoin(request);
+      return;
+    }
     approveJoinRequest(requestId);
     if (!request) {
       return;
@@ -1010,6 +1069,28 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
         selectedCommunityId,
         request.playerId,
         "approved",
+      );
+    }
+  }
+
+  async function handleRejectJoin(requestId: string) {
+    const request = pending.find((item) => item.id === requestId);
+    if (hideV0Mock && request) {
+      await supabaseHub.rejectJoin(request);
+      return;
+    }
+    rejectJoinRequest(requestId);
+    if (!request) {
+      return;
+    }
+
+    const supabase = getOptionalSupabaseClient();
+    if (supabase) {
+      await setCommunityMembershipStatus(
+        supabase,
+        selectedCommunityId,
+        request.playerId,
+        "rejected",
       );
     }
   }
@@ -1039,8 +1120,16 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
     : "参加中の開発者コミュニティの掲示板。開発者のスレッドを閲覧し、返信できます。";
 
   const selectedCommunity =
-    allPlayerCommunities.find((c) => c.id === selectedCommunityId) ??
-    playerJoinedCommunities.find((c) => c.id === selectedCommunityId);
+    joinedCommunities.find((c) => c.id === selectedCommunityId) ??
+    allPlayerCommunities.find((c) => c.id === selectedCommunityId);
+
+  if (hideV0Mock && !supabaseHub.loaded) {
+    return (
+      <div className="mx-auto max-w-3xl">
+        <p className="text-sm text-zinc-500">読み込み中...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -1102,6 +1191,11 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
             type="button"
             onClick={() => {
               if (!user) {
+                return;
+              }
+              if (hideV0Mock && supabaseHub.developerProfile) {
+                setSettingsProfile(supabaseHub.developerProfile);
+                setSettingsOpen(true);
                 return;
               }
               const profile = ensureOwnDeveloperCommunity(user.id, user.name, {
@@ -1168,7 +1262,7 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
                       key={request.id}
                       request={request}
                       onApprove={handleApproveJoin}
-                      onReject={rejectJoinRequest}
+                      onReject={handleRejectJoin}
                       returnTo={memberProfileReturnTo}
                     />
                   ))}
@@ -1250,6 +1344,13 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
                 post={post}
                 canReply={!isDeveloper && canViewCommunity}
                 onReply={(body) => addReply(post.id, body)}
+                reportReturnPath={
+                  isDeveloper
+                    ? "/studio/community"
+                    : selectedCommunityId
+                      ? `/mypage/community?community=${encodeURIComponent(selectedCommunityId)}`
+                      : "/mypage/community"
+                }
               />
             ))}
             {visibleThreads.length === 0 && (

@@ -15,6 +15,7 @@ import {
   FeedbackTabPanel,
   FollowingTabPanel,
 } from "@/components/mypage-v0-extra-tabs";
+import { FollowingDevelopersPanel } from "@/components/following-developers-panel";
 import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { MyPageLoopPanel } from "@/components/mypage-loop-panel";
 import {
@@ -625,10 +626,7 @@ function MyPagePageContent() {
           ))}
         {activeTab === "following" &&
           (hideV0Mock ? (
-            <FeatureComingSoonPanel
-              title="フォロー中の開発者"
-              description="開発者フォロー一覧は準備中です。"
-            />
+            <FollowingDevelopersPanel />
           ) : (
             <FollowingTabPanel />
           ))}

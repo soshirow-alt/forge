@@ -2,14 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { CreatorFollowButton } from "@/components/creator-follow-button";
+import { CreatorCommunityJoinButton } from "@/components/creator-community-join-button";
+import { ContentReportButton } from "@/components/content-report-button";
 import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { PlayerShell, GameThumbnail } from "@/components/player-shell";
+import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import type { CreatorProfileResolved } from "@/hooks/use-creator-profile";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
-import { BadgeCheck, Globe, MapPin, UserPlus } from "lucide-react";
+import { BadgeCheck, Globe, MapPin } from "lucide-react";
 
 type CreatorTab = "overview" | "devlog" | "achievements" | "followers";
 
@@ -33,10 +37,15 @@ function websiteHref(url: string): string {
 
 export function CreatorProfileRealView({ profile }: { profile: CreatorProfileResolved }) {
   const hideV0Mock = shouldHideV0MockContent();
-  const { requireAuth } = useRequireAuth();
-  const returnPath = `/creators/${profile.routeId}`;
+  const { user } = useRequireAuth();
+  const { getFollowerCount, refreshFollowerCount } = useGames();
   const [activeTab, setActiveTab] = useState<CreatorTab>("overview");
-  const [following, setFollowing] = useState(false);
+  const isSelf = user?.id === profile.userId;
+  const followerCount = getFollowerCount(profile.routeId, 0);
+
+  useEffect(() => {
+    void refreshFollowerCount(profile.userId);
+  }, [profile.userId, refreshFollowerCount]);
 
   const inDevGames = profile.games.filter((game) => game.status === "in-dev");
   const completedGames = profile.games.filter((game) => game.status === "completed");
@@ -98,22 +107,21 @@ export function CreatorProfileRealView({ profile }: { profile: CreatorProfileRes
                     </a>
                   ) : null}
                 </div>
-                {!hideV0Mock ? (
+                {!isSelf ? (
                   <div className="mt-5 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        requireAuth(() => setFollowing((value) => !value), returnPath)
-                      }
-                      className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold ${
-                        following
-                          ? "border border-rose-500/40 bg-rose-500/10 text-rose-300"
-                          : "bg-violet-600 text-white hover:bg-violet-500"
-                      }`}
-                    >
-                      <UserPlus className="size-4" aria-hidden="true" />
-                      {following ? "フォロー中" : "フォロー"}
-                    </button>
+                    <CreatorFollowButton
+                      creatorRouteKey={profile.routeId}
+                      developerUserId={profile.userId}
+                    />
+                    <CreatorCommunityJoinButton developerUserId={profile.userId} />
+                    <ContentReportButton
+                      target={{
+                        targetType: "developer",
+                        targetId: profile.userId,
+                        contextLabel: profile.name,
+                      }}
+                      returnPath={`/creators/${profile.routeId}`}
+                    />
                   </div>
                 ) : null}
               </div>
@@ -232,10 +240,15 @@ export function CreatorProfileRealView({ profile }: { profile: CreatorProfileRes
 
           {activeTab === "followers" &&
             (hideV0Mock ? (
-              <FeatureComingSoonPanel
-                title="フォロワー"
-                description="フォロワー一覧は準備中です。"
-              />
+              <div className="space-y-4">
+                <p className="text-sm text-zinc-400">
+                  フォロワー {followerCount.toLocaleString()}人
+                </p>
+                <FeatureComingSoonPanel
+                  title="フォロワー"
+                  description="フォロワー一覧は準備中です。"
+                />
+              </div>
             ) : (
               <FeatureComingSoonPanel title="フォロワー" />
             ))}

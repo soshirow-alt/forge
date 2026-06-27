@@ -4,6 +4,64 @@
 
 ---
 
+## 2026-06-27 REL-2-07 — 通報導線（最低限）
+
+- migration **024** — `content_reports`（理由コード + 補足 + 対象種別）
+- 本番: `/games/[id]`（実作品）・コミュニティ投稿・`/creators/[id]` に「通報」→ ログイン後モーダル送信
+- 運営者確認は Supabase Dashboard（アプリ内 admin UI なし）
+- 設計: `docs/rel-2-07-content-reports-design.md`
+
+---
+
+## 2026-06-27 — Phase 2 migration 本番 Dashboard 適用確認（オーナー）
+
+- **015〜020** — 本番 DB 確認 SQL すべて `ok: true`
+- **021・022** — 適用済
+- **023** + RLS fixup — 適用済
+- **024** — 適用済（通報。E2E 未実施）
+- **Phase 2 コード Issue（2-01〜2-07）** — 配線済。次は Preview E2E 一括
+
+---
+
+## 2026-06-27 REL-2-06 — コミュニティ Supabase 配線
+
+- migration **018 + 020** 前提 — `developer_communities` / `community_memberships` / `community_posts` / `community_replies` を本番正本
+- 本番: localStorage コミュニティ join / 開設 store 無効。mock 掲示板フォールバック禁止
+- `/studio/community` — DB から自分の community ensure・pending/approved 一覧・スレッド/返信
+- `/mypage/community` — 承認済み参加一覧 + 掲示板
+- `/creators/[id]`（実プロフィール）— コミュニティ参加申請 UI
+- Studio オンボーディング承諾 — 本番は `ensureDeveloperCommunity` のみ
+- 設計: `docs/rel-2-06-community-supabase-design.md`
+
+---
+
+## 2026-06-27 REL-2-05 — 開発者フォロー Supabase 配線
+
+- migration **023** + RLS fixup 適用済 — `developer_follows` 正本
+- 本番: `/creators/[id]`・`/games/[id]`（実作品）でフォロー / 解除トグル。フォロワー数は count RPC
+- `/mypage`「フォロー中」タブ — ログイン中ユーザーのフォロー開発者一覧（公開作品数付き）
+- 自分自身・作品オーナー preview ではフォロー UI 非表示。フォロワー一覧タブは件数のみ（一覧は Coming Soon）
+- Preview mock の localStorage フォローは本番モードでは無効
+
+---
+
+## 2026-06-27 REL-2-05 — 開発者フォロー（設計確定）
+
+- migration **023** — `developer_follows` + count RPC
+- 正本: `developer_user_id`（開発者 user UUID）。RLS: 本人の follow 行のみ SELECT。フォロワー数は RPC
+- 設計 GO 済み — Dashboard 適用 GO は SQL レビュー後
+
+---
+
+## 2026-06-27 REL-2-05 — 開発者フォロー（設計草案）
+
+- migration **023** `developer_follows`（021・022 使用済みのため 024 不要）
+- 正本キー: `developer_user_id` = 開発者の `auth.users.id`
+- 設計: `docs/rel-2-05-developer-follows-design.md`
+- REL-2-06 / 2-07 とは分離
+
+---
+
 ## 2026-06-27 REL-2-01 — 外部リンク Supabase 配線
 
 - migration **021** 適用後 — `x_url` / `youtube_url` を DB 正本化

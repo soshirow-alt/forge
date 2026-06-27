@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import type { CommunityPost, CommunityReply } from "@/lib/community-v0-mock-data";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 import {
   fetchCommunityPosts,
@@ -48,7 +49,7 @@ export function useCommunityBoard(
 
     const supabase = getOptionalSupabaseClient();
     if (!supabase || !communityId) {
-      setPosts(mockPosts);
+      setPosts(shouldHideV0MockContent() ? [] : mockPosts);
       setLoaded(true);
       return;
     }
@@ -58,11 +59,13 @@ export function useCommunityBoard(
         if (cancelled) {
           return;
         }
-        setPosts(dbPosts.length > 0 ? dbPosts : mockPosts);
+        setPosts(
+          dbPosts.length > 0 || shouldHideV0MockContent() ? dbPosts : mockPosts,
+        );
       })
       .catch(() => {
         if (!cancelled) {
-          setPosts(mockPosts);
+          setPosts(shouldHideV0MockContent() ? [] : mockPosts);
         }
       })
       .finally(() => {

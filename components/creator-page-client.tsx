@@ -96,7 +96,7 @@ export function CreatorPageClient({ id }: { id: string }) {
               )}
             </div>
           )}
-          <CreatorFollowButton creatorId={creator.id} />
+          <CreatorFollowButton creatorRouteKey={creator.id} />
         </div>
 
         <section className="mt-12">

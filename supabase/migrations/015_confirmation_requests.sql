@@ -22,10 +22,14 @@ CREATE INDEX IF NOT EXISTS confirmation_requests_project_id_idx
 
 ALTER TABLE public.confirmation_requests ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Confirmation requests are publicly readable"
+  ON public.confirmation_requests;
 CREATE POLICY "Confirmation requests are publicly readable"
   ON public.confirmation_requests FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Project owners insert confirmation requests"
+  ON public.confirmation_requests;
 CREATE POLICY "Project owners insert confirmation requests"
   ON public.confirmation_requests FOR INSERT
   WITH CHECK (

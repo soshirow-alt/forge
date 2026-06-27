@@ -23,7 +23,9 @@ import {
   openDeveloperCommunity,
 } from "@/lib/developer-community-v0-store";
 import { buildLoginUrlWithReturn } from "@/lib/login-return-url";
-import { shouldBypassStudioLoginGate } from "@/lib/production-mode";
+import { shouldBypassStudioLoginGate, shouldHideV0MockContent } from "@/lib/production-mode";
+import { getOptionalSupabaseClient } from "@/lib/supabase/client";
+import { ensureDeveloperCommunity } from "@/lib/supabase/community-db";
 
 type StudioEntryGateContextValue = {
   attemptStudioEntry: (href?: string) => void;
@@ -54,14 +56,28 @@ export function StudioEntryGateProvider({ children }: { children: ReactNode }) {
     }
     acceptDeveloperPage(user.id);
     const communityId = communityIdFromUser(user.id, user.name);
-    openDeveloperCommunity({
-      id: communityId,
-      name: `${user.name}コミュニティ`,
-      avatar: "/images/landing/game-1.png",
-      handle: communityId,
-      description: "フォロワーと交流し、一緒にゲームを育てましょう",
-      memberCountLabel: 0,
-    });
+    if (shouldHideV0MockContent()) {
+      const supabase = getOptionalSupabaseClient();
+      if (supabase) {
+        void ensureDeveloperCommunity(supabase, {
+          id: communityId,
+          ownerId: user.id,
+          name: `${user.name}コミュニティ`,
+          description: "フォロワーと交流し、一緒にゲームを育てましょう",
+          avatarUrl: "/images/landing/game-1.png",
+          handle: communityId,
+        });
+      }
+    } else {
+      openDeveloperCommunity({
+        id: communityId,
+        name: `${user.name}コミュニティ`,
+        avatar: "/images/landing/game-1.png",
+        handle: communityId,
+        description: "フォロワーと交流し、一緒にゲームを育てましょう",
+        memberCountLabel: 0,
+      });
+    }
     setModalOpen(false);
     router.push(pendingHref);
   }, [user, pendingHref, router]);

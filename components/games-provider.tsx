@@ -39,12 +39,24 @@ import {
   type DeveloperProfileInput,
 } from "@/lib/developer-profiles";
 import {
+  buildFollowedDeveloperSummaries,
+  resolveDeveloperUserIdForFollow,
+  type FollowedDeveloperSummary,
+} from "@/lib/developer-follows";
+import {
   getCreatorById as getMockCreatorById,
   getCreatorId as getMockCreatorId,
   type Creator,
 } from "@/lib/creators";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
+import {
+  countDeveloperFollowersInDb,
+  fetchFollowingDeveloperUserIds,
+  followDeveloperInDb,
+  unfollowDeveloperInDb,
+} from "@/lib/supabase/developer-follows-db";
 import { mergeGameWithExtras, saveGameExtra } from "@/lib/game-extra-storage";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { upsertDeveloperProfile, fetchDeveloperProfiles } from "@/lib/supabase/developer-profiles-db";
 import {
   deleteProjectInDb,
@@ -241,8 +253,10 @@ type GamesContextValue = {
   getOwnedProjects: (userId: string | undefined) => Game[];
   getGamesByCreator: (creatorName: string) => Game[];
   getFollowerCount: (creatorId: string, defaultCount?: number) => number;
+  refreshFollowerCount: (developerUserId: string) => Promise<void>;
   isFollowing: (creatorId: string) => boolean;
-  followCreator: (creatorId: string) => void;
+  toggleFollowCreator: (creatorId: string) => Promise<void>;
+  getFollowedDevelopers: () => FollowedDeveloperSummary[];
   isBookmarked: (gameId: string) => boolean;
   bookmarkGame: (gameId: string) => void;
   unbookmarkGame: (gameId: string) => void;
@@ -340,6 +354,11 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   const [applicantCounts, setApplicantCounts] = useState<Counts>({});
   const [followerCounts, setFollowerCounts] = useState<Counts>({});
   const [followedCreators, setFollowedCreators] = useState<string[]>([]);
+  const [followedDeveloperUserIds, setFollowedDeveloperUserIds] = useState<string[]>(
+    [],
+  );
+  const [followerCountByDeveloperUserId, setFollowerCountByDeveloperUserId] =
+    useState<Counts>({});
   const [devlogs, setDevlogs] = useState<DevlogEntry[]>([]);
   const [helpfulMarksByProject, setHelpfulMarksByProject] = useState<
     Record<string, string[]>
@@ -371,10 +390,17 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     setDeveloperProfiles(profiles);
   }, []);
 
+  const resolveDeveloperUserId = useCallback(
+    (key: string) => resolveDeveloperUserIdForFollow(key, developerProfiles),
+    [developerProfiles],
+  );
+
   useEffect(() => {
     setApplicantCounts(loadCounts(APPLICANT_STORAGE_KEY));
-    setFollowerCounts(loadCounts(FOLLOWERS_STORAGE_KEY));
-    setFollowedCreators(loadFollowing());
+    if (!shouldHideV0MockContent()) {
+      setFollowerCounts(loadCounts(FOLLOWERS_STORAGE_KEY));
+      setFollowedCreators(loadFollowing());
+    }
     setLocalNotifications(loadLocalNotifications());
     setHydrated(true);
 
@@ -400,6 +426,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     if (!user) {
       setUserEngagement(EMPTY_USER_ENGAGEMENT);
       setDbNotifications([]);
+      setFollowedDeveloperUserIds([]);
       return;
     }
 
@@ -411,6 +438,10 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     void fetchUserEngagement(supabase, user.id)
       .then(setUserEngagement)
       .catch(() => setUserEngagement(EMPTY_USER_ENGAGEMENT));
+
+    void fetchFollowingDeveloperUserIds(supabase, user.id)
+      .then(setFollowedDeveloperUserIds)
+      .catch(() => setFollowedDeveloperUserIds([]));
 
     void fetchUserNotifications(supabase, user.id)
       .then((rows) =>
@@ -447,7 +478,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   }, [applicantCounts, hydrated]);
 
   useEffect(() => {
-    if (!hydrated) {
+    if (!hydrated || shouldHideV0MockContent()) {
       return;
     }
 
@@ -455,7 +486,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   }, [followerCounts, hydrated]);
 
   useEffect(() => {
-    if (!hydrated) {
+    if (!hydrated || shouldHideV0MockContent()) {
       return;
     }
 
@@ -1275,19 +1306,87 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   );
 
   const getFollowerCount = useCallback(
-    (creatorId: string, defaultCount = 0) =>
-      followerCounts[creatorId] ?? defaultCount,
-    [followerCounts],
+    (creatorId: string, defaultCount = 0) => {
+      const developerUserId = resolveDeveloperUserId(creatorId);
+      if (developerUserId) {
+        return followerCountByDeveloperUserId[developerUserId] ?? defaultCount;
+      }
+      return followerCounts[creatorId] ?? defaultCount;
+    },
+    [followerCountByDeveloperUserId, followerCounts, resolveDeveloperUserId],
+  );
+
+  const refreshFollowerCount = useCallback(
+    async (developerUserId: string) => {
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return;
+      }
+
+      const count = await countDeveloperFollowersInDb(supabase, developerUserId);
+      setFollowerCountByDeveloperUserId((prev) => ({
+        ...prev,
+        [developerUserId]: count,
+      }));
+    },
+    [],
   );
 
   const isFollowing = useCallback(
-    (creatorId: string) => followedCreators.includes(creatorId),
-    [followedCreators],
+    (creatorId: string) => {
+      const developerUserId = resolveDeveloperUserId(creatorId);
+      if (developerUserId) {
+        return followedDeveloperUserIds.includes(developerUserId);
+      }
+      return followedCreators.includes(creatorId);
+    },
+    [followedCreators, followedDeveloperUserIds, resolveDeveloperUserId],
   );
 
-  const followCreator = useCallback(
-    (creatorId: string) => {
+  const toggleFollowCreator = useCallback(
+    async (creatorId: string) => {
+      const developerUserId = resolveDeveloperUserId(creatorId);
+      if (developerUserId && user) {
+        if (developerUserId === user.id) {
+          return;
+        }
+
+        const supabase = getOptionalSupabaseClient();
+        if (!supabase) {
+          return;
+        }
+
+        const currentlyFollowing = followedDeveloperUserIds.includes(developerUserId);
+        if (currentlyFollowing) {
+          await unfollowDeveloperInDb(supabase, user.id, developerUserId);
+          setFollowedDeveloperUserIds((prev) =>
+            prev.filter((id) => id !== developerUserId),
+          );
+          setFollowerCountByDeveloperUserId((prev) => ({
+            ...prev,
+            [developerUserId]: Math.max(0, (prev[developerUserId] ?? 1) - 1),
+          }));
+        } else {
+          await followDeveloperInDb(supabase, user.id, developerUserId);
+          setFollowedDeveloperUserIds((prev) => [...prev, developerUserId]);
+          setFollowerCountByDeveloperUserId((prev) => ({
+            ...prev,
+            [developerUserId]: (prev[developerUserId] ?? 0) + 1,
+          }));
+        }
+        return;
+      }
+
+      if (shouldHideV0MockContent()) {
+        return;
+      }
+
       if (followedCreators.includes(creatorId)) {
+        setFollowedCreators((prev) => prev.filter((id) => id !== creatorId));
+        setFollowerCounts((prev) => ({
+          ...prev,
+          [creatorId]: Math.max(0, (prev[creatorId] ?? 1) - 1),
+        }));
         return;
       }
 
@@ -1297,8 +1396,28 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         [creatorId]: (prev[creatorId] ?? 0) + 1,
       }));
     },
-    [followedCreators],
+    [
+      followedCreators,
+      followedDeveloperUserIds,
+      resolveDeveloperUserId,
+      user,
+    ],
   );
+
+  const getFollowedDevelopers = useCallback((): FollowedDeveloperSummary[] => {
+    return buildFollowedDeveloperSummaries(
+      followedDeveloperUserIds,
+      developerProfiles,
+      (ownerId) =>
+        submittedGames
+          .filter((game) => game.ownerId === ownerId && isGamePublic(game))
+          .map((game) => ({
+            title: game.title,
+            thumbnailUrl: game.thumbnailUrl,
+            ownerName: game.ownerName,
+          })),
+    );
+  }, [followedDeveloperUserIds, developerProfiles, submittedGames]);
 
   const isBookmarked = useCallback(
     (gameId: string) => userEngagement.bookmarkedProjectIds.includes(gameId),
@@ -1754,8 +1873,10 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       getOwnedProjects,
       getGamesByCreator,
       getFollowerCount,
+      refreshFollowerCount,
       isFollowing,
-      followCreator,
+      toggleFollowCreator,
+      getFollowedDevelopers,
       isBookmarked,
       bookmarkGame,
       unbookmarkGame,
@@ -1826,8 +1947,10 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       getOwnedProjects,
       getGamesByCreator,
       getFollowerCount,
+      refreshFollowerCount,
       isFollowing,
-      followCreator,
+      toggleFollowCreator,
+      getFollowedDevelopers,
       isBookmarked,
       bookmarkGame,
       unbookmarkGame,

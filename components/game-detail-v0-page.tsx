@@ -26,6 +26,7 @@ import { GameVoicesV0Tab } from "@/components/game-voices-v0-tab";
 import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { GameExternalLinks } from "@/components/game-external-links";
 import { GameNotFoundPanel } from "@/components/game-not-found-panel";
+import { ContentReportButton } from "@/components/content-report-button";
 import { GameThumbnail, PlayerShell } from "@/components/player-shell";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
@@ -143,6 +144,10 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     hasPlayedGame,
     isProjectOwner,
     getOwnedProjects,
+    isFollowing,
+    toggleFollowCreator,
+    getFollowerCount,
+    refreshFollowerCount,
   } = useGames();
   const submittedGame = dataReady ? getSubmittedGameById(id) : undefined;
   const hideV0Mock = shouldHideV0MockContent();
@@ -211,6 +216,20 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   const [feedbackStep, setFeedbackStep] = useState<FeedbackFlowStep>("closed");
   const [voicesRefreshKey, setVoicesRefreshKey] = useState(0);
   const [following, setFollowing] = useState(game.developer.following);
+  const developerUserId =
+    isRealProject && submittedGame?.ownerId ? submittedGame.ownerId : null;
+  const creatorRouteKey = game.developer.id;
+  const realFollowing = developerUserId ? isFollowing(creatorRouteKey) : following;
+  const showDeveloperFollow =
+    !isOwnerPreview &&
+    (developerUserId ? user?.id !== developerUserId : !hideV0Mock);
+
+  useEffect(() => {
+    if (developerUserId) {
+      void refreshFollowerCount(developerUserId);
+    }
+  }, [developerUserId, refreshFollowerCount]);
+
   const [mockWatching, setMockWatching] = useState(game.watching);
   const [mockSaved, setMockSaved] = useState(game.saved);
   const [played, setPlayed] = useState(false);
@@ -284,6 +303,21 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     },
     [requireAuth, returnPath],
   );
+
+  const handleToggleDeveloperFollow = useCallback(() => {
+    if (developerUserId) {
+      handleProtectedAction(() => {
+        void toggleFollowCreator(creatorRouteKey);
+      });
+      return;
+    }
+    handleProtectedAction(() => setFollowing((value) => !value));
+  }, [
+    creatorRouteKey,
+    developerUserId,
+    handleProtectedAction,
+    toggleFollowCreator,
+  ]);
 
   const handleFeedbackSuccess = useCallback(
     (body?: string) => {
@@ -376,6 +410,18 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                 <h1 className="mt-4 text-2xl font-bold tracking-tight text-white sm:text-3xl">
                   {game.title}
                 </h1>
+                {isRealProject && !isOwnerPreview ? (
+                  <div className="mt-2">
+                    <ContentReportButton
+                      target={{
+                        targetType: "project",
+                        targetId: resolvedId,
+                        contextLabel: game.title,
+                      }}
+                      returnPath={returnPath}
+                    />
+                  </div>
+                ) : null}
                 <p className="mt-2 text-sm leading-relaxed text-zinc-400">{game.lead}</p>
                 <Link
                   href={`/creators/${game.developer.id}`}
@@ -509,18 +555,18 @@ function GameDetailV0PageBody({ id }: { id: string }) {
               <Bookmark className="size-4" aria-hidden="true" />
               {saved ? "保存済み" : "あとで遊ぶ"}
             </button>
-            {!isOwnerPreview && !hideV0Mock ? (
+            {showDeveloperFollow ? (
               <button
                 type="button"
-                onClick={() => handleProtectedAction(() => setFollowing((value) => !value))}
+                onClick={handleToggleDeveloperFollow}
                 className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
-                  following
+                  realFollowing
                     ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
                     : "border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-white"
                 }`}
               >
                 <Heart className="size-4" aria-hidden="true" />
-                {following ? "開発者フォロー中" : "開発者をフォロー"}
+                {realFollowing ? "開発者フォロー中" : "開発者をフォロー"}
               </button>
             ) : null}
           </div>
@@ -605,9 +651,14 @@ function GameDetailV0PageBody({ id }: { id: string }) {
               </span>
               <div className="min-w-0">
                 <p className="truncate font-semibold text-white">{game.developer.name}</p>
-                {!isRealProject && game.developer.followers > 0 ? (
+                {developerUserId || (!isRealProject && game.developer.followers > 0) ? (
                   <p className="text-xs text-zinc-500">
-                    フォロワー {game.developer.followers.toLocaleString()}
+                    フォロワー{" "}
+                    {(developerUserId
+                      ? getFollowerCount(creatorRouteKey, 0)
+                      : game.developer.followers
+                    ).toLocaleString()}
+                    人
                   </p>
                 ) : null}
               </div>
@@ -615,17 +666,17 @@ function GameDetailV0PageBody({ id }: { id: string }) {
             {game.developer.bio ? (
               <p className="mt-3 text-xs leading-relaxed text-zinc-500">{game.developer.bio}</p>
             ) : null}
-            {!isOwnerPreview && !hideV0Mock ? (
+            {showDeveloperFollow ? (
               <button
                 type="button"
-                onClick={() => handleProtectedAction(() => setFollowing((value) => !value))}
+                onClick={handleToggleDeveloperFollow}
                 className={`mt-4 w-full rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
-                  following
+                  realFollowing
                     ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
                     : "border-zinc-700 text-zinc-300 hover:border-zinc-600"
                 }`}
               >
-                {following ? "開発者フォロー中" : "開発者をフォローする"}
+                {realFollowing ? "開発者フォロー中" : "開発者をフォローする"}
               </button>
             ) : null}
             <Link

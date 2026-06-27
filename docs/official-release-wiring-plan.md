@@ -344,9 +344,11 @@ Phase 3 — 初期版周辺（③）※ 通報・共感・実績・ランキン�
 | | |
 |--|--|
 | **分類** | ② |
-| **Supabase** | **要** — `creator_follows` 等（migration 案） |
-| **概要** | localStorage `followedCreators` 廃止 |
-| **RUN** | ❌ |
+| **Supabase** | **要** — migration **023**（`developer_follows`）+ RLS fixup ✅ |
+| **概要** | localStorage `followedCreators` 廃止。本番のフォロー UI・フォロワー数・マイページフォロー中を DB 正本化 |
+| **設計** | `docs/rel-2-05-developer-follows-design.md` |
+| **GO** | ✅ 設計 GO — migration + fixup 適用済（2026-06-27） |
+| **RUN** | ✅ アプリ配線済（Preview E2E 推奨） |
 
 ### REL-2-06 コミュニティ完全 Supabase 化
 
@@ -354,16 +356,21 @@ Phase 3 — 初期版周辺（③）※ 通報・共感・実績・ランキン�
 |--|--|
 | **分類** | ② |
 | **Supabase** | **要** — **018 + 020** |
-| **概要** | 参加・承認・コミュニティ名・投稿を DB 正本。localStorage join store は本番無効 |
-| **RUN** | ❌ migration GO 後 |
+| **概要** | localStorage join store 廃止。参加・承認・掲示板・コミュニティ名を DB 正本化 |
+| **設計** | `docs/rel-2-06-community-supabase-design.md` |
+| **GO** | ✅ migration 018+020 本番 Dashboard 適用済（2026-06-27 確認 SQL） |
+| **RUN** | ✅ アプリ配線済 — Preview E2E 推奨 |
 
 ### REL-2-07 最低限の通報導線
 
 | | |
 |--|--|
-| **分類** | ③（初期版には含めるが Phase 2 末でも可） |
-| **Supabase** | 要（`reports` テーブル案）or 外部フォーム |
-| **RUN** | ❌ 設計 GO 後 |
+| **分類** | ③（初期版に含む） |
+| **Supabase** | **要** — migration **024**（`content_reports`） |
+| **概要** | 作品・コミュニティ投稿・開発者プロフィールから通報。Dashboard で運営確認 |
+| **設計** | `docs/rel-2-07-content-reports-design.md` |
+| **GO** | ✅ migration 024 本番 Dashboard 適用済（2026-06-27） |
+| **RUN** | ✅ アプリ配線済 — Preview E2E 推奨 |
 
 ---
 
@@ -394,8 +401,8 @@ Phase 3 — 初期版周辺（③）※ 通報・共感・実績・ランキン�
 
 ## 4. Supabase migration 015〜020
 
-**RUN 判断**: **[C] 追加確認必須** — Dashboard 適用 GO はまだ出さない。  
-**レビュー正本**: `docs/migration-015-020-pre-apply-review.md`（テーブル / RLS / 影響 / 順序 / rollback / 確認手順）
+**ステータス**: ✅ **本番 Dashboard 適用済**（2026-06-27 — 確認 SQL 015〜020 すべて `ok: true`）  
+**レビュー正本**: `docs/migration-015-020-pre-apply-review.md`
 
 | # | 内容 | 初期版での位置づけ | Phase 2 関連 Issue |
 |---|------|-------------------|-------------------|
@@ -406,7 +413,7 @@ Phase 3 — 初期版周辺（③）※ 通報・共感・実績・ランキン�
 | **019** | 影響度 RPC | ③（中身隠し中は未使用） | Phase 3 |
 | **020** | `community_posts.title` | ② | REL-2-06 |
 
-**新規 migration 案（Phase 2）**: 021 外部リンク（✅ 適用・実装済み）、022 作品概要（✅）、023 フォロー
+**Phase 2 migration（本番）**: 015〜020 ✅ / 021 ✅ / 022 ✅ / 023 + fixup ✅ / **024 ✅**
 
 ---
 
