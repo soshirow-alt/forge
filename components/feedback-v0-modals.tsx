@@ -97,7 +97,7 @@ function GameSummaryCard({ game }: { game: GameDetailV0 }) {
           </span>
           <span className="inline-flex items-center gap-1">
             <Users className="size-3.5 text-violet-400" aria-hidden="true" />
-            見届け {game.witnessCount.toLocaleString()}
+            見届け人 {game.witnessCount.toLocaleString()}
           </span>
         </div>
       </div>
@@ -415,7 +415,7 @@ export function FeedbackSuccessV0Modal({
           <MessageSquare className="size-7" aria-hidden="true" />
         </div>
         <p className="text-sm leading-relaxed text-zinc-400">
-          開発者の改善の参考になります。反映されたら、見届け中の作品で変化を確認できます。
+          開発者の改善の参考になります。反映されたら、更新を追っている作品で変化を確認できます。
         </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
           <Link

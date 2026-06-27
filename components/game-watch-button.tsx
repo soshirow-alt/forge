@@ -3,6 +3,10 @@
 import { AuthGatedHint } from "@/components/auth-gated-hint";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
+import {
+  WATCH_BUTTON_OFF,
+  WATCH_BUTTON_ON,
+} from "@/lib/watch-ui-labels";
 
 type GameWatchButtonProps = {
   gameId: string;
@@ -34,10 +38,10 @@ export function GameWatchButton({
     : "rounded-lg border px-4 py-2 text-sm font-medium transition-colors";
 
   const label = !isLoggedIn
-    ? "ログインして更新を追う"
+    ? `ログインして${WATCH_BUTTON_OFF}`
     : watching
-      ? "更新を追跡中"
-      : "更新を追う";
+      ? WATCH_BUTTON_ON
+      : WATCH_BUTTON_OFF;
 
   return (
     <div className={className}>

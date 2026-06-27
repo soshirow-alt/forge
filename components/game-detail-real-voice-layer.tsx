@@ -209,17 +209,18 @@ export function useGameDetailEngagement(gameId: string, enabled: boolean) {
     setSaved(isBookmarked(gameId));
   }, [enabled, gameId, isWatching, isBookmarked]);
 
-  const toggleWatch = useCallback(async () => {
+  const toggleWatch = useCallback(async (): Promise<boolean> => {
     if (!enabled) {
-      return;
+      return false;
     }
     if (watching) {
       await unwatchGame(gameId);
       setWatching(false);
-      return;
+      return false;
     }
     await watchGame(gameId);
     setWatching(true);
+    return true;
   }, [enabled, gameId, watching, watchGame, unwatchGame]);
 
   const toggleSaved = useCallback(async () => {

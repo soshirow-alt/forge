@@ -7,6 +7,7 @@ import {
   type ForgeGameCardBadge,
 } from "@/components/forge-game-card";
 import { useGames } from "@/components/games-provider";
+import { WATCH_BADGE_LABEL, WATCH_LIST_TITLE } from "@/lib/watch-ui-labels";
 
 function engagementBadge(id: string, label: string, emoji?: string): ForgeGameCardBadge[] {
   return [{ id, emoji, label }];
@@ -48,7 +49,7 @@ export function MyPageWitnessingRealPanel() {
     if (watchedGames.length === 0) {
       return (
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-6 py-16 text-center">
-          <p className="text-zinc-400">見届け中の作品はまだありません。</p>
+          <p className="text-zinc-400">{WATCH_LIST_TITLE}はまだありません。</p>
           <Link
             href="/home"
             className="mt-6 inline-block rounded-lg bg-violet-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
@@ -63,7 +64,7 @@ export function MyPageWitnessingRealPanel() {
       <ForgeGameCardList
         games={watchedGames}
         variant="compact"
-        badgesForGame={() => engagementBadge("watching", "見届け中", "🔄")}
+        badgesForGame={() => engagementBadge("watching", WATCH_BADGE_LABEL, "🔄")}
         detailLabel="詳細 →"
       />
     );

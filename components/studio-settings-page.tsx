@@ -9,14 +9,14 @@ export function StudioSettingsPage() {
     <StudioShell activeNav="settings">
       <div className="mx-auto max-w-3xl space-y-8">
         <header>
-          <h1 className="text-2xl font-bold text-white sm:text-3xl">Studio 設定</h1>
+          <h1 className="text-2xl font-bold text-white sm:text-3xl">設定</h1>
           <p className="mt-2 text-sm text-zinc-400">
             アカウントと通知の設定。通知は Player / Studio を同じ画面で管理できます。
           </p>
         </header>
         <ForgeSettingsForm context="studio" />
         <p className="text-center text-xs text-zinc-600">
-          Player 設定画面でも同じ通知設定にアクセスできます。{" "}
+          Player からも同じ設定画面にアクセスできます。{" "}
           <Link href="/settings" className="text-violet-400 hover:text-violet-300">
             /settings
           </Link>

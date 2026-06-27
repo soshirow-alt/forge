@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { useGames } from "@/components/games-provider";
 import { DeveloperGachaModal } from "@/components/developer-gacha-modal";
 import { DeveloperListCard } from "@/components/developer-list-card";
 import { PlayerShell } from "@/components/player-shell";
 import { useRequireAuth } from "@/hooks/use-require-auth";
+import { buildPublicDeveloperSearchResults } from "@/lib/discovery-public-developers";
 import {
   DEVELOPER_SEARCH_TOTAL,
   developerGenreFilters,
@@ -20,6 +22,10 @@ import {
   type DeveloperSearchSortId,
   type DeveloperSearchSortOrder,
 } from "@/lib/developer-search-v0-mock-data";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
+import { getOptionalSupabaseClient } from "@/lib/supabase/client";
+import { countDeveloperFollowersBatchInDb } from "@/lib/supabase/developer-follows-db";
+import { isGamePublic } from "@/lib/project-visibility";
 import { Dices } from "lucide-react";
 
 function parseGenres(param: string | null): string[] {
@@ -69,6 +75,14 @@ function buildCreatorsSearchUrl(options: {
 function DeveloperSearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const hideV0Mock = shouldHideV0MockContent();
+  const {
+    submittedGames,
+    dataReady,
+    getDeveloperProfileByUserId,
+    isFollowing,
+    toggleFollowCreator,
+  } = useGames();
   const { requireAuth } = useRequireAuth();
   const queryFromUrl = searchParams.get("q")?.trim() ?? "";
   const sortFromUrl = parseDeveloperSort(searchParams.get("sort"));
@@ -82,6 +96,7 @@ function DeveloperSearchContent() {
   const [newOnly, setNewOnly] = useState(newOnlyFromUrl);
   const [gachaOpen, setGachaOpen] = useState(false);
   const [gachaPick, setGachaPick] = useState<DeveloperSearchResult | null>(null);
+  const [followerCounts, setFollowerCounts] = useState<Record<string, number>>({});
   const [followingIds, setFollowingIds] = useState<Set<string>>(() => {
     const initial = new Set<string>();
     for (const dev of developerSearchResults) {
@@ -92,6 +107,59 @@ function DeveloperSearchContent() {
     return initial;
   });
 
+  const publicOwnerIds = useMemo(() => {
+    if (!hideV0Mock) {
+      return [];
+    }
+    return [
+      ...new Set(
+        submittedGames
+          .filter(isGamePublic)
+          .map((game) => game.ownerId)
+          .filter((ownerId): ownerId is string => Boolean(ownerId)),
+      ),
+    ];
+  }, [hideV0Mock, submittedGames]);
+
+  const publicDeveloperProfiles = useMemo(() => {
+    return publicOwnerIds
+      .map((ownerId) => getDeveloperProfileByUserId(ownerId))
+      .filter((profile): profile is NonNullable<typeof profile> => Boolean(profile));
+  }, [getDeveloperProfileByUserId, publicOwnerIds]);
+
+  useEffect(() => {
+    if (!hideV0Mock || !dataReady || publicOwnerIds.length === 0) {
+      return;
+    }
+
+    const supabase = getOptionalSupabaseClient();
+    if (!supabase) {
+      return;
+    }
+
+    void countDeveloperFollowersBatchInDb(supabase, publicOwnerIds)
+      .then(setFollowerCounts)
+      .catch(() => setFollowerCounts({}));
+  }, [dataReady, hideV0Mock, publicOwnerIds]);
+
+  const catalog = useMemo(() => {
+    if (!hideV0Mock) {
+      return developerSearchResults;
+    }
+    return buildPublicDeveloperSearchResults(
+      publicDeveloperProfiles,
+      submittedGames,
+      followerCounts,
+      isFollowing,
+    );
+  }, [
+    followerCounts,
+    hideV0Mock,
+    isFollowing,
+    publicDeveloperProfiles,
+    submittedGames,
+  ]);
+
   useEffect(() => {
     setQuery(queryFromUrl);
     setSelectedGenres(parseGenres(genreParam));
@@ -101,6 +169,10 @@ function DeveloperSearchContent() {
   const handleFollow = useCallback(
     (devId: string) => {
       requireAuth(() => {
+        if (hideV0Mock) {
+          void toggleFollowCreator(devId);
+          return;
+        }
         setFollowingIds((prev) => {
           const next = new Set(prev);
           if (next.has(devId)) {
@@ -118,14 +190,33 @@ function DeveloperSearchContent() {
         genres: genresFromUrl,
       }));
     },
-    [genresFromUrl, newOnlyFromUrl, orderFromUrl, queryFromUrl, requireAuth, sortFromUrl],
+    [
+      genresFromUrl,
+      hideV0Mock,
+      newOnlyFromUrl,
+      orderFromUrl,
+      queryFromUrl,
+      requireAuth,
+      sortFromUrl,
+      toggleFollowCreator,
+    ],
   );
 
   const results = useMemo(() => {
-    const filtered = filterDevelopers(queryFromUrl, genresFromUrl);
+    const filtered = filterDevelopers(queryFromUrl, genresFromUrl, catalog);
     const scoped = newOnlyFromUrl ? filtered.filter((dev) => dev.isNew) : filtered;
     return sortDevelopers(scoped, sortFromUrl, orderFromUrl);
-  }, [genresFromUrl, newOnlyFromUrl, orderFromUrl, queryFromUrl, sortFromUrl]);
+  }, [catalog, genresFromUrl, newOnlyFromUrl, orderFromUrl, queryFromUrl, sortFromUrl]);
+
+  const totalLabel = hideV0Mock ? String(catalog.length) : String(DEVELOPER_SEARCH_TOTAL);
+
+  if (hideV0Mock && !dataReady) {
+    return (
+      <PlayerShell activeNav="creator-search" headerSearchDefault={queryFromUrl}>
+        <p className="text-sm text-zinc-500">読み込み中...</p>
+      </PlayerShell>
+    );
+  }
 
   const applySearch = () => {
     router.push(
@@ -258,7 +349,7 @@ function DeveloperSearchContent() {
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-zinc-500">
-              検索結果: {DEVELOPER_SEARCH_TOTAL}人（表示 {results.length}人）
+              検索結果: {totalLabel}人（表示 {results.length}人）
             </p>
             <div className="flex flex-wrap items-center gap-2">
               {developerSearchSortOptions.map((option) => (
@@ -298,7 +389,7 @@ function DeveloperSearchContent() {
               <li key={dev.id}>
                 <DeveloperListCard
                   dev={dev}
-                  following={followingIds.has(dev.id)}
+                  following={hideV0Mock ? isFollowing(dev.id) : followingIds.has(dev.id)}
                   onFollow={handleFollow}
                 />
               </li>

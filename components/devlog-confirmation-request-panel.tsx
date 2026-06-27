@@ -242,7 +242,7 @@ export function DevlogConfirmationRequestPanel({
           hintLabel="対象者"
           hint={
             <>
-              未選択のときは「前verを遊んだ人」と「見届け中の人」に届きます。
+              未選択のときは「前verを遊んだ人」と「更新を追っている人」に届きます。
               <br />
               「関連FBを送った人」は、上で選んだ課題に関係する人を優先します。
             </>

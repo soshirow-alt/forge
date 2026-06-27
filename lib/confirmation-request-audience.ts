@@ -28,8 +28,8 @@ export const CONFIRMATION_NOTIFY_AUDIENCE_OPTIONS: ConfirmationNotifyAudienceOpt
     },
     {
       key: "watchers",
-      label: "見届け中の人",
-      description: "見届け登録している人",
+      label: "更新を追っている人",
+      description: "「更新を追う」をオンにしている人",
     },
     {
       key: "bookmarks",

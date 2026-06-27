@@ -49,6 +49,13 @@ import { applyProjectOverviewV0 } from "@/lib/project-overview-v0-store";
 import { projectStudioPath } from "@/lib/project-nurture-links";
 import { shouldHideV0MockContent, isProductionReleaseMode } from "@/lib/production-mode";
 import { formatRelativeUpdateLabel } from "@/lib/discovery-public-games";
+import {
+  WATCH_BUTTON_OFF,
+  WATCH_BUTTON_ON,
+  WATCH_FIRST_HINT,
+  hasSeenWatchFirstHint,
+  markWatchFirstHintSeen,
+} from "@/lib/watch-ui-labels";
 import { useProjectOverviewV0 } from "@/hooks/use-project-overview-v0";
 import { useProjectPublicStats } from "@/hooks/use-project-public-stats";
 import {
@@ -234,6 +241,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
 
   const [mockWatching, setMockWatching] = useState(game.watching);
   const [mockSaved, setMockSaved] = useState(game.saved);
+  const [watchHint, setWatchHint] = useState<string | null>(null);
   const [played, setPlayed] = useState(false);
   const voiceLayerRef = useRef<GameDetailRealVoiceHandle>(null);
   const {
@@ -305,6 +313,21 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     },
     [requireAuth, returnPath],
   );
+
+  const handleWatchToggle = useCallback(() => {
+    handleProtectedAction(() => {
+      if (isRealProject) {
+        void toggleWatch().then((started) => {
+          if (started && !hasSeenWatchFirstHint()) {
+            markWatchFirstHintSeen();
+            setWatchHint(WATCH_FIRST_HINT);
+          }
+        });
+        return;
+      }
+      setMockWatching((value) => !value);
+    });
+  }, [handleProtectedAction, isRealProject, toggleWatch]);
 
   const handleToggleDeveloperFollow = useCallback(() => {
     if (developerUserId) {
@@ -439,7 +462,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                   {showWitnessStat ? (
                     <StatItem
                       icon={<Users className="size-4" aria-hidden="true" />}
-                      label={isRealProject ? "見届け人" : "見届け"}
+                      label="見届け人"
                       value={
                         isRealProject
                           ? publicStats.witnessCount.toLocaleString()
@@ -519,15 +542,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
             </button>
             <button
               type="button"
-              onClick={() =>
-                handleProtectedAction(() => {
-                  if (isRealProject) {
-                    void toggleWatch();
-                    return;
-                  }
-                  setMockWatching((value) => !value);
-                })
-              }
+              onClick={handleWatchToggle}
               className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
                 watching
                   ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
@@ -535,7 +550,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
               }`}
             >
               <Check className="size-4" aria-hidden="true" />
-              {watching ? "見届け中" : "見届ける"}
+              {watching ? WATCH_BUTTON_ON : WATCH_BUTTON_OFF}
             </button>
             <button
               type="button"
@@ -572,6 +587,12 @@ function GameDetailV0PageBody({ id }: { id: string }) {
               </button>
             ) : null}
           </div>
+
+          {watchHint ? (
+            <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm leading-relaxed text-emerald-100/90">
+              {watchHint}
+            </p>
+          ) : null}
 
           {isRealProject && !isOwnerPreview ? (
             <GameChangeCheckSection
@@ -724,7 +745,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                       <p className="text-xs text-zinc-500">{related.genre}</p>
                       <p className="mt-1 inline-flex items-center gap-1 text-xs text-zinc-500">
                         <Users className="size-3" aria-hidden="true" />
-                        見届け {related.witnessCount.toLocaleString()}
+                        見届け人 {related.witnessCount.toLocaleString()}
                       </p>
                     </div>
                   </Link>

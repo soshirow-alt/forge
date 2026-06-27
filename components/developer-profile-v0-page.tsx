@@ -189,7 +189,7 @@ function DeveloperProfileV0PageContent({ id }: { id: string }) {
                           <span className="rounded-md border border-violet-500/30 bg-violet-500/10 px-2 py-0.5 text-xs text-violet-300">開発中</span>
                           <h3 className="mt-2 font-semibold text-white">{game.title}</h3>
                           <p className="mt-1 text-sm text-zinc-400">{game.description}</p>
-                          <p className="mt-2 text-xs text-zinc-500">見届け {game.witnessCount.toLocaleString()} · 最終更新 {game.lastUpdated}</p>
+                          <p className="mt-2 text-xs text-zinc-500">見届け人 {game.witnessCount.toLocaleString()} · 最終更新 {game.lastUpdated}</p>
                         </div>
                       </Link>
                     </li>

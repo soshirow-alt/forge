@@ -16,7 +16,7 @@ export function PlayerSettingsV0Page() {
         </header>
         <ForgeSettingsForm context="player" />
         <p className="text-center text-xs text-zinc-600">
-          Studio 設定でも同じ通知項目を編集できます。{" "}
+          Studio からも同じ設定画面にアクセスできます。{" "}
           <Link href="/studio/settings" className="text-violet-400 hover:text-violet-300">
             /studio/settings
           </Link>

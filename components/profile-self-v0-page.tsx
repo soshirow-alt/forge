@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useGames } from "@/components/games-provider";
+import { WATCH_STAT_LABEL } from "@/lib/watch-ui-labels";
 import { PlayerShell } from "@/components/player-shell";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { ProfileAvatarPicker } from "@/components/profile-avatar-picker";
@@ -186,8 +187,7 @@ export function ProfileSelfV0Page() {
       <div className="mx-auto max-w-4xl space-y-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-medium text-violet-300">プレイヤー・プロフィール</p>
-            <h1 className="mt-1 text-2xl font-bold text-white sm:text-3xl">マイプロフィール</h1>
+            <h1 className="text-2xl font-bold text-white sm:text-3xl">Playerプロフィール</h1>
             <p className="mt-2 text-sm text-zinc-500">プレイヤーとして公開される自己紹介です。</p>
           </div>
           <button
@@ -233,7 +233,7 @@ export function ProfileSelfV0Page() {
               { label: "送ったFB", value: displayProfile.stats.feedbackCount },
               { label: "共感された回数", value: displayProfile.stats.voicesReceived },
               { label: "フォロー中開発者", value: displayProfile.stats.followingDevelopers },
-              { label: "見届け中", value: displayProfile.stats.witnessingGames },
+              { label: WATCH_STAT_LABEL, value: displayProfile.stats.witnessingGames },
             ].map((stat) => (
               <div
                 key={stat.label}

@@ -113,8 +113,12 @@ export const developerSearchResults: DeveloperSearchResult[] = [
   },
 ];
 
-export function filterDevelopers(query: string, genres: string[] = []): DeveloperSearchResult[] {
-  let list = developerSearchResults;
+export function filterDevelopers(
+  query: string,
+  genres: string[] = [],
+  source: DeveloperSearchResult[] = developerSearchResults,
+): DeveloperSearchResult[] {
+  let list = source;
 
   if (genres.length > 0) {
     list = list.filter((dev) => dev.genres.some((genre) => genres.includes(genre)));

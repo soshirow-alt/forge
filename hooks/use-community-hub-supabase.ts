@@ -44,6 +44,8 @@ function toProfile(
 
 export function useCommunityHubSupabase(isDeveloper: boolean) {
   const { user, hydrated } = useAuth();
+  const userId = user?.id;
+  const userName = user?.name ?? "";
   const enabled = shouldHideV0MockContent();
   const [developerProfile, setDeveloperProfile] = useState<DeveloperCommunityProfile | null>(
     null,
@@ -66,8 +68,8 @@ export function useCommunityHubSupabase(isDeveloper: boolean) {
       const community = await fetchDeveloperCommunityById(supabase, communityId);
       const communityName = community?.name ?? "コミュニティ";
 
-      if (user) {
-        const status = await fetchCommunityMembershipStatus(supabase, communityId, user.id);
+      if (userId) {
+        const status = await fetchCommunityMembershipStatus(supabase, communityId, userId);
         setMembershipStatus(status);
       }
 
@@ -86,11 +88,11 @@ export function useCommunityHubSupabase(isDeveloper: boolean) {
         );
       }
     },
-    [user, isDeveloper, developerProfile?.id],
+    [userId, isDeveloper, developerProfile?.id],
   );
 
   useEffect(() => {
-    if (!enabled || !hydrated || !user) {
+    if (!enabled || !hydrated || !userId) {
       setLoaded(true);
       return;
     }
@@ -103,41 +105,46 @@ export function useCommunityHubSupabase(isDeveloper: boolean) {
     }
 
     void (async () => {
-      if (isDeveloper) {
-        const id = communityIdFromUser(user.id, user.name);
-        let record = await fetchDeveloperCommunityByOwner(supabase, user.id);
-        if (!record) {
-          await ensureDeveloperCommunity(supabase, {
-            id,
-            ownerId: user.id,
-            name: `${user.name}コミュニティ`,
-            description: "フォロワーと交流し、一緒にゲームを育てましょう",
-            avatarUrl: DEFAULT_AVATAR,
-            handle: id,
-          });
-          record = await fetchDeveloperCommunityByOwner(supabase, user.id);
+      try {
+        if (isDeveloper) {
+          const id = communityIdFromUser(userId, userName);
+          let record = await fetchDeveloperCommunityByOwner(supabase, userId);
+          if (!record) {
+            await ensureDeveloperCommunity(supabase, {
+              id,
+              ownerId: userId,
+              name: `${userName}コミュニティ`,
+              description: "フォロワーと交流し、一緒にゲームを育てましょう",
+              avatarUrl: DEFAULT_AVATAR,
+              handle: id,
+            });
+            record = await fetchDeveloperCommunityByOwner(supabase, userId);
+          }
+          if (record && !cancelled) {
+            const count = await countApprovedCommunityMembers(supabase, record.id);
+            const profile = toProfile(record, count);
+            setDeveloperProfile(profile);
+            await reloadMembershipData(record.id);
+          }
+        } else {
+          const joined = await fetchJoinedCommunitiesForUser(supabase, userId);
+          if (!cancelled) {
+            setJoinedCommunities(joined);
+          }
         }
-        if (record && !cancelled) {
-          const count = await countApprovedCommunityMembers(supabase, record.id);
-          const profile = toProfile(record, count);
-          setDeveloperProfile(profile);
-          await reloadMembershipData(record.id);
-        }
-      } else {
-        const joined = await fetchJoinedCommunitiesForUser(supabase, user.id);
+      } catch {
+        // RLS / network errors should not leave the hub stuck on "読み込み中..."
+      } finally {
         if (!cancelled) {
-          setJoinedCommunities(joined);
+          setLoaded(true);
         }
-      }
-      if (!cancelled) {
-        setLoaded(true);
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [enabled, hydrated, user, isDeveloper, reloadMembershipData]);
+  }, [enabled, hydrated, userId, userName, isDeveloper, reloadMembershipData]);
 
   const applyToCommunity = useCallback(
     async (communityId: string) => {

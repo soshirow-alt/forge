@@ -17,6 +17,7 @@ import {
 } from "@/components/mypage-v0-extra-tabs";
 import { FollowingDevelopersPanel } from "@/components/following-developers-panel";
 import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
+import { WATCH_LIST_TITLE } from "@/lib/watch-ui-labels";
 import { MyPageLoopPanel } from "@/components/mypage-loop-panel";
 import {
   MyPageSavedRealPanel,
@@ -350,19 +351,17 @@ function WitnessingTabPanel() {
       <div className="min-w-0 flex-1">
         <header>
           <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-            見届け中の作品
+            {WATCH_LIST_TITLE}
           </h1>
           <V0ExpandableHelp
             prompt="詳しく見る"
-            teaser="見届け中の作品とは？ — 気になる作品を追い、更新や変化を見届けるリストです。"
+            teaser={`${WATCH_LIST_TITLE}とは？ — 「更新を追う」をオンにした作品の一覧です。`}
           >
             <p>
-              見届け人は、同じ作品を継続して追うプレイヤーのことです。Forge
-              の必須条件ではありませんが、いると「変化を見る」「再プレイ」が起きやすくなります。
+              「見届け人」は作品が正式版になったときに付与される称号です。ボタン1回の「更新を追う」とは別の仕組みです。
             </p>
             <p className="mt-2">
-              この一覧では、見届け中の作品の更新や Devlog
-              をまとめて確認できます。気になったら詳細からプレイやフィードバックへ進めます。
+              この一覧では、更新を追っている作品の Devlog や新版をまとめて確認できます。
             </p>
           </V0ExpandableHelp>
         </header>

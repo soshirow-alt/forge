@@ -2,16 +2,16 @@ export const playerGuideSteps = [
   { label: "作品を探す", description: "気になる作品を検索・発見する" },
   { label: "プレイする", description: "短いサイクルで遊び、感想を持ち帰る" },
   { label: "フィードバックする", description: "感想や気づきを開発者に送る" },
-  { label: "見届ける", description: "更新や改善の変化を追いかける" },
+  { label: "更新を追う", description: "更新や改善の変化を追いかける" },
   { label: "保存する", description: "あとで遊びたい作品をストックする" },
 ] as const;
 
 export const playerGuideFaq = [
   {
     id: "witnessing",
-    question: "見届け中の作品とは？",
+    question: "更新を追っている作品とは？",
     answer:
-      "あなたがフィードバックした作品や、継続的に変化を追っている作品です。開発ログや更新内容を確認して、作品の成長を見届けましょう。",
+      "「更新を追う」をオンにした作品の一覧です。開発ログや新版の通知が届き、作品の育ちを確認できます。「見届け人」は正式版到達時の称号で、別の仕組みです。",
   },
   {
     id: "saved",

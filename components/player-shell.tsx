@@ -16,6 +16,7 @@ import { type FormEvent, type ReactNode, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useStudioEntryGate } from "@/components/studio-entry-gate-provider";
 import { shouldBypassStudioLoginOnPreview } from "@/lib/preview-v0";
+import { WATCH_TAB_LABEL } from "@/lib/watch-ui-labels";
 
 const primaryLinks = [
   { id: "home", href: "/home", label: "ホーム" },
@@ -109,7 +110,7 @@ function MypageSidebarGroup() {
         href="/mypage/profile"
         className={`ml-4 block ${subNavLinkClass(isMypageProfile)}`}
       >
-        プレイヤー・プロフィール
+        Playerプロフィール
       </Link>
       <Link
         href="/mypage/community"
@@ -207,7 +208,7 @@ export function PlayerShell({
           <Link
             href="/mypage/profile"
             className="rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
-            aria-label="プレイヤー・マイプロフィール"
+            aria-label="Playerプロフィール"
           >
             <User className="size-5" />
           </Link>
@@ -263,7 +264,7 @@ export function MyPageTabs({
   onTabChange: (tab: string) => void;
 }) {
   const tabs = [
-    { id: "witnessing", label: "見届け中" },
+    { id: "witnessing", label: WATCH_TAB_LABEL },
     { id: "saved", label: "保存作品" },
     { id: "play-history", label: "プレイ履歴" },
     { id: "feedback", label: "FB履歴" },

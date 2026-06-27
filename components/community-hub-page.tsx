@@ -7,7 +7,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { ConfirmationCitationCard } from "@/components/confirmation-citation-card";
 import { ContentReportButton } from "@/components/content-report-button";
-import { useCommunityBoard } from "@/hooks/use-community-board";
+import {
+  EMPTY_COMMUNITY_POSTS,
+  useCommunityBoard,
+} from "@/hooks/use-community-board";
 import { useCommunityHubSupabase } from "@/hooks/use-community-hub-supabase";
 import { useCommunityJoinV0 } from "@/hooks/use-community-join-v0";
 import { useDeveloperCommunitiesV0 } from "@/hooks/use-developer-communities-v0";
@@ -958,7 +961,10 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
     appendReply,
     persistPost,
     persistReply,
-  } = useCommunityBoard(selectedCommunityId, hideV0Mock ? [] : mockPosts);
+  } = useCommunityBoard(
+    selectedCommunityId,
+    hideV0Mock ? EMPTY_COMMUNITY_POSTS : mockPosts,
+  );
 
   const [dbMembershipStatus, setDbMembershipStatus] = useState<
     "none" | "pending" | "approved" | "rejected" | null

@@ -1,3 +1,5 @@
+import { WATCH_BADGE_LABEL, WATCH_TAB_LABEL } from "@/lib/watch-ui-labels";
+
 export const witnessingGames = [
   {
     title: "星灯の旅路",
@@ -128,7 +130,7 @@ export { genreFilterOptions as genreFilters } from "@/lib/genre-filters-v0";
 
 export const playHistoryFilterTabs = [
   { id: "all", label: "すべて", count: 30 },
-  { id: "witnessing", label: "見届け中", count: 5 },
+  { id: "witnessing", label: WATCH_TAB_LABEL, count: 5 },
   { id: "supported", label: "応援中の作者の作品", count: 8 },
   { id: "play-only", label: "プレイのみ", count: 17 },
 ] as const;
@@ -166,7 +168,7 @@ export const playHistoryGames: PlayHistoryGame[] = [
     description: "夜の森を旅する短編アドベンチャー",
     image: "/images/landing/game-1.png",
     tags: [
-      { label: "見届け中", variant: "witnessing" },
+      { label: WATCH_BADGE_LABEL, variant: "witnessing" },
       { label: "応援中の作者", variant: "supported" },
     ],
     firstPlay: "2025/05/18 (v0.1.0)",
@@ -186,7 +188,7 @@ export const playHistoryGames: PlayHistoryGame[] = [
     version: "v0.3.2",
     description: "心の奥に残る、静かな物語",
     image: "/images/landing/game-2.png",
-    tags: [{ label: "見届け中", variant: "witnessing" }],
+    tags: [{ label: WATCH_BADGE_LABEL, variant: "witnessing" }],
     firstPlay: "2025/05/10 (v0.2.0)",
     playCount: 2,
     totalPlayTime: "3時間15分",
@@ -248,7 +250,7 @@ export const playHistoryGames: PlayHistoryGame[] = [
     description: "あの夏の記憶を、もう一度辿るノスタルジアRPG",
     image: "/images/landing/game-4.png",
     tags: [
-      { label: "見届け中", variant: "witnessing" },
+      { label: WATCH_BADGE_LABEL, variant: "witnessing" },
       { label: "応援中の作者", variant: "supported" },
     ],
     firstPlay: "2025/04/20 (v0.1.2)",
@@ -284,7 +286,7 @@ export const playHistoryGames: PlayHistoryGame[] = [
     version: "v0.1.0",
     description: "猫とコーヒーと、ゆったり営業する癒し系シミュレーション",
     image: "/images/landing/game-4.png",
-    tags: [{ label: "見届け中", variant: "witnessing" }],
+    tags: [{ label: WATCH_BADGE_LABEL, variant: "witnessing" }],
     firstPlay: "2025/05/01 (v0.1.0)",
     playCount: 2,
     totalPlayTime: "2時間10分",

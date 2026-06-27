@@ -13,6 +13,9 @@ import {
 
 const DEFAULT_AVATAR = "/images/landing/game-4.png";
 
+/** Stable empty list — inline `[]` in deps causes infinite refetch loops. */
+export const EMPTY_COMMUNITY_POSTS: CommunityPost[] = [];
+
 function resolveAuthor(userId: string, currentUserId?: string, userName?: string) {
   if (currentUserId && userId === currentUserId) {
     return {
@@ -34,7 +37,9 @@ export function useCommunityBoard(
   mockPosts: CommunityPost[],
 ) {
   const { user } = useAuth();
-  const [posts, setPosts] = useState<CommunityPost[]>(mockPosts);
+  const normalizedMockPosts =
+    mockPosts.length === 0 ? EMPTY_COMMUNITY_POSTS : mockPosts;
+  const [posts, setPosts] = useState<CommunityPost[]>(normalizedMockPosts);
   const [loaded, setLoaded] = useState(false);
 
   const authorResolver = useCallback(
@@ -49,7 +54,7 @@ export function useCommunityBoard(
 
     const supabase = getOptionalSupabaseClient();
     if (!supabase || !communityId) {
-      setPosts(shouldHideV0MockContent() ? [] : mockPosts);
+      setPosts(shouldHideV0MockContent() ? EMPTY_COMMUNITY_POSTS : normalizedMockPosts);
       setLoaded(true);
       return;
     }
@@ -60,12 +65,16 @@ export function useCommunityBoard(
           return;
         }
         setPosts(
-          dbPosts.length > 0 || shouldHideV0MockContent() ? dbPosts : mockPosts,
+          dbPosts.length > 0 || shouldHideV0MockContent()
+            ? dbPosts
+            : normalizedMockPosts,
         );
       })
       .catch(() => {
         if (!cancelled) {
-          setPosts(shouldHideV0MockContent() ? [] : mockPosts);
+          setPosts(
+            shouldHideV0MockContent() ? EMPTY_COMMUNITY_POSTS : normalizedMockPosts,
+          );
         }
       })
       .finally(() => {
@@ -77,7 +86,7 @@ export function useCommunityBoard(
     return () => {
       cancelled = true;
     };
-  }, [communityId, mockPosts, authorResolver]);
+  }, [communityId, normalizedMockPosts, authorResolver]);
 
   const prependPost = useCallback((post: CommunityPost) => {
     setPosts((prev) => [post, ...prev]);

@@ -11,7 +11,7 @@ export const playerSettingsSections: SettingsSection[] = [
     title: "通知",
     description: "どの変化を知らせるかを選べます。",
     items: [
-      { id: "devlog", label: "開発ログの公開", description: "見届け中の作品が更新されたとき", enabled: true },
+      { id: "devlog", label: "開発ログの公開", description: "更新を追っている作品が更新されたとき", enabled: true },
       { id: "follow", label: "フォロー中の開発者", description: "新しい作品や更新があったとき", enabled: true },
       { id: "empathy", label: "共感", description: "あなたのフィードバックに共感が付いたとき", enabled: true },
       { id: "system", label: "システム", description: "Forge からのお知らせ", enabled: false },

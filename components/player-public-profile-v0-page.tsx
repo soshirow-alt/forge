@@ -1,8 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { PlayerShell } from "@/components/player-shell";
 import { getPlayerPublicProfile } from "@/lib/community-player-profile-v0-mock-data";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
+import { WATCH_STAT_LABEL } from "@/lib/watch-ui-labels";
 import { Sparkles } from "lucide-react";
 
 export function PlayerPublicProfileV0Page({
@@ -12,6 +16,10 @@ export function PlayerPublicProfileV0Page({
   handle: string;
   returnHref?: string;
 }) {
+  if (shouldHideV0MockContent()) {
+    notFound();
+  }
+
   const profile = getPlayerPublicProfile(handle);
   if (!profile) {
     notFound();
@@ -56,7 +64,7 @@ export function PlayerPublicProfileV0Page({
               { label: "送ったFB", value: profile.stats.feedbackCount },
               { label: "共感された回数", value: profile.stats.voicesReceived },
               { label: "フォロー中開発者", value: profile.stats.followingDevelopers },
-              { label: "見届け中", value: profile.stats.witnessingGames },
+              { label: WATCH_STAT_LABEL, value: profile.stats.witnessingGames },
             ].map((stat) => (
               <div
                 key={stat.label}
