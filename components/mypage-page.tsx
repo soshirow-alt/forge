@@ -624,6 +624,7 @@ function MyPagePageContent() {
             <AchievementsTabPanel />
           ))}
         {activeTab === "following" &&
+          // production-mode-audit: 意図的逆パターン — 本番=Supabase正本、Preview=mockタブ
           (hideV0Mock ? (
             <FollowingDevelopersPanel />
           ) : (

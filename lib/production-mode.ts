@@ -3,6 +3,14 @@
  *
  * Phase 0+ issues branch on `isProductionReleaseMode()` / `shouldHideV0MockContent()`.
  *
+ * ## 分岐ルール（再発防止 — 詳細は docs/production-mode-audit.md）
+ *
+ * - `shouldHideV0MockContent()` で UI コンポーネントを丸ごと差し替えない（データ源差し替え優先）
+ * - `isPreviewV0Deployment()` は本ファイル内のみ — 削除・投稿・保存等のボタン非表示に使わない
+ * - Preview 確認だけで main/prod GO しない — `NEXT_PUBLIC_FORGE_PRODUCTION_MODE=true` で build 確認
+ *
+ * CI: `npm run verify:production-mode-guards`
+ *
  * | Mode       | Typical host / signal              | Mock UI | Studio login bypass |
  * |------------|------------------------------------|---------|---------------------|
  * | preview    | preview-landing-01 URL, Vercel     | yes     | yes                 |

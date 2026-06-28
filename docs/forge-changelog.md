@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-28 — production-mode 監査と再発防止
+
+- **追加** — `docs/production-mode-audit.md`：`shouldHideV0MockContent()` 分岐の高/中/低リスク一覧、禁止ルール、リリース前チェックリスト（6 URL）
+- **追加** — `npm run verify:production-mode-guards`（`isPreviewV0Deployment` 漏出・Preview 機能ガードの静的検知）
+- **是正** — `/studio/mypage`：Preview でも **実作品がある場合は本番と同じ DirectoryPanel**（mock グリッドとの丸ごと差し替えを縮小）
+- **方針** — Coming Soon 配線より先に監査・ガード。Preview だけで main/prod GO しない
+
+---
+
 ## 2026-06-28 — Studio プロジェクト一覧を実データグリッドに復元
 
 - **修正** — `/studio/mypage` 本番同等モードで誤って出ていた「あなたの作品」枠を削除（`/studio` ホームのみに集約）

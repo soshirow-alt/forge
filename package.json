@@ -16,6 +16,7 @@
     "verify:official-release:staging": "npx --yes tsx scripts/official-release-staging-verify.ts",
     "verify:official-release:staging:flow": "npx --yes tsx scripts/official-release-staging-verify.ts --flow",
     "verify:production-auth-guards": "npx --yes tsx scripts/verify-production-auth-guards.ts",
+    "verify:production-mode-guards": "npx --yes tsx scripts/verify-production-mode-guards.ts",
     "verify:witness:staging": "npx --yes tsx scripts/witness-staging-verify.ts",
     "seed:witness:sandbox": "npx --yes tsx scripts/witness-sandbox-seed.ts",
     "verify:witness:grants:staging": "npx --yes tsx scripts/witness-grants-staging-verify.ts",
