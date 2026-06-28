@@ -23,6 +23,7 @@ export function LoginPage({
   const searchParams = useSearchParams();
   const returnParam = searchParams.get("return");
   const callbackError = searchParams.get("error");
+  const notice = searchParams.get("notice");
 
   const { user, hydrated, signIn } = useAuth();
   const [email, setEmail] = useState("");
@@ -73,6 +74,12 @@ export function LoginPage({
         {!supabaseConfigured && (
           <div className="mt-6 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
             Supabaseの環境変数が設定されていません。
+          </div>
+        )}
+
+        {notice === "password-changed" && (
+          <div className="mt-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+            パスワードを変更しました。新しいパスワードでログインしてください。
           </div>
         )}
 
