@@ -150,6 +150,7 @@ import {
   markUserNotificationAsRead,
   notificationRowToNotification,
 } from "@/lib/supabase/user-notifications-db";
+import { filterUsersByPlayerNotificationPref } from "@/lib/supabase/user-settings-db";
 
 export type RecordPlayOptions = {
   context?: PlaySessionContext;
@@ -1750,13 +1751,19 @@ export function GamesProvider({ children }: { children: ReactNode }) {
           })
         ).filter((recipientId) => recipientId !== user.id);
 
-        if (recipientIds.length > 0) {
+        const enabledRecipients = await filterUsersByPlayerNotificationPref(
+          supabase,
+          recipientIds,
+          "watch-updates",
+        );
+
+        if (enabledRecipients.length > 0) {
           const message = createConfirmationRequestNotificationMessage(
             projectTitle,
             confirmationDraft,
           );
           await insertConfirmationRequestNotifications(supabase, {
-            recipientUserIds: recipientIds,
+            recipientUserIds: enabledRecipients,
             projectId,
             devlogId: entry.id,
             confirmationRequestId: confirmationRecord.id,
@@ -1773,15 +1780,20 @@ export function GamesProvider({ children }: { children: ReactNode }) {
 
       const watcherIds = await fetchWatcherUserIds(supabase, projectId);
       const recipientIds = watcherIds.filter((watcherId) => watcherId !== user.id);
+      const enabledRecipients = await filterUsersByPlayerNotificationPref(
+        supabase,
+        recipientIds,
+        "watch-updates",
+      );
 
-      if (recipientIds.length === 0) {
+      if (enabledRecipients.length === 0) {
         return;
       }
 
       if (publishVersion) {
         const message = createVersionPublishedMessage(projectTitle, publishVersion);
         await insertVersionPublishedNotifications(supabase, {
-          recipientUserIds: recipientIds,
+          recipientUserIds: enabledRecipients,
           projectId,
           devlogId: entry.id,
           publishedVersion: publishVersion,
@@ -1792,7 +1804,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
 
       const message = createNotificationMessage("devlog", projectTitle);
       await insertDevlogNotifications(supabase, {
-        recipientUserIds: recipientIds,
+        recipientUserIds: enabledRecipients,
         projectId,
         devlogId: entry.id,
         message,

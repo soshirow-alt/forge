@@ -15,13 +15,12 @@ import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { BadgeCheck, Globe, MapPin } from "lucide-react";
 
-type CreatorTab = "overview" | "devlog" | "achievements" | "followers";
+type CreatorTab = "overview" | "devlog" | "achievements";
 
 const tabs: { id: CreatorTab; label: string }[] = [
   { id: "overview", label: "概要" },
   { id: "devlog", label: "開発ログ" },
   { id: "achievements", label: "実績" },
-  { id: "followers", label: "フォロワー" },
 ];
 
 function xProfileHref(account: string): string {
@@ -35,12 +34,17 @@ function websiteHref(url: string): string {
   return url.startsWith("http") ? url : `https://${url}`;
 }
 
-export function CreatorProfileRealView({ profile }: { profile: CreatorProfileResolved }) {
+export function CreatorProfileRealView({
+  profile,
+  isSelf,
+}: {
+  profile: CreatorProfileResolved;
+  isSelf: boolean;
+}) {
   const hideV0Mock = shouldHideV0MockContent();
-  const { user } = useRequireAuth();
+  useRequireAuth();
   const { getFollowerCount, refreshFollowerCount } = useGames();
   const [activeTab, setActiveTab] = useState<CreatorTab>("overview");
-  const isSelf = user?.id === profile.userId;
   const followerCount = getFollowerCount(profile.routeId, 0);
 
   useEffect(() => {
@@ -64,7 +68,13 @@ export function CreatorProfileRealView({ profile }: { profile: CreatorProfileRes
                   <h1 className="text-2xl font-bold text-white">{profile.name}</h1>
                   <BadgeCheck className="size-5 text-violet-400" aria-hidden="true" />
                 </div>
-                <p className="mt-1 text-sm text-zinc-500">@{profile.handle}</p>
+                <p className="mt-1 text-sm text-zinc-500">
+                  @{profile.handle}
+                  <span className="mx-2 text-zinc-700" aria-hidden="true">
+                    ·
+                  </span>
+                  フォロワー {followerCount.toLocaleString()}人
+                </p>
                 {profile.bio ? (
                   <p className="mt-3 text-sm leading-relaxed text-zinc-400">{profile.bio}</p>
                 ) : null}
@@ -226,20 +236,6 @@ export function CreatorProfileRealView({ profile }: { profile: CreatorProfileRes
               <FeatureComingSoonPanel title="開発者の実績" />
             ))}
 
-          {activeTab === "followers" &&
-            (hideV0Mock ? (
-              <div className="space-y-4">
-                <p className="text-sm text-zinc-400">
-                  フォロワー {followerCount.toLocaleString()}人
-                </p>
-                <FeatureComingSoonPanel
-                  title="フォロワー"
-                  description="フォロワー一覧は準備中です。"
-                />
-              </div>
-            ) : (
-              <FeatureComingSoonPanel title="フォロワー" />
-            ))}
         </div>
 
         <aside className="w-full shrink-0 space-y-5 xl:w-72">
