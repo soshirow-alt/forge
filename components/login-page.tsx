@@ -5,16 +5,13 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import {
   AuthPageShell,
-  OAuthButtons,
-  OAuthDivider,
-  type OAuthProviderId,
+  OAuthComingSoonSection,
   PasswordInput,
   authInputClassName,
 } from "@/components/auth-layout";
 import { useAuth } from "@/components/auth-provider";
 import { getAuthErrorMessage } from "@/lib/auth";
 import { resolvePostLoginPath } from "@/lib/login-return-url";
-import { isOAuthLoginEnabled } from "@/lib/oauth-config";
 
 export function LoginPage({
   supabaseConfigured,
@@ -25,12 +22,10 @@ export function LoginPage({
   const returnParam = searchParams.get("return");
   const callbackError = searchParams.get("error");
 
-  const { user, hydrated, signIn, signInWithOAuth } = useAuth();
+  const { user, hydrated, signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [oauthError, setOauthError] = useState<string | null>(null);
-  const [oauthLoading, setOauthLoading] = useState<OAuthProviderId | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -50,7 +45,6 @@ export function LoginPage({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setOauthError(null);
     setSubmitting(true);
 
     try {
@@ -60,25 +54,6 @@ export function LoginPage({
       const authError = caught as { message?: string };
       setError(getAuthErrorMessage(authError.message ?? "認証に失敗しました。"));
       setSubmitting(false);
-    }
-  }
-
-  async function handleOAuth(provider: OAuthProviderId) {
-    setError(null);
-    setOauthError(null);
-    setOauthLoading(provider);
-
-    try {
-      await signInWithOAuth(provider, resolvePostLoginPath(returnParam));
-    } catch (caught) {
-      const authError = caught as { message?: string; code?: string };
-      setOauthError(
-        getAuthErrorMessage(
-          authError.message ?? "ログインに失敗しました。",
-          authError.code,
-        ),
-      );
-      setOauthLoading(null);
     }
   }
 
@@ -148,24 +123,7 @@ export function LoginPage({
           </button>
         </form>
 
-        <OAuthDivider />
-        {oauthError && (
-          <div className="mb-3 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
-            {oauthError}
-          </div>
-        )}
-        {isOAuthLoginEnabled() ? (
-          <OAuthButtons
-            mode="login"
-            disabled={!supabaseConfigured}
-            loadingProvider={oauthLoading}
-            onOAuth={handleOAuth}
-          />
-        ) : (
-          <p className="text-center text-xs leading-relaxed text-zinc-500">
-            Google / Discord / GitHub ログインは準備中です。メールアドレスでログインできます。
-          </p>
-        )}
+        <OAuthComingSoonSection />
 
         <p className="mt-8 text-center text-sm text-zinc-500">
           アカウントをお持ちでない方は{" "}

@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-06-28 — OAuth を Coming soon に固定
+
+- **変更** — `/login`・`/register` の Google / Discord / GitHub ボタンを廃止し **Coming soon** 表示。メール登録・ログインのみ
+- **理由** — Supabase 側プロバイダー未設定のまま押せるとエラーになる。初期版では OAuth 設定を後回し
+- **確認** — ログイン画面に押せない Coming soon、メールログインは従来どおり
+
+---
+
 ## 2026-06-28 — OAuth ボタンを Supabase 設定完了まで非表示
 
 - **原因** — Supabase で Google / Discord / GitHub が未有効のままボタンを押すと、Supabase 側 JSON エラー（`provider is not enabled`）に遷移していた

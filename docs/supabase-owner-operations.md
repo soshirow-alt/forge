@@ -90,19 +90,9 @@ Forge MVP 初期（ユーザー数十〜数百）では **DB サイズ・MAU と
 
 ### OAuth（Google / Discord / GitHub）
 
-**コード側**: `/login`・`/register` の OAuth ボタンは `NEXT_PUBLIC_FORGE_OAUTH_ENABLED=true` のときのみ表示。
+**初期版方針（2026-06）**: UI は **Coming soon**（メール登録・ログインのみ）。Supabase / Google Cloud 等の OAuth 設定は **公開時まで保留**。
 
-**Supabase で有効化するまで env は設定しない**（未設定時は JSON エラー画面に飛ぶため）。
-
-1. **Authentication → Providers** — 使うプロバイダーを **Enable**
-   - **Google** — Client ID / Secret（Google Cloud Console）
-   - **Discord** — Client ID / Secret（Discord Developer Portal）
-   - **GitHub** — Client ID / Secret（GitHub OAuth App）
-2. 各プロバイダーの **Redirect URL**（Supabase が表示）を Google / Discord / GitHub 側にも登録
-3. 上記 **Redirect URLs**（Forge の `/auth/callback`）が Supabase URL Configuration に入っているか再確認
-4. **Vercel（Preview / 本番）** — `NEXT_PUBLIC_FORGE_OAUTH_ENABLED=true` を追加して再デプロイ
-
-未設定時の Supabase 応答例: `Unsupported provider: provider is not enabled`（400 JSON）。
+将来有効化するとき: Authentication → Providers で有効化、Redirect URLs 確認、ログイン画面の Coming soon をボタンに差し替え（`auth-provider` の配線は残置）。
 
 ---
 
