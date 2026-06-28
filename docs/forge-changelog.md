@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-06-26 — 運営へのご意見を Resend でメール通知
+
+- **API** — `POST /api/platform-feedback`（DB 保存 + Resend 通知）
+- **届き先** — `forge.operation@gmail.com`（`PLATFORM_FEEDBACK_NOTIFY_EMAIL` で上書き可）
+- **env** — `RESEND_API_KEY`（必須）、`RESEND_FROM_EMAIL`（任意）、`PLATFORM_FEEDBACK_NOTIFY_EMAIL`（任意）
+- **挙動** — DB 保存は成功・メール失敗時もユーザーには受付完了を表示（運営は Dashboard でも確認可）
+- **オーナー** — Resend で API キー発行 → Vercel Production / Preview に設定。初回は `onboarding@resend.dev` 利用時に受信先メールを Resend で検証
+
+---
+
 ## 2026-06-26 — 運営へのご意見モーダル表示修正
 
 - **原因** — サイドバー内で `position: fixed` していたため、オーバーレイとパネルが正しく重ならず半透明に見えていた

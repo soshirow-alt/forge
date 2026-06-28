@@ -13,7 +13,6 @@ import {
   type PlatformFeedbackViewerMode,
 } from "@/lib/platform-feedback";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
-import { submitPlatformFeedback } from "@/lib/supabase/platform-feedback-db";
 
 type PlatformFeedbackSidebarBoxProps = {
   viewerMode: PlatformFeedbackViewerMode;
@@ -63,39 +62,49 @@ export function PlatformFeedbackSidebarBox({
     setSubmitting(true);
     setErrorMessage(null);
 
-    const supabase = getOptionalSupabaseClient();
-    if (!supabase) {
+    if (!getOptionalSupabaseClient()) {
       setErrorMessage("送信できませんでした。しばらくしてからお試しください。");
       setSubmitting(false);
       return;
     }
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
+      const response = await fetch("/api/platform-feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category,
+          message: message.trim(),
+          pagePath: pathname,
+          viewerMode,
+        }),
+      });
+
+      if (response.status === 401) {
         setErrorMessage("ログインが必要です。");
-        setSubmitting(false);
         return;
       }
 
-      await submitPlatformFeedback(supabase, {
-        userId: user.id,
-        category,
-        message: message.trim(),
-        pagePath: pathname,
-        viewerMode,
-      });
-      setDone(true);
-    } catch (error) {
-      if (error instanceof Error && error.message === "platform_feedback_table_missing") {
-        setErrorMessage(
-          "ご意見の受付準備中です。しばらくしてからお試しください。",
-        );
-      } else {
-        setErrorMessage("送信できませんでした。しばらくしてからお試しください。");
+      if (response.status === 503) {
+        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+        if (payload?.error === "Platform feedback is not ready yet") {
+          setErrorMessage(
+            "ご意見の受付準備中です。しばらくしてからお試しください。",
+          );
+        } else {
+          setErrorMessage("送信できませんでした。しばらくしてからお試しください。");
+        }
+        return;
       }
+
+      if (!response.ok) {
+        setErrorMessage("送信できませんでした。しばらくしてからお試しください。");
+        return;
+      }
+
+      setDone(true);
+    } catch {
+      setErrorMessage("送信できませんでした。しばらくしてからお試しください。");
     } finally {
       setSubmitting(false);
     }
