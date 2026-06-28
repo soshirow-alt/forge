@@ -108,3 +108,58 @@ export async function countDeveloperFollowersBatchInDb(
   }
   return result;
 }
+
+export type DeveloperFollowerForOwner = {
+  followerId: string;
+  followedAt: string;
+  displayName: string;
+  creatorRouteId: string | null;
+};
+
+type DeveloperFollowerForOwnerRow = {
+  follower_id: string;
+  followed_at: string;
+  display_name: string;
+  creator_route_id: string | null;
+};
+
+export function isDeveloperFollowersListMissingError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const message =
+    "message" in error && typeof error.message === "string"
+      ? error.message
+      : String(error);
+
+  return (
+    message.includes("list_developer_followers_for_owner") &&
+    (message.includes("does not exist") || message.includes("Could not find"))
+  );
+}
+
+/** Studio — followers of the authenticated developer (migration 028). */
+export async function fetchDeveloperFollowersForOwner(
+  supabase: SupabaseClient,
+  options?: { limit?: number; offset?: number },
+): Promise<DeveloperFollowerForOwner[]> {
+  const { data, error } = await supabase.rpc("list_developer_followers_for_owner", {
+    p_limit: options?.limit ?? 100,
+    p_offset: options?.offset ?? 0,
+  });
+
+  if (error) {
+    if (isDeveloperFollowersListMissingError(error)) {
+      return [];
+    }
+    throw error;
+  }
+
+  return ((data ?? []) as DeveloperFollowerForOwnerRow[]).map((row) => ({
+    followerId: String(row.follower_id),
+    followedAt: row.followed_at,
+    displayName: row.display_name?.trim() || "プレイヤー",
+    creatorRouteId: row.creator_route_id?.trim() || null,
+  }));
+}

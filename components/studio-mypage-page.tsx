@@ -90,11 +90,6 @@ function StudioMypagePageContent() {
           ) : (
             <StudioAchievementsTabPanel />
           )
-        ) : hideV0Mock ? (
-          <FeatureComingSoonPanel
-            title="フォロワー"
-            description="フォロワー一覧の表示は準備中です。公開をお待ちください。"
-          />
         ) : (
           <StudioFollowersTabPanel />
         )}
