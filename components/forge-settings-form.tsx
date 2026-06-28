@@ -100,7 +100,7 @@ export function ForgeSettingsForm({ context }: { context: "player" | "studio" })
   return (
     <div className="space-y-8">
       <Suspense fallback={<AccountSettingsFallback />}>
-        <AccountSettingsPanel />
+        <AccountSettingsPanel section="credentials" />
       </Suspense>
 
       <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
@@ -165,6 +165,10 @@ export function ForgeSettingsForm({ context }: { context: "player" | "studio" })
             </ul>
           </section>
         ))}
+
+      <Suspense fallback={null}>
+        <AccountSettingsPanel section="deletion" />
+      </Suspense>
     </div>
   );
 }

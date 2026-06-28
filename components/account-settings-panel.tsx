@@ -20,7 +20,13 @@ import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 
 type AccountEdit = "email" | "password" | "delete" | null;
 
-export function AccountSettingsPanel() {
+type AccountSettingsSection = "credentials" | "deletion";
+
+export function AccountSettingsPanel({
+  section = "credentials",
+}: {
+  section?: AccountSettingsSection;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, hydrated, logout } = useAuth();
@@ -187,6 +193,9 @@ export function AccountSettingsPanel() {
   }
 
   if (!hydrated) {
+    if (section === "deletion") {
+      return null;
+    }
     return (
       <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
         <p className="text-sm text-zinc-500">読み込み中…</p>
@@ -195,6 +204,9 @@ export function AccountSettingsPanel() {
   }
 
   if (!supabase) {
+    if (section === "deletion") {
+      return null;
+    }
     return (
       <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
         <h2 className="text-base font-semibold text-white">アカウント</h2>
@@ -204,6 +216,9 @@ export function AccountSettingsPanel() {
   }
 
   if (!user) {
+    if (section === "deletion") {
+      return null;
+    }
     return (
       <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
         <h2 className="text-base font-semibold text-white">アカウント</h2>
@@ -211,6 +226,85 @@ export function AccountSettingsPanel() {
           ログイン情報の変更にはログインが必要です。
         </p>
       </section>
+    );
+  }
+
+  if (section === "deletion") {
+    return (
+      <>
+        {message && message.tone === "error" ? (
+          <p className="rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+            {message.text}
+          </p>
+        ) : null}
+
+        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
+          <h2 className="text-base font-semibold text-zinc-200">アカウント退会</h2>
+          <p className="mt-2 text-sm leading-relaxed text-zinc-500">
+            退会するとログインできなくなり、プロフィール名は「退会済みユーザー」に置き換わります。
+            作品へのフィードバックなど、コミュニティに残した記録は匿名のまま保持されます。
+          </p>
+          <button
+            type="button"
+            onClick={() => openEdit("delete")}
+            className="mt-4 text-sm text-red-400 underline-offset-2 transition-colors hover:text-red-300 hover:underline"
+          >
+            アカウントを退会する
+          </button>
+        </section>
+
+        {accountEdit === "delete" && (
+          <V0SimpleModal title="アカウントを退会" onClose={closeModal}>
+            <p className="text-sm leading-relaxed text-zinc-300">
+              退会後はログインできません。公開名は「退会済みユーザー」になり、ブックマーク・通知・フォローなど個人向けデータは削除されます。
+            </p>
+            {canUsePassword ? (
+              <>
+                <label className="mt-4 block text-xs font-medium text-zinc-500" htmlFor="account-delete-password">
+                  現在のパスワード
+                </label>
+                <PasswordInput
+                  id="account-delete-password"
+                  name="current-password"
+                  value={deletePassword}
+                  onChange={setDeletePassword}
+                  placeholder="現在のパスワード"
+                  autoComplete="current-password"
+                />
+              </>
+            ) : null}
+            <label className="mt-4 block text-xs font-medium text-zinc-500" htmlFor="account-delete-confirmation">
+              確認のため「{ACCOUNT_DELETE_CONFIRMATION_PHRASE}」と入力
+            </label>
+            <input
+              id="account-delete-confirmation"
+              type="text"
+              value={deleteConfirmation}
+              onChange={(event) => setDeleteConfirmation(event.target.value)}
+              className={authInputClassName}
+              autoComplete="off"
+            />
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={() => void handleAccountDelete()}
+                className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-50"
+              >
+                {submitting ? "処理中…" : "退会する"}
+              </button>
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={closeModal}
+                className="rounded-xl border border-zinc-700 px-4 py-2.5 text-sm text-zinc-400 hover:border-zinc-600"
+              >
+                キャンセル
+              </button>
+            </div>
+          </V0SimpleModal>
+        )}
+      </>
     );
   }
 
@@ -276,21 +370,6 @@ export function AccountSettingsPanel() {
             ) : null}
           </li>
         </ul>
-      </section>
-
-      <section className="rounded-2xl border border-red-900/40 bg-red-950/10 p-5 sm:p-6">
-        <h2 className="text-base font-semibold text-red-200">アカウント退会</h2>
-        <p className="mt-2 text-sm leading-relaxed text-zinc-400">
-          退会するとログインできなくなり、プロフィール名は「退会済みユーザー」に置き換わります。
-          作品へのフィードバックなど、コミュニティに残した記録は匿名のまま保持されます。
-        </p>
-        <button
-          type="button"
-          onClick={() => openEdit("delete")}
-          className="mt-4 rounded-lg border border-red-800/80 px-4 py-2 text-sm font-medium text-red-300 transition-colors hover:border-red-700 hover:bg-red-950/40"
-        >
-          アカウントを退会する
-        </button>
       </section>
 
       {accountEdit === "email" && (
@@ -405,58 +484,6 @@ export function AccountSettingsPanel() {
               className="flex-1 rounded-xl bg-violet-600 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
             >
               {submitting ? "更新中…" : "変更して再ログイン"}
-            </button>
-            <button
-              type="button"
-              disabled={submitting}
-              onClick={closeModal}
-              className="rounded-xl border border-zinc-700 px-4 py-2.5 text-sm text-zinc-400 hover:border-zinc-600"
-            >
-              キャンセル
-            </button>
-          </div>
-        </V0SimpleModal>
-      )}
-
-      {accountEdit === "delete" && (
-        <V0SimpleModal title="アカウントを退会" onClose={closeModal}>
-          <p className="text-sm leading-relaxed text-zinc-300">
-            退会後はログインできません。公開名は「退会済みユーザー」になり、ブックマーク・通知・フォローなど個人向けデータは削除されます。
-          </p>
-          {canUsePassword ? (
-            <>
-              <label className="mt-4 block text-xs font-medium text-zinc-500" htmlFor="account-delete-password">
-                現在のパスワード
-              </label>
-              <PasswordInput
-                id="account-delete-password"
-                name="current-password"
-                value={deletePassword}
-                onChange={setDeletePassword}
-                placeholder="現在のパスワード"
-                autoComplete="current-password"
-              />
-            </>
-          ) : null}
-          <label className="mt-4 block text-xs font-medium text-zinc-500" htmlFor="account-delete-confirmation">
-            確認のため「{ACCOUNT_DELETE_CONFIRMATION_PHRASE}」と入力
-          </label>
-          <input
-            id="account-delete-confirmation"
-            type="text"
-            value={deleteConfirmation}
-            onChange={(event) => setDeleteConfirmation(event.target.value)}
-            className={authInputClassName}
-            autoComplete="off"
-          />
-          <div className="mt-5 flex gap-2">
-            <button
-              type="button"
-              disabled={submitting}
-              onClick={() => void handleAccountDelete()}
-              className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-50"
-            >
-              {submitting ? "処理中…" : "退会する"}
             </button>
             <button
               type="button"
