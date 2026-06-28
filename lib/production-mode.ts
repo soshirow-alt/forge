@@ -149,5 +149,5 @@ export function shouldBypassStudioLoginGate(host?: string): boolean {
 
 /** Middleware — routes that require Supabase session in production release mode. */
 export function getProductionAuthProtectedPrefixes(): readonly string[] {
-  return ["/studio", "/mypage", "/notifications"];
+  return ["/studio", "/mypage", "/notifications", "/settings"];
 }

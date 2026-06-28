@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { type FormEvent, type ReactNode, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { useGames } from "@/components/games-provider";
 import { useStudioEntryGate } from "@/components/studio-entry-gate-provider";
 import { shouldBypassStudioLoginOnPreview } from "@/lib/preview-v0";
 import { WATCH_TAB_LABEL } from "@/lib/watch-ui-labels";
@@ -126,18 +127,22 @@ export function PlayerShell({
   children,
   activeNav = "home",
   headerSearchDefault,
-  notificationBadge = 4,
+  notificationBadge,
 }: {
   children: ReactNode;
   activeNav?: PlayerShellNavId;
   headerSearchDefault?: string;
+  /** Override header badge; default uses unread DB notifications when logged in. */
   notificationBadge?: number;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, hydrated, logout } = useAuth();
+  const { getUnreadNotificationCount } = useGames();
   const { attemptStudioEntry } = useStudioEntryGate();
   const previewStudioBypass = shouldBypassStudioLoginOnPreview();
+  const resolvedNotificationBadge =
+    notificationBadge ?? (user ? getUnreadNotificationCount() : 0);
   const studioButtonClassName =
     "hidden rounded-xl border border-zinc-600 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-500 sm:inline-flex";
 
@@ -199,9 +204,9 @@ export function PlayerShell({
             aria-label="通知"
           >
             <Bell className="size-5" />
-            {notificationBadge > 0 && (
+            {resolvedNotificationBadge > 0 && (
               <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                {notificationBadge > 9 ? "9+" : notificationBadge}
+                {resolvedNotificationBadge > 9 ? "9+" : resolvedNotificationBadge}
               </span>
             )}
           </Link>

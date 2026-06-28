@@ -4,7 +4,15 @@
 
 ---
 
-## 2026-06-28 — REL-PRE-01 lint 棚卸し + A修正（production GO 前）
+## 2026-06-28 — 本番GO前 P1 修正（catalog / 通知バッジ / settings 保護）
+
+- **catalogReady** — `dataReady` を Supabase 作品 fetch 完了まで false に。`/search` 初回の誤「0件」を防止
+- **/search** — 本番モードで catalog 未準備時は「読み込み中…」表示
+- **PlayerShell** — 通知バッジ固定値 4 を廃止。未ログイン 0 / ログイン時は未読件数
+- **/settings** — 本番モードで middleware ログイン必須（mock 設定 UI の露出防止）
+- **QA** — `npm run start` + production mode で hydration 警告なし（dev overlay 由来だった）
+
+---
 
 - **ノイズ除去** — ルート `.tmp-*` 作業ファイル削除、`eslint.config.mjs` に `.tmp-*` ignore 追加
 - **分類結果** — 73 errors → **A: 1件** → **修正済**、**B: 72件**（deploy 後許容）、**C: 38 warnings**

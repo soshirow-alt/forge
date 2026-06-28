@@ -25,6 +25,7 @@ import {
   type SearchSortId,
 } from "@/lib/search-v0-mock-data";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 import {
   BadgeCheck,
   ChevronDown,
@@ -78,7 +79,8 @@ function parseFeatures(param: string | null): string[] {
 }
 
 function WorksSearchContent() {
-  const { submittedGames, getSupportCount } = useGames();
+  const hideV0Mock = shouldHideV0MockContent();
+  const { submittedGames, getSupportCount, dataReady } = useGames();
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryFromUrl = searchParams.get("q")?.trim() ?? "";
@@ -228,6 +230,14 @@ function WorksSearchContent() {
     setSelectedFeatures(nextFeatures);
     pushSearch({ features: nextFeatures });
   };
+
+  if (hideV0Mock && !dataReady) {
+    return (
+      <PlayerShell activeNav="search" headerSearchDefault={queryFromUrl}>
+        <p className="text-sm text-zinc-500">読み込み中...</p>
+      </PlayerShell>
+    );
+  }
 
   return (
     <PlayerShell activeNav="search" headerSearchDefault={queryFromUrl}>

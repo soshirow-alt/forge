@@ -372,6 +372,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     [],
   );
   const [hydrated, setHydrated] = useState(false);
+  const [catalogReady, setCatalogReady] = useState(false);
 
   const reloadFromStorage = useCallback(async () => {
     const supabase = getOptionalSupabaseClient();
@@ -463,10 +464,25 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    void reloadFromStorage().catch(() => {
-      setSubmittedGames([]);
-      setDeveloperProfiles([]);
-    });
+    let cancelled = false;
+    setCatalogReady(false);
+
+    void reloadFromStorage()
+      .catch(() => {
+        if (!cancelled) {
+          setSubmittedGames([]);
+          setDeveloperProfiles([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setCatalogReady(true);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [authHydrated, user?.id, reloadFromStorage]);
 
   useEffect(() => {
@@ -1834,7 +1850,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       submittedGames,
-      dataReady: hydrated,
+      dataReady: authHydrated && catalogReady,
       addSubmittedGame,
       updateSubmittedGame,
       updateProjectDetails,
@@ -1908,6 +1924,8 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     }),
     [
       submittedGames,
+      authHydrated,
+      catalogReady,
       hydrated,
       addSubmittedGame,
       updateSubmittedGame,
