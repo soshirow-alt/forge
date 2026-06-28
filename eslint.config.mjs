@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Local scratch / debug artifacts (REL-PRE-01)
+    ".tmp-*",
   ]),
 ]);
 

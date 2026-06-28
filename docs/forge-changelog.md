@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-06-28 — REL-PRE-01 lint 棚卸し + A修正（production GO 前）
+
+- **ノイズ除去** — ルート `.tmp-*` 作業ファイル削除、`eslint.config.mjs` に `.tmp-*` ignore 追加
+- **分類結果** — 73 errors → **A: 1件** → **修正済**、**B: 72件**（deploy 後許容）、**C: 38 warnings**
+- **A修正** — `/notifications` の early return 後 `useMemo` をインライン filter に変更（rules-of-hooks 解消）
+- **build** — 影響なし（`npm run build` PASS 維持）
+- **次** — main 向け PR → Supabase redirect / Vercel env 確認 → merge / deploy GO
+
+---
+
 ## 2026-06-28 — はじめてガイドに Studio 導線の説明
 
 - **追加** — プレイヤー `/guide` に「開発者の方へ」セクション。右上 **Studio** ボタンのキャプチャ付きで遷移方法を説明

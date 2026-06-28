@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { ForgeHeader } from "@/components/forge-header";
 import { useGames } from "@/components/games-provider";
@@ -63,17 +63,12 @@ export function NotificationsPage() {
   const notifications = getNotifications();
   const unreadCount = getUnreadNotificationCount();
 
-  const filteredNotifications = useMemo(() => {
-    if (filter === "unread") {
-      return notifications.filter((notification) => !notification.read);
-    }
-
-    if (filter === "read") {
-      return notifications.filter((notification) => notification.read);
-    }
-
-    return notifications;
-  }, [filter, notifications]);
+  const filteredNotifications =
+    filter === "unread"
+      ? notifications.filter((notification) => !notification.read)
+      : filter === "read"
+        ? notifications.filter((notification) => notification.read)
+        : notifications;
 
   function handleNotificationClick(id: string) {
     markNotificationAsRead(id);

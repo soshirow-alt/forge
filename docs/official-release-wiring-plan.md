@@ -381,11 +381,13 @@ Phase 3 — 初期版周辺（③）※ 通報・共感・実績・ランキン�
 | | |
 |--|--|
 | **分類** | リリース品質（コード変更必須ではないが GO 前に要対応） |
-| **現状** | `npm run lint` — **71 errors**（2026-06-27 時点。直近 Feature 差分起因ではない） |
+| **現状（2026-06-26 棚卸し後）** | `.tmp-*` 削除 + `eslint.config.mjs` ignore 後: **111 problems（73 errors, 38 warnings）** |
 | **build** | `npm run build` は PASS — **開発続行は可** |
-| **方針** | production GO 前にエラー一覧を分類（重大 / 警告扱い / ルール調整）。少なくとも **React hooks 規則違反・render 中 impure** 等の重大項は潰す |
-| **確認** | `npm run lint` の error 件数を 0 に近づけるか、許容リストをオーナー GO |
-| **RUN** | ❌ **production GO 前必須**（今すぐ全件修正は不要） |
+| **A（GO前修正必須）** | ~~**1件**~~ **0件** — `notifications-page.tsx` conditional useMemo をインライン filter に修正済（2026-06-28） |
+| **B（deploy後許容）** | **72 errors** — set-state-in-effect 58件、refs-during-render 6件（うち4件は未接続 `game-detail-page-client`）、memoization preserve 3件、create-component-during-render 2件、impure-in-handler 1件（false positive）、useCallback inline 1件、prefer-const scripts 1件 |
+| **C（軽微）** | **38 warnings** — 未使用変数、exhaustive-deps 等 |
+| **確認** | A 修正後 `rules-of-hooks` error 解消。B は deploy 後 REL-PRE-02 で段階対応 |
+| **RUN** | ✅ A 修正完了 — **main PR → infra 確認 → merge/deploy GO** |
 
 ---
 
