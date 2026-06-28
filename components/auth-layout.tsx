@@ -12,7 +12,13 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-import { useState, type KeyboardEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useState,
+  type FocusEvent,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal-routes";
 
 export const authInputClassName =
@@ -23,6 +29,32 @@ export const authPrimaryButtonClassName =
 
 export const authSecondaryButtonClassName =
   "block w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-6 py-3.5 text-center text-base font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-800/80";
+
+/** Controlled inputs can block Chrome autofill until the user focuses a field. */
+export function useAuthAutofillUnlock() {
+  const [unlocked, setUnlocked] = useState(false);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setUnlocked(true);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  function unlock() {
+    setUnlocked(true);
+  }
+
+  function onFocus(event: FocusEvent<HTMLInputElement>) {
+    unlock();
+    event.currentTarget.removeAttribute("readonly");
+  }
+
+  return {
+    readOnly: !unlocked,
+    onFocus,
+  };
+}
 
 export function handleAuthFormEnterKey(event: KeyboardEvent<HTMLFormElement>) {
   if (event.key !== "Enter" || event.nativeEvent.isComposing) {
@@ -237,18 +269,24 @@ export function AuthPageShell({
 
 export function PasswordInput({
   id,
+  name,
   value,
   onChange,
   placeholder,
   autoComplete,
   minLength,
+  readOnly,
+  onFocus,
 }: {
   id: string;
+  name?: string;
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
   autoComplete?: string;
   minLength?: number;
+  readOnly?: boolean;
+  onFocus?: (event: FocusEvent<HTMLInputElement>) => void;
 }) {
   const [visible, setVisible] = useState(false);
 
@@ -256,10 +294,13 @@ export function PasswordInput({
     <div className="relative">
       <input
         id={id}
+        name={name}
         type={visible ? "text" : "password"}
         required
         minLength={minLength}
         autoComplete={autoComplete}
+        readOnly={readOnly}
+        onFocus={onFocus}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className={`${authInputClassName} pr-12`}

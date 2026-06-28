@@ -22,7 +22,7 @@ import {
   communityIdFromUser,
   openDeveloperCommunity,
 } from "@/lib/developer-community-v0-store";
-import { buildLoginUrlWithReturn } from "@/lib/login-return-url";
+import { LOGIN_PATH, buildLoginUrlWithReturn } from "@/lib/login-return-url";
 import { shouldBypassStudioLoginGate, shouldHideV0MockContent } from "@/lib/production-mode";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 import { ensureDeveloperCommunity } from "@/lib/supabase/community-db";
@@ -103,7 +103,7 @@ export function StudioEntryGateProvider({ children }: { children: ReactNode }) {
         return;
       }
       if (!user) {
-        router.push("/login?return=/studio");
+        router.push(LOGIN_PATH);
         return;
       }
       if (!shouldPromptDeveloperPage(user.id)) {

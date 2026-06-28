@@ -7,7 +7,6 @@ import {
   type ForgeGameCardBadge,
 } from "@/components/forge-game-card";
 import { MyPageUpdatesSection } from "@/components/mypage-updates-section";
-import { PlayHistorySection } from "@/components/play-history-section";
 import { useGames } from "@/components/games-provider";
 import {
   WATCH_BADGE_LABEL,
@@ -69,8 +68,6 @@ export function MyPageLoopPanel() {
           playedGames={playedGames}
         />
       )}
-
-      <PlayHistorySection />
 
       {watchedGames.length > 0 ? (
         <section className="space-y-3">

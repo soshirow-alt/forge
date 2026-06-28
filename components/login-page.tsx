@@ -9,6 +9,7 @@ import {
   PasswordInput,
   authInputClassName,
   handleAuthFormEnterKey,
+  useAuthAutofillUnlock,
 } from "@/components/auth-layout";
 import { useAuth } from "@/components/auth-provider";
 import { getAuthErrorMessage } from "@/lib/auth";
@@ -28,6 +29,7 @@ export function LoginPage({
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const autofill = useAuthAutofillUnlock();
 
   useEffect(() => {
     if (callbackError === "auth_callback") {
@@ -77,6 +79,7 @@ export function LoginPage({
         <form
           onSubmit={handleSubmit}
           onKeyDown={handleAuthFormEnterKey}
+          autoComplete="on"
           className="mt-8 space-y-4"
         >
           <div>
@@ -85,9 +88,12 @@ export function LoginPage({
             </label>
             <input
               id="email"
+              name="email"
               type="email"
               required
-              autoComplete="email"
+              autoComplete="username"
+              readOnly={autofill.readOnly}
+              onFocus={autofill.onFocus}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               className={authInputClassName}
@@ -101,11 +107,14 @@ export function LoginPage({
             </label>
             <PasswordInput
               id="password"
+              name="password"
               value={password}
               onChange={setPassword}
               placeholder="パスワード"
               autoComplete="current-password"
               minLength={6}
+              readOnly={autofill.readOnly}
+              onFocus={autofill.onFocus}
             />
           </div>
 

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { V0SimpleModal } from "@/components/v0-simple-modal";
+import { formatProjectDeleteError } from "@/lib/supabase/projects";
 
 export type PendingProjectDelete = {
   id: string;
@@ -32,8 +33,8 @@ export function useStudioProjectDeleteModal(
     try {
       await deleteSubmittedGame(pendingDelete.id);
       setPendingDelete(null);
-    } catch {
-      setDeleteError("削除に失敗しました。時間をおいて再度お試しください。");
+    } catch (error) {
+      setDeleteError(formatProjectDeleteError(error));
     } finally {
       setDeleting(false);
     }

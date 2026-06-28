@@ -67,7 +67,7 @@ export function StudioOwnedProjectsSection() {
           ログインすると、投稿した作品がここに表示されます。
         </p>
         <Link
-          href="/login?return=/studio"
+          href="/login"
           className="mt-4 inline-flex rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
         >
           ログインして作品を管理

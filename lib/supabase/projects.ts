@@ -242,6 +242,28 @@ export async function deleteProjectInDb(
   }
 }
 
+/** Map Supabase/Postgres delete errors to owner-facing Japanese hints. */
+export function formatProjectDeleteError(error: unknown): string {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === "object" &&
+          error !== null &&
+          "message" in error &&
+          typeof (error as { message: unknown }).message === "string"
+        ? (error as { message: string }).message
+        : "";
+
+  if (
+    message.includes("project_witness_grants is append-only") ||
+    message.includes("row-level security")
+  ) {
+    return "見届け人データが紐づいているため削除できません。migration 027 適用後に再度お試しください。";
+  }
+
+  return "削除に失敗しました。時間をおいて再度お試しください。";
+}
+
 export async function insertDemoProjects(
   supabase: SupabaseClient,
   ownerId: string,

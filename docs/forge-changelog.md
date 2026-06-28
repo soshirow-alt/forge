@@ -4,6 +4,64 @@
 
 ---
 
+---
+
+## 2026-06-28 — ログインのパスワードマネージャー自動入力
+
+- **原因** — ログインフォームに `name` が無く React の controlled input がブラウザの autofill を上書きしていた。Studio 導線は `/login?return=/studio` など URL がばらついていた（return は post-login では未使用）
+- **修正** — `name` / `autoComplete="username"` / フォーム `autoComplete="on"`、初回描画の readOnly 解除。Studio 未ログイン導線は `/login` に統一
+- **確認** — 本番 URL（`forge-flame-gamma.vercel.app`）で保存した資格情報が `/login` で自動入力されること（Preview URL とは別エントリ）
+
+---
+
+## 2026-06-28 — Preview 確認済み変更の本番反映
+
+- **反映** — Studio 作品一覧・削除、本番モード mock エンゲージメント非表示、マイページプレイ履歴タブ分離、Studio フォロワー一覧（migration 028 要適用）
+- **オーナー** — 本番 Supabase に **028** 未適用なら Dashboard で適用。フォロワータブが migration 未適用バナーになる
+
+---
+
+## 2026-06-28 — Studio フォロワー一覧（実データ）
+
+- **追加** — `/studio/mypage?tab=followers` に **実フォロワー一覧**（フォロー日・表示名。開発者プロフィールがあるフォロワーは `/creators/` へリンク）
+- **migration 028** — `list_developer_followers_for_owner` RPC（**ログイン中の開発者本人のみ** が自分のフォロワー行を取得）
+- **オーナー** — Supabase Dashboard で `028_developer_followers_list_for_owner.sql` を適用（027 と同様）
+
+---
+
+## 2026-06-28 — マイページ「更新追跡中」からプレイ履歴を分離
+
+- **変更** — **更新追跡中**タブは「前回プレイ後の更新」「更新を追っている作品」「あとで遊ぶ」のみ。**プレイ履歴**は **プレイ履歴**タブ専用
+- **確認** — `/mypage`（更新追跡中）にプレイ履歴ブロックが出ない / `/mypage?tab=play-history` で表示
+
+---
+
+## 2026-06-28 — マイページ「あとで遊ぶ」に mock 作品が残る問題
+
+- **原因** — Preview 時に Supabase `project_bookmarks` へ保存した mock ID（例: `rift-runner`）を、本番同等モードでも mock カタログから表示していた
+- **修正** — 本番同等モードではエンゲージメント（保存・更新追跡・プレイ）の解決を **実データのみ** に限定
+- **データ** — DB 上の bookmark 行は残るが UI には出ない（不要なら Dashboard SQL で削除可）
+
+---
+
+## 2026-06-28 — 作品削除が witness 付与済みで失敗する問題
+
+- **原因** — `project_witness_grants` の append-only トリガーが `ON DELETE CASCADE` もブロック。RLS に owner 向け DELETE ポリシーが無かった
+- **migration 027** — `supabase/migrations/027_project_owner_delete_cascade.sql`（UPDATE のみ append-only、owner の CASCADE DELETE を許可）
+- **UI** — 削除失敗時に migration 未適用を示すメッセージを表示
+- **オーナー** — Supabase Dashboard SQL で 027 適用後、witness-sandbox 含む作品削除を再確認
+
+---
+
+## 2026-06-28 — production-mode 監査と再発防止
+
+- **追加** — `docs/production-mode-audit.md`：`shouldHideV0MockContent()` 分岐の高/中/低リスク一覧、禁止ルール、リリース前チェックリスト（6 URL）
+- **追加** — `npm run verify:production-mode-guards`（`isPreviewV0Deployment` 漏出・Preview 機能ガードの静的検知）
+- **是正** — `/studio/mypage`：Preview でも **実作品がある場合は本番と同じ DirectoryPanel**（mock グリッドとの丸ごと差し替えを縮小）
+- **方針** — Coming Soon 配線より先に監査・ガード。Preview だけで main/prod GO しない
+
+---
+
 ## 2026-06-28 — Studio プロジェクト一覧を実データグリッドに復元
 
 - **修正** — `/studio/mypage` 本番同等モードで誤って出ていた「あなたの作品」枠を削除（`/studio` ホームのみに集約）

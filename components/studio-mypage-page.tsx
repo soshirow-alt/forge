@@ -1,7 +1,9 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback } from "react";
+import { Suspense, useCallback, useMemo } from "react";
+import { useAuth } from "@/components/auth-provider";
+import { useGames } from "@/components/games-provider";
 import { StudioAchievementsTabPanel } from "@/components/studio-achievements-tab-panel";
 import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { StudioFollowersTabPanel } from "@/components/studio-followers-tab-panel";
@@ -33,14 +35,30 @@ function tabHref(tab: StudioMypageTab, query: string): string {
   return qs ? `/studio/mypage?${qs}` : "/studio/mypage";
 }
 
+/**
+ * @production-mode-audit high-risk — mock グリッドと実データ Directory を分岐。
+ * 本番同等、または Preview で実作品がある場合は DirectoryPanel に統一（2026-06 構造是正）。
+ */
 function StudioMypageProjectsPanel({ initialQuery = "" }: { initialQuery?: string }) {
   const hideV0Mock = shouldHideV0MockContent();
+  const { user, hydrated } = useAuth();
+  const { getOwnedProjects, dataReady } = useGames();
 
-  if (!hideV0Mock) {
-    return <StudioProjectsTabPanel initialQuery={initialQuery} />;
+  const useRealDirectory = useMemo(() => {
+    if (hideV0Mock) {
+      return true;
+    }
+    if (!hydrated || !dataReady || !user) {
+      return false;
+    }
+    return getOwnedProjects(user.id).length > 0;
+  }, [hideV0Mock, hydrated, dataReady, user, getOwnedProjects]);
+
+  if (useRealDirectory) {
+    return <StudioOwnedProjectsDirectoryPanel initialQuery={initialQuery} />;
   }
 
-  return <StudioOwnedProjectsDirectoryPanel initialQuery={initialQuery} />;
+  return <StudioProjectsTabPanel initialQuery={initialQuery} />;
 }
 
 function StudioMypagePageContent() {
@@ -72,11 +90,6 @@ function StudioMypagePageContent() {
           ) : (
             <StudioAchievementsTabPanel />
           )
-        ) : hideV0Mock ? (
-          <FeatureComingSoonPanel
-            title="フォロワー"
-            description="フォロワー一覧の表示は準備中です。公開をお待ちください。"
-          />
         ) : (
           <StudioFollowersTabPanel />
         )}
