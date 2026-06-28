@@ -32,7 +32,7 @@ type ProjectListCardProps = {
   layout?: "hub" | "directory";
 };
 
-function ProjectDeleteButton({ onClick }: { onClick: () => void }) {
+export function ProjectDeleteButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       type="button"
