@@ -12,6 +12,7 @@ import {
 import { type FormEvent, type ReactNode, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { StudioDirectAccessGuard } from "@/components/studio-entry-gate-provider";
+import { PlatformFeedbackSidebarBox } from "@/components/platform-feedback-sidebar-box";
 import { studioProjectTabs } from "@/lib/studio-project-detail-v0-mock-data";
 
 const primaryLinks = [
@@ -221,6 +222,10 @@ export function StudioShell({
             <Link href="/studio/guide" className={navLinkClass(pathname === "/studio/guide")}>
               はじめてガイド
             </Link>
+          </div>
+
+          <div className="mt-auto shrink-0 pt-4">
+            <PlatformFeedbackSidebarBox viewerMode="studio" />
           </div>
         </nav>
       </aside>

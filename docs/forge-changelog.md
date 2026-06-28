@@ -4,6 +4,22 @@
 
 ---
 
+## 2026-06-26 — 運営連絡先メール差し替え
+
+- **変更** — 利用規約・プライバシーポリシーの問い合わせ先を `forge.operation@gmail.com` に統一（`lib/legal-routes.ts`）
+- **確認** — `/terms` 第15条・`/privacy` お問い合わせ窓口
+
+---
+
+## 2026-06-26 — サイドバー「運営へのご意見」
+
+- **追加** — Player / Studio サイドバー下部にご意見ボックス。種類（不具合・ご要望・サービスへのご意見・その他）+ 本文（10〜2000字）
+- **送信** — ログイン必須。Supabase `platform_feedback` に保存（migration **026** — Dashboard 手動適用）
+- **運営確認** — Supabase Dashboard（アプリ内 admin UI なし）
+- **確認** — `/home` または `/studio` でサイドバー下部 → 送る → モーダル送信
+
+---
+
 ## 2026-06-26 — LP ヒーロー背景を「明るい未来」寄りに差し替え
 
 - **背景** — `public/images/landing/hero-bg.png`（`landing-hero-bg.png` も同期）を夜の城・ランタンから、夜明けの道→光の街へ進むイラストに更新

@@ -16,6 +16,7 @@ import { type FormEvent, type ReactNode, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useGames } from "@/components/games-provider";
 import { useStudioEntryGate } from "@/components/studio-entry-gate-provider";
+import { PlatformFeedbackSidebarBox } from "@/components/platform-feedback-sidebar-box";
 import { shouldBypassStudioLoginOnPreview } from "@/lib/preview-v0";
 import { WATCH_TAB_LABEL } from "@/lib/watch-ui-labels";
 
@@ -191,6 +192,10 @@ export function PlayerShell({
             <Link href="/guide" className={navLinkClass(pathname === "/guide")}>
               はじめてガイド
             </Link>
+          </div>
+
+          <div className="mt-auto shrink-0 pt-4">
+            <PlatformFeedbackSidebarBox viewerMode="player" />
           </div>
         </nav>
       </aside>
