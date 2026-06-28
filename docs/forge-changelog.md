@@ -4,6 +4,22 @@
 
 ---
 
+## 2026-06-26 — LP ヒーロー背景を「明るい未来」寄りに差し替え
+
+- **背景** — `public/images/landing/hero-bg.png`（`landing-hero-bg.png` も同期）を夜の城・ランタンから、夜明けの道→光の街へ進むイラストに更新
+- **利用箇所** — LP `/`、Auth レイアウト左ペイン（変更なし・パス同一）
+- **確認** — `/` と `/login` で左テキスト可読性、右側の朝日が過剰に眩しくないか
+
+---
+
+## 2026-06-26 — 本番デプロイ開始（silent verification）
+
+- **main 反映** — `preview/landing-01`（`8110ccf`）を `main` に fast-forward merge & push。Vercel Production ビルド開始
+- **本番 URL** — https://forge-flame-gamma.vercel.app（外部告知なし・オーナー検証用）
+- **次（未実装・記録）** — 問題報告 / Forge FB 用フォームをサイドバーに追加（マネタイズ示唆の収集も想定）
+
+---
+
 ## 2026-06-28 — 本番GO前 P1 修正（catalog / 通知バッジ / settings 保護）
 
 - **catalogReady** — `dataReady` を Supabase 作品 fetch 完了まで false に。`/search` 初回の誤「0件」を防止
