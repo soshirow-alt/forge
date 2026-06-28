@@ -41,6 +41,8 @@ export function getAuthErrorMessage(message: string, code?: string): string {
       return AUTH_ALREADY_REGISTERED_MESSAGE;
     case "Password should be at least 6 characters":
       return "パスワードは6文字以上で入力してください。";
+    case "Password should be at least 8 characters":
+      return "パスワードは8文字以上で入力してください。";
     case "Unable to validate email address: invalid format":
       return "メールアドレスの形式が正しくありません。";
     case "Email not confirmed":

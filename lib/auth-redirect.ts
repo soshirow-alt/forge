@@ -16,6 +16,11 @@ export function getPasswordResetRedirectUrl(): string {
   return `${getAuthOrigin()}/auth/callback?next=${next}`;
 }
 
+export function getEmailChangeRedirectUrl(): string {
+  const next = encodeURIComponent("/settings?email=confirmed");
+  return `${getAuthOrigin()}/auth/callback?next=${next}`;
+}
+
 export function getOAuthRedirectUrl(nextPath?: string | null): string {
   const next = encodeURIComponent(resolveSafeAuthNextPath(nextPath ?? null));
   return `${getAuthOrigin()}/auth/callback?next=${next}`;

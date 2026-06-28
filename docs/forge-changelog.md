@@ -6,6 +6,25 @@
 
 ---
 
+## 2026-06-28 — 設定画面のアカウント退会を最下部へ
+
+- **変更** — `/settings`・`/studio/settings` でアカウント退会を **通知・プライバシーの下** に移動。赤枠カードをやめ、他セクションと同じ見た目＋テキストリンクに
+
+---
+
+## 2026-06-28 — アカウント設定（パスワード・メール・退会）
+
+- **追加** — `/settings` と `/studio/settings` に **実アカウント管理**
+  - **パスワード変更** — 現在のパスワード確認 → 更新 → 自動ログアウト → `/login` で再ログイン
+  - **メール変更** — 現在のパスワード確認 → 新アドレスへ確認メール → リンクで完了
+  - **アカウント退会（匿名化）** — 「退会する」入力＋パスワード確認。プロフィール名を「退会済みユーザー」に置換、個人向けデータ（ブックマーク・通知・フォロー等）削除。**フィードバック・初声など作品に残った記録は匿名のまま保持**
+- **migration 029** — `anonymize_own_account_data` RPC + `account_anonymizations` テーブル
+- **API** — `POST /api/account/anonymize`（Service Role で Auth ユーザーを無効化）
+- **オーナー** — Supabase Dashboard で `029_account_anonymization.sql` を適用。**`SUPABASE_SERVICE_ROLE_KEY` が Vercel 本番 env に無いと退会の最終段階が失敗**
+- **外部ログイン** — Google/Discord/GitHub のみのアカウントはパスワード・メール変更不可（退会は確認フレーズのみ）
+
+---
+
 ## 2026-06-28 — ログインのパスワードマネージャー自動入力
 
 - **原因** — ログインフォームに `name` が無く React の controlled input がブラウザの autofill を上書きしていた。Studio 導線は `/login?return=/studio` など URL がばらついていた（return は post-login では未使用）

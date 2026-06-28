@@ -79,16 +79,6 @@ export const forgeNotificationStudioItems: SettingsToggleItem[] = [
 
 export const forgeSettingsSections: ForgeSettingsSection[] = [
   {
-    id: "account",
-    title: "アカウント",
-    description: "ログイン情報（preview mock）。",
-    kind: "actions",
-    items: [
-      { id: "email", label: "メールアドレス", description: "shaneco@example.com" },
-      { id: "password", label: "パスワード", description: "最終更新: 2025/03/01" },
-    ],
-  },
-  {
     id: "privacy",
     title: "プライバシー",
     description: "プレイヤーとしての公開範囲。",
