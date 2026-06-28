@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-06-28 — 設定画面の通知・プライバシー・公開設定を Supabase 保存
+
+- **変更** — `/settings`・`/studio/settings` の通知 / プライバシー / Studio 公開設定トグルを **Supabase `user_settings` に保存**（mock local state 廃止）
+- **反映** — Player「更新を追っている作品」OFF → devlog / 新版 / 確認依頼通知を送らない。Studio「届いたフィードバック」OFF → voice 通知トリガーをスキップ。ランキング OFF → 月間影響度ランキングから除外
+- **反映** — Studio 公開設定：開発者プロフィール非公開 → `/creators/` は 404。活動履歴 / フォロワータブ非公開 → タブ非表示
+- **migration 030** — `user_settings` テーブル + 通知フィルタ RPC + ランキング / voice 通知連携
+- **オーナー** — Supabase Dashboard で `030_user_settings.sql` を適用
+- **未反映（保存のみ）** — プレイヤープロフィール公開 / 活動表示（公開プロフィール UI 未実装）、developer-follow / community / witness 等の通知種別（将来実装時に prefs 参照）
+
+---
+
 ## 2026-06-28 — 設定画面のアカウント退会を最下部へ
 
 - **変更** — `/settings`・`/studio/settings` でアカウント退会を **通知・プライバシーの下** に移動。赤枠カードをやめ、他セクションと同じ見た目＋テキストリンクに

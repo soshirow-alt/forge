@@ -2,19 +2,20 @@
 
 import { Suspense, useState } from "react";
 import { AccountSettingsPanel } from "@/components/account-settings-panel";
+import { useUserSettings, type SettingsToggleItem } from "@/hooks/use-user-settings";
 import {
-  forgeNotificationPlayerItems,
-  forgeNotificationStudioItems,
-  forgeSettingsSections,
-  type SettingsToggleItem,
-} from "@/lib/forge-settings-v0-mock-data";
+  privacySettingsSection,
+  studioPublicSettingsSection,
+} from "@/lib/user-settings-definitions";
 
 function ToggleSwitch({
   enabled,
+  disabled,
   onToggle,
   label,
 }: {
   enabled: boolean;
+  disabled?: boolean;
   onToggle: () => void;
   label: string;
 }) {
@@ -24,8 +25,9 @@ function ToggleSwitch({
       role="switch"
       aria-checked={enabled}
       aria-label={label}
+      disabled={disabled}
       onClick={onToggle}
-      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
         enabled ? "bg-violet-600" : "bg-zinc-700"
       }`}
     >
@@ -40,9 +42,11 @@ function ToggleSwitch({
 
 function ToggleRow({
   item,
+  disabled,
   onToggle,
 }: {
   item: SettingsToggleItem;
+  disabled?: boolean;
   onToggle: () => void;
 }) {
   return (
@@ -51,7 +55,12 @@ function ToggleRow({
         <p className="text-sm font-medium text-zinc-200">{item.label}</p>
         <p className="mt-0.5 text-xs text-zinc-500">{item.description}</p>
       </div>
-      <ToggleSwitch enabled={item.enabled} onToggle={onToggle} label={item.label} />
+      <ToggleSwitch
+        enabled={item.enabled}
+        disabled={disabled}
+        onToggle={onToggle}
+        label={item.label}
+      />
     </li>
   );
 }
@@ -64,49 +73,67 @@ function AccountSettingsFallback() {
   );
 }
 
-export function ForgeSettingsForm({ context }: { context: "player" | "studio" }) {
-  const [playerNotifications, setPlayerNotifications] = useState(forgeNotificationPlayerItems);
-  const [studioNotifications, setStudioNotifications] = useState(forgeNotificationStudioItems);
-  const [sections, setSections] = useState(forgeSettingsSections);
+function PreferenceSettingsPanel({ context }: { context: "player" | "studio" }) {
+  const {
+    loaded,
+    saving,
+    error,
+    migrationMissing,
+    playerNotifications,
+    studioNotifications,
+    privacyItems,
+    studioPublicItems,
+    updateNotifyPlayer,
+    updateNotifyStudio,
+    updatePrivacy,
+    updateStudioPublic,
+  } = useUserSettings();
+  const [toggleError, setToggleError] = useState<string | null>(null);
 
-  function togglePlayerNotification(id: string) {
-    setPlayerNotifications((current) =>
-      current.map((item) => (item.id === id ? { ...item, enabled: !item.enabled } : item)),
+  async function handleToggle(action: () => Promise<void>) {
+    setToggleError(null);
+    try {
+      await action();
+    } catch {
+      setToggleError("設定の保存に失敗しました。時間をおいて再度お試しください。");
+    }
+  }
+
+  if (!loaded) {
+    return (
+      <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
+        <p className="text-sm text-zinc-500">設定を読み込み中…</p>
+      </section>
     );
   }
 
-  function toggleStudioNotification(id: string) {
-    setStudioNotifications((current) =>
-      current.map((item) => (item.id === id ? { ...item, enabled: !item.enabled } : item)),
+  if (migrationMissing) {
+    return (
+      <section className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5 sm:p-6">
+        <p className="font-medium text-amber-200">設定の保存機能の準備が未完了です</p>
+        <p className="mt-2 text-sm leading-relaxed text-amber-100/80">
+          Supabase Dashboard で migration 030（
+          <code className="text-xs">030_user_settings.sql</code>
+          ）を適用すると、通知・プライバシー設定が保存されます。
+        </p>
+      </section>
     );
   }
 
-  function toggleSectionItem(sectionId: string, itemId: string) {
-    setSections((current) =>
-      current.map((section) => {
-        if (section.id !== sectionId || section.kind !== "toggles") {
-          return section;
-        }
-        return {
-          ...section,
-          items: (section.items as SettingsToggleItem[]).map((item) =>
-            item.id === itemId ? { ...item, enabled: !item.enabled } : item,
-          ),
-        };
-      }),
-    );
-  }
+  const disabled = saving;
 
   return (
-    <div className="space-y-8">
-      <Suspense fallback={<AccountSettingsFallback />}>
-        <AccountSettingsPanel section="credentials" />
-      </Suspense>
+    <>
+      {(error || toggleError) && (
+        <p className="rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+          {toggleError ?? error}
+        </p>
+      )}
 
       <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
         <h2 className="text-base font-semibold text-white">通知</h2>
         <p className="mt-1 text-sm text-zinc-500">
-          通知設定は共通です。Player 向けと Studio 向けをそれぞれ選べます（preview mock）。
+          通知設定は Supabase に保存されます。Player 向けと Studio 向けをそれぞれ選べます。
         </p>
 
         <div className="mt-6 space-y-6">
@@ -118,7 +145,10 @@ export function ForgeSettingsForm({ context }: { context: "player" | "studio" })
                 <ToggleRow
                   key={item.id}
                   item={item}
-                  onToggle={() => togglePlayerNotification(item.id)}
+                  disabled={disabled}
+                  onToggle={() =>
+                    void handleToggle(() => updateNotifyPlayer(item.id, !item.enabled))
+                  }
                 />
               ))}
             </ul>
@@ -132,7 +162,10 @@ export function ForgeSettingsForm({ context }: { context: "player" | "studio" })
                 <ToggleRow
                   key={item.id}
                   item={item}
-                  onToggle={() => toggleStudioNotification(item.id)}
+                  disabled={disabled}
+                  onToggle={() =>
+                    void handleToggle(() => updateNotifyStudio(item.id, !item.enabled))
+                  }
                 />
               ))}
             </ul>
@@ -140,31 +173,44 @@ export function ForgeSettingsForm({ context }: { context: "player" | "studio" })
         </div>
       </section>
 
-      {sections
-        .filter((section) => {
-          if (context === "player") {
-            return section.id === "privacy";
-          }
-          return section.id === "studio-public";
-        })
-        .map((section) => (
-          <section
-            key={section.id}
-            className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6"
-          >
-            <h2 className="text-base font-semibold text-white">{section.title}</h2>
-            <p className="mt-1 text-sm text-zinc-500">{section.description}</p>
-            <ul className="mt-5 divide-y divide-zinc-800/80">
-              {(section.items as SettingsToggleItem[]).map((item) => (
-                <ToggleRow
-                  key={item.id}
-                  item={item}
-                  onToggle={() => toggleSectionItem(section.id, item.id)}
-                />
-              ))}
-            </ul>
-          </section>
-        ))}
+      <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
+        <h2 className="text-base font-semibold text-white">
+          {context === "player" ? privacySettingsSection.title : studioPublicSettingsSection.title}
+        </h2>
+        <p className="mt-1 text-sm text-zinc-500">
+          {context === "player"
+            ? privacySettingsSection.description
+            : studioPublicSettingsSection.description}
+        </p>
+        <ul className="mt-5 divide-y divide-zinc-800/80">
+          {(context === "player" ? privacyItems : studioPublicItems).map((item) => (
+            <ToggleRow
+              key={item.id}
+              item={item}
+              disabled={disabled}
+              onToggle={() =>
+                void handleToggle(() =>
+                  context === "player"
+                    ? updatePrivacy(item.id, !item.enabled)
+                    : updateStudioPublic(item.id, !item.enabled),
+                )
+              }
+            />
+          ))}
+        </ul>
+      </section>
+    </>
+  );
+}
+
+export function ForgeSettingsForm({ context }: { context: "player" | "studio" }) {
+  return (
+    <div className="space-y-8">
+      <Suspense fallback={<AccountSettingsFallback />}>
+        <AccountSettingsPanel section="credentials" />
+      </Suspense>
+
+      <PreferenceSettingsPanel context={context} />
 
       <Suspense fallback={null}>
         <AccountSettingsPanel section="deletion" />
