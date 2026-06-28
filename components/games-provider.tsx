@@ -608,8 +608,8 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       throw new Error("Supabase is not configured.");
     }
 
-    await deleteProjectInDb(supabase, id);
     await deleteProjectDevlogsByProjectId(supabase, id);
+    await deleteProjectInDb(supabase, id);
     setSubmittedGames((prev) => prev.filter((game) => game.id !== id));
     setSupportCounts((prev) => {
       const next = { ...prev };
@@ -1480,20 +1480,33 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     [user, isBookmarked],
   );
 
+  const resolveEngagementGameById = useCallback(
+    (id: string): Game | undefined => {
+      const submitted = getSubmittedGameById(id);
+      if (submitted) {
+        return mergeGameWithExtras(submitted);
+      }
+      if (shouldHideV0MockContent()) {
+        return undefined;
+      }
+      const mock = getMockGameById(id);
+      return mock ? mergeGameWithExtras(mock) : undefined;
+    },
+    [getSubmittedGameById],
+  );
+
   const getBookmarkedGames = useCallback(() => {
     return userEngagement.bookmarkedProjectIds
-      .map((id) => getSubmittedGameById(id) ?? getMockGameById(id))
-      .filter((game): game is Game => game !== undefined)
-      .map((game) => mergeGameWithExtras(game));
-  }, [userEngagement.bookmarkedProjectIds, getSubmittedGameById]);
+      .map((id) => resolveEngagementGameById(id))
+      .filter((game): game is Game => game !== undefined);
+  }, [userEngagement.bookmarkedProjectIds, resolveEngagementGameById]);
 
   const resolveEngagementGames = useCallback(
     (projectIds: string[]) =>
       projectIds
-        .map((id) => getSubmittedGameById(id) ?? getMockGameById(id))
-        .filter((game): game is Game => game !== undefined)
-        .map((game) => mergeGameWithExtras(game)),
-    [getSubmittedGameById],
+        .map((id) => resolveEngagementGameById(id))
+        .filter((game): game is Game => game !== undefined),
+    [resolveEngagementGameById],
   );
 
   const getSupportedGames = useCallback(

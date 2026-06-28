@@ -4,6 +4,23 @@
 
 ---
 
+## 2026-06-28 — マイページ「あとで遊ぶ」に mock 作品が残る問題
+
+- **原因** — Preview 時に Supabase `project_bookmarks` へ保存した mock ID（例: `rift-runner`）を、本番同等モードでも mock カタログから表示していた
+- **修正** — 本番同等モードではエンゲージメント（保存・更新追跡・プレイ）の解決を **実データのみ** に限定
+- **データ** — DB 上の bookmark 行は残るが UI には出ない（不要なら Dashboard SQL で削除可）
+
+---
+
+## 2026-06-28 — 作品削除が witness 付与済みで失敗する問題
+
+- **原因** — `project_witness_grants` の append-only トリガーが `ON DELETE CASCADE` もブロック。RLS に owner 向け DELETE ポリシーが無かった
+- **migration 027** — `supabase/migrations/027_project_owner_delete_cascade.sql`（UPDATE のみ append-only、owner の CASCADE DELETE を許可）
+- **UI** — 削除失敗時に migration 未適用を示すメッセージを表示
+- **オーナー** — Supabase Dashboard SQL で 027 適用後、witness-sandbox 含む作品削除を再確認
+
+---
+
 ## 2026-06-28 — production-mode 監査と再発防止
 
 - **追加** — `docs/production-mode-audit.md`：`shouldHideV0MockContent()` 分岐の高/中/低リスク一覧、禁止ルール、リリース前チェックリスト（6 URL）
