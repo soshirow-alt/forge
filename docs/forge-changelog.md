@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-06-28 — ログインのパスワードマネージャー自動入力
+
+- **原因** — ログインフォームに `name` が無く React の controlled input がブラウザの autofill を上書きしていた。Studio 導線は `/login?return=/studio` など URL がばらついていた（return は post-login では未使用）
+- **修正** — `name` / `autoComplete="username"` / フォーム `autoComplete="on"`、初回描画の readOnly 解除。Studio 未ログイン導線は `/login` に統一
+- **確認** — 本番 URL（`forge-flame-gamma.vercel.app`）で保存した資格情報が `/login` で自動入力されること（Preview URL とは別エントリ）
+
+---
+
+## 2026-06-28 — Preview 確認済み変更の本番反映
+
+- **反映** — Studio 作品一覧・削除、本番モード mock エンゲージメント非表示、マイページプレイ履歴タブ分離、Studio フォロワー一覧（migration 028 要適用）
+- **オーナー** — 本番 Supabase に **028** 未適用なら Dashboard で適用。フォロワータブが migration 未適用バナーになる
+
+---
+
 ## 2026-06-28 — Studio フォロワー一覧（実データ）
 
 - **追加** — `/studio/mypage?tab=followers` に **実フォロワー一覧**（フォロー日・表示名。開発者プロフィールがあるフォロワーは `/creators/` へリンク）
