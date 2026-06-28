@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { GuideStudioEntrySection } from "@/components/guide-studio-entry-section";
 import { PlayerShell } from "@/components/player-shell";
 import { playerGuideFaq, playerGuideSteps } from "@/lib/player-guide-v0-content";
 
@@ -72,6 +73,8 @@ export function PlayerGuidePage() {
             ))}
           </ol>
         </section>
+
+        <GuideStudioEntrySection />
 
         <section className="mt-10">
           <h2 className="text-lg font-semibold text-white">よくある質問</h2>

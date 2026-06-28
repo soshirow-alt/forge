@@ -9,6 +9,17 @@ export const playerGuideSteps = [
   },
 ] as const;
 
+/** プレイヤーガイド — Studio への導線（開発者向け） */
+export const playerGuideStudioEntry = {
+  title: "開発者の方へ",
+  lead: "作品を投稿・育てる場合は Player 画面とは別の Studio を使います。",
+  body:
+    "ログイン後、画面右上の Studio ボタンから Studio に移動してください。初回のみ、開発者としての利用開始確認が表示されます。",
+  imageSrc: "/images/guide/studio-entry-header.png",
+  imageAlt: "Player 画面右上の Studio ボタンの位置",
+  caption: "右上：検索バーの右側にある Studio を押す",
+} as const;
+
 export const playerGuideFaq = [
   {
     id: "witnessing",
