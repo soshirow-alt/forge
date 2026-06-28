@@ -105,7 +105,12 @@ export function LoginPage({
           </div>
 
           <div className="text-right">
-            <span className="text-sm text-violet-400">パスワードをお忘れの方</span>
+            <Link
+              href="/login/forgot-password"
+              className="text-sm text-violet-400 transition-colors hover:text-violet-300"
+            >
+              パスワードをお忘れの方
+            </Link>
           </div>
 
           {error && (

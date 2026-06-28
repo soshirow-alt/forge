@@ -86,6 +86,8 @@ Forge MVP 初期（ユーザー数十〜数百）では **DB サイズ・MAU と
 - `https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app/auth/callback`（Preview）
 - `http://localhost:3000/auth/callback`（ローカル dev）
 
+パスワード再設定メールも `/auth/callback` 経由で `/auth/reset-password` へ遷移します（追加 URL 不要）。
+
 未設定時: メール確認リンククリック後に `/login?error=auth_callback` へ落ちる。Preview で登録した場合は **Preview の callback URL も必須**。
 
 ### OAuth（Google / Discord / GitHub）

@@ -33,14 +33,7 @@ export function AuthHeader({ active }: { active: "login" | "register" }) {
         </span>
         <span className="text-lg font-bold tracking-tight text-white">Forge</span>
       </Link>
-      <nav className="flex flex-wrap items-center gap-2 text-sm sm:gap-4">
-        <Link href="/" className="text-zinc-400 transition-colors hover:text-white">
-          発見する
-        </Link>
-        <span className="hidden text-zinc-600 sm:inline">|</span>
-        <span className="hidden text-zinc-500 sm:inline">Studio（開発者向け）</span>
-        <span className="hidden text-zinc-600 sm:inline">|</span>
-        <span className="hidden text-zinc-500 sm:inline">ヘルプ</span>
+      <nav className="flex items-center gap-3">
         {active === "login" ? (
           <Link
             href="/register"
@@ -49,17 +42,12 @@ export function AuthHeader({ active }: { active: "login" | "register" }) {
             新規登録
           </Link>
         ) : (
-          <>
-            <Link
-              href="/login"
-              className="rounded-full border border-zinc-600 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:text-white"
-            >
-              ログイン
-            </Link>
-            <span className="rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-500/20">
-              新規登録
-            </span>
-          </>
+          <Link
+            href="/login"
+            className="rounded-full border border-zinc-600 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:text-white"
+          >
+            ログイン
+          </Link>
         )}
       </nav>
     </header>

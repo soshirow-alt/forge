@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-06-28 — ログイン画面の Auth ヘッダー整理 + パスワード再設定
+
+- **ヘッダー** — ログイン/登録画面右上の「発見する」「Studio」「ヘルプ」を削除。Forge ロゴ + 新規登録/ログインのみ
+- **パスワード再設定** — 「パスワードをお忘れの方」→ `/login/forgot-password`。メールリンク → `/auth/reset-password`
+- **確認** — `/login` のリンク・ヘッダー、`/login/forgot-password` でメール送信 UI
+
+---
+
 ## 2026-06-28 — OAuth を Coming soon に固定
 
 - **変更** — `/login`・`/register` の Google / Discord / GitHub ボタンを廃止し **Coming soon** 表示。メール登録・ログインのみ
