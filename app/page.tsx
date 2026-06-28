@@ -1,5 +1,10 @@
 import { redirect } from "next/navigation";
 import { LandingPage } from "@/components/landing-page";
+import {
+  landingMockFeaturedGames,
+  loadLandingFeaturedGames,
+} from "@/lib/landing-featured-games";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -20,5 +25,16 @@ export default async function RootPage() {
     }
   }
 
-  return <LandingPage logoHref="/" />;
+  const useMockContent = !shouldHideV0MockContent();
+  const featuredGames = useMockContent
+    ? landingMockFeaturedGames
+    : await loadLandingFeaturedGames();
+
+  return (
+    <LandingPage
+      logoHref="/"
+      featuredGames={featuredGames}
+      useMockContent={useMockContent}
+    />
+  );
 }

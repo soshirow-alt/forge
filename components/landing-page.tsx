@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
-  Clock,
   Flame,
   Gamepad2,
   Heart,
@@ -11,6 +10,8 @@ import {
   Wrench,
 } from "lucide-react";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal-routes";
+import { LandingFeaturedGamesSection } from "@/components/landing-featured-games-section";
+import type { LandingFeaturedGame } from "@/lib/landing-featured-games";
 
 const valueProps = [
   {
@@ -30,44 +31,6 @@ const valueProps = [
     iconClass: "bg-amber-500/20 text-amber-300",
     title: "一緒に、最高の体験をつくる",
     body: "開発者とプレイヤーがつながり、\nまだ見ぬ名作が生まれていきます。",
-  },
-] as const;
-
-const featuredGames = [
-  {
-    title: "星灯の旅路",
-    description: "夜の森を旅する短編アドベンチャー",
-    feedback: 12,
-    updated: "3日",
-    image: "/images/landing/game-1.png",
-  },
-  {
-    title: "炉心の残光",
-    description: "心の奥に残る、静かな物語",
-    feedback: 8,
-    updated: "5日",
-    image: "/images/landing/game-2.png",
-  },
-  {
-    title: "浮遊ノート",
-    description: "空に浮かぶ島々をめぐる記録",
-    feedback: 23,
-    updated: "7日",
-    image: "/images/landing/game-3.png",
-  },
-  {
-    title: "夏の向こう側",
-    description: "あの夏の記憶を、もう一度",
-    feedback: 15,
-    updated: "2日",
-    image: "/images/landing/game-4.png",
-  },
-  {
-    title: "深淵ノート",
-    description: "失われた記憶を辿るRPG",
-    feedback: 31,
-    updated: "10日",
-    image: "/images/landing/game-5.png",
   },
 ] as const;
 
@@ -158,7 +121,15 @@ function CtaCard({
   );
 }
 
-export function LandingPage({ logoHref = "/" }: { logoHref?: string }) {
+export function LandingPage({
+  logoHref = "/",
+  featuredGames,
+  useMockContent = false,
+}: {
+  logoHref?: string;
+  featuredGames: LandingFeaturedGame[];
+  useMockContent?: boolean;
+}) {
   return (
     <main className="relative min-h-screen bg-[#0a0a0a] text-zinc-100">
       <header className="absolute inset-x-0 top-0 z-20">
@@ -263,75 +234,35 @@ export function LandingPage({ logoHref = "/" }: { logoHref?: string }) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-[1320px] px-6 py-12 sm:px-8 sm:py-14">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">注目の開発中ゲーム</h2>
-          <Link
-            href="/search"
-            className="flex items-center gap-1.5 text-sm font-medium text-violet-300 transition-colors hover:text-violet-200"
-          >
-            すべて見る
-            <ArrowRight className="size-4" aria-hidden="true" />
-          </Link>
-        </div>
-        <div className="mt-6 grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-3 lg:grid-cols-5">
-          {featuredGames.map((game) => (
-            <Link
-              key={game.title}
-              href="/search"
-              className="group overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/70 transition-colors hover:border-violet-500/40"
-            >
-              <div className="relative aspect-[4/3] overflow-hidden">
-                <Image
-                  src={game.image}
-                  alt={game.title}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  sizes="(max-width: 768px) 50vw, 20vw"
-                />
-              </div>
-              <div className="p-4">
-                <h3 className="font-bold text-white">{game.title}</h3>
-                <p className="mt-1.5 line-clamp-1 text-sm text-zinc-500">{game.description}</p>
-                <div className="mt-4 flex items-center gap-4 text-xs text-zinc-500">
-                  <span className="flex items-center gap-1.5">
-                    <MessageSquare className="size-3.5 text-violet-400" aria-hidden="true" />
-                    {game.feedback}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="size-3.5" aria-hidden="true" />
-                    {game.updated}
-                  </span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+      <LandingFeaturedGamesSection games={featuredGames} useMockContent={useMockContent} />
 
       <footer className="mx-auto max-w-[1320px] px-6 pb-10 sm:px-8 sm:pb-12">
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 px-6 py-6 sm:px-7">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="font-bold text-white">Forge からのお知らせ</h2>
-            <span
-              title="お知らせ一覧は準備中"
-              className="flex cursor-not-allowed items-center gap-1.5 text-sm font-medium text-zinc-500"
-            >
-              お知らせ一覧
-              <ArrowRight className="size-4" aria-hidden="true" />
-            </span>
+        {useMockContent && (
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 px-6 py-6 sm:px-7">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="font-bold text-white">Forge からのお知らせ</h2>
+              <span
+                title="お知らせ一覧は準備中"
+                className="flex cursor-not-allowed items-center gap-1.5 text-sm font-medium text-zinc-500"
+              >
+                お知らせ一覧
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </span>
+            </div>
+            <p className="mt-4 text-sm text-zinc-500">
+              <span className="text-zinc-400">2025/05/20</span>
+              <span className="ml-3 text-zinc-300 sm:ml-5">
+                Forge v0.4.0 アップデートを公開しました！
+              </span>
+              <span className="mt-1 block sm:ml-5 sm:mt-0 sm:inline">
+                新機能：改善ループの可視化、通知のカスタマイズ など
+              </span>
+            </p>
           </div>
-          <p className="mt-4 text-sm text-zinc-500">
-            <span className="text-zinc-400">2025/05/20</span>
-            <span className="ml-3 text-zinc-300 sm:ml-5">
-              Forge v0.4.0 アップデートを公開しました！
-            </span>
-            <span className="mt-1 block sm:ml-5 sm:mt-0 sm:inline">
-              新機能：改善ループの可視化、通知のカスタマイズ など
-            </span>
-          </p>
-        </div>
-        <div className="mt-10 flex flex-col items-center justify-between gap-4 text-sm text-zinc-500 md:flex-row">
+        )}
+        <div
+          className={`flex flex-col items-center justify-between gap-4 text-sm text-zinc-500 md:flex-row ${useMockContent ? "mt-10" : ""}`}
+        >
           <p className="md:order-1">© 2026 Forge. All rights reserved.</p>
           <nav className="flex flex-wrap items-center justify-center gap-6 md:order-2 md:gap-8">
             <Link href={TERMS_PATH} className="transition-colors hover:text-zinc-300">
