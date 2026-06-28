@@ -238,7 +238,7 @@ export function StudioHomePage() {
   return (
     <StudioShell activeNav="home" notificationBadge={0}>
       <div className="mx-auto max-w-7xl space-y-10">
-        <StudioOwnedProjectsSection variant="home" />
+        <StudioOwnedProjectsSection />
 
         {!hideV0Mock ? (
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5 sm:p-6">
