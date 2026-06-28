@@ -9,6 +9,7 @@ import {
   OAuthComingSoonSection,
   PasswordInput,
   authInputClassName,
+  handleAuthFormEnterKey,
 } from "@/components/auth-layout";
 import { useAuth } from "@/components/auth-provider";
 import { markNewRegistrationPending } from "@/lib/developer-onboarding-v0-store";
@@ -90,7 +91,11 @@ export function RegisterPage({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          onKeyDown={handleAuthFormEnterKey}
+          className="mt-8 space-y-4"
+        >
           <div>
             <label htmlFor="username" className="text-sm font-medium text-zinc-400">
               ユーザー名

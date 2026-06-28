@@ -12,7 +12,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState, type KeyboardEvent, type ReactNode } from "react";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal-routes";
 
 export const authInputClassName =
@@ -23,6 +23,24 @@ export const authPrimaryButtonClassName =
 
 export const authSecondaryButtonClassName =
   "block w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-6 py-3.5 text-center text-base font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-800/80";
+
+export function handleAuthFormEnterKey(event: KeyboardEvent<HTMLFormElement>) {
+  if (event.key !== "Enter" || event.nativeEvent.isComposing) {
+    return;
+  }
+
+  const target = event.target;
+  if (!(target instanceof HTMLInputElement)) {
+    return;
+  }
+
+  if (target.type === "checkbox" || target.type === "radio") {
+    return;
+  }
+
+  event.preventDefault();
+  event.currentTarget.requestSubmit();
+}
 
 export function AuthHeader({ active }: { active: "login" | "register" }) {
   return (

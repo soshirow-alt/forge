@@ -6,6 +6,7 @@ import {
   AuthPageShell,
   authInputClassName,
   authPrimaryButtonClassName,
+  handleAuthFormEnterKey,
 } from "@/components/auth-layout";
 import { getPasswordResetRedirectUrl } from "@/lib/auth-redirect";
 import { getAuthErrorMessage } from "@/lib/auth";
@@ -80,7 +81,11 @@ export function ForgotPasswordPage({
             </Link>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+          <form
+            onSubmit={handleSubmit}
+            onKeyDown={handleAuthFormEnterKey}
+            className="mt-8 space-y-4"
+          >
             <div>
               <label htmlFor="email" className="text-sm font-medium text-zinc-400">
                 メールアドレス

@@ -6,6 +6,7 @@ import {
   AuthPageShell,
   PasswordInput,
   authPrimaryButtonClassName,
+  handleAuthFormEnterKey,
 } from "@/components/auth-layout";
 import { getAuthErrorMessage } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/client";
@@ -101,7 +102,11 @@ export function ResetPasswordPage({
             </Link>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+          <form
+            onSubmit={handleSubmit}
+            onKeyDown={handleAuthFormEnterKey}
+            className="mt-8 space-y-4"
+          >
             <div>
               <label htmlFor="password" className="text-sm font-medium text-zinc-400">
                 新しいパスワード
