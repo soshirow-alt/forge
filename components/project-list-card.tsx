@@ -24,20 +24,36 @@ type ProjectListCardProps = {
   game: Game;
   growth: ProjectGrowthSnapshot;
   supportCount: number;
-  onDelete: () => void;
+  onDelete?: () => void;
+  /** Preview 等 — 所有者向け削除（確認は親で行う） */
+  showDelete?: boolean;
   compact?: boolean;
   /** home = 改善ループ入口はホームの CTA。directory = 一覧用（ワッペンのみ） */
   layout?: "hub" | "directory";
 };
+
+function ProjectDeleteButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="cursor-pointer shrink-0 self-center rounded-lg px-2 py-1 text-xs text-red-400/80 transition-colors hover:bg-red-500/10 hover:text-red-300"
+    >
+      削除
+    </button>
+  );
+}
 
 export function ProjectListCard({
   game,
   growth,
   supportCount,
   onDelete,
+  showDelete = false,
   compact = false,
   layout = "hub",
 }: ProjectListCardProps) {
+  const canDelete = showDelete && Boolean(onDelete);
   const { isRead: voiceRead } = useNurtureVoiceRead(
     game.id,
     growth.playableVersion,
@@ -48,56 +64,61 @@ export function ProjectListCard({
 
   if (layout === "directory") {
     return (
-      <Link
-        href={projectStudioPath(game.id)}
-        className={`block rounded-xl border bg-zinc-900/60 transition-colors hover:border-zinc-700 hover:bg-zinc-900/80 ${
+      <article
+        className={`flex items-stretch gap-2 rounded-xl border bg-zinc-900/60 ${
           hasHighlight ? "border-orange-500/40 ring-1 ring-orange-500/15" : "border-zinc-800"
         } ${compact ? "p-4" : "p-5"}`}
       >
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <div
-            className={`shrink-0 overflow-hidden rounded-lg border border-zinc-800/80 ${
-              compact ? "h-14 w-20" : "h-16 w-24"
-            }`}
-          >
-            <GameThumbnail
-              thumbnailUrl={game.thumbnailUrl}
-              status={game.status}
-              projectId={game.id}
-              title={game.title}
-              genre={game.genre}
-              phase={game.phase}
-              aspectClassName="aspect-[4/3] h-full w-full"
-              showStatus={false}
-            />
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <h2 className="text-base font-semibold text-zinc-100">{game.title}</h2>
-              {statusBadges.map((badge) => (
-                <span
-                  key={badge.label}
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${BADGE_TONE_CLASS[badge.tone]}`}
-                >
-                  {badge.label}
-                </span>
-              ))}
+        <Link
+          href={projectStudioPath(game.id)}
+          className="min-w-0 flex-1 transition-colors hover:opacity-95"
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <div
+              className={`shrink-0 overflow-hidden rounded-lg border border-zinc-800/80 ${
+                compact ? "h-14 w-20" : "h-16 w-24"
+              }`}
+            >
+              <GameThumbnail
+                thumbnailUrl={game.thumbnailUrl}
+                status={game.status}
+                projectId={game.id}
+                title={game.title}
+                genre={game.genre}
+                phase={game.phase}
+                aspectClassName="aspect-[4/3] h-full w-full"
+                showStatus={false}
+              />
             </div>
 
-            <p className="mt-1 text-xs text-zinc-600">
-              v{growth.playableVersion}
-              {growth.cycleNumber > 0 && ` · サイクル ${growth.cycleNumber}`}
-              {growth.totalVoiceResponseCount > 0 &&
-                ` · 回答 ${growth.totalVoiceResponseCount}件`}
-              {" · "}
-              応援 {supportCount}
-              {" · "}
-              最終更新 {game.lastUpdated}
-            </p>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <h2 className="text-base font-semibold text-zinc-100">{game.title}</h2>
+                {statusBadges.map((badge) => (
+                  <span
+                    key={badge.label}
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${BADGE_TONE_CLASS[badge.tone]}`}
+                  >
+                    {badge.label}
+                  </span>
+                ))}
+              </div>
+
+              <p className="mt-1 text-xs text-zinc-600">
+                v{growth.playableVersion}
+                {growth.cycleNumber > 0 && ` · サイクル ${growth.cycleNumber}`}
+                {growth.totalVoiceResponseCount > 0 &&
+                  ` · 回答 ${growth.totalVoiceResponseCount}件`}
+                {" · "}
+                応援 {supportCount}
+                {" · "}
+                最終更新 {game.lastUpdated}
+              </p>
+            </div>
           </div>
-        </div>
-      </Link>
+        </Link>
+        {canDelete && onDelete ? <ProjectDeleteButton onClick={onDelete} /> : null}
+      </article>
     );
   }
 
@@ -168,15 +189,7 @@ export function ProjectListCard({
                 プレイヤー向けページ
               </Link>
             )}
-            {!compact && (
-              <button
-                type="button"
-                onClick={onDelete}
-                className="cursor-pointer text-xs text-red-400/80 transition-colors hover:text-red-300"
-              >
-                削除
-              </button>
-            )}
+            {canDelete && onDelete ? <ProjectDeleteButton onClick={onDelete} /> : null}
           </div>
         </div>
       </div>
