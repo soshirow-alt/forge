@@ -11,15 +11,11 @@ export type PlayerNotificationPrefKey =
   | "community"
   | "system";
 
-export type StudioNotificationPrefKey =
-  | "voice"
-  | "witness"
-  | "version-play"
-  | "community";
+export type StudioNotificationPrefKey = "witness" | "version-play" | "community";
 
 export type PrivacyPrefKey = "profile" | "activity" | "ranking";
 
-export type StudioPublicPrefKey = "dev-profile" | "follower-list" | "activity-log";
+export type StudioPublicPrefKey = "dev-profile";
 
 export type UserSettings = {
   notifyPlayer: Record<PlayerNotificationPrefKey, boolean>;
@@ -36,7 +32,6 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
     system: false,
   },
   notifyStudio: {
-    voice: true,
     witness: true,
     "version-play": true,
     community: true,
@@ -48,8 +43,6 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   },
   studioPublic: {
     "dev-profile": true,
-    "follower-list": true,
-    "activity-log": true,
   },
 };
 
@@ -81,12 +74,6 @@ export const forgeNotificationPlayerItems: SettingsToggleItem[] = [
 ];
 
 export const forgeNotificationStudioItems: SettingsToggleItem[] = [
-  {
-    id: "voice",
-    label: "届いたフィードバック",
-    description: "作品にフィードバックが届いたとき",
-    enabled: true,
-  },
   {
     id: "witness",
     label: "見届け人",
@@ -145,25 +132,13 @@ export const privacySettingsSection: ForgeSettingsSection = {
 export const studioPublicSettingsSection: ForgeSettingsSection = {
   id: "studio-public",
   title: "公開設定",
-  description: "開発者としての公開範囲。",
+  description: "開発者プロフィールページ（/creators/）を公開するかどうか。",
   kind: "toggles",
   items: [
     {
       id: "dev-profile",
       label: "開発者プロフィールを公開",
-      description: "作品ページから辿れる /creators/ ページ",
-      enabled: true,
-    },
-    {
-      id: "follower-list",
-      label: "フォロワー一覧を公開",
-      description: "開発者プロフィールのフォロワータブ",
-      enabled: true,
-    },
-    {
-      id: "activity-log",
-      label: "活動履歴を公開",
-      description: "開発者プロフィールの開発ログ・活動",
+      description: "OFF にすると /creators/ ページは非公開（作品ページからは辿れません）",
       enabled: true,
     },
   ],

@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-06-28 — 設定から voice 通知 OFF・タブ単位の公開設定を削除
+
+- **削除** — Studio 通知「届いたフィードバック」の ON/OFF（フィードバック通知は常に届く）
+- **削除** — Studio 公開設定の「活動履歴を公開」「フォロワー一覧を公開」（タブ単位の非公開は意味が薄いため）
+- **残す** — 「開発者プロフィールを公開」のみ（/creators/ 全体の公開・非公開）
+- **migration 031** — voice 通知トリガーから設定参照を除去（030 適用済み環境向け）
+- **オーナー** — Dashboard で `031_voice_notifications_always_on.sql` を適用
+
+---
+
 ## 2026-06-28 — 設定画面の通知・プライバシー・公開設定を Supabase 保存
 
 - **変更** — `/settings`・`/studio/settings` の通知 / プライバシー / Studio 公開設定トグルを **Supabase `user_settings` に保存**（mock local state 廃止）

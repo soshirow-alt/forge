@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { CreatorFollowButton } from "@/components/creator-follow-button";
 import { CreatorCommunityJoinButton } from "@/components/creator-community-join-button";
 import { ContentReportButton } from "@/components/content-report-button";
@@ -10,7 +10,6 @@ import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { PlayerShell, GameThumbnail } from "@/components/player-shell";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
-import { useStudioPublicSettings } from "@/hooks/use-studio-public-settings";
 import type { CreatorProfileResolved } from "@/hooks/use-creator-profile";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
@@ -45,35 +44,13 @@ export function CreatorProfileRealView({
 }) {
   const hideV0Mock = shouldHideV0MockContent();
   useRequireAuth();
-  const { isEnabled } = useStudioPublicSettings(profile.userId);
   const { getFollowerCount, refreshFollowerCount } = useGames();
   const [activeTab, setActiveTab] = useState<CreatorTab>("overview");
-  const showActivity = isSelf || isEnabled("activity-log");
-  const showFollowers = isSelf || isEnabled("follower-list");
-  const visibleTabs = useMemo(
-    () =>
-      tabs.filter((tab) => {
-        if (tab.id === "devlog") {
-          return showActivity;
-        }
-        if (tab.id === "followers") {
-          return showFollowers;
-        }
-        return true;
-      }),
-    [showActivity, showFollowers],
-  );
   const followerCount = getFollowerCount(profile.routeId, 0);
 
   useEffect(() => {
     void refreshFollowerCount(profile.userId);
   }, [profile.userId, refreshFollowerCount]);
-
-  useEffect(() => {
-    if (!visibleTabs.some((tab) => tab.id === activeTab)) {
-      setActiveTab("overview");
-    }
-  }, [activeTab, visibleTabs]);
 
   const inDevGames = profile.games.filter((game) => game.status === "in-dev");
   const completedGames = profile.games.filter((game) => game.status === "completed");
@@ -146,7 +123,7 @@ export function CreatorProfileRealView({
 
           <div className="border-b border-zinc-800/80">
             <div className="flex gap-1 overflow-x-auto">
-              {visibleTabs.map((tab) => (
+              {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   type="button"
@@ -260,14 +237,10 @@ export function CreatorProfileRealView({
                 <p className="text-sm text-zinc-400">
                   フォロワー {followerCount.toLocaleString()}人
                 </p>
-                {showFollowers ? (
-                  <FeatureComingSoonPanel
-                    title="フォロワー"
-                    description="フォロワー一覧は準備中です。"
-                  />
-                ) : (
-                  <p className="text-sm text-zinc-500">フォロワー一覧は非公開です。</p>
-                )}
+                <FeatureComingSoonPanel
+                  title="フォロワー"
+                  description="フォロワー一覧は準備中です。"
+                />
               </div>
             ) : (
               <FeatureComingSoonPanel title="フォロワー" />
