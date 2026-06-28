@@ -16,6 +16,7 @@ import { useAuth } from "@/components/auth-provider";
 import { markNewRegistrationPending } from "@/lib/developer-onboarding-v0-store";
 import { AUTH_ALREADY_REGISTERED_MESSAGE, getAuthErrorMessage } from "@/lib/auth";
 import { resolvePostLoginPath } from "@/lib/login-return-url";
+import { isOAuthLoginEnabled } from "@/lib/oauth-config";
 
 export function RegisterPage({
   supabaseConfigured,
@@ -96,8 +97,13 @@ export function RegisterPage({
       markNewRegistrationPending();
       await signInWithOAuth(provider, "/auth/welcome");
     } catch (caught) {
-      const authError = caught as { message?: string };
-      setOauthError(getAuthErrorMessage(authError.message ?? "登録に失敗しました。"));
+      const authError = caught as { message?: string; code?: string };
+      setOauthError(
+        getAuthErrorMessage(
+          authError.message ?? "登録に失敗しました。",
+          authError.code,
+        ),
+      );
       setOauthLoading(null);
     }
   }
@@ -236,12 +242,18 @@ export function RegisterPage({
             {oauthError}
           </div>
         )}
-        <OAuthButtons
-          mode="register"
-          disabled={!supabaseConfigured}
-          loadingProvider={oauthLoading}
-          onOAuth={handleOAuth}
-        />
+        {isOAuthLoginEnabled() ? (
+          <OAuthButtons
+            mode="register"
+            disabled={!supabaseConfigured}
+            loadingProvider={oauthLoading}
+            onOAuth={handleOAuth}
+          />
+        ) : (
+          <p className="text-center text-xs leading-relaxed text-zinc-500">
+            Google / Discord / GitHub 登録は準備中です。メールアドレスで登録できます。
+          </p>
+        )}
 
         <p className="mt-8 text-center text-sm text-zinc-500">
           すでにアカウントをお持ちですか？{" "}

@@ -88,6 +88,24 @@ Forge MVP 初期（ユーザー数十〜数百）では **DB サイズ・MAU と
 
 未設定時: メール確認リンククリック後に `/login?error=auth_callback` へ落ちる。Preview で登録した場合は **Preview の callback URL も必須**。
 
+### OAuth（Google / Discord / GitHub）
+
+**コード側**: `/login`・`/register` の OAuth ボタンは `NEXT_PUBLIC_FORGE_OAUTH_ENABLED=true` のときのみ表示。
+
+**Supabase で有効化するまで env は設定しない**（未設定時は JSON エラー画面に飛ぶため）。
+
+1. **Authentication → Providers** — 使うプロバイダーを **Enable**
+   - **Google** — Client ID / Secret（Google Cloud Console）
+   - **Discord** — Client ID / Secret（Discord Developer Portal）
+   - **GitHub** — Client ID / Secret（GitHub OAuth App）
+2. 各プロバイダーの **Redirect URL**（Supabase が表示）を Google / Discord / GitHub 側にも登録
+3. 上記 **Redirect URLs**（Forge の `/auth/callback`）が Supabase URL Configuration に入っているか再確認
+4. **Vercel（Preview / 本番）** — `NEXT_PUBLIC_FORGE_OAUTH_ENABLED=true` を追加して再デプロイ
+
+未設定時の Supabase 応答例: `Unsupported provider: provider is not enabled`（400 JSON）。
+
+---
+
 ### 確認メールが届かないとき（オーナー）
 
 1. **Supabase Dashboard → Authentication → Logs** — `signup` / `user_confirmation_requested` が出ているか

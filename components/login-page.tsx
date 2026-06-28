@@ -14,6 +14,7 @@ import {
 import { useAuth } from "@/components/auth-provider";
 import { getAuthErrorMessage } from "@/lib/auth";
 import { resolvePostLoginPath } from "@/lib/login-return-url";
+import { isOAuthLoginEnabled } from "@/lib/oauth-config";
 
 export function LoginPage({
   supabaseConfigured,
@@ -70,8 +71,13 @@ export function LoginPage({
     try {
       await signInWithOAuth(provider, resolvePostLoginPath(returnParam));
     } catch (caught) {
-      const authError = caught as { message?: string };
-      setOauthError(getAuthErrorMessage(authError.message ?? "ログインに失敗しました。"));
+      const authError = caught as { message?: string; code?: string };
+      setOauthError(
+        getAuthErrorMessage(
+          authError.message ?? "ログインに失敗しました。",
+          authError.code,
+        ),
+      );
       setOauthLoading(null);
     }
   }
@@ -148,12 +154,18 @@ export function LoginPage({
             {oauthError}
           </div>
         )}
-        <OAuthButtons
-          mode="login"
-          disabled={!supabaseConfigured}
-          loadingProvider={oauthLoading}
-          onOAuth={handleOAuth}
-        />
+        {isOAuthLoginEnabled() ? (
+          <OAuthButtons
+            mode="login"
+            disabled={!supabaseConfigured}
+            loadingProvider={oauthLoading}
+            onOAuth={handleOAuth}
+          />
+        ) : (
+          <p className="text-center text-xs leading-relaxed text-zinc-500">
+            Google / Discord / GitHub ログインは準備中です。メールアドレスでログインできます。
+          </p>
+        )}
 
         <p className="mt-8 text-center text-sm text-zinc-500">
           アカウントをお持ちでない方は{" "}

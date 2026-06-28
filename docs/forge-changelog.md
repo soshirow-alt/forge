@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-06-28 — OAuth ボタンを Supabase 設定完了まで非表示
+
+- **原因** — Supabase で Google / Discord / GitHub が未有効のままボタンを押すと、Supabase 側 JSON エラー（`provider is not enabled`）に遷移していた
+- **変更** — `NEXT_PUBLIC_FORGE_OAUTH_ENABLED=true` のときのみ OAuth ボタン表示。未設定時は「準備中」文言 + メールログインのみ
+- **オーナー作業** — `docs/supabase-owner-operations.md` §OAuth を参照（Providers 有効化 → env → 再デプロイ）
+
+---
+
 ## 2026-06-27 — LP の v0 モック非表示（本番同等）
 
 - **変更** — 本番同等モードの `/` で **星灯の旅路** 等の mock 作品カードと **v0.4.0 お知らせ** を非表示。実公開作品があれば最大5件を Supabase から表示
