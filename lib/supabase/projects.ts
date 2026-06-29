@@ -9,6 +9,11 @@ import {
 } from "@/lib/project-overview";
 import type { ProjectRow } from "@/lib/supabase/schema";
 import type { ProjectEditFormData, SubmitFormData } from "@/lib/project-form";
+import {
+  genresToLegacyGenreColumn,
+  resolveGenresFromDbRow,
+  sanitizeProjectGenresForSave,
+} from "@/lib/project-genres";
 import { normalizeExternalUrlForDb } from "@/lib/game-links";
 
 function formatDateOnly(iso: string) {
@@ -16,11 +21,14 @@ function formatDateOnly(iso: string) {
 }
 
 export function projectRowToGame(row: ProjectRow): Game {
+  const genres = resolveGenresFromDbRow(row);
+
   return {
     id: row.id,
     title: row.title,
     creator: row.creator,
-    genre: row.genre,
+    genres,
+    genre: genresToLegacyGenreColumn(genres),
     description: row.description,
     overviewIntroduction: row.overview_introduction ?? null,
     overviewFeatures: sanitizeOverviewFeatures(row.overview_features),
@@ -49,17 +57,27 @@ export function projectRowToGame(row: ProjectRow): Game {
   };
 }
 
+function projectGenresForDb(genres: string[]) {
+  const sanitized = sanitizeProjectGenresForSave(genres);
+  return {
+    genres: sanitized,
+    genre: genresToLegacyGenreColumn(sanitized),
+  };
+}
+
 function submitFormToInsertRow(
   data: SubmitFormData,
   owner: { ownerId: string; ownerName: string },
 ) {
   const intro = data.introduction?.trim() ?? data.description?.trim() ?? "";
+  const { genres, genre } = projectGenresForDb(data.genres);
   return {
     owner_id: owner.ownerId,
     owner_name: owner.ownerName,
     title: data.title,
     creator: data.creator,
-    genre: data.genre,
+    genre,
+    genres,
     description: deriveProjectDescription(intro) || intro,
     overview_introduction: intro || null,
     phase: data.phase,
@@ -138,12 +156,14 @@ export async function updateProjectFromSubmitForm(
   data: SubmitFormData,
 ): Promise<Game> {
   const intro = data.introduction?.trim() ?? data.description?.trim() ?? "";
+  const { genres, genre } = projectGenresForDb(data.genres);
   const { data: row, error } = await supabase
     .from("projects")
     .update({
       title: data.title,
       creator: data.creator,
-      genre: data.genre,
+      genre,
+      genres,
       description: deriveProjectDescription(intro) || intro,
       overview_introduction: intro || null,
       phase: data.phase,
@@ -178,11 +198,13 @@ export async function updateProjectDetailsInDb(
   data: ProjectEditFormData,
   currentPhase: string,
 ): Promise<Game> {
+  const { genres, genre } = projectGenresForDb(data.genres);
   const { data: row, error } = await supabase
     .from("projects")
     .update({
       title: data.title,
-      genre: data.genre,
+      genre,
+      genres,
       status: data.lookingForTesters ? "テスター募集中" : currentPhase,
       looking_for_testers: data.lookingForTesters,
       tester_slots: data.lookingForTesters ? (data.testerSlots ?? null) : null,

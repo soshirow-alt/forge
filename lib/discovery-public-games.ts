@@ -1,5 +1,8 @@
-import type { HomeGameCard } from "@/lib/home-v0-mock-data";
+import { pickFeatureTagsFromGameTags } from "@/lib/forge-feature-tag-options";
+import { resolveProjectGenres } from "@/lib/project-genres";
+import { getPublicGameTags } from "@/lib/play-environment";
 import { getGameCreatedTimestamp } from "@/lib/game-timestamp";
+import type { HomeGameCard } from "@/lib/home-v0-mock-data";
 import type { Game } from "@/lib/mock-games";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { resolvePlayableVersion } from "@/lib/playable-version";
@@ -82,8 +85,9 @@ export function gameToSearchResult(
   witnessCount = 0,
   voiceCount = 0,
 ): SearchWorkResult {
-  const tags =
-    game.tags.length > 0 ? game.tags : [game.genre].filter(Boolean);
+  const genres = resolveProjectGenres(game);
+  const featureTags = pickFeatureTagsFromGameTags(getPublicGameTags(game.tags));
+  const tags = [...genres, ...featureTags];
 
   return {
     id: game.id,

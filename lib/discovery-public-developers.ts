@@ -1,8 +1,11 @@
 import type { DeveloperSearchResult } from "@/lib/developer-search-v0-mock-data";
 import type { DeveloperProfile } from "@/lib/developer-profiles";
 import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
+import { pickFeatureTagsFromGameTags } from "@/lib/forge-feature-tag-options";
 import { getGameCreatedTimestamp } from "@/lib/game-timestamp";
 import type { Game } from "@/lib/mock-games";
+import { resolveProjectGenres } from "@/lib/project-genres";
+import { getPublicGameTags } from "@/lib/play-environment";
 import { isGamePublic } from "@/lib/project-visibility";
 
 const DEFAULT_AVATAR = "/images/landing/game-1.png";
@@ -12,9 +15,14 @@ const GENRE_SET = new Set<string>(FORGE_GENRE_OPTIONS);
 function collectGenres(games: Game[]): string[] {
   const genres = new Set<string>();
   for (const game of games) {
-    const tags = game.tags.length > 0 ? game.tags : [game.genre];
-    for (const tag of tags) {
-      if (tag && GENRE_SET.has(tag)) {
+    for (const genre of resolveProjectGenres(game)) {
+      if (genre && GENRE_SET.has(genre)) {
+        genres.add(genre);
+      }
+    }
+    const featureTags = pickFeatureTagsFromGameTags(getPublicGameTags(game.tags));
+    for (const tag of featureTags) {
+      if (GENRE_SET.has(tag)) {
         genres.add(tag);
       }
     }

@@ -1,7 +1,7 @@
 export type SubmitFormData = {
   title: string;
   creator: string;
-  genre: string;
+  genres: string[];
   /** @deprecated use introduction — kept for callers that still pass description */
   description?: string;
   /** 作品紹介（正本）。短い description は保存時に先頭から自動生成 */
@@ -26,7 +26,7 @@ export type SubmitFormData = {
 
 export type ProjectEditFormData = {
   title: string;
-  genre: string;
+  genres: string[];
   tags: string[];
   lookingForTesters: boolean;
   testerSlots?: number;

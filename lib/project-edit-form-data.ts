@@ -1,5 +1,10 @@
 import type { ProjectEditFormData } from "@/lib/project-form";
 import { pickFeatureTagsFromGameTags } from "@/lib/forge-feature-tag-options";
+import {
+  pickForgeGenresFromList,
+  resolveProjectGenres,
+  sanitizeProjectGenresForSave,
+} from "@/lib/project-genres";
 import type { Game } from "@/lib/mock-games";
 import {
   getPublicGameTags,
@@ -13,7 +18,9 @@ export function buildProjectEditFormDataFromGame(game: Game): ProjectEditFormDat
 
   return {
     title: game.title,
-    genre: game.genre,
+    genres: sanitizeProjectGenresForSave(
+      pickForgeGenresFromList(resolveProjectGenres(game)),
+    ),
     lookingForTesters: game.lookingForTesters,
     testerSlots: game.testerSlots,
     tags: mergePlayEnvironmentIntoTags(featureTags, playEnvironment),

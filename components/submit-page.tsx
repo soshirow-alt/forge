@@ -30,8 +30,13 @@ import {
   type DeveloperPromptDraft,
 } from "@/lib/version-prompt-form";
 
-import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
+import { FORGE_GENRE_OPTIONS, type ForgeGenreOption } from "@/lib/forge-genre-options";
 import { FORGE_FEATURE_TAG_OPTIONS } from "@/lib/forge-feature-tag-options";
+import {
+  MAX_PROJECT_GENRES,
+  sanitizeProjectGenresForSave,
+  toggleForgeGenre,
+} from "@/lib/project-genres";
 import { DistributionTypeHelp } from "@/components/distribution-type-help";
 import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
 import { getDeveloperSocialLinkDefaults } from "@/lib/developer-external-link-defaults";
@@ -108,7 +113,7 @@ export function SubmitPage() {
   const [success, setSuccess] = useState(false);
   const [submittedGameId, setSubmittedGameId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
-  const [genre, setGenre] = useState("");
+  const [selectedGenres, setSelectedGenres] = useState<ForgeGenreOption[]>([]);
   const [introduction, setIntroduction] = useState("");
   const [phase, setPhase] = useState("");
   const [visibility, setVisibility] = useState<ProjectVisibility>("public");
@@ -278,6 +283,12 @@ export function SubmitPage() {
       }
     }
 
+    const genres = sanitizeProjectGenresForSave(selectedGenres);
+    if (genres.length === 0) {
+      setPromptSaveError("ジャンルを1つ以上選んでください。");
+      return;
+    }
+
     const playEnvironment = {
       ...EMPTY_PLAY_ENVIRONMENT_FORM,
       distribution,
@@ -286,7 +297,7 @@ export function SubmitPage() {
     const data = {
       title,
       creator: profile.publicName,
-      genre,
+      genres,
       introduction,
       phase,
       thumbnailUrl,
@@ -319,7 +330,7 @@ export function SubmitPage() {
       setSubmittedGameId(game.id);
       setSuccess(true);
       setTitle("");
-      setGenre("");
+      setSelectedGenres([]);
       setIntroduction("");
       setPhase("");
       setVisibility("public");
@@ -570,23 +581,25 @@ export function SubmitPage() {
 
           <fieldset>
             <legend className="text-sm font-medium text-zinc-400">ジャンル</legend>
+            <p className="mt-1 text-xs text-zinc-600">
+              複数選べます（最大 {MAX_PROJECT_GENRES} つ）。
+            </p>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {FORGE_GENRE_OPTIONS.map((option) => (
                 <label
                   key={option}
                   className={`flex cursor-pointer items-center justify-center rounded-lg border px-3 py-2 text-sm transition-colors ${
-                    genre === option
+                    selectedGenres.includes(option)
                       ? "border-orange-500/50 bg-orange-500/10 text-orange-300"
                       : "border-zinc-800 bg-zinc-950/50 text-zinc-300 hover:border-zinc-700"
                   }`}
                 >
                   <input
-                    type="radio"
-                    name="genre"
-                    required
-                    value={option}
-                    checked={genre === option}
-                    onChange={() => setGenre(option)}
+                    type="checkbox"
+                    checked={selectedGenres.includes(option)}
+                    onChange={() =>
+                      setSelectedGenres((current) => toggleForgeGenre(current, option))
+                    }
                     className="sr-only"
                   />
                   {option}
@@ -814,7 +827,7 @@ export function SubmitPage() {
                   <GeneratedThumbnailPoster
                     projectId="submit-preview"
                     title={title}
-                    genre={genre || "Indie"}
+                    genre={selectedGenres[0] || "Indie"}
                     phase={phase}
                   />
                 </div>

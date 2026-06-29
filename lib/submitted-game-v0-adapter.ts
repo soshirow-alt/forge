@@ -1,5 +1,8 @@
 import type { GameDetailV0 } from "@/lib/game-detail-v0-mock-data";
+import { pickFeatureTagsFromGameTags } from "@/lib/forge-feature-tag-options";
 import type { Game } from "@/lib/mock-games";
+import { getPublicGameTags } from "@/lib/play-environment";
+import { resolveProjectGenres } from "@/lib/project-genres";
 import {
   resolveDetailIntroduction,
   sanitizeOverviewFeatures,
@@ -15,8 +18,9 @@ export function isSupabaseProjectId(id: string): boolean {
 }
 
 export function gameToDetailV0(game: Game): GameDetailV0 {
-  const tags =
-    game.tags.length > 0 ? game.tags : [game.genre].filter(Boolean);
+  const genres = resolveProjectGenres(game);
+  const featureTags = pickFeatureTagsFromGameTags(getPublicGameTags(game.tags));
+  const tags = [...genres, ...featureTags];
 
   return {
     id: game.id,

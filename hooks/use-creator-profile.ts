@@ -6,6 +6,9 @@ import type { DevlogEntry } from "@/lib/devlogs";
 import { resolveDeveloperSocialLinksForDisplay } from "@/lib/developer-external-link-defaults";
 import { resolveOwnerUserIdFromRouteId } from "@/lib/developer-profiles";
 import type { Game } from "@/lib/mock-games";
+import { pickFeatureTagsFromGameTags } from "@/lib/forge-feature-tag-options";
+import { resolveProjectGenres } from "@/lib/project-genres";
+import { getPublicGameTags } from "@/lib/play-environment";
 import { isGamePublic } from "@/lib/project-visibility";
 
 export type CreatorProfileGameCard = {
@@ -47,7 +50,9 @@ export type CreatorProfileResolved = {
 };
 
 function gameToCreatorCard(game: Game, witnessCount: number): CreatorProfileGameCard {
-  const tags = game.tags.length > 0 ? game.tags : [game.genre].filter(Boolean);
+  const genres = resolveProjectGenres(game);
+  const featureTags = pickFeatureTagsFromGameTags(getPublicGameTags(game.tags));
+  const tags = [...genres, ...featureTags];
   return {
     id: game.id,
     title: game.title,

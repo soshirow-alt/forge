@@ -8,11 +8,18 @@ import {
 } from "@/components/game-detail-overview-v0-tab";
 import { ForgeSdkNote } from "@/components/forge-sdk-note";
 import { useGames } from "@/components/games-provider";
-import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
+import { FORGE_GENRE_OPTIONS, type ForgeGenreOption } from "@/lib/forge-genre-options";
 import {
   FORGE_FEATURE_TAG_OPTIONS,
   pickFeatureTagsFromGameTags,
 } from "@/lib/forge-feature-tag-options";
+import {
+  MAX_PROJECT_GENRES,
+  pickForgeGenresFromList,
+  resolveProjectGenres,
+  sanitizeProjectGenresForSave,
+  toggleForgeGenre,
+} from "@/lib/project-genres";
 import {
   getPublicGameTags,
   mergePlayEnvironmentIntoTags,
@@ -104,7 +111,7 @@ export function ProjectEditForm({
   const game = getSubmittedGameById(projectId);
 
   const [title, setTitle] = useState("");
-  const [genre, setGenre] = useState("");
+  const [selectedGenres, setSelectedGenres] = useState<ForgeGenreOption[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [visibility, setVisibility] = useState<ProjectVisibility>("public");
   const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>();
@@ -132,7 +139,7 @@ export function ProjectEditForm({
     }
 
     setTitle(game.title);
-    setGenre(game.genre);
+    setSelectedGenres(pickForgeGenresFromList(resolveProjectGenres(game)));
     setSelectedTags(pickFeatureTagsFromGameTags(getPublicGameTags(game.tags)));
     setVisibility(game.visibility ?? "public");
     setThumbnailUrl(game.thumbnailUrl);
@@ -153,6 +160,10 @@ export function ProjectEditForm({
     const dataUrl = await readImageAsDataUrl(file);
     setThumbnailUrl(dataUrl);
     setThumbnailPreview(dataUrl);
+  }
+
+  function toggleGenre(genre: ForgeGenreOption) {
+    setSelectedGenres((current) => toggleForgeGenre(current, genre));
   }
 
   function toggleTag(tag: string) {
@@ -180,12 +191,18 @@ export function ProjectEditForm({
         return;
       }
 
+      const genres = sanitizeProjectGenresForSave(selectedGenres);
+      if (genres.length === 0) {
+        setSaveError("ジャンルを1つ以上選んでください。");
+        return;
+      }
+
       const playEnvironment = parsePlayEnvironmentFromTags(game.tags ?? []);
 
       await updateProjectDetails(projectId, {
         ...buildProjectEditFormDataFromGame(game),
         title,
-        genre,
+        genres,
         lookingForTesters: game.lookingForTesters,
         testerSlots: game.testerSlots,
         tags: mergePlayEnvironmentIntoTags(selectedTags, playEnvironment),
@@ -261,27 +278,31 @@ export function ProjectEditForm({
 
       <CollapsibleFormSection
         title="ジャンル"
-        summary={genre || "未選択"}
+        summary={
+          selectedGenres.length > 0
+            ? selectedGenres.join("・")
+            : "未選択（1つ以上）"
+        }
       >
-        <fieldset>
+        <p className="text-xs text-zinc-600">
+          複数選べます（最大 {MAX_PROJECT_GENRES} つ）。
+        </p>
+        <fieldset className="mt-3">
           <legend className="sr-only">ジャンル</legend>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {FORGE_GENRE_OPTIONS.map((option) => (
               <label
                 key={option}
                 className={`flex cursor-pointer items-center justify-center rounded-lg border px-3 py-2 text-sm transition-colors ${
-                  genre === option
+                  selectedGenres.includes(option)
                     ? "border-orange-500/50 bg-orange-500/10 text-orange-300"
                     : "border-zinc-800 bg-zinc-950/50 text-zinc-300 hover:border-zinc-700"
                 }`}
               >
                 <input
-                  type="radio"
-                  name={`genre-${projectId}`}
-                  required
-                  value={option}
-                  checked={genre === option}
-                  onChange={() => setGenre(option)}
+                  type="checkbox"
+                  checked={selectedGenres.includes(option)}
+                  onChange={() => toggleGenre(option)}
                   className="sr-only"
                 />
                 {option}

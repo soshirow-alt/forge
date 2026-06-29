@@ -196,6 +196,7 @@ async function main() {
       title,
       creator: "witness-sandbox",
       genre: "sandbox",
+      genres: ["sandbox"],
       description: encodeSandboxUsersMeta(users),
       phase: "beta",
       status: "active",

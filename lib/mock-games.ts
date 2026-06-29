@@ -5,6 +5,7 @@ export type Game = {
   id: string;
   title: string;
   genre: string;
+  genres?: string[];
   status: string;
   creator: string;
   phase: string;

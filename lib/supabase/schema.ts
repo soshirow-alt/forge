@@ -5,6 +5,7 @@ export type ProjectRow = {
   title: string;
   creator: string;
   genre: string;
+  genres?: string[] | null;
   description: string;
   overview_introduction?: string | null;
   overview_features?: unknown;

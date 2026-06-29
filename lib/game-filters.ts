@@ -1,4 +1,5 @@
 import type { Game } from "@/lib/mock-games";
+import { resolveProjectGenres } from "@/lib/project-genres";
 import { getDefaultSupportCount } from "@/lib/demo-activity";
 import { getGameCreatedTimestamp } from "@/lib/game-timestamp";
 
@@ -40,10 +41,13 @@ export function matchesSearch(game: Game, query: string): boolean {
     return true;
   }
 
+  const genres = resolveProjectGenres(game);
+  const genreText = genres.join(" ").toLowerCase();
+
   return (
     game.title.toLowerCase().includes(trimmed) ||
     game.creator.toLowerCase().includes(trimmed) ||
-    game.genre.toLowerCase().includes(trimmed)
+    genreText.includes(trimmed)
   );
 }
 

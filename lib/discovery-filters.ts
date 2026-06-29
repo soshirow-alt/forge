@@ -1,4 +1,5 @@
 import type { Game } from "@/lib/mock-games";
+import { resolveProjectGenres } from "@/lib/project-genres";
 import {
   DEVELOPMENT_PHASE_OPTIONS,
   type DevelopmentPhase,
@@ -66,7 +67,7 @@ export {
 } from "@/lib/play-environment";
 
 function gameSearchText(game: Game): string {
-  return [game.genre, ...(game.tags ?? [])].join(" ").toLowerCase();
+  return [...resolveProjectGenres(game), ...(game.tags ?? [])].join(" ").toLowerCase();
 }
 
 export function matchesPlatformFilter(game: Game, platform: PlatformFilter): boolean {
@@ -75,9 +76,12 @@ export function matchesPlatformFilter(game: Game, platform: PlatformFilter): boo
 
 export function matchesGenreFilter(game: Game, genre: GenreFilter): boolean {
   const text = gameSearchText(game);
-  const genreField = game.genre.toLowerCase();
+  const genres = resolveProjectGenres(game);
 
-  return genreField.includes(genre.toLowerCase()) || text.includes(genre.toLowerCase());
+  return (
+    genres.some((item) => item.toLowerCase().includes(genre.toLowerCase())) ||
+    text.includes(genre.toLowerCase())
+  );
 }
 
 /** Legacy phase strings in mock/DB still match until data is fully migrated. */

@@ -38,7 +38,7 @@ function createDemoProjectForms(ownerName: string): SubmitFormData[] {
   return [
     {
       title: "星詠みの廃都",
-      genre: "アクションRPG",
+      genres: ["アクション", "RPG"],
       creator: ownerName,
       phase: "試作ver",
       introduction:
@@ -53,7 +53,7 @@ function createDemoProjectForms(ownerName: string): SubmitFormData[] {
     },
     {
       title: "ネオン・アーカイブ",
-      genre: "パズル",
+      genres: ["パズル", "ローグライク"],
       creator: ownerName,
       phase: "試作ver",
       introduction:
@@ -67,7 +67,7 @@ function createDemoProjectForms(ownerName: string): SubmitFormData[] {
     },
     {
       title: "群青の境界",
-      genre: "ホラー",
+      genres: ["ホラー"],
       creator: ownerName,
       phase: "プレイ可能ver",
       introduction:
