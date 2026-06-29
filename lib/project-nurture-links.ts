@@ -103,7 +103,7 @@ export const PROJECT_NURTURE_ACTIONS: ProjectNurtureAction[] = [
   },
 ];
 
-const STUDIO_ACTION_IDS = new Set(["edit-prompts", "edit-project"]);
+const STUDIO_ACTION_IDS = new Set(["edit-prompts", "edit-project", "write-devlog"]);
 
 export function getProjectNurtureActions(context: "studio" | "default") {
   if (context === "studio") {

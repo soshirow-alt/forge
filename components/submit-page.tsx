@@ -386,42 +386,42 @@ export function SubmitPage() {
                   )}
                   <li>
                     <Link
+                      href={
+                        submittedGameId
+                          ? projectStudioPath(submittedGameId)
+                          : "/studio/mypage"
+                      }
+                      className="flex w-full items-center justify-between rounded-lg border border-violet-500/40 bg-violet-500/10 px-5 py-3.5 text-sm font-semibold text-violet-100 transition-colors hover:border-violet-400/50 hover:bg-violet-500/15"
+                    >
+                      作品育成ページを開く
+                      <span aria-hidden="true">→</span>
+                    </Link>
+                    <p className="mt-1.5 text-xs text-zinc-600">
+                      届いた回答の確認・開発ログ・次の改善はここから進められます。
+                    </p>
+                  </li>
+                  <li>
+                    <Link
+                      href={`/projects/${submittedGameId}/devlog/new`}
+                      className="flex w-full items-center justify-between rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3.5 text-sm font-semibold text-zinc-100 transition-colors hover:border-violet-500/40 hover:text-violet-200"
+                    >
+                      開発ログを書く
+                      <span aria-hidden="true">→</span>
+                    </Link>
+                    <p className="mt-1.5 text-xs text-zinc-600">
+                      初回の更新告知や新ver公開に使えます（任意）。
+                    </p>
+                  </li>
+                  <li>
+                    <Link
                       href={`/games/${submittedGameId}`}
-                      className="flex w-full items-center justify-between rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3.5 text-sm font-semibold text-zinc-100 transition-colors hover:border-orange-500/50 hover:text-orange-400"
+                      className="flex w-full items-center justify-between rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3.5 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-600 hover:text-zinc-100"
                     >
                       プレイURLを確認する
                       <span aria-hidden="true">→</span>
                     </Link>
                     <p className="mt-1.5 text-xs text-zinc-600">
                       作品詳細からプレイボタンが正しく動くか確認できます。
-                    </p>
-                  </li>
-                  <li>
-                    <Link
-                      href={
-                        submittedGameId
-                          ? projectStudioPath(submittedGameId)
-                          : "/studio/mypage"
-                      }
-                      className="flex w-full items-center justify-between rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3.5 text-sm font-semibold text-zinc-100 transition-colors hover:border-orange-500/50 hover:text-orange-400"
-                    >
-                      作品育成ページを開く
-                      <span aria-hidden="true">→</span>
-                    </Link>
-                    <p className="mt-1.5 text-xs text-zinc-600">
-                      届いた回答の確認や、次の改善は育成ページから進められます。
-                    </p>
-                  </li>
-                  <li>
-                    <Link
-                      href={`/projects/${submittedGameId}/devlog/new`}
-                      className="flex w-full items-center justify-between rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3.5 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-600 hover:text-zinc-100"
-                    >
-                      開発ログを書く
-                      <span aria-hidden="true">→</span>
-                    </Link>
-                    <p className="mt-1.5 text-xs text-zinc-600">
-                      初回の更新告知や改善共有に使えます（任意）。
                     </p>
                   </li>
                 </ul>

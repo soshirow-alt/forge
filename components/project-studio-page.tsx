@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { notFound, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { Link2, MessageCircleQuestion, Pencil } from "lucide-react";
+import { FileText, Link2, MessageCircleQuestion, Pencil } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { StudioShell } from "@/components/studio-shell";
 import { GameThumbnail } from "@/components/game-thumbnail";
@@ -199,6 +199,13 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
         </header>
 
         <div className="mt-4 flex flex-wrap gap-3">
+          <Link
+            href={`/projects/${projectId}/devlog/new`}
+            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          >
+            <FileText className="size-4" aria-hidden="true" />
+            開発ログを書く
+          </Link>
           <button
             type="button"
             onClick={() => setEditModalOpen(true)}
