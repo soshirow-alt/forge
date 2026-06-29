@@ -1,9 +1,10 @@
 "use client";
 
-import { X } from "lucide-react";
-import { useState, type ChangeEvent } from "react";
+import { GripVertical, X } from "lucide-react";
+import { useState, type ChangeEvent, type DragEvent } from "react";
 import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
 import { readImageAsDataUrl } from "@/lib/read-image-as-data-url";
+import { reorderArrayItem } from "@/lib/reorder-array-item";
 import {
   MAX_PROJECT_THUMBNAILS,
   canAddProjectThumbnails,
@@ -29,7 +30,10 @@ export function ProjectThumbnailFields({
   posterFallback,
 }: ProjectThumbnailFieldsProps) {
   const [fileInputKey, setFileInputKey] = useState(0);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
   const remaining = MAX_PROJECT_THUMBNAILS - thumbnails.length;
+  const canReorder = thumbnails.length > 1;
 
   async function handleFilesChange(event: ChangeEvent<HTMLInputElement>) {
     const files = event.target.files;
@@ -46,6 +50,39 @@ export function ProjectThumbnailFields({
 
   function removeAt(index: number) {
     onChange(thumbnails.filter((_, itemIndex) => itemIndex !== index));
+  }
+
+  function handleDragStart(index: number) {
+    if (!canReorder) {
+      return;
+    }
+    setDragIndex(index);
+  }
+
+  function handleDragOver(event: DragEvent<HTMLDivElement>, index: number) {
+    if (!canReorder || dragIndex === null || dragIndex === index) {
+      return;
+    }
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    setDropIndex(index);
+  }
+
+  function handleDrop(event: DragEvent<HTMLDivElement>, index: number) {
+    event.preventDefault();
+    if (dragIndex === null || dragIndex === index) {
+      setDragIndex(null);
+      setDropIndex(null);
+      return;
+    }
+    onChange(reorderArrayItem(thumbnails, dragIndex, index));
+    setDragIndex(null);
+    setDropIndex(null);
+  }
+
+  function handleDragEnd() {
+    setDragIndex(null);
+    setDropIndex(null);
   }
 
   return (
@@ -71,6 +108,9 @@ export function ProjectThumbnailFields({
         {remaining <= 0 ? (
           <span className="text-amber-400/90">上限に達しました</span>
         ) : null}
+        {canReorder ? (
+          <span className="text-zinc-600">ドラッグで並べ替え</span>
+        ) : null}
         <span className="inline-flex items-center rounded-lg border border-zinc-800 bg-zinc-950/60 px-2 py-1">
           AIで仮サムネ生成（Coming Soon）
         </span>
@@ -81,13 +121,33 @@ export function ProjectThumbnailFields({
           {thumbnails.map((url, index) => (
             <div
               key={`${index}-${url.slice(0, 48)}`}
-              className="group relative overflow-hidden rounded-lg border border-zinc-700"
+              draggable={canReorder}
+              onDragStart={() => handleDragStart(index)}
+              onDragOver={(event) => handleDragOver(event, index)}
+              onDrop={(event) => handleDrop(event, index)}
+              onDragEnd={handleDragEnd}
+              className={`group relative overflow-hidden rounded-lg border transition-[opacity,box-shadow] ${
+                dragIndex === index ? "opacity-50" : ""
+              } ${
+                dropIndex === index && dragIndex !== null
+                  ? "border-violet-400 ring-2 ring-violet-400/40"
+                  : "border-zinc-700"
+              } ${canReorder ? "cursor-grab active:cursor-grabbing" : ""}`}
             >
               <img
                 src={url}
                 alt={`サムネイル ${index + 1}`}
+                draggable={false}
                 className="aspect-video w-full object-cover"
               />
+              {canReorder ? (
+                <span
+                  className="absolute left-1.5 top-1.5 rounded bg-zinc-950/80 p-0.5 text-zinc-400"
+                  aria-hidden="true"
+                >
+                  <GripVertical className="size-3.5" />
+                </span>
+              ) : null}
               <button
                 type="button"
                 onClick={() => removeAt(index)}

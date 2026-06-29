@@ -32,6 +32,7 @@ import {
 import { getPlayTypeLabel } from "@/lib/game-links";
 import { games as mockGames, type Game } from "@/lib/mock-games";
 import { isGamePublic } from "@/lib/project-visibility";
+import { studioSubmitModalHref } from "@/lib/project-nurture-links";
 import {
   pickHeroShowcaseGames,
   showFirstPublishBadge,
@@ -464,7 +465,7 @@ export function HomePage() {
                     ゲームを探す
                   </button>
                   <Link
-                    href="/submit"
+                    href={studioSubmitModalHref()}
                     className="w-full rounded-xl border border-zinc-700/80 bg-zinc-900/60 px-8 py-3.5 text-center text-sm font-semibold text-zinc-100 backdrop-blur-sm transition-all hover:border-orange-500/40 hover:bg-zinc-900 sm:w-auto"
                   >
                     作品を投稿する

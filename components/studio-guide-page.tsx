@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { StudioShell } from "@/components/studio-shell";
+import { studioSubmitModalHref } from "@/lib/project-nurture-links";
 import {
   devHintCards,
   devHintGuideSections,
@@ -87,7 +88,7 @@ export function StudioGuidePage() {
 
         <div className="mt-10 flex flex-wrap gap-3">
           <Link
-            href="/submit"
+            href={studioSubmitModalHref()}
             className="rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500"
           >
             最初の作品を投稿

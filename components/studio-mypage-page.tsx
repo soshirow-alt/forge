@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useMemo } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useGames } from "@/components/games-provider";
 import { StudioAchievementsTabPanel } from "@/components/studio-achievements-tab-panel";
@@ -9,8 +9,10 @@ import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { StudioFollowersTabPanel } from "@/components/studio-followers-tab-panel";
 import { StudioOwnedProjectsDirectoryPanel } from "@/components/studio-owned-projects-directory-panel";
 import { StudioProjectsTabPanel } from "@/components/studio-projects-page";
+import { ProjectSubmitModal } from "@/components/project-submit-modal";
 import { StudioMyPageTabs, StudioShell } from "@/components/studio-shell";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
+import { STUDIO_SUBMIT_SEARCH_PARAM } from "@/lib/project-nurture-links";
 
 export type StudioMypageTab = "projects" | "achievements" | "followers";
 
@@ -39,7 +41,13 @@ function tabHref(tab: StudioMypageTab, query: string): string {
  * @production-mode-audit high-risk — mock グリッドと実データ Directory を分岐。
  * 本番同等、または Preview で実作品がある場合は DirectoryPanel に統一（2026-06 構造是正）。
  */
-function StudioMypageProjectsPanel({ initialQuery = "" }: { initialQuery?: string }) {
+function StudioMypageProjectsPanel({
+  initialQuery = "",
+  onOpenSubmit,
+}: {
+  initialQuery?: string;
+  onOpenSubmit?: () => void;
+}) {
   const hideV0Mock = shouldHideV0MockContent();
   const { user, hydrated } = useAuth();
   const { getOwnedProjects, dataReady } = useGames();
@@ -55,10 +63,17 @@ function StudioMypageProjectsPanel({ initialQuery = "" }: { initialQuery?: strin
   }, [hideV0Mock, hydrated, dataReady, user, getOwnedProjects]);
 
   if (useRealDirectory) {
-    return <StudioOwnedProjectsDirectoryPanel initialQuery={initialQuery} />;
+    return (
+      <StudioOwnedProjectsDirectoryPanel
+        initialQuery={initialQuery}
+        onOpenSubmit={onOpenSubmit}
+      />
+    );
   }
 
-  return <StudioProjectsTabPanel initialQuery={initialQuery} />;
+  return (
+    <StudioProjectsTabPanel initialQuery={initialQuery} onOpenSubmit={onOpenSubmit} />
+  );
 }
 
 function StudioMypagePageContent() {
@@ -67,6 +82,15 @@ function StudioMypagePageContent() {
   const hideV0Mock = shouldHideV0MockContent();
   const activeTab = parseTab(searchParams.get("tab"));
   const initialQuery = searchParams.get("q") ?? "";
+  const [submitModalOpen, setSubmitModalOpen] = useState(
+    () => searchParams.get(STUDIO_SUBMIT_SEARCH_PARAM) === "1",
+  );
+
+  useEffect(() => {
+    if (searchParams.get(STUDIO_SUBMIT_SEARCH_PARAM) === "1") {
+      setSubmitModalOpen(true);
+    }
+  }, [searchParams]);
 
   const handleTabChange = useCallback(
     (tab: StudioMypageTab) => {
@@ -75,12 +99,22 @@ function StudioMypagePageContent() {
     [router, initialQuery],
   );
 
+  function closeSubmitModal() {
+    setSubmitModalOpen(false);
+    if (searchParams.get(STUDIO_SUBMIT_SEARCH_PARAM)) {
+      router.replace(tabHref(activeTab, initialQuery));
+    }
+  }
+
   return (
     <StudioShell activeNav="mypage" headerSearchDefault={initialQuery}>
       <div className="mx-auto max-w-7xl space-y-6">
         <StudioMyPageTabs activeTab={activeTab} onTabChange={handleTabChange} />
         {activeTab === "projects" ? (
-          <StudioMypageProjectsPanel initialQuery={initialQuery} />
+          <StudioMypageProjectsPanel
+            initialQuery={initialQuery}
+            onOpenSubmit={() => setSubmitModalOpen(true)}
+          />
         ) : activeTab === "achievements" ? (
           hideV0Mock ? (
             <FeatureComingSoonPanel
@@ -94,6 +128,7 @@ function StudioMypagePageContent() {
           <StudioFollowersTabPanel />
         )}
       </div>
+      <ProjectSubmitModal open={submitModalOpen} onClose={closeSubmitModal} />
     </StudioShell>
   );
 }

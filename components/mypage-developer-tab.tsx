@@ -13,7 +13,7 @@ import {
   sortProjectsForGrowthHub,
 } from "@/lib/project-growth-state";
 import { resolveVoiceSignalForGame } from "@/lib/project-voice-nurture";
-import { projectStudioPath } from "@/lib/project-nurture-links";
+import { projectStudioPath, studioSubmitModalHref } from "@/lib/project-nurture-links";
 
 function AnalyticsCard({
   label,
@@ -139,14 +139,14 @@ function MyPageDeveloperTabContent() {
         </div>
         {hasProjects ? (
           <Link
-            href="/submit"
+            href={studioSubmitModalHref()}
             className="inline-flex shrink-0 items-center justify-center rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200"
           >
             + 作品を投稿
           </Link>
         ) : (
           <Link
-            href="/submit"
+            href={studioSubmitModalHref()}
             className="inline-flex shrink-0 items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
           >
             作品を投稿する
@@ -158,7 +158,7 @@ function MyPageDeveloperTabContent() {
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-6 py-16 text-center">
           <p className="text-zinc-400">まだ投稿した作品がありません。</p>
           <Link
-            href="/submit"
+            href={studioSubmitModalHref()}
             className="mt-6 inline-block rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
           >
             最初の作品を投稿する

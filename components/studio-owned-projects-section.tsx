@@ -12,7 +12,7 @@ import {
   sortProjectsForGrowthHub,
 } from "@/lib/project-growth-state";
 import { resolveVoiceSignalForGame } from "@/lib/project-voice-nurture";
-import { projectStudioPath } from "@/lib/project-nurture-links";
+import { projectStudioPath, studioSubmitModalHref } from "@/lib/project-nurture-links";
 import { shouldBypassStudioLoginOnPreview } from "@/lib/preview-v0";
 
 /** Studio ホーム `/studio` 専用 — あなたの作品（最大3件 + すべて見る） */
@@ -84,7 +84,7 @@ export function StudioOwnedProjectsSection() {
           まだ投稿した作品がありません。投稿後、ここから各作品の Studio を開けます。
         </p>
         <Link
-          href="/submit"
+          href={studioSubmitModalHref()}
           className="mt-4 inline-flex rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
         >
           最初の作品を投稿

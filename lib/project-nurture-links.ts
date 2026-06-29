@@ -26,6 +26,18 @@ export function projectStudioPath(projectId: string): string {
   return `/projects/${projectId}/studio`;
 }
 
+export const STUDIO_SUBMIT_SEARCH_PARAM = "submit";
+
+/** Studio マイページで新規投稿モーダルを開く URL */
+export function studioSubmitModalHref(options?: { query?: string }): string {
+  const params = new URLSearchParams();
+  params.set(STUDIO_SUBMIT_SEARCH_PARAM, "1");
+  if (options?.query?.trim()) {
+    params.set("q", options.query.trim());
+  }
+  return `/studio/mypage?${params.toString()}`;
+}
+
 export function projectStudioDevlogHref(projectId: string): string {
   return `${projectStudioPath(projectId)}?devlog=1`;
 }
