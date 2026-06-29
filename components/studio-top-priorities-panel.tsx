@@ -1,12 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useGames } from "@/components/games-provider";
-import {
-  PROJECT_STUDIO_FEEDBACK_SECTION_ID,
-  projectStudioFeedbackHref,
-} from "@/lib/project-nurture-links";
 import type { ProjectGrowthSnapshot } from "@/lib/project-growth-state";
 import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
 import { buildTopPriorities, type TopPriority } from "@/lib/top-priorities";
@@ -113,8 +108,6 @@ export function StudioTopPrioritiesPanel({
     ],
   );
 
-  const feedbackHref = projectStudioFeedbackHref(projectId);
-
   return (
     <section
       className={`rounded-xl border border-orange-500/25 bg-zinc-900/40 p-4 sm:p-5 ring-1 ring-orange-500/10 ${
@@ -123,22 +116,12 @@ export function StudioTopPrioritiesPanel({
       aria-labelledby="studio-top-priorities-heading"
       data-forge-p0="top-priorities"
     >
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h2
-            id="studio-top-priorities-heading"
-            className="text-sm font-semibold text-zinc-200"
-          >
-            次に直すこと
-          </h2>
-        </div>
-        <Link
-          href={feedbackHref}
-          className="text-xs text-orange-400/90 transition-colors hover:text-orange-300"
-        >
-          FBを見る →
-        </Link>
-      </div>
+      <h2
+        id="studio-top-priorities-heading"
+        className="text-sm font-semibold text-zinc-200"
+      >
+        次に直すこと
+      </h2>
 
       {!loaded ? (
         <p className="mt-3 text-sm text-zinc-600">集計を読み込み中…</p>
@@ -151,15 +134,6 @@ export function StudioTopPrioritiesPanel({
         </div>
       ) : (
         <PriorityList priorities={priorities} />
-      )}
-
-      {priorities.some((item) => item.category === "action") && (
-        <p className="mt-3 text-xs text-zinc-600">
-          <Link href={`#${PROJECT_STUDIO_FEEDBACK_SECTION_ID}`} className="hover:text-zinc-400">
-            下の「プレイヤーのFBを読む」
-          </Link>
-          から内容を確認してください。
-        </p>
       )}
     </section>
   );

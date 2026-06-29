@@ -31,21 +31,21 @@ const primaryButtonClassName =
   "inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90";
 
 function StudioStatusStrip({
-  game,
   growth,
   display,
   quickFbCount,
   detailedFbCount,
   onPrimaryRead,
   onOpenModifyGameModal,
+  hideReadCta,
 }: {
-  game: Game;
   growth: ProjectGrowthSnapshot;
   display: ReturnType<typeof buildNurtureDisplayContext>;
   quickFbCount: number;
   detailedFbCount: number;
   onPrimaryRead: () => void;
   onOpenModifyGameModal: () => void;
+  hideReadCta: boolean;
 }) {
   const visualMode = getStudioVisualMode(growth);
 
@@ -56,7 +56,7 @@ function StudioStatusStrip({
     >
       <p className="text-sm leading-relaxed text-zinc-300">{display.phaseGuidance}</p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        {visualMode === "pre_cycle" ? null : display.primaryOpensReadPanel ? (
+        {visualMode === "pre_cycle" ? null : display.primaryOpensReadPanel && !hideReadCta ? (
           <button type="button" onClick={onPrimaryRead} className={primaryButtonClassName}>
             届いたFBを読む
           </button>
@@ -262,13 +262,13 @@ export function StudioImprovementLoop({
   return (
     <div className="space-y-6">
       <StudioStatusStrip
-        game={game}
         growth={growth}
         display={display}
         quickFbCount={quickFbCount}
         detailedFbCount={detailedFbCount}
         onPrimaryRead={handlePrimaryRead}
         onOpenModifyGameModal={handleOpenModifyGameModal}
+        hideReadCta={showWorkPanels}
       />
 
       {showWorkPanels ? (

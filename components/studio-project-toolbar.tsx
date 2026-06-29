@@ -1,20 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
-import { Copy, FileText, Link2, MessageSquare, Pencil } from "lucide-react";
+import { Copy, FileText, Link2, Pencil } from "lucide-react";
 import { InputHintBadge } from "@/components/input-hint-badge";
 import { ProjectShareLinkModal } from "@/components/project-share-link-modal";
-import {
-  PROJECT_STUDIO_FEEDBACK_SECTION_ID,
-  projectStudioPath,
-} from "@/lib/project-nurture-links";
-
 const nurturePrimaryButtonClassName =
   "inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-semibold text-zinc-950 shadow-sm shadow-orange-500/20 transition-opacity hover:opacity-90";
-
-const nurtureSecondaryButtonClassName =
-  "inline-flex items-center gap-2 rounded-lg border border-orange-500/35 bg-orange-500/10 px-4 py-2.5 text-sm font-medium text-orange-100 transition-colors hover:border-orange-500/50 hover:bg-orange-500/15";
 
 const nurtureShareButtonClassName =
   "inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-orange-500/25 bg-orange-500/5 px-3 py-2 text-sm font-medium text-orange-200/90 transition-colors hover:border-orange-500/40 hover:bg-orange-500/10 hover:text-orange-100";
@@ -71,13 +62,6 @@ export function StudioProjectToolbar({
                     <FileText className="size-4 shrink-0" aria-hidden="true" />
                     新verの開発ログ
                   </button>
-                  <Link
-                    href={`${projectStudioPath(projectId)}#${PROJECT_STUDIO_FEEDBACK_SECTION_ID}`}
-                    className={nurtureSecondaryButtonClassName}
-                  >
-                    <MessageSquare className="size-4 shrink-0 text-orange-300/90" aria-hidden="true" />
-                    届いたFBを読む
-                  </Link>
                 </div>
               </div>
               <div className="flex shrink-0 items-start gap-0.5">

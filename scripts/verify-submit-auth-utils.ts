@@ -1,0 +1,204 @@
+/**
+ * Pure-logic checks for submit fallback, thumbnails, reorder, login helpers.
+ * No Supabase / browser required.
+ *
+ * Usage: npm run verify:submit-auth-utils
+ */
+import type { PostgrestError } from "@supabase/supabase-js";
+import assert from "node:assert/strict";
+import { mapProjectSubmitErrorMessage } from "../lib/error-message";
+import { sanitizeLoginReturnUrl } from "../lib/login-return-url";
+import { projectThumbnailsForDb, sanitizeProjectThumbnailUrls } from "../lib/project-thumbnails";
+import { reorderArrayItem } from "../lib/reorder-array-item";
+import {
+  getMissingProjectColumn,
+  omitProjectColumn,
+  writeProjectRowWithSchemaFallback,
+} from "../lib/supabase/project-write-compat";
+import {
+  buildGameDetailTabHref,
+  parseGameDetailTab,
+} from "../lib/game-detail-tabs";
+
+function ok(condition: boolean, message: string) {
+  assert.equal(condition, true, message);
+}
+
+function testReorderArrayItem() {
+  ok(
+    JSON.stringify(reorderArrayItem(["a", "b", "c"], 1, 0)) ===
+      JSON.stringify(["b", "a", "c"]),
+    "reorder: move index 1 before 0",
+  );
+  ok(
+    JSON.stringify(reorderArrayItem(["a", "b", "c"], 0, 0)) ===
+      JSON.stringify(["a", "b", "c"]),
+    "reorder: same index is no-op",
+  );
+  ok(
+    JSON.stringify(reorderArrayItem(["a"], 0, 0)) === JSON.stringify(["a"]),
+    "reorder: single item",
+  );
+}
+
+function testThumbnailSanitize() {
+  const dupes = sanitizeProjectThumbnailUrls([" https://x/a ", "https://x/a", ""]);
+  ok(dupes.length === 1 && dupes[0] === "https://x/a", "thumbnail: trim and dedupe");
+
+  const db = projectThumbnailsForDb(["https://first", "https://second"]);
+  ok(db.thumbnail_url === "https://first", "thumbnail: first is primary");
+  ok(
+    JSON.stringify(db.thumbnail_urls) === JSON.stringify(["https://first", "https://second"]),
+    "thumbnail: array preserved",
+  );
+}
+
+function testSchemaFallbackDetection() {
+  const err = { message: 'column "thumbnail_urls" of relation "projects" does not exist' };
+  ok(getMissingProjectColumn(err) === "thumbnail_urls", "detect missing thumbnail_urls");
+
+  const cacheErr = {
+    message: "Could not find the 'genres' column of 'projects' in the schema cache",
+  };
+  ok(getMissingProjectColumn(cacheErr) === "genres", "detect schema cache genres");
+
+  ok(getMissingProjectColumn({ message: "permission denied" }) === null, "ignore non-schema errors");
+
+  const row = { title: "t", thumbnail_urls: ["a"], genres: ["RPG"] };
+  const stripped = omitProjectColumn(row, "thumbnail_urls");
+  ok(!("thumbnail_urls" in stripped) && stripped.title === "t", "omit column");
+}
+
+function mockPostgrestError(message: string, code = "42703"): PostgrestError {
+  return { message, code, details: "", hint: "", name: "PostgrestError" } as PostgrestError;
+}
+
+async function testSchemaFallbackWrite() {
+  const attempts: Record<string, unknown>[] = [];
+
+  const result = await writeProjectRowWithSchemaFallback(async (payload) => {
+    attempts.push({ ...payload });
+    if ("thumbnail_urls" in payload) {
+      return {
+        data: null,
+        error: mockPostgrestError('column "thumbnail_urls" does not exist'),
+      };
+    }
+    return { data: { id: "game-1", title: payload.title }, error: null };
+  }, { title: "Test", thumbnail_urls: ["a"], genre: "RPG" });
+
+  ok(result.id === "game-1", "fallback write succeeds after strip");
+  ok(attempts.length === 2, "fallback retries once");
+  ok(!("thumbnail_urls" in attempts[1]!), "second attempt drops thumbnail_urls");
+}
+
+async function testSchemaFallbackDoesNotMaskOtherErrors() {
+  let threw = false;
+  try {
+    await writeProjectRowWithSchemaFallback(async () => {
+      return {
+        data: null,
+        error: mockPostgrestError("duplicate key value violates unique constraint", "23505"),
+      };
+    }, { title: "Dup" });
+  } catch (error) {
+    threw = true;
+    ok(
+      resolveErrorMessage(error).includes("duplicate key"),
+      "non-schema errors propagate",
+    );
+  }
+  ok(threw, "non-schema errors throw");
+}
+
+function resolveErrorMessage(error: unknown): string {
+  if (typeof error === "object" && error !== null && "message" in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return "";
+}
+
+function testSubmitErrorMapping() {
+  const migration = mapProjectSubmitErrorMessage({
+    message: 'column "thumbnail_urls" does not exist',
+  });
+  ok(migration.includes("migration"), "migration hint for missing column");
+
+  const rls = mapProjectSubmitErrorMessage({ message: "row-level security", code: "42501" });
+  ok(rls.includes("ログイン"), "RLS maps to login hint");
+
+  const plain = mapProjectSubmitErrorMessage({ message: "custom failure" });
+  ok(plain === "custom failure", "passthrough unknown messages");
+}
+
+function testLoginReturnSanitize() {
+  ok(sanitizeLoginReturnUrl("/games/abc") === "/games/abc", "allow game detail return");
+  ok(sanitizeLoginReturnUrl("//evil.com") === null, "reject protocol-relative");
+  ok(sanitizeLoginReturnUrl("https://evil.com") === null, "reject absolute url");
+  ok(sanitizeLoginReturnUrl("/studio/mypage") === null, "reject non-game paths");
+}
+
+function testLoginPageSourceContract() {
+  const fs = require("node:fs") as typeof import("node:fs");
+  const path = require("node:path") as typeof import("node:path");
+  const loginPage = fs.readFileSync(
+    path.join(import.meta.dirname, "../components/login-page.tsx"),
+    "utf8",
+  );
+  const loginRoute = fs.readFileSync(
+    path.join(import.meta.dirname, "../app/login/page.tsx"),
+    "utf8",
+  );
+
+  ok(loginPage.includes("useActionState(loginAction"), "login uses server action");
+  ok(loginPage.includes('autoComplete="username email"'), "login email autocomplete");
+  ok(loginPage.includes('type="password"'), "login native password input");
+  ok(!loginPage.includes("useSearchParams"), "login avoids searchParams remount");
+  ok(loginRoute.includes("getUser()"), "logged-in redirect on server");
+}
+
+function testGameDetailTabs() {
+  ok(parseGameDetailTab(null) === "overview", "game detail tab: default overview");
+  ok(parseGameDetailTab("devlog") === "devlog", "game detail tab: devlog");
+  ok(parseGameDetailTab("versions") === "devlog", "game detail tab: versions alias");
+
+  const withExtra = new URLSearchParams("returning=1&changeCheck=seen");
+  ok(
+    buildGameDetailTabHref("abc-123", "devlog", withExtra) ===
+      "/games/abc-123?returning=1&changeCheck=seen&tab=devlog",
+    "game detail tab: preserve query on devlog",
+  );
+  ok(
+    buildGameDetailTabHref("abc-123", "overview", new URLSearchParams("tab=devlog")) ===
+      "/games/abc-123",
+    "game detail tab: strip tab for overview",
+  );
+}
+
+async function main() {
+  const tests: Array<[string, () => void | Promise<void>]> = [
+    ["reorderArrayItem", testReorderArrayItem],
+    ["thumbnail sanitize", testThumbnailSanitize],
+    ["schema fallback detection", testSchemaFallbackDetection],
+    ["schema fallback write", testSchemaFallbackWrite],
+    ["schema fallback error masking", testSchemaFallbackDoesNotMaskOtherErrors],
+    ["submit error mapping", testSubmitErrorMapping],
+    ["login return sanitize", testLoginReturnSanitize],
+    ["login page source contract", testLoginPageSourceContract],
+    ["game detail tabs", testGameDetailTabs],
+  ];
+
+  let passed = 0;
+  for (const [name, fn] of tests) {
+    await fn();
+    passed += 1;
+    console.log(`  ok  ${name}`);
+  }
+
+  console.log(`\nverify:submit-auth-utils — ${passed}/${passed} passed`);
+}
+
+main().catch((error) => {
+  console.error("\nverify:submit-auth-utils FAILED\n", error);
+  process.exit(1);
+});

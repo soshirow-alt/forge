@@ -10,7 +10,7 @@ import {
   type GameDetailRealVoiceHandle,
 } from "@/components/game-detail-real-voice-layer";
 import { GameDetailHeroGallery } from "@/components/game-detail-hero-gallery";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FeedbackFormV0Modal,
@@ -50,6 +50,11 @@ import { projectStudioPath } from "@/lib/project-nurture-links";
 import { shouldHideV0MockContent, isProductionReleaseMode } from "@/lib/production-mode";
 import { formatRelativeUpdateLabel } from "@/lib/discovery-public-games";
 import {
+  buildGameDetailTabHref,
+  parseGameDetailTab,
+  type GameDetailTab,
+} from "@/lib/game-detail-tabs";
+import {
   WATCH_BUTTON_OFF,
   WATCH_BUTTON_ON,
   WATCH_FIRST_HINT,
@@ -69,9 +74,7 @@ import {
   Users,
 } from "lucide-react";
 
-type DetailTab = "overview" | "devlog" | "voices";
-
-const tabs: { id: DetailTab; label: string }[] = [
+const tabs: { id: GameDetailTab; label: string }[] = [
   { id: "overview", label: "概要" },
   { id: "devlog", label: "開発ログ" },
   { id: "voices", label: "みんなのフィードバック" },
@@ -89,30 +92,38 @@ function StatItem({
   icon,
   label,
   value,
+  onClick,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
+  onClick?: () => void;
 }) {
-  return (
-    <div className="flex items-center gap-2 text-sm text-zinc-400">
+  const content = (
+    <>
       <span className="text-violet-400">{icon}</span>
       <span>
         <span className="text-zinc-500">{label}</span>{" "}
         <span className="font-medium text-zinc-200">{value}</span>
       </span>
-    </div>
+    </>
   );
-}
 
-function parseDetailTab(param: string | null): DetailTab {
-  if (param === "versions") {
-    return "devlog";
+  if (!onClick) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-zinc-400">{content}</div>
+    );
   }
-  if (param === "devlog" || param === "voices") {
-    return param;
-  }
-  return "overview";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-2 rounded-lg text-left text-sm text-zinc-400 transition-colors hover:text-violet-200"
+    >
+      {content}
+    </button>
+  );
 }
 
 function GameDetailV0PageContent({ id }: { id: string }) {
@@ -142,7 +153,9 @@ function GameDetailV0PageContent({ id }: { id: string }) {
 }
 
 function GameDetailV0PageBody({ id }: { id: string }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const activeTab = parseGameDetailTab(searchParams.get("tab"));
   const {
     getSubmittedGameById,
     getGameById,
@@ -219,8 +232,11 @@ function GameDetailV0PageBody({ id }: { id: string }) {
       ? projectStudioPath(ownerProjectId)
       : `/studio/projects/${encodeURIComponent(ownerProjectId)}`
     : null;
-  const [activeTab, setActiveTab] = useState<DetailTab>(() =>
-    parseDetailTab(searchParams.get("tab")),
+  const setDetailTab = useCallback(
+    (tab: GameDetailTab) => {
+      router.replace(buildGameDetailTabHref(id, tab, searchParams), { scroll: false });
+    },
+    [id, router, searchParams],
   );
   const [feedbackStep, setFeedbackStep] = useState<FeedbackFlowStep>("closed");
   const [voicesRefreshKey, setVoicesRefreshKey] = useState(0);
@@ -352,16 +368,16 @@ function GameDetailV0PageBody({ id }: { id: string }) {
       const defaultBody = `${firstVoiceQuestion.question}：ちょうどよい。世界観がとても良かったです。最終章が楽しみです。`;
       appendSessionVoice(game.id, createPreviewVoiceEntry(body?.trim() || defaultBody));
       setVoicesRefreshKey((value) => value + 1);
-      setActiveTab("voices");
+      setDetailTab("voices");
       setFeedbackStep("success");
     },
-    [game.id, isRealProject],
+    [game.id, isRealProject, setDetailTab],
   );
 
   const handleRealVoiceComplete = useCallback(() => {
     setVoicesRefreshKey((value) => value + 1);
-    setActiveTab("voices");
-  }, []);
+    setDetailTab("voices");
+  }, [setDetailTab]);
 
   useFeedbackFlowLock(isRealProject ? "closed" : feedbackStep);
 
@@ -473,6 +489,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                     icon={<FileText className="size-4" aria-hidden="true" />}
                     label="Devlog"
                     value={devlogUpdatedLabel}
+                    onClick={() => setDetailTab("devlog")}
                   />
                   <StatItem
                     icon={<Clock className="size-4" aria-hidden="true" />}
@@ -587,7 +604,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
               gameId={resolvedId}
               playableVersion={submittedGame?.playableVersion}
               onTryVersion={handlePlay}
-              onViewUpdate={() => setActiveTab("devlog")}
+              onViewUpdate={() => setDetailTab("devlog")}
             />
           ) : null}
 
@@ -595,7 +612,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
             <GameChangeCheckCard
               state={previewChangeCheckState}
               currentVersion={game.currentVersion}
-              onViewUpdate={() => setActiveTab("devlog")}
+              onViewUpdate={() => setDetailTab("devlog")}
               onTryVersion={handlePlay}
             />
           ) : null}
@@ -606,7 +623,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => setDetailTab(tab.id)}
                   className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                     activeTab === tab.id
                       ? "border-violet-500 text-violet-200"
@@ -633,7 +650,8 @@ function GameDetailV0PageBody({ id }: { id: string }) {
 
           {activeTab === "devlog" && (
             <GameDevlogV0Tab
-              gameId={resolveGameDetailId(id)}
+              gameId={resolvedId}
+              projectId={isRealProject ? resolvedId : undefined}
               onPlayLatest={handlePlay}
             />
           )}
@@ -645,7 +663,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
               />
             ) : (
               <GameVoicesV0Tab
-                gameId={resolveGameDetailId(id)}
+                gameId={resolvedId}
                 currentVersion={game.currentVersion}
                 refreshKey={voicesRefreshKey}
                 onSendVoice={handleFeedback}
