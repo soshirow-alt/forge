@@ -9,8 +9,13 @@ import {
   Search,
   User,
 } from "lucide-react";
-import { type FormEvent, type ReactNode, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
+import {
+  ForgeShellMobileDrawer,
+  ForgeShellMobileMenuButton,
+  ForgeShellModeSwitch,
+} from "@/components/forge-shell-mobile-nav";
 import { StudioDirectAccessGuard } from "@/components/studio-entry-gate-provider";
 import { PlatformFeedbackSidebarBox } from "@/components/platform-feedback-sidebar-box";
 import { studioProjectTabs } from "@/lib/studio-project-detail-v0-mock-data";
@@ -161,6 +166,45 @@ function navLinkClass(active: boolean) {
   }`;
 }
 
+function StudioSidebarNavBody() {
+  const pathname = usePathname();
+
+  return (
+    <>
+      <div className="space-y-1">
+        {primaryLinks.map((link) => (
+          <Link
+            key={link.id}
+            href={link.href}
+            className={navLinkClass(isPrimaryLinkActive(link.id, pathname))}
+          >
+            {link.label}
+          </Link>
+        ))}
+      </div>
+
+      <SidebarDivider />
+
+      <StudioMypageSidebarGroup />
+
+      <SidebarDivider />
+
+      <div className="space-y-1">
+        <Link href="/studio/settings" className={navLinkClass(pathname === "/studio/settings")}>
+          設定
+        </Link>
+        <Link href="/studio/guide" className={navLinkClass(pathname === "/studio/guide")}>
+          はじめてガイド
+        </Link>
+      </div>
+
+      <div className="mt-auto shrink-0 pt-4">
+        <PlatformFeedbackSidebarBox viewerMode="studio" />
+      </div>
+    </>
+  );
+}
+
 export function StudioShell({
   children,
   activeNav = "home",
@@ -175,6 +219,11 @@ export function StudioShell({
   const router = useRouter();
   const pathname = usePathname();
   const { user, hydrated, logout } = useAuth();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname]);
 
   function handleLogout() {
     void logout().then(() => {
@@ -197,41 +246,44 @@ export function StudioShell({
         </div>
 
         <nav className="flex min-h-0 flex-1 flex-col px-3 py-4">
-          <div className="space-y-1">
-            {primaryLinks.map((link) => (
-              <Link
-                key={link.id}
-                href={link.href}
-                className={navLinkClass(isPrimaryLinkActive(link.id, pathname))}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
-          <SidebarDivider />
-
-          <StudioMypageSidebarGroup />
-
-          <SidebarDivider />
-
-          <div className="space-y-1">
-            <Link href="/studio/settings" className={navLinkClass(pathname === "/studio/settings")}>
-              設定
-            </Link>
-            <Link href="/studio/guide" className={navLinkClass(pathname === "/studio/guide")}>
-              はじめてガイド
-            </Link>
-          </div>
-
-          <div className="mt-auto shrink-0 pt-4">
-            <PlatformFeedbackSidebarBox viewerMode="studio" />
-          </div>
+          <StudioSidebarNavBody />
         </nav>
       </aside>
 
+      <ForgeShellMobileDrawer
+        open={mobileNavOpen}
+        onClose={() => setMobileNavOpen(false)}
+        homeHref="/studio"
+      >
+        <div className="mb-4 space-y-2 border-b border-zinc-800/80 pb-4">
+          <p className="px-1 text-xs font-medium text-zinc-500">表示の切り替え</p>
+          <ForgeShellModeSwitch
+            mode="studio"
+            onNavigate={() => setMobileNavOpen(false)}
+          />
+        </div>
+        <div className="flex min-h-0 flex-1 flex-col">
+          <StudioSidebarNavBody />
+        </div>
+        {user ? (
+          <div className="mt-4 border-t border-zinc-800/80 pt-4 lg:hidden">
+            <button
+              type="button"
+              onClick={() => {
+                setMobileNavOpen(false);
+                handleLogout();
+              }}
+              className="w-full rounded-lg border border-zinc-800 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-100"
+            >
+              ログアウト
+            </button>
+          </div>
+        ) : null}
+      </ForgeShellMobileDrawer>
+
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-zinc-800/80 bg-[#0a0a0a]/95 px-4 py-3 backdrop-blur-md sm:px-6">
+        <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-zinc-800/80 bg-[#0a0a0a]/95 px-4 py-3 backdrop-blur-md sm:gap-3 sm:px-6">
+          <ForgeShellMobileMenuButton onClick={() => setMobileNavOpen(true)} />
           <HeaderSearchForm defaultValue={headerSearchDefault} />
           <Link
             href="/studio/notifications"
@@ -256,7 +308,7 @@ export function StudioShell({
             <button
               type="button"
               onClick={handleLogout}
-              className="shrink-0 rounded-xl border border-zinc-800 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-100"
+              className="hidden shrink-0 rounded-xl border border-zinc-800 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-100 lg:inline-flex"
             >
               ログアウト
             </button>
@@ -264,18 +316,13 @@ export function StudioShell({
             hydrated && (
               <Link
                 href="/login"
-                className="shrink-0 rounded-xl border border-zinc-800 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-100"
+                className="hidden shrink-0 rounded-xl border border-zinc-800 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-100 lg:inline-flex"
               >
                 ログイン
               </Link>
             )
           )}
-          <Link
-            href="/home"
-            className="hidden rounded-xl border border-violet-500/40 bg-violet-600/15 px-4 py-2 text-sm font-medium text-violet-200 transition-colors hover:border-violet-500/60 hover:bg-violet-600/25 sm:inline-flex"
-          >
-            Player
-          </Link>
+          <ForgeShellModeSwitch mode="studio" />
         </header>
 
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
