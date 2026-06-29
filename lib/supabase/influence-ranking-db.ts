@@ -125,7 +125,33 @@ export function buildInfluenceMonthFromEntries(
     label,
     period,
     top3: entries.slice(0, 3),
-    list: entries,
+    list: entries.slice(3),
+    lastMonthTop3,
+  };
+}
+
+export function buildInfluenceLastMonthTop3(
+  entries: InfluenceRankingEntry[],
+): InfluenceRankingMonth["lastMonthTop3"] {
+  return entries.slice(0, 3).map((entry) => ({
+    rank: entry.rank,
+    name: entry.name,
+    score: entry.score,
+  }));
+}
+
+export function buildEmptyInfluenceRankingMonth(
+  monthId: string,
+  label: string,
+  period: string,
+  lastMonthTop3: InfluenceRankingMonth["lastMonthTop3"] = [],
+): InfluenceRankingMonth {
+  return {
+    id: monthId,
+    label,
+    period,
+    top3: [],
+    list: [],
     lastMonthTop3,
   };
 }
