@@ -8,7 +8,11 @@ import {
 import { ForgeSdkNote } from "@/components/forge-sdk-note";
 import { PlayEnvironmentFormFields } from "@/components/play-environment-form-fields";
 import { useGames } from "@/components/games-provider";
-import { AVAILABLE_TAGS } from "@/lib/game-tags";
+import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
+import {
+  FORGE_FEATURE_TAG_OPTIONS,
+  pickFeatureTagsFromGameTags,
+} from "@/lib/forge-feature-tag-options";
 import {
   EMPTY_PLAY_ENVIRONMENT_FORM,
   getPublicGameTags,
@@ -113,7 +117,7 @@ export function ProjectEditForm({
     setGenre(game.genre);
     setLookingForTesters(game.lookingForTesters);
     setTesterSlots(game.testerSlots ?? 10);
-    setSelectedTags(getPublicGameTags(game.tags));
+    setSelectedTags(pickFeatureTagsFromGameTags(getPublicGameTags(game.tags)));
     setPlayEnvironment(parsePlayEnvironmentFromTags(game.tags ?? []));
     const loadedUrls = {
       steamUrl: game.steamUrl ?? "",
@@ -226,23 +230,58 @@ export function ProjectEditForm({
         />
       </div>
 
+      <fieldset>
+        <legend className="text-sm font-medium text-zinc-400">ジャンル</legend>
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {FORGE_GENRE_OPTIONS.map((option) => (
+            <label
+              key={option}
+              className={`flex cursor-pointer items-center justify-center rounded-lg border px-3 py-2 text-sm transition-colors ${
+                genre === option
+                  ? "border-orange-500/50 bg-orange-500/10 text-orange-300"
+                  : "border-zinc-800 bg-zinc-950/50 text-zinc-300 hover:border-zinc-700"
+              }`}
+            >
+              <input
+                type="radio"
+                name={`genre-${projectId}`}
+                required
+                value={option}
+                checked={genre === option}
+                onChange={() => setGenre(option)}
+                className="sr-only"
+              />
+              {option}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
       <div>
-        <label htmlFor={`edit-genre-${projectId}`} className="text-sm font-medium text-zinc-400">
-          ジャンル
-        </label>
-        <input
-          id={`edit-genre-${projectId}`}
-          type="text"
-          required
-          value={genre}
-          onChange={(event) => setGenre(event.target.value)}
-          className={inputClassName}
-          placeholder="例：アクションRPG"
-        />
+        <p className="text-sm font-medium text-zinc-400">特徴タグ</p>
+        <p className="mt-1 text-xs text-zinc-600">
+          ジャンル以外のプレイ特性や見た目。複数選べます（任意）。
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {FORGE_FEATURE_TAG_OPTIONS.map((tag) => (
+            <label
+              key={tag}
+              className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2"
+            >
+              <input
+                type="checkbox"
+                checked={selectedTags.includes(tag)}
+                onChange={() => toggleTag(tag)}
+                className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+              />
+              <span className="text-sm text-zinc-300">{tag}</span>
+            </label>
+          ))}
+        </div>
       </div>
 
       <div>
-        <h2 className="text-sm font-medium text-zinc-400">作品紹介・見どころ</h2>
+        <h2 className="text-sm font-medium text-zinc-400">作品紹介</h2>
         <p className="mt-1 text-xs leading-relaxed text-zinc-600">
           作品詳細の「概要」タブに表示されます。一覧用の短い説明は先頭から自動生成されます。
         </p>
@@ -312,26 +351,6 @@ export function ProjectEditForm({
         }
         inputClassName={inputClassName}
       />
-
-      <div>
-        <p className="text-sm font-medium text-zinc-400">タグ</p>
-        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {AVAILABLE_TAGS.filter((tag) => tag !== "テスター募集中").map((tag) => (
-            <label
-              key={tag}
-              className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2"
-            >
-              <input
-                type="checkbox"
-                checked={selectedTags.includes(tag)}
-                onChange={() => toggleTag(tag)}
-                className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
-              />
-              <span className="text-sm text-zinc-300">{tag}</span>
-            </label>
-          ))}
-        </div>
-      </div>
 
       <div>
         <label htmlFor={`edit-thumbnail-${projectId}`} className="text-sm font-medium text-zinc-400">

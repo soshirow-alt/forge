@@ -17,3 +17,8 @@ export const FORGE_FEATURE_TAG_OPTIONS = [
 ] as const;
 
 export type ForgeFeatureTagOption = (typeof FORGE_FEATURE_TAG_OPTIONS)[number];
+
+export function pickFeatureTagsFromGameTags(tags: string[]): ForgeFeatureTagOption[] {
+  const allowed = new Set<string>(FORGE_FEATURE_TAG_OPTIONS);
+  return tags.filter((tag): tag is ForgeFeatureTagOption => allowed.has(tag));
+}
