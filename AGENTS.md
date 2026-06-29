@@ -98,6 +98,14 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ChatGPT の役割は **コードレビューではなくプロダクトレビュー**。Cursor 向け指示は完成版 1 本。
 
+## Preview / main デプロイ（Cursor）
+
+正本: **`docs/forge-triage-operations.md` §8**
+
+- 実装は **`preview/landing-01`** → commit + push（Preview デプロイ）
+- オーナー Preview 確認後、`main` merge + push（本番）
+- **本番 push 後は必ず `preview/landing-01` を `main` に fast-forward して push** — 両ブランチ同一 commit を維持（Preview だけ / 本番だけが進んだ状態を残さない）
+
 ## Supabase migration（本番）
 
 - オーナー方針：**Supabase Dashboard SQL** で手動適用（CLI より可視性優先）

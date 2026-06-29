@@ -18,5 +18,6 @@ Read `docs/forge-principles.md` before product or UX changes. Business hypothesi
 - Before **§10.2 stop conditions only** (billing, new API contracts, prod public launch, PLAYER_VISIBLE=true, destructive DB, data migration,原典 change, roadmap priority change, irreversible ops): output **GPT判断用メモ** from `docs/gpt-run-decision-memo.md`. Task flow through design→impl→build→staging→main prep runs without per-step approval. **`docs/forge-triage-operations.md` §10**.
 - **preview/landing-01 v0 UI 作業**: 実装完了時は **毎回 commit + push まで** 行う（オーナー RUN 待ち不要）。prod deploy・main 反映は別途停止条件。
 - **本番リリース手順（2026-06 オーナー方針）**: `main` への merge / push（本番 deploy）の前に **必ず `preview/landing-01` で push → オーナー Preview 確認**。Preview 未確認の本番反映は **禁止**（オーナーが明示的に Preview 省略を指示した場合のみ例外）。
+- **Preview / main 同期（2026-06-28）**: 本番 push 後は **必ず** `preview/landing-01` を `main` に fast-forward + push。`origin/main` と `origin/preview/landing-01` を **同一 commit** に保つ。詳細 **`docs/forge-triage-operations.md` §8**。
 
 Full rules: `AGENTS.md`, `docs/forge-principles.md`, `docs/forge-triage-operations.md`.

@@ -172,6 +172,61 @@ handoff 更新トリガー: 大テーマ完了 / migration 完了 / ロードマ
 
 ---
 
+## 8. Preview / main デプロイ手順（2026-06-28〜）
+
+**正本**。オーナー方針: **Preview で試す → 本番 push** を繰り返す。**`preview/landing-01` と `main` のコード差分を常に避ける**。
+
+### 8.1 通常フロー（UI・仕様変更）
+
+```text
+preview/landing-01 で実装
+  → commit + push（Vercel Preview デプロイ）
+  → オーナー Preview 確認
+  → main に merge + push（本番 deploy）
+  → preview/landing-01 を main に追従（fast-forward）+ push
+```
+
+| 段階 | Cursor がやること |
+|------|-------------------|
+| **1. Preview 反映** | `preview/landing-01` に commit + `git push origin preview/landing-01` |
+| **2. 確認待ち** | オーナーが Preview URL で目視（明示 GO または「本番に push」指示） |
+| **3. 本番反映** | `main` に merge（通常は `preview/landing-01` → `main`）+ `git push origin main` |
+| **4. ブランチ同期** | **`preview/landing-01` を `main` と同一 commit に揃える**（下記 §8.2） |
+
+- Preview 未確認の **main 反映は禁止**（オーナーが Preview 省略を**明示**した場合のみ例外）
+- **main だけ push して Preview を古いままにしない**（本番だけ先に進んだ状態を残さない）
+
+### 8.2 本番 push 後の Preview 同期（必須）
+
+本番（`main`）へ merge / push した**直後**、必ず:
+
+```bash
+git checkout preview/landing-01
+git merge main    # 通常 fast-forward
+git push origin preview/landing-01
+```
+
+**完了条件**: `origin/main` と `origin/preview/landing-01` が **同一 commit**（例: `git rev-parse origin/main origin/preview/landing-01` が同じハッシュ）。
+
+- changelog の merge conflict 等で `main` だけ進んだ場合も、**同期まで完了してからタスク完了**とする
+- 返答では、本番 push 時に **Preview も同期済みか** を明示する
+
+### 8.3 やってはいけないこと
+
+| NG | 理由 |
+|----|------|
+| `main` のみ push して `preview/landing-01` を放置 | オーナーの Preview 確認環境と本番が乖離する |
+| Preview 未確認で main 反映 | §8.1・`.cursor/rules/forge.mdc` の例外以外禁止 |
+| 本番反映後に Preview 同期を省略 | 次の Preview 試行が本番と別物になる |
+
+### 8.4 関連
+
+- Cursor ルール: `.cursor/rules/forge.mdc`（Preview push / 本番 GO 条件）
+- エージェント要約: `AGENTS.md` §Preview / main
+- production mode 監査: `docs/production-mode-audit.md`
+
+---
+
 ## 10. Cursor 一気通貫運用（2026-06-16〜）
 
 オーナーが変更を明示するまで有効。**開発速度優先**。安全性は §10.2 の停止条件で維持。
@@ -215,6 +270,7 @@ handoff 更新トリガー: 大テーマ完了 / migration 完了 / ロードマ
 - staging 確認（Cursor / ブラウザ / スクリプトで可能な範囲）
 - テストデータ投入（staging・fixture）
 - **main 反映準備**（commit、push、handoff / changelog / summary 更新）
+- **Preview / main 同期** — 本番 push 後は §8.2 に従い `preview/landing-01` を `main` と同一 commit に揃える
 - handoff 更新（差分。全量 handoff は §7 トリガー時のみ）
 
 ### 10.4 旧 Run 停止リストとの関係
@@ -228,7 +284,7 @@ handoff 更新トリガー: 大テーマ完了 / migration 完了 / ロードマ
 
 | ファイル | 用途 |
 |---|---|
-| `docs/forge-triage-operations.md` | **本ファイル** — トリガー運用の正本 |
+| `docs/forge-triage-operations.md` | **本ファイル** — トリガー運用の正本（**§8 Preview/main 同期**） |
 | `docs/chatgpt-summary-format.md` | Cursor サマリ粒度標準 |
 | `docs/chatgpt-summary.md` | 差分サマリ（毎タスク） |
 | `docs/chatgpt-handoff.md` | 全量引継ぎ（新スレッド初回） |
@@ -240,5 +296,6 @@ handoff 更新トリガー: 大テーマ完了 / migration 完了 / ロードマ
 
 ## 12. 変更履歴
 
+- **2026-06-28** — §8 Preview / main デプロイ手順（Preview 確認 → 本番 → Preview 同期必須・ブランチ同一 commit）
 - **2026-06-16** — §10 Cursor 一気通貫運用（停止条件 9 項目・main 反映準備まで自動可・サマリオーナー欄ルール）
 - **2026-06-13** — 初版（CURSOR キーワード、Run 4 段階、サマリレビュー、UX レビュー、プロダクトレビュー優先順位、チャット移行）

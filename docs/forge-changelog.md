@@ -6,6 +6,13 @@
 
 ---
 
+## 2026-06-28 — Preview / main 同期手順を運用 doc に明文化
+
+- **追加** — `docs/forge-triage-operations.md` **§8**（Preview push → 確認 → 本番 → Preview fast-forward）。`AGENTS.md`・`.cursor/rules/forge.mdc` に要約
+- **方針** — `origin/main` と `origin/preview/landing-01` を常に同一 commit に保つ（本番だけ先に進めない）
+
+---
+
 ## 2026-06-28 — 配布形式 ? アイコンの視認性を微調整
 
 - **変更** — アクセス方法フォームの **?** をわずかに大きく・明るく（枠・文字・背景のコントラストのみ）。目立ちすぎない程度
