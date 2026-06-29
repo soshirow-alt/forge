@@ -27,6 +27,9 @@ export type SubmitFormData = {
 export type ProjectEditFormData = {
   title: string;
   genres: string[];
+  phase: string;
+  playUrl: string;
+  estimatedPlayTime?: string;
   tags: string[];
   lookingForTesters: boolean;
   testerSlots?: number;

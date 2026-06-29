@@ -55,7 +55,7 @@ import {
   followDeveloperInDb,
   unfollowDeveloperInDb,
 } from "@/lib/supabase/developer-follows-db";
-import { mergeGameWithExtras, saveGameExtra } from "@/lib/game-extra-storage";
+import { mergeGameWithExtras } from "@/lib/game-extra-storage";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
 import {
   fetchDeveloperProfiles,
@@ -536,19 +536,8 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       }
 
       const game = await insertProject(supabase, data, owner);
-      const enriched = mergeGameWithExtras({
-        ...game,
-        estimatedPlayTime: data.estimatedPlayTime,
-        focusNotes: data.focusNotes,
-      });
-      if (data.estimatedPlayTime || data.focusNotes) {
-        saveGameExtra(game.id, {
-          estimatedPlayTime: data.estimatedPlayTime,
-          focusNotes: data.focusNotes,
-        });
-      }
       setSubmittedGames((prev) => [
-        enriched,
+        game,
         ...prev.filter((item) => item.id !== game.id),
       ]);
       await mergeDeveloperProfileSocialLinks(supabase, owner.ownerId, {
@@ -559,7 +548,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       });
       const profiles = await fetchDeveloperProfiles(supabase);
       setDeveloperProfiles(profiles);
-      return enriched;
+      return game;
     },
     [],
   );
@@ -591,7 +580,6 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         supabase,
         id,
         data,
-        current?.phase ?? "",
       );
       setSubmittedGames((prev) =>
         prev.map((item) => (item.id === id ? game : item)),

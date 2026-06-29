@@ -1,5 +1,5 @@
 import type { ProjectEditFormData } from "@/lib/project-form";
-import { pickFeatureTagsFromGameTags } from "@/lib/forge-feature-tag-options";
+import { pickFeatureTagsFromGameTags, sanitizeFeatureTagsForSave } from "@/lib/forge-feature-tag-options";
 import {
   pickForgeGenresFromList,
   resolveProjectGenres,
@@ -11,16 +11,24 @@ import {
   mergePlayEnvironmentIntoTags,
   parsePlayEnvironmentFromTags,
 } from "@/lib/play-environment";
+import { loadGameExtras } from "@/lib/game-extra-storage";
 
 export function buildProjectEditFormDataFromGame(game: Game): ProjectEditFormData {
-  const featureTags = pickFeatureTagsFromGameTags(getPublicGameTags(game.tags ?? []));
+  const featureTags = sanitizeFeatureTagsForSave(
+    pickFeatureTagsFromGameTags(getPublicGameTags(game.tags ?? [])),
+  );
   const playEnvironment = parsePlayEnvironmentFromTags(game.tags ?? []);
+  const legacyExtra =
+    typeof window !== "undefined" ? loadGameExtras()[game.id] : undefined;
 
   return {
     title: game.title,
     genres: sanitizeProjectGenresForSave(
       pickForgeGenresFromList(resolveProjectGenres(game)),
     ),
+    phase: game.phase,
+    playUrl: game.playUrl,
+    estimatedPlayTime: game.estimatedPlayTime ?? legacyExtra?.estimatedPlayTime,
     lookingForTesters: game.lookingForTesters,
     testerSlots: game.testerSlots,
     tags: mergePlayEnvironmentIntoTags(featureTags, playEnvironment),

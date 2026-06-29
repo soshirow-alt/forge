@@ -11,6 +11,8 @@ import {
 type PlayEnvironmentFormFieldsProps = {
   value: PlayEnvironmentFormState;
   onChange: (value: PlayEnvironmentFormState) => void;
+  distributionRadioName?: string;
+  distributionRequired?: boolean;
 };
 
 const distributionOptions: {
@@ -28,6 +30,8 @@ const distributionOptions: {
 export function PlayEnvironmentFormFields({
   value,
   onChange,
+  distributionRadioName = "distribution",
+  distributionRequired = false,
 }: PlayEnvironmentFormFieldsProps) {
   return (
     <div className="space-y-5 rounded-xl border border-zinc-800 bg-zinc-950/40 p-5">
@@ -63,7 +67,10 @@ export function PlayEnvironmentFormFields({
 
       <div>
         <p className="text-sm font-medium text-zinc-400">
-          配布形式 <span className="text-zinc-600">（任意）</span>
+          配布形式{" "}
+          {!distributionRequired ? (
+            <span className="text-zinc-600">（任意）</span>
+          ) : null}
         </p>
         <p className="mt-1 text-xs text-zinc-600">
           テスターが遊ぶ方法の目安です。下の「関連リンク」とは別です
@@ -76,7 +83,8 @@ export function PlayEnvironmentFormFields({
             >
               <input
                 type="radio"
-                name="distribution"
+                name={distributionRadioName}
+                required={distributionRequired}
                 checked={value.distribution === option.value}
                 onChange={() =>
                   onChange({ ...value, distribution: option.value })

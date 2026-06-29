@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
-import { PlayEnvironmentFormFields } from "@/components/play-environment-form-fields";
+import { ProjectAccessEnvironmentFields } from "@/components/project-access-environment-fields";
 import { V0SimpleModal } from "@/components/v0-simple-modal";
 import { useAuth } from "@/components/auth-provider";
 import { useGames } from "@/components/games-provider";
@@ -10,7 +10,8 @@ import {
   getDeveloperSocialLinkDefaults,
   mergeSocialLinkDefaults,
 } from "@/lib/developer-external-link-defaults";
-import { pickFeatureTagsFromGameTags } from "@/lib/forge-feature-tag-options";
+import { pickFeatureTagsFromGameTags, sanitizeFeatureTagsForSave } from "@/lib/forge-feature-tag-options";
+import { validatePlayAccess } from "@/lib/project-access-form";
 import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
 import {
   emptyExternalLinkFormValues,
@@ -51,6 +52,7 @@ export function ProjectDistributionLinksModal({
   const [playEnvironment, setPlayEnvironment] = useState<PlayEnvironmentFormState>(
     EMPTY_PLAY_ENVIRONMENT_FORM,
   );
+  const [playUrl, setPlayUrl] = useState("");
   const [externalUrls, setExternalUrls] = useState<ExternalLinkFormValues>(
     emptyExternalLinkFormValues(),
   );
@@ -70,6 +72,7 @@ export function ProjectDistributionLinksModal({
     }
 
     setPlayEnvironment(parsePlayEnvironmentFromTags(game.tags ?? []));
+    setPlayUrl(game.playUrl ?? "");
     const loadedUrls = {
       steamUrl: game.steamUrl ?? "",
       itchUrl: game.itchUrl ?? "",
@@ -92,13 +95,22 @@ export function ProjectDistributionLinksModal({
       return;
     }
 
+    const accessError = validatePlayAccess(playEnvironment, playUrl);
+    if (accessError) {
+      setSaveError(accessError);
+      return;
+    }
+
     setSaveError(null);
     setIsSaving(true);
 
     try {
-      const featureTags = pickFeatureTagsFromGameTags(getPublicGameTags(game.tags ?? []));
+      const featureTags = sanitizeFeatureTagsForSave(
+        pickFeatureTagsFromGameTags(getPublicGameTags(game.tags ?? [])),
+      );
       await updateProjectDetails(projectId, {
         ...buildProjectEditFormDataFromGame(game),
+        playUrl: playUrl.trim(),
         tags: mergePlayEnvironmentIntoTags(featureTags, playEnvironment),
         steamUrl: externalUrls.steamUrl || undefined,
         itchUrl: externalUrls.itchUrl || undefined,
@@ -127,12 +139,20 @@ export function ProjectDistributionLinksModal({
   return (
     <V0SimpleModal
       title="配布・リンク"
-      subtitle="プレイ環境・配布形式と、作品ページに載せるリンク"
+      subtitle="テスターのアクセス方法・対応環境・作品ページのリンク"
       onClose={onClose}
       size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
-        <PlayEnvironmentFormFields value={playEnvironment} onChange={setPlayEnvironment} />
+        <ProjectAccessEnvironmentFields
+          playEnvironment={playEnvironment}
+          onPlayEnvironmentChange={setPlayEnvironment}
+          playUrl={playUrl}
+          onPlayUrlChange={setPlayUrl}
+          inputClassName={inputClassName}
+          playUrlInputId={`play-url-${projectId}`}
+          distributionRadioName={`distribution-${projectId}`}
+        />
         <ExternalLinksFormFields
           formKey={projectId}
           values={externalUrls}

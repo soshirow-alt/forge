@@ -7,11 +7,17 @@ import {
   type GameOverviewEditorHandle,
 } from "@/components/game-detail-overview-v0-tab";
 import { ForgeSdkNote } from "@/components/forge-sdk-note";
+import { ProjectEstimatedPlayTimeField } from "@/components/project-estimated-play-time-field";
+import { ProjectPhaseFormFields } from "@/components/project-phase-form-fields";
 import { useGames } from "@/components/games-provider";
 import { FORGE_GENRE_OPTIONS, type ForgeGenreOption } from "@/lib/forge-genre-options";
 import {
   FORGE_FEATURE_TAG_OPTIONS,
+  MAX_PROJECT_FEATURE_TAGS,
   pickFeatureTagsFromGameTags,
+  sanitizeFeatureTagsForSave,
+  toggleForgeFeatureTag,
+  type ForgeFeatureTagOption,
 } from "@/lib/forge-feature-tag-options";
 import {
   MAX_PROJECT_GENRES,
@@ -35,6 +41,12 @@ import {
   type ProjectVisibility,
 } from "@/lib/project-visibility";
 import { gameToDetailV0 } from "@/lib/submitted-game-v0-adapter";
+import {
+  PROJECT_INTRO_HINT,
+  PROJECT_VISIBILITY_SECTION_HINT,
+  THUMBNAIL_HINT,
+  THUMBNAIL_LABEL,
+} from "@/lib/project-form-copy";
 
 const inputClassName =
   "mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
@@ -112,7 +124,9 @@ export function ProjectEditForm({
 
   const [title, setTitle] = useState("");
   const [selectedGenres, setSelectedGenres] = useState<ForgeGenreOption[]>([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<ForgeFeatureTagOption[]>([]);
+  const [phase, setPhase] = useState("");
+  const [estimatedPlayTime, setEstimatedPlayTime] = useState("");
   const [visibility, setVisibility] = useState<ProjectVisibility>("public");
   const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>();
   const [thumbnailPreview, setThumbnailPreview] = useState<string | undefined>();
@@ -139,8 +153,16 @@ export function ProjectEditForm({
     }
 
     setTitle(game.title);
-    setSelectedGenres(pickForgeGenresFromList(resolveProjectGenres(game)));
-    setSelectedTags(pickFeatureTagsFromGameTags(getPublicGameTags(game.tags)));
+    setSelectedGenres(
+      sanitizeProjectGenresForSave(pickForgeGenresFromList(resolveProjectGenres(game))),
+    );
+    setSelectedTags(
+      sanitizeFeatureTagsForSave(
+        pickFeatureTagsFromGameTags(getPublicGameTags(game.tags)),
+      ),
+    );
+    setPhase(game.phase);
+    setEstimatedPlayTime(game.estimatedPlayTime ?? "");
     setVisibility(game.visibility ?? "public");
     setThumbnailUrl(game.thumbnailUrl);
     setThumbnailPreview(game.thumbnailUrl);
@@ -166,10 +188,8 @@ export function ProjectEditForm({
     setSelectedGenres((current) => toggleForgeGenre(current, genre));
   }
 
-  function toggleTag(tag: string) {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((item) => item !== tag) : [...prev, tag],
-    );
+  function toggleTag(tag: ForgeFeatureTagOption) {
+    setSelectedTags((prev) => toggleForgeFeatureTag(prev, tag));
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -196,6 +216,10 @@ export function ProjectEditForm({
         setSaveError("ジャンルを1つ以上選んでください。");
         return;
       }
+      if (!phase) {
+        setSaveError("開発フェーズを選んでください。");
+        return;
+      }
 
       const playEnvironment = parsePlayEnvironmentFromTags(game.tags ?? []);
 
@@ -203,9 +227,14 @@ export function ProjectEditForm({
         ...buildProjectEditFormDataFromGame(game),
         title,
         genres,
+        phase,
+        estimatedPlayTime: estimatedPlayTime || undefined,
         lookingForTesters: game.lookingForTesters,
         testerSlots: game.testerSlots,
-        tags: mergePlayEnvironmentIntoTags(selectedTags, playEnvironment),
+        tags: mergePlayEnvironmentIntoTags(
+          sanitizeFeatureTagsForSave(selectedTags),
+          playEnvironment,
+        ),
         thumbnailUrl,
         visibility,
       });
@@ -247,33 +276,34 @@ export function ProjectEditForm({
       </div>
 
       <div>
-        <h2 className="text-sm font-medium text-zinc-400">作品紹介</h2>
-        <p className="mt-1 text-xs leading-relaxed text-zinc-600">
-          作品詳細の「概要」タブに表示されます。一覧用の短い説明は先頭から自動生成されます。
-        </p>
-        {overviewValidationError ? (
-          <p
-            role="alert"
-            className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
-          >
-            {overviewValidationError}
-          </p>
-        ) : null}
-        {overviewDisplayGame ? (
-          <div className="mt-4">
-            <GameDetailOverviewV0Tab
-              ref={overviewEditorRef}
-              key={`${projectId}-${editIntroduction}`}
-              game={overviewDisplayGame}
-              editable
-              embeddedInForm
-              hideVersionQuestions
-              hideFeatures
-              compactIntroduction
-              editIntroduction={editIntroduction}
-            />
-          </div>
-        ) : null}
+        <p className="text-sm font-medium text-zinc-400">公開設定</p>
+        <p className="mt-1 text-xs text-zinc-600">{PROJECT_VISIBILITY_SECTION_HINT}</p>
+        <div className="mt-3 space-y-2">
+          {PROJECT_VISIBILITY_FORM_OPTIONS.map((option) => (
+            <label
+              key={option.value}
+              className={`flex cursor-pointer gap-3 rounded-lg border px-3 py-3 transition-colors ${
+                visibility === option.value
+                  ? "border-orange-500/40 bg-orange-500/5"
+                  : "border-zinc-800 bg-zinc-950/50"
+              }`}
+            >
+              <input
+                type="radio"
+                name={`visibility-${projectId}`}
+                checked={visibility === option.value}
+                onChange={() => setVisibility(option.value)}
+                className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+              />
+              <span>
+                <span className="block text-sm font-medium text-zinc-300">
+                  {option.label}
+                </span>
+                <span className="mt-0.5 block text-xs text-zinc-600">{option.hint}</span>
+              </span>
+            </label>
+          ))}
+        </div>
       </div>
 
       <CollapsibleFormSection
@@ -319,7 +349,8 @@ export function ProjectEditForm({
         }
       >
         <p className="text-xs text-zinc-600">
-          ジャンル以外のプレイ特性や見た目。複数選べます（任意）。
+          ジャンル以外のプレイ特性や見た目。複数選べます（任意・最大{" "}
+          {MAX_PROJECT_FEATURE_TAGS} つ）。
         </p>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {FORGE_FEATURE_TAG_OPTIONS.map((tag) => (
@@ -340,39 +371,51 @@ export function ProjectEditForm({
       </CollapsibleFormSection>
 
       <div>
-        <p className="text-sm font-medium text-zinc-400">公開設定</p>
-        <div className="mt-3 space-y-2">
-          {PROJECT_VISIBILITY_FORM_OPTIONS.map((option) => (
-            <label
-              key={option.value}
-              className={`flex cursor-pointer gap-3 rounded-lg border px-3 py-3 transition-colors ${
-                visibility === option.value
-                  ? "border-orange-500/40 bg-orange-500/5"
-                  : "border-zinc-800 bg-zinc-950/50"
-              }`}
-            >
-              <input
-                type="radio"
-                name={`visibility-${projectId}`}
-                checked={visibility === option.value}
-                onChange={() => setVisibility(option.value)}
-                className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
-              />
-              <span>
-                <span className="block text-sm font-medium text-zinc-300">
-                  {option.label}
-                </span>
-                <span className="mt-0.5 block text-xs text-zinc-600">{option.hint}</span>
-              </span>
-            </label>
-          ))}
-        </div>
+        <h2 className="text-sm font-medium text-zinc-400">作品紹介</h2>
+        <p className="mt-1 text-xs leading-relaxed text-zinc-600">{PROJECT_INTRO_HINT}</p>
+        {overviewValidationError ? (
+          <p
+            role="alert"
+            className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+          >
+            {overviewValidationError}
+          </p>
+        ) : null}
+        {overviewDisplayGame ? (
+          <div className="mt-4">
+            <GameDetailOverviewV0Tab
+              ref={overviewEditorRef}
+              key={`${projectId}-${editIntroduction}`}
+              game={overviewDisplayGame}
+              editable
+              embeddedInForm
+              hideVersionQuestions
+              hideFeatures
+              compactIntroduction
+              editIntroduction={editIntroduction}
+            />
+          </div>
+        ) : null}
       </div>
+
+      <ProjectPhaseFormFields
+        value={phase}
+        onChange={setPhase}
+        radioName={`phase-${projectId}`}
+      />
+
+      <ProjectEstimatedPlayTimeField
+        value={estimatedPlayTime}
+        onChange={setEstimatedPlayTime}
+        inputClassName={inputClassName}
+        inputId={`estimated-play-time-${projectId}`}
+      />
 
       <div>
         <label htmlFor={`edit-thumbnail-${projectId}`} className="text-sm font-medium text-zinc-400">
-          サムネイル画像
+          {THUMBNAIL_LABEL}
         </label>
+        <p className="mt-1 text-sm text-zinc-500">{THUMBNAIL_HINT}</p>
         <input
           id={`edit-thumbnail-${projectId}`}
           key={fileInputKey}

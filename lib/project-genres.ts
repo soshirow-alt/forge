@@ -3,7 +3,7 @@ import {
   type ForgeGenreOption,
 } from "@/lib/forge-genre-options";
 
-export const MAX_PROJECT_GENRES = 5;
+export const MAX_PROJECT_GENRES = 3;
 
 const GENRE_SET = new Set<string>(FORGE_GENRE_OPTIONS);
 

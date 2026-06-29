@@ -54,6 +54,7 @@ export function projectRowToGame(row: ProjectRow): Game {
     visibility: row.visibility,
     playableVersion: row.playable_version ?? DEFAULT_PLAYABLE_VERSION,
     releaseStatus: row.release_status ?? "in_development",
+    estimatedPlayTime: row.estimated_play_time ?? undefined,
   };
 }
 
@@ -97,6 +98,7 @@ function submitFormToInsertRow(
     youtube_url: normalizeExternalUrlForDb(data.youtubeUrl),
     visibility: data.visibility ?? ("public" as const),
     playable_version: DEFAULT_PLAYABLE_VERSION,
+    estimated_play_time: data.estimatedPlayTime ?? null,
   };
 }
 
@@ -173,6 +175,7 @@ export async function updateProjectFromSubmitForm(
       thumbnail_url: data.thumbnailUrl ?? null,
       tags: mergeTagsWithRecruitment(data.tags, data.lookingForTesters),
       play_url: data.playUrl,
+      estimated_play_time: data.estimatedPlayTime ?? null,
     steam_url: normalizeExternalUrlForDb(data.steamUrl),
     itch_url: normalizeExternalUrlForDb(data.itchUrl),
     github_url: normalizeExternalUrlForDb(data.githubUrl),
@@ -196,7 +199,6 @@ export async function updateProjectDetailsInDb(
   supabase: SupabaseClient,
   id: string,
   data: ProjectEditFormData,
-  currentPhase: string,
 ): Promise<Game> {
   const { genres, genre } = projectGenresForDb(data.genres);
   const { data: row, error } = await supabase
@@ -205,11 +207,14 @@ export async function updateProjectDetailsInDb(
       title: data.title,
       genre,
       genres,
-      status: data.lookingForTesters ? "テスター募集中" : currentPhase,
+      phase: data.phase,
+      status: data.lookingForTesters ? "テスター募集中" : data.phase,
       looking_for_testers: data.lookingForTesters,
       tester_slots: data.lookingForTesters ? (data.testerSlots ?? null) : null,
       thumbnail_url: data.thumbnailUrl ?? null,
       tags: mergeTagsWithRecruitment(data.tags, data.lookingForTesters),
+      play_url: data.playUrl,
+      estimated_play_time: data.estimatedPlayTime ?? null,
     steam_url: normalizeExternalUrlForDb(data.steamUrl),
     itch_url: normalizeExternalUrlForDb(data.itchUrl),
     github_url: normalizeExternalUrlForDb(data.githubUrl),

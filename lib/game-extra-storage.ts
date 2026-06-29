@@ -42,7 +42,7 @@ export function mergeGameWithExtras(game: Game): Game {
 
   return {
     ...game,
-    estimatedPlayTime: extra.estimatedPlayTime ?? game.estimatedPlayTime,
+    estimatedPlayTime: game.estimatedPlayTime ?? extra.estimatedPlayTime,
     focusNotes: extra.focusNotes ?? game.focusNotes,
   };
 }

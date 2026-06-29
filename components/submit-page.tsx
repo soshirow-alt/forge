@@ -13,15 +13,20 @@ import { useGames } from "@/components/games-provider";
 import {
   EMPTY_PLAY_ENVIRONMENT_FORM,
   mergePlayEnvironmentIntoTags,
-  type DistributionType,
+  type PlayEnvironmentFormState,
 } from "@/lib/play-environment";
 import { projectStudioPath } from "@/lib/project-nurture-links";
+import { validatePlayAccess } from "@/lib/project-access-form";
+import {
+  PROJECT_INTRO_HINT,
+  PROJECT_VISIBILITY_SECTION_HINT,
+  THUMBNAIL_HINT,
+  THUMBNAIL_LABEL,
+} from "@/lib/project-form-copy";
 import {
   PROJECT_VISIBILITY_FORM_OPTIONS,
   type ProjectVisibility,
 } from "@/lib/project-visibility";
-import { DEVELOPMENT_PHASE_OPTIONS } from "@/lib/development-phases";
-import { PLAY_TIME_OPTIONS } from "@/lib/play-time-options";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import {
   createEmptyPromptDraft,
@@ -31,59 +36,24 @@ import {
 } from "@/lib/version-prompt-form";
 
 import { FORGE_GENRE_OPTIONS, type ForgeGenreOption } from "@/lib/forge-genre-options";
-import { FORGE_FEATURE_TAG_OPTIONS } from "@/lib/forge-feature-tag-options";
+import {
+  FORGE_FEATURE_TAG_OPTIONS,
+  MAX_PROJECT_FEATURE_TAGS,
+  sanitizeFeatureTagsForSave,
+  toggleForgeFeatureTag,
+  type ForgeFeatureTagOption,
+} from "@/lib/forge-feature-tag-options";
 import {
   MAX_PROJECT_GENRES,
   sanitizeProjectGenresForSave,
   toggleForgeGenre,
 } from "@/lib/project-genres";
-import { DistributionTypeHelp } from "@/components/distribution-type-help";
+import { ProjectAccessEnvironmentFields } from "@/components/project-access-environment-fields";
+import { ProjectEstimatedPlayTimeField } from "@/components/project-estimated-play-time-field";
+import { ProjectPhaseFormFields } from "@/components/project-phase-form-fields";
 import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
 import { getDeveloperSocialLinkDefaults } from "@/lib/developer-external-link-defaults";
 import type { ProjectExternalLinksInput } from "@/lib/game-links";
-import {
-  DISTRIBUTION_TYPE_HINTS,
-  DISTRIBUTION_TYPE_LABELS,
-} from "@/lib/play-environment";
-
-const phaseOptions = DEVELOPMENT_PHASE_OPTIONS;
-
-const distributionOptions: {
-  value: Exclude<DistributionType, "">;
-  label: string;
-  hint: string;
-}[] = (
-  ["browser", "download", "external"] as const
-).map((value) => ({
-  value,
-  label: DISTRIBUTION_TYPE_LABELS[value],
-  hint: DISTRIBUTION_TYPE_HINTS[value],
-}));
-
-function getAccessUrlField(distribution: DistributionType) {
-  switch (distribution) {
-    case "browser":
-      return {
-        label: "プレイURL",
-        placeholder: "https://example.com/play",
-        hint: "テスターがブラウザで開いて遊べるURL",
-      };
-    case "download":
-      return {
-        label: "ダウンロードURL",
-        placeholder: "https://example.com/game.zip",
-        hint: "zip など配布ファイルのURL",
-      };
-    case "external":
-      return {
-        label: "ゲームページURL",
-        placeholder: "https://store.steampowered.com/...",
-        hint: "Steam・itch.io 等、テスターがゲームにアクセスするURL",
-      };
-    default:
-      return null;
-  }
-}
 
 const inputClassName =
   "mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
@@ -119,14 +89,16 @@ export function SubmitPage() {
   const [visibility, setVisibility] = useState<ProjectVisibility>("public");
   const [estimatedPlayTime, setEstimatedPlayTime] = useState("");
   const [playUrl, setPlayUrl] = useState("");
-  const [distribution, setDistribution] = useState<DistributionType>("");
+  const [playEnvironment, setPlayEnvironment] = useState<PlayEnvironmentFormState>(
+    EMPTY_PLAY_ENVIRONMENT_FORM,
+  );
   const [testerNotesMode, setTesterNotesMode] = useState<"none" | "custom">(
     "none",
   );
   const [promptDrafts, setPromptDrafts] = useState<DeveloperPromptDraft[]>([
     createEmptyPromptDraft(),
   ]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<ForgeFeatureTagOption[]>([]);
   const [steamUrl, setSteamUrl] = useState("");
   const [itchUrl, setItchUrl] = useState("");
   const [discordUrl, setDiscordUrl] = useState("");
@@ -211,10 +183,8 @@ export function SubmitPage() {
     setThumbnailPreview(dataUrl);
   }
 
-  function toggleTag(tag: string) {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((item) => item !== tag) : [...prev, tag],
-    );
+  function toggleTag(tag: ForgeFeatureTagOption) {
+    setSelectedTags((prev) => toggleForgeFeatureTag(prev, tag));
   }
 
   function setExternalLinkField(field: keyof ProjectExternalLinksInput, value: string) {
@@ -289,10 +259,11 @@ export function SubmitPage() {
       return;
     }
 
-    const playEnvironment = {
-      ...EMPTY_PLAY_ENVIRONMENT_FORM,
-      distribution,
-    };
+    const accessError = validatePlayAccess(playEnvironment, playUrl);
+    if (accessError) {
+      setPromptSaveError(accessError);
+      return;
+    }
 
     const data = {
       title,
@@ -302,8 +273,11 @@ export function SubmitPage() {
       phase,
       thumbnailUrl,
       lookingForTesters: false,
-      tags: mergePlayEnvironmentIntoTags(selectedTags, playEnvironment),
-      playUrl,
+      tags: mergePlayEnvironmentIntoTags(
+        sanitizeFeatureTagsForSave(selectedTags),
+        playEnvironment,
+      ),
+      playUrl: playUrl.trim(),
       estimatedPlayTime: estimatedPlayTime || undefined,
       steamUrl: steamUrl || undefined,
       itchUrl: itchUrl || undefined,
@@ -336,7 +310,7 @@ export function SubmitPage() {
       setVisibility("public");
       setEstimatedPlayTime("");
       setPlayUrl("");
-      setDistribution("");
+      setPlayEnvironment(EMPTY_PLAY_ENVIRONMENT_FORM);
       setTesterNotesMode("none");
       setPromptDrafts([createEmptyPromptDraft()]);
       setSelectedTags([]);
@@ -546,9 +520,7 @@ export function SubmitPage() {
 
           <div>
             <p className="text-sm font-medium text-zinc-400">公開設定</p>
-            <p className="mt-1 text-xs text-zinc-600">
-              公開または非公開を選べます。正式版は後から Studio で宣言します。
-            </p>
+            <p className="mt-1 text-xs text-zinc-600">{PROJECT_VISIBILITY_SECTION_HINT}</p>
             <div className="mt-3 space-y-2">
               {PROJECT_VISIBILITY_FORM_OPTIONS.map((option) => (
                 <label
@@ -611,7 +583,8 @@ export function SubmitPage() {
           <div>
             <p className="text-sm font-medium text-zinc-400">特徴タグ</p>
             <p className="mt-1 text-xs text-zinc-600">
-              ジャンル以外のプレイ特性や見た目。複数選べます。
+              ジャンル以外のプレイ特性や見た目。複数選べます（最大{" "}
+              {MAX_PROJECT_FEATURE_TAGS} つ）。
             </p>
             <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
               {FORGE_FEATURE_TAG_OPTIONS.map((tag) => (
@@ -638,9 +611,7 @@ export function SubmitPage() {
             >
               作品紹介
             </label>
-            <p className="mt-1 text-xs text-zinc-600">
-              作品詳細に載る紹介文です。一覧・カード用の短い説明は、先頭から自動で作られます。
-            </p>
+            <p className="mt-1 text-xs text-zinc-600">{PROJECT_INTRO_HINT}</p>
             <textarea
               id="introduction"
               required
@@ -652,124 +623,21 @@ export function SubmitPage() {
             />
           </div>
 
-          <fieldset className="space-y-3">
-            <legend className="text-sm font-medium text-zinc-400">
-              開発フェーズ
-            </legend>
-            <p className="text-xs text-zinc-600">
-              今の完成度を選んでください。テスターがどこまで遊べるかの目安になります
-            </p>
-            <div className="space-y-2">
-              {phaseOptions.map((option) => (
-                <label
-                  key={option.value}
-                  className={`flex cursor-pointer gap-3 rounded-lg border px-3 py-3 transition-colors ${
-                    phase === option.value
-                      ? "border-orange-500/40 bg-orange-500/5"
-                      : "border-zinc-800 bg-zinc-950/50"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="phase"
-                    required
-                    value={option.value}
-                    checked={phase === option.value}
-                    onChange={() => setPhase(option.value)}
-                    className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
-                  />
-                  <span>
-                    <span className="block text-sm font-medium text-zinc-300">
-                      {option.value}
-                    </span>
-                    <span className="mt-0.5 block text-xs text-zinc-600">
-                      {option.hint}
-                    </span>
-                  </span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
+          <ProjectPhaseFormFields value={phase} onChange={setPhase} />
 
-          <div>
-            <label htmlFor="estimatedPlayTime" className="text-sm font-medium text-zinc-400">
-              想定プレイ時間{" "}
-              <span className="font-normal text-zinc-600">（任意）</span>
-            </label>
-            <select
-              id="estimatedPlayTime"
-              value={estimatedPlayTime}
-              onChange={(event) => setEstimatedPlayTime(event.target.value)}
-              className={inputClassName}
-            >
-              <option value="">選択しない</option>
-              {PLAY_TIME_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
+          <ProjectEstimatedPlayTimeField
+            value={estimatedPlayTime}
+            onChange={setEstimatedPlayTime}
+            inputClassName={inputClassName}
+          />
 
-          <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
-            <div>
-              <p className="text-sm font-medium text-zinc-400">
-                テスターのアクセス方法
-              </p>
-              <p className="mt-1 text-xs text-zinc-600">
-                テスターがゲームに触れる方法を選んでください
-              </p>
-            </div>
-            <div className="space-y-2">
-              {distributionOptions.map((option) => (
-                <label
-                  key={option.value}
-                  className={`flex cursor-pointer gap-3 rounded-lg border px-3 py-3 transition-colors ${
-                    distribution === option.value
-                      ? "border-orange-500/40 bg-orange-500/5"
-                      : "border-zinc-800 bg-zinc-900/60"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="distribution"
-                    required
-                    checked={distribution === option.value}
-                    onChange={() => setDistribution(option.value)}
-                    className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
-                  />
-                  <span>
-                    <span className="inline-flex items-center text-sm font-medium text-zinc-300">
-                      {option.label}
-                      <DistributionTypeHelp type={option.value} />
-                    </span>
-                    <span className="mt-0.5 block text-xs text-zinc-600">
-                      {option.hint}
-                    </span>
-                  </span>
-                </label>
-              ))}
-            </div>
-            {getAccessUrlField(distribution) && (
-              <div>
-                <label htmlFor="playUrl" className="text-sm font-medium text-zinc-400">
-                  {getAccessUrlField(distribution)!.label}
-                </label>
-                <p className="mt-1 text-xs text-zinc-600">
-                  {getAccessUrlField(distribution)!.hint}
-                </p>
-                <input
-                  id="playUrl"
-                  type="url"
-                  required
-                  value={playUrl}
-                  onChange={(event) => setPlayUrl(event.target.value)}
-                  className={inputClassName}
-                  placeholder={getAccessUrlField(distribution)!.placeholder}
-                />
-              </div>
-            )}
-          </div>
+          <ProjectAccessEnvironmentFields
+            playEnvironment={playEnvironment}
+            onPlayEnvironmentChange={setPlayEnvironment}
+            playUrl={playUrl}
+            onPlayUrlChange={setPlayUrl}
+            inputClassName={inputClassName}
+          />
 
           <VersionPromptSettingsTrigger
             mode={testerNotesMode}
@@ -797,11 +665,9 @@ export function SubmitPage() {
 
           <div>
             <label htmlFor="thumbnail" className="text-sm font-medium text-zinc-400">
-              サムネイル画像（推奨）
+              {THUMBNAIL_LABEL}
             </label>
-            <p className="mt-1 text-sm text-zinc-500">
-              作品一覧で目立ちやすくなります。未設定でもForgeが仮サムネイルを自動生成します。
-            </p>
+            <p className="mt-1 text-sm text-zinc-500">{THUMBNAIL_HINT}</p>
             <input
               id="thumbnail"
               key={fileInputKey}
