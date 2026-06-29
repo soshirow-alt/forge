@@ -114,6 +114,14 @@ function InfluenceRankingEmptyState() {
   );
 }
 
+function InfluenceRankingLoadingState() {
+  return (
+    <div className="mt-8 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 px-6 py-12 text-center">
+      <p className="text-sm text-zinc-500">ランキングを読み込み中...</p>
+    </div>
+  );
+}
+
 function InfluenceRankingLive() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -198,7 +206,9 @@ function InfluenceRankingLive() {
             </div>
           </header>
 
-          {rankingLoaded && !hasRankedPlayers ? (
+          {!rankingLoaded ? (
+            <InfluenceRankingLoadingState />
+          ) : !hasRankedPlayers ? (
             <InfluenceRankingEmptyState />
           ) : (
             <>
@@ -278,7 +288,9 @@ function InfluenceRankingLive() {
           </section>
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
             <h2 className="text-sm font-semibold text-white">先月の TOP3</h2>
-            {month.lastMonthTop3.length > 0 ? (
+            {!rankingLoaded ? (
+              <p className="mt-3 text-xs text-zinc-600">読み込み中...</p>
+            ) : month.lastMonthTop3.length > 0 ? (
               <ul className="mt-3 space-y-2">
                 {month.lastMonthTop3.map((entry) => (
                   <li key={entry.rank} className="flex justify-between text-sm">
