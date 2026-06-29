@@ -49,6 +49,7 @@ import {
   toggleForgeGenre,
 } from "@/lib/project-genres";
 import { ProjectAccessEnvironmentFields } from "@/components/project-access-environment-fields";
+import { CollapsibleFormSection } from "@/components/collapsible-form-section";
 import { ProjectEstimatedPlayTimeField } from "@/components/project-estimated-play-time-field";
 import { ProjectPhaseFormFields } from "@/components/project-phase-form-fields";
 import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
@@ -551,38 +552,51 @@ export function SubmitPage() {
             </div>
           </div>
 
-          <fieldset>
-            <legend className="text-sm font-medium text-zinc-400">ジャンル</legend>
-            <p className="mt-1 text-xs text-zinc-600">
+          <CollapsibleFormSection
+            title="ジャンル"
+            summary={
+              selectedGenres.length > 0
+                ? selectedGenres.join("・")
+                : "未選択（1つ以上）"
+            }
+          >
+            <p className="text-xs text-zinc-600">
               複数選べます（最大 {MAX_PROJECT_GENRES} つ）。
             </p>
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {FORGE_GENRE_OPTIONS.map((option) => (
-                <label
-                  key={option}
-                  className={`flex cursor-pointer items-center justify-center rounded-lg border px-3 py-2 text-sm transition-colors ${
-                    selectedGenres.includes(option)
-                      ? "border-orange-500/50 bg-orange-500/10 text-orange-300"
-                      : "border-zinc-800 bg-zinc-950/50 text-zinc-300 hover:border-zinc-700"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedGenres.includes(option)}
-                    onChange={() =>
-                      setSelectedGenres((current) => toggleForgeGenre(current, option))
-                    }
-                    className="sr-only"
-                  />
-                  {option}
-                </label>
-              ))}
-            </div>
-          </fieldset>
+            <fieldset className="mt-3">
+              <legend className="sr-only">ジャンル</legend>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {FORGE_GENRE_OPTIONS.map((option) => (
+                  <label
+                    key={option}
+                    className={`flex cursor-pointer items-center justify-center rounded-lg border px-3 py-2 text-sm transition-colors ${
+                      selectedGenres.includes(option)
+                        ? "border-orange-500/50 bg-orange-500/10 text-orange-300"
+                        : "border-zinc-800 bg-zinc-950/50 text-zinc-300 hover:border-zinc-700"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedGenres.includes(option)}
+                      onChange={() =>
+                        setSelectedGenres((current) => toggleForgeGenre(current, option))
+                      }
+                      className="sr-only"
+                    />
+                    {option}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          </CollapsibleFormSection>
 
-          <div>
-            <p className="text-sm font-medium text-zinc-400">特徴タグ</p>
-            <p className="mt-1 text-xs text-zinc-600">
+          <CollapsibleFormSection
+            title="特徴タグ"
+            summary={
+              selectedTags.length > 0 ? selectedTags.join("・") : "なし（任意）"
+            }
+          >
+            <p className="text-xs text-zinc-600">
               ジャンル以外のプレイ特性や見た目。複数選べます（最大{" "}
               {MAX_PROJECT_FEATURE_TAGS} つ）。
             </p>
@@ -602,7 +616,7 @@ export function SubmitPage() {
                 </label>
               ))}
             </div>
-          </div>
+          </CollapsibleFormSection>
 
           <div>
             <label
