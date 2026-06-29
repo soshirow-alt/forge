@@ -1,4 +1,4 @@
-export const MAX_PROJECT_THUMBNAILS = 30;
+export const MAX_PROJECT_THUMBNAILS = 10;
 
 export function sanitizeProjectThumbnailUrls(urls: string[] | undefined): string[] {
   if (!urls?.length) {
