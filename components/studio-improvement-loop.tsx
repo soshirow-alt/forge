@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Copy, MessageSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { DeveloperVoiceInsights } from "@/components/developer-voice-insights";
 import { ModifyGameExplanationModal, shouldShowModifyGameModal } from "@/components/modify-game-explanation-modal";
 import { NurtureDeepFeedbackSection } from "@/components/nurture-deep-feedback-section";
@@ -13,7 +13,6 @@ import { useNurtureVoiceRead } from "@/hooks/use-nurture-feedback-read";
 import type { Game } from "@/lib/mock-games";
 import {
   PROJECT_STUDIO_FEEDBACK_SECTION_ID,
-  gamePlayHref,
   projectStudioDevlogHref,
 } from "@/lib/project-nurture-links";
 import {
@@ -30,43 +29,6 @@ type FeedbackTabId = "quick" | "detailed" | "summary";
 
 const primaryButtonClassName =
   "inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90";
-
-const subtleActionButtonClassName =
-  "inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-zinc-500 transition-colors hover:bg-zinc-800/60 hover:text-zinc-300";
-
-function CopyGamePageUrlButton({ gameId }: { gameId: string }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = useCallback(async () => {
-    const path = gamePlayHref(gameId);
-    const url =
-      typeof window !== "undefined" ? `${window.location.origin}${path}` : path;
-
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      /* clipboard unavailable */
-    }
-  }, [gameId]);
-
-  return (
-    <button type="button" onClick={() => void handleCopy()} className={subtleActionButtonClassName}>
-      {copied ? (
-        <>
-          <Check className="size-3.5" aria-hidden="true" />
-          URLをコピーしました
-        </>
-      ) : (
-        <>
-          <Copy className="size-3.5" aria-hidden="true" />
-          作品ページのURLをコピー
-        </>
-      )}
-    </button>
-  );
-}
 
 function StudioStatusStrip({
   game,
@@ -108,19 +70,9 @@ function StudioStatusStrip({
           </Link>
         ) : null}
       </div>
-      <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-600">
-        <span>
-          かんたんFB {quickFbCount}件 · 詳しいFB {detailedFbCount}件 · v
-          {growth.playableVersion}
-        </span>
-        {visualMode === "pre_cycle" ? (
-          <>
-            <span aria-hidden="true" className="text-zinc-700">
-              ·
-            </span>
-            <CopyGamePageUrlButton gameId={game.id} />
-          </>
-        ) : null}
+      <p className="mt-3 text-xs text-zinc-600">
+        かんたんFB {quickFbCount}件 · 詳しいFB {detailedFbCount}件 · v
+        {growth.playableVersion}
       </p>
     </section>
   );
