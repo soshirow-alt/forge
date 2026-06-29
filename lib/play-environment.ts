@@ -45,6 +45,25 @@ export type PlayEnvironmentFilter =
 
 export type DistributionType = "external" | "download" | "browser" | "";
 
+/** How testers reach the game (play URL). Not the same as project link fields (Steam / Discord …). */
+export const DISTRIBUTION_TYPE_LABELS: Record<
+  Exclude<DistributionType, "">,
+  string
+> = {
+  browser: "ブラウザプレイ",
+  download: "ダウンロード",
+  external: "外部サイト",
+};
+
+export const DISTRIBUTION_TYPE_HINTS: Record<
+  Exclude<DistributionType, "">,
+  string
+> = {
+  browser: "URLを開くとブラウザでそのまま遊べる",
+  download: "ファイルを落としてプレイする",
+  external: "Steam・itch.io など別サイトでプレイ",
+};
+
 export type PlayEnvironmentFormState = {
   pc: boolean;
   mobile: boolean;

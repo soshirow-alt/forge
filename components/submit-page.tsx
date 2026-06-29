@@ -32,30 +32,24 @@ import { FORGE_FEATURE_TAG_OPTIONS } from "@/lib/forge-feature-tag-options";
 import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
 import { getDeveloperSocialLinkDefaults } from "@/lib/developer-external-link-defaults";
 import type { ProjectExternalLinksInput } from "@/lib/game-links";
+import {
+  DISTRIBUTION_TYPE_HINTS,
+  DISTRIBUTION_TYPE_LABELS,
+} from "@/lib/play-environment";
 
 const phaseOptions = DEVELOPMENT_PHASE_OPTIONS;
 
 const distributionOptions: {
-  value: DistributionType;
+  value: Exclude<DistributionType, "">;
   label: string;
   hint: string;
-}[] = [
-  {
-    value: "browser",
-    label: "ブラウザプレイ",
-    hint: "URLを開くとブラウザでそのまま遊べる",
-  },
-  {
-    value: "download",
-    label: "ダウンロード",
-    hint: "ファイルを落としてプレイする",
-  },
-  {
-    value: "external",
-    label: "外部サイト",
-    hint: "Steam・itch.io など別サイトでプレイ",
-  },
-];
+}[] = (
+  ["browser", "download", "external"] as const
+).map((value) => ({
+  value,
+  label: DISTRIBUTION_TYPE_LABELS[value],
+  hint: DISTRIBUTION_TYPE_HINTS[value],
+}));
 
 function getAccessUrlField(distribution: DistributionType) {
   switch (distribution) {

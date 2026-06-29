@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  DISTRIBUTION_TYPE_HINTS,
+  DISTRIBUTION_TYPE_LABELS,
   type DistributionType,
   type PlayEnvironmentFormState,
 } from "@/lib/play-environment";
@@ -10,11 +12,17 @@ type PlayEnvironmentFormFieldsProps = {
   onChange: (value: PlayEnvironmentFormState) => void;
 };
 
-const distributionOptions: { value: DistributionType; label: string }[] = [
-  { value: "browser", label: "ブラウザプレイ" },
-  { value: "download", label: "ダウンロード" },
-  { value: "external", label: "外部リンク" },
-];
+const distributionOptions: {
+  value: Exclude<DistributionType, "">;
+  label: string;
+  hint: string;
+}[] = (
+  ["browser", "download", "external"] as const
+).map((value) => ({
+  value,
+  label: DISTRIBUTION_TYPE_LABELS[value],
+  hint: DISTRIBUTION_TYPE_HINTS[value],
+}));
 
 export function PlayEnvironmentFormFields({
   value,
@@ -56,11 +64,14 @@ export function PlayEnvironmentFormFields({
         <p className="text-sm font-medium text-zinc-400">
           配布形式 <span className="text-zinc-600">（任意）</span>
         </p>
+        <p className="mt-1 text-xs text-zinc-600">
+          テスターが遊ぶ方法の目安です。下の「関連リンク」とは別です
+        </p>
         <div className="mt-3 space-y-2">
           {distributionOptions.map((option) => (
             <label
-              key={option.value || "auto"}
-              className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2"
+              key={option.value}
+              className="flex cursor-pointer gap-3 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2"
             >
               <input
                 type="radio"
@@ -69,9 +80,14 @@ export function PlayEnvironmentFormFields({
                 onChange={() =>
                   onChange({ ...value, distribution: option.value })
                 }
-                className="h-4 w-4 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+                className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
               />
-              <span className="text-sm text-zinc-300">{option.label}</span>
+              <span>
+                <span className="block text-sm text-zinc-300">{option.label}</span>
+                <span className="mt-0.5 block text-xs text-zinc-600">
+                  {option.hint}
+                </span>
+              </span>
             </label>
           ))}
         </div>

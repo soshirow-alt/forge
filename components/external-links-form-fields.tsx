@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import {
   EXTERNAL_LINK_FORM_SPECS,
   EXTERNAL_LINK_GROUPS,
+  PROJECT_LINKS_SECTION_TITLE,
   externalLinkKeysWithValues,
   getExternalLinkSpec,
   type ExternalLinkFormKey,
@@ -61,10 +62,11 @@ export function ExternalLinksFormFields({
     <div className="space-y-5 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
       <div>
         <p className="text-sm font-medium text-zinc-400">
-          外部リンク <span className="font-normal text-zinc-600">（任意）</span>
+          {PROJECT_LINKS_SECTION_TITLE}{" "}
+          <span className="font-normal text-zinc-600">（任意）</span>
         </p>
         <p className="mt-1 text-xs leading-relaxed text-zinc-600">
-          作品ページに載せるリンクです。上の「テスターのアクセス方法」とは別です。Discord・X など
+          作品ページに載せる Steam・Discord・SNS などです。プレイ URL や配布形式の「外部サイト」とは別です。Discord・X など
           開発者共通のリンクは、プロフィールや前回の作品から自動入力されます（必要なものだけ
           <span className="text-zinc-500"> ＋ </span>
           で追加・編集できます）。

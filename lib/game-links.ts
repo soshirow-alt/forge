@@ -30,6 +30,9 @@ export type ExternalLink = {
   url: string;
 };
 
+/** Steam / Discord / SNS links on the game page — not the play / access URL. */
+export const PROJECT_LINKS_SECTION_TITLE = "関連リンク";
+
 /** Display order: Steam → itch → Discord → X → 公式 → YouTube → GitHub */
 export type ProjectExternalLinksInput = {
   steamUrl?: string;
