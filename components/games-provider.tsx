@@ -57,7 +57,11 @@ import {
 } from "@/lib/supabase/developer-follows-db";
 import { mergeGameWithExtras, saveGameExtra } from "@/lib/game-extra-storage";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
-import { upsertDeveloperProfile, fetchDeveloperProfiles } from "@/lib/supabase/developer-profiles-db";
+import {
+  fetchDeveloperProfiles,
+  mergeDeveloperProfileSocialLinks,
+  upsertDeveloperProfile,
+} from "@/lib/supabase/developer-profiles-db";
 import {
   deleteProjectInDb,
   fetchProjects,
@@ -547,6 +551,14 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         enriched,
         ...prev.filter((item) => item.id !== game.id),
       ]);
+      await mergeDeveloperProfileSocialLinks(supabase, owner.ownerId, {
+        discordUrl: data.discordUrl,
+        youtubeUrl: data.youtubeUrl,
+        xUrl: data.xUrl,
+        officialUrl: data.officialUrl,
+      });
+      const profiles = await fetchDeveloperProfiles(supabase);
+      setDeveloperProfiles(profiles);
       return enriched;
     },
     [],
@@ -584,6 +596,17 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       setSubmittedGames((prev) =>
         prev.map((item) => (item.id === id ? game : item)),
       );
+      const ownerId = current?.ownerId ?? game.ownerId;
+      if (ownerId) {
+        await mergeDeveloperProfileSocialLinks(supabase, ownerId, {
+          discordUrl: data.discordUrl,
+          youtubeUrl: data.youtubeUrl,
+          xUrl: data.xUrl,
+          officialUrl: data.officialUrl,
+        });
+        const profiles = await fetchDeveloperProfiles(supabase);
+        setDeveloperProfiles(profiles);
+      }
     },
     [submittedGames],
   );

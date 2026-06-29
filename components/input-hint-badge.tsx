@@ -4,27 +4,43 @@ import type { ReactNode } from "react";
 
 type InputHintBadgeProps = {
   label?: string;
+  ariaLabel?: string;
   children: ReactNode;
 };
 
 /** ラベル横の軽いヒント — ホバー / フォーカスでツールチップ表示（必須入力にはしない） */
 export function InputHintBadge({
   label = "入力ヒント",
+  ariaLabel,
   children,
 }: InputHintBadgeProps) {
+  const isQuestionIcon = label === "?";
+
   return (
     <span className="group relative inline-flex align-middle">
       <button
         type="button"
         tabIndex={0}
-        className="ml-1.5 rounded-full border border-zinc-700/80 bg-zinc-800/60 px-2 py-0.5 text-[10px] font-medium leading-none text-zinc-500 transition-colors hover:border-zinc-600 hover:text-zinc-400 focus:border-orange-500/40 focus:text-zinc-300 focus:outline-none"
-        aria-label={`${label}（ツールチップ）`}
+        onMouseDown={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+        }}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+        }}
+        className={
+          isQuestionIcon
+            ? "ml-1.5 inline-flex size-[1.125rem] shrink-0 items-center justify-center rounded-full border border-zinc-500/90 bg-zinc-700/35 text-[11px] font-semibold leading-none text-zinc-400 shadow-sm shadow-black/20 transition-colors hover:border-zinc-400 hover:bg-zinc-700/55 hover:text-zinc-200 focus:border-orange-500/50 focus:text-zinc-200 focus:outline-none"
+            : "ml-1.5 rounded-full border border-zinc-700/80 bg-zinc-800/60 px-2 py-0.5 text-[10px] font-medium leading-none text-zinc-500 transition-colors hover:border-zinc-600 hover:text-zinc-400 focus:border-orange-500/40 focus:text-zinc-300 focus:outline-none"
+        }
+        aria-label={ariaLabel ?? `${label}（ツールチップ）`}
       >
         {label}
       </button>
       <span
         role="tooltip"
-        className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-56 -translate-x-1/2 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-left text-xs leading-relaxed text-zinc-400 opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+        className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-64 -translate-x-1/2 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-left text-xs leading-relaxed text-zinc-400 opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
       >
         {children}
         <span

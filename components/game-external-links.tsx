@@ -4,7 +4,11 @@ import { AuthGatedHint } from "@/components/auth-gated-hint";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { gameDetailReturnPath } from "@/lib/login-return-url";
-import { getExternalLinks, type ProjectExternalLinksInput } from "@/lib/game-links";
+import {
+  getExternalLinks,
+  PROJECT_LINKS_SECTION_TITLE,
+  type ProjectExternalLinksInput,
+} from "@/lib/game-links";
 import type { Game } from "@/lib/mock-games";
 import { gameHasDownloadDistribution } from "@/lib/play-environment";
 import {
@@ -81,7 +85,7 @@ export function GameExternalLinks({
             : "text-sm font-medium text-zinc-500"
         }
       >
-        外部リンク
+        {PROJECT_LINKS_SECTION_TITLE}
       </h2>
       {showDownloadNote ? (
         <DownloadSafetyNote className={compact ? "mt-1.5 text-xs" : "mt-2"} />

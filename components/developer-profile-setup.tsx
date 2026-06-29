@@ -11,6 +11,8 @@ type DeveloperProfileSetupProps = {
     profile: string;
     xAccount?: string;
     website?: string;
+    discordUrl?: string;
+    youtubeUrl?: string;
   }) => void;
 };
 
@@ -19,6 +21,8 @@ export function DeveloperProfileSetup({ onComplete }: DeveloperProfileSetupProps
   const [profile, setProfile] = useState("");
   const [xAccount, setXAccount] = useState("");
   const [website, setWebsite] = useState("");
+  const [discordUrl, setDiscordUrl] = useState("");
+  const [youtubeUrl, setYoutubeUrl] = useState("");
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,6 +32,8 @@ export function DeveloperProfileSetup({ onComplete }: DeveloperProfileSetupProps
       profile,
       xAccount: xAccount || undefined,
       website: website || undefined,
+      discordUrl: discordUrl || undefined,
+      youtubeUrl: youtubeUrl || undefined,
     });
   }
 
@@ -70,6 +76,39 @@ export function DeveloperProfileSetup({ onComplete }: DeveloperProfileSetupProps
           className={`${inputClassName} resize-y`}
           placeholder="制作スタイルや得意ジャンルなどを紹介してください"
         />
+      </div>
+
+      <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/40 p-4">
+        <p className="text-sm font-medium text-zinc-400">コミュニティ・広報（任意）</p>
+        <p className="text-xs text-zinc-600">
+          `/creators/` の開発者プロフィールにも表示されます。作品ごとのリンクとは別に、開発者共通の URL を登録できます。
+        </p>
+        <div>
+          <label htmlFor="discordUrl" className="text-sm font-medium text-zinc-400">
+            Discord
+          </label>
+          <input
+            id="discordUrl"
+            type="url"
+            value={discordUrl}
+            onChange={(event) => setDiscordUrl(event.target.value)}
+            className={inputClassName}
+            placeholder="https://discord.gg/..."
+          />
+        </div>
+        <div>
+          <label htmlFor="youtubeUrl" className="text-sm font-medium text-zinc-400">
+            YouTube
+          </label>
+          <input
+            id="youtubeUrl"
+            type="url"
+            value={youtubeUrl}
+            onChange={(event) => setYoutubeUrl(event.target.value)}
+            className={inputClassName}
+            placeholder="https://www.youtube.com/..."
+          />
+        </div>
       </div>
 
       <div>

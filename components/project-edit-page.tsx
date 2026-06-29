@@ -25,7 +25,12 @@ import { projectStudioPath } from "@/lib/project-nurture-links";
 import { normalizeOverviewIntroduction } from "@/lib/project-overview";
 import type { ProjectVisibility } from "@/lib/project-visibility";
 import { gameToDetailV0 } from "@/lib/submitted-game-v0-adapter";
-import { PROJECT_EXTERNAL_LINK_SPECS, type ProjectExternalLinksInput } from "@/lib/game-links";
+import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
+import { getDeveloperSocialLinkDefaults, mergeSocialLinkDefaults } from "@/lib/developer-external-link-defaults";
+import {
+  emptyExternalLinkFormValues,
+  type ExternalLinkFormValues,
+} from "@/lib/game-links";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import {
   createEmptyPromptDraft,
@@ -38,16 +43,8 @@ import {
 const inputClassName =
   "mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
 
-function emptyExternalUrls(): Record<keyof ProjectExternalLinksInput, string> {
-  return {
-    steamUrl: "",
-    itchUrl: "",
-    discordUrl: "",
-    xUrl: "",
-    officialUrl: "",
-    youtubeUrl: "",
-    githubUrl: "",
-  };
+function emptyExternalUrls(): ExternalLinkFormValues {
+  return emptyExternalLinkFormValues();
 }
 
 function readImageAsDataUrl(file: File): Promise<string> {
@@ -62,7 +59,7 @@ function readImageAsDataUrl(file: File): Promise<string> {
 export function ProjectEditPage({ projectId }: { projectId: string }) {
   const router = useRouter();
   const { user, hydrated: authHydrated } = useAuth();
-  const { getSubmittedGameById, isProjectOwner, updateProjectDetails, updateProjectOverview, getDeveloperVersionPrompts, saveDeveloperVersionPrompts, dataReady } =
+  const { getSubmittedGameById, isProjectOwner, updateProjectDetails, updateProjectOverview, getDeveloperVersionPrompts, saveDeveloperVersionPrompts, getDeveloperProfileByUserId, getOwnedProjects, dataReady } =
     useGames();
 
   const game = getSubmittedGameById(projectId);
@@ -109,7 +106,7 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
     setTesterSlots(game.testerSlots ?? 10);
     setSelectedTags(getPublicGameTags(game.tags));
     setPlayEnvironment(parsePlayEnvironmentFromTags(game.tags ?? []));
-    setExternalUrls({
+    const loadedUrls = {
       steamUrl: game.steamUrl ?? "",
       itchUrl: game.itchUrl ?? "",
       discordUrl: game.discordUrl ?? "",
@@ -117,12 +114,16 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
       officialUrl: game.officialUrl ?? "",
       youtubeUrl: game.youtubeUrl ?? "",
       githubUrl: game.githubUrl ?? "",
-    });
+    };
+    const profile = user ? getDeveloperProfileByUserId(user.id) : undefined;
+    const ownedProjects = user ? getOwnedProjects(user.id) : [];
+    const defaults = getDeveloperSocialLinkDefaults(profile, ownedProjects, projectId);
+    setExternalUrls(mergeSocialLinkDefaults(loadedUrls, defaults));
     setVisibility(game.visibility ?? "public");
     setThumbnailUrl(game.thumbnailUrl);
     setThumbnailPreview(game.thumbnailUrl);
     setFormLoaded(true);
-  }, [game, formLoaded]);
+  }, [game, formLoaded, getDeveloperProfileByUserId, getOwnedProjects, projectId, user]);
 
   useEffect(() => {
     if (!game || promptsLoaded) {
@@ -371,29 +372,14 @@ export function ProjectEditPage({ projectId }: { projectId: string }) {
             versionLabel={`v${resolvePlayableVersion(game.playableVersion)}`}
           />
 
-          <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
-            <p className="text-sm font-medium text-zinc-400">外部リンク（任意）</p>
-            {PROJECT_EXTERNAL_LINK_SPECS.map((spec) => (
-              <div key={spec.field}>
-                <label htmlFor={spec.field} className="text-sm text-zinc-500">
-                  {spec.label} URL
-                </label>
-                <input
-                  id={spec.field}
-                  type="url"
-                  value={externalUrls[spec.field]}
-                  onChange={(event) =>
-                    setExternalUrls((current) => ({
-                      ...current,
-                      [spec.field]: event.target.value,
-                    }))
-                  }
-                  className={inputClassName}
-                  placeholder={spec.placeholder}
-                />
-              </div>
-            ))}
-          </div>
+          <ExternalLinksFormFields
+            formKey={projectId}
+            values={externalUrls}
+            onChange={(field, value) =>
+              setExternalUrls((current) => ({ ...current, [field]: value }))
+            }
+            inputClassName={inputClassName}
+          />
 
           <div>
             <p className="text-sm font-medium text-zinc-400">タグ</p>
