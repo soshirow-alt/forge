@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { notFound, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { FileText, Link2, MessageCircleQuestion, Pencil } from "lucide-react";
+import { FileText, Link2, Pencil } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { StudioShell } from "@/components/studio-shell";
 import { GameThumbnail } from "@/components/game-thumbnail";
@@ -11,7 +11,6 @@ import { ProjectReleaseStudioPanel } from "@/components/project-release-studio-p
 import { StudioImprovementLoop } from "@/components/studio-improvement-loop";
 import { ProjectDistributionLinksModal } from "@/components/project-distribution-links-modal";
 import { ProjectEditModal } from "@/components/project-edit-modal";
-import { VersionPromptStudioModal } from "@/components/version-prompt-studio-modal";
 import { useGames } from "@/components/games-provider";
 import { useOwnedProjectFeedback } from "@/hooks/use-owned-project-feedback";
 import { useOwnedProjectVoiceSignals } from "@/hooks/use-owned-project-voice-signals";
@@ -69,26 +68,20 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   const [openFeedbackPanel, setOpenFeedbackPanel] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [distributionLinksModalOpen, setDistributionLinksModalOpen] = useState(false);
-  const [promptModalOpen, setPromptModalOpen] = useState(false);
 
   useEffect(() => {
     const edit = searchParams.get("edit");
+    if (edit === "prompts") {
+      router.replace(`/projects/${projectId}/devlog/new#version-prompts`);
+      return;
+    }
     if (edit === "project") {
       setEditModalOpen(true);
-    } else if (edit === "prompts") {
-      setPromptModalOpen(true);
     }
-  }, [searchParams]);
+  }, [searchParams, projectId, router]);
 
   function closeEditModal() {
     setEditModalOpen(false);
-    if (searchParams.get("edit")) {
-      router.replace(projectStudioPath(projectId));
-    }
-  }
-
-  function closePromptModal() {
-    setPromptModalOpen(false);
     if (searchParams.get("edit")) {
       router.replace(projectStudioPath(projectId));
     }
@@ -222,14 +215,6 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
             <Link2 className="size-4" aria-hidden="true" />
             配布・リンク
           </button>
-          <button
-            type="button"
-            onClick={() => setPromptModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-violet-500/40 hover:text-violet-300"
-          >
-            <MessageCircleQuestion className="size-4" aria-hidden="true" />
-            問いを設定
-          </button>
         </div>
 
         <ProjectEditModal
@@ -241,12 +226,6 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
           projectId={projectId}
           open={distributionLinksModalOpen}
           onClose={() => setDistributionLinksModalOpen(false)}
-        />
-        <VersionPromptStudioModal
-          projectId={projectId}
-          playableVersion={growthSnapshot.playableVersion}
-          open={promptModalOpen}
-          onClose={closePromptModal}
         />
 
         <div className="mt-8">

@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { notFound } from "next/navigation";
-import { useCallback, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { DevlogConfirmationRequestPanel } from "@/components/devlog-confirmation-request-panel";
+import { CollapsibleFormSection } from "@/components/collapsible-form-section";
 import { StudioShell } from "@/components/studio-shell";
 import { VersionPromptEditor } from "@/components/version-prompt-editor";
 import { useGames } from "@/components/games-provider";
@@ -55,6 +56,28 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
     newVersionInput: newVersion,
     loadPrompts,
   });
+
+  const [openCurrentVersionPrompts] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.location.hash === "#version-prompts",
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined" || window.location.hash !== "#version-prompts") {
+      return;
+    }
+    const element = document.getElementById("version-prompts");
+    element?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [prompts.loading]);
+
+  const customPromptCount = prompts.promptDrafts.filter((draft) =>
+    draft.promptText.trim(),
+  ).length;
+  const currentVersionPromptSummary =
+    prompts.promptMode === "custom"
+      ? `${customPromptCount}件設定`
+      : "デフォルト";
 
   if (!game) {
     notFound();
@@ -119,7 +142,8 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
         <h1 className="mt-8 text-3xl font-bold tracking-tight">開発ログを書く</h1>
         <p className="mt-2 text-zinc-500">{game.title}</p>
         <p className="mt-1 text-sm text-zinc-600">
-          プレイヤーに、今回の改善や変更点を伝えます。
+          プレイヤーに、今回の改善や変更点を伝えます。プレイヤーへの問いも、新ver公開時またはいまの ver
+          向けにここで設定できます。
         </p>
 
         <form
@@ -210,16 +234,44 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
             )}
           </div>
 
-          {!prompts.loading && (
-            <VersionPromptEditor
-              mode={prompts.promptMode}
-              onModeChange={prompts.setPromptMode}
-              drafts={prompts.promptDrafts}
-              onDraftsChange={prompts.setPromptDrafts}
-              versionLabel={prompts.versionLabel}
-              showValidation={prompts.showValidation}
-            />
-          )}
+          {!prompts.loading &&
+            (publishNewVersion ? (
+              <div id="version-prompts" className="scroll-mt-24">
+                <VersionPromptEditor
+                  mode={prompts.promptMode}
+                  onModeChange={prompts.setPromptMode}
+                  drafts={prompts.promptDrafts}
+                  onDraftsChange={prompts.setPromptDrafts}
+                  versionLabel={prompts.versionLabel}
+                  showValidation={prompts.showValidation}
+                />
+                <p className="mt-2 text-xs text-zinc-600">
+                  新ver公開と一緒に、{prompts.versionLabel} 向けの問いも保存されます。
+                </p>
+              </div>
+            ) : (
+              <CollapsibleFormSection
+                title="いまの ver の問い"
+                summary={`${prompts.versionLabel} · ${currentVersionPromptSummary}`}
+                defaultOpen={openCurrentVersionPrompts}
+              >
+                <p className="text-xs leading-relaxed text-zinc-600">
+                  新verを公開しない場合も、ログ投稿と一緒に {prompts.versionLabel}{" "}
+                  向けの問いを更新できます。未設定の場合はデフォルト問いが使われます。
+                </p>
+                <div id="version-prompts" className="scroll-mt-24 mt-3">
+                  <VersionPromptEditor
+                    mode={prompts.promptMode}
+                    onModeChange={prompts.setPromptMode}
+                    drafts={prompts.promptDrafts}
+                    onDraftsChange={prompts.setPromptDrafts}
+                    versionLabel={prompts.versionLabel}
+                    showValidation={prompts.showValidation}
+                    embeddedInModal
+                  />
+                </div>
+              </CollapsibleFormSection>
+            ))}
 
           <DevlogConfirmationRequestPanel
             open={confirmationOpen}

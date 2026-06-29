@@ -79,9 +79,9 @@ export const PROJECT_NURTURE_ACTIONS: ProjectNurtureAction[] = [
   },
   {
     id: "edit-prompts",
-    label: "質問を編集する",
-    href: (id) => `${projectStudioPath(id)}?edit=prompts`,
-    description: "verごとの問い",
+    label: "プレイヤーへの問い",
+    href: (id) => `/projects/${id}/devlog/new#version-prompts`,
+    description: "開発ログから ver ごとに設定",
   },
   {
     id: "write-devlog",
@@ -103,7 +103,7 @@ export const PROJECT_NURTURE_ACTIONS: ProjectNurtureAction[] = [
   },
 ];
 
-const STUDIO_ACTION_IDS = new Set(["edit-prompts", "edit-project", "write-devlog"]);
+const STUDIO_ACTION_IDS = new Set(["edit-project", "write-devlog"]);
 
 export function getProjectNurtureActions(context: "studio" | "default") {
   if (context === "studio") {
