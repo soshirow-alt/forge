@@ -54,7 +54,7 @@ export function ProjectShareLinkModal({
 
   return (
     <V0SimpleModal
-      title="リンクをコピー"
+      title="作品のリンクをコピー"
       subtitle={
         game
           ? `「${game.title}」の作品ページURLを、X や Discord などに貼り付けられます。`
