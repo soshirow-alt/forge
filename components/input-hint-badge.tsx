@@ -31,7 +31,7 @@ export function InputHintBadge({
         }}
         className={
           isQuestionIcon
-            ? "ml-1.5 inline-flex size-4 shrink-0 items-center justify-center rounded-full border border-zinc-600/80 bg-zinc-800/80 text-[10px] font-semibold leading-none text-zinc-500 transition-colors hover:border-zinc-500 hover:text-zinc-300 focus:border-orange-500/40 focus:text-zinc-300 focus:outline-none"
+            ? "ml-1.5 inline-flex size-[1.125rem] shrink-0 items-center justify-center rounded-full border border-zinc-500/90 bg-zinc-700/35 text-[11px] font-semibold leading-none text-zinc-400 shadow-sm shadow-black/20 transition-colors hover:border-zinc-400 hover:bg-zinc-700/55 hover:text-zinc-200 focus:border-orange-500/50 focus:text-zinc-200 focus:outline-none"
             : "ml-1.5 rounded-full border border-zinc-700/80 bg-zinc-800/60 px-2 py-0.5 text-[10px] font-medium leading-none text-zinc-500 transition-colors hover:border-zinc-600 hover:text-zinc-400 focus:border-orange-500/40 focus:text-zinc-300 focus:outline-none"
         }
         aria-label={ariaLabel ?? `${label}（ツールチップ）`}
