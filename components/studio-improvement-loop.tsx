@@ -31,6 +31,9 @@ type FeedbackTabId = "quick" | "detailed" | "summary";
 const primaryButtonClassName =
   "inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90";
 
+const subtleActionButtonClassName =
+  "inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-zinc-500 transition-colors hover:bg-zinc-800/60 hover:text-zinc-300";
+
 function CopyGamePageUrlButton({ gameId }: { gameId: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -49,15 +52,15 @@ function CopyGamePageUrlButton({ gameId }: { gameId: string }) {
   }, [gameId]);
 
   return (
-    <button type="button" onClick={() => void handleCopy()} className={primaryButtonClassName}>
+    <button type="button" onClick={() => void handleCopy()} className={subtleActionButtonClassName}>
       {copied ? (
         <>
-          <Check className="size-4" aria-hidden="true" />
+          <Check className="size-3.5" aria-hidden="true" />
           URLをコピーしました
         </>
       ) : (
         <>
-          <Copy className="size-4" aria-hidden="true" />
+          <Copy className="size-3.5" aria-hidden="true" />
           作品ページのURLをコピー
         </>
       )}
@@ -91,9 +94,7 @@ function StudioStatusStrip({
     >
       <p className="text-sm leading-relaxed text-zinc-300">{display.phaseGuidance}</p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        {visualMode === "pre_cycle" ? (
-          <CopyGamePageUrlButton gameId={game.id} />
-        ) : display.primaryOpensReadPanel ? (
+        {visualMode === "pre_cycle" ? null : display.primaryOpensReadPanel ? (
           <button type="button" onClick={onPrimaryRead} className={primaryButtonClassName}>
             届いたFBを読む
           </button>
@@ -107,9 +108,19 @@ function StudioStatusStrip({
           </Link>
         ) : null}
       </div>
-      <p className="mt-3 text-xs text-zinc-600">
-        かんたんFB {quickFbCount}件 · 詳しいFB {detailedFbCount}件 · v
-        {growth.playableVersion}
+      <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-600">
+        <span>
+          かんたんFB {quickFbCount}件 · 詳しいFB {detailedFbCount}件 · v
+          {growth.playableVersion}
+        </span>
+        {visualMode === "pre_cycle" ? (
+          <>
+            <span aria-hidden="true" className="text-zinc-700">
+              ·
+            </span>
+            <CopyGamePageUrlButton gameId={game.id} />
+          </>
+        ) : null}
       </p>
     </section>
   );
