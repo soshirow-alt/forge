@@ -86,6 +86,10 @@ export const GameDetailOverviewV0Tab = forwardRef<
   hideVersionQuestions?: boolean;
   /** 親フォームに埋め込み — 単体保存ボタンを隠す */
   embeddedInForm?: boolean;
+  /** 作品の特徴カード編集を隠す（特徴タグに統一した編集フォーム向け） */
+  hideFeatures?: boolean;
+  /** 見出し・枠なしで作品紹介テキストエリアのみ */
+  compactIntroduction?: boolean;
   onSave?: (payload: GameOverviewSavePayload) => void;
   onFeedback?: () => void;
   feedbackCtaLabel?: string;
@@ -98,6 +102,8 @@ export const GameDetailOverviewV0Tab = forwardRef<
   editable = false,
   hideVersionQuestions = true,
   embeddedInForm = false,
+  hideFeatures = false,
+  compactIntroduction = false,
   onSave,
   onFeedback,
   feedbackCtaLabel = "フィードバックする",
@@ -134,8 +140,10 @@ export const GameDetailOverviewV0Tab = forwardRef<
   );
   const displayFeatures =
     visibleFeatures.length > 0 ? visibleFeatures : game.features;
-  const showFeaturesSection = editable || displayFeatures.length > 0;
-  const showIntroSection = editable || introduction.trim().length > 0;
+  const showFeaturesSection =
+    !hideFeatures && (editable || displayFeatures.length > 0);
+  const showIntroSection =
+    editable || introduction.trim().length > 0 || compactIntroduction;
 
   function updateFeature(index: number, patch: Partial<GameDetailFeature>) {
     setFeatures((current) =>
@@ -187,6 +195,15 @@ export const GameDetailOverviewV0Tab = forwardRef<
       if (!introduction.trim()) {
         return { ok: false, error: "作品紹介を入力してください。" };
       }
+      if (hideFeatures) {
+        return {
+          ok: true,
+          payload: {
+            introduction,
+            features: [],
+          },
+        };
+      }
       const featureDraftCheck = validateFeatureDrafts(features);
       if (!featureDraftCheck.ok) {
         return featureDraftCheck;
@@ -213,6 +230,15 @@ export const GameDetailOverviewV0Tab = forwardRef<
     >
       <div className="space-y-6">
         {showIntroSection ? (
+        compactIntroduction && editable ? (
+          <textarea
+            value={introduction}
+            onChange={(event) => setIntroduction(event.target.value)}
+            rows={6}
+            className={`${fieldClassName} resize-y`}
+            placeholder="世界観・遊び方・この作品の魅力を紹介してください"
+          />
+        ) : (
         <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
           <h2 className="text-base font-semibold text-white">作品紹介</h2>
           {editable ? (
@@ -242,6 +268,7 @@ export const GameDetailOverviewV0Tab = forwardRef<
             </>
           )}
         </section>
+        )
         ) : null}
 
         {showFeaturesSection ? (

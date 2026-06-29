@@ -17,7 +17,7 @@ export function ProjectEditModal({ projectId, open, onClose }: ProjectEditModalP
   return (
     <V0SimpleModal
       title="作品情報を編集"
-      subtitle="タイトル・紹介・公開設定・関連リンクなど"
+      subtitle="タイトル・紹介・ジャンル・公開設定など"
       onClose={onClose}
       size="xl"
     >

@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { notFound, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { MessageCircleQuestion, Pencil } from "lucide-react";
+import { Link2, MessageCircleQuestion, Pencil } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { StudioShell } from "@/components/studio-shell";
 import { GameThumbnail } from "@/components/game-thumbnail";
 import { ProjectReleaseStudioPanel } from "@/components/project-release-studio-panel";
 import { StudioImprovementLoop } from "@/components/studio-improvement-loop";
+import { ProjectDistributionLinksModal } from "@/components/project-distribution-links-modal";
 import { ProjectEditModal } from "@/components/project-edit-modal";
 import { VersionPromptStudioModal } from "@/components/version-prompt-studio-modal";
 import { useGames } from "@/components/games-provider";
@@ -67,6 +68,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
 
   const [openFeedbackPanel, setOpenFeedbackPanel] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [distributionLinksModalOpen, setDistributionLinksModalOpen] = useState(false);
   const [promptModalOpen, setPromptModalOpen] = useState(false);
 
   useEffect(() => {
@@ -207,6 +209,14 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
           </button>
           <button
             type="button"
+            onClick={() => setDistributionLinksModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-violet-500/40 hover:text-violet-300"
+          >
+            <Link2 className="size-4" aria-hidden="true" />
+            配布・リンク
+          </button>
+          <button
+            type="button"
             onClick={() => setPromptModalOpen(true)}
             className="inline-flex items-center gap-2 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-violet-500/40 hover:text-violet-300"
           >
@@ -219,6 +229,11 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
           projectId={projectId}
           open={editModalOpen}
           onClose={closeEditModal}
+        />
+        <ProjectDistributionLinksModal
+          projectId={projectId}
+          open={distributionLinksModalOpen}
+          onClose={() => setDistributionLinksModalOpen(false)}
         />
         <VersionPromptStudioModal
           projectId={projectId}
