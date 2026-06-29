@@ -83,6 +83,38 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
     notFound();
   }
 
+  async function handleSavePromptsOnly() {
+    if (publishNewVersion) {
+      setError(
+        "問いだけ保存するときは「新しいプレイ可能verとして公開する」のチェックを外してください。",
+      );
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+
+    const promptResult = prompts.resolvePromptsForSave();
+    if (!promptResult.ok) {
+      setError(promptResult.message);
+      setSubmitting(false);
+      return;
+    }
+
+    try {
+      await saveDeveloperVersionPrompts(
+        projectId,
+        promptResult.versionKey,
+        promptResult.prompts,
+      );
+      router.push(projectStudioPath(projectId));
+    } catch {
+      setError("問いの保存に失敗しました。時間をおいて再度お試しください。");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
@@ -142,8 +174,9 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
         <h1 className="mt-8 text-3xl font-bold tracking-tight">開発ログを書く</h1>
         <p className="mt-2 text-zinc-500">{game.title}</p>
         <p className="mt-1 text-sm text-zinc-600">
-          プレイヤーに、今回の改善や変更点を伝えます。プレイヤーへの問いも、新ver公開時またはいまの ver
-          向けにここで設定できます。
+          プレイヤーに、今回の改善や変更点を伝えます。プレイヤーへの問いは、新ver公開時または
+          <strong className="font-medium text-zinc-500">いまの ver だけ</strong>
+          更新もできます（問いだけの変更は新ver公開・開発ログ投稿になりません）。
         </p>
 
         <form
@@ -256,8 +289,9 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
                 defaultOpen={openCurrentVersionPrompts}
               >
                 <p className="text-xs leading-relaxed text-zinc-600">
-                  新verを公開しない場合も、ログ投稿と一緒に {prompts.versionLabel}{" "}
-                  向けの問いを更新できます。未設定の場合はデフォルト問いが使われます。
+                  {prompts.versionLabel} 向けの問いを更新します。
+                  <strong className="font-medium text-zinc-500"> 問いだけ保存</strong>
+                  なら開発ログも新ver公開も行いません。ログと一緒に保存する場合は下の「開発ログを投稿する」を使います。
                 </p>
                 <div id="version-prompts" className="scroll-mt-24 mt-3">
                   <VersionPromptEditor
@@ -270,6 +304,14 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
                     embeddedInModal
                   />
                 </div>
+                <button
+                  type="button"
+                  disabled={submitting}
+                  onClick={() => void handleSavePromptsOnly()}
+                  className="mt-4 w-full rounded-lg border border-violet-500/40 bg-violet-500/10 px-4 py-3 text-sm font-semibold text-violet-100 transition-colors hover:bg-violet-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {submitting ? "保存中..." : "問いだけ保存（開発ログ・新ver公開なし）"}
+                </button>
               </CollapsibleFormSection>
             ))}
 
@@ -285,9 +327,9 @@ export function DevlogNewPage({ projectId }: { projectId: string }) {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-4 text-lg font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:opacity-60"
+            className="w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-4 text-lg font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {submitting ? "投稿中..." : "投稿する"}
+            {submitting ? "投稿中..." : "開発ログを投稿する"}
           </button>
         </form>
       </main>
