@@ -4,6 +4,7 @@ import {
   type DeveloperProfile,
   type DeveloperProfileInput,
 } from "@/lib/developer-profiles";
+import { mapProjectSubmitErrorMessage } from "@/lib/error-message";
 import { normalizeExternalUrlForDb } from "@/lib/game-links";
 import type { DeveloperProfileRow } from "@/lib/supabase/schema";
 
@@ -62,7 +63,7 @@ export async function upsertDeveloperProfile(
     .single();
 
   if (error) {
-    throw error;
+    throw new Error(mapProjectSubmitErrorMessage(error));
   }
 
   return profileRowToDeveloperProfile(data as DeveloperProfileRow);

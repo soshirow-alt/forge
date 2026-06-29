@@ -545,14 +545,16 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         game,
         ...prev.filter((item) => item.id !== game.id),
       ]);
-      await mergeDeveloperProfileSocialLinks(supabase, owner.ownerId, {
-        discordUrl: data.discordUrl,
-        youtubeUrl: data.youtubeUrl,
-        xUrl: data.xUrl,
-        officialUrl: data.officialUrl,
-      });
-      const profiles = await fetchDeveloperProfiles(supabase);
-      setDeveloperProfiles(profiles);
+      try {
+        await mergeDeveloperProfileSocialLinks(supabase, owner.ownerId, {
+          discordUrl: data.discordUrl,
+          youtubeUrl: data.youtubeUrl,
+          xUrl: data.xUrl,
+          officialUrl: data.officialUrl,
+        });
+      } catch {
+        // Project post succeeded; developer-wide social defaults are best-effort.
+      }
       return game;
     },
     [],

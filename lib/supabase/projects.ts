@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { mapProjectSubmitErrorMessage } from "@/lib/error-message";
 import { mergeTagsWithRecruitment } from "@/lib/game-tags";
 import type { Game } from "@/lib/mock-games";
 import { DEFAULT_PLAYABLE_VERSION } from "@/lib/playable-version";
@@ -154,7 +155,7 @@ export async function insertProject(
     .single();
 
   if (error) {
-    throw error;
+    throw new Error(mapProjectSubmitErrorMessage(error));
   }
 
   return projectRowToGame(row as ProjectRow);

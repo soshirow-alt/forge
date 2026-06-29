@@ -50,6 +50,8 @@ import { ProjectPhaseFormFields } from "@/components/project-phase-form-fields";
 import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
 import { getDeveloperSocialLinkDefaults } from "@/lib/developer-external-link-defaults";
 import { resolveDeveloperPublicName } from "@/lib/developer-display-name";
+import { normalizeDeveloperProfileText } from "@/lib/developer-profiles";
+import { mapProjectSubmitErrorMessage } from "@/lib/error-message";
 import { ForgeSdkNote } from "@/components/forge-sdk-note";
 import { ProjectThumbnailFields } from "@/components/project-thumbnail-fields";
 import type { ProjectExternalLinksInput } from "@/lib/game-links";
@@ -193,14 +195,10 @@ export function SubmitPage() {
       return;
     }
 
-    let profile = getDeveloperProfileByUserId(user.id);
-    const publicName = resolveDeveloperPublicName(user, profile);
-    if (!profile) {
-      profile = await saveDeveloperProfile(user.id, {
-        publicName,
-        profile: "",
-      });
-    }
+    const publicName = resolveDeveloperPublicName(
+      user,
+      getDeveloperProfileByUserId(user.id),
+    );
 
     if (testerNotesMode === "custom") {
       const validation = validatePromptDrafts(promptDrafts);
@@ -249,6 +247,13 @@ export function SubmitPage() {
 
     setSubmitting(true);
     try {
+      if (!getDeveloperProfileByUserId(user.id)) {
+        await saveDeveloperProfile(user.id, {
+          publicName,
+          profile: normalizeDeveloperProfileText(""),
+        });
+      }
+
       const game = await addSubmittedGame(data, {
         ownerId: user.id,
         ownerName: publicName,
@@ -279,11 +284,7 @@ export function SubmitPage() {
       setOfficialUrl("");
       setThumbnailUrls([]);
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "投稿に失敗しました。時間をおいて再度お試しください。";
-      setPromptSaveError(message);
+      setPromptSaveError(mapProjectSubmitErrorMessage(error));
     } finally {
       setSubmitting(false);
     }

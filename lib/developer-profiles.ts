@@ -18,6 +18,13 @@ export type DeveloperProfileInput = {
   youtubeUrl?: string;
 };
 
+export const EMPTY_DEVELOPER_PROFILE_TEXT = "（自己紹介は未設定）";
+
+export function normalizeDeveloperProfileText(profile: string): string {
+  const trimmed = profile.trim();
+  return trimmed || EMPTY_DEVELOPER_PROFILE_TEXT;
+}
+
 export function createDeveloperProfile(
   userId: string,
   input: DeveloperProfileInput,
@@ -26,7 +33,7 @@ export function createDeveloperProfile(
     userId,
     creatorId: `dev-${userId}`,
     publicName: input.publicName.trim(),
-    profile: input.profile.trim(),
+    profile: normalizeDeveloperProfileText(input.profile),
     xAccount: input.xAccount?.trim() || undefined,
     website: input.website?.trim() || undefined,
     discordUrl: input.discordUrl?.trim() || undefined,

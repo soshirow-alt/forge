@@ -9,6 +9,7 @@ import { StudioShell } from "@/components/studio-shell";
 import { useGames } from "@/components/games-provider";
 import { V0SimpleModal } from "@/components/v0-simple-modal";
 import { resolveDeveloperPublicName } from "@/lib/developer-display-name";
+import { normalizeDeveloperProfileText } from "@/lib/developer-profiles";
 import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
 import {
@@ -134,7 +135,7 @@ export function StudioProfileSelfPage() {
         await updateDisplayName(displayName);
         await saveDeveloperProfile(user.id, {
           publicName: displayName,
-          profile: draft.bio.trim(),
+          profile: normalizeDeveloperProfileText(draft.bio),
           xAccount: developerProfile?.xAccount,
           website: developerProfile?.website,
           discordUrl: developerProfile?.discordUrl,
