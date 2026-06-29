@@ -1,5 +1,6 @@
 "use client";
 
+import { DistributionTypeHelp } from "@/components/distribution-type-help";
 import {
   DISTRIBUTION_TYPE_HINTS,
   DISTRIBUTION_TYPE_LABELS,
@@ -83,7 +84,10 @@ export function PlayEnvironmentFormFields({
                 className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
               />
               <span>
-                <span className="block text-sm text-zinc-300">{option.label}</span>
+                <span className="inline-flex items-center text-sm text-zinc-300">
+                  {option.label}
+                  <DistributionTypeHelp type={option.value} />
+                </span>
                 <span className="mt-0.5 block text-xs text-zinc-600">
                   {option.hint}
                 </span>

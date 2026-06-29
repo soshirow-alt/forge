@@ -29,6 +29,7 @@ import {
 
 import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
 import { FORGE_FEATURE_TAG_OPTIONS } from "@/lib/forge-feature-tag-options";
+import { DistributionTypeHelp } from "@/components/distribution-type-help";
 import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
 import { getDeveloperSocialLinkDefaults } from "@/lib/developer-external-link-defaults";
 import type { ProjectExternalLinksInput } from "@/lib/game-links";
@@ -725,8 +726,9 @@ export function SubmitPage() {
                     className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
                   />
                   <span>
-                    <span className="block text-sm font-medium text-zinc-300">
+                    <span className="inline-flex items-center text-sm font-medium text-zinc-300">
                       {option.label}
+                      <DistributionTypeHelp type={option.value} />
                     </span>
                     <span className="mt-0.5 block text-xs text-zinc-600">
                       {option.hint}

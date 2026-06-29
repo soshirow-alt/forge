@@ -64,6 +64,19 @@ export const DISTRIBUTION_TYPE_HINTS: Record<
   external: "Steam・itch.io など別サイトでプレイ",
 };
 
+/** Hover tooltip on ? icons in access-method forms */
+export const DISTRIBUTION_TYPE_TOOLTIPS: Record<
+  Exclude<DistributionType, "">,
+  string
+> = {
+  browser:
+    "プレイ URL を開くと、そのページ上ですぐに遊べるとき選びます。WebGL や HTML5 の試遊ページ（例：GitHub Pages、自サイト）",
+  download:
+    "zip や exe など、ファイルをダウンロードしてから遊ぶとき選びます。Google Drive のファイル直リンクなども含みます",
+  external:
+    "Steam・itch.io など、別サービスのページに移動してから遊ぶ・入手するとき選びます",
+};
+
 export type PlayEnvironmentFormState = {
   pc: boolean;
   mobile: boolean;
