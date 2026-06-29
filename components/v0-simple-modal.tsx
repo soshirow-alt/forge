@@ -9,7 +9,7 @@ type V0SimpleModalProps = {
   subtitle?: string;
   onClose: () => void;
   children: ReactNode;
-  size?: "md" | "lg";
+  size?: "md" | "lg" | "xl";
 };
 
 export function V0SimpleModal({
@@ -20,7 +20,8 @@ export function V0SimpleModal({
   size = "md",
 }: V0SimpleModalProps) {
   const [mounted, setMounted] = useState(false);
-  const widthClass = size === "lg" ? "max-w-lg" : "max-w-md";
+  const widthClass =
+    size === "xl" ? "max-w-2xl" : size === "lg" ? "max-w-lg" : "max-w-md";
 
   useEffect(() => {
     setMounted(true);

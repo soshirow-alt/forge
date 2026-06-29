@@ -8,10 +8,48 @@ import {
   prepareOverviewFeaturesForSave,
 } from "@/lib/project-overview";
 import {
+  OVERVIEW_FEATURE_CUSTOM_TITLE_MAX,
+  OVERVIEW_FEATURE_DESCRIPTION_MAX,
+  OVERVIEW_FEATURE_OTHER,
+  OVERVIEW_FEATURE_PRESET_OPTIONS,
+  resolveFeatureTitleForSave,
+  splitFeatureTitleForEdit,
+  type OverviewFeaturePreset,
+} from "@/lib/overview-feature-presets";
+import {
   emptyFeatureDraft,
   MAX_PROJECT_FEATURES,
-  type ProjectOverviewDraft,
 } from "@/lib/project-overview-v0-store";
+
+function validateFeatureDrafts(
+  features: GameDetailFeature[],
+): { ok: true } | { ok: false; error: string } {
+  for (const feature of features) {
+    const description = feature.description.trim();
+    const { preset, customTitle } = splitFeatureTitleForEdit(feature.title);
+    const title = resolveFeatureTitleForSave(preset, customTitle);
+
+    if (!title && !description) {
+      continue;
+    }
+    if (!preset) {
+      return { ok: false, error: "作品の特徴の種類を選んでください。" };
+    }
+    if (preset === OVERVIEW_FEATURE_OTHER && !customTitle.trim()) {
+      return { ok: false, error: "「その他」の見出しを入力してください。" };
+    }
+    if (!description) {
+      return { ok: false, error: "特徴の説明を入力してください。" };
+    }
+    if (description.length > OVERVIEW_FEATURE_DESCRIPTION_MAX) {
+      return {
+        ok: false,
+        error: `特徴の説明は${OVERVIEW_FEATURE_DESCRIPTION_MAX}字以内にしてください。`,
+      };
+    }
+  }
+  return { ok: true };
+}
 
 function FeatureCard({ title, description }: { title: string; description: string }) {
   return (
@@ -120,6 +158,12 @@ export const GameDetailOverviewV0Tab = forwardRef<
   }
 
   function handleSave() {
+    const featureDraftCheck = validateFeatureDrafts(features);
+    if (!featureDraftCheck.ok) {
+      setSaveValidationError(featureDraftCheck.error);
+      return;
+    }
+
     const featureResult = prepareOverviewFeaturesForSave(features);
     if (!featureResult.ok) {
       setSaveValidationError(featureResult.error);
@@ -142,6 +186,10 @@ export const GameDetailOverviewV0Tab = forwardRef<
     validateAndGetPayload: () => {
       if (!introduction.trim()) {
         return { ok: false, error: "作品紹介を入力してください。" };
+      }
+      const featureDraftCheck = validateFeatureDrafts(features);
+      if (!featureDraftCheck.ok) {
+        return featureDraftCheck;
       }
       const featureResult = prepareOverviewFeaturesForSave(features);
       if (!featureResult.ok) {
@@ -206,7 +254,10 @@ export const GameDetailOverviewV0Tab = forwardRef<
           </div>
           {editable ? (
             <div className="mt-4 space-y-4">
-              {features.map((feature, index) => (
+              {features.map((feature, index) => {
+                const { preset, customTitle } = splitFeatureTitleForEdit(feature.title);
+
+                return (
                 <div
                   key={`feature-${index}`}
                   className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4"
@@ -226,17 +277,44 @@ export const GameDetailOverviewV0Tab = forwardRef<
                       </button>
                     )}
                   </div>
-                  <input
-                    type="text"
-                    value={feature.title}
-                    onChange={(event) =>
-                      updateFeature(index, { title: event.target.value })
-                    }
+                  <select
+                    value={preset}
+                    onChange={(event) => {
+                      const nextPreset = event.target.value as OverviewFeaturePreset | "";
+                      if (!nextPreset) {
+                        updateFeature(index, { title: "" });
+                        return;
+                      }
+                      if (nextPreset === OVERVIEW_FEATURE_OTHER) {
+                        updateFeature(index, { title: customTitle });
+                        return;
+                      }
+                      updateFeature(index, { title: nextPreset });
+                    }}
                     className={fieldClassName}
-                    placeholder="例: 探索"
-                  />
+                  >
+                    <option value="">種類を選ぶ</option>
+                    {OVERVIEW_FEATURE_PRESET_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                  {preset === OVERVIEW_FEATURE_OTHER ? (
+                    <input
+                      type="text"
+                      value={customTitle}
+                      maxLength={OVERVIEW_FEATURE_CUSTOM_TITLE_MAX}
+                      onChange={(event) =>
+                        updateFeature(index, { title: event.target.value })
+                      }
+                      className={fieldClassName}
+                      placeholder={`見出し（${OVERVIEW_FEATURE_CUSTOM_TITLE_MAX}字以内）`}
+                    />
+                  ) : null}
                   <textarea
                     value={feature.description}
+                    maxLength={OVERVIEW_FEATURE_DESCRIPTION_MAX}
                     onChange={(event) =>
                       updateFeature(index, { description: event.target.value })
                     }
@@ -244,8 +322,12 @@ export const GameDetailOverviewV0Tab = forwardRef<
                     className={`${fieldClassName} resize-y`}
                     placeholder="例: ランタンの光で照らしながら、森の奥へ進む探索体験"
                   />
+                  <p className="mt-1 text-right text-[10px] text-zinc-600">
+                    {feature.description.length}/{OVERVIEW_FEATURE_DESCRIPTION_MAX}
+                  </p>
                 </div>
-              ))}
+              );
+              })}
               {features.length < MAX_PROJECT_FEATURES && (
                 <button
                   type="button"

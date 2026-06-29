@@ -8,7 +8,7 @@ import { DeveloperProfileSetup } from "@/components/developer-profile-setup";
 import { PlayerShell } from "@/components/player-shell";
 import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
 import { ForgeSdkNote } from "@/components/forge-sdk-note";
-import { VersionPromptSettingsModal } from "@/components/version-prompt-settings-modal";
+import { VersionPromptSettingsTrigger } from "@/components/version-prompt-settings-modal";
 import { useGames } from "@/components/games-provider";
 import {
   EMPTY_PLAY_ENVIRONMENT_FORM,
@@ -16,7 +16,10 @@ import {
   type DistributionType,
 } from "@/lib/play-environment";
 import { projectStudioPath } from "@/lib/project-nurture-links";
-import type { ProjectVisibility } from "@/lib/project-visibility";
+import {
+  PROJECT_VISIBILITY_FORM_OPTIONS,
+  type ProjectVisibility,
+} from "@/lib/project-visibility";
 import { DEVELOPMENT_PHASE_OPTIONS } from "@/lib/development-phases";
 import { PLAY_TIME_OPTIONS } from "@/lib/play-time-options";
 import { resolvePlayableVersion } from "@/lib/playable-version";
@@ -162,7 +165,7 @@ export function SubmitPage() {
 
   useEffect(() => {
     if (editId) {
-      router.replace(`/projects/${editId}/edit`);
+      router.replace(`${projectStudioPath(editId)}?edit=project`);
     }
   }, [editId, router]);
 
@@ -396,7 +399,7 @@ export function SubmitPage() {
             </h1>
             <p className="mt-2 text-zinc-500">
               {visibility === "private"
-                ? "下書きとして保存しました。公開するには作品設定から公開中に切り替えてください。"
+                ? "非公開として保存しました。公開するには Studio の作品情報から「公開」に切り替えてください。"
                 : "作品一覧の「新着作品」に表示されます"}
             </p>
 
@@ -531,43 +534,37 @@ export function SubmitPage() {
           </div>
 
           <div>
-            <p className="text-sm font-medium text-zinc-400">公開状態</p>
+            <p className="text-sm font-medium text-zinc-400">公開設定</p>
             <p className="mt-1 text-xs text-zinc-600">
-              投稿時点では公開中か下書きを選べます。正式版は後から Studio で宣言します。
+              公開または非公開を選べます。正式版は後から Studio で宣言します。
             </p>
-            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-              <label className="flex flex-1 cursor-pointer items-start gap-3 rounded-lg border border-zinc-800 bg-zinc-950/50 px-4 py-3">
-                <input
-                  type="radio"
-                  name="submit-visibility"
-                  value="public"
-                  checked={visibility === "public"}
-                  onChange={() => setVisibility("public")}
-                  className="mt-0.5 h-4 w-4 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
-                />
-                <span>
-                  <span className="block text-sm font-medium text-zinc-200">公開中</span>
-                  <span className="mt-0.5 block text-xs text-zinc-500">
-                    プレイヤーが発見・プレイできる状態で掲載
+            <div className="mt-3 space-y-2">
+              {PROJECT_VISIBILITY_FORM_OPTIONS.map((option) => (
+                <label
+                  key={option.value}
+                  className={`flex cursor-pointer gap-3 rounded-lg border px-3 py-3 transition-colors ${
+                    visibility === option.value
+                      ? "border-orange-500/40 bg-orange-500/5"
+                      : "border-zinc-800 bg-zinc-950/50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="submit-visibility"
+                    checked={visibility === option.value}
+                    onChange={() => setVisibility(option.value)}
+                    className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+                  />
+                  <span>
+                    <span className="block text-sm font-medium text-zinc-200">
+                      {option.label}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-zinc-500">
+                      {option.hint}
+                    </span>
                   </span>
-                </span>
-              </label>
-              <label className="flex flex-1 cursor-pointer items-start gap-3 rounded-lg border border-zinc-800 bg-zinc-950/50 px-4 py-3">
-                <input
-                  type="radio"
-                  name="submit-visibility"
-                  value="private"
-                  checked={visibility === "private"}
-                  onChange={() => setVisibility("private")}
-                  className="mt-0.5 h-4 w-4 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
-                />
-                <span>
-                  <span className="block text-sm font-medium text-zinc-200">下書き</span>
-                  <span className="mt-0.5 block text-xs text-zinc-500">
-                    自分だけ。準備ができたら公開中に切り替え
-                  </span>
-                </span>
-              </label>
+                </label>
+              ))}
             </div>
           </div>
 
@@ -761,7 +758,7 @@ export function SubmitPage() {
             )}
           </div>
 
-          <VersionPromptSettingsModal
+          <VersionPromptSettingsTrigger
             mode={testerNotesMode}
             onModeChange={setTesterNotesMode}
             drafts={promptDrafts}

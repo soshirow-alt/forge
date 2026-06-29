@@ -80,8 +80,8 @@ export const PROJECT_NURTURE_ACTIONS: ProjectNurtureAction[] = [
   {
     id: "edit-prompts",
     label: "質問を編集する",
-    href: (id) => `/projects/${id}/edit#version-prompts`,
-    description: "verごとの質問",
+    href: (id) => `${projectStudioPath(id)}?edit=prompts`,
+    description: "verごとの問い",
   },
   {
     id: "write-devlog",
@@ -92,7 +92,7 @@ export const PROJECT_NURTURE_ACTIONS: ProjectNurtureAction[] = [
   {
     id: "edit-project",
     label: "作品情報を編集する",
-    href: (id) => `/projects/${id}/edit`,
+    href: (id) => `${projectStudioPath(id)}?edit=project`,
     description: "タイトル・説明・公開設定",
   },
   {

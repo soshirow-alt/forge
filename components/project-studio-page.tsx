@@ -1,17 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { notFound, useRouter } from "next/navigation";
+import { notFound, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
+import { MessageCircleQuestion, Pencil } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { StudioShell } from "@/components/studio-shell";
 import { GameThumbnail } from "@/components/game-thumbnail";
 import { ProjectReleaseStudioPanel } from "@/components/project-release-studio-panel";
 import { StudioImprovementLoop } from "@/components/studio-improvement-loop";
+import { ProjectEditModal } from "@/components/project-edit-modal";
+import { VersionPromptStudioModal } from "@/components/version-prompt-studio-modal";
 import { useGames } from "@/components/games-provider";
 import { useOwnedProjectFeedback } from "@/hooks/use-owned-project-feedback";
 import { useOwnedProjectVoiceSignals } from "@/hooks/use-owned-project-voice-signals";
-import { PROJECT_STUDIO_FEEDBACK_SECTION_ID } from "@/lib/project-nurture-links";
+import { PROJECT_STUDIO_FEEDBACK_SECTION_ID, projectStudioPath } from "@/lib/project-nurture-links";
 import {
   buildProjectGrowthSnapshot,
   filterDeepFeedbackForVersion,
@@ -21,6 +24,7 @@ import { resolveVoiceSignalForGame } from "@/lib/project-voice-nurture";
 
 function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, hydrated } = useAuth();
   const { getSubmittedGameById, isProjectOwner, getDevlogsByProject, dataReady } =
     useGames();
@@ -62,6 +66,31 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   }, [hydrated, user, game, isOwner, projectId, router]);
 
   const [openFeedbackPanel, setOpenFeedbackPanel] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [promptModalOpen, setPromptModalOpen] = useState(false);
+
+  useEffect(() => {
+    const edit = searchParams.get("edit");
+    if (edit === "project") {
+      setEditModalOpen(true);
+    } else if (edit === "prompts") {
+      setPromptModalOpen(true);
+    }
+  }, [searchParams]);
+
+  function closeEditModal() {
+    setEditModalOpen(false);
+    if (searchParams.get("edit")) {
+      router.replace(projectStudioPath(projectId));
+    }
+  }
+
+  function closePromptModal() {
+    setPromptModalOpen(false);
+    if (searchParams.get("edit")) {
+      router.replace(projectStudioPath(projectId));
+    }
+  }
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -168,19 +197,35 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
         </header>
 
         <div className="mt-4 flex flex-wrap gap-3">
-          <Link
-            href={`/projects/${projectId}/edit#overview`}
-            className="inline-flex items-center rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-violet-500/40 hover:text-violet-300"
+          <button
+            type="button"
+            onClick={() => setEditModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-violet-500/40 hover:text-violet-300"
           >
-            作品紹介・見どころを編集
-          </Link>
-          <Link
-            href={`/projects/${projectId}/edit`}
-            className="inline-flex items-center rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-500/40 hover:text-zinc-200"
-          >
+            <Pencil className="size-4" aria-hidden="true" />
             作品情報を編集
-          </Link>
+          </button>
+          <button
+            type="button"
+            onClick={() => setPromptModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-violet-500/40 hover:text-violet-300"
+          >
+            <MessageCircleQuestion className="size-4" aria-hidden="true" />
+            問いを設定
+          </button>
         </div>
+
+        <ProjectEditModal
+          projectId={projectId}
+          open={editModalOpen}
+          onClose={closeEditModal}
+        />
+        <VersionPromptStudioModal
+          projectId={projectId}
+          playableVersion={growthSnapshot.playableVersion}
+          open={promptModalOpen}
+          onClose={closePromptModal}
+        />
 
         <div className="mt-8">
           <StudioImprovementLoop
