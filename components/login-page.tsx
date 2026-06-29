@@ -9,7 +9,6 @@ import {
   PasswordInput,
   authInputClassName,
   handleAuthFormEnterKey,
-  useAuthAutofillUnlock,
 } from "@/components/auth-layout";
 import { useAuth } from "@/components/auth-provider";
 import { getAuthErrorMessage } from "@/lib/auth";
@@ -26,11 +25,8 @@ export function LoginPage({
   const notice = searchParams.get("notice");
 
   const { user, hydrated, signIn } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const autofill = useAuthAutofillUnlock();
 
   useEffect(() => {
     if (callbackError === "auth_callback") {
@@ -50,6 +46,10 @@ export function LoginPage({
     event.preventDefault();
     setError(null);
     setSubmitting(true);
+
+    const formData = new FormData(event.currentTarget);
+    const email = String(formData.get("email") ?? "").trim();
+    const password = String(formData.get("password") ?? "");
 
     try {
       await signIn(email, password);
@@ -86,6 +86,7 @@ export function LoginPage({
         <form
           onSubmit={handleSubmit}
           onKeyDown={handleAuthFormEnterKey}
+          method="post"
           autoComplete="on"
           className="mt-8 space-y-4"
         >
@@ -99,10 +100,6 @@ export function LoginPage({
               type="email"
               required
               autoComplete="username"
-              readOnly={autofill.readOnly}
-              onFocus={autofill.onFocus}
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
               className={authInputClassName}
               placeholder="メールアドレス"
             />
@@ -115,13 +112,9 @@ export function LoginPage({
             <PasswordInput
               id="password"
               name="password"
-              value={password}
-              onChange={setPassword}
               placeholder="パスワード"
               autoComplete="current-password"
               minLength={6}
-              readOnly={autofill.readOnly}
-              onFocus={autofill.onFocus}
             />
           </div>
 

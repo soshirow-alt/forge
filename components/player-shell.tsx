@@ -129,7 +129,7 @@ function MypageSidebarGroup() {
   );
 }
 
-function PlayerSidebarNavBody() {
+function PlayerSidebarNavBody({ showFeedback = true }: { showFeedback?: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -161,9 +161,11 @@ function PlayerSidebarNavBody() {
         </Link>
       </div>
 
-      <div className="mt-auto shrink-0 pt-4">
-        <PlatformFeedbackSidebarBox viewerMode="player" />
-      </div>
+      {showFeedback ? (
+        <div className="mt-auto shrink-0 pt-4">
+          <PlatformFeedbackSidebarBox viewerMode="player" />
+        </div>
+      ) : null}
     </>
   );
 }
@@ -222,6 +224,23 @@ export function PlayerShell({
         open={mobileNavOpen}
         onClose={() => setMobileNavOpen(false)}
         homeHref="/home"
+        footer={
+          <>
+            <PlatformFeedbackSidebarBox viewerMode="player" />
+            {user ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileNavOpen(false);
+                  handleLogout();
+                }}
+                className="w-full rounded-lg border border-zinc-800 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-100"
+              >
+                ログアウト
+              </button>
+            ) : null}
+          </>
+        }
       >
         <div className="mb-4 space-y-2 border-b border-zinc-800/80 pb-4">
           <p className="px-1 text-xs font-medium text-zinc-500">表示の切り替え</p>
@@ -232,23 +251,7 @@ export function PlayerShell({
             onStudioAttempt={() => attemptStudioEntry("/studio")}
           />
         </div>
-        <div className="flex min-h-0 flex-1 flex-col">
-          <PlayerSidebarNavBody />
-        </div>
-        {user ? (
-          <div className="mt-4 border-t border-zinc-800/80 pt-4 lg:hidden">
-            <button
-              type="button"
-              onClick={() => {
-                setMobileNavOpen(false);
-                handleLogout();
-              }}
-              className="w-full rounded-lg border border-zinc-800 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-100"
-            >
-              ログアウト
-            </button>
-          </div>
-        ) : null}
+        <PlayerSidebarNavBody showFeedback={false} />
       </ForgeShellMobileDrawer>
 
       <div className="flex min-w-0 flex-1 flex-col">

@@ -271,6 +271,7 @@ export function PasswordInput({
   id,
   name,
   value,
+  defaultValue = "",
   onChange,
   placeholder,
   autoComplete,
@@ -280,8 +281,9 @@ export function PasswordInput({
 }: {
   id: string;
   name?: string;
-  value: string;
-  onChange: (value: string) => void;
+  value?: string;
+  defaultValue?: string;
+  onChange?: (value: string) => void;
   placeholder: string;
   autoComplete?: string;
   minLength?: number;
@@ -289,6 +291,7 @@ export function PasswordInput({
   onFocus?: (event: FocusEvent<HTMLInputElement>) => void;
 }) {
   const [visible, setVisible] = useState(false);
+  const controlled = value !== undefined;
 
   return (
     <div className="relative">
@@ -301,8 +304,9 @@ export function PasswordInput({
         autoComplete={autoComplete}
         readOnly={readOnly}
         onFocus={onFocus}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
+        {...(controlled
+          ? { value, onChange: (event) => onChange?.(event.target.value) }
+          : { defaultValue })}
         className={`${authInputClassName} pr-12`}
         placeholder={placeholder}
       />

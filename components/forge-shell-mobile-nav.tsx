@@ -23,11 +23,14 @@ export function ForgeShellMobileDrawer({
   onClose,
   homeHref,
   children,
+  footer,
 }: {
   open: boolean;
   onClose: () => void;
   homeHref: string;
   children: ReactNode;
+  /** スクロール外の下部固定（ご意見・ログアウトなど） */
+  footer?: ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
 
@@ -82,12 +85,19 @@ export function ForgeShellMobileDrawer({
             <X className="size-5" aria-hidden="true" />
           </button>
         </div>
-        <nav
-          className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-4"
-          onClick={onClose}
-        >
-          {children}
-        </nav>
+        <div className="flex min-h-0 flex-1 flex-col">
+          <nav
+            className="min-h-0 flex-1 overflow-y-auto px-3 py-4"
+            onClick={onClose}
+          >
+            {children}
+          </nav>
+          {footer ? (
+            <div className="shrink-0 space-y-4 border-t border-zinc-800/80 px-3 py-4">
+              {footer}
+            </div>
+          ) : null}
+        </div>
       </aside>
     </div>,
     document.body,
