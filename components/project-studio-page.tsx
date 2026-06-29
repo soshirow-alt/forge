@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { notFound, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { FileText, Link2, Pencil } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
+import { StudioProjectToolbar } from "@/components/studio-project-toolbar";
 import { StudioShell } from "@/components/studio-shell";
 import { GameThumbnail } from "@/components/game-thumbnail";
 import { ProjectReleaseStudioPanel } from "@/components/project-release-studio-panel";
@@ -191,31 +191,11 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
           </dl>
         </header>
 
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Link
-            href={`/projects/${projectId}/devlog/new`}
-            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-          >
-            <FileText className="size-4" aria-hidden="true" />
-            開発ログを書く
-          </Link>
-          <button
-            type="button"
-            onClick={() => setEditModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-violet-500/40 hover:text-violet-300"
-          >
-            <Pencil className="size-4" aria-hidden="true" />
-            作品情報を編集
-          </button>
-          <button
-            type="button"
-            onClick={() => setDistributionLinksModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-violet-500/40 hover:text-violet-300"
-          >
-            <Link2 className="size-4" aria-hidden="true" />
-            配布・リンク
-          </button>
-        </div>
+        <StudioProjectToolbar
+          projectId={projectId}
+          onEditProject={() => setEditModalOpen(true)}
+          onEditDistribution={() => setDistributionLinksModalOpen(true)}
+        />
 
         <ProjectEditModal
           projectId={projectId}
@@ -228,7 +208,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
           onClose={() => setDistributionLinksModalOpen(false)}
         />
 
-        <div className="mt-8">
+        <div className="mt-6">
           <StudioImprovementLoop
             game={game}
             growth={growthSnapshot}
