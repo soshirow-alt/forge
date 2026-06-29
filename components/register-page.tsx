@@ -110,7 +110,7 @@ export function RegisterPage({
               placeholder="ユーザー名を入力"
             />
             <p className="mt-2 text-xs text-zinc-500">
-              公開される名前です（いつでも変更できます）
+              公開される名前です（Studioプロフィールから変更できます）
             </p>
           </div>
 

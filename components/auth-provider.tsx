@@ -24,6 +24,7 @@ type AuthContextValue = {
     displayName: string,
   ) => Promise<boolean>;
   signInWithOAuth: (provider: Provider, nextPath?: string | null) => Promise<void>;
+  updateDisplayName: (displayName: string) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -181,9 +182,43 @@ export function AuthProvider({
     setUser(null);
   }, [supabase]);
 
+  const updateDisplayName = useCallback(
+    async (displayName: string) => {
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      const trimmed = displayName.trim();
+      if (!trimmed) {
+        throw new Error("表示名を入力してください。");
+      }
+
+      const { data, error } = await supabase.auth.updateUser({
+        data: { display_name: trimmed },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.user) {
+        setUser(mapSupabaseUser(data.user));
+      }
+    },
+    [supabase],
+  );
+
   const value = useMemo(
-    () => ({ user, hydrated, signIn, signUp, signInWithOAuth, logout }),
-    [user, hydrated, signIn, signUp, signInWithOAuth, logout],
+    () => ({
+      user,
+      hydrated,
+      signIn,
+      signUp,
+      signInWithOAuth,
+      updateDisplayName,
+      logout,
+    }),
+    [user, hydrated, signIn, signUp, signInWithOAuth, updateDisplayName, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

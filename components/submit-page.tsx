@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { DeveloperProfileSetup } from "@/components/developer-profile-setup";
 import { PlayerShell } from "@/components/player-shell";
 import { VersionPromptSettingsTrigger } from "@/components/version-prompt-settings-modal";
 import { useGames } from "@/components/games-provider";
@@ -50,6 +49,7 @@ import { ProjectEstimatedPlayTimeField } from "@/components/project-estimated-pl
 import { ProjectPhaseFormFields } from "@/components/project-phase-form-fields";
 import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
 import { getDeveloperSocialLinkDefaults } from "@/lib/developer-external-link-defaults";
+import { resolveDeveloperPublicName } from "@/lib/developer-display-name";
 import { ForgeSdkNote } from "@/components/forge-sdk-note";
 import { ProjectThumbnailFields } from "@/components/project-thumbnail-fields";
 import type { ProjectExternalLinksInput } from "@/lib/game-links";
@@ -69,7 +69,6 @@ export function SubmitPage() {
   const developerProfile = user
     ? getDeveloperProfileByUserId(user.id)
     : undefined;
-  const [showProjectForm, setShowProjectForm] = useState(false);
   const [success, setSuccess] = useState(false);
   const [submittedGameId, setSubmittedGameId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -140,12 +139,6 @@ export function SubmitPage() {
     }
   }, [hydrated, user, router]);
 
-  useEffect(() => {
-    if (developerProfile) {
-      setShowProjectForm(true);
-    }
-  }, [developerProfile]);
-
   if (!hydrated) {
     return (
       <PlayerShell activeNav="mypage">
@@ -190,21 +183,6 @@ export function SubmitPage() {
     }
   }
 
-  function handleDeveloperProfileComplete(input: {
-    publicName: string;
-    profile: string;
-    xAccount?: string;
-    website?: string;
-  }) {
-    if (!user) {
-      return;
-    }
-
-    void saveDeveloperProfile(user.id, input).then(() => {
-      setShowProjectForm(true);
-    });
-  }
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPromptSaveError(null);
@@ -215,10 +193,13 @@ export function SubmitPage() {
       return;
     }
 
-    const profile = getDeveloperProfileByUserId(user.id);
+    let profile = getDeveloperProfileByUserId(user.id);
+    const publicName = resolveDeveloperPublicName(user, profile);
     if (!profile) {
-      setShowProjectForm(false);
-      return;
+      profile = await saveDeveloperProfile(user.id, {
+        publicName,
+        profile: "",
+      });
     }
 
     if (testerNotesMode === "custom") {
@@ -244,7 +225,7 @@ export function SubmitPage() {
 
     const data = {
       title,
-      creator: profile.publicName,
+      creator: publicName,
       genres,
       introduction,
       phase,
@@ -270,7 +251,7 @@ export function SubmitPage() {
     try {
       const game = await addSubmittedGame(data, {
         ownerId: user.id,
-        ownerName: user.name,
+        ownerName: publicName,
       });
 
       const versionKey = resolvePlayableVersion(game.playableVersion);
@@ -325,13 +306,13 @@ export function SubmitPage() {
 
         {!success && (
           <>
-            <h1 className="mt-8 text-3xl font-bold tracking-tight">
-              {showProjectForm ? "作品を投稿する" : "開発者プロフィールを作成"}
-            </h1>
+            <h1 className="mt-8 text-3xl font-bold tracking-tight">作品を投稿する</h1>
             <p className="mt-2 text-zinc-500">
-              {showProjectForm
-                ? "開発中のゲーム情報を入力して、Forgeに掲載しましょう。"
-                : "初めて作品を投稿する前に、開発者として公開される情報を設定してください。"}
+              開発中のゲーム情報を入力して、Forgeに掲載しましょう。公開名は{" "}
+              <Link href="/studio/profile" className="text-violet-300 hover:text-violet-200">
+                Studioプロフィール
+              </Link>
+              から変更できます。
             </p>
           </>
         )}
@@ -462,22 +443,11 @@ export function SubmitPage() {
               </button>
             </div>
           </div>
-        ) : !showProjectForm ? (
-          <DeveloperProfileSetup onComplete={handleDeveloperProfileComplete} />
         ) : (
         <form
           onSubmit={handleSubmit}
           className="mt-8 space-y-6 rounded-xl border border-zinc-800 bg-zinc-900/80 p-8"
         >
-          {developerProfile && (
-            <div className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
-              <p className="text-sm text-zinc-500">開発者名（公開）</p>
-              <p className="mt-1 font-medium text-zinc-100">
-                {developerProfile.publicName}
-              </p>
-            </div>
-          )}
-
           <div>
             <label htmlFor="title" className="text-sm font-medium text-zinc-400">
               タイトル

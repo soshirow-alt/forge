@@ -70,6 +70,7 @@ import {
   updateProjectFromSubmitForm,
   updateProjectOverviewInDb,
   updateProjectPlayableVersion,
+  updateProjectsOwnerDisplayName,
   type ProjectOverviewUpdate,
 } from "@/lib/supabase/projects";
 import { resolvePlayableVersion } from "@/lib/playable-version";
@@ -299,6 +300,10 @@ type GamesContextValue = {
     userId: string,
     input: DeveloperProfileInput,
   ) => Promise<DeveloperProfile>;
+  syncOwnedProjectDisplayNames: (
+    userId: string,
+    displayName: string,
+  ) => Promise<void>;
   getCreatorIdForName: (name: string) => string;
   resolveCreatorById: (id: string) => Creator;
 };
@@ -1853,6 +1858,30 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const syncOwnedProjectDisplayNames = useCallback(
+    async (userId: string, displayName: string) => {
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      const trimmed = displayName.trim();
+      if (!trimmed) {
+        return;
+      }
+
+      await updateProjectsOwnerDisplayName(supabase, userId, trimmed);
+      setSubmittedGames((prev) =>
+        prev.map((game) =>
+          game.ownerId === userId
+            ? { ...game, ownerName: trimmed, creator: trimmed }
+            : game,
+        ),
+      );
+    },
+    [],
+  );
+
   const getCreatorIdForName = useCallback(
     (name: string) => {
       const stored = findDeveloperProfileByPublicName(developerProfiles, name);
@@ -1955,10 +1984,11 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       getDeveloperProfileByUserId,
       getDeveloperProfileByRouteId,
       saveDeveloperProfile,
+      syncOwnedProjectDisplayNames,
       getCreatorIdForName,
       resolveCreatorById,
     }),
-    [
+  [
       submittedGames,
       authHydrated,
       catalogReady,
@@ -2031,6 +2061,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       getDeveloperProfileByUserId,
       getDeveloperProfileByRouteId,
       saveDeveloperProfile,
+      syncOwnedProjectDisplayNames,
       getCreatorIdForName,
       resolveCreatorById,
     ],

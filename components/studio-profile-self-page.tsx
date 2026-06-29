@@ -8,6 +8,7 @@ import { ProfileAvatarPicker } from "@/components/profile-avatar-picker";
 import { StudioShell } from "@/components/studio-shell";
 import { useGames } from "@/components/games-provider";
 import { V0SimpleModal } from "@/components/v0-simple-modal";
+import { resolveDeveloperPublicName } from "@/lib/developer-display-name";
 import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
 import {
@@ -18,8 +19,14 @@ import { Pencil, Sparkles } from "lucide-react";
 
 export function StudioProfileSelfPage() {
   const hideV0Mock = shouldHideV0MockContent();
-  const { user } = useAuth();
-  const { getOwnedProjects } = useGames();
+  const { user, updateDisplayName } = useAuth();
+  const {
+    getOwnedProjects,
+    getDeveloperProfileByUserId,
+    saveDeveloperProfile,
+    syncOwnedProjectDisplayNames,
+  } = useGames();
+  const developerProfile = user ? getDeveloperProfileByUserId(user.id) : undefined;
   const [profile, setProfile] = useState(studioDeveloperSelfProfile);
   const displayProfile = useMemo(() => {
     if (!hideV0Mock || !user) {
@@ -27,14 +34,18 @@ export function StudioProfileSelfPage() {
     }
 
     const ownedCount = getOwnedProjects(user.id).length;
-    const handle = user.email.split("@")[0] ?? "developer";
+    const handle =
+      developerProfile?.creatorId.replace(/^dev-/, "").slice(0, 8) ??
+      user.email.split("@")[0] ??
+      "developer";
+    const publicName = resolveDeveloperPublicName(user, developerProfile);
 
     return {
       ...profile,
-      displayName: user.name,
+      displayName: publicName,
       handle,
       avatar: profile.avatar,
-      bio: profile.bio === studioDeveloperSelfProfile.bio ? "" : profile.bio,
+      bio: developerProfile?.profile ?? (profile.bio === studioDeveloperSelfProfile.bio ? "" : profile.bio),
       stats: {
         ...profile.stats,
         projectCount: ownedCount,
@@ -48,7 +59,7 @@ export function StudioProfileSelfPage() {
       developmentGenres: [],
       favoriteGenres: [],
     };
-  }, [getOwnedProjects, hideV0Mock, profile, user]);
+  }, [developerProfile, getOwnedProjects, hideV0Mock, profile, user]);
   const [editing, setEditing] = useState(false);
   const [genreLimitMessage, setGenreLimitMessage] = useState<string | null>(null);
   const [draft, setDraft] = useState({
@@ -59,14 +70,16 @@ export function StudioProfileSelfPage() {
     developmentGenres: [...profile.developmentGenres],
   });
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   function openEdit() {
     setDraft({
-      displayName: profile.displayName,
-      bio: profile.bio,
-      avatar: profile.avatar,
-      favoriteGenres: [...profile.favoriteGenres],
-      developmentGenres: [...profile.developmentGenres],
+      displayName: displayProfile.displayName,
+      bio: displayProfile.bio,
+      avatar: displayProfile.avatar,
+      favoriteGenres: [...displayProfile.favoriteGenres],
+      developmentGenres: [...displayProfile.developmentGenres],
     });
     setGenreLimitMessage(null);
     setEditing(true);
@@ -101,11 +114,45 @@ export function StudioProfileSelfPage() {
     });
   }
 
-  function saveProfile() {
+  async function saveProfile() {
     const displayName = draft.displayName.trim();
     if (!displayName) {
       return;
     }
+
+    setSaveError(null);
+    setSaveMessage(null);
+
+    if (hideV0Mock) {
+      if (!user) {
+        return;
+      }
+
+      setSaving(true);
+      try {
+        const previousName = resolveDeveloperPublicName(user, developerProfile);
+        await updateDisplayName(displayName);
+        await saveDeveloperProfile(user.id, {
+          publicName: displayName,
+          profile: draft.bio.trim(),
+          xAccount: developerProfile?.xAccount,
+          website: developerProfile?.website,
+          discordUrl: developerProfile?.discordUrl,
+          youtubeUrl: developerProfile?.youtubeUrl,
+        });
+        if (previousName !== displayName) {
+          await syncOwnedProjectDisplayNames(user.id, displayName);
+        }
+        setEditing(false);
+        setSaveMessage("プロフィールを更新しました。");
+      } catch {
+        setSaveError("保存に失敗しました。時間をおいて再度お試しください。");
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
     setProfile((current) => ({
       ...current,
       displayName,
@@ -116,11 +163,7 @@ export function StudioProfileSelfPage() {
         draft.developmentGenres.length > 0 ? draft.developmentGenres : current.developmentGenres,
     }));
     setEditing(false);
-    setSaveMessage(
-      hideV0Mock
-        ? "プロフィールを更新しました。"
-        : "プロフィールを更新しました（preview mock）。",
-    );
+    setSaveMessage("プロフィールを更新しました（preview mock）。");
   }
 
   return (
@@ -134,8 +177,11 @@ export function StudioProfileSelfPage() {
             />
             <div>
               <label className="block text-xs font-medium text-zinc-500" htmlFor="studio-profile-name">
-                表示名
+                表示名（公開）
               </label>
+              <p className="mt-1 text-[11px] text-zinc-600">
+                作品ページ・開発者ページに表示されます。
+              </p>
               <input
                 id="studio-profile-name"
                 type="text"
@@ -215,10 +261,11 @@ export function StudioProfileSelfPage() {
           <div className="mt-5 flex gap-2">
             <button
               type="button"
-              onClick={saveProfile}
-              className="flex-1 rounded-xl bg-violet-600 py-2.5 text-sm font-semibold text-white hover:bg-violet-500"
+              onClick={() => void saveProfile()}
+              disabled={saving}
+              className="flex-1 rounded-xl bg-violet-600 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              保存
+              {saving ? "保存中…" : "保存"}
             </button>
             <button
               type="button"
@@ -250,6 +297,12 @@ export function StudioProfileSelfPage() {
         {saveMessage && (
           <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
             {saveMessage}
+          </p>
+        )}
+
+        {saveError && (
+          <p className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+            {saveError}
           </p>
         )}
 

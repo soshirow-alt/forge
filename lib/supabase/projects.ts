@@ -309,6 +309,24 @@ export function formatProjectDeleteError(error: unknown): string {
   return "削除に失敗しました。時間をおいて再度お試しください。";
 }
 
+export async function updateProjectsOwnerDisplayName(
+  supabase: SupabaseClient,
+  ownerId: string,
+  displayName: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("projects")
+    .update({
+      owner_name: displayName,
+      creator: displayName,
+    })
+    .eq("owner_id", ownerId);
+
+  if (error) {
+    throw error;
+  }
+}
+
 export async function insertDemoProjects(
   supabase: SupabaseClient,
   ownerId: string,
