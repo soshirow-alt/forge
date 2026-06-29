@@ -3,6 +3,7 @@ import {
   getNotificationActionHint,
   getNotificationTypeLabel,
 } from "@/lib/notifications";
+import { notificationTargetHref } from "@/lib/project-nurture-links";
 import type {
   NotificationKind,
   NotificationV0Item,
@@ -39,19 +40,6 @@ function notificationTitle(notification: Notification): string {
       return "フィードバック関連のお知らせ";
     default:
       return getNotificationTypeLabel(notification.type);
-  }
-}
-
-function notificationHref(notification: Notification): string {
-  const base = `/games/${encodeURIComponent(notification.projectId)}`;
-  switch (notification.type) {
-    case "confirmation_request":
-    case "version_published":
-      return base;
-    case "devlog":
-      return `${base}?tab=devlog`;
-    default:
-      return base;
   }
 }
 
@@ -94,7 +82,7 @@ export function notificationToV0Item(notification: Notification): NotificationV0
     body: notification.message,
     timeLabel: formatRelativeNotificationTime(notification.date),
     read: notification.read,
-    href: notificationHref(notification),
+    href: notificationTargetHref(notification),
   };
 }
 

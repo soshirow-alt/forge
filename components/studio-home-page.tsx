@@ -17,7 +17,7 @@ import { StudioSectionHeader, StudioShell } from "@/components/studio-shell";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { studioHomeGrowthRankings } from "@/lib/studio-rankings-v0-mock-data";
 import { developerProfileHref } from "@/lib/developer-search-v0-mock-data";
-import { gameDetailHrefFromTitle } from "@/lib/game-detail-v0-mock-data";
+import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import {
   devHintCards,
   studioActivities,
@@ -89,7 +89,7 @@ function WorkGrowthColumn({
         {entries.map((entry) => (
           <li key={entry.id}>
             <Link
-              href={gameDetailHrefFromTitle(entry.title)}
+              href={gameDetailHref(entry.id)}
               className="flex items-center gap-3 rounded-lg px-1 py-0.5 transition-colors hover:bg-zinc-800/40"
             >
               <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-zinc-800 text-xs font-bold text-zinc-400">

@@ -98,9 +98,15 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
       return;
     }
 
-    if (window.location.hash === `#${PROJECT_STUDIO_FEEDBACK_SECTION_ID}`) {
-      setOpenFeedbackPanel(true);
+    function syncFromHash() {
+      if (window.location.hash === `#${PROJECT_STUDIO_FEEDBACK_SECTION_ID}`) {
+        setOpenFeedbackPanel(true);
+      }
     }
+
+    syncFromHash();
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
   }, []);
 
   useEffect(() => {

@@ -1,11 +1,79 @@
 /**
- * Post-login return URL for play / external-link flows only.
- * Whitelist: /games/{id} — rejects open redirects and non-game paths.
+ * Post-login return URL whitelist — relative paths only, open-redirect safe.
+ *
+ * Allowed paths:
+ * - /games/{id} (?tab=devlog|voices|overview, ?adoption={id})
+ * - /submit, /my-projects
+ * - /studio, /studio/...
+ * - /projects/{id}/studio (?devlog=1, ?edit=project|prompts)
  */
 
 export const LOGIN_PATH = "/login";
 
-const GAME_DETAIL_PATH = /^\/games\/[a-zA-Z0-9_-]+$/;
+const ID_SEGMENT = `[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}`;
+const GAME_TAB_VALUES = new Set(["devlog", "voices", "overview"]);
+const STUDIO_PATH = /^\/studio(?:\/[a-zA-Z0-9][a-zA-Z0-9/_-]*)?$/;
+
+function isUnsafeRelativePath(value: string): boolean {
+  return (
+    !value.startsWith("/") ||
+    value.startsWith("//") ||
+    value.includes("://") ||
+    value.includes("\\") ||
+    value.includes("@")
+  );
+}
+
+function validateGameSearchParams(search: URLSearchParams): boolean {
+  for (const key of search.keys()) {
+    if (key === "tab") {
+      const tab = search.get("tab");
+      if (!tab || !GAME_TAB_VALUES.has(tab)) {
+        return false;
+      }
+    } else if (key === "adoption") {
+      const adoption = search.get("adoption");
+      if (!adoption || !/^[\w-]{1,128}$/.test(adoption)) {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+  return true;
+}
+
+function validateStudioSearchParams(search: URLSearchParams): boolean {
+  for (const key of search.keys()) {
+    if (key === "submit") {
+      if (search.get("submit") !== "1") {
+        return false;
+      }
+    } else if (key === "q") {
+      const q = search.get("q");
+      if (!q || q.length > 200) {
+        return false;
+      }
+    } else if (key === "edit") {
+      const edit = search.get("edit");
+      if (edit !== "project" && edit !== "prompts") {
+        return false;
+      }
+    } else if (key === "devlog") {
+      if (search.get("devlog") !== "1") {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+  return true;
+}
+
+function buildSanitizedPath(pathname: string, search: URLSearchParams): string {
+  const query = search.toString();
+  return query ? `${pathname}?${query}` : pathname;
+}
 
 export function sanitizeLoginReturnUrl(
   value: string | null | undefined,
@@ -15,21 +83,54 @@ export function sanitizeLoginReturnUrl(
   }
 
   try {
-    const decoded = decodeURIComponent(value.trim());
+    let decoded = decodeURIComponent(value.trim());
+    const hashIndex = decoded.indexOf("#");
+    if (hashIndex >= 0) {
+      decoded = decoded.slice(0, hashIndex);
+    }
 
-    if (!decoded.startsWith("/") || decoded.startsWith("//")) {
+    if (isUnsafeRelativePath(decoded)) {
       return null;
     }
 
-    if (decoded.includes("?") || decoded.includes("#")) {
-      return null;
+    const queryIndex = decoded.indexOf("?");
+    const pathname =
+      queryIndex >= 0 ? decoded.slice(0, queryIndex) : decoded;
+    const search =
+      queryIndex >= 0
+        ? new URLSearchParams(decoded.slice(queryIndex + 1))
+        : new URLSearchParams();
+
+    if (pathname === "/submit" || pathname === "/my-projects") {
+      return search.toString() ? null : pathname;
     }
 
-    if (!GAME_DETAIL_PATH.test(decoded)) {
-      return null;
+    const gameMatch = pathname.match(new RegExp(`^/games/(${ID_SEGMENT})$`));
+    if (gameMatch) {
+      if (!validateGameSearchParams(search)) {
+        return null;
+      }
+      return buildSanitizedPath(pathname, search);
     }
 
-    return decoded;
+    if (STUDIO_PATH.test(pathname)) {
+      if (!validateStudioSearchParams(search)) {
+        return null;
+      }
+      return buildSanitizedPath(pathname, search);
+    }
+
+    const projectStudioMatch = pathname.match(
+      new RegExp(`^/projects/(${ID_SEGMENT})/studio$`),
+    );
+    if (projectStudioMatch) {
+      if (!validateStudioSearchParams(search)) {
+        return null;
+      }
+      return buildSanitizedPath(pathname, search);
+    }
+
+    return null;
   } catch {
     return null;
   }

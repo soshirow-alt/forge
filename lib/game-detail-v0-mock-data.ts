@@ -211,11 +211,11 @@ const titleToDetailId: Record<string, string> = {
   "静かな灯台": "natsu-no-mukougawa",
 };
 
-export function gameDetailHrefFromTitle(title: string): string {
-  const id = titleToDetailId[title] ?? "seikat-no-tabiji";
-  return `/games/${encodeURIComponent(id)}`;
+/** Preview/mock catalog のみ — 本番の Supabase 作品タイトルには使わない */
+export function resolveMockGameDetailSlug(title: string): string {
+  return titleToDetailId[title] ?? title;
 }
 
 export function gameDetailIdFromTitle(title: string): string {
-  return titleToDetailId[title] ?? title;
+  return resolveMockGameDetailSlug(title);
 }

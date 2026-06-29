@@ -411,8 +411,8 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     if (!shouldHideV0MockContent()) {
       setFollowerCounts(loadCounts(FOLLOWERS_STORAGE_KEY));
       setFollowedCreators(loadFollowing());
+      setLocalNotifications(loadLocalNotifications());
     }
-    setLocalNotifications(loadLocalNotifications());
     setHydrated(true);
 
     const supabase = getOptionalSupabaseClient();
@@ -520,7 +520,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   }, [followedCreators, hydrated]);
 
   useEffect(() => {
-    if (!hydrated) {
+    if (!hydrated || shouldHideV0MockContent()) {
       return;
     }
 
@@ -691,8 +691,15 @@ export function GamesProvider({ children }: { children: ReactNode }) {
 
   const getGameById = useCallback(
     (id: string) => {
-      const game = getSubmittedGameById(id) ?? getMockGameById(id);
-      return game ? mergeGameWithExtras(game) : undefined;
+      const submitted = getSubmittedGameById(id);
+      if (submitted) {
+        return mergeGameWithExtras(submitted);
+      }
+      if (shouldHideV0MockContent()) {
+        return undefined;
+      }
+      const mock = getMockGameById(id);
+      return mock ? mergeGameWithExtras(mock) : undefined;
     },
     [getSubmittedGameById],
   );

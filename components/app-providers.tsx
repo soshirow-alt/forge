@@ -2,8 +2,9 @@ import { AppGateProviders } from "@/components/app-gate-providers";
 import { AuthProvider } from "@/components/auth-provider";
 import { GamesProvider } from "@/components/games-provider";
 import { mapSupabaseUser } from "@/lib/auth";
+import { ForgeDeploymentProvider } from "@/lib/forge-deployment-context";
+import { getForgeDeploymentModeForServer } from "@/lib/production-mode";
 import { createClient } from "@/lib/supabase/server";
-
 export async function AppProviders({
   children,
 }: {
@@ -22,11 +23,14 @@ export async function AppProviders({
     }
   }
 
+  const deploymentMode = getForgeDeploymentModeForServer();
   return (
-    <AuthProvider initialUser={initialUser}>
-      <GamesProvider>
-        <AppGateProviders>{children}</AppGateProviders>
-      </GamesProvider>
-    </AuthProvider>
+    <ForgeDeploymentProvider mode={deploymentMode}>
+      <AuthProvider initialUser={initialUser}>
+        <GamesProvider>
+          <AppGateProviders>{children}</AppGateProviders>
+        </GamesProvider>
+      </AuthProvider>
+    </ForgeDeploymentProvider>
   );
 }

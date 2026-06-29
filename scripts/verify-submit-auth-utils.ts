@@ -19,6 +19,11 @@ import {
   buildGameDetailTabHref,
   parseGameDetailTab,
 } from "../lib/game-detail-tabs";
+import {
+  gameHistoryHref,
+  gameVersionBannerHref,
+  notificationTargetHref,
+} from "../lib/project-nurture-links";
 
 function ok(condition: boolean, message: string) {
   assert.equal(condition, true, message);
@@ -133,9 +138,103 @@ function testSubmitErrorMapping() {
 
 function testLoginReturnSanitize() {
   ok(sanitizeLoginReturnUrl("/games/abc") === "/games/abc", "allow game detail return");
+  ok(
+    sanitizeLoginReturnUrl("/games/abc?tab=devlog") === "/games/abc?tab=devlog",
+    "allow game detail devlog tab",
+  );
   ok(sanitizeLoginReturnUrl("//evil.com") === null, "reject protocol-relative");
   ok(sanitizeLoginReturnUrl("https://evil.com") === null, "reject absolute url");
-  ok(sanitizeLoginReturnUrl("/studio/mypage") === null, "reject non-game paths");
+  ok(sanitizeLoginReturnUrl("%2F%2Fevil.com") === null, "reject encoded protocol-relative");
+  ok(sanitizeLoginReturnUrl("/\\evil.com") === null, "reject backslash path");
+  ok(
+    sanitizeLoginReturnUrl("/games/abc?tab=devlog&next=https://evil.com") === null,
+    "reject extra game query param",
+  );
+  ok(sanitizeLoginReturnUrl("/studio?unknown=1") === null, "reject unknown studio query");
+  ok(
+    sanitizeLoginReturnUrl("/projects/abc/studio#feedback") === "/projects/abc/studio",
+    "strip hash from project studio return",
+  );
+  ok(sanitizeLoginReturnUrl("/games/abc?tab=versions") === null, "reject non-existent versions tab in return");
+  ok(sanitizeLoginReturnUrl("/studio/mypage") === "/studio/mypage", "allow studio mypage");
+  ok(
+    sanitizeLoginReturnUrl("/studio/mypage?submit=1") === "/studio/mypage?submit=1",
+    "allow studio submit modal return",
+  );
+  ok(sanitizeLoginReturnUrl("/submit") === "/submit", "allow submit path");
+  ok(sanitizeLoginReturnUrl("/my-projects") === "/my-projects", "allow my-projects path");
+  ok(
+    sanitizeLoginReturnUrl("/projects/proj-1/studio?devlog=1") ===
+      "/projects/proj-1/studio?devlog=1",
+    "allow project studio devlog modal",
+  );
+  ok(
+    sanitizeLoginReturnUrl("/games/abc?next=//evil.com") === null,
+    "reject unknown game query params",
+  );
+  ok(
+    sanitizeLoginReturnUrl("/studio/mypage?return=//evil.com") === null,
+    "reject unknown studio query params",
+  );
+  ok(
+    sanitizeLoginReturnUrl("/games/abc/../../../studio") === null,
+    "reject path traversal",
+  );
+}
+
+function testNotificationNurtureLinks() {
+  ok(
+    gameHistoryHref("proj-1") === "/games/proj-1?tab=devlog",
+    "game history href uses devlog tab",
+  );
+  ok(
+    gameVersionBannerHref("proj-1") === "/games/proj-1?tab=devlog",
+    "version banner href uses devlog tab",
+  );
+  ok(
+    notificationTargetHref({
+      id: "n1",
+      type: "devlog",
+      projectId: "proj-1",
+      projectTitle: "Test Game",
+      message: "update",
+      date: "2026-01-01",
+      read: false,
+    }) === "/games/proj-1?tab=devlog",
+    "notification devlog target uses devlog tab",
+  );
+  ok(
+    notificationTargetHref({
+      id: "n2",
+      type: "version_published",
+      projectId: "proj-1",
+      projectTitle: "Test Game",
+      message: "new ver",
+      date: "2026-01-01",
+      read: false,
+    }) === "/games/proj-1?tab=devlog",
+    "notification version_published uses devlog tab",
+  );
+}
+
+function testGamesProviderMockGuardContract() {
+  const fs = require("node:fs") as typeof import("node:fs");
+  const path = require("node:path") as typeof import("node:path");
+  const source = fs.readFileSync(
+    path.join(import.meta.dirname, "../components/games-provider.tsx"),
+    "utf8",
+  );
+
+  ok(
+    source.includes("if (shouldHideV0MockContent())") &&
+      source.includes("const mock = getMockGameById(id);"),
+    "getGameById skips mock fallback in production mode",
+  );
+  ok(
+    source.includes("setLocalNotifications(loadLocalNotifications());") &&
+      source.includes("if (!shouldHideV0MockContent())"),
+    "local mock notifications load only outside production mode",
+  );
 }
 
 function testLoginPageSourceContract() {
@@ -184,6 +283,8 @@ async function main() {
     ["schema fallback error masking", testSchemaFallbackDoesNotMaskOtherErrors],
     ["submit error mapping", testSubmitErrorMapping],
     ["login return sanitize", testLoginReturnSanitize],
+    ["notification nurture links", testNotificationNurtureLinks],
+    ["games provider mock guard contract", testGamesProviderMockGuardContract],
     ["login page source contract", testLoginPageSourceContract],
     ["game detail tabs", testGameDetailTabs],
   ];

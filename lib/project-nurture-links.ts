@@ -1,4 +1,5 @@
 import type { Notification } from "@/lib/notifications";
+import { buildGameDetailTabHref } from "@/lib/game-detail-tabs";
 
 export const PROJECT_STUDIO_FEEDBACK_SECTION_ID = "feedback";
 
@@ -46,12 +47,18 @@ export function projectStudioFeedbackHref(projectId: string): string {
   return `${projectStudioPath(projectId)}#${PROJECT_STUDIO_FEEDBACK_SECTION_ID}`;
 }
 
-export function gameHistoryHref(projectId: string): string {
-  return `/games/${projectId}#${GAME_PROJECT_HISTORY_SECTION_ID}`;
+export function gameDevlogTabHref(projectId: string): string {
+  return buildGameDetailTabHref(projectId, "devlog");
 }
 
+/** @deprecated 旧 hash 導線 — 現行 v0 詳細は開発ログタブへ */
+export function gameHistoryHref(projectId: string): string {
+  return gameDevlogTabHref(projectId);
+}
+
+/** @deprecated 旧 hash 導線 — 新版公開も開発ログタブで確認 */
 export function gameVersionBannerHref(projectId: string): string {
-  return `/games/${projectId}#${NEW_PLAYABLE_VERSION_BANNER_ID}`;
+  return gameDevlogTabHref(projectId);
 }
 
 export function gamePlayHref(projectId: string): string {

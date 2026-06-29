@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useState } from "react";
 import { PlayerShell, GameThumbnail } from "@/components/player-shell";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { useCommunityJoinV0 } from "@/hooks/use-community-join-v0";
@@ -10,12 +11,17 @@ import { communityIdFromDeveloperId, applyToCommunity } from "@/lib/community-jo
 import { hasDeveloperOpenCommunity } from "@/lib/developer-community-v0-store";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import {
+  buildCreatorProfileTabHref,
+  parseCreatorProfileTab,
+  type CreatorProfileTab,
+} from "@/lib/creator-profile-tabs";
+import {
   developerDevlogHref,
   getDeveloperProfileV0,
 } from "@/lib/developer-profile-v0-mock-data";
 import { BadgeCheck, Globe, MapPin, Sprout, UserPlus, Users } from "lucide-react";
 
-type DevTab = "overview" | "devlog" | "achievements" | "followers";
+type DevTab = CreatorProfileTab;
 
 const tabs: { id: DevTab; label: string }[] = [
   { id: "overview", label: "概要" },
@@ -25,19 +31,40 @@ const tabs: { id: DevTab; label: string }[] = [
 ];
 
 export function DeveloperProfileV0Page({ id }: { id: string }) {
-  return <DeveloperProfileV0PageContent id={id} />;
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-full items-center justify-center bg-[#0a0a0a] text-zinc-500">
+          読み込み中...
+        </div>
+      }
+    >
+      <DeveloperProfileV0PageContent id={id} />
+    </Suspense>
+  );
 }
 
 function DeveloperProfileV0PageContent({ id }: { id: string }) {
   const dev = getDeveloperProfileV0(id);
   const { requireAuth } = useRequireAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const returnPath = `/creators/${id}`;
-  const [activeTab, setActiveTab] = useState<DevTab>("overview");
+  const activeTab = parseCreatorProfileTab(searchParams.get("tab"), {
+    includeFollowers: true,
+  });
   const [following, setFollowing] = useState(dev.following);
   const { getStatus } = useCommunityJoinV0();
   const communityId = communityIdFromDeveloperId(id);
   const communityStatus = getStatus(communityId);
   const hasOpenCommunity = hasDeveloperOpenCommunity(id);
+
+  const setTab = useCallback(
+    (tab: DevTab) => {
+      router.replace(buildCreatorProfileTabHref(id, tab));
+    },
+    [id, router],
+  );
 
   const handleFollow = useCallback(() => {
     requireAuth(() => setFollowing((value) => !value), returnPath);
@@ -136,7 +163,7 @@ function DeveloperProfileV0PageContent({ id }: { id: string }) {
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => setTab(tab.id)}
                   className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium ${
                     activeTab === tab.id
                       ? "border-violet-500 text-violet-200"

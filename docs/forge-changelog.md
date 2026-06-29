@@ -4,6 +4,14 @@
 
 ---
 
+- **導線・安定性** — 作品リンクを **projectId ベース** に統一（タイトルから別作品へ飛ぶ `seikat-no-tabiji` フォールバックを廃止）。モバイルナビの **hydration 不一致** を修正（deployment mode を env 推定で SSR/CSR 一致、`headers()` は root で使わない）。**開発者プロフィール**のタブを `?tab=devlog` 等の URL と同期。Studio の `#feedback` 遷移時に FB パネルを短くハイライト。未使用のマイページ mock パネル・メニューを削除
+
+---
+
+- **通知・ログイン導線** — 通知とマイページ更新の死んだ hash（`#game-project-history` 等）を **`?tab=devlog`** に統一。ログイン後 return URL を `/games`・`/submit`・`/studio`・`/projects/{id}/studio`・`/my-projects` に限定拡張（open redirect 対策付き verify 追加）。本番で mock 通知 localStorage / `getGameById` mock フォールバックを抑制
+
+---
+
 - **作品 Studio** — 育成エリアの **届いたFBを読む** ボタン・リンクの重複を整理。FB一覧が同じ画面に出ているときは上部の案内文だけにし、動かない「下の〜から確認」リンクと **FBを見る →** を削除
 
 ---

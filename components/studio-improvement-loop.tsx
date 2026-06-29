@@ -84,12 +84,14 @@ function StudioPlayerFeedbackPanel({
   feedbackEntries,
   quickFbCount,
   detailPanelId,
+  emphasize = false,
 }: {
   gameId: string;
   playableVersion: string;
   feedbackEntries: ProjectFeedbackEntry[];
   quickFbCount: number;
   detailPanelId: string;
+  emphasize?: boolean;
 }) {
   const {
     getOwnerVoiceAggregates,
@@ -99,12 +101,22 @@ function StudioPlayerFeedbackPanel({
     toggleFeedbackHelpful,
   } = useGames();
   const [tab, setTab] = useState<FeedbackTabId>("quick");
+  const [highlighted, setHighlighted] = useState(false);
   const [voiceAggregates, setVoiceAggregates] = useState(
     buildVoicePromptAggregates([]),
   );
   const [voiceResponses, setVoiceResponses] = useState<OwnerVoiceResponseDetail[]>(
     [],
   );
+
+  useEffect(() => {
+    if (!emphasize) {
+      return;
+    }
+    setHighlighted(true);
+    const timer = window.setTimeout(() => setHighlighted(false), 2000);
+    return () => window.clearTimeout(timer);
+  }, [emphasize]);
 
   useEffect(() => {
     void loadHelpfulMarksForProject(gameId);
@@ -145,7 +157,11 @@ function StudioPlayerFeedbackPanel({
     <section
       id={detailPanelId}
       aria-label="プレイヤーのFBを読む"
-      className="scroll-mt-24 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5"
+      className={`scroll-mt-24 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 transition-shadow duration-300 sm:p-5 ${
+        highlighted
+          ? "ring-2 ring-violet-500/70 ring-offset-2 ring-offset-zinc-950"
+          : ""
+      }`}
     >
       <h2 className="text-sm font-semibold text-zinc-200">
         届いたFBを読む
@@ -220,6 +236,7 @@ export function StudioImprovementLoop({
   growth,
   feedbackEntries,
   detailPanelId = PROJECT_STUDIO_FEEDBACK_SECTION_ID,
+  initialOpenFeedback = false,
 }: {
   game: Game;
   growth: ProjectGrowthSnapshot;
@@ -286,6 +303,7 @@ export function StudioImprovementLoop({
             feedbackEntries={feedbackEntries}
             quickFbCount={quickFbCount}
             detailPanelId={detailPanelId}
+            emphasize={initialOpenFeedback}
           />
         </div>
       ) : (

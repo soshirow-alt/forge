@@ -41,9 +41,11 @@ import {
 } from "@/lib/mypage-list-filters";
 import {
   creatorProfileHref,
-  gameDetailHrefWithTab,
-  gamePlayEntryHref,
 } from "@/lib/mypage-navigation";
+import {
+  mockGameDetailHrefFromTitle,
+  mockGameDetailHrefWithTabFromTitle,
+} from "@/lib/mock-game-navigation";
 import {
   Check,
   ChevronRight,
@@ -212,7 +214,7 @@ export function FeedbackTabPanel() {
                   )}
                 </div>
                 <Link
-                  href={gameDetailHrefWithTab(entry.game, "voices")}
+                  href={mockGameDetailHrefWithTabFromTitle(entry.game, "voices")}
                   className="self-start rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300 lg:self-center"
                   aria-label={`${entry.game}のフィードバックを見る`}
                 >
@@ -668,7 +670,7 @@ export function FollowingTabPanel() {
                     プロフィールへ
                   </Link>
                   <Link
-                    href={gamePlayEntryHref(dev.game.title)}
+                    href={mockGameDetailHrefFromTitle(dev.game.title)}
                     className="rounded-lg border border-zinc-800 px-4 py-2 text-center text-sm text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
                   >
                     作品を見る

@@ -135,6 +135,20 @@ export function getForgeDeploymentMode(host?: string): ForgeDeploymentMode {
   return "production";
 }
 
+/** Server Components — host 不要で preview/local を推定（root で headers() を避ける） */
+export function getForgeDeploymentModeForServer(): ForgeDeploymentMode {
+  const vercelUrl = process.env.VERCEL_URL;
+  if (vercelUrl) {
+    return getForgeDeploymentMode(vercelUrl);
+  }
+
+  if (process.env.NODE_ENV === "development") {
+    return "local";
+  }
+
+  return getForgeDeploymentMode();
+}
+
 /** True on production hosts — mock catalog, stubs, and preview bypass must be off. */
 export function isProductionReleaseMode(host?: string): boolean {
   return getForgeDeploymentMode(host) === "production";

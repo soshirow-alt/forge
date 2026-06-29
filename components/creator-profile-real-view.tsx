@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect } from "react";
 import { CreatorFollowButton } from "@/components/creator-follow-button";
 import { CreatorCommunityJoinButton } from "@/components/creator-community-join-button";
 import { ContentReportButton } from "@/components/content-report-button";
@@ -11,11 +12,17 @@ import { PlayerShell, GameThumbnail } from "@/components/player-shell";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import type { CreatorProfileResolved } from "@/hooks/use-creator-profile";
+import {
+  buildCreatorProfileTabHref,
+  parseCreatorProfileTab,
+  type CreatorProfileTab,
+} from "@/lib/creator-profile-tabs";
+import { buildGameDetailTabHref } from "@/lib/game-detail-tabs";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { BadgeCheck, MapPin } from "lucide-react";
 
-type CreatorTab = "overview" | "devlog" | "achievements";
+type CreatorTab = CreatorProfileTab;
 
 const tabs: { id: CreatorTab; label: string }[] = [
   { id: "overview", label: "概要" },
@@ -62,9 +69,18 @@ export function CreatorProfileRealView({
 }) {
   const hideV0Mock = shouldHideV0MockContent();
   useRequireAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { getFollowerCount, refreshFollowerCount } = useGames();
-  const [activeTab, setActiveTab] = useState<CreatorTab>("overview");
+  const activeTab = parseCreatorProfileTab(searchParams.get("tab"));
   const followerCount = getFollowerCount(profile.routeId, 0);
+
+  const setTab = useCallback(
+    (tab: CreatorTab) => {
+      router.replace(buildCreatorProfileTabHref(profile.routeId, tab));
+    },
+    [profile.routeId, router],
+  );
 
   useEffect(() => {
     void refreshFollowerCount(profile.userId);
@@ -145,7 +161,7 @@ export function CreatorProfileRealView({
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => setTab(tab.id)}
                   className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium ${
                     activeTab === tab.id
                       ? "border-violet-500 text-violet-200"
@@ -225,7 +241,7 @@ export function CreatorProfileRealView({
                 {profile.recentDevlogs.map((log) => (
                   <li key={log.id}>
                     <Link
-                      href={`${gameDetailHref(log.gameId)}?tab=devlog`}
+                      href={buildGameDetailTabHref(log.gameId, "devlog")}
                       className="block rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-4 transition-colors hover:border-zinc-700"
                     >
                       <p className="text-xs text-zinc-500">

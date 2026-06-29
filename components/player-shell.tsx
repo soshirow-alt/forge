@@ -22,7 +22,7 @@ import {
 import { useGames } from "@/components/games-provider";
 import { useStudioEntryGate } from "@/components/studio-entry-gate-provider";
 import { PlatformFeedbackSidebarBox } from "@/components/platform-feedback-sidebar-box";
-import { shouldBypassStudioLoginOnPreview } from "@/lib/preview-v0";
+import { useStudioLoginHrefBypass } from "@/lib/forge-deployment-context";
 import { WATCH_TAB_LABEL } from "@/lib/watch-ui-labels";
 
 const primaryLinks = [
@@ -187,7 +187,7 @@ export function PlayerShell({
   const { user, hydrated, logout } = useAuth();
   const { getUnreadNotificationCount } = useGames();
   const { attemptStudioEntry } = useStudioEntryGate();
-  const previewStudioBypass = shouldBypassStudioLoginOnPreview();
+  const previewStudioBypass = useStudioLoginHrefBypass();
   const resolvedNotificationBadge =
     notificationBadge ?? (user ? getUnreadNotificationCount() : 0);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
