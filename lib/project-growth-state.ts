@@ -1,5 +1,6 @@
 import { sortDevlogsNewestFirst, type DevlogEntry } from "@/lib/devlogs";
 import type { Game } from "@/lib/mock-games";
+import { projectStudioDevlogHref } from "@/lib/project-nurture-links";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import {
   resolveVoiceSignalForGame,
@@ -391,7 +392,7 @@ export function buildNurtureDisplayContext(
         },
         secondaryCta: {
           label: "修正が終わった → 変更を記録する",
-          href: `/projects/${gameId}/devlog/new`,
+          href: projectStudioDevlogHref(gameId),
         },
         primaryOpensReadPanel: false,
         primaryOpensModifyGameModal: true,
@@ -408,7 +409,7 @@ export function buildNurtureDisplayContext(
           "記録した変更を、プレイヤーに届けましょう。新verを公開すると、追跡中のプレイヤーに更新が通知されます。",
         primaryCta: {
           label: "新verを公開する",
-          href: `/projects/${gameId}/devlog/new`,
+          href: projectStudioDevlogHref(gameId),
         },
         primaryOpensReadPanel: false,
         primaryOpensModifyGameModal: false,

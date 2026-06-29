@@ -7,7 +7,7 @@ import {
   formatActivityDate,
   getUnifiedProjectHistory,
 } from "@/lib/project-activity";
-import { GAME_PROJECT_HISTORY_SECTION_ID } from "@/lib/project-nurture-links";
+import { GAME_PROJECT_HISTORY_SECTION_ID, projectStudioDevlogHref } from "@/lib/project-nurture-links";
 import type { Game } from "@/lib/mock-games";
 import type { ProjectHistoryEntry } from "@/lib/project-activity";
 
@@ -63,10 +63,10 @@ export function GameProjectHistorySection({ game }: GameProjectHistorySectionPro
         </div>
         {canPost && (
           <Link
-            href={`/projects/${game.id}/devlog/new`}
+            href={projectStudioDevlogHref(game.id)}
             className="shrink-0 cursor-pointer rounded-md border border-zinc-700 px-2.5 py-1 text-xs font-medium text-zinc-200 transition-colors hover:border-orange-500/50 hover:bg-zinc-900 hover:text-orange-400"
           >
-            開発ログを書く
+            新verの開発ログ
           </Link>
         )}
       </div>

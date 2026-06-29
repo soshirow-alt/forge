@@ -13,7 +13,7 @@ import {
   mergePlayEnvironmentIntoTags,
   type PlayEnvironmentFormState,
 } from "@/lib/play-environment";
-import { projectStudioPath } from "@/lib/project-nurture-links";
+import { projectStudioDevlogHref, projectStudioPath } from "@/lib/project-nurture-links";
 import { validatePlayAccess } from "@/lib/project-access-form";
 import {
   PROJECT_INTRO_HINT,
@@ -402,10 +402,10 @@ export function SubmitPage() {
                   </li>
                   <li>
                     <Link
-                      href={`/projects/${submittedGameId}/devlog/new`}
+                      href={projectStudioDevlogHref(submittedGameId)}
                       className="flex w-full items-center justify-between rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3.5 text-sm font-semibold text-zinc-100 transition-colors hover:border-violet-500/40 hover:text-violet-200"
                     >
-                      開発ログを書く
+                      新verの開発ログ
                       <span aria-hidden="true">→</span>
                     </Link>
                     <p className="mt-1.5 text-xs text-zinc-600">

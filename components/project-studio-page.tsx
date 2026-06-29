@@ -9,6 +9,7 @@ import { StudioShell } from "@/components/studio-shell";
 import { GameThumbnail } from "@/components/game-thumbnail";
 import { ProjectReleaseStudioPanel } from "@/components/project-release-studio-panel";
 import { StudioImprovementLoop } from "@/components/studio-improvement-loop";
+import { DevlogComposeModal } from "@/components/devlog-compose-modal";
 import { ProjectDistributionLinksModal } from "@/components/project-distribution-links-modal";
 import { ProjectEditModal } from "@/components/project-edit-modal";
 import { useGames } from "@/components/games-provider";
@@ -68,11 +69,16 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   const [openFeedbackPanel, setOpenFeedbackPanel] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [distributionLinksModalOpen, setDistributionLinksModalOpen] = useState(false);
+  const [devlogModalOpen, setDevlogModalOpen] = useState(false);
 
   useEffect(() => {
     const edit = searchParams.get("edit");
-    if (edit === "prompts") {
-      router.replace(`/projects/${projectId}/devlog/new#version-prompts`);
+    const devlog = searchParams.get("devlog");
+    if (edit === "prompts" || devlog === "1") {
+      setDevlogModalOpen(true);
+      if (searchParams.toString()) {
+        router.replace(projectStudioPath(projectId));
+      }
       return;
     }
     if (edit === "project") {
@@ -193,10 +199,17 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
 
         <StudioProjectToolbar
           projectId={projectId}
+          onOpenNewVersionDevlog={() => setDevlogModalOpen(true)}
           onEditProject={() => setEditModalOpen(true)}
           onEditDistribution={() => setDistributionLinksModalOpen(true)}
         />
 
+        <DevlogComposeModal
+          projectId={projectId}
+          playableVersion={growthSnapshot.playableVersion}
+          open={devlogModalOpen}
+          onClose={() => setDevlogModalOpen(false)}
+        />
         <ProjectEditModal
           projectId={projectId}
           open={editModalOpen}

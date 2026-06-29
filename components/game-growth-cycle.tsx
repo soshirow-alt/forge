@@ -28,7 +28,7 @@ import {
 import type { OwnerVoiceResponseDetail } from "@/lib/supabase/voice-engagement";
 import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
 import { buildVoicePromptAggregates } from "@/lib/voice-aggregates";
-import { gamePlayHref } from "@/lib/project-nurture-links";
+import { gamePlayHref, projectStudioDevlogHref } from "@/lib/project-nurture-links";
 import { Check, Copy, Link2, MessageSquare, Play, Upload, Wrench } from "lucide-react";
 
 const primaryButtonClassName =
@@ -524,7 +524,7 @@ function StepDetailPanel({
     case "devlog":
       return (
         <Link
-          href={`/projects/${game.id}/devlog/new`}
+          href={projectStudioDevlogHref(game.id)}
           className="cursor-pointer inline-flex items-center rounded-lg bg-violet-600/20 px-4 py-2 text-sm font-medium text-violet-200 ring-1 ring-violet-500/30 hover:bg-violet-600/30"
         >
           変更内容を記録する →
@@ -539,7 +539,7 @@ function StepDetailPanel({
             latestPublishedDevlogId={growth.latestPublishedDevlogId}
           />
           <Link
-            href={`/projects/${game.id}/devlog/new`}
+            href={projectStudioDevlogHref(game.id)}
             className="cursor-pointer inline-flex items-center rounded-lg bg-violet-600/20 px-4 py-2 text-sm font-medium text-violet-200 ring-1 ring-violet-500/30 hover:bg-violet-600/30"
           >
             新verを公開する →

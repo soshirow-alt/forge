@@ -45,8 +45,6 @@ export function StudioDevlogNewPage({ projectId }: { projectId: string }) {
   const prompts = useDevlogComposePrompts({
     projectId,
     currentVersionKey,
-    publishNewVersion,
-    newVersionInput: newVersion,
     loadPrompts,
   });
 
@@ -63,7 +61,10 @@ export function StudioDevlogNewPage({ projectId }: { projectId: string }) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const promptResult = prompts.resolvePromptsForSave();
+    const targetVersionKey = publishNewVersion
+      ? studioDisplayVersionToKey(newVersion.trim() || currentVersion)
+      : currentVersionKey;
+    const promptResult = prompts.resolvePromptsForVersion(targetVersionKey);
     if (!promptResult.ok) {
       setSaveMessage(promptResult.message);
       return;
@@ -195,7 +196,11 @@ export function StudioDevlogNewPage({ projectId }: { projectId: string }) {
               onModeChange={prompts.setPromptMode}
               drafts={prompts.promptDrafts}
               onDraftsChange={prompts.setPromptDrafts}
-              versionLabel={prompts.versionLabel}
+              versionLabel={
+                publishNewVersion && newVersion.trim()
+                  ? `${prompts.currentVersionLabel} → v${studioDisplayVersionToKey(newVersion.trim())}`
+                  : prompts.currentVersionLabel
+              }
               showValidation={prompts.showValidation}
             />
           )}

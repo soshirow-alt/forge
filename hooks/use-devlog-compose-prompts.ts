@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   createEmptyPromptDraft,
   sanitizePromptDrafts,
@@ -8,14 +8,11 @@ import {
   type DeveloperPromptDraft,
   type DeveloperPromptInput,
 } from "@/lib/version-prompt-form";
-import { normalizePlayableVersionInput } from "@/lib/playable-version";
 import { promptInputsToDrafts } from "@/lib/studio-version-prompt-v0-store";
 
 type UseDevlogComposePromptsOptions = {
   projectId: string;
   currentVersionKey: string;
-  publishNewVersion: boolean;
-  newVersionInput: string;
   loadPrompts: (
     projectId: string,
     versionKey: string,
@@ -25,19 +22,8 @@ type UseDevlogComposePromptsOptions = {
 export function useDevlogComposePrompts({
   projectId,
   currentVersionKey,
-  publishNewVersion,
-  newVersionInput,
   loadPrompts,
 }: UseDevlogComposePromptsOptions) {
-  const targetVersionKey = useMemo(() => {
-    if (publishNewVersion && newVersionInput.trim()) {
-      return normalizePlayableVersionInput(newVersionInput);
-    }
-    return currentVersionKey;
-  }, [publishNewVersion, newVersionInput, currentVersionKey]);
-
-  const versionLabel = `v${targetVersionKey}`;
-
   const [promptMode, setPromptMode] = useState<"none" | "custom">("none");
   const [promptDrafts, setPromptDrafts] = useState<DeveloperPromptDraft[]>([
     createEmptyPromptDraft(),
@@ -51,7 +37,7 @@ export function useDevlogComposePrompts({
     let active = true;
     setLoading(true);
 
-    void stableLoadPrompts(projectId, targetVersionKey).then((inputs) => {
+    void stableLoadPrompts(projectId, currentVersionKey).then((inputs) => {
       if (!active) {
         return;
       }
@@ -70,20 +56,13 @@ export function useDevlogComposePrompts({
     return () => {
       active = false;
     };
-  }, [projectId, targetVersionKey, stableLoadPrompts]);
+  }, [projectId, currentVersionKey, stableLoadPrompts]);
 
-  function resolvePromptsForSave():
+  function resolvePromptsForVersion(versionKey: string):
     | { ok: true; prompts: DeveloperPromptInput[]; versionKey: string }
     | { ok: false; message: string } {
-    if (publishNewVersion && !newVersionInput.trim()) {
-      return {
-        ok: false,
-        message: "新しいプレイ可能verのバージョン名を入力してください。",
-      };
-    }
-
     if (promptMode !== "custom") {
-      return { ok: true, prompts: [], versionKey: targetVersionKey };
+      return { ok: true, prompts: [], versionKey };
     }
 
     const validation = validatePromptDrafts(promptDrafts);
@@ -98,13 +77,12 @@ export function useDevlogComposePrompts({
     return {
       ok: true,
       prompts: sanitizePromptDrafts(promptDrafts),
-      versionKey: targetVersionKey,
+      versionKey,
     };
   }
 
   return {
-    targetVersionKey,
-    versionLabel,
+    currentVersionLabel: `v${currentVersionKey}`,
     promptMode,
     setPromptMode,
     promptDrafts,
@@ -112,6 +90,6 @@ export function useDevlogComposePrompts({
     showValidation,
     setShowValidation,
     loading,
-    resolvePromptsForSave,
+    resolvePromptsForVersion,
   };
 }

@@ -26,6 +26,10 @@ export function projectStudioPath(projectId: string): string {
   return `/projects/${projectId}/studio`;
 }
 
+export function projectStudioDevlogHref(projectId: string): string {
+  return `${projectStudioPath(projectId)}?devlog=1`;
+}
+
 export function projectStudioFeedbackHref(projectId: string): string {
   return `${projectStudioPath(projectId)}#${PROJECT_STUDIO_FEEDBACK_SECTION_ID}`;
 }
@@ -80,14 +84,14 @@ export const PROJECT_NURTURE_ACTIONS: ProjectNurtureAction[] = [
   {
     id: "edit-prompts",
     label: "プレイヤーへの問い",
-    href: (id) => `/projects/${id}/devlog/new#version-prompts`,
-    description: "開発ログから ver ごとに設定",
+    href: projectStudioDevlogHref,
+    description: "新verの開発ログから設定",
   },
   {
     id: "write-devlog",
-    label: "開発ログを書く",
-    href: (id) => `/projects/${id}/devlog/new`,
-    description: "改善を記録して公開",
+    label: "新verの開発ログ",
+    href: projectStudioDevlogHref,
+    description: "変更の記録と新ver公開",
   },
   {
     id: "edit-project",
