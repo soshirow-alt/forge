@@ -70,24 +70,14 @@ export function VersionPromptEditorDialog({
         >
           キャンセル
         </button>
-        {onConfirm ? (
-          <button
-            type="button"
-            onClick={() => void onConfirm()}
-            disabled={confirming}
-            className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {confirming ? "保存中…" : confirmLabel}
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
-          >
-            閉じる
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => (onConfirm ? void onConfirm() : onClose())}
+          disabled={confirming}
+          className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {confirming ? "保存中…" : confirmLabel}
+        </button>
       </div>
     </V0SimpleModal>
   );
