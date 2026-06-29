@@ -27,6 +27,8 @@ type VersionPromptEditorProps = {
   onDraftsChange: (drafts: DeveloperPromptDraft[]) => void;
   versionLabel?: string;
   showValidation?: boolean;
+  /** モーダル内 — 見出し・外枠を省略 */
+  embeddedInModal?: boolean;
 };
 
 export function VersionPromptEditor({
@@ -36,6 +38,7 @@ export function VersionPromptEditor({
   onDraftsChange,
   versionLabel = "現在のプレイ可能ver",
   showValidation = false,
+  embeddedInModal = false,
 }: VersionPromptEditorProps) {
   const activeCount = drafts.filter((draft) => draft.promptText.trim()).length;
 
@@ -62,18 +65,24 @@ export function VersionPromptEditor({
   return (
     <div
       id="version-prompts"
-      className="scroll-mt-24 space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4"
+      className={
+        embeddedInModal
+          ? "space-y-4"
+          : "scroll-mt-24 space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4"
+      }
     >
-      <div>
-        <p className="text-sm font-medium text-zinc-400">
-          プレイヤーへの問い{" "}
-          <span className="font-normal text-zinc-600">（任意）</span>
-        </p>
-        <p className="mt-1 text-xs leading-relaxed text-zinc-600">
-          {versionLabel}向けに、プレイ後に届けてほしい短い問いを設定できます。
-          未設定の場合は「もう一度遊びたい？」が表示されます。
-        </p>
-      </div>
+      {!embeddedInModal ? (
+        <div>
+          <p className="text-sm font-medium text-zinc-400">
+            プレイヤーへの問い{" "}
+            <span className="font-normal text-zinc-600">（任意）</span>
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-zinc-600">
+            {versionLabel}向けに、プレイ後に届けてほしい短い問いを設定できます。
+            未設定の場合は「もう一度遊びたい？」が表示されます。
+          </p>
+        </div>
+      ) : null}
 
       <div className="flex flex-wrap gap-2">
         <label

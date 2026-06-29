@@ -69,6 +69,36 @@ export function normalizeOverviewIntroduction(intro: string): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+/** 一覧・カード・ヒーロー用 — 作品紹介の先頭から自動生成 */
+export const PROJECT_DESCRIPTION_MAX_LENGTH = 160;
+
+export function deriveProjectDescription(introduction: string): string {
+  const trimmed = introduction.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  if (trimmed.length <= PROJECT_DESCRIPTION_MAX_LENGTH) {
+    return trimmed;
+  }
+
+  const cut = trimmed.lastIndexOf(" ", PROJECT_DESCRIPTION_MAX_LENGTH);
+  const index = cut > 80 ? cut : PROJECT_DESCRIPTION_MAX_LENGTH;
+  return trimmed.slice(0, index).trimEnd();
+}
+
+/** 編集フォームの初期値 — 長文優先、未設定時は旧 description */
+export function resolveEditableIntroduction(
+  overviewIntroduction: string | null | undefined,
+  description: string,
+): string {
+  const intro = overviewIntroduction?.trim();
+  if (intro) {
+    return intro;
+  }
+  return description.trim();
+}
+
 export function resolveDetailIntroduction(
   overviewIntroduction: string | null | undefined,
   description: string,

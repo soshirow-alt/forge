@@ -6,7 +6,14 @@
 
 ---
 
-## 2026-06-28 — Preview / main 同期手順を運用 doc に明文化
+## 2026-06-28 — 作品説明と作品紹介を統一・版問いをモーダル化
+
+- **統一** — 開発者は **作品紹介**（長文）だけ入力。一覧・カード・ヒーロー用の短い `description` は先頭から自動生成（最大 160 字付近）
+- **編集** — `/projects/{id}/edit` の「説明」欄を廃止。作品紹介・見どころは **「更新する」1 回**で保存（別ボタン廃止）
+- **投稿** — `/submit` も「作品紹介」1 欄に統一
+- **版問い** — `/submit`・`/projects/{id}/edit` で **「問いを設定」ボタン → モーダル**。フォーム本体からは外し、任意設定であることを明示
+
+---
 
 - **追加** — `docs/forge-triage-operations.md` **§8**（Preview push → 確認 → 本番 → Preview fast-forward）。`AGENTS.md`・`.cursor/rules/forge.mdc` に要約
 - **方針** — `origin/main` と `origin/preview/landing-01` を常に同一 commit に保つ（本番だけ先に進めない）

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, forwardRef, useImperativeHandle } from "react";
 import { Compass, ChevronDown, Plus, Sparkles, Trash2 } from "lucide-react";
 import type { GameDetailFeature, GameDetailV0 } from "@/lib/game-detail-v0-mock-data";
 import {
@@ -33,25 +33,40 @@ export type GameOverviewSavePayload = {
   features: GameDetailFeature[];
 };
 
-export function GameDetailOverviewV0Tab({
-  game,
-  editable = false,
-  hideVersionQuestions = true,
-  onSave,
-  onFeedback,
-  feedbackCtaLabel = "フィードバックする",
-  editIntroduction,
-}: {
+export type GameOverviewEditorHandle = {
+  validateAndGetPayload: () =>
+    | { ok: true; payload: GameOverviewSavePayload }
+    | { ok: false; error: string };
+};
+
+export const GameDetailOverviewV0Tab = forwardRef<
+  GameOverviewEditorHandle,
+  {
   game: GameDetailV0;
   editable?: boolean;
   /** 質問は ver ごとの開発ログ / 版問いで設定 */
   hideVersionQuestions?: boolean;
+  /** 親フォームに埋め込み — 単体保存ボタンを隠す */
+  embeddedInForm?: boolean;
   onSave?: (payload: GameOverviewSavePayload) => void;
   onFeedback?: () => void;
   feedbackCtaLabel?: string;
   /** 編集時 — DB の overview_introduction（未設定は空。description フォールバックは含めない） */
   editIntroduction?: string;
-}) {
+}
+>(function GameDetailOverviewV0Tab(
+  {
+  game,
+  editable = false,
+  hideVersionQuestions = true,
+  embeddedInForm = false,
+  onSave,
+  onFeedback,
+  feedbackCtaLabel = "フィードバックする",
+  editIntroduction,
+},
+  ref,
+) {
   const [introExpanded, setIntroExpanded] = useState(false);
   const [introduction, setIntroduction] = useState(
     editable ? (editIntroduction ?? "") : game.introduction,
@@ -111,12 +126,36 @@ export function GameDetailOverviewV0Tab({
       return;
     }
 
+    if (!introduction.trim()) {
+      setSaveValidationError("作品紹介を入力してください。");
+      return;
+    }
+
     setSaveValidationError(null);
     onSave?.({
       introduction,
       features: featureResult.features,
     });
   }
+
+  useImperativeHandle(ref, () => ({
+    validateAndGetPayload: () => {
+      if (!introduction.trim()) {
+        return { ok: false, error: "作品紹介を入力してください。" };
+      }
+      const featureResult = prepareOverviewFeaturesForSave(features);
+      if (!featureResult.ok) {
+        return { ok: false, error: featureResult.error };
+      }
+      return {
+        ok: true,
+        payload: {
+          introduction,
+          features: featureResult.features,
+        },
+      };
+    },
+  }));
 
   return (
     <div
@@ -238,7 +277,7 @@ export function GameDetailOverviewV0Tab({
           </p>
         ) : null}
 
-        {editable && (
+        {editable && !embeddedInForm && (
           <button
             type="button"
             onClick={handleSave}
@@ -302,7 +341,7 @@ export function GameDetailOverviewV0Tab({
             </button>
           )}
 
-          {editable && (
+          {editable && !embeddedInForm && (
             <button
               type="button"
               onClick={handleSave}
@@ -315,4 +354,4 @@ export function GameDetailOverviewV0Tab({
       )}
     </div>
   );
-}
+});

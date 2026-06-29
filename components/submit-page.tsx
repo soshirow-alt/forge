@@ -8,7 +8,7 @@ import { DeveloperProfileSetup } from "@/components/developer-profile-setup";
 import { PlayerShell } from "@/components/player-shell";
 import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
 import { ForgeSdkNote } from "@/components/forge-sdk-note";
-import { VersionPromptEditor } from "@/components/version-prompt-editor";
+import { VersionPromptSettingsModal } from "@/components/version-prompt-settings-modal";
 import { useGames } from "@/components/games-provider";
 import {
   EMPTY_PLAY_ENVIRONMENT_FORM,
@@ -106,7 +106,7 @@ export function SubmitPage() {
   const [submittedGameId, setSubmittedGameId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [genre, setGenre] = useState("");
-  const [description, setDescription] = useState("");
+  const [introduction, setIntroduction] = useState("");
   const [phase, setPhase] = useState("");
   const [visibility, setVisibility] = useState<ProjectVisibility>("public");
   const [estimatedPlayTime, setEstimatedPlayTime] = useState("");
@@ -284,7 +284,7 @@ export function SubmitPage() {
       title,
       creator: profile.publicName,
       genre,
-      description,
+      introduction,
       phase,
       thumbnailUrl,
       lookingForTesters: false,
@@ -317,7 +317,7 @@ export function SubmitPage() {
       setSuccess(true);
       setTitle("");
       setGenre("");
-      setDescription("");
+      setIntroduction("");
       setPhase("");
       setVisibility("public");
       setEstimatedPlayTime("");
@@ -623,19 +623,22 @@ export function SubmitPage() {
 
           <div>
             <label
-              htmlFor="description"
+              htmlFor="introduction"
               className="text-sm font-medium text-zinc-400"
             >
-              ゲーム説明
+              作品紹介
             </label>
+            <p className="mt-1 text-xs text-zinc-600">
+              作品詳細に載る紹介文です。一覧・カード用の短い説明は、先頭から自動で作られます。
+            </p>
             <textarea
-              id="description"
+              id="introduction"
               required
-              rows={5}
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
+              rows={6}
+              value={introduction}
+              onChange={(event) => setIntroduction(event.target.value)}
               className={`${inputClassName} resize-y`}
-              placeholder="ゲームの概要を入力してください"
+              placeholder="世界観・遊び方・この作品の魅力を紹介してください"
             />
           </div>
 
@@ -758,7 +761,7 @@ export function SubmitPage() {
             )}
           </div>
 
-          <VersionPromptEditor
+          <VersionPromptSettingsModal
             mode={testerNotesMode}
             onModeChange={setTesterNotesMode}
             drafts={promptDrafts}

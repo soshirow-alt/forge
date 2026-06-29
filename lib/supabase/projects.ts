@@ -3,6 +3,7 @@ import { mergeTagsWithRecruitment } from "@/lib/game-tags";
 import type { Game } from "@/lib/mock-games";
 import { DEFAULT_PLAYABLE_VERSION } from "@/lib/playable-version";
 import {
+  deriveProjectDescription,
   sanitizeOverviewFeatures,
   type ProjectOverviewFeature,
 } from "@/lib/project-overview";
@@ -52,13 +53,15 @@ function submitFormToInsertRow(
   data: SubmitFormData,
   owner: { ownerId: string; ownerName: string },
 ) {
+  const intro = data.introduction?.trim() ?? data.description?.trim() ?? "";
   return {
     owner_id: owner.ownerId,
     owner_name: owner.ownerName,
     title: data.title,
     creator: data.creator,
     genre: data.genre,
-    description: data.description,
+    description: deriveProjectDescription(intro) || intro,
+    overview_introduction: intro || null,
     phase: data.phase,
     status: data.lookingForTesters ? "テスター募集中" : data.phase,
     looking_for_testers: data.lookingForTesters,
@@ -134,13 +137,15 @@ export async function updateProjectFromSubmitForm(
   id: string,
   data: SubmitFormData,
 ): Promise<Game> {
+  const intro = data.introduction?.trim() ?? data.description?.trim() ?? "";
   const { data: row, error } = await supabase
     .from("projects")
     .update({
       title: data.title,
       creator: data.creator,
       genre: data.genre,
-      description: data.description,
+      description: deriveProjectDescription(intro) || intro,
+      overview_introduction: intro || null,
       phase: data.phase,
       status: data.lookingForTesters ? "テスター募集中" : data.phase,
       looking_for_testers: data.lookingForTesters,
@@ -178,7 +183,6 @@ export async function updateProjectDetailsInDb(
     .update({
       title: data.title,
       genre: data.genre,
-      description: data.description,
       status: data.lookingForTesters ? "テスター募集中" : currentPhase,
       looking_for_testers: data.lookingForTesters,
       tester_slots: data.lookingForTesters ? (data.testerSlots ?? null) : null,
@@ -214,11 +218,13 @@ export async function updateProjectOverviewInDb(
   id: string,
   data: ProjectOverviewUpdate,
 ): Promise<Game> {
+  const introText = data.overviewIntroduction?.trim() ?? "";
   const { data: row, error } = await supabase
     .from("projects")
     .update({
       overview_introduction: data.overviewIntroduction,
       overview_features: data.overviewFeatures,
+      description: deriveProjectDescription(introText) || introText,
     })
     .eq("id", id)
     .select("*")

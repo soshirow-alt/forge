@@ -41,7 +41,7 @@ function createDemoProjectForms(ownerName: string): SubmitFormData[] {
       genre: "アクションRPG",
       creator: ownerName,
       phase: "試作ver",
-      description:
+      introduction:
         "星の欠片で魔法を紡ぐ探索アクションRPG。廃都を巡り、失われた詠唱を集めて世界の均衡を取り戻すデモverです。",
       lookingForTesters: true,
       testerSlots: 12,
@@ -56,7 +56,7 @@ function createDemoProjectForms(ownerName: string): SubmitFormData[] {
       genre: "パズル",
       creator: ownerName,
       phase: "試作ver",
-      description:
+      introduction:
         "ネオンに彩られたデータ迷宮を解き明かすローグライク・パズル。記憶の断片を組み合わせ、失われた都市の真実に迫ります。",
       lookingForTesters: true,
       testerSlots: 8,
@@ -70,7 +70,7 @@ function createDemoProjectForms(ownerName: string): SubmitFormData[] {
       genre: "ホラー",
       creator: ownerName,
       phase: "プレイ可能ver",
-      description:
+      introduction:
         "霧に包まれた離島で起きる協力型ホラー体験。仲間と連携しながら、境界の向こうから迫る存在から逃げ延びるサバイバルデモ。",
       lookingForTesters: true,
       testerSlots: 15,
