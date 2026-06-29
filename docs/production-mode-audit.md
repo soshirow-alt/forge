@@ -99,7 +99,7 @@ Cursor は上記のうち **変更 diff が触れた URL** を build 後に報�
 | `components/studio-mypage-page.tsx` | 実績・フォロワータブ → Coming Soon |
 | `components/mypage-page.tsx` | FB履歴・実績 → Coming Soon |
 | `components/game-detail-v0-page.tsx` | 「みんなのFB」タブ → Coming Soon |
-| `components/influence-ranking-v0-page.tsx` | Coming Soon |
+| `components/influence-ranking-v0-page.tsx` | 本番は Supabase RPC 実データ（019 + 030 privacy）。空月は空状態 |
 | `app/studio/rankings/page.tsx` | Coming Soon |
 | `components/creator-profile-real-view.tsx` | 実績・フォロワー → Coming Soon |
 | `components/notifications-v0-page.tsx` | DB 通知のみ（mock 追加分なし） |

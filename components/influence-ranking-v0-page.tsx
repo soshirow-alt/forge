@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { PlayerShell } from "@/components/player-shell";
-import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import {
   influenceRankingMetricWeights,
@@ -13,8 +12,12 @@ import {
   type InfluenceRankingEntry,
   type InfluenceRankingMetrics,
 } from "@/lib/influence-ranking-v0-mock-data";
+import { getInfluenceRankingMonthOptions } from "@/lib/influence-ranking-month-catalog";
 import { useInfluenceRankingMonth } from "@/hooks/use-influence-ranking-month";
-import { playerRankingProfileHref } from "@/lib/player-ranking-profile";
+import {
+  isPlayerRankingProfileLinkEnabled,
+  playerRankingProfileHref,
+} from "@/lib/player-ranking-profile";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { RANKING_LIST_INITIAL } from "@/lib/ranking-v0-shared";
 import { ChevronLeft, ChevronRight, HelpCircle } from "lucide-react";
@@ -40,17 +43,17 @@ function RankingMetricSummary({ metrics }: { metrics: InfluenceRankingMetrics })
   );
 }
 
-function Top3Card({ entry }: { entry: InfluenceRankingEntry }) {
+function Top3Card({ entry, linkEnabled }: { entry: InfluenceRankingEntry; linkEnabled: boolean }) {
   const isFirst = entry.rank === 1;
-  return (
-    <Link
-      href={playerRankingProfileHref(entry.handle)}
-      className={`flex flex-col rounded-2xl border p-5 text-center transition-colors hover:border-violet-500/30 ${
-        isFirst
-          ? "border-amber-500/40 bg-gradient-to-b from-amber-500/10 to-zinc-900/40"
-          : "border-zinc-800/80 bg-zinc-900/40"
-      }`}
-    >
+  const className = `flex flex-col rounded-2xl border p-5 text-center transition-colors ${
+    linkEnabled ? "hover:border-violet-500/30" : ""
+  } ${
+    isFirst
+      ? "border-amber-500/40 bg-gradient-to-b from-amber-500/10 to-zinc-900/40"
+      : "border-zinc-800/80 bg-zinc-900/40"
+  }`;
+  const body = (
+    <>
       <p className="text-2xl" aria-hidden="true">
         {entry.rank === 1 ? "🥇" : entry.rank === 2 ? "🥈" : "🥉"}
       </p>
@@ -60,60 +63,69 @@ function Top3Card({ entry }: { entry: InfluenceRankingEntry }) {
       <p className={`mt-2 text-sm font-medium ${entry.titleColor}`}>{entry.title}</p>
       <p className="mt-2 text-lg font-bold text-violet-300">月間影響度 {entry.score.toLocaleString()}</p>
       <RankingMetricSummary metrics={entry.metrics} />
+    </>
+  );
+
+  if (!linkEnabled) {
+    return <div className={className}>{body}</div>;
+  }
+
+  return (
+    <Link href={playerRankingProfileHref(entry.handle)} className={className}>
+      {body}
     </Link>
   );
 }
 
-function PlayerCell({ entry }: { entry: InfluenceRankingEntry }) {
-  return (
-    <Link
-      href={playerRankingProfileHref(entry.handle)}
-      className="flex items-center gap-3 transition-colors hover:text-violet-200"
-    >
+function PlayerCell({ entry, linkEnabled }: { entry: InfluenceRankingEntry; linkEnabled: boolean }) {
+  const content = (
+    <>
       <ProfileAvatar src={entry.avatar} className="size-8" size={32} />
       <div className="min-w-0">
         <p className="font-medium text-white">{entry.name}</p>
         <p className="text-xs text-zinc-500">@{entry.handle}</p>
       </div>
+    </>
+  );
+
+  if (!linkEnabled) {
+    return <div className="flex items-center gap-3">{content}</div>;
+  }
+
+  return (
+    <Link
+      href={playerRankingProfileHref(entry.handle)}
+      className="flex items-center gap-3 transition-colors hover:text-violet-200"
+    >
+      {content}
     </Link>
   );
 }
 
-function InfluenceRankingComingSoon() {
+function InfluenceRankingEmptyState() {
   return (
-    <PlayerShell activeNav="ranking">
-      <header>
-        <h1 className="text-2xl font-bold text-white sm:text-3xl">月間影響度ランキング</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">
-          今月、開発者の意思決定・作品改善・確認依頼に対して良い影響を与えたプレイヤーを称えます。
-        </p>
-      </header>
-      <div className="mt-8">
-        <FeatureComingSoonPanel
-          title="月間影響度ランキング"
-          description="ランキングの集計・表示は準備中です。公開をお待ちください。"
-        />
-      </div>
-    </PlayerShell>
+    <div className="mt-8 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 px-6 py-12 text-center">
+      <p className="text-sm leading-relaxed text-zinc-400">
+        この月のランキングデータはまだありません。
+        <br />
+        開発者評価・改善に繋がったFB・確認依頼への貢献などが集計されると表示されます。
+      </p>
+    </div>
   );
-}
-
-function InfluenceRankingContent() {
-  if (shouldHideV0MockContent()) {
-    return <InfluenceRankingComingSoon />;
-  }
-
-  return <InfluenceRankingLive />;
 }
 
 function InfluenceRankingLive() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const hideV0Mock = shouldHideV0MockContent();
   const monthId = parseRankingMonthId(searchParams.get("month"));
   const { month, loaded: rankingLoaded, dataSource } = useInfluenceRankingMonth(monthId);
-  const monthIndex = influenceRankingMonths.findIndex((item) => item.id === monthId);
-  const canGoPrev = monthIndex < influenceRankingMonths.length - 1;
+  const monthOptions = hideV0Mock ? getInfluenceRankingMonthOptions() : influenceRankingMonths;
+  const monthIndex = monthOptions.findIndex((item) => item.id === monthId);
+  const canGoPrev = monthIndex < monthOptions.length - 1;
   const canGoNext = monthIndex > 0;
+  const profileLinksEnabled = isPlayerRankingProfileLinkEnabled();
+  const hasRankedPlayers = month.top3.length > 0 || month.list.length > 0;
   const [showAll, setShowAll] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
@@ -157,9 +169,7 @@ function InfluenceRankingLive() {
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">
               今月、開発者の意思決定・作品改善・確認依頼に対して良い影響を与えたプレイヤーを称えます。
               {rankingLoaded && dataSource === "live" ? (
-                <span className="mt-1 block text-xs text-emerald-400/90">
-                  実データ集計を表示中（役立った評価・採用・確認依頼への貢献など）
-                </span>
+                <span className="mt-1 block text-xs text-emerald-400/90">実データ集計を表示中</span>
               ) : null}
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -167,7 +177,7 @@ function InfluenceRankingLive() {
                 <button
                   type="button"
                   disabled={!canGoPrev}
-                  onClick={() => goMonth(influenceRankingMonths[monthIndex + 1]!.id)}
+                  onClick={() => goMonth(monthOptions[monthIndex + 1]!.id)}
                   className="text-zinc-500 transition-colors hover:text-zinc-300 disabled:cursor-not-allowed disabled:opacity-30"
                   aria-label="前月"
                 >
@@ -177,7 +187,7 @@ function InfluenceRankingLive() {
                 <button
                   type="button"
                   disabled={!canGoNext}
-                  onClick={() => goMonth(influenceRankingMonths[monthIndex - 1]!.id)}
+                  onClick={() => goMonth(monthOptions[monthIndex - 1]!.id)}
                   className="text-zinc-500 transition-colors hover:text-zinc-300 disabled:cursor-not-allowed disabled:opacity-30"
                   aria-label="次月"
                 >
@@ -188,51 +198,57 @@ function InfluenceRankingLive() {
             </div>
           </header>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            {month.top3.map((entry) => (
-              <Top3Card key={entry.rank} entry={entry} />
-            ))}
-          </div>
-
-          <div className="mt-8 overflow-hidden rounded-2xl border border-zinc-800/80">
-            <table className="w-full text-sm">
-              <thead className="bg-zinc-900/60 text-left text-xs text-zinc-500">
-                <tr>
-                  <th className="px-4 py-3">順位</th>
-                  <th className="px-4 py-3">プレイヤー</th>
-                  <th className="px-4 py-3">影響度スコア</th>
-                  <th className="hidden px-4 py-3 sm:table-cell">今月の称号</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-800/80">
-                {visibleList.map((entry) => (
-                  <tr key={entry.rank} className="bg-zinc-900/30">
-                    <td className="px-4 py-3 font-medium text-zinc-400">{entry.rank}</td>
-                    <td className="px-4 py-3">
-                      <PlayerCell entry={entry} />
-                    </td>
-                    <td className="px-4 py-3 font-semibold text-violet-300">
-                      {entry.score.toLocaleString()}
-                    </td>
-                    <td className="hidden px-4 py-3 sm:table-cell">
-                      <span className={`text-xs font-medium ${entry.titleColor}`}>
-                        {entry.title}
-                      </span>
-                    </td>
-                  </tr>
+          {rankingLoaded && !hasRankedPlayers ? (
+            <InfluenceRankingEmptyState />
+          ) : (
+            <>
+              <div className="mt-8 grid gap-4 sm:grid-cols-3">
+                {month.top3.map((entry) => (
+                  <Top3Card key={entry.rank} entry={entry} linkEnabled={profileLinksEnabled} />
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
 
-          {hasMore && (
-            <button
-              type="button"
-              onClick={() => setShowAll(true)}
-              className="mt-4 w-full rounded-xl border border-zinc-800 py-3 text-sm text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
-            >
-              もっと見る
-            </button>
+              <div className="mt-8 overflow-hidden rounded-2xl border border-zinc-800/80">
+                <table className="w-full text-sm">
+                  <thead className="bg-zinc-900/60 text-left text-xs text-zinc-500">
+                    <tr>
+                      <th className="px-4 py-3">順位</th>
+                      <th className="px-4 py-3">プレイヤー</th>
+                      <th className="px-4 py-3">影響度スコア</th>
+                      <th className="hidden px-4 py-3 sm:table-cell">今月の称号</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/80">
+                    {visibleList.map((entry) => (
+                      <tr key={entry.rank} className="bg-zinc-900/30">
+                        <td className="px-4 py-3 font-medium text-zinc-400">{entry.rank}</td>
+                        <td className="px-4 py-3">
+                          <PlayerCell entry={entry} linkEnabled={profileLinksEnabled} />
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-violet-300">
+                          {entry.score.toLocaleString()}
+                        </td>
+                        <td className="hidden px-4 py-3 sm:table-cell">
+                          <span className={`text-xs font-medium ${entry.titleColor}`}>
+                            {entry.title}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {hasMore && (
+                <button
+                  type="button"
+                  onClick={() => setShowAll(true)}
+                  className="mt-4 w-full rounded-xl border border-zinc-800 py-3 text-sm text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
+                >
+                  もっと見る
+                </button>
+              )}
+            </>
           )}
         </div>
 
@@ -262,16 +278,20 @@ function InfluenceRankingLive() {
           </section>
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
             <h2 className="text-sm font-semibold text-white">先月の TOP3</h2>
-            <ul className="mt-3 space-y-2">
-              {month.lastMonthTop3.map((entry) => (
-                <li key={entry.rank} className="flex justify-between text-sm">
-                  <span className="text-zinc-400">
-                    {entry.rank}位 {entry.name}
-                  </span>
-                  <span className="text-violet-300">{entry.score.toLocaleString()}</span>
-                </li>
-              ))}
-            </ul>
+            {month.lastMonthTop3.length > 0 ? (
+              <ul className="mt-3 space-y-2">
+                {month.lastMonthTop3.map((entry) => (
+                  <li key={entry.rank} className="flex justify-between text-sm">
+                    <span className="text-zinc-400">
+                      {entry.rank}位 {entry.name}
+                    </span>
+                    <span className="text-violet-300">{entry.score.toLocaleString()}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 text-xs text-zinc-600">先月のデータはまだありません。</p>
+            )}
             <button
               type="button"
               onClick={() => setShowArchive((value) => !value)}
@@ -284,7 +304,7 @@ function InfluenceRankingLive() {
             </button>
             {showArchive && (
               <ul className="mt-3 space-y-2 border-t border-zinc-800/80 pt-3">
-                {influenceRankingMonths.map((archiveMonth) => (
+                {monthOptions.map((archiveMonth) => (
                   <li key={archiveMonth.id}>
                     <button
                       type="button"
@@ -315,7 +335,7 @@ export function InfluenceRankingV0Page() {
         </PlayerShell>
       }
     >
-      <InfluenceRankingContent />
+      <InfluenceRankingLive />
     </Suspense>
   );
 }

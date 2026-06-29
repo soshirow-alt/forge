@@ -1,4 +1,6 @@
 import { profileAvatarPresets } from "@/lib/profile-avatar-presets";
+import { parseInfluenceRankingMonthId } from "@/lib/influence-ranking-month-catalog";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { RANKING_LIST_INITIAL, RANKING_MAX } from "@/lib/ranking-v0-shared";
 
 export { RANKING_LIST_INITIAL, RANKING_MAX };
@@ -160,6 +162,10 @@ export const influenceRankingList = influenceRankingMonths[0].list;
 export const lastMonthTop3 = influenceRankingMonths[0].lastMonthTop3;
 
 export function parseRankingMonthId(param: string | null): string {
+  if (shouldHideV0MockContent()) {
+    return parseInfluenceRankingMonthId(param);
+  }
+
   const found = influenceRankingMonths.find((month) => month.id === param);
   return found?.id ?? influenceRankingMonths[0].id;
 }
