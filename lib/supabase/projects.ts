@@ -9,6 +9,7 @@ import {
   type ProjectOverviewFeature,
 } from "@/lib/project-overview";
 import type { ProjectRow } from "@/lib/supabase/schema";
+import { writeProjectRowWithSchemaFallback } from "@/lib/supabase/project-write-compat";
 import type { ProjectEditFormData, SubmitFormData } from "@/lib/project-form";
 import {
   genresToLegacyGenreColumn,
@@ -148,17 +149,16 @@ export async function insertProject(
   data: SubmitFormData,
   owner: { ownerId: string; ownerName: string },
 ): Promise<Game> {
-  const { data: row, error } = await supabase
-    .from("projects")
-    .insert(submitFormToInsertRow(data, owner))
-    .select("*")
-    .single();
-
-  if (error) {
+  try {
+    const row = await writeProjectRowWithSchemaFallback(
+      async (payload) =>
+        supabase.from("projects").insert(payload).select("*").single(),
+      submitFormToInsertRow(data, owner),
+    );
+    return projectRowToGame(row as ProjectRow);
+  } catch (error) {
     throw new Error(mapProjectSubmitErrorMessage(error));
   }
-
-  return projectRowToGame(row as ProjectRow);
 }
 
 export async function updateProjectFromSubmitForm(
@@ -169,9 +169,10 @@ export async function updateProjectFromSubmitForm(
   const intro = data.introduction?.trim() ?? data.description?.trim() ?? "";
   const { genres, genre } = projectGenresForDb(data.genres);
   const thumbnails = projectThumbnailsForDb(data.thumbnailUrls);
-  const { data: row, error } = await supabase
-    .from("projects")
-    .update({
+  const row = await writeProjectRowWithSchemaFallback(
+    async (payload) =>
+      supabase.from("projects").update(payload).eq("id", id).select("*").single(),
+    {
       title: data.title,
       creator: data.creator,
       genre,
@@ -187,21 +188,15 @@ export async function updateProjectFromSubmitForm(
       tags: mergeTagsWithRecruitment(data.tags, data.lookingForTesters),
       play_url: data.playUrl,
       estimated_play_time: data.estimatedPlayTime ?? null,
-    steam_url: normalizeExternalUrlForDb(data.steamUrl),
-    itch_url: normalizeExternalUrlForDb(data.itchUrl),
-    github_url: normalizeExternalUrlForDb(data.githubUrl),
-    discord_url: normalizeExternalUrlForDb(data.discordUrl),
-    official_url: normalizeExternalUrlForDb(data.officialUrl),
-    x_url: normalizeExternalUrlForDb(data.xUrl),
-    youtube_url: normalizeExternalUrlForDb(data.youtubeUrl),
-    })
-    .eq("id", id)
-    .select("*")
-    .single();
-
-  if (error) {
-    throw error;
-  }
+      steam_url: normalizeExternalUrlForDb(data.steamUrl),
+      itch_url: normalizeExternalUrlForDb(data.itchUrl),
+      github_url: normalizeExternalUrlForDb(data.githubUrl),
+      discord_url: normalizeExternalUrlForDb(data.discordUrl),
+      official_url: normalizeExternalUrlForDb(data.officialUrl),
+      x_url: normalizeExternalUrlForDb(data.xUrl),
+      youtube_url: normalizeExternalUrlForDb(data.youtubeUrl),
+    },
+  );
 
   return projectRowToGame(row as ProjectRow);
 }
@@ -213,9 +208,10 @@ export async function updateProjectDetailsInDb(
 ): Promise<Game> {
   const { genres, genre } = projectGenresForDb(data.genres);
   const thumbnails = projectThumbnailsForDb(data.thumbnailUrls);
-  const { data: row, error } = await supabase
-    .from("projects")
-    .update({
+  const row = await writeProjectRowWithSchemaFallback(
+    async (payload) =>
+      supabase.from("projects").update(payload).eq("id", id).select("*").single(),
+    {
       title: data.title,
       genre,
       genres,
@@ -228,22 +224,16 @@ export async function updateProjectDetailsInDb(
       tags: mergeTagsWithRecruitment(data.tags, data.lookingForTesters),
       play_url: data.playUrl,
       estimated_play_time: data.estimatedPlayTime ?? null,
-    steam_url: normalizeExternalUrlForDb(data.steamUrl),
-    itch_url: normalizeExternalUrlForDb(data.itchUrl),
-    github_url: normalizeExternalUrlForDb(data.githubUrl),
-    discord_url: normalizeExternalUrlForDb(data.discordUrl),
-    official_url: normalizeExternalUrlForDb(data.officialUrl),
-    x_url: normalizeExternalUrlForDb(data.xUrl),
-    youtube_url: normalizeExternalUrlForDb(data.youtubeUrl),
+      steam_url: normalizeExternalUrlForDb(data.steamUrl),
+      itch_url: normalizeExternalUrlForDb(data.itchUrl),
+      github_url: normalizeExternalUrlForDb(data.githubUrl),
+      discord_url: normalizeExternalUrlForDb(data.discordUrl),
+      official_url: normalizeExternalUrlForDb(data.officialUrl),
+      x_url: normalizeExternalUrlForDb(data.xUrl),
+      youtube_url: normalizeExternalUrlForDb(data.youtubeUrl),
       visibility: data.visibility,
-    })
-    .eq("id", id)
-    .select("*")
-    .single();
-
-  if (error) {
-    throw error;
-  }
+    },
+  );
 
   return projectRowToGame(row as ProjectRow);
 }

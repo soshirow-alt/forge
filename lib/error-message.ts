@@ -36,7 +36,15 @@ export function mapProjectSubmitErrorMessage(error: unknown): string {
     message.includes("x_url") ||
     message.includes("overview_introduction")
   ) {
-    return "投稿に失敗しました。データベースの更新が未適用の可能性があります。しばらくしてから再度お試しください。";
+    return "投稿に失敗しました。Supabase に migration 021・022・033・034・035 が未適用の可能性があります。Dashboard で SQL を適用するか、時間をおいて再度お試しください。";
+  }
+
+  if (
+    message.toLowerCase().includes("payload") ||
+    message.toLowerCase().includes("too large") ||
+    message.toLowerCase().includes("request entity too large")
+  ) {
+    return "投稿データが大きすぎます。サムネイルの枚数やサイズを減らして再度お試しください。";
   }
 
   if (code === "42501" || message.toLowerCase().includes("row-level security")) {

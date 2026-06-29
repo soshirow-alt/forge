@@ -30,7 +30,7 @@ export const authPrimaryButtonClassName =
 export const authSecondaryButtonClassName =
   "block w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-6 py-3.5 text-center text-base font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-800/80";
 
-/** Controlled inputs can block Chrome autofill until the user focuses a field. */
+/** @deprecated Prefer uncontrolled auth fields or server actions. Kept for settings forms. */
 export function useAuthAutofillUnlock() {
   const [unlocked, setUnlocked] = useState(false);
 
@@ -271,7 +271,7 @@ export function PasswordInput({
   id,
   name,
   value,
-  defaultValue = "",
+  defaultValue,
   onChange,
   placeholder,
   autoComplete,
@@ -292,6 +292,8 @@ export function PasswordInput({
 }) {
   const [visible, setVisible] = useState(false);
   const controlled = value !== undefined;
+  const uncontrolledProps =
+    !controlled && defaultValue !== undefined ? { defaultValue } : {};
 
   return (
     <div className="relative">
@@ -306,7 +308,7 @@ export function PasswordInput({
         onFocus={onFocus}
         {...(controlled
           ? { value, onChange: (event) => onChange?.(event.target.value) }
-          : { defaultValue })}
+          : uncontrolledProps)}
         className={`${authInputClassName} pr-12`}
         placeholder={placeholder}
       />

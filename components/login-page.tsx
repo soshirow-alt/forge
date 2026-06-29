@@ -1,65 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useActionState } from "react";
 import {
   AuthPageShell,
   OAuthComingSoonSection,
-  PasswordInput,
   authInputClassName,
   handleAuthFormEnterKey,
 } from "@/components/auth-layout";
-import { useAuth } from "@/components/auth-provider";
-import { getAuthErrorMessage } from "@/lib/auth";
-import { resolvePostLoginPath } from "@/lib/login-return-url";
+import { loginAction, type LoginActionState } from "@/lib/auth-login-action";
+
+const initialLoginState: LoginActionState = { error: null };
 
 export function LoginPage({
   supabaseConfigured,
+  returnParam,
+  callbackError,
+  notice,
 }: {
   supabaseConfigured: boolean;
+  returnParam: string | null;
+  callbackError: string | null;
+  notice: string | null;
 }) {
-  const searchParams = useSearchParams();
-  const returnParam = searchParams.get("return");
-  const callbackError = searchParams.get("error");
-  const notice = searchParams.get("notice");
-
-  const { user, hydrated, signIn } = useAuth();
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (callbackError === "auth_callback") {
-      setError(
-        "メール確認リンクが無効または期限切れです。確認メールを再送するか、ログインをお試しください。",
-      );
-    }
-  }, [callbackError]);
-
-  useEffect(() => {
-    if (hydrated && user) {
-      window.location.href = resolvePostLoginPath(returnParam);
-    }
-  }, [hydrated, user, returnParam]);
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-    setSubmitting(true);
-
-    const formData = new FormData(event.currentTarget);
-    const email = String(formData.get("email") ?? "").trim();
-    const password = String(formData.get("password") ?? "");
-
-    try {
-      await signIn(email, password);
-      window.location.href = resolvePostLoginPath(returnParam);
-    } catch (caught) {
-      const authError = caught as { message?: string };
-      setError(getAuthErrorMessage(authError.message ?? "認証に失敗しました。"));
-      setSubmitting(false);
-    }
-  }
+  const [state, formAction, pending] = useActionState(loginAction, initialLoginState);
+  const error = state.error ?? callbackError;
 
   return (
     <AuthPageShell active="login">
@@ -84,12 +49,14 @@ export function LoginPage({
         )}
 
         <form
-          onSubmit={handleSubmit}
-          onKeyDown={handleAuthFormEnterKey}
+          action={formAction}
           method="post"
           autoComplete="on"
+          onKeyDown={handleAuthFormEnterKey}
           className="mt-8 space-y-4"
         >
+          <input type="hidden" name="return" value={returnParam ?? ""} />
+
           <div>
             <label htmlFor="email" className="text-sm font-medium text-zinc-400">
               メールアドレス
@@ -99,7 +66,9 @@ export function LoginPage({
               name="email"
               type="email"
               required
-              autoComplete="username"
+              autoComplete="username email"
+              inputMode="email"
+              spellCheck={false}
               className={authInputClassName}
               placeholder="メールアドレス"
             />
@@ -109,12 +78,15 @@ export function LoginPage({
             <label htmlFor="password" className="text-sm font-medium text-zinc-400">
               パスワード
             </label>
-            <PasswordInput
+            <input
               id="password"
               name="password"
-              placeholder="パスワード"
+              type="password"
+              required
               autoComplete="current-password"
               minLength={6}
+              className={authInputClassName}
+              placeholder="パスワード"
             />
           </div>
 
@@ -135,10 +107,10 @@ export function LoginPage({
 
           <button
             type="submit"
-            disabled={submitting || !supabaseConfigured}
+            disabled={pending || !supabaseConfigured}
             className="w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-violet-500/20 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {submitting ? "処理中..." : "ログイン"}
+            {pending ? "処理中..." : "ログイン"}
           </button>
         </form>
 
