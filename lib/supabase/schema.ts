@@ -149,6 +149,8 @@ export type DeveloperProfileRow = {
   profile: string;
   x_account: string | null;
   website: string | null;
+  discord_url: string | null;
+  youtube_url: string | null;
   created_at: string;
   updated_at: string;
 };

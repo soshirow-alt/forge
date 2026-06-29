@@ -4,6 +4,25 @@
 
 ---
 
+## 2026-06-28 — 外部リンク入力をグループ化・追加式 UI に
+
+- **変更** — `/submit` と `/projects/{id}/edit` の外部リンクを **3 グループ**（ストア・配布先 / コミュニティ・広報 / 開発情報）に整理
+- **変更** — 7 件すべてを最初から表示せず、グループ内の **＋ ボタン** で必要なリンク種別だけ入力欄を開く。× で削除
+- **既存 URL** — 編集画面では保存済みリンクは自動で入力欄を表示
+- **自動入力** — Discord / X / YouTube / 公式サイトは開発者プロフィール（X・Web）または **他作品で最後に使った URL** を空欄に初期入力（Steam / itch / GitHub は作品ごと）
+
+---
+
+## 2026-06-28 — 開発者プロフィールに Discord / YouTube を追加
+
+- **追加** — `developer_profiles.discord_url` / `youtube_url`（**migration 032**）。初回登録フォームでも入力可
+- **表示** — `/creators/{id}` に Discord・YouTube リンクを表示（X・公式サイトと並列）。プロフィール未設定時は **過去作品の URL をフォールバック表示**
+- **同期** — 作品投稿・編集で Discord / YouTube / X / 公式を保存したら、開発者プロフィールにも自動反映（次回以降の prefill と公開プロフィール用）
+- **作品詳細** — 従来どおり作品に保存した外部リンクは `/games/{id}` サイドバーにも表示
+- **オーナー** — Supabase Dashboard で `032_developer_profile_social_links.sql` を適用
+
+---
+
 ## 2026-06-28 — 月間影響度ランキングを本番で開放
 
 - **変更** — `/rankings/influence` の Coming Soon を解除。本番は **Supabase RPC `get_monthly_player_influence_ranking`**（019、030 で privacy 除外）の実データを表示

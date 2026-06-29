@@ -107,6 +107,63 @@ export const EXTERNAL_LINK_FORM_SPECS: {
   { key: "github", field: "githubUrl", label: "GitHub", placeholder: "https://github.com/..." },
 ];
 
+export type ExternalLinkGroupId = "distribution" | "community" | "development";
+
+export const EXTERNAL_LINK_GROUPS: {
+  id: ExternalLinkGroupId;
+  title: string;
+  description: string;
+  keys: ExternalLinkFormKey[];
+}[] = [
+  {
+    id: "distribution",
+    title: "ストア・配布先",
+    description: "Steam や itch.io など、作品本体のページ",
+    keys: ["steam", "itch"],
+  },
+  {
+    id: "community",
+    title: "コミュニティ・広報",
+    description: "Discord・SNS・動画・公式サイトなど、告知・交流向け",
+    keys: ["discord", "x", "youtube", "official"],
+  },
+  {
+    id: "development",
+    title: "開発情報",
+    description: "ソースコードや開発リポジトリ",
+    keys: ["github"],
+  },
+];
+
+export function getExternalLinkSpec(key: ExternalLinkFormKey) {
+  return EXTERNAL_LINK_FORM_SPECS.find((spec) => spec.key === key)!;
+}
+
+export function externalLinkKeysWithValues(
+  values: ProjectExternalLinksInput,
+): ExternalLinkFormKey[] {
+  return EXTERNAL_LINK_FORM_SPECS.filter((spec) =>
+    Boolean(values[spec.field]?.trim()),
+  ).map((spec) => spec.key);
+}
+
+export type ExternalLinkFormValues = Record<
+  keyof ProjectExternalLinksInput,
+  string
+>;
+
+export function emptyExternalLinkFormValues(): ExternalLinkFormValues {
+  return {
+    steamUrl: "",
+    itchUrl: "",
+    discordUrl: "",
+    xUrl: "",
+    officialUrl: "",
+    youtubeUrl: "",
+    githubUrl: "",
+  };
+}
+
 function trimUrl(url: string | undefined): string | undefined {
   const trimmed = url?.trim();
   return trimmed || undefined;

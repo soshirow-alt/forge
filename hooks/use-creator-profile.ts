@@ -3,9 +3,8 @@
 import { useMemo } from "react";
 import { useGames } from "@/components/games-provider";
 import type { DevlogEntry } from "@/lib/devlogs";
-import {
-  resolveOwnerUserIdFromRouteId,
-} from "@/lib/developer-profiles";
+import { resolveDeveloperSocialLinksForDisplay } from "@/lib/developer-external-link-defaults";
+import { resolveOwnerUserIdFromRouteId } from "@/lib/developer-profiles";
 import type { Game } from "@/lib/mock-games";
 import { isGamePublic } from "@/lib/project-visibility";
 
@@ -30,6 +29,8 @@ export type CreatorProfileResolved = {
   avatar: string;
   website?: string;
   xAccount?: string;
+  discordUrl?: string;
+  youtubeUrl?: string;
   games: CreatorProfileGameCard[];
   recentDevlogs: {
     id: string;
@@ -103,10 +104,13 @@ export function useCreatorProfile(routeId: string) {
     const ownerGames = submittedGames.filter(
       (game) => game.ownerId === userId && isGamePublic(game),
     );
+    const allOwnerGames = submittedGames.filter((game) => game.ownerId === userId);
 
     if (!stored && ownerGames.length === 0) {
       return null;
     }
+
+    const socialLinks = resolveDeveloperSocialLinksForDisplay(stored, allOwnerGames);
 
     const name =
       stored?.publicName ??
@@ -138,8 +142,10 @@ export function useCreatorProfile(routeId: string) {
       handle,
       bio,
       avatar: ownerGames[0]?.thumbnailUrl?.trim() || "/images/landing/game-1.png",
-      website: stored?.website,
-      xAccount: stored?.xAccount,
+      website: stored?.website || socialLinks.officialUrl || undefined,
+      xAccount: stored?.xAccount || socialLinks.xUrl || undefined,
+      discordUrl: socialLinks.discordUrl || undefined,
+      youtubeUrl: socialLinks.youtubeUrl || undefined,
       games,
       recentDevlogs: buildRecentDevlogs(ownerGames, allDevlogs),
       stats: {

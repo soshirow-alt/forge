@@ -5,6 +5,8 @@ export type DeveloperProfile = {
   profile: string;
   xAccount?: string;
   website?: string;
+  discordUrl?: string;
+  youtubeUrl?: string;
 };
 
 export type DeveloperProfileInput = {
@@ -12,6 +14,8 @@ export type DeveloperProfileInput = {
   profile: string;
   xAccount?: string;
   website?: string;
+  discordUrl?: string;
+  youtubeUrl?: string;
 };
 
 export function createDeveloperProfile(
@@ -25,6 +29,8 @@ export function createDeveloperProfile(
     profile: input.profile.trim(),
     xAccount: input.xAccount?.trim() || undefined,
     website: input.website?.trim() || undefined,
+    discordUrl: input.discordUrl?.trim() || undefined,
+    youtubeUrl: input.youtubeUrl?.trim() || undefined,
   };
 }
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { DeveloperProfileSetup } from "@/components/developer-profile-setup";
 import { PlayerShell } from "@/components/player-shell";
@@ -29,7 +29,9 @@ import {
 
 import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
 import { FORGE_FEATURE_TAG_OPTIONS } from "@/lib/forge-feature-tag-options";
-import { EXTERNAL_LINK_FORM_SPECS, type ExternalLinkFormKey } from "@/lib/game-links";
+import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
+import { getDeveloperSocialLinkDefaults } from "@/lib/developer-external-link-defaults";
+import type { ProjectExternalLinksInput } from "@/lib/game-links";
 
 const phaseOptions = DEVELOPMENT_PHASE_OPTIONS;
 
@@ -98,7 +100,7 @@ export function SubmitPage() {
   const editId = searchParams.get("edit");
   const { user, hydrated } = useAuth();
 
-  const { addSubmittedGame, getDeveloperProfileByUserId, saveDeveloperProfile, saveDeveloperVersionPrompts } =
+  const { addSubmittedGame, getDeveloperProfileByUserId, getOwnedProjects, saveDeveloperProfile, saveDeveloperVersionPrompts } =
     useGames();
 
   const developerProfile = user
@@ -122,9 +124,6 @@ export function SubmitPage() {
     createEmptyPromptDraft(),
   ]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [enabledExternalLinks, setEnabledExternalLinks] = useState<
-    ExternalLinkFormKey[]
-  >([]);
   const [steamUrl, setSteamUrl] = useState("");
   const [itchUrl, setItchUrl] = useState("");
   const [discordUrl, setDiscordUrl] = useState("");
@@ -138,6 +137,33 @@ export function SubmitPage() {
   const [promptSaveError, setPromptSaveError] = useState<string | null>(null);
   const [showPromptValidation, setShowPromptValidation] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const socialPrefillDoneRef = useRef(false);
+
+  useEffect(() => {
+    if (!user || socialPrefillDoneRef.current) {
+      return;
+    }
+
+    const ownedProjects = getOwnedProjects(user.id);
+    if (!developerProfile && ownedProjects.length === 0) {
+      return;
+    }
+
+    const defaults = getDeveloperSocialLinkDefaults(developerProfile, ownedProjects);
+    if (defaults.discordUrl) {
+      setDiscordUrl((current) => current || defaults.discordUrl);
+    }
+    if (defaults.xUrl) {
+      setXUrl((current) => current || defaults.xUrl);
+    }
+    if (defaults.youtubeUrl) {
+      setYoutubeUrl((current) => current || defaults.youtubeUrl);
+    }
+    if (defaults.officialUrl) {
+      setOfficialUrl((current) => current || defaults.officialUrl);
+    }
+    socialPrefillDoneRef.current = true;
+  }, [developerProfile, getOwnedProjects, user]);
 
   useEffect(() => {
     if (editId) {
@@ -188,78 +214,27 @@ export function SubmitPage() {
     );
   }
 
-  function toggleExternalLink(key: ExternalLinkFormKey) {
-    setEnabledExternalLinks((prev) => {
-      if (prev.includes(key)) {
-        switch (key) {
-          case "steam":
-            setSteamUrl("");
-            break;
-          case "itch":
-            setItchUrl("");
-            break;
-          case "discord":
-            setDiscordUrl("");
-            break;
-          case "x":
-            setXUrl("");
-            break;
-          case "official":
-            setOfficialUrl("");
-            break;
-          case "youtube":
-            setYoutubeUrl("");
-            break;
-          case "github":
-            setGithubUrl("");
-            break;
-        }
-        return prev.filter((item) => item !== key);
-      }
-      return [...prev, key];
-    });
-  }
-
-  function getExternalLinkUrl(key: ExternalLinkFormKey): string {
-    switch (key) {
-      case "steam":
-        return steamUrl;
-      case "itch":
-        return itchUrl;
-      case "discord":
-        return discordUrl;
-      case "x":
-        return xUrl;
-      case "official":
-        return officialUrl;
-      case "youtube":
-        return youtubeUrl;
-      case "github":
-        return githubUrl;
-    }
-  }
-
-  function setExternalLinkUrl(key: ExternalLinkFormKey, value: string) {
-    switch (key) {
-      case "steam":
+  function setExternalLinkField(field: keyof ProjectExternalLinksInput, value: string) {
+    switch (field) {
+      case "steamUrl":
         setSteamUrl(value);
         break;
-      case "itch":
+      case "itchUrl":
         setItchUrl(value);
         break;
-      case "discord":
+      case "discordUrl":
         setDiscordUrl(value);
         break;
-      case "x":
+      case "xUrl":
         setXUrl(value);
         break;
-      case "official":
+      case "officialUrl":
         setOfficialUrl(value);
         break;
-      case "youtube":
+      case "youtubeUrl":
         setYoutubeUrl(value);
         break;
-      case "github":
+      case "githubUrl":
         setGithubUrl(value);
         break;
     }
@@ -356,7 +331,6 @@ export function SubmitPage() {
       setTesterNotesMode("none");
       setPromptDrafts([createEmptyPromptDraft()]);
       setSelectedTags([]);
-      setEnabledExternalLinks([]);
       setSteamUrl("");
       setItchUrl("");
       setGithubUrl("");
@@ -797,66 +771,20 @@ export function SubmitPage() {
             versionLabel="初回のプレイ可能ver"
           />
 
-          <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
-            <div>
-              <p className="text-sm font-medium text-zinc-400">
-                関連リンク{" "}
-                <span className="font-normal text-zinc-600">（任意）</span>
-              </p>
-              <p className="mt-1 text-xs leading-relaxed text-zinc-600">
-                上のアクセスURLとは別に、作品ページに載せたいリンクです。Discord（コミュニティ用）や
-                GitHub（開発リポジトリ）など、テスター向けの補助情報に使います。
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {EXTERNAL_LINK_FORM_SPECS.map((option) => (
-                <label
-                  key={option.key}
-                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
-                    enabledExternalLinks.includes(option.key)
-                      ? "border-orange-500/40 bg-orange-500/5 text-orange-300"
-                      : "border-zinc-800 bg-zinc-900/60 text-zinc-300"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={enabledExternalLinks.includes(option.key)}
-                    onChange={() => toggleExternalLink(option.key)}
-                    className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
-                  />
-                  {option.label}
-                </label>
-              ))}
-            </div>
-            {enabledExternalLinks.map((key) => {
-              const label =
-                EXTERNAL_LINK_FORM_SPECS.find((option) => option.key === key)
-                  ?.label ?? key;
-              return (
-                <div key={key}>
-                  <label
-                    htmlFor={`external-${key}`}
-                    className="text-sm text-zinc-500"
-                  >
-                    {label} URL
-                  </label>
-                  <input
-                    id={`external-${key}`}
-                    type="url"
-                    value={getExternalLinkUrl(key)}
-                    onChange={(event) =>
-                      setExternalLinkUrl(key, event.target.value)
-                    }
-                    className={inputClassName}
-                    placeholder={
-                      EXTERNAL_LINK_FORM_SPECS.find((option) => option.key === key)
-                        ?.placeholder
-                    }
-                  />
-                </div>
-              );
-            })}
-          </div>
+          <ExternalLinksFormFields
+            formKey="submit"
+            values={{
+              steamUrl,
+              itchUrl,
+              discordUrl,
+              xUrl,
+              officialUrl,
+              youtubeUrl,
+              githubUrl,
+            }}
+            onChange={setExternalLinkField}
+            inputClassName={inputClassName}
+          />
 
           <div>
             <label htmlFor="thumbnail" className="text-sm font-medium text-zinc-400">

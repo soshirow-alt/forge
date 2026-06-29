@@ -13,7 +13,7 @@ import { useRequireAuth } from "@/hooks/use-require-auth";
 import type { CreatorProfileResolved } from "@/hooks/use-creator-profile";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
-import { BadgeCheck, Globe, MapPin } from "lucide-react";
+import { BadgeCheck, MapPin } from "lucide-react";
 
 type CreatorTab = "overview" | "devlog" | "achievements";
 
@@ -32,6 +32,25 @@ function xProfileHref(account: string): string {
 
 function websiteHref(url: string): string {
   return url.startsWith("http") ? url : `https://${url}`;
+}
+
+function CreatorSocialLink({
+  href,
+  label,
+}: {
+  href: string;
+  label: string;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 text-violet-300 transition-colors hover:text-violet-200"
+    >
+      {label}
+    </a>
+  );
 }
 
 export function CreatorProfileRealView({
@@ -84,25 +103,19 @@ export function CreatorProfileRealView({
                     日本
                   </span>
                   {profile.xAccount ? (
-                    <a
+                    <CreatorSocialLink
                       href={xProfileHref(profile.xAccount)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-violet-300 transition-colors hover:text-violet-200"
-                    >
-                      X: {profile.xAccount}
-                    </a>
+                      label="X"
+                    />
                   ) : null}
                   {profile.website ? (
-                    <a
-                      href={websiteHref(profile.website)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-violet-300 transition-colors hover:text-violet-200"
-                    >
-                      <Globe className="size-3.5" aria-hidden="true" />
-                      公式サイト
-                    </a>
+                    <CreatorSocialLink href={websiteHref(profile.website)} label="公式サイト" />
+                  ) : null}
+                  {profile.discordUrl ? (
+                    <CreatorSocialLink href={profile.discordUrl} label="Discord" />
+                  ) : null}
+                  {profile.youtubeUrl ? (
+                    <CreatorSocialLink href={profile.youtubeUrl} label="YouTube" />
                   ) : null}
                 </div>
                 {!isSelf ? (
