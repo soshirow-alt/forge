@@ -238,18 +238,13 @@ function MyPageDeveloperTabContent() {
 
       <section>
         <div className="rounded-xl border border-dashed border-zinc-700 bg-zinc-900/50 p-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h2 className="text-xl font-semibold tracking-tight">Forge SDK</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-500">
-                より詳細なアナリティクスは、任意で Forge SDK
-                を組み込むことで利用できる予定です。
-              </p>
-              <ForgeSdkNote className="mt-3 max-w-2xl" />
-            </div>
-            <span className="inline-flex shrink-0 items-center rounded-full border border-zinc-700 bg-zinc-900 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-400">
-              Coming Soon
-            </span>
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight">Forge SDK</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-500">
+              より詳細なアナリティクスは、任意で Forge SDK
+              を組み込むことで利用できる予定です。
+            </p>
+            <ForgeSdkNote className="mt-3 max-w-2xl" />
           </div>
         </div>
       </section>
