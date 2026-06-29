@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { FileText, Link2, MessageSquare, Pencil, Share2 } from "lucide-react";
+import { Copy, FileText, Link2, MessageSquare, Pencil } from "lucide-react";
+import { InputHintBadge } from "@/components/input-hint-badge";
 import { ProjectShareLinkModal } from "@/components/project-share-link-modal";
 import {
   PROJECT_STUDIO_FEEDBACK_SECTION_ID,
@@ -79,14 +80,19 @@ export function StudioProjectToolbar({
                   </Link>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setShareModalOpen(true)}
-                className={nurtureShareButtonClassName}
-              >
-                <Share2 className="size-4 shrink-0" aria-hidden="true" />
-                作品ページを共有
-              </button>
+              <div className="flex shrink-0 items-start gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => setShareModalOpen(true)}
+                  className={nurtureShareButtonClassName}
+                >
+                  <Copy className="size-4 shrink-0" aria-hidden="true" />
+                  リンクをコピー
+                </button>
+                <InputHintBadge label="?" ariaLabel="リンクをコピーについて">
+                  作品ページのURLをコピーし、X・Discord・ブログなど Forge の外に貼り付けて、プレイヤーを呼び込めます。
+                </InputHintBadge>
+              </div>
             </div>
           </div>
         </section>
