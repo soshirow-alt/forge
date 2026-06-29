@@ -7,7 +7,7 @@ export const PROJECT_VISIBILITY_SECTION_HINT =
 export const THUMBNAIL_LABEL = "サムネイル画像（推奨）";
 
 export const THUMBNAIL_HINT =
-  "作品一覧で目立ちやすくなります。未設定でもForgeが仮サムネイルを自動生成します。";
+  "最大30枚まで登録できます。1枚目が一覧用、2枚目以降は作品詳細で自動切り替わります。未設定でもForgeが仮サムネイルを自動生成します。";
 
 export const PROJECT_ACCESS_SECTION_TITLE = "テスターのアクセス方法";
 

@@ -2,12 +2,10 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { DeveloperProfileSetup } from "@/components/developer-profile-setup";
 import { PlayerShell } from "@/components/player-shell";
-import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
-import { ForgeSdkNote } from "@/components/forge-sdk-note";
 import { VersionPromptSettingsTrigger } from "@/components/version-prompt-settings-modal";
 import { useGames } from "@/components/games-provider";
 import {
@@ -20,8 +18,6 @@ import { validatePlayAccess } from "@/lib/project-access-form";
 import {
   PROJECT_INTRO_HINT,
   PROJECT_VISIBILITY_SECTION_HINT,
-  THUMBNAIL_HINT,
-  THUMBNAIL_LABEL,
 } from "@/lib/project-form-copy";
 import {
   PROJECT_VISIBILITY_FORM_OPTIONS,
@@ -54,19 +50,12 @@ import { ProjectEstimatedPlayTimeField } from "@/components/project-estimated-pl
 import { ProjectPhaseFormFields } from "@/components/project-phase-form-fields";
 import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
 import { getDeveloperSocialLinkDefaults } from "@/lib/developer-external-link-defaults";
+import { ForgeSdkNote } from "@/components/forge-sdk-note";
+import { ProjectThumbnailFields } from "@/components/project-thumbnail-fields";
 import type { ProjectExternalLinksInput } from "@/lib/game-links";
 
 const inputClassName =
   "mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
-
-function readImageAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-}
 
 export function SubmitPage() {
   const router = useRouter();
@@ -107,9 +96,7 @@ export function SubmitPage() {
   const [officialUrl, setOfficialUrl] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>();
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | undefined>();
-  const [fileInputKey, setFileInputKey] = useState(0);
+  const [thumbnailUrls, setThumbnailUrls] = useState<string[]>([]);
   const [promptSaveError, setPromptSaveError] = useState<string | null>(null);
   const [showPromptValidation, setShowPromptValidation] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -171,17 +158,6 @@ export function SubmitPage() {
 
   if (!user) {
     return null;
-  }
-
-  async function handleThumbnailChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    const dataUrl = await readImageAsDataUrl(file);
-    setThumbnailUrl(dataUrl);
-    setThumbnailPreview(dataUrl);
   }
 
   function toggleTag(tag: ForgeFeatureTagOption) {
@@ -272,7 +248,7 @@ export function SubmitPage() {
       genres,
       introduction,
       phase,
-      thumbnailUrl,
+      thumbnailUrls,
       lookingForTesters: false,
       tags: mergePlayEnvironmentIntoTags(
         sanitizeFeatureTagsForSave(selectedTags),
@@ -320,9 +296,7 @@ export function SubmitPage() {
       setGithubUrl("");
       setDiscordUrl("");
       setOfficialUrl("");
-      setThumbnailUrl(undefined);
-      setThumbnailPreview(undefined);
-      setFileInputKey((key) => key + 1);
+      setThumbnailUrls([]);
     } catch (error) {
       const message =
         error instanceof Error
@@ -677,46 +651,21 @@ export function SubmitPage() {
             inputClassName={inputClassName}
           />
 
-          <div>
-            <label htmlFor="thumbnail" className="text-sm font-medium text-zinc-400">
-              {THUMBNAIL_LABEL}
-            </label>
-            <p className="mt-1 text-sm text-zinc-500">{THUMBNAIL_HINT}</p>
-            <input
-              id="thumbnail"
-              key={fileInputKey}
-              type="file"
-              accept="image/*"
-              onChange={handleThumbnailChange}
-              className="mt-3 block w-full text-sm text-zinc-400 file:mr-4 file:rounded-lg file:border-0 file:bg-zinc-800 file:px-4 file:py-2 file:text-sm file:font-medium file:text-zinc-200 hover:file:bg-zinc-700"
-            />
-            <p className="mt-3 inline-flex items-center rounded-lg border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-xs text-zinc-500">
-              AIで仮サムネ生成（Coming Soon）
-            </p>
-            {thumbnailPreview ? (
-              <div className="mt-4 overflow-hidden rounded-lg border border-zinc-700">
-                <img
-                  src={thumbnailPreview}
-                  alt="サムネイルプレビュー"
-                  className="aspect-video w-full object-cover"
-                />
-              </div>
-            ) : title.trim() ? (
-              <div className="mt-4 overflow-hidden rounded-lg border border-zinc-700">
-                <div className="aspect-video">
-                  <GeneratedThumbnailPoster
-                    projectId="submit-preview"
-                    title={title}
-                    genre={selectedGenres[0] || "Indie"}
-                    phase={phase}
-                  />
-                </div>
-                <p className="border-t border-zinc-800 bg-zinc-950/50 px-3 py-2 text-xs text-zinc-500">
-                  自動生成プレビュー（投稿後も同様の仮サムネイルが表示されます）
-                </p>
-              </div>
-            ) : null}
-          </div>
+          <ProjectThumbnailFields
+            inputId="thumbnail"
+            thumbnails={thumbnailUrls}
+            onChange={setThumbnailUrls}
+            posterFallback={
+              title.trim()
+                ? {
+                    projectId: "submit-preview",
+                    title,
+                    genre: selectedGenres[0] || "Indie",
+                    phase,
+                  }
+                : undefined
+            }
+          />
 
           <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-3">
             <ForgeSdkNote />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import {
   GameDetailOverviewV0Tab,
   type GameOverviewEditorHandle,
@@ -35,30 +35,18 @@ import {
   normalizeOverviewIntroduction,
   resolveEditableIntroduction,
 } from "@/lib/project-overview";
+import { resolveProjectThumbnailUrls } from "@/lib/project-thumbnails";
 import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
 import {
   PROJECT_VISIBILITY_FORM_OPTIONS,
   type ProjectVisibility,
 } from "@/lib/project-visibility";
 import { gameToDetailV0 } from "@/lib/submitted-game-v0-adapter";
-import {
-  PROJECT_INTRO_HINT,
-  PROJECT_VISIBILITY_SECTION_HINT,
-  THUMBNAIL_HINT,
-  THUMBNAIL_LABEL,
-} from "@/lib/project-form-copy";
+import { PROJECT_INTRO_HINT, PROJECT_VISIBILITY_SECTION_HINT } from "@/lib/project-form-copy";
+import { ProjectThumbnailFields } from "@/components/project-thumbnail-fields";
 
 const inputClassName =
   "mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
-
-function readImageAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-}
 
 type ProjectEditFormProps = {
   projectId: string;
@@ -89,9 +77,7 @@ export function ProjectEditForm({
   const [phase, setPhase] = useState("");
   const [estimatedPlayTime, setEstimatedPlayTime] = useState("");
   const [visibility, setVisibility] = useState<ProjectVisibility>("public");
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>();
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | undefined>();
-  const [fileInputKey, setFileInputKey] = useState(0);
+  const [thumbnailUrls, setThumbnailUrls] = useState<string[]>([]);
   const [formLoaded, setFormLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -125,24 +111,12 @@ export function ProjectEditForm({
     setPhase(game.phase);
     setEstimatedPlayTime(game.estimatedPlayTime ?? "");
     setVisibility(game.visibility ?? "public");
-    setThumbnailUrl(game.thumbnailUrl);
-    setThumbnailPreview(game.thumbnailUrl);
+    setThumbnailUrls(resolveProjectThumbnailUrls(game));
     setFormLoaded(true);
   }, [game, formLoaded, projectId]);
 
   if (!dataReady || !game || !formLoaded) {
     return <p className="text-sm text-zinc-500">読み込み中…</p>;
-  }
-
-  async function handleThumbnailChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    const dataUrl = await readImageAsDataUrl(file);
-    setThumbnailUrl(dataUrl);
-    setThumbnailPreview(dataUrl);
   }
 
   function toggleGenre(genre: ForgeGenreOption) {
@@ -196,7 +170,7 @@ export function ProjectEditForm({
           sanitizeFeatureTagsForSave(selectedTags),
           playEnvironment,
         ),
-        thumbnailUrl,
+        thumbnailUrls,
         visibility,
       });
 
@@ -372,29 +346,11 @@ export function ProjectEditForm({
         inputId={`estimated-play-time-${projectId}`}
       />
 
-      <div>
-        <label htmlFor={`edit-thumbnail-${projectId}`} className="text-sm font-medium text-zinc-400">
-          {THUMBNAIL_LABEL}
-        </label>
-        <p className="mt-1 text-sm text-zinc-500">{THUMBNAIL_HINT}</p>
-        <input
-          id={`edit-thumbnail-${projectId}`}
-          key={fileInputKey}
-          type="file"
-          accept="image/*"
-          onChange={handleThumbnailChange}
-          className="mt-2 block w-full text-sm text-zinc-400 file:mr-4 file:rounded-lg file:border-0 file:bg-zinc-800 file:px-4 file:py-2 file:text-sm file:font-medium file:text-zinc-200 hover:file:bg-zinc-700"
-        />
-        {thumbnailPreview && (
-          <div className="mt-4 overflow-hidden rounded-lg border border-zinc-700">
-            <img
-              src={thumbnailPreview}
-              alt="サムネイルプレビュー"
-              className="aspect-video w-full object-cover"
-            />
-          </div>
-        )}
-      </div>
+      <ProjectThumbnailFields
+        inputId={`edit-thumbnail-${projectId}`}
+        thumbnails={thumbnailUrls}
+        onChange={setThumbnailUrls}
+      />
 
       <ForgeSdkNote />
 

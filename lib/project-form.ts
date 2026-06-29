@@ -7,7 +7,7 @@ export type SubmitFormData = {
   /** 作品紹介（正本）。短い description は保存時に先頭から自動生成 */
   introduction: string;
   phase: string;
-  thumbnailUrl?: string;
+  thumbnailUrls?: string[];
   lookingForTesters: boolean;
   testerSlots?: number;
   tags: string[];
@@ -33,7 +33,7 @@ export type ProjectEditFormData = {
   tags: string[];
   lookingForTesters: boolean;
   testerSlots?: number;
-  thumbnailUrl?: string;
+  thumbnailUrls?: string[];
   steamUrl?: string;
   itchUrl?: string;
   githubUrl?: string;

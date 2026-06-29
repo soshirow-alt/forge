@@ -15,6 +15,11 @@ import {
   sanitizeProjectGenresForSave,
 } from "@/lib/project-genres";
 import { normalizeExternalUrlForDb } from "@/lib/game-links";
+import {
+  projectThumbnailsForDb,
+  resolveProjectPrimaryThumbnail,
+  resolveProjectThumbnailUrlsFromRow,
+} from "@/lib/project-thumbnails";
 
 function formatDateOnly(iso: string) {
   return iso.split("T")[0];
@@ -39,7 +44,8 @@ export function projectRowToGame(row: ProjectRow): Game {
     lastUpdated: formatDateOnly(row.updated_at),
     createdAt: row.created_at,
     section: row.section,
-    thumbnailUrl: row.thumbnail_url ?? undefined,
+    thumbnailUrl: resolveProjectPrimaryThumbnail(row),
+    thumbnailUrls: resolveProjectThumbnailUrlsFromRow(row),
     tags: row.tags ?? [],
     playUrl: row.play_url,
     steamUrl: row.steam_url ?? undefined,
@@ -72,6 +78,7 @@ function submitFormToInsertRow(
 ) {
   const intro = data.introduction?.trim() ?? data.description?.trim() ?? "";
   const { genres, genre } = projectGenresForDb(data.genres);
+  const thumbnails = projectThumbnailsForDb(data.thumbnailUrls);
   return {
     owner_id: owner.ownerId,
     owner_name: owner.ownerName,
@@ -86,7 +93,8 @@ function submitFormToInsertRow(
     looking_for_testers: data.lookingForTesters,
     tester_slots: data.lookingForTesters ? (data.testerSlots ?? null) : null,
     section: "new" as const,
-    thumbnail_url: data.thumbnailUrl ?? null,
+    thumbnail_url: thumbnails.thumbnail_url,
+    thumbnail_urls: thumbnails.thumbnail_urls,
     tags: mergeTagsWithRecruitment(data.tags, data.lookingForTesters),
     play_url: data.playUrl,
     steam_url: normalizeExternalUrlForDb(data.steamUrl),
@@ -159,6 +167,7 @@ export async function updateProjectFromSubmitForm(
 ): Promise<Game> {
   const intro = data.introduction?.trim() ?? data.description?.trim() ?? "";
   const { genres, genre } = projectGenresForDb(data.genres);
+  const thumbnails = projectThumbnailsForDb(data.thumbnailUrls);
   const { data: row, error } = await supabase
     .from("projects")
     .update({
@@ -172,7 +181,8 @@ export async function updateProjectFromSubmitForm(
       status: data.lookingForTesters ? "テスター募集中" : data.phase,
       looking_for_testers: data.lookingForTesters,
       tester_slots: data.lookingForTesters ? (data.testerSlots ?? null) : null,
-      thumbnail_url: data.thumbnailUrl ?? null,
+      thumbnail_url: thumbnails.thumbnail_url,
+      thumbnail_urls: thumbnails.thumbnail_urls,
       tags: mergeTagsWithRecruitment(data.tags, data.lookingForTesters),
       play_url: data.playUrl,
       estimated_play_time: data.estimatedPlayTime ?? null,
@@ -201,6 +211,7 @@ export async function updateProjectDetailsInDb(
   data: ProjectEditFormData,
 ): Promise<Game> {
   const { genres, genre } = projectGenresForDb(data.genres);
+  const thumbnails = projectThumbnailsForDb(data.thumbnailUrls);
   const { data: row, error } = await supabase
     .from("projects")
     .update({
@@ -211,7 +222,8 @@ export async function updateProjectDetailsInDb(
       status: data.lookingForTesters ? "テスター募集中" : data.phase,
       looking_for_testers: data.lookingForTesters,
       tester_slots: data.lookingForTesters ? (data.testerSlots ?? null) : null,
-      thumbnail_url: data.thumbnailUrl ?? null,
+      thumbnail_url: thumbnails.thumbnail_url,
+      thumbnail_urls: thumbnails.thumbnail_urls,
       tags: mergeTagsWithRecruitment(data.tags, data.lookingForTesters),
       play_url: data.playUrl,
       estimated_play_time: data.estimatedPlayTime ?? null,

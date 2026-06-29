@@ -12,6 +12,7 @@ import {
   parsePlayEnvironmentFromTags,
 } from "@/lib/play-environment";
 import { loadGameExtras } from "@/lib/game-extra-storage";
+import { resolveProjectThumbnailUrls } from "@/lib/project-thumbnails";
 
 export function buildProjectEditFormDataFromGame(game: Game): ProjectEditFormData {
   const featureTags = sanitizeFeatureTagsForSave(
@@ -32,7 +33,7 @@ export function buildProjectEditFormDataFromGame(game: Game): ProjectEditFormDat
     lookingForTesters: game.lookingForTesters,
     testerSlots: game.testerSlots,
     tags: mergePlayEnvironmentIntoTags(featureTags, playEnvironment),
-    thumbnailUrl: game.thumbnailUrl,
+    thumbnailUrls: resolveProjectThumbnailUrls(game),
     steamUrl: game.steamUrl,
     itchUrl: game.itchUrl,
     githubUrl: game.githubUrl,

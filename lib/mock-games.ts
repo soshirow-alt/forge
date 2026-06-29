@@ -15,6 +15,7 @@ export type Game = {
   lastUpdated: string;
   section: "new" | "testers" | "beta";
   thumbnailUrl?: string;
+  thumbnailUrls?: string[];
   tags: string[];
   playUrl: string;
   steamUrl?: string;

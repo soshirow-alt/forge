@@ -6,10 +6,36 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const AUTO_ADVANCE_MS = 5000;
 
+function GallerySlide({ src, active }: { src: string; active: boolean }) {
+  const className = `absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
+    active ? "opacity-100" : "opacity-0"
+  }`;
+
+  if (src.startsWith("data:") || src.startsWith("blob:")) {
+    return <img src={src} alt="" className={className} />;
+  }
+
+  return (
+    <Image
+      src={src}
+      alt=""
+      fill
+      className={`object-cover transition-opacity duration-700 ${
+        active ? "opacity-100" : "opacity-0"
+      }`}
+      priority={active}
+    />
+  );
+}
+
 export function GameDetailHeroGallery({ images }: { images: string[] }) {
   const slides = images.length > 0 ? images : ["/images/landing/game-1.png"];
   const [index, setIndex] = useState(0);
   const total = slides.length;
+
+  useEffect(() => {
+    setIndex(0);
+  }, [slides.join("|")]);
 
   useEffect(() => {
     if (total <= 1) {
@@ -30,9 +56,11 @@ export function GameDetailHeroGallery({ images }: { images: string[] }) {
   }
 
   return (
-    <div className="group relative min-h-[220px] lg:min-h-[320px]">
-      <Image src={slides[index]} alt="" fill className="object-cover" priority />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/80 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-transparent lg:to-[#0a0a0a]/40" />
+    <div className="group relative min-h-[220px] overflow-hidden lg:min-h-[320px]">
+      {slides.map((src, slideIndex) => (
+        <GallerySlide key={`${slideIndex}-${src.slice(0, 48)}`} src={src} active={slideIndex === index} />
+      ))}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/80 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-transparent lg:to-[#0a0a0a]/40" />
 
       {total > 1 && (
         <>

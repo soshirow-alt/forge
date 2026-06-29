@@ -15,6 +15,7 @@ export type ProjectRow = {
   tester_slots: number | null;
   section: "new" | "testers" | "beta";
   thumbnail_url: string | null;
+  thumbnail_urls?: string[] | null;
   tags: string[];
   play_url: string;
   steam_url: string | null;

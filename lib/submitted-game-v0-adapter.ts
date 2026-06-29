@@ -7,6 +7,7 @@ import {
   resolveDetailIntroduction,
   sanitizeOverviewFeatures,
 } from "@/lib/project-overview";
+import { resolveProjectThumbnailUrls } from "@/lib/project-thumbnails";
 
 const DEFAULT_HERO = "/images/landing/game-1.png";
 
@@ -21,6 +22,8 @@ export function gameToDetailV0(game: Game): GameDetailV0 {
   const genres = resolveProjectGenres(game);
   const featureTags = pickFeatureTagsFromGameTags(getPublicGameTags(game.tags));
   const tags = [...genres, ...featureTags];
+  const galleryImages = resolveProjectThumbnailUrls(game);
+  const heroImage = galleryImages[0] || DEFAULT_HERO;
 
   return {
     id: game.id,
@@ -30,13 +33,13 @@ export function gameToDetailV0(game: Game): GameDetailV0 {
         ? `${game.description.slice(0, 100)}…`
         : game.description || game.title,
     tags,
-    heroImage: game.thumbnailUrl || DEFAULT_HERO,
-    galleryImages: [game.thumbnailUrl || DEFAULT_HERO],
+    heroImage,
+    galleryImages: galleryImages.length > 0 ? galleryImages : [DEFAULT_HERO],
     currentVersion: game.playableVersion || "v0.1.0",
     developer: {
       id: game.ownerId || game.creator,
       name: game.ownerName || game.creator,
-      avatar: game.thumbnailUrl || DEFAULT_HERO,
+      avatar: heroImage,
       followers: 0,
       bio: "",
       following: false,
