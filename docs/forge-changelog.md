@@ -20,7 +20,12 @@
 
 ---
 
-- **広告スクショ用デモ（Preview のみ）** — `NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO=true` のとき Studio ホーム・マイページ・マイページ一部タブに厚い mock を強制表示（本番では常に無効）。撮影後は環境変数を外すか、追加ファイルを削除
+- **広告スクショ用デモ（Preview のみ）** — `NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO=true` のとき Studio ホーム・マイページ・Player マイページ一部タブに厚い mock を強制表示（本番では常に無効）
+  - **オーナー（Vercel Preview のみ）** — Project → Settings → Environment Variables → `NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO` = `true`、**Environment は Preview のみ**（Production / Development には付けない）。保存後 `preview/landing-01` の Preview を再デプロイ
+  - **有効時の変化** — `/studio`「あなたの作品」が mock 3件（新着 FB バッジ付き）に差し替え、ヘッダー通知バッジが mock 件数表示。`/studio/mypage` 作品タブが実データ Directory ではなく mock グリッド。`/mypage` の FB履歴・実績・フォロー中タブが mock パネル表示
+  - **撮影候補 URL** — `/studio`、`/studio/mypage`、`/mypage?tab=feedback`、`/mypage?tab=achievements`、`/mypage?tab=following`（ログイン推奨）。他画面は従来どおり Preview の v0 mock
+  - **本番安全** — `isProductionReleaseMode()` が true の hostname では env が true でも **常に無効**（verify: `ad screenshot demo guard`）
+  - **撮影後** — Preview の env を削除または `false` に戻し再デプロイ
 
 ---
 
