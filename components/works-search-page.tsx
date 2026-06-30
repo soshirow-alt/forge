@@ -25,7 +25,7 @@ import {
   type SearchSortId,
 } from "@/lib/search-v0-mock-data";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
-import { shouldHideV0MockContent } from "@/lib/production-mode";
+import { useHideV0MockContent } from "@/lib/forge-deployment-context";
 import {
   BadgeCheck,
   ChevronDown,
@@ -79,7 +79,7 @@ function parseFeatures(param: string | null): string[] {
 }
 
 function WorksSearchContent() {
-  const hideV0Mock = shouldHideV0MockContent();
+  const hideV0Mock = useHideV0MockContent();
   const { submittedGames, getSupportCount, dataReady } = useGames();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -107,7 +107,7 @@ function WorksSearchContent() {
     const realWorks = getPublicSubmittedGames(submittedGames).map((game) =>
       gameToSearchResult(game, getSupportCount(game.id)),
     );
-    return mergeSearchResults(realWorks, searchWorkResults);
+    return mergeSearchResults(realWorks, searchWorkResults, hideV0Mock);
   }, [submittedGames, getSupportCount]);
 
   const filtered = useMemo(

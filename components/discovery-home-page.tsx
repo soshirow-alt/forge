@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 import { useGames } from "@/components/games-provider";
 import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
 import { PlayerShell } from "@/components/player-shell";
+import { useHideV0MockContent } from "@/lib/forge-deployment-context";
 import {
   gameToHomeCard,
   getPublicSubmittedGames,
@@ -234,6 +235,7 @@ function DiscoverySectionEmpty({ message }: { message: string }) {
 
 export function DiscoveryHomePage() {
   const { submittedGames, getSupportCount } = useGames();
+  const hideV0Mock = useHideV0MockContent();
 
   const publicGames = useMemo(
     () => getPublicSubmittedGames(submittedGames),
@@ -257,18 +259,18 @@ export function DiscoveryHomePage() {
   );
 
   const heroItems = useMemo(
-    () => mergeHomeCards(realUpdatedGames.slice(0, 3), heroSlides),
-    [realUpdatedGames],
+    () => mergeHomeCards(realUpdatedGames.slice(0, 3), heroSlides, hideV0Mock),
+    [realUpdatedGames, hideV0Mock],
   );
 
   const newItems = useMemo(
-    () => mergeHomeCards(realNewGames, newGames),
-    [realNewGames],
+    () => mergeHomeCards(realNewGames, newGames, hideV0Mock),
+    [realNewGames, hideV0Mock],
   );
 
   const updatedItems = useMemo(
-    () => mergeHomeCards(realUpdatedGames, recentlyUpdatedGames),
-    [realUpdatedGames],
+    () => mergeHomeCards(realUpdatedGames, recentlyUpdatedGames, hideV0Mock),
+    [realUpdatedGames, hideV0Mock],
   );
 
   const popularItems = useMemo(() => {
@@ -277,8 +279,8 @@ export function DiscoveryHomePage() {
         (a, b) => getSupportCount(b.id) - getSupportCount(a.id),
       )
       .map((game) => gameToHomeCard(game, getSupportCount(game.id)));
-    return mergeHomeCards(realPopular, popularGames);
-  }, [publicGames, getSupportCount]);
+    return mergeHomeCards(realPopular, popularGames, hideV0Mock);
+  }, [publicGames, getSupportCount, hideV0Mock]);
 
   return (
     <PlayerShell activeNav="home">

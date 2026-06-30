@@ -24,6 +24,10 @@
 
 ---
 
+- **Player ホーム `/home` の空表示** — `mergeHomeCards` が `shouldHideV0MockContent()` を client 直呼びしており Preview でも本番扱いになることがあった。`useHideV0MockContent()`（deployment context）経由に修正。本番 URL では mock は出ず実公開作品のみ（未投稿なら空が正しい）
+
+---
+
 - **広告スクショ用デモ（Preview のみ）** — `NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO=true` のとき Studio ホーム・マイページ・Player マイページ一部タブに厚い mock を強制表示（本番では常に無効）
   - **オーナー（Vercel Preview のみ）** — Project → Settings → Environment Variables → `NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO` = `true`、**Environment は Preview のみ**（Production / Development には付けない）。保存後 `preview/landing-01` の Preview を再デプロイ
   - **有効時の変化** — `/studio`「あなたの作品」が mock 3件（新着 FB バッジ付き）に差し替え、ヘッダー通知バッジが mock 件数表示。`/studio/mypage` 作品タブが実データ Directory ではなく mock グリッド。`/mypage` の FB履歴・実績・フォロー中タブが mock パネル表示

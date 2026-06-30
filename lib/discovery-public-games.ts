@@ -107,8 +107,9 @@ export function gameToSearchResult(
 export function mergeHomeCards(
   primary: HomeGameCard[],
   secondary: HomeGameCard[],
+  hideV0Mock = shouldHideV0MockContent(),
 ): HomeGameCard[] {
-  if (shouldHideV0MockContent()) {
+  if (hideV0Mock) {
     return [...primary];
   }
 
@@ -126,8 +127,9 @@ export function mergeHomeCards(
 export function mergeSearchResults(
   primary: SearchWorkResult[],
   secondary: SearchWorkResult[],
+  hideV0Mock = shouldHideV0MockContent(),
 ): SearchWorkResult[] {
-  if (shouldHideV0MockContent()) {
+  if (hideV0Mock) {
     return [...primary];
   }
 
