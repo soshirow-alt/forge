@@ -47,7 +47,8 @@ import {
 import { firstVoiceQuestion } from "@/lib/feedback-v0-mock-data";
 import { applyProjectOverviewV0 } from "@/lib/project-overview-v0-store";
 import { projectStudioPath } from "@/lib/project-nurture-links";
-import { shouldHideV0MockContent, isProductionReleaseMode } from "@/lib/production-mode";
+import { useHideV0MockContent } from "@/lib/forge-deployment-context";
+import { isProductionReleaseMode } from "@/lib/production-mode";
 import {
   buildGameDetailTabHref,
   parseGameDetailTab,
@@ -128,7 +129,7 @@ function StatItem({
 
 function GameDetailV0PageContent({ id }: { id: string }) {
   const { getSubmittedGameById, dataReady } = useGames();
-  const hideV0Mock = shouldHideV0MockContent();
+  const hideV0Mock = useHideV0MockContent();
   const submittedGame = dataReady ? getSubmittedGameById(id) : undefined;
 
   if (hideV0Mock) {
@@ -170,7 +171,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     refreshFollowerCount,
   } = useGames();
   const submittedGame = dataReady ? getSubmittedGameById(id) : undefined;
-  const hideV0Mock = shouldHideV0MockContent();
+  const hideV0Mock = useHideV0MockContent();
   const resolvedId = isSupabaseProjectId(id) ? id : resolveGameDetailId(id);
   const waitingForCatalog = isSupabaseProjectId(id) && !dataReady;
 
@@ -199,6 +200,8 @@ function GameDetailV0PageBody({ id }: { id: string }) {
         ? "—"
         : game.devlogUpdatedAgo;
   const hasRealPlayUrl = Boolean(submittedGame?.playUrl?.trim());
+  const playUnavailableOnPublic =
+    hideV0Mock && isRealProject && !hasRealPlayUrl;
   const { revision: overviewRevision } = useProjectOverviewV0(resolvedId);
   const displayGame = useMemo(() => {
     if (isRealProject || isProductionReleaseMode()) {
@@ -304,6 +307,9 @@ function GameDetailV0PageBody({ id }: { id: string }) {
         setFeedbackStep("first-voice");
         return;
       }
+      if (playUnavailableOnPublic) {
+        return;
+      }
       setFeedbackStep("play-stub");
     }, returnPath);
   }, [
@@ -313,6 +319,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     submittedGame,
     recordPlay,
     isRealProject,
+    playUnavailableOnPublic,
   ]);
 
   const handleFeedback = useCallback(() => {
@@ -549,7 +556,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
             <button
               type="button"
               onClick={handlePlay}
-              disabled={!hydrated}
+              disabled={!hydrated || playUnavailableOnPublic}
               className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Play className="size-4" aria-hidden="true" />

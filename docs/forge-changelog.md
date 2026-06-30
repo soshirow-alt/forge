@@ -4,6 +4,10 @@
 
 ---
 
+- **サービスイン前 Ready チェック Batch 1** — `docs/forge-production-readiness-checklist.md` を新設（固定 Preview URL・deploy 停止条件・migration/env・rollback）。`/home` は公開環境で mock 配列を merge しない経路に整理。`/games/[id]` は deployment context 経由の mock 判定に統一し、公開環境で playUrl のない実作品にプレイ用スタブモーダルが出ないよう抑止
+
+---
+
 - **Phase 3 PR1 — `/studio` home viewModel** — `buildStudioHomeViewModel` で通知バッジと下部セクション（最近の動き・今週の伸び・開発ヒント）の表示分岐をデータ層へ移動。`studio-home-page.tsx` から mock 直接 import と `hideV0Mock` 分岐を削減。見た目・セクション順は維持。「あなたの作品」は現状のまま
 
 ---

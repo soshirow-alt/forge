@@ -252,20 +252,27 @@ export function DiscoveryHomePage() {
     [publicGames, getSupportCount],
   );
 
-  const heroItems = useMemo(
-    () => mergeHomeCards(realUpdatedGames.slice(0, 3), heroSlides, hideV0Mock),
-    [realUpdatedGames, hideV0Mock],
-  );
+  const heroItems = useMemo(() => {
+    const primary = realUpdatedGames.slice(0, 3);
+    if (hideV0Mock) {
+      return primary;
+    }
+    return mergeHomeCards(primary, heroSlides, false);
+  }, [realUpdatedGames, hideV0Mock]);
 
-  const newItems = useMemo(
-    () => mergeHomeCards(realNewGames, newGames, hideV0Mock),
-    [realNewGames, hideV0Mock],
-  );
+  const newItems = useMemo(() => {
+    if (hideV0Mock) {
+      return realNewGames;
+    }
+    return mergeHomeCards(realNewGames, newGames, false);
+  }, [realNewGames, hideV0Mock]);
 
-  const updatedItems = useMemo(
-    () => mergeHomeCards(realUpdatedGames, recentlyUpdatedGames, hideV0Mock),
-    [realUpdatedGames, hideV0Mock],
-  );
+  const updatedItems = useMemo(() => {
+    if (hideV0Mock) {
+      return realUpdatedGames;
+    }
+    return mergeHomeCards(realUpdatedGames, recentlyUpdatedGames, false);
+  }, [realUpdatedGames, hideV0Mock]);
 
   const popularItems = useMemo(() => {
     const realPopular = [...publicGames]
@@ -273,7 +280,10 @@ export function DiscoveryHomePage() {
         (a, b) => getSupportCount(b.id) - getSupportCount(a.id),
       )
       .map((game) => gameToHomeCard(game, getSupportCount(game.id)));
-    return mergeHomeCards(realPopular, popularGames, hideV0Mock);
+    if (hideV0Mock) {
+      return realPopular;
+    }
+    return mergeHomeCards(realPopular, popularGames, false);
   }, [publicGames, getSupportCount, hideV0Mock]);
 
   if (!publicCatalogReady) {
