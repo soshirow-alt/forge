@@ -108,7 +108,10 @@ type ForgeShellModeSwitchProps = {
   mode: "player" | "studio";
   onNavigate?: () => void;
   onStudioAttempt?: () => void;
+  /** Preview/local — Studio へ Link 直遷移 */
   studioHrefBypass?: boolean;
+  /** 本番で未ログイン・hydrate 前 — ログイン return 付き Link */
+  studioLoginHref?: string;
 };
 
 const playerSwitchClassName =
@@ -122,6 +125,7 @@ export function ForgeShellModeSwitch({
   onNavigate,
   onStudioAttempt,
   studioHrefBypass = false,
+  studioLoginHref,
 }: ForgeShellModeSwitchProps) {
   if (mode === "studio") {
     return (
@@ -142,6 +146,19 @@ export function ForgeShellModeSwitch({
         href="/studio"
         onClick={onNavigate}
         title="開発者向け Studio（投稿した作品の管理）"
+        className={studioSwitchClassName}
+      >
+        Studio
+      </Link>
+    );
+  }
+
+  if (studioLoginHref) {
+    return (
+      <Link
+        href={studioLoginHref}
+        onClick={onNavigate}
+        title="開発者向け Studio（ログインが必要です）"
         className={studioSwitchClassName}
       >
         Studio

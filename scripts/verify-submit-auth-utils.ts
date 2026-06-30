@@ -251,6 +251,8 @@ function testLoginPageSourceContract() {
 
   ok(loginPage.includes("useActionState(loginAction"), "login uses server action");
   ok(loginPage.includes('autoComplete="username email"'), "login email autocomplete");
+  ok(loginPage.includes("useAuthAutofillUnlock"), "login autofill unlock hook");
+  ok(loginPage.includes("readOnly={autofill.readOnly}"), "login readOnly autofill trick");
   ok(loginPage.includes('type="password"'), "login native password input");
   ok(!loginPage.includes("useSearchParams"), "login avoids searchParams remount");
   ok(loginRoute.includes("getUser()"), "logged-in redirect on server");

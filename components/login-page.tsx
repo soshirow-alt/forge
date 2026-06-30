@@ -7,6 +7,7 @@ import {
   OAuthComingSoonSection,
   authInputClassName,
   handleAuthFormEnterKey,
+  useAuthAutofillUnlock,
 } from "@/components/auth-layout";
 import { loginAction, type LoginActionState } from "@/lib/auth-login-action";
 
@@ -25,6 +26,7 @@ export function LoginPage({
 }) {
   const [state, formAction, pending] = useActionState(loginAction, initialLoginState);
   const error = state.error ?? callbackError;
+  const autofill = useAuthAutofillUnlock();
 
   return (
     <AuthPageShell active="login">
@@ -49,6 +51,7 @@ export function LoginPage({
         )}
 
         <form
+          id="login-form"
           action={formAction}
           method="post"
           autoComplete="on"
@@ -69,6 +72,8 @@ export function LoginPage({
               autoComplete="username email"
               inputMode="email"
               spellCheck={false}
+              readOnly={autofill.readOnly}
+              onFocus={autofill.onFocus}
               className={authInputClassName}
               placeholder="メールアドレス"
             />
@@ -85,6 +90,8 @@ export function LoginPage({
               required
               autoComplete="current-password"
               minLength={6}
+              readOnly={autofill.readOnly}
+              onFocus={autofill.onFocus}
               className={authInputClassName}
               placeholder="パスワード"
             />
