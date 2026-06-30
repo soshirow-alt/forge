@@ -4,6 +4,10 @@
 
 ---
 
+- **P0 hotfix — Studio 認証ループ（本番）** — `/login` のサーバー `getUser()` 即時 redirect を廃止。ログアウト後にサーバーだけログイン済みと誤認し `/studio` と `/login?return=/studio` を往復する不具合を修正。ログイン済みユーザーの return 遷移は `authResolved` 後のクライアント `router.replace` のみ
+
+---
+
 - **サービスイン前 Ready チェック Batch 1** — `docs/forge-production-readiness-checklist.md` を新設（固定 Preview URL・deploy 停止条件・migration/env・rollback）。`/home` は公開環境で mock 配列を merge しない経路に整理。`/games/[id]` は deployment context 経由の mock 判定に統一し、公開環境で playUrl のない実作品にプレイ用スタブモーダルが出ないよう抑止
 
 ---

@@ -441,6 +441,24 @@ function testAuthRedirectLoopGuardContract() {
     path.join(import.meta.dirname, "../components/studio-entry-gate-provider.tsx"),
     "utf8",
   );
+  const loginRoute = fs.readFileSync(
+    path.join(import.meta.dirname, "../app/login/page.tsx"),
+    "utf8",
+  );
+  const loginPage = fs.readFileSync(
+    path.join(import.meta.dirname, "../components/login-page.tsx"),
+    "utf8",
+  );
+
+  ok(
+    !loginRoute.includes("redirect(resolvePostLoginPath") &&
+      !loginRoute.includes("getUser()"),
+    "login server route does not redirect on getUser (avoids studio ping-pong)",
+  );
+  ok(
+    loginPage.includes("authResolved") && loginPage.includes("router.replace"),
+    "login page redirects only after client authResolved",
+  );
 
   ok(authProvider.includes("authResolved"), "auth-provider exposes authResolved");
   ok(
@@ -481,7 +499,14 @@ function testLoginPageSourceContract() {
   ok(loginPage.includes("readOnly={autofill.readOnly}"), "login readOnly autofill trick");
   ok(loginPage.includes('type="password"'), "login native password input");
   ok(!loginPage.includes("useSearchParams"), "login avoids searchParams remount");
-  ok(loginRoute.includes("getUser()"), "logged-in redirect on server");
+  ok(
+    !loginRoute.includes("getUser()"),
+    "login route does not server-redirect logged-in users",
+  );
+  ok(
+    loginPage.includes("resolvePostLoginPath"),
+    "login page client redirect uses post-login path",
+  );
 }
 
 function testRealDevlogMapping() {

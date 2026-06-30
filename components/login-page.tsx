@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useRef } from "react";
 import {
   AuthPageShell,
   OAuthComingSoonSection,
@@ -9,7 +10,9 @@ import {
   handleAuthFormEnterKey,
   useAuthAutofillUnlock,
 } from "@/components/auth-layout";
+import { useAuth } from "@/components/auth-provider";
 import { loginAction, type LoginActionState } from "@/lib/auth-login-action";
+import { resolvePostLoginPath } from "@/lib/login-return-url";
 
 const initialLoginState: LoginActionState = { error: null };
 
@@ -24,9 +27,21 @@ export function LoginPage({
   callbackError: string | null;
   notice: string | null;
 }) {
+  const router = useRouter();
+  const { user, authResolved } = useAuth();
   const [state, formAction, pending] = useActionState(loginAction, initialLoginState);
   const error = state.error ?? callbackError;
   const autofill = useAuthAutofillUnlock();
+  const redirectedRef = useRef(false);
+
+  useEffect(() => {
+    if (!authResolved || !user || redirectedRef.current) {
+      return;
+    }
+
+    redirectedRef.current = true;
+    router.replace(resolvePostLoginPath(returnParam));
+  }, [authResolved, user, returnParam, router]);
 
   return (
     <AuthPageShell active="login">
