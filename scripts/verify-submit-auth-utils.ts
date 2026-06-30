@@ -244,10 +244,18 @@ function testDemoRouteBlocksProduction() {
 
   try {
     process.env.NEXT_PUBLIC_FORGE_PRODUCTION_MODE = "true";
+    process.env.VERCEL_ENV = "production";
     expectNotFound("forge-flame-gamma.vercel.app", "demo routes 404 on production hostname");
+    delete process.env.VERCEL_ENV;
+    process.env.VERCEL_ENV = "preview";
+    expectAllowed(
+      "forge-9flhmt30r-soshirow-alts-projects.vercel.app",
+      "demo routes allowed on Vercel preview deployment URL",
+    );
+    delete process.env.VERCEL_ENV;
     expectAllowed(
       "forge-git-preview-landing-01-soshirow-alts-projects.vercel.app",
-      "demo routes allowed on preview hostname even with force production mode",
+      "demo routes allowed on preview branch alias",
     );
     expectAllowed("localhost:3001", "demo routes allowed on localhost");
   } finally {
@@ -256,6 +264,7 @@ function testDemoRouteBlocksProduction() {
     } else {
       process.env.NEXT_PUBLIC_FORGE_PRODUCTION_MODE = prevProd;
     }
+    delete process.env.VERCEL_ENV;
   }
 }
 

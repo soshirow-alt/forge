@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
 
 function isDemoRouteAllowedHost(host?: string): boolean {
+  if (process.env.VERCEL_ENV === "preview") {
+    return true;
+  }
+
   const normalized = (host ?? "").toLowerCase();
   if (!normalized) {
     return false;
@@ -20,10 +24,15 @@ function isDemoRouteAllowedHost(host?: string): boolean {
 }
 
 /**
- * `/demo/*` — 本番 hostname では 404。
- * Preview hostname / local では `NEXT_PUBLIC_FORGE_PRODUCTION_MODE` が付いていても fixture を開く。
+ * `/demo/*` — 本番 hostname / VERCEL_ENV=production では 404。
+ * Preview デプロイ・preview ブランチ alias・local では fixture を開く。
  */
 export function blockDemoRouteOnProduction(host?: string): void {
+  if (process.env.VERCEL_ENV === "production") {
+    notFound();
+    return;
+  }
+
   if (!isDemoRouteAllowedHost(host)) {
     notFound();
   }
