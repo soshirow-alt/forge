@@ -347,7 +347,7 @@ export function OAuthComingSoonSection({
       <OAuthDivider />
       <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-5 text-center">
         <span className="inline-block rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-200">
-          準備中
+          Coming soon
         </span>
         <p className="mt-3 text-sm leading-relaxed text-zinc-500">{description}</p>
       </div>

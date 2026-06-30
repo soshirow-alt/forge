@@ -112,7 +112,7 @@ export function ProjectThumbnailFields({
           <span className="text-zinc-600">ドラッグで並べ替え</span>
         ) : null}
         <span className="inline-flex items-center rounded-lg border border-zinc-800 bg-zinc-950/60 px-2 py-1">
-          AIで仮サムネ生成（準備中）
+          AIで仮サムネ生成（Coming Soon）
         </span>
       </div>
 
