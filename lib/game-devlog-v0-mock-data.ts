@@ -156,10 +156,21 @@ export function getDevlogFilterTabs(entries: GameDevlogEntry[]) {
 
 export function getDevlogStatsForGame(entries: GameDevlogEntry[]) {
   const latest = entries.find((e) => e.isLatest) ?? entries[0];
+  if (!latest) {
+    return {
+      totalPosts: 0,
+      currentVersion: "—",
+      lastUpdated: "—",
+    };
+  }
+
+  const version =
+    latest.version?.trim() && latest.version !== "—" ? latest.version : "—";
+
   return {
     totalPosts: entries.length,
-    currentVersion: latest?.version !== "—" ? latest.version : "v0.4.0",
-    lastUpdated: latest?.publishedAt ?? "2025/05/18",
+    currentVersion: version,
+    lastUpdated: latest.publishedAt?.trim() || "—",
   };
 }
 

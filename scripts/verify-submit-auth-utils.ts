@@ -30,6 +30,7 @@ import {
   realDevlogToV0,
 } from "../hooks/use-game-devlogs-v0";
 import type { DevlogEntry } from "../lib/devlogs";
+import { getDevlogStatsForGame } from "../lib/game-devlog-v0-mock-data";
 import { isSupabaseProjectId } from "../lib/submitted-game-v0-adapter";
 
 function ok(condition: boolean, message: string) {
@@ -435,6 +436,44 @@ function testRealDevlogMapping() {
   ok(!isSupabaseProjectId("seikat-no-tabiji"), "slug is not supabase id");
 }
 
+function testDevlogStatsForGame() {
+  const empty = getDevlogStatsForGame([]);
+  ok(empty.totalPosts === 0, "devlog stats: empty array totalPosts 0");
+  ok(empty.currentVersion === "—", "devlog stats: empty array currentVersion fallback");
+  ok(empty.lastUpdated === "—", "devlog stats: empty array lastUpdated fallback");
+
+  const dashVersion = getDevlogStatsForGame([
+    {
+      id: "e-1",
+      version: "—",
+      publishedAt: "2026/6/1",
+      relativeLabel: "2026/6/1",
+      title: "メモ",
+      excerpt: "—",
+      highlights: [],
+      kind: "note",
+      isLatest: true,
+    },
+  ]);
+  ok(dashVersion.currentVersion === "—", "devlog stats: dash version entry no throw");
+  ok(dashVersion.lastUpdated === "2026/6/1", "devlog stats: preserves publishedAt");
+
+  const withVersion = getDevlogStatsForGame([
+    {
+      id: "e-2",
+      version: "v0.2.0",
+      publishedAt: "2026/6/2",
+      relativeLabel: "2026/6/2",
+      title: "ver公開",
+      excerpt: "本文",
+      highlights: ["プレイ可能verが更新されました"],
+      kind: "version",
+      isLatest: true,
+    },
+  ]);
+  ok(withVersion.currentVersion === "v0.2.0", "devlog stats: uses latest version when set");
+}
+
 function testGameDetailTabs() {
   ok(parseGameDetailTab(null) === "overview", "game detail tab: default overview");
   ok(parseGameDetailTab("devlog") === "devlog", "game detail tab: devlog");
@@ -471,6 +510,7 @@ async function main() {
     ["login page source contract", testLoginPageSourceContract],
     ["game detail tabs", testGameDetailTabs],
     ["real devlog mapping", testRealDevlogMapping],
+    ["devlog stats for game", testDevlogStatsForGame],
   ];
 
   let passed = 0;

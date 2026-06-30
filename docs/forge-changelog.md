@@ -4,6 +4,10 @@
 
 ---
 
+- **ゲーム詳細 devlog 0件クラッシュ修正** — 実作品で開発ログが0件のとき `getDevlogStatsForGame([])` が `undefined.version` で落ちる不具合を修正。0件時は `currentVersion` / `lastUpdated` を `—`、fake ver 表示なし
+
+---
+
 - **ゲーム詳細 hotfix（shell / devlog / home）** — `/games/[id]` のタブ切替で親レイアウト幅が変わらないよう右サイドバーを全タブで固定（`activeTab !== "voices"` 分岐を削除）。実 UUID 作品の devlog は Supabase のみ正本（localStorage extras・mock fallback 不混入）。**devlog タブ初回マウント時** — 実作品では `useSyncExternalStore`（localStorage extras）を購読せず real/mock フック分離し、hydration クラッシュを防止。`devlogsReady` まで loading・0 件は empty。`realDevlogToV0` を null-safe、相対日時は SSR 安定の固定日付表示。実 UUID は `dataReady` 前に mock hero を出さない。`/home` は `dataReady` 前に空メッセージを出さず loading。Studio 作品 Studio（`/projects/{id}/studio`）とマイページ Directory に **公開ページを見る** → `/games/{id}`（同一 shell・owner preview 分岐）
 
 ---
