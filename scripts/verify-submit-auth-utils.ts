@@ -219,17 +219,37 @@ function testNotificationNurtureLinks() {
 
 function testDemoRouteBlocksProduction() {
   const prevProd = process.env.NEXT_PUBLIC_FORGE_PRODUCTION_MODE;
-  try {
-    process.env.NEXT_PUBLIC_FORGE_PRODUCTION_MODE = "true";
-    const { blockDemoRouteOnProduction } =
-      require("../lib/demo/demo-route-guard") as typeof import("../lib/demo/demo-route-guard");
+  const { blockDemoRouteOnProduction } =
+    require("../lib/demo/demo-route-guard") as typeof import("../lib/demo/demo-route-guard");
+
+  function expectNotFound(host: string, label: string) {
     let threw = false;
     try {
-      blockDemoRouteOnProduction("forge.example.com");
+      blockDemoRouteOnProduction(host);
     } catch {
       threw = true;
     }
-    ok(threw, "demo routes call notFound on production hostname");
+    ok(threw, label);
+  }
+
+  function expectAllowed(host: string, label: string) {
+    let threw = false;
+    try {
+      blockDemoRouteOnProduction(host);
+    } catch {
+      threw = true;
+    }
+    ok(!threw, label);
+  }
+
+  try {
+    process.env.NEXT_PUBLIC_FORGE_PRODUCTION_MODE = "true";
+    expectNotFound("forge-flame-gamma.vercel.app", "demo routes 404 on production hostname");
+    expectAllowed(
+      "forge-git-preview-landing-01-soshirow-alts-projects.vercel.app",
+      "demo routes allowed on preview hostname even with force production mode",
+    );
+    expectAllowed("localhost:3001", "demo routes allowed on localhost");
   } finally {
     if (prevProd === undefined) {
       delete process.env.NEXT_PUBLIC_FORGE_PRODUCTION_MODE;

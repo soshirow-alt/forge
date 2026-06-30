@@ -484,7 +484,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
 
     if (!user) {
       catalogUserIdRef.current = undefined;
-      setCatalogReady(false);
+      setCatalogReady(true);
       setSubmittedGames([]);
       setDeveloperProfiles([]);
       return;

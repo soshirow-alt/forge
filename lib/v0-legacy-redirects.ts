@@ -3,7 +3,6 @@
  */
 export const V0_LEGACY_REDIRECTS: Readonly<Record<string, string>> = {
   "/bookmarks": "/mypage?tab=saved",
-  "/demo": "/home",
   "/my-projects": "/studio/mypage",
 };
 

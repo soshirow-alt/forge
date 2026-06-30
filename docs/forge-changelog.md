@@ -38,6 +38,10 @@
 
 ---
 
+- **Preview 確認ブロッカー修正** — `/demo` の legacy middleware リダイレクト（`/home`）を削除。`/demo/ad-screenshot` は Preview hostname / local のみ許可（`NEXT_PUBLIC_FORGE_PRODUCTION_MODE` が Preview に付いていても fixture 可）。未ログイン時 `catalogReady` が false のまま Studio が読み込み中で止まる問題を修正
+
+---
+
 - **広告スクショ用デモ（旧・廃止）** — ~~`NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO=true` のとき Studio ホーム・マイページ・Player マイページ一部タブに厚い mock を強制表示~~ → Phase 2 で `/demo/ad-screenshot` に移行
 
 ---
