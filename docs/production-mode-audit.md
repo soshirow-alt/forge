@@ -149,4 +149,5 @@ mock データ・mock 表示の **単純非表示** または **データ merge 
 
 | 日付 | 内容 |
 |------|------|
+| 2026-06-30 | data-layer **Phase 2** — ad demo を `/demo/ad-screenshot` に隔離（`4282b4a`）。Preview 確認ブロッカー（`0d500d0`: legacy `/demo` redirect 削除・Studio 読み込み中停止）。`VERCEL_ENV=preview` で demo route 許可（`44013bd`）。**ログイン済み Preview 確認待ち** — 本番 deploy 禁止 |
 | 2026-06-28 | 初版。`/studio/mypage` 回帰を契機に一覧化・禁止ルール・チェックリスト・ verify スクリプト |

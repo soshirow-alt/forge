@@ -32,17 +32,17 @@
 
 ---
 
-- **広告スクショ用デモ Phase 2（隔離）** — 本体導線（`/studio`・`/studio/mypage`・`/mypage`）から `isAdScreenshotDemoEnabled` / env 分岐を除去。fixture は **`/demo/ad-screenshot`** 配下に集約（本番 hostname では 404）。`NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO` は不要
+- **data-layer Phase 2 — ad demo 隔離（`4282b4a` + `0d500d0` + `44013bd`）** — **状態: ログイン済み Preview 確認待ち**（本番 deploy 禁止。Phase 3 未着手）
+  - **`4282b4a` 本体** — `/studio`・`/studio/mypage`・`/mypage` から `isAdScreenshotDemoEnabled` / env 分岐を除去。fixture は **`/demo/ad-screenshot`** 配下に集約。`NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO` は不要
+  - **`0d500d0` Preview 確認ブロッカー** — `/demo` の legacy middleware リダイレクト（`/home`）を削除。未ログイン時 `catalogReady` が false のまま Studio が読み込み中で止まる問題を修正
+  - **`44013bd` demo route 許可** — `VERCEL_ENV=preview`・preview ブランチ alias・local で `/demo/ad-screenshot` を許可（`NEXT_PUBLIC_FORGE_PRODUCTION_MODE` が Preview に付いていても fixture 可）。本番は `VERCEL_ENV=production` で 404
   - **撮影候補 URL（Preview / local）** — `/demo/ad-screenshot`、`/demo/ad-screenshot/studio`、`/demo/ad-screenshot/studio-mypage`、`/demo/ad-screenshot/mypage?tab=feedback` 等（インデックスに一覧）
   - **本体** — `/studio`・`/studio/mypage` は実データ / Preview mock（0 件時）のみ。ad demo 用 UI 差し替えなし
+  - **オーナー Preview 確認（ログイン済み）** — (1) `/studio` が読み込み中で止まらない (2) `/studio/mypage` 同 (3) `/mypage` に ad demo 由来の特殊タブ・mock が出ない (4) `/home`・実作品詳細の表示崩れなし
 
 ---
 
-- **Preview 確認ブロッカー修正** — `/demo` の legacy middleware リダイレクト（`/home`）を削除。`/demo/ad-screenshot` は Preview hostname / local のみ許可（`NEXT_PUBLIC_FORGE_PRODUCTION_MODE` が Preview に付いていても fixture 可）。未ログイン時 `catalogReady` が false のまま Studio が読み込み中で止まる問題を修正
-
----
-
-- **広告スクショ用デモ（旧・廃止）** — ~~`NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO=true` のとき Studio ホーム・マイページ・Player マイページ一部タブに厚い mock を強制表示~~ → Phase 2 で `/demo/ad-screenshot` に移行
+- **広告スクショ用デモ（旧・廃止）** — ~~`NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO=true` のとき Studio ホーム・マイページ・Player マイページ一部タブに厚い mock を強制表示~~ → data-layer Phase 2（`4282b4a` 他）で `/demo/ad-screenshot` に移行
 
 ---
 

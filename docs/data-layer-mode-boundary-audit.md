@@ -6,6 +6,8 @@
 
 正本ポリシー: オーナー指示（2026-06）+ `docs/production-mode-audit.md`
 
+**互換方針（2026-06-30）** — 本番実データはオーナーテスト 1 件のみ。既存データ互換のための複雑な fallback や旧 demo 導線は残さない。本体に残る v0 / mock / demo / ad screenshot 分岐は **削除・隔離を優先**（認証・RLS・open redirect・env・migration 整合性は維持）。
+
 ---
 
 ## 最終形（target）
@@ -131,7 +133,7 @@ else              → StudioProjectsTabPanel      (mock grid)
 
 | ファイル / パターン | 扱い |
 |---------------------|------|
-| `StudioAdDemoOwnedPreview` + `isAdScreenshotDemoEnabled` in owned-projects / mypage | **完了** — `/demo/ad-screenshot` に隔離 |
+| `StudioAdDemoOwnedPreview` + `isAdScreenshotDemoEnabled` in owned-projects / mypage | **Phase 2 完了（Preview 確認待ち）** — `/demo/ad-screenshot` に隔離（`4282b4a` + `0d500d0` + `44013bd`） |
 | `StudioProjectsTabPanel` in mypage main flow | 削除（Directory に統一） |
 | `studio-home-page` の mock section 差し替え | データ層へ |
 | `game-detail-v0-page` の dual feedback stack | 統合 |
@@ -140,15 +142,15 @@ else              → StudioProjectsTabPanel      (mock grid)
 
 ## 実装フェーズ（commit 分割案）
 
-| Phase | commit 単位 | 内容 |
-|-------|---------------|------|
-| 0 | `docs: data-layer mode boundary audit` | 本ファイル（一覧化のみ） |
-| 1 | `/studio/mypage` Directory 単一化 | Panel 差し替え削除、provider でリスト供給 | **完了** `refactor/data-layer-mode-boundary` |
-| 2 | ad demo 隔離 | 本体から `isAdScreenshotDemoEnabled` 分岐を除去 | **完了** `refactor/data-layer-mode-boundary` |
-| 3 | `/studio` home viewModel | セクション差し替えをデータ配列化 |
-| 4 | `/home` sections from provider | mock import をページから除去 |
-| 5 | `/games/[id]` viewModel + shell 統合 | 404/voice/feedback をデータ層へ |
-| 6 | verify 強化 | UI 直呼び `shouldHideV0MockContent` を CI で検出（優先 4 URL） |
+| Phase | commit 単位 | 内容 | 状態 |
+|-------|---------------|------|------|
+| 0 | `docs: data-layer mode boundary audit` | 本ファイル（一覧化のみ） | **完了** |
+| 1 | `28749ed` | `/studio/mypage` Directory 単一化 — Panel 差し替え削除、provider でリスト供給 | **完了** |
+| 2 | `4282b4a` + `0d500d0` + `44013bd` | ad demo 隔離 — 本体から `isAdScreenshotDemoEnabled` 分岐除去、`/demo/ad-screenshot` 隔離、legacy redirect 削除、Studio 読み込み中停止修正、Preview demo route 許可 | **ログイン済み Preview 確認待ち**（本番 deploy 禁止） |
+| 3 | — | `/studio` home viewModel — セクション差し替えをデータ配列化 | **未着手**（Phase 2 確認後に判断） |
+| 4 | — | `/home` sections from provider — mock import をページから除去 | 未着手 |
+| 5 | — | `/games/[id]` viewModel + shell 統合 — 404/voice/feedback をデータ層へ | 未着手 |
+| 6 | — | verify 強化 — UI 直呼び `shouldHideV0MockContent` を CI で検出（優先 4 URL） | 未着手 |
 
 各 phase 後: `npm run verify:production-mode-guards` + `npm run build`（本番 deploy 禁止）。
 
@@ -159,3 +161,14 @@ else              → StudioProjectsTabPanel      (mock grid)
 - 踏んだ URL と結果
 - 消えた分岐（ファイル:行 → 移動先）
 - 残タスク
+
+### Phase 2 オーナー確認（ログイン済み Preview）
+
+| # | URL / 観点 |
+|---|------------|
+| 1 | `/studio` — 読み込み中で止まらない |
+| 2 | `/studio/mypage` — 同上 |
+| 3 | `/mypage` — ad demo 由来の特殊タブ・mock が出ない |
+| 4 | `/home`・実作品詳細 — 表示崩れなし |
+
+確認後に Phase 3 着手可否を判断。本番 deploy は Phase 2 確認完了まで禁止。
