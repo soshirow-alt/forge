@@ -430,6 +430,39 @@ function testHomeSearchPublicCatalogContract() {
   ok(!search.includes("submittedGames"), "works-search does not use submittedGames");
 }
 
+function testAuthRedirectLoopGuardContract() {
+  const fs = require("node:fs") as typeof import("node:fs");
+  const path = require("node:path") as typeof import("node:path");
+  const authProvider = fs.readFileSync(
+    path.join(import.meta.dirname, "../components/auth-provider.tsx"),
+    "utf8",
+  );
+  const studioGuard = fs.readFileSync(
+    path.join(import.meta.dirname, "../components/studio-entry-gate-provider.tsx"),
+    "utf8",
+  );
+
+  ok(authProvider.includes("authResolved"), "auth-provider exposes authResolved");
+  ok(
+    authProvider.includes("supabase.auth.getUser()"),
+    "auth-provider hydrates with client getUser",
+  );
+  ok(
+    !authProvider.includes("supabase.auth.getSession()"),
+    "auth-provider does not hydrate with getSession",
+  );
+  ok(
+    authProvider.includes('event === "SIGNED_OUT"') &&
+      authProvider.includes("hadServerUserRef"),
+    "auth-provider keeps server initialUser until sign-out or client confirmation",
+  );
+  ok(
+    studioGuard.includes("authResolved") &&
+      studioGuard.includes("if (!authResolved)"),
+    "StudioDirectAccessGuard waits for authResolved before login redirect",
+  );
+}
+
 function testLoginPageSourceContract() {
   const fs = require("node:fs") as typeof import("node:fs");
   const path = require("node:path") as typeof import("node:path");
@@ -567,6 +600,7 @@ async function main() {
     ["games provider mock guard contract", testGamesProviderMockGuardContract],
     ["public catalog auth independence contract", testPublicCatalogAuthIndependenceContract],
     ["home search public catalog contract", testHomeSearchPublicCatalogContract],
+    ["auth redirect loop guard contract", testAuthRedirectLoopGuardContract],
     ["login page source contract", testLoginPageSourceContract],
     ["game detail tabs", testGameDetailTabs],
     ["real devlog mapping", testRealDevlogMapping],

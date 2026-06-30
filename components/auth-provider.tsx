@@ -6,17 +6,21 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import { getEmailConfirmRedirectUrl, getOAuthRedirectUrl } from "@/lib/auth-redirect";
 import { mapSupabaseUser, type User } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/client";
-import type { Provider } from "@supabase/supabase-js";
+import type { AuthChangeEvent, Provider, User as SupabaseAuthUser } from "@supabase/supabase-js";
 
 type AuthContextValue = {
   user: User | null;
+  /** @deprecated Prefer `authResolved` — kept for existing call sites. */
   hydrated: boolean;
+  /** Client auth bootstrap finished; safe to gate on `user`. */
+  authResolved: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (
     email: string,
@@ -35,12 +39,38 @@ type AuthProviderProps = {
   initialUser?: User | null;
 };
 
+function applyAuthChangeEvent(
+  event: AuthChangeEvent,
+  sessionUser: SupabaseAuthUser | null | undefined,
+  hadServerUser: boolean,
+  setUser: (user: User | null) => void,
+) {
+  if (event === "SIGNED_OUT") {
+    setUser(null);
+    return;
+  }
+
+  if (sessionUser) {
+    setUser(mapSupabaseUser(sessionUser));
+    return;
+  }
+
+  if (event === "INITIAL_SESSION" && hadServerUser) {
+    return;
+  }
+
+  if (event !== "INITIAL_SESSION") {
+    setUser(null);
+  }
+}
+
 export function AuthProvider({
   children,
   initialUser = null,
 }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(initialUser);
-  const [hydrated, setHydrated] = useState(false);
+  const [authResolved, setAuthResolved] = useState(false);
+  const hadServerUserRef = useRef(Boolean(initialUser));
   const supabase = useMemo(() => {
     if (
       !process.env.NEXT_PUBLIC_SUPABASE_URL ||
@@ -54,24 +84,30 @@ export function AuthProvider({
 
   useEffect(() => {
     if (!supabase) {
-      setHydrated(true);
+      setAuthResolved(true);
       return;
     }
 
     let active = true;
 
-    void supabase.auth.getSession().then(({ data: { session } }) => {
+    void supabase.auth.getUser().then(({ data: { user: authUser } }) => {
       if (!active) {
         return;
       }
 
-      setUser(session?.user ? mapSupabaseUser(session.user) : null);
-      setHydrated(true);
+      if (authUser) {
+        setUser(mapSupabaseUser(authUser));
+        hadServerUserRef.current = false;
+      } else if (!hadServerUserRef.current) {
+        setUser(null);
+      }
+
+      setAuthResolved(true);
     });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) {
         return;
       }
@@ -82,8 +118,18 @@ export function AuthProvider({
           return;
         }
 
-        setUser(session?.user ? mapSupabaseUser(session.user) : null);
-        setHydrated(true);
+        applyAuthChangeEvent(
+          event,
+          session?.user,
+          hadServerUserRef.current,
+          setUser,
+        );
+
+        if (session?.user || event === "SIGNED_OUT") {
+          hadServerUserRef.current = false;
+        }
+
+        setAuthResolved(true);
       }, 0);
     });
 
@@ -109,7 +155,9 @@ export function AuthProvider({
       }
 
       if (data.user) {
+        hadServerUserRef.current = false;
         setUser(mapSupabaseUser(data.user));
+        setAuthResolved(true);
       }
     },
     [supabase],
@@ -142,7 +190,9 @@ export function AuthProvider({
       }
 
       if (data.session?.user) {
+        hadServerUserRef.current = false;
         setUser(mapSupabaseUser(data.session.user));
+        setAuthResolved(true);
       }
 
       return Boolean(data.session);
@@ -179,7 +229,9 @@ export function AuthProvider({
       await supabase.auth.signOut();
     }
 
+    hadServerUserRef.current = false;
     setUser(null);
+    setAuthResolved(true);
   }, [supabase]);
 
   const updateDisplayName = useCallback(
@@ -211,14 +263,15 @@ export function AuthProvider({
   const value = useMemo(
     () => ({
       user,
-      hydrated,
+      hydrated: authResolved,
+      authResolved,
       signIn,
       signUp,
       signInWithOAuth,
       updateDisplayName,
       logout,
     }),
-    [user, hydrated, signIn, signUp, signInWithOAuth, updateDisplayName, logout],
+    [user, authResolved, signIn, signUp, signInWithOAuth, updateDisplayName, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

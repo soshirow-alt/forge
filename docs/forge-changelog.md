@@ -4,6 +4,10 @@
 
 ---
 
+- **Studio 認証リダイレクトループ修正** — `/studio` と `/login?return=/studio` の往復を解消。サーバー `initialUser` をクライアント `getSession()` の一時空で上書きしないよう `getUser()` + `authResolved` で初回確認。`StudioDirectAccessGuard` は認証未確定間は login へ飛ばさない
+
+---
+
 - **公開カタログ分離（/home・検索）** — `publicGames` / `publicCatalogReady` を追加し、`visibility='public'` の作品だけをマウント時に取得（`fetchPublicProjects`）。`/home` と `/search` は auth / `dataReady` を待たず公開カタログのみで表示。`submittedGames` は Studio・マイページ等のログイン依存画面向けに維持。応援数・devlog・通知等は初期表示をブロックしない
 
 ---

@@ -167,14 +167,14 @@ export function useStudioEntryGate() {
 export function StudioDirectAccessGuard() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, hydrated } = useAuth();
+  const { user, authResolved } = useAuth();
   const { attemptStudioEntry } = useStudioEntryGate();
 
   useEffect(() => {
     if (shouldBypassStudioLoginGate()) {
       return;
     }
-    if (!hydrated) {
+    if (!authResolved) {
       return;
     }
     if (!user) {
@@ -185,7 +185,7 @@ export function StudioDirectAccessGuard() {
     if (shouldPromptDeveloperPage(user.id)) {
       attemptStudioEntry(pathname.startsWith("/studio") ? pathname : "/studio");
     }
-  }, [hydrated, user, attemptStudioEntry, pathname, router]);
+  }, [authResolved, user, attemptStudioEntry, pathname, router]);
 
   return null;
 }
