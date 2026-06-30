@@ -32,6 +32,13 @@ function KindBadge({ kind }: { kind: GameDevlogEntry["kind"] }) {
   );
 }
 
+function normalizeEntry(entry: GameDevlogEntry): GameDevlogEntry {
+  return {
+    ...entry,
+    highlights: entry.highlights ?? [],
+  };
+}
+
 function LatestDevlogCard({
   entry,
   onPlay,
@@ -39,6 +46,7 @@ function LatestDevlogCard({
   entry: GameDevlogEntry;
   onPlay?: () => void;
 }) {
+  const highlights = entry.highlights ?? [];
   return (
     <section className="rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 to-zinc-900/40 p-5 sm:p-6">
       <div className="flex flex-wrap items-center gap-2">
@@ -52,9 +60,9 @@ function LatestDevlogCard({
       </div>
       <h2 className="mt-3 text-lg font-semibold text-white">{entry.title}</h2>
       <p className="mt-2 text-sm leading-relaxed text-zinc-400">{entry.excerpt}</p>
-      {entry.highlights.length > 0 && (
+      {highlights.length > 0 && (
         <ul className="mt-4 space-y-1.5">
-          {entry.highlights.map((item) => (
+          {highlights.map((item) => (
             <li key={item} className="flex items-start gap-2 text-sm text-zinc-300">
               <Sparkles className="mt-0.5 size-3.5 shrink-0 text-violet-400" aria-hidden="true" />
               {item}
@@ -85,7 +93,8 @@ function DevlogTimelineItem({
   expanded: boolean;
   onToggle: () => void;
 }) {
-  const hasMore = entry.highlights.length > 0;
+  const highlights = entry.highlights ?? [];
+  const hasMore = highlights.length > 0;
 
   return (
     <article className="relative pl-8">
@@ -110,7 +119,7 @@ function DevlogTimelineItem({
         <p className="mt-2 text-sm leading-relaxed text-zinc-400">{entry.excerpt}</p>
         {hasMore && expanded && (
           <ul className="mt-3 space-y-1 border-t border-zinc-800/80 pt-3">
-            {entry.highlights.map((item) => (
+            {highlights.map((item) => (
               <li key={item} className="text-sm text-zinc-500">
                 · {item}
               </li>
@@ -149,7 +158,11 @@ export function GameDevlogV0Tab({
   const [filter, setFilter] = useState<DevlogFilterId>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const { entries: allEntries } = useGameDevlogsV0(gameId, projectId);
+  const { entries: rawEntries, loaded } = useGameDevlogsV0(gameId, projectId);
+  const allEntries = useMemo(
+    () => rawEntries.map(normalizeEntry),
+    [rawEntries],
+  );
   const filtered = useMemo(() => filterDevlogs(allEntries, filter), [allEntries, filter]);
   const stats = useMemo(() => getDevlogStatsForGame(allEntries), [allEntries]);
   const filterTabs = useMemo(() => getDevlogFilterTabs(allEntries), [allEntries]);
@@ -158,6 +171,14 @@ export function GameDevlogV0Tab({
     filter === "all" && latest
       ? filtered.filter((e) => e.id !== latest.id)
       : filtered;
+
+  if (!loaded) {
+    return (
+      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/30 px-6 py-12 text-center">
+        <p className="text-sm text-zinc-500">開発ログを読み込み中...</p>
+      </div>
+    );
+  }
 
   if (allEntries.length === 0) {
     return (

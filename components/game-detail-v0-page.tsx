@@ -48,7 +48,6 @@ import { firstVoiceQuestion } from "@/lib/feedback-v0-mock-data";
 import { applyProjectOverviewV0 } from "@/lib/project-overview-v0-store";
 import { projectStudioPath } from "@/lib/project-nurture-links";
 import { shouldHideV0MockContent, isProductionReleaseMode } from "@/lib/production-mode";
-import { formatRelativeUpdateLabel } from "@/lib/discovery-public-games";
 import {
   buildGameDetailTabHref,
   parseGameDetailTab,
@@ -62,6 +61,7 @@ import {
   markWatchFirstHintSeen,
 } from "@/lib/watch-ui-labels";
 import { useProjectOverviewV0 } from "@/hooks/use-project-overview-v0";
+import { formatDevlogPublishedAt } from "@/hooks/use-game-devlogs-v0";
 import { useProjectPublicStats } from "@/hooks/use-project-public-stats";
 import {
   Bookmark,
@@ -172,6 +172,8 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   const submittedGame = dataReady ? getSubmittedGameById(id) : undefined;
   const hideV0Mock = shouldHideV0MockContent();
   const resolvedId = isSupabaseProjectId(id) ? id : resolveGameDetailId(id);
+  const waitingForCatalog = isSupabaseProjectId(id) && !dataReady;
+
   const isRealProject = Boolean(
     submittedGame && isSupabaseProjectId(submittedGame.id),
   );
@@ -192,7 +194,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     (publicStatsLoaded && publicStats.feedbackParticipantCount > 0);
   const devlogUpdatedLabel =
     isRealProject && publicStats.latestDevlogAt
-      ? formatRelativeUpdateLabel(publicStats.latestDevlogAt)
+      ? formatDevlogPublishedAt(publicStats.latestDevlogAt)
       : isRealProject
         ? "—"
         : game.devlogUpdatedAgo;
@@ -380,6 +382,14 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   }, [setDetailTab]);
 
   useFeedbackFlowLock(isRealProject ? "closed" : feedbackStep);
+
+  if (waitingForCatalog) {
+    return (
+      <PlayerShell>
+        <p className="text-sm text-zinc-500">読み込み中...</p>
+      </PlayerShell>
+    );
+  }
 
   return (
     <PlayerShell>
@@ -671,7 +681,6 @@ function GameDetailV0PageBody({ id }: { id: string }) {
             ))}
         </div>
 
-        {activeTab !== "voices" && (
         <aside className="w-full shrink-0 space-y-5 xl:w-72">
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
             <div className="flex items-center gap-3">
@@ -767,7 +776,6 @@ function GameDetailV0PageBody({ id }: { id: string }) {
           </section>
           ) : null}
         </aside>
-        )}
       </div>
     </PlayerShell>
   );

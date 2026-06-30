@@ -24,6 +24,13 @@ import {
   gameVersionBannerHref,
   notificationTargetHref,
 } from "../lib/project-nurture-links";
+import {
+  isValidDevlogEntry,
+  normalizeGameDevlogEntry,
+  realDevlogToV0,
+} from "../hooks/use-game-devlogs-v0";
+import type { DevlogEntry } from "../lib/devlogs";
+import { isSupabaseProjectId } from "../lib/submitted-game-v0-adapter";
 
 function ok(condition: boolean, message: string) {
   assert.equal(condition, true, message);
@@ -385,6 +392,49 @@ function testLoginPageSourceContract() {
   ok(loginRoute.includes("getUser()"), "logged-in redirect on server");
 }
 
+function testRealDevlogMapping() {
+  const minimal: DevlogEntry = {
+    id: "d-1",
+    projectId: "00000000-0000-0000-0000-000000000001",
+    title: "",
+    content: "",
+    date: "2026-06-01",
+  };
+  ok(isValidDevlogEntry(minimal), "valid devlog entry");
+  const mapped = realDevlogToV0(minimal, true);
+  ok(mapped.title === "（無題）", "devlog null-safe title");
+  ok(mapped.excerpt === "—", "devlog null-safe content");
+  ok(mapped.highlights.length === 0, "devlog note has no highlights");
+  ok(mapped.relativeLabel === mapped.publishedAt, "devlog stable relative label");
+
+  const versioned: DevlogEntry = {
+    ...minimal,
+    id: "d-2",
+    title: "ver公開",
+    content: "本文",
+    publishedVersion: "v0.2.0",
+  };
+  const versionMapped = realDevlogToV0(versioned, false);
+  ok(versionMapped.kind === "version", "devlog version kind");
+  ok(versionMapped.highlights.length === 1, "devlog version highlight");
+
+  const extra = normalizeGameDevlogEntry({
+    id: "x",
+    version: "—",
+    publishedAt: "—",
+    relativeLabel: "—",
+    title: "t",
+    excerpt: "e",
+    highlights: undefined as unknown as string[],
+    kind: "note",
+  });
+  ok(Array.isArray(extra.highlights) && extra.highlights.length === 0, "normalize highlights");
+
+  const uuid = "00000000-0000-0000-0000-000000000099";
+  ok(isSupabaseProjectId(uuid), "uuid detector for real project");
+  ok(!isSupabaseProjectId("seikat-no-tabiji"), "slug is not supabase id");
+}
+
 function testGameDetailTabs() {
   ok(parseGameDetailTab(null) === "overview", "game detail tab: default overview");
   ok(parseGameDetailTab("devlog") === "devlog", "game detail tab: devlog");
@@ -420,6 +470,7 @@ async function main() {
     ["games provider mock guard contract", testGamesProviderMockGuardContract],
     ["login page source contract", testLoginPageSourceContract],
     ["game detail tabs", testGameDetailTabs],
+    ["real devlog mapping", testRealDevlogMapping],
   ];
 
   let passed = 0;

@@ -11,45 +11,62 @@ import { isVersionPublishDevlog } from "@/lib/player-update-display";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { isSupabaseProjectId } from "@/lib/submitted-game-v0-adapter";
 import {
-  getStudioDevlogExtrasForProject,
   getStudioDevlogExtrasServerSnapshot,
   getStudioDevlogExtrasSnapshot,
   subscribeStudioDevlogExtras,
 } from "@/lib/studio-devlog-draft-v0-store";
 
-function formatRelativeDevlogLabel(date: string): string {
-  const parsed = Date.parse(date);
-  if (Number.isNaN(parsed)) {
-    return date;
+const EMPTY_EXTRAS: Record<string, GameDevlogEntry[]> = {};
+
+function subscribeNoop(_listener: () => void) {
+  return () => {};
+}
+
+function getEmptyExtrasSnapshot(): Record<string, GameDevlogEntry[]> {
+  return EMPTY_EXTRAS;
+}
+
+/** SSR/CSR で同じ文字列になる日付表示（相対日時は使わない） */
+export function formatDevlogPublishedAt(date: string | undefined | null): string {
+  const trimmed = date?.trim() ?? "";
+  if (!trimmed) {
+    return "—";
   }
 
-  const diffMs = Date.now() - parsed;
-  const days = Math.floor(diffMs / (24 * 60 * 60 * 1000));
-  if (days < 1) {
-    return "今日";
+  const isoDay = trimmed.split("T")[0] ?? trimmed;
+  const parsed = Date.parse(isoDay);
+  if (Number.isNaN(parsed)) {
+    return trimmed;
   }
-  if (days < 7) {
-    return `${days}日前`;
-  }
+
   return new Date(parsed).toLocaleDateString("ja-JP", {
-    month: "short",
+    year: "numeric",
+    month: "numeric",
     day: "numeric",
+    timeZone: "UTC",
   });
 }
 
-function realDevlogToV0(entry: DevlogEntry, isLatest: boolean): GameDevlogEntry {
+export function isValidDevlogEntry(
+  entry: DevlogEntry | null | undefined,
+): entry is DevlogEntry {
+  return Boolean(entry?.id?.trim());
+}
+
+export function realDevlogToV0(entry: DevlogEntry, isLatest: boolean): GameDevlogEntry {
+  const content = entry.content?.trim() ?? "";
+  const title = entry.title?.trim() || "（無題）";
+  const publishedAt = formatDevlogPublishedAt(entry.date);
   const isVersion = isVersionPublishDevlog(entry);
   const excerpt =
-    entry.content.length > 160
-      ? `${entry.content.slice(0, 160)}…`
-      : entry.content;
+    content.length > 160 ? `${content.slice(0, 160)}…` : content || "—";
 
   return {
     id: entry.id,
-    version: entry.publishedVersion ?? "—",
-    publishedAt: new Date(entry.date).toLocaleDateString("ja-JP"),
-    relativeLabel: formatRelativeDevlogLabel(entry.date),
-    title: entry.title,
+    version: entry.publishedVersion?.trim() || "—",
+    publishedAt,
+    relativeLabel: publishedAt,
+    title,
     excerpt,
     highlights: isVersion ? ["プレイ可能verが更新されました"] : [],
     kind: isVersion ? "version" : "note",
@@ -57,66 +74,92 @@ function realDevlogToV0(entry: DevlogEntry, isLatest: boolean): GameDevlogEntry 
   };
 }
 
-function mergeDevlogEntries(
+export function normalizeGameDevlogEntry(entry: GameDevlogEntry): GameDevlogEntry {
+  return {
+    ...entry,
+    id: entry.id?.trim() || "unknown",
+    title: entry.title?.trim() || "（無題）",
+    excerpt: entry.excerpt?.trim() || "—",
+    version: entry.version?.trim() || "—",
+    publishedAt: entry.publishedAt?.trim() || "—",
+    relativeLabel: entry.relativeLabel?.trim() || entry.publishedAt?.trim() || "—",
+    highlights: Array.isArray(entry.highlights) ? entry.highlights : [],
+    kind: entry.kind === "note" ? "note" : "version",
+  };
+}
+
+function mergeMockDevlogEntries(
   gameId: string,
   projectId: string | undefined,
-  realDevlogs: GameDevlogEntry[] | null,
+  extrasByProject: Record<string, GameDevlogEntry[]>,
 ): GameDevlogEntry[] {
-  if (realDevlogs !== null) {
-    if (realDevlogs.length > 0) {
-      return realDevlogs;
-    }
-
-    if (!shouldHideV0MockContent() && projectId) {
-      const extras = getStudioDevlogExtrasForProject(projectId);
-      if (extras.length > 0) {
-        return extras.map((entry, index) => ({
-          ...entry,
-          isLatest: index === 0,
-        }));
-      }
-    }
-
-    return [];
-  }
-
   if (shouldHideV0MockContent()) {
     return [];
   }
 
-  const base = getDevlogsForGame(gameId);
-  const extras = projectId ? getStudioDevlogExtrasForProject(projectId) : [];
+  const base = getDevlogsForGame(gameId).map(normalizeGameDevlogEntry);
+  const extras = projectId ? (extrasByProject[projectId] ?? []) : [];
 
   if (extras.length === 0) {
     return base;
   }
 
   return [
-    ...extras.map((entry, index) => ({
-      ...entry,
-      isLatest: index === 0,
-    })),
+    ...extras.map((entry, index) =>
+      normalizeGameDevlogEntry({
+        ...entry,
+        isLatest: index === 0,
+      }),
+    ),
     ...base.map((entry) => ({ ...entry, isLatest: false })),
   ];
 }
 
-export function useGameDevlogsV0(gameId: string, projectId?: string) {
-  const { getDevlogsByProject } = useGames();
-  const extrasSnapshot = useSyncExternalStore(
-    subscribeStudioDevlogExtras,
-    getStudioDevlogExtrasSnapshot,
+function useRealGameDevlogs(gameId: string, enabled: boolean) {
+  const { getDevlogsByProject, devlogsReady } = useGames();
+
+  const entries = useMemo(() => {
+    if (!enabled) {
+      return [];
+    }
+
+    return sortDevlogsNewestFirst(getDevlogsByProject(gameId))
+      .filter(isValidDevlogEntry)
+      .map((entry, index) => realDevlogToV0(entry, index === 0));
+  }, [enabled, gameId, getDevlogsByProject, devlogsReady]);
+
+  return {
+    entries,
+    loaded: !enabled || devlogsReady,
+  };
+}
+
+function useMockGameDevlogs(
+  gameId: string,
+  projectId: string | undefined,
+  enabled: boolean,
+) {
+  const extrasByProject = useSyncExternalStore(
+    enabled ? subscribeStudioDevlogExtras : subscribeNoop,
+    enabled ? getStudioDevlogExtrasSnapshot : getEmptyExtrasSnapshot,
     getStudioDevlogExtrasServerSnapshot,
   );
 
   const entries = useMemo(() => {
-    const realDevlogs = isSupabaseProjectId(gameId)
-      ? sortDevlogsNewestFirst(getDevlogsByProject(gameId)).map((entry, index) =>
-          realDevlogToV0(entry, index === 0),
-        )
-      : null;
+    if (!enabled) {
+      return [];
+    }
 
-    return mergeDevlogEntries(gameId, projectId, realDevlogs);
-  }, [gameId, projectId, extrasSnapshot, getDevlogsByProject]);
+    return mergeMockDevlogEntries(gameId, projectId, extrasByProject);
+  }, [enabled, gameId, projectId, extrasByProject]);
 
-  return { entries };
+  return { entries, loaded: true };
+}
+
+export function useGameDevlogsV0(gameId: string, projectId?: string) {
+  const isRealProject = isSupabaseProjectId(gameId);
+  const real = useRealGameDevlogs(gameId, isRealProject);
+  const mock = useMockGameDevlogs(gameId, projectId, !isRealProject);
+
+  return isRealProject ? real : mock;
 }

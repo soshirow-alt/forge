@@ -182,6 +182,8 @@ type Counts = Record<string, number>;
 type GamesContextValue = {
   submittedGames: Game[];
   dataReady: boolean;
+  /** Supabase project_devlogs の初回取得完了（実作品 devlog タブ用） */
+  devlogsReady: boolean;
   addSubmittedGame: (
     data: SubmitFormData,
     owner: { ownerId: string; ownerName: string },
@@ -377,6 +379,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   const [followerCountByDeveloperUserId, setFollowerCountByDeveloperUserId] =
     useState<Counts>({});
   const [devlogs, setDevlogs] = useState<DevlogEntry[]>([]);
+  const [devlogsReady, setDevlogsReady] = useState(false);
   const [helpfulMarksByProject, setHelpfulMarksByProject] = useState<
     Record<string, string[]>
   >({});
@@ -430,10 +433,13 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         .catch(() => setSupportCounts({}));
       void fetchAllProjectDevlogs(supabase)
         .then(setDevlogs)
-        .catch(() => setDevlogs([]));
+        .catch(() => setDevlogs([]))
+        .finally(() => setDevlogsReady(true));
       void fetchAllProjectReleaseEvents(supabase)
         .then(setReleaseEvents)
         .catch(() => setReleaseEvents([]));
+    } else {
+      setDevlogsReady(true);
     }
   }, []);
 
@@ -1954,6 +1960,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     () => ({
       submittedGames,
       dataReady: authHydrated && catalogReady,
+      devlogsReady,
       addSubmittedGame,
       updateSubmittedGame,
       updateProjectDetails,
@@ -2031,6 +2038,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       submittedGames,
       authHydrated,
       catalogReady,
+      devlogsReady,
       hydrated,
       addSubmittedGame,
       updateSubmittedGame,

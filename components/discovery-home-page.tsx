@@ -234,7 +234,7 @@ function DiscoverySectionEmpty({ message }: { message: string }) {
 }
 
 export function DiscoveryHomePage() {
-  const { submittedGames, getSupportCount } = useGames();
+  const { submittedGames, getSupportCount, dataReady } = useGames();
   const hideV0Mock = useHideV0MockContent();
 
   const publicGames = useMemo(
@@ -281,6 +281,14 @@ export function DiscoveryHomePage() {
       .map((game) => gameToHomeCard(game, getSupportCount(game.id)));
     return mergeHomeCards(realPopular, popularGames, hideV0Mock);
   }, [publicGames, getSupportCount, hideV0Mock]);
+
+  if (!dataReady) {
+    return (
+      <PlayerShell activeNav="home">
+        <p className="text-sm text-zinc-500">読み込み中...</p>
+      </PlayerShell>
+    );
+  }
 
   return (
     <PlayerShell activeNav="home">

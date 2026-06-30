@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { Copy, FileText, Link2, Pencil } from "lucide-react";
+import { Copy, ExternalLink, FileText, Link2, Pencil } from "lucide-react";
 import { InputHintBadge } from "@/components/input-hint-badge";
 import { ProjectShareLinkModal } from "@/components/project-share-link-modal";
+import { gamePlayHref } from "@/lib/project-nurture-links";
 const nurturePrimaryButtonClassName =
   "inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-semibold text-zinc-950 shadow-sm shadow-orange-500/20 transition-opacity hover:opacity-90";
 
@@ -42,6 +44,10 @@ export function StudioProjectToolbar({
               <Link2 className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
               配布・リンク
             </button>
+            <Link href={gamePlayHref(projectId)} className={settingsButtonClassName}>
+              <ExternalLink className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+              公開ページを見る
+            </Link>
           </div>
         </section>
 

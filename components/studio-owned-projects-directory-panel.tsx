@@ -23,7 +23,7 @@ import {
   sortProjectsForGrowthHub,
   type ProjectGrowthSnapshot,
 } from "@/lib/project-growth-state";
-import { projectStudioPath, studioSubmitModalHref } from "@/lib/project-nurture-links";
+import { gamePlayHref, projectStudioPath, studioSubmitModalHref } from "@/lib/project-nurture-links";
 import { resolveVoiceSignalForGame } from "@/lib/project-voice-nurture";
 import { isStudioMypagePreviewMockProject } from "@/lib/studio-mypage-owned-projects";
 import type { Game } from "@/lib/mock-games";
@@ -178,7 +178,13 @@ function OwnedProjectGridCard({
           </p>
         </div>
       </Link>
-      <div className="flex justify-end border-t border-zinc-800/80 px-3 py-2">
+      <div className="flex items-center justify-between gap-2 border-t border-zinc-800/80 px-3 py-2">
+        <Link
+          href={gamePlayHref(game.id)}
+          className="text-xs text-violet-400 transition-colors hover:text-violet-200"
+        >
+          公開ページを見る
+        </Link>
         {showDelete ? (
           <ProjectDeleteButton
             onClick={() => onDelete({ id: game.id, title: game.title })}
