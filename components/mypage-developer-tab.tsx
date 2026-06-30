@@ -223,11 +223,11 @@ function MyPageDeveloperTabContent() {
       <section>
         <h2 className="text-xl font-semibold tracking-tight">アナリティクス</h2>
         <p className="mt-1 text-sm text-zinc-500">
-          作品全体のパフォーマンス概要（準備中）
+          作品全体のパフォーマンス概要（Coming Soon）
         </p>
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <AnalyticsCard label="閲覧数" value="—" hint="準備中" />
-          <AnalyticsCard label="プレイクリック" value="—" hint="準備中" />
+          <AnalyticsCard label="閲覧数" value="—" hint="Coming Soon" />
+          <AnalyticsCard label="プレイクリック" value="—" hint="Coming Soon" />
           <AnalyticsCard
             label="応援数"
             value={String(totalSupports)}

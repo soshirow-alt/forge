@@ -77,7 +77,7 @@ function StudioMypagePageContent() {
           hideV0Mock ? (
             <FeatureComingSoonPanel
               title="実績"
-              description="開発者実績の集計・表示は準備中です。公開をお待ちください。"
+              description="開発者実績の集計・表示は Coming Soon です。"
             />
           ) : (
             <StudioAchievementsTabPanel />

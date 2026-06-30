@@ -89,7 +89,7 @@ export function PlatformFeedbackSidebarBox({
         const payload = (await response.json().catch(() => null)) as { error?: string } | null;
         if (payload?.error === "Platform feedback is not ready yet") {
           setErrorMessage(
-            "ご意見の受付準備中です。しばらくしてからお試しください。",
+            "ご意見の受付は Coming Soon です。しばらくしてからお試しください。",
           );
         } else {
           setErrorMessage("送信できませんでした。しばらくしてからお試しください。");

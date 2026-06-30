@@ -4,6 +4,10 @@
 
 ---
 
+- **Coming Soon 表記統一** — 「追って機能追加予定」「準備中です」等の未提供機能表現をユーザー画面で `Coming Soon`（大文字・スペースあり）に統一。`FeatureComingSoonPanel`・OAuth・Forge SDK・各種空状態パネルを含む
+
+---
+
 - **UI文言整理（実装用語の除去）** — ユーザー向け画面から `preview mock`・`本番では`・Supabase / migration 露出を除去。OAuth・Forge SDK・サムネ AI の Coming soon 表記は維持。確認用画面は「確認用データ」「端末内の一時保存」等の自然な表現に。設定フッターの生 URL を「Player / Studio の設定」ラベルに変更
 
 ---

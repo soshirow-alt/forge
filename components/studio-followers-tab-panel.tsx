@@ -69,9 +69,9 @@ export function StudioFollowersTabPanel() {
   if (migrationMissing) {
     return (
       <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6 text-sm text-amber-100/90">
-        <p className="font-medium text-amber-200">フォロワー一覧の準備が未完了です</p>
+        <p className="font-medium text-amber-200">フォロワー一覧は Coming Soon です</p>
         <p className="mt-2 leading-relaxed text-amber-100/80">
-          フォロワー一覧は準備中です。しばらくお待ちください。
+          フォロワー一覧は Coming Soon です。
         </p>
       </div>
     );

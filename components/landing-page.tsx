@@ -242,7 +242,7 @@ export function LandingPage({
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="font-bold text-white">Forge からのお知らせ</h2>
               <span
-                title="お知らせ一覧は準備中"
+                title="お知らせ一覧は Coming Soon"
                 className="flex cursor-not-allowed items-center gap-1.5 text-sm font-medium text-zinc-500"
               >
                 お知らせ一覧

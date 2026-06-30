@@ -259,7 +259,7 @@ export function CreatorProfileRealView({
             (hideV0Mock ? (
               <FeatureComingSoonPanel
                 title="開発者の実績"
-                description="開発者バッジの表示は準備中です。"
+                description="開発者バッジの表示は Coming Soon です。"
               />
             ) : (
               <FeatureComingSoonPanel title="開発者の実績" />

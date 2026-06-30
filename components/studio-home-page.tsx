@@ -269,7 +269,7 @@ export function StudioHomePage() {
             <div className="mt-5">
               <FeatureComingSoonPanel
                 title="今週の伸び"
-                description="週次ランキングの集計・表示は準備中です。公開をお待ちください。"
+                description="週次ランキングの集計・表示は Coming Soon です。"
               />
             </div>
           </section>

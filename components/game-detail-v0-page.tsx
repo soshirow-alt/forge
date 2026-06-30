@@ -669,7 +669,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
             (hideV0Mock ? (
               <FeatureComingSoonPanel
                 title="みんなのフィードバック"
-                description="他のプレイヤーのフィードバックを見る機能は準備中です。"
+                description="他のプレイヤーのフィードバックを見る機能は Coming Soon です。"
               />
             ) : (
               <GameVoicesV0Tab

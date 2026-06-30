@@ -17,7 +17,7 @@ export function ForgeSdkNote({ className = "" }: ForgeSdkNoteProps) {
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-medium text-zinc-300">Forge SDK</span>
             <span className="inline-flex items-center rounded-full border border-zinc-600 bg-zinc-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
-              Coming soon
+              Coming Soon
             </span>
             <span className="text-[11px] text-zinc-600">（任意）</span>
           </div>

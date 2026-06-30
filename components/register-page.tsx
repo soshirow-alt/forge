@@ -209,7 +209,7 @@ export function RegisterPage({
           </button>
         </form>
 
-        <OAuthComingSoonSection description="Google / Discord / GitHub 登録は準備中です。メールアドレスで登録できます。" />
+        <OAuthComingSoonSection description="Google / Discord / GitHub 登録は Coming Soon です。メールアドレスで登録できます。" />
 
         <p className="mt-8 text-center text-sm text-zinc-500">
           すでにアカウントをお持ちですか？{" "}

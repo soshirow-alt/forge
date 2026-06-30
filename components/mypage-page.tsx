@@ -87,7 +87,7 @@ function MyPagePageContent() {
           ) : (
             <FeatureComingSoonPanel
               title="FB履歴"
-              description="あなたが届けたフィードバックの履歴は準備中です。"
+              description="あなたが届けたフィードバックの履歴は Coming Soon です。"
             />
           ))}
         {activeTab === "achievements" &&
@@ -96,7 +96,7 @@ function MyPagePageContent() {
           ) : (
             <FeatureComingSoonPanel
               title="実績"
-              description="プレイヤー実績バッジの表示は準備中です。"
+              description="プレイヤー実績バッジの表示は Coming Soon です。"
             />
           ))}
         {activeTab === "following" &&

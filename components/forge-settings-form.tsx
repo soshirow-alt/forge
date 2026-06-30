@@ -110,9 +110,9 @@ function PreferenceSettingsPanel({ context }: { context: "player" | "studio" }) 
   if (migrationMissing) {
     return (
       <section className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5 sm:p-6">
-        <p className="font-medium text-amber-200">設定の保存機能の準備が未完了です</p>
+        <p className="font-medium text-amber-200">設定の保存機能は Coming Soon です</p>
         <p className="mt-2 text-sm leading-relaxed text-amber-100/80">
-          通知・プライバシー設定の保存は準備中です。しばらくお待ちください。
+          通知・プライバシー設定の保存は Coming Soon です。
         </p>
       </section>
     );

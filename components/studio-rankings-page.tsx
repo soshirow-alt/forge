@@ -109,7 +109,7 @@ function StudioRankingsComingSoon() {
         <div>
           <FeatureComingSoonPanel
             title="月間開発ランキング"
-            description="開発者ランキングの集計・表示は準備中です。公開をお待ちください。"
+            description="開発者ランキングの集計・表示は Coming Soon です。"
           />
         </div>
       </div>
