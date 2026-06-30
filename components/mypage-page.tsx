@@ -12,7 +12,6 @@ import { MyPageSavedRealPanel } from "@/components/mypage-real-panels";
 import { PlayHistorySection } from "@/components/play-history-section";
 import { MyPageTabs, PlayerShell } from "@/components/player-shell";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
-import { isAdScreenshotDemoEnabled } from "@/lib/ad-screenshot-demo";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect } from "react";
 
@@ -57,8 +56,7 @@ function MyPagePageContent() {
 
   const activeTab = parseTab(tabParam);
   const hideV0Mock = shouldHideV0MockContent();
-  const adDemoMocks = isAdScreenshotDemoEnabled();
-  const useMockPlayerTabs = adDemoMocks || !hideV0Mock;
+  const useMockPlayerTabs = !hideV0Mock;
 
   const setTab = useCallback(
     (tab: MyPageTab) => {
@@ -102,11 +100,7 @@ function MyPagePageContent() {
             />
           ))}
         {activeTab === "following" &&
-          (hideV0Mock && !adDemoMocks ? (
-            <FollowingDevelopersPanel />
-          ) : (
-            <FollowingTabPanel />
-          ))}
+          (hideV0Mock ? <FollowingDevelopersPanel /> : <FollowingTabPanel />)}
       </div>
     </PlayerShell>
   );

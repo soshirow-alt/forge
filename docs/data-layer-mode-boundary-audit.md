@@ -131,7 +131,7 @@ else              → StudioProjectsTabPanel      (mock grid)
 
 | ファイル / パターン | 扱い |
 |---------------------|------|
-| `StudioAdDemoOwnedPreview` + `isAdScreenshotDemoEnabled` in owned-projects / mypage | 隔離（専用 layout または demo route） |
+| `StudioAdDemoOwnedPreview` + `isAdScreenshotDemoEnabled` in owned-projects / mypage | **完了** — `/demo/ad-screenshot` に隔離 |
 | `StudioProjectsTabPanel` in mypage main flow | 削除（Directory に統一） |
 | `studio-home-page` の mock section 差し替え | データ層へ |
 | `game-detail-v0-page` の dual feedback stack | 統合 |
@@ -144,7 +144,7 @@ else              → StudioProjectsTabPanel      (mock grid)
 |-------|---------------|------|
 | 0 | `docs: data-layer mode boundary audit` | 本ファイル（一覧化のみ） |
 | 1 | `/studio/mypage` Directory 単一化 | Panel 差し替え削除、provider でリスト供給 | **完了** `refactor/data-layer-mode-boundary` |
-| 2 | ad demo 隔離 | 本体から `isAdScreenshotDemoEnabled` 分岐を除去 |
+| 2 | ad demo 隔離 | 本体から `isAdScreenshotDemoEnabled` 分岐を除去 | **完了** `refactor/data-layer-mode-boundary` |
 | 3 | `/studio` home viewModel | セクション差し替えをデータ配列化 |
 | 4 | `/home` sections from provider | mock import をページから除去 |
 | 5 | `/games/[id]` viewModel + shell 統合 | 404/voice/feedback をデータ層へ |

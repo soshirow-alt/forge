@@ -58,7 +58,6 @@ import {
 } from "@/lib/supabase/developer-follows-db";
 import { mergeGameWithExtras } from "@/lib/game-extra-storage";
 import { useForgeDeploymentMode } from "@/lib/forge-deployment-context";
-import { isAdScreenshotDemoEnabled } from "@/lib/ad-screenshot-demo";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { resolveStudioMypageOwnedProjects } from "@/lib/studio-mypage-owned-projects";
 import {
@@ -714,10 +713,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   const getStudioMypageOwnedProjects = useCallback(
     (userId: string | undefined) => {
       const realOwned = userId ? getOwnedProjects(userId) : [];
-      return resolveStudioMypageOwnedProjects(realOwned, {
-        hideV0Mock: hideV0MockForMypage,
-        adScreenshotDemo: isAdScreenshotDemoEnabled(),
-      });
+      return resolveStudioMypageOwnedProjects(realOwned, hideV0MockForMypage);
     },
     [getOwnedProjects, hideV0MockForMypage],
   );

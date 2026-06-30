@@ -1,9 +1,13 @@
-import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import Link from "next/link";
 import { blockDemoRouteOnProduction } from "@/lib/demo/demo-route-guard";
 
-export default async function DemoRoute() {
+export default async function AdScreenshotDemoLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const host = (await headers()).get("host") ?? undefined;
   blockDemoRouteOnProduction(host);
-  redirect("/demo/ad-screenshot");
+  return children;
 }

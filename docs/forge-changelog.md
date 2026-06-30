@@ -28,16 +28,17 @@
 
 ---
 
-- **Studio マイページ Phase 1（data-layer）** — `/studio/mypage` の `StudioProjectsTabPanel` ↔ `DirectoryPanel` UI 差し替えを廃止。`GamesProvider.getStudioMypageOwnedProjects` が本番は実データのみ・Preview/local はデータ層で mock 注入（ad demo 含む）。作品タブ UI は Directory のみ
+- **Studio マイページ Phase 1（data-layer）** — `/studio/mypage` の `StudioProjectsTabPanel` ↔ `DirectoryPanel` UI 差し替えを廃止。`GamesProvider.getStudioMypageOwnedProjects` が本番は実データのみ・Preview/local はデータ層で mock 注入。作品タブ UI は Directory のみ
 
 ---
 
-- **広告スクショ用デモ（Preview のみ）** — `NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO=true` のとき Studio ホーム・マイページ・Player マイページ一部タブに厚い mock を強制表示（本番では常に無効）
-  - **オーナー（Vercel Preview のみ）** — Project → Settings → Environment Variables → `NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO` = `true`、**Environment は Preview のみ**（Production / Development には付けない）。保存後 `preview/landing-01` の Preview を再デプロイ
-  - **有効時の変化** — `/studio`「あなたの作品」が mock 3件（新着 FB バッジ付き）に差し替え、ヘッダー通知バッジが mock 件数表示。`/studio/mypage` 作品タブが実データ Directory ではなく mock グリッド。`/mypage` の FB履歴・実績・フォロー中タブが mock パネル表示
-  - **撮影候補 URL** — `/studio`、`/studio/mypage`、`/mypage?tab=feedback`、`/mypage?tab=achievements`、`/mypage?tab=following`（ログイン推奨）。他画面は従来どおり Preview の v0 mock
-  - **本番安全** — `isProductionReleaseMode()` が true の hostname では env が true でも **常に無効**（verify: `ad screenshot demo guard`）
-  - **撮影後** — Preview の env を削除または `false` に戻し再デプロイ
+- **広告スクショ用デモ Phase 2（隔離）** — 本体導線（`/studio`・`/studio/mypage`・`/mypage`）から `isAdScreenshotDemoEnabled` / env 分岐を除去。fixture は **`/demo/ad-screenshot`** 配下に集約（本番 hostname では 404）。`NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO` は不要
+  - **撮影候補 URL（Preview / local）** — `/demo/ad-screenshot`、`/demo/ad-screenshot/studio`、`/demo/ad-screenshot/studio-mypage`、`/demo/ad-screenshot/mypage?tab=feedback` 等（インデックスに一覧）
+  - **本体** — `/studio`・`/studio/mypage` は実データ / Preview mock（0 件時）のみ。ad demo 用 UI 差し替えなし
+
+---
+
+- **広告スクショ用デモ（旧・廃止）** — ~~`NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO=true` のとき Studio ホーム・マイページ・Player マイページ一部タブに厚い mock を強制表示~~ → Phase 2 で `/demo/ad-screenshot` に移行
 
 ---
 

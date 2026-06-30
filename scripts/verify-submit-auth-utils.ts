@@ -217,21 +217,20 @@ function testNotificationNurtureLinks() {
   );
 }
 
-function testAdScreenshotDemoGuard() {
-  const prev = process.env.NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO;
+function testDemoRouteBlocksProduction() {
   const prevProd = process.env.NEXT_PUBLIC_FORGE_PRODUCTION_MODE;
   try {
-    process.env.NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO = "true";
     process.env.NEXT_PUBLIC_FORGE_PRODUCTION_MODE = "true";
-    const { isAdScreenshotDemoEnabled } =
-      require("../lib/ad-screenshot-demo") as typeof import("../lib/ad-screenshot-demo");
-    ok(!isAdScreenshotDemoEnabled(), "ad screenshot demo disabled in production mode");
-  } finally {
-    if (prev === undefined) {
-      delete process.env.NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO;
-    } else {
-      process.env.NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO = prev;
+    const { blockDemoRouteOnProduction } =
+      require("../lib/demo/demo-route-guard") as typeof import("../lib/demo/demo-route-guard");
+    let threw = false;
+    try {
+      blockDemoRouteOnProduction("forge.example.com");
+    } catch {
+      threw = true;
     }
+    ok(threw, "demo routes call notFound on production hostname");
+  } finally {
     if (prevProd === undefined) {
       delete process.env.NEXT_PUBLIC_FORGE_PRODUCTION_MODE;
     } else {
@@ -246,30 +245,45 @@ function testStudioMypageOwnedProjectsResolver() {
   const real = [{ id: "real-1", ownerId: "user-a" } as import("../lib/mock-games").Game];
 
   ok(
-    resolveStudioMypageOwnedProjects(real, { hideV0Mock: true, adScreenshotDemo: false }).length ===
-      1,
+    resolveStudioMypageOwnedProjects(real, true).length === 1,
     "production mode returns real owned only",
   );
   ok(
-    resolveStudioMypageOwnedProjects([], { hideV0Mock: true, adScreenshotDemo: false }).length ===
-      0,
+    resolveStudioMypageOwnedProjects([], true).length === 0,
     "production mode returns empty without mock fallback",
   );
-  const previewEmpty = resolveStudioMypageOwnedProjects([], {
-    hideV0Mock: false,
-    adScreenshotDemo: false,
-  });
+  const previewEmpty = resolveStudioMypageOwnedProjects([], false);
   ok(previewEmpty.length > 0, "preview mode injects mock games when real list empty");
   ok(
-    resolveStudioMypageOwnedProjects(real, { hideV0Mock: false, adScreenshotDemo: false }).length ===
-      1,
+    resolveStudioMypageOwnedProjects(real, false).length === 1,
     "preview mode prefers real owned over mock",
   );
-  const adDemo = resolveStudioMypageOwnedProjects(real, {
-    hideV0Mock: false,
-    adScreenshotDemo: true,
-  });
-  ok(adDemo.length >= 3, "ad screenshot demo injects mock subset as data");
+}
+
+function testMainFlowsNoAdScreenshotDemo() {
+  const fs = require("node:fs") as typeof import("node:fs");
+  const path = require("node:path") as typeof import("node:path");
+  const root = path.join(import.meta.dirname, "..");
+  const files = [
+    "components/games-provider.tsx",
+    "components/studio-home-page.tsx",
+    "components/studio-owned-projects-section.tsx",
+    "components/mypage-page.tsx",
+    "lib/studio-mypage-owned-projects.ts",
+  ];
+  for (const file of files) {
+    const source = fs.readFileSync(path.join(root, file), "utf8");
+    ok(
+      !source.includes("ad-screenshot-demo") &&
+        !source.includes("isAdScreenshotDemoEnabled") &&
+        !source.includes("adScreenshotStudioProjects"),
+      `${file} has no ad screenshot demo imports`,
+    );
+  }
+  ok(
+    !fs.existsSync(path.join(root, "lib/ad-screenshot-demo.ts")),
+    "legacy lib/ad-screenshot-demo.ts removed from main lib",
+  );
 }
 
 function testStudioMypagePageSingleDirectoryPanel() {
@@ -370,8 +384,9 @@ async function main() {
     ["submit error mapping", testSubmitErrorMapping],
     ["login return sanitize", testLoginReturnSanitize],
     ["notification nurture links", testNotificationNurtureLinks],
-    ["ad screenshot demo guard", testAdScreenshotDemoGuard],
+    ["demo route blocks production", testDemoRouteBlocksProduction],
     ["studio mypage owned projects resolver", testStudioMypageOwnedProjectsResolver],
+    ["main flows no ad screenshot demo", testMainFlowsNoAdScreenshotDemo],
     ["studio mypage single directory panel", testStudioMypagePageSingleDirectoryPanel],
     ["games provider mock guard contract", testGamesProviderMockGuardContract],
     ["login page source contract", testLoginPageSourceContract],

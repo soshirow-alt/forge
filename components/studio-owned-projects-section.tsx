@@ -13,8 +13,6 @@ import {
 } from "@/lib/project-growth-state";
 import { resolveVoiceSignalForGame } from "@/lib/project-voice-nurture";
 import { projectStudioPath, studioSubmitModalHref } from "@/lib/project-nurture-links";
-import { isAdScreenshotDemoEnabled } from "@/lib/ad-screenshot-demo";
-import { StudioAdDemoOwnedPreview } from "@/components/studio-ad-demo-owned-preview";
 import { shouldBypassStudioLoginOnPreview } from "@/lib/preview-v0";
 
 function StudioOwnedProjectsLoadingSection() {
@@ -80,10 +78,6 @@ export function StudioOwnedProjectsSection() {
 
   if (!hydrated || !dataReady) {
     return <StudioOwnedProjectsLoadingSection />;
-  }
-
-  if (isAdScreenshotDemoEnabled()) {
-    return <StudioAdDemoOwnedPreview />;
   }
 
   if (!user && !shouldBypassStudioLoginOnPreview()) {

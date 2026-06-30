@@ -15,7 +15,6 @@ import { StudioOwnedProjectsSection } from "@/components/studio-owned-projects-s
 import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { StudioSectionHeader, StudioShell } from "@/components/studio-shell";
 import { useHideV0MockContent } from "@/lib/forge-deployment-context";
-import { isAdScreenshotDemoEnabled } from "@/lib/ad-screenshot-demo";
 import {
   countStudioUnread,
   studioNotifications,
@@ -239,9 +238,7 @@ function RankingSnippetsSection() {
 
 export function StudioHomePage() {
   const hideV0Mock = useHideV0MockContent();
-  const adDemo = isAdScreenshotDemoEnabled();
-  const notificationBadge =
-    hideV0Mock && !adDemo ? 0 : countStudioUnread(studioNotifications);
+  const notificationBadge = hideV0Mock ? 0 : countStudioUnread(studioNotifications);
 
   return (
     <StudioShell activeNav="home" notificationBadge={notificationBadge}>

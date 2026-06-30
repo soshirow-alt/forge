@@ -2,9 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import {
-  adScreenshotStudioProjects,
-} from "@/lib/ad-screenshot-demo";
+import { adScreenshotStudioProjects } from "@/lib/demo/ad-screenshot-fixture";
 import {
   formatStat,
   phaseBadgeClass,
@@ -63,8 +61,8 @@ function DemoProjectRow({ project }: { project: StudioProjectCard }) {
   );
 }
 
-/** 広告スクショ用 — Studio ホーム「あなたの作品」に mock を表示 */
-export function StudioAdDemoOwnedPreview() {
+/** `/demo/ad-screenshot/studio` — Studio ホーム「あなたの作品」fixture */
+export function AdScreenshotStudioOwnedSection() {
   const projects = adScreenshotStudioProjects();
   const top = projects[0];
 
@@ -95,7 +93,7 @@ export function StudioAdDemoOwnedPreview() {
       </div>
 
       <p className="mt-4 text-center text-sm text-zinc-500">
-        <Link href="/studio/mypage" className="text-violet-300 hover:text-violet-200">
+        <Link href="/demo/ad-screenshot/studio-mypage" className="text-violet-300 hover:text-violet-200">
           すべての作品を見る（{projects.length}件+）
         </Link>
       </p>

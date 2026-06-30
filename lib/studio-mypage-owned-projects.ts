@@ -1,4 +1,3 @@
-import { adScreenshotStudioProjects } from "@/lib/ad-screenshot-demo";
 import type { Game } from "@/lib/mock-games";
 import {
   studioProjectsAll,
@@ -38,17 +37,13 @@ export function isStudioMypagePreviewMockProject(game: Game): boolean {
  * `/studio/mypage` 作品一覧のデータ源（mode 判定は provider から渡す）
  * - 本番: 実データのみ（0 件なら空）
  * - Preview/local: 実データ優先。0 件なら mock を Game[] として返す
- * - ad screenshot demo: mock サブセット（Phase 1 — データ層に閉じる）
  */
 export function resolveStudioMypageOwnedProjects(
   realOwned: Game[],
-  options: { hideV0Mock: boolean; adScreenshotDemo: boolean },
+  hideV0Mock: boolean,
 ): Game[] {
-  if (options.hideV0Mock) {
+  if (hideV0Mock) {
     return realOwned;
-  }
-  if (options.adScreenshotDemo) {
-    return studioProjectCardsToOwnedGames(adScreenshotStudioProjects());
   }
   if (realOwned.length > 0) {
     return realOwned;
