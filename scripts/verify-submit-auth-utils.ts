@@ -217,6 +217,29 @@ function testNotificationNurtureLinks() {
   );
 }
 
+function testAdScreenshotDemoGuard() {
+  const prev = process.env.NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO;
+  const prevProd = process.env.NEXT_PUBLIC_FORGE_PRODUCTION_MODE;
+  try {
+    process.env.NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO = "true";
+    process.env.NEXT_PUBLIC_FORGE_PRODUCTION_MODE = "true";
+    const { isAdScreenshotDemoEnabled } =
+      require("../lib/ad-screenshot-demo") as typeof import("../lib/ad-screenshot-demo");
+    ok(!isAdScreenshotDemoEnabled(), "ad screenshot demo disabled in production mode");
+  } finally {
+    if (prev === undefined) {
+      delete process.env.NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO;
+    } else {
+      process.env.NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO = prev;
+    }
+    if (prevProd === undefined) {
+      delete process.env.NEXT_PUBLIC_FORGE_PRODUCTION_MODE;
+    } else {
+      process.env.NEXT_PUBLIC_FORGE_PRODUCTION_MODE = prevProd;
+    }
+  }
+}
+
 function testGamesProviderMockGuardContract() {
   const fs = require("node:fs") as typeof import("node:fs");
   const path = require("node:path") as typeof import("node:path");
@@ -286,6 +309,7 @@ async function main() {
     ["submit error mapping", testSubmitErrorMapping],
     ["login return sanitize", testLoginReturnSanitize],
     ["notification nurture links", testNotificationNurtureLinks],
+    ["ad screenshot demo guard", testAdScreenshotDemoGuard],
     ["games provider mock guard contract", testGamesProviderMockGuardContract],
     ["login page source contract", testLoginPageSourceContract],
     ["game detail tabs", testGameDetailTabs],

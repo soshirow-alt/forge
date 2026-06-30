@@ -7,6 +7,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -35,12 +36,17 @@ const StudioEntryGateContext = createContext<StudioEntryGateContextValue | null>
   null,
 );
 
+function studioPathsEqual(current: string, target: string): boolean {
+  return current === target || current.startsWith(`${target}/`);
+}
+
 export function StudioEntryGateProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, hydrated } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const [pendingHref, setPendingHref] = useState("/studio");
+  const directAccessPromptedRef = useRef(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -79,8 +85,10 @@ export function StudioEntryGateProvider({ children }: { children: ReactNode }) {
       });
     }
     setModalOpen(false);
-    router.push(pendingHref);
-  }, [user, pendingHref, router]);
+    if (!studioPathsEqual(pathname, pendingHref)) {
+      router.push(pendingHref);
+    }
+  }, [user, pendingHref, pathname, router]);
 
   const handleDecline = useCallback(() => {
     if (user) {
@@ -92,29 +100,42 @@ export function StudioEntryGateProvider({ children }: { children: ReactNode }) {
     }
   }, [user, pathname, router]);
 
+  const promptDeveloperOnboardingIfNeeded = useCallback(
+    (href: string) => {
+      if (!user || !shouldPromptDeveloperPage(user.id)) {
+        return false;
+      }
+      if (directAccessPromptedRef.current) {
+        return true;
+      }
+      directAccessPromptedRef.current = true;
+      setPendingHref(href);
+      setModalOpen(true);
+      return true;
+    },
+    [user],
+  );
+
   const attemptStudioEntry = useCallback(
     (href = "/studio") => {
-      // Preview / local — 認証 hydrate 前でも直接遷移（v0 UI レビュー用）
       if (shouldBypassStudioLoginGate()) {
-        router.push(href);
-        return;
-      }
-      if (!hydrated) {
-        router.push(buildLoginUrlWithReturn(href));
+        if (!studioPathsEqual(pathname, href)) {
+          router.push(href);
+        }
         return;
       }
       if (!user) {
         router.push(buildLoginUrlWithReturn(href));
         return;
       }
-      if (!shouldPromptDeveloperPage(user.id)) {
-        router.push(href);
+      if (promptDeveloperOnboardingIfNeeded(href)) {
         return;
       }
-      setPendingHref(href);
-      setModalOpen(true);
+      if (!studioPathsEqual(pathname, href)) {
+        router.push(href);
+      }
     },
-    [hydrated, user, router],
+    [user, pathname, router, promptDeveloperOnboardingIfNeeded],
   );
 
   const value = useMemo(
@@ -148,7 +169,6 @@ export function StudioDirectAccessGuard() {
   const pathname = usePathname();
   const { user, hydrated } = useAuth();
   const { attemptStudioEntry } = useStudioEntryGate();
-  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     if (shouldBypassStudioLoginGate()) {
@@ -162,14 +182,10 @@ export function StudioDirectAccessGuard() {
       router.replace(buildLoginUrlWithReturn(returnPath));
       return;
     }
-    if (checked) {
-      return;
-    }
-    setChecked(true);
     if (shouldPromptDeveloperPage(user.id)) {
       attemptStudioEntry(pathname.startsWith("/studio") ? pathname : "/studio");
     }
-  }, [hydrated, user, checked, attemptStudioEntry, pathname, router]);
+  }, [hydrated, user, attemptStudioEntry, pathname, router]);
 
   return null;
 }

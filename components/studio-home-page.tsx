@@ -15,6 +15,11 @@ import { StudioOwnedProjectsSection } from "@/components/studio-owned-projects-s
 import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { StudioSectionHeader, StudioShell } from "@/components/studio-shell";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
+import { isAdScreenshotDemoEnabled } from "@/lib/ad-screenshot-demo";
+import {
+  countStudioUnread,
+  studioNotifications,
+} from "@/lib/studio-notifications-v0-mock-data";
 import { studioHomeGrowthRankings } from "@/lib/studio-rankings-v0-mock-data";
 import { developerProfileHref } from "@/lib/developer-search-v0-mock-data";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
@@ -234,9 +239,12 @@ function RankingSnippetsSection() {
 
 export function StudioHomePage() {
   const hideV0Mock = shouldHideV0MockContent();
+  const adDemo = isAdScreenshotDemoEnabled();
+  const notificationBadge =
+    hideV0Mock && !adDemo ? 0 : countStudioUnread(studioNotifications);
 
   return (
-    <StudioShell activeNav="home" notificationBadge={0}>
+    <StudioShell activeNav="home" notificationBadge={notificationBadge}>
       <div className="mx-auto max-w-7xl space-y-10">
         <StudioOwnedProjectsSection />
 

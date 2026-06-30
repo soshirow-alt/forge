@@ -110,7 +110,9 @@ type ForgeShellModeSwitchProps = {
   onStudioAttempt?: () => void;
   /** Preview/local — Studio へ Link 直遷移 */
   studioHrefBypass?: boolean;
-  /** 本番で未ログイン・hydrate 前 — ログイン return 付き Link */
+  /** ログイン済み・オンボーディング不要 — Studio へ Link 直遷移 */
+  studioDirectHref?: string;
+  /** 本番で未ログイン — ログイン return 付き Link */
   studioLoginHref?: string;
 };
 
@@ -125,6 +127,7 @@ export function ForgeShellModeSwitch({
   onNavigate,
   onStudioAttempt,
   studioHrefBypass = false,
+  studioDirectHref,
   studioLoginHref,
 }: ForgeShellModeSwitchProps) {
   if (mode === "studio") {
@@ -140,10 +143,10 @@ export function ForgeShellModeSwitch({
     );
   }
 
-  if (studioHrefBypass) {
+  if (studioHrefBypass || studioDirectHref) {
     return (
       <Link
-        href="/studio"
+        href={studioDirectHref ?? "/studio"}
         onClick={onNavigate}
         title="開発者向け Studio（投稿した作品の管理）"
         className={studioSwitchClassName}

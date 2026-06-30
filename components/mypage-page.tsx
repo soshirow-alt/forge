@@ -12,6 +12,7 @@ import { MyPageSavedRealPanel } from "@/components/mypage-real-panels";
 import { PlayHistorySection } from "@/components/play-history-section";
 import { MyPageTabs, PlayerShell } from "@/components/player-shell";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
+import { isAdScreenshotDemoEnabled } from "@/lib/ad-screenshot-demo";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect } from "react";
 
@@ -56,6 +57,8 @@ function MyPagePageContent() {
 
   const activeTab = parseTab(tabParam);
   const hideV0Mock = shouldHideV0MockContent();
+  const adDemoMocks = isAdScreenshotDemoEnabled();
+  const useMockPlayerTabs = adDemoMocks || !hideV0Mock;
 
   const setTab = useCallback(
     (tab: MyPageTab) => {
@@ -81,26 +84,25 @@ function MyPagePageContent() {
         {activeTab === "saved" && <MyPageSavedRealPanel />}
         {activeTab === "play-history" && <PlayHistorySection />}
         {activeTab === "feedback" &&
-          (hideV0Mock ? (
+          (useMockPlayerTabs ? (
+            <FeedbackTabPanel />
+          ) : (
             <FeatureComingSoonPanel
               title="FB履歴"
               description="あなたが届けたフィードバックの履歴は準備中です。"
             />
-          ) : (
-            <FeedbackTabPanel />
           ))}
         {activeTab === "achievements" &&
-          (hideV0Mock ? (
+          (useMockPlayerTabs ? (
+            <AchievementsTabPanel />
+          ) : (
             <FeatureComingSoonPanel
               title="実績"
               description="プレイヤー実績バッジの表示は準備中です。"
             />
-          ) : (
-            <AchievementsTabPanel />
           ))}
         {activeTab === "following" &&
-          // production-mode-audit: 意図的逆パターン — 本番=Supabase正本、Preview=mockタブ
-          (hideV0Mock ? (
+          (hideV0Mock && !adDemoMocks ? (
             <FollowingDevelopersPanel />
           ) : (
             <FollowingTabPanel />

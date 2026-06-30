@@ -13,7 +13,30 @@ import {
 } from "@/lib/project-growth-state";
 import { resolveVoiceSignalForGame } from "@/lib/project-voice-nurture";
 import { projectStudioPath, studioSubmitModalHref } from "@/lib/project-nurture-links";
+import { isAdScreenshotDemoEnabled } from "@/lib/ad-screenshot-demo";
+import { StudioAdDemoOwnedPreview } from "@/components/studio-ad-demo-owned-preview";
 import { shouldBypassStudioLoginOnPreview } from "@/lib/preview-v0";
+
+function StudioOwnedProjectsLoadingSection() {
+  return (
+    <section
+      className="rounded-2xl border border-orange-500/30 bg-orange-500/5 p-5 sm:p-6"
+      aria-busy="true"
+      aria-label="あなたの作品を読み込み中"
+    >
+      <div className="h-4 w-32 animate-pulse rounded bg-zinc-800/80" />
+      <div className="mt-3 h-6 w-40 animate-pulse rounded bg-zinc-800/80" />
+      <div className="mt-5 space-y-3">
+        {[0, 1, 2].map((key) => (
+          <div
+            key={key}
+            className="h-20 animate-pulse rounded-xl border border-zinc-800/80 bg-zinc-900/40"
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
 
 /** Studio ホーム `/studio` 専用 — あなたの作品（最大3件 + すべて見る） */
 export function StudioOwnedProjectsSection() {
@@ -56,7 +79,11 @@ export function StudioOwnedProjectsSection() {
   );
 
   if (!hydrated || !dataReady) {
-    return null;
+    return <StudioOwnedProjectsLoadingSection />;
+  }
+
+  if (isAdScreenshotDemoEnabled()) {
+    return <StudioAdDemoOwnedPreview />;
   }
 
   if (!user && !shouldBypassStudioLoginOnPreview()) {

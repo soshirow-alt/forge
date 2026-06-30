@@ -22,6 +22,7 @@ import {
 import { useGames } from "@/components/games-provider";
 import { useStudioEntryGate } from "@/components/studio-entry-gate-provider";
 import { PlatformFeedbackSidebarBox } from "@/components/platform-feedback-sidebar-box";
+import { shouldPromptDeveloperPage } from "@/lib/developer-onboarding-v0-store";
 import { useStudioLoginHrefBypass } from "@/lib/forge-deployment-context";
 import { buildLoginUrlWithReturn } from "@/lib/login-return-url";
 import { WATCH_TAB_LABEL } from "@/lib/watch-ui-labels";
@@ -189,10 +190,13 @@ export function PlayerShell({
   const { getUnreadNotificationCount } = useGames();
   const { attemptStudioEntry } = useStudioEntryGate();
   const previewStudioBypass = useStudioLoginHrefBypass();
+  const needsStudioOnboarding = Boolean(user && shouldPromptDeveloperPage(user.id));
   const studioLoginHref =
-    !previewStudioBypass && (!hydrated || !user)
+    !previewStudioBypass && !user
       ? buildLoginUrlWithReturn("/studio")
       : undefined;
+  const studioDirectHref =
+    previewStudioBypass || (user && !needsStudioOnboarding) ? "/studio" : undefined;
   const resolvedNotificationBadge =
     notificationBadge ?? (user ? getUnreadNotificationCount() : 0);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -252,6 +256,7 @@ export function PlayerShell({
           <ForgeShellModeSwitch
             mode="player"
             studioHrefBypass={previewStudioBypass}
+            studioDirectHref={studioDirectHref}
             studioLoginHref={studioLoginHref}
             onNavigate={() => setMobileNavOpen(false)}
             onStudioAttempt={() => attemptStudioEntry("/studio")}
@@ -304,6 +309,7 @@ export function PlayerShell({
           <ForgeShellModeSwitch
             mode="player"
             studioHrefBypass={previewStudioBypass}
+            studioDirectHref={studioDirectHref}
             studioLoginHref={studioLoginHref}
             onStudioAttempt={() => attemptStudioEntry("/studio")}
           />
