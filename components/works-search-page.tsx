@@ -12,7 +12,6 @@ import {
 import {
   filterSearchWorks,
   gameToSearchResult,
-  getPublicSubmittedGames,
   mergeSearchResults,
   sortSearchWorks,
 } from "@/lib/discovery-public-games";
@@ -80,7 +79,7 @@ function parseFeatures(param: string | null): string[] {
 
 function WorksSearchContent() {
   const hideV0Mock = useHideV0MockContent();
-  const { submittedGames, getSupportCount, dataReady } = useGames();
+  const { publicGames, publicCatalogReady, getSupportCount } = useGames();
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryFromUrl = searchParams.get("q")?.trim() ?? "";
@@ -104,11 +103,11 @@ function WorksSearchContent() {
   }, [queryFromUrl, genreParam, featureParam]);
 
   const catalog = useMemo(() => {
-    const realWorks = getPublicSubmittedGames(submittedGames).map((game) =>
+    const realWorks = publicGames.map((game) =>
       gameToSearchResult(game, getSupportCount(game.id)),
     );
     return mergeSearchResults(realWorks, searchWorkResults, hideV0Mock);
-  }, [submittedGames, getSupportCount]);
+  }, [publicGames, getSupportCount, hideV0Mock]);
 
   const filtered = useMemo(
     () => filterSearchWorks(catalog, queryFromUrl, genresFromUrl, featuresFromUrl),
@@ -231,7 +230,7 @@ function WorksSearchContent() {
     pushSearch({ features: nextFeatures });
   };
 
-  if (hideV0Mock && !dataReady) {
+  if (!publicCatalogReady) {
     return (
       <PlayerShell activeNav="search" headerSearchDefault={queryFromUrl}>
         <p className="text-sm text-zinc-500">読み込み中...</p>

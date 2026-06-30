@@ -11,7 +11,6 @@ import { PlayerShell } from "@/components/player-shell";
 import { useHideV0MockContent } from "@/lib/forge-deployment-context";
 import {
   gameToHomeCard,
-  getPublicSubmittedGames,
   mergeHomeCards,
   sortGamesByNewest,
   sortGamesByUpdated,
@@ -234,13 +233,8 @@ function DiscoverySectionEmpty({ message }: { message: string }) {
 }
 
 export function DiscoveryHomePage() {
-  const { submittedGames, getSupportCount, dataReady } = useGames();
+  const { publicGames, publicCatalogReady, getSupportCount } = useGames();
   const hideV0Mock = useHideV0MockContent();
-
-  const publicGames = useMemo(
-    () => getPublicSubmittedGames(submittedGames),
-    [submittedGames],
-  );
 
   const realNewGames = useMemo(
     () =>
@@ -282,7 +276,7 @@ export function DiscoveryHomePage() {
     return mergeHomeCards(realPopular, popularGames, hideV0Mock);
   }, [publicGames, getSupportCount, hideV0Mock]);
 
-  if (!dataReady) {
+  if (!publicCatalogReady) {
     return (
       <PlayerShell activeNav="home">
         <p className="text-sm text-zinc-500">読み込み中...</p>

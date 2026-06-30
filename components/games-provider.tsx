@@ -68,6 +68,7 @@ import {
 import {
   deleteProjectInDb,
   fetchProjects,
+  fetchPublicProjects,
   insertProject,
   updateProjectDetailsInDb,
   updateProjectFromSubmitForm,
@@ -181,6 +182,9 @@ type Counts = Record<string, number>;
 
 type GamesContextValue = {
   submittedGames: Game[];
+  /** visibility=public のみ — /home・検索用（auth 非依存） */
+  publicGames: Game[];
+  publicCatalogReady: boolean;
   dataReady: boolean;
   /** Supabase project_devlogs の初回取得完了（実作品 devlog タブ用） */
   devlogsReady: boolean;
@@ -367,6 +371,8 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   const deploymentMode = useForgeDeploymentMode();
   const hideV0MockForMypage = deploymentMode === "production";
   const [submittedGames, setSubmittedGames] = useState<Game[]>([]);
+  const [publicGames, setPublicGames] = useState<Game[]>([]);
+  const [publicCatalogReady, setPublicCatalogReady] = useState(false);
   const [supportCounts, setSupportCounts] = useState<Counts>({});
   const [userEngagement, setUserEngagement] =
     useState<UserEngagementState>(EMPTY_USER_ENGAGEMENT);
@@ -412,6 +418,17 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     setDeveloperProfiles(profiles);
   }, []);
 
+  const reloadPublicCatalog = useCallback(async () => {
+    const supabase = getOptionalSupabaseClient();
+    if (!supabase) {
+      setPublicGames([]);
+      return;
+    }
+
+    const projects = await fetchPublicProjects(supabase);
+    setPublicGames(projects.map((game) => mergeGameWithExtras(game)));
+  }, []);
+
   const resolveDeveloperUserId = useCallback(
     (key: string) => resolveDeveloperUserIdForFollow(key, developerProfiles),
     [developerProfiles],
@@ -428,6 +445,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
 
     const supabase = getOptionalSupabaseClient();
     if (supabase) {
+      void reloadPublicCatalog()
+        .catch(() => setPublicGames([]))
+        .finally(() => setPublicCatalogReady(true));
       void fetchSupportCounts(supabase)
         .then(setSupportCounts)
         .catch(() => setSupportCounts({}));
@@ -439,9 +459,10 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         .then(setReleaseEvents)
         .catch(() => setReleaseEvents([]));
     } else {
+      setPublicCatalogReady(true);
       setDevlogsReady(true);
     }
-  }, []);
+  }, [reloadPublicCatalog]);
 
   useEffect(() => {
     if (!authHydrated) {
@@ -572,6 +593,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         game,
         ...prev.filter((item) => item.id !== game.id),
       ]);
+      if (game.visibility !== "private") {
+        void reloadPublicCatalog().catch(() => undefined);
+      }
       try {
         await mergeDeveloperProfileSocialLinks(supabase, owner.ownerId, {
           discordUrl: data.discordUrl,
@@ -584,7 +608,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       }
       return game;
     },
-    [],
+    [reloadPublicCatalog],
   );
 
   const updateSubmittedGame = useCallback(
@@ -598,8 +622,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       setSubmittedGames((prev) =>
         prev.map((item) => (item.id === id ? game : item)),
       );
+      void reloadPublicCatalog().catch(() => undefined);
     },
-    [],
+    [reloadPublicCatalog],
   );
 
   const updateProjectDetails = useCallback(
@@ -681,11 +706,15 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     setDevlogs((prev) => prev.filter((entry) => entry.projectId !== id));
     setLocalNotifications((prev) => prev.filter((entry) => entry.projectId !== id));
     setDbNotifications((prev) => prev.filter((entry) => entry.projectId !== id));
-  }, []);
+    setPublicGames((prev) => prev.filter((game) => game.id !== id));
+    void reloadPublicCatalog().catch(() => undefined);
+  }, [reloadPublicCatalog]);
 
   const getSubmittedGameById = useCallback(
-    (id: string) => submittedGames.find((game) => game.id === id),
-    [submittedGames],
+    (id: string) =>
+      submittedGames.find((game) => game.id === id) ??
+      publicGames.find((game) => game.id === id),
+    [submittedGames, publicGames],
   );
 
   const isSubmittedGame = useCallback(
@@ -1959,6 +1988,8 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       submittedGames,
+      publicGames,
+      publicCatalogReady,
       dataReady: authHydrated && catalogReady,
       devlogsReady,
       addSubmittedGame,
@@ -2036,6 +2067,8 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     }),
   [
       submittedGames,
+      publicGames,
+      publicCatalogReady,
       authHydrated,
       catalogReady,
       devlogsReady,

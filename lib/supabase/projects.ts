@@ -125,6 +125,23 @@ export async function fetchProjects(supabase: SupabaseClient): Promise<Game[]> {
   return ((data ?? []) as ProjectRow[]).map(projectRowToGame);
 }
 
+/** Player-facing catalog — public visibility only (never includes owned private). */
+export async function fetchPublicProjects(
+  supabase: SupabaseClient,
+): Promise<Game[]> {
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("visibility", "public")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return ((data ?? []) as ProjectRow[]).map(projectRowToGame);
+}
+
 export async function updateProjectPlayableVersion(
   supabase: SupabaseClient,
   projectId: string,

@@ -4,6 +4,10 @@
 
 ---
 
+- **公開カタログ分離（/home・検索）** — `publicGames` / `publicCatalogReady` を追加し、`visibility='public'` の作品だけをマウント時に取得（`fetchPublicProjects`）。`/home` と `/search` は auth / `dataReady` を待たず公開カタログのみで表示。`submittedGames` は Studio・マイページ等のログイン依存画面向けに維持。応援数・devlog・通知等は初期表示をブロックしない
+
+---
+
 - **ゲーム詳細 devlog 0件クラッシュ修正** — 実作品で開発ログが0件のとき `getDevlogStatsForGame([])` が `undefined.version` で落ちる不具合を修正。0件時は `currentVersion` / `lastUpdated` を `—`、fake ver 表示なし
 
 ---

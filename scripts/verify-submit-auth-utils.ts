@@ -372,6 +372,64 @@ function testGamesProviderMockGuardContract() {
   );
 }
 
+function testPublicCatalogAuthIndependenceContract() {
+  const fs = require("node:fs") as typeof import("node:fs");
+  const path = require("node:path") as typeof import("node:path");
+  const provider = fs.readFileSync(
+    path.join(import.meta.dirname, "../components/games-provider.tsx"),
+    "utf8",
+  );
+  const projects = fs.readFileSync(
+    path.join(import.meta.dirname, "../lib/supabase/projects.ts"),
+    "utf8",
+  );
+
+  ok(provider.includes("publicGames"), "games-provider exposes publicGames");
+  ok(provider.includes("publicCatalogReady"), "games-provider exposes publicCatalogReady");
+  ok(provider.includes("fetchPublicProjects"), "games-provider imports fetchPublicProjects");
+  ok(
+    provider.includes("void reloadPublicCatalog()") &&
+      provider.includes(".finally(() => setPublicCatalogReady(true))"),
+    "public catalog loads on mount and sets publicCatalogReady",
+  );
+  const mountEffectStart = provider.indexOf("setHydrated(true);");
+  const publicFetchIndex = provider.indexOf("void reloadPublicCatalog()");
+  const authCatalogEffect = provider.indexOf("if (!authHydrated) {\n      return;\n    }\n\n    if (!user) {\n      catalogUserIdRef");
+  ok(
+    mountEffectStart > -1 &&
+      publicFetchIndex > mountEffectStart &&
+      (authCatalogEffect < 0 || publicFetchIndex < authCatalogEffect),
+    "reloadPublicCatalog is not gated behind authHydrated catalog effect",
+  );
+  ok(
+    projects.includes('.eq("visibility", "public")'),
+    "fetchPublicProjects filters visibility public explicitly",
+  );
+}
+
+function testHomeSearchPublicCatalogContract() {
+  const fs = require("node:fs") as typeof import("node:fs");
+  const path = require("node:path") as typeof import("node:path");
+  const home = fs.readFileSync(
+    path.join(import.meta.dirname, "../components/discovery-home-page.tsx"),
+    "utf8",
+  );
+  const search = fs.readFileSync(
+    path.join(import.meta.dirname, "../components/works-search-page.tsx"),
+    "utf8",
+  );
+
+  ok(home.includes("publicCatalogReady"), "discovery-home gates on publicCatalogReady");
+  ok(home.includes("publicGames"), "discovery-home reads publicGames");
+  ok(!home.includes("dataReady"), "discovery-home does not use dataReady");
+  ok(!home.includes("submittedGames"), "discovery-home does not use submittedGames");
+
+  ok(search.includes("publicCatalogReady"), "works-search gates on publicCatalogReady");
+  ok(search.includes("publicGames"), "works-search reads publicGames");
+  ok(!search.includes("dataReady"), "works-search does not use dataReady");
+  ok(!search.includes("submittedGames"), "works-search does not use submittedGames");
+}
+
 function testLoginPageSourceContract() {
   const fs = require("node:fs") as typeof import("node:fs");
   const path = require("node:path") as typeof import("node:path");
@@ -507,6 +565,8 @@ async function main() {
     ["main flows no ad screenshot demo", testMainFlowsNoAdScreenshotDemo],
     ["studio mypage single directory panel", testStudioMypagePageSingleDirectoryPanel],
     ["games provider mock guard contract", testGamesProviderMockGuardContract],
+    ["public catalog auth independence contract", testPublicCatalogAuthIndependenceContract],
+    ["home search public catalog contract", testHomeSearchPublicCatalogContract],
     ["login page source contract", testLoginPageSourceContract],
     ["game detail tabs", testGameDetailTabs],
     ["real devlog mapping", testRealDevlogMapping],
