@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useMemo } from "react";
 import {
   AuthPageShell,
   OAuthComingSoonSection,
@@ -27,21 +26,17 @@ export function LoginPage({
   callbackError: string | null;
   notice: string | null;
 }) {
-  const router = useRouter();
   const { user, authResolved } = useAuth();
   const [state, formAction, pending] = useActionState(loginAction, initialLoginState);
   const error = state.error ?? callbackError;
   const autofill = useAuthAutofillUnlock();
-  const redirectedRef = useRef(false);
-
-  useEffect(() => {
-    if (!authResolved || !user || redirectedRef.current) {
-      return;
-    }
-
-    redirectedRef.current = true;
-    router.replace(resolvePostLoginPath(returnParam));
-  }, [authResolved, user, returnParam, router]);
+  const continuePath = useMemo(
+    () => (returnParam ? resolvePostLoginPath(returnParam) : null),
+    [returnParam],
+  );
+  const showContinueLink = Boolean(
+    authResolved && user && continuePath && continuePath !== "/",
+  );
 
   return (
     <AuthPageShell active="login">
@@ -64,6 +59,18 @@ export function LoginPage({
             パスワードを変更しました。新しいパスワードでログインしてください。
           </div>
         )}
+
+        {showContinueLink && continuePath ? (
+          <div className="mt-6 rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm text-violet-100">
+            <p>ログイン済みです。</p>
+            <Link
+              href={continuePath}
+              className="mt-2 inline-flex font-medium text-violet-300 transition-colors hover:text-violet-200"
+            >
+              続ける →
+            </Link>
+          </div>
+        ) : null}
 
         <form
           id="login-form"

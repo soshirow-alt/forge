@@ -456,11 +456,19 @@ function testAuthRedirectLoopGuardContract() {
     "login server route does not redirect on getUser (avoids studio ping-pong)",
   );
   ok(
-    loginPage.includes("authResolved") && loginPage.includes("router.replace"),
-    "login page redirects only after client authResolved",
+    !loginPage.includes("router.replace") && !loginPage.includes("useEffect"),
+    "login page does not auto-redirect (avoids server/client auth ping-pong)",
+  );
+  ok(
+    loginPage.includes("showContinueLink") && loginPage.includes("続ける"),
+    "login page offers manual continue link when already signed in",
   );
 
   ok(authProvider.includes("authResolved"), "auth-provider exposes authResolved");
+  ok(
+    !authProvider.includes('if (event !== "INITIAL_SESSION")'),
+    "auth-provider does not clear user on non-INITIAL_SESSION null session",
+  );
   ok(
     authProvider.includes("supabase.auth.getUser()"),
     "auth-provider hydrates with client getUser",
@@ -478,6 +486,10 @@ function testAuthRedirectLoopGuardContract() {
     studioGuard.includes("authResolved") &&
       studioGuard.includes("if (!authResolved)"),
     "StudioDirectAccessGuard waits for authResolved before login redirect",
+  );
+  ok(
+    studioGuard.includes('deploymentMode === "production"'),
+    "StudioDirectAccessGuard defers login redirect to middleware in production",
   );
 }
 
@@ -505,7 +517,7 @@ function testLoginPageSourceContract() {
   );
   ok(
     loginPage.includes("resolvePostLoginPath"),
-    "login page client redirect uses post-login path",
+    "login page continue link uses post-login path",
   );
 }
 

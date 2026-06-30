@@ -4,7 +4,11 @@
 
 ---
 
-- **P0 hotfix — Studio 認証ループ（本番）** — `/login` のサーバー `getUser()` 即時 redirect を廃止。ログアウト後にサーバーだけログイン済みと誤認し `/studio` と `/login?return=/studio` を往復する不具合を修正。ログイン済みユーザーの return 遷移は `authResolved` 後のクライアント `router.replace` のみ
+- **P0 hotfix — ログイン直後の即ログアウト（本番）** — `AuthProvider` が null session イベントで `user` を消していたのと、`StudioDirectAccessGuard` が本番で client `user=null` だけを根拠に `/login` へ戻していたのを修正。本番の `/studio` 保護は middleware に一本化。`/login` の自動 replace は廃止し、ログイン済み時は「続ける」リンクのみ
+
+---
+
+- **P0 hotfix — Studio 認証ループ（本番）** — `/login` のサーバー `getUser()` 即時 redirect を廃止。ログアウト後にサーバーだけログイン済みと誤認し `/studio` と `/login?return=/studio` を往復する不具合を修正
 
 ---
 

@@ -55,12 +55,10 @@ function applyAuthChangeEvent(
     return;
   }
 
+  // Keep server-hydrated user until client confirms a session or explicit sign-out.
+  // Do not clear on transient null session events (TOKEN_REFRESHED, etc.).
   if (event === "INITIAL_SESSION" && hadServerUser) {
     return;
-  }
-
-  if (event !== "INITIAL_SESSION") {
-    setUser(null);
   }
 }
 

@@ -23,6 +23,7 @@ import {
   communityIdFromUser,
   openDeveloperCommunity,
 } from "@/lib/developer-community-v0-store";
+import { useForgeDeploymentMode } from "@/lib/forge-deployment-context";
 import { buildLoginUrlWithReturn } from "@/lib/login-return-url";
 import { shouldBypassStudioLoginGate, shouldHideV0MockContent } from "@/lib/production-mode";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
@@ -167,6 +168,7 @@ export function useStudioEntryGate() {
 export function StudioDirectAccessGuard() {
   const router = useRouter();
   const pathname = usePathname();
+  const deploymentMode = useForgeDeploymentMode();
   const { user, authResolved } = useAuth();
   const { attemptStudioEntry } = useStudioEntryGate();
 
@@ -177,6 +179,16 @@ export function StudioDirectAccessGuard() {
     if (!authResolved) {
       return;
     }
+
+    // Production: middleware already requires a session for /studio.
+    // Do not bounce to /login on transient client user=null after server login.
+    if (deploymentMode === "production") {
+      if (user && shouldPromptDeveloperPage(user.id)) {
+        attemptStudioEntry(pathname.startsWith("/studio") ? pathname : "/studio");
+      }
+      return;
+    }
+
     if (!user) {
       const returnPath = pathname.startsWith("/studio") ? pathname : "/studio";
       router.replace(buildLoginUrlWithReturn(returnPath));
@@ -185,7 +197,7 @@ export function StudioDirectAccessGuard() {
     if (shouldPromptDeveloperPage(user.id)) {
       attemptStudioEntry(pathname.startsWith("/studio") ? pathname : "/studio");
     }
-  }, [authResolved, user, attemptStudioEntry, pathname, router]);
+  }, [authResolved, user, attemptStudioEntry, pathname, router, deploymentMode]);
 
   return null;
 }
