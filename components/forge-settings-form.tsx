@@ -112,9 +112,7 @@ function PreferenceSettingsPanel({ context }: { context: "player" | "studio" }) 
       <section className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5 sm:p-6">
         <p className="font-medium text-amber-200">設定の保存機能の準備が未完了です</p>
         <p className="mt-2 text-sm leading-relaxed text-amber-100/80">
-          Supabase Dashboard で migration 030（
-          <code className="text-xs">030_user_settings.sql</code>
-          ）を適用すると、通知・プライバシー設定が保存されます。
+          通知・プライバシー設定の保存は準備中です。しばらくお待ちください。
         </p>
       </section>
     );
@@ -133,7 +131,7 @@ function PreferenceSettingsPanel({ context }: { context: "player" | "studio" }) 
       <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
         <h2 className="text-base font-semibold text-white">通知</h2>
         <p className="mt-1 text-sm text-zinc-500">
-          通知設定は Supabase に保存されます。Player 向けと Studio 向けをそれぞれ選べます。
+          通知設定はアカウントに保存されます。Player 向けと Studio 向けをそれぞれ選べます。
         </p>
 
         <div className="mt-6 space-y-6">

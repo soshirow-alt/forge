@@ -105,7 +105,7 @@ export function StudioDevlogNewPage({ projectId }: { projectId: string }) {
         </h1>
         <p className="mt-2 text-zinc-500">{project.title}</p>
         <p className="mt-1 text-sm text-zinc-600">
-          プレイヤーに、今回の改善や変更点を伝えます（preview mock — 端末内に保存）。
+          プレイヤーに、今回の改善や変更点を伝えます。確認用の画面で、内容は端末内に一時保存されます。
         </p>
 
         {saveMessage && (
@@ -161,7 +161,7 @@ export function StudioDevlogNewPage({ projectId }: { projectId: string }) {
                   今回の更新を新しい ver として公開する
                 </span>
                 <span className="mt-1 block text-xs text-zinc-600">
-                  チェックすると ver の更新として記録されます（preview mock）。
+                  チェックすると ver の更新として記録されます（確認用の記録です）。
                 </span>
               </span>
             </label>

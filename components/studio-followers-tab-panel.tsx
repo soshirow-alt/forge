@@ -71,9 +71,7 @@ export function StudioFollowersTabPanel() {
       <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6 text-sm text-amber-100/90">
         <p className="font-medium text-amber-200">フォロワー一覧の準備が未完了です</p>
         <p className="mt-2 leading-relaxed text-amber-100/80">
-          Supabase Dashboard で migration 028（
-          <code className="text-xs">028_developer_followers_list_for_owner.sql</code>
-          ）を適用すると、フォロワー一覧が表示されます。
+          フォロワー一覧は準備中です。しばらくお待ちください。
         </p>
       </div>
     );

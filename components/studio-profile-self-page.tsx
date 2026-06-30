@@ -164,7 +164,7 @@ export function StudioProfileSelfPage() {
         draft.developmentGenres.length > 0 ? draft.developmentGenres : current.developmentGenres,
     }));
     setEditing(false);
-    setSaveMessage("プロフィールを更新しました（preview mock）。");
+    setSaveMessage("表示を更新しました（確認用データです）。");
   }
 
   return (

@@ -58,7 +58,7 @@ export function GameProjectHistorySection({ game }: GameProjectHistorySectionPro
             前回プレイしたあとに変わった点は、ここで確認できます
           </p>
           {usingPlaceholderDevlogs && (
-            <p className="text-xs text-zinc-600">（サンプル表示）</p>
+            <p className="text-xs text-zinc-600">（表示例）</p>
           )}
         </div>
         {canPost && (

@@ -193,7 +193,7 @@ export function PlayStubV0Modal({
       <div className="space-y-4 px-5 py-5 sm:px-6 sm:py-6">
         <GameSummaryCard game={game} />
         <p className="text-sm leading-relaxed text-zinc-400">
-          この画面でプレイ体験を始めます。本番ではブラウザや Steam など、作品ごとのプレイ環境に移動します。
+          この画面でプレイ体験を始めます。公開後は、作品ごとのプレイ環境（ブラウザや Steam など）に移動します。
         </p>
         <div className="flex flex-col gap-2 sm:flex-row">
           <button

@@ -18,7 +18,7 @@ export function StudioSettingsPage() {
         <p className="text-center text-xs text-zinc-600">
           Player からも同じ設定画面にアクセスできます。{" "}
           <Link href="/settings" className="text-violet-400 hover:text-violet-300">
-            /settings
+            Player の設定
           </Link>
         </p>
       </div>

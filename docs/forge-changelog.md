@@ -4,6 +4,10 @@
 
 ---
 
+- **UI文言整理（実装用語の除去）** — ユーザー向け画面から `Coming soon`・`preview mock`・`本番では`・Supabase / migration 露出を除去。OAuth・Forge SDK・サムネ AI は「準備中」に統一。確認用画面は「確認用データ」「端末内の一時保存」等の自然な表現に。設定フッターの生 URL を「Player / Studio の設定」ラベルに変更
+
+---
+
 - **Studio 認証リダイレクトループ修正** — `/studio` と `/login?return=/studio` の往復を解消。サーバー `initialUser` をクライアント `getSession()` の一時空で上書きしないよう `getUser()` + `authResolved` で初回確認。`StudioDirectAccessGuard` は認証未確定間は login へ飛ばさない
 
 ---

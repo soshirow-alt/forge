@@ -101,7 +101,7 @@ export function StudioNotificationsPage() {
               description={
                 hideV0Mock
                   ? "届いたフィードバックやプレイ状況は、ここに表示されます。"
-                  : "プレビューではサンプル通知が表示されます。"
+                  : "確認用のサンプル通知が表示されています。"
               }
             />
           </div>

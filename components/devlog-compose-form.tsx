@@ -139,7 +139,7 @@ export function DevlogComposeForm({
       onSaved?.();
     } catch {
       setError(
-        "開発ログの投稿に失敗しました。Supabase の設定と migration 004 を確認してください。",
+        "開発ログの投稿に失敗しました。時間をおいて再度お試しください。",
       );
     } finally {
       setSubmitting(false);

@@ -101,8 +101,8 @@ export function ProfileSelfV0Page() {
     setEditing(false);
     setSaveMessage(
       hideV0Mock
-        ? "プロフィールを更新しました（この端末の表示のみ）。"
-        : "プロフィールを更新しました（preview mock）。",
+        ? "表示を更新しました（確認用です。端末内の表示のみ変わります）。"
+        : "表示を更新しました（確認用データです）。",
     );
   }
 
