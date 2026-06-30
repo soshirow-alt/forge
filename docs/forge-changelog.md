@@ -16,7 +16,11 @@
 
 ---
 
-- **Studio 遷移の点滅** — ログイン済みなのに hydrate 前だけ Studio がログインリンクになり `/login` 経由でチラつく問題を修正（ログイン済みは Link 直遷移）。`router.push` の同一パス再遷移・オンボーディングモーダルの再表示を抑制。作品一覧は読み込み中スケルトンを表示し、mock→実データの一瞬切り替えを防止
+- **Studio 遷移の点滅** — 本番の主因は **hydrate 前にログイン済みでも Studio がログインリンクになる**件の修正（ログイン済みは Link 直遷移）。`router.push` の同一パス再遷移・オンボーディングモーダルの再表示を抑制。作品一覧は読み込み中スケルトンで async 読み込みのチラつきを防止（本番では mock グリッドは出ない。Preview で実作品ありの旧挙動向けに mock→実の一瞬切り替えも潰した）
+
+---
+
+- **Studio 点滅（追補）** — スケルトンの `animate-pulse` を廃止（点滅に見えていた）。`catalogReady` をユーザー切替時以外リセットしない（Studio 再入場で空→表示のチラつき防止）。Studio ホームの mock 表示判定を deployment context に統一（SSR/CSR 不一致で Preview mock が一瞬出る問題）。`StudioDirectAccessGuard` を `/studio` layout に移動
 
 ---
 

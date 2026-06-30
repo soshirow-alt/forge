@@ -17,7 +17,6 @@ export function useOwnedProjectVoiceSignals(userId: string | undefined) {
     }
 
     let active = true;
-    setLoaded(false);
 
     void getOwnedProjectVoiceSignals(userId)
       .then((result) => {

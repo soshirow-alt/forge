@@ -11,7 +11,7 @@ import { StudioOwnedProjectsDirectoryPanel } from "@/components/studio-owned-pro
 import { StudioProjectsTabPanel } from "@/components/studio-projects-page";
 import { ProjectSubmitModal } from "@/components/project-submit-modal";
 import { StudioMyPageTabs, StudioShell } from "@/components/studio-shell";
-import { shouldHideV0MockContent } from "@/lib/production-mode";
+import { useHideV0MockContent } from "@/lib/forge-deployment-context";
 import { isAdScreenshotDemoEnabled } from "@/lib/ad-screenshot-demo";
 import { STUDIO_SUBMIT_SEARCH_PARAM } from "@/lib/project-nurture-links";
 
@@ -41,12 +41,12 @@ function tabHref(tab: StudioMypageTab, query: string): string {
 function StudioMypageProjectsLoadingPanel() {
   return (
     <div className="space-y-4" aria-busy="true" aria-label="作品一覧を読み込み中">
-      <div className="h-10 w-full max-w-md animate-pulse rounded-xl bg-zinc-900/60" />
+      <div className="h-10 w-full max-w-md rounded-xl bg-zinc-900/60" />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[0, 1, 2, 3, 4, 5].map((key) => (
           <div
             key={key}
-            className="aspect-[4/3] animate-pulse rounded-2xl border border-zinc-800/80 bg-zinc-900/40"
+            className="aspect-[4/3] rounded-2xl border border-zinc-800/80 bg-zinc-900/40"
           />
         ))}
       </div>
@@ -65,7 +65,7 @@ function StudioMypageProjectsPanel({
   initialQuery?: string;
   onOpenSubmit?: () => void;
 }) {
-  const hideV0Mock = shouldHideV0MockContent();
+  const hideV0Mock = useHideV0MockContent();
   const { user, hydrated } = useAuth();
   const { getOwnedProjects, dataReady } = useGames();
 
@@ -98,7 +98,7 @@ function StudioMypageProjectsPanel({
 function StudioMypagePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const hideV0Mock = shouldHideV0MockContent();
+  const hideV0Mock = useHideV0MockContent();
   const activeTab = parseTab(searchParams.get("tab"));
   const initialQuery = searchParams.get("q") ?? "";
   const [submitModalOpen, setSubmitModalOpen] = useState(

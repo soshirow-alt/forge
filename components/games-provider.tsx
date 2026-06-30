@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -383,6 +384,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   );
   const [hydrated, setHydrated] = useState(false);
   const [catalogReady, setCatalogReady] = useState(false);
+  const catalogUserIdRef = useRef<string | undefined>(undefined);
 
   const reloadFromStorage = useCallback(async () => {
     const supabase = getOptionalSupabaseClient();
@@ -474,8 +476,21 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    if (!user) {
+      catalogUserIdRef.current = undefined;
+      setCatalogReady(false);
+      setSubmittedGames([]);
+      setDeveloperProfiles([]);
+      return;
+    }
+
+    const userChanged = catalogUserIdRef.current !== user.id;
+    catalogUserIdRef.current = user.id;
+    if (userChanged) {
+      setCatalogReady(false);
+    }
+
     let cancelled = false;
-    setCatalogReady(false);
 
     void reloadFromStorage()
       .catch(() => {

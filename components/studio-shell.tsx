@@ -16,7 +16,6 @@ import {
   ForgeShellMobileMenuButton,
   ForgeShellModeSwitch,
 } from "@/components/forge-shell-mobile-nav";
-import { StudioDirectAccessGuard } from "@/components/studio-entry-gate-provider";
 import { PlatformFeedbackSidebarBox } from "@/components/platform-feedback-sidebar-box";
 import { studioProjectTabs } from "@/lib/studio-project-detail-v0-mock-data";
 
@@ -236,7 +235,6 @@ export function StudioShell({
 
   return (
     <div className="flex min-h-screen bg-[#0a0a0a] text-zinc-100">
-      <StudioDirectAccessGuard />
       <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r border-zinc-800/80 bg-zinc-950 lg:flex xl:w-60">
         <div className="shrink-0 border-b border-zinc-800/80 px-5 py-5">
           <Link href="/studio" className="flex items-center gap-2.5">

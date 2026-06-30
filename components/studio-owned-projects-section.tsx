@@ -24,13 +24,13 @@ function StudioOwnedProjectsLoadingSection() {
       aria-busy="true"
       aria-label="あなたの作品を読み込み中"
     >
-      <div className="h-4 w-32 animate-pulse rounded bg-zinc-800/80" />
-      <div className="mt-3 h-6 w-40 animate-pulse rounded bg-zinc-800/80" />
+      <div className="h-4 w-32 rounded bg-zinc-800/80" />
+      <div className="mt-3 h-6 w-40 rounded bg-zinc-800/80" />
       <div className="mt-5 space-y-3">
         {[0, 1, 2].map((key) => (
           <div
             key={key}
-            className="h-20 animate-pulse rounded-xl border border-zinc-800/80 bg-zinc-900/40"
+            className="h-20 rounded-xl border border-zinc-800/80 bg-zinc-900/40"
           />
         ))}
       </div>
