@@ -14,19 +14,14 @@ import {
 import { StudioOwnedProjectsSection } from "@/components/studio-owned-projects-section";
 import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { StudioSectionHeader, StudioShell } from "@/components/studio-shell";
-import { useHideV0MockContent } from "@/lib/forge-deployment-context";
-import {
-  countStudioUnread,
-  studioNotifications,
-} from "@/lib/studio-notifications-v0-mock-data";
-import { studioHomeGrowthRankings } from "@/lib/studio-rankings-v0-mock-data";
+import { useStudioHomeViewModel } from "@/hooks/use-studio-home-view-model";
+import type { StudioActivityItem } from "@/lib/studio-home-v0-mock-data";
 import { developerProfileHref } from "@/lib/developer-search-v0-mock-data";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
-import {
-  devHintCards,
-  studioActivities,
-  type StudioActivityItem,
-} from "@/lib/studio-home-v0-mock-data";
+import type {
+  StudioHomeGrowthRankings,
+  StudioHomeSectionVM,
+} from "@/lib/studio-home-view-model";
 
 function activityIcon(type: StudioActivityItem["type"]) {
   switch (type) {
@@ -83,7 +78,7 @@ function WorkGrowthColumn({
 }: {
   title: string;
   metricLabel: string;
-  entries: { rank: number; id: string; title: string; image: string; creator: string; growthRate: string }[];
+  entries: StudioHomeGrowthRankings["witnessGrowthWorks"];
 }) {
   return (
     <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-4">
@@ -124,7 +119,7 @@ function DeveloperGrowthColumn({
 }: {
   title: string;
   metricLabel: string;
-  entries: { rank: number; id: string; name: string; avatar: string; handle: string; growthRate: string }[];
+  entries: StudioHomeGrowthRankings["followerGrowthDevelopers"];
 }) {
   return (
     <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-4">
@@ -188,7 +183,7 @@ function DevHintCard({
   );
 }
 
-function RankingSnippetsSection() {
+function RankingSnippetsSection({ rankings }: { rankings: StudioHomeGrowthRankings }) {
   const [expanded, setExpanded] = useState(false);
   const limit = expanded ? 10 : 3;
 
@@ -202,17 +197,17 @@ function RankingSnippetsSection() {
         <WorkGrowthColumn
           title="見届け人が伸びた作品"
           metricLabel="見届け人 · 前週比"
-          entries={studioHomeGrowthRankings.witnessGrowthWorks.slice(0, limit)}
+          entries={rankings.witnessGrowthWorks.slice(0, limit)}
         />
         <WorkGrowthColumn
           title="FBが増えた作品"
           metricLabel="フィードバック · 前週比"
-          entries={studioHomeGrowthRankings.feedbackGrowthWorks.slice(0, limit)}
+          entries={rankings.feedbackGrowthWorks.slice(0, limit)}
         />
         <DeveloperGrowthColumn
           title="フォロワーが増えた開発者"
           metricLabel="フォロワー · 前週比"
-          entries={studioHomeGrowthRankings.followerGrowthDevelopers.slice(0, limit)}
+          entries={rankings.followerGrowthDevelopers.slice(0, limit)}
         />
       </div>
       <div className="mt-5 flex flex-wrap justify-center gap-3">
@@ -236,31 +231,29 @@ function RankingSnippetsSection() {
   );
 }
 
-export function StudioHomePage() {
-  const hideV0Mock = useHideV0MockContent();
-  const notificationBadge = hideV0Mock ? 0 : countStudioUnread(studioNotifications);
-
-  return (
-    <StudioShell activeNav="home" notificationBadge={notificationBadge}>
-      <div className="mx-auto max-w-7xl space-y-10">
-        <StudioOwnedProjectsSection />
-
-        {!hideV0Mock ? (
-          <section className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5 sm:p-6">
-            <StudioSectionHeader
-              title="最近の動き"
-              href="/studio/notifications"
-              icon={<Rocket className="size-5 text-violet-400" aria-hidden="true" />}
-            />
-            <div className="mt-5 space-y-3">
-              {studioActivities.map((item) => (
-                <ActivityRow key={item.id} item={item} />
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        {hideV0Mock ? (
+function StudioHomeSection({ section }: { section: StudioHomeSectionVM }) {
+  switch (section.id) {
+    case "recent-activity":
+      if (section.status === "hidden") {
+        return null;
+      }
+      return (
+        <section className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5 sm:p-6">
+          <StudioSectionHeader
+            title={section.headerTitle}
+            href={section.headerHref}
+            icon={<Rocket className="size-5 text-violet-400" aria-hidden="true" />}
+          />
+          <div className="mt-5 space-y-3">
+            {section.activities.map((item) => (
+              <ActivityRow key={item.id} item={item} />
+            ))}
+          </div>
+        </section>
+      );
+    case "weekly-growth":
+      if (section.status === "coming-soon") {
+        return (
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5 sm:p-6">
             <StudioSectionHeader
               title="今週の伸び"
@@ -268,26 +261,41 @@ export function StudioHomePage() {
             />
             <div className="mt-5">
               <FeatureComingSoonPanel
-                title="今週の伸び"
-                description="週次ランキングの集計・表示は Coming Soon です。"
+                title={section.comingSoonTitle}
+                description={section.comingSoonDescription}
               />
             </div>
           </section>
-        ) : (
-          <RankingSnippetsSection />
-        )}
-
+        );
+      }
+      return <RankingSnippetsSection rankings={section.rankings} />;
+    case "dev-hints":
+      return (
         <section>
           <StudioSectionHeader
             title="開発ヒント"
             icon={<Lightbulb className="size-5 text-violet-400" aria-hidden="true" />}
           />
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
-            {devHintCards.map((card) => (
+            {section.cards.map((card) => (
               <DevHintCard key={card.id} id={card.id} title={card.title} tips={card.tips} />
             ))}
           </div>
         </section>
+      );
+  }
+}
+
+export function StudioHomePage() {
+  const viewModel = useStudioHomeViewModel();
+
+  return (
+    <StudioShell activeNav="home" notificationBadge={viewModel.notificationBadge}>
+      <div className="mx-auto max-w-7xl space-y-10">
+        <StudioOwnedProjectsSection />
+        {viewModel.sections.map((section) => (
+          <StudioHomeSection key={section.id} section={section} />
+        ))}
       </div>
     </StudioShell>
   );

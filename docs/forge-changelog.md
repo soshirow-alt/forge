@@ -4,6 +4,10 @@
 
 ---
 
+- **Phase 3 PR1 — `/studio` home viewModel** — `buildStudioHomeViewModel` で通知バッジと下部セクション（最近の動き・今週の伸び・開発ヒント）の表示分岐をデータ層へ移動。`studio-home-page.tsx` から mock 直接 import と `hideV0Mock` 分岐を削減。見た目・セクション順は維持。「あなたの作品」は現状のまま
+
+---
+
 - **Coming Soon 表記統一** — 「追って機能追加予定」「準備中です」等の未提供機能表現をユーザー画面で `Coming Soon`（大文字・スペースあり）に統一。`FeatureComingSoonPanel`・OAuth・Forge SDK・各種空状態パネルを含む
 
 ---
