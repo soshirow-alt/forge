@@ -80,7 +80,7 @@ Cursor は上記のうち **変更 diff が触れた URL** を build 後に報�
 
 | ファイル | 分岐 | 本番同等時 | リスク | 状態 / 次アクション |
 |----------|------|------------|--------|---------------------|
-| `components/studio-mypage-page.tsx` | `StudioProjectsTabPanel` ↔ `StudioOwnedProjectsDirectoryPanel` | DirectoryPanel | Preview だけ mock グリッド | **是正済み（2026-06）** — 本番 + 実データあり Preview も DirectoryPanel |
+| `components/studio-mypage-page.tsx` | ~~`StudioProjectsTabPanel` ↔ `DirectoryPanel`~~ | DirectoryPanel のみ | Preview mock は `getStudioMypageOwnedProjects` でデータ注入（2026-06 Phase 1） | **Phase 1 完了** — UI 差し替え廃止 |
 | `components/community-hub-page.tsx` | mock store ↔ `useCommunityHubSupabase` | Supabase | 配線変更で片系統だけ死ぬ | **監視** — 同一ファイル内二重実装。配線時 E2E 必須 |
 | `components/games-provider.tsx` | localStorage フォロー/mock 通知 ↔ Supabase | Supabase 正本 | mock 側だけ機能追加で再発 | **監視** — データ層分岐は許容。UI は共有 |
 | `components/developer-search-v0-page.tsx` | mock catalog + LS フォロー ↔ 実 catalog + DB | 実データ | 件数・フォロー状態の非対称 | **監視** — UI 共有。変更時両モード確認 |

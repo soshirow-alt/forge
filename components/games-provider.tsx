@@ -57,7 +57,10 @@ import {
   unfollowDeveloperInDb,
 } from "@/lib/supabase/developer-follows-db";
 import { mergeGameWithExtras } from "@/lib/game-extra-storage";
+import { useForgeDeploymentMode } from "@/lib/forge-deployment-context";
+import { isAdScreenshotDemoEnabled } from "@/lib/ad-screenshot-demo";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
+import { resolveStudioMypageOwnedProjects } from "@/lib/studio-mypage-owned-projects";
 import {
   fetchDeveloperProfiles,
   mergeDeveloperProfileSocialLinks,
@@ -258,6 +261,8 @@ type GamesContextValue = {
   isSubmittedGame: (id: string) => boolean;
   isProjectOwner: (projectId: string, userId: string | undefined) => boolean;
   getOwnedProjects: (userId: string | undefined) => Game[];
+  /** `/studio/mypage` — 実データ + Preview/local のみデータ層 mock 注入 */
+  getStudioMypageOwnedProjects: (userId: string | undefined) => Game[];
   getGamesByCreator: (creatorName: string) => Game[];
   getFollowerCount: (creatorId: string, defaultCount?: number) => number;
   refreshFollowerCount: (developerUserId: string) => Promise<void>;
@@ -358,6 +363,8 @@ function loadLocalNotifications(): Notification[] {
 
 export function GamesProvider({ children }: { children: ReactNode }) {
   const { user, hydrated: authHydrated } = useAuth();
+  const deploymentMode = useForgeDeploymentMode();
+  const hideV0MockForMypage = deploymentMode === "production";
   const [submittedGames, setSubmittedGames] = useState<Game[]>([]);
   const [supportCounts, setSupportCounts] = useState<Counts>({});
   const [userEngagement, setUserEngagement] =
@@ -702,6 +709,17 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       return submittedGames.filter((game) => game.ownerId === userId);
     },
     [submittedGames],
+  );
+
+  const getStudioMypageOwnedProjects = useCallback(
+    (userId: string | undefined) => {
+      const realOwned = userId ? getOwnedProjects(userId) : [];
+      return resolveStudioMypageOwnedProjects(realOwned, {
+        hideV0Mock: hideV0MockForMypage,
+        adScreenshotDemo: isAdScreenshotDemoEnabled(),
+      });
+    },
+    [getOwnedProjects, hideV0MockForMypage],
   );
 
   const getGameById = useCallback(
@@ -1976,6 +1994,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       isSubmittedGame,
       isProjectOwner,
       getOwnedProjects,
+      getStudioMypageOwnedProjects,
       getGamesByCreator,
       getFollowerCount,
       refreshFollowerCount,
@@ -2053,6 +2072,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       isSubmittedGame,
       isProjectOwner,
       getOwnedProjects,
+      getStudioMypageOwnedProjects,
       getGamesByCreator,
       getFollowerCount,
       refreshFollowerCount,

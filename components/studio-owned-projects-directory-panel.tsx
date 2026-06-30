@@ -25,6 +25,7 @@ import {
 } from "@/lib/project-growth-state";
 import { projectStudioPath, studioSubmitModalHref } from "@/lib/project-nurture-links";
 import { resolveVoiceSignalForGame } from "@/lib/project-voice-nurture";
+import { isStudioMypagePreviewMockProject } from "@/lib/studio-mypage-owned-projects";
 import type { Game } from "@/lib/mock-games";
 import {
   STUDIO_PROJECTS_PAGE_SIZE,
@@ -54,6 +55,7 @@ type OwnedProjectRow = {
   game: Game;
   growth: ProjectGrowthSnapshot;
   notificationCount: number;
+  showDelete: boolean;
 };
 
 function NewProjectCard({
@@ -101,9 +103,11 @@ function NewProjectCard({
 function OwnedProjectGridCard({
   row,
   onDelete,
+  showDelete,
 }: {
   row: OwnedProjectRow;
   onDelete: (project: PendingProjectDelete) => void;
+  showDelete: boolean;
 }) {
   const { game, growth, notificationCount } = row;
   const statusBadges = getProjectStatusBadges(growth, false);
@@ -175,9 +179,11 @@ function OwnedProjectGridCard({
         </div>
       </Link>
       <div className="flex justify-end border-t border-zinc-800/80 px-3 py-2">
-        <ProjectDeleteButton
-          onClick={() => onDelete({ id: game.id, title: game.title })}
-        />
+        {showDelete ? (
+          <ProjectDeleteButton
+            onClick={() => onDelete({ id: game.id, title: game.title })}
+          />
+        ) : null}
       </div>
     </article>
   );
@@ -186,9 +192,11 @@ function OwnedProjectGridCard({
 function OwnedProjectListRow({
   row,
   onDelete,
+  showDelete,
 }: {
   row: OwnedProjectRow;
   onDelete: (project: PendingProjectDelete) => void;
+  showDelete: boolean;
 }) {
   const { game, growth, notificationCount } = row;
   const statusBadges = getProjectStatusBadges(growth, false);
@@ -241,9 +249,11 @@ function OwnedProjectListRow({
           </p>
         </div>
       </Link>
-      <ProjectDeleteButton
-        onClick={() => onDelete({ id: game.id, title: game.title })}
-      />
+      {showDelete ? (
+        <ProjectDeleteButton
+          onClick={() => onDelete({ id: game.id, title: game.title })}
+        />
+      ) : null}
     </article>
   );
 }
@@ -257,7 +267,7 @@ export function StudioOwnedProjectsDirectoryPanel({
 }) {
   const { user, hydrated } = useAuth();
   const {
-    getOwnedProjects,
+    getStudioMypageOwnedProjects,
     deleteSubmittedGame,
     getDevlogsByProject,
     dataReady,
@@ -273,12 +283,12 @@ export function StudioOwnedProjectsDirectoryPanel({
   const [page, setPage] = useState(1);
 
   const ownedRows = useMemo(() => {
-    if (!user || !voiceLoaded) {
+    if (!voiceLoaded) {
       return [];
     }
 
     const games = sortProjectsForGrowthHub(
-      getOwnedProjects(user.id),
+      getStudioMypageOwnedProjects(user?.id),
       voiceSignals,
       getDevlogsByProject,
     );
@@ -293,9 +303,16 @@ export function StudioOwnedProjectsDirectoryPanel({
         game,
         growth,
         notificationCount: growth.pendingFeedbackCount,
+        showDelete: !isStudioMypagePreviewMockProject(game),
       };
     });
-  }, [getDevlogsByProject, getOwnedProjects, user, voiceLoaded, voiceSignals]);
+  }, [
+    getDevlogsByProject,
+    getStudioMypageOwnedProjects,
+    user?.id,
+    voiceLoaded,
+    voiceSignals,
+  ]);
 
   const filtered = useMemo(() => {
     let list = [...ownedRows];
@@ -412,14 +429,24 @@ export function StudioOwnedProjectsDirectoryPanel({
       ) : viewMode === "grid" ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {pageItems.map((row) => (
-            <OwnedProjectGridCard key={row.game.id} row={row} onDelete={requestDelete} />
+            <OwnedProjectGridCard
+              key={row.game.id}
+              row={row}
+              onDelete={requestDelete}
+              showDelete={row.showDelete}
+            />
           ))}
           {safePage === totalPages && <NewProjectCard onOpenSubmit={onOpenSubmit} />}
         </div>
       ) : (
         <div className="space-y-3">
           {pageItems.map((row) => (
-            <OwnedProjectListRow key={row.game.id} row={row} onDelete={requestDelete} />
+            <OwnedProjectListRow
+              key={row.game.id}
+              row={row}
+              onDelete={requestDelete}
+              showDelete={row.showDelete}
+            />
           ))}
           {safePage === totalPages && <NewProjectCard compact onOpenSubmit={onOpenSubmit} />}
         </div>

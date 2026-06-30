@@ -28,6 +28,10 @@
 
 ---
 
+- **Studio マイページ Phase 1（data-layer）** — `/studio/mypage` の `StudioProjectsTabPanel` ↔ `DirectoryPanel` UI 差し替えを廃止。`GamesProvider.getStudioMypageOwnedProjects` が本番は実データのみ・Preview/local はデータ層で mock 注入（ad demo 含む）。作品タブ UI は Directory のみ
+
+---
+
 - **広告スクショ用デモ（Preview のみ）** — `NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO=true` のとき Studio ホーム・マイページ・Player マイページ一部タブに厚い mock を強制表示（本番では常に無効）
   - **オーナー（Vercel Preview のみ）** — Project → Settings → Environment Variables → `NEXT_PUBLIC_FORGE_AD_SCREENSHOT_DEMO` = `true`、**Environment は Preview のみ**（Production / Development には付けない）。保存後 `preview/landing-01` の Preview を再デプロイ
   - **有効時の変化** — `/studio`「あなたの作品」が mock 3件（新着 FB バッジ付き）に差し替え、ヘッダー通知バッジが mock 件数表示。`/studio/mypage` 作品タブが実データ Directory ではなく mock グリッド。`/mypage` の FB履歴・実績・フォロー中タブが mock パネル表示

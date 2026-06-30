@@ -240,6 +240,67 @@ function testAdScreenshotDemoGuard() {
   }
 }
 
+function testStudioMypageOwnedProjectsResolver() {
+  const { resolveStudioMypageOwnedProjects } =
+    require("../lib/studio-mypage-owned-projects") as typeof import("../lib/studio-mypage-owned-projects");
+  const real = [{ id: "real-1", ownerId: "user-a" } as import("../lib/mock-games").Game];
+
+  ok(
+    resolveStudioMypageOwnedProjects(real, { hideV0Mock: true, adScreenshotDemo: false }).length ===
+      1,
+    "production mode returns real owned only",
+  );
+  ok(
+    resolveStudioMypageOwnedProjects([], { hideV0Mock: true, adScreenshotDemo: false }).length ===
+      0,
+    "production mode returns empty without mock fallback",
+  );
+  const previewEmpty = resolveStudioMypageOwnedProjects([], {
+    hideV0Mock: false,
+    adScreenshotDemo: false,
+  });
+  ok(previewEmpty.length > 0, "preview mode injects mock games when real list empty");
+  ok(
+    resolveStudioMypageOwnedProjects(real, { hideV0Mock: false, adScreenshotDemo: false }).length ===
+      1,
+    "preview mode prefers real owned over mock",
+  );
+  const adDemo = resolveStudioMypageOwnedProjects(real, {
+    hideV0Mock: false,
+    adScreenshotDemo: true,
+  });
+  ok(adDemo.length >= 3, "ad screenshot demo injects mock subset as data");
+}
+
+function testStudioMypagePageSingleDirectoryPanel() {
+  const fs = require("node:fs") as typeof import("node:fs");
+  const path = require("node:path") as typeof import("node:path");
+  const mypage = fs.readFileSync(
+    path.join(import.meta.dirname, "../components/studio-mypage-page.tsx"),
+    "utf8",
+  );
+  const provider = fs.readFileSync(
+    path.join(import.meta.dirname, "../components/games-provider.tsx"),
+    "utf8",
+  );
+  ok(
+    !mypage.includes("StudioProjectsTabPanel"),
+    "studio-mypage-page does not swap to StudioProjectsTabPanel",
+  );
+  ok(
+    !mypage.includes("isAdScreenshotDemoEnabled"),
+    "studio-mypage-page projects tab has no ad demo branch",
+  );
+  ok(
+    mypage.includes("StudioOwnedProjectsDirectoryPanel"),
+    "studio-mypage-page always uses DirectoryPanel for projects",
+  );
+  ok(
+    provider.includes("getStudioMypageOwnedProjects"),
+    "games-provider exposes getStudioMypageOwnedProjects",
+  );
+}
+
 function testGamesProviderMockGuardContract() {
   const fs = require("node:fs") as typeof import("node:fs");
   const path = require("node:path") as typeof import("node:path");
@@ -310,6 +371,8 @@ async function main() {
     ["login return sanitize", testLoginReturnSanitize],
     ["notification nurture links", testNotificationNurtureLinks],
     ["ad screenshot demo guard", testAdScreenshotDemoGuard],
+    ["studio mypage owned projects resolver", testStudioMypageOwnedProjectsResolver],
+    ["studio mypage single directory panel", testStudioMypagePageSingleDirectoryPanel],
     ["games provider mock guard contract", testGamesProviderMockGuardContract],
     ["login page source contract", testLoginPageSourceContract],
     ["game detail tabs", testGameDetailTabs],

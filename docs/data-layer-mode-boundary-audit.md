@@ -143,7 +143,7 @@ else              → StudioProjectsTabPanel      (mock grid)
 | Phase | commit 単位 | 内容 |
 |-------|---------------|------|
 | 0 | `docs: data-layer mode boundary audit` | 本ファイル（一覧化のみ） |
-| 1 | `/studio/mypage` Directory 単一化 | Panel 差し替え削除、provider でリスト供給 |
+| 1 | `/studio/mypage` Directory 単一化 | Panel 差し替え削除、provider でリスト供給 | **完了** `refactor/data-layer-mode-boundary` |
 | 2 | ad demo 隔離 | 本体から `isAdScreenshotDemoEnabled` 分岐を除去 |
 | 3 | `/studio` home viewModel | セクション差し替えをデータ配列化 |
 | 4 | `/home` sections from provider | mock import をページから除去 |
