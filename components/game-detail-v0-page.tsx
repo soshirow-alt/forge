@@ -65,7 +65,12 @@ import { useProjectOverviewV0 } from "@/hooks/use-project-overview-v0";
 import { formatDevlogPublishedAt } from "@/hooks/use-game-devlogs-v0";
 import { useProjectPublicStats } from "@/hooks/use-project-public-stats";
 import { resolveGameDetailPlayerMeta } from "@/lib/game-detail-player-meta";
-import { getExternalLinks } from "@/lib/game-links";
+import {
+  resolvePlayDestinations,
+  resolvePublicationDisplay,
+  type PlayDestination,
+} from "@/lib/game-play-destinations";
+import { GamePlayDestinationModal } from "@/components/game-play-destination-modal";
 import {
   Bookmark,
   Check,
@@ -166,20 +171,14 @@ function GameDetailV0PageBody({ id }: { id: string }) {
       : !isRealProject && hasDevlogForOverview
         ? game.devlogUpdatedAgo
         : "";
-  const overviewExternalLinks = useMemo(() => {
-    if (!externalLinkGame) {
-      return [];
-    }
-    return getExternalLinks({
-      steamUrl: externalLinkGame.steamUrl,
-      itchUrl: externalLinkGame.itchUrl,
-      discordUrl: externalLinkGame.discordUrl,
-      xUrl: externalLinkGame.xUrl,
-      officialUrl: externalLinkGame.officialUrl,
-      youtubeUrl: externalLinkGame.youtubeUrl,
-      githubUrl: externalLinkGame.githubUrl,
-    });
-  }, [externalLinkGame]);
+  const overviewPublication = useMemo(
+    () => resolvePublicationDisplay(externalLinkGame ?? submittedGame),
+    [externalLinkGame, submittedGame],
+  );
+  const playDestinations = useMemo(
+    () => resolvePlayDestinations(externalLinkGame ?? submittedGame),
+    [externalLinkGame, submittedGame],
+  );
   const hasRealPlayUrl = Boolean(submittedGame?.playUrl?.trim());
   const playUnavailableOnPublic =
     hideV0Mock && isRealProject && !hasRealPlayUrl;
@@ -225,6 +224,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     [id, router, searchParams],
   );
   const [feedbackStep, setFeedbackStep] = useState<FeedbackFlowStep>("closed");
+  const [playDestinationPickerOpen, setPlayDestinationPickerOpen] = useState(false);
   const [voicesRefreshKey, setVoicesRefreshKey] = useState(0);
   const [following, setFollowing] = useState(game.developer.following);
   const developerUserId =
@@ -275,33 +275,79 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     }
   }, [isRealProject, hydrated, isLoggedIn, hasPlayedGame, resolvedId]);
 
+  const completePlaySession = useCallback(() => {
+    if (isRealProject) {
+      setPlayed(true);
+      voiceLayerRef.current?.notifyPlayComplete();
+      return;
+    }
+    setFeedbackStep("first-voice");
+  }, [isRealProject]);
+
+  const navigateToPlayDestination = useCallback(
+    async (url: string) => {
+      const projectId = submittedGame?.id ?? (isRealProject ? resolvedId : null);
+      if (projectId) {
+        await recordPlay(projectId);
+      }
+      window.open(url, "_blank", "noopener,noreferrer");
+      completePlaySession();
+    },
+    [submittedGame?.id, isRealProject, resolvedId, recordPlay, completePlaySession],
+  );
+
   const handlePlay = useCallback(() => {
     requireAuth(async () => {
-      if (hasRealPlayUrl && submittedGame?.playUrl) {
-        await recordPlay(submittedGame.id);
-        window.open(submittedGame.playUrl, "_blank", "noopener,noreferrer");
-        if (isRealProject) {
-          setPlayed(true);
-          voiceLayerRef.current?.notifyPlayComplete();
-          return;
-        }
-        setFeedbackStep("first-voice");
-        return;
-      }
       if (playUnavailableOnPublic) {
         return;
       }
+
+      if (hasRealPlayUrl) {
+        const destinations =
+          playDestinations.length > 0
+            ? playDestinations
+            : submittedGame?.playUrl
+              ? [
+                  {
+                    label: "外部サイト",
+                    url: submittedGame.playUrl,
+                    actionLabel: "外部サイトで開く",
+                  } satisfies PlayDestination,
+                ]
+              : [];
+
+        if (destinations.length === 0) {
+          return;
+        }
+
+        if (destinations.length === 1) {
+          await navigateToPlayDestination(destinations[0].url);
+          return;
+        }
+
+        setPlayDestinationPickerOpen(true);
+        return;
+      }
+
       setFeedbackStep("play-stub");
     }, returnPath);
   }, [
     requireAuth,
     returnPath,
-    hasRealPlayUrl,
-    submittedGame,
-    recordPlay,
-    isRealProject,
     playUnavailableOnPublic,
+    hasRealPlayUrl,
+    playDestinations,
+    submittedGame?.playUrl,
+    navigateToPlayDestination,
   ]);
+
+  const handlePlayDestinationSelect = useCallback(
+    async (destination: PlayDestination) => {
+      setPlayDestinationPickerOpen(false);
+      await navigateToPlayDestination(destination.url);
+    },
+    [navigateToPlayDestination],
+  );
 
   const handleFeedback = useCallback(() => {
     requireAuth(() => {
@@ -381,6 +427,13 @@ function GameDetailV0PageBody({ id }: { id: string }) {
 
   return (
     <PlayerShell>
+      {playDestinationPickerOpen ? (
+        <GamePlayDestinationModal
+          destinations={playDestinations}
+          onSelect={handlePlayDestinationSelect}
+          onClose={() => setPlayDestinationPickerOpen(false)}
+        />
+      ) : null}
       {isRealProject ? (
         <GameDetailRealVoiceLayer
           ref={voiceLayerRef}
@@ -603,7 +656,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                     }
                   : null
               }
-              externalLinks={overviewExternalLinks}
+              publication={overviewPublication}
               watching={watching}
               onWatch={handleWatchToggle}
               onFeedback={handleFeedback}

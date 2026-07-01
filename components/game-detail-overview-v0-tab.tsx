@@ -24,7 +24,7 @@ import type {
   GameDetailOverviewActivity,
   GameDetailPlayerMeta,
 } from "@/lib/game-detail-player-meta";
-import type { ExternalLink } from "@/lib/game-links";
+import type { PublicationDisplay } from "@/lib/game-play-destinations";
 import { GameDetailPlayerOverview } from "@/components/game-detail-player-overview";
 
 function validateFeatureDrafts(
@@ -107,7 +107,7 @@ export const GameDetailOverviewV0Tab = forwardRef<
   overviewActivity?: GameDetailOverviewActivity | null;
   gameId?: string;
   heroLead?: string;
-  externalLinks?: ExternalLink[];
+  publication?: PublicationDisplay | null;
   watching?: boolean;
   onWatch?: () => void;
 }
@@ -127,7 +127,7 @@ export const GameDetailOverviewV0Tab = forwardRef<
   overviewActivity = null,
   gameId,
   heroLead,
-  externalLinks = [],
+  publication = null,
   watching = false,
   onWatch,
 },
@@ -249,12 +249,11 @@ export const GameDetailOverviewV0Tab = forwardRef<
   if (isPlayerOverview && playerMeta && overviewActivity && gameId) {
     return (
       <GameDetailPlayerOverview
-        gameId={gameId}
         game={game}
         heroLead={heroLead ?? game.lead}
         playerMeta={playerMeta}
         activity={overviewActivity}
-        externalLinks={externalLinks}
+        publication={publication}
         watching={watching}
         onWatch={onWatch}
       />

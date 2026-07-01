@@ -3,15 +3,12 @@
 import { useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import type { GameDetailFeature, GameDetailV0 } from "@/lib/game-detail-v0-mock-data";
-import type { ExternalLink } from "@/lib/game-links";
 import type {
   GameDetailOverviewActivity,
   GameDetailPlayerMeta,
-  PlayerPlatformOption,
+  PlayerOptionChip,
 } from "@/lib/game-detail-player-meta";
-import { useRequireAuth } from "@/hooks/use-require-auth";
-import { useGames } from "@/components/games-provider";
-import { gameDetailReturnPath } from "@/lib/login-return-url";
+import type { PublicationDisplay } from "@/lib/game-play-destinations";
 import { WATCH_BUTTON_OFF, WATCH_BUTTON_ON } from "@/lib/watch-ui-labels";
 
 const INTRO_COLLAPSE_THRESHOLD = 200;
@@ -67,11 +64,11 @@ function SidebarCard({
   );
 }
 
-function PlatformChip({ option }: { option: PlayerPlatformOption }) {
+function OptionChip({ option }: { option: PlayerOptionChip }) {
   return (
     <span
       className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs ${
-        option.supported
+        option.active
           ? "border-zinc-600 bg-zinc-800/70 font-medium text-zinc-200"
           : "border-zinc-800/80 bg-zinc-950/40 text-zinc-600"
       }`}
@@ -86,7 +83,7 @@ function IntroBody({ text }: { text: string }) {
   const needsExpand = text.length > INTRO_COLLAPSE_THRESHOLD;
 
   return (
-    <div className="mt-4">
+    <div className="mt-4 min-h-[5.25rem]">
       <p
         className={`text-[15px] leading-7 text-zinc-300 ${
           !expanded && needsExpand ? "line-clamp-4" : ""
@@ -145,11 +142,10 @@ function feedbackStatusLabel(count: number): string {
 
 function PlayInfoPanel({ playerMeta }: { playerMeta: GameDetailPlayerMeta }) {
   const { playInfo, phaseDescription } = playerMeta;
-  const hasPlatforms = playInfo.platformOptions.some((option) => option.supported);
-  const hasPlayMethod = Boolean(playInfo.playMethodLabel);
-  const hasPlayTime = Boolean(playInfo.estimatedPlayTime);
-  const hasContent =
-    phaseDescription || hasPlayTime || hasPlatforms || hasPlayMethod;
+  const hasPlayTime = playInfo.playTimeOptions.some((option) => option.active);
+  const hasDevice = playInfo.deviceOptions.some((option) => option.active);
+  const hasPlayMethod = playInfo.playMethodOptions.some((option) => option.active);
+  const hasContent = phaseDescription || hasPlayTime || hasDevice || hasPlayMethod;
 
   if (!hasContent) {
     return null;
@@ -161,85 +157,137 @@ function PlayInfoPanel({ playerMeta }: { playerMeta: GameDetailPlayerMeta }) {
         <p className="mt-3 text-sm leading-relaxed text-zinc-400">{phaseDescription}</p>
       ) : null}
 
-      {hasPlayTime ? (
-        <p className="mt-3 text-sm text-zinc-400">
-          <span className="text-zinc-500">想定時間：</span>
-          {playInfo.estimatedPlayTime}
-        </p>
-      ) : null}
-
-      {hasPlatforms ? (
-        <div className="mt-3">
-          <p className="text-xs text-zinc-500">対応環境</p>
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {playInfo.platformOptions.map((option) => (
-              <PlatformChip key={option.label} option={option} />
-            ))}
-          </div>
+      <div className="mt-3">
+        <p className="text-xs text-zinc-500">想定時間</p>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {playInfo.playTimeOptions.map((option) => (
+            <OptionChip key={option.label} option={option} />
+          ))}
         </div>
+      </div>
+
+      <div className="mt-3">
+        <p className="text-xs text-zinc-500">対応端末</p>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {playInfo.deviceOptions.map((option) => (
+            <OptionChip key={option.label} option={option} />
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-3">
+        <p className="text-xs text-zinc-500">遊び方</p>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {playInfo.playMethodOptions.map((option) => (
+            <OptionChip key={option.label} option={option} />
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function PublicationPanel({ publication }: { publication: PublicationDisplay }) {
+  const summary =
+    publication.labels.length === 1
+      ? `${publication.labels[0]}で公開されています。`
+      : `${publication.labels.join("、")}で公開されています。`;
+
+  return (
+    <div className="mt-3 space-y-2">
+      <p className="text-sm leading-relaxed text-zinc-300">{summary}</p>
+      <p className="text-xs leading-relaxed text-zinc-500">
+        「プレイする」から移動できます。
+      </p>
+    </div>
+  );
+}
+
+/**
+ * 「最近の動き」はプレイヤー向けの表示専用サマリー。
+ * Studio では概要タブから直接編集せず、開発ログ / 新ver公開 / フィードバック件数 /
+ * 版ごとの問い（将来）から自動反映する想定。
+ */
+function RecentActivityPanel({
+  activity,
+  focusNotes,
+  watching,
+  onWatch,
+}: {
+  activity: GameDetailOverviewActivity;
+  focusNotes: string | null;
+  watching: boolean;
+  onWatch?: () => void;
+}) {
+  return (
+    <>
+      <ul className="mt-3 space-y-1.5 text-sm leading-relaxed text-zinc-400">
+        <li>
+          {activity.hasDevlog
+            ? `最新の開発ログ：${activity.devlogLabel}`
+            : "開発ログはまだありません。"}
+        </li>
+        <li>{feedbackStatusLabel(activity.voiceCount)}</li>
+      </ul>
+
+      {focusNotes ? (
+        <p className="mt-4 border-l-2 border-violet-500/30 pl-3 text-sm leading-relaxed text-zinc-300">
+          <span className="mb-1 block text-xs font-medium text-violet-300/80">
+            いま見てほしいこと
+          </span>
+          {focusNotes}
+        </p>
       ) : null}
 
-      {hasPlayMethod ? (
-        <p className="mt-3 text-sm text-zinc-400">
-          <span className="text-zinc-500">プレイ方法：</span>
-          {playInfo.playMethodLabel}
-        </p>
+      {onWatch ? (
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={onWatch}
+            className={`inline-flex items-center rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
+              watching
+                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                : "border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-white"
+            }`}
+          >
+            {watching ? WATCH_BUTTON_ON : WATCH_BUTTON_OFF}
+          </button>
+        </div>
       ) : null}
     </>
   );
 }
 
 type GameDetailPlayerOverviewProps = {
-  gameId: string;
   game: GameDetailV0;
   heroLead: string;
   playerMeta: GameDetailPlayerMeta;
   activity: GameDetailOverviewActivity;
-  externalLinks: ExternalLink[];
+  publication: PublicationDisplay | null;
   watching: boolean;
   onWatch?: () => void;
 };
 
 export function GameDetailPlayerOverview({
-  gameId,
   game,
   heroLead,
   playerMeta,
   activity,
-  externalLinks,
+  publication,
   watching,
   onWatch,
 }: GameDetailPlayerOverviewProps) {
-  const { requireAuth } = useRequireAuth();
-  const { recordPlay } = useGames();
-  const returnPath = gameDetailReturnPath(gameId);
-
   const introText = resolveIntroText(game.introduction, heroLead);
   const displayFeatures = game.features.filter(
     (feature) => feature.title.trim() && feature.description.trim(),
   );
-  const relatedTags = game.relatedTags.filter(
-    (tag) => !game.tags.includes(tag),
-  );
-  const showSidebarTags = relatedTags.length > 0;
 
   const showPlayInfoCard = Boolean(
     playerMeta.phaseDescription ||
-      playerMeta.playInfo.estimatedPlayTime ||
-      playerMeta.playInfo.platformOptions.some((option) => option.supported) ||
-      playerMeta.playInfo.playMethodLabel,
+      playerMeta.playInfo.playTimeOptions.some((option) => option.active) ||
+      playerMeta.playInfo.deviceOptions.some((option) => option.active) ||
+      playerMeta.playInfo.playMethodOptions.some((option) => option.active),
   );
-
-  function handleExternalLink(url: string) {
-    requireAuth(
-      () => {
-        void recordPlay(gameId).finally(() => {
-          window.open(url, "_blank", "noopener,noreferrer");
-        });
-      },
-      returnPath,
-    );
-  }
 
   return (
     <div className="grid gap-5 lg:grid-cols-3 lg:gap-6">
@@ -250,43 +298,13 @@ export function GameDetailPlayerOverview({
           </OverviewCard>
         ) : null}
 
-        <OverviewCard title="いまの状況">
-          <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-            この作品はまだ開発中です。
-          </p>
-          <ul className="mt-3 space-y-1 text-sm leading-relaxed text-zinc-500">
-            <li>
-              {activity.hasDevlog
-                ? `開発ログの最新更新：${activity.devlogLabel}`
-                : "開発ログはまだありません。"}
-            </li>
-            <li>{feedbackStatusLabel(activity.voiceCount)}</li>
-          </ul>
-
-          {playerMeta.focusNotes ? (
-            <p className="mt-4 border-l-2 border-violet-500/30 pl-3 text-sm leading-relaxed text-zinc-300">
-              <span className="mb-1 block text-xs font-medium text-violet-300/80">
-                いま見てほしいこと
-              </span>
-              {playerMeta.focusNotes}
-            </p>
-          ) : null}
-
-          {onWatch ? (
-            <div className="mt-4">
-              <button
-                type="button"
-                onClick={onWatch}
-                className={`inline-flex items-center rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
-                  watching
-                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
-                    : "border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-white"
-                }`}
-              >
-                {watching ? WATCH_BUTTON_ON : WATCH_BUTTON_OFF}
-              </button>
-            </div>
-          ) : null}
+        <OverviewCard title="最近の動き">
+          <RecentActivityPanel
+            activity={activity}
+            focusNotes={playerMeta.focusNotes}
+            watching={watching}
+            onWatch={onWatch}
+          />
         </OverviewCard>
       </div>
 
@@ -297,35 +315,9 @@ export function GameDetailPlayerOverview({
           </SidebarCard>
         ) : null}
 
-        {externalLinks.length > 0 ? (
-          <SidebarCard title="外部リンク">
-            <div className="mt-3 flex flex-wrap gap-2">
-              {externalLinks.map((link) => (
-                <button
-                  key={link.url}
-                  type="button"
-                  onClick={() => handleExternalLink(link.url)}
-                  className="rounded-md border border-zinc-700/80 bg-zinc-950/50 px-2.5 py-1 text-xs text-zinc-400 transition-colors hover:border-orange-500/40 hover:text-orange-300"
-                >
-                  {link.label}
-                </button>
-              ))}
-            </div>
-          </SidebarCard>
-        ) : null}
-
-        {showSidebarTags ? (
-          <SidebarCard title="関連タグ">
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {relatedTags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center rounded-md border border-zinc-700/80 bg-zinc-800/50 px-2.5 py-1 text-xs text-zinc-400"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
+        {publication ? (
+          <SidebarCard title="公開先">
+            <PublicationPanel publication={publication} />
           </SidebarCard>
         ) : null}
 
@@ -334,6 +326,11 @@ export function GameDetailPlayerOverview({
             <CompactFeatureList features={displayFeatures} />
           </SidebarCard>
         ) : null}
+
+        {/*
+          Phase B+ 候補: 右カラム下部に「類似の作品」カードを置く余地。
+          現時点では作品数が少ないため、空カードは出さない。
+        */}
       </aside>
     </div>
   );

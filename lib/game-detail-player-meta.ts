@@ -1,23 +1,32 @@
 import { displayPhase, getPhasePlayerDescription } from "@/lib/development-phases";
 import {
-  DISTRIBUTION_TYPE_LABELS,
   getDistributionType,
   getPlayEnvironmentLabels,
   supportsMobile,
   supportsPc,
-  supportsBrowser,
+  type DistributionType,
 } from "@/lib/play-environment";
+import { PLAY_TIME_OPTIONS } from "@/lib/play-time-options";
 import type { Game } from "@/lib/mock-games";
 
-export type PlayerPlatformOption = {
+export type PlayerOptionChip = {
   label: string;
-  supported: boolean;
+  active: boolean;
 };
 
+const PLAYER_PLAY_METHOD_OPTIONS: {
+  id: Exclude<DistributionType, "">;
+  label: string;
+}[] = [
+  { id: "browser", label: "ブラウザで起動" },
+  { id: "download", label: "ダウンロード" },
+  { id: "external", label: "外部サイトで開く" },
+];
+
 export type PlayerPlayInfoDisplay = {
-  estimatedPlayTime: string | null;
-  platformOptions: PlayerPlatformOption[];
-  playMethodLabel: string | null;
+  playTimeOptions: PlayerOptionChip[];
+  deviceOptions: PlayerOptionChip[];
+  playMethodOptions: PlayerOptionChip[];
 };
 
 export type GameDetailPlayerMeta = {
@@ -44,14 +53,21 @@ export type GameDetailOverviewActivity = {
 
 export function resolvePlayerPlayInfoDisplay(game: Game): PlayerPlayInfoDisplay {
   const distribution = getDistributionType(game);
+  const selectedPlayTime = game.estimatedPlayTime?.trim() || null;
+
   return {
-    estimatedPlayTime: game.estimatedPlayTime?.trim() || null,
-    platformOptions: [
-      { label: "PC", supported: supportsPc(game) },
-      { label: "スマホ", supported: supportsMobile(game) },
-      { label: "ブラウザ", supported: supportsBrowser(game) },
+    playTimeOptions: PLAY_TIME_OPTIONS.map((label) => ({
+      label,
+      active: Boolean(selectedPlayTime && label === selectedPlayTime),
+    })),
+    deviceOptions: [
+      { label: "PC", active: supportsPc(game) },
+      { label: "スマホ", active: supportsMobile(game) },
     ],
-    playMethodLabel: distribution ? DISTRIBUTION_TYPE_LABELS[distribution] : null,
+    playMethodOptions: PLAYER_PLAY_METHOD_OPTIONS.map((option) => ({
+      label: option.label,
+      active: distribution === option.id,
+    })),
   };
 }
 
