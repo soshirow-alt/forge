@@ -456,12 +456,26 @@ function testAuthRedirectLoopGuardContract() {
     "login server route does not redirect on getUser (avoids studio ping-pong)",
   );
   ok(
-    !loginPage.includes("router.replace") && !loginPage.includes("useEffect"),
-    "login page does not auto-redirect (avoids server/client auth ping-pong)",
+    !loginPage.includes("router.replace"),
+    "login page does not use router.replace (avoids client navigation ping-pong)",
+  );
+  ok(
+    loginPage.includes("state.redirectTo") &&
+      loginPage.includes("window.location.assign"),
+    "login page navigates only after successful form submit (redirectTo)",
   );
   ok(
     loginPage.includes("showContinueLink") && loginPage.includes("続ける"),
     "login page offers manual continue link when already signed in",
+  );
+  const loginActionSource = fs.readFileSync(
+    path.join(import.meta.dirname, "../lib/auth-login-action.ts"),
+    "utf8",
+  );
+  ok(
+    loginActionSource.includes("redirectTo") &&
+      !loginActionSource.includes("redirect(resolvePostLoginPath"),
+    "login action returns redirectTo instead of useActionState-unreliable redirect()",
   );
 
   ok(authProvider.includes("authResolved"), "auth-provider exposes authResolved");
@@ -518,6 +532,10 @@ function testLoginPageSourceContract() {
   ok(
     loginPage.includes("resolvePostLoginPath"),
     "login page continue link uses post-login path",
+  );
+  ok(
+    loginPage.includes('href={continuePath}'),
+    "login continue link uses full navigation anchor",
   );
 }
 

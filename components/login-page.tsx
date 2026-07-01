@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useMemo } from "react";
+import { useActionState, useEffect, useMemo, useRef } from "react";
 import {
   AuthPageShell,
   OAuthComingSoonSection,
@@ -13,7 +13,7 @@ import { useAuth } from "@/components/auth-provider";
 import { loginAction, type LoginActionState } from "@/lib/auth-login-action";
 import { resolvePostLoginPath } from "@/lib/login-return-url";
 
-const initialLoginState: LoginActionState = { error: null };
+const initialLoginState: LoginActionState = { error: null, redirectTo: null };
 
 export function LoginPage({
   supabaseConfigured,
@@ -30,6 +30,7 @@ export function LoginPage({
   const [state, formAction, pending] = useActionState(loginAction, initialLoginState);
   const error = state.error ?? callbackError;
   const autofill = useAuthAutofillUnlock();
+  const postSubmitRedirectStartedRef = useRef(false);
   const continuePath = useMemo(
     () => (returnParam ? resolvePostLoginPath(returnParam) : null),
     [returnParam],
@@ -37,6 +38,15 @@ export function LoginPage({
   const showContinueLink = Boolean(
     authResolved && user && continuePath && continuePath !== "/",
   );
+
+  useEffect(() => {
+    if (!state.redirectTo || postSubmitRedirectStartedRef.current) {
+      return;
+    }
+
+    postSubmitRedirectStartedRef.current = true;
+    window.location.assign(state.redirectTo);
+  }, [state.redirectTo]);
 
   return (
     <AuthPageShell active="login">
@@ -63,12 +73,12 @@ export function LoginPage({
         {showContinueLink && continuePath ? (
           <div className="mt-6 rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm text-violet-100">
             <p>ログイン済みです。</p>
-            <Link
+            <a
               href={continuePath}
               className="mt-2 inline-flex font-medium text-violet-300 transition-colors hover:text-violet-200"
             >
               続ける →
-            </Link>
+            </a>
           </div>
         ) : null}
 

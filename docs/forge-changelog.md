@@ -4,7 +4,11 @@
 
 ---
 
-- **P0 hotfix — ログイン直後の即ログアウト（本番）** — `AuthProvider` が null session イベントで `user` を消していたのと、`StudioDirectAccessGuard` が本番で client `user=null` だけを根拠に `/login` へ戻していたのを修正。本番の `/studio` 保護は middleware に一本化。`/login` の自動 replace は廃止し、ログイン済み時は「続ける」リンクのみ
+- **P0 hotfix — ログイン後 /login に残留** — `useActionState` 経由では server `redirect()` が効かず、ログイン成功後も `/login` に残る不具合を修正。`loginAction` は `redirectTo` を返し、フォーム送信成功時のみ `window.location.assign` で return 先へ遷移。「続ける →」は `<a href>` でフル遷移
+
+---
+
+- **P0 hotfix — ログイン直後の即ログアウト（本番）** — `AuthProvider` が null session イベントで `user` を消していたのと、`StudioDirectAccessGuard` が本番で client `user=null` だけを根拠に `/login` へ戻していたのを修正
 
 ---
 

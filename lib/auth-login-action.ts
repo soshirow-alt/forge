@@ -1,12 +1,14 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { getAuthErrorMessage } from "@/lib/auth";
 import { resolvePostLoginPath } from "@/lib/login-return-url";
 import { createClient } from "@/lib/supabase/server";
 
 export type LoginActionState = {
   error: string | null;
+  /** Set after successful sign-in; client navigates (useActionState + redirect() is unreliable). */
+  redirectTo?: string | null;
 };
 
 export async function loginAction(
@@ -18,12 +20,12 @@ export async function loginAction(
   const returnParam = String(formData.get("return") ?? "").trim() || null;
 
   if (!email || !password) {
-    return { error: "メールアドレスとパスワードを入力してください。" };
+    return { error: "メールアドレスとパスワードを入力してください。", redirectTo: null };
   }
 
   const supabase = await createClient();
   if (!supabase) {
-    return { error: "Supabaseの環境変数が設定されていません。" };
+    return { error: "Supabaseの環境変数が設定されていません。", redirectTo: null };
   }
 
   const { error } = await supabase.auth.signInWithPassword({
@@ -32,8 +34,10 @@ export async function loginAction(
   });
 
   if (error) {
-    return { error: getAuthErrorMessage(error.message) };
+    return { error: getAuthErrorMessage(error.message), redirectTo: null };
   }
 
-  redirect(resolvePostLoginPath(returnParam));
+  const redirectTo = resolvePostLoginPath(returnParam);
+  revalidatePath("/", "layout");
+  return { error: null, redirectTo };
 }
