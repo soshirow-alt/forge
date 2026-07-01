@@ -628,7 +628,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
             (hideV0Mock ? (
               <FeatureComingSoonPanel
                 title="みんなのフィードバック"
-                description="他のプレイヤーが届けた声の傾向や、よく挙がるテーマがここで見られるようになります。いまは準備中です。"
+                description="他のプレイヤーのフィードバックの傾向や、よく挙がるテーマがここで見られるようになります。いまは準備中です。"
               />
             ) : (
               <GameVoicesV0Tab

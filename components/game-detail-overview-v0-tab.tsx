@@ -103,7 +103,7 @@ export const GameDetailOverviewV0Tab = forwardRef<
   editIntroduction?: string;
   /** プレイヤー向け概要タブのメタ情報（フェーズ・プレイ時間・対応環境など） */
   playerMeta?: GameDetailPlayerMeta | null;
-  /** プレイヤー向け — 開発ログ・声の状況など */
+  /** プレイヤー向け — 開発ログ・フィードバックの状況など */
   overviewActivity?: GameDetailOverviewActivity | null;
   gameId?: string;
   heroLead?: string;
