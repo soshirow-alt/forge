@@ -30,6 +30,10 @@ type ProjectListCardProps = {
   compact?: boolean;
   /** home = 改善ループ入口はホームの CTA。directory = 一覧用（ワッペンのみ） */
   layout?: "hub" | "directory";
+  /** directory 用メタ行からサイクル番号を隠す */
+  hideCycleInMeta?: boolean;
+  /** 削除の代わりに「届いたFBを見る」（遷移先は親で後から配線） */
+  showViewReceivedFeedbackButton?: boolean;
 };
 
 export function ProjectDeleteButton({ onClick }: { onClick: () => void }) {
@@ -44,6 +48,17 @@ export function ProjectDeleteButton({ onClick }: { onClick: () => void }) {
   );
 }
 
+export function ViewReceivedFeedbackButton() {
+  return (
+    <button
+      type="button"
+      className="shrink-0 self-center rounded-lg border border-orange-500/40 bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-300 transition-colors hover:bg-orange-500/20"
+    >
+      届いたFBを見る
+    </button>
+  );
+}
+
 export function ProjectListCard({
   game,
   growth,
@@ -52,8 +67,14 @@ export function ProjectListCard({
   showDelete = false,
   compact = false,
   layout = "hub",
+  hideCycleInMeta = false,
+  showViewReceivedFeedbackButton = false,
 }: ProjectListCardProps) {
   const canDelete = showDelete && Boolean(onDelete);
+  const cycleMeta =
+    !hideCycleInMeta && growth.cycleNumber > 0
+      ? ` · サイクル ${growth.cycleNumber}`
+      : "";
   const { isRead: voiceRead } = useNurtureVoiceRead(
     game.id,
     growth.playableVersion,
@@ -106,7 +127,7 @@ export function ProjectListCard({
 
               <p className="mt-1 text-xs text-zinc-600">
                 v{growth.playableVersion}
-                {growth.cycleNumber > 0 && ` · サイクル ${growth.cycleNumber}`}
+                {cycleMeta}
                 {growth.totalVoiceResponseCount > 0 &&
                   ` · 回答 ${growth.totalVoiceResponseCount}件`}
                 {" · "}
@@ -117,6 +138,7 @@ export function ProjectListCard({
             </div>
           </div>
         </Link>
+        {showViewReceivedFeedbackButton ? <ViewReceivedFeedbackButton /> : null}
         {canDelete && onDelete ? <ProjectDeleteButton onClick={onDelete} /> : null}
       </article>
     );

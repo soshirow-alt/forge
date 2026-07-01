@@ -4,7 +4,9 @@
 
 ---
 
-- **P0 hotfix — ログイン後 /login に残留** — `useActionState` 経由では server `redirect()` が効かず、ログイン成功後も `/login` に残る不具合を修正。`loginAction` は `redirectTo` を返し、フォーム送信成功時のみ `window.location.assign` で return 先へ遷移。「続ける →」は `<a href>` でフル遷移
+- **Studio ホーム「あなたの作品」** — 見出しを「プレイヤーから新たな反応があった作品」、説明を「新たなフィードバックが届きました」に変更。カード右の「削除」を「届いたFBを見る」ボタンに差し替え（遷移先は未配線）。メタ行の「サイクル N」を非表示。同一作品は1行のままバッジ件数で表現
+
+--- — `useActionState` 経由では server `redirect()` が効かず、ログイン成功後も `/login` に残る不具合を修正。`loginAction` は `redirectTo` を返し、フォーム送信成功時のみ `window.location.assign` で return 先へ遷移。「続ける →」は `<a href>` でフル遷移
 
 ---
 

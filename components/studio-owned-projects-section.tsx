@@ -5,7 +5,6 @@ import { useMemo } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { ProjectListCard } from "@/components/project-list-card";
 import { useGames } from "@/components/games-provider";
-import { useStudioProjectDeleteModal } from "@/components/studio-project-delete-modal";
 import { useOwnedProjectVoiceSignals } from "@/hooks/use-owned-project-voice-signals";
 import {
   buildProjectGrowthSnapshot,
@@ -41,15 +40,12 @@ export function StudioOwnedProjectsSection() {
   const { user, hydrated } = useAuth();
   const {
     getOwnedProjects,
-    deleteSubmittedGame,
     getSupportCount,
     getDevlogsByProject,
     dataReady,
   } = useGames();
   const { signals: voiceSignals, loaded: voiceLoaded } =
     useOwnedProjectVoiceSignals(user?.id);
-  const { requestDelete, modal } = useStudioProjectDeleteModal(deleteSubmittedGame);
-
   const ownedGames = useMemo(
     () => (user ? getOwnedProjects(user.id) : []),
     [getOwnedProjects, user],
@@ -120,11 +116,10 @@ export function StudioOwnedProjectsSection() {
     <section className="rounded-2xl border border-orange-500/30 bg-orange-500/5 p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-medium text-orange-400/90">Studio · あなたの作品</p>
-          <h2 className="mt-1 text-lg font-semibold text-zinc-100">あなたの作品</h2>
-          <p className="mt-2 text-sm text-zinc-400">
-            フィードバック確認・devlog・ver公開はここから。
-          </p>
+          <h2 className="text-lg font-semibold text-zinc-100">
+            プレイヤーから新たな反応があった作品
+          </h2>
+          <p className="mt-2 text-sm text-zinc-400">新たなフィードバックが届きました</p>
         </div>
         {topGame && (
           <Link
@@ -145,8 +140,8 @@ export function StudioOwnedProjectsSection() {
             game={game}
             growth={growth}
             supportCount={getSupportCount(game.id)}
-            showDelete
-            onDelete={() => requestDelete({ id: game.id, title: game.title })}
+            showViewReceivedFeedbackButton
+            hideCycleInMeta
             compact
             layout="directory"
           />
@@ -161,7 +156,6 @@ export function StudioOwnedProjectsSection() {
         </p>
       )}
 
-      {modal}
     </section>
   );
 }
