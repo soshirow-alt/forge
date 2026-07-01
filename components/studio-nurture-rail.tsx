@@ -193,7 +193,9 @@ export function StudioNurtureRail({
           <div className="border-t border-zinc-800/80 pt-3">
             <RailSubheading>次に直すこと</RailSubheading>
             <p className="mt-1 text-xs leading-relaxed text-zinc-600">
-              確認したFBや未対応項目から、次に取り組むことを整理します。
+              {hasUnreadVoice
+                ? "未確認のフィードバックがあります。上で確認後、次に直すことを整理できます。"
+                : "確認した内容から、次に直すことを整理します。"}
             </p>
             <div className="mt-2">
               <StudioTopPrioritiesPanel

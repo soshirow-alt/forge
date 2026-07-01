@@ -14,7 +14,7 @@ import type { GameDetailTab } from "@/lib/game-detail-tabs";
 import { resolveGameDetailPlayerMeta } from "@/lib/game-detail-player-meta";
 import { resolvePublicationDisplay } from "@/lib/game-play-destinations";
 import { gameToDetailV0 } from "@/lib/submitted-game-v0-adapter";
-import { Bookmark, Check, Clock, Heart, Play } from "lucide-react";
+import { Clock } from "lucide-react";
 
 const previewTabs: { id: GameDetailTab; label: string }[] = [
   { id: "overview", label: "概要" },
@@ -27,33 +27,6 @@ function TagPill({ children }: { children: React.ReactNode }) {
     <span className="rounded-md border border-zinc-700/80 bg-zinc-800/60 px-2.5 py-1 text-xs text-zinc-300">
       {children}
     </span>
-  );
-}
-
-/** プレイヤー詳細と同位置の CTA 見た目（Studio 内では操作不可） */
-function PlayerCtaPreviewRow() {
-  return (
-    <div
-      className="flex flex-wrap items-center gap-2 border-b border-zinc-800/60 pb-4"
-      aria-hidden="true"
-    >
-      <span className="inline-flex items-center gap-2 rounded-xl bg-violet-600/90 px-5 py-2.5 text-sm font-semibold text-white">
-        <Play className="size-4" />
-        プレイする
-      </span>
-      <span className="inline-flex items-center gap-2 rounded-xl border border-zinc-800 px-4 py-2.5 text-sm text-zinc-600">
-        <Check className="size-4" />
-        更新を追う
-      </span>
-      <span className="inline-flex items-center gap-2 rounded-xl border border-zinc-800 px-4 py-2.5 text-sm text-zinc-600">
-        <Bookmark className="size-4" />
-        あとで遊ぶ
-      </span>
-      <span className="inline-flex items-center gap-2 rounded-xl border border-zinc-800 px-4 py-2.5 text-sm text-zinc-600">
-        <Heart className="size-4" />
-        開発者をフォロー
-      </span>
-    </div>
   );
 }
 
@@ -134,8 +107,6 @@ export function GameDetailPlayerPreview({
           </div>
         </div>
       </section>
-
-      <PlayerCtaPreviewRow />
 
       <div className="border-b border-zinc-800/80">
         <div className="flex gap-1 overflow-x-auto">

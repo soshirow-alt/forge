@@ -110,6 +110,11 @@ export function StudioTopPrioritiesPanel({
     ],
   );
 
+  const displayPriorities = useMemo(
+    () => (hideHeading ? priorities.filter((item) => item.id !== "unread-voices") : priorities),
+    [priorities, hideHeading],
+  );
+
   return (
     <section
       className={`${
@@ -133,7 +138,7 @@ export function StudioTopPrioritiesPanel({
 
       {!loaded ? (
         <p className={`text-sm text-zinc-600 ${hideHeading ? "" : "mt-3"}`}>集計を読み込み中…</p>
-      ) : priorities.length === 0 ? (
+      ) : displayPriorities.length === 0 ? (
         <div
           className={`rounded-lg border border-dashed border-zinc-800 bg-zinc-950/30 px-4 py-3 ${
             hideHeading ? "" : "mt-3"
@@ -141,11 +146,13 @@ export function StudioTopPrioritiesPanel({
         >
           <p className="text-sm font-medium text-zinc-400">まだ次に直すことはありません</p>
           <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-            プレイヤーのフィードバックが届くと、ここに優先候補が最大3件表示されます。
+            {hideHeading
+              ? "FBを確認すると、ここに優先候補が最大3件表示されます。"
+              : "プレイヤーのフィードバックが届くと、ここに優先候補が最大3件表示されます。"}
           </p>
         </div>
       ) : (
-        <PriorityList priorities={priorities} />
+        <PriorityList priorities={displayPriorities} />
       )}
     </section>
   );

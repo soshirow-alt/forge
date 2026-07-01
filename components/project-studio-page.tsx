@@ -16,7 +16,7 @@ import { StudioProjectToolbar } from "@/components/studio-project-toolbar";
 import { useGames } from "@/components/games-provider";
 import { useOwnedProjectFeedback } from "@/hooks/use-owned-project-feedback";
 import { useOwnedProjectVoiceSignals } from "@/hooks/use-owned-project-voice-signals";
-import { PROJECT_STUDIO_FEEDBACK_SECTION_ID, projectStudioPath, gamePlayHref } from "@/lib/project-nurture-links";
+import { PROJECT_STUDIO_FEEDBACK_SECTION_ID, projectStudioPath } from "@/lib/project-nurture-links";
 import { useProjectTestPlay } from "@/hooks/use-project-test-play";
 import {
   buildProjectGrowthSnapshot,
@@ -158,27 +158,17 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   return (
     <StudioShell activeNav="mypage">
       <div className="mx-auto max-w-7xl">
-        <header className="flex flex-col gap-2 border-b border-zinc-800/80 pb-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <Link
-              href="/studio"
-              className="text-sm text-zinc-500 transition-colors hover:text-violet-400"
-            >
-              ← Studio ホーム
-            </Link>
-            <p className="mt-2 text-sm text-zinc-400">Studio編集</p>
-            <p className="mt-0.5 text-xs text-zinc-500">
-              {visibilityLabel} · v{growthSnapshot.playableVersion}
-            </p>
-          </div>
+        <header className="border-b border-zinc-800/80 pb-3">
           <Link
-            href={gamePlayHref(projectId)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 transition-colors hover:border-violet-500/40 hover:text-violet-300"
+            href="/studio"
+            className="text-sm text-zinc-500 transition-colors hover:text-violet-400"
           >
-            公開ページを見る
+            ← Studio ホーム
           </Link>
+          <p className="mt-2 text-sm text-zinc-400">Studio編集</p>
+          <p className="mt-0.5 text-xs text-zinc-500">
+            {visibilityLabel} · v{growthSnapshot.playableVersion}
+          </p>
         </header>
 
         <DevlogComposeModal
