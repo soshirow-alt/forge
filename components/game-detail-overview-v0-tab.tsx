@@ -110,8 +110,6 @@ export const GameDetailOverviewV0Tab = forwardRef<
   externalLinks?: ExternalLink[];
   watching?: boolean;
   onWatch?: () => void;
-  onOpenDevlog?: () => void;
-  onOpenVoices?: () => void;
 }
 >(function GameDetailOverviewV0Tab(
   {
@@ -132,8 +130,6 @@ export const GameDetailOverviewV0Tab = forwardRef<
   externalLinks = [],
   watching = false,
   onWatch,
-  onOpenDevlog,
-  onOpenVoices,
 },
   ref,
 ) {
@@ -260,8 +256,6 @@ export const GameDetailOverviewV0Tab = forwardRef<
         activity={overviewActivity}
         externalLinks={externalLinks}
         watching={watching}
-        onOpenDevlog={onOpenDevlog}
-        onOpenVoices={onOpenVoices}
         onWatch={onWatch}
       />
     );

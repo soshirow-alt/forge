@@ -7,24 +7,31 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 const AUTO_ADVANCE_MS = 5000;
 
 function GallerySlide({ src, active }: { src: string; active: boolean }) {
-  const className = `absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
-    active ? "opacity-100" : "opacity-0"
-  }`;
+  const visibility = active ? "opacity-100" : "opacity-0";
 
   if (src.startsWith("data:") || src.startsWith("blob:")) {
-    return <img src={src} alt="" className={className} />;
+    return (
+      <div
+        className={`absolute inset-0 flex items-center justify-center bg-zinc-950 transition-opacity duration-700 ${visibility}`}
+      >
+        <img src={src} alt="" className="max-h-full max-w-full object-contain" />
+      </div>
+    );
   }
 
   return (
-    <Image
-      src={src}
-      alt=""
-      fill
-      className={`object-cover transition-opacity duration-700 ${
-        active ? "opacity-100" : "opacity-0"
-      }`}
-      priority={active}
-    />
+    <div
+      className={`absolute inset-0 flex items-center justify-center bg-zinc-950 transition-opacity duration-700 ${visibility}`}
+    >
+      <Image
+        src={src}
+        alt=""
+        fill
+        className="object-contain"
+        sizes="(max-width: 1024px) 100vw, 60vw"
+        priority={active}
+      />
+    </div>
   );
 }
 
@@ -56,11 +63,11 @@ export function GameDetailHeroGallery({ images }: { images: string[] }) {
   }
 
   return (
-    <div className="group relative min-h-[220px] overflow-hidden lg:min-h-[320px]">
+    <div className="group relative min-h-[220px] overflow-hidden bg-zinc-950 lg:min-h-[320px]">
       {slides.map((src, slideIndex) => (
         <GallerySlide key={`${slideIndex}-${src.slice(0, 48)}`} src={src} active={slideIndex === index} />
       ))}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/80 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-transparent lg:to-[#0a0a0a]/40" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/50 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-transparent lg:to-[#0a0a0a]/25" />
 
       {total > 1 && (
         <>

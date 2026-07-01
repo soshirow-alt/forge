@@ -606,8 +606,6 @@ function GameDetailV0PageBody({ id }: { id: string }) {
               externalLinks={overviewExternalLinks}
               watching={watching}
               onWatch={handleWatchToggle}
-              onOpenDevlog={() => setDetailTab("devlog")}
-              onOpenVoices={() => setDetailTab("voices")}
               onFeedback={handleFeedback}
               feedbackCtaLabel={
                 hydrated && !isLoggedIn

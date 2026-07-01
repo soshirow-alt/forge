@@ -1,16 +1,20 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
 import type { GameDetailFeature, GameDetailV0 } from "@/lib/game-detail-v0-mock-data";
 import type { ExternalLink } from "@/lib/game-links";
 import type {
   GameDetailOverviewActivity,
   GameDetailPlayerMeta,
+  PlayerPlatformOption,
 } from "@/lib/game-detail-player-meta";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { useGames } from "@/components/games-provider";
 import { gameDetailReturnPath } from "@/lib/login-return-url";
 import { WATCH_BUTTON_OFF, WATCH_BUTTON_ON } from "@/lib/watch-ui-labels";
+
+const INTRO_COLLAPSE_THRESHOLD = 200;
 
 function normalizeText(value: string): string {
   return value.trim().replace(/\s+/g, " ");
@@ -27,26 +31,6 @@ function resolveIntroText(introduction: string, heroLead: string): string {
     return heroLead.trim();
   }
   return "";
-}
-
-function MetaChip({
-  children,
-  tone = "neutral",
-}: {
-  children: ReactNode;
-  tone?: "neutral" | "muted";
-}) {
-  return (
-    <span
-      className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs ${
-        tone === "muted"
-          ? "border-zinc-800 bg-zinc-950/50 text-zinc-500"
-          : "border-zinc-700/80 bg-zinc-800/50 text-zinc-300"
-      }`}
-    >
-      {children}
-    </span>
-  );
 }
 
 function OverviewCard({
@@ -83,6 +67,50 @@ function SidebarCard({
   );
 }
 
+function PlatformChip({ option }: { option: PlayerPlatformOption }) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs ${
+        option.supported
+          ? "border-zinc-600 bg-zinc-800/70 font-medium text-zinc-200"
+          : "border-zinc-800/80 bg-zinc-950/40 text-zinc-600"
+      }`}
+    >
+      {option.label}
+    </span>
+  );
+}
+
+function IntroBody({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const needsExpand = text.length > INTRO_COLLAPSE_THRESHOLD;
+
+  return (
+    <div className="mt-4">
+      <p
+        className={`text-[15px] leading-7 text-zinc-300 ${
+          !expanded && needsExpand ? "line-clamp-4" : ""
+        }`}
+      >
+        {text}
+      </p>
+      {needsExpand ? (
+        <button
+          type="button"
+          onClick={() => setExpanded((value) => !value)}
+          className="mt-3 inline-flex items-center gap-1 text-sm text-violet-400 transition-colors hover:text-violet-300"
+        >
+          {expanded ? "閉じる" : "もっと見る"}
+          <ChevronDown
+            className={`size-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+            aria-hidden="true"
+          />
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function CompactFeatureList({ features }: { features: GameDetailFeature[] }) {
   if (features.length === 0) {
     return null;
@@ -107,12 +135,58 @@ function CompactFeatureList({ features }: { features: GameDetailFeature[] }) {
 
 function feedbackStatusLabel(count: number): string {
   if (count <= 0) {
-    return "まだフィードバックはありません。";
+    return "フィードバックはまだありません。";
   }
   if (count === 1) {
     return "1件のフィードバックがあります。";
   }
   return `${count.toLocaleString()}件のフィードバックがあります。`;
+}
+
+function PlayInfoPanel({ playerMeta }: { playerMeta: GameDetailPlayerMeta }) {
+  const { playInfo, phaseDescription } = playerMeta;
+  const hasPlatforms = playInfo.platformOptions.some((option) => option.supported);
+  const hasPlayMethod = Boolean(playInfo.playMethodLabel);
+  const hasPlayTime = Boolean(playInfo.estimatedPlayTime);
+  const hasContent =
+    phaseDescription || hasPlayTime || hasPlatforms || hasPlayMethod;
+
+  if (!hasContent) {
+    return null;
+  }
+
+  return (
+    <>
+      {phaseDescription ? (
+        <p className="mt-3 text-sm leading-relaxed text-zinc-400">{phaseDescription}</p>
+      ) : null}
+
+      {hasPlayTime ? (
+        <p className="mt-3 text-sm text-zinc-400">
+          <span className="text-zinc-500">想定時間：</span>
+          {playInfo.estimatedPlayTime}
+        </p>
+      ) : null}
+
+      {hasPlatforms ? (
+        <div className="mt-3">
+          <p className="text-xs text-zinc-500">対応環境</p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {playInfo.platformOptions.map((option) => (
+              <PlatformChip key={option.label} option={option} />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {hasPlayMethod ? (
+        <p className="mt-3 text-sm text-zinc-400">
+          <span className="text-zinc-500">プレイ方法：</span>
+          {playInfo.playMethodLabel}
+        </p>
+      ) : null}
+    </>
+  );
 }
 
 type GameDetailPlayerOverviewProps = {
@@ -123,8 +197,6 @@ type GameDetailPlayerOverviewProps = {
   activity: GameDetailOverviewActivity;
   externalLinks: ExternalLink[];
   watching: boolean;
-  onOpenDevlog?: () => void;
-  onOpenVoices?: () => void;
   onWatch?: () => void;
 };
 
@@ -136,8 +208,6 @@ export function GameDetailPlayerOverview({
   activity,
   externalLinks,
   watching,
-  onOpenDevlog,
-  onOpenVoices,
   onWatch,
 }: GameDetailPlayerOverviewProps) {
   const { requireAuth } = useRequireAuth();
@@ -148,27 +218,17 @@ export function GameDetailPlayerOverview({
   const displayFeatures = game.features.filter(
     (feature) => feature.title.trim() && feature.description.trim(),
   );
-  const showTags = game.tags.length > 0;
   const relatedTags = game.relatedTags.filter(
     (tag) => !game.tags.includes(tag),
   );
   const showSidebarTags = relatedTags.length > 0;
 
-  const playMetaChips: ReactNode[] = [];
-  if (playerMeta.estimatedPlayTime) {
-    playMetaChips.push(
-      <MetaChip key="play-time">{playerMeta.estimatedPlayTime}</MetaChip>,
-    );
-  }
-  for (const label of playerMeta.environmentLabels) {
-    playMetaChips.push(<MetaChip key={label}>{label}</MetaChip>);
-  }
-
-  const showPlayInfoCard =
-    playerMeta.phaseLabel ||
+  const showPlayInfoCard = Boolean(
     playerMeta.phaseDescription ||
-    playMetaChips.length > 0 ||
-    activity.lastUpdated;
+      playerMeta.playInfo.estimatedPlayTime ||
+      playerMeta.playInfo.platformOptions.some((option) => option.supported) ||
+      playerMeta.playInfo.playMethodLabel,
+  );
 
   function handleExternalLink(url: string) {
     requireAuth(
@@ -184,52 +244,23 @@ export function GameDetailPlayerOverview({
   return (
     <div className="grid gap-5 lg:grid-cols-3 lg:gap-6">
       <div className="min-w-0 space-y-5 lg:col-span-2">
-        <OverviewCard title="作品紹介">
-          {introText ? (
-            <p className="mt-3 text-sm leading-relaxed text-zinc-300">{introText}</p>
-          ) : null}
-          {showTags ? (
-            <p
-              className={`text-sm leading-relaxed text-zinc-500 ${introText ? "mt-4" : "mt-3"}`}
-            >
-              <span className="text-zinc-600">タグ：</span>
-              {game.tags.join(" / ")}
-            </p>
-          ) : null}
-        </OverviewCard>
+        {introText ? (
+          <OverviewCard title="作品紹介">
+            <IntroBody text={introText} />
+          </OverviewCard>
+        ) : null}
 
-        <OverviewCard title="いまの開発状況">
+        <OverviewCard title="いまの状況">
           <p className="mt-3 text-sm leading-relaxed text-zinc-400">
             この作品はまだ開発中です。
           </p>
-          <ul className="mt-3 space-y-1.5 text-sm leading-relaxed text-zinc-400">
+          <ul className="mt-3 space-y-1 text-sm leading-relaxed text-zinc-500">
             <li>
-              {activity.hasDevlog && onOpenDevlog ? (
-                <>
-                  開発ログの最新更新：
-                  <button
-                    type="button"
-                    onClick={onOpenDevlog}
-                    className="ml-1 font-medium text-violet-400 transition-colors hover:text-violet-300"
-                  >
-                    {activity.devlogLabel}
-                  </button>
-                </>
-              ) : (
-                <span className="text-zinc-500">
-                  開発ログはまだありません。更新が記録されると、開発ログタブに表示されます。
-                </span>
-              )}
+              {activity.hasDevlog
+                ? `開発ログの最新更新：${activity.devlogLabel}`
+                : "開発ログはまだありません。"}
             </li>
-            <li>
-              {activity.voiceCount > 0 ? (
-                <span>{feedbackStatusLabel(activity.voiceCount)}</span>
-              ) : (
-                <span className="text-zinc-500">
-                  まだフィードバックはありません。遊んで感じたことを共有してみませんか？
-                </span>
-              )}
-            </li>
+            <li>{feedbackStatusLabel(activity.voiceCount)}</li>
           </ul>
 
           {playerMeta.focusNotes ? (
@@ -241,17 +272,8 @@ export function GameDetailPlayerOverview({
             </p>
           ) : null}
 
-          <div className="mt-5 flex flex-wrap gap-2">
-            {onOpenVoices ? (
-              <button
-                type="button"
-                onClick={onOpenVoices}
-                className="inline-flex items-center rounded-xl border border-zinc-700 bg-zinc-950/50 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-violet-500/40 hover:text-violet-200"
-              >
-                みんなのフィードバックを見る
-              </button>
-            ) : null}
-            {onWatch ? (
+          {onWatch ? (
+            <div className="mt-4">
               <button
                 type="button"
                 onClick={onWatch}
@@ -263,34 +285,15 @@ export function GameDetailPlayerOverview({
               >
                 {watching ? WATCH_BUTTON_ON : WATCH_BUTTON_OFF}
               </button>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
         </OverviewCard>
       </div>
 
       <aside className="min-w-0 space-y-4">
         {showPlayInfoCard ? (
-          <SidebarCard title="遊ぶ前に知っておくこと">
-            {playerMeta.phaseLabel ? (
-              <div className="mt-3">
-                <span className="inline-flex rounded-md border border-orange-500/35 bg-orange-500/10 px-2.5 py-1 text-xs font-semibold text-orange-200">
-                  {playerMeta.phaseLabel}
-                </span>
-                {playerMeta.phaseDescription ? (
-                  <p className="mt-2 text-sm leading-relaxed text-zinc-400">
-                    {playerMeta.phaseDescription}
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
-            {playMetaChips.length > 0 ? (
-              <div className="mt-3 flex flex-wrap gap-2">{playMetaChips}</div>
-            ) : null}
-            {activity.lastUpdated ? (
-              <p className="mt-3 text-xs text-zinc-500">
-                最終更新：{activity.lastUpdated}
-              </p>
-            ) : null}
+          <SidebarCard title="プレイ情報">
+            <PlayInfoPanel playerMeta={playerMeta} />
           </SidebarCard>
         ) : null}
 
@@ -315,7 +318,12 @@ export function GameDetailPlayerOverview({
           <SidebarCard title="関連タグ">
             <div className="mt-3 flex flex-wrap gap-1.5">
               {relatedTags.map((tag) => (
-                <MetaChip key={tag}>{tag}</MetaChip>
+                <span
+                  key={tag}
+                  className="inline-flex items-center rounded-md border border-zinc-700/80 bg-zinc-800/50 px-2.5 py-1 text-xs text-zinc-400"
+                >
+                  {tag}
+                </span>
               ))}
             </div>
           </SidebarCard>
