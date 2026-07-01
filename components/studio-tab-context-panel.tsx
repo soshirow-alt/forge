@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Image as ImageIcon, MessageCircleQuestion, MessageSquare, Pencil, Sparkles, Link2, Copy, ExternalLink, FileText } from "lucide-react";
+import { Image as ImageIcon, MessageSquare, Pencil, Sparkles, Link2, Copy, ExternalLink, FileText } from "lucide-react";
 import { StudioEditSectionSwitcher } from "@/components/studio-edit-section-switcher";
 import { StudioOverviewBasicInfoEditPanel } from "@/components/studio-overview-basic-info-edit-panel";
 import { StudioOverviewGenresTagsEditPanel } from "@/components/studio-overview-genres-tags-edit-panel";
@@ -11,7 +11,6 @@ import { StudioOverviewVisibilityEditPanel } from "@/components/studio-overview-
 import { StudioOverviewIntroductionEditPanel } from "@/components/studio-overview-introduction-edit-panel";
 import { StudioOverviewPlayInfoEditPanel } from "@/components/studio-overview-play-info-edit-panel";
 import { StudioDevlogCurrentEditPanel } from "@/components/studio-devlog-current-edit-panel";
-import { StudioDevlogPromptsEditPanel } from "@/components/studio-devlog-prompts-edit-panel";
 import { ProjectShareLinkModal } from "@/components/project-share-link-modal";
 import { ProjectReleaseStudioPanel } from "@/components/project-release-studio-panel";
 import { StudioPlayerFeedbackPanel } from "@/components/studio-improvement-loop";
@@ -58,7 +57,7 @@ type OverviewEditMode =
   | "play-info"
   | "visibility";
 
-type DevlogEditMode = null | "current" | "prompts";
+type DevlogEditMode = null | "current";
 
 function StudioEditPaneShell({ children }: { children: ReactNode }) {
   return (
@@ -358,17 +357,9 @@ export function StudioTabContextPanel({
         <StudioDevlogCurrentEditPanel
           key={`${projectId}-devlog-current`}
           projectId={projectId}
-          onCancel={closeDevlogEdit}
-          onOpenNewVersionDevlog={onOpenNewVersionDevlog}
-        />
-      );
-    } else if (devlogEditMode === "prompts") {
-      sectionContent = (
-        <StudioDevlogPromptsEditPanel
-          key={`${projectId}-devlog-prompts`}
-          projectId={projectId}
           playableVersion={versionKey}
           onCancel={closeDevlogEdit}
+          onOpenNewVersionDevlog={onOpenNewVersionDevlog}
           onSaved={closeDevlogEdit}
         />
       );
@@ -387,14 +378,6 @@ export function StudioTabContextPanel({
             >
               <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
               現在の開発ログを編集
-            </button>
-            <button
-              type="button"
-              onClick={() => setDevlogEditMode("prompts")}
-              className={panelButtonClassName}
-            >
-              <MessageCircleQuestion className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-              質問事項を編集
             </button>
           </PanelBlock>
 
