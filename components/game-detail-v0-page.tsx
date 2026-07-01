@@ -25,7 +25,6 @@ import { GameDetailOverviewV0Tab } from "@/components/game-detail-overview-v0-ta
 import { GameDevlogV0Tab } from "@/components/game-devlog-v0-tab";
 import { GameVoicesV0Tab } from "@/components/game-voices-v0-tab";
 import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
-import { GameExternalLinks } from "@/components/game-external-links";
 import { GameNotFoundPanel } from "@/components/game-not-found-panel";
 import { ContentReportButton } from "@/components/content-report-button";
 import { GameThumbnail, PlayerShell } from "@/components/player-shell";
@@ -66,6 +65,7 @@ import { useProjectOverviewV0 } from "@/hooks/use-project-overview-v0";
 import { formatDevlogPublishedAt } from "@/hooks/use-game-devlogs-v0";
 import { useProjectPublicStats } from "@/hooks/use-project-public-stats";
 import { resolveGameDetailPlayerMeta } from "@/lib/game-detail-player-meta";
+import { getExternalLinks } from "@/lib/game-links";
 import {
   Bookmark,
   Check,
@@ -166,6 +166,20 @@ function GameDetailV0PageBody({ id }: { id: string }) {
       : !isRealProject && hasDevlogForOverview
         ? game.devlogUpdatedAgo
         : "";
+  const overviewExternalLinks = useMemo(() => {
+    if (!externalLinkGame) {
+      return [];
+    }
+    return getExternalLinks({
+      steamUrl: externalLinkGame.steamUrl,
+      itchUrl: externalLinkGame.itchUrl,
+      discordUrl: externalLinkGame.discordUrl,
+      xUrl: externalLinkGame.xUrl,
+      officialUrl: externalLinkGame.officialUrl,
+      youtubeUrl: externalLinkGame.youtubeUrl,
+      githubUrl: externalLinkGame.githubUrl,
+    });
+  }, [externalLinkGame]);
   const hasRealPlayUrl = Boolean(submittedGame?.playUrl?.trim());
   const playUnavailableOnPublic =
     hideV0Mock && isRealProject && !hasRealPlayUrl;
@@ -576,6 +590,8 @@ function GameDetailV0PageBody({ id }: { id: string }) {
           {activeTab === "overview" && (
             <GameDetailOverviewV0Tab
               game={displayGame}
+              gameId={resolvedId}
+              heroLead={game.lead}
               playerMeta={playerMeta}
               overviewActivity={
                 playerMeta
@@ -587,23 +603,9 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                     }
                   : null
               }
-              overviewLinks={
-                externalLinkGame ? (
-                  <GameExternalLinks
-                    gameId={resolvedId}
-                    playUrl={externalLinkGame.playUrl}
-                    steamUrl={externalLinkGame.steamUrl}
-                    itchUrl={externalLinkGame.itchUrl}
-                    discordUrl={externalLinkGame.discordUrl}
-                    xUrl={externalLinkGame.xUrl}
-                    officialUrl={externalLinkGame.officialUrl}
-                    youtubeUrl={externalLinkGame.youtubeUrl}
-                    githubUrl={externalLinkGame.githubUrl}
-                    tags={externalLinkGame.tags}
-                    compact
-                  />
-                ) : null
-              }
+              externalLinks={overviewExternalLinks}
+              watching={watching}
+              onWatch={handleWatchToggle}
               onOpenDevlog={() => setDetailTab("devlog")}
               onOpenVoices={() => setDetailTab("voices")}
               onFeedback={handleFeedback}

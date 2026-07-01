@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, forwardRef, useImperativeHandle, type ReactNode } from "react";
-import { Compass, ChevronDown, ChevronRight, Plus, Sparkles, Trash2 } from "lucide-react";
+import { useEffect, useState, forwardRef, useImperativeHandle } from "react";
+import { Compass, ChevronDown, Plus, Sparkles, Trash2 } from "lucide-react";
 import type { GameDetailFeature, GameDetailV0 } from "@/lib/game-detail-v0-mock-data";
 import {
   MAX_PROJECT_OVERVIEW_FEATURES,
@@ -20,14 +20,12 @@ import {
   emptyFeatureDraft,
   MAX_PROJECT_FEATURES,
 } from "@/lib/project-overview-v0-store";
-import type { GameDetailPlayerMeta } from "@/lib/game-detail-player-meta";
-
-export type GameDetailOverviewActivity = {
-  lastUpdated: string;
-  hasDevlog: boolean;
-  devlogLabel: string;
-  voiceCount: number;
-};
+import type {
+  GameDetailOverviewActivity,
+  GameDetailPlayerMeta,
+} from "@/lib/game-detail-player-meta";
+import type { ExternalLink } from "@/lib/game-links";
+import { GameDetailPlayerOverview } from "@/components/game-detail-player-overview";
 
 function validateFeatureDrafts(
   features: GameDetailFeature[],
@@ -107,7 +105,11 @@ export const GameDetailOverviewV0Tab = forwardRef<
   playerMeta?: GameDetailPlayerMeta | null;
   /** プレイヤー向け — 開発ログ・声の状況など */
   overviewActivity?: GameDetailOverviewActivity | null;
-  overviewLinks?: ReactNode;
+  gameId?: string;
+  heroLead?: string;
+  externalLinks?: ExternalLink[];
+  watching?: boolean;
+  onWatch?: () => void;
   onOpenDevlog?: () => void;
   onOpenVoices?: () => void;
 }
@@ -125,7 +127,11 @@ export const GameDetailOverviewV0Tab = forwardRef<
   editIntroduction,
   playerMeta = null,
   overviewActivity = null,
-  overviewLinks = null,
+  gameId,
+  heroLead,
+  externalLinks = [],
+  watching = false,
+  onWatch,
   onOpenDevlog,
   onOpenVoices,
 },
@@ -149,9 +155,10 @@ export const GameDetailOverviewV0Tab = forwardRef<
     );
   }, [game.id, game.introduction, game.features, editable, editIntroduction]);
 
-  const isPlayerOverview = !editable && Boolean(playerMeta);
+  const isPlayerOverview =
+    !editable && Boolean(playerMeta) && Boolean(overviewActivity) && Boolean(gameId);
   const introPreview =
-    isPlayerOverview || introduction.length <= 120 || introExpanded
+    introduction.length <= 120 || introExpanded
       ? introduction
       : `${introduction.slice(0, 120)}…`;
 
@@ -165,17 +172,6 @@ export const GameDetailOverviewV0Tab = forwardRef<
     !hideFeatures && (editable || displayFeatures.length > 0);
   const showIntroSection =
     editable || introduction.trim().length > 0 || compactIntroduction;
-  const introHeading = isPlayerOverview ? "どんなゲーム？" : "作品紹介";
-  const showFocusSection = isPlayerOverview && Boolean(playerMeta?.focusNotes);
-  const showSupplementaryMeta =
-    isPlayerOverview &&
-    Boolean(
-      playerMeta?.phaseLabel ||
-        playerMeta?.estimatedPlayTime ||
-        playerMeta?.environmentLabels.length ||
-        overviewActivity?.lastUpdated,
-    );
-  const showActivitySection = isPlayerOverview && overviewActivity;
 
   function updateFeature(index: number, patch: Partial<GameDetailFeature>) {
     setFeatures((current) =>
@@ -254,6 +250,23 @@ export const GameDetailOverviewV0Tab = forwardRef<
     },
   }));
 
+  if (isPlayerOverview && playerMeta && overviewActivity && gameId) {
+    return (
+      <GameDetailPlayerOverview
+        gameId={gameId}
+        game={game}
+        heroLead={heroLead ?? game.lead}
+        playerMeta={playerMeta}
+        activity={overviewActivity}
+        externalLinks={externalLinks}
+        watching={watching}
+        onOpenDevlog={onOpenDevlog}
+        onOpenVoices={onOpenVoices}
+        onWatch={onWatch}
+      />
+    );
+  }
+
   return (
     <div
       className={
@@ -272,7 +285,7 @@ export const GameDetailOverviewV0Tab = forwardRef<
           />
         ) : (
         <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
-          <h2 className="text-base font-semibold text-white">{introHeading}</h2>
+          <h2 className="text-base font-semibold text-white">作品紹介</h2>
           {editable ? (
             <textarea
               value={introduction}
@@ -284,7 +297,7 @@ export const GameDetailOverviewV0Tab = forwardRef<
           ) : (
             <>
               <p className="mt-3 text-sm leading-relaxed text-zinc-400">{introPreview}</p>
-              {!isPlayerOverview && introduction.length > 120 && (
+              {introduction.length > 120 && (
                 <button
                   type="button"
                   onClick={() => setIntroExpanded((value) => !value)}
@@ -410,103 +423,6 @@ export const GameDetailOverviewV0Tab = forwardRef<
             </div>
           )}
         </section>
-        ) : null}
-
-        {showFocusSection && playerMeta?.focusNotes ? (
-          <section>
-            <h2 className="text-base font-semibold text-white">いま見てほしいこと</h2>
-            <p className="mt-3 text-sm leading-relaxed text-zinc-300">
-              {playerMeta.focusNotes}
-            </p>
-          </section>
-        ) : null}
-
-        {showSupplementaryMeta && playerMeta ? (
-          <section className="border-t border-zinc-800/80 pt-6">
-            <h2 className="text-sm font-medium text-zinc-400">この作品について</h2>
-            <div className="mt-3 space-y-2 text-sm leading-relaxed text-zinc-400">
-              {playerMeta.phaseLabel ? (
-                <p>
-                  <span className="font-medium text-orange-200/90">{playerMeta.phaseLabel}</span>
-                  {playerMeta.phaseDescription ? (
-                    <>
-                      <span className="text-zinc-500"> — </span>
-                      {playerMeta.phaseDescription}
-                    </>
-                  ) : null}
-                </p>
-              ) : null}
-              {playerMeta.estimatedPlayTime ? (
-                <p>
-                  <span className="text-zinc-500">想定プレイ時間：</span>
-                  {playerMeta.estimatedPlayTime}
-                </p>
-              ) : null}
-              {playerMeta.environmentLabels.length > 0 ? (
-                <p>
-                  <span className="text-zinc-500">対応環境：</span>
-                  {playerMeta.environmentLabels.join(" · ")}
-                </p>
-              ) : null}
-              {overviewActivity?.lastUpdated ? (
-                <p className="text-xs text-zinc-600">
-                  最終更新 {overviewActivity.lastUpdated}
-                </p>
-              ) : null}
-            </div>
-          </section>
-        ) : null}
-
-        {isPlayerOverview && overviewLinks ? (
-          <section className="border-t border-zinc-800/80 pt-6">{overviewLinks}</section>
-        ) : null}
-
-        {showActivitySection && overviewActivity ? (
-          <section className="border-t border-zinc-800/80 pt-6">
-            <h2 className="text-sm font-medium text-zinc-400">いまの様子</h2>
-            <ul className="mt-3 space-y-2 text-sm text-zinc-400">
-              <li>
-                {overviewActivity.hasDevlog && onOpenDevlog ? (
-                  <button
-                    type="button"
-                    onClick={onOpenDevlog}
-                    className="inline-flex items-center gap-1 text-violet-400 transition-colors hover:text-violet-300"
-                  >
-                    開発ログを見る（{overviewActivity.devlogLabel}）
-                    <ChevronRight className="size-4" aria-hidden="true" />
-                  </button>
-                ) : (
-                  <span className="text-zinc-500">
-                    開発ログはまだありません。更新が記録されると開発ログタブに表示されます。
-                  </span>
-                )}
-              </li>
-              <li>
-                {overviewActivity.voiceCount > 0 ? (
-                  onOpenVoices ? (
-                    <button
-                      type="button"
-                      onClick={onOpenVoices}
-                      className="inline-flex items-center gap-1 text-violet-400 transition-colors hover:text-violet-300"
-                    >
-                      {overviewActivity.voiceCount.toLocaleString()}
-                      人のプレイヤーが声を届けています
-                      <ChevronRight className="size-4" aria-hidden="true" />
-                    </button>
-                  ) : (
-                    <span>
-                      {overviewActivity.voiceCount.toLocaleString()}
-                      人のプレイヤーが声を届けています
-                    </span>
-                  )
-                ) : (
-                  <span className="text-zinc-500">
-                    まだ声は少ない作品です。遊んで感じたことを届けると、開発者の次の改善に役立ちます。
-                  </span>
-                )}
-              </li>
-            </ul>
-          </section>
         ) : null}
 
         {saveValidationError ? (

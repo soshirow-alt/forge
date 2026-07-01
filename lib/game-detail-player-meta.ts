@@ -10,6 +10,13 @@ export type GameDetailPlayerMeta = {
   focusNotes: string | null;
 };
 
+export type GameDetailOverviewActivity = {
+  lastUpdated: string;
+  hasDevlog: boolean;
+  devlogLabel: string;
+  voiceCount: number;
+};
+
 /**
  * 「いま見てほしいこと」の将来方針:
  * 概要タブでの手入力項目ではなく、最新の開発ログまたは版公開時の問いから自動反映する。
