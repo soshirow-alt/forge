@@ -12,6 +12,7 @@ import { StudioImprovementLoop } from "@/components/studio-improvement-loop";
 import { DevlogComposeModal } from "@/components/devlog-compose-modal";
 import { ProjectDistributionLinksModal } from "@/components/project-distribution-links-modal";
 import { ProjectEditModal } from "@/components/project-edit-modal";
+import { GameDetailPlayerPreview } from "@/components/game-detail-player-preview";
 import { useGames } from "@/components/games-provider";
 import { useOwnedProjectFeedback } from "@/hooks/use-owned-project-feedback";
 import { useOwnedProjectVoiceSignals } from "@/hooks/use-owned-project-voice-signals";
@@ -226,6 +227,10 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
           open={distributionLinksModalOpen}
           onClose={() => setDistributionLinksModalOpen(false)}
         />
+
+        <div className="mt-8">
+          <GameDetailPlayerPreview projectId={projectId} />
+        </div>
 
         <div className="mt-6">
           <StudioImprovementLoop
