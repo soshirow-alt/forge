@@ -1,0 +1,138 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { ProjectPhaseFormFields } from "@/components/project-phase-form-fields";
+import {
+  StudioPanelEditShell,
+  studioPanelInputClassName,
+} from "@/components/studio-panel-edit-shell";
+import { useGames } from "@/components/games-provider";
+import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
+
+export type StudioOverviewBasicInfoEditPanelProps = {
+  projectId: string;
+  onCancel: () => void;
+  onSaved?: () => void;
+};
+
+export function StudioOverviewBasicInfoEditPanel({
+  projectId,
+  onCancel,
+  onSaved,
+}: StudioOverviewBasicInfoEditPanelProps) {
+  const { getSubmittedGameById, updateProjectDetails, dataReady } = useGames();
+  const game = getSubmittedGameById(projectId);
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [phase, setPhase] = useState("");
+  const [formLoaded, setFormLoaded] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!game || formLoaded) {
+      return;
+    }
+
+    setTitle(game.title);
+    setDescription(game.description ?? "");
+    setPhase(game.phase);
+    setFormLoaded(true);
+  }, [game, formLoaded]);
+
+  async function handleSave() {
+    if (!game) {
+      return;
+    }
+
+    setSaveError(null);
+    setValidationError(null);
+
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      setValidationError("タイトルを入力してください。");
+      return;
+    }
+    if (!phase) {
+      setValidationError("開発フェーズを選んでください。");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await updateProjectDetails(projectId, {
+        ...buildProjectEditFormDataFromGame(game),
+        title: trimmedTitle,
+        description: description.trim(),
+        phase,
+      });
+      onSaved?.();
+    } catch (error) {
+      setSaveError(
+        error instanceof Error
+          ? error.message
+          : "保存に失敗しました。時間をおいて再度お試しください。",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  if (!dataReady || !game || !formLoaded) {
+    return <p className="text-sm text-zinc-500">読み込み中…</p>;
+  }
+
+  const hasOverviewIntro = Boolean(game.overviewIntroduction?.trim());
+
+  return (
+    <StudioPanelEditShell
+      title="基本情報を編集"
+      onCancel={onCancel}
+      onSave={() => void handleSave()}
+      isSaving={isSaving}
+      saveError={saveError}
+      validationError={validationError}
+    >
+      <div>
+        <label htmlFor={`studio-basic-title-${projectId}`} className="text-xs font-medium text-zinc-500">
+          タイトル
+        </label>
+        <input
+          id={`studio-basic-title-${projectId}`}
+          type="text"
+          required
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          className={studioPanelInputClassName}
+        />
+      </div>
+
+      <div>
+        <label htmlFor={`studio-basic-lead-${projectId}`} className="text-xs font-medium text-zinc-500">
+          1行説明
+        </label>
+        <textarea
+          id={`studio-basic-lead-${projectId}`}
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+          rows={2}
+          className={`${studioPanelInputClassName} resize-y`}
+          placeholder="ヒーローに表示される短い説明"
+        />
+        {hasOverviewIntro ? (
+          <p className="mt-1 text-[11px] text-zinc-600">
+            作品紹介を設定している場合、一覧用の短い説明は作品紹介からも生成されます。
+          </p>
+        ) : null}
+      </div>
+
+      <ProjectPhaseFormFields
+        value={phase}
+        onChange={setPhase}
+        radioName={`studio-basic-phase-${projectId}`}
+      />
+    </StudioPanelEditShell>
+  );
+}

@@ -116,9 +116,11 @@ export function ProjectReleaseStudioPanel({
         >
           {embedded ? "正式版" : "正式verとして宣言する"}
         </h2>
-        <span className="rounded-full border border-zinc-700 bg-zinc-950/60 px-3 py-1 text-xs font-medium text-zinc-200">
-          {RELEASE_STATUS_LABELS[releaseStatus]}
-        </span>
+        {embedded && releaseStatus === "in_development" ? null : (
+          <span className="rounded-full border border-zinc-700 bg-zinc-950/60 px-3 py-1 text-xs font-medium text-zinc-200">
+            {RELEASE_STATUS_LABELS[releaseStatus]}
+          </span>
+        )}
       </div>
 
       {(error || actionError) && (

@@ -2,21 +2,16 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import {
-  Copy,
-  ExternalLink,
-  FileText,
-  Link2,
-  MessageSquare,
-  Pencil,
-  Play,
-  Sparkles,
-} from "lucide-react";
-import { GamePlayDestinationModal } from "@/components/game-play-destination-modal";
+import { Image as ImageIcon, MessageCircleQuestion, MessageSquare, Pencil, Sparkles, Link2, Copy, ExternalLink, FileText } from "lucide-react";
 import { StudioEditSectionSwitcher } from "@/components/studio-edit-section-switcher";
+import { StudioOverviewBasicInfoEditPanel } from "@/components/studio-overview-basic-info-edit-panel";
+import { StudioOverviewGenresTagsEditPanel } from "@/components/studio-overview-genres-tags-edit-panel";
+import { StudioOverviewImagesEditPanel } from "@/components/studio-overview-images-edit-panel";
+import { StudioOverviewVisibilityEditPanel } from "@/components/studio-overview-visibility-edit-panel";
 import { StudioOverviewIntroductionEditPanel } from "@/components/studio-overview-introduction-edit-panel";
 import { StudioOverviewPlayInfoEditPanel } from "@/components/studio-overview-play-info-edit-panel";
-import { StudioOverviewProjectInfoEditPanel } from "@/components/studio-overview-project-info-edit-panel";
+import { StudioDevlogCurrentEditPanel } from "@/components/studio-devlog-current-edit-panel";
+import { StudioDevlogPromptsEditPanel } from "@/components/studio-devlog-prompts-edit-panel";
 import { ProjectShareLinkModal } from "@/components/project-share-link-modal";
 import { ProjectReleaseStudioPanel } from "@/components/project-release-studio-panel";
 import { StudioPlayerFeedbackPanel } from "@/components/studio-improvement-loop";
@@ -24,7 +19,6 @@ import { StudioTopPrioritiesPanel } from "@/components/studio-top-priorities-pan
 import { useGames } from "@/components/games-provider";
 import { formatDevlogPublishedAt } from "@/hooks/use-game-devlogs-v0";
 import { useNurtureVoiceRead } from "@/hooks/use-nurture-feedback-read";
-import { useProjectTestPlay } from "@/hooks/use-project-test-play";
 import { sortDevlogsNewestFirst } from "@/lib/devlogs";
 import type { GameDetailTab } from "@/lib/game-detail-tabs";
 import type { Game } from "@/lib/mock-games";
@@ -55,7 +49,16 @@ const SECTION_CONTENT_HEADINGS: Record<GameDetailTab, string> = {
   voices: "フィードバック確認",
 };
 
-type OverviewEditMode = null | "project-info" | "introduction" | "play-info";
+type OverviewEditMode =
+  | null
+  | "basic-info"
+  | "genres-tags"
+  | "images"
+  | "introduction"
+  | "play-info"
+  | "visibility";
+
+type DevlogEditMode = null | "current" | "prompts";
 
 function StudioEditPaneShell({ children }: { children: ReactNode }) {
   return (
@@ -107,7 +110,6 @@ export type StudioTabContextPanelProps = {
   devlogCount: number;
   initialOpenFeedback?: boolean;
   onOpenNewVersionDevlog: () => void;
-  onEditThumbnail?: () => void;
 };
 
 export function StudioTabContextPanel({
@@ -120,21 +122,12 @@ export function StudioTabContextPanel({
   devlogCount,
   initialOpenFeedback = false,
   onOpenNewVersionDevlog,
-  onEditThumbnail,
 }: StudioTabContextPanelProps) {
   const { getDevlogsByProject } = useGames();
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [feedbackExpanded, setFeedbackExpanded] = useState(initialOpenFeedback);
   const [overviewEditMode, setOverviewEditMode] = useState<OverviewEditMode>(null);
-
-  const {
-    playDestinations,
-    playDestinationPickerOpen,
-    setPlayDestinationPickerOpen,
-    hasPlayUrl,
-    handleTestPlay,
-    handlePlayDestinationSelect,
-  } = useProjectTestPlay(projectId);
+  const [devlogEditMode, setDevlogEditMode] = useState<DevlogEditMode>(null);
 
   const versionKey = growth.playableVersion;
   const { isRead: voiceRead, markRead } = useNurtureVoiceRead(game.id, versionKey);
@@ -169,10 +162,17 @@ export function StudioTabContextPanel({
     if (activeSection !== "overview") {
       setOverviewEditMode(null);
     }
+    if (activeSection !== "devlog") {
+      setDevlogEditMode(null);
+    }
   }, [activeSection]);
 
   function closeOverviewEdit() {
     setOverviewEditMode(null);
+  }
+
+  function closeDevlogEdit() {
+    setDevlogEditMode(null);
   }
 
   useEffect(() => {
@@ -180,14 +180,6 @@ export function StudioTabContextPanel({
       setFeedbackExpanded(true);
     }
   }, [activeSection, initialOpenFeedback, hasFeedback]);
-
-  const playModal = playDestinationPickerOpen ? (
-    <GamePlayDestinationModal
-      destinations={playDestinations}
-      onSelect={handlePlayDestinationSelect}
-      onClose={() => setPlayDestinationPickerOpen(false)}
-    />
-  ) : null;
 
   const shareModal = (
     <ProjectShareLinkModal
@@ -206,14 +198,40 @@ export function StudioTabContextPanel({
   let sectionContent: ReactNode;
 
   if (activeSection === "overview") {
-    if (overviewEditMode === "project-info") {
+    if (overviewEditMode === "basic-info") {
       sectionContent = (
-        <StudioOverviewProjectInfoEditPanel
-          key={`${projectId}-project-info`}
+        <StudioOverviewBasicInfoEditPanel
+          key={`${projectId}-basic-info`}
           projectId={projectId}
           onCancel={closeOverviewEdit}
           onSaved={closeOverviewEdit}
-          onEditThumbnail={onEditThumbnail}
+        />
+      );
+    } else if (overviewEditMode === "genres-tags") {
+      sectionContent = (
+        <StudioOverviewGenresTagsEditPanel
+          key={`${projectId}-genres-tags`}
+          projectId={projectId}
+          onCancel={closeOverviewEdit}
+          onSaved={closeOverviewEdit}
+        />
+      );
+    } else if (overviewEditMode === "images") {
+      sectionContent = (
+        <StudioOverviewImagesEditPanel
+          key={`${projectId}-images`}
+          projectId={projectId}
+          onCancel={closeOverviewEdit}
+          onSaved={closeOverviewEdit}
+        />
+      );
+    } else if (overviewEditMode === "visibility") {
+      sectionContent = (
+        <StudioOverviewVisibilityEditPanel
+          key={`${projectId}-visibility`}
+          projectId={projectId}
+          onCancel={closeOverviewEdit}
+          onSaved={closeOverviewEdit}
         />
       );
     } else if (overviewEditMode === "introduction") {
@@ -240,15 +258,37 @@ export function StudioTabContextPanel({
           <PanelBlock>
             <button
               type="button"
-              onClick={() => setOverviewEditMode("project-info")}
+              onClick={() => setOverviewEditMode("basic-info")}
               className={panelButtonClassName}
             >
               <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-              作品情報を編集
+              基本情報を編集
             </button>
-            <HintList
-              items={["タイトル", "1行説明", "ジャンル", "特徴タグ", "フェーズ"]}
-            />
+            <HintList items={["タイトル", "1行説明", "開発フェーズ"]} />
+          </PanelBlock>
+
+          <PanelBlock>
+            <button
+              type="button"
+              onClick={() => setOverviewEditMode("genres-tags")}
+              className={panelButtonClassName}
+            >
+              <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+              ジャンル・タグを編集
+            </button>
+            <HintList items={["ジャンル", "特徴タグ"]} />
+          </PanelBlock>
+
+          <PanelBlock>
+            <button
+              type="button"
+              onClick={() => setOverviewEditMode("images")}
+              className={panelButtonClassName}
+            >
+              <ImageIcon className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+              画像を編集
+            </button>
+            <HintList items={["サムネイル", "スクリーンショット"]} />
           </PanelBlock>
 
           <PanelBlock>
@@ -280,23 +320,14 @@ export function StudioTabContextPanel({
               <span className="text-xs text-zinc-500">公開状態</span>
               <span className="text-sm font-medium text-zinc-200">{visibilityLabel}</span>
             </div>
-            <p className="text-xs text-zinc-600">
-              {onEditThumbnail ? (
-                <>
-                  切り替え・サムネイルは{" "}
-                  <button
-                    type="button"
-                    onClick={onEditThumbnail}
-                    className="text-orange-400/90 underline-offset-2 hover:underline"
-                  >
-                    従来の編集画面
-                  </button>
-                  から行えます。
-                </>
-              ) : (
-                "切り替えは従来の編集画面から行えます。"
-              )}
-            </p>
+            <button
+              type="button"
+              onClick={() => setOverviewEditMode("visibility")}
+              className={panelButtonClassName}
+            >
+              <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+              公開設定を編集
+            </button>
           </PanelBlock>
 
           <PanelBlock title="共有">
@@ -322,25 +353,52 @@ export function StudioTabContextPanel({
       );
     }
   } else if (activeSection === "devlog") {
-    sectionContent = (
-      <>
-        <PanelBlock>
-          <button
-            type="button"
-            onClick={handleTestPlay}
-            disabled={!hasPlayUrl}
-            className={`${panelButtonClassName} disabled:cursor-not-allowed disabled:opacity-50`}
-          >
-            <Play className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-            テストプレイ
-          </button>
-          <button type="button" onClick={onOpenNewVersionDevlog} className={primaryButtonClassName}>
-            <FileText className="size-4 shrink-0" aria-hidden="true" />
-            新verの開発ログを書く
-          </button>
-        </PanelBlock>
+    if (devlogEditMode === "current") {
+      sectionContent = (
+        <StudioDevlogCurrentEditPanel
+          key={`${projectId}-devlog-current`}
+          projectId={projectId}
+          onCancel={closeDevlogEdit}
+          onOpenNewVersionDevlog={onOpenNewVersionDevlog}
+        />
+      );
+    } else if (devlogEditMode === "prompts") {
+      sectionContent = (
+        <StudioDevlogPromptsEditPanel
+          key={`${projectId}-devlog-prompts`}
+          projectId={projectId}
+          playableVersion={versionKey}
+          onCancel={closeDevlogEdit}
+          onSaved={closeDevlogEdit}
+        />
+      );
+    } else {
+      sectionContent = (
+        <>
+          <PanelBlock>
+            <button type="button" onClick={onOpenNewVersionDevlog} className={primaryButtonClassName}>
+              <FileText className="size-4 shrink-0" aria-hidden="true" />
+              新verの開発ログを書く
+            </button>
+            <button
+              type="button"
+              onClick={() => setDevlogEditMode("current")}
+              className={panelButtonClassName}
+            >
+              <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+              現在の開発ログを編集
+            </button>
+            <button
+              type="button"
+              onClick={() => setDevlogEditMode("prompts")}
+              className={panelButtonClassName}
+            >
+              <MessageCircleQuestion className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+              質問事項を編集
+            </button>
+          </PanelBlock>
 
-        <PanelBlock title="最新の開発ログ">
+          <PanelBlock title="最新の開発ログ">
           {latestDevlog ? (
             <div className="rounded-lg border border-zinc-800/60 bg-zinc-950/30 px-3 py-2.5">
               <p className="text-sm font-medium text-zinc-200">{latestDevlog.title}</p>
@@ -366,7 +424,8 @@ export function StudioTabContextPanel({
           embedded
         />
       </>
-    );
+      );
+    }
   } else {
     sectionContent = (
       <>
@@ -430,7 +489,6 @@ export function StudioTabContextPanel({
 
   return (
     <>
-      {playModal}
       {shareModal}
       <StudioEditPaneShell>
         <StudioEditSectionSwitcher
@@ -438,7 +496,7 @@ export function StudioTabContextPanel({
           onSectionChange={onSectionChange}
         />
 
-        {overviewEditMode ? null : (
+        {overviewEditMode || devlogEditMode ? null : (
           <p className="text-xs font-medium text-zinc-500">
             {SECTION_CONTENT_HEADINGS[activeSection]}
           </p>

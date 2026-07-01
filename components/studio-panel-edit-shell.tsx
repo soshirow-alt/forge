@@ -11,12 +11,14 @@ const saveButtonClassName =
 export type StudioPanelEditShellProps = {
   title: string;
   onCancel: () => void;
-  onSave: () => void;
+  onSave?: () => void;
   isSaving?: boolean;
   saveError?: string | null;
   validationError?: string | null;
   children: ReactNode;
   footerNote?: ReactNode;
+  hideSave?: boolean;
+  saveLabel?: string;
 };
 
 export function StudioPanelEditShell({
@@ -28,6 +30,8 @@ export function StudioPanelEditShell({
   validationError = null,
   children,
   footerNote,
+  hideSave = false,
+  saveLabel = "保存",
 }: StudioPanelEditShellProps) {
   return (
     <section
@@ -67,18 +71,20 @@ export function StudioPanelEditShell({
 
       {footerNote ? <div className="mt-3">{footerNote}</div> : null}
 
-      <div className="mt-4 flex gap-2">
+      <div className={`mt-4 flex gap-2`}>
         <button type="button" onClick={onCancel} disabled={isSaving} className={cancelButtonClassName}>
-          キャンセル
+          {hideSave ? "戻る" : "キャンセル"}
         </button>
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={isSaving}
-          className={saveButtonClassName}
-        >
-          {isSaving ? "保存中…" : "保存"}
-        </button>
+        {hideSave || !onSave ? null : (
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={isSaving}
+            className={saveButtonClassName}
+          >
+            {isSaving ? "保存中…" : saveLabel}
+          </button>
+        )}
       </div>
     </section>
   );

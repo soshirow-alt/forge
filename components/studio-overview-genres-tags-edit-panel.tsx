@@ -2,10 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { CollapsibleFormSection } from "@/components/collapsible-form-section";
-import { ProjectPhaseFormFields } from "@/components/project-phase-form-fields";
 import {
   StudioPanelEditShell,
-  studioPanelInputClassName,
 } from "@/components/studio-panel-edit-shell";
 import { useGames } from "@/components/games-provider";
 import { FORGE_GENRE_OPTIONS, type ForgeGenreOption } from "@/lib/forge-genre-options";
@@ -31,27 +29,22 @@ import {
 } from "@/lib/play-environment";
 import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
 
-export type StudioOverviewProjectInfoEditPanelProps = {
+export type StudioOverviewGenresTagsEditPanelProps = {
   projectId: string;
   onCancel: () => void;
   onSaved?: () => void;
-  onEditThumbnail?: () => void;
 };
 
-export function StudioOverviewProjectInfoEditPanel({
+export function StudioOverviewGenresTagsEditPanel({
   projectId,
   onCancel,
   onSaved,
-  onEditThumbnail,
-}: StudioOverviewProjectInfoEditPanelProps) {
+}: StudioOverviewGenresTagsEditPanelProps) {
   const { getSubmittedGameById, updateProjectDetails, dataReady } = useGames();
   const game = getSubmittedGameById(projectId);
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
   const [selectedGenres, setSelectedGenres] = useState<ForgeGenreOption[]>([]);
   const [selectedTags, setSelectedTags] = useState<ForgeFeatureTagOption[]>([]);
-  const [phase, setPhase] = useState("");
   const [formLoaded, setFormLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -62,8 +55,6 @@ export function StudioOverviewProjectInfoEditPanel({
       return;
     }
 
-    setTitle(game.title);
-    setDescription(game.description ?? "");
     setSelectedGenres(
       sanitizeProjectGenresForSave(pickForgeGenresFromList(resolveProjectGenres(game))),
     );
@@ -72,7 +63,6 @@ export function StudioOverviewProjectInfoEditPanel({
         pickFeatureTagsFromGameTags(getPublicGameTags(game.tags)),
       ),
     );
-    setPhase(game.phase);
     setFormLoaded(true);
   }, [game, formLoaded]);
 
@@ -84,19 +74,9 @@ export function StudioOverviewProjectInfoEditPanel({
     setSaveError(null);
     setValidationError(null);
 
-    const trimmedTitle = title.trim();
-    if (!trimmedTitle) {
-      setValidationError("タイトルを入力してください。");
-      return;
-    }
-
     const genres = sanitizeProjectGenresForSave(selectedGenres);
     if (genres.length === 0) {
       setValidationError("ジャンルを1つ以上選んでください。");
-      return;
-    }
-    if (!phase) {
-      setValidationError("開発フェーズを選んでください。");
       return;
     }
 
@@ -106,10 +86,7 @@ export function StudioOverviewProjectInfoEditPanel({
     try {
       await updateProjectDetails(projectId, {
         ...buildProjectEditFormDataFromGame(game),
-        title: trimmedTitle,
-        description: description.trim(),
         genres,
-        phase,
         tags: mergePlayEnvironmentIntoTags(
           sanitizeFeatureTagsForSave(selectedTags),
           playEnvironment,
@@ -131,69 +108,15 @@ export function StudioOverviewProjectInfoEditPanel({
     return <p className="text-sm text-zinc-500">読み込み中…</p>;
   }
 
-  const hasOverviewIntro = Boolean(game.overviewIntroduction?.trim());
-
   return (
     <StudioPanelEditShell
-      title="作品情報を編集"
+      title="ジャンル・タグを編集"
       onCancel={onCancel}
       onSave={() => void handleSave()}
       isSaving={isSaving}
       saveError={saveError}
       validationError={validationError}
-      footerNote={
-        onEditThumbnail ? (
-          <p className="text-xs text-zinc-600">
-            サムネイルの編集は{" "}
-            <button
-              type="button"
-              onClick={onEditThumbnail}
-              className="text-orange-400/90 underline-offset-2 hover:underline"
-            >
-              従来の編集画面
-            </button>
-            で行えます。
-          </p>
-        ) : null
-      }
     >
-      <div>
-        <label htmlFor={`studio-info-title-${projectId}`} className="text-xs font-medium text-zinc-500">
-          タイトル
-        </label>
-        <input
-          id={`studio-info-title-${projectId}`}
-          type="text"
-          required
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-          className={studioPanelInputClassName}
-          placeholder="ゲームのタイトル"
-        />
-      </div>
-
-      <div>
-        <label
-          htmlFor={`studio-info-lead-${projectId}`}
-          className="text-xs font-medium text-zinc-500"
-        >
-          1行説明
-        </label>
-        <textarea
-          id={`studio-info-lead-${projectId}`}
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
-          rows={2}
-          className={`${studioPanelInputClassName} resize-y`}
-          placeholder="ヒーローに表示される短い説明"
-        />
-        {hasOverviewIntro ? (
-          <p className="mt-1 text-[11px] text-zinc-600">
-            作品紹介を設定している場合、一覧用の短い説明は作品紹介からも生成されます。
-          </p>
-        ) : null}
-      </div>
-
       <CollapsibleFormSection
         title="ジャンル"
         summary={selectedGenres.length > 0 ? selectedGenres.join("・") : "未選択（1つ以上）"}
@@ -247,12 +170,6 @@ export function StudioOverviewProjectInfoEditPanel({
           ))}
         </div>
       </CollapsibleFormSection>
-
-      <ProjectPhaseFormFields
-        value={phase}
-        onChange={setPhase}
-        radioName={`studio-phase-${projectId}`}
-      />
     </StudioPanelEditShell>
   );
 }

@@ -1,12 +1,21 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import type { GameDetailTab } from "@/lib/game-detail-tabs";
 
-const STUDIO_EDIT_SECTIONS: { id: GameDetailTab; label: string }[] = [
+const STUDIO_EDIT_SECTIONS: { id: GameDetailTab; label: ReactNode }[] = [
   { id: "overview", label: "概要" },
   { id: "devlog", label: "開発ログ" },
-  { id: "voices", label: "フィードバック" },
+  {
+    id: "voices",
+    label: (
+      <span className="inline-flex flex-col items-center leading-[1.15]">
+        <span>フィード</span>
+        <span>バック</span>
+      </span>
+    ),
+  },
 ];
 
 export type StudioEditSectionSwitcherProps = {
