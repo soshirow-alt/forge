@@ -78,7 +78,7 @@ export function GameDetailPlayerPreview({
 
   return (
     <div aria-label="公開ページの見え方" className="min-w-0 space-y-4">
-      <h2 className="text-sm font-medium text-zinc-400">公開ページの見え方</h2>
+      <h2 className="text-sm font-medium text-zinc-500">公開ページの見え方</h2>
 
       <section className="overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/30">
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
@@ -111,17 +111,19 @@ export function GameDetailPlayerPreview({
         </div>
       </section>
 
-      <div className="border-b border-zinc-800/80">
-        <div className="flex gap-1 overflow-x-auto">
+      <div className="border-b border-zinc-800/60">
+        <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label="公開ページタブ">
           {previewTabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+              className={`shrink-0 border-b-2 px-4 py-3 text-sm transition-colors ${
                 activeTab === tab.id
-                  ? "border-violet-500 text-violet-200"
-                  : "border-transparent text-zinc-500 hover:text-zinc-300"
+                  ? "border-zinc-600 font-medium text-zinc-400"
+                  : "border-transparent font-normal text-zinc-600 hover:text-zinc-500"
               }`}
             >
               {tab.label}
