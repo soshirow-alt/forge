@@ -11,7 +11,7 @@ import {
   sortProjectsForGrowthHub,
 } from "@/lib/project-growth-state";
 import { resolveVoiceSignalForGame } from "@/lib/project-voice-nurture";
-import { projectStudioPath, studioSubmitModalHref } from "@/lib/project-nurture-links";
+import { studioSubmitModalHref } from "@/lib/project-nurture-links";
 import { shouldBypassStudioLoginOnPreview } from "@/lib/preview-v0";
 
 function StudioOwnedProjectsLoadingSection() {
@@ -110,27 +110,13 @@ export function StudioOwnedProjectsSection() {
     );
   }
 
-  const topGame = gamesWithGrowth[0];
-
   return (
     <section className="rounded-2xl border border-orange-500/30 bg-orange-500/5 p-5 sm:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold text-zinc-100">
-            プレイヤーから新たな反応があった作品
-          </h2>
-          <p className="mt-2 text-sm text-zinc-400">新たなフィードバックが届きました</p>
-        </div>
-        {topGame && (
-          <Link
-            href={projectStudioPath(topGame.game.id)}
-            className="inline-flex shrink-0 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
-          >
-            {topGame.growth.pendingFeedbackCount > 0
-              ? "新着あり · 作品 Studio を開く"
-              : "作品 Studio を開く"}
-          </Link>
-        )}
+      <div>
+        <h2 className="text-lg font-semibold text-zinc-100">
+          プレイヤーから新たな反応があった作品
+        </h2>
+        <p className="mt-2 text-sm text-zinc-400">新たなフィードバックが届きました</p>
       </div>
 
       <div className="mt-5 space-y-3">
