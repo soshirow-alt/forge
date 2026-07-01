@@ -10,6 +10,8 @@ import {
   type GameDetailRealVoiceHandle,
 } from "@/components/game-detail-real-voice-layer";
 import { GameDetailHeroGallery } from "@/components/game-detail-hero-gallery";
+import { GameDetailHeroMeta } from "@/components/game-detail-hero-meta";
+import { GameGrowthStatusStrip } from "@/components/game-growth-status-strip";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -64,6 +66,7 @@ import {
 import { useProjectOverviewV0 } from "@/hooks/use-project-overview-v0";
 import { formatDevlogPublishedAt } from "@/hooks/use-game-devlogs-v0";
 import { useProjectPublicStats } from "@/hooks/use-project-public-stats";
+import { resolveGameDetailPlayerMeta } from "@/lib/game-detail-player-meta";
 import {
   Bookmark,
   Check,
@@ -179,6 +182,10 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     submittedGame && isSupabaseProjectId(submittedGame.id),
   );
   const externalLinkGame = getGameById(resolvedId) ?? submittedGame;
+  const playerMeta = useMemo(
+    () => resolveGameDetailPlayerMeta(externalLinkGame ?? submittedGame),
+    [externalLinkGame, submittedGame],
+  );
   const game = useMemo(() => {
     if (submittedGame && isSupabaseProjectId(submittedGame.id)) {
       return gameToDetailV0(submittedGame);
@@ -193,12 +200,25 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   const showFeedbackParticipantStat =
     !isRealProject ||
     (publicStatsLoaded && publicStats.feedbackParticipantCount > 0);
-  const devlogUpdatedLabel =
+  const voiceCountForStrip = isRealProject
+    ? publicStats.feedbackParticipantCount
+    : game.voiceCount;
+  const hasDevlogForStrip = isRealProject
+    ? Boolean(publicStats.latestDevlogAt)
+    : Boolean(game.devlogUpdatedAgo && game.devlogUpdatedAgo !== "—");
+  const devlogStripLabel =
     isRealProject && publicStats.latestDevlogAt
       ? formatDevlogPublishedAt(publicStats.latestDevlogAt)
-      : isRealProject
-        ? "—"
-        : game.devlogUpdatedAgo;
+      : !isRealProject && hasDevlogForStrip
+        ? game.devlogUpdatedAgo
+        : "まだありません";
+  const devlogUpdatedLabel = hasDevlogForStrip
+    ? isRealProject && publicStats.latestDevlogAt
+      ? formatDevlogPublishedAt(publicStats.latestDevlogAt)
+      : game.devlogUpdatedAgo
+    : isRealProject
+      ? "—"
+      : game.devlogUpdatedAgo;
   const hasRealPlayUrl = Boolean(submittedGame?.playUrl?.trim());
   const playUnavailableOnPublic =
     hideV0Mock && isRealProject && !hasRealPlayUrl;
@@ -469,6 +489,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                   </div>
                 ) : null}
                 <p className="mt-2 text-sm leading-relaxed text-zinc-400">{game.lead}</p>
+                {playerMeta ? <GameDetailHeroMeta meta={playerMeta} /> : null}
                 <Link
                   href={`/creators/${game.developer.id}`}
                   className="mt-4 inline-flex items-center gap-2 text-sm text-zinc-300 transition-colors hover:text-violet-300"
@@ -517,6 +538,18 @@ function GameDetailV0PageBody({ id }: { id: string }) {
               </div>
             </div>
           </section>
+
+          {playerMeta ? (
+            <GameGrowthStatusStrip
+              meta={playerMeta}
+              lastUpdated={game.lastUpdated}
+              hasDevlog={hasDevlogForStrip}
+              devlogLabel={devlogStripLabel}
+              voiceCount={voiceCountForStrip}
+              onDevlogClick={() => setDetailTab("devlog")}
+              onVoicesClick={() => setDetailTab("voices")}
+            />
+          ) : null}
 
           {externalLinkGame ? (
             <GameExternalLinks
@@ -656,6 +689,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
           {activeTab === "overview" && (
             <GameDetailOverviewV0Tab
               game={displayGame}
+              playerMeta={playerMeta}
               onFeedback={handleFeedback}
               feedbackCtaLabel={
                 hydrated && !isLoggedIn
@@ -676,7 +710,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
             (hideV0Mock ? (
               <FeatureComingSoonPanel
                 title="みんなのフィードバック"
-                description="他のプレイヤーのフィードバックを見る機能は Coming Soon です。"
+                description="他のプレイヤーが届けた声の傾向や、よく挙がるテーマがここで見られるようになります。いまは準備中です。"
               />
             ) : (
               <GameVoicesV0Tab

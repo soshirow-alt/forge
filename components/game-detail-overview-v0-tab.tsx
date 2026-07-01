@@ -20,6 +20,7 @@ import {
   emptyFeatureDraft,
   MAX_PROJECT_FEATURES,
 } from "@/lib/project-overview-v0-store";
+import type { GameDetailPlayerMeta } from "@/lib/game-detail-player-meta";
 
 function validateFeatureDrafts(
   features: GameDetailFeature[],
@@ -95,6 +96,8 @@ export const GameDetailOverviewV0Tab = forwardRef<
   feedbackCtaLabel?: string;
   /** 編集時 — DB の overview_introduction（未設定は空。description フォールバックは含めない） */
   editIntroduction?: string;
+  /** プレイヤー向け概要タブのメタ情報（フェーズ・プレイ時間・対応環境など） */
+  playerMeta?: GameDetailPlayerMeta | null;
 }
 >(function GameDetailOverviewV0Tab(
   {
@@ -108,6 +111,7 @@ export const GameDetailOverviewV0Tab = forwardRef<
   onFeedback,
   feedbackCtaLabel = "フィードバックする",
   editIntroduction,
+  playerMeta = null,
 },
   ref,
 ) {
@@ -144,6 +148,13 @@ export const GameDetailOverviewV0Tab = forwardRef<
     !hideFeatures && (editable || displayFeatures.length > 0);
   const showIntroSection =
     editable || introduction.trim().length > 0 || compactIntroduction;
+  const introHeading = !editable && playerMeta ? "どんなゲーム？" : "作品紹介";
+  const showFocusSection = !editable && Boolean(playerMeta?.focusNotes);
+  const showPhaseSection =
+    !editable && Boolean(playerMeta?.phaseLabel);
+  const showPlayMetaSection =
+    !editable &&
+    Boolean(playerMeta?.estimatedPlayTime || playerMeta?.environmentLabels.length);
 
   function updateFeature(index: number, patch: Partial<GameDetailFeature>) {
     setFeatures((current) =>
@@ -240,7 +251,7 @@ export const GameDetailOverviewV0Tab = forwardRef<
           />
         ) : (
         <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
-          <h2 className="text-base font-semibold text-white">作品紹介</h2>
+          <h2 className="text-base font-semibold text-white">{introHeading}</h2>
           {editable ? (
             <textarea
               value={introduction}
@@ -378,6 +389,56 @@ export const GameDetailOverviewV0Tab = forwardRef<
             </div>
           )}
         </section>
+        ) : null}
+
+        {showFocusSection && playerMeta?.focusNotes ? (
+          <section className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-5 sm:p-6">
+            <h2 className="text-base font-semibold text-white">いま見てほしいところ</h2>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-300">
+              {playerMeta.focusNotes}
+            </p>
+          </section>
+        ) : null}
+
+        {showPhaseSection && playerMeta ? (
+          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
+            <h2 className="text-base font-semibold text-white">開発フェーズ</h2>
+            <p className="mt-3 text-sm font-medium text-orange-200/90">{playerMeta.phaseLabel}</p>
+            {playerMeta.phaseDescription ? (
+              <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+                {playerMeta.phaseDescription}
+              </p>
+            ) : null}
+          </section>
+        ) : null}
+
+        {showPlayMetaSection && playerMeta ? (
+          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
+            <h2 className="text-base font-semibold text-white">プレイ情報</h2>
+            <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+              {playerMeta.estimatedPlayTime ? (
+                <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3 py-2.5">
+                  <dt className="text-[11px] font-medium text-zinc-600">想定プレイ時間</dt>
+                  <dd className="mt-0.5 text-sm text-zinc-200">{playerMeta.estimatedPlayTime}</dd>
+                </div>
+              ) : null}
+              {playerMeta.environmentLabels.length > 0 ? (
+                <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3 py-2.5 sm:col-span-2">
+                  <dt className="text-[11px] font-medium text-zinc-600">対応環境</dt>
+                  <dd className="mt-1.5 flex flex-wrap gap-1.5">
+                    {playerMeta.environmentLabels.map((label) => (
+                      <span
+                        key={label}
+                        className="rounded-md border border-zinc-700/70 bg-zinc-800/50 px-2 py-0.5 text-xs text-zinc-300"
+                      >
+                        {label}
+                      </span>
+                    ))}
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
+          </section>
         ) : null}
 
         {saveValidationError ? (
