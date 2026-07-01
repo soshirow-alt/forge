@@ -191,13 +191,15 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
           onClose={() => setDistributionLinksModalOpen(false)}
         />
 
-        <div className="mt-5 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-0">
-          <GameDetailPlayerPreview
-            projectId={projectId}
-            activeTab={activeSection}
-            onTabChange={setActiveSection}
-            onTestPlay={handleTestPlay}
-          />
+        <div className="mt-5 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px] xl:gap-8">
+          <div className="min-w-0">
+            <GameDetailPlayerPreview
+              projectId={projectId}
+              activeTab={activeSection}
+              onTabChange={setActiveSection}
+              onTestPlay={handleTestPlay}
+            />
+          </div>
 
           <StudioTabContextPanel
             projectId={projectId}

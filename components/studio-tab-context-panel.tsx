@@ -57,9 +57,11 @@ function StudioEditPaneShell({ children }: { children: ReactNode }) {
   return (
     <aside
       aria-label="Studio編集ペイン"
-      className="w-full shrink-0 xl:sticky xl:top-6 xl:w-[320px] xl:self-start xl:border-l xl:border-zinc-800/90 xl:bg-zinc-950/45 xl:pl-5 xl:py-2"
+      className="w-full shrink-0 xl:sticky xl:top-6 xl:self-start"
     >
-      <div className="space-y-3">{children}</div>
+      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/55 px-4 py-4 shadow-sm shadow-black/20 ring-1 ring-inset ring-zinc-800/40">
+        <div className="space-y-4">{children}</div>
+      </div>
     </aside>
   );
 }
@@ -72,7 +74,7 @@ function PanelBlock({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-zinc-800/60 bg-zinc-900/25 p-4">
+    <section className="rounded-xl border border-zinc-800/45 bg-zinc-950/30 p-4">
       {title ? (
         <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{title}</h3>
       ) : null}
@@ -337,7 +339,7 @@ export function StudioTabContextPanel({
         </PanelBlock>
 
         {showFeedbackPanel ? (
-          <div className="max-h-[24rem] overflow-y-auto rounded-xl border border-zinc-800/60">
+          <div className="max-h-[24rem] overflow-y-auto rounded-xl border border-zinc-800/45 bg-zinc-950/25">
             <StudioPlayerFeedbackPanel
               gameId={game.id}
               playableVersion={versionKey}

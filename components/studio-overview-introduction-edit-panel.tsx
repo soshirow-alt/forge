@@ -90,7 +90,7 @@ export function StudioOverviewIntroductionEditPanel({
   return (
     <section
       aria-label="作品紹介を編集"
-      className="rounded-xl border border-zinc-800/80 bg-zinc-900/35 p-4"
+      className="rounded-xl border border-zinc-800/45 bg-zinc-950/30 p-4"
     >
       <button
         type="button"
