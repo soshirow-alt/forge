@@ -78,7 +78,7 @@ function StudioStatusStrip({
   );
 }
 
-function StudioPlayerFeedbackPanel({
+export function StudioPlayerFeedbackPanel({
   gameId,
   playableVersion,
   feedbackEntries,

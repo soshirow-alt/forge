@@ -15,12 +15,14 @@ type ProjectReleaseStudioPanelProps = {
   projectId: string;
   devlogCount: number;
   playableVersion: string;
+  embedded?: boolean;
 };
 
 export function ProjectReleaseStudioPanel({
   projectId,
   devlogCount,
   playableVersion,
+  embedded = false,
 }: ProjectReleaseStudioPanelProps) {
   const {
     events,
@@ -83,7 +85,13 @@ export function ProjectReleaseStudioPanel({
 
   if (!loaded) {
     return (
-      <section className="mt-10 rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+      <section
+        className={
+          embedded
+            ? "rounded-xl border border-zinc-800/80 bg-zinc-900/35 p-4"
+            : "mt-10 rounded-xl border border-zinc-800 bg-zinc-900/60 p-5"
+        }
+      >
         <p className="text-sm text-zinc-500">読み込み中…</p>
       </section>
     );
@@ -91,12 +99,22 @@ export function ProjectReleaseStudioPanel({
 
   return (
     <section
-      id="official-release"
-      className="mt-10 scroll-mt-24 rounded-xl border border-zinc-800 bg-zinc-900/60 p-5"
+      id={embedded ? undefined : "official-release"}
+      className={
+        embedded
+          ? "scroll-mt-24 rounded-xl border border-zinc-800/80 bg-zinc-900/35 p-4"
+          : "mt-10 scroll-mt-24 rounded-xl border border-zinc-800 bg-zinc-900/60 p-5"
+      }
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-base font-semibold tracking-tight text-zinc-100">
-          正式verとして宣言する
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2
+          className={
+            embedded
+              ? "text-xs font-semibold uppercase tracking-wide text-zinc-500"
+              : "text-base font-semibold tracking-tight text-zinc-100"
+          }
+        >
+          {embedded ? "正式ver" : "正式verとして宣言する"}
         </h2>
         <span className="rounded-full border border-zinc-700 bg-zinc-950/60 px-3 py-1 text-xs font-medium text-zinc-200">
           {RELEASE_STATUS_LABELS[releaseStatus]}
@@ -124,7 +142,9 @@ export function ProjectReleaseStudioPanel({
             type="button"
             disabled={busy || !releasedValidation.ok}
             onClick={() => void handleReleased()}
-            className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            className={`rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 ${
+              embedded ? "w-full px-4 py-2 text-sm" : "px-5 py-2.5 text-sm"
+            }`}
           >
             正式verとして宣言する
           </button>

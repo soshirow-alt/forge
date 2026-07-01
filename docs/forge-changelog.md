@@ -4,6 +4,10 @@
 
 ---
 
+- **Studio Phase B2** — `StudioNurtureRail` 新設。公開ページプレビュー（左）+ 育成・運用 Rail（右）の2カラム化。既存モーダル・FB/優先度/正式ver を Rail へ再配置。旧 Toolbar / ImprovementLoop / ReleasePanel は `SHOW_LEGACY_STUDIO_UI` で非表示（ロールバック可）。DB 変更なし
+
+---
+
 - **Studio Phase B1** — `/projects/[id]/studio` にプレイヤー詳細同型の読み取り専用プレビュー（`GameDetailPlayerPreview`）を追加。ヒーロー・CTA・タブ・概要2カラムを Studio 内で確認可能。既存 Studio 機能は維持。DB 変更なし
 
 ---
