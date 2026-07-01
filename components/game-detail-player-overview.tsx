@@ -140,11 +140,11 @@ function feedbackStatusLabel(count: number): string {
 }
 
 function PlayInfoPanel({ playerMeta }: { playerMeta: GameDetailPlayerMeta }) {
-  const { playInfo, phaseDescription } = playerMeta;
+  const { playInfo } = playerMeta;
   const hasPlayTime = playInfo.playTimeOptions.some((option) => option.active);
   const hasDevice = playInfo.deviceOptions.some((option) => option.active);
   const hasPlayMethod = playInfo.playMethodOptions.some((option) => option.active);
-  const hasContent = phaseDescription || hasPlayTime || hasDevice || hasPlayMethod;
+  const hasContent = hasPlayTime || hasDevice || hasPlayMethod;
 
   if (!hasContent) {
     return null;
@@ -152,10 +152,6 @@ function PlayInfoPanel({ playerMeta }: { playerMeta: GameDetailPlayerMeta }) {
 
   return (
     <>
-      {phaseDescription ? (
-        <p className="mt-3 text-sm leading-relaxed text-zinc-400">{phaseDescription}</p>
-      ) : null}
-
       <div className="mt-3">
         <p className="text-xs text-zinc-500">想定時間</p>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -257,8 +253,7 @@ export function GameDetailPlayerOverview({
   );
 
   const showPlayInfoCard = Boolean(
-    playerMeta.phaseDescription ||
-      playerMeta.playInfo.playTimeOptions.some((option) => option.active) ||
+    playerMeta.playInfo.playTimeOptions.some((option) => option.active) ||
       playerMeta.playInfo.deviceOptions.some((option) => option.active) ||
       playerMeta.playInfo.playMethodOptions.some((option) => option.active),
   );
