@@ -9,7 +9,6 @@ import type {
   PlayerOptionChip,
 } from "@/lib/game-detail-player-meta";
 import type { PublicationDisplay } from "@/lib/game-play-destinations";
-import { WATCH_BUTTON_OFF, WATCH_BUTTON_ON } from "@/lib/watch-ui-labels";
 
 const INTRO_COLLAPSE_THRESHOLD = 200;
 
@@ -188,17 +187,16 @@ function PlayInfoPanel({ playerMeta }: { playerMeta: GameDetailPlayerMeta }) {
 }
 
 function PublicationPanel({ publication }: { publication: PublicationDisplay }) {
-  const summary =
-    publication.labels.length === 1
-      ? `${publication.labels[0]}で公開されています。`
-      : `${publication.labels.join("、")}で公開されています。`;
-
   return (
-    <div className="mt-3 space-y-2">
-      <p className="text-sm leading-relaxed text-zinc-300">{summary}</p>
-      <p className="text-xs leading-relaxed text-zinc-500">
-        「プレイする」から移動できます。
-      </p>
+    <div className="mt-3 flex flex-wrap gap-1.5">
+      {publication.labels.map((label) => (
+        <span
+          key={label}
+          className="inline-flex items-center rounded-md border border-zinc-700/80 bg-zinc-800/50 px-2.5 py-1 text-xs text-zinc-400"
+        >
+          {label}
+        </span>
+      ))}
     </div>
   );
 }
@@ -211,13 +209,9 @@ function PublicationPanel({ publication }: { publication: PublicationDisplay }) 
 function RecentActivityPanel({
   activity,
   focusNotes,
-  watching,
-  onWatch,
 }: {
   activity: GameDetailOverviewActivity;
   focusNotes: string | null;
-  watching: boolean;
-  onWatch?: () => void;
 }) {
   return (
     <>
@@ -238,22 +232,6 @@ function RecentActivityPanel({
           {focusNotes}
         </p>
       ) : null}
-
-      {onWatch ? (
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={onWatch}
-            className={`inline-flex items-center rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
-              watching
-                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
-                : "border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-white"
-            }`}
-          >
-            {watching ? WATCH_BUTTON_ON : WATCH_BUTTON_OFF}
-          </button>
-        </div>
-      ) : null}
     </>
   );
 }
@@ -264,8 +242,6 @@ type GameDetailPlayerOverviewProps = {
   playerMeta: GameDetailPlayerMeta;
   activity: GameDetailOverviewActivity;
   publication: PublicationDisplay | null;
-  watching: boolean;
-  onWatch?: () => void;
 };
 
 export function GameDetailPlayerOverview({
@@ -274,8 +250,6 @@ export function GameDetailPlayerOverview({
   playerMeta,
   activity,
   publication,
-  watching,
-  onWatch,
 }: GameDetailPlayerOverviewProps) {
   const introText = resolveIntroText(game.introduction, heroLead);
   const displayFeatures = game.features.filter(
@@ -302,8 +276,6 @@ export function GameDetailPlayerOverview({
           <RecentActivityPanel
             activity={activity}
             focusNotes={playerMeta.focusNotes}
-            watching={watching}
-            onWatch={onWatch}
           />
         </OverviewCard>
       </div>

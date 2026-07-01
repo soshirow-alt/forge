@@ -108,8 +108,6 @@ export const GameDetailOverviewV0Tab = forwardRef<
   gameId?: string;
   heroLead?: string;
   publication?: PublicationDisplay | null;
-  watching?: boolean;
-  onWatch?: () => void;
 }
 >(function GameDetailOverviewV0Tab(
   {
@@ -128,8 +126,6 @@ export const GameDetailOverviewV0Tab = forwardRef<
   gameId,
   heroLead,
   publication = null,
-  watching = false,
-  onWatch,
 },
   ref,
 ) {
@@ -254,8 +250,6 @@ export const GameDetailOverviewV0Tab = forwardRef<
         playerMeta={playerMeta}
         activity={overviewActivity}
         publication={publication}
-        watching={watching}
-        onWatch={onWatch}
       />
     );
   }

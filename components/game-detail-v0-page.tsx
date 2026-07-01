@@ -57,9 +57,6 @@ import {
 import {
   WATCH_BUTTON_OFF,
   WATCH_BUTTON_ON,
-  WATCH_FIRST_HINT,
-  hasSeenWatchFirstHint,
-  markWatchFirstHintSeen,
 } from "@/lib/watch-ui-labels";
 import { useProjectOverviewV0 } from "@/hooks/use-project-overview-v0";
 import { formatDevlogPublishedAt } from "@/hooks/use-game-devlogs-v0";
@@ -243,7 +240,6 @@ function GameDetailV0PageBody({ id }: { id: string }) {
 
   const [mockWatching, setMockWatching] = useState(game.watching);
   const [mockSaved, setMockSaved] = useState(game.saved);
-  const [watchHint, setWatchHint] = useState<string | null>(null);
   const [played, setPlayed] = useState(false);
   const voiceLayerRef = useRef<GameDetailRealVoiceHandle>(null);
   const {
@@ -369,12 +365,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   const handleWatchToggle = useCallback(() => {
     handleProtectedAction(() => {
       if (isRealProject) {
-        void toggleWatch().then((started) => {
-          if (started && !hasSeenWatchFirstHint()) {
-            markWatchFirstHintSeen();
-            setWatchHint(WATCH_FIRST_HINT);
-          }
-        });
+        void toggleWatch();
         return;
       }
       setMockWatching((value) => !value);
@@ -597,12 +588,6 @@ function GameDetailV0PageBody({ id }: { id: string }) {
             ) : null}
           </div>
 
-          {watchHint ? (
-            <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm leading-relaxed text-emerald-100/90">
-              {watchHint}
-            </p>
-          ) : null}
-
           {isRealProject && !isOwnerPreview ? (
             <GameChangeCheckSection
               gameId={resolvedId}
@@ -657,8 +642,6 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                   : null
               }
               publication={overviewPublication}
-              watching={watching}
-              onWatch={handleWatchToggle}
               onFeedback={handleFeedback}
               feedbackCtaLabel={
                 hydrated && !isLoggedIn
@@ -735,20 +718,10 @@ function GameDetailV0PageBody({ id }: { id: string }) {
             </Link>
           </section>
 
-          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-            <h2 className="text-sm font-semibold text-white">関連タグ</h2>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {game.relatedTags.map((tag) => (
-                <Link
-                  key={tag}
-                  href={`/search?q=${encodeURIComponent(tag)}`}
-                  className="rounded-full border border-zinc-700 px-3 py-1 text-xs text-zinc-400 transition-colors hover:border-violet-500/40 hover:text-violet-200"
-                >
-                  {tag}
-                </Link>
-              ))}
-            </div>
-          </section>
+          {/*
+            Phase B+ 候補: 右サイドバーに「類似の作品」カードを置く余地。
+            関連タグはヒーロー上部と重複するため表示しない。
+          */}
 
           {game.relatedGames.length > 0 ? (
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
