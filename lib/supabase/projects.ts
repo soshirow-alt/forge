@@ -230,6 +230,7 @@ export async function updateProjectDetailsInDb(
       supabase.from("projects").update(payload).eq("id", id).select("*").single(),
     {
       title: data.title,
+      ...(data.description !== undefined ? { description: data.description.trim() } : {}),
       genre,
       genres,
       phase: data.phase,

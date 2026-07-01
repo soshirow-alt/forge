@@ -24,6 +24,7 @@ export function buildProjectEditFormDataFromGame(game: Game): ProjectEditFormDat
 
   return {
     title: game.title,
+    description: game.description,
     genres: sanitizeProjectGenresForSave(
       pickForgeGenresFromList(resolveProjectGenres(game)),
     ),

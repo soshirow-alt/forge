@@ -26,6 +26,8 @@ export type SubmitFormData = {
 
 export type ProjectEditFormData = {
   title: string;
+  /** ヒーロー・一覧用の短い説明 */
+  description?: string;
   genres: string[];
   phase: string;
   playUrl: string;

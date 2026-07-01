@@ -212,8 +212,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
           devlogCount={devlogCount}
           initialOpenFeedback={openFeedbackPanel}
           onOpenNewVersionDevlog={() => setDevlogModalOpen(true)}
-          onEditProject={() => setEditModalOpen(true)}
-          onEditDistribution={() => setDistributionLinksModalOpen(true)}
+          onEditThumbnail={() => setEditModalOpen(true)}
         />
       </div>
 
