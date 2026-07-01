@@ -11,12 +11,13 @@ import { DevlogComposeModal } from "@/components/devlog-compose-modal";
 import { ProjectDistributionLinksModal } from "@/components/project-distribution-links-modal";
 import { ProjectEditModal } from "@/components/project-edit-modal";
 import { GameDetailPlayerPreview } from "@/components/game-detail-player-preview";
-import { StudioNurtureRail } from "@/components/studio-nurture-rail";
+import { StudioTabContextPanel } from "@/components/studio-tab-context-panel";
 import { StudioProjectToolbar } from "@/components/studio-project-toolbar";
 import { useGames } from "@/components/games-provider";
 import { useOwnedProjectFeedback } from "@/hooks/use-owned-project-feedback";
 import { useOwnedProjectVoiceSignals } from "@/hooks/use-owned-project-voice-signals";
 import { PROJECT_STUDIO_FEEDBACK_SECTION_ID, projectStudioPath } from "@/lib/project-nurture-links";
+import type { GameDetailTab } from "@/lib/game-detail-tabs";
 import { useProjectTestPlay } from "@/hooks/use-project-test-play";
 import {
   buildProjectGrowthSnapshot,
@@ -72,6 +73,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   }, [hydrated, user, game, isOwner, projectId, router]);
 
   const [openFeedbackPanel, setOpenFeedbackPanel] = useState(false);
+  const [activeTab, setActiveTab] = useState<GameDetailTab>("overview");
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [distributionLinksModalOpen, setDistributionLinksModalOpen] = useState(false);
   const [devlogModalOpen, setDevlogModalOpen] = useState(false);
@@ -106,6 +108,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
     function syncFromHash() {
       if (window.location.hash === `#${PROJECT_STUDIO_FEEDBACK_SECTION_ID}`) {
         setOpenFeedbackPanel(true);
+        setActiveTab("voices");
       }
     }
 
@@ -189,10 +192,16 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
         />
 
         <div className="mt-5 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <GameDetailPlayerPreview projectId={projectId} onTestPlay={handleTestPlay} />
-
-          <StudioNurtureRail
+          <GameDetailPlayerPreview
             projectId={projectId}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            onTestPlay={handleTestPlay}
+          />
+
+          <StudioTabContextPanel
+            projectId={projectId}
+            activeTab={activeTab}
             game={game}
             growth={growthSnapshot}
             feedbackEntries={projectFeedback}

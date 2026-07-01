@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { GameDetailHeroGallery } from "@/components/game-detail-hero-gallery";
 import { GameDetailOverviewV0Tab } from "@/components/game-detail-overview-v0-tab";
 import { GameDetailPhaseBadge } from "@/components/game-detail-phase-badge";
@@ -32,6 +32,8 @@ function TagPill({ children }: { children: React.ReactNode }) {
 
 type GameDetailPlayerPreviewProps = {
   projectId: string;
+  activeTab: GameDetailTab;
+  onTabChange: (tab: GameDetailTab) => void;
   onTestPlay?: () => void;
 };
 
@@ -41,11 +43,12 @@ type GameDetailPlayerPreviewProps = {
  */
 export function GameDetailPlayerPreview({
   projectId,
+  activeTab,
+  onTabChange,
   onTestPlay,
 }: GameDetailPlayerPreviewProps) {
   const { getSubmittedGameById } = useGames();
   const submittedGame = getSubmittedGameById(projectId);
-  const [activeTab, setActiveTab] = useState<GameDetailTab>("overview");
 
   const displayGame = useMemo(
     () => (submittedGame ? gameToDetailV0(submittedGame) : null),
@@ -114,7 +117,7 @@ export function GameDetailPlayerPreview({
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => onTabChange(tab.id)}
               className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                 activeTab === tab.id
                   ? "border-violet-500 text-violet-200"
