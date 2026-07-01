@@ -44,8 +44,10 @@ const primaryButtonClassName =
 const secondaryButtonClassName =
   "inline-flex w-full items-center justify-center gap-2 rounded-lg border border-orange-500/30 bg-orange-500/10 px-4 py-2.5 text-sm font-medium text-orange-200 transition-colors hover:border-orange-500/50 hover:bg-orange-500/15";
 
-const panelButtonClassName =
-  "inline-flex w-full items-center gap-2 rounded-lg border border-zinc-800/70 bg-zinc-900/50 px-3 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-900/80 hover:text-zinc-100";
+const menuRowClassName =
+  "flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-800/50 hover:text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-orange-500/50";
+
+const menuHintClassName = "px-2 text-[11px] leading-relaxed text-zinc-600";
 
 const SECTION_CONTENT_HEADINGS: Record<GameDetailTab, string> = {
   overview: "公開ページを編集",
@@ -57,16 +59,14 @@ function StudioEditPaneShell({ children }: { children: ReactNode }) {
   return (
     <aside
       aria-label="Studio編集ペイン"
-      className="w-full shrink-0 xl:sticky xl:top-6 xl:self-start"
+      className="mt-8 w-full shrink-0 border-t border-zinc-800/60 pt-8 xl:mt-0 xl:w-[360px] xl:self-stretch xl:border-t-0 xl:border-l xl:border-zinc-800/80 xl:bg-zinc-900/70 xl:pt-6 xl:pl-6 xl:-mr-8 xl:pr-8 xl:min-h-[calc(100dvh-6rem)] xl:sticky xl:top-6"
     >
-      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/55 px-4 py-4 shadow-sm shadow-black/20 ring-1 ring-inset ring-zinc-800/40">
-        <div className="space-y-4">{children}</div>
-      </div>
+      <div className="space-y-5">{children}</div>
     </aside>
   );
 }
 
-function PanelBlock({
+function EditMenuGroup({
   title,
   children,
 }: {
@@ -74,23 +74,19 @@ function PanelBlock({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-zinc-800/45 bg-zinc-950/30 p-4">
+    <div className="space-y-1 border-t border-zinc-800/35 pt-4 first:border-t-0 first:pt-0">
       {title ? (
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{title}</h3>
+        <h3 className="mb-1.5 px-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+          {title}
+        </h3>
       ) : null}
-      <div className={title ? "mt-3 space-y-2" : "space-y-2"}>{children}</div>
-    </section>
+      {children}
+    </div>
   );
 }
 
-function HintList({ items }: { items: string[] }) {
-  return (
-    <ul className="list-inside list-disc text-xs leading-relaxed text-zinc-600">
-      {items.map((item) => (
-        <li key={item}>{item}</li>
-      ))}
-    </ul>
-  );
+function HintLine({ children }: { children: ReactNode }) {
+  return <p className={menuHintClassName}>{children}</p>;
 }
 
 export type StudioTabContextPanelProps = {
@@ -208,74 +204,68 @@ export function StudioTabContextPanel({
       />
     ) : (
       <>
-        <PanelBlock>
-          <button type="button" onClick={onEditProject} className={panelButtonClassName}>
+        <EditMenuGroup>
+          <button type="button" onClick={onEditProject} className={menuRowClassName}>
             <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
             作品情報を編集
           </button>
-          <HintList
-            items={["タイトル", "1行説明", "ジャンル", "特徴タグ", "フェーズ", "サムネイル"]}
-          />
-        </PanelBlock>
+          <HintLine>タイトル · 1行説明 · ジャンル · 特徴タグ · フェーズ · サムネイル</HintLine>
+        </EditMenuGroup>
 
-        <PanelBlock>
+        <EditMenuGroup>
           <button
             type="button"
             onClick={() => setIntroEditOpen(true)}
-            className={panelButtonClassName}
+            className={menuRowClassName}
           >
             <Sparkles className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
             作品紹介を編集
           </button>
-          <HintList items={["作品紹介"]} />
-        </PanelBlock>
+          <HintLine>作品紹介</HintLine>
+        </EditMenuGroup>
 
-        <PanelBlock>
-          <button type="button" onClick={onEditDistribution} className={panelButtonClassName}>
+        <EditMenuGroup>
+          <button type="button" onClick={onEditDistribution} className={menuRowClassName}>
             <Link2 className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
             プレイ情報・公開先を編集
           </button>
-          <HintList items={["想定時間", "対応端末", "遊び方", "公開先URL"]} />
-        </PanelBlock>
+          <HintLine>想定時間 · 対応端末 · 遊び方 · 公開先URL</HintLine>
+        </EditMenuGroup>
 
-        <PanelBlock title="公開設定">
-          <div className="flex items-center justify-between rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3 py-2">
-            <span className="text-xs text-zinc-500">公開状態</span>
-            <span className="text-sm font-medium text-zinc-200">{visibilityLabel}</span>
+        <EditMenuGroup title="公開設定">
+          <div className="flex items-center justify-between px-2 py-1.5 text-sm">
+            <span className="text-zinc-500">公開状態</span>
+            <span className="font-medium text-zinc-200">{visibilityLabel}</span>
           </div>
-          <p className="text-xs text-zinc-600">切り替えは「作品情報を編集」から行えます。</p>
-        </PanelBlock>
+          <HintLine>切り替えは「作品情報を編集」から</HintLine>
+        </EditMenuGroup>
 
-        <PanelBlock title="共有">
+        <EditMenuGroup title="共有">
           <Link
             href={gamePlayHref(projectId)}
             target="_blank"
             rel="noopener noreferrer"
-            className={panelButtonClassName}
+            className={menuRowClassName}
           >
             <ExternalLink className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
             公開ページを見る
           </Link>
-          <button
-            type="button"
-            onClick={() => setShareModalOpen(true)}
-            className={panelButtonClassName}
-          >
+          <button type="button" onClick={() => setShareModalOpen(true)} className={menuRowClassName}>
             <Copy className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
             作品リンクをコピー
           </button>
-        </PanelBlock>
+        </EditMenuGroup>
       </>
     );
   } else if (activeSection === "devlog") {
     sectionContent = (
       <>
-        <PanelBlock>
+        <EditMenuGroup>
           <button
             type="button"
             onClick={handleTestPlay}
             disabled={!hasPlayUrl}
-            className={`${panelButtonClassName} disabled:cursor-not-allowed disabled:opacity-50`}
+            className={`${menuRowClassName} disabled:cursor-not-allowed disabled:opacity-50`}
           >
             <Play className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
             テストプレイ
@@ -284,39 +274,41 @@ export function StudioTabContextPanel({
             <FileText className="size-4 shrink-0" aria-hidden="true" />
             新verの開発ログを書く
           </button>
-        </PanelBlock>
+        </EditMenuGroup>
 
-        <PanelBlock title="最新の開発ログ">
+        <EditMenuGroup title="最新の開発ログ">
           {latestDevlog ? (
-            <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3 py-2.5">
+            <div className="space-y-1 px-2 py-1">
               <p className="text-sm font-medium text-zinc-200">{latestDevlog.title}</p>
-              <p className="mt-1 text-xs text-zinc-500">
+              <p className="text-xs text-zinc-500">
                 {formatDevlogPublishedAt(latestDevlog.date)}
                 {latestDevlog.publishedVersion ? ` · ${latestDevlog.publishedVersion}` : ""}
               </p>
-              <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-zinc-400">
+              <p className="line-clamp-3 text-xs leading-relaxed text-zinc-400">
                 {latestDevlog.content}
               </p>
             </div>
           ) : (
-            <p className="text-xs leading-relaxed text-zinc-500">
+            <p className="px-2 text-xs leading-relaxed text-zinc-500">
               開発ログはまだありません。「新verの開発ログを書く」から最初の更新を記録できます。
             </p>
           )}
-        </PanelBlock>
+        </EditMenuGroup>
 
-        <ProjectReleaseStudioPanel
-          projectId={projectId}
-          devlogCount={devlogCount}
-          playableVersion={versionKey}
-          embedded
-        />
+        <EditMenuGroup>
+          <ProjectReleaseStudioPanel
+            projectId={projectId}
+            devlogCount={devlogCount}
+            playableVersion={versionKey}
+            embedded
+          />
+        </EditMenuGroup>
       </>
     );
   } else {
     sectionContent = (
       <>
-        <PanelBlock>
+        <EditMenuGroup>
           <button
             type="button"
             onClick={handleReadFeedback}
@@ -331,15 +323,15 @@ export function StudioTabContextPanel({
               </span>
             ) : null}
           </button>
-          <p className="text-center text-xs text-zinc-600">
+          <p className="px-2 text-center text-xs text-zinc-600">
             {hasFeedback
               ? `かんたん ${quickFbCount} · 詳しい ${detailedFbCount}`
               : "このverのFBはまだありません"}
           </p>
-        </PanelBlock>
+        </EditMenuGroup>
 
         {showFeedbackPanel ? (
-          <div className="max-h-[24rem] overflow-y-auto rounded-xl border border-zinc-800/45 bg-zinc-950/25">
+          <div className="max-h-[24rem] overflow-y-auto border-t border-zinc-800/35 pt-3">
             <StudioPlayerFeedbackPanel
               gameId={game.id}
               playableVersion={versionKey}
@@ -350,13 +342,13 @@ export function StudioTabContextPanel({
             />
           </div>
         ) : hasFeedback ? (
-          <button type="button" onClick={handleReadFeedback} className={panelButtonClassName}>
+          <button type="button" onClick={handleReadFeedback} className={menuRowClassName}>
             届いたFBを読む
           </button>
         ) : null}
 
-        <PanelBlock title="次に直すこと">
-          <p className="text-xs leading-relaxed text-zinc-600">
+        <EditMenuGroup title="次に直すこと">
+          <p className="px-2 text-xs leading-relaxed text-zinc-600">
             {hasUnreadVoice
               ? "未確認のフィードバックがあります。確認後、次に直すことを整理できます。"
               : "確認した内容から、次に直すことを整理します。"}
@@ -369,7 +361,7 @@ export function StudioTabContextPanel({
             embedded
             hideHeading
           />
-        </PanelBlock>
+        </EditMenuGroup>
       </>
     );
   }
@@ -385,7 +377,7 @@ export function StudioTabContextPanel({
         />
 
         {introEditOpen && activeSection === "overview" ? null : (
-          <p className="text-xs font-medium text-zinc-500">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
             {SECTION_CONTENT_HEADINGS[activeSection]}
           </p>
         )}

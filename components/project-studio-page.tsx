@@ -160,39 +160,39 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
 
   return (
     <StudioShell activeNav="mypage">
-      <div className="mx-auto max-w-7xl">
-        <header className="border-b border-zinc-800/80 pb-3">
-          <Link
-            href="/studio"
-            className="text-sm text-zinc-500 transition-colors hover:text-violet-400"
-          >
-            ← Studio ホーム
-          </Link>
-          <p className="mt-2 text-sm text-zinc-400">Studio編集</p>
-          <p className="mt-0.5 text-xs text-zinc-500">
-            {visibilityLabel} · v{growthSnapshot.playableVersion}
-          </p>
-        </header>
+      <DevlogComposeModal
+        projectId={projectId}
+        playableVersion={growthSnapshot.playableVersion}
+        open={devlogModalOpen}
+        onClose={() => setDevlogModalOpen(false)}
+      />
+      <ProjectEditModal
+        projectId={projectId}
+        open={editModalOpen}
+        onClose={closeEditModal}
+      />
+      <ProjectDistributionLinksModal
+        projectId={projectId}
+        open={distributionLinksModalOpen}
+        onClose={() => setDistributionLinksModalOpen(false)}
+      />
 
-        <DevlogComposeModal
-          projectId={projectId}
-          playableVersion={growthSnapshot.playableVersion}
-          open={devlogModalOpen}
-          onClose={() => setDevlogModalOpen(false)}
-        />
-        <ProjectEditModal
-          projectId={projectId}
-          open={editModalOpen}
-          onClose={closeEditModal}
-        />
-        <ProjectDistributionLinksModal
-          projectId={projectId}
-          open={distributionLinksModalOpen}
-          onClose={() => setDistributionLinksModalOpen(false)}
-        />
+      <div className="flex flex-col xl:flex-row xl:items-start">
+        <div className="min-w-0 flex-1 xl:pr-10">
+          <header className="border-b border-zinc-800/80 pb-3">
+            <Link
+              href="/studio"
+              className="text-sm text-zinc-500 transition-colors hover:text-violet-400"
+            >
+              ← Studio ホーム
+            </Link>
+            <p className="mt-2 text-sm text-zinc-400">Studio編集</p>
+            <p className="mt-0.5 text-xs text-zinc-500">
+              {visibilityLabel} · v{growthSnapshot.playableVersion}
+            </p>
+          </header>
 
-        <div className="mt-5 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px] xl:gap-8">
-          <div className="min-w-0">
+          <div className="mt-5 max-w-5xl">
             <GameDetailPlayerPreview
               projectId={projectId}
               activeTab={activeSection}
@@ -200,49 +200,49 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
               onTestPlay={handleTestPlay}
             />
           </div>
+        </div>
 
-          <StudioTabContextPanel
+        <StudioTabContextPanel
+          projectId={projectId}
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+          game={game}
+          growth={growthSnapshot}
+          feedbackEntries={projectFeedback}
+          devlogCount={devlogCount}
+          initialOpenFeedback={openFeedbackPanel}
+          onOpenNewVersionDevlog={() => setDevlogModalOpen(true)}
+          onEditProject={() => setEditModalOpen(true)}
+          onEditDistribution={() => setDistributionLinksModalOpen(true)}
+        />
+      </div>
+
+      {SHOW_LEGACY_STUDIO_UI ? (
+        <>
+          <StudioProjectToolbar
             projectId={projectId}
-            activeSection={activeSection}
-            onSectionChange={setActiveSection}
-            game={game}
-            growth={growthSnapshot}
-            feedbackEntries={projectFeedback}
-            devlogCount={devlogCount}
-            initialOpenFeedback={openFeedbackPanel}
             onOpenNewVersionDevlog={() => setDevlogModalOpen(true)}
             onEditProject={() => setEditModalOpen(true)}
             onEditDistribution={() => setDistributionLinksModalOpen(true)}
           />
-        </div>
 
-        {SHOW_LEGACY_STUDIO_UI ? (
-          <>
-            <StudioProjectToolbar
-              projectId={projectId}
-              onOpenNewVersionDevlog={() => setDevlogModalOpen(true)}
-              onEditProject={() => setEditModalOpen(true)}
-              onEditDistribution={() => setDistributionLinksModalOpen(true)}
+          <div className="mt-6">
+            <StudioImprovementLoop
+              game={game}
+              growth={growthSnapshot}
+              feedbackEntries={projectFeedback}
+              detailPanelId={PROJECT_STUDIO_FEEDBACK_SECTION_ID}
+              initialOpenFeedback={openFeedbackPanel}
             />
+          </div>
 
-            <div className="mt-6">
-              <StudioImprovementLoop
-                game={game}
-                growth={growthSnapshot}
-                feedbackEntries={projectFeedback}
-                detailPanelId={PROJECT_STUDIO_FEEDBACK_SECTION_ID}
-                initialOpenFeedback={openFeedbackPanel}
-              />
-            </div>
-
-            <ProjectReleaseStudioPanel
-              projectId={game.id}
-              devlogCount={devlogCount}
-              playableVersion={growthSnapshot.playableVersion}
-            />
-          </>
-        ) : null}
-      </div>
+          <ProjectReleaseStudioPanel
+            projectId={game.id}
+            devlogCount={devlogCount}
+            playableVersion={growthSnapshot.playableVersion}
+          />
+        </>
+      ) : null}
     </StudioShell>
   );
 }

@@ -4,6 +4,10 @@
 
 ---
 
+- **Studio Phase B3 Preview 2.2** — 右ペインを固定インスペクター化（左カラムのみ header border、flex 分割、全高 bg + border-l）。内側カードを操作行メニューに弱体化。DB 変更なし
+
+---
+
 - **Studio Phase B3 Preview 2.1** — 右ペインを単一パネル面（`rounded-2xl` + `bg-zinc-900/55` + 全周 border）に変更。左との `gap-8` で境界干渉を解消。内側カードはネスト調整。DB 変更なし
 
 ---

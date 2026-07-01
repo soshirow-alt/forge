@@ -23,7 +23,7 @@ export function StudioEditSectionSwitcher({
       <div
         role="tablist"
         aria-label="編集する場所"
-        className="mt-2 grid grid-cols-3 gap-1 rounded-lg border border-zinc-700/80 bg-zinc-950/90 p-1"
+        className="mt-2 grid grid-cols-3 gap-1 rounded-lg bg-zinc-950/50 p-1 ring-1 ring-inset ring-zinc-800/60"
       >
         {STUDIO_EDIT_SECTIONS.map((section) => {
           const selected = activeSection === section.id;
