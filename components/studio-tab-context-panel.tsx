@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { GamePlayDestinationModal } from "@/components/game-play-destination-modal";
+import { StudioOverviewIntroductionEditPanel } from "@/components/studio-overview-introduction-edit-panel";
 import { ProjectShareLinkModal } from "@/components/project-share-link-modal";
 import { ProjectReleaseStudioPanel } from "@/components/project-release-studio-panel";
 import { StudioPlayerFeedbackPanel } from "@/components/studio-improvement-loop";
@@ -53,9 +54,11 @@ const TAB_PANEL_HEADINGS: Record<GameDetailTab, string> = {
 
 function PanelShell({
   activeTab,
+  hideHeading = false,
   children,
 }: {
   activeTab: GameDetailTab;
+  hideHeading?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -63,7 +66,9 @@ function PanelShell({
       aria-label={TAB_PANEL_HEADINGS[activeTab]}
       className="w-full shrink-0 space-y-3 xl:w-[320px]"
     >
-      <p className="text-xs font-medium text-zinc-500">{TAB_PANEL_HEADINGS[activeTab]}</p>
+      {hideHeading ? null : (
+        <p className="text-xs font-medium text-zinc-500">{TAB_PANEL_HEADINGS[activeTab]}</p>
+      )}
       {children}
     </aside>
   );
@@ -124,6 +129,7 @@ export function StudioTabContextPanel({
   const { getDevlogsByProject } = useGames();
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [feedbackExpanded, setFeedbackExpanded] = useState(initialOpenFeedback);
+  const [introEditOpen, setIntroEditOpen] = useState(false);
 
   const {
     playDestinations,
@@ -164,6 +170,12 @@ export function StudioTabContextPanel({
   }, [markRead]);
 
   useEffect(() => {
+    if (activeTab !== "overview") {
+      setIntroEditOpen(false);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
     if (activeTab === "voices" && (initialOpenFeedback || hasFeedback)) {
       setFeedbackExpanded(true);
     }
@@ -190,60 +202,74 @@ export function StudioTabContextPanel({
       <>
         {playModal}
         {shareModal}
-        <PanelShell activeTab={activeTab}>
-          <PanelBlock>
-            <button type="button" onClick={onEditProject} className={panelButtonClassName}>
-              <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-              作品情報を編集
-            </button>
-            <HintList
-              items={["タイトル", "1行説明", "ジャンル", "特徴タグ", "フェーズ", "サムネイル"]}
+        <PanelShell activeTab={activeTab} hideHeading={introEditOpen}>
+          {introEditOpen ? (
+            <StudioOverviewIntroductionEditPanel
+              projectId={projectId}
+              onCancel={() => setIntroEditOpen(false)}
+              onSaved={() => setIntroEditOpen(false)}
             />
-          </PanelBlock>
+          ) : (
+            <>
+              <PanelBlock>
+                <button type="button" onClick={onEditProject} className={panelButtonClassName}>
+                  <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+                  作品情報を編集
+                </button>
+                <HintList
+                  items={["タイトル", "1行説明", "ジャンル", "特徴タグ", "フェーズ", "サムネイル"]}
+                />
+              </PanelBlock>
 
-          <PanelBlock>
-            <button type="button" onClick={onEditProject} className={panelButtonClassName}>
-              <Sparkles className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-              作品紹介を編集
-            </button>
-            <HintList items={["作品紹介", "作品の特徴"]} />
-          </PanelBlock>
+              <PanelBlock>
+                <button
+                  type="button"
+                  onClick={() => setIntroEditOpen(true)}
+                  className={panelButtonClassName}
+                >
+                  <Sparkles className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+                  作品紹介を編集
+                </button>
+                <HintList items={["作品紹介"]} />
+              </PanelBlock>
 
-          <PanelBlock>
-            <button type="button" onClick={onEditDistribution} className={panelButtonClassName}>
-              <Link2 className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-              プレイ情報・公開先を編集
-            </button>
-            <HintList items={["想定時間", "対応端末", "遊び方", "公開先URL"]} />
-          </PanelBlock>
+              <PanelBlock>
+                <button type="button" onClick={onEditDistribution} className={panelButtonClassName}>
+                  <Link2 className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+                  プレイ情報・公開先を編集
+                </button>
+                <HintList items={["想定時間", "対応端末", "遊び方", "公開先URL"]} />
+              </PanelBlock>
 
-          <PanelBlock title="公開設定">
-            <div className="flex items-center justify-between rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3 py-2">
-              <span className="text-xs text-zinc-500">公開状態</span>
-              <span className="text-sm font-medium text-zinc-200">{visibilityLabel}</span>
-            </div>
-            <p className="text-xs text-zinc-600">切り替えは「作品情報を編集」から行えます。</p>
-          </PanelBlock>
+              <PanelBlock title="公開設定">
+                <div className="flex items-center justify-between rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3 py-2">
+                  <span className="text-xs text-zinc-500">公開状態</span>
+                  <span className="text-sm font-medium text-zinc-200">{visibilityLabel}</span>
+                </div>
+                <p className="text-xs text-zinc-600">切り替えは「作品情報を編集」から行えます。</p>
+              </PanelBlock>
 
-          <PanelBlock title="共有">
-            <Link
-              href={gamePlayHref(projectId)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={panelButtonClassName}
-            >
-              <ExternalLink className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-              公開ページを見る
-            </Link>
-            <button
-              type="button"
-              onClick={() => setShareModalOpen(true)}
-              className={panelButtonClassName}
-            >
-              <Copy className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-              作品リンクをコピー
-            </button>
-          </PanelBlock>
+              <PanelBlock title="共有">
+                <Link
+                  href={gamePlayHref(projectId)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={panelButtonClassName}
+                >
+                  <ExternalLink className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+                  公開ページを見る
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setShareModalOpen(true)}
+                  className={panelButtonClassName}
+                >
+                  <Copy className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+                  作品リンクをコピー
+                </button>
+              </PanelBlock>
+            </>
+          )}
         </PanelShell>
       </>
     );

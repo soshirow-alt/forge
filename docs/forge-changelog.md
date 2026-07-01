@@ -4,6 +4,10 @@
 
 ---
 
+- **Studio Phase B3 Preview** — 概要タブ右パネルで「作品紹介を編集」のみ右パネル内編集（`StudioOverviewIntroductionEditPanel`）。既存 `updateProjectOverview` / `GameDetailOverviewV0Tab` 再利用。保存後は games state 更新で左プレビューへ即反映。他項目は既存モーダルのまま。DB 変更なし
+
+---
+
 - **Studio Phase B2.7（タブ連動右パネル Preview）** — 左プレビューのタブ状態に応じて右側を切り替え（`StudioTabContextPanel`）。概要＝公開ページ編集、開発ログ＝ログ・更新・正式版、FB＝確認・次に直すこと。既存モーダル/パネル再利用。左に編集ボタン追加なし。DB 変更なし
 
 ---
