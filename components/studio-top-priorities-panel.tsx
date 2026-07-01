@@ -55,12 +55,14 @@ export function StudioTopPrioritiesPanel({
   feedbackEntries,
   voiceRead,
   embedded = false,
+  hideHeading = false,
 }: {
   projectId: string;
   growth: ProjectGrowthSnapshot;
   feedbackEntries: ProjectFeedbackEntry[];
   voiceRead: boolean;
   embedded?: boolean;
+  hideHeading?: boolean;
 }) {
   const { getOwnerVoiceAggregates } = useGames();
   const [loaded, setLoaded] = useState(false);
@@ -110,23 +112,33 @@ export function StudioTopPrioritiesPanel({
 
   return (
     <section
-      className={`rounded-xl border border-orange-500/25 bg-zinc-900/40 p-4 sm:p-5 ring-1 ring-orange-500/10 ${
-        embedded ? "" : "mt-8"
+      className={`${
+        hideHeading
+          ? ""
+          : `rounded-xl border border-orange-500/25 bg-zinc-900/40 p-4 sm:p-5 ring-1 ring-orange-500/10 ${
+              embedded ? "" : "mt-8"
+            }`
       }`}
-      aria-labelledby="studio-top-priorities-heading"
+      aria-labelledby={hideHeading ? undefined : "studio-top-priorities-heading"}
       data-forge-p0="top-priorities"
     >
-      <h2
-        id="studio-top-priorities-heading"
-        className="text-sm font-semibold text-zinc-200"
-      >
-        次に直すこと
-      </h2>
+      {hideHeading ? null : (
+        <h2
+          id="studio-top-priorities-heading"
+          className="text-sm font-semibold text-zinc-200"
+        >
+          次に直すこと
+        </h2>
+      )}
 
       {!loaded ? (
-        <p className="mt-3 text-sm text-zinc-600">集計を読み込み中…</p>
+        <p className={`text-sm text-zinc-600 ${hideHeading ? "" : "mt-3"}`}>集計を読み込み中…</p>
       ) : priorities.length === 0 ? (
-        <div className="mt-3 rounded-lg border border-dashed border-zinc-800 bg-zinc-950/30 px-4 py-3">
+        <div
+          className={`rounded-lg border border-dashed border-zinc-800 bg-zinc-950/30 px-4 py-3 ${
+            hideHeading ? "" : "mt-3"
+          }`}
+        >
           <p className="text-sm font-medium text-zinc-400">まだ次に直すことはありません</p>
           <p className="mt-1 text-xs leading-relaxed text-zinc-500">
             プレイヤーのフィードバックが届くと、ここに優先候補が最大3件表示されます。

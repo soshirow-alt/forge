@@ -4,6 +4,10 @@
 
 ---
 
+- **Studio Phase B2.5** — 上部ヘッダー軽量化（作品名削除・Studio編集+版表示）。左メイン見出しを「公開ページの見え方」に。テストプレイを右Rail「今日やること」へ移動、左はプレイヤーCTA見た目のみ。Rail見出しを今日やること/編集する/公開・共有/正式版に再編。DB 変更なし
+
+---
+
 - **Studio Phase B2** — `StudioNurtureRail` 新設。公開ページプレビュー（左）+ 育成・運用 Rail（右）の2カラム化。既存モーダル・FB/優先度/正式ver を Rail へ再配置。旧 Toolbar / ImprovementLoop / ReleasePanel は `SHOW_LEGACY_STUDIO_UI` で非表示（ロールバック可）。DB 変更なし
 
 ---

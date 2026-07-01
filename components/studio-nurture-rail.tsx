@@ -9,12 +9,15 @@ import {
   Link2,
   MessageSquare,
   Pencil,
+  Play,
 } from "lucide-react";
+import { GamePlayDestinationModal } from "@/components/game-play-destination-modal";
 import { ProjectShareLinkModal } from "@/components/project-share-link-modal";
 import { ProjectReleaseStudioPanel } from "@/components/project-release-studio-panel";
 import { StudioPlayerFeedbackPanel } from "@/components/studio-improvement-loop";
 import { StudioTopPrioritiesPanel } from "@/components/studio-top-priorities-panel";
 import { useNurtureVoiceRead } from "@/hooks/use-nurture-feedback-read";
+import { useProjectTestPlay } from "@/hooks/use-project-test-play";
 import type { Game } from "@/lib/mock-games";
 import {
   PROJECT_STUDIO_FEEDBACK_SECTION_ID,
@@ -52,6 +55,12 @@ function RailSection({
   );
 }
 
+function RailSubheading({ children }: { children: ReactNode }) {
+  return (
+    <p className="text-xs font-medium text-zinc-400">{children}</p>
+  );
+}
+
 export type StudioNurtureRailProps = {
   projectId: string;
   game: Game;
@@ -77,6 +86,15 @@ export function StudioNurtureRail({
 }: StudioNurtureRailProps) {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [feedbackExpanded, setFeedbackExpanded] = useState(initialOpenFeedback);
+
+  const {
+    playDestinations,
+    playDestinationPickerOpen,
+    setPlayDestinationPickerOpen,
+    hasPlayUrl,
+    handleTestPlay,
+    handlePlayDestinationSelect,
+  } = useProjectTestPlay(projectId);
 
   const versionKey = growth.playableVersion;
   const { isRead: voiceRead, markRead } = useNurtureVoiceRead(game.id, versionKey);
@@ -113,10 +131,27 @@ export function StudioNurtureRail({
   return (
     <>
       <aside
-        aria-label="Studio 育成・運用"
-        className="w-full shrink-0 space-y-4 xl:w-[320px]"
+        aria-label="Studio 操作"
+        className="w-full shrink-0 space-y-3 xl:w-[320px]"
       >
-        <RailSection title="育成">
+        {playDestinationPickerOpen ? (
+          <GamePlayDestinationModal
+            destinations={playDestinations}
+            onSelect={handlePlayDestinationSelect}
+            onClose={() => setPlayDestinationPickerOpen(false)}
+          />
+        ) : null}
+
+        <RailSection title="今日やること">
+          <button
+            type="button"
+            onClick={handleTestPlay}
+            disabled={!hasPlayUrl}
+            className={`${railButtonClassName} disabled:cursor-not-allowed disabled:opacity-50`}
+          >
+            <Play className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+            テストプレイ
+          </button>
           <button type="button" onClick={onOpenNewVersionDevlog} className={primaryButtonClassName}>
             <FileText className="size-4 shrink-0" aria-hidden="true" />
             新verの開発ログを書く
@@ -128,44 +163,52 @@ export function StudioNurtureRail({
             className={`${secondaryButtonClassName} disabled:cursor-not-allowed disabled:opacity-50`}
           >
             <MessageSquare className="size-4 shrink-0" aria-hidden="true" />
-            届いたFBを読む
+            新しいFBを確認する
             {hasUnreadVoice ? (
               <span className="rounded-full bg-orange-500/90 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-950">
                 未確認
               </span>
             ) : null}
           </button>
-          {hasFeedback ? (
-            <p className="text-center text-xs text-zinc-600">
-              かんたん {quickFbCount} · 詳しい {detailedFbCount}
+          <p className="text-xs leading-relaxed text-zinc-600">
+            プレイヤーから届いたフィードバックを確認します。
+            {hasFeedback
+              ? `（かんたん ${quickFbCount} · 詳しい ${detailedFbCount}）`
+              : "（このverのFBはまだありません）"}
+          </p>
+
+          {showWorkPanels && feedbackExpanded ? (
+            <div className="max-h-[28rem] overflow-y-auto rounded-lg border border-zinc-800/80">
+              <StudioPlayerFeedbackPanel
+                gameId={game.id}
+                playableVersion={versionKey}
+                feedbackEntries={feedbackEntries}
+                quickFbCount={quickFbCount}
+                detailPanelId={PROJECT_STUDIO_FEEDBACK_SECTION_ID}
+                emphasize={initialOpenFeedback}
+              />
+            </div>
+          ) : null}
+
+          <div className="border-t border-zinc-800/80 pt-3">
+            <RailSubheading>次に直すこと</RailSubheading>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-600">
+              確認したFBや未対応項目から、次に取り組むことを整理します。
             </p>
-          ) : (
-            <p className="text-center text-xs text-zinc-600">このverのFBはまだありません</p>
-          )}
+            <div className="mt-2">
+              <StudioTopPrioritiesPanel
+                projectId={projectId}
+                growth={growth}
+                feedbackEntries={feedbackEntries}
+                voiceRead={voiceRead}
+                embedded
+                hideHeading
+              />
+            </div>
+          </div>
         </RailSection>
 
-        <StudioTopPrioritiesPanel
-          projectId={projectId}
-          growth={growth}
-          feedbackEntries={feedbackEntries}
-          voiceRead={voiceRead}
-          embedded
-        />
-
-        {showWorkPanels && feedbackExpanded ? (
-          <div className="max-h-[32rem] overflow-y-auto rounded-xl">
-            <StudioPlayerFeedbackPanel
-              gameId={game.id}
-              playableVersion={versionKey}
-              feedbackEntries={feedbackEntries}
-              quickFbCount={quickFbCount}
-              detailPanelId={PROJECT_STUDIO_FEEDBACK_SECTION_ID}
-              emphasize={initialOpenFeedback}
-            />
-          </div>
-        ) : null}
-
-        <RailSection title="作品の編集">
+        <RailSection title="編集する">
           <button type="button" onClick={onEditProject} className={railButtonClassName}>
             <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
             作品情報を編集
@@ -181,9 +224,6 @@ export function StudioNurtureRail({
             <span className="text-xs text-zinc-500">公開状態</span>
             <span className="text-sm font-medium text-zinc-200">{visibilityLabel}</span>
           </div>
-          <p className="text-xs leading-relaxed text-zinc-600">
-            公開/非公開の切り替えは「作品情報を編集」から行えます。
-          </p>
           <Link
             href={gamePlayHref(projectId)}
             target="_blank"

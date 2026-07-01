@@ -16,10 +16,10 @@ import { StudioProjectToolbar } from "@/components/studio-project-toolbar";
 import { useGames } from "@/components/games-provider";
 import { useOwnedProjectFeedback } from "@/hooks/use-owned-project-feedback";
 import { useOwnedProjectVoiceSignals } from "@/hooks/use-owned-project-voice-signals";
-import { PROJECT_STUDIO_FEEDBACK_SECTION_ID, projectStudioPath } from "@/lib/project-nurture-links";
+import { PROJECT_STUDIO_FEEDBACK_SECTION_ID, projectStudioPath, gamePlayHref } from "@/lib/project-nurture-links";
+import { useProjectTestPlay } from "@/hooks/use-project-test-play";
 import {
   buildProjectGrowthSnapshot,
-  filterDeepFeedbackForVersion,
   groupFeedbackByProject,
 } from "@/lib/project-growth-state";
 import { resolveVoiceSignalForGame } from "@/lib/project-voice-nurture";
@@ -151,47 +151,34 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
       getDevlogsByProject,
     );
 
-  const quickFbCount = growthSnapshot.totalVoiceResponseCount;
-  const detailedFbCount = filterDeepFeedbackForVersion(
-    projectFeedback,
-    growthSnapshot.playableVersion,
-  ).length;
-
   const devlogCount = getDevlogsByProject(game.id).length;
   const visibilityLabel = getVisibilityBadgeLabel(game.visibility);
+  const { handleTestPlay } = useProjectTestPlay(projectId);
 
   return (
     <StudioShell activeNav="mypage">
       <div className="mx-auto max-w-7xl">
-        <Link
-          href="/studio"
-          className="cursor-pointer text-sm text-zinc-500 transition-colors hover:text-violet-400"
-        >
-          ← Studio ホーム
-        </Link>
-
-        <header className="mt-4 flex flex-col gap-2 border-b border-zinc-800/80 pb-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-orange-400/90">作品 Studio</p>
-            <h1 className="mt-1 truncate text-xl font-bold tracking-tight text-zinc-50 sm:text-2xl">
-              {game.title}
-            </h1>
-            <p className="mt-1 text-sm text-zinc-500">
+        <header className="flex flex-col gap-2 border-b border-zinc-800/80 pb-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <Link
+              href="/studio"
+              className="text-sm text-zinc-500 transition-colors hover:text-violet-400"
+            >
+              ← Studio ホーム
+            </Link>
+            <p className="mt-2 text-sm text-zinc-400">Studio編集</p>
+            <p className="mt-0.5 text-xs text-zinc-500">
               {visibilityLabel} · v{growthSnapshot.playableVersion}
             </p>
           </div>
-          {SHOW_LEGACY_STUDIO_UI ? (
-            <dl className="flex shrink-0 flex-wrap gap-3 sm:gap-4">
-              <div className="min-w-[88px] rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-center">
-                <dt className="text-[10px] text-zinc-500">かんたんFB</dt>
-                <dd className="text-lg font-semibold text-zinc-100">{quickFbCount}</dd>
-              </div>
-              <div className="min-w-[88px] rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-center">
-                <dt className="text-[10px] text-zinc-500">詳しいFB</dt>
-                <dd className="text-lg font-semibold text-zinc-100">{detailedFbCount}</dd>
-              </div>
-            </dl>
-          ) : null}
+          <Link
+            href={gamePlayHref(projectId)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 transition-colors hover:border-violet-500/40 hover:text-violet-300"
+          >
+            公開ページを見る
+          </Link>
         </header>
 
         <DevlogComposeModal
@@ -211,8 +198,8 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
           onClose={() => setDistributionLinksModalOpen(false)}
         />
 
-        <div className="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <GameDetailPlayerPreview projectId={projectId} />
+        <div className="mt-5 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <GameDetailPlayerPreview projectId={projectId} onTestPlay={handleTestPlay} />
 
           <StudioNurtureRail
             projectId={projectId}

@@ -114,7 +114,7 @@ export function ProjectReleaseStudioPanel({
               : "text-base font-semibold tracking-tight text-zinc-100"
           }
         >
-          {embedded ? "正式ver" : "正式verとして宣言する"}
+          {embedded ? "正式版" : "正式verとして宣言する"}
         </h2>
         <span className="rounded-full border border-zinc-700 bg-zinc-950/60 px-3 py-1 text-xs font-medium text-zinc-200">
           {RELEASE_STATUS_LABELS[releaseStatus]}
