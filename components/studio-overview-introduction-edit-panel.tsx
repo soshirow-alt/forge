@@ -88,7 +88,10 @@ export function StudioOverviewIntroductionEditPanel({
   }
 
   return (
-    <section aria-label="作品紹介を編集" className="space-y-3 border-t border-zinc-800/35 pt-4">
+    <section
+      aria-label="作品紹介を編集"
+      className="rounded-xl border border-zinc-800/50 bg-zinc-950/25 p-4"
+    >
       <button
         type="button"
         onClick={onCancel}

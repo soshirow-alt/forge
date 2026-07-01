@@ -177,8 +177,8 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
         onClose={() => setDistributionLinksModalOpen(false)}
       />
 
-      <div className="flex flex-col xl:flex-row xl:items-start">
-        <div className="min-w-0 flex-1 xl:pr-10">
+      <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:gap-8">
+        <div className="min-w-0 flex-1">
           <header className="border-b border-zinc-800/80 pb-3">
             <Link
               href="/studio"
@@ -192,7 +192,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
             </p>
           </header>
 
-          <div className="mt-5 max-w-5xl">
+          <div className="mt-5">
             <GameDetailPlayerPreview
               projectId={projectId}
               activeTab={activeSection}
