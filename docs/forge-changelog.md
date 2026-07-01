@@ -4,6 +4,10 @@
 
 ---
 
+- **Studio Phase B3 Preview 2** — 右ペイン上部に「編集する場所」セグメント（概要/開発ログ/フィードバック）を追加し主導線化。`activeSection` を左右で共有同期。右ペインに背景差・左境界・sticky。作品紹介の右パネル内編集は維持。DB 変更なし
+
+---
+
 - **Studio Phase B3 Preview** — 概要タブ右パネルで「作品紹介を編集」のみ右パネル内編集（`StudioOverviewIntroductionEditPanel`）。既存 `updateProjectOverview` / `GameDetailOverviewV0Tab` 再利用。保存後は games state 更新で左プレビューへ即反映。他項目は既存モーダルのまま。DB 変更なし
 
 ---

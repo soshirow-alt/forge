@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { GamePlayDestinationModal } from "@/components/game-play-destination-modal";
+import { StudioEditSectionSwitcher } from "@/components/studio-edit-section-switcher";
 import { StudioOverviewIntroductionEditPanel } from "@/components/studio-overview-introduction-edit-panel";
 import { ProjectShareLinkModal } from "@/components/project-share-link-modal";
 import { ProjectReleaseStudioPanel } from "@/components/project-release-studio-panel";
@@ -44,32 +45,21 @@ const secondaryButtonClassName =
   "inline-flex w-full items-center justify-center gap-2 rounded-lg border border-orange-500/30 bg-orange-500/10 px-4 py-2.5 text-sm font-medium text-orange-200 transition-colors hover:border-orange-500/50 hover:bg-orange-500/15";
 
 const panelButtonClassName =
-  "inline-flex w-full items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950/60 px-3 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-900/80 hover:text-zinc-100";
+  "inline-flex w-full items-center gap-2 rounded-lg border border-zinc-800/70 bg-zinc-900/50 px-3 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-900/80 hover:text-zinc-100";
 
-const TAB_PANEL_HEADINGS: Record<GameDetailTab, string> = {
+const SECTION_CONTENT_HEADINGS: Record<GameDetailTab, string> = {
   overview: "公開ページを編集",
   devlog: "開発ログ・更新",
   voices: "フィードバック確認",
 };
 
-function PanelShell({
-  activeTab,
-  hideHeading = false,
-  children,
-}: {
-  activeTab: GameDetailTab;
-  hideHeading?: boolean;
-  children: ReactNode;
-}) {
+function StudioEditPaneShell({ children }: { children: ReactNode }) {
   return (
     <aside
-      aria-label={TAB_PANEL_HEADINGS[activeTab]}
-      className="w-full shrink-0 space-y-3 xl:w-[320px]"
+      aria-label="Studio編集ペイン"
+      className="w-full shrink-0 xl:sticky xl:top-6 xl:w-[320px] xl:self-start xl:border-l xl:border-zinc-800/90 xl:bg-zinc-950/45 xl:pl-5 xl:py-2"
     >
-      {hideHeading ? null : (
-        <p className="text-xs font-medium text-zinc-500">{TAB_PANEL_HEADINGS[activeTab]}</p>
-      )}
-      {children}
+      <div className="space-y-3">{children}</div>
     </aside>
   );
 }
@@ -82,7 +72,7 @@ function PanelBlock({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-zinc-800/80 bg-zinc-900/35 p-4">
+    <section className="rounded-xl border border-zinc-800/60 bg-zinc-900/25 p-4">
       {title ? (
         <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{title}</h3>
       ) : null}
@@ -103,7 +93,8 @@ function HintList({ items }: { items: string[] }) {
 
 export type StudioTabContextPanelProps = {
   projectId: string;
-  activeTab: GameDetailTab;
+  activeSection: GameDetailTab;
+  onSectionChange: (section: GameDetailTab) => void;
   game: Game;
   growth: ProjectGrowthSnapshot;
   feedbackEntries: ProjectFeedbackEntry[];
@@ -116,7 +107,8 @@ export type StudioTabContextPanelProps = {
 
 export function StudioTabContextPanel({
   projectId,
-  activeTab,
+  activeSection,
+  onSectionChange,
   game,
   growth,
   feedbackEntries,
@@ -170,16 +162,16 @@ export function StudioTabContextPanel({
   }, [markRead]);
 
   useEffect(() => {
-    if (activeTab !== "overview") {
+    if (activeSection !== "overview") {
       setIntroEditOpen(false);
     }
-  }, [activeTab]);
+  }, [activeSection]);
 
   useEffect(() => {
-    if (activeTab === "voices" && (initialOpenFeedback || hasFeedback)) {
+    if (activeSection === "voices" && (initialOpenFeedback || hasFeedback)) {
       setFeedbackExpanded(true);
     }
-  }, [activeTab, initialOpenFeedback, hasFeedback]);
+  }, [activeSection, initialOpenFeedback, hasFeedback]);
 
   const playModal = playDestinationPickerOpen ? (
     <GamePlayDestinationModal
@@ -197,145 +189,131 @@ export function StudioTabContextPanel({
     />
   );
 
-  if (activeTab === "overview") {
-    return (
-      <>
-        {playModal}
-        {shareModal}
-        <PanelShell activeTab={activeTab} hideHeading={introEditOpen}>
-          {introEditOpen ? (
-            <StudioOverviewIntroductionEditPanel
-              projectId={projectId}
-              onCancel={() => setIntroEditOpen(false)}
-              onSaved={() => setIntroEditOpen(false)}
-            />
-          ) : (
-            <>
-              <PanelBlock>
-                <button type="button" onClick={onEditProject} className={panelButtonClassName}>
-                  <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                  作品情報を編集
-                </button>
-                <HintList
-                  items={["タイトル", "1行説明", "ジャンル", "特徴タグ", "フェーズ", "サムネイル"]}
-                />
-              </PanelBlock>
-
-              <PanelBlock>
-                <button
-                  type="button"
-                  onClick={() => setIntroEditOpen(true)}
-                  className={panelButtonClassName}
-                >
-                  <Sparkles className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                  作品紹介を編集
-                </button>
-                <HintList items={["作品紹介"]} />
-              </PanelBlock>
-
-              <PanelBlock>
-                <button type="button" onClick={onEditDistribution} className={panelButtonClassName}>
-                  <Link2 className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                  プレイ情報・公開先を編集
-                </button>
-                <HintList items={["想定時間", "対応端末", "遊び方", "公開先URL"]} />
-              </PanelBlock>
-
-              <PanelBlock title="公開設定">
-                <div className="flex items-center justify-between rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3 py-2">
-                  <span className="text-xs text-zinc-500">公開状態</span>
-                  <span className="text-sm font-medium text-zinc-200">{visibilityLabel}</span>
-                </div>
-                <p className="text-xs text-zinc-600">切り替えは「作品情報を編集」から行えます。</p>
-              </PanelBlock>
-
-              <PanelBlock title="共有">
-                <Link
-                  href={gamePlayHref(projectId)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={panelButtonClassName}
-                >
-                  <ExternalLink className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                  公開ページを見る
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setShareModalOpen(true)}
-                  className={panelButtonClassName}
-                >
-                  <Copy className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                  作品リンクをコピー
-                </button>
-              </PanelBlock>
-            </>
-          )}
-        </PanelShell>
-      </>
-    );
-  }
-
-  if (activeTab === "devlog") {
-    return (
-      <>
-        {playModal}
-        <PanelShell activeTab={activeTab}>
-          <PanelBlock>
-            <button
-              type="button"
-              onClick={handleTestPlay}
-              disabled={!hasPlayUrl}
-              className={`${panelButtonClassName} disabled:cursor-not-allowed disabled:opacity-50`}
-            >
-              <Play className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-              テストプレイ
-            </button>
-            <button type="button" onClick={onOpenNewVersionDevlog} className={primaryButtonClassName}>
-              <FileText className="size-4 shrink-0" aria-hidden="true" />
-              新verの開発ログを書く
-            </button>
-          </PanelBlock>
-
-          <PanelBlock title="最新の開発ログ">
-            {latestDevlog ? (
-              <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3 py-2.5">
-                <p className="text-sm font-medium text-zinc-200">{latestDevlog.title}</p>
-                <p className="mt-1 text-xs text-zinc-500">
-                  {formatDevlogPublishedAt(latestDevlog.date)}
-                  {latestDevlog.publishedVersion
-                    ? ` · ${latestDevlog.publishedVersion}`
-                    : ""}
-                </p>
-                <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-zinc-400">
-                  {latestDevlog.content}
-                </p>
-              </div>
-            ) : (
-              <p className="text-xs leading-relaxed text-zinc-500">
-                開発ログはまだありません。「新verの開発ログを書く」から最初の更新を記録できます。
-              </p>
-            )}
-          </PanelBlock>
-
-          <ProjectReleaseStudioPanel
-            projectId={projectId}
-            devlogCount={devlogCount}
-            playableVersion={versionKey}
-            embedded
-          />
-        </PanelShell>
-      </>
-    );
-  }
-
-  // voices tab
   const showFeedbackPanel =
-    getStudioVisualMode(growth) !== "pre_cycle" && hasFeedback && feedbackExpanded;
+    activeSection === "voices" &&
+    getStudioVisualMode(growth) !== "pre_cycle" &&
+    hasFeedback &&
+    feedbackExpanded;
 
-  return (
-    <>
-      {shareModal}
-      <PanelShell activeTab={activeTab}>
+  let sectionContent: ReactNode;
+
+  if (activeSection === "overview") {
+    sectionContent = introEditOpen ? (
+      <StudioOverviewIntroductionEditPanel
+        projectId={projectId}
+        onCancel={() => setIntroEditOpen(false)}
+        onSaved={() => setIntroEditOpen(false)}
+      />
+    ) : (
+      <>
+        <PanelBlock>
+          <button type="button" onClick={onEditProject} className={panelButtonClassName}>
+            <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+            作品情報を編集
+          </button>
+          <HintList
+            items={["タイトル", "1行説明", "ジャンル", "特徴タグ", "フェーズ", "サムネイル"]}
+          />
+        </PanelBlock>
+
+        <PanelBlock>
+          <button
+            type="button"
+            onClick={() => setIntroEditOpen(true)}
+            className={panelButtonClassName}
+          >
+            <Sparkles className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+            作品紹介を編集
+          </button>
+          <HintList items={["作品紹介"]} />
+        </PanelBlock>
+
+        <PanelBlock>
+          <button type="button" onClick={onEditDistribution} className={panelButtonClassName}>
+            <Link2 className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+            プレイ情報・公開先を編集
+          </button>
+          <HintList items={["想定時間", "対応端末", "遊び方", "公開先URL"]} />
+        </PanelBlock>
+
+        <PanelBlock title="公開設定">
+          <div className="flex items-center justify-between rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3 py-2">
+            <span className="text-xs text-zinc-500">公開状態</span>
+            <span className="text-sm font-medium text-zinc-200">{visibilityLabel}</span>
+          </div>
+          <p className="text-xs text-zinc-600">切り替えは「作品情報を編集」から行えます。</p>
+        </PanelBlock>
+
+        <PanelBlock title="共有">
+          <Link
+            href={gamePlayHref(projectId)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={panelButtonClassName}
+          >
+            <ExternalLink className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+            公開ページを見る
+          </Link>
+          <button
+            type="button"
+            onClick={() => setShareModalOpen(true)}
+            className={panelButtonClassName}
+          >
+            <Copy className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+            作品リンクをコピー
+          </button>
+        </PanelBlock>
+      </>
+    );
+  } else if (activeSection === "devlog") {
+    sectionContent = (
+      <>
+        <PanelBlock>
+          <button
+            type="button"
+            onClick={handleTestPlay}
+            disabled={!hasPlayUrl}
+            className={`${panelButtonClassName} disabled:cursor-not-allowed disabled:opacity-50`}
+          >
+            <Play className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+            テストプレイ
+          </button>
+          <button type="button" onClick={onOpenNewVersionDevlog} className={primaryButtonClassName}>
+            <FileText className="size-4 shrink-0" aria-hidden="true" />
+            新verの開発ログを書く
+          </button>
+        </PanelBlock>
+
+        <PanelBlock title="最新の開発ログ">
+          {latestDevlog ? (
+            <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3 py-2.5">
+              <p className="text-sm font-medium text-zinc-200">{latestDevlog.title}</p>
+              <p className="mt-1 text-xs text-zinc-500">
+                {formatDevlogPublishedAt(latestDevlog.date)}
+                {latestDevlog.publishedVersion ? ` · ${latestDevlog.publishedVersion}` : ""}
+              </p>
+              <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-zinc-400">
+                {latestDevlog.content}
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs leading-relaxed text-zinc-500">
+              開発ログはまだありません。「新verの開発ログを書く」から最初の更新を記録できます。
+            </p>
+          )}
+        </PanelBlock>
+
+        <ProjectReleaseStudioPanel
+          projectId={projectId}
+          devlogCount={devlogCount}
+          playableVersion={versionKey}
+          embedded
+        />
+      </>
+    );
+  } else {
+    sectionContent = (
+      <>
         <PanelBlock>
           <button
             type="button"
@@ -359,7 +337,7 @@ export function StudioTabContextPanel({
         </PanelBlock>
 
         {showFeedbackPanel ? (
-          <div className="max-h-[24rem] overflow-y-auto rounded-xl border border-zinc-800/80">
+          <div className="max-h-[24rem] overflow-y-auto rounded-xl border border-zinc-800/60">
             <StudioPlayerFeedbackPanel
               gameId={game.id}
               playableVersion={versionKey}
@@ -370,11 +348,7 @@ export function StudioTabContextPanel({
             />
           </div>
         ) : hasFeedback ? (
-          <button
-            type="button"
-            onClick={handleReadFeedback}
-            className={panelButtonClassName}
-          >
+          <button type="button" onClick={handleReadFeedback} className={panelButtonClassName}>
             届いたFBを読む
           </button>
         ) : null}
@@ -394,7 +368,28 @@ export function StudioTabContextPanel({
             hideHeading
           />
         </PanelBlock>
-      </PanelShell>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {playModal}
+      {shareModal}
+      <StudioEditPaneShell>
+        <StudioEditSectionSwitcher
+          activeSection={activeSection}
+          onSectionChange={onSectionChange}
+        />
+
+        {introEditOpen && activeSection === "overview" ? null : (
+          <p className="text-xs font-medium text-zinc-500">
+            {SECTION_CONTENT_HEADINGS[activeSection]}
+          </p>
+        )}
+
+        {sectionContent}
+      </StudioEditPaneShell>
     </>
   );
 }

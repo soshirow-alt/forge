@@ -73,7 +73,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   }, [hydrated, user, game, isOwner, projectId, router]);
 
   const [openFeedbackPanel, setOpenFeedbackPanel] = useState(false);
-  const [activeTab, setActiveTab] = useState<GameDetailTab>("overview");
+  const [activeSection, setActiveSection] = useState<GameDetailTab>("overview");
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [distributionLinksModalOpen, setDistributionLinksModalOpen] = useState(false);
   const [devlogModalOpen, setDevlogModalOpen] = useState(false);
@@ -108,7 +108,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
     function syncFromHash() {
       if (window.location.hash === `#${PROJECT_STUDIO_FEEDBACK_SECTION_ID}`) {
         setOpenFeedbackPanel(true);
-        setActiveTab("voices");
+        setActiveSection("voices");
       }
     }
 
@@ -191,17 +191,18 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
           onClose={() => setDistributionLinksModalOpen(false)}
         />
 
-        <div className="mt-5 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="mt-5 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-0">
           <GameDetailPlayerPreview
             projectId={projectId}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
+            activeTab={activeSection}
+            onTabChange={setActiveSection}
             onTestPlay={handleTestPlay}
           />
 
           <StudioTabContextPanel
             projectId={projectId}
-            activeTab={activeTab}
+            activeSection={activeSection}
+            onSectionChange={setActiveSection}
             game={game}
             growth={growthSnapshot}
             feedbackEntries={projectFeedback}
