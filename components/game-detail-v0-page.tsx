@@ -10,8 +10,7 @@ import {
   type GameDetailRealVoiceHandle,
 } from "@/components/game-detail-real-voice-layer";
 import { GameDetailHeroGallery } from "@/components/game-detail-hero-gallery";
-import { GameDetailHeroMeta } from "@/components/game-detail-hero-meta";
-import { GameGrowthStatusStrip } from "@/components/game-growth-status-strip";
+import { GameDetailPhaseBadge } from "@/components/game-detail-phase-badge";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -71,9 +70,7 @@ import {
   Bookmark,
   Check,
   Clock,
-  FileText,
   Heart,
-  MessageSquare,
   Play,
   Users,
 } from "lucide-react";
@@ -89,44 +86,6 @@ function TagPill({ children }: { children: React.ReactNode }) {
     <span className="rounded-md border border-zinc-700/80 bg-zinc-800/60 px-2.5 py-1 text-xs text-zinc-300">
       {children}
     </span>
-  );
-}
-
-function StatItem({
-  icon,
-  label,
-  value,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  onClick?: () => void;
-}) {
-  const content = (
-    <>
-      <span className="text-violet-400">{icon}</span>
-      <span>
-        <span className="text-zinc-500">{label}</span>{" "}
-        <span className="font-medium text-zinc-200">{value}</span>
-      </span>
-    </>
-  );
-
-  if (!onClick) {
-    return (
-      <div className="flex items-center gap-2 text-sm text-zinc-400">{content}</div>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex items-center gap-2 rounded-lg text-left text-sm text-zinc-400 transition-colors hover:text-violet-200"
-    >
-      {content}
-    </button>
   );
 }
 
@@ -192,33 +151,21 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     }
     return getGameDetailV0(id);
   }, [id, submittedGame]);
-  const { stats: publicStats, loaded: publicStatsLoaded } = useProjectPublicStats(
+  const { stats: publicStats } = useProjectPublicStats(
     isRealProject ? resolvedId : null,
   );
-  const showWitnessStat =
-    !isRealProject || (publicStatsLoaded && publicStats.witnessCount > 0);
-  const showFeedbackParticipantStat =
-    !isRealProject ||
-    (publicStatsLoaded && publicStats.feedbackParticipantCount > 0);
-  const voiceCountForStrip = isRealProject
+  const voiceCountForOverview = isRealProject
     ? publicStats.feedbackParticipantCount
     : game.voiceCount;
-  const hasDevlogForStrip = isRealProject
+  const hasDevlogForOverview = isRealProject
     ? Boolean(publicStats.latestDevlogAt)
     : Boolean(game.devlogUpdatedAgo && game.devlogUpdatedAgo !== "—");
-  const devlogStripLabel =
+  const devlogOverviewLabel =
     isRealProject && publicStats.latestDevlogAt
       ? formatDevlogPublishedAt(publicStats.latestDevlogAt)
-      : !isRealProject && hasDevlogForStrip
+      : !isRealProject && hasDevlogForOverview
         ? game.devlogUpdatedAgo
-        : "まだありません";
-  const devlogUpdatedLabel = hasDevlogForStrip
-    ? isRealProject && publicStats.latestDevlogAt
-      ? formatDevlogPublishedAt(publicStats.latestDevlogAt)
-      : game.devlogUpdatedAgo
-    : isRealProject
-      ? "—"
-      : game.devlogUpdatedAgo;
+        : "";
   const hasRealPlayUrl = Boolean(submittedGame?.playUrl?.trim());
   const playUnavailableOnPublic =
     hideV0Mock && isRealProject && !hasRealPlayUrl;
@@ -462,7 +409,23 @@ function GameDetailV0PageBody({ id }: { id: string }) {
       )}
 
       <div className="flex flex-col gap-8 xl:flex-row xl:items-start">
-        <div className="min-w-0 flex-1 space-y-6">
+        <div className="min-w-0 flex-1 space-y-5">
+          {isOwnerPreview ? (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-orange-500/25 bg-orange-500/5 px-3 py-2 text-xs">
+              <span className="text-orange-200/90">
+                Studioプレビュー中：プレイヤーに見えるページを確認しています
+              </span>
+              {ownerStudioHref ? (
+                <Link
+                  href={ownerStudioHref}
+                  className="shrink-0 font-medium text-orange-200 transition-colors hover:text-white"
+                >
+                  Studioで編集 →
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
+
           <section className="overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/30">
             <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
               <GameDetailHeroGallery images={game.galleryImages} />
@@ -473,9 +436,12 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                     <TagPill key={tag}>{tag}</TagPill>
                   ))}
                 </div>
-                <h1 className="mt-4 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                  {game.title}
-                </h1>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                    {game.title}
+                  </h1>
+                  {playerMeta ? <GameDetailPhaseBadge meta={playerMeta} /> : null}
+                </div>
                 {isRealProject && !isOwnerPreview ? (
                   <div className="mt-2">
                     <ContentReportButton
@@ -489,7 +455,6 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                   </div>
                 ) : null}
                 <p className="mt-2 text-sm leading-relaxed text-zinc-400">{game.lead}</p>
-                {playerMeta ? <GameDetailHeroMeta meta={playerMeta} /> : null}
                 <Link
                   href={`/creators/${game.developer.id}`}
                   className="mt-4 inline-flex items-center gap-2 text-sm text-zinc-300 transition-colors hover:text-violet-300"
@@ -499,91 +464,13 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                   </span>
                   {game.developer.name}
                 </Link>
-
-                <div className="mt-5 grid gap-2 sm:grid-cols-2">
-                  {showWitnessStat ? (
-                    <StatItem
-                      icon={<Users className="size-4" aria-hidden="true" />}
-                      label="見届け人"
-                      value={
-                        isRealProject
-                          ? publicStats.witnessCount.toLocaleString()
-                          : game.witnessCount.toLocaleString()
-                      }
-                    />
-                  ) : null}
-                  {showFeedbackParticipantStat ? (
-                    <StatItem
-                      icon={<MessageSquare className="size-4" aria-hidden="true" />}
-                      label={isRealProject ? "FBした人" : "フィードバック"}
-                      value={
-                        isRealProject
-                          ? publicStats.feedbackParticipantCount.toLocaleString()
-                          : game.voiceCount.toLocaleString()
-                      }
-                    />
-                  ) : null}
-                  <StatItem
-                    icon={<FileText className="size-4" aria-hidden="true" />}
-                    label="Devlog"
-                    value={devlogUpdatedLabel}
-                    onClick={() => setDetailTab("devlog")}
-                  />
-                  <StatItem
-                    icon={<Clock className="size-4" aria-hidden="true" />}
-                    label="最終更新"
-                    value={game.lastUpdated}
-                  />
-                </div>
+                <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-zinc-500">
+                  <Clock className="size-3.5 shrink-0" aria-hidden="true" />
+                  最終更新 {game.lastUpdated}
+                </p>
               </div>
             </div>
           </section>
-
-          {playerMeta ? (
-            <GameGrowthStatusStrip
-              meta={playerMeta}
-              lastUpdated={game.lastUpdated}
-              hasDevlog={hasDevlogForStrip}
-              devlogLabel={devlogStripLabel}
-              voiceCount={voiceCountForStrip}
-              onDevlogClick={() => setDetailTab("devlog")}
-              onVoicesClick={() => setDetailTab("voices")}
-            />
-          ) : null}
-
-          {externalLinkGame ? (
-            <GameExternalLinks
-              gameId={resolvedId}
-              playUrl={externalLinkGame.playUrl}
-              steamUrl={externalLinkGame.steamUrl}
-              itchUrl={externalLinkGame.itchUrl}
-              discordUrl={externalLinkGame.discordUrl}
-              xUrl={externalLinkGame.xUrl}
-              officialUrl={externalLinkGame.officialUrl}
-              youtubeUrl={externalLinkGame.youtubeUrl}
-              githubUrl={externalLinkGame.githubUrl}
-              tags={externalLinkGame.tags}
-            />
-          ) : null}
-
-          {isOwnerPreview ? (
-            <div className="rounded-xl border border-orange-500/25 bg-orange-500/5 px-4 py-3 sm:px-5">
-              <p className="text-sm font-medium text-orange-200">
-                プレイヤー向けページのプレビュー
-              </p>
-              <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-                公開中の見え方を確認しています。フォローなどプレイヤー向け操作は別アカウントで試してください。
-              </p>
-              {ownerStudioHref ? (
-                <Link
-                  href={ownerStudioHref}
-                  className="mt-3 inline-flex rounded-xl border border-zinc-700 bg-zinc-950/60 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-orange-500/40 hover:text-white"
-                >
-                  作品を更新する
-                </Link>
-              ) : null}
-            </div>
-          ) : null}
 
           <div className="flex flex-wrap gap-3">
             <button
@@ -690,6 +577,35 @@ function GameDetailV0PageBody({ id }: { id: string }) {
             <GameDetailOverviewV0Tab
               game={displayGame}
               playerMeta={playerMeta}
+              overviewActivity={
+                playerMeta
+                  ? {
+                      lastUpdated: game.lastUpdated,
+                      hasDevlog: hasDevlogForOverview,
+                      devlogLabel: devlogOverviewLabel,
+                      voiceCount: voiceCountForOverview,
+                    }
+                  : null
+              }
+              overviewLinks={
+                externalLinkGame ? (
+                  <GameExternalLinks
+                    gameId={resolvedId}
+                    playUrl={externalLinkGame.playUrl}
+                    steamUrl={externalLinkGame.steamUrl}
+                    itchUrl={externalLinkGame.itchUrl}
+                    discordUrl={externalLinkGame.discordUrl}
+                    xUrl={externalLinkGame.xUrl}
+                    officialUrl={externalLinkGame.officialUrl}
+                    youtubeUrl={externalLinkGame.youtubeUrl}
+                    githubUrl={externalLinkGame.githubUrl}
+                    tags={externalLinkGame.tags}
+                    compact
+                  />
+                ) : null
+              }
+              onOpenDevlog={() => setDetailTab("devlog")}
+              onOpenVoices={() => setDetailTab("voices")}
               onFeedback={handleFeedback}
               feedbackCtaLabel={
                 hydrated && !isLoggedIn

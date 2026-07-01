@@ -10,6 +10,12 @@ export type GameDetailPlayerMeta = {
   focusNotes: string | null;
 };
 
+/**
+ * 「いま見てほしいこと」の将来方針:
+ * 概要タブでの手入力項目ではなく、最新の開発ログまたは版公開時の問いから自動反映する。
+ * 現状は legacy の focusNotes（localStorage extras 等）のみ安全に表示する。
+ */
+
 export function resolveGameDetailPlayerMeta(
   game: Game | null | undefined,
 ): GameDetailPlayerMeta | null {

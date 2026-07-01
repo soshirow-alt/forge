@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, forwardRef, useImperativeHandle } from "react";
-import { Compass, ChevronDown, Plus, Sparkles, Trash2 } from "lucide-react";
+import { useEffect, useState, forwardRef, useImperativeHandle, type ReactNode } from "react";
+import { Compass, ChevronDown, ChevronRight, Plus, Sparkles, Trash2 } from "lucide-react";
 import type { GameDetailFeature, GameDetailV0 } from "@/lib/game-detail-v0-mock-data";
 import {
   MAX_PROJECT_OVERVIEW_FEATURES,
@@ -21,6 +21,13 @@ import {
   MAX_PROJECT_FEATURES,
 } from "@/lib/project-overview-v0-store";
 import type { GameDetailPlayerMeta } from "@/lib/game-detail-player-meta";
+
+export type GameDetailOverviewActivity = {
+  lastUpdated: string;
+  hasDevlog: boolean;
+  devlogLabel: string;
+  voiceCount: number;
+};
 
 function validateFeatureDrafts(
   features: GameDetailFeature[],
@@ -98,6 +105,11 @@ export const GameDetailOverviewV0Tab = forwardRef<
   editIntroduction?: string;
   /** プレイヤー向け概要タブのメタ情報（フェーズ・プレイ時間・対応環境など） */
   playerMeta?: GameDetailPlayerMeta | null;
+  /** プレイヤー向け — 開発ログ・声の状況など */
+  overviewActivity?: GameDetailOverviewActivity | null;
+  overviewLinks?: ReactNode;
+  onOpenDevlog?: () => void;
+  onOpenVoices?: () => void;
 }
 >(function GameDetailOverviewV0Tab(
   {
@@ -112,6 +124,10 @@ export const GameDetailOverviewV0Tab = forwardRef<
   feedbackCtaLabel = "フィードバックする",
   editIntroduction,
   playerMeta = null,
+  overviewActivity = null,
+  overviewLinks = null,
+  onOpenDevlog,
+  onOpenVoices,
 },
   ref,
 ) {
@@ -133,10 +149,11 @@ export const GameDetailOverviewV0Tab = forwardRef<
     );
   }, [game.id, game.introduction, game.features, editable, editIntroduction]);
 
+  const isPlayerOverview = !editable && Boolean(playerMeta);
   const introPreview =
-    introduction.length > 120 && !introExpanded
-      ? `${introduction.slice(0, 120)}…`
-      : introduction;
+    isPlayerOverview || introduction.length <= 120 || introExpanded
+      ? introduction
+      : `${introduction.slice(0, 120)}…`;
 
   const showVersionQuestions = !hideVersionQuestions;
   const visibleFeatures = features.filter(
@@ -148,13 +165,17 @@ export const GameDetailOverviewV0Tab = forwardRef<
     !hideFeatures && (editable || displayFeatures.length > 0);
   const showIntroSection =
     editable || introduction.trim().length > 0 || compactIntroduction;
-  const introHeading = !editable && playerMeta ? "どんなゲーム？" : "作品紹介";
-  const showFocusSection = !editable && Boolean(playerMeta?.focusNotes);
-  const showPhaseSection =
-    !editable && Boolean(playerMeta?.phaseLabel);
-  const showPlayMetaSection =
-    !editable &&
-    Boolean(playerMeta?.estimatedPlayTime || playerMeta?.environmentLabels.length);
+  const introHeading = isPlayerOverview ? "どんなゲーム？" : "作品紹介";
+  const showFocusSection = isPlayerOverview && Boolean(playerMeta?.focusNotes);
+  const showSupplementaryMeta =
+    isPlayerOverview &&
+    Boolean(
+      playerMeta?.phaseLabel ||
+        playerMeta?.estimatedPlayTime ||
+        playerMeta?.environmentLabels.length ||
+        overviewActivity?.lastUpdated,
+    );
+  const showActivitySection = isPlayerOverview && overviewActivity;
 
   function updateFeature(index: number, patch: Partial<GameDetailFeature>) {
     setFeatures((current) =>
@@ -263,7 +284,7 @@ export const GameDetailOverviewV0Tab = forwardRef<
           ) : (
             <>
               <p className="mt-3 text-sm leading-relaxed text-zinc-400">{introPreview}</p>
-              {introduction.length > 120 && (
+              {!isPlayerOverview && introduction.length > 120 && (
                 <button
                   type="button"
                   onClick={() => setIntroExpanded((value) => !value)}
@@ -392,52 +413,99 @@ export const GameDetailOverviewV0Tab = forwardRef<
         ) : null}
 
         {showFocusSection && playerMeta?.focusNotes ? (
-          <section className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-5 sm:p-6">
-            <h2 className="text-base font-semibold text-white">いま見てほしいところ</h2>
+          <section>
+            <h2 className="text-base font-semibold text-white">いま見てほしいこと</h2>
             <p className="mt-3 text-sm leading-relaxed text-zinc-300">
               {playerMeta.focusNotes}
             </p>
           </section>
         ) : null}
 
-        {showPhaseSection && playerMeta ? (
-          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
-            <h2 className="text-base font-semibold text-white">開発フェーズ</h2>
-            <p className="mt-3 text-sm font-medium text-orange-200/90">{playerMeta.phaseLabel}</p>
-            {playerMeta.phaseDescription ? (
-              <p className="mt-2 text-sm leading-relaxed text-zinc-400">
-                {playerMeta.phaseDescription}
-              </p>
-            ) : null}
+        {showSupplementaryMeta && playerMeta ? (
+          <section className="border-t border-zinc-800/80 pt-6">
+            <h2 className="text-sm font-medium text-zinc-400">この作品について</h2>
+            <div className="mt-3 space-y-2 text-sm leading-relaxed text-zinc-400">
+              {playerMeta.phaseLabel ? (
+                <p>
+                  <span className="font-medium text-orange-200/90">{playerMeta.phaseLabel}</span>
+                  {playerMeta.phaseDescription ? (
+                    <>
+                      <span className="text-zinc-500"> — </span>
+                      {playerMeta.phaseDescription}
+                    </>
+                  ) : null}
+                </p>
+              ) : null}
+              {playerMeta.estimatedPlayTime ? (
+                <p>
+                  <span className="text-zinc-500">想定プレイ時間：</span>
+                  {playerMeta.estimatedPlayTime}
+                </p>
+              ) : null}
+              {playerMeta.environmentLabels.length > 0 ? (
+                <p>
+                  <span className="text-zinc-500">対応環境：</span>
+                  {playerMeta.environmentLabels.join(" · ")}
+                </p>
+              ) : null}
+              {overviewActivity?.lastUpdated ? (
+                <p className="text-xs text-zinc-600">
+                  最終更新 {overviewActivity.lastUpdated}
+                </p>
+              ) : null}
+            </div>
           </section>
         ) : null}
 
-        {showPlayMetaSection && playerMeta ? (
-          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
-            <h2 className="text-base font-semibold text-white">プレイ情報</h2>
-            <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-              {playerMeta.estimatedPlayTime ? (
-                <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3 py-2.5">
-                  <dt className="text-[11px] font-medium text-zinc-600">想定プレイ時間</dt>
-                  <dd className="mt-0.5 text-sm text-zinc-200">{playerMeta.estimatedPlayTime}</dd>
-                </div>
-              ) : null}
-              {playerMeta.environmentLabels.length > 0 ? (
-                <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3 py-2.5 sm:col-span-2">
-                  <dt className="text-[11px] font-medium text-zinc-600">対応環境</dt>
-                  <dd className="mt-1.5 flex flex-wrap gap-1.5">
-                    {playerMeta.environmentLabels.map((label) => (
-                      <span
-                        key={label}
-                        className="rounded-md border border-zinc-700/70 bg-zinc-800/50 px-2 py-0.5 text-xs text-zinc-300"
-                      >
-                        {label}
-                      </span>
-                    ))}
-                  </dd>
-                </div>
-              ) : null}
-            </dl>
+        {isPlayerOverview && overviewLinks ? (
+          <section className="border-t border-zinc-800/80 pt-6">{overviewLinks}</section>
+        ) : null}
+
+        {showActivitySection && overviewActivity ? (
+          <section className="border-t border-zinc-800/80 pt-6">
+            <h2 className="text-sm font-medium text-zinc-400">いまの様子</h2>
+            <ul className="mt-3 space-y-2 text-sm text-zinc-400">
+              <li>
+                {overviewActivity.hasDevlog && onOpenDevlog ? (
+                  <button
+                    type="button"
+                    onClick={onOpenDevlog}
+                    className="inline-flex items-center gap-1 text-violet-400 transition-colors hover:text-violet-300"
+                  >
+                    開発ログを見る（{overviewActivity.devlogLabel}）
+                    <ChevronRight className="size-4" aria-hidden="true" />
+                  </button>
+                ) : (
+                  <span className="text-zinc-500">
+                    開発ログはまだありません。更新が記録されると開発ログタブに表示されます。
+                  </span>
+                )}
+              </li>
+              <li>
+                {overviewActivity.voiceCount > 0 ? (
+                  onOpenVoices ? (
+                    <button
+                      type="button"
+                      onClick={onOpenVoices}
+                      className="inline-flex items-center gap-1 text-violet-400 transition-colors hover:text-violet-300"
+                    >
+                      {overviewActivity.voiceCount.toLocaleString()}
+                      人のプレイヤーが声を届けています
+                      <ChevronRight className="size-4" aria-hidden="true" />
+                    </button>
+                  ) : (
+                    <span>
+                      {overviewActivity.voiceCount.toLocaleString()}
+                      人のプレイヤーが声を届けています
+                    </span>
+                  )
+                ) : (
+                  <span className="text-zinc-500">
+                    まだ声は少ない作品です。遊んで感じたことを届けると、開発者の次の改善に役立ちます。
+                  </span>
+                )}
+              </li>
+            </ul>
           </section>
         ) : null}
 
