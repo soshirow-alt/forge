@@ -24,11 +24,18 @@ function defaultAvatarForUser(userId: string): string {
 
 export function ProfileSelfV0Page() {
   const hideV0Mock = shouldHideV0MockContent();
-  const { user } = useAuth();
+  const { user, hydrated } = useAuth();
   const { getFollowedDevelopers, getWatchedGames } = useGames();
   const [profile, setProfile] = useState(profileSelfMock);
   const displayProfile = useMemo(() => {
-    if (!hideV0Mock || !user) {
+    if (!user) {
+      if (!hideV0Mock) {
+        return profile;
+      }
+      return null;
+    }
+
+    if (!hideV0Mock) {
       return profile;
     }
 
@@ -67,6 +74,9 @@ export function ProfileSelfV0Page() {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   function openEdit() {
+    if (!displayProfile) {
+      return;
+    }
     setDraft({
       displayName: displayProfile.displayName,
       bio: displayProfile.bio,
@@ -103,6 +113,22 @@ export function ProfileSelfV0Page() {
       hideV0Mock
         ? "表示を更新しました（確認用です。端末内の表示のみ変わります）。"
         : "表示を更新しました（確認用データです）。",
+    );
+  }
+
+  if (hideV0Mock && hydrated && !user) {
+    return (
+      <PlayerShell>
+        <p className="text-sm text-zinc-500">読み込み中…</p>
+      </PlayerShell>
+    );
+  }
+
+  if (!displayProfile) {
+    return (
+      <PlayerShell>
+        <p className="text-sm text-zinc-500">読み込み中…</p>
+      </PlayerShell>
     );
   }
 

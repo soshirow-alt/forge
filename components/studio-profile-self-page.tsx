@@ -20,7 +20,7 @@ import { Pencil, Sparkles } from "lucide-react";
 
 export function StudioProfileSelfPage() {
   const hideV0Mock = shouldHideV0MockContent();
-  const { user, updateDisplayName } = useAuth();
+  const { user, hydrated, updateDisplayName } = useAuth();
   const {
     getOwnedProjects,
     getDeveloperProfileByUserId,
@@ -30,7 +30,14 @@ export function StudioProfileSelfPage() {
   const developerProfile = user ? getDeveloperProfileByUserId(user.id) : undefined;
   const [profile, setProfile] = useState(studioDeveloperSelfProfile);
   const displayProfile = useMemo(() => {
-    if (!hideV0Mock || !user) {
+    if (!user) {
+      if (!hideV0Mock) {
+        return profile;
+      }
+      return null;
+    }
+
+    if (!hideV0Mock) {
       return profile;
     }
 
@@ -75,6 +82,9 @@ export function StudioProfileSelfPage() {
   const [saving, setSaving] = useState(false);
 
   function openEdit() {
+    if (!displayProfile) {
+      return;
+    }
     setDraft({
       displayName: displayProfile.displayName,
       bio: displayProfile.bio,
@@ -165,6 +175,22 @@ export function StudioProfileSelfPage() {
     }));
     setEditing(false);
     setSaveMessage("表示を更新しました（確認用データです）。");
+  }
+
+  if (hideV0Mock && hydrated && !user) {
+    return (
+      <StudioShell activeNav="profile">
+        <p className="text-sm text-zinc-500">読み込み中…</p>
+      </StudioShell>
+    );
+  }
+
+  if (!displayProfile) {
+    return (
+      <StudioShell activeNav="profile">
+        <p className="text-sm text-zinc-500">読み込み中…</p>
+      </StudioShell>
+    );
   }
 
   return (

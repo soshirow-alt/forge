@@ -4,6 +4,10 @@
 
 ---
 
+- **ログアウト時 mock フラッシュ修正・開発ログ右ペイン文言整理** — 本番Previewで `/mypage/profile`・`/studio/profile` ログアウト直後に mock「しゃねこ」が一瞬出ないよう、hideV0Mock 時の user null fallback を廃止（loading 表示）。Studio 開発ログ右ペインを「公開ログの確認 + 問い設定」に文言整理（「編集」表記を廃止、本文は読み取り専用のまま）。DB migration なし
+
+---
+
 - **新規投稿時の初回開発ログ自動作成** — `/studio/submit` で作品投稿時に `初回公開`（v0.1）の開発ログを1件自動作成。本文は投稿時の作品紹介。`insertProjectDevlog` 直接（通知・adoption matcher・playable_version 二重更新なし）。投稿前プレビューの開発ログタブに初回公開予定を表示。既存作品バックフィルなし。DB migration なし
 
 ---

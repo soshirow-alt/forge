@@ -91,13 +91,13 @@ export function StudioDevlogCurrentEditPanel({
   return (
     <>
       <StudioPanelEditShell
-        title="現在の開発ログを編集"
+        title={`${versionLabel} の記録と問い`}
         backLabel="← 開発ログに戻る"
         onCancel={onCancel}
         hideSave
       >
         <div>
-          <p className="text-xs font-medium text-zinc-500">このverで変えたこと</p>
+          <p className="text-xs font-medium text-zinc-500">公開ログ（読み取り専用）</p>
           {latestDevlog ? (
             <div className="mt-2 rounded-lg border border-zinc-800/60 bg-zinc-950/30 px-3 py-2.5">
               <p className="text-sm font-medium text-zinc-200">{latestDevlog.title}</p>
@@ -113,7 +113,7 @@ export function StudioDevlogCurrentEditPanel({
             </p>
           )}
           <p className="mt-2 text-[11px] leading-relaxed text-zinc-600">
-            公開済みの本文は直接書き換えません。追記や修正は新verの開発ログで記録してください。
+            公開済みの本文は変更できません。修正や追記は新verの開発ログで記録してください。
           </p>
           <button
             type="button"

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Image as ImageIcon, Pencil, Sparkles, Link2, Copy, ExternalLink, FileText } from "lucide-react";
+import { Image as ImageIcon, Pencil, Sparkles, Link2, Copy, ExternalLink, FileText, Eye } from "lucide-react";
 import { StudioEditSectionSwitcher } from "@/components/studio-edit-section-switcher";
 import { StudioOverviewBasicInfoEditPanel } from "@/components/studio-overview-basic-info-edit-panel";
 import { StudioOverviewGenresTagsEditPanel } from "@/components/studio-overview-genres-tags-edit-panel";
@@ -371,6 +371,11 @@ export function StudioTabContextPanel({
       const currentDevlogMeta = latestDevlog
         ? `${latestDevlog.publishedVersion ?? versionLabel} / ${formatDevlogPublishedAt(latestDevlog.date)}更新`
         : `${versionLabel} / 開発ログ未作成`;
+      const currentDevlogExcerpt = latestDevlog
+        ? latestDevlog.content.length > 100
+          ? `${latestDevlog.content.slice(0, 100)}…`
+          : latestDevlog.content
+        : null;
 
       sectionContent = (
         <>
@@ -384,18 +389,28 @@ export function StudioTabContextPanel({
             </button>
           </PanelBlock>
 
-          <PanelBlock title="現在の開発ログを編集">
-            <p className="text-sm font-medium text-zinc-200">{currentDevlogMeta}</p>
+          <PanelBlock title={`${versionLabel} の公開ログ`}>
+            {latestDevlog ? (
+              <>
+                <p className="text-sm font-medium text-zinc-200">{latestDevlog.title}</p>
+                <p className="text-xs text-zinc-500">{currentDevlogMeta}</p>
+                {currentDevlogExcerpt ? (
+                  <p className="text-xs leading-relaxed text-zinc-600">{currentDevlogExcerpt}</p>
+                ) : null}
+              </>
+            ) : (
+              <p className="text-sm font-medium text-zinc-200">{currentDevlogMeta}</p>
+            )}
             <p className="text-xs leading-relaxed text-zinc-600">
-              このverでプレイヤーに見てほしいことを調整できます。
+              公開済みの本文は変更できません。修正や追記は新verの開発ログで記録してください。
             </p>
             <button
               type="button"
               onClick={() => setDevlogEditMode("current")}
               className={panelButtonClassName}
             >
-              <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-              編集する
+              <Eye className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+              詳細を見る
             </button>
           </PanelBlock>
 
