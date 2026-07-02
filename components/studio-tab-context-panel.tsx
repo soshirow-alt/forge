@@ -86,13 +86,11 @@ function PanelBlock({
   );
 }
 
-function HintList({ items }: { items: string[] }) {
+function OverviewGroupLabel({ children }: { children: ReactNode }) {
   return (
-    <ul className="list-inside list-disc text-xs leading-relaxed text-zinc-600">
-      {items.map((item) => (
-        <li key={item}>{item}</li>
-      ))}
-    </ul>
+    <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-600">
+      {children}
+    </p>
   );
 }
 
@@ -235,102 +233,107 @@ export function StudioTabContextPanel({
       );
     } else {
       sectionContent = (
-        <>
-          <PanelBlock>
-            <button
-              type="button"
-              onClick={() => setOverviewEditMode("basic-info")}
-              className={panelButtonClassName}
-            >
-              <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-              基本情報を編集
-            </button>
-            <HintList items={["タイトル", "1行説明", "開発フェーズ"]} />
-          </PanelBlock>
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <OverviewGroupLabel>ページの内容</OverviewGroupLabel>
+            <div className="space-y-2">
+              <PanelBlock>
+                <button
+                  type="button"
+                  onClick={() => setOverviewEditMode("basic-info")}
+                  className={panelButtonClassName}
+                >
+                  <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+                  基本情報を編集
+                </button>
+              </PanelBlock>
 
-          <PanelBlock>
-            <button
-              type="button"
-              onClick={() => setOverviewEditMode("genres-tags")}
-              className={panelButtonClassName}
-            >
-              <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-              ジャンル・タグを編集
-            </button>
-            <HintList items={["ジャンル", "特徴タグ"]} />
-          </PanelBlock>
+              <PanelBlock>
+                <button
+                  type="button"
+                  onClick={() => setOverviewEditMode("genres-tags")}
+                  className={panelButtonClassName}
+                >
+                  <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+                  ジャンル・タグを編集
+                </button>
+              </PanelBlock>
 
-          <PanelBlock>
-            <button
-              type="button"
-              onClick={() => setOverviewEditMode("images")}
-              className={panelButtonClassName}
-            >
-              <ImageIcon className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-              画像を編集
-            </button>
-            <HintList items={["サムネイル", "スクリーンショット"]} />
-          </PanelBlock>
+              <PanelBlock>
+                <button
+                  type="button"
+                  onClick={() => setOverviewEditMode("introduction")}
+                  className={panelButtonClassName}
+                >
+                  <Sparkles className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+                  作品紹介を編集
+                </button>
+              </PanelBlock>
 
-          <PanelBlock>
-            <button
-              type="button"
-              onClick={() => setOverviewEditMode("introduction")}
-              className={panelButtonClassName}
-            >
-              <Sparkles className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-              作品紹介を編集
-            </button>
-            <HintList items={["作品紹介"]} />
-          </PanelBlock>
-
-          <PanelBlock>
-            <button
-              type="button"
-              onClick={() => setOverviewEditMode("play-info")}
-              className={panelButtonClassName}
-            >
-              <Link2 className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-              プレイ情報・公開先を編集
-            </button>
-            <HintList items={["想定時間", "対応端末", "遊び方", "公開先URL"]} />
-          </PanelBlock>
-
-          <PanelBlock title="公開設定">
-            <div className="flex items-center justify-between rounded-lg border border-zinc-800/60 bg-zinc-950/30 px-3 py-2">
-              <span className="text-xs text-zinc-500">公開状態</span>
-              <span className="text-sm font-medium text-zinc-200">{visibilityLabel}</span>
+              <PanelBlock>
+                <button
+                  type="button"
+                  onClick={() => setOverviewEditMode("images")}
+                  className={panelButtonClassName}
+                >
+                  <ImageIcon className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+                  画像を編集
+                </button>
+              </PanelBlock>
             </div>
-            <button
-              type="button"
-              onClick={() => setOverviewEditMode("visibility")}
-              className={panelButtonClassName}
-            >
-              <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-              公開設定を編集
-            </button>
-          </PanelBlock>
+          </div>
 
-          <PanelBlock title="共有">
-            <Link
-              href={gamePlayHref(projectId)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={panelButtonClassName}
-            >
-              <ExternalLink className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-              公開ページを見る
-            </Link>
-            <button
-              type="button"
-              onClick={() => setShareModalOpen(true)}
-              className={panelButtonClassName}
-            >
-              <Copy className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-              作品リンクをコピー
-            </button>
-          </PanelBlock>
-        </>
+          <div className="space-y-2">
+            <OverviewGroupLabel>遊び方・公開</OverviewGroupLabel>
+            <div className="space-y-2">
+              <PanelBlock>
+                <button
+                  type="button"
+                  onClick={() => setOverviewEditMode("play-info")}
+                  className={panelButtonClassName}
+                >
+                  <Link2 className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+                  プレイ情報・公開先を編集
+                </button>
+              </PanelBlock>
+
+              <PanelBlock title="公開設定">
+                <div className="flex items-center justify-between rounded-lg border border-zinc-800/60 bg-zinc-950/30 px-3 py-2">
+                  <span className="text-xs text-zinc-500">公開状態</span>
+                  <span className="text-sm font-medium text-zinc-200">{visibilityLabel}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setOverviewEditMode("visibility")}
+                  className={panelButtonClassName}
+                >
+                  <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+                  公開設定を編集
+                </button>
+              </PanelBlock>
+
+              <div className="space-y-2 pt-0.5">
+                <Link
+                  href={gamePlayHref(projectId)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={panelButtonClassName}
+                >
+                  <ExternalLink className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+                  公開ページを見る
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setShareModalOpen(true)}
+                  className={panelButtonClassName}
+                >
+                  <Copy className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+                  作品リンクをコピー
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       );
     }
   } else if (activeSection === "devlog") {
