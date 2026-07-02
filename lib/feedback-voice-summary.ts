@@ -31,7 +31,9 @@ function sortNewestFirst(entries: ProjectFeedbackEntry[]): ProjectFeedbackEntry[
 export function buildDeepFeedbackSummary(
   entries: ProjectFeedbackEntry[],
   currentPlayableVersion: string,
+  studioPane = false,
 ): DeepFeedbackSummary {
+  const freeOpinionLabel = studioPane ? "自由な意見" : "詳しい感想";
   const currentVersion = resolvePlayableVersion(currentPlayableVersion);
   const sorted = sortNewestFirst(entries);
   const currentVersionEntries = sorted.filter(
@@ -40,12 +42,16 @@ export function buildDeepFeedbackSummary(
 
   if (currentVersionEntries.length === 0) {
     return {
-      title: "詳しい感想（任意）",
-      lines: ["このver向けの詳しい感想はまだありません。"],
+      title: studioPane ? "自由な意見" : "詳しい感想（任意）",
+      lines: [
+        studioPane
+          ? "このver向けの自由な意見はまだありません。"
+          : "このver向けの詳しい感想はまだありません。",
+      ],
     };
   }
 
-  const lines: string[] = [`詳しい感想 ${currentVersionEntries.length}件`];
+  const lines: string[] = [`${freeOpinionLabel} ${currentVersionEntries.length}件`];
 
   const latestGood = currentVersionEntries.find((entry) =>
     entry.item.goodPoints?.trim(),
@@ -78,7 +84,7 @@ export function buildDeepFeedbackSummary(
   }
 
   return {
-    title: "詳しい感想（任意）",
+    title: studioPane ? "自由な意見" : "詳しい感想（任意）",
     lines,
   };
 }

@@ -71,7 +71,7 @@ function StudioStatusStrip({
         ) : null}
       </div>
       <p className="mt-3 text-xs text-zinc-600">
-        かんたんFB {quickFbCount}件 · 詳しいFB {detailedFbCount}件 · v
+        質問への回答 {quickFbCount}件 · 自由な意見 {detailedFbCount}件 · v
         {growth.playableVersion}
       </p>
     </section>
@@ -154,8 +154,8 @@ export function StudioPlayerFeedbackPanel({
   }, [gameId, playableVersion, quickFbCount, getOwnerVoiceResponseDetails]);
 
   const tabs: { id: FeedbackTabId; label: string; count?: number }[] = [
-    { id: "quick", label: "かんたんFB", count: quickFbCount },
-    { id: "detailed", label: "詳しいFB", count: detailedFbCount },
+    { id: "quick", label: "質問への回答", count: quickFbCount },
+    { id: "detailed", label: "自由な意見", count: detailedFbCount },
     { id: "summary", label: "集計" },
   ];
 
@@ -226,7 +226,9 @@ export function StudioPlayerFeedbackPanel({
       <div className="mt-4">
         {tab === "quick" && (
           quickFbCount === 0 ? (
-            <p className="text-sm text-zinc-500">このverのかんたんFBはまだありません。</p>
+            <p className="text-sm text-zinc-500">
+              このverの質問への回答はまだありません。
+            </p>
           ) : (
             <OwnerVoiceResponseList
               responses={voiceResponses}
@@ -240,12 +242,15 @@ export function StudioPlayerFeedbackPanel({
         )}
         {tab === "detailed" && (
           detailedFbCount === 0 ? (
-            <p className="text-sm text-zinc-500">このverの詳しいFBはまだありません。</p>
+            <p className="text-sm text-zinc-500">
+              このverの自由な意見はまだありません。
+            </p>
           ) : (
             <NurtureDeepFeedbackSection
               feedbackEntries={feedbackEntries}
               playableVersion={playableVersion}
               compact
+              studioPane={embeddedInStudioPane}
               helpfulMarks={helpfulMarks}
               onToggleHelpful={(sourceType, sourceId, marked) =>
                 void toggleFeedbackHelpful(gameId, sourceType, sourceId, marked)
@@ -257,6 +262,11 @@ export function StudioPlayerFeedbackPanel({
           <DeveloperVoiceInsights
             aggregates={voiceAggregates}
             versionKey={playableVersion}
+            emptyMessage={
+              embeddedInStudioPane
+                ? "選択式回答の集計はまだありません。"
+                : undefined
+            }
           />
         )}
       </div>

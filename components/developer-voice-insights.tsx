@@ -10,15 +10,20 @@ import { interpretVoiceAggregate } from "@/lib/voice-interpretation";
 type DeveloperVoiceInsightsProps = {
   aggregates: VoicePromptAggregate[];
   versionKey: string;
+  emptyMessage?: string;
 };
 
 export function DeveloperVoiceInsights({
   aggregates,
   versionKey,
+  emptyMessage,
 }: DeveloperVoiceInsightsProps) {
   const withResponses = aggregates.filter((item) => item.totalResponses > 0);
 
   if (withResponses.length === 0) {
+    if (emptyMessage) {
+      return <p className="text-sm text-zinc-500">{emptyMessage}</p>;
+    }
     return null;
   }
 

@@ -13,6 +13,8 @@ type NurtureDeepFeedbackSectionProps = {
   feedbackEntries: ProjectFeedbackEntry[];
   playableVersion: string;
   compact?: boolean;
+  /** Studio 右ペイン向けの表示文言 */
+  studioPane?: boolean;
   helpfulMarks?: Set<string>;
   onToggleHelpful?: (sourceType: HelpfulMarkSourceType, sourceId: string, marked: boolean) => void;
 };
@@ -45,6 +47,7 @@ export function NurtureDeepFeedbackSection({
   feedbackEntries,
   playableVersion,
   compact = false,
+  studioPane = false,
   helpfulMarks,
   onToggleHelpful,
 }: NurtureDeepFeedbackSectionProps) {
@@ -54,8 +57,8 @@ export function NurtureDeepFeedbackSection({
     [feedbackEntries, playableVersion],
   );
   const summary = useMemo(
-    () => buildDeepFeedbackSummary(feedbackEntries, playableVersion),
-    [feedbackEntries, playableVersion],
+    () => buildDeepFeedbackSummary(feedbackEntries, playableVersion, studioPane),
+    [feedbackEntries, playableVersion, studioPane],
   );
   const latestFeedback = versionFeedback[0];
 
@@ -68,7 +71,7 @@ export function NurtureDeepFeedbackSection({
 
   return (
     <section
-      aria-label="詳しい感想"
+      aria-label={studioPane ? "自由な意見" : "詳しい感想"}
       className={`rounded-lg border border-zinc-800/40 bg-zinc-950/20 px-3.5 py-3 ${
         compact ? "" : "mt-4"
       }`}
@@ -103,7 +106,7 @@ export function NurtureDeepFeedbackSection({
                 onClick={() => setShowPastFeedback((value) => !value)}
                 className="text-xs text-zinc-500 transition-colors hover:text-orange-400"
               >
-                過去の詳しい感想 {pastFeedback.length}件
+                過去の{studioPane ? "自由な意見" : "詳しい感想"} {pastFeedback.length}件
                 {showPastFeedback ? " ▲" : " ▼"}
               </button>
               {showPastFeedback && (
