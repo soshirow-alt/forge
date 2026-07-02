@@ -27,16 +27,15 @@ export function projectStudioPath(projectId: string): string {
   return `/projects/${projectId}/studio`;
 }
 
+/** @deprecated 旧モーダル導線 — /studio/submit へリダイレクト用 */
 export const STUDIO_SUBMIT_SEARCH_PARAM = "submit";
 
-/** Studio マイページで新規投稿モーダルを開く URL */
+/** Studio 新規投稿ページ */
 export function studioSubmitModalHref(options?: { query?: string }): string {
-  const params = new URLSearchParams();
-  params.set(STUDIO_SUBMIT_SEARCH_PARAM, "1");
   if (options?.query?.trim()) {
-    params.set("q", options.query.trim());
+    return `/studio/submit?q=${encodeURIComponent(options.query.trim())}`;
   }
-  return `/studio/mypage?${params.toString()}`;
+  return "/studio/submit";
 }
 
 export function projectStudioDevlogHref(projectId: string): string {

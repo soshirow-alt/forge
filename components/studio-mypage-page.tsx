@@ -1,12 +1,11 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect } from "react";
 import { StudioAchievementsTabPanel } from "@/components/studio-achievements-tab-panel";
 import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { StudioFollowersTabPanel } from "@/components/studio-followers-tab-panel";
 import { StudioOwnedProjectsDirectoryPanel } from "@/components/studio-owned-projects-directory-panel";
-import { ProjectSubmitModal } from "@/components/project-submit-modal";
 import { StudioMyPageTabs, StudioShell } from "@/components/studio-shell";
 import { useHideV0MockContent } from "@/lib/forge-deployment-context";
 import { STUDIO_SUBMIT_SEARCH_PARAM } from "@/lib/project-nurture-links";
@@ -40,15 +39,12 @@ function StudioMypagePageContent() {
   const hideV0Mock = useHideV0MockContent();
   const activeTab = parseTab(searchParams.get("tab"));
   const initialQuery = searchParams.get("q") ?? "";
-  const [submitModalOpen, setSubmitModalOpen] = useState(
-    () => searchParams.get(STUDIO_SUBMIT_SEARCH_PARAM) === "1",
-  );
 
   useEffect(() => {
     if (searchParams.get(STUDIO_SUBMIT_SEARCH_PARAM) === "1") {
-      setSubmitModalOpen(true);
+      router.replace("/studio/submit");
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   const handleTabChange = useCallback(
     (tab: StudioMypageTab) => {
@@ -57,13 +53,6 @@ function StudioMypagePageContent() {
     [router, initialQuery],
   );
 
-  function closeSubmitModal() {
-    setSubmitModalOpen(false);
-    if (searchParams.get(STUDIO_SUBMIT_SEARCH_PARAM)) {
-      router.replace(tabHref(activeTab, initialQuery));
-    }
-  }
-
   return (
     <StudioShell activeNav="mypage" headerSearchDefault={initialQuery}>
       <div className="mx-auto max-w-7xl space-y-6">
@@ -71,7 +60,7 @@ function StudioMypagePageContent() {
         {activeTab === "projects" ? (
           <StudioOwnedProjectsDirectoryPanel
             initialQuery={initialQuery}
-            onOpenSubmit={() => setSubmitModalOpen(true)}
+            onOpenSubmit={() => router.push("/studio/submit")}
           />
         ) : activeTab === "achievements" ? (
           hideV0Mock ? (
@@ -86,7 +75,6 @@ function StudioMypagePageContent() {
           <StudioFollowersTabPanel />
         )}
       </div>
-      <ProjectSubmitModal open={submitModalOpen} onClose={closeSubmitModal} />
     </StudioShell>
   );
 }

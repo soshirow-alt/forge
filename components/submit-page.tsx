@@ -2,10 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import {
-  projectStudioPath,
-  studioSubmitModalHref,
-} from "@/lib/project-nurture-links";
+import { projectStudioPath } from "@/lib/project-nurture-links";
 
 export function SubmitPage() {
   const router = useRouter();
@@ -17,7 +14,7 @@ export function SubmitPage() {
       router.replace(`${projectStudioPath(editId)}?edit=project`);
       return;
     }
-    router.replace(studioSubmitModalHref());
+    router.replace("/studio/submit");
   }, [editId, router]);
 
   return null;
