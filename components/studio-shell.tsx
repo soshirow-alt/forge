@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { useGames } from "@/components/games-provider";
 import {
   ForgeShellMobileDrawer,
   ForgeShellMobileMenuButton,
@@ -210,17 +211,21 @@ export function StudioShell({
   children,
   activeNav = "home",
   headerSearchDefault,
-  notificationBadge = 0,
+  notificationBadge,
 }: {
   children: ReactNode;
   activeNav?: StudioShellNavId;
   headerSearchDefault?: string;
+  /** Override header badge; default uses unread DB notifications when logged in. */
   notificationBadge?: number;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, hydrated, logout } = useAuth();
+  const { getUnreadNotificationCount } = useGames();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const resolvedNotificationBadge =
+    notificationBadge ?? (user ? getUnreadNotificationCount() : 0);
 
   useEffect(() => {
     setMobileNavOpen(false);
@@ -287,14 +292,15 @@ export function StudioShell({
           <ForgeShellMobileMenuButton onClick={() => setMobileNavOpen(true)} />
           <HeaderSearchForm defaultValue={headerSearchDefault} />
           <Link
-            href="/studio/notifications"
+            href="/notifications"
             className="relative rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
             aria-label="通知"
+            title="通知（プレイヤー画面）"
           >
             <Bell className="size-5" />
-            {notificationBadge > 0 && (
+            {resolvedNotificationBadge > 0 && (
               <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                {notificationBadge > 9 ? "9+" : notificationBadge}
+                {resolvedNotificationBadge > 9 ? "9+" : resolvedNotificationBadge}
               </span>
             )}
           </Link>

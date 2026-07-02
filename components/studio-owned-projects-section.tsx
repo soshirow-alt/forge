@@ -19,7 +19,7 @@ function StudioOwnedProjectsLoadingSection() {
     <section
       className="rounded-2xl border border-orange-500/30 bg-orange-500/5 p-5 sm:p-6"
       aria-busy="true"
-      aria-label="あなたの作品を読み込み中"
+      aria-label="プレイヤーの反応を読み込み中"
     >
       <div className="h-4 w-32 rounded bg-zinc-800/80" />
       <div className="mt-3 h-6 w-40 rounded bg-zinc-800/80" />
@@ -35,7 +35,34 @@ function StudioOwnedProjectsLoadingSection() {
   );
 }
 
-/** Studio ホーム `/studio` 専用 — あなたの作品（最大3件 + すべて見る） */
+function StudioVoiceResponsesEmptyState() {
+  return (
+    <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/20 p-5 sm:p-6">
+      <h2 className="text-lg font-semibold text-zinc-100">確認したいプレイヤーの反応</h2>
+      <p className="mt-2 text-sm text-zinc-400">
+        まだプレイヤーからの反応はありません。
+        <br />
+        公開ページを整えて、プレイヤーに遊んでもらいましょう。
+      </p>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <Link
+          href="/studio/mypage"
+          className="inline-flex rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-600"
+        >
+          作品一覧を見る
+        </Link>
+        <Link
+          href={studioSubmitModalHref()}
+          className="inline-flex rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+        >
+          新規投稿する
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+/** Studio ホーム `/studio` 専用 — プレイヤー回答がある作品（最大3件） */
 export function StudioOwnedProjectsSection() {
   const { user, hydrated } = useAuth();
   const {
@@ -72,7 +99,18 @@ export function StudioOwnedProjectsSection() {
     [sortedGames, voiceSignals, getDevlogsByProject],
   );
 
-  if (!hydrated || !dataReady) {
+  const projectsWithVoiceResponses = useMemo(
+    () =>
+      gamesWithGrowth.filter(({ growth }) => growth.totalVoiceResponseCount > 0),
+    [gamesWithGrowth],
+  );
+
+  const displayProjects = useMemo(
+    () => projectsWithVoiceResponses.slice(0, 3),
+    [projectsWithVoiceResponses],
+  );
+
+  if (!hydrated || !dataReady || (Boolean(user) && ownedGames.length > 0 && !voiceLoaded)) {
     return <StudioOwnedProjectsLoadingSection />;
   }
 
@@ -110,17 +148,23 @@ export function StudioOwnedProjectsSection() {
     );
   }
 
+  if (displayProjects.length === 0) {
+    return <StudioVoiceResponsesEmptyState />;
+  }
+
   return (
     <section className="rounded-2xl border border-orange-500/30 bg-orange-500/5 p-5 sm:p-6">
       <div>
         <h2 className="text-lg font-semibold text-zinc-100">
-          プレイヤーから新たな反応があった作品
+          確認したいプレイヤーの反応
         </h2>
-        <p className="mt-2 text-sm text-zinc-400">新たなフィードバックが届きました</p>
+        <p className="mt-2 text-sm text-zinc-400">
+          届いた回答を確認して、次の改善につなげましょう。
+        </p>
       </div>
 
       <div className="mt-5 space-y-3">
-        {gamesWithGrowth.slice(0, 3).map(({ game, growth }) => (
+        {displayProjects.map(({ game, growth }) => (
           <ProjectListCard
             key={game.id}
             game={game}
@@ -134,14 +178,13 @@ export function StudioOwnedProjectsSection() {
         ))}
       </div>
 
-      {ownedGames.length > 3 && (
+      {projectsWithVoiceResponses.length > 3 && (
         <p className="mt-4 text-center text-sm text-zinc-500">
           <Link href="/studio/mypage" className="text-violet-300 hover:text-violet-200">
             すべての作品を見る（{ownedGames.length}件）
           </Link>
         </p>
       )}
-
     </section>
   );
 }

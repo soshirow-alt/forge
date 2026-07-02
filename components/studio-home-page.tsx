@@ -290,7 +290,7 @@ export function StudioHomePage() {
   const viewModel = useStudioHomeViewModel();
 
   return (
-    <StudioShell activeNav="home" notificationBadge={viewModel.notificationBadge}>
+    <StudioShell activeNav="home">
       <div className="mx-auto max-w-7xl space-y-10">
         <StudioOwnedProjectsSection />
         {viewModel.sections.map((section) => (

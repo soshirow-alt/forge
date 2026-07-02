@@ -74,7 +74,7 @@ export function StudioNotificationsPage() {
   }
 
   return (
-    <StudioShell activeNav="notifications" notificationBadge={unread}>
+    <StudioShell activeNav="notifications">
       <div className="mx-auto max-w-3xl">
         <header className="flex items-center justify-between gap-4">
           <div>
@@ -96,14 +96,27 @@ export function StudioNotificationsPage() {
 
         {items.length === 0 ? (
           <div className="mt-8">
-            <FeatureComingSoonPanel
-              title="通知はまだありません"
-              description={
-                hideV0Mock
-                  ? "届いたフィードバックやプレイ状況は、ここに表示されます。"
-                  : "確認用のサンプル通知が表示されています。"
-              }
-            />
+            {hideV0Mock ? (
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-900/30 p-6 text-center">
+                <p className="text-sm font-medium text-zinc-300">
+                  Studio 向けの通知一覧は準備中です
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-500">
+                  届いた回答や更新のお知らせは、通知ページで確認できます。
+                </p>
+                <Link
+                  href="/notifications"
+                  className="mt-5 inline-flex rounded-xl border border-violet-500/40 bg-violet-500/10 px-4 py-2 text-sm font-medium text-violet-200 transition-colors hover:bg-violet-500/15"
+                >
+                  通知ページを開く
+                </Link>
+              </div>
+            ) : (
+              <FeatureComingSoonPanel
+                title="通知はまだありません"
+                description="確認用のサンプル通知が表示されています。"
+              />
+            )}
           </div>
         ) : (
           <ul className="mt-8 space-y-3">

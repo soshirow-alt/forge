@@ -8,7 +8,11 @@ import {
   getProjectStatusBadges,
   type ProjectGrowthSnapshot,
 } from "@/lib/project-growth-state";
-import { gamePlayHref, projectStudioPath } from "@/lib/project-nurture-links";
+import {
+  gamePlayHref,
+  projectStudioFeedbackHref,
+  projectStudioPath,
+} from "@/lib/project-nurture-links";
 import type { Game } from "@/lib/mock-games";
 
 const BADGE_TONE_CLASS: Record<
@@ -48,14 +52,14 @@ export function ProjectDeleteButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-export function ViewReceivedFeedbackButton() {
+export function ViewReceivedFeedbackButton({ projectId }: { projectId: string }) {
   return (
-    <button
-      type="button"
+    <Link
+      href={projectStudioFeedbackHref(projectId)}
       className="shrink-0 self-center rounded-lg border border-orange-500/40 bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-300 transition-colors hover:bg-orange-500/20"
     >
       届いたFBを見る
-    </button>
+    </Link>
   );
 }
 
@@ -138,7 +142,9 @@ export function ProjectListCard({
             </div>
           </div>
         </Link>
-        {showViewReceivedFeedbackButton ? <ViewReceivedFeedbackButton /> : null}
+        {showViewReceivedFeedbackButton && growth.totalVoiceResponseCount > 0 ? (
+          <ViewReceivedFeedbackButton projectId={game.id} />
+        ) : null}
         {canDelete && onDelete ? <ProjectDeleteButton onClick={onDelete} /> : null}
       </article>
     );

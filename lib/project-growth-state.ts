@@ -617,7 +617,7 @@ export function getProjectStatusBadges(
     growth.totalVoiceResponseCount > 0
   ) {
     badges.push({
-      label: `新しい回答 ${growth.totalVoiceResponseCount}件`,
+      label: `未確認の回答 ${growth.totalVoiceResponseCount}件`,
       tone: "orange",
     });
   }
