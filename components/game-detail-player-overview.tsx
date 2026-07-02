@@ -42,7 +42,7 @@ function OverviewCard({
     <section
       className={`rounded-2xl border border-zinc-800/80 bg-zinc-900/35 p-5 sm:p-6 ${className}`}
     >
-      <h2 className="text-base font-semibold text-white">{title}</h2>
+      <h2 className="break-words text-base font-semibold text-white">{title}</h2>
       {children}
     </section>
   );
@@ -84,7 +84,7 @@ function IntroBody({ text, muted = false }: { text: string; muted?: boolean }) {
   return (
     <div className="mt-4 min-h-[5.25rem]">
       <p
-        className={`text-[15px] leading-7 ${
+        className={`break-words text-[15px] leading-7 ${
           muted ? "text-zinc-600" : "text-zinc-300"
         } ${!expanded && needsExpand ? "line-clamp-4" : ""}`}
       >
@@ -115,12 +115,12 @@ function CompactFeatureList({ features }: { features: GameDetailFeature[] }) {
   return (
     <ul className="mt-3 space-y-2">
       {features.map((feature) => (
-        <li key={feature.title} className="text-xs leading-relaxed text-zinc-400">
+        <li key={feature.title} className="break-words text-xs leading-relaxed text-zinc-400">
           <span className="font-medium text-zinc-300">{feature.title}</span>
           {feature.description ? (
             <>
               <span className="text-zinc-600"> — </span>
-              <span>{feature.description}</span>
+              <span className="break-words">{feature.description}</span>
             </>
           ) : null}
         </li>
@@ -207,7 +207,7 @@ function PublicationPanel({ publication }: { publication: PublicationDisplay }) 
       {publication.labels.map((label) => (
         <span
           key={label}
-          className="inline-flex items-center rounded-md border border-zinc-700/80 bg-zinc-800/50 px-2.5 py-1 text-xs text-zinc-400"
+          className="inline-flex max-w-full items-center break-all rounded-md border border-zinc-700/80 bg-zinc-800/50 px-2.5 py-1 text-xs text-zinc-400"
         >
           {label}
         </span>
@@ -230,7 +230,7 @@ function RecentActivityPanel({
 }) {
   return (
     <>
-      <ul className="mt-3 space-y-1.5 text-sm leading-relaxed text-zinc-400">
+      <ul className="mt-3 space-y-1.5 break-words text-sm leading-relaxed text-zinc-400">
         <li>
           {activity.hasDevlog
             ? `最新の開発ログ：${activity.devlogLabel}`
@@ -240,7 +240,7 @@ function RecentActivityPanel({
       </ul>
 
       {focusNotes ? (
-        <p className="mt-4 border-l-2 border-violet-500/30 pl-3 text-sm leading-relaxed text-zinc-300">
+        <p className="mt-4 break-words border-l-2 border-violet-500/30 pl-3 text-sm leading-relaxed text-zinc-300">
           <span className="mb-1 block text-xs font-medium text-violet-300/80">
             いま見てほしいこと
           </span>

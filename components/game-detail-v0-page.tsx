@@ -488,14 +488,14 @@ function GameDetailV0PageBody({ id }: { id: string }) {
             <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
               <GameDetailHeroGallery images={game.galleryImages} />
 
-              <div className="flex flex-col justify-center p-6 lg:p-8">
+              <div className="flex min-w-0 flex-col justify-center p-6 lg:p-8">
                 <div className="flex flex-wrap gap-2">
                   {game.tags.map((tag) => (
                     <TagPill key={tag}>{tag}</TagPill>
                   ))}
                 </div>
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2">
+                  <h1 className="min-w-0 break-words text-2xl font-bold tracking-tight text-white sm:text-3xl">
                     {game.title}
                   </h1>
                   {playerMeta ? <GameDetailPhaseBadge meta={playerMeta} /> : null}
@@ -512,15 +512,15 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                     />
                   </div>
                 ) : null}
-                <p className="mt-2 text-sm leading-relaxed text-zinc-400">{game.lead}</p>
+                <p className="mt-2 break-words text-sm leading-relaxed text-zinc-400">{game.lead}</p>
                 <Link
                   href={`/creators/${game.developer.id}`}
-                  className="mt-4 inline-flex items-center gap-2 text-sm text-zinc-300 transition-colors hover:text-violet-300"
+                  className="mt-4 inline-flex min-w-0 max-w-full flex-wrap items-center gap-2 break-words text-sm text-zinc-300 transition-colors hover:text-violet-300"
                 >
                   <span className="relative size-7 overflow-hidden rounded-full bg-zinc-800">
                     <Image src={game.developer.avatar} alt="" fill className="object-cover" />
                   </span>
-                  {game.developer.name}
+                  <span className="break-words">{game.developer.name}</span>
                 </Link>
                 <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-zinc-500">
                   <Clock className="size-3.5 shrink-0" aria-hidden="true" />

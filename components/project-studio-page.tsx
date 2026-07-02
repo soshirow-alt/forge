@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
@@ -11,6 +10,7 @@ import { DevlogComposeModal } from "@/components/devlog-compose-modal";
 import { ProjectDistributionLinksModal } from "@/components/project-distribution-links-modal";
 import { ProjectEditModal } from "@/components/project-edit-modal";
 import { GameDetailPlayerPreview } from "@/components/game-detail-player-preview";
+import { StudioMypageBackLink } from "@/components/studio-mypage-back-link";
 import { StudioTabContextPanel } from "@/components/studio-tab-context-panel";
 import { StudioProjectToolbar } from "@/components/studio-project-toolbar";
 import { useGames } from "@/components/games-provider";
@@ -192,12 +192,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
       <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:gap-8">
         <div className="min-w-0 flex-1">
           <header className="border-b border-zinc-800/80 pb-3">
-            <Link
-              href="/studio"
-              className="text-sm text-zinc-500 transition-colors hover:text-violet-400"
-            >
-              ← Studio ホーム
-            </Link>
+            <StudioMypageBackLink />
             <p className="mt-2 text-sm text-zinc-400">Studio編集</p>
             <p className="mt-0.5 text-xs text-zinc-500">
               {visibilityLabel} · v{growthSnapshot.playableVersion}

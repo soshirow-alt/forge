@@ -2,11 +2,11 @@
 
 import Image from "next/image";
 import { useMemo } from "react";
-import { GameDetailHeroGallery } from "@/components/game-detail-hero-gallery";
 import { GameDetailOverviewV0Tab } from "@/components/game-detail-overview-v0-tab";
 import { GameDetailPhaseBadge } from "@/components/game-detail-phase-badge";
 import { GameDevlogV0Tab } from "@/components/game-devlog-v0-tab";
 import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
+import { StudioHeroPreviewGallery } from "@/components/studio-hero-preview-gallery";
 import { useGames } from "@/components/games-provider";
 import { formatDevlogPublishedAt } from "@/hooks/use-game-devlogs-v0";
 import { useProjectPublicStats } from "@/hooks/use-project-public-stats";
@@ -14,6 +14,8 @@ import type { GameDetailTab } from "@/lib/game-detail-tabs";
 import { resolveGameDetailPlayerMeta } from "@/lib/game-detail-player-meta";
 import { resolvePublicationDisplay } from "@/lib/game-play-destinations";
 import type { Game } from "@/lib/mock-games";
+import { resolveProjectGenres } from "@/lib/project-genres";
+import { resolveProjectThumbnailUrls } from "@/lib/project-thumbnails";
 import { gameToDetailV0 } from "@/lib/submitted-game-v0-adapter";
 import { Clock } from "lucide-react";
 
@@ -25,7 +27,7 @@ const previewTabs: { id: GameDetailTab; label: string }[] = [
 
 function TagPill({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-md border border-zinc-700/80 bg-zinc-800/60 px-2.5 py-1 text-xs text-zinc-300">
+    <span className="break-words rounded-md border border-zinc-700/80 bg-zinc-800/60 px-2.5 py-1 text-xs text-zinc-300">
       {children}
     </span>
   );
@@ -76,7 +78,27 @@ export function GameDetailPlayerPreview({
     ? formatDevlogPublishedAt(publicStats.latestDevlogAt)
     : "";
 
-  if (!submittedGame || !displayGame) {
+  const thumbnailUrls = useMemo(
+    () => (submittedGame ? resolveProjectThumbnailUrls(submittedGame) : []),
+    [submittedGame],
+  );
+
+  const posterFallback = useMemo(() => {
+    if (!submittedGame) {
+      return null;
+    }
+    const genres = resolveProjectGenres(submittedGame);
+    return {
+      projectId: submittedGame.id,
+      title: submittedGame.title,
+      genre: genres[0] ?? "その他",
+      phase: submittedGame.phase,
+    };
+  }, [submittedGame]);
+
+  const hasCustomThumbnails = thumbnailUrls.length > 0;
+
+  if (!submittedGame || !displayGame || !posterFallback) {
     return null;
   }
 
@@ -86,26 +108,35 @@ export function GameDetailPlayerPreview({
 
       <section className="overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/30">
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-          <GameDetailHeroGallery images={displayGame.galleryImages} />
+          <StudioHeroPreviewGallery
+            images={thumbnailUrls}
+            posterFallback={posterFallback}
+          />
 
-          <div className="flex flex-col justify-center p-6 lg:p-8">
+          <div className="flex min-w-0 flex-col justify-center p-6 lg:p-8">
             <div className="flex flex-wrap gap-2">
               {displayGame.tags.map((tag) => (
                 <TagPill key={tag}>{tag}</TagPill>
               ))}
             </div>
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <p className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2">
+              <p className="min-w-0 break-words text-2xl font-bold tracking-tight text-white sm:text-3xl">
                 {displayGame.title}
               </p>
               {playerMeta ? <GameDetailPhaseBadge meta={playerMeta} /> : null}
             </div>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-400">{displayGame.lead}</p>
-            <div className="mt-4 inline-flex items-center gap-2 text-sm text-zinc-300">
-              <span className="relative size-7 overflow-hidden rounded-full bg-zinc-800">
-                <Image src={displayGame.developer.avatar} alt="" fill className="object-cover" />
-              </span>
-              {displayGame.developer.name}
+            <p className="mt-2 break-words text-sm leading-relaxed text-zinc-400">{displayGame.lead}</p>
+            <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2 text-sm text-zinc-300">
+              {hasCustomThumbnails ? (
+                <span className="relative size-7 shrink-0 overflow-hidden rounded-full bg-zinc-800">
+                  <Image src={displayGame.developer.avatar} alt="" fill className="object-cover" />
+                </span>
+              ) : (
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-medium text-zinc-400">
+                  {displayGame.developer.name.slice(0, 1) || "?"}
+                </span>
+              )}
+              <span className="break-words">{displayGame.developer.name}</span>
             </div>
             <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-zinc-500">
               <Clock className="size-3.5 shrink-0" aria-hidden="true" />

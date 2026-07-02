@@ -2,21 +2,21 @@
 
 import Image from "next/image";
 import { useMemo } from "react";
-import { GameDetailHeroGallery } from "@/components/game-detail-hero-gallery";
 import { GameDetailOverviewV0Tab } from "@/components/game-detail-overview-v0-tab";
 import { GameDetailPhaseBadge } from "@/components/game-detail-phase-badge";
 import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
+import { StudioHeroPreviewGallery } from "@/components/studio-hero-preview-gallery";
 import type { GameDetailTab } from "@/lib/game-detail-tabs";
 import { resolvePublicationDisplay } from "@/lib/game-play-destinations";
 import {
   buildDraftGame,
   buildSubmitDraftDetailV0,
   resolveSubmitDraftPreviewPlayerMeta,
-  SUBMIT_DRAFT_IMAGE_PLACEHOLDER,
   SUBMIT_DRAFT_PREVIEW_ID,
   type SubmitDraftOwner,
   type SubmitDraftState,
 } from "@/lib/studio-submit-draft";
+import { sanitizeProjectGenresForSave } from "@/lib/project-genres";
 import { Clock } from "lucide-react";
 
 const previewTabs: { id: GameDetailTab; label: string }[] = [
@@ -34,7 +34,7 @@ function TagPill({
 }) {
   return (
     <span
-      className={`rounded-md border px-2.5 py-1 text-xs ${
+      className={`break-words rounded-md border px-2.5 py-1 text-xs ${
         muted
           ? "border-zinc-800/80 bg-zinc-950/40 text-zinc-600"
           : "border-zinc-700/80 bg-zinc-800/60 text-zinc-300"
@@ -84,6 +84,17 @@ export function StudioSubmitPlayerPreview({
   const phaseIsPlaceholder = !submitDraft.phase.trim();
   const genreIsPlaceholder = submitDraft.genres.length === 0;
   const hasGalleryImages = submitDraft.thumbnailUrls.length > 0;
+  const primaryGenre = sanitizeProjectGenresForSave(submitDraft.genres)[0] ?? "その他";
+
+  const posterFallback = useMemo(
+    () => ({
+      projectId: SUBMIT_DRAFT_PREVIEW_ID,
+      title: submitDraft.title.trim() || "タイトル未入力",
+      genre: primaryGenre,
+      phase: submitDraft.phase,
+    }),
+    [submitDraft.title, submitDraft.phase, primaryGenre],
+  );
 
   return (
     <div aria-label="公開ページの見え方" className="min-w-0 space-y-4">
@@ -91,12 +102,12 @@ export function StudioSubmitPlayerPreview({
 
       <section className="overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/30">
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-          <GameDetailHeroGallery
+          <StudioHeroPreviewGallery
             images={hasGalleryImages ? displayGame.galleryImages : []}
-            emptyPlaceholder={SUBMIT_DRAFT_IMAGE_PLACEHOLDER}
+            posterFallback={posterFallback}
           />
 
-          <div className="flex flex-col justify-center p-6 lg:p-8">
+          <div className="flex min-w-0 flex-col justify-center p-6 lg:p-8">
             <div className="flex flex-wrap gap-2">
               {displayGame.tags.map((tag) => (
                 <TagPill key={tag} muted={genreIsPlaceholder && tag === displayGame.tags[0]}>
@@ -104,12 +115,12 @@ export function StudioSubmitPlayerPreview({
                 </TagPill>
               ))}
             </div>
-            <div className="mt-4 flex flex-wrap items-center gap-2">
+            <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2">
               <p
                 className={
                   titleIsPlaceholder
-                    ? "text-2xl font-bold tracking-tight text-zinc-500 sm:text-3xl"
-                    : "text-2xl font-bold tracking-tight text-white sm:text-3xl"
+                    ? "min-w-0 break-words text-2xl font-bold tracking-tight text-zinc-500 sm:text-3xl"
+                    : "min-w-0 break-words text-2xl font-bold tracking-tight text-white sm:text-3xl"
                 }
               >
                 {displayGame.title}
@@ -119,13 +130,13 @@ export function StudioSubmitPlayerPreview({
             <p
               className={
                 introIsPlaceholder
-                  ? "mt-2 text-sm leading-relaxed text-zinc-600"
-                  : "mt-2 text-sm leading-relaxed text-zinc-400"
+                  ? "mt-2 break-words text-sm leading-relaxed text-zinc-600"
+                  : "mt-2 break-words text-sm leading-relaxed text-zinc-400"
               }
             >
               {displayGame.lead}
             </p>
-            <div className="mt-4 inline-flex items-center gap-2 text-sm text-zinc-300">
+            <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2 text-sm text-zinc-300">
               {hasGalleryImages ? (
                 <span className="relative size-7 overflow-hidden rounded-full bg-zinc-800">
                   <Image
@@ -140,7 +151,7 @@ export function StudioSubmitPlayerPreview({
                   {submitOwner.ownerName.slice(0, 1) || "?"}
                 </span>
               )}
-              {displayGame.developer.name}
+              <span className="break-words">{displayGame.developer.name}</span>
             </div>
             <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-zinc-500">
               <Clock className="size-3.5 shrink-0" aria-hidden="true" />

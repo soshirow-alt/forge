@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { StudioSubmitPlayerPreview } from "@/components/studio-submit-player-preview";
 import { StudioShell } from "@/components/studio-shell";
+import { StudioMypageBackLink } from "@/components/studio-mypage-back-link";
 import { StudioSubmitPanel } from "@/components/studio-submit-panel";
 import { useGames } from "@/components/games-provider";
 import { useStudioSubmit, type SubmitValidationEditMode } from "@/hooks/use-studio-submit";
@@ -111,12 +111,7 @@ export function StudioSubmitPage() {
       <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:gap-8">
         <div className="min-w-0 flex-1">
           <header className="border-b border-zinc-800/80 pb-3">
-            <Link
-              href="/studio/mypage"
-              className="text-sm text-zinc-500 transition-colors hover:text-violet-400"
-            >
-              ← Studio ホーム
-            </Link>
+            <StudioMypageBackLink />
             <p className="mt-2 text-sm text-zinc-400">作品を投稿する</p>
             <p className="mt-0.5 text-xs text-zinc-500">
               右のStudioパネルで入力すると、左に公開ページの見え方が反映されます。

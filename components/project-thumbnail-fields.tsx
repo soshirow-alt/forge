@@ -117,7 +117,8 @@ export function ProjectThumbnailFields({
       </div>
 
       {thumbnails.length > 0 ? (
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="mt-4 max-h-[min(60vh,28rem)] overflow-y-auto pr-1">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {thumbnails.map((url, index) => (
             <div
               key={`${index}-${url.slice(0, 48)}`}
@@ -171,6 +172,7 @@ export function ProjectThumbnailFields({
               ＋ 追加
             </label>
           ) : null}
+        </div>
         </div>
       ) : posterFallback?.title.trim() ? (
         <div className="mt-4 overflow-hidden rounded-lg border border-zinc-700">
