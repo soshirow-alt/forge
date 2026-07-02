@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Image as ImageIcon, MessageSquare, Pencil, Sparkles, Link2, Copy, ExternalLink, FileText } from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Image as ImageIcon, Pencil, Sparkles, Link2, Copy, ExternalLink, FileText } from "lucide-react";
 import { StudioEditSectionSwitcher } from "@/components/studio-edit-section-switcher";
 import { StudioOverviewBasicInfoEditPanel } from "@/components/studio-overview-basic-info-edit-panel";
 import { StudioOverviewGenresTagsEditPanel } from "@/components/studio-overview-genres-tags-edit-panel";
@@ -27,7 +27,6 @@ import {
 } from "@/lib/project-nurture-links";
 import {
   filterDeepFeedbackForVersion,
-  getStudioVisualMode,
   type ProjectGrowthSnapshot,
 } from "@/lib/project-growth-state";
 import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
@@ -35,9 +34,6 @@ import { getVisibilityBadgeLabel } from "@/lib/project-visibility";
 
 const primaryButtonClassName =
   "inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 shadow-sm shadow-orange-500/20 transition-opacity hover:opacity-90";
-
-const secondaryButtonClassName =
-  "inline-flex w-full items-center justify-center gap-2 rounded-lg border border-orange-500/30 bg-orange-500/10 px-4 py-2.5 text-sm font-medium text-orange-200 transition-colors hover:border-orange-500/50 hover:bg-orange-500/15";
 
 const panelButtonClassName =
   "inline-flex w-full items-center gap-2 rounded-lg border border-zinc-800/60 bg-zinc-950/40 px-3 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70 hover:text-zinc-100";
@@ -124,7 +120,6 @@ export function StudioTabContextPanel({
 }: StudioTabContextPanelProps) {
   const { getDevlogsByProject } = useGames();
   const [shareModalOpen, setShareModalOpen] = useState(false);
-  const [feedbackExpanded, setFeedbackExpanded] = useState(initialOpenFeedback);
   const [overviewEditMode, setOverviewEditMode] = useState<OverviewEditMode>(null);
   const [devlogEditMode, setDevlogEditMode] = useState<DevlogEditMode>(null);
 
@@ -138,6 +133,7 @@ export function StudioTabContextPanel({
   );
   const hasFeedback = quickFbCount > 0 || detailedFbCount > 0;
   const hasUnreadVoice = !voiceRead && quickFbCount > 0;
+  const totalFeedbackCount = quickFbCount + detailedFbCount;
 
   const latestDevlog = useMemo(() => {
     const devlogs = sortDevlogsNewestFirst(getDevlogsByProject(projectId));
@@ -146,16 +142,12 @@ export function StudioTabContextPanel({
 
   const visibilityLabel = getVisibilityBadgeLabel(game.visibility);
 
-  const handleReadFeedback = useCallback(() => {
+  useEffect(() => {
+    if (activeSection !== "voices" || !hasFeedback || voiceRead || quickFbCount === 0) {
+      return;
+    }
     void markRead();
-    setFeedbackExpanded(true);
-    requestAnimationFrame(() => {
-      document.getElementById(PROJECT_STUDIO_FEEDBACK_SECTION_ID)?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    });
-  }, [markRead]);
+  }, [activeSection, hasFeedback, voiceRead, quickFbCount, markRead]);
 
   useEffect(() => {
     if (activeSection !== "overview") {
@@ -174,12 +166,6 @@ export function StudioTabContextPanel({
     setDevlogEditMode(null);
   }
 
-  useEffect(() => {
-    if (activeSection === "voices" && (initialOpenFeedback || hasFeedback)) {
-      setFeedbackExpanded(true);
-    }
-  }, [activeSection, initialOpenFeedback, hasFeedback]);
-
   const shareModal = (
     <ProjectShareLinkModal
       projectId={projectId}
@@ -187,12 +173,6 @@ export function StudioTabContextPanel({
       onClose={() => setShareModalOpen(false)}
     />
   );
-
-  const showFeedbackPanel =
-    activeSection === "voices" &&
-    getStudioVisualMode(growth) !== "pre_cycle" &&
-    hasFeedback &&
-    feedbackExpanded;
 
   let sectionContent: ReactNode;
 
@@ -413,49 +393,30 @@ export function StudioTabContextPanel({
     sectionContent = (
       <>
         <PanelBlock>
-          <button
-            type="button"
-            onClick={handleReadFeedback}
-            disabled={!hasFeedback}
-            className={`${secondaryButtonClassName} disabled:cursor-not-allowed disabled:opacity-50`}
-          >
-            <MessageSquare className="size-4 shrink-0" aria-hidden="true" />
-            新しいFBを確認する
-            {hasUnreadVoice ? (
-              <span className="rounded-full bg-orange-500/90 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-950">
-                未確認
-              </span>
-            ) : null}
-          </button>
-          <p className="text-center text-xs text-zinc-600">
-            {hasFeedback
-              ? `かんたん ${quickFbCount} · 詳しい ${detailedFbCount}`
-              : "このverのFBはまだありません"}
-          </p>
+          {hasFeedback ? (
+            <div className="max-h-[24rem] overflow-y-auto">
+              <StudioPlayerFeedbackPanel
+                gameId={game.id}
+                playableVersion={versionKey}
+                feedbackEntries={feedbackEntries}
+                quickFbCount={quickFbCount}
+                detailPanelId={PROJECT_STUDIO_FEEDBACK_SECTION_ID}
+                emphasize={initialOpenFeedback}
+                embeddedInStudioPane
+                unreadVoiceCount={hasUnreadVoice ? quickFbCount : 0}
+                totalFeedbackCount={totalFeedbackCount}
+              />
+            </div>
+          ) : (
+            <p className="text-xs leading-relaxed text-zinc-500">
+              まだフィードバックはありません。
+            </p>
+          )}
         </PanelBlock>
-
-        {showFeedbackPanel ? (
-          <div className="max-h-[24rem] overflow-y-auto rounded-xl border border-zinc-800/45 bg-zinc-950/20">
-            <StudioPlayerFeedbackPanel
-              gameId={game.id}
-              playableVersion={versionKey}
-              feedbackEntries={feedbackEntries}
-              quickFbCount={quickFbCount}
-              detailPanelId={PROJECT_STUDIO_FEEDBACK_SECTION_ID}
-              emphasize={initialOpenFeedback}
-            />
-          </div>
-        ) : hasFeedback ? (
-          <button type="button" onClick={handleReadFeedback} className={panelButtonClassName}>
-            届いたFBを読む
-          </button>
-        ) : null}
 
         <PanelBlock title="次に直すこと">
           <p className="text-xs leading-relaxed text-zinc-600">
-            {hasUnreadVoice
-              ? "未確認のフィードバックがあります。確認後、次に直すことを整理できます。"
-              : "確認した内容から、次に直すことを整理します。"}
+            確認した内容から、次に取り組むことを整理します。
           </p>
           <StudioTopPrioritiesPanel
             projectId={projectId}

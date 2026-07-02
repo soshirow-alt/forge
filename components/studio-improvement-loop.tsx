@@ -85,6 +85,9 @@ export function StudioPlayerFeedbackPanel({
   quickFbCount,
   detailPanelId,
   emphasize = false,
+  embeddedInStudioPane = false,
+  unreadVoiceCount = 0,
+  totalFeedbackCount,
 }: {
   gameId: string;
   playableVersion: string;
@@ -92,6 +95,9 @@ export function StudioPlayerFeedbackPanel({
   quickFbCount: number;
   detailPanelId: string;
   emphasize?: boolean;
+  embeddedInStudioPane?: boolean;
+  unreadVoiceCount?: number;
+  totalFeedbackCount?: number;
 }) {
   const {
     getOwnerVoiceAggregates,
@@ -153,26 +159,53 @@ export function StudioPlayerFeedbackPanel({
     { id: "summary", label: "集計" },
   ];
 
+  const feedbackTotal = totalFeedbackCount ?? quickFbCount + detailedFbCount;
+
   return (
     <section
       id={detailPanelId}
-      aria-label="プレイヤーのFBを読む"
-      className={`scroll-mt-24 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 transition-shadow duration-300 sm:p-5 ${
-        highlighted
-          ? "ring-2 ring-violet-500/70 ring-offset-2 ring-offset-zinc-950"
-          : ""
+      aria-label={embeddedInStudioPane ? "届いたフィードバック" : "プレイヤーのFBを読む"}
+      className={`scroll-mt-24 transition-shadow duration-300 ${
+        embeddedInStudioPane
+          ? highlighted
+            ? "rounded-lg ring-2 ring-violet-500/70 ring-offset-2 ring-offset-zinc-950"
+            : ""
+          : `rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5 ${
+              highlighted
+                ? "ring-2 ring-violet-500/70 ring-offset-2 ring-offset-zinc-950"
+                : ""
+            }`
       }`}
     >
-      <h2 className="text-sm font-semibold text-zinc-200">
-        届いたFBを読む
-        {helpfulCount > 0 && (
-          <span className="ml-2 text-xs font-normal text-violet-300">
-            役立った {helpfulCount}件
-          </span>
-        )}
-      </h2>
+      {embeddedInStudioPane ? (
+        <div>
+          <h2 className="text-sm font-semibold text-zinc-200">届いたフィードバック</h2>
+          <p className="mt-1 text-xs text-zinc-500">
+            {unreadVoiceCount > 0 ? (
+              <>
+                <span className="font-medium text-orange-300">未確認 {unreadVoiceCount}件</span>
+                <span className="text-zinc-600"> / </span>
+              </>
+            ) : null}
+            <span>合計 {feedbackTotal}件</span>
+          </p>
+        </div>
+      ) : (
+        <h2 className="text-sm font-semibold text-zinc-200">
+          届いたFBを読む
+          {helpfulCount > 0 && (
+            <span className="ml-2 text-xs font-normal text-violet-300">
+              役立った {helpfulCount}件
+            </span>
+          )}
+        </h2>
+      )}
 
-      <div className="mt-4 flex flex-wrap gap-2 border-b border-zinc-800 pb-3">
+      <div
+        className={`flex flex-wrap gap-2 border-b border-zinc-800 pb-3 ${
+          embeddedInStudioPane ? "mt-3" : "mt-4"
+        }`}
+      >
         {tabs.map((item) => (
           <button
             key={item.id}
