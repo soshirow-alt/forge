@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
+import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
 import { GameThumbnail } from "@/components/player-shell";
 import type { GameDetailV0 } from "@/lib/game-detail-v0-mock-data";
 import {
@@ -68,10 +69,57 @@ function ModalShell({ title, subtitle, onClose, children, size = "md" }: ModalSh
   );
 }
 
+function GameSummaryThumb({ game }: { game: GameDetailV0 }) {
+  const thumbSrc = game.heroImage.trim() || game.galleryImages[0]?.trim() || "";
+
+  if (thumbSrc) {
+    return (
+      <GameThumbnail
+        src={thumbSrc}
+        alt={game.title}
+        className="size-20 shrink-0 sm:size-24"
+      />
+    );
+  }
+
+  return (
+    <div className="relative size-20 shrink-0 overflow-hidden rounded-xl bg-zinc-800 sm:size-24">
+      <GeneratedThumbnailPoster
+        projectId={game.id}
+        title={game.title}
+        genre={game.tags[0] ?? ""}
+        phase={game.currentVersion}
+        styleSeed={game.id}
+        compact
+        className="absolute inset-0"
+      />
+    </div>
+  );
+}
+
+function GameSummaryDeveloperAvatar({ game }: { game: GameDetailV0 }) {
+  const thumbSrc = game.heroImage.trim() || game.galleryImages[0]?.trim() || "";
+  const avatarSrc = game.developer.avatar.trim() || thumbSrc;
+
+  if (avatarSrc) {
+    return (
+      <span className="relative size-5 overflow-hidden rounded-full bg-zinc-800">
+        <Image src={avatarSrc} alt="" fill className="object-cover" />
+      </span>
+    );
+  }
+
+  return (
+    <span className="flex size-5 items-center justify-center rounded-full bg-zinc-800 text-[10px] font-medium text-zinc-400">
+      {game.developer.name.slice(0, 1) || "?"}
+    </span>
+  );
+}
+
 function GameSummaryCard({ game }: { game: GameDetailV0 }) {
   return (
     <div className="flex gap-4 rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4">
-      <GameThumbnail src={game.heroImage} alt={game.title} className="size-20 shrink-0 sm:size-24" />
+      <GameSummaryThumb game={game} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap gap-2">
           <span className="rounded-md border border-violet-500/30 bg-violet-500/10 px-2 py-0.5 text-xs text-violet-300">
@@ -90,9 +138,7 @@ function GameSummaryCard({ game }: { game: GameDetailV0 }) {
         <p className="mt-1 line-clamp-2 text-xs text-zinc-500">{game.lead}</p>
         <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-zinc-500">
           <span className="inline-flex items-center gap-1">
-            <span className="relative size-5 overflow-hidden rounded-full bg-zinc-800">
-              <Image src={game.developer.avatar} alt="" fill className="object-cover" />
-            </span>
+            <GameSummaryDeveloperAvatar game={game} />
             {game.developer.name}
           </span>
           <span className="inline-flex items-center gap-1">

@@ -9,8 +9,6 @@ import {
 } from "@/lib/project-overview";
 import { resolveProjectThumbnailUrls } from "@/lib/project-thumbnails";
 
-const DEFAULT_HERO = "/images/landing/game-1.png";
-
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -23,7 +21,7 @@ export function gameToDetailV0(game: Game): GameDetailV0 {
   const featureTags = pickFeatureTagsFromGameTags(getPublicGameTags(game.tags));
   const tags = [...genres, ...featureTags];
   const galleryImages = resolveProjectThumbnailUrls(game);
-  const heroImage = galleryImages[0] || DEFAULT_HERO;
+  const heroImage = galleryImages[0] ?? "";
 
   return {
     id: game.id,
@@ -34,12 +32,12 @@ export function gameToDetailV0(game: Game): GameDetailV0 {
         : game.description || game.title,
     tags,
     heroImage,
-    galleryImages: galleryImages.length > 0 ? galleryImages : [DEFAULT_HERO],
+    galleryImages,
     currentVersion: game.playableVersion || "v0.1.0",
     developer: {
       id: game.ownerId || game.creator,
       name: game.ownerName || game.creator,
-      avatar: heroImage,
+      avatar: "",
       followers: 0,
       bio: "",
       following: false,

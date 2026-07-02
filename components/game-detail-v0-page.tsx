@@ -10,6 +10,7 @@ import {
   type GameDetailRealVoiceHandle,
 } from "@/components/game-detail-real-voice-layer";
 import { GameDetailHeroGallery } from "@/components/game-detail-hero-gallery";
+import { GameHeroPreviewGallery } from "@/components/game-hero-preview-gallery";
 import { GameDetailPhaseBadge } from "@/components/game-detail-phase-badge";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -62,6 +63,8 @@ import { useProjectOverviewV0 } from "@/hooks/use-project-overview-v0";
 import { formatDevlogPublishedAt } from "@/hooks/use-game-devlogs-v0";
 import { useProjectPublicStats } from "@/hooks/use-project-public-stats";
 import { resolveGameDetailPlayerMeta } from "@/lib/game-detail-player-meta";
+import { resolveProjectGenres } from "@/lib/project-genres";
+import { resolveProjectThumbnailUrls } from "@/lib/project-thumbnails";
 import { PROJECT_TITLE_HERO_CLASS } from "@/lib/project-title";
 import {
   resolvePlayDestinations,
@@ -88,6 +91,35 @@ function TagPill({ children }: { children: React.ReactNode }) {
   return (
     <span className="rounded-md border border-zinc-700/80 bg-zinc-800/60 px-2.5 py-1 text-xs text-zinc-300">
       {children}
+    </span>
+  );
+}
+
+function GameDetailDeveloperAvatar({
+  name,
+  imageSrc,
+  sizeClass = "size-7",
+  textClassName = "text-xs",
+}: {
+  name: string;
+  imageSrc?: string;
+  sizeClass?: string;
+  textClassName?: string;
+}) {
+  const src = imageSrc?.trim();
+  if (src) {
+    return (
+      <span className={`relative ${sizeClass} shrink-0 overflow-hidden rounded-full bg-zinc-800`}>
+        <Image src={src} alt="" fill className="object-cover" />
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={`flex ${sizeClass} shrink-0 items-center justify-center rounded-full bg-zinc-800 font-medium text-zinc-400 ${textClassName}`}
+    >
+      {name.slice(0, 1) || "?"}
     </span>
   );
 }
@@ -154,6 +186,32 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     }
     return getGameDetailV0(id);
   }, [id, submittedGame]);
+  const thumbnailUrls = useMemo(
+    () =>
+      submittedGame && isRealProject
+        ? resolveProjectThumbnailUrls(submittedGame)
+        : [],
+    [submittedGame, isRealProject],
+  );
+  const posterFallback = useMemo(() => {
+    if (!submittedGame || !isRealProject) {
+      return null;
+    }
+    const genres = resolveProjectGenres(submittedGame);
+    return {
+      projectId: submittedGame.id,
+      title: submittedGame.title,
+      genre: genres[0] ?? "その他",
+      phase: submittedGame.phase,
+      styleSeed: submittedGame.id,
+    };
+  }, [submittedGame, isRealProject]);
+  const developerAvatarSrc = useMemo(() => {
+    if (isRealProject) {
+      return thumbnailUrls[0] ?? "";
+    }
+    return game.developer.avatar;
+  }, [isRealProject, thumbnailUrls, game.developer.avatar]);
   const { stats: publicStats } = useProjectPublicStats(
     isRealProject ? resolvedId : null,
   );
@@ -487,7 +545,14 @@ function GameDetailV0PageBody({ id }: { id: string }) {
 
           <section className="overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/30">
             <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-              <GameDetailHeroGallery images={game.galleryImages} />
+              {isRealProject && posterFallback ? (
+                <GameHeroPreviewGallery
+                  images={thumbnailUrls}
+                  posterFallback={posterFallback}
+                />
+              ) : (
+                <GameDetailHeroGallery images={game.galleryImages} />
+              )}
 
               <div className="flex min-w-0 flex-col justify-center p-6 lg:p-8">
                 <div className="flex flex-wrap gap-2">
@@ -518,9 +583,10 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                   href={`/creators/${game.developer.id}`}
                   className="mt-4 inline-flex min-w-0 max-w-full flex-wrap items-center gap-2 break-words text-sm text-zinc-300 transition-colors hover:text-violet-300"
                 >
-                  <span className="relative size-7 overflow-hidden rounded-full bg-zinc-800">
-                    <Image src={game.developer.avatar} alt="" fill className="object-cover" />
-                  </span>
+                  <GameDetailDeveloperAvatar
+                    name={game.developer.name}
+                    imageSrc={developerAvatarSrc}
+                  />
                   <span className="break-words">{game.developer.name}</span>
                 </Link>
                 <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-zinc-500">
@@ -678,9 +744,12 @@ function GameDetailV0PageBody({ id }: { id: string }) {
         <aside className="w-full shrink-0 space-y-5 xl:w-72">
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
             <div className="flex items-center gap-3">
-              <span className="relative size-12 overflow-hidden rounded-full bg-zinc-800">
-                <Image src={game.developer.avatar} alt="" fill className="object-cover" />
-              </span>
+              <GameDetailDeveloperAvatar
+                name={game.developer.name}
+                imageSrc={developerAvatarSrc}
+                sizeClass="size-12"
+                textClassName="text-sm"
+              />
               <div className="min-w-0">
                 <p className="truncate font-semibold text-white">{game.developer.name}</p>
                 {developerUserId || (!isRealProject && game.developer.followers > 0) ? (
