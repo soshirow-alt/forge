@@ -7,7 +7,10 @@ import { DeveloperVoiceInsights } from "@/components/developer-voice-insights";
 import { ModifyGameExplanationModal, shouldShowModifyGameModal } from "@/components/modify-game-explanation-modal";
 import { NurtureDeepFeedbackSection } from "@/components/nurture-deep-feedback-section";
 import { OwnerVoiceResponseList } from "@/components/owner-voice-response-list";
+import { StudioFreeOpinionsDetailModal } from "@/components/studio-free-opinions-detail-modal";
+import { StudioQuestionAnswersDetailModal } from "@/components/studio-question-answers-detail-modal";
 import { StudioTopPrioritiesPanel } from "@/components/studio-top-priorities-panel";
+import { FeedbackStructuredCard } from "@/components/feedback-structured-card";
 import { useGames } from "@/components/games-provider";
 import { useNurtureVoiceRead } from "@/hooks/use-nurture-feedback-read";
 import type { Game } from "@/lib/mock-games";
@@ -26,6 +29,8 @@ import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
 import { buildVoicePromptAggregates } from "@/lib/voice-aggregates";
 
 type FeedbackTabId = "quick" | "detailed" | "summary";
+
+const FREE_OPINION_INLINE_MAX = 2;
 
 const primaryButtonClassName =
   "inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90";
@@ -108,6 +113,8 @@ export function StudioPlayerFeedbackPanel({
   } = useGames();
   const [tab, setTab] = useState<FeedbackTabId>("quick");
   const [highlighted, setHighlighted] = useState(false);
+  const [questionDetailOpen, setQuestionDetailOpen] = useState(false);
+  const [freeOpinionsDetailOpen, setFreeOpinionsDetailOpen] = useState(false);
   const [voiceAggregates, setVoiceAggregates] = useState(
     buildVoicePromptAggregates([]),
   );
@@ -128,15 +135,6 @@ export function StudioPlayerFeedbackPanel({
     void loadHelpfulMarksForProject(gameId);
   }, [gameId, loadHelpfulMarksForProject]);
 
-  const helpfulMarks = getHelpfulMarksForProject(gameId);
-  const helpfulCount = helpfulMarks.size;
-
-  const detailedFb = useMemo(
-    () => filterDeepFeedbackForVersion(feedbackEntries, playableVersion),
-    [feedbackEntries, playableVersion],
-  );
-  const detailedFbCount = detailedFb.length;
-
   useEffect(() => {
     void getOwnerVoiceAggregates(gameId, playableVersion)
       .then((rows) => setVoiceAggregates(buildVoicePromptAggregates(rows)))
@@ -153,11 +151,34 @@ export function StudioPlayerFeedbackPanel({
       .catch(() => setVoiceResponses([]));
   }, [gameId, playableVersion, quickFbCount, getOwnerVoiceResponseDetails]);
 
-  const tabs: { id: FeedbackTabId; label: string; count?: number }[] = [
-    { id: "quick", label: "質問への回答", count: quickFbCount },
-    { id: "detailed", label: "自由な意見", count: detailedFbCount },
-    { id: "summary", label: "集計" },
-  ];
+  const helpfulMarks = getHelpfulMarksForProject(gameId);
+  const helpfulCount = helpfulMarks.size;
+
+  const detailedFb = useMemo(
+    () => filterDeepFeedbackForVersion(feedbackEntries, playableVersion),
+    [feedbackEntries, playableVersion],
+  );
+  const detailedFbCount = detailedFb.length;
+
+  const promptsWithAnswers = useMemo(
+    () => voiceAggregates.filter((item) => item.totalResponses > 0),
+    [voiceAggregates],
+  );
+  const questionCount = promptsWithAnswers.length;
+
+  const paneButtonClassName =
+    "mt-3 w-full rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 py-2.5 text-sm font-medium text-orange-200 transition-colors hover:border-orange-500/50 hover:bg-orange-500/15 disabled:cursor-not-allowed disabled:opacity-50";
+
+  const tabs: { id: FeedbackTabId; label: string; count?: number }[] = embeddedInStudioPane
+    ? [
+        { id: "quick", label: "質問への回答", count: quickFbCount },
+        { id: "detailed", label: "自由な意見", count: detailedFbCount },
+      ]
+    : [
+        { id: "quick", label: "質問への回答", count: quickFbCount },
+        { id: "detailed", label: "自由な意見", count: detailedFbCount },
+        { id: "summary", label: "集計" },
+      ];
 
   const feedbackTotal = totalFeedbackCount ?? quickFbCount + detailedFbCount;
 
@@ -224,11 +245,31 @@ export function StudioPlayerFeedbackPanel({
       </div>
 
       <div className="mt-4">
-        {tab === "quick" && (
-          quickFbCount === 0 ? (
+        {tab === "quick" &&
+          (quickFbCount === 0 ? (
             <p className="text-sm text-zinc-500">
               このverの質問への回答はまだありません。
             </p>
+          ) : embeddedInStudioPane ? (
+            <div>
+              <p className="text-sm font-medium text-zinc-200">質問への回答</p>
+              <p className="mt-1 text-xs text-zinc-500">
+                合計 {quickFbCount}件 / 質問 {questionCount}件
+                {unreadVoiceCount > 0 ? (
+                  <span className="text-orange-300"> · 未確認 {unreadVoiceCount}件</span>
+                ) : null}
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-zinc-600">
+                開発者が設定した質問への回答を集計して確認できます。
+              </p>
+              <button
+                type="button"
+                onClick={() => setQuestionDetailOpen(true)}
+                className={paneButtonClassName}
+              >
+                回答を詳しく見る
+              </button>
+            </div>
           ) : (
             <OwnerVoiceResponseList
               responses={voiceResponses}
@@ -238,15 +279,37 @@ export function StudioPlayerFeedbackPanel({
                 void toggleFeedbackHelpful(gameId, sourceType, sourceId, marked)
               }
             />
-          )
-        )}
-        {tab === "detailed" && (
-          detailedFbCount === 0 ? (
+          ))}
+
+        {tab === "detailed" &&
+          (detailedFbCount === 0 ? (
             <div className="space-y-1">
               <p className="text-sm text-zinc-500">まだ自由な意見はありません。</p>
               <p className="text-xs leading-relaxed text-zinc-600">
                 プレイヤーから任意で届いた感想・不具合報告などがここに表示されます。
               </p>
+            </div>
+          ) : embeddedInStudioPane && detailedFbCount > FREE_OPINION_INLINE_MAX ? (
+            <div>
+              <p className="text-sm font-medium text-zinc-200">自由な意見</p>
+              <p className="mt-1 text-xs text-zinc-500">{detailedFbCount}件</p>
+              <ul className="mt-3 space-y-2">
+                {detailedFb.slice(0, FREE_OPINION_INLINE_MAX).map(({ item }) => (
+                  <li
+                    key={item.id}
+                    className="rounded-lg border border-zinc-800/60 bg-zinc-950/40 px-3 py-2"
+                  >
+                    <FeedbackStructuredCard item={item} compact showDate={false} />
+                  </li>
+                ))}
+              </ul>
+              <button
+                type="button"
+                onClick={() => setFreeOpinionsDetailOpen(true)}
+                className={paneButtonClassName}
+              >
+                自由な意見を見る
+              </button>
             </div>
           ) : (
             <NurtureDeepFeedbackSection
@@ -259,20 +322,37 @@ export function StudioPlayerFeedbackPanel({
                 void toggleFeedbackHelpful(gameId, sourceType, sourceId, marked)
               }
             />
-          )
-        )}
-        {tab === "summary" && (
+          ))}
+
+        {!embeddedInStudioPane && tab === "summary" && (
           <DeveloperVoiceInsights
             aggregates={voiceAggregates}
             versionKey={playableVersion}
-            emptyMessage={
-              embeddedInStudioPane
-                ? "選択式回答の集計はまだありません。"
-                : undefined
-            }
           />
         )}
       </div>
+
+      {embeddedInStudioPane ? (
+        <>
+          <StudioQuestionAnswersDetailModal
+            open={questionDetailOpen}
+            onClose={() => setQuestionDetailOpen(false)}
+            playableVersion={playableVersion}
+            aggregates={voiceAggregates}
+            responses={voiceResponses}
+          />
+          <StudioFreeOpinionsDetailModal
+            open={freeOpinionsDetailOpen}
+            onClose={() => setFreeOpinionsDetailOpen(false)}
+            playableVersion={playableVersion}
+            feedbackEntries={feedbackEntries}
+            helpfulMarks={helpfulMarks}
+            onToggleHelpful={(sourceType, sourceId, marked) =>
+              void toggleFeedbackHelpful(gameId, sourceType, sourceId, marked)
+            }
+          />
+        </>
+      ) : null}
     </section>
   );
 }
