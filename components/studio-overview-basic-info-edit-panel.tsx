@@ -10,7 +10,10 @@ import {
 import type { StudioOverviewEditPanelCommonProps } from "@/components/studio-overview-edit-panel-types";
 import { useGames } from "@/components/games-provider";
 import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
-import { validateProjectOneLineDescription } from "@/lib/project-one-line-description";
+import {
+  clampProjectOneLineDescription,
+  validateProjectOneLineDescription,
+} from "@/lib/project-one-line-description";
 
 export type StudioOverviewBasicInfoEditPanelProps = StudioOverviewEditPanelCommonProps;
 
@@ -37,7 +40,7 @@ export function StudioOverviewBasicInfoEditPanel({
     }
 
     setTitle(game.title);
-    setDescription(game.description ?? "");
+    setDescription(clampProjectOneLineDescription(game.description ?? ""));
     setPhase(game.phase);
     setFormLoaded(true);
   }, [game, formLoaded]);
@@ -45,7 +48,7 @@ export function StudioOverviewBasicInfoEditPanel({
   function emitPreview(next: { title: string; description: string; phase: string }) {
     onPreviewPatchChange?.({
       title: next.title,
-      description: next.description,
+      description: clampProjectOneLineDescription(next.description),
       phase: next.phase,
     });
   }

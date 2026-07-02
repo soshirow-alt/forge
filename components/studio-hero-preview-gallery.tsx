@@ -8,6 +8,7 @@ export type StudioHeroPosterFallback = {
   title: string;
   genre: string;
   phase?: string;
+  styleSeed?: string;
 };
 
 type StudioHeroPreviewGalleryProps = {
@@ -31,6 +32,7 @@ export function StudioHeroPreviewGallery({
         title={posterFallback.title}
         genre={posterFallback.genre}
         phase={posterFallback.phase ?? ""}
+        styleSeed={posterFallback.styleSeed ?? posterFallback.projectId}
         className="absolute inset-0"
       />
     </div>

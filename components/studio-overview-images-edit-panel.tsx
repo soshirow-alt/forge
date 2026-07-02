@@ -91,6 +91,7 @@ export function StudioOverviewImagesEditPanel({
           title: game.title,
           genre: genres[0] ?? "その他",
           phase: game.phase,
+          styleSeed: game.id,
         }}
       />
     </StudioPanelEditShell>

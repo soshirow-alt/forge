@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import {
   PROJECT_ONE_LINE_DESCRIPTION_HINT,
   PROJECT_ONE_LINE_DESCRIPTION_MAX,
@@ -19,7 +20,18 @@ export function ProjectOneLineDescriptionField({
   onChange,
   inputClassName,
 }: ProjectOneLineDescriptionFieldProps) {
-  const length = value.length;
+  const safeValue = clampProjectOneLineDescription(value);
+  const length = safeValue.length;
+
+  useEffect(() => {
+    if (value !== safeValue) {
+      onChange(safeValue);
+    }
+  }, [value, safeValue, onChange]);
+
+  function commitNext(raw: string) {
+    onChange(clampProjectOneLineDescription(raw));
+  }
 
   return (
     <div>
@@ -29,11 +41,20 @@ export function ProjectOneLineDescriptionField({
       <input
         id={id}
         type="text"
-        value={value}
+        value={safeValue}
         maxLength={PROJECT_ONE_LINE_DESCRIPTION_MAX}
-        onChange={(event) =>
-          onChange(clampProjectOneLineDescription(event.target.value))
-        }
+        onChange={(event) => commitNext(event.target.value)}
+        onPaste={(event) => {
+          event.preventDefault();
+          const pasted = event.clipboardData.getData("text");
+          const input = event.currentTarget;
+          const start = input.selectionStart ?? safeValue.length;
+          const end = input.selectionEnd ?? safeValue.length;
+          const merged =
+            safeValue.slice(0, start) + pasted + safeValue.slice(end);
+          commitNext(merged);
+        }}
+        onCompositionEnd={(event) => commitNext(event.currentTarget.value)}
         className={inputClassName}
         placeholder="ヒーローに表示される短い説明"
       />

@@ -20,6 +20,7 @@ type ProjectThumbnailFieldsProps = {
     title: string;
     genre: string;
     phase?: string;
+    styleSeed?: string;
   };
 };
 
@@ -182,6 +183,7 @@ export function ProjectThumbnailFields({
               title={posterFallback.title}
               genre={posterFallback.genre}
               phase={posterFallback.phase ?? ""}
+              styleSeed={posterFallback.styleSeed ?? posterFallback.projectId}
             />
           </div>
         </div>

@@ -27,6 +27,7 @@ import {
 import { PROJECT_VISIBILITY_FORM_OPTIONS, type ProjectVisibility } from "@/lib/project-visibility";
 import { PROJECT_VISIBILITY_SECTION_HINT } from "@/lib/project-form-copy";
 import type { SubmitDraftState } from "@/lib/studio-submit-draft";
+import { SUBMIT_DRAFT_PREVIEW_ID } from "@/lib/studio-submit-draft";
 import type { ProjectExternalLinksInput } from "@/lib/game-links";
 
 type SubmitEditPanelProps = {
@@ -203,10 +204,11 @@ export function StudioSubmitImagesEditPanel({
         thumbnails={draft.thumbnailUrls}
         onChange={(thumbnailUrls) => onApply({ thumbnailUrls })}
         posterFallback={{
-          projectId: "submit-preview",
+          projectId: SUBMIT_DRAFT_PREVIEW_ID,
           title: draft.title.trim() || "タイトル未入力",
           genre: primaryGenre,
           phase: draft.phase,
+          styleSeed: SUBMIT_DRAFT_PREVIEW_ID,
         }}
       />
     </StudioPanelEditShell>

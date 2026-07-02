@@ -8,6 +8,8 @@ type GeneratedThumbnailPosterProps = {
   title: string;
   genre: string;
   phase: string;
+  /** 背景・柄・色用 seed（未指定時は projectId）。タイトル表示とは分離 */
+  styleSeed?: string;
   className?: string;
   compact?: boolean;
 };
@@ -64,11 +66,11 @@ export function GeneratedThumbnailPoster({
   title,
   genre,
   phase,
+  styleSeed,
   className = "",
   compact = false,
 }: GeneratedThumbnailPosterProps) {
-  const seed = `${projectId}:${title}:${genre}`;
-  const { palette, pattern, rotation } = getPosterStyle(seed);
+  const { palette, pattern, rotation } = getPosterStyle(styleSeed ?? projectId);
   const displayTitle = title.trim() || "Untitled Project";
 
   return (

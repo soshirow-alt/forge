@@ -96,6 +96,7 @@ export function StudioSubmitPlayerPreview({
       title: submitDraft.title.trim() || "タイトル未入力",
       genre: primaryGenre,
       phase: submitDraft.phase,
+      styleSeed: SUBMIT_DRAFT_PREVIEW_ID,
     }),
     [submitDraft.title, submitDraft.phase, primaryGenre],
   );

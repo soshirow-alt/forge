@@ -94,6 +94,7 @@ export function GameDetailPlayerPreview({
       title: submittedGame.title,
       genre: genres[0] ?? "その他",
       phase: submittedGame.phase,
+      styleSeed: submittedGame.id,
     };
   }, [submittedGame]);
 
