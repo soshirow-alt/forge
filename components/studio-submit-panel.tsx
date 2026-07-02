@@ -1,7 +1,7 @@
 "use client";
 
 import { SlidersHorizontal, Pencil, Sparkles, Image as ImageIcon, Link2 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { VersionPromptSettingsTrigger } from "@/components/version-prompt-settings-modal";
 import {
   StudioSubmitBasicInfoEditPanel,
@@ -11,6 +11,7 @@ import {
   StudioSubmitPlayInfoEditPanel,
   StudioSubmitVisibilityEditPanel,
 } from "@/components/studio-submit-edit-panels";
+import type { SubmitValidationEditMode } from "@/lib/studio-submit-draft";
 import { getVisibilityBadgeLabel } from "@/lib/project-visibility";
 import {
   summarizeSubmitDraftBasic,
@@ -28,29 +29,61 @@ const panelButtonClassName =
 const primaryButtonClassName =
   "inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 shadow-sm shadow-orange-500/20 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
 
-type SubmitEditMode =
-  | null
-  | "basic-info"
-  | "genres-tags"
-  | "introduction"
-  | "images"
-  | "play-info"
-  | "visibility";
+type SubmitEditMode = SubmitValidationEditMode | "images" | "visibility" | null;
+
+type RequirementBadge = "required" | "optional";
+
+function RequirementLabel({ kind }: { kind: RequirementBadge }) {
+  return (
+    <span
+      className={`rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
+        kind === "required"
+          ? "bg-orange-500/15 text-orange-300 ring-1 ring-orange-500/25"
+          : "bg-zinc-800/80 text-zinc-500"
+      }`}
+    >
+      {kind === "required" ? "必須" : "任意"}
+    </span>
+  );
+}
 
 function PanelBlock({
   title,
+  requirement,
+  fieldHint,
   children,
 }: {
   title?: string;
+  requirement?: RequirementBadge;
+  fieldHint?: string;
   children: ReactNode;
 }) {
   return (
     <section className="rounded-xl border border-zinc-800/50 bg-zinc-950/25 p-4">
       {title ? (
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{title}</h3>
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              {title}
+            </h3>
+            {requirement ? <RequirementLabel kind={requirement} /> : null}
+          </div>
+          {fieldHint ? <p className="text-[11px] text-zinc-600">{fieldHint}</p> : null}
+        </div>
       ) : null}
       <div className={title ? "mt-3 space-y-2" : "space-y-2"}>{children}</div>
     </section>
+  );
+}
+
+function SubmitValidationAlert({ message }: { message: string }) {
+  return (
+    <p
+      role="alert"
+      className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200"
+    >
+      {message}
+    </p>
   );
 }
 
@@ -69,6 +102,8 @@ export type StudioSubmitPanelProps = {
   submitting: boolean;
   submitError: string | null;
   showPromptValidation: boolean;
+  focusEditMode?: SubmitValidationEditMode | null;
+  onFocusEditModeHandled?: () => void;
 };
 
 export function StudioSubmitPanel({
@@ -78,10 +113,20 @@ export function StudioSubmitPanel({
   submitting,
   submitError,
   showPromptValidation,
+  focusEditMode = null,
+  onFocusEditModeHandled,
 }: StudioSubmitPanelProps) {
   const [editMode, setEditMode] = useState<SubmitEditMode>(null);
   const visibilityLabel = getVisibilityBadgeLabel(draft.visibility);
   const promptSummary = summarizeVersionPromptSettings(draft.promptMode, draft.promptDrafts);
+
+  useEffect(() => {
+    if (!focusEditMode) {
+      return;
+    }
+    setEditMode(focusEditMode);
+    onFocusEditModeHandled?.();
+  }, [focusEditMode, onFocusEditModeHandled]);
 
   function applyPatch(patch: Partial<SubmitDraftState>) {
     onDraftChange(patch);
@@ -93,17 +138,26 @@ export function StudioSubmitPanel({
 
   if (editMode === "basic-info") {
     return (
-      <StudioSubmitBasicInfoEditPanel draft={draft} onApply={applyPatch} onCancel={closeEdit} />
+      <aside aria-label="Studioパネル" className="w-full shrink-0 xl:sticky xl:top-6 xl:w-[340px] xl:self-start">
+        {submitError ? <SubmitValidationAlert message={submitError} /> : null}
+        <StudioSubmitBasicInfoEditPanel draft={draft} onApply={applyPatch} onCancel={closeEdit} />
+      </aside>
     );
   }
   if (editMode === "genres-tags") {
     return (
-      <StudioSubmitGenresTagsEditPanel draft={draft} onApply={applyPatch} onCancel={closeEdit} />
+      <aside aria-label="Studioパネル" className="w-full shrink-0 xl:sticky xl:top-6 xl:w-[340px] xl:self-start">
+        {submitError ? <SubmitValidationAlert message={submitError} /> : null}
+        <StudioSubmitGenresTagsEditPanel draft={draft} onApply={applyPatch} onCancel={closeEdit} />
+      </aside>
     );
   }
   if (editMode === "introduction") {
     return (
-      <StudioSubmitIntroductionEditPanel draft={draft} onApply={applyPatch} onCancel={closeEdit} />
+      <aside aria-label="Studioパネル" className="w-full shrink-0 xl:sticky xl:top-6 xl:w-[340px] xl:self-start">
+        {submitError ? <SubmitValidationAlert message={submitError} /> : null}
+        <StudioSubmitIntroductionEditPanel draft={draft} onApply={applyPatch} onCancel={closeEdit} />
+      </aside>
     );
   }
   if (editMode === "images") {
@@ -113,7 +167,10 @@ export function StudioSubmitPanel({
   }
   if (editMode === "play-info") {
     return (
-      <StudioSubmitPlayInfoEditPanel draft={draft} onApply={applyPatch} onCancel={closeEdit} />
+      <aside aria-label="Studioパネル" className="w-full shrink-0 xl:sticky xl:top-6 xl:w-[340px] xl:self-start">
+        {submitError ? <SubmitValidationAlert message={submitError} /> : null}
+        <StudioSubmitPlayInfoEditPanel draft={draft} onApply={applyPatch} onCancel={closeEdit} />
+      </aside>
     );
   }
   if (editMode === "visibility") {
@@ -143,7 +200,11 @@ export function StudioSubmitPanel({
             <div className="space-y-2">
               <GroupLabel>ページの内容</GroupLabel>
               <div className="space-y-2">
-                <PanelBlock title="基本情報">
+                <PanelBlock
+                  title="基本情報"
+                  requirement="required"
+                  fieldHint="タイトル・開発フェーズ"
+                >
                   <p className="text-sm text-zinc-300">{summarizeSubmitDraftBasic(draft)}</p>
                   <button type="button" onClick={() => setEditMode("basic-info")} className={panelButtonClassName}>
                     <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
@@ -151,7 +212,11 @@ export function StudioSubmitPanel({
                   </button>
                 </PanelBlock>
 
-                <PanelBlock title="ジャンル・タグ">
+                <PanelBlock
+                  title="ジャンル・タグ"
+                  requirement="required"
+                  fieldHint="ジャンル（必須）・特徴タグ（任意）"
+                >
                   <p className="text-sm text-zinc-300">{summarizeSubmitDraftGenres(draft)}</p>
                   <button type="button" onClick={() => setEditMode("genres-tags")} className={panelButtonClassName}>
                     <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
@@ -159,7 +224,7 @@ export function StudioSubmitPanel({
                   </button>
                 </PanelBlock>
 
-                <PanelBlock title="作品紹介">
+                <PanelBlock title="作品紹介" requirement="required">
                   <p className="text-sm text-zinc-300">{summarizeSubmitDraftIntroduction(draft)}</p>
                   <button type="button" onClick={() => setEditMode("introduction")} className={panelButtonClassName}>
                     <Sparkles className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
@@ -167,7 +232,7 @@ export function StudioSubmitPanel({
                   </button>
                 </PanelBlock>
 
-                <PanelBlock title="画像">
+                <PanelBlock title="画像" requirement="optional" fieldHint="未設定でも投稿できます">
                   <p className="text-sm text-zinc-300">{summarizeSubmitDraftImages(draft)}</p>
                   <button type="button" onClick={() => setEditMode("images")} className={panelButtonClassName}>
                     <ImageIcon className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
@@ -180,7 +245,11 @@ export function StudioSubmitPanel({
             <div className="space-y-2">
               <GroupLabel>遊び方・公開</GroupLabel>
               <div className="space-y-2">
-                <PanelBlock title="プレイ情報・公開先">
+                <PanelBlock
+                  title="プレイ情報・公開先"
+                  requirement="required"
+                  fieldHint="配布形式・プレイURL"
+                >
                   <p className="text-sm text-zinc-300">{summarizeSubmitDraftPlayInfo(draft)}</p>
                   <button type="button" onClick={() => setEditMode("play-info")} className={panelButtonClassName}>
                     <Link2 className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
@@ -188,7 +257,7 @@ export function StudioSubmitPanel({
                   </button>
                 </PanelBlock>
 
-                <PanelBlock title="公開設定">
+                <PanelBlock title="公開設定" requirement="optional">
                   <div className="flex items-center justify-between rounded-lg border border-zinc-800/60 bg-zinc-950/30 px-3 py-2">
                     <span className="text-xs text-zinc-500">公開状態</span>
                     <span className="text-sm font-medium text-zinc-200">{visibilityLabel}</span>
@@ -203,7 +272,7 @@ export function StudioSubmitPanel({
 
             <div className="space-y-2">
               <GroupLabel>フィードバック設定</GroupLabel>
-              <PanelBlock title="プレイヤーに聞きたいこと（任意）">
+              <PanelBlock title="プレイヤーに聞きたいこと" requirement="optional">
                 <p className="text-xs leading-relaxed text-zinc-600">
                   未設定の場合は、プレイ後にデフォルトの問いが表示されます。
                 </p>

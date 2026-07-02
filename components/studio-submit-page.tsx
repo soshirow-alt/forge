@@ -8,7 +8,7 @@ import { StudioSubmitPlayerPreview } from "@/components/studio-submit-player-pre
 import { StudioShell } from "@/components/studio-shell";
 import { StudioSubmitPanel } from "@/components/studio-submit-panel";
 import { useGames } from "@/components/games-provider";
-import { useStudioSubmit } from "@/hooks/use-studio-submit";
+import { useStudioSubmit, type SubmitValidationEditMode } from "@/hooks/use-studio-submit";
 import type { GameDetailTab } from "@/lib/game-detail-tabs";
 import { getDeveloperSocialLinkDefaults } from "@/lib/developer-external-link-defaults";
 import { resolveDeveloperPublicName } from "@/lib/developer-display-name";
@@ -30,6 +30,7 @@ export function StudioSubmitPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showPromptValidation, setShowPromptValidation] = useState(false);
+  const [focusEditMode, setFocusEditMode] = useState<SubmitValidationEditMode | null>(null);
   const socialPrefillDoneRef = useRef(false);
 
   const developerProfile = user ? getDeveloperProfileByUserId(user.id) : undefined;
@@ -81,11 +82,15 @@ export function StudioSubmitPage() {
 
     setSubmitError(null);
     setShowPromptValidation(false);
+    setFocusEditMode(null);
     setSubmitting(true);
 
     const result = await submitDraft(draft, user);
     if (!result.ok) {
       setSubmitError(result.message);
+      if (result.editMode) {
+        setFocusEditMode(result.editMode);
+      }
       if (draft.promptMode === "custom") {
         setShowPromptValidation(true);
       }
@@ -135,6 +140,8 @@ export function StudioSubmitPage() {
           submitting={submitting}
           submitError={submitError}
           showPromptValidation={showPromptValidation}
+          focusEditMode={focusEditMode}
+          onFocusEditModeHandled={() => setFocusEditMode(null)}
         />
       </div>
     </StudioShell>

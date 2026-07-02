@@ -12,40 +12,62 @@ import { resolveDeveloperPublicName } from "@/lib/developer-display-name";
 import {
   draftToSubmitFormData,
   getSubmitPromptsToSave,
+  SUBMIT_VALIDATION_PANEL_LABELS,
   type SubmitDraftOwner,
   type SubmitDraftState,
+  type SubmitValidationEditMode,
 } from "@/lib/studio-submit-draft";
 import { sanitizeProjectGenresForSave } from "@/lib/project-genres";
 import { validatePromptDrafts } from "@/lib/version-prompt-form";
 import type { User } from "@/lib/auth";
 
+export type { SubmitValidationEditMode } from "@/lib/studio-submit-draft";
+
 export type SubmitDraftValidationResult =
   | { ok: true }
-  | { ok: false; message: string };
+  | {
+      ok: false;
+      message: string;
+      editMode?: SubmitValidationEditMode;
+      sectionLabel?: string;
+    };
+
+function validationFailure(
+  editMode: SubmitValidationEditMode,
+  detail: string,
+): SubmitDraftValidationResult {
+  const sectionLabel = SUBMIT_VALIDATION_PANEL_LABELS[editMode];
+  return {
+    ok: false,
+    message: `「${sectionLabel}」を確認してください。${detail}`,
+    editMode,
+    sectionLabel,
+  };
+}
 
 export function validateSubmitDraftForPost(
   draft: SubmitDraftState,
 ): SubmitDraftValidationResult {
   if (!draft.title.trim()) {
-    return { ok: false, message: "タイトルを入力してください。" };
+    return validationFailure("basic-info", "タイトルを入力してください。");
   }
 
   const genres = sanitizeProjectGenresForSave(draft.genres);
   if (genres.length === 0) {
-    return { ok: false, message: "ジャンルを1つ以上選んでください。" };
+    return validationFailure("genres-tags", "ジャンルを1つ以上選んでください。");
   }
 
   if (!draft.introduction.trim()) {
-    return { ok: false, message: "作品紹介を入力してください。" };
+    return validationFailure("introduction", "作品紹介を入力してください。");
   }
 
   if (!draft.phase.trim()) {
-    return { ok: false, message: "開発フェーズを選んでください。" };
+    return validationFailure("basic-info", "開発フェーズを選んでください。");
   }
 
   const accessError = validatePlayAccess(draft.playEnvironment, draft.playUrl);
   if (accessError) {
-    return { ok: false, message: accessError };
+    return validationFailure("play-info", accessError);
   }
 
   if (draft.promptMode === "custom") {
