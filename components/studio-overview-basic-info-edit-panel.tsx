@@ -20,8 +20,8 @@ export function StudioOverviewBasicInfoEditPanel({
   onCancel,
   onSaved,
 }: StudioOverviewBasicInfoEditPanelProps) {
-  const { getSubmittedGameById, updateProjectDetails, dataReady } = useGames();
-  const game = getSubmittedGameById(projectId);
+  const { getOwnedProjectById, updateProjectDetails, dataReady } = useGames();
+  const game = getOwnedProjectById(projectId);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");

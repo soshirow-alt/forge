@@ -23,8 +23,8 @@ export function StudioOverviewVisibilityEditPanel({
   onCancel,
   onSaved,
 }: StudioOverviewVisibilityEditPanelProps) {
-  const { getSubmittedGameById, updateProjectDetails, dataReady } = useGames();
-  const game = getSubmittedGameById(projectId);
+  const { getOwnedProjectById, updateProjectDetails, dataReady } = useGames();
+  const game = getOwnedProjectById(projectId);
 
   const [visibility, setVisibility] = useState<ProjectVisibility>("public");
   const [formLoaded, setFormLoaded] = useState(false);

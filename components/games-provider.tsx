@@ -180,6 +180,14 @@ const EMPTY_USER_ENGAGEMENT: UserEngagementState = {
 
 type Counts = Record<string, number>;
 
+/** submittedGames / publicGames 更新用 — id 未存在時は先頭に追加 */
+function upsertGameInList(prev: Game[], merged: Game): Game[] {
+  if (prev.some((item) => item.id === merged.id)) {
+    return prev.map((item) => (item.id === merged.id ? merged : item));
+  }
+  return [merged, ...prev];
+}
+
 type GamesContextValue = {
   submittedGames: Game[];
   /** visibility=public のみ — /home・検索用（auth 非依存） */
@@ -197,6 +205,8 @@ type GamesContextValue = {
   updateProjectOverview: (id: string, data: ProjectOverviewUpdate) => Promise<void>;
   deleteSubmittedGame: (id: string) => Promise<void>;
   getSubmittedGameById: (id: string) => Game | undefined;
+  /** Studio 編集用 — submittedGames のみ（publicGames フォールバックなし） */
+  getOwnedProjectById: (id: string) => Game | undefined;
   getGameById: (id: string) => Game | undefined;
   getGamesBySection: (section: Game["section"]) => Game[];
   getSupportCount: (id: string, defaultCount?: number) => number;
@@ -641,17 +651,12 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         data,
       );
       const merged = mergeGameWithExtras(game);
-      setSubmittedGames((prev) =>
-        prev.map((item) => (item.id === id ? merged : item)),
-      );
+      setSubmittedGames((prev) => upsertGameInList(prev, merged));
       setPublicGames((prev) => {
         if (merged.visibility !== "public") {
           return prev.filter((item) => item.id !== id);
         }
-        if (prev.some((item) => item.id === id)) {
-          return prev.map((item) => (item.id === id ? merged : item));
-        }
-        return prev;
+        return upsertGameInList(prev, merged);
       });
       void reloadPublicCatalog().catch(() => undefined);
       const ownerId = current?.ownerId ?? game.ownerId;
@@ -678,17 +683,12 @@ export function GamesProvider({ children }: { children: ReactNode }) {
 
       const game = await updateProjectOverviewInDb(supabase, id, data);
       const merged = mergeGameWithExtras(game);
-      setSubmittedGames((prev) =>
-        prev.map((item) => (item.id === id ? merged : item)),
-      );
+      setSubmittedGames((prev) => upsertGameInList(prev, merged));
       setPublicGames((prev) => {
         if (merged.visibility !== "public") {
           return prev.filter((item) => item.id !== id);
         }
-        if (prev.some((item) => item.id === id)) {
-          return prev.map((item) => (item.id === id ? merged : item));
-        }
-        return prev;
+        return upsertGameInList(prev, merged);
       });
       void reloadPublicCatalog().catch(() => undefined);
     },
@@ -746,6 +746,16 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       return publicGames.find((game) => game.id === id);
     },
     [submittedGames, publicGames, catalogReady],
+  );
+
+  const getOwnedProjectById = useCallback(
+    (id: string) => {
+      if (!catalogReady) {
+        return undefined;
+      }
+      return submittedGames.find((game) => game.id === id);
+    },
+    [submittedGames, catalogReady],
   );
 
   const isSubmittedGame = useCallback(
@@ -2029,6 +2039,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       updateProjectOverview,
       deleteSubmittedGame,
       getSubmittedGameById,
+      getOwnedProjectById,
       getGameById,
       getGamesBySection,
       getSupportCount,
@@ -2110,6 +2121,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       updateProjectOverview,
       deleteSubmittedGame,
       getSubmittedGameById,
+      getOwnedProjectById,
       getGameById,
       getGamesBySection,
       getSupportCount,

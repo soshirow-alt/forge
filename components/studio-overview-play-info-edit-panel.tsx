@@ -30,8 +30,8 @@ export function StudioOverviewPlayInfoEditPanel({
   onCancel,
   onSaved,
 }: StudioOverviewPlayInfoEditPanelProps) {
-  const { getSubmittedGameById, updateProjectDetails, dataReady } = useGames();
-  const game = getSubmittedGameById(projectId);
+  const { getOwnedProjectById, updateProjectDetails, dataReady } = useGames();
+  const game = getOwnedProjectById(projectId);
 
   const [playEnvironment, setPlayEnvironment] = useState<PlayEnvironmentFormState>(
     EMPTY_PLAY_ENVIRONMENT_FORM,

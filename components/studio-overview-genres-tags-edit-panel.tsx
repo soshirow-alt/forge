@@ -40,8 +40,8 @@ export function StudioOverviewGenresTagsEditPanel({
   onCancel,
   onSaved,
 }: StudioOverviewGenresTagsEditPanelProps) {
-  const { getSubmittedGameById, updateProjectDetails, dataReady } = useGames();
-  const game = getSubmittedGameById(projectId);
+  const { getOwnedProjectById, updateProjectDetails, dataReady } = useGames();
+  const game = getOwnedProjectById(projectId);
 
   const [selectedGenres, setSelectedGenres] = useState<ForgeGenreOption[]>([]);
   const [selectedTags, setSelectedTags] = useState<ForgeFeatureTagOption[]>([]);

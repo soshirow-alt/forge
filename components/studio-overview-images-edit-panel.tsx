@@ -21,8 +21,8 @@ export function StudioOverviewImagesEditPanel({
   onCancel,
   onSaved,
 }: StudioOverviewImagesEditPanelProps) {
-  const { getSubmittedGameById, updateProjectDetails, dataReady } = useGames();
-  const game = getSubmittedGameById(projectId);
+  const { getOwnedProjectById, updateProjectDetails, dataReady } = useGames();
+  const game = getOwnedProjectById(projectId);
 
   const [thumbnailUrls, setThumbnailUrls] = useState<string[]>([]);
   const [formLoaded, setFormLoaded] = useState(false);

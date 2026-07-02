@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { notFound, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { StudioShell } from "@/components/studio-shell";
@@ -29,12 +29,13 @@ import { getVisibilityBadgeLabel } from "@/lib/project-visibility";
 /** B2 ロールバック用 — true にすると旧 Studio 縦積み UI を再表示 */
 const SHOW_LEGACY_STUDIO_UI = false;
 
+type StudioOwnerAccess = "loading" | "owner" | "notOwner";
+
 function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, hydrated } = useAuth();
-  const { getSubmittedGameById, getDevlogsByProject, dataReady } =
-    useGames();
+  const { getOwnedProjectById, getDevlogsByProject, dataReady } = useGames();
   const { handleTestPlay } = useProjectTestPlay(projectId);
 
   const { entries: feedbackEntries, loaded: feedbackLoaded } =
@@ -42,8 +43,17 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   const { signals: voiceSignals, loaded: voiceLoaded } =
     useOwnedProjectVoiceSignals(user?.id);
 
-  const game = getSubmittedGameById(projectId);
-  const isOwner = Boolean(user && game && game.ownerId === user.id);
+  const game = getOwnedProjectById(projectId);
+
+  const ownerAccess: StudioOwnerAccess = useMemo(() => {
+    if (!hydrated || !dataReady || !user) {
+      return "loading";
+    }
+    if (!game) {
+      return "notOwner";
+    }
+    return game.ownerId === user.id ? "owner" : "notOwner";
+  }, [hydrated, dataReady, user, game]);
 
   const growth = useMemo(() => {
     if (!game) {
@@ -68,13 +78,11 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   }, [hydrated, user, router]);
 
   useEffect(() => {
-    if (!hydrated || !dataReady || !user || !game) {
+    if (ownerAccess !== "notOwner") {
       return;
     }
-    if (!isOwner) {
-      router.replace(`/games/${projectId}`);
-    }
-  }, [hydrated, dataReady, user, game, isOwner, projectId, router]);
+    router.replace(`/games/${projectId}`);
+  }, [ownerAccess, projectId, router]);
 
   const [openFeedbackPanel, setOpenFeedbackPanel] = useState(false);
   const [activeSection, setActiveSection] = useState<GameDetailTab>("overview");
@@ -130,7 +138,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
     element?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [feedbackLoaded, voiceLoaded, growth, openFeedbackPanel]);
 
-  if (!hydrated || !dataReady) {
+  if (ownerAccess === "loading") {
     return (
       <StudioShell activeNav="mypage">
         <p className="text-zinc-500">読み込み中...</p>
@@ -142,12 +150,16 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
     return null;
   }
 
-  if (!game) {
-    notFound();
+  if (ownerAccess === "notOwner") {
+    return null;
   }
 
-  if (!isOwner) {
-    return null;
+  if (!game) {
+    return (
+      <StudioShell activeNav="mypage">
+        <p className="text-zinc-500">読み込み中...</p>
+      </StudioShell>
+    );
   }
 
   const growthSnapshot =

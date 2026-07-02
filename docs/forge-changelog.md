@@ -4,6 +4,10 @@
 
 ---
 
+- **Studio 編集 P0（保存反映・F5）** — `submittedGames` を upsert 化し保存直後に provider state へ確実反映。Studio 編集は `getOwnedProjectById`（public フォールバックなし）を正本に。owner ガードを loading / owner / notOwner の三値化し判定完了前の `/games/{id}` 誤リダイレクトを防止。DB 変更なし
+
+---
+
 - **Studio 編集画面復旧** — 保存後の左プレビュー未反映と F5 時の `/games/{id}` 誤リダイレクトを修正。`getSubmittedGameById` の catalog 読込前フォールバックを止め、保存時に `submittedGames` / `publicGames` を同期。`GameDetailPlayerPreview` を Phase 1 前に戻し draft は `StudioSubmitPlayerPreview` に分離。DB 変更なし
 
 ---

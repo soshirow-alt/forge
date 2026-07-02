@@ -26,8 +26,8 @@ export function StudioOverviewIntroductionEditPanel({
   onSaved,
 }: StudioOverviewIntroductionEditPanelProps) {
   const overviewEditorRef = useRef<GameOverviewEditorHandle>(null);
-  const { getSubmittedGameById, updateProjectOverview, dataReady } = useGames();
-  const game = getSubmittedGameById(projectId);
+  const { getOwnedProjectById, updateProjectOverview, dataReady } = useGames();
+  const game = getOwnedProjectById(projectId);
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
