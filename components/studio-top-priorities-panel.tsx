@@ -144,7 +144,7 @@ export function StudioTopPrioritiesPanel({
             hideHeading ? "" : "mt-3"
           }`}
         >
-          <p className="text-sm font-medium text-zinc-400">まだ十分なフィードバックがありません</p>
+          <p className="text-sm font-medium text-zinc-400">十分なフィードバックがありません</p>
           <p className="mt-1 text-xs leading-relaxed text-zinc-500">
             フィードバックが集まると、多かった意見や気になる傾向が表示されます。
           </p>

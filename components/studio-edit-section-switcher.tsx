@@ -9,7 +9,13 @@ const STUDIO_EDIT_SECTIONS: { id: GameDetailTab; label: ReactNode }[] = [
   { id: "devlog", label: "開発ログ" },
   {
     id: "voices",
-    label: "フィードバック",
+    label: (
+      <span className="block leading-tight">
+        フィード
+        <br />
+        バック
+      </span>
+    ),
   },
 ];
 

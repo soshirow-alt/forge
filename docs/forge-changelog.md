@@ -4,7 +4,9 @@
 
 ---
 
-- **Studioホーム反応セクション・通知導線の最小修正** — `/studio` 上部は `project_voice_responses` がある作品のみ表示（0件時は空状態 + 作品一覧/新規投稿 CTA）。見出しを「確認したいプレイヤーの反応」に変更、「新しい回答」バッジを「未確認の回答」に変更。「届いたFBを見る」は回答あり時のみ `作品Studio` フィードバックへリンク。StudioShell の通知ベルは `/notifications` へ（実データの未読バッジ）。`/studio/notifications` 直アクセス時は通知ページへの案内を表示。DB migration なし
+- **Studio右パネル文言の改行調整** — タブ「フィードバック」を意図的に「フィード / バック」の2行表示に。傾向カードの空状態を「十分なフィードバックがありません」に短縮（不自然な1文字改行を回避）。DB migration なし
+
+--- — `/studio` 上部は `project_voice_responses` がある作品のみ表示（0件時は空状態 + 作品一覧/新規投稿 CTA）。見出しを「確認したいプレイヤーの反応」に変更、「新しい回答」バッジを「未確認の回答」に変更。「届いたFBを見る」は回答あり時のみ `作品Studio` フィードバックへリンク。StudioShell の通知ベルは `/notifications` へ（実データの未読バッジ）。`/studio/notifications` 直アクセス時は通知ページへの案内を表示。DB migration なし
 
 --- — 本番Previewで `/mypage/profile`・`/studio/profile` ログアウト直後に mock「しゃねこ」が一瞬出ないよう、hideV0Mock 時の user null fallback を廃止（loading 表示）。Studio 開発ログ右ペインを「公開ログの確認 + 問い設定」に文言整理（「編集」表記を廃止、本文は読み取り専用のまま）。DB migration なし
 
