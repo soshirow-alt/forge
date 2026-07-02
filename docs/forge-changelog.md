@@ -4,6 +4,10 @@
 
 ---
 
+- **Studio 新規投稿 Phase 1 修正** — Studio編集画面の左プレビュー回帰を修正（`GameDetailPlayerPreview` の projectId モードを Phase 1 以前の実装に分離）。`/studio/submit` 初期表示からランダム画像・PC/外部サイトの初期選択を除去し、未入力はプレースホルダーのみ表示（保存値には混ぜない）。DB 変更なし
+
+---
+
 - **Studio 新規投稿 Phase 1** — `/studio/submit` を新設（左プレビュー + 右Studioパネル）。投稿後は `/projects/{id}/studio` へ遷移。`/submit` と `?submit=1` は新ページへリダイレクト。プレイヤーへの問い（任意）はモーダルで設定可能。DB 変更なし
 
 ---

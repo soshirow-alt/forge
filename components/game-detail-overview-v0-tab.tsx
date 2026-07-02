@@ -108,6 +108,10 @@ export const GameDetailOverviewV0Tab = forwardRef<
   gameId?: string;
   heroLead?: string;
   publication?: PublicationDisplay | null;
+  /** 新規投稿プレビュー — 未設定のプレイ情報をプレースホルダー表示 */
+  showUnsetPlayPlaceholders?: boolean;
+  /** 新規投稿プレビュー — 作品紹介プレースホルダーを薄く表示 */
+  mutedIntroduction?: boolean;
 }
 >(function GameDetailOverviewV0Tab(
   {
@@ -126,6 +130,8 @@ export const GameDetailOverviewV0Tab = forwardRef<
   gameId,
   heroLead,
   publication = null,
+  showUnsetPlayPlaceholders = false,
+  mutedIntroduction = false,
 },
   ref,
 ) {
@@ -250,6 +256,8 @@ export const GameDetailOverviewV0Tab = forwardRef<
         playerMeta={playerMeta}
         activity={overviewActivity}
         publication={publication}
+        showUnsetPlayPlaceholders={showUnsetPlayPlaceholders}
+        mutedIntroduction={mutedIntroduction}
       />
     );
   }

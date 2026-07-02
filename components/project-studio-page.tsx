@@ -35,6 +35,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   const { user, hydrated } = useAuth();
   const { getSubmittedGameById, isProjectOwner, getDevlogsByProject, dataReady } =
     useGames();
+  const { handleTestPlay } = useProjectTestPlay(projectId);
 
   const { entries: feedbackEntries, loaded: feedbackLoaded } =
     useOwnedProjectFeedback(user?.id);
@@ -156,7 +157,6 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
 
   const devlogCount = getDevlogsByProject(game.id).length;
   const visibilityLabel = getVisibilityBadgeLabel(game.visibility);
-  const { handleTestPlay } = useProjectTestPlay(projectId);
 
   return (
     <StudioShell activeNav="mypage">

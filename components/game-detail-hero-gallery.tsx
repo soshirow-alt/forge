@@ -35,7 +35,21 @@ function GallerySlide({ src, active }: { src: string; active: boolean }) {
   );
 }
 
-export function GameDetailHeroGallery({ images }: { images: string[] }) {
+export function GameDetailHeroGallery({
+  images,
+  emptyPlaceholder,
+}: {
+  images: string[];
+  emptyPlaceholder?: string;
+}) {
+  if (images.length === 0 && emptyPlaceholder) {
+    return (
+      <div className="flex min-h-[220px] items-center justify-center border border-dashed border-zinc-800/80 bg-zinc-950/40 px-6 text-center lg:min-h-[320px]">
+        <p className="text-sm text-zinc-600">{emptyPlaceholder}</p>
+      </div>
+    );
+  }
+
   const slides = images.length > 0 ? images : ["/images/landing/game-1.png"];
   const [index, setIndex] = useState(0);
   const total = slides.length;

@@ -4,16 +4,12 @@ import {
   type ForgeFeatureTagOption,
 } from "@/lib/forge-feature-tag-options";
 import type { ForgeGenreOption } from "@/lib/forge-genre-options";
-import {
-  resolveGameDetailPlayerMeta,
-  resolvePlayerPlayInfoDisplay,
-  type GameDetailPlayerMeta,
-} from "@/lib/game-detail-player-meta";
+import type { GameDetailPlayerMeta } from "@/lib/game-detail-player-meta";
 import type { GameDetailV0 } from "@/lib/game-detail-v0-mock-data";
 import type { Game } from "@/lib/mock-games";
+import { PLAY_TIME_OPTIONS } from "@/lib/play-time-options";
 import {
   EMPTY_PLAY_ENVIRONMENT_FORM,
-  getPlayEnvironmentLabels,
   mergePlayEnvironmentIntoTags,
   type PlayEnvironmentFormState,
 } from "@/lib/play-environment";
@@ -24,7 +20,6 @@ import {
   sanitizeProjectGenresForSave,
 } from "@/lib/project-genres";
 import { DEFAULT_PLAYABLE_VERSION } from "@/lib/playable-version";
-import { gameToDetailV0 } from "@/lib/submitted-game-v0-adapter";
 import type { ProjectVisibility } from "@/lib/project-visibility";
 import {
   createEmptyPromptDraft,
@@ -34,6 +29,19 @@ import {
 } from "@/lib/version-prompt-form";
 
 export const SUBMIT_DRAFT_PREVIEW_ID = "submit-draft-preview";
+
+/** プレビュー表示専用 — 保存データには入れない */
+export const SUBMIT_DRAFT_TITLE_PLACEHOLDER = "タイトル未入力";
+export const SUBMIT_DRAFT_INTRO_PLACEHOLDER = "作品紹介がここに表示されます";
+export const SUBMIT_DRAFT_GENRE_PLACEHOLDER = "ジャンル未設定";
+export const SUBMIT_DRAFT_PHASE_PLACEHOLDER = "開発フェーズ未設定";
+export const SUBMIT_DRAFT_IMAGE_PLACEHOLDER = "画像を追加するとここに表示されます";
+
+const DRAFT_PLAY_METHOD_OPTIONS = [
+  { id: "browser" as const, label: "ブラウザで起動" },
+  { id: "download" as const, label: "ダウンロード" },
+  { id: "external" as const, label: "外部サイトで開く" },
+];
 
 export type SubmitDraftState = {
   title: string;
@@ -87,6 +95,7 @@ export function createEmptySubmitDraft(): SubmitDraftState {
   };
 }
 
+/** 投稿保存用 — 未入力は空のまま。プレースホルダー文字列は入れない */
 export function buildDraftGame(
   draft: SubmitDraftState,
   owner: SubmitDraftOwner,
@@ -99,16 +108,16 @@ export function buildDraftGame(
 
   return {
     id: SUBMIT_DRAFT_PREVIEW_ID,
-    title: draft.title.trim() || "タイトル未入力",
+    title: draft.title.trim(),
     creator: owner.creator,
     ownerName: owner.ownerName,
     ownerId: owner.ownerId,
     genres,
-    genre: genresToLegacyGenreColumn(genres) || "その他",
-    description: description || "作品紹介がここに表示されます",
+    genre: genresToLegacyGenreColumn(genres) || "",
+    description,
     overviewIntroduction: intro || null,
-    phase: draft.phase.trim() || "試作ver",
-    status: draft.phase.trim() || "試作ver",
+    phase: draft.phase.trim(),
+    status: draft.phase.trim(),
     lookingForTesters: false,
     lastUpdated: "投稿前",
     createdAt: new Date().toISOString(),
@@ -132,57 +141,79 @@ export function buildDraftGame(
   };
 }
 
+/** 左プレビュー表示専用 — 未入力はプレースホルダー文言で見せる */
 export function buildSubmitDraftDetailV0(
   draft: SubmitDraftState,
   owner: SubmitDraftOwner,
 ): GameDetailV0 {
-  const game = buildDraftGame(draft, owner);
-  const detail = gameToDetailV0(game);
-  return applySubmitDraftPreviewDisplay(detail, draft);
-}
-
-export function applySubmitDraftPreviewDisplay(
-  detail: GameDetailV0,
-  draft: SubmitDraftState,
-): GameDetailV0 {
   const intro = draft.introduction.trim();
   const genres = sanitizeProjectGenresForSave(draft.genres);
   const featureTags = sanitizeFeatureTagsForSave(draft.featureTags);
-  const tags = [
-    ...(genres.length > 0 ? genres : ["ジャンル未設定"]),
-    ...featureTags,
-  ];
+  const tags =
+    genres.length > 0
+      ? [...genres, ...featureTags]
+      : [SUBMIT_DRAFT_GENRE_PLACEHOLDER];
+  const heroImage = draft.thumbnailUrls[0] ?? "";
 
   return {
-    ...detail,
-    title: draft.title.trim() || "タイトル未入力",
-    lead: intro ? detail.lead : "作品紹介がここに表示されます",
-    introduction: intro || "作品紹介がここに表示されます",
+    id: SUBMIT_DRAFT_PREVIEW_ID,
+    title: draft.title.trim() || SUBMIT_DRAFT_TITLE_PLACEHOLDER,
+    lead: intro || SUBMIT_DRAFT_INTRO_PLACEHOLDER,
     tags,
-    galleryImages:
-      draft.thumbnailUrls.length > 0 ? detail.galleryImages : [detail.heroImage],
+    heroImage,
+    galleryImages: draft.thumbnailUrls,
+    currentVersion: DEFAULT_PLAYABLE_VERSION,
+    developer: {
+      id: owner.ownerId,
+      name: owner.ownerName,
+      avatar: heroImage,
+      followers: 0,
+      bio: "",
+      following: false,
+    },
+    witnessCount: 0,
+    voiceCount: 0,
+    devlogUpdatedAgo: "投稿前",
+    lastUpdated: "投稿前",
+    watching: false,
+    saved: false,
+    introduction: intro || SUBMIT_DRAFT_INTRO_PLACEHOLDER,
+    features: [],
+    developerWorry: "",
+    wantedVoices: [],
+    relatedTags: tags,
+    relatedGames: [],
   };
 }
 
 export function resolveSubmitDraftPreviewPlayerMeta(
   draft: SubmitDraftState,
-  game: Game,
 ): GameDetailPlayerMeta {
-  const resolved = resolveGameDetailPlayerMeta(game);
-  if (resolved) {
-    return resolved;
-  }
+  const phase = draft.phase.trim();
+  const playTime = draft.estimatedPlayTime.trim();
+  const distribution = draft.playEnvironment.distribution;
 
   return {
-    phaseLabel: draft.phase.trim() ? displayPhase(draft.phase) : "開発フェーズ未設定",
-    phaseDescription: draft.phase.trim()
-      ? getPhasePlayerDescription(draft.phase)
+    phaseLabel: phase ? displayPhase(phase) : SUBMIT_DRAFT_PHASE_PLACEHOLDER,
+    phaseDescription: phase
+      ? getPhasePlayerDescription(phase)
       : "右パネルで開発フェーズを設定できます",
-    estimatedPlayTime: draft.estimatedPlayTime.trim() || null,
-    environmentLabels: draft.playUrl.trim()
-      ? getPlayEnvironmentLabels(game)
-      : ["公開先未設定"],
-    playInfo: resolvePlayerPlayInfoDisplay(game),
+    estimatedPlayTime: playTime || null,
+    environmentLabels: ["公開先未設定"],
+    playInfo: {
+      playTimeOptions: PLAY_TIME_OPTIONS.map((label) => ({
+        label,
+        active: Boolean(playTime && label === playTime),
+      })),
+      deviceOptions: [
+        { label: "PC", active: draft.playEnvironment.pc },
+        { label: "スマホ", active: draft.playEnvironment.mobile },
+      ],
+      playMethodOptions: DRAFT_PLAY_METHOD_OPTIONS.map((option) => ({
+        label: option.label,
+        active: Boolean(distribution && distribution === option.id),
+      })),
+    },
     focusNotes: null,
   };
 }
@@ -223,15 +254,15 @@ export function getSubmitPromptsToSave(draft: SubmitDraftState): DeveloperPrompt
 }
 
 export function summarizeSubmitDraftBasic(draft: SubmitDraftState): string {
-  const title = draft.title.trim() || "タイトル未入力";
-  const phase = draft.phase.trim() ? displayPhase(draft.phase) : "開発フェーズ未設定";
+  const title = draft.title.trim() || SUBMIT_DRAFT_TITLE_PLACEHOLDER;
+  const phase = draft.phase.trim() ? displayPhase(draft.phase) : SUBMIT_DRAFT_PHASE_PLACEHOLDER;
   return `${title} · ${phase}`;
 }
 
 export function summarizeSubmitDraftGenres(draft: SubmitDraftState): string {
   const genres = sanitizeProjectGenresForSave(draft.genres);
   if (genres.length === 0) {
-    return "ジャンル未設定";
+    return SUBMIT_DRAFT_GENRE_PLACEHOLDER;
   }
   const tags = sanitizeFeatureTagsForSave(draft.featureTags);
   return tags.length > 0 ? `${genres.join("・")} / タグ${tags.length}件` : genres.join("・");

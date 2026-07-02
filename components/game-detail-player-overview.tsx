@@ -77,16 +77,16 @@ function OptionChip({ option }: { option: PlayerOptionChip }) {
   );
 }
 
-function IntroBody({ text }: { text: string }) {
+function IntroBody({ text, muted = false }: { text: string; muted?: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const needsExpand = text.length > INTRO_COLLAPSE_THRESHOLD;
 
   return (
     <div className="mt-4 min-h-[5.25rem]">
       <p
-        className={`text-[15px] leading-7 text-zinc-300 ${
-          !expanded && needsExpand ? "line-clamp-4" : ""
-        }`}
+        className={`text-[15px] leading-7 ${
+          muted ? "text-zinc-600" : "text-zinc-300"
+        } ${!expanded && needsExpand ? "line-clamp-4" : ""}`}
       >
         {text}
       </p>
@@ -137,6 +137,25 @@ function feedbackStatusLabel(count: number): string {
     return "1件のフィードバックがあります。";
   }
   return `${count.toLocaleString()}件のフィードバックがあります。`;
+}
+
+function UnsetPlayInfoPanel() {
+  return (
+    <div className="mt-3 space-y-3 text-sm text-zinc-600">
+      <div>
+        <p className="text-xs text-zinc-500">想定時間</p>
+        <p className="mt-1">想定時間未設定</p>
+      </div>
+      <div>
+        <p className="text-xs text-zinc-500">対応端末</p>
+        <p className="mt-1">対応端末未設定</p>
+      </div>
+      <div>
+        <p className="text-xs text-zinc-500">遊び方</p>
+        <p className="mt-1">遊び方未設定</p>
+      </div>
+    </div>
+  );
 }
 
 function PlayInfoPanel({ playerMeta }: { playerMeta: GameDetailPlayerMeta }) {
@@ -238,6 +257,8 @@ type GameDetailPlayerOverviewProps = {
   playerMeta: GameDetailPlayerMeta;
   activity: GameDetailOverviewActivity;
   publication: PublicationDisplay | null;
+  showUnsetPlayPlaceholders?: boolean;
+  mutedIntroduction?: boolean;
 };
 
 export function GameDetailPlayerOverview({
@@ -246,6 +267,8 @@ export function GameDetailPlayerOverview({
   playerMeta,
   activity,
   publication,
+  showUnsetPlayPlaceholders = false,
+  mutedIntroduction = false,
 }: GameDetailPlayerOverviewProps) {
   const introText = resolveIntroText(game.introduction, heroLead);
   const displayFeatures = game.features.filter(
@@ -258,12 +281,14 @@ export function GameDetailPlayerOverview({
       playerMeta.playInfo.playMethodOptions.some((option) => option.active),
   );
 
+  const showPlayInfoSection = showPlayInfoCard || showUnsetPlayPlaceholders;
+
   return (
     <div className="grid gap-5 lg:grid-cols-3 lg:gap-6">
       <div className="min-w-0 space-y-5 lg:col-span-2">
         {introText ? (
           <OverviewCard title="作品紹介">
-            <IntroBody text={introText} />
+            <IntroBody text={introText} muted={mutedIntroduction} />
           </OverviewCard>
         ) : null}
 
@@ -276,9 +301,13 @@ export function GameDetailPlayerOverview({
       </div>
 
       <aside className="min-w-0 space-y-4">
-        {showPlayInfoCard ? (
+        {showPlayInfoSection ? (
           <SidebarCard title="プレイ情報">
-            <PlayInfoPanel playerMeta={playerMeta} />
+            {showPlayInfoCard ? (
+              <PlayInfoPanel playerMeta={playerMeta} />
+            ) : (
+              <UnsetPlayInfoPanel />
+            )}
           </SidebarCard>
         ) : null}
 
