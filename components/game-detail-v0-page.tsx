@@ -62,6 +62,7 @@ import { useProjectOverviewV0 } from "@/hooks/use-project-overview-v0";
 import { formatDevlogPublishedAt } from "@/hooks/use-game-devlogs-v0";
 import { useProjectPublicStats } from "@/hooks/use-project-public-stats";
 import { resolveGameDetailPlayerMeta } from "@/lib/game-detail-player-meta";
+import { PROJECT_TITLE_HERO_CLASS } from "@/lib/project-title";
 import {
   resolvePlayDestinations,
   resolvePublicationDisplay,
@@ -495,7 +496,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                   ))}
                 </div>
                 <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2">
-                  <h1 className="min-w-0 break-words text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                  <h1 className={`${PROJECT_TITLE_HERO_CLASS} text-white`}>
                     {game.title}
                   </h1>
                   {playerMeta ? <GameDetailPhaseBadge meta={playerMeta} /> : null}

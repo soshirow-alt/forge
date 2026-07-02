@@ -17,6 +17,7 @@ import type { Game } from "@/lib/mock-games";
 import { resolveProjectGenres } from "@/lib/project-genres";
 import { resolveProjectThumbnailUrls } from "@/lib/project-thumbnails";
 import { PROJECT_ONE_LINE_DESCRIPTION_HERO_CLASS } from "@/lib/project-one-line-description";
+import { PROJECT_TITLE_HERO_CLASS } from "@/lib/project-title";
 import { gameToDetailV0 } from "@/lib/submitted-game-v0-adapter";
 import { Clock } from "lucide-react";
 
@@ -122,7 +123,7 @@ export function GameDetailPlayerPreview({
               ))}
             </div>
             <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2">
-              <p className="min-w-0 break-words text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              <p className={`${PROJECT_TITLE_HERO_CLASS} text-white`}>
                 {displayGame.title}
               </p>
               {playerMeta ? <GameDetailPhaseBadge meta={playerMeta} /> : null}

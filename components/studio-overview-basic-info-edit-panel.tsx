@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ProjectPhaseFormFields } from "@/components/project-phase-form-fields";
 import { ProjectOneLineDescriptionField } from "@/components/project-one-line-description-field";
+import { ProjectTitleField } from "@/components/project-title-field";
 import {
   StudioPanelEditShell,
   studioPanelInputClassName,
@@ -14,6 +15,7 @@ import {
   clampProjectOneLineDescription,
   validateProjectOneLineDescription,
 } from "@/lib/project-one-line-description";
+import { clampProjectTitle, validateProjectTitle } from "@/lib/project-title";
 
 export type StudioOverviewBasicInfoEditPanelProps = StudioOverviewEditPanelCommonProps;
 
@@ -39,7 +41,7 @@ export function StudioOverviewBasicInfoEditPanel({
       return;
     }
 
-    setTitle(game.title);
+    setTitle(clampProjectTitle(game.title));
     setDescription(clampProjectOneLineDescription(game.description ?? ""));
     setPhase(game.phase);
     setFormLoaded(true);
@@ -47,7 +49,7 @@ export function StudioOverviewBasicInfoEditPanel({
 
   function emitPreview(next: { title: string; description: string; phase: string }) {
     onPreviewPatchChange?.({
-      title: next.title,
+      title: clampProjectTitle(next.title),
       description: clampProjectOneLineDescription(next.description),
       phase: next.phase,
     });
@@ -64,6 +66,11 @@ export function StudioOverviewBasicInfoEditPanel({
     const trimmedTitle = title.trim();
     if (!trimmedTitle) {
       setValidationError("タイトルを入力してください。");
+      return;
+    }
+    const titleError = validateProjectTitle(title);
+    if (titleError) {
+      setValidationError(titleError);
       return;
     }
     if (!phase) {
@@ -110,23 +117,16 @@ export function StudioOverviewBasicInfoEditPanel({
       saveError={saveError}
       validationError={validationError}
     >
-      <div>
-        <label htmlFor={`studio-basic-title-${projectId}`} className="text-xs font-medium text-zinc-500">
-          タイトル
-        </label>
-        <input
-          id={`studio-basic-title-${projectId}`}
-          type="text"
-          required
-          value={title}
-          onChange={(event) => {
-            const nextTitle = event.target.value;
-            setTitle(nextTitle);
-            emitPreview({ title: nextTitle, description, phase });
-          }}
-          className={studioPanelInputClassName}
-        />
-      </div>
+      <ProjectTitleField
+        id={`studio-basic-title-${projectId}`}
+        value={title}
+        onChange={(nextTitle) => {
+          setTitle(nextTitle);
+          emitPreview({ title: nextTitle, description, phase });
+        }}
+        inputClassName={studioPanelInputClassName}
+        required
+      />
 
       <ProjectOneLineDescriptionField
         id={`studio-basic-lead-${projectId}`}

@@ -46,7 +46,7 @@ export const SUBMIT_VALIDATION_PANEL_LABELS: Record<SubmitValidationEditMode, st
 
 /** プレビュー表示専用 — 保存データには入れない */
 export const SUBMIT_DRAFT_TITLE_PLACEHOLDER = "タイトル未入力";
-export const SUBMIT_DRAFT_LEAD_PLACEHOLDER = "1行説明がここに表示されます";
+export const SUBMIT_DRAFT_LEAD_PLACEHOLDER = "キャッチコピーがここに表示されます";
 export const SUBMIT_DRAFT_INTRO_PLACEHOLDER = "作品紹介がここに表示されます";
 export const SUBMIT_DRAFT_GENRE_PLACEHOLDER = "ジャンル未設定";
 export const SUBMIT_DRAFT_PHASE_PLACEHOLDER = "開発フェーズ未設定";
@@ -283,7 +283,7 @@ export function summarizeSubmitDraftBasic(draft: SubmitDraftState): string {
       : lead.length > 36
         ? `${lead.slice(0, 35)}…`
         : lead
-    : "1行説明未入力";
+    : "キャッチコピー未入力";
   return `${title} · ${phase} · ${leadSummary}`;
 }
 

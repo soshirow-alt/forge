@@ -152,7 +152,7 @@ function DiscoveryGameCard({
         <div className="relative p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <h3 className="text-lg font-semibold leading-snug text-zinc-50 transition-colors group-hover:text-orange-300">
+              <h3 className="line-clamp-2 text-lg font-semibold leading-snug text-zinc-50 transition-colors group-hover:text-orange-300">
                 {game.title}
               </h3>
               <p className="mt-1 text-sm text-zinc-500">{game.genre}</p>

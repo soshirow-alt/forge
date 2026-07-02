@@ -332,7 +332,7 @@ export function GameDetailPageClient({ id }: { id: string }) {
         <div className="mt-6 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/80">
           <div className="p-5 sm:p-6 lg:p-7">
             <header className="border-b border-zinc-800/60 pb-4">
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              <h1 className="line-clamp-2 text-2xl font-bold tracking-tight sm:text-3xl">
                 {game.title}
               </h1>
               <p className="mt-1 text-sm text-zinc-500">{game.creator}</p>

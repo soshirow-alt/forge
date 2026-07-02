@@ -20,6 +20,7 @@ import { sanitizeProjectGenresForSave } from "@/lib/project-genres";
 import {
   PROJECT_ONE_LINE_DESCRIPTION_HERO_CLASS,
 } from "@/lib/project-one-line-description";
+import { PROJECT_TITLE_HERO_CLASS } from "@/lib/project-title";
 import { Clock } from "lucide-react";
 
 const previewTabs: { id: GameDetailTab; label: string }[] = [
@@ -124,8 +125,8 @@ export function StudioSubmitPlayerPreview({
               <p
                 className={
                   titleIsPlaceholder
-                    ? "min-w-0 break-words text-2xl font-bold tracking-tight text-zinc-500 sm:text-3xl"
-                    : "min-w-0 break-words text-2xl font-bold tracking-tight text-white sm:text-3xl"
+                    ? `${PROJECT_TITLE_HERO_CLASS} text-zinc-500`
+                    : `${PROJECT_TITLE_HERO_CLASS} text-white`
                 }
               >
                 {displayGame.title}

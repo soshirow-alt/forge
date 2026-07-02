@@ -6,6 +6,7 @@ import { ProjectPhaseFormFields } from "@/components/project-phase-form-fields";
 import { ProjectThumbnailFields } from "@/components/project-thumbnail-fields";
 import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
 import { ProjectOneLineDescriptionField } from "@/components/project-one-line-description-field";
+import { ProjectTitleField } from "@/components/project-title-field";
 import {
   StudioPanelEditShell,
   studioPanelInputClassName,
@@ -49,19 +50,13 @@ export function StudioSubmitBasicInfoEditPanel({
       onSave={onCancel}
       saveLabel="反映する"
     >
-      <div>
-        <label htmlFor="submit-title" className="text-xs font-medium text-zinc-500">
-          タイトル
-        </label>
-        <input
-          id="submit-title"
-          type="text"
-          value={draft.title}
-          onChange={(event) => onApply({ title: event.target.value })}
-          className={studioPanelInputClassName}
-          placeholder="ゲームのタイトル"
-        />
-      </div>
+      <ProjectTitleField
+        id="submit-title"
+        value={draft.title}
+        onChange={(title) => onApply({ title })}
+        inputClassName={studioPanelInputClassName}
+        placeholder="ゲームのタイトル"
+      />
       <ProjectOneLineDescriptionField
         id="submit-lead"
         value={draft.description}

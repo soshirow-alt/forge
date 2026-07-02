@@ -2,25 +2,29 @@
 
 import { useEffect } from "react";
 import {
-  PROJECT_ONE_LINE_DESCRIPTION_HINT,
-  PROJECT_ONE_LINE_DESCRIPTION_MAX,
-  clampProjectOneLineDescription,
-} from "@/lib/project-one-line-description";
+  PROJECT_TITLE_HINT,
+  PROJECT_TITLE_MAX,
+  clampProjectTitle,
+} from "@/lib/project-title";
 
-type ProjectOneLineDescriptionFieldProps = {
+type ProjectTitleFieldProps = {
   id: string;
   value: string;
   onChange: (value: string) => void;
   inputClassName: string;
+  placeholder?: string;
+  required?: boolean;
 };
 
-export function ProjectOneLineDescriptionField({
+export function ProjectTitleField({
   id,
   value,
   onChange,
   inputClassName,
-}: ProjectOneLineDescriptionFieldProps) {
-  const safeValue = clampProjectOneLineDescription(value);
+  placeholder,
+  required,
+}: ProjectTitleFieldProps) {
+  const safeValue = clampProjectTitle(value);
   const length = safeValue.length;
 
   useEffect(() => {
@@ -30,19 +34,20 @@ export function ProjectOneLineDescriptionField({
   }, [value, safeValue, onChange]);
 
   function commitNext(raw: string) {
-    onChange(clampProjectOneLineDescription(raw));
+    onChange(clampProjectTitle(raw));
   }
 
   return (
     <div>
       <label htmlFor={id} className="text-xs font-medium text-zinc-500">
-        キャッチコピー
+        タイトル
       </label>
       <input
         id={id}
         type="text"
         value={safeValue}
-        maxLength={PROJECT_ONE_LINE_DESCRIPTION_MAX}
+        maxLength={PROJECT_TITLE_MAX}
+        required={required}
         onChange={(event) => commitNext(event.target.value)}
         onPaste={(event) => {
           event.preventDefault();
@@ -56,18 +61,18 @@ export function ProjectOneLineDescriptionField({
         }}
         onCompositionEnd={(event) => commitNext(event.currentTarget.value)}
         className={inputClassName}
-        placeholder="公開ページ上部に表示される短い紹介文"
+        placeholder={placeholder}
       />
       <p className="mt-1 text-[11px] leading-relaxed text-zinc-600">
-        {PROJECT_ONE_LINE_DESCRIPTION_HINT}
+        {PROJECT_TITLE_HINT}
       </p>
       <p
         className={`mt-0.5 text-right text-[11px] tabular-nums ${
-          length >= PROJECT_ONE_LINE_DESCRIPTION_MAX ? "text-orange-300/90" : "text-zinc-500"
+          length >= PROJECT_TITLE_MAX ? "text-orange-300/90" : "text-zinc-500"
         }`}
         aria-live="polite"
       >
-        {length} / {PROJECT_ONE_LINE_DESCRIPTION_MAX}
+        {length} / {PROJECT_TITLE_MAX}
       </p>
     </div>
   );

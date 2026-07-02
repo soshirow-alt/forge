@@ -19,6 +19,7 @@ import {
 } from "@/lib/studio-submit-draft";
 import { sanitizeProjectGenresForSave } from "@/lib/project-genres";
 import { validateProjectOneLineDescription } from "@/lib/project-one-line-description";
+import { validateProjectTitle } from "@/lib/project-title";
 import { validatePromptDrafts } from "@/lib/version-prompt-form";
 import type { User } from "@/lib/auth";
 
@@ -51,6 +52,11 @@ export function validateSubmitDraftForPost(
 ): SubmitDraftValidationResult {
   if (!draft.title.trim()) {
     return validationFailure("basic-info", "タイトルを入力してください。");
+  }
+
+  const titleError = validateProjectTitle(draft.title);
+  if (titleError) {
+    return validationFailure("basic-info", titleError);
   }
 
   const leadError = validateProjectOneLineDescription(draft.description);

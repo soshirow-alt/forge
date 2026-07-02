@@ -216,7 +216,7 @@ export function StudioSubmitPanel({
                 <PanelBlock
                   title="基本情報"
                   requirement="required"
-                  fieldHint="タイトル・1行説明・開発フェーズ"
+                  fieldHint="タイトル・キャッチコピー・開発フェーズ"
                 >
                   <p className={panelSummaryClassName}>{summarizeSubmitDraftBasic(draft)}</p>
                   <button type="button" onClick={() => setEditMode("basic-info")} className={panelButtonClassName}>
