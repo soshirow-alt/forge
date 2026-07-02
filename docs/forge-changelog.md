@@ -4,6 +4,10 @@
 
 ---
 
+- **本番 deploy** — `preview/landing-01` を `main` に fast-forward（`48eb666`）。プライバシーポリシー A 項目（運営へのご意見・開発者共有範囲）、auth フッター整理、設定画面の法務導線、利用規約第3条表記統一を本番反映。`origin/main` と `origin/preview/landing-01` を同一 commit に同期
+
+---
+
 - **利用規約 第3条の表記統一** — 「その他当社が定める機能」を「その他運営者が定める機能」に修正（文書全体の「運営者」表記に揃え）。DB migration なし
 
 ---
