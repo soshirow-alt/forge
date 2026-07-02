@@ -414,9 +414,9 @@ export function StudioTabContextPanel({
           )}
         </PanelBlock>
 
-        <PanelBlock title="次に直すこと">
+        <PanelBlock title="フィードバックの傾向">
           <p className="text-xs leading-relaxed text-zinc-600">
-            確認した内容から、次に取り組むことを整理します。
+            届いたフィードバックの中で、多かった意見や気になる反応を整理します。
           </p>
           <StudioTopPrioritiesPanel
             projectId={projectId}

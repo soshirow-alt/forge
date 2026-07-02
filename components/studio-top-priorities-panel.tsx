@@ -10,13 +10,13 @@ import { buildVoicePromptAggregates } from "@/lib/voice-aggregates";
 function categoryLabel(category: TopPriority["category"]): string {
   switch (category) {
     case "bug":
-      return "バグ";
+      return "不具合報告";
     case "concern":
-      return "気になる点";
+      return "気になる反応";
     case "voice":
-      return "回答傾向";
+      return "多かった意見";
     case "action":
-      return "確認";
+      return "未確認";
     default:
       return "";
   }
@@ -132,7 +132,7 @@ export function StudioTopPrioritiesPanel({
           id="studio-top-priorities-heading"
           className="text-sm font-semibold text-zinc-200"
         >
-          次に直すこと
+          フィードバックの傾向
         </h2>
       )}
 
@@ -144,11 +144,9 @@ export function StudioTopPrioritiesPanel({
             hideHeading ? "" : "mt-3"
           }`}
         >
-          <p className="text-sm font-medium text-zinc-400">まだ次に直すことはありません</p>
+          <p className="text-sm font-medium text-zinc-400">まだ十分なフィードバックがありません</p>
           <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-            {hideHeading
-              ? "FBを確認すると、ここに優先候補が最大3件表示されます。"
-              : "プレイヤーのフィードバックが届くと、ここに優先候補が最大3件表示されます。"}
+            フィードバックが集まると、多かった意見や気になる傾向が表示されます。
           </p>
         </div>
       ) : (

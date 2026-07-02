@@ -242,9 +242,12 @@ export function StudioPlayerFeedbackPanel({
         )}
         {tab === "detailed" && (
           detailedFbCount === 0 ? (
-            <p className="text-sm text-zinc-500">
-              このverの自由な意見はまだありません。
-            </p>
+            <div className="space-y-1">
+              <p className="text-sm text-zinc-500">まだ自由な意見はありません。</p>
+              <p className="text-xs leading-relaxed text-zinc-600">
+                プレイヤーから任意で届いた感想・不具合報告などがここに表示されます。
+              </p>
+            </div>
           ) : (
             <NurtureDeepFeedbackSection
               feedbackEntries={feedbackEntries}
@@ -354,7 +357,7 @@ export function StudioImprovementLoop({
           <MessageSquare className="mx-auto size-8 text-zinc-600" aria-hidden="true" />
           <p className="mt-2 text-sm font-medium text-zinc-400">まだプレイヤーFBがありません</p>
           <p className="mt-1 text-xs text-zinc-500">
-            FBが届くと「次に直すこと」と「届いたFBを読む」が表示されます。
+            FBが届くと「フィードバックの傾向」と届いたフィードバックが表示されます。
           </p>
         </div>
       )}

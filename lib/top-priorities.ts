@@ -78,7 +78,7 @@ function concernCandidates(
     {
       id: "concern-summary",
       title: truncate(top.item.concerns!.trim()),
-      reason: `気になる点 ${withConcerns.length}件`,
+      reason: `気になる反応 ${withConcerns.length}件`,
       category: "concern",
       score: withConcerns.length * 8,
     },
@@ -162,7 +162,7 @@ function unreadCandidate(
   const count = Math.max(pendingFeedbackCount, 1);
   return {
     id: "unread-voices",
-    title: "新しいFBを確認する",
+    title: "未確認のフィードバック",
     reason: hasUnreadVoice
       ? `未読の回答があります`
       : `未処理のフィードバックがあります`,
@@ -172,7 +172,7 @@ function unreadCandidate(
 }
 
 /**
- * P0 ルールベース — 開発者向け「次に直すこと」最大3件
+ * P0 ルールベース — 開発者向けフィードバック傾向（最大3件）
  */
 export function buildTopPriorities(input: {
   projectId: string;
