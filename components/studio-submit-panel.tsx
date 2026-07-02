@@ -21,7 +21,16 @@ import {
   summarizeSubmitDraftPlayInfo,
   type SubmitDraftState,
 } from "@/lib/studio-submit-draft";
-import { summarizeVersionPromptSettings } from "@/components/version-prompt-editor-dialog";
+import {
+  summarizeVersionPromptSettings,
+} from "@/components/version-prompt-editor-dialog";
+import {
+  studioOperationPanelAsideClassName,
+  studioOperationPanelBlockClassName,
+  studioOperationPanelGroupLabelClassName,
+  studioOperationPanelHeaderAccentClassName,
+  studioOperationPanelOuterClassName,
+} from "@/lib/studio-operation-panel-styles";
 
 const panelButtonClassName =
   "inline-flex w-full items-center gap-2 rounded-lg border border-zinc-800/60 bg-zinc-950/40 px-3 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70 hover:text-zinc-100";
@@ -29,8 +38,7 @@ const panelButtonClassName =
 const primaryButtonClassName =
   "inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 shadow-sm shadow-orange-500/20 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
 
-const submitPanelAsideClassName =
-  "w-full shrink-0 xl:sticky xl:top-6 xl:w-[340px] xl:self-start";
+const submitPanelAsideClassName = studioOperationPanelAsideClassName;
 
 const panelSummaryClassName = "break-words text-sm text-zinc-300";
 
@@ -64,11 +72,11 @@ function PanelBlock({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-zinc-800/50 bg-zinc-950/25 p-4">
+    <section className={studioOperationPanelBlockClassName}>
       {title ? (
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-orange-300/80">
               {title}
             </h3>
             {requirement ? <RequirementLabel kind={requirement} /> : null}
@@ -93,11 +101,7 @@ function SubmitValidationAlert({ message }: { message: string }) {
 }
 
 function GroupLabel({ children }: { children: ReactNode }) {
-  return (
-    <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-600">
-      {children}
-    </p>
-  );
+  return <p className={studioOperationPanelGroupLabelClassName}>{children}</p>;
 }
 
 export type StudioSubmitPanelProps = {
@@ -190,9 +194,9 @@ export function StudioSubmitPanel({
 
   return (
     <aside aria-label="Studioパネル" className={submitPanelAsideClassName}>
-      <div className="rounded-2xl border border-zinc-800/75 bg-zinc-900/50 px-4 py-4 shadow-sm shadow-black/10">
+      <div className={studioOperationPanelOuterClassName}>
         <div className="space-y-4">
-          <div className="-mx-4 -mt-4 rounded-t-2xl border-b border-orange-500/15 bg-gradient-to-br from-orange-500/10 via-orange-500/5 to-transparent px-4 pb-4 pt-4">
+          <div className={studioOperationPanelHeaderAccentClassName}>
             <div className="flex items-center gap-2">
               <span
                 className="h-4 w-0.5 shrink-0 rounded-full bg-orange-500/80"
@@ -212,7 +216,7 @@ export function StudioSubmitPanel({
                 <PanelBlock
                   title="基本情報"
                   requirement="required"
-                  fieldHint="タイトル・開発フェーズ"
+                  fieldHint="タイトル・1行説明・開発フェーズ"
                 >
                   <p className={panelSummaryClassName}>{summarizeSubmitDraftBasic(draft)}</p>
                   <button type="button" onClick={() => setEditMode("basic-info")} className={panelButtonClassName}>

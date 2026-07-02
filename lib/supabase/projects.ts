@@ -78,7 +78,8 @@ function submitFormToInsertRow(
   data: SubmitFormData,
   owner: { ownerId: string; ownerName: string },
 ) {
-  const intro = data.introduction?.trim() ?? data.description?.trim() ?? "";
+  const lead = data.description?.trim() ?? "";
+  const intro = data.introduction?.trim() ?? "";
   const { genres, genre } = projectGenresForDb(data.genres);
   const thumbnails = projectThumbnailsForDb(data.thumbnailUrls);
   return {
@@ -88,7 +89,7 @@ function submitFormToInsertRow(
     creator: data.creator,
     genre,
     genres,
-    description: deriveProjectDescription(intro) || intro,
+    description: lead,
     overview_introduction: intro || null,
     phase: data.phase,
     status: data.lookingForTesters ? "テスター募集中" : data.phase,

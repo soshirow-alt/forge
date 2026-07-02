@@ -6,6 +6,7 @@ import {
   type GameOverviewEditorHandle,
 } from "@/components/game-detail-overview-v0-tab";
 import { StudioPanelEditShell } from "@/components/studio-panel-edit-shell";
+import type { StudioOverviewEditPanelCommonProps } from "@/components/studio-overview-edit-panel-types";
 import { useGames } from "@/components/games-provider";
 import {
   normalizeOverviewIntroduction,
@@ -14,16 +15,13 @@ import {
 import { PROJECT_INTRO_HINT } from "@/lib/project-form-copy";
 import { gameToDetailV0 } from "@/lib/submitted-game-v0-adapter";
 
-export type StudioOverviewIntroductionEditPanelProps = {
-  projectId: string;
-  onCancel: () => void;
-  onSaved?: () => void;
-};
+export type StudioOverviewIntroductionEditPanelProps = StudioOverviewEditPanelCommonProps;
 
 export function StudioOverviewIntroductionEditPanel({
   projectId,
   onCancel,
   onSaved,
+  onPreviewPatchChange,
 }: StudioOverviewIntroductionEditPanelProps) {
   const overviewEditorRef = useRef<GameOverviewEditorHandle>(null);
   const { getOwnedProjectById, updateProjectOverview, dataReady } = useGames();
@@ -104,6 +102,9 @@ export function StudioOverviewIntroductionEditPanel({
           hideFeatures
           compactIntroduction
           editIntroduction={editIntroduction}
+          onIntroductionDraftChange={(introduction) =>
+            onPreviewPatchChange?.({ overviewIntroduction: introduction })
+          }
         />
       </div>
     </StudioPanelEditShell>

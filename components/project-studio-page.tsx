@@ -16,7 +16,11 @@ import { StudioProjectToolbar } from "@/components/studio-project-toolbar";
 import { useGames } from "@/components/games-provider";
 import { useOwnedProjectFeedback } from "@/hooks/use-owned-project-feedback";
 import { useOwnedProjectVoiceSignals } from "@/hooks/use-owned-project-voice-signals";
-import { PROJECT_STUDIO_FEEDBACK_SECTION_ID, projectStudioPath } from "@/lib/project-nurture-links";
+import { mergeGameForStudioPreview, type StudioEditPreviewPatch } from "@/lib/studio-edit-preview-merge";
+import {
+  PROJECT_STUDIO_FEEDBACK_SECTION_ID,
+  projectStudioPath,
+} from "@/lib/project-nurture-links";
 import type { GameDetailTab } from "@/lib/game-detail-tabs";
 import { useProjectTestPlay } from "@/hooks/use-project-test-play";
 import {
@@ -86,6 +90,14 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [distributionLinksModalOpen, setDistributionLinksModalOpen] = useState(false);
   const [devlogModalOpen, setDevlogModalOpen] = useState(false);
+  const [previewPatch, setPreviewPatch] = useState<StudioEditPreviewPatch | null>(null);
+
+  const previewGame = useMemo(() => {
+    if (!game) {
+      return null;
+    }
+    return mergeGameForStudioPreview(game, previewPatch);
+  }, [game, previewPatch]);
 
   useEffect(() => {
     const edit = searchParams.get("edit");
@@ -201,9 +213,8 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
 
           <div className="mt-5">
             <GameDetailPlayerPreview
-              key={`${projectId}-${game.lastUpdated}-${game.title}`}
               projectId={projectId}
-              sourceGame={game}
+              sourceGame={previewGame ?? game}
               activeTab={activeSection}
               onTabChange={setActiveSection}
               onTestPlay={handleTestPlay}
@@ -221,6 +232,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
           devlogCount={devlogCount}
           initialOpenFeedback={openFeedbackPanel}
           onOpenNewVersionDevlog={() => setDevlogModalOpen(true)}
+          onPreviewPatchChange={setPreviewPatch}
         />
       </div>
 

@@ -112,6 +112,8 @@ export const GameDetailOverviewV0Tab = forwardRef<
   showUnsetPlayPlaceholders?: boolean;
   /** 新規投稿プレビュー — 作品紹介プレースホルダーを薄く表示 */
   mutedIntroduction?: boolean;
+  /** Studio 編集プレビュー — 未保存の作品紹介を左プレビューへ反映 */
+  onIntroductionDraftChange?: (introduction: string) => void;
 }
 >(function GameDetailOverviewV0Tab(
   {
@@ -132,6 +134,7 @@ export const GameDetailOverviewV0Tab = forwardRef<
   publication = null,
   showUnsetPlayPlaceholders = false,
   mutedIntroduction = false,
+  onIntroductionDraftChange,
 },
   ref,
 ) {
@@ -170,6 +173,11 @@ export const GameDetailOverviewV0Tab = forwardRef<
     !hideFeatures && (editable || displayFeatures.length > 0);
   const showIntroSection =
     editable || introduction.trim().length > 0 || compactIntroduction;
+
+  function handleIntroductionChange(value: string) {
+    setIntroduction(value);
+    onIntroductionDraftChange?.(value);
+  }
 
   function updateFeature(index: number, patch: Partial<GameDetailFeature>) {
     setFeatures((current) =>
@@ -273,7 +281,7 @@ export const GameDetailOverviewV0Tab = forwardRef<
         compactIntroduction && editable ? (
           <textarea
             value={introduction}
-            onChange={(event) => setIntroduction(event.target.value)}
+            onChange={(event) => handleIntroductionChange(event.target.value)}
             rows={6}
             className={`${fieldClassName} resize-y`}
             placeholder="世界観・遊び方・この作品の魅力を紹介してください"
@@ -284,7 +292,7 @@ export const GameDetailOverviewV0Tab = forwardRef<
           {editable ? (
             <textarea
               value={introduction}
-              onChange={(event) => setIntroduction(event.target.value)}
+              onChange={(event) => handleIntroductionChange(event.target.value)}
               rows={6}
               className={`${fieldClassName} mt-3 resize-y`}
               placeholder="世界観・遊び方・この作品の魅力を紹介してください"

@@ -92,7 +92,7 @@ export function StudioDevlogCurrentEditPanel({
     <>
       <StudioPanelEditShell
         title="現在の開発ログを編集"
-        backLabel="← 開発ログ"
+        backLabel="← 開発ログに戻る"
         onCancel={onCancel}
         hideSave
       >

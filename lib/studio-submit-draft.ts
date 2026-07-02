@@ -14,7 +14,6 @@ import {
   type PlayEnvironmentFormState,
 } from "@/lib/play-environment";
 import type { SubmitFormData } from "@/lib/project-form";
-import { deriveProjectDescription } from "@/lib/project-overview";
 import {
   genresToLegacyGenreColumn,
   sanitizeProjectGenresForSave,
@@ -46,6 +45,7 @@ export const SUBMIT_VALIDATION_PANEL_LABELS: Record<SubmitValidationEditMode, st
 
 /** プレビュー表示専用 — 保存データには入れない */
 export const SUBMIT_DRAFT_TITLE_PLACEHOLDER = "タイトル未入力";
+export const SUBMIT_DRAFT_LEAD_PLACEHOLDER = "1行説明がここに表示されます";
 export const SUBMIT_DRAFT_INTRO_PLACEHOLDER = "作品紹介がここに表示されます";
 export const SUBMIT_DRAFT_GENRE_PLACEHOLDER = "ジャンル未設定";
 export const SUBMIT_DRAFT_PHASE_PLACEHOLDER = "開発フェーズ未設定";
@@ -59,6 +59,8 @@ const DRAFT_PLAY_METHOD_OPTIONS = [
 
 export type SubmitDraftState = {
   title: string;
+  /** ヒーロー用の1行説明（game.description） */
+  description: string;
   phase: string;
   genres: ForgeGenreOption[];
   featureTags: ForgeFeatureTagOption[];
@@ -88,6 +90,7 @@ export type SubmitDraftOwner = {
 export function createEmptySubmitDraft(): SubmitDraftState {
   return {
     title: "",
+    description: "",
     phase: "",
     genres: [],
     featureTags: [],
@@ -115,10 +118,10 @@ export function buildDraftGame(
   owner: SubmitDraftOwner,
 ): Game {
   const intro = draft.introduction.trim();
+  const lead = draft.description.trim();
   const genres = sanitizeProjectGenresForSave(draft.genres);
   const featureTags = sanitizeFeatureTagsForSave(draft.featureTags);
   const tags = mergePlayEnvironmentIntoTags(featureTags, draft.playEnvironment);
-  const description = intro ? deriveProjectDescription(intro) : "";
 
   return {
     id: SUBMIT_DRAFT_PREVIEW_ID,
@@ -128,7 +131,7 @@ export function buildDraftGame(
     ownerId: owner.ownerId,
     genres,
     genre: genresToLegacyGenreColumn(genres) || "",
-    description,
+    description: lead,
     overviewIntroduction: intro || null,
     phase: draft.phase.trim(),
     status: draft.phase.trim(),
@@ -161,6 +164,7 @@ export function buildSubmitDraftDetailV0(
   owner: SubmitDraftOwner,
 ): GameDetailV0 {
   const intro = draft.introduction.trim();
+  const lead = draft.description.trim();
   const genres = sanitizeProjectGenresForSave(draft.genres);
   const featureTags = sanitizeFeatureTagsForSave(draft.featureTags);
   const tags =
@@ -172,7 +176,7 @@ export function buildSubmitDraftDetailV0(
   return {
     id: SUBMIT_DRAFT_PREVIEW_ID,
     title: draft.title.trim() || SUBMIT_DRAFT_TITLE_PLACEHOLDER,
-    lead: intro || SUBMIT_DRAFT_INTRO_PLACEHOLDER,
+    lead: lead || SUBMIT_DRAFT_LEAD_PLACEHOLDER,
     tags,
     heroImage,
     galleryImages: draft.thumbnailUrls,
@@ -242,6 +246,7 @@ export function draftToSubmitFormData(
     title: draft.title.trim(),
     creator: owner.creator,
     genres: sanitizeProjectGenresForSave(draft.genres),
+    description: draft.description.trim(),
     introduction: draft.introduction.trim(),
     phase: draft.phase.trim(),
     thumbnailUrls: draft.thumbnailUrls,
@@ -270,7 +275,13 @@ export function getSubmitPromptsToSave(draft: SubmitDraftState): DeveloperPrompt
 export function summarizeSubmitDraftBasic(draft: SubmitDraftState): string {
   const title = draft.title.trim() || SUBMIT_DRAFT_TITLE_PLACEHOLDER;
   const phase = draft.phase.trim() ? displayPhase(draft.phase) : SUBMIT_DRAFT_PHASE_PLACEHOLDER;
-  return `${title} · ${phase}`;
+  const lead = draft.description.trim();
+  const leadSummary = lead
+    ? lead.length > 24
+      ? `${lead.slice(0, 23)}…`
+      : lead
+    : "1行説明未入力";
+  return `${title} · ${phase} · ${leadSummary}`;
 }
 
 export function summarizeSubmitDraftGenres(draft: SubmitDraftState): string {

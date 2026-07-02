@@ -7,6 +7,7 @@ import {
   StudioPanelEditShell,
   studioPanelInputClassName,
 } from "@/components/studio-panel-edit-shell";
+import type { StudioOverviewEditPanelCommonProps } from "@/components/studio-overview-edit-panel-types";
 import { useGames } from "@/components/games-provider";
 import { pickFeatureTagsFromGameTags, sanitizeFeatureTagsForSave } from "@/lib/forge-feature-tag-options";
 import { validatePlayAccess } from "@/lib/project-access-form";
@@ -19,16 +20,13 @@ import {
   type PlayEnvironmentFormState,
 } from "@/lib/play-environment";
 
-export type StudioOverviewPlayInfoEditPanelProps = {
-  projectId: string;
-  onCancel: () => void;
-  onSaved?: () => void;
-};
+export type StudioOverviewPlayInfoEditPanelProps = StudioOverviewEditPanelCommonProps;
 
 export function StudioOverviewPlayInfoEditPanel({
   projectId,
   onCancel,
   onSaved,
+  onPreviewPatchChange,
 }: StudioOverviewPlayInfoEditPanelProps) {
   const { getOwnedProjectById, updateProjectDetails, dataReady } = useGames();
   const game = getOwnedProjectById(projectId);
@@ -53,6 +51,24 @@ export function StudioOverviewPlayInfoEditPanel({
     setEstimatedPlayTime(game.estimatedPlayTime ?? "");
     setFormLoaded(true);
   }, [game, formLoaded]);
+
+  function emitPreview(
+    nextEnvironment: PlayEnvironmentFormState,
+    nextPlayUrl: string,
+    nextEstimatedPlayTime: string,
+  ) {
+    if (!game) {
+      return;
+    }
+    const featureTags = sanitizeFeatureTagsForSave(
+      pickFeatureTagsFromGameTags(getPublicGameTags(game.tags ?? [])),
+    );
+    onPreviewPatchChange?.({
+      playUrl: nextPlayUrl,
+      estimatedPlayTime: nextEstimatedPlayTime || undefined,
+      tags: mergePlayEnvironmentIntoTags(featureTags, nextEnvironment),
+    });
+  }
 
   async function handleSave() {
     if (!game) {
@@ -106,16 +122,25 @@ export function StudioOverviewPlayInfoEditPanel({
     >
       <ProjectEstimatedPlayTimeField
         value={estimatedPlayTime}
-        onChange={setEstimatedPlayTime}
+        onChange={(value) => {
+          setEstimatedPlayTime(value);
+          emitPreview(playEnvironment, playUrl, value);
+        }}
         inputClassName={studioPanelInputClassName}
         inputId={`studio-play-time-${projectId}`}
       />
 
       <ProjectAccessEnvironmentFields
         playEnvironment={playEnvironment}
-        onPlayEnvironmentChange={setPlayEnvironment}
+        onPlayEnvironmentChange={(value) => {
+          setPlayEnvironment(value);
+          emitPreview(value, playUrl, estimatedPlayTime);
+        }}
         playUrl={playUrl}
-        onPlayUrlChange={setPlayUrl}
+        onPlayUrlChange={(value) => {
+          setPlayUrl(value);
+          emitPreview(playEnvironment, value, estimatedPlayTime);
+        }}
         inputClassName={studioPanelInputClassName}
         playUrlInputId={`studio-play-url-${projectId}`}
         distributionRadioName={`studio-distribution-${projectId}`}

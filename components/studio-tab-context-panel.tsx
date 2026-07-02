@@ -31,6 +31,13 @@ import {
 } from "@/lib/project-growth-state";
 import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
 import { resolvePlayableVersion } from "@/lib/playable-version";
+import type { StudioEditPreviewPatch } from "@/lib/studio-edit-preview-merge";
+import {
+  studioOperationPanelAsideClassName,
+  studioOperationPanelBlockClassName,
+  studioOperationPanelGroupLabelClassName,
+  studioOperationPanelOuterClassName,
+} from "@/lib/studio-operation-panel-styles";
 import { getVisibilityBadgeLabel } from "@/lib/project-visibility";
 
 const primaryButtonClassName =
@@ -58,11 +65,8 @@ type DevlogEditMode = null | "current";
 
 function StudioEditPaneShell({ children }: { children: ReactNode }) {
   return (
-    <aside
-      aria-label="Studioパネル"
-      className="w-full shrink-0 xl:sticky xl:top-6 xl:w-[340px] xl:self-start"
-    >
-      <div className="rounded-2xl border border-zinc-800/75 bg-zinc-900/50 px-4 py-4 shadow-sm shadow-black/10">
+    <aside aria-label="Studioパネル" className={studioOperationPanelAsideClassName}>
+      <div className={studioOperationPanelOuterClassName}>
         <div className="space-y-4">{children}</div>
       </div>
     </aside>
@@ -77,9 +81,9 @@ function PanelBlock({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-zinc-800/50 bg-zinc-950/25 p-4">
+    <section className={studioOperationPanelBlockClassName}>
       {title ? (
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{title}</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-orange-300/80">{title}</h3>
       ) : null}
       <div className={title ? "mt-3 space-y-2" : "space-y-2"}>{children}</div>
     </section>
@@ -87,11 +91,7 @@ function PanelBlock({
 }
 
 function OverviewGroupLabel({ children }: { children: ReactNode }) {
-  return (
-    <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-600">
-      {children}
-    </p>
-  );
+  return <p className={studioOperationPanelGroupLabelClassName}>{children}</p>;
 }
 
 export type StudioTabContextPanelProps = {
@@ -104,6 +104,7 @@ export type StudioTabContextPanelProps = {
   devlogCount: number;
   initialOpenFeedback?: boolean;
   onOpenNewVersionDevlog: () => void;
+  onPreviewPatchChange?: (patch: StudioEditPreviewPatch | null) => void;
 };
 
 export function StudioTabContextPanel({
@@ -116,6 +117,7 @@ export function StudioTabContextPanel({
   devlogCount,
   initialOpenFeedback = false,
   onOpenNewVersionDevlog,
+  onPreviewPatchChange,
 }: StudioTabContextPanelProps) {
   const { getDevlogsByProject } = useGames();
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -152,18 +154,29 @@ export function StudioTabContextPanel({
   useEffect(() => {
     if (activeSection !== "overview") {
       setOverviewEditMode(null);
+      onPreviewPatchChange?.(null);
     }
     if (activeSection !== "devlog") {
       setDevlogEditMode(null);
     }
-  }, [activeSection]);
+  }, [activeSection, onPreviewPatchChange]);
+
+  useEffect(() => {
+    onPreviewPatchChange?.(null);
+  }, [overviewEditMode, onPreviewPatchChange]);
 
   function closeOverviewEdit() {
     setOverviewEditMode(null);
+    onPreviewPatchChange?.(null);
   }
 
   function closeDevlogEdit() {
     setDevlogEditMode(null);
+  }
+
+  function handleOverviewSaved() {
+    onPreviewPatchChange?.(null);
+    closeOverviewEdit();
   }
 
   const shareModal = (
@@ -183,7 +196,8 @@ export function StudioTabContextPanel({
           key={`${projectId}-basic-info`}
           projectId={projectId}
           onCancel={closeOverviewEdit}
-          onSaved={closeOverviewEdit}
+          onSaved={handleOverviewSaved}
+          onPreviewPatchChange={onPreviewPatchChange}
         />
       );
     } else if (overviewEditMode === "genres-tags") {
@@ -192,7 +206,8 @@ export function StudioTabContextPanel({
           key={`${projectId}-genres-tags`}
           projectId={projectId}
           onCancel={closeOverviewEdit}
-          onSaved={closeOverviewEdit}
+          onSaved={handleOverviewSaved}
+          onPreviewPatchChange={onPreviewPatchChange}
         />
       );
     } else if (overviewEditMode === "images") {
@@ -201,7 +216,8 @@ export function StudioTabContextPanel({
           key={`${projectId}-images`}
           projectId={projectId}
           onCancel={closeOverviewEdit}
-          onSaved={closeOverviewEdit}
+          onSaved={handleOverviewSaved}
+          onPreviewPatchChange={onPreviewPatchChange}
         />
       );
     } else if (overviewEditMode === "visibility") {
@@ -210,7 +226,8 @@ export function StudioTabContextPanel({
           key={`${projectId}-visibility`}
           projectId={projectId}
           onCancel={closeOverviewEdit}
-          onSaved={closeOverviewEdit}
+          onSaved={handleOverviewSaved}
+          onPreviewPatchChange={onPreviewPatchChange}
         />
       );
     } else if (overviewEditMode === "introduction") {
@@ -219,7 +236,8 @@ export function StudioTabContextPanel({
           key={`${projectId}-introduction`}
           projectId={projectId}
           onCancel={closeOverviewEdit}
-          onSaved={closeOverviewEdit}
+          onSaved={handleOverviewSaved}
+          onPreviewPatchChange={onPreviewPatchChange}
         />
       );
     } else if (overviewEditMode === "play-info") {
@@ -228,7 +246,8 @@ export function StudioTabContextPanel({
           key={`${projectId}-play-info`}
           projectId={projectId}
           onCancel={closeOverviewEdit}
-          onSaved={closeOverviewEdit}
+          onSaved={handleOverviewSaved}
+          onPreviewPatchChange={onPreviewPatchChange}
         />
       );
     } else {

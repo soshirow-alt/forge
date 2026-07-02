@@ -5,21 +5,19 @@ import { ProjectThumbnailFields } from "@/components/project-thumbnail-fields";
 import {
   StudioPanelEditShell,
 } from "@/components/studio-panel-edit-shell";
+import type { StudioOverviewEditPanelCommonProps } from "@/components/studio-overview-edit-panel-types";
 import { useGames } from "@/components/games-provider";
 import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
 import { resolveProjectGenres } from "@/lib/project-genres";
 import { resolveProjectThumbnailUrls } from "@/lib/project-thumbnails";
 
-export type StudioOverviewImagesEditPanelProps = {
-  projectId: string;
-  onCancel: () => void;
-  onSaved?: () => void;
-};
+export type StudioOverviewImagesEditPanelProps = StudioOverviewEditPanelCommonProps;
 
 export function StudioOverviewImagesEditPanel({
   projectId,
   onCancel,
   onSaved,
+  onPreviewPatchChange,
 }: StudioOverviewImagesEditPanelProps) {
   const { getOwnedProjectById, updateProjectDetails, dataReady } = useGames();
   const game = getOwnedProjectById(projectId);
@@ -37,6 +35,14 @@ export function StudioOverviewImagesEditPanel({
     setThumbnailUrls(resolveProjectThumbnailUrls(game));
     setFormLoaded(true);
   }, [game, formLoaded]);
+
+  function handleThumbnailChange(urls: string[]) {
+    setThumbnailUrls(urls);
+    onPreviewPatchChange?.({
+      thumbnailUrls: urls,
+      thumbnailUrl: urls[0],
+    });
+  }
 
   async function handleSave() {
     if (!game) {
@@ -79,7 +85,7 @@ export function StudioOverviewImagesEditPanel({
       <ProjectThumbnailFields
         inputId={`studio-images-${projectId}`}
         thumbnails={thumbnailUrls}
-        onChange={setThumbnailUrls}
+        onChange={handleThumbnailChange}
         posterFallback={{
           projectId: game.id,
           title: game.title,

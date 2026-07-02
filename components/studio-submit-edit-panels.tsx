@@ -8,6 +8,7 @@ import { ExternalLinksFormFields } from "@/components/external-links-form-fields
 import {
   StudioPanelEditShell,
   studioPanelInputClassName,
+  studioPanelSingleLineInputClassName,
 } from "@/components/studio-panel-edit-shell";
 import { CollapsibleFormSection } from "@/components/collapsible-form-section";
 import { FORGE_GENRE_OPTIONS, type ForgeGenreOption } from "@/lib/forge-genre-options";
@@ -42,7 +43,7 @@ export function StudioSubmitBasicInfoEditPanel({
   return (
     <StudioPanelEditShell
       title="基本情報"
-      backLabel="← 投稿内容"
+      backLabel="← 投稿内容に戻る"
       onCancel={onCancel}
       onSave={onCancel}
       saveLabel="反映する"
@@ -58,6 +59,19 @@ export function StudioSubmitBasicInfoEditPanel({
           onChange={(event) => onApply({ title: event.target.value })}
           className={studioPanelInputClassName}
           placeholder="ゲームのタイトル"
+        />
+      </div>
+      <div>
+        <label htmlFor="submit-lead" className="text-xs font-medium text-zinc-500">
+          1行説明
+        </label>
+        <input
+          id="submit-lead"
+          type="text"
+          value={draft.description}
+          onChange={(event) => onApply({ description: event.target.value })}
+          className={studioPanelSingleLineInputClassName}
+          placeholder="ヒーローに表示される短い説明"
         />
       </div>
       <ProjectPhaseFormFields
@@ -78,7 +92,7 @@ export function StudioSubmitGenresTagsEditPanel({
   return (
     <StudioPanelEditShell
       title="ジャンル・タグ"
-      backLabel="← 投稿内容"
+      backLabel="← 投稿内容に戻る"
       onCancel={onCancel}
       onSave={onCancel}
       saveLabel="反映する"
@@ -159,15 +173,10 @@ export function StudioSubmitIntroductionEditPanel({
   return (
     <StudioPanelEditShell
       title="作品紹介"
-      backLabel="← 投稿内容"
+      backLabel="← 投稿内容に戻る"
       onCancel={onCancel}
       onSave={onCancel}
       saveLabel="反映する"
-      footerNote={
-        <p className="text-[11px] leading-relaxed text-zinc-600">
-          1行説明は作品紹介の先頭から自動生成されます。
-        </p>
-      }
     >
       <p className="text-xs text-zinc-600">{PROJECT_INTRO_HINT}</p>
       <textarea
@@ -191,7 +200,7 @@ export function StudioSubmitImagesEditPanel({
   return (
     <StudioPanelEditShell
       title="画像"
-      backLabel="← 投稿内容"
+      backLabel="← 投稿内容に戻る"
       onCancel={onCancel}
       onSave={onCancel}
       saveLabel="反映する"
@@ -223,7 +232,7 @@ export function StudioSubmitPlayInfoEditPanel({
   return (
     <StudioPanelEditShell
       title="プレイ情報・公開先"
-      backLabel="← 投稿内容"
+      backLabel="← 投稿内容に戻る"
       onCancel={onCancel}
       onSave={onCancel}
       saveLabel="反映する"
@@ -271,7 +280,7 @@ export function StudioSubmitVisibilityEditPanel({
   return (
     <StudioPanelEditShell
       title="公開設定"
-      backLabel="← 投稿内容"
+      backLabel="← 投稿内容に戻る"
       onCancel={onCancel}
       onSave={onCancel}
       saveLabel="反映する"

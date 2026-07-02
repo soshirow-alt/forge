@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   StudioPanelEditShell,
 } from "@/components/studio-panel-edit-shell";
+import type { StudioOverviewEditPanelCommonProps } from "@/components/studio-overview-edit-panel-types";
 import { useGames } from "@/components/games-provider";
 import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
 import { PROJECT_VISIBILITY_SECTION_HINT } from "@/lib/project-form-copy";
@@ -12,16 +13,13 @@ import {
   type ProjectVisibility,
 } from "@/lib/project-visibility";
 
-export type StudioOverviewVisibilityEditPanelProps = {
-  projectId: string;
-  onCancel: () => void;
-  onSaved?: () => void;
-};
+export type StudioOverviewVisibilityEditPanelProps = StudioOverviewEditPanelCommonProps;
 
 export function StudioOverviewVisibilityEditPanel({
   projectId,
   onCancel,
   onSaved,
+  onPreviewPatchChange,
 }: StudioOverviewVisibilityEditPanelProps) {
   const { getOwnedProjectById, updateProjectDetails, dataReady } = useGames();
   const game = getOwnedProjectById(projectId);
@@ -91,7 +89,10 @@ export function StudioOverviewVisibilityEditPanel({
               type="radio"
               name={`studio-visibility-${projectId}`}
               checked={visibility === option.value}
-              onChange={() => setVisibility(option.value)}
+              onChange={() => {
+                setVisibility(option.value);
+                onPreviewPatchChange?.({ visibility: option.value });
+              }}
               className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
             />
             <span>

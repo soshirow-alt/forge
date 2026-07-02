@@ -5,20 +5,19 @@ import { ProjectPhaseFormFields } from "@/components/project-phase-form-fields";
 import {
   StudioPanelEditShell,
   studioPanelInputClassName,
+  studioPanelSingleLineInputClassName,
 } from "@/components/studio-panel-edit-shell";
+import type { StudioOverviewEditPanelCommonProps } from "@/components/studio-overview-edit-panel-types";
 import { useGames } from "@/components/games-provider";
 import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
 
-export type StudioOverviewBasicInfoEditPanelProps = {
-  projectId: string;
-  onCancel: () => void;
-  onSaved?: () => void;
-};
+export type StudioOverviewBasicInfoEditPanelProps = StudioOverviewEditPanelCommonProps;
 
 export function StudioOverviewBasicInfoEditPanel({
   projectId,
   onCancel,
   onSaved,
+  onPreviewPatchChange,
 }: StudioOverviewBasicInfoEditPanelProps) {
   const { getOwnedProjectById, updateProjectDetails, dataReady } = useGames();
   const game = getOwnedProjectById(projectId);
@@ -41,6 +40,14 @@ export function StudioOverviewBasicInfoEditPanel({
     setPhase(game.phase);
     setFormLoaded(true);
   }, [game, formLoaded]);
+
+  function emitPreview(next: { title: string; description: string; phase: string }) {
+    onPreviewPatchChange?.({
+      title: next.title,
+      description: next.description,
+      phase: next.phase,
+    });
+  }
 
   async function handleSave() {
     if (!game) {
@@ -84,8 +91,6 @@ export function StudioOverviewBasicInfoEditPanel({
     return <p className="text-sm text-zinc-500">読み込み中…</p>;
   }
 
-  const hasOverviewIntro = Boolean(game.overviewIntroduction?.trim());
-
   return (
     <StudioPanelEditShell
       title="基本情報を編集"
@@ -104,7 +109,11 @@ export function StudioOverviewBasicInfoEditPanel({
           type="text"
           required
           value={title}
-          onChange={(event) => setTitle(event.target.value)}
+          onChange={(event) => {
+            const nextTitle = event.target.value;
+            setTitle(nextTitle);
+            emitPreview({ title: nextTitle, description, phase });
+          }}
           className={studioPanelInputClassName}
         />
       </div>
@@ -113,24 +122,26 @@ export function StudioOverviewBasicInfoEditPanel({
         <label htmlFor={`studio-basic-lead-${projectId}`} className="text-xs font-medium text-zinc-500">
           1行説明
         </label>
-        <textarea
+        <input
           id={`studio-basic-lead-${projectId}`}
+          type="text"
           value={description}
-          onChange={(event) => setDescription(event.target.value)}
-          rows={2}
-          className={`${studioPanelInputClassName} resize-y`}
+          onChange={(event) => {
+            const nextDescription = event.target.value;
+            setDescription(nextDescription);
+            emitPreview({ title, description: nextDescription, phase });
+          }}
+          className={studioPanelSingleLineInputClassName}
           placeholder="ヒーローに表示される短い説明"
         />
-        {hasOverviewIntro ? (
-          <p className="mt-1 text-[11px] text-zinc-600">
-            作品紹介を設定している場合、一覧用の短い説明は作品紹介からも生成されます。
-          </p>
-        ) : null}
       </div>
 
       <ProjectPhaseFormFields
         value={phase}
-        onChange={setPhase}
+        onChange={(nextPhase) => {
+          setPhase(nextPhase);
+          emitPreview({ title, description, phase: nextPhase });
+        }}
         radioName={`studio-basic-phase-${projectId}`}
       />
     </StudioPanelEditShell>

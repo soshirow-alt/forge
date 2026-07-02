@@ -5,6 +5,7 @@ import { CollapsibleFormSection } from "@/components/collapsible-form-section";
 import {
   StudioPanelEditShell,
 } from "@/components/studio-panel-edit-shell";
+import type { StudioOverviewEditPanelCommonProps } from "@/components/studio-overview-edit-panel-types";
 import { useGames } from "@/components/games-provider";
 import { FORGE_GENRE_OPTIONS, type ForgeGenreOption } from "@/lib/forge-genre-options";
 import {
@@ -21,6 +22,7 @@ import {
   resolveProjectGenres,
   sanitizeProjectGenresForSave,
   toggleForgeGenre,
+  genresToLegacyGenreColumn,
 } from "@/lib/project-genres";
 import {
   getPublicGameTags,
@@ -29,16 +31,13 @@ import {
 } from "@/lib/play-environment";
 import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
 
-export type StudioOverviewGenresTagsEditPanelProps = {
-  projectId: string;
-  onCancel: () => void;
-  onSaved?: () => void;
-};
+export type StudioOverviewGenresTagsEditPanelProps = StudioOverviewEditPanelCommonProps;
 
 export function StudioOverviewGenresTagsEditPanel({
   projectId,
   onCancel,
   onSaved,
+  onPreviewPatchChange,
 }: StudioOverviewGenresTagsEditPanelProps) {
   const { getOwnedProjectById, updateProjectDetails, dataReady } = useGames();
   const game = getOwnedProjectById(projectId);
@@ -65,6 +64,23 @@ export function StudioOverviewGenresTagsEditPanel({
     );
     setFormLoaded(true);
   }, [game, formLoaded]);
+
+  function emitPreview(
+    genres: ForgeGenreOption[],
+    tags: ForgeFeatureTagOption[],
+  ) {
+    const sanitizedGenres = sanitizeProjectGenresForSave(genres);
+    const playEnvironment = parsePlayEnvironmentFromTags(game?.tags ?? []);
+    const mergedTags = mergePlayEnvironmentIntoTags(
+      sanitizeFeatureTagsForSave(tags),
+      playEnvironment,
+    );
+    onPreviewPatchChange?.({
+      genres: sanitizedGenres,
+      genre: genresToLegacyGenreColumn(sanitizedGenres) || "",
+      tags: mergedTags,
+    });
+  }
 
   async function handleSave() {
     if (!game) {
@@ -135,9 +151,11 @@ export function StudioOverviewGenresTagsEditPanel({
               <input
                 type="checkbox"
                 checked={selectedGenres.includes(option)}
-                onChange={() =>
-                  setSelectedGenres((current) => toggleForgeGenre(current, option))
-                }
+                onChange={() => {
+                  const nextGenres = toggleForgeGenre(selectedGenres, option);
+                  setSelectedGenres(nextGenres);
+                  emitPreview(nextGenres, selectedTags);
+                }}
                 className="sr-only"
               />
               {option}
@@ -160,9 +178,11 @@ export function StudioOverviewGenresTagsEditPanel({
               <input
                 type="checkbox"
                 checked={selectedTags.includes(tag)}
-                onChange={() =>
-                  setSelectedTags((prev) => toggleForgeFeatureTag(prev, tag))
-                }
+                onChange={() => {
+                  const nextTags = toggleForgeFeatureTag(selectedTags, tag);
+                  setSelectedTags(nextTags);
+                  emitPreview(selectedGenres, nextTags);
+                }}
                 className="h-3.5 w-3.5 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
               />
               <span className="text-xs text-zinc-300">{tag}</span>

@@ -80,6 +80,7 @@ export function StudioSubmitPlayerPreview({
   }, [submitDraft, submitOwner]);
 
   const titleIsPlaceholder = !submitDraft.title.trim();
+  const leadIsPlaceholder = !submitDraft.description.trim();
   const introIsPlaceholder = !submitDraft.introduction.trim();
   const phaseIsPlaceholder = !submitDraft.phase.trim();
   const genreIsPlaceholder = submitDraft.genres.length === 0;
@@ -129,7 +130,7 @@ export function StudioSubmitPlayerPreview({
             </div>
             <p
               className={
-                introIsPlaceholder
+                leadIsPlaceholder
                   ? "mt-2 break-words text-sm leading-relaxed text-zinc-600"
                   : "mt-2 break-words text-sm leading-relaxed text-zinc-400"
               }
