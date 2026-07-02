@@ -4,6 +4,8 @@
 
 ---
 
+- **本番 deploy（Batch 1）** — `preview/landing-01` を `main` に fast-forward（`ba48003`）。Studio 投稿/編集パネル、mock 漏れ防止、通知導線、コミュニティ guards 等 52 commit を本番反映。`PLAYER_VISIBLE=false` 維持。オーナー Preview スモーク + DB 汚染掃除後 GO
+
 - **Studio / マイページ コミュニティの mock 漏れ防止** — `/studio/community`・`/mypage/community` でログイン済み実ユーザーに mock「しゃねこコミュニティ」を表示しない。本番同等 Preview では Supabase のみ参照し、mock id/name は表示・upsert しない。コミュニティ未作成時は「コミュニティを準備中です」空状態。DB migration なし
 
 --- — タブ「フィードバック」を意図的に「フィード / バック」の2行表示に。傾向カードの空状態を「十分なフィードバックがありません」に短縮（不自然な1文字改行を回避）。DB migration なし

@@ -167,10 +167,12 @@ npm run build
 ## 8. 記録欄（deploy GO 時にオーナーが追記）
 
 ```
-deploy commit:
-固定 Preview 最終確認日:
-本番 deploy 日時:
-migration 最終適用（番号）:
-PLAYER_VISIBLE:
-残課題:
+deploy commit: ba4800390953bf1fd3f343719e5678b21a5e358f (ba48003)
+固定 Preview 最終確認日: 2026-07-03（オーナー Preview スモーク A 項目 OK）
+本番 deploy 日時: 2026-07-03 03:29 JST（main fast-forward push 7640a14..ba48003）
+production URL: https://forge-flame-gamma.vercel.app
+deploy 結果: main push 成功。production /home HTTP 200 確認。preview/landing-01 同期済み（同一 commit）
+migration 最終適用（番号）: オーナー確認済み（026 platform_feedback 等。本 deploy で新規 migration なし）
+PLAYER_VISIBLE: false（オーナー Production env 確認済み）
+残課題: オーナー本番 hostname 再スモーク。witness-sandbox 通知/コミュニティ DB 掃除済み
 ```
