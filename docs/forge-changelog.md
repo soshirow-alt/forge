@@ -4,7 +4,7 @@
 
 ---
 
-- **Studio mypage 初期表示（A-1）** — `/studio/mypage` の作品一覧を `hydrated && dataReady` で先に表示。voice 集計（回答数・反応バッジ・新着）は後追い反映。未取得中の回答数は「—」表示（0件と混同しない）。DB 変更なし
+- **ルート遷移ブラックアウト対策** — `/studio/community`・`/studio/mypage`・`/mypage/community` のルート `Suspense` を Shell 付き「読み込み中…」fallback に変更（`fallback={null}` 廃止）。サイドバー遷移時の一瞬の黒画面を防止。DB 変更なし
 
 ---
 
