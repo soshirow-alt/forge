@@ -114,8 +114,6 @@ export function AuthFooter() {
         <Link href={PRIVACY_PATH} className="transition-colors hover:text-zinc-300">
           プライバシーポリシー
         </Link>
-        <span>クッキーポリシー</span>
-        <span>運営会社</span>
       </div>
       <p>© 2026 Forge. All rights reserved.</p>
     </footer>

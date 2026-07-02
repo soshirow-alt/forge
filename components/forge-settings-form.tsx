@@ -1,7 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { Suspense, useState } from "react";
 import { AccountSettingsPanel } from "@/components/account-settings-panel";
+import {
+  FORGE_LEGAL_CONTACT_EMAIL,
+  PRIVACY_PATH,
+  TERMS_PATH,
+} from "@/lib/legal-routes";
 import { useUserSettings, type SettingsToggleItem } from "@/hooks/use-user-settings";
 import {
   privacySettingsSection,
@@ -201,6 +207,30 @@ function PreferenceSettingsPanel({ context }: { context: "player" | "studio" }) 
   );
 }
 
+function SettingsLegalLinks() {
+  return (
+    <nav
+      aria-label="規約・お問い合わせ"
+      className="border-t border-zinc-800/80 pt-6 text-center text-xs text-zinc-500"
+    >
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+        <Link href={TERMS_PATH} className="transition-colors hover:text-zinc-300">
+          利用規約
+        </Link>
+        <Link href={PRIVACY_PATH} className="transition-colors hover:text-zinc-300">
+          プライバシーポリシー
+        </Link>
+        <a
+          href={`mailto:${FORGE_LEGAL_CONTACT_EMAIL}`}
+          className="transition-colors hover:text-zinc-300"
+        >
+          お問い合わせ
+        </a>
+      </div>
+    </nav>
+  );
+}
+
 export function ForgeSettingsForm({ context }: { context: "player" | "studio" }) {
   return (
     <div className="space-y-8">
@@ -213,6 +243,8 @@ export function ForgeSettingsForm({ context }: { context: "player" | "studio" })
       <Suspense fallback={null}>
         <AccountSettingsPanel section="deletion" />
       </Suspense>
+
+      <SettingsLegalLinks />
     </div>
   );
 }

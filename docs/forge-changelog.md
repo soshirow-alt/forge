@@ -4,6 +4,10 @@
 
 ---
 
+- **プライバシーポリシー A 項目（X投稿前）** — `/privacy` に運営へのご意見（保存・運営メール通知）と開発者への共有範囲（FB内容は開発者が閲覧可、メール原則非提供、みんなのFBは集計中心、コミュニティの表示名等）を追記。auth フッターの未リンク「クッキーポリシー」「運営会社」を削除。`/settings`・`/studio/settings` 下部に規約・PP・お問い合わせ導線を追加。DB migration なし
+
+---
+
 - **本番 deploy（Batch 1）** — `preview/landing-01` を `main` に fast-forward（`ba48003`）。Studio 投稿/編集パネル、mock 漏れ防止、通知導線、コミュニティ guards 等 52 commit を本番反映。`PLAYER_VISIBLE=false` 維持。オーナー Preview スモーク + DB 汚染掃除後 GO
 
 - **Studio / マイページ コミュニティの mock 漏れ防止** — `/studio/community`・`/mypage/community` でログイン済み実ユーザーに mock「しゃねこコミュニティ」を表示しない。本番同等 Preview では Supabase のみ参照し、mock id/name は表示・upsert しない。コミュニティ未作成時は「コミュニティを準備中です」空状態。DB migration なし
