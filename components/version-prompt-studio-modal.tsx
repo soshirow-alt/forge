@@ -18,6 +18,8 @@ type VersionPromptStudioModalProps = {
   open: boolean;
   onClose: () => void;
   onSaved?: () => void;
+  dialogTitle?: string;
+  dialogSubtitle?: string;
 };
 
 export function VersionPromptStudioModal({
@@ -26,6 +28,8 @@ export function VersionPromptStudioModal({
   open,
   onClose,
   onSaved,
+  dialogTitle,
+  dialogSubtitle,
 }: VersionPromptStudioModalProps) {
   const { getDeveloperVersionPrompts, saveDeveloperVersionPrompts } = useGames();
   const [mode, setMode] = useState<"none" | "custom">("none");
@@ -116,6 +120,8 @@ export function VersionPromptStudioModal({
       onConfirm={handleSave}
       confirming={saving}
       confirmError={saveError}
+      title={dialogTitle}
+      subtitle={dialogSubtitle}
     />
   );
 }

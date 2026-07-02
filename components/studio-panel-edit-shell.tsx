@@ -19,6 +19,7 @@ export type StudioPanelEditShellProps = {
   footerNote?: ReactNode;
   hideSave?: boolean;
   saveLabel?: string;
+  backLabel?: string;
 };
 
 export function StudioPanelEditShell({
@@ -32,6 +33,7 @@ export function StudioPanelEditShell({
   footerNote,
   hideSave = false,
   saveLabel = "保存",
+  backLabel = "← 公開ページを編集",
 }: StudioPanelEditShellProps) {
   return (
     <section
@@ -44,7 +46,7 @@ export function StudioPanelEditShell({
         disabled={isSaving}
         className="text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-300 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        ← 公開ページを編集
+        {backLabel}
       </button>
 
       <h3 className="mt-3 text-sm font-semibold text-zinc-200">{title}</h3>

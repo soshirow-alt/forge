@@ -17,6 +17,8 @@ type VersionPromptEditorDialogProps = {
   confirmLabel?: string;
   confirming?: boolean;
   confirmError?: string | null;
+  title?: string;
+  subtitle?: string;
 };
 
 export function VersionPromptEditorDialog({
@@ -32,6 +34,8 @@ export function VersionPromptEditorDialog({
   confirmLabel = "保存",
   confirming = false,
   confirmError = null,
+  title = "プレイヤーへの問い",
+  subtitle,
 }: VersionPromptEditorDialogProps) {
   if (!open) {
     return null;
@@ -39,8 +43,11 @@ export function VersionPromptEditorDialog({
 
   return (
     <V0SimpleModal
-      title="プレイヤーへの問い"
-      subtitle={`${versionLabel} — 未設定の場合は「もう一度遊びたい？」などのデフォルト問いが表示されます`}
+      title={title}
+      subtitle={
+        subtitle ??
+        `${versionLabel} — 未設定の場合は「もう一度遊びたい？」などのデフォルト問いが表示されます`
+      }
       onClose={onClose}
       size="lg"
     >

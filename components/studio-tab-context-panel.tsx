@@ -11,8 +11,8 @@ import { StudioOverviewVisibilityEditPanel } from "@/components/studio-overview-
 import { StudioOverviewIntroductionEditPanel } from "@/components/studio-overview-introduction-edit-panel";
 import { StudioOverviewPlayInfoEditPanel } from "@/components/studio-overview-play-info-edit-panel";
 import { StudioDevlogCurrentEditPanel } from "@/components/studio-devlog-current-edit-panel";
+import { StudioReleaseAboutBlock } from "@/components/studio-release-about-block";
 import { ProjectShareLinkModal } from "@/components/project-share-link-modal";
-import { ProjectReleaseStudioPanel } from "@/components/project-release-studio-panel";
 import { StudioPlayerFeedbackPanel } from "@/components/studio-improvement-loop";
 import { StudioTopPrioritiesPanel } from "@/components/studio-top-priorities-panel";
 import { useGames } from "@/components/games-provider";
@@ -30,6 +30,7 @@ import {
   type ProjectGrowthSnapshot,
 } from "@/lib/project-growth-state";
 import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
+import { resolvePlayableVersion } from "@/lib/playable-version";
 import { getVisibilityBadgeLabel } from "@/lib/project-visibility";
 
 const primaryButtonClassName =
@@ -123,7 +124,8 @@ export function StudioTabContextPanel({
   const [overviewEditMode, setOverviewEditMode] = useState<OverviewEditMode>(null);
   const [devlogEditMode, setDevlogEditMode] = useState<DevlogEditMode>(null);
 
-  const versionKey = growth.playableVersion;
+  const versionKey = resolvePlayableVersion(growth.playableVersion);
+  const versionLabel = `v${versionKey}`;
   const { isRead: voiceRead, markRead } = useNurtureVoiceRead(game.id, versionKey);
 
   const quickFbCount = growth.totalVoiceResponseCount;
@@ -344,49 +346,43 @@ export function StudioTabContextPanel({
         />
       );
     } else {
+      const currentDevlogMeta = latestDevlog
+        ? `${latestDevlog.publishedVersion ?? versionLabel} / ${formatDevlogPublishedAt(latestDevlog.date)}更新`
+        : `${versionLabel} / 開発ログ未作成`;
+
       sectionContent = (
         <>
-          <PanelBlock>
+          <PanelBlock title="新verの開発ログを書く">
+            <p className="text-xs leading-relaxed text-zinc-600">
+              更新内容と、このverでプレイヤーに見てほしいことをまとめます。
+            </p>
             <button type="button" onClick={onOpenNewVersionDevlog} className={primaryButtonClassName}>
               <FileText className="size-4 shrink-0" aria-hidden="true" />
               新verの開発ログを書く
             </button>
+          </PanelBlock>
+
+          <PanelBlock title="現在の開発ログを編集">
+            <p className="text-sm font-medium text-zinc-200">{currentDevlogMeta}</p>
+            <p className="text-xs leading-relaxed text-zinc-600">
+              このverでプレイヤーに見てほしいことを調整できます。
+            </p>
             <button
               type="button"
               onClick={() => setDevlogEditMode("current")}
               className={panelButtonClassName}
             >
               <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-              現在の開発ログを編集
+              編集する
             </button>
           </PanelBlock>
 
-          <PanelBlock title="最新の開発ログ">
-          {latestDevlog ? (
-            <div className="rounded-lg border border-zinc-800/60 bg-zinc-950/30 px-3 py-2.5">
-              <p className="text-sm font-medium text-zinc-200">{latestDevlog.title}</p>
-              <p className="mt-1 text-xs text-zinc-500">
-                {formatDevlogPublishedAt(latestDevlog.date)}
-                {latestDevlog.publishedVersion ? ` · ${latestDevlog.publishedVersion}` : ""}
-              </p>
-              <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-zinc-400">
-                {latestDevlog.content}
-              </p>
-            </div>
-          ) : (
-            <p className="text-xs leading-relaxed text-zinc-500">
-              開発ログはまだありません。「新verの開発ログを書く」から最初の更新を記録できます。
-            </p>
-          )}
-        </PanelBlock>
-
-        <ProjectReleaseStudioPanel
-          projectId={projectId}
-          devlogCount={devlogCount}
-          playableVersion={versionKey}
-          embedded
-        />
-      </>
+          <StudioReleaseAboutBlock
+            projectId={projectId}
+            devlogCount={devlogCount}
+            playableVersion={versionKey}
+          />
+        </>
       );
     }
   } else {

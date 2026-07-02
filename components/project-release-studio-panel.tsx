@@ -15,7 +15,9 @@ type ProjectReleaseStudioPanelProps = {
   projectId: string;
   devlogCount: number;
   playableVersion: string;
+  /** @deprecated Use layout instead */
   embedded?: boolean;
+  layout?: "page" | "embedded" | "detail";
 };
 
 export function ProjectReleaseStudioPanel({
@@ -23,7 +25,9 @@ export function ProjectReleaseStudioPanel({
   devlogCount,
   playableVersion,
   embedded = false,
+  layout,
 }: ProjectReleaseStudioPanelProps) {
+  const resolvedLayout = layout ?? (embedded ? "embedded" : "page");
   const {
     events,
     loaded,
@@ -84,10 +88,14 @@ export function ProjectReleaseStudioPanel({
   };
 
   if (!loaded) {
+    if (resolvedLayout === "detail") {
+      return <p className="text-sm text-zinc-500">読み込み中…</p>;
+    }
+
     return (
       <section
         className={
-          embedded
+          resolvedLayout === "embedded"
             ? "rounded-xl border border-zinc-800/80 bg-zinc-900/35 p-4"
             : "mt-10 rounded-xl border border-zinc-800 bg-zinc-900/60 p-5"
         }
@@ -97,31 +105,32 @@ export function ProjectReleaseStudioPanel({
     );
   }
 
-  return (
-    <section
-      id={embedded ? undefined : "official-release"}
-      className={
-        embedded
-          ? "scroll-mt-24 rounded-xl border border-zinc-800/80 bg-zinc-900/35 p-4"
-          : "mt-10 scroll-mt-24 rounded-xl border border-zinc-800 bg-zinc-900/60 p-5"
-      }
-    >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2
-          className={
-            embedded
-              ? "text-xs font-semibold uppercase tracking-wide text-zinc-500"
-              : "text-base font-semibold tracking-tight text-zinc-100"
-          }
-        >
-          {embedded ? "正式版" : "正式verとして宣言する"}
-        </h2>
-        {embedded && releaseStatus === "in_development" ? null : (
-          <span className="rounded-full border border-zinc-700 bg-zinc-950/60 px-3 py-1 text-xs font-medium text-zinc-200">
+  const content = (
+    <>
+      {resolvedLayout !== "detail" ? (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2
+            className={
+              resolvedLayout === "embedded"
+                ? "text-xs font-semibold uppercase tracking-wide text-zinc-500"
+                : "text-base font-semibold tracking-tight text-zinc-100"
+            }
+          >
+            {resolvedLayout === "embedded" ? "正式版" : "正式verとして宣言する"}
+          </h2>
+          {resolvedLayout === "embedded" && releaseStatus === "in_development" ? null : (
+            <span className="rounded-full border border-zinc-700 bg-zinc-950/60 px-3 py-1 text-xs font-medium text-zinc-200">
+              {RELEASE_STATUS_LABELS[releaseStatus]}
+            </span>
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-sm font-medium text-zinc-300">
             {RELEASE_STATUS_LABELS[releaseStatus]}
           </span>
-        )}
-      </div>
+        </div>
+      )}
 
       {(error || actionError) && (
         <p className="mt-3 text-sm text-red-400/90">{actionError ?? error}</p>
@@ -145,7 +154,7 @@ export function ProjectReleaseStudioPanel({
             disabled={busy || !releasedValidation.ok}
             onClick={() => void handleReleased()}
             className={`rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 ${
-              embedded ? "w-full px-4 py-2 text-sm" : "px-5 py-2.5 text-sm"
+              resolvedLayout === "page" ? "px-5 py-2.5 text-sm" : "w-full px-4 py-2 text-sm"
             }`}
           >
             正式verとして宣言する
@@ -204,6 +213,23 @@ export function ProjectReleaseStudioPanel({
           )}
         </div>
       ) : null}
+    </>
+  );
+
+  if (resolvedLayout === "detail") {
+    return content;
+  }
+
+  return (
+    <section
+      id={resolvedLayout === "embedded" ? undefined : "official-release"}
+      className={
+        resolvedLayout === "embedded"
+          ? "scroll-mt-24 rounded-xl border border-zinc-800/80 bg-zinc-900/35 p-4"
+          : "mt-10 scroll-mt-24 rounded-xl border border-zinc-800 bg-zinc-900/60 p-5"
+      }
+    >
+      {content}
     </section>
   );
 }
