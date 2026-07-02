@@ -2,11 +2,18 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { useGames } from "@/components/games-provider";
 import type { CommunityJoinRequest, CommunityMember } from "@/lib/community-join-v0-store";
 import {
   membershipToJoinRequest,
   membershipToMember,
 } from "@/lib/community-member-display";
+import {
+  isMockCommunityId,
+  isMockCommunityName,
+  isSafeDeveloperCommunityProfile,
+  resolveCommunityDisplayName,
+} from "@/lib/community-mock-guards";
 import {
   communityIdFromUser,
   type DeveloperCommunityProfile,
@@ -44,6 +51,7 @@ function toProfile(
 
 export function useCommunityHubSupabase(isDeveloper: boolean) {
   const { user, hydrated } = useAuth();
+  const { getDeveloperProfileByUserId } = useGames();
   const userId = user?.id;
   const userName = user?.name ?? "";
   const enabled = shouldHideV0MockContent();
@@ -108,19 +116,46 @@ export function useCommunityHubSupabase(isDeveloper: boolean) {
       try {
         if (isDeveloper) {
           const id = communityIdFromUser(userId, userName);
+          if (isMockCommunityId(id)) {
+            return;
+          }
+
+          const developerProfileRecord = getDeveloperProfileByUserId(userId);
+          const communityName = resolveCommunityDisplayName({
+            user,
+            publicName: developerProfileRecord?.publicName,
+            forCommunityName: true,
+          });
+
           let record = await fetchDeveloperCommunityByOwner(supabase, userId);
+          if (
+            record &&
+            !isSafeDeveloperCommunityProfile({
+              id: record.id,
+              name: record.name,
+            })
+          ) {
+            record = null;
+          }
           if (!record) {
+            if (isMockCommunityName(communityName)) {
+              return;
+            }
             await ensureDeveloperCommunity(supabase, {
               id,
               ownerId: userId,
-              name: `${userName}コミュニティ`,
+              name: communityName,
               description: "フォロワーと交流し、一緒にゲームを育てましょう",
               avatarUrl: DEFAULT_AVATAR,
               handle: id,
             });
             record = await fetchDeveloperCommunityByOwner(supabase, userId);
           }
-          if (record && !cancelled) {
+          if (
+            record &&
+            isSafeDeveloperCommunityProfile({ id: record.id, name: record.name }) &&
+            !cancelled
+          ) {
             const count = await countApprovedCommunityMembers(supabase, record.id);
             const profile = toProfile(record, count);
             setDeveloperProfile(profile);
@@ -129,7 +164,13 @@ export function useCommunityHubSupabase(isDeveloper: boolean) {
         } else {
           const joined = await fetchJoinedCommunitiesForUser(supabase, userId);
           if (!cancelled) {
-            setJoinedCommunities(joined);
+            setJoinedCommunities(
+              joined.filter(
+                (community) =>
+                  !isMockCommunityId(community.id) &&
+                  !isMockCommunityName(community.name),
+              ),
+            );
           }
         }
       } catch {
@@ -144,7 +185,7 @@ export function useCommunityHubSupabase(isDeveloper: boolean) {
     return () => {
       cancelled = true;
     };
-  }, [enabled, hydrated, userId, userName, isDeveloper, reloadMembershipData]);
+  }, [enabled, hydrated, userId, userName, user, isDeveloper, reloadMembershipData, getDeveloperProfileByUserId]);
 
   const applyToCommunity = useCallback(
     async (communityId: string) => {

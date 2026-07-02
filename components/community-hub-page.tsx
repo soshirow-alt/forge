@@ -28,14 +28,16 @@ import {
   playerCommunityFeedMock,
   playerJoinedCommunities,
   studioCommunityPostsMock,
-  studioCommunityProfile,
-  studioOwnCommunityId,
   allPlayerCommunities,
   devlogQuoteHref,
   type CommunityPost,
   type CommunityReply,
   type DevlogQuoteRef,
 } from "@/lib/community-v0-mock-data";
+import {
+  isMockCommunityId,
+  isSafeDeveloperCommunityProfile,
+} from "@/lib/community-mock-guards";
 import type { CommunityJoinRequest, CommunityMember } from "@/lib/community-join-v0-store";
 import {
   communityJoinRequestProfileHref,
@@ -987,18 +989,30 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
     useCommunityJoinV0();
 
   // localStorage はクライアント確定後のみ参照（SSR との不一致でクラッシュするのを防ぐ）
-  const ownCommunity =
+  const ownCommunityRaw =
     isDeveloper && hydrated && user && !hideV0Mock
       ? findOwnCommunityInList(user.id, user.name, opened)
       : null;
-  const developerCommunityId = hideV0Mock
-    ? (supabaseHub.developerProfile?.id ?? "")
-    : (ownCommunity?.id ?? studioOwnCommunityId);
-  const developerCommunityProfile: DeveloperCommunityProfile | null = hideV0Mock
+  const ownCommunity = isSafeDeveloperCommunityProfile(ownCommunityRaw)
+    ? ownCommunityRaw
+    : null;
+  const supabaseDeveloperProfile = isSafeDeveloperCommunityProfile(
+    supabaseHub.developerProfile,
+  )
     ? supabaseHub.developerProfile
-    : (ownCommunity ?? studioCommunityProfile);
+    : null;
+  const developerCommunityId = hideV0Mock
+    ? (supabaseDeveloperProfile?.id ?? "")
+    : (ownCommunity?.id ?? "");
+  const developerCommunityProfile: DeveloperCommunityProfile | null = hideV0Mock
+    ? supabaseDeveloperProfile
+    : ownCommunity;
 
-  const hubLoading = hideV0Mock && !supabaseHub.loaded;
+  const hubLoading =
+    !hydrated || (hideV0Mock && !supabaseHub.loaded);
+  const developerHubPending = isDeveloper && (!hydrated || !user || hubLoading);
+  const developerHubEmpty =
+    isDeveloper && hydrated && Boolean(user) && !hubLoading && !developerCommunityProfile;
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsProfile, setSettingsProfile] = useState<DeveloperCommunityProfile | null>(null);
@@ -1006,16 +1020,20 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
   const activeTab = (searchParams.get("tab") === "members" ? "members" : "board") as CommunityTab;
 
   const mockJoinedCommunities = playerJoinedCommunities.filter(
-    (c) => getStatus(c.id) === "approved",
+    (c) => getStatus(c.id) === "approved" && !isMockCommunityId(c.id),
   );
   const joinedCommunities = hideV0Mock
-    ? supabaseHub.joinedCommunities.map((c) => ({
-        id: c.id,
-        name: c.name,
-        avatar: c.avatar,
-        memberCount: c.memberCount,
-      }))
-    : mockJoinedCommunities;
+    ? supabaseHub.joinedCommunities
+        .filter((c) => !isMockCommunityId(c.id))
+        .map((c) => ({
+          id: c.id,
+          name: c.name,
+          avatar: c.avatar,
+          memberCount: c.memberCount,
+        }))
+    : hydrated && user
+      ? mockJoinedCommunities
+      : [];
 
   const communityParam = searchParams.get("community");
   const selectedCommunityId = isDeveloper
@@ -1029,6 +1047,10 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
       : "/mypage/community?tab=members";
 
   const mockPosts = isDeveloper ? studioCommunityPostsMock : playerCommunityFeedMock;
+  const boardSeedPosts =
+    hideV0Mock || !user
+      ? EMPTY_COMMUNITY_POSTS
+      : mockPosts.filter((post) => !isMockCommunityId(post.communityId));
   const {
     posts,
     loaded: boardLoaded,
@@ -1038,7 +1060,7 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
     persistReply,
   } = useCommunityBoard(
     selectedCommunityId,
-    hideV0Mock ? EMPTY_COMMUNITY_POSTS : mockPosts,
+    hideV0Mock ? EMPTY_COMMUNITY_POSTS : boardSeedPosts,
   );
 
   const boardLoading = hideV0Mock && Boolean(selectedCommunityId) && !boardLoaded;
@@ -1062,7 +1084,7 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
     }
 
     if (isDeveloper) {
-      if (!developerCommunityProfile) {
+      if (!developerCommunityProfile || !isSafeDeveloperCommunityProfile(developerCommunityProfile)) {
         return;
       }
       void ensureDeveloperCommunity(supabase, {
@@ -1208,10 +1230,13 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
 
   const selectedCommunity =
     joinedCommunities.find((c) => c.id === selectedCommunityId) ??
-    allPlayerCommunities.find((c) => c.id === selectedCommunityId);
+    (isMockCommunityId(selectedCommunityId)
+      ? undefined
+      : allPlayerCommunities.find((c) => c.id === selectedCommunityId));
 
   const showCommunityPanel =
-    Boolean(selectedCommunityId) || (isDeveloper && hubLoading);
+    Boolean(selectedCommunityId) ||
+    (isDeveloper && (hubLoading || developerHubPending));
   const showBoardSkeleton = hubLoading || boardLoading;
 
   return (
@@ -1256,9 +1281,9 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
       )}
 
       {isDeveloper &&
-        (hubLoading || !developerCommunityProfile ? (
+        (developerHubPending ? (
           <CommunityHubProfileSkeleton />
-        ) : (
+        ) : developerCommunityProfile ? (
           <div className="flex flex-col gap-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <span className="relative size-12 shrink-0 overflow-hidden rounded-full bg-zinc-800">
@@ -1280,11 +1305,14 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
             <button
               type="button"
               onClick={() => {
-                if (!user) {
+                if (!user || !developerCommunityProfile) {
                   return;
                 }
-                if (hideV0Mock && supabaseHub.developerProfile) {
-                  setSettingsProfile(supabaseHub.developerProfile);
+                if (!isSafeDeveloperCommunityProfile(developerCommunityProfile)) {
+                  return;
+                }
+                if (hideV0Mock && supabaseDeveloperProfile) {
+                  setSettingsProfile(supabaseDeveloperProfile);
                   setSettingsOpen(true);
                   return;
                 }
@@ -1302,6 +1330,13 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
               <Settings className="size-4" aria-hidden="true" />
               コミュニティ設定
             </button>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-zinc-800 px-4 py-8 text-center">
+            <p className="text-sm font-medium text-zinc-300">コミュニティを準備中です</p>
+            <p className="mt-2 text-sm text-zinc-500">
+              公開作品を作成すると、コミュニティが作成されます
+            </p>
           </div>
         ))}
 
