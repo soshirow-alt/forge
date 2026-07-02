@@ -4,6 +4,10 @@
 
 ---
 
+- **Studio mypage 初期表示（A-1）** — `/studio/mypage` の作品一覧を `hydrated && dataReady` で先に表示。voice 集計（回答数・反応バッジ・新着）は後追い反映。未取得中の回答数は「—」表示（0件と混同しない）。DB 変更なし
+
+---
+
 - **ログイン P0（return・自動遷移）** — ログイン済みで `/login` を開いたとき、return があればそこへ・なければ `/studio/mypage` へ自動遷移（手動「続ける」廃止）。Studio・通知・ブックマーク等のクライアント側 login redirect に `?return=` を付与。return なしログイン成功後のデフォルト先を `/studio/mypage` に変更。`/bookmarks`・`/notifications` を return ホワイトリストに追加。Preview bypass は未変更。DB 変更なし
 
 ---

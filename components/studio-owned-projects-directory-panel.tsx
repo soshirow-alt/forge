@@ -56,7 +56,15 @@ type OwnedProjectRow = {
   growth: ProjectGrowthSnapshot;
   notificationCount: number;
   showDelete: boolean;
+  voiceLoaded: boolean;
 };
+
+function formatVoiceResponseCount(count: number, voiceLoaded: boolean): string {
+  if (!voiceLoaded) {
+    return "—";
+  }
+  return String(count);
+}
 
 function NewProjectCard({
   compact = false,
@@ -109,9 +117,13 @@ function OwnedProjectGridCard({
   onDelete: (project: PendingProjectDelete) => void;
   showDelete: boolean;
 }) {
-  const { game, growth, notificationCount } = row;
-  const statusBadges = getProjectStatusBadges(growth, false);
+  const { game, growth, notificationCount, voiceLoaded } = row;
+  const statusBadges = voiceLoaded ? getProjectStatusBadges(growth, false) : [];
   const hasHighlight = notificationCount > 0 || statusBadges.length > 0;
+  const responseCountLabel = formatVoiceResponseCount(
+    growth.totalVoiceResponseCount,
+    voiceLoaded,
+  );
 
   return (
     <article
@@ -162,7 +174,13 @@ function OwnedProjectGridCard({
               <MessageSquare className="size-3.5 shrink-0 text-violet-400" aria-hidden="true" />
               <span>
                 回答{" "}
-                <span className="text-zinc-200">{growth.totalVoiceResponseCount}</span>
+                <span
+                  className={
+                    voiceLoaded ? "text-zinc-200" : "text-zinc-500"
+                  }
+                >
+                  {responseCountLabel}
+                </span>
               </span>
             </span>
             <span className="inline-flex items-center gap-1.5">
@@ -204,9 +222,13 @@ function OwnedProjectListRow({
   onDelete: (project: PendingProjectDelete) => void;
   showDelete: boolean;
 }) {
-  const { game, growth, notificationCount } = row;
-  const statusBadges = getProjectStatusBadges(growth, false);
+  const { game, growth, notificationCount, voiceLoaded } = row;
+  const statusBadges = voiceLoaded ? getProjectStatusBadges(growth, false) : [];
   const hasHighlight = notificationCount > 0 || statusBadges.length > 0;
+  const responseCountLabel = formatVoiceResponseCount(
+    growth.totalVoiceResponseCount,
+    voiceLoaded,
+  );
 
   return (
     <article
@@ -251,7 +273,10 @@ function OwnedProjectListRow({
           </div>
           <p className="mt-1 text-xs text-zinc-500">
             {game.genre} · ver {growth.playableVersion} · 回答{" "}
-            {growth.totalVoiceResponseCount} · 最終更新 {game.lastUpdated}
+            <span className={voiceLoaded ? "text-zinc-400" : "text-zinc-600"}>
+              {responseCountLabel}
+            </span>{" "}
+            · 最終更新 {game.lastUpdated}
           </p>
         </div>
       </Link>
@@ -289,27 +314,29 @@ export function StudioOwnedProjectsDirectoryPanel({
   const [page, setPage] = useState(1);
 
   const ownedRows = useMemo(() => {
-    if (!voiceLoaded) {
-      return [];
-    }
-
-    const games = sortProjectsForGrowthHub(
-      getStudioMypageOwnedProjects(user?.id),
-      voiceSignals,
-      getDevlogsByProject,
-    );
+    const ownedGames = getStudioMypageOwnedProjects(user?.id);
+    const games = voiceLoaded
+      ? sortProjectsForGrowthHub(ownedGames, voiceSignals, getDevlogsByProject)
+      : [...ownedGames].sort((a, b) =>
+          (b.lastUpdated || b.createdAt || "").localeCompare(
+            a.lastUpdated || a.createdAt || "",
+          ),
+        );
 
     return games.map((game) => {
       const growth = buildProjectGrowthSnapshot(
         game,
-        resolveVoiceSignalForGame(game, voiceSignals),
+        voiceLoaded
+          ? resolveVoiceSignalForGame(game, voiceSignals)
+          : resolveVoiceSignalForGame(game, []),
         getDevlogsByProject,
       );
       return {
         game,
         growth,
-        notificationCount: growth.pendingFeedbackCount,
+        notificationCount: voiceLoaded ? growth.pendingFeedbackCount : 0,
         showDelete: !isStudioMypagePreviewMockProject(game),
+        voiceLoaded,
       };
     });
   }, [
@@ -346,7 +373,7 @@ export function StudioOwnedProjectsDirectoryPanel({
     safePage * STUDIO_PROJECTS_PAGE_SIZE,
   );
 
-  if (!hydrated || !dataReady || !voiceLoaded) {
+  if (!hydrated || !dataReady) {
     return <p className="text-sm text-zinc-500">読み込み中…</p>;
   }
 
