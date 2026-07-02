@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { ProjectPhaseFormFields } from "@/components/project-phase-form-fields";
+import { ProjectOneLineDescriptionField } from "@/components/project-one-line-description-field";
 import {
   StudioPanelEditShell,
   studioPanelInputClassName,
-  studioPanelSingleLineInputClassName,
 } from "@/components/studio-panel-edit-shell";
 import type { StudioOverviewEditPanelCommonProps } from "@/components/studio-overview-edit-panel-types";
 import { useGames } from "@/components/games-provider";
 import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
+import { validateProjectOneLineDescription } from "@/lib/project-one-line-description";
 
 export type StudioOverviewBasicInfoEditPanelProps = StudioOverviewEditPanelCommonProps;
 
@@ -67,6 +68,12 @@ export function StudioOverviewBasicInfoEditPanel({
       return;
     }
 
+    const leadError = validateProjectOneLineDescription(description);
+    if (leadError) {
+      setValidationError(leadError);
+      return;
+    }
+
     setIsSaving(true);
     try {
       await updateProjectDetails(projectId, {
@@ -118,23 +125,15 @@ export function StudioOverviewBasicInfoEditPanel({
         />
       </div>
 
-      <div>
-        <label htmlFor={`studio-basic-lead-${projectId}`} className="text-xs font-medium text-zinc-500">
-          1行説明
-        </label>
-        <input
-          id={`studio-basic-lead-${projectId}`}
-          type="text"
-          value={description}
-          onChange={(event) => {
-            const nextDescription = event.target.value;
-            setDescription(nextDescription);
-            emitPreview({ title, description: nextDescription, phase });
-          }}
-          className={studioPanelSingleLineInputClassName}
-          placeholder="ヒーローに表示される短い説明"
-        />
-      </div>
+      <ProjectOneLineDescriptionField
+        id={`studio-basic-lead-${projectId}`}
+        value={description}
+        onChange={(nextDescription) => {
+          setDescription(nextDescription);
+          emitPreview({ title, description: nextDescription, phase });
+        }}
+        inputClassName={studioPanelInputClassName}
+      />
 
       <ProjectPhaseFormFields
         value={phase}

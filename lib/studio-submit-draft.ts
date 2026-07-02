@@ -1,4 +1,5 @@
 import { displayPhase, getPhasePlayerDescription } from "@/lib/development-phases";
+import { PROJECT_ONE_LINE_DESCRIPTION_MAX } from "@/lib/project-one-line-description";
 import {
   sanitizeFeatureTagsForSave,
   type ForgeFeatureTagOption,
@@ -277,9 +278,11 @@ export function summarizeSubmitDraftBasic(draft: SubmitDraftState): string {
   const phase = draft.phase.trim() ? displayPhase(draft.phase) : SUBMIT_DRAFT_PHASE_PLACEHOLDER;
   const lead = draft.description.trim();
   const leadSummary = lead
-    ? lead.length > 24
-      ? `${lead.slice(0, 23)}…`
-      : lead
+    ? lead.length > PROJECT_ONE_LINE_DESCRIPTION_MAX
+      ? `${lead.slice(0, PROJECT_ONE_LINE_DESCRIPTION_MAX - 1)}…`
+      : lead.length > 36
+        ? `${lead.slice(0, 35)}…`
+        : lead
     : "1行説明未入力";
   return `${title} · ${phase} · ${leadSummary}`;
 }

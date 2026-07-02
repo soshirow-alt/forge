@@ -17,6 +17,9 @@ import {
   type SubmitDraftState,
 } from "@/lib/studio-submit-draft";
 import { sanitizeProjectGenresForSave } from "@/lib/project-genres";
+import {
+  PROJECT_ONE_LINE_DESCRIPTION_HERO_CLASS,
+} from "@/lib/project-one-line-description";
 import { Clock } from "lucide-react";
 
 const previewTabs: { id: GameDetailTab; label: string }[] = [
@@ -131,8 +134,8 @@ export function StudioSubmitPlayerPreview({
             <p
               className={
                 leadIsPlaceholder
-                  ? "mt-2 break-words text-sm leading-relaxed text-zinc-600"
-                  : "mt-2 break-words text-sm leading-relaxed text-zinc-400"
+                  ? `${PROJECT_ONE_LINE_DESCRIPTION_HERO_CLASS} text-zinc-600`
+                  : `${PROJECT_ONE_LINE_DESCRIPTION_HERO_CLASS} text-zinc-400`
               }
             >
               {displayGame.lead}

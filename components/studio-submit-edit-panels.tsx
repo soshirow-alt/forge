@@ -5,10 +5,10 @@ import { ProjectEstimatedPlayTimeField } from "@/components/project-estimated-pl
 import { ProjectPhaseFormFields } from "@/components/project-phase-form-fields";
 import { ProjectThumbnailFields } from "@/components/project-thumbnail-fields";
 import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
+import { ProjectOneLineDescriptionField } from "@/components/project-one-line-description-field";
 import {
   StudioPanelEditShell,
   studioPanelInputClassName,
-  studioPanelSingleLineInputClassName,
 } from "@/components/studio-panel-edit-shell";
 import { CollapsibleFormSection } from "@/components/collapsible-form-section";
 import { FORGE_GENRE_OPTIONS, type ForgeGenreOption } from "@/lib/forge-genre-options";
@@ -61,19 +61,12 @@ export function StudioSubmitBasicInfoEditPanel({
           placeholder="ゲームのタイトル"
         />
       </div>
-      <div>
-        <label htmlFor="submit-lead" className="text-xs font-medium text-zinc-500">
-          1行説明
-        </label>
-        <input
-          id="submit-lead"
-          type="text"
-          value={draft.description}
-          onChange={(event) => onApply({ description: event.target.value })}
-          className={studioPanelSingleLineInputClassName}
-          placeholder="ヒーローに表示される短い説明"
-        />
-      </div>
+      <ProjectOneLineDescriptionField
+        id="submit-lead"
+        value={draft.description}
+        onChange={(description) => onApply({ description })}
+        inputClassName={studioPanelInputClassName}
+      />
       <ProjectPhaseFormFields
         value={draft.phase}
         onChange={(phase) => onApply({ phase })}

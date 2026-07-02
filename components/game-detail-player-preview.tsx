@@ -16,6 +16,7 @@ import { resolvePublicationDisplay } from "@/lib/game-play-destinations";
 import type { Game } from "@/lib/mock-games";
 import { resolveProjectGenres } from "@/lib/project-genres";
 import { resolveProjectThumbnailUrls } from "@/lib/project-thumbnails";
+import { PROJECT_ONE_LINE_DESCRIPTION_HERO_CLASS } from "@/lib/project-one-line-description";
 import { gameToDetailV0 } from "@/lib/submitted-game-v0-adapter";
 import { Clock } from "lucide-react";
 
@@ -125,7 +126,9 @@ export function GameDetailPlayerPreview({
               </p>
               {playerMeta ? <GameDetailPhaseBadge meta={playerMeta} /> : null}
             </div>
-            <p className="mt-2 break-words text-sm leading-relaxed text-zinc-400">{displayGame.lead}</p>
+            <p className={`${PROJECT_ONE_LINE_DESCRIPTION_HERO_CLASS} text-zinc-400`}>
+              {displayGame.lead}
+            </p>
             <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2 text-sm text-zinc-300">
               {hasCustomThumbnails ? (
                 <span className="relative size-7 shrink-0 overflow-hidden rounded-full bg-zinc-800">
