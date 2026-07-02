@@ -24,6 +24,11 @@ import {
   type DevlogEntry,
 } from "@/lib/devlogs";
 import {
+  buildInitialProjectDevlogContent,
+  INITIAL_PROJECT_DEVLOG_PUBLISHED_VERSION,
+  INITIAL_PROJECT_DEVLOG_TITLE,
+} from "@/lib/initial-project-devlog";
+import {
   createNotificationMessage,
   createVersionPublishedMessage,
   sortNotificationsNewestFirst,
@@ -252,6 +257,11 @@ type GamesContextValue = {
     data: SubmitFormData,
     owner: { ownerId: string; ownerName: string },
   ) => Promise<Game>;
+  createInitialProjectDevlog: (
+    projectId: string,
+    authorId: string,
+    introduction: string,
+  ) => Promise<DevlogEntry>;
   updateSubmittedGame: (id: string, data: SubmitFormData) => Promise<void>;
   updateProjectDetails: (id: string, data: ProjectEditFormData) => Promise<void>;
   updateProjectOverview: (id: string, data: ProjectOverviewUpdate) => Promise<void>;
@@ -671,6 +681,27 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       return game;
     },
     [reloadPublicCatalog],
+  );
+
+  const createInitialProjectDevlog = useCallback(
+    async (projectId: string, authorId: string, introduction: string) => {
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      const entry = await insertProjectDevlog(
+        supabase,
+        authorId,
+        projectId,
+        INITIAL_PROJECT_DEVLOG_TITLE,
+        buildInitialProjectDevlogContent(introduction),
+        { publishedVersion: INITIAL_PROJECT_DEVLOG_PUBLISHED_VERSION },
+      );
+      setDevlogs((prev) => [entry, ...prev]);
+      return entry;
+    },
+    [],
   );
 
   const updateSubmittedGame = useCallback(
@@ -2092,6 +2123,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       dataReady: authHydrated && catalogReady,
       devlogsReady,
       addSubmittedGame,
+      createInitialProjectDevlog,
       updateSubmittedGame,
       updateProjectDetails,
       updateProjectOverview,
@@ -2174,6 +2206,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       devlogsReady,
       hydrated,
       addSubmittedGame,
+      createInitialProjectDevlog,
       updateSubmittedGame,
       updateProjectDetails,
       updateProjectOverview,

@@ -99,6 +99,7 @@ export function useStudioSubmit() {
   const router = useRouter();
   const {
     addSubmittedGame,
+    createInitialProjectDevlog,
     getDeveloperProfileByUserId,
     saveDeveloperProfile,
     saveDeveloperVersionPrompts,
@@ -138,9 +139,23 @@ export function useStudioSubmit() {
           ownerName: publicName,
         });
 
+        try {
+          await createInitialProjectDevlog(game.id, user.id, draft.introduction);
+        } catch {
+          throw new Error(
+            "初回開発ログの作成に失敗しました。作品は作成済みの可能性があります。マイページを確認してください。",
+          );
+        }
+
         const versionKey = resolvePlayableVersion(game.playableVersion);
         const promptsToSave = getSubmitPromptsToSave(draft);
-        await saveDeveloperVersionPrompts(game.id, versionKey, promptsToSave);
+        try {
+          await saveDeveloperVersionPrompts(game.id, versionKey, promptsToSave);
+        } catch {
+          throw new Error(
+            "フィードバック用の問いの保存に失敗しました。作品は作成済みの可能性があります。マイページを確認してください。",
+          );
+        }
 
         router.push(projectStudioPath(game.id));
         return { ok: true };
@@ -150,6 +165,7 @@ export function useStudioSubmit() {
     },
     [
       addSubmittedGame,
+      createInitialProjectDevlog,
       getDeveloperProfileByUserId,
       router,
       saveDeveloperProfile,

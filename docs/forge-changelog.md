@@ -4,6 +4,10 @@
 
 ---
 
+- **新規投稿時の初回開発ログ自動作成** — `/studio/submit` で作品投稿時に `初回公開`（v0.1）の開発ログを1件自動作成。本文は投稿時の作品紹介。`insertProjectDevlog` 直接（通知・adoption matcher・playable_version 二重更新なし）。投稿前プレビューの開発ログタブに初回公開予定を表示。既存作品バックフィルなし。DB migration なし
+
+---
+
 - **公開ページ 未設定サムネをForgeポスターに統一** — `/games/[id]` の実投稿でサムネ未設定時、`DEFAULT_HERO` ストック画像ではなく `GeneratedThumbnailPoster`（青いForgeポスター）を表示。Studioプレビュー・一覧カードと同型に揃えた。開発者アバターはサムネ未設定時にイニシャル表示。フィードバックモーダルのサマリーカードも同様。DB migration なし
 
 ---

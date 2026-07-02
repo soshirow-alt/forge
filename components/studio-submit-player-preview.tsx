@@ -21,6 +21,11 @@ import {
   PROJECT_ONE_LINE_DESCRIPTION_HERO_CLASS,
 } from "@/lib/project-one-line-description";
 import { PROJECT_TITLE_HERO_CLASS } from "@/lib/project-title";
+import {
+  buildInitialProjectDevlogContent,
+  INITIAL_PROJECT_DEVLOG_PUBLISHED_VERSION,
+  INITIAL_PROJECT_DEVLOG_TITLE,
+} from "@/lib/initial-project-devlog";
 import { Clock } from "lucide-react";
 
 const previewTabs: { id: GameDetailTab; label: string }[] = [
@@ -88,6 +93,13 @@ export function StudioSubmitPlayerPreview({
   const introIsPlaceholder = !submitDraft.introduction.trim();
   const phaseIsPlaceholder = !submitDraft.phase.trim();
   const genreIsPlaceholder = submitDraft.genres.length === 0;
+  const initialDevlogExcerpt = useMemo(() => {
+    const content = buildInitialProjectDevlogContent(submitDraft.introduction);
+    if (!content) {
+      return "作品紹介を入力すると、ここに初回開発ログの本文プレビューが表示されます。";
+    }
+    return content.length > 160 ? `${content.slice(0, 160)}…` : content;
+  }, [submitDraft.introduction]);
   const hasGalleryImages = submitDraft.thumbnailUrls.length > 0;
   const primaryGenre = sanitizeProjectGenresForSave(submitDraft.genres)[0] ?? "その他";
 
@@ -207,10 +219,22 @@ export function StudioSubmitPlayerPreview({
       ) : null}
 
       {activeTab === "devlog" ? (
-        <div className="rounded-xl border border-dashed border-zinc-800/80 bg-zinc-950/20 px-4 py-8 text-center">
-          <p className="text-sm text-zinc-500">まだ開発ログはありません。</p>
-          <p className="mt-1 text-xs text-zinc-600">
-            投稿後、Studioの開発ログタブから最初の更新を記録できます。
+        <div className="rounded-xl border border-dashed border-violet-500/20 bg-violet-500/5 px-4 py-6 text-left">
+          <p className="text-xs font-medium text-violet-200/90">
+            投稿すると「{INITIAL_PROJECT_DEVLOG_TITLE}」として記録されます
+          </p>
+          <p className="mt-2 text-sm font-medium text-zinc-200">
+            v{INITIAL_PROJECT_DEVLOG_PUBLISHED_VERSION}
+          </p>
+          <p className="mt-3 text-sm font-semibold text-white">
+            {INITIAL_PROJECT_DEVLOG_TITLE}
+          </p>
+          <p
+            className={`mt-2 text-sm leading-relaxed ${
+              introIsPlaceholder ? "text-zinc-600" : "text-zinc-400"
+            }`}
+          >
+            {initialDevlogExcerpt}
           </p>
         </div>
       ) : null}

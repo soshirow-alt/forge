@@ -76,6 +76,7 @@ export function ProjectSubmitForm({
 
   const {
     addSubmittedGame,
+    createInitialProjectDevlog,
     getDeveloperProfileByUserId,
     getOwnedProjects,
     saveDeveloperProfile,
@@ -259,10 +260,24 @@ export function ProjectSubmitForm({
         ownerName: publicName,
       });
 
+      try {
+        await createInitialProjectDevlog(game.id, user.id, introduction);
+      } catch {
+        throw new Error(
+          "初回開発ログの作成に失敗しました。作品は作成済みの可能性があります。マイページを確認してください。",
+        );
+      }
+
       const versionKey = resolvePlayableVersion(game.playableVersion);
       const promptsToSave =
         testerNotesMode === "custom" ? sanitizePromptDrafts(promptDrafts) : [];
-      await saveDeveloperVersionPrompts(game.id, versionKey, promptsToSave);
+      try {
+        await saveDeveloperVersionPrompts(game.id, versionKey, promptsToSave);
+      } catch {
+        throw new Error(
+          "フィードバック用の問いの保存に失敗しました。作品は作成済みの可能性があります。マイページを確認してください。",
+        );
+      }
 
       if (onSubmitted) {
         onSubmitted(game.id, visibility);
