@@ -640,9 +640,20 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         id,
         data,
       );
+      const merged = mergeGameWithExtras(game);
       setSubmittedGames((prev) =>
-        prev.map((item) => (item.id === id ? game : item)),
+        prev.map((item) => (item.id === id ? merged : item)),
       );
+      setPublicGames((prev) => {
+        if (merged.visibility !== "public") {
+          return prev.filter((item) => item.id !== id);
+        }
+        if (prev.some((item) => item.id === id)) {
+          return prev.map((item) => (item.id === id ? merged : item));
+        }
+        return prev;
+      });
+      void reloadPublicCatalog().catch(() => undefined);
       const ownerId = current?.ownerId ?? game.ownerId;
       if (ownerId) {
         await mergeDeveloperProfileSocialLinks(supabase, ownerId, {
@@ -655,7 +666,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         setDeveloperProfiles(profiles);
       }
     },
-    [submittedGames],
+    [reloadPublicCatalog, submittedGames],
   );
 
   const updateProjectOverview = useCallback(
@@ -666,11 +677,22 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       }
 
       const game = await updateProjectOverviewInDb(supabase, id, data);
+      const merged = mergeGameWithExtras(game);
       setSubmittedGames((prev) =>
-        prev.map((item) => (item.id === id ? game : item)),
+        prev.map((item) => (item.id === id ? merged : item)),
       );
+      setPublicGames((prev) => {
+        if (merged.visibility !== "public") {
+          return prev.filter((item) => item.id !== id);
+        }
+        if (prev.some((item) => item.id === id)) {
+          return prev.map((item) => (item.id === id ? merged : item));
+        }
+        return prev;
+      });
+      void reloadPublicCatalog().catch(() => undefined);
     },
-    [],
+    [reloadPublicCatalog],
   );
 
   const deleteSubmittedGame = useCallback(async (id: string) => {
@@ -711,10 +733,19 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   }, [reloadPublicCatalog]);
 
   const getSubmittedGameById = useCallback(
-    (id: string) =>
-      submittedGames.find((game) => game.id === id) ??
-      publicGames.find((game) => game.id === id),
-    [submittedGames, publicGames],
+    (id: string) => {
+      const submitted = submittedGames.find((game) => game.id === id);
+      if (submitted) {
+        return submitted;
+      }
+      // オーナー作品 catalog 読込前に publicGames へフォールバックすると
+      // Studio 編集で古いデータ表示・誤リダイレクトの原因になる
+      if (!catalogReady) {
+        return undefined;
+      }
+      return publicGames.find((game) => game.id === id);
+    },
+    [submittedGames, publicGames, catalogReady],
   );
 
   const isSubmittedGame = useCallback(

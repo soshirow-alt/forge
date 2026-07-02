@@ -33,7 +33,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, hydrated } = useAuth();
-  const { getSubmittedGameById, isProjectOwner, getDevlogsByProject, dataReady } =
+  const { getSubmittedGameById, getDevlogsByProject, dataReady } =
     useGames();
   const { handleTestPlay } = useProjectTestPlay(projectId);
 
@@ -43,7 +43,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
     useOwnedProjectVoiceSignals(user?.id);
 
   const game = getSubmittedGameById(projectId);
-  const isOwner = isProjectOwner(projectId, user?.id);
+  const isOwner = Boolean(user && game && game.ownerId === user.id);
 
   const growth = useMemo(() => {
     if (!game) {
@@ -68,10 +68,13 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   }, [hydrated, user, router]);
 
   useEffect(() => {
-    if (hydrated && user && game && !isOwner) {
+    if (!hydrated || !dataReady || !user || !game) {
+      return;
+    }
+    if (!isOwner) {
       router.replace(`/games/${projectId}`);
     }
-  }, [hydrated, user, game, isOwner, projectId, router]);
+  }, [hydrated, dataReady, user, game, isOwner, projectId, router]);
 
   const [openFeedbackPanel, setOpenFeedbackPanel] = useState(false);
   const [activeSection, setActiveSection] = useState<GameDetailTab>("overview");
@@ -194,7 +197,9 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
 
           <div className="mt-5">
             <GameDetailPlayerPreview
+              key={`${projectId}-${game.lastUpdated}-${game.title}`}
               projectId={projectId}
+              sourceGame={game}
               activeTab={activeSection}
               onTabChange={setActiveSection}
               onTestPlay={handleTestPlay}

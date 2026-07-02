@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { GameDetailPlayerPreview } from "@/components/game-detail-player-preview";
+import { StudioSubmitPlayerPreview } from "@/components/studio-submit-player-preview";
 import { StudioShell } from "@/components/studio-shell";
 import { StudioSubmitPanel } from "@/components/studio-submit-panel";
 import { useGames } from "@/components/games-provider";
@@ -122,8 +122,7 @@ export function StudioSubmitPage() {
           </header>
 
           <div className="mt-5">
-            <GameDetailPlayerPreview
-              previewMode
+            <StudioSubmitPlayerPreview
               submitDraft={draft}
               submitOwner={submitOwner}
               activeTab={activeTab}

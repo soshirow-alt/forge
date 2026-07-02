@@ -4,6 +4,10 @@
 
 ---
 
+- **Studio 編集画面復旧** — 保存後の左プレビュー未反映と F5 時の `/games/{id}` 誤リダイレクトを修正。`getSubmittedGameById` の catalog 読込前フォールバックを止め、保存時に `submittedGames` / `publicGames` を同期。`GameDetailPlayerPreview` を Phase 1 前に戻し draft は `StudioSubmitPlayerPreview` に分離。DB 変更なし
+
+---
+
 - **Studio 新規投稿 Phase 1 修正** — Studio編集画面の左プレビュー回帰を修正（`GameDetailPlayerPreview` の projectId モードを Phase 1 以前の実装に分離）。`/studio/submit` 初期表示からランダム画像・PC/外部サイトの初期選択を除去し、未入力はプレースホルダーのみ表示（保存値には混ぜない）。DB 変更なし
 
 ---
