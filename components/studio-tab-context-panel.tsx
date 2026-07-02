@@ -41,8 +41,8 @@ const panelButtonClassName =
 
 const SECTION_CONTENT_HEADINGS: Record<GameDetailTab, string> = {
   overview: "公開ページを編集",
-  devlog: "開発ログ・更新",
-  voices: "フィードバック確認",
+  devlog: "開発ログを更新",
+  voices: "フィードバックを見る",
 };
 
 type OverviewEditMode =
@@ -59,7 +59,7 @@ type DevlogEditMode = null | "current";
 function StudioEditPaneShell({ children }: { children: ReactNode }) {
   return (
     <aside
-      aria-label="Studio編集ペイン"
+      aria-label="Studioパネル"
       className="w-full shrink-0 xl:sticky xl:top-6 xl:w-[340px] xl:self-start"
     >
       <div className="rounded-2xl border border-zinc-800/75 bg-zinc-900/50 px-4 py-4 shadow-sm shadow-black/10">
@@ -388,7 +388,7 @@ export function StudioTabContextPanel({
   } else {
     sectionContent = (
       <>
-        <PanelBlock>
+        <PanelBlock title="届いたフィードバック">
           {hasFeedback ? (
             <div className="max-h-[24rem] overflow-y-auto">
               <StudioPlayerFeedbackPanel
@@ -399,6 +399,7 @@ export function StudioTabContextPanel({
                 detailPanelId={PROJECT_STUDIO_FEEDBACK_SECTION_ID}
                 emphasize={initialOpenFeedback}
                 embeddedInStudioPane
+                hidePaneHeading
                 unreadVoiceCount={hasUnreadVoice ? quickFbCount : 0}
                 totalFeedbackCount={totalFeedbackCount}
               />

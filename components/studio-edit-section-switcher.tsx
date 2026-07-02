@@ -9,12 +9,7 @@ const STUDIO_EDIT_SECTIONS: { id: GameDetailTab; label: ReactNode }[] = [
   { id: "devlog", label: "開発ログ" },
   {
     id: "voices",
-    label: (
-      <span className="inline-flex flex-col items-center leading-[1.15]">
-        <span>フィード</span>
-        <span>バック</span>
-      </span>
-    ),
+    label: "フィードバック",
   },
 ];
 
@@ -35,12 +30,12 @@ export function StudioEditSectionSwitcher({
           aria-hidden="true"
         />
         <SlidersHorizontal className="size-3.5 shrink-0 text-orange-400/90" aria-hidden="true" />
-        <h2 className="text-sm font-semibold tracking-tight text-zinc-100">編集パネル</h2>
+        <h2 className="text-sm font-semibold tracking-tight text-zinc-100">Studioパネル</h2>
       </div>
 
       <div
         role="tablist"
-        aria-label="編集する場所"
+        aria-label="Studioのタブ"
         className="mt-2.5 grid grid-cols-3 gap-1.5 rounded-lg border border-orange-500/25 bg-zinc-950/95 p-1 shadow-inner shadow-black/25"
       >
         {STUDIO_EDIT_SECTIONS.map((section) => {

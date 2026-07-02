@@ -91,6 +91,7 @@ export function StudioPlayerFeedbackPanel({
   detailPanelId,
   emphasize = false,
   embeddedInStudioPane = false,
+  hidePaneHeading = false,
   unreadVoiceCount = 0,
   totalFeedbackCount,
 }: {
@@ -101,6 +102,7 @@ export function StudioPlayerFeedbackPanel({
   detailPanelId: string;
   emphasize?: boolean;
   embeddedInStudioPane?: boolean;
+  hidePaneHeading?: boolean;
   unreadVoiceCount?: number;
   totalFeedbackCount?: number;
 }) {
@@ -199,9 +201,8 @@ export function StudioPlayerFeedbackPanel({
       }`}
     >
       {embeddedInStudioPane ? (
-        <div>
-          <h2 className="text-sm font-semibold text-zinc-200">届いたフィードバック</h2>
-          <p className="mt-1 text-xs text-zinc-500">
+        hidePaneHeading ? (
+          <p className="text-xs text-zinc-500">
             {unreadVoiceCount > 0 ? (
               <>
                 <span className="font-medium text-orange-300">未確認 {unreadVoiceCount}件</span>
@@ -210,7 +211,20 @@ export function StudioPlayerFeedbackPanel({
             ) : null}
             <span>合計 {feedbackTotal}件</span>
           </p>
-        </div>
+        ) : (
+          <div>
+            <h2 className="text-sm font-semibold text-zinc-200">届いたフィードバック</h2>
+            <p className="mt-1 text-xs text-zinc-500">
+              {unreadVoiceCount > 0 ? (
+                <>
+                  <span className="font-medium text-orange-300">未確認 {unreadVoiceCount}件</span>
+                  <span className="text-zinc-600"> / </span>
+                </>
+              ) : null}
+              <span>合計 {feedbackTotal}件</span>
+            </p>
+          </div>
+        )
       ) : (
         <h2 className="text-sm font-semibold text-zinc-200">
           届いたFBを読む
@@ -224,7 +238,7 @@ export function StudioPlayerFeedbackPanel({
 
       <div
         className={`flex flex-wrap gap-2 border-b border-zinc-800 pb-3 ${
-          embeddedInStudioPane ? "mt-3" : "mt-4"
+          embeddedInStudioPane ? (hidePaneHeading ? "mt-2" : "mt-3") : "mt-4"
         }`}
       >
         {tabs.map((item) => (

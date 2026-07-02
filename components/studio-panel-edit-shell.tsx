@@ -33,7 +33,7 @@ export function StudioPanelEditShell({
   footerNote,
   hideSave = false,
   saveLabel = "保存",
-  backLabel = "← 公開ページを編集",
+  backLabel = "← 概要",
 }: StudioPanelEditShellProps) {
   return (
     <section
