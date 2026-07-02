@@ -188,6 +188,58 @@ function upsertGameInList(prev: Game[], merged: Game): Game[] {
   return [merged, ...prev];
 }
 
+/** dev only — DB返却と保存payloadのズレを即分かるようにする */
+function warnProjectDetailsDbPayloadMismatch(
+  projectId: string,
+  payload: ProjectEditFormData,
+  returned: Game,
+): void {
+  if (process.env.NODE_ENV !== "development") {
+    return;
+  }
+
+  const mismatches: string[] = [];
+  if (returned.title !== payload.title) {
+    mismatches.push(
+      `title payload="${payload.title}" returned="${returned.title}"`,
+    );
+  }
+  const payloadDescription = payload.description?.trim() ?? "";
+  if (returned.description !== payloadDescription) {
+    mismatches.push(
+      `description payload="${payloadDescription}" returned="${returned.description}"`,
+    );
+  }
+  if (returned.phase !== payload.phase) {
+    mismatches.push(
+      `phase payload="${payload.phase}" returned="${returned.phase}"`,
+    );
+  }
+
+  if (mismatches.length > 0) {
+    console.warn(
+      `[Forge] updateProjectDetails DB/payload mismatch (${projectId}): ${mismatches.join("; ")}`,
+    );
+  }
+}
+
+/** DB成功後の provider upsert 用 — 基本情報は保存payloadを正とする */
+function applyProjectDetailsPayloadToGame(
+  merged: Game,
+  data: ProjectEditFormData,
+): Game {
+  return {
+    ...merged,
+    title: data.title,
+    description:
+      data.description !== undefined
+        ? data.description.trim()
+        : merged.description,
+    phase: data.phase,
+    status: data.lookingForTesters ? "テスター募集中" : data.phase,
+  };
+}
+
 type GamesContextValue = {
   submittedGames: Game[];
   /** visibility=public のみ — /home・検索用（auth 非依存） */
@@ -644,13 +696,12 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         throw new Error("Supabase is not configured.");
       }
 
-      const current = submittedGames.find((item) => item.id === id);
-      const game = await updateProjectDetailsInDb(
-        supabase,
-        id,
+      const game = await updateProjectDetailsInDb(supabase, id, data);
+      warnProjectDetailsDbPayloadMismatch(id, data, game);
+      const merged = applyProjectDetailsPayloadToGame(
+        mergeGameWithExtras(game),
         data,
       );
-      const merged = mergeGameWithExtras(game);
       setSubmittedGames((prev) => upsertGameInList(prev, merged));
       setPublicGames((prev) => {
         if (merged.visibility !== "public") {
@@ -659,19 +710,26 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         return upsertGameInList(prev, merged);
       });
       void reloadPublicCatalog().catch(() => undefined);
-      const ownerId = current?.ownerId ?? game.ownerId;
+
+      const ownerId = game.ownerId;
       if (ownerId) {
-        await mergeDeveloperProfileSocialLinks(supabase, ownerId, {
-          discordUrl: data.discordUrl,
-          youtubeUrl: data.youtubeUrl,
-          xUrl: data.xUrl,
-          officialUrl: data.officialUrl,
-        });
-        const profiles = await fetchDeveloperProfiles(supabase);
-        setDeveloperProfiles(profiles);
+        void (async () => {
+          try {
+            await mergeDeveloperProfileSocialLinks(supabase, ownerId, {
+              discordUrl: data.discordUrl,
+              youtubeUrl: data.youtubeUrl,
+              xUrl: data.xUrl,
+              officialUrl: data.officialUrl,
+            });
+            const profiles = await fetchDeveloperProfiles(supabase);
+            setDeveloperProfiles(profiles);
+          } catch {
+            // Project save succeeded; developer profile sync is best-effort.
+          }
+        })();
       }
     },
-    [reloadPublicCatalog, submittedGames],
+    [reloadPublicCatalog],
   );
 
   const updateProjectOverview = useCallback(

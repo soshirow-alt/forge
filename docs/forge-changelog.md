@@ -4,6 +4,10 @@
 
 ---
 
+- **Studio 編集 P0.5（保存軽量化・基本情報反映）** — `updateProjectDetails` の保存完了を DB + provider upsert までに限定し、プロフィール再取得・catalog reload はバックグラウンド化。DB成功後の upsert では `title` / `description` / `phase` を保存payloadで明示反映。dev のみ DB/payload ズレを `console.warn`。DB 変更なし
+
+---
+
 - **Studio 編集 P0（保存反映・F5）** — `submittedGames` を upsert 化し保存直後に provider state へ確実反映。Studio 編集は `getOwnedProjectById`（public フォールバックなし）を正本に。owner ガードを loading / owner / notOwner の三値化し判定完了前の `/games/{id}` 誤リダイレクトを防止。DB 変更なし
 
 ---
