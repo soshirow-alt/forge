@@ -4,7 +4,7 @@
 
 ---
 
-- **ルート遷移ブラックアウト対策** — `/studio/community`・`/studio/mypage`・`/mypage/community` のルート `Suspense` を Shell 付き「読み込み中…」fallback に変更（`fallback={null}` 廃止）。サイドバー遷移時の一瞬の黒画面を防止。DB 変更なし
+- **コミュニティ hub 骨格先出し** — `community-hub-page` の `supabaseHub.loaded` 全文ゲートを廃止。タイトル・タブは先表示、プロフィール・投稿・メンバーは skeleton。本番 loading 中の mock（shaneco）フォールバックを廃止。DB 変更なし
 
 ---
 

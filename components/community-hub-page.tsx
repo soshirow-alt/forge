@@ -856,6 +856,80 @@ function filterVisibleThreads(
   );
 }
 
+function CommunityHubProfileSkeleton() {
+  return (
+    <div
+      className="flex flex-col gap-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:flex-row sm:items-center sm:justify-between"
+      aria-busy="true"
+      aria-label="コミュニティ情報を読み込み中"
+    >
+      <div className="flex items-center gap-3">
+        <div className="size-12 shrink-0 animate-pulse rounded-full bg-zinc-800/80" />
+        <div className="space-y-2">
+          <div className="h-4 w-36 animate-pulse rounded bg-zinc-800/80" />
+          <div className="h-3 w-24 animate-pulse rounded bg-zinc-800/60" />
+        </div>
+      </div>
+      <div className="h-9 w-32 animate-pulse rounded-xl bg-zinc-800/60 sm:self-center" />
+    </div>
+  );
+}
+
+function CommunityJoinedPillsSkeleton() {
+  return (
+    <div
+      className="flex flex-wrap gap-2"
+      aria-busy="true"
+      aria-label="参加コミュニティを読み込み中"
+    >
+      {[0, 1, 2].map((key) => (
+        <div key={key} className="h-8 w-28 animate-pulse rounded-full bg-zinc-800/70" />
+      ))}
+    </div>
+  );
+}
+
+function CommunityBoardSkeleton() {
+  return (
+    <div className="space-y-4" aria-busy="true" aria-label="掲示板を読み込み中">
+      {[0, 1, 2].map((key) => (
+        <div key={key} className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
+          <div className="flex gap-3">
+            <div className="size-10 shrink-0 animate-pulse rounded-full bg-zinc-800/80" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="h-3 w-32 animate-pulse rounded bg-zinc-800/80" />
+              <div className="h-4 max-w-md animate-pulse rounded bg-zinc-800/60" />
+              <div className="h-3 w-full animate-pulse rounded bg-zinc-800/50" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CommunityMembersSkeleton() {
+  return (
+    <div className="space-y-6" aria-busy="true" aria-label="参加者を読み込み中">
+      <div>
+        <div className="h-4 w-28 animate-pulse rounded bg-zinc-800/80" />
+        <div className="mt-3 h-16 animate-pulse rounded-xl border border-zinc-800/80 bg-zinc-900/40" />
+      </div>
+      <div>
+        <div className="h-4 w-24 animate-pulse rounded bg-zinc-800/80" />
+        <ul className="mt-3 space-y-2">
+          {[0, 1, 2].map((key) => (
+            <li
+              key={key}
+              className="h-14 animate-pulse rounded-xl border border-zinc-800/80 bg-zinc-900/40"
+            />
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 function CommunityTabs({
   activeTab,
   onTabChange,
@@ -917,14 +991,14 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
     isDeveloper && hydrated && user && !hideV0Mock
       ? findOwnCommunityInList(user.id, user.name, opened)
       : null;
-  const developerCommunityId =
-    hideV0Mock && supabaseHub.developerProfile
-      ? supabaseHub.developerProfile.id
-      : ownCommunity?.id ?? studioOwnCommunityId;
-  const developerCommunityProfile =
-    hideV0Mock && supabaseHub.developerProfile
-      ? supabaseHub.developerProfile
-      : ownCommunity ?? studioCommunityProfile;
+  const developerCommunityId = hideV0Mock
+    ? (supabaseHub.developerProfile?.id ?? "")
+    : (ownCommunity?.id ?? studioOwnCommunityId);
+  const developerCommunityProfile: DeveloperCommunityProfile | null = hideV0Mock
+    ? supabaseHub.developerProfile
+    : (ownCommunity ?? studioCommunityProfile);
+
+  const hubLoading = hideV0Mock && !supabaseHub.loaded;
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsProfile, setSettingsProfile] = useState<DeveloperCommunityProfile | null>(null);
@@ -957,6 +1031,7 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
   const mockPosts = isDeveloper ? studioCommunityPostsMock : playerCommunityFeedMock;
   const {
     posts,
+    loaded: boardLoaded,
     prependPost,
     appendReply,
     persistPost,
@@ -965,6 +1040,8 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
     selectedCommunityId,
     hideV0Mock ? EMPTY_COMMUNITY_POSTS : mockPosts,
   );
+
+  const boardLoading = hideV0Mock && Boolean(selectedCommunityId) && !boardLoaded;
 
   const [dbMembershipStatus, setDbMembershipStatus] = useState<
     "none" | "pending" | "approved" | "rejected" | null
@@ -985,6 +1062,9 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
     }
 
     if (isDeveloper) {
+      if (!developerCommunityProfile) {
+        return;
+      }
       void ensureDeveloperCommunity(supabase, {
         id: developerCommunityId,
         ownerId: user.id,
@@ -1122,20 +1202,17 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
 
   const title = isDeveloper ? "マイコミュニティ" : "参加コミュニティ";
   const description = isDeveloper
-    ? developerCommunityProfile.description
+    ? (developerCommunityProfile?.description ??
+      "フォロワーと交流し、一緒にゲームを育てましょう")
     : "参加中の開発者コミュニティの掲示板。開発者のスレッドを閲覧し、返信できます。";
 
   const selectedCommunity =
     joinedCommunities.find((c) => c.id === selectedCommunityId) ??
     allPlayerCommunities.find((c) => c.id === selectedCommunityId);
 
-  if (hideV0Mock && !supabaseHub.loaded) {
-    return (
-      <div className="mx-auto max-w-3xl">
-        <p className="text-sm text-zinc-500">読み込み中...</p>
-      </div>
-    );
-  }
+  const showCommunityPanel =
+    Boolean(selectedCommunityId) || (isDeveloper && hubLoading);
+  const showBoardSkeleton = hubLoading || boardLoading;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -1147,79 +1224,86 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
       {!isDeveloper && (
         <section className="space-y-2">
           <p className="text-xs font-medium text-zinc-500">参加中のコミュニティ</p>
-          <div className="flex flex-wrap gap-2">
-            {joinedCommunities.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => selectCommunity(c.id)}
-                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors ${
-                  selectedCommunityId === c.id
-                    ? "border-violet-500/50 bg-violet-600/15 text-violet-200"
-                    : "border-zinc-700/80 bg-zinc-900/60 text-zinc-400 hover:border-zinc-600"
-                }`}
-              >
-                <span className="relative size-5 overflow-hidden rounded-full bg-zinc-800">
-                  <Image src={c.avatar} alt="" fill className="object-cover" sizes="20px" />
-                </span>
-                {c.name}
-              </button>
-            ))}
-            {joinedCommunities.length === 0 && (
-              <p className="text-sm text-zinc-500">
-                まだ参加中のコミュニティがありません。開発者プロフィールから参加申請してください。
-              </p>
-            )}
-          </div>
+          {hubLoading ? (
+            <CommunityJoinedPillsSkeleton />
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {joinedCommunities.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => selectCommunity(c.id)}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                    selectedCommunityId === c.id
+                      ? "border-violet-500/50 bg-violet-600/15 text-violet-200"
+                      : "border-zinc-700/80 bg-zinc-900/60 text-zinc-400 hover:border-zinc-600"
+                  }`}
+                >
+                  <span className="relative size-5 overflow-hidden rounded-full bg-zinc-800">
+                    <Image src={c.avatar} alt="" fill className="object-cover" sizes="20px" />
+                  </span>
+                  {c.name}
+                </button>
+              ))}
+              {joinedCommunities.length === 0 && (
+                <p className="text-sm text-zinc-500">
+                  まだ参加中のコミュニティがありません。開発者プロフィールから参加申請してください。
+                </p>
+              )}
+            </div>
+          )}
         </section>
       )}
 
-      {isDeveloper && (
-        <div className="flex flex-col gap-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <span className="relative size-12 shrink-0 overflow-hidden rounded-full bg-zinc-800">
-              <Image
-                src={developerCommunityProfile.avatar}
-                alt=""
-                fill
-                className="object-cover"
-                sizes="48px"
-              />
-            </span>
-            <div>
-              <p className="font-semibold text-white">{developerCommunityProfile.name}</p>
-              <p className="text-sm text-zinc-500">
-                参加者 {developerCommunityProfile.memberCountLabel}人
-              </p>
+      {isDeveloper &&
+        (hubLoading || !developerCommunityProfile ? (
+          <CommunityHubProfileSkeleton />
+        ) : (
+          <div className="flex flex-col gap-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <span className="relative size-12 shrink-0 overflow-hidden rounded-full bg-zinc-800">
+                <Image
+                  src={developerCommunityProfile.avatar}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="48px"
+                />
+              </span>
+              <div>
+                <p className="font-semibold text-white">{developerCommunityProfile.name}</p>
+                <p className="text-sm text-zinc-500">
+                  参加者 {developerCommunityProfile.memberCountLabel}人
+                </p>
+              </div>
             </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              if (!user) {
-                return;
-              }
-              if (hideV0Mock && supabaseHub.developerProfile) {
-                setSettingsProfile(supabaseHub.developerProfile);
+            <button
+              type="button"
+              onClick={() => {
+                if (!user) {
+                  return;
+                }
+                if (hideV0Mock && supabaseHub.developerProfile) {
+                  setSettingsProfile(supabaseHub.developerProfile);
+                  setSettingsOpen(true);
+                  return;
+                }
+                const profile = ensureOwnDeveloperCommunity(user.id, user.name, {
+                  name: developerCommunityProfile.name,
+                  avatar: developerCommunityProfile.avatar,
+                  handle: developerCommunityProfile.handle,
+                  description: developerCommunityProfile.description,
+                });
+                setSettingsProfile(profile);
                 setSettingsOpen(true);
-                return;
-              }
-              const profile = ensureOwnDeveloperCommunity(user.id, user.name, {
-                name: developerCommunityProfile.name,
-                avatar: developerCommunityProfile.avatar,
-                handle: developerCommunityProfile.handle,
-                description: developerCommunityProfile.description,
-              });
-              setSettingsProfile(profile);
-              setSettingsOpen(true);
-            }}
-            className="inline-flex items-center gap-2 self-start rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-violet-500/40 hover:text-white sm:self-center"
-          >
-            <Settings className="size-4" aria-hidden="true" />
-            コミュニティ設定
-          </button>
-        </div>
-      )}
+              }}
+              className="inline-flex items-center gap-2 self-start rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-violet-500/40 hover:text-white sm:self-center"
+            >
+              <Settings className="size-4" aria-hidden="true" />
+              コミュニティ設定
+            </button>
+          </div>
+        ))}
 
       {isDeveloper && settingsProfile && user ? (
         <CommunitySettingsModal
@@ -1239,22 +1323,26 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
         </div>
       )}
 
-      {!isDeveloper && !selectedCommunityId && (
+      {!isDeveloper && !hubLoading && !selectedCommunityId && (
         <p className="rounded-xl border border-dashed border-zinc-800 px-4 py-6 text-center text-sm text-zinc-500">
           参加中のコミュニティがありません。開発者プロフィールから参加申請してください。
         </p>
       )}
 
-      {selectedCommunityId && (
+      {showCommunityPanel && (
         <>
       <CommunityTabs
         activeTab={activeTab}
         onTabChange={setTab}
-        pendingCount={isDeveloper ? pending.length : undefined}
+        pendingCount={
+          hubLoading ? undefined : isDeveloper ? pending.length : undefined
+        }
       />
 
       {activeTab === "members" ? (
-        !canViewCommunity ? (
+        hubLoading ? (
+          <CommunityMembersSkeleton />
+        ) : !canViewCommunity ? (
           <CommunityJoinPrompt communityId={selectedCommunityId} />
         ) : (
         <section className="space-y-6">
@@ -1302,11 +1390,13 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
           </div>
         </section>
         )
+      ) : showBoardSkeleton ? (
+        <CommunityBoardSkeleton />
       ) : !canViewCommunity ? (
         <CommunityJoinPrompt communityId={selectedCommunityId} />
       ) : (
         <>
-          {isDeveloper && (
+          {isDeveloper && developerCommunityProfile && (
             <DeveloperComposePanel
               ownerId={user?.id}
               onPost={(title, body, quote) => {
