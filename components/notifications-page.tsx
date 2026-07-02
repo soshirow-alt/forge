@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { ForgeHeader } from "@/components/forge-header";
 import { useGames } from "@/components/games-provider";
-import { LOGIN_PATH } from "@/hooks/use-require-auth";
+import { useRedirectToLoginWhenLoggedOut } from "@/hooks/use-redirect-to-login-when-logged-out";
 import {
   formatNotificationDate,
   getNotificationActionHint,
@@ -26,7 +25,6 @@ const filterOptions: { value: NotificationFilter; label: string }[] = [
 ];
 
 export function NotificationsPage() {
-  const router = useRouter();
   const { user, hydrated } = useAuth();
   const {
     getNotifications,
@@ -43,11 +41,7 @@ export function NotificationsPage() {
     }
   }, [hydrated, user, reloadNotifications]);
 
-  useEffect(() => {
-    if (hydrated && !user) {
-      router.replace(LOGIN_PATH);
-    }
-  }, [hydrated, user, router]);
+  useRedirectToLoginWhenLoggedOut();
 
   if (!hydrated || !user) {
     return (

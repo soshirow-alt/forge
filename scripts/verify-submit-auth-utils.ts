@@ -171,6 +171,11 @@ function testLoginReturnSanitize() {
   );
   ok(sanitizeLoginReturnUrl("/submit") === "/submit", "allow submit path");
   ok(sanitizeLoginReturnUrl("/my-projects") === "/my-projects", "allow my-projects path");
+  ok(sanitizeLoginReturnUrl("/bookmarks") === "/bookmarks", "allow bookmarks path");
+  ok(
+    sanitizeLoginReturnUrl("/notifications") === "/notifications",
+    "allow notifications path",
+  );
   ok(
     sanitizeLoginReturnUrl("/projects/proj-1/studio?devlog=1") ===
       "/projects/proj-1/studio?devlog=1",
@@ -465,8 +470,13 @@ function testAuthRedirectLoopGuardContract() {
     "login page navigates only after successful form submit (redirectTo)",
   );
   ok(
-    loginPage.includes("showContinueLink") && loginPage.includes("続ける"),
-    "login page offers manual continue link when already signed in",
+    loginPage.includes("alreadySignedInRedirectStartedRef") &&
+      loginPage.includes("window.location.replace"),
+    "login page auto-redirects signed-in users once via full navigation",
+  );
+  ok(
+    !loginPage.includes("showContinueLink") && !loginPage.includes("ログイン済みです"),
+    "login page does not show passive already-signed-in banner",
   );
   const loginActionSource = fs.readFileSync(
     path.join(import.meta.dirname, "../lib/auth-login-action.ts"),
@@ -531,11 +541,11 @@ function testLoginPageSourceContract() {
   );
   ok(
     loginPage.includes("resolvePostLoginPath"),
-    "login page continue link uses post-login path",
+    "login page resolves post-login path for signed-in redirect",
   );
   ok(
-    loginPage.includes('href={continuePath}'),
-    "login continue link uses full navigation anchor",
+    loginPage.includes("alreadySignedInRedirectStartedRef"),
+    "login page guards signed-in auto redirect to once",
   );
 }
 

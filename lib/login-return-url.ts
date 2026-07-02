@@ -10,6 +10,9 @@
 
 export const LOGIN_PATH = "/login";
 
+/** return なしログイン・登録セッション確立後のデフォルト遷移先 */
+export const DEFAULT_POST_LOGIN_PATH = "/studio/mypage";
+
 const ID_SEGMENT = `[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}`;
 const GAME_TAB_VALUES = new Set(["devlog", "voices", "overview"]);
 const STUDIO_PATH = /^\/studio(?:\/[a-zA-Z0-9][a-zA-Z0-9/_-]*)?$/;
@@ -101,7 +104,12 @@ export function sanitizeLoginReturnUrl(
         ? new URLSearchParams(decoded.slice(queryIndex + 1))
         : new URLSearchParams();
 
-    if (pathname === "/submit" || pathname === "/my-projects") {
+    if (
+      pathname === "/submit" ||
+      pathname === "/my-projects" ||
+      pathname === "/bookmarks" ||
+      pathname === "/notifications"
+    ) {
       return search.toString() ? null : pathname;
     }
 
@@ -139,7 +147,11 @@ export function sanitizeLoginReturnUrl(
 export function resolvePostLoginPath(
   returnParam: string | null | undefined,
 ): string {
-  return sanitizeLoginReturnUrl(returnParam) ?? "/";
+  return sanitizeLoginReturnUrl(returnParam) ?? DEFAULT_POST_LOGIN_PATH;
+}
+
+export function buildPathWithSearch(pathname: string, searchParams: string): string {
+  return searchParams ? `${pathname}?${searchParams}` : pathname;
 }
 
 export function buildLoginUrlWithReturn(returnPath: string): string {

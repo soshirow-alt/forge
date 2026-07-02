@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { BookmarkButton } from "@/components/bookmark-button";
 import { CreatorLink } from "@/components/creator-link";
@@ -11,19 +9,14 @@ import { GameTags } from "@/components/game-tags";
 import { GameThumbnail } from "@/components/game-thumbnail";
 import { PlayTypeLabel } from "@/components/play-type-label";
 import { useGames } from "@/components/games-provider";
-import { LOGIN_PATH } from "@/hooks/use-require-auth";
+import { useRedirectToLoginWhenLoggedOut } from "@/hooks/use-redirect-to-login-when-logged-out";
 import { displayPhase } from "@/lib/development-phases";
 
 export function BookmarksPage() {
-  const router = useRouter();
   const { user, hydrated } = useAuth();
   const { getBookmarkedGames } = useGames();
 
-  useEffect(() => {
-    if (hydrated && !user) {
-      router.replace(LOGIN_PATH);
-    }
-  }, [hydrated, user, router]);
+  useRedirectToLoginWhenLoggedOut();
 
   if (!hydrated || !user) {
     return (

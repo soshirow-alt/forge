@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useMemo, useRef } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import {
   AuthPageShell,
   OAuthComingSoonSection,
@@ -11,7 +11,7 @@ import {
 } from "@/components/auth-layout";
 import { useAuth } from "@/components/auth-provider";
 import { loginAction, type LoginActionState } from "@/lib/auth-login-action";
-import { resolvePostLoginPath } from "@/lib/login-return-url";
+import { LOGIN_PATH, resolvePostLoginPath } from "@/lib/login-return-url";
 
 const initialLoginState: LoginActionState = { error: null, redirectTo: null };
 
@@ -31,13 +31,21 @@ export function LoginPage({
   const error = state.error ?? callbackError;
   const autofill = useAuthAutofillUnlock();
   const postSubmitRedirectStartedRef = useRef(false);
-  const continuePath = useMemo(
-    () => (returnParam ? resolvePostLoginPath(returnParam) : null),
-    [returnParam],
-  );
-  const showContinueLink = Boolean(
-    authResolved && user && continuePath && continuePath !== "/",
-  );
+  const alreadySignedInRedirectStartedRef = useRef(false);
+
+  useEffect(() => {
+    if (!authResolved || !user || alreadySignedInRedirectStartedRef.current) {
+      return;
+    }
+
+    const target = resolvePostLoginPath(returnParam);
+    if (target === LOGIN_PATH || target.startsWith(`${LOGIN_PATH}?`)) {
+      return;
+    }
+
+    alreadySignedInRedirectStartedRef.current = true;
+    window.location.replace(target);
+  }, [authResolved, user, returnParam]);
 
   useEffect(() => {
     if (!state.redirectTo || postSubmitRedirectStartedRef.current) {
@@ -69,18 +77,6 @@ export function LoginPage({
             パスワードを変更しました。新しいパスワードでログインしてください。
           </div>
         )}
-
-        {showContinueLink && continuePath ? (
-          <div className="mt-6 rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm text-violet-100">
-            <p>ログイン済みです。</p>
-            <a
-              href={continuePath}
-              className="mt-2 inline-flex font-medium text-violet-300 transition-colors hover:text-violet-200"
-            >
-              続ける →
-            </a>
-          </div>
-        ) : null}
 
         <form
           id="login-form"

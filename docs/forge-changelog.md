@@ -4,6 +4,10 @@
 
 ---
 
+- **ログイン P0（return・自動遷移）** — ログイン済みで `/login` を開いたとき、return があればそこへ・なければ `/studio/mypage` へ自動遷移（手動「続ける」廃止）。Studio・通知・ブックマーク等のクライアント側 login redirect に `?return=` を付与。return なしログイン成功後のデフォルト先を `/studio/mypage` に変更。`/bookmarks`・`/notifications` を return ホワイトリストに追加。Preview bypass は未変更。DB 変更なし
+
+---
+
 - **Studio 編集 P0.5（保存軽量化・基本情報反映）** — `updateProjectDetails` の保存完了を DB + provider upsert までに限定し、プロフィール再取得・catalog reload はバックグラウンド化。DB成功後の upsert では `title` / `description` / `phase` を保存payloadで明示反映。dev のみ DB/payload ズレを `console.warn`。DB 変更なし
 
 ---

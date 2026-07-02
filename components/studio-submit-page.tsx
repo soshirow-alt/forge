@@ -12,6 +12,7 @@ import { useStudioSubmit } from "@/hooks/use-studio-submit";
 import type { GameDetailTab } from "@/lib/game-detail-tabs";
 import { getDeveloperSocialLinkDefaults } from "@/lib/developer-external-link-defaults";
 import { resolveDeveloperPublicName } from "@/lib/developer-display-name";
+import { useRedirectToLoginWhenLoggedOut } from "@/hooks/use-redirect-to-login-when-logged-out";
 import {
   createEmptySubmitDraft,
   type SubmitDraftOwner,
@@ -45,11 +46,7 @@ export function StudioSubmitPage() {
     };
   }, [user, developerProfile]);
 
-  useEffect(() => {
-    if (hydrated && !user) {
-      router.replace("/login");
-    }
-  }, [hydrated, user, router]);
+  useRedirectToLoginWhenLoggedOut();
 
   useEffect(() => {
     if (!user || socialPrefillDoneRef.current) {

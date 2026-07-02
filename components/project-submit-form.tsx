@@ -27,6 +27,7 @@ import {
   validatePromptDrafts,
   type DeveloperPromptDraft,
 } from "@/lib/version-prompt-form";
+import { useRedirectToLoginWhenLoggedOut } from "@/hooks/use-redirect-to-login-when-logged-out";
 import { FORGE_GENRE_OPTIONS, type ForgeGenreOption } from "@/lib/forge-genre-options";
 import {
   FORGE_FEATURE_TAG_OPTIONS,
@@ -144,11 +145,7 @@ export function ProjectSubmitForm({
     socialPrefillDoneRef.current = true;
   }, [developerProfile, getOwnedProjects, user]);
 
-  useEffect(() => {
-    if (hydrated && !user) {
-      router.replace("/login");
-    }
-  }, [hydrated, user, router]);
+  useRedirectToLoginWhenLoggedOut();
 
   if (!hydrated) {
     return <p className="text-sm text-zinc-500">読み込み中...</p>;

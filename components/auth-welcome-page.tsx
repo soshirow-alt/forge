@@ -1,24 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import {
   AuthPageShell,
   authPrimaryButtonClassName,
 } from "@/components/auth-layout";
 import { useAuth } from "@/components/auth-provider";
+import { useRedirectToLoginWhenLoggedOut } from "@/hooks/use-redirect-to-login-when-logged-out";
 import { CheckCircle2 } from "lucide-react";
 
 export function AuthWelcomePage() {
-  const router = useRouter();
   const { user, hydrated } = useAuth();
 
-  useEffect(() => {
-    if (hydrated && !user) {
-      router.replace("/login");
-    }
-  }, [hydrated, user, router]);
+  useRedirectToLoginWhenLoggedOut();
 
   if (!hydrated || !user) {
     return (

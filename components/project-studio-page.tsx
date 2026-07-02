@@ -24,6 +24,7 @@ import {
   groupFeedbackByProject,
 } from "@/lib/project-growth-state";
 import { resolveVoiceSignalForGame } from "@/lib/project-voice-nurture";
+import { useRedirectToLoginWhenLoggedOut } from "@/hooks/use-redirect-to-login-when-logged-out";
 import { getVisibilityBadgeLabel } from "@/lib/project-visibility";
 
 /** B2 ロールバック用 — true にすると旧 Studio 縦積み UI を再表示 */
@@ -71,11 +72,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
     return groupFeedbackByProject(feedbackEntries).get(projectId) ?? [];
   }, [feedbackEntries, projectId]);
 
-  useEffect(() => {
-    if (hydrated && !user) {
-      router.replace("/login");
-    }
-  }, [hydrated, user, router]);
+  useRedirectToLoginWhenLoggedOut();
 
   useEffect(() => {
     if (ownerAccess !== "notOwner") {
