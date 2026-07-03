@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { GameDetailOverviewV0Tab } from "@/components/game-detail-overview-v0-tab";
 import { GameDetailPhaseBadge } from "@/components/game-detail-phase-badge";
 import { GameDevlogV0Tab } from "@/components/game-devlog-v0-tab";
-import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
+import { EveryonesVoiceSection } from "@/components/everyones-voice-section";
 import { StudioHeroPreviewGallery } from "@/components/studio-hero-preview-gallery";
 import { useGames } from "@/components/games-provider";
 import { formatDevlogPublishedAt } from "@/hooks/use-game-devlogs-v0";
@@ -197,9 +197,10 @@ export function GameDetailPlayerPreview({
       ) : null}
 
       {activeTab === "voices" ? (
-        <FeatureComingSoonPanel
-          title="みんなのフィードバック"
-          description="他のプレイヤーのフィードバックの傾向や、よく挙がるテーマがここで見られるようになります。いまは準備中です。"
+        <EveryonesVoiceSection
+          gameId={projectId}
+          playableVersion={submittedGame?.playableVersion}
+          variant="tab"
         />
       ) : null}
     </div>

@@ -72,3 +72,20 @@ export function bucketPercent(count: number, total: number): number {
   }
   return Math.round((count / total) * 100);
 }
+
+/** 公開側「みんなのFB」で傾向（割合・棒）を出す最低回答数 */
+export const PUBLIC_VOICE_TREND_MIN_RESPONSES = 3;
+
+export function canShowPublicVoiceTrend(totalResponses: number): boolean {
+  return totalResponses >= PUBLIC_VOICE_TREND_MIN_RESPONSES;
+}
+
+export function topVoiceAggregateBucket(
+  aggregate: VoicePromptAggregate,
+): VoiceAggregateBucket | null {
+  if (aggregate.buckets.length === 0) {
+    return null;
+  }
+
+  return [...aggregate.buckets].sort((a, b) => b.count - a.count)[0] ?? null;
+}

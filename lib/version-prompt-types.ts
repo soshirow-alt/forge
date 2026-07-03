@@ -57,3 +57,7 @@ export const YES_NO_OPTIONS: VersionPromptOption[] = [
   { id: "yes", label: "はい" },
   { id: "no", label: "いいえ" },
 ];
+
+export function isFreeTextResponseKind(kind: VersionPromptResponseKind): boolean {
+  return kind === "short_text";
+}

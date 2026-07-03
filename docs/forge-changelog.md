@@ -4,6 +4,10 @@
 
 ---
 
+- **みんなのフィードバック（本番）** — `/games/[id]` の voices タブを production mode でも集計表示に。既存 RPC `get_public_voice_aggregates` + `EveryonesVoiceSection` を再利用。個別回答・自由記述本文は非公開（件数のみ）。回答3件未満は傾向非表示。DB migration なし
+
+---
+
 - **本番 deploy** — `preview/landing-01` を `main` に fast-forward（`48eb666`）。プライバシーポリシー A 項目（運営へのご意見・開発者共有範囲）、auth フッター整理、設定画面の法務導線、利用規約第3条表記統一を本番反映。`origin/main` と `origin/preview/landing-01` を同一 commit に同期
 
 ---

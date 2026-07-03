@@ -1,15 +1,21 @@
 "use client";
 
-import { bucketPercent, type VoicePromptAggregate } from "@/lib/voice-aggregates";
+import {
+  bucketPercent,
+  topVoiceAggregateBucket,
+  type VoicePromptAggregate,
+} from "@/lib/voice-aggregates";
 
 type VoiceAggregateBarsProps = {
   aggregate: VoicePromptAggregate;
   compact?: boolean;
+  showTopTrend?: boolean;
 };
 
 export function VoiceAggregateBars({
   aggregate,
   compact = false,
+  showTopTrend = false,
 }: VoiceAggregateBarsProps) {
   if (aggregate.totalResponses === 0) {
     return (
@@ -18,9 +24,15 @@ export function VoiceAggregateBars({
   }
 
   const sorted = [...aggregate.buckets].sort((a, b) => b.count - a.count);
+  const topBucket = showTopTrend ? topVoiceAggregateBucket(aggregate) : null;
 
   return (
     <div className={compact ? "space-y-1.5" : "space-y-2"}>
+      {topBucket ? (
+        <p className="text-xs text-orange-300/90">
+          多かった声: {topBucket.answerLabel}
+        </p>
+      ) : null}
       {sorted.map((bucket) => {
         const pct = bucketPercent(bucket.count, aggregate.totalResponses);
         return (

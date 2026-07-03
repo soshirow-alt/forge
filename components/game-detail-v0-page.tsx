@@ -24,8 +24,8 @@ import {
 } from "@/components/feedback-v0-modals";
 import { GameDetailOverviewV0Tab } from "@/components/game-detail-overview-v0-tab";
 import { GameDevlogV0Tab } from "@/components/game-devlog-v0-tab";
+import { EveryonesVoiceSection } from "@/components/everyones-voice-section";
 import { GameVoicesV0Tab } from "@/components/game-voices-v0-tab";
-import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { GameNotFoundPanel } from "@/components/game-not-found-panel";
 import { ContentReportButton } from "@/components/content-report-button";
 import { GameThumbnail, PlayerShell } from "@/components/player-shell";
@@ -726,10 +726,13 @@ function GameDetailV0PageBody({ id }: { id: string }) {
             />
           )}
           {activeTab === "voices" &&
-            (hideV0Mock ? (
-              <FeatureComingSoonPanel
-                title="みんなのフィードバック"
-                description="他のプレイヤーのフィードバックの傾向や、よく挙がるテーマがここで見られるようになります。いまは準備中です。"
+            (isRealProject ? (
+              <EveryonesVoiceSection
+                gameId={resolvedId}
+                playableVersion={submittedGame?.playableVersion}
+                variant="tab"
+                refreshKey={voicesRefreshKey}
+                onSendVoice={handleFeedback}
               />
             ) : (
               <GameVoicesV0Tab
