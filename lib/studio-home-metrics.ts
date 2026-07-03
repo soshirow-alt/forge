@@ -58,6 +58,20 @@ export function hasStudioHomeConnectionData(metrics: StudioHomeConnectionMetrics
   return hasPlay || hasVoice || hasWitness;
 }
 
+/** RPC 適用済みで月次系列が返ればグラフを描画する（全月0でも API 値をそのまま表示） */
+export function shouldRenderStudioHomeCharts(
+  metrics: StudioHomeConnectionMetrics,
+  rpcReady: boolean,
+): boolean {
+  return rpcReady && metrics.months.length > 0;
+}
+
+export function isWitnessSpreadEmpty(metrics: StudioHomeConnectionMetrics): boolean {
+  return !metrics.witnessCommunity.some(
+    (point) => point.watching > 0 || point.communityMembers > 0,
+  );
+}
+
 export function latestStudioHomePlayDepth(
   metrics: StudioHomeConnectionMetrics,
 ): StudioHomePlayDepthPoint {

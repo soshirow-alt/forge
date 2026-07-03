@@ -20,7 +20,10 @@ export async function GET() {
 
   try {
     const { metrics, rpcReady } = await fetchStudioHomeConnectionMetrics(supabase);
-    return NextResponse.json({ metrics, rpcReady });
+    return NextResponse.json(
+      { metrics, rpcReady },
+      { headers: { "Cache-Control": "no-store, max-age=0" } },
+    );
   } catch (error) {
     console.error("studio home metrics failed", error);
     return NextResponse.json({ error: "Failed to load metrics" }, { status: 500 });

@@ -1,5 +1,7 @@
 "use client";
 
+/** Studio ホーム `/studio` — メインコンテンツのみ。数値は `/api/studio/home-metrics` のみ使用（サンプル/mock なし） */
+
 import Link from "next/link";
 import {
   BookOpen,
@@ -25,10 +27,11 @@ import {
   STUDIO_HOME_DEV_HINTS,
   STUDIO_HOME_QUICK_LINKS,
   formatStudioHomeMonthLabel,
-  hasStudioHomeConnectionData,
+  isWitnessSpreadEmpty,
   latestStudioHomePlayDepth,
   latestStudioHomeVoiceFunnel,
   latestStudioHomeWitnessCommunity,
+  shouldRenderStudioHomeCharts,
   voiceDeliveryRatePercent,
 } from "@/lib/studio-home-metrics";
 
@@ -117,18 +120,48 @@ function MetricSummaryRow({
   );
 }
 
+function ChartHeadline({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+}) {
+  return (
+    <div className="mb-4 rounded-xl border border-white/[0.06] bg-gradient-to-br from-white/[0.04] to-transparent px-4 py-3.5">
+      <p className="text-xs font-medium text-zinc-500">{label}</p>
+      <p className="mt-1 text-3xl font-bold tabular-nums tracking-tight text-zinc-50">{value}</p>
+      {hint ? <p className="mt-1.5 text-xs leading-relaxed text-zinc-500">{hint}</p> : null}
+    </div>
+  );
+}
+
+function LowDataHint({ children }: { children: ReactNode }) {
+  return (
+    <p className="mt-3 rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3 py-2.5 text-xs leading-relaxed text-zinc-500">
+      {children}
+    </p>
+  );
+}
+
 function ConnectionChartCard({
   title,
   description,
   accent,
+  headline,
   children,
   summary,
+  footerNote,
 }: {
   title: string;
   description: string;
   accent: CardAccent;
+  headline: ReactNode;
   children: ReactNode;
   summary: ReactNode;
+  footerNote?: ReactNode;
 }) {
   const styles = CARD_ACCENT_STYLES[accent];
 
@@ -144,8 +177,10 @@ function ConnectionChartCard({
         <h3 className="text-base font-semibold tracking-tight text-zinc-50">{title}</h3>
         <p className="mt-1.5 text-xs leading-relaxed text-zinc-500">{description}</p>
       </div>
-      <div className="relative mt-5 min-h-[220px] flex-1">{children}</div>
-      <div className="relative mt-5 space-y-2 rounded-xl border border-white/[0.05] bg-black/20 p-4 backdrop-blur-sm">
+      <div className="relative mt-4">{headline}</div>
+      <div className="relative mt-3 min-h-[200px] flex-1">{children}</div>
+      {footerNote}
+      <div className="relative mt-4 space-y-2 rounded-xl border border-white/[0.05] bg-black/20 p-4 backdrop-blur-sm">
         {summary}
       </div>
     </article>
@@ -161,10 +196,11 @@ function ConnectionMetricsSection({
   rpcReady: boolean;
   metrics: ReturnType<typeof useStudioHomeMetrics>["metrics"];
 }) {
-  const hasData = hasStudioHomeConnectionData(metrics);
+  const showCharts = shouldRenderStudioHomeCharts(metrics, rpcReady);
   const playDepth = latestStudioHomePlayDepth(metrics);
   const voiceFunnel = latestStudioHomeVoiceFunnel(metrics);
   const witness = latestStudioHomeWitnessCommunity(metrics);
+  const witnessEmpty = isWitnessSpreadEmpty(metrics);
   const feedbackRate = voiceDeliveryRatePercent(voiceFunnel.voiced, voiceFunnel.played);
   const monthLabels = metrics.months.map(formatStudioHomeMonthLabel);
   const latestMonthLabel =
@@ -217,7 +253,7 @@ function ConnectionMetricsSection({
         </p>
       )}
 
-      {!hasData ? (
+      {!showCharts ? (
         <div className="mt-8 rounded-2xl border border-zinc-800/80 bg-gradient-to-br from-zinc-900/60 to-zinc-950/80 px-6 py-12 text-center shadow-inner">
           <p className="text-sm text-zinc-400">
             まだプレイヤーとのつながりは集計されていません。
@@ -227,11 +263,26 @@ function ConnectionMetricsSection({
           </p>
         </div>
       ) : (
-        <div className="mt-8 grid gap-5 xl:grid-cols-3">
+        <div
+          className="mt-8 grid gap-5 xl:grid-cols-3"
+          data-studio-metrics-source="api"
+          data-studio-metrics-months={metrics.months.join(",")}
+        >
           <ConnectionChartCard
             accent="violet"
             title="プレイの深さ"
             description="公開作品を遊んだユニークプレイヤーの内訳です。"
+            headline={
+              <ChartHeadline
+                label={latestMonthLabel ? `${latestMonthLabel}のプレイヤー` : "直近月のプレイヤー"}
+                value={`${playDepth.total}人`}
+                hint={
+                  playDepth.total > 0
+                    ? `1回 ${playDepth.once}人 · 2回 ${playDepth.twice}人 · 3回以上 ${playDepth.thricePlus}人`
+                    : "この月はまだプレイがありません"
+                }
+              />
+            }
             summary={
               <>
                 <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-600">
@@ -284,6 +335,17 @@ function ConnectionMetricsSection({
             accent="sky"
             title="フィードバックの深さ"
             description="プレイした人のうち、どこまでフィードバックを届けてくれたかの推移です。"
+            headline={
+              <ChartHeadline
+                label={latestMonthLabel ? `${latestMonthLabel}の遊んだ人` : "直近月の遊んだ人"}
+                value={`${voiceFunnel.played}人`}
+                hint={
+                  voiceFunnel.played > 0
+                    ? `初回フィードバック ${voiceFunnel.voiced}人 · 追加 ${voiceFunnel.deep}人`
+                    : "この月はまだプレイがありません"
+                }
+              />
+            }
             summary={
               <>
                 <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-600">
@@ -343,6 +405,20 @@ function ConnectionMetricsSection({
             accent="orange"
             title="見届けの広がり"
             description="プレイ後も作品と関係を持ち続けてくれているプレイヤーの推移です。"
+            headline={
+              <ChartHeadline
+                label={latestMonthLabel ? `${latestMonthLabel}末` : "直近月末"}
+                value={`見届け ${witness.watching}人`}
+                hint={`コミュニティ参加者 ${witness.communityMembers}人`}
+              />
+            }
+            footerNote={
+              witnessEmpty ? (
+                <LowDataHint>
+                  まだ見届け・コミュニティ参加はありません。見届けやコミュニティ参加が増えると、ここに推移が表示されます。
+                </LowDataHint>
+              ) : null
+            }
             summary={
               <>
                 <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-600">

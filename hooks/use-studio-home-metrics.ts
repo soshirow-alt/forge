@@ -24,7 +24,7 @@ export function useStudioHomeMetrics() {
     setLoading(true);
     setError(false);
 
-    void fetch("/api/studio/home-metrics")
+    void fetch("/api/studio/home-metrics", { cache: "no-store" })
       .then(async (response) => {
         if (!response.ok) {
           throw new Error("metrics fetch failed");
