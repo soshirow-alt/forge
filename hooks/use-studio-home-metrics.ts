@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   EMPTY_STUDIO_HOME_CONNECTION_METRICS,
   type StudioHomeConnectionMetrics,
@@ -18,14 +18,22 @@ export function useStudioHomeMetrics(granularity: StudioHomeGranularity = "month
   const [metrics, setMetrics] = useState<StudioHomeConnectionMetrics>(
     EMPTY_STUDIO_HOME_CONNECTION_METRICS,
   );
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [fetching, setFetching] = useState(false);
   const [rpcReady, setRpcReady] = useState(false);
   const [granularityFallback, setGranularityFallback] = useState(false);
   const [error, setError] = useState(false);
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
+    const isRefetch = hasLoadedRef.current;
+
+    if (isRefetch) {
+      setFetching(true);
+    } else {
+      setInitialLoading(true);
+    }
     setError(false);
 
     void fetch(`/api/studio/home-metrics?granularity=${granularity}`, { cache: "no-store" })
@@ -46,13 +54,16 @@ export function useStudioHomeMetrics(granularity: StudioHomeGranularity = "month
       .catch(() => {
         if (active) {
           setError(true);
-          setMetrics(EMPTY_STUDIO_HOME_CONNECTION_METRICS);
-          setGranularityFallback(false);
+          if (!hasLoadedRef.current) {
+            setMetrics(EMPTY_STUDIO_HOME_CONNECTION_METRICS);
+          }
         }
       })
       .finally(() => {
         if (active) {
-          setLoading(false);
+          hasLoadedRef.current = true;
+          setInitialLoading(false);
+          setFetching(false);
         }
       });
 
@@ -61,5 +72,12 @@ export function useStudioHomeMetrics(granularity: StudioHomeGranularity = "month
     };
   }, [granularity]);
 
-  return { metrics, loading, rpcReady, granularityFallback, error };
+  return {
+    metrics,
+    initialLoading,
+    fetching,
+    rpcReady,
+    granularityFallback,
+    error,
+  };
 }

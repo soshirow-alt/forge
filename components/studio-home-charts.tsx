@@ -25,25 +25,63 @@ function xAtIndex(index: number, count: number, innerWidth: number, left: number
   return left + (index / (count - 1)) * innerWidth;
 }
 
-function computeYMax(values: number[]): number {
-  const max = Math.max(0, ...values);
-  if (max <= 0) {
-    return 4;
+function computeDataMax(values: number[]): number {
+  if (values.length === 0) {
+    return 0;
   }
-  if (max <= 4) {
-    return 4;
-  }
-  return Math.ceil(max * 1.15);
+  return Math.max(0, ...values);
 }
 
-function yTicks(max: number): number[] {
-  const step = max <= 4 ? 1 : Math.ceil(max / 4);
+/** 1–2–5–10 系の「きりのいい」刻み幅 */
+function niceStep(roughStep: number): number {
+  if (roughStep <= 0) {
+    return 1;
+  }
+  const exponent = Math.floor(Math.log10(roughStep));
+  const magnitude = 10 ** exponent;
+  const normalized = roughStep / magnitude;
+  if (normalized <= 1) {
+    return magnitude;
+  }
+  if (normalized <= 2) {
+    return 2 * magnitude;
+  }
+  if (normalized <= 5) {
+    return 5 * magnitude;
+  }
+  return 10 * magnitude;
+}
+
+const Y_AXIS_MIN_MAX = 4;
+
+/** データ最大値から Y 軸上限を算出（固定 maxY なし。少人数時は最低 4） */
+function computeYMax(values: number[]): number {
+  const dataMax = computeDataMax(values);
+  if (dataMax <= 0) {
+    return Y_AXIS_MIN_MAX;
+  }
+  if (dataMax <= Y_AXIS_MIN_MAX) {
+    return Y_AXIS_MIN_MAX;
+  }
+
+  const paddedMax = dataMax * 1.08;
+  const step = niceStep(paddedMax / 4);
+  const niceMax = Math.ceil(paddedMax / step) * step;
+  return Math.max(niceMax, Y_AXIS_MIN_MAX);
+}
+
+function yTicks(yMax: number): number[] {
+  if (yMax <= Y_AXIS_MIN_MAX) {
+    return Array.from({ length: Y_AXIS_MIN_MAX + 1 }, (_, index) => index);
+  }
+
+  const step = niceStep(yMax / 4);
   const ticks: number[] = [];
-  for (let value = 0; value <= max; value += step) {
+  for (let value = 0; value <= yMax; value += step) {
     ticks.push(value);
   }
-  if (ticks[ticks.length - 1] !== max) {
-    ticks.push(max);
+  if (ticks[ticks.length - 1] !== yMax) {
+    ticks.push(yMax);
   }
   return ticks;
 }
@@ -69,7 +107,7 @@ function ChartFrame({
       viewBox={`0 0 ${size.width} ${size.height}`}
       role="img"
       aria-hidden="true"
-      className="overflow-visible"
+      className="overflow-hidden"
     >
       <defs>
         <linearGradient id="studio-chart-grid-fade" x1="0" y1="0" x2="0" y2="1">
@@ -217,7 +255,8 @@ export function StudioHomeMultiLineChart({
 
   function pointAt(index: number, value: number) {
     const x = xAtIndex(index, periods.length, innerWidth, CHART_PADDING.left);
-    const y = CHART_PADDING.top + innerHeight - (value / yMax) * innerHeight;
+    const rawY = CHART_PADDING.top + innerHeight - (value / yMax) * innerHeight;
+    const y = Math.max(CHART_PADDING.top, rawY);
     return { x, y };
   }
 

@@ -14,6 +14,7 @@ import {
   Heart,
   HelpCircle,
   LayoutGrid,
+  Loader2,
   MessageSquare,
   PenLine,
   Sparkles,
@@ -287,11 +288,26 @@ function PeriodGranularitySelect({
   );
 }
 
+function ChartFetchingOverlay({ active }: { active: boolean }) {
+  if (!active) {
+    return null;
+  }
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-zinc-950/35 backdrop-blur-[1px]"
+      aria-hidden="true"
+    >
+      <Loader2 className="size-5 animate-spin text-zinc-400" />
+    </div>
+  );
+}
+
 function ConnectionChartCard({
   title,
   description,
   accent,
   icon: Icon,
+  fetching = false,
   children,
   footer,
 }: {
@@ -299,6 +315,7 @@ function ConnectionChartCard({
   description: string;
   accent: CardAccent;
   icon: LucideIcon;
+  fetching?: boolean;
   children: ReactNode;
   footer: ReactNode;
 }) {
@@ -323,23 +340,33 @@ function ConnectionChartCard({
           <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">{description}</p>
         </div>
       </div>
-      <div className="relative mt-4 shrink-0 rounded-xl border border-white/[0.04] bg-black/25 px-2 pb-1 pt-2 backdrop-blur-sm">
+      <div
+        className={`relative mt-4 shrink-0 rounded-xl border border-white/[0.04] bg-black/25 px-2 pb-1 pt-2 backdrop-blur-sm transition-opacity duration-200 ${fetching ? "opacity-80" : "opacity-100"}`}
+        aria-busy={fetching}
+      >
+        <ChartFetchingOverlay active={fetching} />
         {children}
       </div>
-      <div className="relative mt-2 mt-auto shrink-0 border-t border-white/[0.06] pt-2.5">{footer}</div>
+      <div
+        className={`relative mt-2 mt-auto shrink-0 border-t border-white/[0.06] pt-2.5 transition-opacity duration-200 ${fetching ? "opacity-80" : "opacity-100"}`}
+      >
+        {footer}
+      </div>
     </article>
   );
 }
 
 function ConnectionMetricsSection({
-  loading,
+  initialLoading,
+  fetching,
   rpcReady,
   granularityFallback,
   granularity,
   onGranularityChange,
   metrics,
 }: {
-  loading: boolean;
+  initialLoading: boolean;
+  fetching: boolean;
   rpcReady: boolean;
   granularityFallback: boolean;
   granularity: StudioHomeGranularity;
@@ -347,6 +374,8 @@ function ConnectionMetricsSection({
   metrics: ReturnType<typeof useStudioHomeMetrics>["metrics"];
 }) {
   const showCharts = shouldRenderStudioHomeCharts(metrics, rpcReady);
+  const hasStaleChartData = metrics.months.length > 0;
+  const displayCharts = showCharts || (fetching && hasStaleChartData);
   const playDepth = latestStudioHomePlayDepth(metrics);
   const voiceFunnel = latestStudioHomeVoiceFunnel(metrics);
   const witness = latestStudioHomeWitnessCommunity(metrics);
@@ -360,25 +389,8 @@ function ConnectionMetricsSection({
   const currentLabel = formatStudioHomePeriodFooterLabel(latestPeriodKey, granularity, "current");
   const witnessLabel = formatStudioHomePeriodFooterLabel(latestPeriodKey, granularity, "witness");
 
-  if (loading) {
-    return (
-      <section aria-busy="true" aria-label="プレイヤーとのつながりを読み込み中">
-        <div className="h-10 w-48 rounded-lg bg-zinc-800/60" />
-        <div className="mt-8 h-8 w-72 rounded-lg bg-zinc-800/60" />
-        <div className="mt-6 grid gap-5 xl:grid-cols-3">
-          {[0, 1, 2].map((key) => (
-            <div
-              key={key}
-              className="h-[420px] animate-pulse rounded-2xl border border-zinc-800/80 bg-zinc-900/40"
-            />
-          ))}
-        </div>
-      </section>
-    );
-  }
-
   return (
-    <section>
+    <section aria-busy={fetching}>
       <header className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Studio ホーム</h1>
       </header>
@@ -402,14 +414,23 @@ function ConnectionMetricsSection({
         </p>
       )}
 
-      {!rpcReady && (
+      {!rpcReady && !initialLoading && (
         <p className="mt-4 rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90">
           集計用のデータベース設定が未適用のため、グラフは空の状態です。マイグレーション
           036 を適用すると表示されます。
         </p>
       )}
 
-      {!showCharts ? (
+      {initialLoading ? (
+        <div className="mt-6 grid gap-5 xl:grid-cols-3" aria-label="プレイヤーとのつながりを読み込み中">
+          {[0, 1, 2].map((key) => (
+            <div
+              key={key}
+              className="h-[380px] animate-pulse rounded-2xl border border-zinc-800/80 bg-zinc-900/40"
+            />
+          ))}
+        </div>
+      ) : !displayCharts ? (
         <div className="mt-8 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 px-6 py-12 text-center">
           <p className="text-sm text-zinc-400">
             まだプレイヤーとのつながりは集計されていません。
@@ -428,6 +449,7 @@ function ConnectionMetricsSection({
           <ConnectionChartCard
             accent="violet"
             icon={Gamepad2}
+            fetching={fetching}
             title="プレイの深さ"
             description="何回遊んでくれたかの内訳"
             footer={
@@ -492,6 +514,7 @@ function ConnectionMetricsSection({
           <ConnectionChartCard
             accent="sky"
             icon={MessageSquare}
+            fetching={fetching}
             title="フィードバックの深さ"
             description="遊んだ人のうち、どこまで反応してくれたか"
             footer={
@@ -556,6 +579,7 @@ function ConnectionMetricsSection({
           <ConnectionChartCard
             accent="orange"
             icon={Heart}
+            fetching={fetching}
             title="見届けの広がり"
             description="プレイ後も作品を追いかけてくれた人の推移"
             footer={
@@ -758,14 +782,16 @@ function DevHintsSection() {
 
 export function StudioHomePage() {
   const [granularity, setGranularity] = useState<StudioHomeGranularity>("month");
-  const { metrics, loading, rpcReady, granularityFallback } = useStudioHomeMetrics(granularity);
+  const { metrics, initialLoading, fetching, rpcReady, granularityFallback } =
+    useStudioHomeMetrics(granularity);
   const { highlights, loading: highlightsLoading } = useStudioHomeHighlights();
 
   return (
     <StudioShell activeNav="home">
       <div className="mx-auto max-w-7xl space-y-8 pb-6">
         <ConnectionMetricsSection
-          loading={loading}
+          initialLoading={initialLoading}
+          fetching={fetching}
           rpcReady={rpcReady}
           granularityFallback={granularityFallback}
           granularity={granularity}
