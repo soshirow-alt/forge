@@ -10,7 +10,7 @@ const steps = [
   { label: "公開", description: "プレイ可能verを届ける" },
   { label: "フィードバックを見る", description: "届いたフィードバックを読み、材料にする" },
   { label: "改善する", description: "次のverで何を直すか決める" },
-  { label: "新ver公開", description: "Devlog で変化を伝える" },
+  { label: "新ver公開", description: "開発ログで変化を伝える" },
   { label: "正式ver公開", description: "育てた記録の区切りとして Released に" },
 ] as const;
 

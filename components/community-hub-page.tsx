@@ -92,7 +92,7 @@ function DevlogCitationCard({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5 text-xs text-violet-300">
           <Quote className="size-3.5" aria-hidden="true" />
-          Devlog {quote.version}
+          開発ログ {quote.version}
           {quote.publishedAt && <span className="text-zinc-600">· {quote.publishedAt}</span>}
         </div>
         <p className="mt-1 text-sm font-medium text-zinc-200">{quote.title}</p>

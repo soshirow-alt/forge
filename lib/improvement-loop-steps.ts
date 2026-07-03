@@ -38,7 +38,7 @@ export const IMPROVEMENT_LOOP_STEPS: {
     id: "publish",
     number: 4,
     label: "記録・公開する",
-    sublabel: "Devlogとverを公開",
+    sublabel: "開発ログとverを公開",
   },
   {
     id: "wait",

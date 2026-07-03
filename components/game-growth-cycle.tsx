@@ -573,7 +573,7 @@ function PlayerVoiceEmptyState({
   return (
     <div className="mt-6 rounded-xl border border-dashed border-zinc-800 bg-zinc-950/30 px-5 py-6 text-center">
       <MessageSquare className="mx-auto size-8 text-zinc-600" aria-hidden="true" />
-      <p className="mt-2 text-sm text-zinc-500">このverの声はまだありません</p>
+      <p className="mt-2 text-sm text-zinc-500">このverのフィードバックはまだありません</p>
     </div>
   );
 }
@@ -683,9 +683,9 @@ export function GameGrowthCycle({
       />
 
       {showVoiceSection ? (
-        <section aria-label="プレイヤーの声" className="mt-6 space-y-3">
+        <section aria-label="届いたフィードバック" className="mt-6 space-y-3">
           <h3 className="text-sm font-semibold text-zinc-200">
-            プレイヤーの声
+            届いたフィードバック
             <span className="ml-2 text-xs font-normal text-zinc-500">
               v{growth.playableVersion}
             </span>

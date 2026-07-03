@@ -16,7 +16,7 @@ export const WATCH_BADGE_LABEL = "更新追跡中";
 export const WATCH_STAT_LABEL = "更新追跡中";
 
 export const WATCH_FIRST_HINT =
-  "更新を追い始めました。開発ログや新版の通知が届きます。「見届け人」は作品が正式版になったとき、プレイや初声などの関与で付与される称号で、このボタン1回では付与されません。";
+  "更新を追い始めました。開発ログや新版の通知が届きます。「見届け人」は作品が正式版になったとき、プレイやフィードバックなどの関与で付与される称号で、このボタン1回では付与されません。";
 
 export const WATCH_FIRST_HINT_STORAGE_KEY = "forge-watch-first-hint-seen";
 

@@ -356,7 +356,7 @@ export function StudioProfileSelfPage() {
               { label: "作品数", value: displayProfile.stats.projectCount },
               { label: "届いたFB", value: displayProfile.stats.feedbackReceived },
               { label: "見届け人累計", value: displayProfile.stats.witnessTotal },
-              { label: "Devlog", value: displayProfile.stats.devlogCount },
+              { label: "開発ログ", value: displayProfile.stats.devlogCount },
             ].map((stat) => (
               <div
                 key={stat.label}

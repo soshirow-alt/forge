@@ -28,7 +28,7 @@ function RankingMetricSummary({ metrics }: { metrics: InfluenceRankingMetrics })
     { label: "改善に繋がったFB", value: `${metrics.improvementLinkedCount}件` },
     { label: "確認依頼への回答", value: `${metrics.verificationContributionCount}件` },
     { label: "継続見届け中の作品", value: `${metrics.continuedWitnessCount}件` },
-    { label: "声が少ない作品への貢献", value: `${metrics.lowVoiceContributionCount}件` },
+    { label: "フィードバックが少ない作品への貢献", value: `${metrics.lowVoiceContributionCount}件` },
   ];
 
   return (

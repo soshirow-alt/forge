@@ -183,5 +183,5 @@ export const influenceRankingMetricWeights = [
   { id: "improvement", label: "改善・変更に繋がったFB", weight: "25%" },
   { id: "verification", label: "確認依頼・変化チェックへの貢献", weight: "20%" },
   { id: "continued", label: "継続して見届けた貢献", weight: "10%" },
-  { id: "low-voice", label: "声が少ない作品への貢献", weight: "10%" },
+  { id: "low-voice", label: "フィードバックが少ない作品への貢献", weight: "10%" },
 ] as const;
