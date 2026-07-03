@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import type { StudioHomeGranularity } from "@/lib/studio-home-metrics";
 import { formatStudioHomePeriodChartLabel } from "@/lib/studio-home-metrics";
 
-const CHART_HEIGHT = 200;
-const CHART_PADDING = { top: 16, right: 12, bottom: 32, left: 40 };
+const CHART_HEIGHT = 188;
+const CHART_PADDING = { top: 12, right: 8, bottom: 26, left: 28 };
 
 type ChartSize = {
   width: number;
@@ -91,10 +91,10 @@ function ChartFrame({
               strokeDasharray={tick === 0 ? undefined : "4 4"}
             />
             <text
-              x={CHART_PADDING.left - 8}
+              x={CHART_PADDING.left - 6}
               y={y + 4}
               textAnchor="end"
-              className="fill-zinc-500 text-[11px] font-medium"
+              className="fill-zinc-500 text-[10px] font-medium tabular-nums"
             >
               {tick}
             </text>
@@ -109,21 +109,12 @@ function ChartFrame({
             x={x}
             y={size.height - 8}
             textAnchor="middle"
-            className="fill-zinc-400 text-[11px] font-medium"
+            className="fill-zinc-400 text-[10px] font-medium"
           >
             {label}
           </text>
         );
       })}
-      <text
-        x={10}
-        y={CHART_PADDING.top + innerHeight / 2}
-        transform={`rotate(-90 10 ${CHART_PADDING.top + innerHeight / 2})`}
-        textAnchor="middle"
-        className="fill-zinc-500 text-[10px] font-medium"
-      >
-        人
-      </text>
       {children}
     </svg>
   );
@@ -299,7 +290,7 @@ export function StudioHomeChartLegend({
   items: { label: string; color: string }[];
 }) {
   return (
-    <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
+    <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
       {items.map((item) => (
         <li key={item.label} className="flex items-center gap-2 text-xs font-medium text-zinc-400">
           <span

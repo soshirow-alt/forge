@@ -60,8 +60,6 @@ const WITNESS_COLORS = {
   communityMembers: "#fb7185",
 };
 
-const FOOTER_MIN_HEIGHT = "min-h-[8.75rem]";
-
 type CardAccent = "violet" | "sky" | "orange";
 
 const CARD_ACCENT_STYLES: Record<
@@ -125,6 +123,9 @@ const QUICK_LINK_STYLES: Record<
 
 const DEV_HINT_ICONS = [HelpCircle, FileText, TrendingUp] as const;
 
+const FOOTER_ROW_GRID =
+  "grid grid-cols-[1rem_minmax(0,1fr)_3rem] items-center gap-x-2 text-sm leading-tight";
+
 function MetricDot({ color }: { color: string }) {
   return (
     <span
@@ -135,7 +136,7 @@ function MetricDot({ color }: { color: string }) {
   );
 }
 
-function FooterBreakdownItem({
+function FooterBreakdownRow({
   color,
   label,
   value,
@@ -145,7 +146,7 @@ function FooterBreakdownItem({
   value: string;
 }) {
   return (
-    <div className="grid grid-cols-[auto_minmax(0,1fr)_3.25rem] items-center gap-x-2 text-sm">
+    <div className={FOOTER_ROW_GRID}>
       {color ? <MetricDot color={color} /> : <span className="size-2 shrink-0" aria-hidden="true" />}
       <span className="text-zinc-400">{label}</span>
       <span className="text-right font-semibold tabular-nums text-zinc-200">{value}</span>
@@ -153,7 +154,7 @@ function FooterBreakdownItem({
   );
 }
 
-function FooterStatItem({
+function FooterStatRow({
   icon: Icon,
   iconClass,
   label,
@@ -165,10 +166,63 @@ function FooterStatItem({
   value: string;
 }) {
   return (
-    <div className="grid grid-cols-[auto_minmax(0,1fr)_3.25rem] items-center gap-x-2 text-sm">
+    <div className={FOOTER_ROW_GRID}>
       <Icon className={`size-3.5 shrink-0 ${iconClass}`} aria-hidden="true" />
       <span className="text-zinc-400">{label}</span>
       <span className="text-right font-semibold tabular-nums text-zinc-200">{value}</span>
+    </div>
+  );
+}
+
+function CardFooterSectionLabel({ children }: { children: ReactNode }) {
+  return <p className="mb-1 text-xs leading-none text-zinc-500">{children}</p>;
+}
+
+function CardFooterWithHighlight({
+  label,
+  highlightLabel,
+  highlightValue,
+  highlightSuffix,
+  highlightClassName,
+  children,
+}: {
+  label: string;
+  highlightLabel: string;
+  highlightValue: string;
+  highlightSuffix?: string;
+  highlightClassName: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-x-4">
+      <div className="min-w-0">
+        <CardFooterSectionLabel>{label}</CardFooterSectionLabel>
+        <div className="space-y-1">{children}</div>
+      </div>
+      <div className="shrink-0 text-right leading-tight">
+        <p className="text-xs text-zinc-500">{highlightLabel}</p>
+        <p className={`text-2xl font-bold tabular-nums ${highlightClassName}`}>
+          {highlightValue}
+          {highlightSuffix ? (
+            <span className="ml-0.5 text-base font-semibold">{highlightSuffix}</span>
+          ) : null}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function CardFooterList({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="min-w-0">
+      <CardFooterSectionLabel>{label}</CardFooterSectionLabel>
+      <div className="space-y-1">{children}</div>
     </div>
   );
 }
@@ -269,10 +323,10 @@ function ConnectionChartCard({
           <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">{description}</p>
         </div>
       </div>
-      <div className="relative mt-5 flex-1 rounded-xl border border-white/[0.04] bg-black/25 p-3 backdrop-blur-sm">
+      <div className="relative mt-4 shrink-0 rounded-xl border border-white/[0.04] bg-black/25 px-2 pb-1 pt-2 backdrop-blur-sm">
         {children}
       </div>
-      <div className="relative mt-4 border-t border-white/[0.06] pt-4">{footer}</div>
+      <div className="relative mt-2 mt-auto shrink-0 border-t border-white/[0.06] pt-2.5">{footer}</div>
     </article>
   );
 }
@@ -377,33 +431,29 @@ function ConnectionMetricsSection({
             title="プレイの深さ"
             description="何回遊んでくれたかの内訳"
             footer={
-              <div className={`flex items-end justify-between gap-4 ${FOOTER_MIN_HEIGHT}`}>
-                <div className="space-y-2">
-                  <p className="text-xs text-zinc-500">{breakdownLabel}</p>
-                  <FooterBreakdownItem
-                    color={PLAY_DEPTH_COLORS.once}
-                    label="1回だけ"
-                    value={`${playDepth.once}人`}
-                  />
-                  <FooterBreakdownItem
-                    color={PLAY_DEPTH_COLORS.twice}
-                    label="2回"
-                    value={`${playDepth.twice}人`}
-                  />
-                  <FooterBreakdownItem
-                    color={PLAY_DEPTH_COLORS.thricePlus}
-                    label="3回以上"
-                    value={`${playDepth.thricePlus}人`}
-                  />
-                </div>
-                <div className="shrink-0 text-right">
-                  <p className="text-xs text-zinc-500">合計</p>
-                  <p className="text-3xl font-bold tabular-nums text-violet-300">
-                    {playDepth.total}
-                    <span className="ml-0.5 text-lg font-semibold">人</span>
-                  </p>
-                </div>
-              </div>
+              <CardFooterWithHighlight
+                label={breakdownLabel}
+                highlightLabel="合計"
+                highlightValue={String(playDepth.total)}
+                highlightSuffix="人"
+                highlightClassName="text-violet-300"
+              >
+                <FooterBreakdownRow
+                  color={PLAY_DEPTH_COLORS.once}
+                  label="1回だけ"
+                  value={`${playDepth.once}人`}
+                />
+                <FooterBreakdownRow
+                  color={PLAY_DEPTH_COLORS.twice}
+                  label="2回"
+                  value={`${playDepth.twice}人`}
+                />
+                <FooterBreakdownRow
+                  color={PLAY_DEPTH_COLORS.thricePlus}
+                  label="3回以上"
+                  value={`${playDepth.thricePlus}人`}
+                />
+              </CardFooterWithHighlight>
             }
           >
             <StudioHomeStackedBarChart
@@ -445,32 +495,28 @@ function ConnectionMetricsSection({
             title="フィードバックの深さ"
             description="遊んだ人のうち、どこまで反応してくれたか"
             footer={
-              <div className={`flex items-end justify-between gap-4 ${FOOTER_MIN_HEIGHT}`}>
-                <div className="space-y-2">
-                  <p className="text-xs text-zinc-500">{currentLabel}</p>
-                  <FooterBreakdownItem
-                    color={FEEDBACK_DEPTH_COLORS.played}
-                    label="遊んだ人"
-                    value={`${voiceFunnel.played}人`}
-                  />
-                  <FooterBreakdownItem
-                    color={FEEDBACK_DEPTH_COLORS.voiced}
-                    label="初回フィードバック"
-                    value={`${voiceFunnel.voiced}人`}
-                  />
-                  <FooterBreakdownItem
-                    color={FEEDBACK_DEPTH_COLORS.deep}
-                    label="追加フィードバック"
-                    value={`${voiceFunnel.deep}人`}
-                  />
-                </div>
-                <div className="shrink-0 text-right">
-                  <p className="text-xs text-zinc-500">フィードバック率</p>
-                  <p className="text-3xl font-bold tabular-nums text-cyan-300">
-                    {feedbackRate === null ? "—" : `${feedbackRate}%`}
-                  </p>
-                </div>
-              </div>
+              <CardFooterWithHighlight
+                label={currentLabel}
+                highlightLabel="フィードバック率"
+                highlightValue={feedbackRate === null ? "—" : `${feedbackRate}%`}
+                highlightClassName="text-cyan-300"
+              >
+                <FooterBreakdownRow
+                  color={FEEDBACK_DEPTH_COLORS.played}
+                  label="遊んだ人"
+                  value={`${voiceFunnel.played}人`}
+                />
+                <FooterBreakdownRow
+                  color={FEEDBACK_DEPTH_COLORS.voiced}
+                  label="初回フィードバック"
+                  value={`${voiceFunnel.voiced}人`}
+                />
+                <FooterBreakdownRow
+                  color={FEEDBACK_DEPTH_COLORS.deep}
+                  label="追加フィードバック"
+                  value={`${voiceFunnel.deep}人`}
+                />
+              </CardFooterWithHighlight>
             }
           >
             <StudioHomeMultiLineChart
@@ -513,21 +559,20 @@ function ConnectionMetricsSection({
             title="見届けの広がり"
             description="プレイ後も作品を追いかけてくれた人の推移"
             footer={
-              <div className={`flex flex-col justify-end space-y-2 ${FOOTER_MIN_HEIGHT}`}>
-                <p className="text-xs text-zinc-500">{witnessLabel}</p>
-                <FooterStatItem
+              <CardFooterList label={witnessLabel}>
+                <FooterStatRow
                   icon={Heart}
                   iconClass="text-orange-400"
                   label="見届けている人"
                   value={`${witness.watching}人`}
                 />
-                <FooterStatItem
+                <FooterStatRow
                   icon={Users}
                   iconClass="text-rose-400"
                   label="コミュニティ参加者"
                   value={`${witness.communityMembers}人`}
                 />
-              </div>
+              </CardFooterList>
             }
           >
             <StudioHomeMultiLineChart

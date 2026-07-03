@@ -87,20 +87,29 @@ export function formatStudioHomePeriodFooterLabel(
   kind: "breakdown" | "current" | "witness",
 ): string {
   const chartLabel = formatStudioHomePeriodChartLabel(periodKey, granularity);
-  if (granularity === "month") {
-    if (kind === "witness") {
-      return `${chartLabel}末の目安`;
-    }
-    if (kind === "current") {
-      return `${chartLabel}の現在値`;
-    }
-    return `${chartLabel}の内訳`;
-  }
   if (kind === "witness") {
-    return `${chartLabel}末の目安`;
+    if (granularity === "day") {
+      return "今日の現在値";
+    }
+    if (granularity === "week") {
+      return "今週末時点";
+    }
+    return `${chartLabel}末時点`;
   }
   if (kind === "current") {
+    if (granularity === "day") {
+      return "今日の現在値";
+    }
+    if (granularity === "week") {
+      return "今週の現在値";
+    }
     return `${chartLabel}の現在値`;
+  }
+  if (granularity === "day") {
+    return "今日の内訳";
+  }
+  if (granularity === "week") {
+    return "今週の内訳";
   }
   return `${chartLabel}の内訳`;
 }
