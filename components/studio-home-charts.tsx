@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { formatStudioHomeMonthLabel } from "@/lib/studio-home-metrics";
 
-const CHART_HEIGHT = 220;
+const CHART_HEIGHT = 200;
 const CHART_PADDING = { top: 16, right: 12, bottom: 32, left: 40 };
 
 type ChartSize = {
@@ -65,8 +65,8 @@ function ChartFrame({
     >
       <defs>
         <linearGradient id="studio-chart-grid-fade" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="rgb(63 63 70)" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="rgb(63 63 70)" stopOpacity="0.08" />
+          <stop offset="0%" stopColor="rgb(82 82 91)" stopOpacity="0.22" />
+          <stop offset="100%" stopColor="rgb(82 82 91)" stopOpacity="0.04" />
         </linearGradient>
       </defs>
       {ticks.map((tick) => {
@@ -228,7 +228,8 @@ export function StudioHomeMultiLineChart({
             x2="0"
             y2="1"
           >
-            <stop offset="0%" stopColor={item.color} stopOpacity="0.28" />
+            <stop offset="0%" stopColor={item.color} stopOpacity="0.35" />
+            <stop offset="85%" stopColor={item.color} stopOpacity="0.06" />
             <stop offset="100%" stopColor={item.color} stopOpacity="0" />
           </linearGradient>
         ))}
@@ -255,16 +256,18 @@ export function StudioHomeMultiLineChart({
               strokeWidth={2.5}
               strokeLinecap="round"
               strokeLinejoin="round"
+              style={{ filter: `drop-shadow(0 0 6px ${item.color}55)` }}
             />
             {points.map((point, index) => (
               <circle
                 key={`${item.key}-${index}`}
                 cx={point.x}
                 cy={point.y}
-                r={4}
+                r={3.5}
                 fill={item.color}
                 stroke="rgb(9 9 11)"
                 strokeWidth={2}
+                style={{ filter: `drop-shadow(0 0 4px ${item.color}66)` }}
               />
             ))}
           </g>
