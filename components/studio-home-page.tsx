@@ -126,11 +126,11 @@ const QUICK_LINK_STYLES: Record<
 const DEV_HINT_ICONS = [HelpCircle, FileText, TrendingUp] as const;
 
 /** 3カード共通の固定行高（flex/mt-auto 不使用） */
-const CARD_GRID_CLASS = "grid grid-rows-[4.5rem_12.25rem_2.75rem_7.75rem] gap-0";
+const CARD_GRID_CLASS = "grid grid-rows-[4.5rem_12.25rem_2.75rem_7.25rem] gap-0";
 const CARD_ROW_HEADER = "h-[4.5rem] overflow-hidden";
 const CARD_ROW_CHART = "h-[12.25rem] overflow-hidden";
 const CARD_ROW_LEGEND = "h-[2.75rem] overflow-hidden";
-const CARD_ROW_FOOTER = "h-[7.75rem] overflow-hidden border-t border-white/[0.06] pt-2";
+const CARD_ROW_FOOTER = "h-[7.25rem] overflow-hidden border-t border-white/[0.06] pt-2";
 
 const FOOTER_ROW_GRID =
   "grid h-5 grid-cols-[1rem_minmax(0,1fr)_2.75rem] items-center gap-x-2 text-sm leading-none";
@@ -214,7 +214,7 @@ function CardFooterShell({
   row3: ReactNode;
 }) {
   return (
-    <div className="grid h-full grid-cols-[minmax(0,1fr)_4.5rem] gap-x-3">
+    <div className="grid grid-cols-[minmax(0,1fr)_4.5rem] items-start gap-x-3">
       <div>
         <CardFooterSectionLabel>{label}</CardFooterSectionLabel>
         <div className={FOOTER_LIST_BLOCK_H}>
@@ -445,7 +445,7 @@ function ConnectionMetricsSection({
           {[0, 1, 2].map((key) => (
             <div
               key={key}
-              className="h-[27.25rem] animate-pulse rounded-2xl border border-zinc-800/80 bg-zinc-900/40 sm:h-[calc(27.25rem+1rem)]"
+              className="h-[26.75rem] animate-pulse rounded-2xl border border-zinc-800/80 bg-zinc-900/40 sm:h-[calc(26.75rem+1rem)]"
             />
           ))}
         </div>
