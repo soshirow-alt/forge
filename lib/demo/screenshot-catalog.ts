@@ -1,6 +1,10 @@
 import type { HomeGameCard } from "@/lib/home-v0-mock-data";
 import type { GameDevlogEntry } from "@/lib/game-devlog-v0-mock-data";
-import type { StudioProjectCard } from "@/lib/studio-projects-v0-mock-data";
+import type {
+  StudioHomeConnectionMetrics,
+  StudioHomeGranularity,
+  StudioHomeHighlights,
+} from "@/lib/studio-home-metrics";
 import { SCREENSHOT_FLAGSHIP_GAME_ID } from "@/lib/demo/screenshot-routes";
 
 export { SCREENSHOT_FLAGSHIP_GAME_ID };
@@ -284,80 +288,60 @@ export const screenshotPlayHistory: ScreenshotPlayHistoryEntry[] = [
   },
 ];
 
-export type ScreenshotStudioLifecycleStepId =
-  | "submit"
-  | "published"
-  | "read"
-  | "improve"
-  | "newVersion"
-  | "official";
-
-export const SCREENSHOT_STUDIO_LIFECYCLE_STEPS: {
-  id: ScreenshotStudioLifecycleStepId;
-  label: string;
-}[] = [
-  { id: "submit", label: "投稿" },
-  { id: "published", label: "公開中" },
-  { id: "read", label: "回答を見る" },
-  { id: "improve", label: "改善する" },
-  { id: "newVersion", label: "新版公開" },
-  { id: "official", label: "正式版公開" },
-];
-
-export type ScreenshotStudioHomeProject = StudioProjectCard & {
-  currentStepId: ScreenshotStudioLifecycleStepId;
-  nextAction: string;
-  cycleNumber?: number;
+/** Studio ホーム `/studio` 用 fixture — 代表作「星灯の旅路」を軸にした接続指標 */
+export const screenshotStudioHomeHighlights: StudioHomeHighlights = {
+  unreadVoiceProjectCount: 2,
+  hasRecentCommunityReply: true,
 };
 
-export const screenshotStudioHomeProjects: ScreenshotStudioHomeProject[] = [
-  {
-    id: "ss-studio-flagship",
-    title: screenshotFlagship.title,
-    genres: `${screenshotFlagship.genre}・ファンタジー`,
-    phase: "通しプレイ版",
-    image: screenshotFlagship.thumbnail,
-    witnessCount: screenshotFlagship.witnessCount,
-    voiceCount: screenshotFlagship.voiceCount,
-    firstVoiceCount: 42,
-    updatedLabel: "3時間前",
-    version: screenshotFlagship.version,
-    notificationCount: 3,
-    currentStepId: "read",
-    cycleNumber: 3,
-    nextAction: "新着フィードバックを確認する",
-  },
-  {
-    id: "ss-studio-roshin",
-    title: "炉心の残光",
-    genres: "ナラティブRPG",
-    phase: "プレイ可能版",
-    image: "/images/landing/game-2.png",
-    witnessCount: 24,
-    voiceCount: 18,
-    firstVoiceCount: 18,
-    updatedLabel: "2日前",
-    version: "v0.3.2",
-    notificationCount: 1,
-    currentStepId: "improve",
-    cycleNumber: 2,
-    nextAction: "次に直すことを決めて修正する",
-  },
-  {
-    id: "ss-studio-shinen",
-    title: "深淵ノート",
-    genres: "ホラー・アドベンチャー",
-    phase: "正式版",
-    image: "/images/landing/game-5.png",
-    witnessCount: 19,
-    voiceCount: 31,
-    firstVoiceCount: 31,
-    updatedLabel: "1週間前",
-    version: "v1.0.0",
-    currentStepId: "official",
-    nextAction: "正式版として公開済み — 見届けを確認",
-  },
-];
+function screenshotStudioPeriodKeys(granularity: StudioHomeGranularity): string[] {
+  if (granularity === "month") {
+    return ["2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07"];
+  }
+  if (granularity === "week") {
+    return ["2026-05-26", "2026-06-02", "2026-06-09", "2026-06-16", "2026-06-23", "2026-06-30"];
+  }
+  return ["2026-06-28", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03"];
+}
 
-/** @deprecated Use screenshotStudioHomeProjects for screenshot studio page */
-export const screenshotStudioProjects: StudioProjectCard[] = screenshotStudioHomeProjects;
+export function getScreenshotStudioHomeMetrics(
+  granularity: StudioHomeGranularity,
+): StudioHomeConnectionMetrics {
+  const months = screenshotStudioPeriodKeys(granularity);
+
+  const playOnce = [14, 19, 24, 30, 35, 41];
+  const playTwice = [7, 10, 13, 16, 19, 22];
+  const playThrice = [4, 6, 8, 10, 12, 15];
+  const playDepth = playOnce.map((once, index) => {
+    const twice = playTwice[index]!;
+    const thricePlus = playThrice[index]!;
+    return { once, twice, thricePlus, total: once + twice + thricePlus };
+  });
+
+  const voiceFunnel = [
+    { played: 32, voiced: 16, deep: 5 },
+    { played: 48, voiced: 26, deep: 9 },
+    { played: 64, voiced: 36, deep: 13 },
+    { played: 82, voiced: 48, deep: 18 },
+    { played: 102, voiced: 62, deep: 22 },
+    {
+      played: 124,
+      voiced: Math.max(screenshotFlagship.voiceCount, 72),
+      deep: 26,
+    },
+  ];
+
+  const witnessCommunity = [
+    { watching: 9, communityMembers: 4 },
+    { watching: 14, communityMembers: 7 },
+    { watching: 19, communityMembers: 10 },
+    { watching: 24, communityMembers: 13 },
+    { watching: 28, communityMembers: 16 },
+    {
+      watching: screenshotFlagship.witnessCount,
+      communityMembers: 18,
+    },
+  ];
+
+  return { months, playDepth, voiceFunnel, witnessCommunity };
+}

@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-07-03 — スクリーンショット撮影用 `/demo/screenshot/*`（Studio 再差し替え）
+
+- **Studio シーン** — 独自 fixture 画面を廃止。現行 `/studio` と同じ `StudioHomeView`（3グラフ・日/週/月切替・気になる動き・クイックアクセス・開発のヒント）を流用し、表示データのみ `screenshot-catalog` の fixture に差し替え
+
+---
+
 ## 2026-07-03 — スクリーンショット撮影用 `/demo/screenshot/*`（Studio 追記）
 
 - **Studio シーン** — 旧「あなたの作品」リスト（ad-screenshot 風）を廃止。fixture 専用の **Studio ホーム** に差し替え（見出し・気になる動き・作品カード・6段 micro rail・次のアクション）。代表作「星灯の旅路」は catalog と整合

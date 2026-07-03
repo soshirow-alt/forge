@@ -42,7 +42,9 @@ import {
   latestStudioHomeWitnessCommunity,
   shouldRenderStudioHomeCharts,
   voiceDeliveryRatePercent,
+  type StudioHomeConnectionMetrics,
   type StudioHomeGranularity,
+  type StudioHomeHighlights,
 } from "@/lib/studio-home-metrics";
 
 const PLAY_DEPTH_COLORS = {
@@ -390,7 +392,7 @@ function ConnectionMetricsSection({
   granularityFallback: boolean;
   granularity: StudioHomeGranularity;
   onGranularityChange: (value: StudioHomeGranularity) => void;
-  metrics: ReturnType<typeof useStudioHomeMetrics>["metrics"];
+  metrics: StudioHomeConnectionMetrics;
 }) {
   const showCharts = shouldRenderStudioHomeCharts(metrics, rpcReady);
   const hasStaleChartData = metrics.months.length > 0;
@@ -828,6 +830,55 @@ function DevHintsSection() {
   );
 }
 
+export type StudioHomeViewProps = {
+  granularity: StudioHomeGranularity;
+  onGranularityChange: (value: StudioHomeGranularity) => void;
+  metrics: StudioHomeConnectionMetrics;
+  highlights: StudioHomeHighlights;
+  initialLoading?: boolean;
+  fetching?: boolean;
+  rpcReady?: boolean;
+  granularityFallback?: boolean;
+  highlightsLoading?: boolean;
+};
+
+export function StudioHomeView({
+  granularity,
+  onGranularityChange,
+  metrics,
+  highlights,
+  initialLoading = false,
+  fetching = false,
+  rpcReady = true,
+  granularityFallback = false,
+  highlightsLoading = false,
+}: StudioHomeViewProps) {
+  return (
+    <div className="mx-auto max-w-7xl space-y-8 pb-6">
+      <ConnectionMetricsSection
+        initialLoading={initialLoading}
+        fetching={fetching}
+        rpcReady={rpcReady}
+        granularityFallback={granularityFallback}
+        granularity={granularity}
+        onGranularityChange={onGranularityChange}
+        metrics={metrics}
+      />
+
+      <HighlightsSection
+        unreadVoiceProjectCount={highlights.unreadVoiceProjectCount}
+        hasRecentCommunityReply={highlights.hasRecentCommunityReply}
+        loading={highlightsLoading}
+      />
+
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+        <QuickAccessSection />
+        <DevHintsSection />
+      </div>
+    </div>
+  );
+}
+
 export function StudioHomePage() {
   const [granularity, setGranularity] = useState<StudioHomeGranularity>("month");
   const { metrics, initialLoading, fetching, rpcReady, granularityFallback } =
@@ -836,28 +887,17 @@ export function StudioHomePage() {
 
   return (
     <StudioShell activeNav="home">
-      <div className="mx-auto max-w-7xl space-y-8 pb-6">
-        <ConnectionMetricsSection
-          initialLoading={initialLoading}
-          fetching={fetching}
-          rpcReady={rpcReady}
-          granularityFallback={granularityFallback}
-          granularity={granularity}
-          onGranularityChange={setGranularity}
-          metrics={metrics}
-        />
-
-        <HighlightsSection
-          unreadVoiceProjectCount={highlights.unreadVoiceProjectCount}
-          hasRecentCommunityReply={highlights.hasRecentCommunityReply}
-          loading={highlightsLoading}
-        />
-
-        <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
-          <QuickAccessSection />
-          <DevHintsSection />
-        </div>
-      </div>
+      <StudioHomeView
+        granularity={granularity}
+        onGranularityChange={setGranularity}
+        metrics={metrics}
+        highlights={highlights}
+        initialLoading={initialLoading}
+        fetching={fetching}
+        rpcReady={rpcReady}
+        granularityFallback={granularityFallback}
+        highlightsLoading={highlightsLoading}
+      />
     </StudioShell>
   );
 }
