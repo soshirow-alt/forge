@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "type": "module",
+  "description": "Isolated promo artboard PNG export — not part of Next.js app",
+  "scripts": {
+    "export": "node export-png.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.1"
+  }
+}

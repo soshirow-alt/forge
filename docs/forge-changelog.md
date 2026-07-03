@@ -4,6 +4,10 @@
 
 ---
 
+- **広告用静的アートボード（本体と分離）** — `tools/promo-artboards/` に X 投稿用 4 画面（HTML/CSS、1200×675 PNG 書き出し可）。本番 DB・seed・app ルート・deploy には非接触
+
+---
+
 - **みんなのフィードバック（本番）** — `/games/[id]` の voices タブを production mode でも集計表示に。既存 RPC `get_public_voice_aggregates` + `EveryonesVoiceSection` を再利用。個別回答・自由記述本文は非公開（件数のみ）。回答3件未満は傾向非表示。DB migration なし
 
 ---
