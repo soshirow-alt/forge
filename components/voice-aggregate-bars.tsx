@@ -30,7 +30,7 @@ export function VoiceAggregateBars({
     <div className={compact ? "space-y-1.5" : "space-y-2"}>
       {topBucket ? (
         <p className="text-xs text-orange-300/90">
-          多かった声: {topBucket.answerLabel}
+          多かった反応: {topBucket.answerLabel}
         </p>
       ) : null}
       {sorted.map((bucket) => {
