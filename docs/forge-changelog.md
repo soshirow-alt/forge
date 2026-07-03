@@ -4,6 +4,7 @@
 
 ---
 
+- **本番 deploy** — `preview/landing-01` を `main` に fast-forward（`3b90393`）。Studio ホーム（実データ3カード・日/週/月切替）、みんなのFB集計表示・文言統一、`tools/promo-artboards/`（本体ルート非接触）。migration 036/037 は Dashboard 適用済み前提。`PLAYER_VISIBLE=false` 維持。`origin/main` と `origin/preview/landing-01` を同一 commit に同期
 - **みんなのフィードバック（文言）** — `/games/[id]` voices タブの「声」表現を「反応」「フィードバック」に統一。少数回答時の重複説明をカード内のみに整理
 - **Studio ホーム UI（フッター下余白）** — 3カード共通のフッター行高を 7.75rem → 7.25rem に微調整。見出し・リスト位置は維持
 - **Studio ホーム UI（v0テイスト）** — `/studio` メインコンテンツのみ。グラス感・グラデーション・アイコン付きクイックアクセス・リッチな3グラフカード。文言を「プレイの深さ」「フィードバックの深さ」「見届けの広がり」等に統一。shell / DB / RPC / hooks は変更なし
