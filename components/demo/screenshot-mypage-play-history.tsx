@@ -128,7 +128,7 @@ export function ScreenshotMypagePlayHistoryPage() {
                   </span>
                 </div>
                 <h3 className="mt-2 text-sm font-semibold text-white">深淵ノート</h3>
-                <p className="mt-1 text-xs text-zinc-500">v1.0.0 到達 · 2025/05/12</p>
+                <p className="mt-1 text-xs text-zinc-500">v1.0.0 到達 · 1週間前</p>
               </div>
             </div>
           </div>

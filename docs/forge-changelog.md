@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-03 — スクリーンショット撮影用 `/demo/screenshot/*`（追記）
+
+- **devlog タブ** — 固定 Preview（`VERCEL_ENV=production`）でも空にならないよう、fixture 専用パネルに差し替え（3件・声を受けた改善文面）
+- **日付表示** — 代表作まわりを相対表現（3時間前 / 昨日 / 3日前 等）に統一
+
+---
+
 ## 2026-07-03 — スクリーンショット撮影用 `/demo/screenshot/*`
 
 - **追加** — X投稿・LP向けの固定 fixture 画面（Preview / localhost のみ。本番 hostname では `/demo/*` 404）

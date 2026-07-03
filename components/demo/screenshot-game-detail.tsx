@@ -3,7 +3,7 @@
 import { GameDetailHeroGallery } from "@/components/game-detail-hero-gallery";
 import { GameDetailPhaseBadge } from "@/components/game-detail-phase-badge";
 import { GameDetailPlayerOverview } from "@/components/game-detail-player-overview";
-import { GameDevlogV0Tab } from "@/components/game-devlog-v0-tab";
+import { ScreenshotGameDevlogPanel } from "@/components/demo/screenshot-game-devlog-panel";
 import { GameVoicesV0Tab } from "@/components/game-voices-v0-tab";
 import { PlayerShell } from "@/components/player-shell";
 import { screenshotFlagship } from "@/lib/demo/screenshot-catalog";
@@ -16,6 +16,7 @@ import type {
   GameDetailOverviewActivity,
   GameDetailPlayerMeta,
 } from "@/lib/game-detail-player-meta";
+import { useMemo } from "react";
 import { getGameDetailV0 } from "@/lib/game-detail-v0-mock-data";
 import { PROJECT_TITLE_HERO_CLASS } from "@/lib/project-title";
 import { Bookmark, Check, Clock, Heart, Play } from "lucide-react";
@@ -86,7 +87,7 @@ const screenshotPlayerMeta: GameDetailPlayerMeta = {
 };
 
 const screenshotOverviewActivity: GameDetailOverviewActivity = {
-  lastUpdated: screenshotFlagship.lastUpdated,
+  lastUpdated: screenshotFlagship.lastUpdatedLabel,
   hasDevlog: true,
   devlogLabel: "3日前 — チュートリアル短縮と序盤イベント調整",
   voiceCount: screenshotFlagship.voiceCount,
@@ -101,7 +102,18 @@ export function ScreenshotGameDetailPage({
 }) {
   const resolvedId =
     gameId === SCREENSHOT_FLAGSHIP_GAME_ID ? SCREENSHOT_FLAGSHIP_GAME_ID : gameId;
-  const game = getGameDetailV0(resolvedId);
+  const game = useMemo(() => {
+    const base = getGameDetailV0(resolvedId);
+    return {
+      ...base,
+      title: screenshotFlagship.title,
+      currentVersion: screenshotFlagship.version,
+      lastUpdated: screenshotFlagship.lastUpdatedLabel,
+      devlogUpdatedAgo: "3日前",
+      voiceCount: screenshotFlagship.voiceCount,
+      witnessCount: screenshotFlagship.witnessCount,
+    };
+  }, [resolvedId]);
 
   return (
     <PlayerShell>
@@ -204,9 +216,7 @@ export function ScreenshotGameDetailPage({
             />
           )}
 
-          {activeTab === "devlog" && (
-            <GameDevlogV0Tab gameId={resolvedId} onPlayLatest={noop} />
-          )}
+          {activeTab === "devlog" && <ScreenshotGameDevlogPanel />}
 
           {activeTab === "voices" && (
             <GameVoicesV0Tab

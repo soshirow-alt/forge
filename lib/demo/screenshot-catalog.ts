@@ -1,4 +1,5 @@
 import type { HomeGameCard } from "@/lib/home-v0-mock-data";
+import type { GameDevlogEntry } from "@/lib/game-devlog-v0-mock-data";
 import type { StudioProjectCard } from "@/lib/studio-projects-v0-mock-data";
 import { SCREENSHOT_FLAGSHIP_GAME_ID } from "@/lib/demo/screenshot-routes";
 
@@ -13,11 +14,60 @@ export const screenshotFlagship = {
   thumbnail: "/images/landing/game-1.png",
   version: "v0.4.0",
   updatedLabel: "3時間前更新",
-  lastUpdated: "2025/05/18",
+  lastUpdatedLabel: "3日前",
   voiceCount: 48,
   witnessCount: 32,
   lead: "失われた星の記憶を探す、夜の森の旅。ランタンの光を頼りに、静かな物語を辿る。",
 } as const;
+
+export const screenshotDevlogEntries: GameDevlogEntry[] = [
+  {
+    id: "ss-devlog-1",
+    version: "v0.4.0",
+    publishedAt: "3日前",
+    relativeLabel: "3日前",
+    title: "チュートリアル短縮と序盤イベント調整",
+    excerpt:
+      "プレイヤーのフィードバックを反映し、チュートリアルを約30%短くしました。序盤の森マップに目印を追加し、最初の「旅の実感」が出るまでの導線を見直しています。",
+    highlights: [
+      "チュートリアルテキストを整理",
+      "序盤の森マップに目印を追加",
+      "プレイヤーの声を反映した導線改善",
+    ],
+    kind: "version",
+    isLatest: true,
+  },
+  {
+    id: "ss-devlog-2",
+    version: "v0.3.2",
+    publishedAt: "1週間前",
+    relativeLabel: "1週間前",
+    title: "ランタン演出とBGMの改善",
+    excerpt:
+      "「夜の森の雰囲気がもっと欲しい」という声を受け、ランタンの光量とBGMの切り替えを見直しました。探索の没入感が上がるよう調整しています。",
+    highlights: [
+      "ランタンの光量と範囲を調整",
+      "エリアごとのBGMフェードを改善",
+      "プレイヤーFBを反映した雰囲気作り",
+    ],
+    kind: "version",
+  },
+  {
+    id: "ss-devlog-3",
+    version: "v0.3.0",
+    publishedAt: "2週間前",
+    relativeLabel: "2週間前",
+    title: "プレイヤーの声を受けた戦闘テンポ調整",
+    excerpt:
+      "戦闘前後のフェードと待ち時間を調整。複数のフィードバックで指摘されたテンポ問題を改善し、探索のリズムが途切れにくくなりました。",
+    highlights: [
+      "イベント間の待機を短縮",
+      "戦闘後の戻り時間を調整",
+      "「テンポが良くなった」という声が増加",
+    ],
+    kind: "version",
+  },
+];
 
 function homeCard(
   id: string,
@@ -193,10 +243,10 @@ export const screenshotPlayHistory: ScreenshotPlayHistoryEntry[] = [
     image: screenshotFlagship.thumbnail,
     genre: screenshotFlagship.genre,
     tags: ["見届け中", "応援中の作者"],
-    lastPlay: "2025/05/18",
+    lastPlay: "昨日",
     playCount: 4,
     timeline: [
-      "v0.4.0 をプレイ — チュートリアル短縮を確認",
+      "v0.4.0 をプレイ — チュートリアル短縮を確認（3日前の更新）",
       "v0.3.2 をプレイ — 序盤イベントのテンポ改善",
       "初声を届けた — 「世界観がとても良かった」",
       "v0.1.0 をプレイ — はじめての旅",
@@ -209,7 +259,7 @@ export const screenshotPlayHistory: ScreenshotPlayHistoryEntry[] = [
     image: "/images/landing/game-2.png",
     genre: "ナラティブRPG",
     tags: ["見届け中"],
-    lastPlay: "2025/05/14",
+    lastPlay: "3日前",
     playCount: 2,
     timeline: [
       "v0.3.2 をプレイ",
@@ -224,7 +274,7 @@ export const screenshotPlayHistory: ScreenshotPlayHistoryEntry[] = [
     image: "/images/landing/game-5.png",
     genre: "ホラー",
     tags: ["見届け中", "正式ver到達"],
-    lastPlay: "2025/05/12",
+    lastPlay: "1週間前",
     playCount: 5,
     timeline: [
       "正式ver到達を見届けた",
