@@ -1,0 +1,276 @@
+import type { HomeGameCard } from "@/lib/home-v0-mock-data";
+import type { StudioProjectCard } from "@/lib/studio-projects-v0-mock-data";
+import { SCREENSHOT_FLAGSHIP_GAME_ID } from "@/lib/demo/screenshot-routes";
+
+export { SCREENSHOT_FLAGSHIP_GAME_ID };
+
+export const screenshotFlagship = {
+  id: SCREENSHOT_FLAGSHIP_GAME_ID,
+  title: "星灯の旅路",
+  developerName: "Sora Games",
+  developerId: "sora-games",
+  genre: "アドベンチャー",
+  thumbnail: "/images/landing/game-1.png",
+  version: "v0.4.0",
+  updatedLabel: "3時間前更新",
+  lastUpdated: "2025/05/18",
+  voiceCount: 48,
+  witnessCount: 32,
+  lead: "失われた星の記憶を探す、夜の森の旅。ランタンの光を頼りに、静かな物語を辿る。",
+} as const;
+
+function homeCard(
+  id: string,
+  title: string,
+  image: string,
+  genre: string,
+  updatedLabel: string,
+  voiceCount: number,
+  witnessCount: number,
+  version = "v0.3.2",
+): HomeGameCard {
+  return {
+    id,
+    title,
+    version,
+    description: "",
+    image,
+    genre,
+    updatedLabel,
+    voiceCount,
+    witnessCount,
+  };
+}
+
+export const screenshotHeroSlides: HomeGameCard[] = [
+  {
+    id: screenshotFlagship.id,
+    title: screenshotFlagship.title,
+    version: screenshotFlagship.version,
+    description: screenshotFlagship.lead,
+    image: screenshotFlagship.thumbnail,
+    genre: screenshotFlagship.genre,
+    updatedLabel: "昨日更新",
+    voiceCount: screenshotFlagship.voiceCount,
+    witnessCount: screenshotFlagship.witnessCount,
+  },
+  homeCard(
+    "ss-roshin",
+    "炉心の残光",
+    "/images/landing/game-2.png",
+    "ナラティブRPG",
+    "3日前更新",
+    36,
+    24,
+    "v0.3.2",
+  ),
+  homeCard(
+    "ss-sorashima",
+    "空島パイオニア",
+    "/images/landing/game-3.png",
+    "サバイバルクラフト",
+    "1週間前更新",
+    29,
+    22,
+    "v0.2.1",
+  ),
+];
+
+export const screenshotRecentlyUpdated: HomeGameCard[] = [
+  homeCard(
+    screenshotFlagship.id,
+    screenshotFlagship.title,
+    screenshotFlagship.thumbnail,
+    screenshotFlagship.genre,
+    "3時間前更新",
+    24,
+    15,
+    screenshotFlagship.version,
+  ),
+  homeCard(
+    "ss-shinen",
+    "深淵ノート",
+    "/images/landing/game-5.png",
+    "ホラー",
+    "8時間前更新",
+    31,
+    19,
+    "v0.5.1",
+  ),
+  homeCard(
+    "ss-ember",
+    "余燼の王国",
+    "/demo-thumbnails/emberfall.svg",
+    "アクションRPG",
+    "1日前更新",
+    28,
+    18,
+    "v0.2.0",
+  ),
+  homeCard(
+    "ss-neon",
+    "ネオンドリフト",
+    "/demo-thumbnails/neon-drift.svg",
+    "レース",
+    "2日前更新",
+    22,
+    14,
+    "v0.1.8",
+  ),
+  homeCard(
+    "ss-natsu",
+    "夏の向こう側",
+    "/images/landing/game-4.png",
+    "日常アドベンチャー",
+    "3日前更新",
+    15,
+    8,
+    "v0.2.4",
+  ),
+];
+
+export const screenshotPopular: HomeGameCard[] = [
+  homeCard(
+    screenshotFlagship.id,
+    screenshotFlagship.title,
+    screenshotFlagship.thumbnail,
+    screenshotFlagship.genre,
+    "今週",
+    48,
+    32,
+    screenshotFlagship.version,
+  ),
+  homeCard(
+    "ss-roshin",
+    "炉心の残光",
+    "/images/landing/game-2.png",
+    "ナラティブRPG",
+    "今週",
+    36,
+    24,
+  ),
+  homeCard(
+    "ss-hollow",
+    "虚ろな信号",
+    "/demo-thumbnails/hollow-signal.svg",
+    "サバイバルホラー",
+    "今週",
+    27,
+    16,
+    "v0.4.1",
+  ),
+  homeCard(
+    "ss-mori",
+    "森の中の小さな工房",
+    "/images/landing/game-5.png",
+    "シミュレーション",
+    "今週",
+    20,
+    12,
+    "v0.1.5",
+  ),
+];
+
+export const screenshotNewGames: HomeGameCard[] = screenshotRecentlyUpdated.slice(0, 4);
+
+export type ScreenshotPlayHistoryEntry = {
+  title: string;
+  version: string;
+  description: string;
+  image: string;
+  genre: string;
+  tags: string[];
+  lastPlay: string;
+  playCount: number;
+  timeline: string[];
+};
+
+export const screenshotPlayHistory: ScreenshotPlayHistoryEntry[] = [
+  {
+    title: screenshotFlagship.title,
+    version: screenshotFlagship.version,
+    description: "夜の森を旅する短編アドベンチャー",
+    image: screenshotFlagship.thumbnail,
+    genre: screenshotFlagship.genre,
+    tags: ["見届け中", "応援中の作者"],
+    lastPlay: "2025/05/18",
+    playCount: 4,
+    timeline: [
+      "v0.4.0 をプレイ — チュートリアル短縮を確認",
+      "v0.3.2 をプレイ — 序盤イベントのテンポ改善",
+      "初声を届けた — 「世界観がとても良かった」",
+      "v0.1.0 をプレイ — はじめての旅",
+    ],
+  },
+  {
+    title: "炉心の残光",
+    version: "v0.3.2",
+    description: "心の奥に残る、静かな物語",
+    image: "/images/landing/game-2.png",
+    genre: "ナラティブRPG",
+    tags: ["見届け中"],
+    lastPlay: "2025/05/14",
+    playCount: 2,
+    timeline: [
+      "v0.3.2 をプレイ",
+      "フィードバックを届けた",
+      "v0.2.0 をプレイ",
+    ],
+  },
+  {
+    title: "深淵ノート",
+    version: "v0.5.1",
+    description: "地下書庫を探索するホラーアドベンチャー",
+    image: "/images/landing/game-5.png",
+    genre: "ホラー",
+    tags: ["見届け中", "正式ver到達"],
+    lastPlay: "2025/05/12",
+    playCount: 5,
+    timeline: [
+      "正式ver到達を見届けた",
+      "v0.5.1 をプレイ — 新エリア追加",
+      "v0.4.0 をプレイ",
+    ],
+  },
+];
+
+export const screenshotStudioProjects: StudioProjectCard[] = [
+  {
+    id: "ss-studio-flagship",
+    title: screenshotFlagship.title,
+    genres: `${screenshotFlagship.genre}・ファンタジー`,
+    phase: "通しプレイ版",
+    image: screenshotFlagship.thumbnail,
+    witnessCount: screenshotFlagship.witnessCount,
+    voiceCount: screenshotFlagship.voiceCount,
+    firstVoiceCount: 42,
+    updatedLabel: "3時間前",
+    version: screenshotFlagship.version,
+    notificationCount: 3,
+  },
+  {
+    id: "ss-studio-roshin",
+    title: "炉心の残光",
+    genres: "ナラティブRPG",
+    phase: "プレイ可能版",
+    image: "/images/landing/game-2.png",
+    witnessCount: 24,
+    voiceCount: 18,
+    firstVoiceCount: 18,
+    updatedLabel: "2日前",
+    version: "v0.3.2",
+    notificationCount: 1,
+  },
+  {
+    id: "ss-studio-shinen",
+    title: "深淵ノート",
+    genres: "ホラー・アドベンチャー",
+    phase: "正式版",
+    image: "/images/landing/game-5.png",
+    witnessCount: 19,
+    voiceCount: 31,
+    firstVoiceCount: 31,
+    updatedLabel: "1週間前",
+    version: "v1.0.0",
+  },
+];

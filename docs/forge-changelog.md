@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-07-03 — スクリーンショット撮影用 `/demo/screenshot/*`
+
+- **追加** — X投稿・LP向けの固定 fixture 画面（Preview / localhost のみ。本番 hostname では `/demo/*` 404）
+- **6シーン** — プレイヤーホーム、作品詳細（概要 / みんなの声 / 開発ログ）、マイページ・プレイ履歴、Studio・あなたの作品
+- **データ** — `lib/demo/screenshot-catalog.ts`（代表作「星灯の旅路」を軸に世界観統一）。Supabase seed・API 書き込みなし
+- **ハブ** — `/demo/screenshot` から各シーンへ。本番導線・サイドバーにはリンクなし
+- **確認** — `npm run dev` → `http://localhost:3000/demo/screenshot`（撮影時はブラウザ幅 1280px+ 推奨）
+
+---
+
 - **Studio 用語統一（声・Devlog）** — 開発のヒント・はじめてガイド・育成ループ・プロフィール等のユーザー向け文言から「声」「Devlog」を排除（フィードバック / 開発ログに統一）
 - **本番 deploy** — `preview/landing-01` を `main` に fast-forward（`3b90393`）。Studio ホーム（実データ3カード・日/週/月切替）、みんなのFB集計表示・文言統一、`tools/promo-artboards/`（本体ルート非接触）。migration 036/037 は Dashboard 適用済み前提。`PLAYER_VISIBLE=false` 維持。`origin/main` と `origin/preview/landing-01` を同一 commit に同期
 - **みんなのフィードバック（文言）** — `/games/[id]` voices タブの「声」表現を「反応」「フィードバック」に統一。少数回答時の重複説明をカード内のみに整理
