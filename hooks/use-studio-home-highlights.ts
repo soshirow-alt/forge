@@ -33,20 +33,22 @@ export function useStudioHomeHighlights() {
 
   useEffect(() => {
     if (!user) {
-      setHighlights(EMPTY_HIGHLIGHTS);
-      setLoading(false);
       return;
     }
 
     const supabase = getOptionalSupabaseClient();
     if (!supabase) {
-      setHighlights(EMPTY_HIGHLIGHTS);
-      setLoading(false);
       return;
     }
 
     let active = true;
-    setLoading(true);
+
+    queueMicrotask(() => {
+      if (!active) {
+        return;
+      }
+      setLoading(true);
+    });
 
     void fetchStudioHomeHighlights(supabase, user.id, publicProjects)
       .then((result) => {
@@ -70,5 +72,8 @@ export function useStudioHomeHighlights() {
     };
   }, [publicProjects, user]);
 
-  return { highlights, loading };
+  return {
+    highlights: user ? highlights : EMPTY_HIGHLIGHTS,
+    loading: user ? (getOptionalSupabaseClient() ? loading : false) : false,
+  };
 }

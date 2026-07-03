@@ -29,12 +29,17 @@ export function useStudioHomeMetrics(granularity: StudioHomeGranularity = "month
     let active = true;
     const isRefetch = hasLoadedRef.current;
 
-    if (isRefetch) {
-      setFetching(true);
-    } else {
-      setInitialLoading(true);
-    }
-    setError(false);
+    queueMicrotask(() => {
+      if (!active) {
+        return;
+      }
+      if (isRefetch) {
+        setFetching(true);
+      } else {
+        setInitialLoading(true);
+      }
+      setError(false);
+    });
 
     void fetch(`/api/studio/home-metrics?granularity=${granularity}`, { cache: "no-store" })
       .then(async (response) => {
