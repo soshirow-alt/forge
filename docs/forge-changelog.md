@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-07-03 — スクリーンショット撮影用 `/demo/screenshot/*`（Studio 追記）
+
+- **Studio シーン** — 旧「あなたの作品」リスト（ad-screenshot 風）を廃止。fixture 専用の **Studio ホーム** に差し替え（見出し・気になる動き・作品カード・6段 micro rail・次のアクション）。代表作「星灯の旅路」は catalog と整合
+
+---
+
 ## 2026-07-03 — スクリーンショット撮影用 `/demo/screenshot/*`（追記）
 
 - **devlog タブ** — 固定 Preview（`VERCEL_ENV=production`）でも空にならないよう、fixture 専用パネルに差し替え（3件・声を受けた改善文面）

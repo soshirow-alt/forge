@@ -30,8 +30,8 @@ export const SCREENSHOT_SCENES = [
   },
   {
     href: "/demo/screenshot/studio",
-    title: "Studio・あなたの作品",
-    description: "開発者に届く反応が見える画面",
+    title: "Studio ホーム",
+    description: "作品ごとの現在地・6段rail・次のアクション",
   },
 ] as const;
 

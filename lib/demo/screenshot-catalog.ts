@@ -284,7 +284,33 @@ export const screenshotPlayHistory: ScreenshotPlayHistoryEntry[] = [
   },
 ];
 
-export const screenshotStudioProjects: StudioProjectCard[] = [
+export type ScreenshotStudioLifecycleStepId =
+  | "submit"
+  | "published"
+  | "read"
+  | "improve"
+  | "newVersion"
+  | "official";
+
+export const SCREENSHOT_STUDIO_LIFECYCLE_STEPS: {
+  id: ScreenshotStudioLifecycleStepId;
+  label: string;
+}[] = [
+  { id: "submit", label: "投稿" },
+  { id: "published", label: "公開中" },
+  { id: "read", label: "回答を見る" },
+  { id: "improve", label: "改善する" },
+  { id: "newVersion", label: "新版公開" },
+  { id: "official", label: "正式版公開" },
+];
+
+export type ScreenshotStudioHomeProject = StudioProjectCard & {
+  currentStepId: ScreenshotStudioLifecycleStepId;
+  nextAction: string;
+  cycleNumber?: number;
+};
+
+export const screenshotStudioHomeProjects: ScreenshotStudioHomeProject[] = [
   {
     id: "ss-studio-flagship",
     title: screenshotFlagship.title,
@@ -297,6 +323,9 @@ export const screenshotStudioProjects: StudioProjectCard[] = [
     updatedLabel: "3時間前",
     version: screenshotFlagship.version,
     notificationCount: 3,
+    currentStepId: "read",
+    cycleNumber: 3,
+    nextAction: "新着フィードバックを確認する",
   },
   {
     id: "ss-studio-roshin",
@@ -310,6 +339,9 @@ export const screenshotStudioProjects: StudioProjectCard[] = [
     updatedLabel: "2日前",
     version: "v0.3.2",
     notificationCount: 1,
+    currentStepId: "improve",
+    cycleNumber: 2,
+    nextAction: "次に直すことを決めて修正する",
   },
   {
     id: "ss-studio-shinen",
@@ -322,5 +354,10 @@ export const screenshotStudioProjects: StudioProjectCard[] = [
     firstVoiceCount: 31,
     updatedLabel: "1週間前",
     version: "v1.0.0",
+    currentStepId: "official",
+    nextAction: "正式版として公開済み — 見届けを確認",
   },
 ];
+
+/** @deprecated Use screenshotStudioHomeProjects for screenshot studio page */
+export const screenshotStudioProjects: StudioProjectCard[] = screenshotStudioHomeProjects;

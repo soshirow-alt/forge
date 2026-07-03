@@ -1,5 +1,5 @@
-import { ScreenshotStudioOwnedPage } from "@/components/demo/screenshot-studio-owned";
+import { ScreenshotStudioHomePage } from "@/components/demo/screenshot-studio-home";
 
 export default function ScreenshotStudioRoute() {
-  return <ScreenshotStudioOwnedPage />;
+  return <ScreenshotStudioHomePage />;
 }
