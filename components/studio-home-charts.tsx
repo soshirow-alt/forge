@@ -1,7 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { formatStudioHomeMonthLabel } from "@/lib/studio-home-metrics";
+import type { StudioHomeGranularity } from "@/lib/studio-home-metrics";
+import { formatStudioHomePeriodChartLabel } from "@/lib/studio-home-metrics";
 
 const CHART_HEIGHT = 200;
 const CHART_PADDING = { top: 16, right: 12, bottom: 32, left: 40 };
@@ -15,6 +16,13 @@ function useChartInner(size: ChartSize) {
   const innerWidth = Math.max(0, size.width - CHART_PADDING.left - CHART_PADDING.right);
   const innerHeight = Math.max(0, size.height - CHART_PADDING.top - CHART_PADDING.bottom);
   return { innerWidth, innerHeight };
+}
+
+function xAtIndex(index: number, count: number, innerWidth: number, left: number): number {
+  if (count <= 1) {
+    return left + innerWidth / 2;
+  }
+  return left + (index / (count - 1)) * innerWidth;
 }
 
 function computeYMax(values: number[]): number {
@@ -43,12 +51,12 @@ function yTicks(max: number): number[] {
 function ChartFrame({
   size,
   yMax,
-  monthLabels,
+  periodLabels,
   children,
 }: {
   size: ChartSize;
   yMax: number;
-  monthLabels: string[];
+  periodLabels: string[];
   children: ReactNode;
 }) {
   const { innerWidth, innerHeight } = useChartInner(size);
@@ -93,12 +101,8 @@ function ChartFrame({
           </g>
         );
       })}
-      {monthLabels.map((label, index) => {
-        const x =
-          CHART_PADDING.left +
-          (monthLabels.length <= 1
-            ? innerWidth / 2
-            : (index / (monthLabels.length - 1)) * innerWidth);
+      {periodLabels.map((label, index) => {
+        const x = xAtIndex(index, periodLabels.length, innerWidth, CHART_PADDING.left);
         return (
           <text
             key={`${label}-${index}`}
@@ -130,23 +134,28 @@ function gradientId(key: string) {
 }
 
 export function StudioHomeStackedBarChart({
-  months,
+  periods,
+  granularity,
   series,
 }: {
-  months: string[];
+  periods: string[];
+  granularity: StudioHomeGranularity;
   series: { key: string; label: string; values: number[]; color: string }[];
 }) {
   const size: ChartSize = { width: 360, height: CHART_HEIGHT };
   const { innerWidth, innerHeight } = useChartInner(size);
-  const monthLabels = months.map(formatStudioHomeMonthLabel);
-  const totals = months.map((_, index) =>
+  const periodLabels = periods.map((period) =>
+    formatStudioHomePeriodChartLabel(period, granularity),
+  );
+  const totals = periods.map((_, index) =>
     series.reduce((sum, item) => sum + (item.values[index] ?? 0), 0),
   );
   const yMax = computeYMax(totals);
-  const barWidth = months.length > 0 ? innerWidth / months.length : innerWidth;
+  const barSpan =
+    periods.length <= 1 ? innerWidth * 0.4 : (innerWidth / (periods.length - 1)) * 0.55;
 
   return (
-    <ChartFrame size={size} yMax={yMax} monthLabels={monthLabels}>
+    <ChartFrame size={size} yMax={yMax} periodLabels={periodLabels}>
       <defs>
         {series.map((item) => (
           <linearGradient
@@ -162,15 +171,20 @@ export function StudioHomeStackedBarChart({
           </linearGradient>
         ))}
       </defs>
-      {months.map((month, monthIndex) => {
-        const x = CHART_PADDING.left + monthIndex * barWidth + barWidth * 0.12;
-        const width = barWidth * 0.76;
+      {periods.map((period, periodIndex) => {
+        const centerX = xAtIndex(
+          periodIndex,
+          periods.length,
+          innerWidth,
+          CHART_PADDING.left,
+        );
+        const x = centerX - barSpan / 2;
         let cursorY = CHART_PADDING.top + innerHeight;
 
         return (
-          <g key={month}>
+          <g key={period}>
             {series.map((item) => {
-              const value = item.values[monthIndex] ?? 0;
+              const value = item.values[periodIndex] ?? 0;
               const height = yMax > 0 ? (value / yMax) * innerHeight : 0;
               cursorY -= height;
               return (
@@ -178,7 +192,7 @@ export function StudioHomeStackedBarChart({
                   key={item.key}
                   x={x}
                   y={cursorY}
-                  width={width}
+                  width={barSpan}
                   height={height}
                   rx={4}
                   fill={`url(#${gradientId(item.key)})`}
@@ -193,23 +207,25 @@ export function StudioHomeStackedBarChart({
 }
 
 export function StudioHomeMultiLineChart({
-  months,
+  periods,
+  granularity,
   series,
   fillAreas = false,
 }: {
-  months: string[];
+  periods: string[];
+  granularity: StudioHomeGranularity;
   series: { key: string; label: string; values: number[]; color: string }[];
   fillAreas?: boolean;
 }) {
   const size: ChartSize = { width: 360, height: CHART_HEIGHT };
   const { innerWidth, innerHeight } = useChartInner(size);
-  const monthLabels = months.map(formatStudioHomeMonthLabel);
+  const periodLabels = periods.map((period) =>
+    formatStudioHomePeriodChartLabel(period, granularity),
+  );
   const yMax = computeYMax(series.flatMap((item) => item.values));
 
   function pointAt(index: number, value: number) {
-    const x =
-      CHART_PADDING.left +
-      (months.length <= 1 ? innerWidth / 2 : (index / (months.length - 1)) * innerWidth);
+    const x = xAtIndex(index, periods.length, innerWidth, CHART_PADDING.left);
     const y = CHART_PADDING.top + innerHeight - (value / yMax) * innerHeight;
     return { x, y };
   }
@@ -217,7 +233,7 @@ export function StudioHomeMultiLineChart({
   const baselineY = CHART_PADDING.top + innerHeight;
 
   return (
-    <ChartFrame size={size} yMax={yMax} monthLabels={monthLabels}>
+    <ChartFrame size={size} yMax={yMax} periodLabels={periodLabels}>
       <defs>
         {series.map((item) => (
           <linearGradient
@@ -283,7 +299,7 @@ export function StudioHomeChartLegend({
   items: { label: string; color: string }[];
 }) {
   return (
-    <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-2">
+    <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
       {items.map((item) => (
         <li key={item.label} className="flex items-center gap-2 text-xs font-medium text-zinc-400">
           <span

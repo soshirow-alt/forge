@@ -31,6 +31,21 @@ export type StudioHomeHighlights = {
 
 export const STUDIO_HOME_METRICS_MONTH_COUNT = 6;
 
+export type StudioHomeGranularity = "day" | "week" | "month";
+
+export const STUDIO_HOME_GRANULARITY_OPTIONS: {
+  id: StudioHomeGranularity;
+  label: string;
+}[] = [
+  { id: "day", label: "日次（直近6日間）" },
+  { id: "week", label: "週次（直近6週間）" },
+  { id: "month", label: "月次（直近6か月）" },
+];
+
+export function isStudioHomeGranularity(value: string): value is StudioHomeGranularity {
+  return value === "day" || value === "week" || value === "month";
+}
+
 export const EMPTY_STUDIO_HOME_CONNECTION_METRICS: StudioHomeConnectionMetrics = {
   months: [],
   playDepth: [],
@@ -45,6 +60,49 @@ export function formatStudioHomeMonthLabel(monthKey: string): string {
     return monthKey;
   }
   return `${monthNumber}月`;
+}
+
+export function formatStudioHomePeriodChartLabel(
+  periodKey: string,
+  granularity: StudioHomeGranularity,
+): string {
+  if (granularity === "month") {
+    return formatStudioHomeMonthLabel(periodKey);
+  }
+  const parts = periodKey.split("-");
+  const month = Number.parseInt(parts[1] ?? "", 10);
+  const day = Number.parseInt(parts[2] ?? "", 10);
+  if (!Number.isFinite(month) || !Number.isFinite(day)) {
+    return periodKey;
+  }
+  if (granularity === "day") {
+    return `${month}/${day}`;
+  }
+  return `${month}/${day}週`;
+}
+
+export function formatStudioHomePeriodFooterLabel(
+  periodKey: string,
+  granularity: StudioHomeGranularity,
+  kind: "breakdown" | "current" | "witness",
+): string {
+  const chartLabel = formatStudioHomePeriodChartLabel(periodKey, granularity);
+  if (granularity === "month") {
+    if (kind === "witness") {
+      return `${chartLabel}末の目安`;
+    }
+    if (kind === "current") {
+      return `${chartLabel}の現在値`;
+    }
+    return `${chartLabel}の内訳`;
+  }
+  if (kind === "witness") {
+    return `${chartLabel}末の目安`;
+  }
+  if (kind === "current") {
+    return `${chartLabel}の現在値`;
+  }
+  return `${chartLabel}の内訳`;
 }
 
 export function hasStudioHomeConnectionData(metrics: StudioHomeConnectionMetrics): boolean {

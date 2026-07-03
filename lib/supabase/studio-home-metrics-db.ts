@@ -3,6 +3,7 @@ import { resolvePlayableVersion } from "@/lib/playable-version";
 import {
   EMPTY_STUDIO_HOME_CONNECTION_METRICS,
   type StudioHomeConnectionMetrics,
+  type StudioHomeGranularity,
   type StudioHomeHighlights,
 } from "@/lib/studio-home-metrics";
 
@@ -63,20 +64,42 @@ function normalizeMetrics(payload: RpcRow | null): StudioHomeConnectionMetrics {
 
 export async function fetchStudioHomeConnectionMetrics(
   supabase: SupabaseClient,
-): Promise<{ metrics: StudioHomeConnectionMetrics; rpcReady: boolean }> {
-  const { data, error } = await supabase.rpc("get_studio_home_connection_metrics");
+  granularity: StudioHomeGranularity = "month",
+): Promise<{
+  metrics: StudioHomeConnectionMetrics;
+  rpcReady: boolean;
+  granularityFallback: boolean;
+}> {
+  const { data, error } = await supabase.rpc("get_studio_home_connection_metrics", {
+    p_granularity: granularity,
+  });
 
-  if (error) {
-    if (isRpcMissing(error)) {
-      return { metrics: EMPTY_STUDIO_HOME_CONNECTION_METRICS, rpcReady: false };
-    }
-    throw error;
+  if (!error) {
+    return {
+      metrics: normalizeMetrics((data ?? null) as RpcRow | null),
+      rpcReady: true,
+      granularityFallback: false,
+    };
   }
 
-  return {
-    metrics: normalizeMetrics((data ?? null) as RpcRow | null),
-    rpcReady: true,
-  };
+  const legacy = await supabase.rpc("get_studio_home_connection_metrics");
+  if (!legacy.error) {
+    return {
+      metrics: normalizeMetrics((legacy.data ?? null) as RpcRow | null),
+      rpcReady: true,
+      granularityFallback: granularity !== "month",
+    };
+  }
+
+  if (isRpcMissing(error) || isRpcMissing(legacy.error)) {
+    return {
+      metrics: EMPTY_STUDIO_HOME_CONNECTION_METRICS,
+      rpcReady: false,
+      granularityFallback: false,
+    };
+  }
+
+  throw error;
 }
 
 const RECENT_COMMUNITY_REPLY_DAYS = 7;

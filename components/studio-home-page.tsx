@@ -7,6 +7,7 @@ import {
   ArrowUpRight,
   BookOpen,
   Calendar,
+  ChevronDown,
   ChevronRight,
   FileText,
   Gamepad2,
@@ -20,7 +21,7 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { StudioShell } from "@/components/studio-shell";
 import {
   StudioHomeChartLegend,
@@ -31,14 +32,15 @@ import { useStudioHomeHighlights } from "@/hooks/use-studio-home-highlights";
 import { useStudioHomeMetrics } from "@/hooks/use-studio-home-metrics";
 import {
   STUDIO_HOME_DEV_HINTS,
+  STUDIO_HOME_GRANULARITY_OPTIONS,
   STUDIO_HOME_QUICK_LINKS,
-  formatStudioHomeMonthLabel,
-  isWitnessSpreadEmpty,
+  formatStudioHomePeriodFooterLabel,
   latestStudioHomePlayDepth,
   latestStudioHomeVoiceFunnel,
   latestStudioHomeWitnessCommunity,
   shouldRenderStudioHomeCharts,
   voiceDeliveryRatePercent,
+  type StudioHomeGranularity,
 } from "@/lib/studio-home-metrics";
 
 const PLAY_DEPTH_COLORS = {
@@ -58,6 +60,8 @@ const WITNESS_COLORS = {
   communityMembers: "#fb7185",
 };
 
+const FOOTER_MIN_HEIGHT = "min-h-[8.75rem]";
+
 type CardAccent = "violet" | "sky" | "orange";
 
 const CARD_ACCENT_STYLES: Record<
@@ -68,7 +72,6 @@ const CARD_ACCENT_STYLES: Record<
     iconBg: string;
     icon: string;
     hover: string;
-    highlight: string;
   }
 > = {
   violet: {
@@ -77,7 +80,6 @@ const CARD_ACCENT_STYLES: Record<
     iconBg: "bg-violet-500/15 border-violet-500/25",
     icon: "text-violet-300",
     hover: "hover:border-violet-500/30 hover:shadow-violet-500/10",
-    highlight: "text-violet-300",
   },
   sky: {
     orb: "bg-sky-500/20",
@@ -85,7 +87,6 @@ const CARD_ACCENT_STYLES: Record<
     iconBg: "bg-sky-500/15 border-sky-500/25",
     icon: "text-sky-300",
     hover: "hover:border-sky-500/30 hover:shadow-sky-500/10",
-    highlight: "text-cyan-300",
   },
   orange: {
     orb: "bg-orange-500/20",
@@ -93,7 +94,6 @@ const CARD_ACCENT_STYLES: Record<
     iconBg: "bg-orange-500/15 border-orange-500/25",
     icon: "text-orange-300",
     hover: "hover:border-orange-500/30 hover:shadow-orange-500/10",
-    highlight: "text-orange-300",
   },
 };
 
@@ -145,10 +145,90 @@ function FooterBreakdownItem({
   value: string;
 }) {
   return (
-    <div className="flex items-center gap-2 text-sm text-zinc-400">
-      {color ? <MetricDot color={color} /> : null}
-      <span>{label}</span>
-      <span className="font-semibold tabular-nums text-zinc-200">{value}</span>
+    <div className="grid grid-cols-[auto_minmax(0,1fr)_3.25rem] items-center gap-x-2 text-sm">
+      {color ? <MetricDot color={color} /> : <span className="size-2 shrink-0" aria-hidden="true" />}
+      <span className="text-zinc-400">{label}</span>
+      <span className="text-right font-semibold tabular-nums text-zinc-200">{value}</span>
+    </div>
+  );
+}
+
+function FooterStatItem({
+  icon: Icon,
+  iconClass,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  iconClass: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="grid grid-cols-[auto_minmax(0,1fr)_3.25rem] items-center gap-x-2 text-sm">
+      <Icon className={`size-3.5 shrink-0 ${iconClass}`} aria-hidden="true" />
+      <span className="text-zinc-400">{label}</span>
+      <span className="text-right font-semibold tabular-nums text-zinc-200">{value}</span>
+    </div>
+  );
+}
+
+function PeriodGranularitySelect({
+  value,
+  onChange,
+}: {
+  value: StudioHomeGranularity;
+  onChange: (value: StudioHomeGranularity) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected =
+    STUDIO_HOME_GRANULARITY_OPTIONS.find((option) => option.id === value) ??
+    STUDIO_HOME_GRANULARITY_OPTIONS[2]!;
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="inline-flex items-center gap-2 rounded-xl border border-zinc-700/80 bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-300 shadow-sm backdrop-blur-sm transition-colors hover:border-zinc-600"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+      >
+        <Calendar className="size-4 text-zinc-500" aria-hidden="true" />
+        {selected.label}
+        <ChevronDown className="size-4 text-zinc-500" aria-hidden="true" />
+      </button>
+      {open && (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-20 cursor-default"
+            aria-label="メニューを閉じる"
+            onClick={() => setOpen(false)}
+          />
+          <ul
+            role="listbox"
+            className="absolute right-0 z-30 mt-1 min-w-[12.5rem] rounded-xl border border-zinc-800 bg-zinc-950 py-1 shadow-xl"
+          >
+            {STUDIO_HOME_GRANULARITY_OPTIONS.map((option) => (
+              <li key={option.id} role="option" aria-selected={option.id === value}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChange(option.id);
+                    setOpen(false);
+                  }}
+                  className={`block w-full px-3.5 py-2 text-left text-sm transition-colors hover:bg-zinc-900 ${
+                    option.id === value ? "text-violet-200" : "text-zinc-300"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   );
 }
@@ -160,7 +240,6 @@ function ConnectionChartCard({
   icon: Icon,
   children,
   footer,
-  footerNote,
 }: {
   title: string;
   description: string;
@@ -168,7 +247,6 @@ function ConnectionChartCard({
   icon: LucideIcon;
   children: ReactNode;
   footer: ReactNode;
-  footerNote?: ReactNode;
 }) {
   const styles = CARD_ACCENT_STYLES[accent];
 
@@ -191,10 +269,9 @@ function ConnectionChartCard({
           <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">{description}</p>
         </div>
       </div>
-      <div className="relative mt-5 rounded-xl border border-white/[0.04] bg-black/25 p-3 backdrop-blur-sm">
+      <div className="relative mt-5 flex-1 rounded-xl border border-white/[0.04] bg-black/25 p-3 backdrop-blur-sm">
         {children}
       </div>
-      {footerNote}
       <div className="relative mt-4 border-t border-white/[0.06] pt-4">{footer}</div>
     </article>
   );
@@ -203,32 +280,42 @@ function ConnectionChartCard({
 function ConnectionMetricsSection({
   loading,
   rpcReady,
+  granularityFallback,
+  granularity,
+  onGranularityChange,
   metrics,
 }: {
   loading: boolean;
   rpcReady: boolean;
+  granularityFallback: boolean;
+  granularity: StudioHomeGranularity;
+  onGranularityChange: (value: StudioHomeGranularity) => void;
   metrics: ReturnType<typeof useStudioHomeMetrics>["metrics"];
 }) {
   const showCharts = shouldRenderStudioHomeCharts(metrics, rpcReady);
   const playDepth = latestStudioHomePlayDepth(metrics);
   const voiceFunnel = latestStudioHomeVoiceFunnel(metrics);
   const witness = latestStudioHomeWitnessCommunity(metrics);
-  const witnessEmpty = isWitnessSpreadEmpty(metrics);
   const feedbackRate = voiceDeliveryRatePercent(voiceFunnel.voiced, voiceFunnel.played);
-  const monthLabels = metrics.months.map(formatStudioHomeMonthLabel);
-  const latestMonthLabel =
-    monthLabels[monthLabels.length - 1] ?? formatStudioHomeMonthLabel(metrics.months.at(-1) ?? "");
+  const latestPeriodKey = metrics.months.at(-1) ?? "";
+  const breakdownLabel = formatStudioHomePeriodFooterLabel(
+    latestPeriodKey,
+    granularity,
+    "breakdown",
+  );
+  const currentLabel = formatStudioHomePeriodFooterLabel(latestPeriodKey, granularity, "current");
+  const witnessLabel = formatStudioHomePeriodFooterLabel(latestPeriodKey, granularity, "witness");
 
   if (loading) {
     return (
       <section aria-busy="true" aria-label="プレイヤーとのつながりを読み込み中">
-        <div className="h-16 rounded-xl bg-zinc-800/60" />
+        <div className="h-10 w-48 rounded-lg bg-zinc-800/60" />
         <div className="mt-8 h-8 w-72 rounded-lg bg-zinc-800/60" />
         <div className="mt-6 grid gap-5 xl:grid-cols-3">
           {[0, 1, 2].map((key) => (
             <div
               key={key}
-              className="h-[440px] animate-pulse rounded-2xl border border-zinc-800/80 bg-zinc-900/40"
+              className="h-[420px] animate-pulse rounded-2xl border border-zinc-800/80 bg-zinc-900/40"
             />
           ))}
         </div>
@@ -238,11 +325,8 @@ function ConnectionMetricsSection({
 
   return (
     <section>
-      <header className="mb-8">
+      <header className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Studio ホーム</h1>
-        <p className="mt-1.5 text-sm text-zinc-500">
-          公開中の作品全体を通じた、プレイヤーとのつながりを確認できます
-        </p>
       </header>
 
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -255,14 +339,17 @@ function ConnectionMetricsSection({
             </p>
           </div>
         </div>
-        <span className="inline-flex items-center gap-2 rounded-xl border border-zinc-700/80 bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-300 shadow-sm backdrop-blur-sm">
-          <Calendar className="size-4 text-zinc-500" aria-hidden="true" />
-          直近6か月
-        </span>
+        <PeriodGranularitySelect value={granularity} onChange={onGranularityChange} />
       </div>
 
+      {granularityFallback && (
+        <p className="mt-4 rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90">
+          日次・週次の集計にはマイグレーション 037 の適用が必要です。いまは月次データを表示しています。
+        </p>
+      )}
+
       {!rpcReady && (
-        <p className="mt-5 rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90">
+        <p className="mt-4 rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90">
           集計用のデータベース設定が未適用のため、グラフは空の状態です。マイグレーション
           036 を適用すると表示されます。
         </p>
@@ -279,9 +366,10 @@ function ConnectionMetricsSection({
         </div>
       ) : (
         <div
-          className="mt-6 grid gap-5 xl:grid-cols-3"
+          className="mt-6 grid items-stretch gap-5 xl:grid-cols-3"
           data-studio-metrics-source="api"
           data-studio-metrics-months={metrics.months.join(",")}
+          data-studio-metrics-granularity={granularity}
         >
           <ConnectionChartCard
             accent="violet"
@@ -289,11 +377,9 @@ function ConnectionMetricsSection({
             title="プレイの深さ"
             description="何回遊んでくれたかの内訳"
             footer={
-              <div className="flex items-end justify-between gap-4">
+              <div className={`flex items-end justify-between gap-4 ${FOOTER_MIN_HEIGHT}`}>
                 <div className="space-y-2">
-                  <p className="text-xs text-zinc-500">
-                    {latestMonthLabel}の内訳
-                  </p>
+                  <p className="text-xs text-zinc-500">{breakdownLabel}</p>
                   <FooterBreakdownItem
                     color={PLAY_DEPTH_COLORS.once}
                     label="1回だけ"
@@ -310,7 +396,7 @@ function ConnectionMetricsSection({
                     value={`${playDepth.thricePlus}人`}
                   />
                 </div>
-                <div className="text-right">
+                <div className="shrink-0 text-right">
                   <p className="text-xs text-zinc-500">合計</p>
                   <p className="text-3xl font-bold tabular-nums text-violet-300">
                     {playDepth.total}
@@ -321,7 +407,8 @@ function ConnectionMetricsSection({
             }
           >
             <StudioHomeStackedBarChart
-              months={metrics.months}
+              periods={metrics.months}
+              granularity={granularity}
               series={[
                 {
                   key: "once",
@@ -358,9 +445,9 @@ function ConnectionMetricsSection({
             title="フィードバックの深さ"
             description="遊んだ人のうち、どこまで反応してくれたか"
             footer={
-              <div className="flex items-end justify-between gap-4">
+              <div className={`flex items-end justify-between gap-4 ${FOOTER_MIN_HEIGHT}`}>
                 <div className="space-y-2">
-                  <p className="text-xs text-zinc-500">{latestMonthLabel}の現在値</p>
+                  <p className="text-xs text-zinc-500">{currentLabel}</p>
                   <FooterBreakdownItem
                     color={FEEDBACK_DEPTH_COLORS.played}
                     label="遊んだ人"
@@ -377,7 +464,7 @@ function ConnectionMetricsSection({
                     value={`${voiceFunnel.deep}人`}
                   />
                 </div>
-                <div className="text-right">
+                <div className="shrink-0 text-right">
                   <p className="text-xs text-zinc-500">フィードバック率</p>
                   <p className="text-3xl font-bold tabular-nums text-cyan-300">
                     {feedbackRate === null ? "—" : `${feedbackRate}%`}
@@ -387,7 +474,8 @@ function ConnectionMetricsSection({
             }
           >
             <StudioHomeMultiLineChart
-              months={metrics.months}
+              periods={metrics.months}
+              granularity={granularity}
               fillAreas
               series={[
                 {
@@ -424,35 +512,27 @@ function ConnectionMetricsSection({
             icon={Heart}
             title="見届けの広がり"
             description="プレイ後も作品を追いかけてくれた人の推移"
-            footerNote={
-              witnessEmpty ? (
-                <p className="relative mt-3 text-xs leading-relaxed text-zinc-500">
-                  まだ見届け・コミュニティ参加はありません。増えるとここに推移が表示されます。
-                </p>
-              ) : null
-            }
             footer={
-              <div className="space-y-2">
-                <p className="text-xs text-zinc-500">{latestMonthLabel}末の目安</p>
-                <div className="flex items-center gap-2 text-sm text-zinc-400">
-                  <Heart className="size-3.5 text-orange-400" aria-hidden="true" />
-                  <span>見届けている人</span>
-                  <span className="font-semibold tabular-nums text-zinc-200">
-                    {witness.watching}人
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-zinc-400">
-                  <Users className="size-3.5 text-rose-400" aria-hidden="true" />
-                  <span>コミュニティ参加者</span>
-                  <span className="font-semibold tabular-nums text-zinc-200">
-                    {witness.communityMembers}人
-                  </span>
-                </div>
+              <div className={`flex flex-col justify-end space-y-2 ${FOOTER_MIN_HEIGHT}`}>
+                <p className="text-xs text-zinc-500">{witnessLabel}</p>
+                <FooterStatItem
+                  icon={Heart}
+                  iconClass="text-orange-400"
+                  label="見届けている人"
+                  value={`${witness.watching}人`}
+                />
+                <FooterStatItem
+                  icon={Users}
+                  iconClass="text-rose-400"
+                  label="コミュニティ参加者"
+                  value={`${witness.communityMembers}人`}
+                />
               </div>
             }
           >
             <StudioHomeMultiLineChart
-              months={metrics.months}
+              periods={metrics.months}
+              granularity={granularity}
               fillAreas
               series={[
                 {
@@ -558,9 +638,9 @@ function HighlightsSection({
 
 function QuickAccessSection() {
   return (
-    <section className="rounded-2xl border border-zinc-800/60 bg-gradient-to-br from-zinc-900/60 to-zinc-950/80 p-5 backdrop-blur-md">
+    <section className="rounded-2xl border border-zinc-800/60 bg-gradient-to-br from-zinc-900/60 to-zinc-950/80 p-4 backdrop-blur-md">
       <h2 className="text-base font-semibold text-zinc-100">クイックアクセス</h2>
-      <ul className="mt-4 grid grid-cols-2 gap-3">
+      <ul className="mt-3 grid grid-cols-2 gap-2">
         {STUDIO_HOME_QUICK_LINKS.map((link) => {
           const style = QUICK_LINK_STYLES[link.href] ?? QUICK_LINK_STYLES["/studio/mypage"]!;
           const Icon = style.icon;
@@ -568,18 +648,18 @@ function QuickAccessSection() {
             <li key={link.href}>
               <Link
                 href={link.href}
-                className="group relative flex aspect-[4/3] flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-zinc-950/50 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-white/10 hover:bg-zinc-900/60 hover:shadow-lg"
+                className="group relative flex items-center gap-2.5 rounded-xl border border-white/[0.06] bg-zinc-950/50 px-3 py-2.5 transition-all duration-300 hover:border-white/10 hover:bg-zinc-900/60"
               >
                 <ArrowUpRight
-                  className="absolute right-3 top-3 size-3.5 text-zinc-600 transition-colors group-hover:text-zinc-400"
+                  className="absolute right-2 top-2 size-3 text-zinc-600 transition-colors group-hover:text-zinc-400"
                   aria-hidden="true"
                 />
                 <span
-                  className={`flex size-11 items-center justify-center rounded-xl border ${style.iconBg}`}
+                  className={`flex size-9 shrink-0 items-center justify-center rounded-lg border ${style.iconBg}`}
                 >
-                  <Icon className={`size-5 ${style.iconColor}`} aria-hidden="true" />
+                  <Icon className={`size-4 ${style.iconColor}`} aria-hidden="true" />
                 </span>
-                <span className="mt-3 text-sm font-medium text-zinc-300 group-hover:text-zinc-100">
+                <span className="pr-4 text-sm font-medium text-zinc-300 group-hover:text-zinc-100">
                   {link.label}
                 </span>
               </Link>
@@ -593,7 +673,7 @@ function QuickAccessSection() {
 
 function DevHintsSection() {
   return (
-    <section className="flex h-full flex-col rounded-2xl border border-zinc-800/60 bg-gradient-to-br from-zinc-900/60 to-zinc-950/80 p-5 backdrop-blur-md">
+    <section className="rounded-2xl border border-zinc-800/60 bg-gradient-to-br from-zinc-900/60 to-zinc-950/80 p-4 backdrop-blur-md">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-base font-semibold text-zinc-100">開発のヒント</h2>
         <Link
@@ -603,17 +683,17 @@ function DevHintsSection() {
           すべて見る →
         </Link>
       </div>
-      <ul className="mt-4 flex flex-1 flex-col gap-2">
+      <ul className="mt-2 divide-y divide-white/[0.04]">
         {STUDIO_HOME_DEV_HINTS.map((hint, index) => {
           const Icon = DEV_HINT_ICONS[index] ?? HelpCircle;
           return (
             <li key={hint.id}>
               <Link
                 href={hint.href}
-                className="group flex items-center gap-3 rounded-xl border border-transparent px-3 py-3 transition-all hover:border-white/[0.06] hover:bg-zinc-950/50"
+                className="group flex items-center gap-2.5 py-2.5 transition-colors"
               >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/80 text-zinc-400 group-hover:text-violet-300">
-                  <Icon className="size-4" aria-hidden="true" />
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/80 text-zinc-400 group-hover:text-violet-300">
+                  <Icon className="size-3.5" aria-hidden="true" />
                 </span>
                 <span className="min-w-0 flex-1 text-sm text-zinc-400 group-hover:text-zinc-200">
                   {hint.title}
@@ -632,13 +712,21 @@ function DevHintsSection() {
 }
 
 export function StudioHomePage() {
-  const { metrics, loading, rpcReady } = useStudioHomeMetrics();
+  const [granularity, setGranularity] = useState<StudioHomeGranularity>("month");
+  const { metrics, loading, rpcReady, granularityFallback } = useStudioHomeMetrics(granularity);
   const { highlights, loading: highlightsLoading } = useStudioHomeHighlights();
 
   return (
     <StudioShell activeNav="home">
-      <div className="mx-auto max-w-7xl space-y-10 pb-6">
-        <ConnectionMetricsSection loading={loading} rpcReady={rpcReady} metrics={metrics} />
+      <div className="mx-auto max-w-7xl space-y-8 pb-6">
+        <ConnectionMetricsSection
+          loading={loading}
+          rpcReady={rpcReady}
+          granularityFallback={granularityFallback}
+          granularity={granularity}
+          onGranularityChange={setGranularity}
+          metrics={metrics}
+        />
 
         <HighlightsSection
           unreadVoiceProjectCount={highlights.unreadVoiceProjectCount}
@@ -646,7 +734,7 @@ export function StudioHomePage() {
           loading={highlightsLoading}
         />
 
-        <div className="grid gap-5 lg:grid-cols-2 lg:items-stretch">
+        <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
           <QuickAccessSection />
           <DevHintsSection />
         </div>

@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { fetchStudioHomeConnectionMetrics } from "@/lib/supabase/studio-home-metrics-db";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const supabase = await createClient();
   if (!supabase) {
     return NextResponse.json({ error: "Supabase is not configured" }, { status: 503 });
@@ -19,9 +19,17 @@ export async function GET() {
   }
 
   try {
-    const { metrics, rpcReady } = await fetchStudioHomeConnectionMetrics(supabase);
+    const granularityParam = request.nextUrl.searchParams.get("granularity") ?? "month";
+    const granularity = (
+      granularityParam === "day" || granularityParam === "week" || granularityParam === "month"
+        ? granularityParam
+        : "month"
+    ) as "day" | "week" | "month";
+
+    const { metrics, rpcReady, granularityFallback } =
+      await fetchStudioHomeConnectionMetrics(supabase, granularity);
     return NextResponse.json(
-      { metrics, rpcReady },
+      { metrics, rpcReady, granularity, granularityFallback },
       { headers: { "Cache-Control": "no-store, max-age=0" } },
     );
   } catch (error) {
