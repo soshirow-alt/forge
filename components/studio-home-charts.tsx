@@ -5,6 +5,7 @@ import type { StudioHomeGranularity } from "@/lib/studio-home-metrics";
 import { formatStudioHomePeriodChartLabel } from "@/lib/studio-home-metrics";
 
 const CHART_HEIGHT = 188;
+export const STUDIO_HOME_CHART_HEIGHT = CHART_HEIGHT;
 const CHART_PADDING = { top: 12, right: 8, bottom: 26, left: 28 };
 
 type ChartSize = {
@@ -325,11 +326,15 @@ export function StudioHomeMultiLineChart({
 
 export function StudioHomeChartLegend({
   items,
+  className = "",
 }: {
   items: { label: string; color: string }[];
+  className?: string;
 }) {
   return (
-    <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+    <ul
+      className={`m-0 flex h-full flex-wrap content-start gap-x-3 gap-y-0.5 ${className}`.trim()}
+    >
       {items.map((item) => (
         <li key={item.label} className="flex items-center gap-2 text-xs font-medium text-zinc-400">
           <span

@@ -27,6 +27,7 @@ import { StudioShell } from "@/components/studio-shell";
 import {
   StudioHomeChartLegend,
   StudioHomeMultiLineChart,
+  STUDIO_HOME_CHART_HEIGHT,
   StudioHomeStackedBarChart,
 } from "@/components/studio-home-charts";
 import { useStudioHomeHighlights } from "@/hooks/use-studio-home-highlights";
@@ -124,8 +125,16 @@ const QUICK_LINK_STYLES: Record<
 
 const DEV_HINT_ICONS = [HelpCircle, FileText, TrendingUp] as const;
 
+/** 3カード共通の固定行高（flex/mt-auto 不使用） */
+const CARD_GRID_CLASS = "grid grid-rows-[4.5rem_12.25rem_2.75rem_7.75rem] gap-0";
+const CARD_ROW_HEADER = "h-[4.5rem] overflow-hidden";
+const CARD_ROW_CHART = "h-[12.25rem] overflow-hidden";
+const CARD_ROW_LEGEND = "h-[2.75rem] overflow-hidden";
+const CARD_ROW_FOOTER = "h-[7.75rem] overflow-hidden border-t border-white/[0.06] pt-2";
+
 const FOOTER_ROW_GRID =
-  "grid grid-cols-[1rem_minmax(0,1fr)_3rem] items-center gap-x-2 text-sm leading-tight";
+  "grid h-5 grid-cols-[1rem_minmax(0,1fr)_2.75rem] items-center gap-x-2 text-sm leading-none";
+const FOOTER_LIST_BLOCK_H = "h-[3.75rem]";
 
 function MetricDot({ color }: { color: string }) {
   return (
@@ -149,7 +158,7 @@ function FooterBreakdownRow({
   return (
     <div className={FOOTER_ROW_GRID}>
       {color ? <MetricDot color={color} /> : <span className="size-2 shrink-0" aria-hidden="true" />}
-      <span className="text-zinc-400">{label}</span>
+      <span className="truncate text-zinc-400">{label}</span>
       <span className="text-right font-semibold tabular-nums text-zinc-200">{value}</span>
     </div>
   );
@@ -169,14 +178,18 @@ function FooterStatRow({
   return (
     <div className={FOOTER_ROW_GRID}>
       <Icon className={`size-3.5 shrink-0 ${iconClass}`} aria-hidden="true" />
-      <span className="text-zinc-400">{label}</span>
+      <span className="truncate text-zinc-400">{label}</span>
       <span className="text-right font-semibold tabular-nums text-zinc-200">{value}</span>
     </div>
   );
 }
 
+function FooterEmptyRow() {
+  return <div className="h-5" aria-hidden="true" />;
+}
+
 function CardFooterSectionLabel({ children }: { children: ReactNode }) {
-  return <p className="mb-1 text-xs leading-none text-zinc-500">{children}</p>;
+  return <p className="h-4 text-xs leading-4 text-zinc-500">{children}</p>;
 }
 
 type CardFooterHighlight = {
@@ -186,34 +199,44 @@ type CardFooterHighlight = {
   className: string;
 };
 
-/** 3カード共通。左=見出し+リスト、右=ハイライト（見届けは空列で幅だけ確保） */
+/** 3カード共通フッター（見出し・3行・右ハイライトのYを固定） */
 function CardFooterShell({
   label,
   highlight,
-  children,
+  row1,
+  row2,
+  row3,
 }: {
   label: string;
   highlight?: CardFooterHighlight | null;
-  children: ReactNode;
+  row1: ReactNode;
+  row2: ReactNode;
+  row3: ReactNode;
 }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_5rem] items-start gap-x-4">
-      <div className="min-w-0">
+    <div className="grid h-full grid-cols-[minmax(0,1fr)_4.5rem] gap-x-3">
+      <div>
         <CardFooterSectionLabel>{label}</CardFooterSectionLabel>
-        <div className="space-y-1">{children}</div>
+        <div className={FOOTER_LIST_BLOCK_H}>
+          {row1}
+          {row2}
+          {row3}
+        </div>
       </div>
-      <div className="w-20 shrink-0 text-right leading-tight">
-        {highlight ? (
-          <>
-            <p className="text-xs text-zinc-500">{highlight.label}</p>
-            <p className={`text-2xl font-bold tabular-nums ${highlight.className}`}>
+      <div>
+        <p className="h-4 text-[10px] leading-4 text-zinc-500 whitespace-nowrap">
+          {highlight?.label ?? "\u00A0"}
+        </p>
+        <div className={`flex ${FOOTER_LIST_BLOCK_H} items-end justify-end`}>
+          {highlight ? (
+            <p className={`text-right text-2xl font-bold leading-none tabular-nums ${highlight.className}`}>
               {highlight.value}
               {highlight.suffix ? (
                 <span className="ml-0.5 text-base font-semibold">{highlight.suffix}</span>
               ) : null}
             </p>
-          </>
-        ) : null}
+          ) : null}
+        </div>
       </div>
     </div>
   );
@@ -299,7 +322,8 @@ function ConnectionChartCard({
   accent,
   icon: Icon,
   fetching = false,
-  children,
+  chart,
+  legend,
   footer,
 }: {
   title: string;
@@ -307,39 +331,43 @@ function ConnectionChartCard({
   accent: CardAccent;
   icon: LucideIcon;
   fetching?: boolean;
-  children: ReactNode;
+  chart: ReactNode;
+  legend: ReactNode;
   footer: ReactNode;
 }) {
   const styles = CARD_ACCENT_STYLES[accent];
 
   return (
     <article
-      className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-gradient-to-b from-zinc-900/80 to-zinc-950/90 p-5 shadow-xl shadow-black/30 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 sm:p-6 ${styles.border} ${styles.hover}`}
+      className={`group relative ${CARD_GRID_CLASS} overflow-hidden rounded-2xl border bg-gradient-to-b from-zinc-900/80 to-zinc-950/90 p-5 shadow-xl shadow-black/30 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 sm:p-6 ${styles.border} ${styles.hover}`}
     >
       <div
         className={`pointer-events-none absolute -right-8 -top-8 size-32 rounded-full blur-3xl ${styles.orb}`}
         aria-hidden="true"
       />
-      <div className="relative flex items-start gap-3">
-        <span
-          className={`flex size-10 shrink-0 items-center justify-center rounded-xl border ${styles.iconBg}`}
-        >
-          <Icon className={`size-5 ${styles.icon}`} aria-hidden="true" />
-        </span>
-        <div className="min-w-0">
-          <h3 className="text-base font-semibold tracking-tight text-zinc-50">{title}</h3>
-          <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">{description}</p>
+      <div className={`relative ${CARD_ROW_HEADER}`}>
+        <div className="flex h-full items-start gap-3">
+          <span
+            className={`flex size-10 shrink-0 items-center justify-center rounded-xl border ${styles.iconBg}`}
+          >
+            <Icon className={`size-5 ${styles.icon}`} aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <h3 className="truncate text-base font-semibold leading-tight text-zinc-50">{title}</h3>
+            <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-zinc-500">{description}</p>
+          </div>
         </div>
       </div>
       <div
-        className={`relative mt-4 flex min-h-[220px] flex-1 flex-col rounded-xl border border-white/[0.04] bg-black/25 px-2 pb-1 pt-2 backdrop-blur-sm transition-opacity duration-200 ${fetching ? "opacity-80" : "opacity-100"}`}
+        className={`relative ${CARD_ROW_CHART} rounded-xl border border-white/[0.04] bg-black/25 px-2 pb-1 pt-2 backdrop-blur-sm transition-opacity duration-200 ${fetching ? "opacity-80" : "opacity-100"}`}
         aria-busy={fetching}
       >
         <ChartFetchingOverlay active={fetching} />
-        {children}
+        <div style={{ height: STUDIO_HOME_CHART_HEIGHT }}>{chart}</div>
       </div>
+      <div className={CARD_ROW_LEGEND}>{legend}</div>
       <div
-        className={`relative mt-2 shrink-0 border-t border-white/[0.06] pt-2.5 transition-opacity duration-200 ${fetching ? "opacity-80" : "opacity-100"}`}
+        className={`${CARD_ROW_FOOTER} transition-opacity duration-200 ${fetching ? "opacity-80" : "opacity-100"}`}
       >
         {footer}
       </div>
@@ -417,7 +445,7 @@ function ConnectionMetricsSection({
           {[0, 1, 2].map((key) => (
             <div
               key={key}
-              className="h-[380px] animate-pulse rounded-2xl border border-zinc-800/80 bg-zinc-900/40"
+              className="h-[27.25rem] animate-pulse rounded-2xl border border-zinc-800/80 bg-zinc-900/40 sm:h-[calc(27.25rem+1rem)]"
             />
           ))}
         </div>
@@ -443,6 +471,41 @@ function ConnectionMetricsSection({
             fetching={fetching}
             title="プレイの深さ"
             description="何回遊んでくれたかの内訳"
+            chart={
+              <StudioHomeStackedBarChart
+                periods={metrics.months}
+                granularity={granularity}
+                series={[
+                  {
+                    key: "once",
+                    label: "1回だけ",
+                    values: metrics.playDepth.map((point) => point.once),
+                    color: PLAY_DEPTH_COLORS.once,
+                  },
+                  {
+                    key: "twice",
+                    label: "2回",
+                    values: metrics.playDepth.map((point) => point.twice),
+                    color: PLAY_DEPTH_COLORS.twice,
+                  },
+                  {
+                    key: "thricePlus",
+                    label: "3回以上",
+                    values: metrics.playDepth.map((point) => point.thricePlus),
+                    color: PLAY_DEPTH_COLORS.thricePlus,
+                  },
+                ]}
+              />
+            }
+            legend={
+              <StudioHomeChartLegend
+                items={[
+                  { label: "1回だけ", color: PLAY_DEPTH_COLORS.once },
+                  { label: "2回", color: PLAY_DEPTH_COLORS.twice },
+                  { label: "3回以上", color: PLAY_DEPTH_COLORS.thricePlus },
+                ]}
+              />
+            }
             footer={
               <CardFooterShell
                 label={breakdownLabel}
@@ -452,57 +515,30 @@ function ConnectionMetricsSection({
                   suffix: "人",
                   className: "text-violet-300",
                 }}
-              >
-                <FooterBreakdownRow
-                  color={PLAY_DEPTH_COLORS.once}
-                  label="1回だけ"
-                  value={`${playDepth.once}人`}
-                />
-                <FooterBreakdownRow
-                  color={PLAY_DEPTH_COLORS.twice}
-                  label="2回"
-                  value={`${playDepth.twice}人`}
-                />
-                <FooterBreakdownRow
-                  color={PLAY_DEPTH_COLORS.thricePlus}
-                  label="3回以上"
-                  value={`${playDepth.thricePlus}人`}
-                />
-              </CardFooterShell>
+                row1={
+                  <FooterBreakdownRow
+                    color={PLAY_DEPTH_COLORS.once}
+                    label="1回だけ"
+                    value={`${playDepth.once}人`}
+                  />
+                }
+                row2={
+                  <FooterBreakdownRow
+                    color={PLAY_DEPTH_COLORS.twice}
+                    label="2回"
+                    value={`${playDepth.twice}人`}
+                  />
+                }
+                row3={
+                  <FooterBreakdownRow
+                    color={PLAY_DEPTH_COLORS.thricePlus}
+                    label="3回以上"
+                    value={`${playDepth.thricePlus}人`}
+                  />
+                }
+              />
             }
-          >
-            <StudioHomeStackedBarChart
-              periods={metrics.months}
-              granularity={granularity}
-              series={[
-                {
-                  key: "once",
-                  label: "1回だけ",
-                  values: metrics.playDepth.map((point) => point.once),
-                  color: PLAY_DEPTH_COLORS.once,
-                },
-                {
-                  key: "twice",
-                  label: "2回",
-                  values: metrics.playDepth.map((point) => point.twice),
-                  color: PLAY_DEPTH_COLORS.twice,
-                },
-                {
-                  key: "thricePlus",
-                  label: "3回以上",
-                  values: metrics.playDepth.map((point) => point.thricePlus),
-                  color: PLAY_DEPTH_COLORS.thricePlus,
-                },
-              ]}
-            />
-            <StudioHomeChartLegend
-              items={[
-                { label: "1回だけ", color: PLAY_DEPTH_COLORS.once },
-                { label: "2回", color: PLAY_DEPTH_COLORS.twice },
-                { label: "3回以上", color: PLAY_DEPTH_COLORS.thricePlus },
-              ]}
-            />
-          </ConnectionChartCard>
+          />
 
           <ConnectionChartCard
             accent="sky"
@@ -510,66 +546,74 @@ function ConnectionMetricsSection({
             fetching={fetching}
             title="フィードバックの深さ"
             description="遊んだ人のうち、どこまで反応してくれたか"
+            chart={
+              <StudioHomeMultiLineChart
+                periods={metrics.months}
+                granularity={granularity}
+                fillAreas
+                series={[
+                  {
+                    key: "played",
+                    label: "遊んだ人",
+                    values: metrics.voiceFunnel.map((point) => point.played),
+                    color: FEEDBACK_DEPTH_COLORS.played,
+                  },
+                  {
+                    key: "voiced",
+                    label: "初回フィードバック",
+                    values: metrics.voiceFunnel.map((point) => point.voiced),
+                    color: FEEDBACK_DEPTH_COLORS.voiced,
+                  },
+                  {
+                    key: "deep",
+                    label: "追加フィードバック",
+                    values: metrics.voiceFunnel.map((point) => point.deep),
+                    color: FEEDBACK_DEPTH_COLORS.deep,
+                  },
+                ]}
+              />
+            }
+            legend={
+              <StudioHomeChartLegend
+                items={[
+                  { label: "遊んだ人", color: FEEDBACK_DEPTH_COLORS.played },
+                  { label: "初回フィードバック", color: FEEDBACK_DEPTH_COLORS.voiced },
+                  { label: "追加フィードバック", color: FEEDBACK_DEPTH_COLORS.deep },
+                ]}
+              />
+            }
             footer={
               <CardFooterShell
                 label={currentLabel}
                 highlight={{
-                  label: "フィードバック率",
+                  label: "FB率",
                   value: feedbackRate === null ? "—" : `${feedbackRate}%`,
                   className: "text-cyan-300",
                 }}
-              >
-                <FooterBreakdownRow
-                  color={FEEDBACK_DEPTH_COLORS.played}
-                  label="遊んだ人"
-                  value={`${voiceFunnel.played}人`}
-                />
-                <FooterBreakdownRow
-                  color={FEEDBACK_DEPTH_COLORS.voiced}
-                  label="初回フィードバック"
-                  value={`${voiceFunnel.voiced}人`}
-                />
-                <FooterBreakdownRow
-                  color={FEEDBACK_DEPTH_COLORS.deep}
-                  label="追加フィードバック"
-                  value={`${voiceFunnel.deep}人`}
-                />
-              </CardFooterShell>
+                row1={
+                  <FooterBreakdownRow
+                    color={FEEDBACK_DEPTH_COLORS.played}
+                    label="遊んだ人"
+                    value={`${voiceFunnel.played}人`}
+                  />
+                }
+                row2={
+                  <FooterBreakdownRow
+                    color={FEEDBACK_DEPTH_COLORS.voiced}
+                    label="初回フィードバック"
+                    value={`${voiceFunnel.voiced}人`}
+                  />
+                }
+                row3={
+                  <FooterBreakdownRow
+                    color={FEEDBACK_DEPTH_COLORS.deep}
+                    label="追加フィードバック"
+                    value={`${voiceFunnel.deep}人`}
+                  />
+                }
+              />
             }
-          >
-            <StudioHomeMultiLineChart
-              periods={metrics.months}
-              granularity={granularity}
-              fillAreas
-              series={[
-                {
-                  key: "played",
-                  label: "遊んだ人",
-                  values: metrics.voiceFunnel.map((point) => point.played),
-                  color: FEEDBACK_DEPTH_COLORS.played,
-                },
-                {
-                  key: "voiced",
-                  label: "初回フィードバック",
-                  values: metrics.voiceFunnel.map((point) => point.voiced),
-                  color: FEEDBACK_DEPTH_COLORS.voiced,
-                },
-                {
-                  key: "deep",
-                  label: "追加フィードバック",
-                  values: metrics.voiceFunnel.map((point) => point.deep),
-                  color: FEEDBACK_DEPTH_COLORS.deep,
-                },
-              ]}
-            />
-            <StudioHomeChartLegend
-              items={[
-                { label: "遊んだ人", color: FEEDBACK_DEPTH_COLORS.played },
-                { label: "初回フィードバック", color: FEEDBACK_DEPTH_COLORS.voiced },
-                { label: "追加フィードバック", color: FEEDBACK_DEPTH_COLORS.deep },
-              ]}
-            />
-          </ConnectionChartCard>
+          />
 
           <ConnectionChartCard
             accent="orange"
@@ -577,49 +621,58 @@ function ConnectionMetricsSection({
             fetching={fetching}
             title="見届けの広がり"
             description="プレイ後も作品を追いかけてくれた人の推移"
-            footer={
-              <CardFooterShell label={witnessLabel}>
-                <FooterStatRow
-                  icon={Heart}
-                  iconClass="text-orange-400"
-                  label="見届けている人"
-                  value={`${witness.watching}人`}
-                />
-                <FooterStatRow
-                  icon={Users}
-                  iconClass="text-rose-400"
-                  label="コミュニティ参加者"
-                  value={`${witness.communityMembers}人`}
-                />
-              </CardFooterShell>
+            chart={
+              <StudioHomeMultiLineChart
+                periods={metrics.months}
+                granularity={granularity}
+                fillAreas
+                series={[
+                  {
+                    key: "watching",
+                    label: "見届けている人",
+                    values: metrics.witnessCommunity.map((point) => point.watching),
+                    color: WITNESS_COLORS.watching,
+                  },
+                  {
+                    key: "communityMembers",
+                    label: "コミュニティ参加者",
+                    values: metrics.witnessCommunity.map((point) => point.communityMembers),
+                    color: WITNESS_COLORS.communityMembers,
+                  },
+                ]}
+              />
             }
-          >
-            <StudioHomeMultiLineChart
-              periods={metrics.months}
-              granularity={granularity}
-              fillAreas
-              series={[
-                {
-                  key: "watching",
-                  label: "見届けている人",
-                  values: metrics.witnessCommunity.map((point) => point.watching),
-                  color: WITNESS_COLORS.watching,
-                },
-                {
-                  key: "communityMembers",
-                  label: "コミュニティ参加者",
-                  values: metrics.witnessCommunity.map((point) => point.communityMembers),
-                  color: WITNESS_COLORS.communityMembers,
-                },
-              ]}
-            />
-            <StudioHomeChartLegend
-              items={[
-                { label: "見届けている人", color: WITNESS_COLORS.watching },
-                { label: "コミュニティ参加者", color: WITNESS_COLORS.communityMembers },
-              ]}
-            />
-          </ConnectionChartCard>
+            legend={
+              <StudioHomeChartLegend
+                items={[
+                  { label: "見届けている人", color: WITNESS_COLORS.watching },
+                  { label: "コミュニティ参加者", color: WITNESS_COLORS.communityMembers },
+                ]}
+              />
+            }
+            footer={
+              <CardFooterShell
+                label={witnessLabel}
+                row1={
+                  <FooterStatRow
+                    icon={Heart}
+                    iconClass="text-orange-400"
+                    label="見届けている人"
+                    value={`${witness.watching}人`}
+                  />
+                }
+                row2={
+                  <FooterStatRow
+                    icon={Users}
+                    iconClass="text-rose-400"
+                    label="コミュニティ参加者"
+                    value={`${witness.communityMembers}人`}
+                  />
+                }
+                row3={<FooterEmptyRow />}
+              />
+            }
+          />
         </div>
       )}
     </section>
