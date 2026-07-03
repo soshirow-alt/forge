@@ -6,7 +6,18 @@ import { formatStudioHomePeriodChartLabel } from "@/lib/studio-home-metrics";
 
 const CHART_HEIGHT = 188;
 export const STUDIO_HOME_CHART_HEIGHT = CHART_HEIGHT;
-const CHART_PADDING = { top: 12, right: 8, bottom: 26, left: 28 };
+const CHART_PADDING = { top: 12, right: 12, bottom: 26, left: 28 };
+
+/** 折れ線の点＋stroke＋glow がはみ出す分 */
+const POINT_VISUAL_OUTSET = 12;
+/** 棒の幅はスロット幅に対する比率 */
+const BAR_WIDTH_RATIO = 0.55;
+const BAR_EDGE_EXTRA = 2;
+
+type PlotXScale = {
+  xAt: (index: number) => number;
+  barWidth: number;
+};
 
 type ChartSize = {
   width: number;
@@ -19,11 +30,38 @@ function useChartInner(size: ChartSize) {
   return { innerWidth, innerHeight };
 }
 
-function xAtIndex(index: number, count: number, innerWidth: number, left: number): number {
-  if (count <= 1) {
-    return left + innerWidth / 2;
+/**
+ * 棒・折れ線・X軸ラベル共通の横座標。
+ * 最初/最後のデータを plot 内側に置き、棒半幅・点半径・glow 分の余白を確保する。
+ */
+function createPlotXScale(count: number, innerWidth: number, left: number): PlotXScale {
+  if (count <= 0) {
+    return { xAt: () => left, barWidth: 0 };
   }
-  return left + (index / (count - 1)) * innerWidth;
+
+  const nominalSlot = count <= 1 ? innerWidth : innerWidth / (count - 1);
+  const nominalBarWidth = count <= 1 ? innerWidth * 0.4 : nominalSlot * BAR_WIDTH_RATIO;
+  const edgePad = Math.max(POINT_VISUAL_OUTSET, nominalBarWidth / 2 + BAR_EDGE_EXTRA);
+
+  const plotStart = left + edgePad;
+  const plotEnd = left + innerWidth - edgePad;
+  const plotSpan = Math.max(plotEnd - plotStart, 0);
+
+  const slotWidth = count <= 1 ? plotSpan : plotSpan / (count - 1);
+  const barWidth =
+    count <= 1
+      ? Math.min(nominalBarWidth, plotSpan * 0.5)
+      : Math.min(nominalBarWidth, slotWidth * 0.85);
+
+  return {
+    barWidth,
+    xAt(index: number) {
+      if (count <= 1) {
+        return plotStart + plotSpan / 2;
+      }
+      return plotStart + (index / (count - 1)) * plotSpan;
+    },
+  };
 }
 
 function computeDataMax(values: number[]): number {
@@ -100,6 +138,7 @@ function ChartFrame({
 }) {
   const { innerWidth, innerHeight } = useChartInner(size);
   const ticks = yTicks(yMax);
+  const plotX = createPlotXScale(periodLabels.length, innerWidth, CHART_PADDING.left);
 
   return (
     <svg
@@ -108,7 +147,7 @@ function ChartFrame({
       viewBox={`0 0 ${size.width} ${size.height}`}
       role="img"
       aria-hidden="true"
-      className="overflow-hidden"
+      className="overflow-visible"
     >
       <defs>
         <linearGradient id="studio-chart-grid-fade" x1="0" y1="0" x2="0" y2="1">
@@ -141,7 +180,7 @@ function ChartFrame({
         );
       })}
       {periodLabels.map((label, index) => {
-        const x = xAtIndex(index, periodLabels.length, innerWidth, CHART_PADDING.left);
+        const x = plotX.xAt(index);
         return (
           <text
             key={`${label}-${index}`}
@@ -181,8 +220,7 @@ export function StudioHomeStackedBarChart({
     series.reduce((sum, item) => sum + (item.values[index] ?? 0), 0),
   );
   const yMax = computeYMax(totals);
-  const barSpan =
-    periods.length <= 1 ? innerWidth * 0.4 : (innerWidth / (periods.length - 1)) * 0.55;
+  const plotX = createPlotXScale(periods.length, innerWidth, CHART_PADDING.left);
 
   return (
     <ChartFrame size={size} yMax={yMax} periodLabels={periodLabels}>
@@ -202,13 +240,8 @@ export function StudioHomeStackedBarChart({
         ))}
       </defs>
       {periods.map((period, periodIndex) => {
-        const centerX = xAtIndex(
-          periodIndex,
-          periods.length,
-          innerWidth,
-          CHART_PADDING.left,
-        );
-        const x = centerX - barSpan / 2;
+        const centerX = plotX.xAt(periodIndex);
+        const x = centerX - plotX.barWidth / 2;
         let cursorY = CHART_PADDING.top + innerHeight;
 
         return (
@@ -222,7 +255,7 @@ export function StudioHomeStackedBarChart({
                   key={item.key}
                   x={x}
                   y={cursorY}
-                  width={barSpan}
+                  width={plotX.barWidth}
                   height={height}
                   rx={4}
                   fill={`url(#${gradientId(item.key)})`}
@@ -253,9 +286,10 @@ export function StudioHomeMultiLineChart({
     formatStudioHomePeriodChartLabel(period, granularity),
   );
   const yMax = computeYMax(series.flatMap((item) => item.values));
+  const plotX = createPlotXScale(periods.length, innerWidth, CHART_PADDING.left);
 
   function pointAt(index: number, value: number) {
-    const x = xAtIndex(index, periods.length, innerWidth, CHART_PADDING.left);
+    const x = plotX.xAt(index);
     const rawY = CHART_PADDING.top + innerHeight - (value / yMax) * innerHeight;
     const y = Math.max(CHART_PADDING.top, rawY);
     return { x, y };
