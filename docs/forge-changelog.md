@@ -4,6 +4,14 @@
 
 ---
 
+- **Studio ホーム再整理** — `/studio` を作品一覧ではなく「公開作品全体のプレイヤーとのつながり」ダッシュボードに変更。主役は直近6か月の3グラフ（遊びの深さ・声の届き方・見届け・コミュニティ［見届けている人・コミュニティ参加者のみ］）。作品カード・今週の伸び・最近の動き・NBA 風ヒントを撤去。小さく「気になる動き」（未確認の声・コミュニティ返信）、クイックアクセス、静的「開発のヒント」を配置。見届けは `project_watches` ベース（`project_witness_grants` 未使用）。集計 RPC `get_studio_home_connection_metrics` を migration 036 で追加（**Dashboard 手動適用が必要**）。RLS 変更なし
+
+---
+
+- **X広告用 AIモック画像（ラフ）** — 静的 HTML アートボード方針を一旦停止し、`tools/promo-ai-images/` で AI ベース + SVG 後載せの 4 枚（ホーム / 詳細 / みんなのFB / コミュニティ）。1200×675 と 1600×900。本番 DB・seed・app ルート・deploy には非接触
+
+---
+
 - **広告用静的アートボード（本体と分離）** — `tools/promo-artboards/` に X 投稿用 4 画面（HTML/CSS、1200×675 PNG 書き出し可）。本番 DB・seed・app ルート・deploy には非接触
 
 ---
