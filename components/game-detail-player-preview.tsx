@@ -18,6 +18,7 @@ import { resolveProjectGenres } from "@/lib/project-genres";
 import { resolveProjectThumbnailUrls } from "@/lib/project-thumbnails";
 import { PROJECT_ONE_LINE_DESCRIPTION_HERO_CLASS } from "@/lib/project-one-line-description";
 import { PROJECT_TITLE_HERO_CLASS } from "@/lib/project-title";
+import { getUserFacingGameTags } from "@/lib/user-labels";
 import { gameToDetailV0 } from "@/lib/submitted-game-v0-adapter";
 import { Clock } from "lucide-react";
 
@@ -118,7 +119,7 @@ export function GameDetailPlayerPreview({
 
           <div className="flex min-w-0 flex-col justify-center p-6 lg:p-8">
             <div className="flex flex-wrap gap-2">
-              {displayGame.tags.map((tag) => (
+              {getUserFacingGameTags(displayGame.tags).map((tag) => (
                 <TagPill key={tag}>{tag}</TagPill>
               ))}
             </div>

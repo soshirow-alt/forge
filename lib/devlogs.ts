@@ -21,7 +21,7 @@ export const mockDevlogs: DevlogEntry[] = [
     projectId: "rift-runner",
     title: "αverテスト開始",
     content:
-      "次元切り替えの操作性を改善しました。テスター募集にご協力ください。",
+      "次元切り替えの操作性を改善しました。テストプレイにご協力ください。",
     date: "2026-06-07",
   },
   {

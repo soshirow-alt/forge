@@ -6,7 +6,7 @@ export function getAccessUrlField(distribution: DistributionType) {
       return {
         label: "プレイURL",
         placeholder: "https://example.com/play",
-        hint: "テスターがブラウザで開いて遊べるURL",
+        hint: "プレイヤーがブラウザで開いて遊べるURL",
       };
     case "download":
       return {
@@ -18,7 +18,7 @@ export function getAccessUrlField(distribution: DistributionType) {
       return {
         label: "ゲームページURL",
         placeholder: "https://store.steampowered.com/...",
-        hint: "Steam・itch.io 等、テスターがゲームにアクセスするURL",
+        hint: "Steam・itch.io 等、プレイヤーがゲームにアクセスするURL",
       };
     default:
       return null;

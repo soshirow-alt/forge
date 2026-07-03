@@ -19,7 +19,7 @@ export function ProjectPhaseFormFields({
     <fieldset className="space-y-3">
       <legend className="text-sm font-medium text-zinc-400">開発フェーズ</legend>
       <p className="text-xs text-zinc-600">
-        今の完成度を選んでください。テスターがどこまで遊べるかの目安になります
+        今の完成度を選んでください。プレイヤーがどこまで遊べるかの目安になります
       </p>
       <div className="space-y-2">
         {DEVELOPMENT_PHASE_OPTIONS.map((option) => (

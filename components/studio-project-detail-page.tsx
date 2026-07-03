@@ -25,6 +25,7 @@ import {
   getStudioProjectDetail,
   parseStudioProjectTab,
 } from "@/lib/studio-project-detail-v0-mock-data";
+import { getUserFacingGameTags } from "@/lib/user-labels";
 import { Clock, ExternalLink, MessageSquare, Pencil, Users } from "lucide-react";
 
 function TagPill({ children }: { children: React.ReactNode }) {
@@ -100,7 +101,7 @@ function StudioProjectDetailContent({ id }: { id: string }) {
 
             <div className="flex flex-col justify-center p-6 lg:p-8">
               <div className="flex flex-wrap gap-2">
-                {game.tags.map((tag) => (
+                {getUserFacingGameTags(game.tags).map((tag) => (
                   <TagPill key={tag}>{tag}</TagPill>
                 ))}
               </div>

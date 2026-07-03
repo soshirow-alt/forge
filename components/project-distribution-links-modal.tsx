@@ -139,7 +139,7 @@ export function ProjectDistributionLinksModal({
   return (
     <V0SimpleModal
       title="配布・リンク"
-      subtitle="テスターのアクセス方法・対応環境・作品ページのリンク"
+      subtitle="プレイヤーのアクセス方法・対応環境・作品ページのリンク"
       onClose={onClose}
       size="lg"
     >

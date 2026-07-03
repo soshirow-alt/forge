@@ -92,7 +92,7 @@ function createDemoDevlogs(projectIds: string[]): DevlogEntry[] {
       projectId: project1,
       title: "試作verデモを公開しました",
       content:
-        "星詠みの廃都の試作verを公開しました。テスターの皆さんからの回答をお待ちしています。",
+        "星詠みの廃都の試作verを公開しました。プレイヤーの皆さんからの回答をお待ちしています。",
       date: "2026-06-10",
     },
     {

@@ -66,6 +66,7 @@ import { resolveGameDetailPlayerMeta } from "@/lib/game-detail-player-meta";
 import { resolveProjectGenres } from "@/lib/project-genres";
 import { resolveProjectThumbnailUrls } from "@/lib/project-thumbnails";
 import { PROJECT_TITLE_HERO_CLASS } from "@/lib/project-title";
+import { getUserFacingGameTags } from "@/lib/user-labels";
 import {
   resolvePlayDestinations,
   resolvePublicationDisplay,
@@ -556,7 +557,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
 
               <div className="flex min-w-0 flex-col justify-center p-6 lg:p-8">
                 <div className="flex flex-wrap gap-2">
-                  {game.tags.map((tag) => (
+                  {getUserFacingGameTags(game.tags).map((tag) => (
                     <TagPill key={tag}>{tag}</TagPill>
                   ))}
                 </div>

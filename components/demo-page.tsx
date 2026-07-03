@@ -35,7 +35,7 @@ export function DemoPage() {
       const profile = await saveDeveloperProfile(user.id, {
         publicName: "デモ開発スタジオ",
         profile:
-          "Forgeデモ環境用の開発者プロフィールです。試作品の公開とテスター募集のデモを行います。",
+          "Forgeデモ環境用の開発者プロフィールです。試作品の公開とプレイヤー参加のデモを行います。",
         xAccount: "@forge_demo",
         website: "https://example.com",
       });

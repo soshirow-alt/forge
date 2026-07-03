@@ -12,6 +12,7 @@ import {
   firstVoiceQuestion,
 } from "@/lib/feedback-v0-mock-data";
 import { Compass, MessageSquare, Users, X } from "lucide-react";
+import { getUserFacingGameTags } from "@/lib/user-labels";
 
 export type FeedbackFlowStep = "closed" | "play-stub" | "first-voice" | "full-form" | "success";
 
@@ -125,7 +126,9 @@ function GameSummaryCard({ game }: { game: GameDetailV0 }) {
           <span className="rounded-md border border-violet-500/30 bg-violet-500/10 px-2 py-0.5 text-xs text-violet-300">
             開発中
           </span>
-          {game.tags.slice(0, 3).map((tag) => (
+          {getUserFacingGameTags(game.tags)
+            .slice(0, 3)
+            .map((tag) => (
             <span
               key={tag}
               className="rounded-md border border-zinc-700/80 bg-zinc-800/60 px-2 py-0.5 text-xs text-zinc-400"

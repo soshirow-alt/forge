@@ -73,7 +73,7 @@ export function PlayEnvironmentFormFields({
           ) : null}
         </p>
         <p className="mt-1 text-xs text-zinc-600">
-          テスターが遊ぶ方法の目安です。下の「関連リンク」とは別です
+          プレイヤーが遊ぶ方法の目安です。下の「関連リンク」とは別です
         </p>
         <div className="mt-3 space-y-2">
           {distributionOptions.map((option) => (
