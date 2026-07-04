@@ -900,7 +900,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
 
   const addNotification = useCallback(
     (type: NotificationType, projectId: string) => {
-      if (type === "devlog") {
+      if (type === "devlog" || shouldHideV0MockContent()) {
         return;
       }
 
@@ -924,19 +924,19 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     [getSubmittedGameById],
   );
 
-  const getNotifications = useCallback(
-    () =>
-      sortNotificationsNewestFirst([...dbNotifications, ...localNotifications]),
-    [dbNotifications, localNotifications],
-  );
+  const getNotifications = useCallback(() => {
+    if (shouldHideV0MockContent()) {
+      return sortNotificationsNewestFirst(dbNotifications);
+    }
+    return sortNotificationsNewestFirst([...dbNotifications, ...localNotifications]);
+  }, [dbNotifications, localNotifications]);
 
-  const getUnreadNotificationCount = useCallback(
-    () =>
-      [...dbNotifications, ...localNotifications].filter(
-        (notification) => !notification.read,
-      ).length,
-    [dbNotifications, localNotifications],
-  );
+  const getUnreadNotificationCount = useCallback(() => {
+    const notifications = shouldHideV0MockContent()
+      ? dbNotifications
+      : [...dbNotifications, ...localNotifications];
+    return notifications.filter((notification) => !notification.read).length;
+  }, [dbNotifications, localNotifications]);
 
   const markNotificationAsRead = useCallback(
     (id: string) => {

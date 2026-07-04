@@ -1,4 +1,5 @@
 import type { Game } from "@/lib/mock-games";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 
 export type GameExtraFields = {
   estimatedPlayTime?: string;
@@ -8,6 +9,10 @@ export type GameExtraFields = {
 const STORAGE_KEY = "forge-game-extras";
 
 export function loadGameExtras(): Record<string, GameExtraFields> {
+  if (shouldHideV0MockContent()) {
+    return {};
+  }
+
   if (typeof window === "undefined") {
     return {};
   }
@@ -31,6 +36,10 @@ export function saveGameExtra(gameId: string, extra: GameExtraFields): void {
 }
 
 export function mergeGameWithExtras(game: Game): Game {
+  if (shouldHideV0MockContent()) {
+    return game;
+  }
+
   if (typeof window === "undefined") {
     return game;
   }

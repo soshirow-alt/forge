@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-05 — 本番ガード: localStorage 混入防止（game-extra / 通知）
+
+- **game-extra-storage** — 本番モード（`shouldHideV0MockContent()`）では `mergeGameWithExtras` / `loadGameExtras` が no-op。実作品の `estimatedPlayTime` / `focusNotes` は DB 正本のみ
+- **通知** — 本番では `addNotification` の local 追記を停止。`getNotifications` / 未読数は DB 通知のみ（共感操作後の幽霊通知なし）
+- **旧編集URL** — `/projects/[id]/edit` と `/submit?edit=` はサーバー redirect のみ（現行UIの href からは参照しない）
+- **Preview** — mock / V0 用 localStorage 上書きは Preview 専用のまま
+
+---
+
 ## 2026-07-05 — レガシーStudio UI削除（SHOW_LEGACY_STUDIO_UI 廃止）
 
 - **削除** — `SHOW_LEGACY_STUDIO_UI` ブロック、`StudioProjectToolbar`、`StudioNurtureRail`、`StudioImprovementLoop`、`ProjectDistributionLinksModal`（いずれも通常ルート未使用）

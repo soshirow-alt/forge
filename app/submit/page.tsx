@@ -1,10 +1,16 @@
-import { Suspense } from "react";
-import { SubmitPage } from "@/components/submit-page";
+import { redirect } from "next/navigation";
+import { studioOverviewEditHref } from "@/lib/studio-edit-url";
 
-export default function Submit() {
-  return (
-    <Suspense>
-      <SubmitPage />
-    </Suspense>
-  );
+/** 旧投稿URL — 外部ブックマーク互換。正本は /studio/submit */
+export default async function Submit({
+  searchParams,
+}: {
+  searchParams: Promise<{ edit?: string }>;
+}) {
+  const sp = await searchParams;
+  const editId = sp.edit?.trim();
+  if (editId) {
+    redirect(studioOverviewEditHref(editId, "basic-info"));
+  }
+  redirect("/studio/submit");
 }
