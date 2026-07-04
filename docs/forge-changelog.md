@@ -35,7 +35,8 @@
   - 主CTAは `projects.play_url` を最優先。プレイ記録はバックグラウンド（失敗してもタブは開く）
   - URL未設定時は disabled ＋「この作品はまだプレイURLが設定されていません」
 - **公開準備中** — phase によるプレイ制限はなし（visibility=public なら一般ユーザーもログイン後にプレイ可）
-- **DB書き込み不要** — 対象作品は既に `play_url` / `official_url` 登録済み。本番 deploy（preview 確認後）が必要
+- **DB書き込み不要** — 対象作品は既に `play_url` / `official_url` 登録済み
+- **本番反映** — `preview/landing-01` → `main` fast-forward（hotfix `182791a` 含む）。Git push だけでは Vercel Production が更新されなかったため `vercel deploy --prod` で `forge-flame-gamma.vercel.app` に反映。`origin/main` と `origin/preview/landing-01` は `9f51c3b` で同一
 
 ---
 
