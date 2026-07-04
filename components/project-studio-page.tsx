@@ -4,14 +4,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { StudioShell } from "@/components/studio-shell";
-import { ProjectReleaseStudioPanel } from "@/components/project-release-studio-panel";
-import { StudioImprovementLoop } from "@/components/studio-improvement-loop";
 import { DevlogComposeModal } from "@/components/devlog-compose-modal";
-import { ProjectDistributionLinksModal } from "@/components/project-distribution-links-modal";
 import { GameDetailPlayerPreview } from "@/components/game-detail-player-preview";
 import { StudioMypageBackLink } from "@/components/studio-mypage-back-link";
 import { StudioTabContextPanel } from "@/components/studio-tab-context-panel";
-import { StudioProjectToolbar } from "@/components/studio-project-toolbar";
 import { useGames } from "@/components/games-provider";
 import { useOwnedProjectFeedback } from "@/hooks/use-owned-project-feedback";
 import { useOwnedProjectVoiceSignals } from "@/hooks/use-owned-project-voice-signals";
@@ -31,9 +27,6 @@ import { useRedirectToLoginWhenLoggedOut } from "@/hooks/use-redirect-to-login-w
 import { getVisibilityBadgeLabel } from "@/lib/project-visibility";
 import { parseStudioOverviewEditMode } from "@/lib/studio-edit-url";
 import { scrollStudioPanelToTop } from "@/lib/studio-panel-scroll";
-
-/** B2 ロールバック用 — true にすると旧 Studio 縦積み UI を再表示 */
-const SHOW_LEGACY_STUDIO_UI = false;
 
 type StudioOwnerAccess = "loading" | "owner" | "notOwner";
 
@@ -88,7 +81,6 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
 
   const [openFeedbackPanel, setOpenFeedbackPanel] = useState(false);
   const [activeSection, setActiveSection] = useState<GameDetailTab>("overview");
-  const [distributionLinksModalOpen, setDistributionLinksModalOpen] = useState(false);
   const [devlogModalOpen, setDevlogModalOpen] = useState(false);
   const [previewPatch, setPreviewPatch] = useState<StudioEditPreviewPatch | null>(null);
 
@@ -192,11 +184,6 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
         open={devlogModalOpen}
         onClose={() => setDevlogModalOpen(false)}
       />
-      <ProjectDistributionLinksModal
-        projectId={projectId}
-        open={distributionLinksModalOpen}
-        onClose={() => setDistributionLinksModalOpen(false)}
-      />
 
       <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:gap-8">
         <div className="min-w-0 flex-1">
@@ -234,36 +221,6 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
           onInitialOverviewEditHandled={clearOverviewEditQuery}
         />
       </div>
-
-      {SHOW_LEGACY_STUDIO_UI ? (
-        <>
-          <StudioProjectToolbar
-            projectId={projectId}
-            onOpenNewVersionDevlog={() => setDevlogModalOpen(true)}
-            onEditProject={() => {
-              setActiveSection("overview");
-              scrollStudioPanelToTop();
-            }}
-            onEditDistribution={() => setDistributionLinksModalOpen(true)}
-          />
-
-          <div className="mt-6">
-            <StudioImprovementLoop
-              game={game}
-              growth={growthSnapshot}
-              feedbackEntries={projectFeedback}
-              detailPanelId={PROJECT_STUDIO_FEEDBACK_SECTION_ID}
-              initialOpenFeedback={openFeedbackPanel}
-            />
-          </div>
-
-          <ProjectReleaseStudioPanel
-            projectId={game.id}
-            devlogCount={devlogCount}
-            playableVersion={growthSnapshot.playableVersion}
-          />
-        </>
-      ) : null}
     </StudioShell>
   );
 }

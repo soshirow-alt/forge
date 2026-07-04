@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-05 — レガシーStudio UI削除（SHOW_LEGACY_STUDIO_UI 廃止）
+
+- **削除** — `SHOW_LEGACY_STUDIO_UI` ブロック、`StudioProjectToolbar`、`StudioNurtureRail`、`StudioImprovementLoop`、`ProjectDistributionLinksModal`（いずれも通常ルート未使用）
+- **現行Studio** — `StudioTabContextPanel` + インライン編集パネルのみ。挙動変更なし
+- **残したもの** — `ProjectReleaseStudioPanel`（`studio-release-detail-modal` で使用中）、`StudioPlayerFeedbackPanel`（現行 voices タブで使用中）
+- **既知ギャップ** — 投稿後の Steam/itch 等の外部リンク編集は新Studioに未統合（旧モーダルも既に到達不能だった）。次タスク候補
+
+---
+
 ## 2026-07-05 — 投稿成功後・共有導線の追加修正（Preview）
 
 - **公開作品ページ** — オーナー向け管理バーを削除。オーナーでもプレイヤーと同じ見え方
