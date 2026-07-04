@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
 import { ProjectAccessEnvironmentFields } from "@/components/project-access-environment-fields";
 import { ProjectEstimatedPlayTimeField } from "@/components/project-estimated-play-time-field";
 import {
@@ -10,8 +11,14 @@ import {
 import type { StudioOverviewEditPanelCommonProps } from "@/components/studio-overview-edit-panel-types";
 import { useGames } from "@/components/games-provider";
 import { pickFeatureTagsFromGameTags, sanitizeFeatureTagsForSave } from "@/lib/forge-feature-tag-options";
+import {
+  emptyExternalLinkFormValues,
+  type ExternalLinkFormValues,
+  type ProjectExternalLinksInput,
+} from "@/lib/game-links";
 import { validatePlayAccess } from "@/lib/project-access-form";
 import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
+import type { Game } from "@/lib/mock-games";
 import {
   EMPTY_PLAY_ENVIRONMENT_FORM,
   getPublicGameTags,
@@ -21,6 +28,32 @@ import {
 } from "@/lib/play-environment";
 
 export type StudioOverviewPlayInfoEditPanelProps = StudioOverviewEditPanelCommonProps;
+
+function externalLinksFromGame(game: Game): ExternalLinkFormValues {
+  return {
+    steamUrl: game.steamUrl ?? "",
+    itchUrl: game.itchUrl ?? "",
+    discordUrl: game.discordUrl ?? "",
+    xUrl: game.xUrl ?? "",
+    officialUrl: game.officialUrl ?? "",
+    youtubeUrl: game.youtubeUrl ?? "",
+    githubUrl: game.githubUrl ?? "",
+  };
+}
+
+function externalLinksPayload(
+  values: ExternalLinkFormValues,
+): ProjectExternalLinksInput {
+  return {
+    steamUrl: values.steamUrl.trim() || undefined,
+    itchUrl: values.itchUrl.trim() || undefined,
+    discordUrl: values.discordUrl.trim() || undefined,
+    xUrl: values.xUrl.trim() || undefined,
+    officialUrl: values.officialUrl.trim() || undefined,
+    youtubeUrl: values.youtubeUrl.trim() || undefined,
+    githubUrl: values.githubUrl.trim() || undefined,
+  };
+}
 
 export function StudioOverviewPlayInfoEditPanel({
   projectId,
@@ -36,6 +69,9 @@ export function StudioOverviewPlayInfoEditPanel({
   );
   const [playUrl, setPlayUrl] = useState("");
   const [estimatedPlayTime, setEstimatedPlayTime] = useState("");
+  const [externalLinks, setExternalLinks] = useState<ExternalLinkFormValues>(
+    emptyExternalLinkFormValues(),
+  );
   const [formLoaded, setFormLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -49,17 +85,30 @@ export function StudioOverviewPlayInfoEditPanel({
     setPlayEnvironment(parsePlayEnvironmentFromTags(game.tags ?? []));
     setPlayUrl(game.playUrl ?? "");
     setEstimatedPlayTime(game.estimatedPlayTime ?? "");
+    setExternalLinks(externalLinksFromGame(game));
     setFormLoaded(true);
   }, [game, formLoaded]);
 
+  const previewSignature = useMemo(
+    () =>
+      JSON.stringify({
+        playEnvironment,
+        playUrl,
+        estimatedPlayTime,
+        externalLinks,
+      }),
+    [playEnvironment, playUrl, estimatedPlayTime, externalLinks],
+  );
+
   useEffect(() => {
     setValidationError(null);
-  }, [playEnvironment, playUrl, estimatedPlayTime]);
+  }, [previewSignature]);
 
   function emitPreview(
     nextEnvironment: PlayEnvironmentFormState,
     nextPlayUrl: string,
     nextEstimatedPlayTime: string,
+    nextExternalLinks: ExternalLinkFormValues,
   ) {
     if (!game) {
       return;
@@ -71,6 +120,15 @@ export function StudioOverviewPlayInfoEditPanel({
       playUrl: nextPlayUrl,
       estimatedPlayTime: nextEstimatedPlayTime || undefined,
       tags: mergePlayEnvironmentIntoTags(featureTags, nextEnvironment),
+      ...externalLinksPayload(nextExternalLinks),
+    });
+  }
+
+  function setExternalLinkField(field: keyof ProjectExternalLinksInput, value: string) {
+    setExternalLinks((current) => {
+      const next = { ...current, [field]: value };
+      emitPreview(playEnvironment, playUrl, estimatedPlayTime, next);
+      return next;
     });
   }
 
@@ -98,6 +156,7 @@ export function StudioOverviewPlayInfoEditPanel({
         playUrl: playUrl.trim(),
         estimatedPlayTime: estimatedPlayTime || undefined,
         tags: mergePlayEnvironmentIntoTags(featureTags, playEnvironment),
+        ...externalLinksPayload(externalLinks),
       });
       onSaved?.();
     } catch (error) {
@@ -128,7 +187,7 @@ export function StudioOverviewPlayInfoEditPanel({
         value={estimatedPlayTime}
         onChange={(value) => {
           setEstimatedPlayTime(value);
-          emitPreview(playEnvironment, playUrl, value);
+          emitPreview(playEnvironment, playUrl, value, externalLinks);
         }}
         inputClassName={studioPanelInputClassName}
         inputId={`studio-play-time-${projectId}`}
@@ -138,16 +197,23 @@ export function StudioOverviewPlayInfoEditPanel({
         playEnvironment={playEnvironment}
         onPlayEnvironmentChange={(value) => {
           setPlayEnvironment(value);
-          emitPreview(value, playUrl, estimatedPlayTime);
+          emitPreview(value, playUrl, estimatedPlayTime, externalLinks);
         }}
         playUrl={playUrl}
         onPlayUrlChange={(value) => {
           setPlayUrl(value);
-          emitPreview(playEnvironment, value, estimatedPlayTime);
+          emitPreview(playEnvironment, value, estimatedPlayTime, externalLinks);
         }}
         inputClassName={studioPanelInputClassName}
         playUrlInputId={`studio-play-url-${projectId}`}
         distributionRadioName={`studio-distribution-${projectId}`}
+      />
+
+      <ExternalLinksFormFields
+        formKey={`studio-play-info-${projectId}`}
+        values={externalLinks}
+        onChange={setExternalLinkField}
+        inputClassName={studioPanelInputClassName}
       />
     </StudioPanelEditShell>
   );

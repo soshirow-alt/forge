@@ -13,6 +13,14 @@
 
 ---
 
+## 2026-07-05 — プレイ情報編集へ関連リンク統合
+
+- **Studio「プレイ情報・公開先を編集」** — `ExternalLinksFormFields` を統合。投稿済み作品でプレイURL・配布形式に加え、Steam / itch / Discord / X / 公式 / YouTube / GitHub を表示・編集・保存可能
+- **公開ページ反映** — 保存後 `resolvePlayDestinations`（プレイ先）と `GameExternalLinks`（関連リンク）が更新データを参照
+- **旧UI復活なし** — `ProjectDistributionLinksModal` は戻さず、新Studioパネルへフォーム部品のみ移植
+
+---
+
 ## 2026-07-05 — 投稿成功後・共有導線の追加修正（Preview）
 
 - **公開作品ページ** — オーナー向け管理バーを削除。オーナーでもプレイヤーと同じ見え方
