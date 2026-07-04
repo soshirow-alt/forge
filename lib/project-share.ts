@@ -24,12 +24,18 @@ export function buildProjectShareIntroText(
   ].join("\n");
 }
 
+/** X Web Intent body — URL appears once in `text` only (no `url` param). */
+export function buildXComposeShareText(title: string, pageUrl: string): string {
+  return buildProjectShareIntroText(title, pageUrl);
+}
+
 /** X Web Intent — opens compose UI; does not post automatically. */
 export function buildXComposeIntentUrl(text: string): string {
   return `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`;
 }
 
-export function openXComposeInNewTab(text: string): void {
+export function openXComposeInNewTab(title: string, pageUrl: string): void {
+  const text = buildXComposeShareText(title, pageUrl);
   const url = buildXComposeIntentUrl(text);
   window.open(url, "_blank", "noopener,noreferrer");
 }

@@ -8,7 +8,6 @@ import { ProjectReleaseStudioPanel } from "@/components/project-release-studio-p
 import { StudioImprovementLoop } from "@/components/studio-improvement-loop";
 import { DevlogComposeModal } from "@/components/devlog-compose-modal";
 import { ProjectDistributionLinksModal } from "@/components/project-distribution-links-modal";
-import { ProjectEditModal } from "@/components/project-edit-modal";
 import { GameDetailPlayerPreview } from "@/components/game-detail-player-preview";
 import { StudioMypageBackLink } from "@/components/studio-mypage-back-link";
 import { StudioTabContextPanel } from "@/components/studio-tab-context-panel";
@@ -30,6 +29,8 @@ import {
 import { resolveVoiceSignalForGame } from "@/lib/project-voice-nurture";
 import { useRedirectToLoginWhenLoggedOut } from "@/hooks/use-redirect-to-login-when-logged-out";
 import { getVisibilityBadgeLabel } from "@/lib/project-visibility";
+import { parseStudioOverviewEditMode } from "@/lib/studio-edit-url";
+import { scrollStudioPanelToTop } from "@/lib/studio-panel-scroll";
 
 /** B2 ロールバック用 — true にすると旧 Studio 縦積み UI を再表示 */
 const SHOW_LEGACY_STUDIO_UI = false;
@@ -87,10 +88,11 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
 
   const [openFeedbackPanel, setOpenFeedbackPanel] = useState(false);
   const [activeSection, setActiveSection] = useState<GameDetailTab>("overview");
-  const [editModalOpen, setEditModalOpen] = useState(false);
   const [distributionLinksModalOpen, setDistributionLinksModalOpen] = useState(false);
   const [devlogModalOpen, setDevlogModalOpen] = useState(false);
   const [previewPatch, setPreviewPatch] = useState<StudioEditPreviewPatch | null>(null);
+
+  const initialOverviewEditMode = parseStudioOverviewEditMode(searchParams.get("edit"));
 
   const previewGame = useMemo(() => {
     if (!game) {
@@ -109,13 +111,13 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
       }
       return;
     }
-    if (edit === "project") {
-      setEditModalOpen(true);
+    if (parseStudioOverviewEditMode(edit)) {
+      setActiveSection("overview");
+      scrollStudioPanelToTop();
     }
   }, [searchParams, projectId, router]);
 
-  function closeEditModal() {
-    setEditModalOpen(false);
+  function clearOverviewEditQuery() {
     if (searchParams.get("edit")) {
       router.replace(projectStudioPath(projectId));
     }
@@ -190,11 +192,6 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
         open={devlogModalOpen}
         onClose={() => setDevlogModalOpen(false)}
       />
-      <ProjectEditModal
-        projectId={projectId}
-        open={editModalOpen}
-        onClose={closeEditModal}
-      />
       <ProjectDistributionLinksModal
         projectId={projectId}
         open={distributionLinksModalOpen}
@@ -233,6 +230,8 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
           initialOpenFeedback={openFeedbackPanel}
           onOpenNewVersionDevlog={() => setDevlogModalOpen(true)}
           onPreviewPatchChange={setPreviewPatch}
+          initialOverviewEditMode={initialOverviewEditMode}
+          onInitialOverviewEditHandled={clearOverviewEditQuery}
         />
       </div>
 
@@ -241,7 +240,10 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
           <StudioProjectToolbar
             projectId={projectId}
             onOpenNewVersionDevlog={() => setDevlogModalOpen(true)}
-            onEditProject={() => setEditModalOpen(true)}
+            onEditProject={() => {
+              setActiveSection("overview");
+              scrollStudioPanelToTop();
+            }}
             onEditDistribution={() => setDistributionLinksModalOpen(true)}
           />
 

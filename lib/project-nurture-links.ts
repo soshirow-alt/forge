@@ -1,5 +1,6 @@
 import type { Notification } from "@/lib/notifications";
 import { buildGameDetailTabHref } from "@/lib/game-detail-tabs";
+import { studioOverviewEditHref } from "@/lib/studio-edit-url";
 
 export const PROJECT_STUDIO_FEEDBACK_SECTION_ID = "feedback";
 
@@ -114,7 +115,7 @@ export const PROJECT_NURTURE_ACTIONS: ProjectNurtureAction[] = [
   {
     id: "edit-project",
     label: "作品情報を編集する",
-    href: (id) => `${projectStudioPath(id)}?edit=project`,
+    href: (id) => studioOverviewEditHref(id, "basic-info"),
     description: "タイトル・説明・公開設定",
   },
   {

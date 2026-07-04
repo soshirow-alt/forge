@@ -52,6 +52,10 @@ export function StudioOverviewPlayInfoEditPanel({
     setFormLoaded(true);
   }, [game, formLoaded]);
 
+  useEffect(() => {
+    setValidationError(null);
+  }, [playEnvironment, playUrl, estimatedPlayTime]);
+
   function emitPreview(
     nextEnvironment: PlayEnvironmentFormState,
     nextPlayUrl: string,

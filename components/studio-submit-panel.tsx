@@ -2,6 +2,7 @@
 
 import { SlidersHorizontal, Pencil, Sparkles, Image as ImageIcon, Link2 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
+import { scrollStudioPanelToTop } from "@/lib/studio-panel-scroll";
 import { VersionPromptSettingsTrigger } from "@/components/version-prompt-settings-modal";
 import {
   StudioSubmitBasicInfoEditPanel,
@@ -134,8 +135,14 @@ export function StudioSubmitPanel({
       return;
     }
     setEditMode(focusEditMode);
+    scrollStudioPanelToTop();
     onFocusEditModeHandled?.();
   }, [focusEditMode, onFocusEditModeHandled]);
+
+  function openEdit(mode: Exclude<SubmitEditMode, null>) {
+    setEditMode(mode);
+    scrollStudioPanelToTop();
+  }
 
   function applyPatch(patch: Partial<SubmitDraftState>) {
     onDraftChange(patch);
@@ -219,7 +226,7 @@ export function StudioSubmitPanel({
                   fieldHint="タイトル・キャッチコピー・開発フェーズ"
                 >
                   <p className={panelSummaryClassName}>{summarizeSubmitDraftBasic(draft)}</p>
-                  <button type="button" onClick={() => setEditMode("basic-info")} className={panelButtonClassName}>
+                  <button type="button" onClick={() => openEdit("basic-info")} className={panelButtonClassName}>
                     <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
                     編集する
                   </button>
@@ -231,7 +238,7 @@ export function StudioSubmitPanel({
                   fieldHint="ジャンル（必須）・特徴タグ（任意）"
                 >
                   <p className={panelSummaryClassName}>{summarizeSubmitDraftGenres(draft)}</p>
-                  <button type="button" onClick={() => setEditMode("genres-tags")} className={panelButtonClassName}>
+                  <button type="button" onClick={() => openEdit("genres-tags")} className={panelButtonClassName}>
                     <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
                     編集する
                   </button>
@@ -239,7 +246,7 @@ export function StudioSubmitPanel({
 
                 <PanelBlock title="作品紹介" requirement="required">
                   <p className={panelSummaryClassName}>{summarizeSubmitDraftIntroduction(draft)}</p>
-                  <button type="button" onClick={() => setEditMode("introduction")} className={panelButtonClassName}>
+                  <button type="button" onClick={() => openEdit("introduction")} className={panelButtonClassName}>
                     <Sparkles className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
                     編集する
                   </button>
@@ -247,7 +254,7 @@ export function StudioSubmitPanel({
 
                 <PanelBlock title="画像" requirement="optional" fieldHint="未設定でも投稿できます">
                   <p className={panelSummaryClassName}>{summarizeSubmitDraftImages(draft)}</p>
-                  <button type="button" onClick={() => setEditMode("images")} className={panelButtonClassName}>
+                  <button type="button" onClick={() => openEdit("images")} className={panelButtonClassName}>
                     <ImageIcon className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
                     編集する
                   </button>
@@ -264,7 +271,7 @@ export function StudioSubmitPanel({
                   fieldHint="配布形式・プレイURL"
                 >
                   <p className={panelSummaryClassName}>{summarizeSubmitDraftPlayInfo(draft)}</p>
-                  <button type="button" onClick={() => setEditMode("play-info")} className={panelButtonClassName}>
+                  <button type="button" onClick={() => openEdit("play-info")} className={panelButtonClassName}>
                     <Link2 className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
                     編集する
                   </button>
@@ -275,7 +282,7 @@ export function StudioSubmitPanel({
                     <span className="text-xs text-zinc-500">公開状態</span>
                     <span className="text-sm font-medium text-zinc-200">{visibilityLabel}</span>
                   </div>
-                  <button type="button" onClick={() => setEditMode("visibility")} className={panelButtonClassName}>
+                  <button type="button" onClick={() => openEdit("visibility")} className={panelButtonClassName}>
                     <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
                     編集する
                   </button>

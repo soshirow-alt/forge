@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import { projectStudioPath } from "@/lib/project-nurture-links";
+import { studioOverviewEditHref } from "@/lib/studio-edit-url";
 
 export function SubmitPage() {
   const router = useRouter();
@@ -11,7 +11,7 @@ export function SubmitPage() {
 
   useEffect(() => {
     if (editId) {
-      router.replace(`${projectStudioPath(editId)}?edit=project`);
+      router.replace(studioOverviewEditHref(editId, "basic-info"));
       return;
     }
     router.replace("/studio/submit");

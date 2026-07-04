@@ -23,6 +23,7 @@ import {
   sortProjectsForGrowthHub,
   type ProjectGrowthSnapshot,
 } from "@/lib/project-growth-state";
+import { ProjectCardShareActions } from "@/components/project-card-share-actions";
 import { gamePlayHref, projectStudioPath, studioSubmitModalHref } from "@/lib/project-nurture-links";
 import { resolveVoiceSignalForGame } from "@/lib/project-voice-nurture";
 import { isStudioMypagePreviewMockProject } from "@/lib/studio-mypage-owned-projects";
@@ -197,12 +198,7 @@ function OwnedProjectGridCard({
         </div>
       </Link>
       <div className="flex items-center justify-between gap-2 border-t border-zinc-800/80 px-3 py-2">
-        <Link
-          href={gamePlayHref(game.id)}
-          className="text-xs text-violet-400 transition-colors hover:text-violet-200"
-        >
-          公開ページを見る
-        </Link>
+        <ProjectCardShareActions game={game} />
         {showDelete ? (
           <ProjectDeleteButton
             onClick={() => onDelete({ id: game.id, title: game.title })}
@@ -280,6 +276,9 @@ function OwnedProjectListRow({
           </p>
         </div>
       </Link>
+      <div className="mt-2">
+        <ProjectCardShareActions game={game} />
+      </div>
       {showDelete ? (
         <ProjectDeleteButton
           onClick={() => onDelete({ id: game.id, title: game.title })}

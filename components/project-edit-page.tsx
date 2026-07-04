@@ -2,13 +2,13 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { projectStudioPath } from "@/lib/project-nurture-links";
+import { studioOverviewEditHref } from "@/lib/studio-edit-url";
 
 export function ProjectEditPage({ projectId }: { projectId: string }) {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace(`${projectStudioPath(projectId)}?edit=project`);
+    router.replace(studioOverviewEditHref(projectId, "basic-info"));
   }, [projectId, router]);
 
   return null;

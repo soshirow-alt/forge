@@ -47,6 +47,10 @@ export function StudioOverviewBasicInfoEditPanel({
     setFormLoaded(true);
   }, [game, formLoaded]);
 
+  useEffect(() => {
+    setValidationError(null);
+  }, [title, description, phase]);
+
   function emitPreview(next: { title: string; description: string; phase: string }) {
     onPreviewPatchChange?.({
       title: clampProjectTitle(next.title),

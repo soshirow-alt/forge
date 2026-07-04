@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Image as ImageIcon, Pencil, Sparkles, Link2, Copy, ExternalLink, FileText, Eye } from "lucide-react";
+import { Image as ImageIcon, Pencil, Sparkles, Link2, FileText, Eye } from "lucide-react";
 import { StudioEditSectionSwitcher } from "@/components/studio-edit-section-switcher";
 import { StudioOverviewBasicInfoEditPanel } from "@/components/studio-overview-basic-info-edit-panel";
 import { StudioOverviewGenresTagsEditPanel } from "@/components/studio-overview-genres-tags-edit-panel";
@@ -12,7 +12,6 @@ import { StudioOverviewIntroductionEditPanel } from "@/components/studio-overvie
 import { StudioOverviewPlayInfoEditPanel } from "@/components/studio-overview-play-info-edit-panel";
 import { StudioDevlogCurrentEditPanel } from "@/components/studio-devlog-current-edit-panel";
 import { StudioReleaseAboutBlock } from "@/components/studio-release-about-block";
-import { ProjectShareLinkModal } from "@/components/project-share-link-modal";
 import { StudioPlayerFeedbackPanel } from "@/components/studio-improvement-loop";
 import { StudioTopPrioritiesPanel } from "@/components/studio-top-priorities-panel";
 import { useGames } from "@/components/games-provider";
@@ -38,7 +37,9 @@ import {
   studioOperationPanelGroupLabelClassName,
   studioOperationPanelOuterClassName,
 } from "@/lib/studio-operation-panel-styles";
-import { getVisibilityBadgeLabel } from "@/lib/project-visibility";
+import { getVisibilityBadgeLabel, isGamePublic } from "@/lib/project-visibility";
+import { scrollStudioPanelToTop } from "@/lib/studio-panel-scroll";
+import type { StudioOverviewEditMode } from "@/lib/studio-edit-url";
 
 const primaryButtonClassName =
   "inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 shadow-sm shadow-orange-500/20 transition-opacity hover:opacity-90";
@@ -52,16 +53,15 @@ const SECTION_CONTENT_HEADINGS: Record<GameDetailTab, string> = {
   voices: "フィードバックを見る",
 };
 
-type OverviewEditMode =
-  | null
-  | "basic-info"
-  | "genres-tags"
-  | "images"
-  | "introduction"
-  | "play-info"
-  | "visibility";
-
 type DevlogEditMode = null | "current";
+
+function openOverviewEdit(
+  mode: StudioOverviewEditMode,
+  setMode: (mode: StudioOverviewEditMode) => void,
+) {
+  setMode(mode);
+  scrollStudioPanelToTop();
+}
 
 function StudioEditPaneShell({ children }: { children: ReactNode }) {
   return (
@@ -105,6 +105,8 @@ export type StudioTabContextPanelProps = {
   initialOpenFeedback?: boolean;
   onOpenNewVersionDevlog: () => void;
   onPreviewPatchChange?: (patch: StudioEditPreviewPatch | null) => void;
+  initialOverviewEditMode?: StudioOverviewEditMode | null;
+  onInitialOverviewEditHandled?: () => void;
 };
 
 export function StudioTabContextPanel({
@@ -118,10 +120,11 @@ export function StudioTabContextPanel({
   initialOpenFeedback = false,
   onOpenNewVersionDevlog,
   onPreviewPatchChange,
+  initialOverviewEditMode = null,
+  onInitialOverviewEditHandled,
 }: StudioTabContextPanelProps) {
   const { getDevlogsByProject } = useGames();
-  const [shareModalOpen, setShareModalOpen] = useState(false);
-  const [overviewEditMode, setOverviewEditMode] = useState<OverviewEditMode>(null);
+  const [overviewEditMode, setOverviewEditMode] = useState<StudioOverviewEditMode | null>(null);
   const [devlogEditMode, setDevlogEditMode] = useState<DevlogEditMode>(null);
 
   const versionKey = resolvePlayableVersion(growth.playableVersion);
@@ -143,6 +146,17 @@ export function StudioTabContextPanel({
   }, [getDevlogsByProject, projectId]);
 
   const visibilityLabel = getVisibilityBadgeLabel(game.visibility);
+  const isPublic = isGamePublic(game);
+  const publicPageLabel = isPublic ? "公開ページを見る" : "確認用ページを見る";
+
+  useEffect(() => {
+    if (!initialOverviewEditMode) {
+      return;
+    }
+    setOverviewEditMode(initialOverviewEditMode);
+    scrollStudioPanelToTop();
+    onInitialOverviewEditHandled?.();
+  }, [initialOverviewEditMode, onInitialOverviewEditHandled]);
 
   useEffect(() => {
     if (activeSection !== "voices" || !hasFeedback || voiceRead || quickFbCount === 0) {
@@ -178,14 +192,6 @@ export function StudioTabContextPanel({
     onPreviewPatchChange?.(null);
     closeOverviewEdit();
   }
-
-  const shareModal = (
-    <ProjectShareLinkModal
-      projectId={projectId}
-      open={shareModalOpen}
-      onClose={() => setShareModalOpen(false)}
-    />
-  );
 
   let sectionContent: ReactNode;
 
@@ -259,7 +265,7 @@ export function StudioTabContextPanel({
               <PanelBlock>
                 <button
                   type="button"
-                  onClick={() => setOverviewEditMode("basic-info")}
+                  onClick={() => openOverviewEdit("basic-info", setOverviewEditMode)}
                   className={panelButtonClassName}
                 >
                   <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
@@ -270,7 +276,7 @@ export function StudioTabContextPanel({
               <PanelBlock>
                 <button
                   type="button"
-                  onClick={() => setOverviewEditMode("genres-tags")}
+                  onClick={() => openOverviewEdit("genres-tags", setOverviewEditMode)}
                   className={panelButtonClassName}
                 >
                   <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
@@ -281,7 +287,7 @@ export function StudioTabContextPanel({
               <PanelBlock>
                 <button
                   type="button"
-                  onClick={() => setOverviewEditMode("introduction")}
+                  onClick={() => openOverviewEdit("introduction", setOverviewEditMode)}
                   className={panelButtonClassName}
                 >
                   <Sparkles className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
@@ -292,7 +298,7 @@ export function StudioTabContextPanel({
               <PanelBlock>
                 <button
                   type="button"
-                  onClick={() => setOverviewEditMode("images")}
+                  onClick={() => openOverviewEdit("images", setOverviewEditMode)}
                   className={panelButtonClassName}
                 >
                   <ImageIcon className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
@@ -308,7 +314,7 @@ export function StudioTabContextPanel({
               <PanelBlock>
                 <button
                   type="button"
-                  onClick={() => setOverviewEditMode("play-info")}
+                  onClick={() => openOverviewEdit("play-info", setOverviewEditMode)}
                   className={panelButtonClassName}
                 >
                   <Link2 className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
@@ -323,7 +329,7 @@ export function StudioTabContextPanel({
                 </div>
                 <button
                   type="button"
-                  onClick={() => setOverviewEditMode("visibility")}
+                  onClick={() => openOverviewEdit("visibility", setOverviewEditMode)}
                   className={panelButtonClassName}
                 >
                   <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
@@ -331,25 +337,18 @@ export function StudioTabContextPanel({
                 </button>
               </PanelBlock>
 
-              <div className="space-y-2 pt-0.5">
+              <p className="pt-0.5 text-[11px] text-zinc-600">
                 <Link
                   href={gamePlayHref(projectId)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={panelButtonClassName}
+                  className="text-zinc-500 underline-offset-2 hover:text-violet-300 hover:underline"
                 >
-                  <ExternalLink className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                  公開ページを見る
+                  {publicPageLabel}
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => setShareModalOpen(true)}
-                  className={panelButtonClassName}
-                >
-                  <Copy className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                  外部に共有する
-                </button>
-              </div>
+                <span className="text-zinc-700"> · </span>
+                共有はマイページの作品カードから
+              </p>
             </div>
           </div>
         </div>
@@ -466,9 +465,7 @@ export function StudioTabContextPanel({
   }
 
   return (
-    <>
-      {shareModal}
-      <StudioEditPaneShell>
+    <StudioEditPaneShell>
         <StudioEditSectionSwitcher
           activeSection={activeSection}
           onSectionChange={onSectionChange}
@@ -482,6 +479,5 @@ export function StudioTabContextPanel({
 
         {sectionContent}
       </StudioEditPaneShell>
-    </>
   );
 }

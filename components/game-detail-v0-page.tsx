@@ -52,7 +52,6 @@ import {
 } from "@/lib/game-voices-v0-mock-data";
 import { firstVoiceQuestion } from "@/lib/feedback-v0-mock-data";
 import { applyProjectOverviewV0 } from "@/lib/project-overview-v0-store";
-import { ProjectOwnerManageBar } from "@/components/project-owner-manage-bar";
 import { projectStudioPath } from "@/lib/project-nurture-links";
 import { useHideV0MockContent } from "@/lib/forge-deployment-context";
 import { isProductionReleaseMode } from "@/lib/production-mode";
@@ -582,15 +581,6 @@ function GameDetailV0PageBody({ id }: { id: string }) {
 
       <div className="flex flex-col gap-8 xl:flex-row xl:items-start">
         <div className="min-w-0 flex-1 space-y-5">
-          {isOwnerPreview && ownerStudioHref && ownerProjectId ? (
-            <ProjectOwnerManageBar
-              projectId={ownerProjectId}
-              title={game.title}
-              visibility={submittedGame?.visibility}
-              studioHref={ownerStudioHref}
-            />
-          ) : null}
-
           <section className="overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/30">
             <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
               {isRealProject && posterFallback ? (

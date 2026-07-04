@@ -105,6 +105,54 @@ export function validateSubmitDraftForPost(
   return { ok: true };
 }
 
+/** Re-validate a single section — used to clear stale submit errors after input. */
+export function validateSubmitDraftSection(
+  draft: SubmitDraftState,
+  editMode: SubmitValidationEditMode,
+): SubmitDraftValidationResult {
+  switch (editMode) {
+    case "basic-info": {
+      if (!draft.title.trim()) {
+        return validationFailure("basic-info", "タイトルを入力してください。");
+      }
+      const titleError = validateProjectTitle(draft.title);
+      if (titleError) {
+        return validationFailure("basic-info", titleError);
+      }
+      const leadError = validateProjectOneLineDescription(draft.description);
+      if (leadError) {
+        return validationFailure("basic-info", leadError);
+      }
+      if (!draft.phase.trim()) {
+        return validationFailure("basic-info", "開発フェーズを選んでください。");
+      }
+      return { ok: true };
+    }
+    case "genres-tags": {
+      const genres = sanitizeProjectGenresForSave(draft.genres);
+      if (genres.length === 0) {
+        return validationFailure("genres-tags", "ジャンルを1つ以上選んでください。");
+      }
+      return { ok: true };
+    }
+    case "introduction": {
+      if (!draft.introduction.trim()) {
+        return validationFailure("introduction", "作品紹介を入力してください。");
+      }
+      return { ok: true };
+    }
+    case "play-info": {
+      const accessError = validatePlayAccess(draft.playEnvironment, draft.playUrl);
+      if (accessError) {
+        return validationFailure("play-info", accessError);
+      }
+      return { ok: true };
+    }
+    default:
+      return { ok: true };
+  }
+}
+
 export function useStudioSubmit() {
   const {
     addSubmittedGame,
@@ -185,5 +233,5 @@ export function useStudioSubmit() {
     ],
   );
 
-  return { submitDraft, validateSubmitDraftForPost };
+  return { submitDraft, validateSubmitDraftForPost, validateSubmitDraftSection };
 }

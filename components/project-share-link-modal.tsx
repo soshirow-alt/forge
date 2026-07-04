@@ -57,7 +57,7 @@ export function ProjectShareLinkModal({
     if (!pageUrl) {
       return;
     }
-    openXComposeInNewTab(buildProjectShareIntroText(title, pageUrl));
+    openXComposeInNewTab(title, pageUrl);
   }, [pageUrl, title]);
 
   const handleCopyIntro = useCallback(async () => {

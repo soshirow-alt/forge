@@ -11,6 +11,7 @@ import { ProjectSubmitSuccessPanel } from "@/components/project-submit-success-p
 import { useGames } from "@/components/games-provider";
 import {
   useStudioSubmit,
+  validateSubmitDraftSection,
   type SubmitDraftSuccessResult,
   type SubmitValidationEditMode,
 } from "@/hooks/use-studio-submit";
@@ -28,7 +29,8 @@ export function StudioSubmitPage() {
   const router = useRouter();
   const { user, hydrated } = useAuth();
   const { getDeveloperProfileByUserId, getOwnedProjects } = useGames();
-  const { submitDraft } = useStudioSubmit();
+  const { submitDraft, validateSubmitDraftForPost, validateSubmitDraftSection } =
+    useStudioSubmit();
 
   const [draft, setDraft] = useState<SubmitDraftState>(() => createEmptySubmitDraft());
   const [activeTab, setActiveTab] = useState<GameDetailTab>("overview");
@@ -36,6 +38,7 @@ export function StudioSubmitPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showPromptValidation, setShowPromptValidation] = useState(false);
   const [focusEditMode, setFocusEditMode] = useState<SubmitValidationEditMode | null>(null);
+  const [failedEditMode, setFailedEditMode] = useState<SubmitValidationEditMode | null>(null);
   const [successState, setSuccessState] = useState<SubmitDraftSuccessResult | null>(
     null,
   );
@@ -78,6 +81,35 @@ export function StudioSubmitPage() {
     socialPrefillDoneRef.current = true;
   }, [developerProfile, getOwnedProjects, user]);
 
+  useEffect(() => {
+    if (!submitError) {
+      return;
+    }
+
+    const full = validateSubmitDraftForPost(draft);
+    if (full.ok) {
+      setSubmitError(null);
+      setFailedEditMode(null);
+      setShowPromptValidation(false);
+      return;
+    }
+
+    if (failedEditMode) {
+      const section = validateSubmitDraftSection(draft, failedEditMode);
+      if (section.ok) {
+        setSubmitError(null);
+        setFailedEditMode(null);
+        setShowPromptValidation(false);
+      }
+    }
+  }, [
+    draft,
+    submitError,
+    failedEditMode,
+    validateSubmitDraftForPost,
+    validateSubmitDraftSection,
+  ]);
+
   function patchDraft(patch: Partial<SubmitDraftState>) {
     setDraft((current) => ({ ...current, ...patch }));
   }
@@ -108,6 +140,9 @@ export function StudioSubmitPage() {
       setSubmitError(result.message);
       if (result.editMode) {
         setFocusEditMode(result.editMode);
+        setFailedEditMode(result.editMode);
+      } else {
+        setFailedEditMode(null);
       }
       if (draft.promptMode === "custom") {
         setShowPromptValidation(true);

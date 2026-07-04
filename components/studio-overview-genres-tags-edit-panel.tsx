@@ -65,6 +65,10 @@ export function StudioOverviewGenresTagsEditPanel({
     setFormLoaded(true);
   }, [game, formLoaded]);
 
+  useEffect(() => {
+    setValidationError(null);
+  }, [selectedGenres, selectedTags]);
+
   function emitPreview(
     genres: ForgeGenreOption[],
     tags: ForgeFeatureTagOption[],
