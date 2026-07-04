@@ -12,7 +12,6 @@ import {
 import { GameDetailHeroGallery } from "@/components/game-detail-hero-gallery";
 import { GameHeroPreviewGallery } from "@/components/game-hero-preview-gallery";
 import { GameDetailPhaseBadge } from "@/components/game-detail-phase-badge";
-import { GameHubSummaryCard } from "@/components/game-hub-summary-card";
 import { YourInvolvementCard } from "@/components/your-involvement-card";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -343,10 +342,6 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     watching,
     enabled: isRealProject && hydrated && isLoggedIn,
   });
-  const hubPlayLabel =
-    hydrated && !isLoggedIn ? "ログインしてプレイ" : "この版で遊ぶ";
-  const hubVoiceLabel =
-    hydrated && !isLoggedIn ? "ログインして声を届ける" : "声を届ける";
   const involvementLoginHref = buildLoginUrlWithReturn(returnPath);
 
   const changeCheckOverride = parseChangeCheckPreviewOverride(
@@ -864,19 +859,6 @@ function GameDetailV0PageBody({ id }: { id: string }) {
         </div>
 
         <aside className="w-full shrink-0 space-y-5 xl:w-72">
-          <GameHubSummaryCard
-            gameId={id}
-            playableVersion={
-              submittedGame?.playableVersion ?? game.currentVersion
-            }
-            focusNotes={playerMeta?.focusNotes}
-            playLabel={hubPlayLabel}
-            onPlay={handlePlay}
-            playDisabled={!hydrated || playUnavailableOnPublic}
-            onSendVoice={handleFeedback}
-            voiceLabel={hubVoiceLabel}
-          />
-
           <YourInvolvementCard
             hydrated={hydrated}
             isLoggedIn={isLoggedIn}
