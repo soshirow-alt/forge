@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import { displayPhase } from "@/lib/development-phases";
+import {
+  DEFAULT_GAME_OG_PATH,
+  resolveOgImageUrl,
+} from "@/lib/og-image-url";
 import { formatPlayableVersionLabel } from "@/lib/playable-version";
 import { RELEASE_STATUS_LABELS, type ProjectReleaseStatus } from "@/lib/project-release-state";
 import { getSiteOrigin, toAbsoluteUrl } from "@/lib/site-url";
 import type { ProjectOgData } from "@/lib/supabase/project-og";
 
-export const DEFAULT_GAME_OG_PATH = "/images/og-default.svg";
+export { DEFAULT_GAME_OG_PATH } from "@/lib/og-image-url";
 
 export const FALLBACK_GAME_METADATA: Metadata = {
   title: "Forge",
@@ -53,9 +57,7 @@ export function buildGameDetailMetadata(project: ProjectOgData): Metadata {
   const description = buildGameOgDescription(project);
   const path = `/games/${project.id}`;
   const pageUrl = toAbsoluteUrl(path, origin);
-  const imageUrl = project.thumbnailUrl?.trim()
-    ? toAbsoluteUrl(project.thumbnailUrl, origin)
-    : toAbsoluteUrl(DEFAULT_GAME_OG_PATH, origin);
+  const imageUrl = resolveOgImageUrl(project.thumbnailUrl, origin);
 
   return {
     title,
@@ -88,7 +90,7 @@ export function buildGameDetailMetadata(project: ProjectOgData): Metadata {
 
 export function buildFallbackGameDetailMetadata(): Metadata {
   const origin = getSiteOrigin();
-  const imageUrl = toAbsoluteUrl(DEFAULT_GAME_OG_PATH, origin);
+  const imageUrl = resolveOgImageUrl(null, origin);
   const description = FALLBACK_GAME_METADATA.description as string;
 
   return {

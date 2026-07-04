@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07-04 — OGP画像URL安全化（data URI フォールバック / デフォルトPNG）
+
+- **og:image** — `data:` / `blob:` / 非 http(s) / 壊れた `https://host/data:image...` は使わず、デフォルトOGPへフォールバック（`resolveOgImageUrl`）
+- **デフォルト画像** — `public/images/og-default.png`（Xカード互換のため PNG）
+- **http(s) サムネ** — そのまま採用。同一オリジン相対パス（`/images/...`）は絶対URL化
+
+---
+
 ## 2026-07-04 — 作品ページ Phase 1（OGP / あなたの関わり）
 
 - **動的OGP** — `/games/{id}` で公開作品ごとに title・description・サムネ（なければデフォルト）・Twitter `summary_large_image` を出力。X に貼ったときの見栄え用
