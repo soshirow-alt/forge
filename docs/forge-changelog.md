@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-05 — RLS: 匿名ユーザーの開発者系 write 遮断（migration 038）
+
+- **`038_block_anonymous_developer_writes.sql`** — `auth_is_registered_user()` ヘルパー追加。projects / developer_profiles / devlogs / version_prompts / confirmation_requests / release_events / communities 等の INSERT/UPDATE/DELETE を匿名 JWT から拒否
+- **プレイヤー系は未変更** — voice_responses / feedback / plays / bookmarks / watches 等は Phase 1 で別設計
+- **適用** — Supabase Dashboard SQL（staging-first）。**Anonymous Sign-ins 有効化の前に適用**
+- **コード変更なし** — migration ファイル追加のみ
+
+---
+
 ## 2026-07-05 — ゲストログイン Phase 0（匿名セッション基盤）
 
 - **ゲストで続ける** — `/login` に匿名ログイン（`signInAnonymously`）ボタンを追加。return URL ありなら復帰、なければ `/home`（`/studio/mypage` へは飛ばさない）
