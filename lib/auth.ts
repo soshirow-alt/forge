@@ -1,17 +1,23 @@
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
+import { isAnonymousSupabaseUser } from "@/lib/guest-auth";
+
 export type User = {
   id: string;
   email: string;
   name: string;
   avatarInitial: string;
+  /** Supabase anonymous (guest) player session */
+  isAnonymous: boolean;
 };
 
 export function mapSupabaseUser(supabaseUser: SupabaseUser): User {
-  const name =
-    (supabaseUser.user_metadata?.display_name as string | undefined) ||
-    supabaseUser.email?.split("@")[0] ||
-    "ユーザー";
+  const isAnonymous = isAnonymousSupabaseUser(supabaseUser);
+  const name = isAnonymous
+    ? "ゲスト"
+    : (supabaseUser.user_metadata?.display_name as string | undefined) ||
+      supabaseUser.email?.split("@")[0] ||
+      "ユーザー";
   const avatarInitial = name.charAt(0).toUpperCase() || "U";
 
   return {
@@ -19,7 +25,12 @@ export function mapSupabaseUser(supabaseUser: SupabaseUser): User {
     email: supabaseUser.email ?? "",
     name,
     avatarInitial,
+    isAnonymous,
   };
+}
+
+export function isRegisteredAppUser(user: User | null | undefined): boolean {
+  return Boolean(user && !user.isAnonymous);
 }
 
 export const AUTH_ALREADY_REGISTERED_MESSAGE =

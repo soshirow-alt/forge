@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-07-05 — ゲストログイン Phase 0（匿名セッション基盤）
+
+- **ゲストで続ける** — `/login` に匿名ログイン（`signInAnonymously`）ボタンを追加。return URL ありなら復帰、なければ `/home`（`/studio/mypage` へは飛ばさない）
+- **ゲスト判定** — `User.isAnonymous` / `useAuth().isGuest` / `isRegisteredUser`。`useRequireAuth` の `isLoggedIn` は通常アカウントのみ
+- **開発者導線ブロック** — middleware + `RegisteredAccountGuard` + Studio ガードでゲストを `/studio` `/mypage` `/notifications` `/settings` `/submit` `/projects/...` 等から遮断
+- **送客防止（原典準拠・次フェーズ向けメモ）** — Phase 1 でプレイ接続時はセッション作成→プレイ記録→外部リンクの順を実装予定。今回は未接続
+- **Supabase Dashboard** — Anonymous Sign-ins の有効化が必要（未設定時はゲストボタンでエラー表示）
+- **RLS / DB** — 変更なし（Phase 1 前の確認メモは実装レスポンス参照）
+
+---
+
 ## 2026-07-05 — 原典 v2（用語体系・ゲスト方針）
 
 - **`docs/forge-principles.md` 原典 v2** — 実装・Preview・オーナー判断を反映。古い原典への回帰ではなく、芯（完成前の場・非レビュー・学習ループ・送客防止）を維持

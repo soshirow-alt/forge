@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { getEmailConfirmRedirectUrl, getOAuthRedirectUrl } from "@/lib/auth-redirect";
-import { mapSupabaseUser, type User } from "@/lib/auth";
+import { isRegisteredAppUser, mapSupabaseUser, type User } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/client";
 import type { AuthChangeEvent, Provider, User as SupabaseAuthUser } from "@supabase/supabase-js";
 
@@ -21,7 +21,12 @@ type AuthContextValue = {
   hydrated: boolean;
   /** Client auth bootstrap finished; safe to gate on `user`. */
   authResolved: boolean;
+  /** Supabase anonymous (guest) player session */
+  isGuest: boolean;
+  /** Email/OAuth registered account (not guest) */
+  isRegisteredUser: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signInAnonymously: () => Promise<void>;
   signUp: (
     email: string,
     password: string,
@@ -222,6 +227,24 @@ export function AuthProvider({
     [supabase],
   );
 
+  const signInAnonymously = useCallback(async () => {
+    if (!supabase) {
+      throw new Error("Supabase is not configured.");
+    }
+
+    const { data, error } = await supabase.auth.signInAnonymously();
+
+    if (error) {
+      throw error;
+    }
+
+    if (data.user) {
+      hadServerUserRef.current = false;
+      setUser(mapSupabaseUser(data.user));
+      setAuthResolved(true);
+    }
+  }, [supabase]);
+
   const logout = useCallback(async () => {
     if (supabase) {
       await supabase.auth.signOut();
@@ -258,18 +281,35 @@ export function AuthProvider({
     [supabase],
   );
 
+  const isGuest = Boolean(user?.isAnonymous);
+  const isRegisteredUser = isRegisteredAppUser(user);
+
   const value = useMemo(
     () => ({
       user,
       hydrated: authResolved,
       authResolved,
+      isGuest,
+      isRegisteredUser,
       signIn,
+      signInAnonymously,
       signUp,
       signInWithOAuth,
       updateDisplayName,
       logout,
     }),
-    [user, authResolved, signIn, signUp, signInWithOAuth, updateDisplayName, logout],
+    [
+      user,
+      authResolved,
+      isGuest,
+      isRegisteredUser,
+      signIn,
+      signInAnonymously,
+      signUp,
+      signInWithOAuth,
+      updateDisplayName,
+      logout,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

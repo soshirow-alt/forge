@@ -1,3 +1,8 @@
+import {
+  DEFAULT_POST_GUEST_LOGIN_PATH,
+  isGuestReturnPathAllowed,
+} from "@/lib/guest-auth";
+
 /**
  * Post-login return URL whitelist — relative paths only, open-redirect safe.
  *
@@ -147,20 +152,52 @@ export function sanitizeLoginReturnUrl(
 export function resolvePostLoginPath(
   returnParam: string | null | undefined,
 ): string {
-  return sanitizeLoginReturnUrl(returnParam) ?? DEFAULT_POST_LOGIN_PATH;
+  return resolvePostAuthPath(returnParam, { isGuest: false });
+}
+
+export function resolvePostGuestLoginPath(
+  returnParam: string | null | undefined,
+): string {
+  return resolvePostAuthPath(returnParam, { isGuest: true });
+}
+
+export function resolvePostAuthPath(
+  returnParam: string | null | undefined,
+  options: { isGuest: boolean },
+): string {
+  const sanitized = sanitizeLoginReturnUrl(returnParam);
+
+  if (options.isGuest) {
+    if (sanitized && isGuestReturnPathAllowed(sanitized)) {
+      return sanitized;
+    }
+    return DEFAULT_POST_GUEST_LOGIN_PATH;
+  }
+
+  return sanitized ?? DEFAULT_POST_LOGIN_PATH;
 }
 
 export function buildPathWithSearch(pathname: string, searchParams: string): string {
   return searchParams ? `${pathname}?${searchParams}` : pathname;
 }
 
-export function buildLoginUrlWithReturn(returnPath: string): string {
+export function buildLoginUrlWithReturn(
+  returnPath: string,
+  options?: { notice?: string },
+): string {
   const safe = sanitizeLoginReturnUrl(returnPath);
-  if (!safe) {
-    return LOGIN_PATH;
+  const params = new URLSearchParams();
+
+  if (safe) {
+    params.set("return", safe);
   }
 
-  return `${LOGIN_PATH}?return=${encodeURIComponent(safe)}`;
+  if (options?.notice) {
+    params.set("notice", options.notice);
+  }
+
+  const query = params.toString();
+  return query ? `${LOGIN_PATH}?${query}` : LOGIN_PATH;
 }
 
 export function gameDetailReturnPath(gameId: string): string {

@@ -24,6 +24,7 @@ import {
   openDeveloperCommunity,
 } from "@/lib/developer-community-v0-store";
 import { useForgeDeploymentMode } from "@/lib/forge-deployment-context";
+import { ACCOUNT_REGISTRATION_REQUIRED_NOTICE } from "@/lib/guest-auth";
 import { buildLoginUrlWithReturn } from "@/lib/login-return-url";
 import { shouldBypassStudioLoginGate, shouldHideV0MockContent } from "@/lib/production-mode";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
@@ -44,7 +45,7 @@ function studioPathsEqual(current: string, target: string): boolean {
 export function StudioEntryGateProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, hydrated } = useAuth();
+  const { user, hydrated, isGuest } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const [pendingHref, setPendingHref] = useState("/studio");
   const directAccessPromptedRef = useRef(false);
@@ -119,6 +120,14 @@ export function StudioEntryGateProvider({ children }: { children: ReactNode }) {
 
   const attemptStudioEntry = useCallback(
     (href = "/studio") => {
+      if (isGuest) {
+        router.push(
+          buildLoginUrlWithReturn(href, {
+            notice: ACCOUNT_REGISTRATION_REQUIRED_NOTICE,
+          }),
+        );
+        return;
+      }
       if (shouldBypassStudioLoginGate()) {
         if (!studioPathsEqual(pathname, href)) {
           router.push(href);
@@ -136,7 +145,7 @@ export function StudioEntryGateProvider({ children }: { children: ReactNode }) {
         router.push(href);
       }
     },
-    [user, pathname, router, promptDeveloperOnboardingIfNeeded],
+    [user, isGuest, pathname, router, promptDeveloperOnboardingIfNeeded],
   );
 
   const value = useMemo(
@@ -169,14 +178,25 @@ export function StudioDirectAccessGuard() {
   const router = useRouter();
   const pathname = usePathname();
   const deploymentMode = useForgeDeploymentMode();
-  const { user, authResolved } = useAuth();
+  const { user, authResolved, isGuest } = useAuth();
   const { attemptStudioEntry } = useStudioEntryGate();
 
   useEffect(() => {
-    if (shouldBypassStudioLoginGate()) {
+    if (!authResolved) {
       return;
     }
-    if (!authResolved) {
+
+    if (isGuest) {
+      const returnPath = pathname.startsWith("/studio") ? pathname : "/studio";
+      router.replace(
+        buildLoginUrlWithReturn(returnPath, {
+          notice: ACCOUNT_REGISTRATION_REQUIRED_NOTICE,
+        }),
+      );
+      return;
+    }
+
+    if (shouldBypassStudioLoginGate()) {
       return;
     }
 
@@ -197,7 +217,7 @@ export function StudioDirectAccessGuard() {
     if (shouldPromptDeveloperPage(user.id)) {
       attemptStudioEntry(pathname.startsWith("/studio") ? pathname : "/studio");
     }
-  }, [authResolved, user, attemptStudioEntry, pathname, router, deploymentMode]);
+  }, [authResolved, user, isGuest, attemptStudioEntry, pathname, router, deploymentMode]);
 
   return null;
 }

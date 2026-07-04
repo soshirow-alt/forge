@@ -1,6 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import {
+  ACCOUNT_REGISTRATION_REQUIRED_NOTICE,
+  isAnonymousSupabaseUser,
+  requiresRegisteredAccount,
+} from "@/lib/guest-auth";
+import {
   getProductionAuthProtectedPrefixes,
   isProductionReleaseMode,
 } from "@/lib/production-mode";
@@ -58,9 +63,17 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith(prefix),
   );
 
+  const returnPath = `${pathname}${request.nextUrl.search}`;
+
   if (!user && isProtected) {
-    const returnPath = `${pathname}${request.nextUrl.search}`;
     const loginPath = buildLoginUrlWithReturn(returnPath);
+    return NextResponse.redirect(new URL(loginPath, request.url));
+  }
+
+  if (user && isAnonymousSupabaseUser(user) && requiresRegisteredAccount(pathname)) {
+    const loginPath = buildLoginUrlWithReturn(returnPath, {
+      notice: ACCOUNT_REGISTRATION_REQUIRED_NOTICE,
+    });
     return NextResponse.redirect(new URL(loginPath, request.url));
   }
 
