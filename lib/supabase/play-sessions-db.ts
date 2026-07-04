@@ -135,6 +135,29 @@ export async function fetchPlaySessionsForUser(
   return ((data ?? []) as PlaySessionRow[]).map(rowToSession);
 }
 
+
+export async function fetchPlaySessionsForProject(
+  supabase: SupabaseClient,
+  userId: string,
+  projectId: string,
+): Promise<ProjectPlaySession[]> {
+  const { data, error } = await supabase
+    .from("project_play_sessions")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("project_id", projectId)
+    .order("played_at", { ascending: false });
+
+  if (error) {
+    if (isPlaySessionsTableMissingError(error)) {
+      return [];
+    }
+    throw error;
+  }
+
+  return ((data ?? []) as PlaySessionRow[]).map(rowToSession);
+}
+
 export type ProjectPlayFirstSeen = {
   projectId: string;
   firstPlayedAt: string;
@@ -174,4 +197,26 @@ export async function fetchProjectPlayFirstSeen(
     projectId,
     firstPlayedAt,
   }));
+}
+
+/** Earliest legacy project_plays timestamp for one project (sessions handled separately). */
+export async function fetchProjectPlayFirstSeenForProject(
+  supabase: SupabaseClient,
+  userId: string,
+  projectId: string,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("project_plays")
+    .select("created_at")
+    .eq("user_id", userId)
+    .eq("project_id", projectId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return (data?.created_at as string | undefined) ?? null;
 }

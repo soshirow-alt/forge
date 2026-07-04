@@ -5,6 +5,14 @@ export function resolvePlayableVersion(value: string | undefined | null): string
   return trimmed || DEFAULT_PLAYABLE_VERSION;
 }
 
+/** Display label like `v0.1` (always one leading `v`). */
+export function formatPlayableVersionLabel(
+  value: string | undefined | null,
+): string {
+  const resolved = resolvePlayableVersion(value).replace(/^v/i, "");
+  return `v${resolved || DEFAULT_PLAYABLE_VERSION}`;
+}
+
 export function normalizePlayableVersionInput(input: string): string {
   return input.trim();
 }

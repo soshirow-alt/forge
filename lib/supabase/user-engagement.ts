@@ -296,6 +296,25 @@ export async function fetchUserFeedbackForVersion(
   return feedbackRowToItem(data as FeedbackRow);
 }
 
+export async function fetchUserFeedbackForProject(
+  supabase: SupabaseClient,
+  userId: string,
+  projectId: string,
+): Promise<GameFeedbackItem[]> {
+  const { data, error } = await supabase
+    .from("project_feedback")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("project_id", projectId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return ((data ?? []) as FeedbackRow[]).map(feedbackRowToItem);
+}
+
 export async function fetchUserLatestFeedbackVersionKey(
   supabase: SupabaseClient,
   userId: string,

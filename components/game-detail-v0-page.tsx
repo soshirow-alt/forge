@@ -12,8 +12,11 @@ import {
 import { GameDetailHeroGallery } from "@/components/game-detail-hero-gallery";
 import { GameHeroPreviewGallery } from "@/components/game-hero-preview-gallery";
 import { GameDetailPhaseBadge } from "@/components/game-detail-phase-badge";
+import { GameHubSummaryCard } from "@/components/game-hub-summary-card";
+import { YourInvolvementCard } from "@/components/your-involvement-card";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePlayerProjectInvolvement } from "@/hooks/use-player-project-involvement";
 import {
   FeedbackFormV0Modal,
   FeedbackSuccessV0Modal,
@@ -31,7 +34,10 @@ import { ContentReportButton } from "@/components/content-report-button";
 import { GameThumbnail, PlayerShell } from "@/components/player-shell";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
-import { gameDetailReturnPath } from "@/lib/login-return-url";
+import {
+  buildLoginUrlWithReturn,
+  gameDetailReturnPath,
+} from "@/lib/login-return-url";
 import {
   parseChangeCheckPreviewOverride,
   resolveChangeCheckPreviewState,
@@ -328,6 +334,20 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   } = useGameDetailEngagement(resolvedId, isRealProject);
   const watching = isRealProject ? realWatching : mockWatching;
   const saved = isRealProject ? realSaved : mockSaved;
+  const {
+    involvement,
+    loaded: involvementLoaded,
+  } = usePlayerProjectInvolvement({
+    projectId: isRealProject ? resolvedId : null,
+    playableVersion: submittedGame?.playableVersion ?? game.currentVersion,
+    watching,
+    enabled: isRealProject && hydrated && isLoggedIn,
+  });
+  const hubPlayLabel =
+    hydrated && !isLoggedIn ? "ログインしてプレイ" : "この版で遊ぶ";
+  const hubVoiceLabel =
+    hydrated && !isLoggedIn ? "ログインして声を届ける" : "声を届ける";
+  const involvementLoginHref = buildLoginUrlWithReturn(returnPath);
 
   const changeCheckOverride = parseChangeCheckPreviewOverride(
     searchParams.get("changeCheck"),
@@ -844,6 +864,33 @@ function GameDetailV0PageBody({ id }: { id: string }) {
         </div>
 
         <aside className="w-full shrink-0 space-y-5 xl:w-72">
+          <GameHubSummaryCard
+            gameId={id}
+            playableVersion={
+              submittedGame?.playableVersion ?? game.currentVersion
+            }
+            focusNotes={playerMeta?.focusNotes}
+            playLabel={hubPlayLabel}
+            onPlay={handlePlay}
+            playDisabled={!hydrated || playUnavailableOnPublic}
+            onSendVoice={handleFeedback}
+            voiceLabel={hubVoiceLabel}
+          />
+
+          <YourInvolvementCard
+            hydrated={hydrated}
+            isLoggedIn={isLoggedIn}
+            loginHref={involvementLoginHref}
+            involvement={involvement}
+            loaded={involvementLoaded}
+            watching={watching}
+            playableVersion={
+              submittedGame?.playableVersion ?? game.currentVersion
+            }
+            onPlayLatest={handlePlay}
+            playDisabled={!hydrated || playUnavailableOnPublic}
+          />
+
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
             <div className="flex items-center gap-3">
               <GameDetailDeveloperAvatar
