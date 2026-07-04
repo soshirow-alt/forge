@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-05 — RLS: 匿名ユーザーのプレイヤー系 write 遮断（migration 039）
+
+- **`039_block_anonymous_player_writes.sql`** — voice_responses / feedback / plays / play_sessions / bookmarks / watches / supports / community apply・replies / platform_feedback / content_reports / disputes / notification既読 等の write を匿名 JWT から拒否
+- **SECURITY DEFINER 補強** — `ensure_platform_default_prompt`・`anonymize_own_account_data` も匿名呼び出し拒否
+- **SELECT は未変更** — Phase 1 で play/初回 FB 開放時に対象テーブルだけ匿名許可 migration を別途作成予定
+- **適用順** — 038 → 039 → Anonymous Sign-ins 有効化
+
+---
+
 ## 2026-07-05 — RLS: 匿名ユーザーの開発者系 write 遮断（migration 038）
 
 - **`038_block_anonymous_developer_writes.sql`** — `auth_is_registered_user()` ヘルパー追加。projects / developer_profiles / devlogs / version_prompts / confirmation_requests / release_events / communities 等の INSERT/UPDATE/DELETE を匿名 JWT から拒否
