@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-04 — 作品詳細の公開カタログ待ち（not-found / mock フラッシュ防止）
+
+- **原因** — `/games/{id}` が `dataReady`（auth + オーナー catalog）だけで判定し、`publicCatalogReady`（`fetchPublicProjects`）完了前に not-found または mock 詳細へ進んでいた
+- **修正** — 公開 Supabase UUID では `publicCatalogReady` まで「読み込み中...」。完了後も見つからない場合のみ `GameNotFoundPanel`。Body の `waitingForCatalog` も同様（Preview の mock 一瞬表示を防止）
+- **堅牢化** — `getSubmittedGameById` の `publicGames` 参照は `publicCatalogReady` 後のみ。オーナー作品は `submittedGames` 優先のまま（Studio 非破壊）
+- **対象外** — `/home`・`/search`・DB・RLS は変更なし
+
+---
+
 ## 2026-07-04 — 概要タブ「プレイ情報」の重複CTA削除
 
 - **プレイ情報カード** — 大きい紫の「ブラウザで起動」ボタンを削除。想定時間・対応端末・遊び方の情報表示のみに戻す

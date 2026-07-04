@@ -134,12 +134,16 @@ function GameDetailDeveloperAvatar({
 }
 
 function GameDetailV0PageContent({ id }: { id: string }) {
-  const { getSubmittedGameById, dataReady } = useGames();
+  const { getSubmittedGameById, dataReady, publicCatalogReady } = useGames();
   const hideV0Mock = useHideV0MockContent();
+  const isPublicProjectId = isSupabaseProjectId(id);
   const submittedGame = dataReady ? getSubmittedGameById(id) : undefined;
+  // 公開 UUID は publicGames 待ち。オーナー作品は submittedGames で先に見つかる
+  const waitingForPublicCatalog =
+    isPublicProjectId && !publicCatalogReady && !submittedGame;
 
   if (hideV0Mock) {
-    if (!dataReady) {
+    if (!dataReady || waitingForPublicCatalog) {
       return (
         <PlayerShell>
           <p className="text-sm text-zinc-500">読み込み中...</p>
@@ -147,7 +151,7 @@ function GameDetailV0PageContent({ id }: { id: string }) {
       );
     }
     const hasRealProject = Boolean(
-      isSupabaseProjectId(id) &&
+      isPublicProjectId &&
         submittedGame &&
         isSupabaseProjectId(submittedGame.id),
     );
@@ -167,6 +171,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     getSubmittedGameById,
     getGameById,
     dataReady,
+    publicCatalogReady,
     recordPlay,
     hasPlayedGame,
     isProjectOwner,
@@ -179,7 +184,9 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   const submittedGame = dataReady ? getSubmittedGameById(id) : undefined;
   const hideV0Mock = useHideV0MockContent();
   const resolvedId = isSupabaseProjectId(id) ? id : resolveGameDetailId(id);
-  const waitingForCatalog = isSupabaseProjectId(id) && !dataReady;
+  const waitingForCatalog =
+    isSupabaseProjectId(id) &&
+    (!dataReady || (!publicCatalogReady && !submittedGame));
 
   const isRealProject = Boolean(
     submittedGame && isSupabaseProjectId(submittedGame.id),

@@ -829,12 +829,12 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       }
       // オーナー作品 catalog 読込前に publicGames へフォールバックすると
       // Studio 編集で古いデータ表示・誤リダイレクトの原因になる
-      if (!catalogReady) {
+      if (!catalogReady || !publicCatalogReady) {
         return undefined;
       }
       return publicGames.find((game) => game.id === id);
     },
-    [submittedGames, publicGames, catalogReady],
+    [submittedGames, publicGames, catalogReady, publicCatalogReady],
   );
 
   const getOwnedProjectById = useCallback(
