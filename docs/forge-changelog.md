@@ -10,6 +10,7 @@
 - **修正** — 公開 Supabase UUID では `publicCatalogReady` まで「読み込み中...」。完了後も見つからない場合のみ `GameNotFoundPanel`。Body の `waitingForCatalog` も同様（Preview の mock 一瞬表示を防止）
 - **堅牢化** — `getSubmittedGameById` の `publicGames` 参照は `publicCatalogReady` 後のみ。オーナー作品は `submittedGames` 優先のまま（Studio 非破壊）
 - **対象外** — `/home`・`/search`・DB・RLS は変更なし
+- **本番反映** — `d612ad7` を `main` に FF + `vercel deploy --prod`（`forge-flame-gamma.vercel.app`）。`origin/main` と `origin/preview/landing-01` 同一
 
 ---
 
