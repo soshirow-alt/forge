@@ -283,21 +283,12 @@ function RecentActivityPanel({
   );
 }
 
-type PrimaryPlayAction = {
-  label: string;
-  href?: string | null;
-  onClick: () => void;
-  disabled?: boolean;
-};
-
 type GameDetailPlayerOverviewProps = {
   game: GameDetailV0;
   heroLead: string;
   playerMeta: GameDetailPlayerMeta;
   activity: GameDetailOverviewActivity;
   publication: PublicationDisplay | null;
-  primaryPlayAction?: PrimaryPlayAction | null;
-  playUrlMissingMessage?: string | null;
   playDestinations?: PlayDestination[];
   onPlayDestinationOpen?: () => void;
   showUnsetPlayPlaceholders?: boolean;
@@ -310,8 +301,6 @@ export function GameDetailPlayerOverview({
   playerMeta,
   activity,
   publication,
-  primaryPlayAction = null,
-  playUrlMissingMessage = null,
   playDestinations = [],
   onPlayDestinationOpen,
   showUnsetPlayPlaceholders = false,
@@ -328,11 +317,7 @@ export function GameDetailPlayerOverview({
       playerMeta.playInfo.playMethodOptions.some((option) => option.active),
   );
 
-  const showPlayInfoSection =
-    showPlayInfoCard ||
-    showUnsetPlayPlaceholders ||
-    Boolean(primaryPlayAction) ||
-    Boolean(playUrlMissingMessage);
+  const showPlayInfoSection = showPlayInfoCard || showUnsetPlayPlaceholders;
 
   return (
     <div className="grid gap-5 lg:grid-cols-3 lg:gap-6">
@@ -358,33 +343,6 @@ export function GameDetailPlayerOverview({
               <PlayInfoPanel playerMeta={playerMeta} />
             ) : showUnsetPlayPlaceholders ? (
               <UnsetPlayInfoPanel />
-            ) : null}
-            {primaryPlayAction ? (
-              primaryPlayAction.href && !primaryPlayAction.disabled ? (
-                <a
-                  href={primaryPlayAction.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={primaryPlayAction.onClick}
-                  className="mt-4 block w-full rounded-lg bg-violet-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-violet-500"
-                >
-                  {primaryPlayAction.label}
-                </a>
-              ) : (
-                <button
-                  type="button"
-                  onClick={primaryPlayAction.onClick}
-                  disabled={primaryPlayAction.disabled}
-                  className="mt-4 w-full rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {primaryPlayAction.label}
-                </button>
-              )
-            ) : null}
-            {playUrlMissingMessage ? (
-              <p className="mt-3 text-xs text-amber-300/90" role="status">
-                {playUrlMissingMessage}
-              </p>
             ) : null}
           </SidebarCard>
         ) : null}

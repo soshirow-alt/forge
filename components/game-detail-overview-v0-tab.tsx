@@ -111,14 +111,6 @@ export const GameDetailOverviewV0Tab = forwardRef<
   gameId?: string;
   heroLead?: string;
   publication?: PublicationDisplay | null;
-  /** 概要右カラム「遊び方」と同じ URL で起動する CTA */
-  primaryPlayAction?: {
-    label: string;
-    href?: string | null;
-    onClick: () => void;
-    disabled?: boolean;
-  } | null;
-  playUrlMissingMessage?: string | null;
   playDestinations?: PlayDestination[];
   onPlayDestinationOpen?: () => void;
   /** 新規投稿プレビュー — 未設定のプレイ情報をプレースホルダー表示 */
@@ -145,8 +137,6 @@ export const GameDetailOverviewV0Tab = forwardRef<
   gameId,
   heroLead,
   publication = null,
-  primaryPlayAction = null,
-  playUrlMissingMessage = null,
   playDestinations = [],
   onPlayDestinationOpen,
   showUnsetPlayPlaceholders = false,
@@ -281,8 +271,6 @@ export const GameDetailOverviewV0Tab = forwardRef<
         playerMeta={playerMeta}
         activity={overviewActivity}
         publication={publication}
-        primaryPlayAction={primaryPlayAction}
-        playUrlMissingMessage={playUrlMissingMessage}
         playDestinations={playDestinations}
         onPlayDestinationOpen={onPlayDestinationOpen}
         showUnsetPlayPlaceholders={showUnsetPlayPlaceholders}

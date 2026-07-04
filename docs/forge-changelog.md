@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-04 — 概要タブ「プレイ情報」の重複CTA削除
+
+- **プレイ情報カード** — 大きい紫の「ブラウザで起動」ボタンを削除。想定時間・対応端末・遊び方の情報表示のみに戻す
+- **主CTA** — 上部「プレイする」を維持
+- **公開先** — 小さいリンク群（ブラウザで起動 / 公式サイトで開く）は維持。hotfix の `<a target="_blank">` + fire-and-forget `recordPlay` は変更なし
+- **別件（未着手）** — 「あなたの関わり」プレイ回数が連打しても増えない件。`project_plays` upsert の2回目以降が UPDATE RLS 欠如で失敗し、`project_play_sessions` 追記まで届かない可能性。P0ブロッカーではない
+
+---
+
 ## 2026-07-04 — OGP画像URL安全化（data URI フォールバック / デフォルトPNG）
 
 - **og:image** — `data:` / `blob:` / 非 http(s) / 壊れた `https://host/data:image...` は使わず、デフォルトOGPへフォールバック（`resolveOgImageUrl`）

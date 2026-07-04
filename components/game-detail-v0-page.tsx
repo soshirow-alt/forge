@@ -252,15 +252,6 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   const hasPlayDestination = Boolean(primaryPlayUrl);
   const playUnavailableOnPublic =
     hideV0Mock && isRealProject && !hasPlayDestination;
-  const primaryPlayActionLabel = useMemo(() => {
-    if (!primaryPlayUrl) {
-      return "ブラウザで起動";
-    }
-    return (
-      playDestinations.find((destination) => destination.url === primaryPlayUrl)
-        ?.actionLabel ?? "ブラウザで起動"
-    );
-  }, [playDestinations, primaryPlayUrl]);
   const { revision: overviewRevision } = useProjectOverviewV0(resolvedId);
   const displayGame = useMemo(() => {
     if (isRealProject || isProductionReleaseMode()) {
@@ -792,36 +783,9 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                   : null
               }
               publication={overviewPublication}
-              primaryPlayAction={
-                hasPlayDestination
-                  ? {
-                      label: primaryPlayActionLabel,
-                      href:
-                        hydrated &&
-                        isLoggedIn &&
-                        primaryPlayUrl &&
-                        !playUnavailableOnPublic
-                          ? primaryPlayUrl
-                          : null,
-                      onClick:
-                        hydrated &&
-                        isLoggedIn &&
-                        primaryPlayUrl &&
-                        !playUnavailableOnPublic
-                          ? handlePrimaryPlayAnchorClick
-                          : handlePlay,
-                      disabled: !hydrated || playUnavailableOnPublic,
-                    }
-                  : null
-              }
               playDestinations={playDestinations}
               onPlayDestinationOpen={
                 hydrated && isLoggedIn ? markPlayOpened : undefined
-              }
-              playUrlMissingMessage={
-                playUnavailableOnPublic || playUrlMissingVisible
-                  ? PLAY_URL_MISSING_MESSAGE
-                  : null
               }
               onFeedback={handleFeedback}
               feedbackCtaLabel={
