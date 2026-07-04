@@ -68,7 +68,10 @@ import { resolveProjectThumbnailUrls } from "@/lib/project-thumbnails";
 import { PROJECT_TITLE_HERO_CLASS } from "@/lib/project-title";
 import { getUserFacingGameTags } from "@/lib/user-labels";
 import {
+  openExternalPlayUrl,
+  PLAY_URL_MISSING_MESSAGE,
   resolvePlayDestinations,
+  resolvePrimaryPlayUrl,
   resolvePublicationDisplay,
   type PlayDestination,
 } from "@/lib/game-play-destinations";
@@ -232,13 +235,27 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     () => resolvePublicationDisplay(externalLinkGame ?? submittedGame),
     [externalLinkGame, submittedGame],
   );
+  const playSourceGame = externalLinkGame ?? submittedGame;
   const playDestinations = useMemo(
-    () => resolvePlayDestinations(externalLinkGame ?? submittedGame),
-    [externalLinkGame, submittedGame],
+    () => resolvePlayDestinations(playSourceGame),
+    [playSourceGame],
   );
-  const hasRealPlayUrl = Boolean(submittedGame?.playUrl?.trim());
+  const primaryPlayUrl = useMemo(
+    () => resolvePrimaryPlayUrl(playSourceGame),
+    [playSourceGame],
+  );
+  const hasPlayDestination = Boolean(primaryPlayUrl);
   const playUnavailableOnPublic =
-    hideV0Mock && isRealProject && !hasRealPlayUrl;
+    hideV0Mock && isRealProject && !hasPlayDestination;
+  const primaryPlayActionLabel = useMemo(() => {
+    if (!primaryPlayUrl) {
+      return "ブラウザで起動";
+    }
+    return (
+      playDestinations.find((destination) => destination.url === primaryPlayUrl)
+        ?.actionLabel ?? "ブラウザで起動"
+    );
+  }, [playDestinations, primaryPlayUrl]);
   const { revision: overviewRevision } = useProjectOverviewV0(resolvedId);
   const displayGame = useMemo(() => {
     if (isRealProject || isProductionReleaseMode()) {
@@ -282,6 +299,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   );
   const [feedbackStep, setFeedbackStep] = useState<FeedbackFlowStep>("closed");
   const [playDestinationPickerOpen, setPlayDestinationPickerOpen] = useState(false);
+  const [playUrlMissingVisible, setPlayUrlMissingVisible] = useState(false);
   const [voicesRefreshKey, setVoicesRefreshKey] = useState(0);
   const [following, setFollowing] = useState(game.developer.following);
   const developerUserId =
@@ -340,48 +358,63 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     setFeedbackStep("first-voice");
   }, [isRealProject]);
 
+  const recordPlayInBackground = useCallback(() => {
+    const projectId = submittedGame?.id ?? (isRealProject ? resolvedId : null);
+    if (!projectId) {
+      return;
+    }
+    void recordPlay(projectId).catch(() => undefined);
+  }, [submittedGame?.id, isRealProject, resolvedId, recordPlay]);
+
+  const markPlayOpened = useCallback(() => {
+    setPlayUrlMissingVisible(false);
+    recordPlayInBackground();
+    completePlaySession();
+  }, [recordPlayInBackground, completePlaySession]);
+
   const navigateToPlayDestination = useCallback(
-    async (url: string) => {
-      const projectId = submittedGame?.id ?? (isRealProject ? resolvedId : null);
-      if (projectId) {
-        await recordPlay(projectId);
+    (url: string) => {
+      // await せず同期で開く（recordPlay 待ちだと popup blocker で無反応になる）
+      const opened = openExternalPlayUrl(url);
+      if (!opened) {
+        setPlayUrlMissingVisible(true);
+        return;
       }
-      window.open(url, "_blank", "noopener,noreferrer");
-      completePlaySession();
+      markPlayOpened();
     },
-    [submittedGame?.id, isRealProject, resolvedId, recordPlay, completePlaySession],
+    [markPlayOpened],
   );
 
   const handlePlay = useCallback(() => {
-    requireAuth(async () => {
-      if (playUnavailableOnPublic) {
+    requireAuth(() => {
+      if (!hasPlayDestination) {
+        setPlayUrlMissingVisible(true);
         return;
       }
 
-      if (hasRealPlayUrl) {
-        const destinations =
-          playDestinations.length > 0
-            ? playDestinations
-            : submittedGame?.playUrl
-              ? [
-                  {
-                    label: "外部サイト",
-                    url: submittedGame.playUrl,
-                    actionLabel: "外部サイトで開く",
-                  } satisfies PlayDestination,
-                ]
-              : [];
-
-        if (destinations.length === 0) {
+      // 本番作品: projects.play_url を最優先で確実に開く（公式サイト等との選択モーダルを挟まない）
+      if (isRealProject) {
+        if (primaryPlayUrl && playSourceGame?.playUrl?.trim()) {
+          navigateToPlayDestination(primaryPlayUrl);
           return;
         }
 
-        if (destinations.length === 1) {
-          await navigateToPlayDestination(destinations[0].url);
+        if (playDestinations.length === 1) {
+          navigateToPlayDestination(playDestinations[0].url);
           return;
         }
 
-        setPlayDestinationPickerOpen(true);
+        if (playDestinations.length > 1) {
+          setPlayDestinationPickerOpen(true);
+          return;
+        }
+
+        setPlayUrlMissingVisible(true);
+        return;
+      }
+
+      if (primaryPlayUrl) {
+        navigateToPlayDestination(primaryPlayUrl);
         return;
       }
 
@@ -390,20 +423,27 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   }, [
     requireAuth,
     returnPath,
-    playUnavailableOnPublic,
-    hasRealPlayUrl,
+    hasPlayDestination,
+    isRealProject,
+    playSourceGame?.playUrl,
     playDestinations,
-    submittedGame?.playUrl,
+    primaryPlayUrl,
     navigateToPlayDestination,
   ]);
 
   const handlePlayDestinationSelect = useCallback(
-    async (destination: PlayDestination) => {
+    (_destination: PlayDestination) => {
+      // <a target="_blank"> が新規タブを開く。ここでは記録のみ（二重 window.open しない）
       setPlayDestinationPickerOpen(false);
-      await navigateToPlayDestination(destination.url);
+      markPlayOpened();
     },
-    [navigateToPlayDestination],
+    [markPlayOpened],
   );
+
+  const handlePrimaryPlayAnchorClick = useCallback(() => {
+    // ログイン済みの <a> ネイティブ遷移。記録のみ。
+    markPlayOpened();
+  }, [markPlayOpened]);
 
   const handleFeedback = useCallback(() => {
     requireAuth(() => {
@@ -598,16 +638,37 @@ function GameDetailV0PageBody({ id }: { id: string }) {
             </div>
           </section>
 
+          <div className="flex flex-col gap-2">
           <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={handlePlay}
-              disabled={!hydrated || playUnavailableOnPublic}
-              className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <Play className="size-4" aria-hidden="true" />
-              {hydrated && !isLoggedIn ? "ログインしてプレイ" : "プレイする"}
-            </button>
+            {hydrated &&
+            isLoggedIn &&
+            primaryPlayUrl &&
+            !playUnavailableOnPublic &&
+            (isRealProject ? Boolean(playSourceGame?.playUrl?.trim()) : true) ? (
+              <a
+                href={primaryPlayUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={handlePrimaryPlayAnchorClick}
+                className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
+              >
+                <Play className="size-4" aria-hidden="true" />
+                プレイする
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={handlePlay}
+                disabled={!hydrated || playUnavailableOnPublic}
+                title={
+                  playUnavailableOnPublic ? PLAY_URL_MISSING_MESSAGE : undefined
+                }
+                className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Play className="size-4" aria-hidden="true" />
+                {hydrated && !isLoggedIn ? "ログインしてプレイ" : "プレイする"}
+              </button>
+            )}
             <button
               type="button"
               onClick={handleWatchToggle}
@@ -654,6 +715,12 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                 {realFollowing ? "開発者フォロー中" : "開発者をフォロー"}
               </button>
             ) : null}
+          </div>
+          {playUnavailableOnPublic || playUrlMissingVisible ? (
+            <p className="text-xs text-amber-300/90" role="status">
+              {PLAY_URL_MISSING_MESSAGE}
+            </p>
+          ) : null}
           </div>
 
           {isRealProject && !isOwnerPreview ? (
@@ -710,6 +777,37 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                   : null
               }
               publication={overviewPublication}
+              primaryPlayAction={
+                hasPlayDestination
+                  ? {
+                      label: primaryPlayActionLabel,
+                      href:
+                        hydrated &&
+                        isLoggedIn &&
+                        primaryPlayUrl &&
+                        !playUnavailableOnPublic
+                          ? primaryPlayUrl
+                          : null,
+                      onClick:
+                        hydrated &&
+                        isLoggedIn &&
+                        primaryPlayUrl &&
+                        !playUnavailableOnPublic
+                          ? handlePrimaryPlayAnchorClick
+                          : handlePlay,
+                      disabled: !hydrated || playUnavailableOnPublic,
+                    }
+                  : null
+              }
+              playDestinations={playDestinations}
+              onPlayDestinationOpen={
+                hydrated && isLoggedIn ? markPlayOpened : undefined
+              }
+              playUrlMissingMessage={
+                playUnavailableOnPublic || playUrlMissingVisible
+                  ? PLAY_URL_MISSING_MESSAGE
+                  : null
+              }
               onFeedback={handleFeedback}
               feedbackCtaLabel={
                 hydrated && !isLoggedIn

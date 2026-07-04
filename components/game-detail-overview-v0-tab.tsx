@@ -24,7 +24,10 @@ import type {
   GameDetailOverviewActivity,
   GameDetailPlayerMeta,
 } from "@/lib/game-detail-player-meta";
-import type { PublicationDisplay } from "@/lib/game-play-destinations";
+import type {
+  PlayDestination,
+  PublicationDisplay,
+} from "@/lib/game-play-destinations";
 import { GameDetailPlayerOverview } from "@/components/game-detail-player-overview";
 
 function validateFeatureDrafts(
@@ -108,6 +111,16 @@ export const GameDetailOverviewV0Tab = forwardRef<
   gameId?: string;
   heroLead?: string;
   publication?: PublicationDisplay | null;
+  /** 概要右カラム「遊び方」と同じ URL で起動する CTA */
+  primaryPlayAction?: {
+    label: string;
+    href?: string | null;
+    onClick: () => void;
+    disabled?: boolean;
+  } | null;
+  playUrlMissingMessage?: string | null;
+  playDestinations?: PlayDestination[];
+  onPlayDestinationOpen?: () => void;
   /** 新規投稿プレビュー — 未設定のプレイ情報をプレースホルダー表示 */
   showUnsetPlayPlaceholders?: boolean;
   /** 新規投稿プレビュー — 作品紹介プレースホルダーを薄く表示 */
@@ -132,6 +145,10 @@ export const GameDetailOverviewV0Tab = forwardRef<
   gameId,
   heroLead,
   publication = null,
+  primaryPlayAction = null,
+  playUrlMissingMessage = null,
+  playDestinations = [],
+  onPlayDestinationOpen,
   showUnsetPlayPlaceholders = false,
   mutedIntroduction = false,
   onIntroductionDraftChange,
@@ -264,6 +281,10 @@ export const GameDetailOverviewV0Tab = forwardRef<
         playerMeta={playerMeta}
         activity={overviewActivity}
         publication={publication}
+        primaryPlayAction={primaryPlayAction}
+        playUrlMissingMessage={playUrlMissingMessage}
+        playDestinations={playDestinations}
+        onPlayDestinationOpen={onPlayDestinationOpen}
         showUnsetPlayPlaceholders={showUnsetPlayPlaceholders}
         mutedIntroduction={mutedIntroduction}
       />

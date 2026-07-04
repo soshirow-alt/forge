@@ -19,14 +19,20 @@ export function GamePlayDestinationModal({
       <ul className="space-y-2">
         {destinations.map((destination) => (
           <li key={destination.url}>
-            <button
-              type="button"
-              onClick={() => onSelect(destination)}
+            <a
+              href={destination.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                // ネイティブ遷移で新規タブを開き、副作用（プレイ記録）だけ親へ通知する。
+                // preventDefault しない（popup blocker / 同一オリジン相対パス化を避ける）。
+                onSelect(destination);
+              }}
               className="flex w-full items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-left text-sm text-zinc-200 transition-colors hover:border-violet-500/40 hover:bg-violet-500/10 hover:text-white"
             >
               <span>{destination.actionLabel}</span>
               <span className="text-xs text-zinc-500">{destination.label}</span>
-            </button>
+            </a>
           </li>
         ))}
       </ul>

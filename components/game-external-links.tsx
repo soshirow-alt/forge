@@ -9,6 +9,7 @@ import {
   PROJECT_LINKS_SECTION_TITLE,
   type ProjectExternalLinksInput,
 } from "@/lib/game-links";
+import { normalizeExternalUrl } from "@/lib/game-play-destinations";
 import type { Game } from "@/lib/mock-games";
 import { gameHasDownloadDistribution } from "@/lib/play-environment";
 import {
@@ -16,14 +17,11 @@ import {
   ExternalLinkSafetyNote,
 } from "@/components/play-safety-note";
 
-type GameExternalLinksProps = Pick<
-  Game,
-  "playUrl" | "tags"
-> &
+type GameExternalLinksProps = Pick<Game, "playUrl" | "tags"> &
   ProjectExternalLinksInput & {
-  compact?: boolean;
-  gameId: string;
-};
+    compact?: boolean;
+    gameId: string;
+  };
 
 export function GameExternalLinks({
   gameId,
@@ -48,7 +46,12 @@ export function GameExternalLinks({
     officialUrl,
     xUrl,
     youtubeUrl,
-  });
+  })
+    .map((link) => ({
+      ...link,
+      url: normalizeExternalUrl(link.url),
+    }))
+    .filter((link): link is { label: string; url: string } => Boolean(link.url));
 
   if (links.length === 0) {
     return null;
@@ -59,16 +62,9 @@ export function GameExternalLinks({
     tags,
   } as Game);
 
-  function handleLinkClick(url: string) {
-    requireAuth(
-      () => {
-        void recordPlay(gameId).finally(() => {
-          window.open(url, "_blank", "noopener,noreferrer");
-        });
-      },
-      gameDetailReturnPath(gameId),
-    );
-  }
+  const linkClassName = compact
+    ? "rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-orange-500/50 hover:bg-zinc-900 hover:text-orange-400"
+    : "rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-orange-500/50 hover:bg-zinc-900 hover:text-orange-400";
 
   return (
     <div
@@ -98,22 +94,39 @@ export function GameExternalLinks({
           className={compact ? "mt-1.5" : "mt-2"}
         />
       )}
-      <div className={compact ? "mt-2 flex flex-wrap gap-2" : "mt-4 flex flex-wrap gap-3"}>
-        {links.map((link) => (
-          <button
-            key={link.label}
-            type="button"
-            onClick={() => handleLinkClick(link.url)}
-            title={isLoggedIn ? link.label : "ログインすると使えます"}
-            className={
-              compact
-                ? "rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-orange-500/50 hover:bg-zinc-900 hover:text-orange-400"
-                : "rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-orange-500/50 hover:bg-zinc-900 hover:text-orange-400"
-            }
-          >
-            {isLoggedIn ? link.label : `ログインして${link.label}`}
-          </button>
-        ))}
+      <div
+        className={
+          compact ? "mt-2 flex flex-wrap gap-2" : "mt-4 flex flex-wrap gap-3"
+        }
+      >
+        {links.map((link) =>
+          isLoggedIn ? (
+            <a
+              key={link.label}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                void recordPlay(gameId).catch(() => undefined);
+              }}
+              className={linkClassName}
+            >
+              {link.label}
+            </a>
+          ) : (
+            <button
+              key={link.label}
+              type="button"
+              onClick={() =>
+                requireAuth(() => undefined, gameDetailReturnPath(gameId))
+              }
+              title="ログインすると使えます"
+              className={linkClassName}
+            >
+              {`ログインして${link.label}`}
+            </button>
+          ),
+        )}
       </div>
     </div>
   );

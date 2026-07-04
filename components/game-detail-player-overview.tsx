@@ -8,7 +8,10 @@ import type {
   GameDetailPlayerMeta,
   PlayerOptionChip,
 } from "@/lib/game-detail-player-meta";
-import type { PublicationDisplay } from "@/lib/game-play-destinations";
+import type {
+  PlayDestination,
+  PublicationDisplay,
+} from "@/lib/game-play-destinations";
 
 const INTRO_COLLAPSE_THRESHOLD = 200;
 
@@ -201,7 +204,36 @@ function PlayInfoPanel({ playerMeta }: { playerMeta: GameDetailPlayerMeta }) {
   );
 }
 
-function PublicationPanel({ publication }: { publication: PublicationDisplay }) {
+function PublicationPanel({
+  publication,
+  destinations,
+  onDestinationOpen,
+}: {
+  publication: PublicationDisplay;
+  destinations: PlayDestination[];
+  /** 外部タブは <a> が開く。ここではプレイ記録など副作用のみ。 */
+  onDestinationOpen?: () => void;
+}) {
+  if (destinations.length > 0) {
+    return (
+      <div className="mt-3 flex flex-col gap-2">
+        {destinations.map((destination) => (
+          <a
+            key={destination.url}
+            href={destination.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => onDestinationOpen?.()}
+            className="inline-flex w-full items-center justify-between rounded-lg border border-zinc-700/80 bg-zinc-800/40 px-3 py-2 text-left text-xs font-medium text-zinc-200 transition-colors hover:border-violet-500/40 hover:bg-violet-500/10 hover:text-white"
+          >
+            <span>{destination.actionLabel}</span>
+            <span className="text-zinc-500">{destination.label}</span>
+          </a>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="mt-3 flex flex-wrap gap-1.5">
       {publication.labels.map((label) => (
@@ -251,12 +283,23 @@ function RecentActivityPanel({
   );
 }
 
+type PrimaryPlayAction = {
+  label: string;
+  href?: string | null;
+  onClick: () => void;
+  disabled?: boolean;
+};
+
 type GameDetailPlayerOverviewProps = {
   game: GameDetailV0;
   heroLead: string;
   playerMeta: GameDetailPlayerMeta;
   activity: GameDetailOverviewActivity;
   publication: PublicationDisplay | null;
+  primaryPlayAction?: PrimaryPlayAction | null;
+  playUrlMissingMessage?: string | null;
+  playDestinations?: PlayDestination[];
+  onPlayDestinationOpen?: () => void;
   showUnsetPlayPlaceholders?: boolean;
   mutedIntroduction?: boolean;
 };
@@ -267,6 +310,10 @@ export function GameDetailPlayerOverview({
   playerMeta,
   activity,
   publication,
+  primaryPlayAction = null,
+  playUrlMissingMessage = null,
+  playDestinations = [],
+  onPlayDestinationOpen,
   showUnsetPlayPlaceholders = false,
   mutedIntroduction = false,
 }: GameDetailPlayerOverviewProps) {
@@ -281,7 +328,11 @@ export function GameDetailPlayerOverview({
       playerMeta.playInfo.playMethodOptions.some((option) => option.active),
   );
 
-  const showPlayInfoSection = showPlayInfoCard || showUnsetPlayPlaceholders;
+  const showPlayInfoSection =
+    showPlayInfoCard ||
+    showUnsetPlayPlaceholders ||
+    Boolean(primaryPlayAction) ||
+    Boolean(playUrlMissingMessage);
 
   return (
     <div className="grid gap-5 lg:grid-cols-3 lg:gap-6">
@@ -305,15 +356,46 @@ export function GameDetailPlayerOverview({
           <SidebarCard title="プレイ情報">
             {showPlayInfoCard ? (
               <PlayInfoPanel playerMeta={playerMeta} />
-            ) : (
+            ) : showUnsetPlayPlaceholders ? (
               <UnsetPlayInfoPanel />
-            )}
+            ) : null}
+            {primaryPlayAction ? (
+              primaryPlayAction.href && !primaryPlayAction.disabled ? (
+                <a
+                  href={primaryPlayAction.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={primaryPlayAction.onClick}
+                  className="mt-4 block w-full rounded-lg bg-violet-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-violet-500"
+                >
+                  {primaryPlayAction.label}
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  onClick={primaryPlayAction.onClick}
+                  disabled={primaryPlayAction.disabled}
+                  className="mt-4 w-full rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {primaryPlayAction.label}
+                </button>
+              )
+            ) : null}
+            {playUrlMissingMessage ? (
+              <p className="mt-3 text-xs text-amber-300/90" role="status">
+                {playUrlMissingMessage}
+              </p>
+            ) : null}
           </SidebarCard>
         ) : null}
 
         {publication ? (
           <SidebarCard title="公開先">
-            <PublicationPanel publication={publication} />
+            <PublicationPanel
+              publication={publication}
+              destinations={playDestinations}
+              onDestinationOpen={onPlayDestinationOpen}
+            />
           </SidebarCard>
         ) : null}
 

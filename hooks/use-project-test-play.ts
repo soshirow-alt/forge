@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useGames } from "@/components/games-provider";
 import {
+  openExternalPlayUrl,
   resolvePlayDestinations,
   type PlayDestination,
 } from "@/lib/game-play-destinations";
@@ -20,33 +21,32 @@ export function useProjectTestPlay(projectId: string) {
   const hasPlayUrl = Boolean(submittedGame?.playUrl?.trim());
 
   const navigateToPlayDestination = useCallback(
-    async (url: string) => {
-      await recordPlay(projectId);
-      window.open(url, "_blank", "noopener,noreferrer");
+    (url: string) => {
+      // await せず同期で開く（recordPlay 待ちだと popup blocker で無反応になる）
+      openExternalPlayUrl(url);
+      void recordPlay(projectId).catch(() => undefined);
     },
     [projectId, recordPlay],
   );
 
   const handleTestPlay = useCallback(() => {
+    const playUrl = submittedGame?.playUrl?.trim();
+    if (playUrl) {
+      navigateToPlayDestination(playUrl);
+      return;
+    }
+
     const destinations =
       playDestinations.length > 0
         ? playDestinations
-        : submittedGame?.playUrl
-          ? [
-              {
-                label: "外部サイト",
-                url: submittedGame.playUrl,
-                actionLabel: "外部サイトで開く",
-              } satisfies PlayDestination,
-            ]
-          : [];
+        : [];
 
     if (destinations.length === 0) {
       return;
     }
 
     if (destinations.length === 1) {
-      void navigateToPlayDestination(destinations[0].url);
+      navigateToPlayDestination(destinations[0].url);
       return;
     }
 
@@ -54,9 +54,9 @@ export function useProjectTestPlay(projectId: string) {
   }, [navigateToPlayDestination, playDestinations, submittedGame?.playUrl]);
 
   const handlePlayDestinationSelect = useCallback(
-    async (destination: PlayDestination) => {
+    (destination: PlayDestination) => {
       setPlayDestinationPickerOpen(false);
-      await navigateToPlayDestination(destination.url);
+      navigateToPlayDestination(destination.url);
     },
     [navigateToPlayDestination],
   );

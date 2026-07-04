@@ -189,31 +189,37 @@ export function GameDetailPageClient({ id }: { id: string }) {
     setPlayDialogOpen(true);
   }, [goToLogin, id, isLoggedIn]);
 
-  const handleLaunchGame = useCallback(async () => {
+  const handleLaunchGame = useCallback(() => {
     if (!game || !isLoggedIn) {
       return;
     }
 
-    setLaunchingGame(true);
-    try {
-      await recordPlay(
-        game.id,
-        adoptionVerifyContext
-          ? {
-              context: "adoption_verify",
-              adoptionId: adoptionVerifyContext.id,
-            }
-          : undefined,
-      );
-      setPlayed(true);
-      setOverlayDismissed(false);
-      sessionStorage.removeItem(overlayDismissKey(game.id));
-      window.open(game.playUrl, "_blank", "noopener,noreferrer");
-      setPlayDialogOpen(false);
-    } finally {
-      setLaunchingGame(false);
+    const playUrl = game.playUrl?.trim();
+    if (!playUrl) {
+      return;
     }
-  }, [game, isLoggedIn, recordPlay]);
+
+    // await せず同期で開く（recordPlay 待ちだと popup blocker で無反応になる）
+    window.open(playUrl, "_blank", "noopener,noreferrer");
+    setPlayed(true);
+    setOverlayDismissed(false);
+    sessionStorage.removeItem(overlayDismissKey(game.id));
+    setPlayDialogOpen(false);
+    setLaunchingGame(true);
+    void recordPlay(
+      game.id,
+      adoptionVerifyContext
+        ? {
+            context: "adoption_verify",
+            adoptionId: adoptionVerifyContext.id,
+          }
+        : undefined,
+    )
+      .catch(() => undefined)
+      .finally(() => {
+        setLaunchingGame(false);
+      });
+  }, [game, isLoggedIn, recordPlay, adoptionVerifyContext]);
 
   const handleOverlayDismiss = useCallback(() => {
     writeOverlayDismissed(id);

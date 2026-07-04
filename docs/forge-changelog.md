@@ -4,6 +4,23 @@
 
 ---
 
+## 2026-07-04 — 作品詳細「プレイする」が外部URLを開けない不具合（P0 hotfix）
+
+- **症状** — 本番で `play_url` が入っている作品でも、詳細の「プレイする」／公開先の「ブラウザで起動」「公式サイトで開く」が無反応、または Forge 内 404 に見えることがあった
+- **原因**
+  - `recordPlay` を `await` してから `window.open` しており popup blocker で無反応
+  - `play_url` と `official_url` が両方あると選択モーダル経由になり、主CTAが直接開かなかった
+  - scheme なし URL を相対パス扱いすると同一オリジン遷移になり Forge 404 になり得る
+- **修正**
+  - `normalizeExternalUrl` で http(s) を保証（なければ `https://` 付与）
+  - 主CTA・公開先・選択モーダルは `<a target="_blank" rel="noopener noreferrer">` 優先（ネイティブ新規タブ）
+  - 主CTAは `projects.play_url` を最優先。プレイ記録はバックグラウンド（失敗してもタブは開く）
+  - URL未設定時は disabled ＋「この作品はまだプレイURLが設定されていません」
+- **公開準備中** — phase によるプレイ制限はなし（visibility=public なら一般ユーザーもログイン後にプレイ可）
+- **DB書き込み不要** — 対象作品は既に `play_url` / `official_url` 登録済み。本番 deploy（preview 確認後）が必要
+
+---
+
 ## 2026-07-03 — ユーザー向け文言「テスター」→「プレイヤー」
 
 - **投稿・編集フォーム** — 「プレイヤーのアクセス方法」等、配布・アクセス・完成度・対応環境の説明文を統一
