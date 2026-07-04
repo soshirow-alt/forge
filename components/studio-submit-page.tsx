@@ -7,8 +7,13 @@ import { StudioSubmitPlayerPreview } from "@/components/studio-submit-player-pre
 import { StudioShell } from "@/components/studio-shell";
 import { StudioMypageBackLink } from "@/components/studio-mypage-back-link";
 import { StudioSubmitPanel } from "@/components/studio-submit-panel";
+import { ProjectSubmitSuccessPanel } from "@/components/project-submit-success-panel";
 import { useGames } from "@/components/games-provider";
-import { useStudioSubmit, type SubmitValidationEditMode } from "@/hooks/use-studio-submit";
+import {
+  useStudioSubmit,
+  type SubmitDraftSuccessResult,
+  type SubmitValidationEditMode,
+} from "@/hooks/use-studio-submit";
 import type { GameDetailTab } from "@/lib/game-detail-tabs";
 import { getDeveloperSocialLinkDefaults } from "@/lib/developer-external-link-defaults";
 import { resolveDeveloperPublicName } from "@/lib/developer-display-name";
@@ -31,6 +36,9 @@ export function StudioSubmitPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showPromptValidation, setShowPromptValidation] = useState(false);
   const [focusEditMode, setFocusEditMode] = useState<SubmitValidationEditMode | null>(null);
+  const [successState, setSuccessState] = useState<SubmitDraftSuccessResult | null>(
+    null,
+  );
   const socialPrefillDoneRef = useRef(false);
 
   const developerProfile = user ? getDeveloperProfileByUserId(user.id) : undefined;
@@ -74,6 +82,16 @@ export function StudioSubmitPage() {
     setDraft((current) => ({ ...current, ...patch }));
   }
 
+  function handleSubmitAnother() {
+    setSuccessState(null);
+    setDraft(createEmptySubmitDraft());
+    setSubmitError(null);
+    setShowPromptValidation(false);
+    setFocusEditMode(null);
+    setActiveTab("overview");
+    socialPrefillDoneRef.current = false;
+  }
+
   async function handleSubmit() {
     if (!user) {
       router.push("/login");
@@ -95,13 +113,33 @@ export function StudioSubmitPage() {
         setShowPromptValidation(true);
       }
       setSubmitting(false);
+      return;
     }
+
+    setSuccessState(result);
+    setSubmitting(false);
   }
 
   if (!hydrated || !user || !submitOwner) {
     return (
       <StudioShell activeNav="mypage">
         <p className="text-sm text-zinc-500">読み込み中…</p>
+      </StudioShell>
+    );
+  }
+
+  if (successState) {
+    return (
+      <StudioShell activeNav="mypage">
+        <div className="mx-auto max-w-lg">
+          <StudioMypageBackLink />
+          <ProjectSubmitSuccessPanel
+            gameId={successState.gameId}
+            title={successState.title}
+            visibility={successState.visibility}
+            onSubmitAnother={handleSubmitAnother}
+          />
+        </div>
       </StudioShell>
     );
   }

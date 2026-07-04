@@ -62,7 +62,11 @@ type ProjectSubmitFormProps = {
   formKey?: string;
   embedded?: boolean;
   onCancel?: () => void;
-  onSubmitted?: (gameId: string, visibility: ProjectVisibility) => void;
+  onSubmitted?: (
+    gameId: string,
+    visibility: ProjectVisibility,
+    title: string,
+  ) => void;
 };
 
 export function ProjectSubmitForm({
@@ -88,6 +92,7 @@ export function ProjectSubmitForm({
     : undefined;
   const [success, setSuccess] = useState(false);
   const [submittedGameId, setSubmittedGameId] = useState<string | null>(null);
+  const [submittedTitle, setSubmittedTitle] = useState("");
   const [submittedVisibility, setSubmittedVisibility] =
     useState<ProjectVisibility>("public");
   const [title, setTitle] = useState("");
@@ -280,11 +285,12 @@ export function ProjectSubmitForm({
       }
 
       if (onSubmitted) {
-        onSubmitted(game.id, visibility);
+        onSubmitted(game.id, visibility, game.title);
         return;
       }
 
       setSubmittedGameId(game.id);
+      setSubmittedTitle(game.title);
       setSubmittedVisibility(visibility);
       setSuccess(true);
       setTitle("");
@@ -315,10 +321,12 @@ export function ProjectSubmitForm({
     return (
       <ProjectSubmitSuccessPanel
         gameId={submittedGameId}
+        title={submittedTitle}
         visibility={submittedVisibility}
         onSubmitAnother={() => {
           setSuccess(false);
           setSubmittedGameId(null);
+          setSubmittedTitle("");
         }}
       />
     );

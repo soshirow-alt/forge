@@ -52,6 +52,7 @@ import {
 } from "@/lib/game-voices-v0-mock-data";
 import { firstVoiceQuestion } from "@/lib/feedback-v0-mock-data";
 import { applyProjectOverviewV0 } from "@/lib/project-overview-v0-store";
+import { ProjectOwnerManageBar } from "@/components/project-owner-manage-bar";
 import { projectStudioPath } from "@/lib/project-nurture-links";
 import { useHideV0MockContent } from "@/lib/forge-deployment-context";
 import { isProductionReleaseMode } from "@/lib/production-mode";
@@ -581,20 +582,13 @@ function GameDetailV0PageBody({ id }: { id: string }) {
 
       <div className="flex flex-col gap-8 xl:flex-row xl:items-start">
         <div className="min-w-0 flex-1 space-y-5">
-          {isOwnerPreview ? (
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-orange-500/25 bg-orange-500/5 px-3 py-2 text-xs">
-              <span className="text-orange-200/90">
-                Studioプレビュー中：プレイヤーに見えるページを確認しています
-              </span>
-              {ownerStudioHref ? (
-                <Link
-                  href={ownerStudioHref}
-                  className="shrink-0 font-medium text-orange-200 transition-colors hover:text-white"
-                >
-                  Studioで編集 →
-                </Link>
-              ) : null}
-            </div>
+          {isOwnerPreview && ownerStudioHref && ownerProjectId ? (
+            <ProjectOwnerManageBar
+              projectId={ownerProjectId}
+              title={game.title}
+              visibility={submittedGame?.visibility}
+              studioHref={ownerStudioHref}
+            />
           ) : null}
 
           <section className="overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/30">

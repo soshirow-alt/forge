@@ -1,11 +1,9 @@
 "use client";
 
 import { useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { useGames } from "@/components/games-provider";
 import { mapProjectSubmitErrorMessage } from "@/lib/error-message";
 import { validatePlayAccess } from "@/lib/project-access-form";
-import { projectStudioPath } from "@/lib/project-nurture-links";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import { normalizeDeveloperProfileText } from "@/lib/developer-profiles";
 import { resolveDeveloperPublicName } from "@/lib/developer-display-name";
@@ -22,22 +20,34 @@ import { validateProjectOneLineDescription } from "@/lib/project-one-line-descri
 import { validateProjectTitle } from "@/lib/project-title";
 import { validatePromptDrafts } from "@/lib/version-prompt-form";
 import type { User } from "@/lib/auth";
+import type { ProjectVisibility } from "@/lib/project-visibility";
 
 export type { SubmitValidationEditMode } from "@/lib/studio-submit-draft";
 
+export type SubmitDraftFailureResult = {
+  ok: false;
+  message: string;
+  editMode?: SubmitValidationEditMode;
+  sectionLabel?: string;
+};
+
+export type SubmitDraftSuccessResult = {
+  ok: true;
+  gameId: string;
+  title: string;
+  visibility: ProjectVisibility;
+};
+
 export type SubmitDraftValidationResult =
   | { ok: true }
-  | {
-      ok: false;
-      message: string;
-      editMode?: SubmitValidationEditMode;
-      sectionLabel?: string;
-    };
+  | SubmitDraftFailureResult;
+
+export type SubmitDraftResult = SubmitDraftSuccessResult | SubmitDraftFailureResult;
 
 function validationFailure(
   editMode: SubmitValidationEditMode,
   detail: string,
-): SubmitDraftValidationResult {
+): SubmitDraftFailureResult {
   const sectionLabel = SUBMIT_VALIDATION_PANEL_LABELS[editMode];
   return {
     ok: false,
@@ -96,7 +106,6 @@ export function validateSubmitDraftForPost(
 }
 
 export function useStudioSubmit() {
-  const router = useRouter();
   const {
     addSubmittedGame,
     createInitialProjectDevlog,
@@ -109,7 +118,7 @@ export function useStudioSubmit() {
     async (
       draft: SubmitDraftState,
       user: User,
-    ): Promise<SubmitDraftValidationResult> => {
+    ): Promise<SubmitDraftResult> => {
       const validation = validateSubmitDraftForPost(draft);
       if (!validation.ok) {
         return validation;
@@ -157,8 +166,12 @@ export function useStudioSubmit() {
           );
         }
 
-        router.push(projectStudioPath(game.id));
-        return { ok: true };
+        return {
+          ok: true,
+          gameId: game.id,
+          title: game.title,
+          visibility: game.visibility === "private" ? "private" : "public",
+        };
       } catch (error) {
         return { ok: false, message: mapProjectSubmitErrorMessage(error) };
       }
@@ -167,7 +180,6 @@ export function useStudioSubmit() {
       addSubmittedGame,
       createInitialProjectDevlog,
       getDeveloperProfileByUserId,
-      router,
       saveDeveloperProfile,
       saveDeveloperVersionPrompts,
     ],

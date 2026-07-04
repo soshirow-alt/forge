@@ -77,10 +77,10 @@ export function StudioProjectToolbar({
                   className={nurtureShareButtonClassName}
                 >
                   <Copy className="size-4 shrink-0" aria-hidden="true" />
-                  作品のリンクをコピー
+                  外部に共有する
                 </button>
-                <InputHintBadge label="?" ariaLabel="作品のリンクをコピーについて">
-                  作品ページのURLをコピーし、X・Discord・ブログなど Forge の外に貼り付けて、プレイヤーを呼び込めます。
+                <InputHintBadge label="?" ariaLabel="外部に共有するについて">
+                  Xの投稿画面を開いたり、紹介文とリンクをコピーして Discord・LINE などへ貼り付けられます。
                 </InputHintBadge>
               </div>
             </div>

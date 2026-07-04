@@ -14,6 +14,7 @@ type ProjectSubmitModalProps = {
 export function ProjectSubmitModal({ open, onClose }: ProjectSubmitModalProps) {
   const [successState, setSuccessState] = useState<{
     gameId: string;
+    title: string;
     visibility: ProjectVisibility;
   } | null>(null);
 
@@ -30,7 +31,7 @@ export function ProjectSubmitModal({ open, onClose }: ProjectSubmitModalProps) {
     setSuccessState(null);
   }
 
-  const title = successState ? "投稿が完了しました" : "作品を投稿する";
+  const title = successState ? "投稿しました！" : "作品を投稿する";
   const subtitle = successState
     ? undefined
     : "開発中のゲーム情報を入力して、Forgeに掲載しましょう";
@@ -45,6 +46,7 @@ export function ProjectSubmitModal({ open, onClose }: ProjectSubmitModalProps) {
       {successState ? (
         <ProjectSubmitSuccessPanel
           gameId={successState.gameId}
+          title={successState.title}
           visibility={successState.visibility}
           compact
           onSubmitAnother={handleSubmitAnother}
@@ -55,8 +57,8 @@ export function ProjectSubmitModal({ open, onClose }: ProjectSubmitModalProps) {
           formKey="submit-modal"
           embedded
           onCancel={handleClose}
-          onSubmitted={(gameId, visibility) =>
-            setSuccessState({ gameId, visibility })
+          onSubmitted={(gameId, visibility, projectTitle) =>
+            setSuccessState({ gameId, title: projectTitle, visibility })
           }
         />
       )}

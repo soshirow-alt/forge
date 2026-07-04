@@ -347,7 +347,7 @@ export function StudioTabContextPanel({
                   className={panelButtonClassName}
                 >
                   <Copy className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                  作品リンクをコピー
+                  外部に共有する
                 </button>
               </div>
             </div>
