@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-07-05 — 投稿成功・共有導線・レガシーStudio削除（本番反映）
+
+- **投稿成功** — 成功画面、外部共有（X Web Intent）、作品情報編集への直接導線
+- **公開作品ページ** — オーナー管理バー削除（プレイヤーと同じ見え方）
+- **非公開共有** — 投稿成功・マイページ作品カードで disabled + 案内
+- **旧編集UI廃止** — `SHOW_LEGACY_STUDIO_UI` / 旧モーダル削除。Studio インライン編集へ統一
+- **プレイ情報編集** — Steam/itch/Discord 等を Studio「プレイ情報・公開先」パネルに統合
+- **本番ガード** — `game-extra-storage` / local 通知の本番 no-op。旧 edit/submit URL は server redirect
+- **本番反映** — `5308dbd` を `main` FF + `vercel deploy --prod`（`forge-flame-gamma.vercel.app`、deploy `dpl_BYLCKkWcyACxhGbA8ittNykP7n6E`）。`origin/main` と `origin/preview/landing-01` 同一
+
+---
+
 ## 2026-07-05 — 本番ガード: localStorage 混入防止（game-extra / 通知）
 
 - **game-extra-storage** — 本番モード（`shouldHideV0MockContent()`）では `mergeGameWithExtras` / `loadGameExtras` が no-op。実作品の `estimatedPlayTime` / `focusNotes` は DB 正本のみ
