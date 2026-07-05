@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-05 — entry mode / LP / ゲスト UX（本番反映）
+
+- **範囲** — `c96b694` entry mode（Anonymous Auth 廃止）+ `a5e650a` LP 導線整理 + `a73cac3` ゲスト `/login` 挙動・登録限定導線
+- **前提維持** — Allow anonymous sign-ins OFF、038/039 migration 安全ガード、ゲスト FB Phase 1 未実装
+- **本番反映** — `preview/landing-01` → `main` fast-forward（`a73cac3`）。`vercel deploy --prod`（`forge-flame-gamma.vercel.app`、deploy `dpl_3Nxh8nzunF8GSD5ZfqVvfXkqKnym`）。`origin/main` と `origin/preview/landing-01` 同一
+- **本番確認（HTML/静的）** — LP カード下「アカウントを作成する」0件、右上「新規登録」あり、「ゲームを探す」→ `/login?return=/home`、ログイン画面「ゲストで参加」・新規登録導線あり
+
+---
+
 ## 2026-07-05 — ゲスト UX: ログイン画面表示と登録限定導線（Preview）
 
 - **/login /register** — ゲスト entry mode でも画面を表示（ゲストを `/home` へ自動 redirect しない）。通常ログイン済みユーザーのみ従来どおり redirect
