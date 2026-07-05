@@ -112,15 +112,16 @@ Cursor が参照する既存変数（変更不要）:
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | クライアント Auth |
 | `SUPABASE_SERVICE_ROLE_KEY` | サーバー enrich（既存） |
 | `NEXT_PUBLIC_SITE_URL` | OAuth `redirectTo` 生成（未設定時は `window.location.origin`） |
-| `NEXT_PUBLIC_X_AUTH_ENABLED` | **`true`** — 全環境で X 導線 ON。**`false`** — 全環境 OFF（Provider 未設定時の JSON 事故防止）。**未設定** — Preview/local は ON、本番 release mode は OFF |
+| `NEXT_PUBLIC_X_AUTH_ENABLED` | **`true`** — 本番含め全環境 ON。**`false`** — 本番/local OFF（Preview branch デプロイは **常に ON** — E2E 用）。**未設定** — local ON、本番 release OFF |
 
 **X Client Secret は Forge 側に置かない**（Supabase Dashboard のみ。Vercel env にも追加しない）。
 
 **`NEXT_PUBLIC_X_AUTH_ENABLED` 運用**
 
-1. **Preview / local（未設定）** — X ボタン **表示**（Provider E2E 用）。Provider 未設定のまま押すと Supabase 生 JSON に遷移しうるため、E2E 前に Provider を ON にすること
-2. **本番 release mode（未設定）** — X ボタン **非表示**。本番 GO 前に `NEXT_PUBLIC_X_AUTH_ENABLED=true`
-3. **明示 `false`** — 一時的に全環境で X 導線を止めるとき
+1. **Preview branch（`preview/landing-01`）** — 環境変数に関係なく X ボタン **表示**（Provider E2E）
+2. **local（未設定）** — X ボタン **表示**
+3. **本番 release mode** — **`true` 明示まで非表示**。本番 GO 前に Vercel で `NEXT_PUBLIC_X_AUTH_ENABLED=true`
+4. **明示 `false`** — local 等で一時的に X 導線を止める（Preview branch には効かない）
 
 ---
 

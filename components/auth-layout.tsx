@@ -104,9 +104,11 @@ export function AuthHeader({ active }: { active: "login" | "register" }) {
   );
 }
 
-export function AuthFooter() {
+export function AuthFooter({ className }: { className?: string }) {
   return (
-    <footer className="flex flex-col gap-3 border-t border-zinc-800/80 px-6 py-5 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between lg:px-10">
+    <footer
+      className={`flex flex-col gap-3 border-t border-zinc-800/80 px-6 py-5 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between lg:px-10${className ? ` ${className}` : ""}`}
+    >
       <div className="flex flex-wrap gap-x-4 gap-y-1">
         <Link href={TERMS_PATH} className="transition-colors hover:text-zinc-300">
           利用規約
@@ -260,7 +262,7 @@ export function AuthPageShell({
         </div>
         <AuthHeroPanel variant={active} />
       </div>
-      <AuthFooter />
+      <AuthFooter className="mt-auto shrink-0" />
     </div>
   );
 }

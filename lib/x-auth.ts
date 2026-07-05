@@ -1,5 +1,5 @@
 import type { User as SupabaseUser } from "@supabase/supabase-js";
-import { isProductionReleaseMode } from "@/lib/production-mode";
+import { isPreviewV0Deployment, isProductionReleaseMode } from "@/lib/production-mode";
 
 export type XProfilePayload = {
   xUserId: string;
@@ -16,8 +16,12 @@ export type PublicXProfile = {
 
 const X_PROVIDER_IDS = new Set(["x", "twitter"]);
 
-/** Preview/local は既定で表示。本番は NEXT_PUBLIC_X_AUTH_ENABLED=true まで非表示。明示 false で全環境OFF。 */
+/** Preview branch は E2E 用に常に表示。local 未設定は ON。本番 release は true 明示まで OFF。 */
 export function isXAuthEnabled(): boolean {
+  if (isPreviewV0Deployment()) {
+    return true;
+  }
+
   const flag = process.env.NEXT_PUBLIC_X_AUTH_ENABLED;
   if (flag === "true") {
     return true;

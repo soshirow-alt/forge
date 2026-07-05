@@ -6,7 +6,7 @@
 
 ## 2026-07-06 — X Auth flag 既定値修正 + ログインフッター位置
 
-- **Xボタン** — `NEXT_PUBLIC_X_AUTH_ENABLED` 未設定時: Preview/local は **表示**、本番 release mode は非表示（Preview E2E 用）
+- **Xボタン** — Preview branch（`preview-landing-01`）は **常に表示**（Vercel の `NEXT_PUBLIC_X_AUTH_ENABLED=false` でも E2E 可）。local 未設定も ON。本番 release は `true` 明示まで OFF
 - **ログイン/登録シェル** — `AuthPageShell` を `min-h-screen` に変更しフッターを画面下に固定
 - **未実施** — Provider E2E / main / 本番 deploy
 
