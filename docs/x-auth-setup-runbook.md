@@ -118,7 +118,7 @@ Cursor が参照する既存変数（変更不要）:
 
 **`NEXT_PUBLIC_X_AUTH_ENABLED` 運用**
 
-1. **Preview branch（`preview/landing-01`）** — 環境変数に関係なく X ボタン **表示**（Provider E2E）
+1. **Preview branch（`preview/landing-01`）** — ホスト名 / git ref で判定。**環境変数に関係なく** X ボタン **表示**（`NEXT_PUBLIC_FORGE_PRODUCTION_MODE=true` でも可）
 2. **local（未設定）** — X ボタン **表示**
 3. **本番 release mode** — **`true` 明示まで非表示**。本番 GO 前に Vercel で `NEXT_PUBLIC_X_AUTH_ENABLED=true`
 4. **明示 `false`** — local 等で一時的に X 導線を止める（Preview branch には効かない）
