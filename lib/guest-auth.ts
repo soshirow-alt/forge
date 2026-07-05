@@ -6,7 +6,13 @@ export const DEFAULT_POST_GUEST_LOGIN_PATH = "/home";
 export const ACCOUNT_REGISTRATION_REQUIRED_NOTICE = "account-required";
 
 export const ACCOUNT_REGISTRATION_REQUIRED_MESSAGE =
-  "この機能を使うにはアカウント登録が必要です。";
+  "この機能を使うにはログインが必要です。ログインまたは新規登録してください。";
+
+export const REGISTERED_FEATURE_REQUIRES_LOGIN_TITLE =
+  "この機能を使うにはログインが必要です";
+
+export const REGISTERED_FEATURE_REQUIRES_LOGIN_BODY =
+  "ログインすると、この機能を利用できます";
 
 /** Routes that require a registered Supabase account in all deployment modes. */
 export const REGISTERED_ACCOUNT_REQUIRED_PREFIXES = [

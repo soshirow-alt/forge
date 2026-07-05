@@ -13,6 +13,7 @@ import {
 } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useEntryMode } from "@/components/entry-mode-provider";
+import { useRegisteredAccountPrompt } from "@/components/registered-account-prompt-provider";
 import { DeveloperPageOnboardingModal } from "@/components/developer-page-onboarding-modal";
 import {
   acceptDeveloperPage,
@@ -46,8 +47,8 @@ function studioPathsEqual(current: string, target: string): boolean {
 export function StudioEntryGateProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, hydrated, isRegisteredUser } = useAuth();
-  const { isGuestEntry } = useEntryMode();
+  const { user, authResolved, isRegisteredUser } = useAuth();
+  const { promptRegisteredAccountAccess } = useRegisteredAccountPrompt();
   const [modalOpen, setModalOpen] = useState(false);
   const [pendingHref, setPendingHref] = useState("/studio");
   const directAccessPromptedRef = useRef(false);
@@ -122,32 +123,38 @@ export function StudioEntryGateProvider({ children }: { children: ReactNode }) {
 
   const attemptStudioEntry = useCallback(
     (href = "/studio") => {
-      if (isGuestEntry) {
-        router.push(
-          buildLoginUrlWithReturn(href, {
-            notice: ACCOUNT_REGISTRATION_REQUIRED_NOTICE,
-          }),
-        );
+      if (!authResolved) {
         return;
       }
+
+      if (!isRegisteredUser) {
+        promptRegisteredAccountAccess(href);
+        return;
+      }
+
       if (shouldBypassStudioLoginGate()) {
         if (!studioPathsEqual(pathname, href)) {
           router.push(href);
         }
         return;
       }
-      if (!user) {
-        router.push(buildLoginUrlWithReturn(href));
-        return;
-      }
+
       if (promptDeveloperOnboardingIfNeeded(href)) {
         return;
       }
+
       if (!studioPathsEqual(pathname, href)) {
         router.push(href);
       }
     },
-    [user, isGuestEntry, pathname, router, promptDeveloperOnboardingIfNeeded],
+    [
+      authResolved,
+      isRegisteredUser,
+      pathname,
+      router,
+      promptDeveloperOnboardingIfNeeded,
+      promptRegisteredAccountAccess,
+    ],
   );
 
   const value = useMemo(

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { GuideStudioEntrySection } from "@/components/guide-studio-entry-section";
 import { PlayerShell } from "@/components/player-shell";
+import { RegisteredOnlyLink } from "@/components/registered-account-prompt-provider";
 import { playerGuideFaq, playerGuideSteps } from "@/lib/player-guide-v0-content";
 
 function FaqItem({
@@ -100,12 +101,12 @@ export function PlayerGuidePage() {
           >
             作品を探す
           </Link>
-          <Link
+          <RegisteredOnlyLink
             href="/mypage"
             className="rounded-xl border border-zinc-700 px-5 py-2.5 text-sm font-medium text-zinc-300 hover:border-zinc-600"
           >
             マイページへ
-          </Link>
+          </RegisteredOnlyLink>
         </div>
       </div>
     </PlayerShell>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import {
   AuthPageShell,
   OAuthComingSoonSection,
@@ -37,7 +37,7 @@ export function LoginPage({
   notice: string | null;
 }) {
   const { user, authResolved, isRegisteredUser } = useAuth();
-  const { isGuestEntry, setGuestEntryMode } = useEntryMode();
+  const { setGuestEntryMode } = useEntryMode();
   const [state, formAction, pending] = useActionState(loginAction, initialLoginState);
   const autofill = useAuthAutofillUnlock();
   const postSubmitRedirectStartedRef = useRef(false);
@@ -55,18 +55,8 @@ export function LoginPage({
       }
       alreadySignedInRedirectStartedRef.current = true;
       window.location.replace(target);
-      return;
     }
-
-    if (isGuestEntry) {
-      const target = resolvePostGuestLoginPath(returnParam);
-      if (target === LOGIN_PATH || target.startsWith(`${LOGIN_PATH}?`)) {
-        return;
-      }
-      alreadySignedInRedirectStartedRef.current = true;
-      window.location.replace(target);
-    }
-  }, [authResolved, user, isRegisteredUser, isGuestEntry, returnParam]);
+  }, [authResolved, user, isRegisteredUser, returnParam]);
 
   function handleGuestContinue() {
     setGuestEntryMode();

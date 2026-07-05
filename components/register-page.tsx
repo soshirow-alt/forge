@@ -22,7 +22,7 @@ export function RegisterPage({
   supabaseConfigured: boolean;
 }) {
   const router = useRouter();
-  const { user, hydrated, signUp } = useAuth();
+  const { user, authResolved, isRegisteredUser, signUp } = useAuth();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,10 +32,10 @@ export function RegisterPage({
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (hydrated && user) {
+    if (authResolved && isRegisteredUser) {
       window.location.href = resolvePostLoginPath(null);
     }
-  }, [hydrated, user]);
+  }, [authResolved, isRegisteredUser]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

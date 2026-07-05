@@ -2,6 +2,7 @@
 
 import { ForgeEntryGate } from "@/components/forge-entry-gate";
 import { EntryModeProvider, useEntryMode } from "@/components/entry-mode-provider";
+import { RegisteredAccountPromptProvider } from "@/components/registered-account-prompt-provider";
 import { StudioEntryGateProvider } from "@/components/studio-entry-gate-provider";
 import { useAuth } from "@/components/auth-provider";
 import { useEffect, type ReactNode } from "react";
@@ -23,10 +24,12 @@ export function AppGateProviders({ children }: { children: React.ReactNode }) {
   return (
     <EntryModeProvider>
       <EntryModeAuthSync>
-        <StudioEntryGateProvider>
-          {children}
-          <ForgeEntryGate />
-        </StudioEntryGateProvider>
+        <RegisteredAccountPromptProvider>
+          <StudioEntryGateProvider>
+            {children}
+            <ForgeEntryGate />
+          </StudioEntryGateProvider>
+        </RegisteredAccountPromptProvider>
       </EntryModeAuthSync>
     </EntryModeProvider>
   );

@@ -47,6 +47,14 @@ export function isEntryModeUnset(): boolean {
 }
 
 export function shouldShowForgeEntryGate(pathname: string): boolean {
+  if (
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname.startsWith("/login/")
+  ) {
+    return false;
+  }
+
   if (pathname === "/home" || pathname === "/search" || pathname === "/guide") {
     return true;
   }

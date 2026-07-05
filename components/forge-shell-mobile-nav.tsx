@@ -112,8 +112,6 @@ type ForgeShellModeSwitchProps = {
   studioHrefBypass?: boolean;
   /** ログイン済み・オンボーディング不要 — Studio へ Link 直遷移 */
   studioDirectHref?: string;
-  /** 本番で未ログイン — ログイン return 付き Link */
-  studioLoginHref?: string;
 };
 
 const playerSwitchClassName =
@@ -128,7 +126,6 @@ export function ForgeShellModeSwitch({
   onStudioAttempt,
   studioHrefBypass = false,
   studioDirectHref,
-  studioLoginHref,
 }: ForgeShellModeSwitchProps) {
   if (mode === "studio") {
     return (
@@ -156,19 +153,6 @@ export function ForgeShellModeSwitch({
     );
   }
 
-  if (studioLoginHref) {
-    return (
-      <Link
-        href={studioLoginHref}
-        onClick={onNavigate}
-        title="開発者向け Studio（ログインが必要です）"
-        className={studioSwitchClassName}
-      >
-        Studio
-      </Link>
-    );
-  }
-
   return (
     <button
       type="button"
@@ -176,7 +160,7 @@ export function ForgeShellModeSwitch({
         onNavigate?.();
         onStudioAttempt?.();
       }}
-      title="開発者向け Studio（投稿した作品の管理）"
+      title="開発者向け Studio（ログインが必要です）"
       className={studioSwitchClassName}
     >
       Studio

@@ -3,8 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { useEntryMode } from "@/components/entry-mode-provider";
-import { isRegisteredAppUser } from "@/lib/auth";
-import { ACCOUNT_REGISTRATION_REQUIRED_NOTICE } from "@/lib/guest-auth";
+import { useRegisteredAccountPrompt } from "@/components/registered-account-prompt-provider";
 import { buildLoginUrlWithReturn, LOGIN_PATH } from "@/lib/login-return-url";
 
 export { LOGIN_PATH } from "@/lib/login-return-url";
@@ -13,27 +12,19 @@ export function useRequireAuth() {
   const router = useRouter();
   const { user, hydrated, isRegisteredUser } = useAuth();
   const { isGuestEntry } = useEntryMode();
-  const registered = isRegisteredAppUser(user);
+  const { promptRegisteredAccountAccess } = useRegisteredAccountPrompt();
 
   function requireAuth(action: () => void, returnPath?: string) {
     if (!hydrated) {
       return;
     }
 
-    if (!registered) {
-      router.push(
-        returnPath
-          ? buildLoginUrlWithReturn(returnPath, {
-              notice: isGuestEntry
-                ? ACCOUNT_REGISTRATION_REQUIRED_NOTICE
-                : undefined,
-            })
-          : LOGIN_PATH,
-      );
+    if (isRegisteredUser) {
+      action();
       return;
     }
 
-    action();
+    promptRegisteredAccountAccess(returnPath);
   }
 
   return {

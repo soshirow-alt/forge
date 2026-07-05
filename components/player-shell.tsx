@@ -22,9 +22,9 @@ import {
 import { useGames } from "@/components/games-provider";
 import { useStudioEntryGate } from "@/components/studio-entry-gate-provider";
 import { PlatformFeedbackSidebarBox } from "@/components/platform-feedback-sidebar-box";
+import { RegisteredOnlyLink } from "@/components/registered-account-prompt-provider";
 import { shouldPromptDeveloperPage } from "@/lib/developer-onboarding-v0-store";
 import { useStudioLoginHrefBypass } from "@/lib/forge-deployment-context";
-import { buildLoginUrlWithReturn } from "@/lib/login-return-url";
 import { WATCH_TAB_LABEL } from "@/lib/watch-ui-labels";
 
 const primaryLinks = [
@@ -112,21 +112,21 @@ function MypageSidebarGroup() {
 
   return (
     <div className="space-y-1">
-      <Link href="/mypage" className={navLinkClass(isMypageHub)}>
+      <RegisteredOnlyLink href="/mypage" className={navLinkClass(isMypageHub)}>
         マイページ
-      </Link>
-      <Link
+      </RegisteredOnlyLink>
+      <RegisteredOnlyLink
         href="/mypage/profile"
         className={`ml-4 block ${subNavLinkClass(isMypageProfile)}`}
       >
         Playerプロフィール
-      </Link>
-      <Link
+      </RegisteredOnlyLink>
+      <RegisteredOnlyLink
         href="/mypage/community"
         className={`ml-4 block ${subNavLinkClass(isCommunity)}`}
       >
         参加コミュニティ
-      </Link>
+      </RegisteredOnlyLink>
     </div>
   );
 }
@@ -155,9 +155,9 @@ function PlayerSidebarNavBody({ showFeedback = true }: { showFeedback?: boolean 
       <SidebarDivider />
 
       <div className="space-y-1">
-        <Link href="/settings" className={navLinkClass(pathname === "/settings")}>
+        <RegisteredOnlyLink href="/settings" className={navLinkClass(pathname === "/settings")}>
           設定
-        </Link>
+        </RegisteredOnlyLink>
         <Link href="/guide" className={navLinkClass(pathname === "/guide")}>
           はじめてガイド
         </Link>
@@ -186,17 +186,15 @@ export function PlayerShell({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, hydrated, logout } = useAuth();
+  const { user, hydrated, logout, isRegisteredUser } = useAuth();
   const { getUnreadNotificationCount } = useGames();
   const { attemptStudioEntry } = useStudioEntryGate();
   const previewStudioBypass = useStudioLoginHrefBypass();
   const needsStudioOnboarding = Boolean(user && shouldPromptDeveloperPage(user.id));
-  const studioLoginHref =
-    !previewStudioBypass && !user
-      ? buildLoginUrlWithReturn("/studio")
-      : undefined;
   const studioDirectHref =
-    previewStudioBypass || (user && !needsStudioOnboarding) ? "/studio" : undefined;
+    previewStudioBypass || (isRegisteredUser && user && !needsStudioOnboarding)
+      ? "/studio"
+      : undefined;
   const resolvedNotificationBadge =
     notificationBadge ?? (user ? getUnreadNotificationCount() : 0);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -257,7 +255,6 @@ export function PlayerShell({
             mode="player"
             studioHrefBypass={previewStudioBypass}
             studioDirectHref={studioDirectHref}
-            studioLoginHref={studioLoginHref}
             onNavigate={() => setMobileNavOpen(false)}
             onStudioAttempt={() => attemptStudioEntry("/studio")}
           />
@@ -269,7 +266,7 @@ export function PlayerShell({
         <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-zinc-800/80 bg-[#0a0a0a]/95 px-4 py-3 backdrop-blur-md sm:gap-3 sm:px-6">
           <ForgeShellMobileMenuButton onClick={() => setMobileNavOpen(true)} />
           <HeaderSearchForm defaultValue={headerSearchDefault} />
-          <Link
+          <RegisteredOnlyLink
             href="/notifications"
             className="relative rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
             aria-label="通知"
@@ -280,14 +277,14 @@ export function PlayerShell({
                 {resolvedNotificationBadge > 9 ? "9+" : resolvedNotificationBadge}
               </span>
             )}
-          </Link>
-          <Link
+          </RegisteredOnlyLink>
+          <RegisteredOnlyLink
             href="/mypage/profile"
             className="rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
             aria-label="Playerプロフィール"
           >
             <User className="size-5" />
-          </Link>
+          </RegisteredOnlyLink>
           {user ? (
             <button
               type="button"
@@ -310,7 +307,6 @@ export function PlayerShell({
             mode="player"
             studioHrefBypass={previewStudioBypass}
             studioDirectHref={studioDirectHref}
-            studioLoginHref={studioLoginHref}
             onStudioAttempt={() => attemptStudioEntry("/studio")}
           />
         </header>
