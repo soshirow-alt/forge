@@ -32,6 +32,7 @@ type AuthContextValue = {
     displayName: string,
   ) => Promise<boolean>;
   signInWithOAuth: (provider: Provider, nextPath?: string | null) => Promise<void>;
+  linkOAuthIdentity: (provider: Provider, nextPath?: string | null) => Promise<void>;
   updateDisplayName: (displayName: string) => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -244,6 +245,44 @@ export function AuthProvider({
     [supabase],
   );
 
+  const linkOAuthIdentity = useCallback(
+    async (provider: Provider, nextPath?: string | null) => {
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      const auth = supabase.auth as typeof supabase.auth & {
+        linkIdentity?: (params: {
+          provider: Provider;
+          options?: { redirectTo?: string };
+        }) => Promise<{
+          data: { url?: string | null };
+          error: { message?: string; code?: string } | null;
+        }>;
+      };
+
+      if (typeof auth.linkIdentity !== "function") {
+        throw new Error("Identity linking is not available in this client version.");
+      }
+
+      const { data, error } = await auth.linkIdentity({
+        provider,
+        options: {
+          redirectTo: getOAuthRedirectUrl(nextPath),
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.url) {
+        window.location.assign(data.url);
+      }
+    },
+    [supabase],
+  );
+
   const logout = useCallback(async () => {
     if (supabase) {
       await supabase.auth.signOut();
@@ -292,6 +331,7 @@ export function AuthProvider({
       signIn,
       signUp,
       signInWithOAuth,
+      linkOAuthIdentity,
       updateDisplayName,
       logout,
     }),
@@ -302,6 +342,7 @@ export function AuthProvider({
       signIn,
       signUp,
       signInWithOAuth,
+      linkOAuthIdentity,
       updateDisplayName,
       logout,
     ],

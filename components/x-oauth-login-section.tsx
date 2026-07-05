@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { OAuthDivider } from "@/components/auth-layout";
 import { useAuth } from "@/components/auth-provider";
 import { getAuthErrorMessage } from "@/lib/auth";
 import type { Provider } from "@supabase/supabase-js";
@@ -32,6 +31,7 @@ export function XOAuthLoginSection({
         getAuthErrorMessage(
           authError.message ?? "Xログインに失敗しました。",
           authError.code,
+          "x_login",
         ),
       );
       setLoading(false);
@@ -39,27 +39,21 @@ export function XOAuthLoginSection({
   }
 
   return (
-    <>
-      <OAuthDivider />
-      <div className="space-y-3">
-        <button
-          type="button"
-          disabled={disabled || loading}
-          onClick={() => void handleXAuth()}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900/60 px-6 py-3.5 text-base font-semibold text-zinc-100 transition-colors hover:border-zinc-600 hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <span aria-hidden="true">𝕏</span>
-          {loading ? "Xへ移動中…" : `Xで${verb}`}
-        </button>
-        {error ? (
-          <p className="rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
-            {error}
-          </p>
-        ) : null}
-        <p className="text-center text-xs leading-relaxed text-zinc-600">
-          X連携は任意です。メールログインとゲスト参加も引き続き利用できます。
+    <div className="space-y-3">
+      <button
+        type="button"
+        disabled={disabled || loading}
+        onClick={() => void handleXAuth()}
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900/60 px-6 py-3.5 text-base font-semibold text-zinc-100 transition-colors hover:border-zinc-600 hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <span aria-hidden="true">𝕏</span>
+        {loading ? "Xへ移動中…" : `Xで${verb}`}
+      </button>
+      {error ? (
+        <p className="rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+          {error}
         </p>
-      </div>
-    </>
+      ) : null}
+    </div>
   );
 }

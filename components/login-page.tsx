@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import {
   AuthPageShell,
   authInputClassName,
@@ -12,7 +12,6 @@ import { XOAuthLoginSection } from "@/components/x-oauth-login-section";
 import { useAuth } from "@/components/auth-provider";
 import { useEntryMode } from "@/components/entry-mode-provider";
 import { loginAction, type LoginActionState } from "@/lib/auth-login-action";
-import { getAuthErrorMessage } from "@/lib/auth";
 import {
   ACCOUNT_REGISTRATION_REQUIRED_MESSAGE,
   ACCOUNT_REGISTRATION_REQUIRED_NOTICE,
@@ -24,6 +23,58 @@ import {
 } from "@/lib/login-return-url";
 
 const initialLoginState: LoginActionState = { error: null, redirectTo: null };
+
+function GuestParticipationConfirmDialog({
+  open,
+  pending,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  pending: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/80 px-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="guest-login-confirm-title"
+    >
+      <div className="w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl shadow-black/40">
+        <h2 id="guest-login-confirm-title" className="text-lg font-semibold text-white">
+          ゲストで参加
+        </h2>
+        <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+          ゲスト参加の記録は、ログイン後に引き継がれません。
+        </p>
+        <div className="mt-6 flex flex-col gap-3">
+          <button
+            type="button"
+            disabled={pending}
+            onClick={onConfirm}
+            className="w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-6 py-3 text-base font-semibold text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            ゲストで参加
+          </button>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={onCancel}
+            className="w-full rounded-xl px-6 py-2 text-sm text-zinc-500 transition-colors hover:text-zinc-300"
+          >
+            キャンセル
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function LoginPage({
   supabaseConfigured,
@@ -42,6 +93,7 @@ export function LoginPage({
   const autofill = useAuthAutofillUnlock();
   const postSubmitRedirectStartedRef = useRef(false);
   const alreadySignedInRedirectStartedRef = useRef(false);
+  const [guestConfirmOpen, setGuestConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (!authResolved || alreadySignedInRedirectStartedRef.current) {
@@ -77,11 +129,6 @@ export function LoginPage({
     <AuthPageShell active="login">
       <div className="mx-auto w-full max-w-md">
         <h1 className="text-3xl font-bold tracking-tight text-white">ログイン</h1>
-        <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-          あなたのアカウントにログインして、
-          <br />
-          ゲームの世界を広げましょう。
-        </p>
 
         {!supabaseConfigured && (
           <div className="mt-6 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
@@ -100,6 +147,12 @@ export function LoginPage({
             {ACCOUNT_REGISTRATION_REQUIRED_MESSAGE}
           </div>
         )}
+
+        {callbackError ? (
+          <div className="mt-6 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+            {callbackError}
+          </div>
+        ) : null}
 
         <form
           id="login-form"
@@ -168,32 +221,28 @@ export function LoginPage({
             disabled={pending || !supabaseConfigured}
             className="w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-violet-500/20 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {pending ? "処理中..." : "ログイン"}
+            {pending ? "処理中..." : "メールでログイン"}
           </button>
         </form>
 
-        <div className="mt-6 space-y-3">
-          <button
-            type="button"
-            disabled={pending}
-            onClick={handleGuestContinue}
-            className="w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-6 py-3.5 text-base font-semibold text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            ゲストで参加
-          </button>
-          <p className="text-center text-xs leading-relaxed text-zinc-500">
-            アカウントなしで作品を見たり、外部プレイやフィードバックができます。
-          </p>
-          <p className="text-center text-xs leading-relaxed text-zinc-600">
-            ゲストの記録は通常ログイン後に引き継がれません。
-          </p>
+        <div className="mt-3">
+          <XOAuthLoginSection
+            nextPath={resolvePostLoginPath(returnParam)}
+            disabled={pending || !supabaseConfigured}
+            mode="login"
+          />
         </div>
 
-        <XOAuthLoginSection
-          nextPath={resolvePostLoginPath(returnParam)}
-          disabled={pending || !supabaseConfigured}
-          mode="login"
-        />
+        <div className="my-8 border-t border-zinc-800" aria-hidden="true" />
+
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => setGuestConfirmOpen(true)}
+          className="w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-6 py-3.5 text-base font-semibold text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          ゲストで参加
+        </button>
 
         <p className="mt-8 text-center text-sm text-zinc-500">
           アカウントをお持ちでない方は{" "}
@@ -202,6 +251,16 @@ export function LoginPage({
           </Link>
         </p>
       </div>
+
+      <GuestParticipationConfirmDialog
+        open={guestConfirmOpen}
+        pending={pending}
+        onCancel={() => setGuestConfirmOpen(false)}
+        onConfirm={() => {
+          setGuestConfirmOpen(false);
+          handleGuestContinue();
+        }}
+      />
     </AuthPageShell>
   );
 }

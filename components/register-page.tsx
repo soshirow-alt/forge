@@ -209,11 +209,13 @@ export function RegisterPage({
           </button>
         </form>
 
-        <XOAuthLoginSection
+        <div className="mt-6">
+          <XOAuthLoginSection
           nextPath={resolvePostLoginPath(null)}
           disabled={submitting || !supabaseConfigured}
           mode="register"
         />
+        </div>
 
         <p className="mt-8 text-center text-sm text-zinc-500">
           すでにアカウントをお持ちですか？{" "}

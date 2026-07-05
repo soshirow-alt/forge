@@ -4,6 +4,73 @@
 
 ---
 
+## 2026-07-06 — Xログイン/連携 UI修正（preview/landing-01）
+
+- **ログイン画面** — CTA中心に整理。並び: メールでログイン → Xでログイン → ゲストで参加（確認モーダル）→ 新規登録。説明文削除
+- **エラー表示** — Xログイン/連携で生JSON・JSエラーを出さず汎用メッセージに変換
+- **linkIdentity 修正** — メソッド切り離しによる `linkIdentityOAuth` undefined を解消（`auth-provider.linkOAuthIdentity` で `supabase.auth.linkIdentity` を直接呼び出し）
+- **設定 X連携** — 説明文を短縮
+- **プレイヤープロフィール X表示** — 実プロフィール接続時の別TODO（今回E2E対象外）
+
+---
+
+## 2026-07-06 — X Provider 設定 GO（[A]）— Site URL 本番維持方針
+
+- **GO** — X Developer Console 作成、Supabase X Provider ON、Manual linking ON、Redirect URLs 3 件追加
+- **オーナー** — 上記方針で Provider 手動設定に進行中。完了後 Preview E2E（Xログイン / メールユーザー連携 / user_x_profiles / @handle / 同一X拒否）
+- **Site URL** — `https://forge-flame-gamma.vercel.app` **維持**（Preview 検証中も変更しない。共通 Supabase のメール認証・PW リセット保護）
+- **Redirect URLs 追加** — Preview / 本番 / localhost の `/auth/callback`（X OAuth は `redirectTo` で各 origin を使用）
+- **X Developer Callback** — `https://bpnisgzxuwdxelhnduuf.supabase.co/auth/v1/callback` のみ（Forge `/auth/callback` 不可）
+- **Secret** — Supabase Dashboard のみ（Forge / Vercel env 不可）
+- **次** — Provider 設定後 Preview E2E（Xログイン / メールユーザー連携 / user_x_profiles / @handle / 同一X拒否）。**プレイヤープロフィール `/players/[handle]` の X 表示は未実装・E2E対象外**
+- **未実施** — Provider 実設定 / main / 本番 deploy
+
+---
+
+## 2026-07-06 — X連携 DB post-check 最終 PASS → Provider 設定 GO 判断
+
+- **042 + 043** — Dashboard grants / RLS / anonymize DELETE / REST 統合 post-check 最終 **PASS**
+- **次** — X Developer Console + Supabase Auth Provider（X）+ Manual linking（オーナー手動。Preview E2E まで）
+- **未実施** — X Developer / Supabase Provider 実設定 / main / 本番 deploy
+
+---
+
+## 2026-07-06 — X連携 043 権限補正 Dashboard 適用（統合 post-check）
+
+- **043 適用** — オーナー Dashboard で権限補正 SQL Run 完了（Success / No rows returned）
+- **統合 post-check REST** — `upsert_own_x_profile` anon は `permission denied`（042 時の `not_authenticated` から変化 = anon EXECUTE 剥奪を反映）、`get_public_feedback_cards` anon 200、`get_public_x_profile` 404
+- **repo** — `supabase/migrations/043_user_x_profiles_rpc_grants_fixup.sql` 正本として残置
+- **未実施** — X Developer / Supabase Provider / main / 本番 deploy
+
+---
+
+## 2026-07-06 — X連携 042 post-check NG → 043 権限補正SQL 追加
+
+- **042 post-check NG** — `upsert_own_x_profile` / `anonymize_own_account_data` に anon EXECUTE が残存（止める条件該当）
+- **043 追加** — `supabase/migrations/043_user_x_profiles_rpc_grants_fixup.sql`（PUBLIC/anon REVOKE → authenticated のみ GRANT、`get_public_feedback_cards` は anon+authenticated 明示 GRANT）
+- **042 正本も更新** — 将来適用時に anon REVOKE を含む（既適用 DB は 043 で補正）
+- **未実施** — 043 Dashboard 適用 / X Developer / Supabase Provider / main / 本番 deploy
+
+---
+
+## 2026-07-06 — X連携 042 Dashboard 適用済み（post-check REST 通過）
+
+- **042 適用** — オーナー Dashboard SQL Editor で `042_user_x_profiles.sql` 全文 Run 完了
+- **post-check REST 通過** — `user_x_profiles` 存在、旧 `get_public_x_profile(s)` なし、`get_public_feedback_cards` に `author_x_username`、`upsert_own_x_profile` は anon 拒否（`not_authenticated`）
+- **残確認** — Dashboard で `upsert_own_x_profile` / `get_public_feedback_cards` / `anonymize_own_account_data` の routine_privileges（RLS / anonymize DELETE は SQL post-check）
+- **未実施** — X Developer / Supabase Provider / Preview X E2E / main / 本番 deploy
+
+---
+
+## 2026-07-06 — X連携 042 pre-check 通過（GPT B判定 / Dashboard Run 待ち）
+
+- **pre-check 通過** — `bpnisgzxuwdxelhnduuf` で REST 確認済み: 旧 `get_public_x_profile(s)` なし、`user_x_profiles` / `upsert_own_x_profile` 未存在、`author_x_username` 未追加、041 前提（FB 4 テーブル / optional_comment / moderation_status / feedback_reports / 公開 RPC）OK
+- **次** — オーナー Dashboard SQL Editor で `042_user_x_profiles.sql` 全文 Run → post-check → Preview X 連携確認
+- **Cursor 確認済み** — Preview `GET /api/projects/.../public-author-x` は `{ ok, xUsername }` のみ（042 適用前は `xUsername: null`）
+- **未実施** — 042 Dashboard 適用 / X Developer / Supabase Provider / main / 本番 deploy
+
+---
+
 ## 2026-07-06 — X連携 042 プライバシー修正（preview/landing-01）
 
 - **042 正本修正** — `get_public_x_profile` / `get_public_x_profiles` を削除（user_id キー公開 RPC を廃止）

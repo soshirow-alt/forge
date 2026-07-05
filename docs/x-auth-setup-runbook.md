@@ -39,11 +39,11 @@ OAuth 2.0 コールバック後、`auth.users` / `identities` の metadata か�
 
 ### オーナー作業（本番反映前に必須）
 
-1. **042 migration を Supabase Dashboard SQL で適用**（`docs/supabase-dashboard-migration-guide.md`）
+1. ~~**042 migration**~~ / ~~**043 権限補正**~~ — Dashboard 適用済み（post-check 最終 PASS）
 2. **X Developer Console** で OAuth 2.0 アプリ作成
 3. **Supabase Dashboard → Authentication → Providers → X** を有効化
 4. **Manual linking** を有効化（Identity linking）
-5. Preview URL で X ログイン / 連携 / 表示を確認
+5. Preview URL で X ログイン / 連携 / 表示を確認（対象: 設定 / 公開FB / 作品詳細 / `/creators/...`。プレイヤープロフィールは別TODO）
 6. 問題なければ main merge + 本番 deploy（別 GO）
 
 ---
@@ -53,20 +53,20 @@ OAuth 2.0 コールバック後、`auth.users` / `identities` の metadata か�
 1. [developer.x.com](https://developer.x.com/) → Project / App
 2. **User authentication settings** を有効化
 3. **OAuth 2.0** / **Confidential client**（Web app）
-4. **Callback URL**（Supabase Auth が受ける URL）:
+4. **Callback URL**（Supabase Auth が受ける URL。**Forge の `/auth/callback` ではない**）:
 
    ```
    https://<PROJECT_REF>.supabase.co/auth/v1/callback
    ```
 
-   例: `https://bpnisgzxuwdxelhnduuf.supabase.co/auth/v1/callback`
+   正本: `https://bpnisgzxuwdxelhnduuf.supabase.co/auth/v1/callback`
 
-5. **Website URL**（Forge）:
-   - Preview: `https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app`
-   - Production: 本番 Forge URL
+5. **Website URL**（Forge・参考）:
+   - Preview 検証: `https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app`
+   - Production: `https://forge-flame-gamma.vercel.app`
 
 6. **App permissions**: 最小（Sign in with X に必要な read 系のみ。**Write 不要**）
-7. **Client ID** / **Client Secret** を控える
+7. **Client ID** / **Client Secret** を控える（Secret は **Supabase Dashboard のみ**。Forge `.env` / Vercel env には置かない）
 
 ---
 
@@ -78,15 +78,23 @@ OAuth 2.0 コールバック後、`auth.users` / `identities` の metadata か�
 |---|---|
 | Enable X | ON |
 | Client ID | X Developer の Client ID |
-| Client Secret | X Developer の Client Secret |
+| Client Secret | X Developer の Client Secret（**Supabase Dashboard のみ**。Forge / Vercel には置かない） |
 | Redirect URL（参考） | `https://<PROJECT_REF>.supabase.co/auth/v1/callback` |
 
 **Authentication → URL Configuration**
 
-| 項目 | Preview / Production |
+| 項目 | 値 |
 |---|---|
-| Site URL | 各環境の Forge 起点 URL |
-| Redirect URLs | `https://<preview-host>/auth/callback`、本番同様、`http://localhost:3000/auth/callback`（ローカル） |
+| **Site URL** | `https://forge-flame-gamma.vercel.app` **維持**（Preview 検証中も変更しない） |
+| **Redirect URLs**（追加） | 以下 3 件を allowlist に含める |
+
+```
+https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app/auth/callback
+https://forge-flame-gamma.vercel.app/auth/callback
+http://localhost:3000/auth/callback
+```
+
+**Site URL を Preview に変えない理由**: `bpnisgzxuwdxelhnduuf` は Preview / 本番共通。Site URL を Preview にすると本番のメール認証・パスワードリセット・デフォルトリダイレクトに影響しうる。X OAuth はコード側 `redirectTo`（`getOAuthRedirectUrl()` = 各環境の `origin` + `/auth/callback`）で Preview も動くため、**Redirect URLs 追加のみで足りる**。
 
 **Authentication → Settings（Identity linking）**
 
@@ -105,7 +113,7 @@ Cursor が参照する既存変数（変更不要）:
 | `SUPABASE_SERVICE_ROLE_KEY` | サーバー enrich（既存） |
 | `NEXT_PUBLIC_SITE_URL` | OAuth `redirectTo` 生成（未設定時は `window.location.origin`） |
 
-**X Client Secret は Forge 側に置かない**（Supabase Dashboard のみ）。
+**X Client Secret は Forge 側に置かない**（Supabase Dashboard のみ。Vercel env にも追加しない）。
 
 ---
 
@@ -175,12 +183,14 @@ Forge /login → signInWithOAuth('x')
 ## 7. Preview 確認ポイント
 
 1. `/login` — 「Xでログイン」表示。メール / ゲスト導線は従来通り
-2. X ログイン成功 → セッション確立 → `user_x_profiles` 行が作成（042 適用後）
+2. X ログイン成功 → セッション確立 → `user_x_profiles` 行が作成
 3. `/settings` — 連携状態・「Xで連携」
 4. 公開FBカード — 登録ユーザー + X 連携時 `@handle` バッジ
 5. `/creators/...` — X 連携済みなら `@handle`
 6. 作品詳細 — 作者名横に `@handle`
 7. Provider 未有効時 — 「このログイン方法は現在利用できません」
+
+**プレイヤープロフィール（`/players/[handle]`）** — X `@handle` 表示は **未実装**（v0 mock ページのみ。実プロフィール公開と別 TODO）。今回の Provider E2E 対象外。
 
 ---
 
@@ -199,7 +209,7 @@ Forge /login → signInWithOAuth('x')
 
 ## 9. 未実施（明示）
 
-- Supabase Dashboard 設定変更
+- Supabase Auth Provider（X）設定変更 — **GPT [A] Run推奨**（Site URL は本番維持、Redirect URLs 3 件追加）
 - X Developer Console 設定変更
-- 042 migration の Dashboard 適用
+- Preview X ログイン / 連携 E2E 確認
 - main 反映 / production deploy
