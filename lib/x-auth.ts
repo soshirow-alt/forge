@@ -1,5 +1,5 @@
 import type { User as SupabaseUser } from "@supabase/supabase-js";
-import { isPreviewV0Deployment, isProductionReleaseMode } from "@/lib/production-mode";
+import { isProductionReleaseMode } from "@/lib/production-mode";
 
 export type XProfilePayload = {
   xUserId: string;
@@ -16,9 +16,31 @@ export type PublicXProfile = {
 
 const X_PROVIDER_IDS = new Set(["x", "twitter"]);
 
+/** preview-landing-01 ホスト/ブランチ — FORGE_PRODUCTION_MODE 強制時も Preview E2E 用に X を出す */
+function isPreviewLanding01Surface(host?: string): boolean {
+  const resolved =
+    host ??
+    (typeof window !== "undefined" ? window.location.hostname : undefined);
+  if (resolved?.includes("preview-landing-01")) {
+    return true;
+  }
+
+  const vercelUrl =
+    process.env.VERCEL_URL ?? process.env.NEXT_PUBLIC_VERCEL_URL;
+  if (vercelUrl?.includes("preview-landing-01")) {
+    return true;
+  }
+
+  const refs = [
+    process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF,
+    process.env.VERCEL_GIT_COMMIT_REF,
+  ];
+  return refs.some((ref) => ref === "preview/landing-01");
+}
+
 /** Preview branch は E2E 用に常に表示。local 未設定は ON。本番 release は true 明示まで OFF。 */
 export function isXAuthEnabled(): boolean {
-  if (isPreviewV0Deployment()) {
+  if (isPreviewLanding01Surface()) {
     return true;
   }
 
