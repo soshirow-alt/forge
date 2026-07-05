@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-07-06 — Studio X連携導線 + OAuth scope 調査
+
+- **Studio設定 / Studioプロフィール** — X OAuth UI は複製せず、`/settings` へ誘導する「Xアカウント連携」カードを追加（未連携: 「アカウント設定で連携する」/ 連携済み: `@handle` + 「アカウント設定を開く」）。解除・変更の誤解を招く文言なし
+- **OAuth scope 調査** — Supabase Auth X provider は `users.read` / `users.email` / `tweet.read` / `offline.access` を **固定要求**。クライアント `options.scopes` では削減不可。email 表示は X Developer の Request email OFF でも Supabase 側仕様
+- **本番 GO 前（オーナー）** — X Developer App 表示名を **`Forge`** に修正。同意画面の権限表示と Forge 実利用の差は runbook §4.1 参照
+- **本番 GO 前（確認）** — 本番 hostname で `NEXT_PUBLIC_X_AUTH_ENABLED` 未設定時に X ボタンが **出ない**こと（意図どおり）。Preview hostname 判定の退行がないこと
+- **未実施** — main / 本番 deploy
+
+---
+
 ## 2026-07-06 — X Auth flag 既定値修正 + ログインフッター位置
 
 - **Xボタン** — `preview-landing-01` ホスト/ブランチは **常に表示**（`NEXT_PUBLIC_X_AUTH_ENABLED=false` や `NEXT_PUBLIC_FORGE_PRODUCTION_MODE=true` でも E2E 可）。local 未設定も ON。本番 release は `true` 明示まで OFF

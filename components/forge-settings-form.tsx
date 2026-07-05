@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Suspense, useState } from "react";
 import { AccountSettingsPanel } from "@/components/account-settings-panel";
 import { XAccountLinkSection } from "@/components/x-account-link-section";
+import { XAccountSettingsLinkSection } from "@/components/x-account-settings-link-section";
 import {
   FORGE_LEGAL_CONTACT_EMAIL,
   PRIVACY_PATH,
@@ -239,9 +240,13 @@ export function ForgeSettingsForm({ context }: { context: "player" | "studio" })
         <AccountSettingsPanel section="credentials" />
       </Suspense>
 
-      <Suspense fallback={<AccountSettingsFallback />}>
-        <XAccountLinkSection />
-      </Suspense>
+      {context === "player" ? (
+        <Suspense fallback={<AccountSettingsFallback />}>
+          <XAccountLinkSection />
+        </Suspense>
+      ) : (
+        <XAccountSettingsLinkSection />
+      )}
 
       <PreferenceSettingsPanel context={context} />
 

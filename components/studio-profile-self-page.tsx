@@ -16,6 +16,7 @@ import {
   STUDIO_DEVELOPMENT_GENRE_MAX,
   studioDeveloperSelfProfile,
 } from "@/lib/studio-developer-profile-v0-mock-data";
+import { XAccountSettingsLinkSection } from "@/components/x-account-settings-link-section";
 import { Pencil, Sparkles } from "lucide-react";
 
 export function StudioProfileSelfPage() {
@@ -368,6 +369,8 @@ export function StudioProfileSelfPage() {
             ))}
           </div>
         </section>
+
+        <XAccountSettingsLinkSection />
 
         {!hideV0Mock ? (
           <div className="grid gap-4 sm:grid-cols-2">

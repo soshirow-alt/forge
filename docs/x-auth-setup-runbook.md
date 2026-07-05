@@ -66,7 +66,9 @@ OAuth 2.0 コールバック後、`auth.users` / `identities` の metadata か�
    - Production: `https://forge-flame-gamma.vercel.app`
 
 6. **App permissions**: 最小（Sign in with X に必要な read 系のみ。**Write 不要**）
-7. **Client ID** / **Client Secret** を控える（Secret は **Supabase Dashboard のみ**。Forge `.env` / Vercel env には置かない）
+7. **App name（表示名）**: 同意画面に出る名称。**`Forge`** に設定する（Client ID や内部 App name がそのまま出ると `2073817817313427457Forge_game_` のように数字付きで怪しく見える）
+8. **Request email from users**: X Developer 側は **OFF 推奨**（Forge は X メールを使わない）— ただし **Supabase Auth が `users.email` scope を固定要求**するため、同意画面に *Your email address* が出続ける可能性あり（後述 §4.1）
+9. **Client ID** / **Client Secret** を控える（Secret は **Supabase Dashboard のみ**。Forge `.env` / Vercel env には置かない）
 
 ---
 
@@ -126,6 +128,40 @@ Cursor が参照する既存変数（変更不要）:
 ---
 
 ## 4. OAuth フローと callback
+
+### 4.1 Scope（2026-07-06 調査 — 本番 GO 前の確認事項）
+
+**Forge 方針**: X の `@handle` 表示のみ。投稿/DM なし。OAuth token 非保存。
+
+**Supabase Auth（GoTrue）の X provider は scope を固定**しており、Forge クライアントの `signInWithOAuth` / `linkIdentity` の `options.scopes` では **削れない**（追加のみ）。
+
+| scope | Supabase 側 | 同意画面での見え方（例） | Forge での利用 |
+|---|---|---|---|
+| `users.read` | 固定 | プロフィール read | **必要**（@handle / 表示名 / アイコン） |
+| `users.email` | 固定 | *Your email address* | Supabase が `confirmed_email` を取得するため要求。**Forge は X メールを保存・表示しない** |
+| `tweet.read` | 固定 | *All the posts you can view…* | Supabase コメント上「OAuth 2.0 user context に必要」。**Forge は投稿を読まない** |
+| `offline.access` | 固定 | （refresh token） | Supabase Auth セッション維持用。**Forge は provider token を DB 保存しない** |
+
+根拠: [supabase/auth `internal/api/provider/x.go`](https://github.com/supabase/auth/blob/master/internal/api/provider/x.go) — デフォルト 4 scope を常に付与。`options.scopes` は **append** のみ。
+
+**email が出る理由**: X Developer で Request email OFF でも、Supabase が `users.email` + `/2/users/me?...confirmed_email` を使うため。
+
+**本番 GO 前の対応案**（優先順）:
+
+1. **オーナー**: X Developer の **App 表示名を `Forge` に修正**（同意画面の信頼性）
+2. **オーナー**: 同意画面スクショを残し、利用規約/プライバシーで「X連携時に要求される権限と Forge の実利用の差」を明記するか検討
+3. **Cursor / 将来**: Supabase へ X provider の scope 最小化 feature request、または self-hosted GoTrue カスタム（本番 GO 条件には含めない）
+
+**`signInWithOAuth` / `linkIdentity` で scope 指定**:
+
+```typescript
+await supabase.auth.signInWithOAuth({
+  provider: "x",
+  options: { scopes: "..." }, // 追加 scope のみ。固定 4 scope は消せない
+});
+```
+
+### 4.2 フロー図
 
 ```
 Forge /login → signInWithOAuth('x')
