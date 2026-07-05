@@ -189,7 +189,7 @@ export function LoginPage({
             onClick={handleGuestContinue}
             className="w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-6 py-3.5 text-base font-semibold text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            ゲストで続ける
+            ゲストで参加
           </button>
           <p className="text-center text-xs leading-relaxed text-zinc-500">
             アカウントなしで作品を見たり、外部プレイやフィードバックができます。

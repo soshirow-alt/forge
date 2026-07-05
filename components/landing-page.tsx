@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal-routes";
 import { LandingFeaturedGamesSection } from "@/components/landing-featured-games-section";
+import { buildLoginUrlWithReturn } from "@/lib/login-return-url";
 import type { LandingFeaturedGame } from "@/lib/landing-featured-games";
 
 const valueProps = [
@@ -54,7 +55,6 @@ function CtaCard({
   primaryLabel,
   primaryHref,
   primaryClass,
-  secondaryHref,
 }: {
   accent: "player" | "developer";
   label: string;
@@ -64,7 +64,6 @@ function CtaCard({
   primaryLabel: string;
   primaryHref?: string;
   primaryClass: string;
-  secondaryHref: string;
 }) {
   const border =
     accent === "player" ? "border-violet-500/30" : "border-emerald-500/30";
@@ -111,12 +110,6 @@ function CtaCard({
           {primaryLabel}
         </span>
       )}
-      <Link
-        href={secondaryHref}
-        className="relative mt-5 text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-200"
-      >
-        アカウントを作成する
-      </Link>
     </div>
   );
 }
@@ -213,9 +206,8 @@ export function LandingPage({
                   title="プレイヤーとして参加"
                   body={"ゲームを探してプレイし、\n開発者にフィードバックを届けましょう。"}
                   primaryLabel="ゲームを探す"
-                  primaryHref="/home"
+                  primaryHref={buildLoginUrlWithReturn("/home")}
                   primaryClass="bg-white text-zinc-950 shadow-white/20"
-                  secondaryHref="/register"
                 />
                 <CtaCard
                   accent="developer"
@@ -224,9 +216,8 @@ export function LandingPage({
                   title="開発者としてはじめる"
                   body={"あなたのゲームを公開し、\nプレイヤーと一緒に育てていきましょう。"}
                   primaryLabel="Studioに入る"
-                  primaryHref="/login"
+                  primaryHref={buildLoginUrlWithReturn("/studio")}
                   primaryClass="bg-emerald-500 text-zinc-950 shadow-emerald-500/30"
-                  secondaryHref="/register"
                 />
               </div>
             </div>

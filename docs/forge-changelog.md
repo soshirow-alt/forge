@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-05 — LP 導線整理（Preview）
+
+- **LP カード** — プレイヤー/開発者カード下の「アカウントを作成する」を削除。新規登録は右上ヘッダーのみ
+- **LP CTA** — 「ゲームを探す」「Studioに入る」はいずれも `/login?return=…` へ（プレイヤーは `/home`、Studio は `/studio`）。LP から入口ゲート/ゲスト選択は出さない
+- **ログイン画面** — 「ゲストで続ける」を「ゲストで参加」に文言変更（ログイン画面内の新規登録導線は維持）
+- **return URL** — ログイン後の return 先に `/home` を許可
+
+---
+
 ## 2026-07-05 — ゲスト方針確定: entry mode（Anonymous Auth 廃止）
 
 - **原典 v2 追補** — `docs/forge-principles.md` §3 を entry mode 方式に更新（Anonymous Auth 不使用・ゲストプレイ DB 非記録・ゲスト FB 方針・038/039 維持）

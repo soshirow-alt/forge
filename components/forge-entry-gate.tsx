@@ -57,7 +57,7 @@ export function ForgeEntryGate() {
             onClick={setGuestEntryMode}
             className="w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-6 py-3.5 text-base font-semibold text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-900"
           >
-            ゲストで続ける
+            ゲストで参加
           </button>
         </div>
         <p className="mt-4 text-center text-xs leading-relaxed text-zinc-600">

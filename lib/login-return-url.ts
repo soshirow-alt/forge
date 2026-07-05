@@ -110,6 +110,7 @@ export function sanitizeLoginReturnUrl(
         : new URLSearchParams();
 
     if (
+      pathname === "/home" ||
       pathname === "/submit" ||
       pathname === "/my-projects" ||
       pathname === "/bookmarks" ||
