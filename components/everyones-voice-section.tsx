@@ -65,7 +65,7 @@ function PromptAggregateCard({
         {versionLabel} · 回答 {totalResponses} 件
       </p>
       <div className="mt-3">
-        <VoiceAggregateBars aggregate={aggregate} showTopTrend />
+        <VoiceAggregateBars aggregate={aggregate} variant="public" />
       </div>
     </li>
   );

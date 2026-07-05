@@ -1,8 +1,11 @@
 import {
+  REPLAY_INTENT_OPTIONS,
+  YES_NO_OPTIONS,
   isFreeTextResponseKind,
   type VersionPromptOption,
   type VersionPromptResponseKind,
 } from "@/lib/version-prompt-types";
+import { SCALE_3_OPTIONS } from "@/lib/version-prompt-form";
 
 export type VoiceAggregateBucket = {
   answerValue: string;
@@ -33,6 +36,64 @@ export type PublicVoiceAggregateRow = {
   response_count: number;
 };
 
+function defaultOptionsForResponseKind(
+  responseKind: VersionPromptResponseKind,
+): VersionPromptOption[] {
+  switch (responseKind) {
+    case "yes_no":
+      return YES_NO_OPTIONS;
+    case "scale_3":
+      return SCALE_3_OPTIONS;
+    case "replay_intent":
+      return REPLAY_INTENT_OPTIONS;
+    default:
+      return [];
+  }
+}
+
+/** Public みんなのFB — option id ベースの短いラベル。answer_label の自由記述は使わない */
+export function resolvePublicAggregateBucketLabel(
+  responseKind: VersionPromptResponseKind,
+  answerValue: string,
+  options?: VersionPromptOption[],
+): string {
+  const optionList =
+    options && options.length > 0 ? options : defaultOptionsForResponseKind(responseKind);
+  const match = optionList.find((option) => option.id === answerValue);
+  return match?.label ?? answerValue;
+}
+
+function mergeChoiceBuckets(aggregate: VoicePromptAggregate): VoicePromptAggregate {
+  if (isFreeTextResponseKind(aggregate.responseKind) || aggregate.buckets.length === 0) {
+    return aggregate;
+  }
+
+  const merged = new Map<string, VoiceAggregateBucket>();
+  for (const bucket of aggregate.buckets) {
+    const existing = merged.get(bucket.answerValue);
+    if (existing) {
+      existing.count += bucket.count;
+      continue;
+    }
+    merged.set(bucket.answerValue, {
+      answerValue: bucket.answerValue,
+      answerLabel: resolvePublicAggregateBucketLabel(
+        aggregate.responseKind,
+        bucket.answerValue,
+        aggregate.options,
+      ),
+      count: bucket.count,
+    });
+  }
+
+  const buckets = [...merged.values()].sort((a, b) => b.count - a.count);
+  return {
+    ...aggregate,
+    buckets,
+    totalResponses: buckets.reduce((sum, bucket) => sum + bucket.count, 0),
+  };
+}
+
 export function buildVoicePromptAggregates(
   rows: PublicVoiceAggregateRow[],
 ): VoicePromptAggregate[] {
@@ -61,10 +122,13 @@ export function buildVoicePromptAggregates(
     if (row.answer_value) {
       aggregate.buckets.push({
         answerValue: row.answer_value,
-        answerLabel: row.answer_label ?? row.answer_value,
+        answerLabel: resolvePublicAggregateBucketLabel(
+          row.response_kind,
+          row.answer_value,
+          row.options ?? undefined,
+        ),
         count: Number(row.response_count),
       });
-      aggregate.totalResponses += Number(row.response_count);
       continue;
     }
 
@@ -73,7 +137,9 @@ export function buildVoicePromptAggregates(
     }
   }
 
-  return [...byPrompt.values()].sort((a, b) => a.sortOrder - b.sortOrder);
+  return [...byPrompt.values()]
+    .map(mergeChoiceBuckets)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
 export function bucketPercent(count: number, total: number): number {

@@ -4,7 +4,15 @@
 
 ---
 
-## 2026-07-05 — ゲスト FB Phase 1: UI + Studio 表示マージ（preview/landing-01・未 push）
+## 2026-07-05 — みんなのFB: 選択式集計の answer_value 正規化（preview/landing-01）
+
+- **原因** — RPC `get_public_voice_aggregates` が `answer_value` + `answer_label` で GROUP BY するため、任意コメント付き回答が別行に分裂。公開 UI が `answer_label`（自由記述混在）をそのまま表示していた
+- **修正** — `buildVoicePromptAggregates` で `answer_value` ベースにマージし、表示ラベルは prompt options / 既定選択肢から解決（DB migration なし）
+- **UI** — 公開「みんなのFB」は積み上げバー + 凡例。「多かった反応: …」の長文表示を廃止。Studio は従来の横棒表示のまま
+
+---
+
+## 2026-07-05 — ゲスト FB Phase 1: UI + Studio 表示マージ（preview/landing-01）
 
 - **作品詳細** — entry mode = guest でも FB 導線をログインモーダルで止めない。`GameDetailGuestVoiceLayer` + `GuestVoiceSection` / `GuestDeepFeedbackForm` で guest-voice / guest-feedback API へ送信。成功時「ゲストとして開発者に届けました」。ゲストプレイは DB 記録・プレイ人数加算なし
 - **Studio** — 質問への回答・自由な意見に登録ユーザー + ゲストを時系列マージ。ゲスト行に「ゲスト」バッジ。helpful mark はゲスト行に非表示。Studio 件数のみ `fetchOwnerStudioVoiceResponseCount`（通知・ranking・growth 信号は登録者のみのまま）
