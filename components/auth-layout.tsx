@@ -252,7 +252,7 @@ export function AuthPageShell({
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-full flex-col bg-zinc-950 text-zinc-100">
+    <div className="flex min-h-screen flex-col bg-zinc-950 text-zinc-100">
       <AuthHeader active={active} />
       <div className="flex flex-1 flex-col lg:flex-row">
         <div className="flex flex-1 flex-col justify-center px-6 py-10 lg:max-w-xl lg:px-10 xl:max-w-2xl xl:px-14">

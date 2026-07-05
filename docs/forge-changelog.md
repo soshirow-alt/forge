@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07-06 — X Auth flag 既定値修正 + ログインフッター位置
+
+- **Xボタン** — `NEXT_PUBLIC_X_AUTH_ENABLED` 未設定時: Preview/local は **表示**、本番 release mode は非表示（Preview E2E 用）
+- **ログイン/登録シェル** — `AuthPageShell` を `min-h-screen` に変更しフッターを画面下に固定
+- **未実施** — Provider E2E / main / 本番 deploy
+
+---
+
 ## 2026-07-06 — X Auth feature flag（NEXT_PUBLIC_X_AUTH_ENABLED）
 
 - **Phase A 再修正** — Provider 未設定時に Supabase 生 JSON へ遷移する事故を防ぐため、`NEXT_PUBLIC_X_AUTH_ENABLED=true` 時のみ X 導線を表示

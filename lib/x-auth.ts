@@ -1,4 +1,5 @@
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { isProductionReleaseMode } from "@/lib/production-mode";
 
 export type XProfilePayload = {
   xUserId: string;
@@ -15,9 +16,16 @@ export type PublicXProfile = {
 
 const X_PROVIDER_IDS = new Set(["x", "twitter"]);
 
-/** Preview/本番で Supabase X Provider 有効化後にのみ true。未設定時は X 導線を出さない。 */
+/** Preview/local は既定で表示。本番は NEXT_PUBLIC_X_AUTH_ENABLED=true まで非表示。明示 false で全環境OFF。 */
 export function isXAuthEnabled(): boolean {
-  return process.env.NEXT_PUBLIC_X_AUTH_ENABLED === "true";
+  const flag = process.env.NEXT_PUBLIC_X_AUTH_ENABLED;
+  if (flag === "true") {
+    return true;
+  }
+  if (flag === "false") {
+    return false;
+  }
+  return !isProductionReleaseMode();
 }
 
 export function isXProviderId(provider: string | undefined | null): boolean {
