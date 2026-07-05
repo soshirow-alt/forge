@@ -123,9 +123,7 @@ export function XAccountLinkSection() {
       <h2 className="text-base font-semibold text-white">Xアカウント連携</h2>
       <p className="mt-1 text-sm text-zinc-500">
         Forge上にXの@handleを表示できます。
-      </p>
-      <p className="mt-1 text-xs text-zinc-600">
-        投稿やDMは行わず、OAuth tokenも保存しません。
+        ForgeからXへの投稿やDMは行いません。
       </p>
 
       {message ? (
