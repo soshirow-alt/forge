@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-05 — みんなのFB 個別カード公開 Phase 0（原典・法務・041 草案）
+
+- **原典** — `docs/forge-principles.md` §5 を v2 に更新。上段=選択式集計、下段=テキストカード（問い補足/短文・詳しい感想 4 項目）。opaque `card_id`、通報 API 経由、モデレーション非表示
+- **法務 UI** — プライバシーポリシー第3条・利用規約第7条/第12条を個別カード公開・送信前同意・通報 API に整合（最終更新日 2026-07-05）
+- **Phase 0 整理** — `docs/public-feedback-cards-phase0.md`（Phase 表、同意文言反映方針、本番 DB 共有前提、4 値 `target_source`）
+- **041 草案** — `supabase/migrations/041_public_feedback_cards.sql`（`optional_comment` + backfill、moderation 列、`feedback_reports`、RPC `get_public_feedback_cards` / `resolve_feedback_card_id`、集計 RPC の answer_value 正規化）。**Dashboard 適用・UI/API 実装・main/deploy は未実施**
+
+---
+
 ## 2026-07-05 — みんなのFB: 選択式集計の answer_value 正規化（preview/landing-01）
 
 - **原因** — RPC `get_public_voice_aggregates` が `answer_value` + `answer_label` で GROUP BY するため、任意コメント付き回答が別行に分裂。公開 UI が `answer_label`（自由記述混在）をそのまま表示していた
