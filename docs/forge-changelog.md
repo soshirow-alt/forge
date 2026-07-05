@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-07-05 — ゲスト FB Phase 1: migration 040 草案 + API 骨組み（DB 未適用）
+
+- **DB** — `supabase/migrations/040_project_guest_feedback.sql` をリポジトリに追加（Preview / 本番とも **未適用**）。`project_guest_voice_responses` / `project_guest_feedback` / `guest_feedback_rate_events`。038/039・登録者テーブルは変更なし
+- **公開集計** — `get_public_voice_aggregates(p_project_id, p_version_key, p_include_guest default true)` に刷新。`short_text` は登録・ゲストとも **件数のみ**（`answer_value` / `answer_label` は NULL）。選択式・再プレイ意向等のみバケット集計
+- **API** — service role 経由のみ。`POST/DELETE /api/guest/submitter`（`forge_guest_submitter` cookie）、`POST /api/projects/[projectId]/guest-voice`、`POST …/guest-feedback`。validation・rate limit（IP ハッシュ + submitter_key）・エラーコード整備
+- **submitter cookie** — 連投防止用 UUID。`user_id` と紐づけない。通常ログイン成功時に server action + 登録済みセッション検知で cookie 削除
+- **プライバシーポリシー** — ゲスト FB・集計・cookie/IP ハッシュ・非統合を第3条に追記（Phase 1 本番反映前の前提文案）
+- **次** — Preview DB へ 040 適用 → UI（ゲスト送信・Studio 閲覧）→ E2E 確認。本番反映は別途
+- **後方互換（push 前）** — `fetchPublicVoiceAggregates` は `includeGuest:false` 時のみ `p_include_guest` を送信（旧 007 RPC と共存）。`buildVoicePromptAggregates` は 040 の count-only `short_text` 行を `totalResponses` に反映
+
+---
+
 ## 2026-07-05 — entry mode / LP / ゲスト UX（本番反映）
 
 - **範囲** — `c96b694` entry mode（Anonymous Auth 廃止）+ `a5e650a` LP 導線整理 + `a73cac3` ゲスト `/login` 挙動・登録限定導線

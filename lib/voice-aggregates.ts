@@ -1,6 +1,7 @@
-import type {
-  VersionPromptOption,
-  VersionPromptResponseKind,
+import {
+  isFreeTextResponseKind,
+  type VersionPromptOption,
+  type VersionPromptResponseKind,
 } from "@/lib/version-prompt-types";
 
 export type VoiceAggregateBucket = {
@@ -53,12 +54,21 @@ export function buildVoicePromptAggregates(
       byPrompt.set(row.prompt_id, aggregate);
     }
 
-    if (row.answer_value && row.response_count > 0) {
+    if (row.response_count <= 0) {
+      continue;
+    }
+
+    if (row.answer_value) {
       aggregate.buckets.push({
         answerValue: row.answer_value,
         answerLabel: row.answer_label ?? row.answer_value,
         count: Number(row.response_count),
       });
+      aggregate.totalResponses += Number(row.response_count);
+      continue;
+    }
+
+    if (isFreeTextResponseKind(row.response_kind)) {
       aggregate.totalResponses += Number(row.response_count);
     }
   }

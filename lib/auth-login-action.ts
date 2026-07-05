@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getAuthErrorMessage } from "@/lib/auth";
+import { clearGuestSubmitterCookie } from "@/lib/guest-feedback/submitter-cookie";
 import { resolvePostLoginPath } from "@/lib/login-return-url";
 import { createClient } from "@/lib/supabase/server";
 
@@ -36,6 +37,8 @@ export async function loginAction(
   if (error) {
     return { error: getAuthErrorMessage(error.message), redirectTo: null };
   }
+
+  await clearGuestSubmitterCookie();
 
   const redirectTo = resolvePostLoginPath(returnParam);
   revalidatePath("/", "layout");

@@ -12,9 +12,12 @@ function EntryModeAuthSync({ children }: { children: React.ReactNode }) {
   const { clearGuestEntryMode } = useEntryMode();
 
   useEffect(() => {
-    if (isRegisteredUser) {
-      clearGuestEntryMode();
+    if (!isRegisteredUser) {
+      return;
     }
+
+    clearGuestEntryMode();
+    void fetch("/api/guest/submitter", { method: "DELETE" });
   }, [isRegisteredUser, clearGuestEntryMode]);
 
   return children;

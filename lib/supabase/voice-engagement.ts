@@ -471,12 +471,22 @@ export async function fetchPublicVoiceAggregates(
   supabase: SupabaseClient,
   projectId: string,
   versionKey: string,
+  options?: { includeGuest?: boolean },
 ): Promise<PublicVoiceAggregateRow[]> {
   const version = resolvePlayableVersion(versionKey);
-  const { data, error } = await supabase.rpc("get_public_voice_aggregates", {
+  const rpcArgs: {
+    p_project_id: string;
+    p_version_key: string;
+    p_include_guest?: boolean;
+  } = {
     p_project_id: projectId,
     p_version_key: version,
-  });
+  };
+  if (options?.includeGuest === false) {
+    rpcArgs.p_include_guest = false;
+  }
+
+  const { data, error } = await supabase.rpc("get_public_voice_aggregates", rpcArgs);
 
   if (error) {
     return [];
