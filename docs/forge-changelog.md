@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07-05 — 041 migration レビュー修正 + Phase 1 runbook（preview/landing-01）
+
+- **041 SQL** — `get_public_voice_aggregates`: `bucketed_responses` で `count(*)` 保持、`bucketed_rows` で `sum(response_count)`（registered + guest 同一 `answer_value` 合算）。`feedback_reports.reason_code` を設計どおり 5 値に修正（`rights` 削除、`inappropriate` 追加）
+- **runbook** — `docs/public-feedback-041-apply-runbook.md` 追加（Dashboard 適用手順・pre/post SQL・ロールバック範囲）
+- **未実施** — Supabase Dashboard 041 適用 / main / 本番 deploy
+
+---
+
 ## 2026-07-05 — みんなのFB 個別カード公開 Phase 0（原典・法務・041 草案）
 
 - **原典** — `docs/forge-principles.md` §5 を v2 に更新。上段=選択式集計、下段=テキストカード（問い補足/短文・詳しい感想 4 項目）。opaque `card_id`、通報 API 経由、モデレーション非表示

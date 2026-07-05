@@ -5,7 +5,9 @@
 --   - moderation_status / hidden_* / report_count on all 4 feedback tables
 --   - feedback_reports (4 target_source values; API service role only — no client INSERT)
 --   - feedback_public_card_id() + resolve_feedback_card_id() + get_public_feedback_cards()
---   - get_public_voice_aggregates: GROUP BY answer_value only (ignore answer_label for buckets)
+--   - get_public_voice_aggregates: merge buckets by answer_value; sum per-source counts (registered + guest)
+-- Schema (001/002/006/040): projects.id uuid; FB tables project_id text; guest include_in_public_aggregate boolean (040)
+-- Visibility: pr.id::text = p_project_id — same pattern as 006/040 RPCs
 -- Apply: Supabase Dashboard SQL Editor when owner GO/RUN (shared prod DB — Preview uses same DB)
 -- NOT applied automatically. Do NOT run until Phase 1 owner GO.
 
@@ -150,7 +152,7 @@ CREATE TABLE IF NOT EXISTS public.feedback_reports (
   target_id uuid NOT NULL,
   card_id text NOT NULL,
   reason_code text NOT NULL CHECK (
-    reason_code IN ('spam', 'harassment', 'rights', 'personal_info', 'other')
+    reason_code IN ('harassment', 'personal_info', 'spam', 'inappropriate', 'other')
   ),
   details text NOT NULL DEFAULT '' CHECK (char_length(details) <= 500),
   project_id text NOT NULL,
@@ -524,7 +526,8 @@ AS $$
     SELECT
       r.prompt_id,
       r.answer_value,
-      max(r.answer_label) AS answer_label
+      max(r.answer_label) AS answer_label,
+      count(*)::bigint AS response_count
     FROM public.project_voice_responses r
     INNER JOIN public.project_version_prompts vp ON vp.id = r.prompt_id
     WHERE r.project_id = p_project_id
@@ -538,7 +541,8 @@ AS $$
     SELECT
       g.prompt_id,
       g.answer_value,
-      max(g.answer_label) AS answer_label
+      max(g.answer_label) AS answer_label,
+      count(*)::bigint AS response_count
     FROM public.project_guest_voice_responses g
     INNER JOIN public.project_version_prompts vp ON vp.id = g.prompt_id
     WHERE g.project_id = p_project_id
@@ -579,8 +583,8 @@ AS $$
       p.sort_order,
       p.source,
       br.answer_value,
-      br.answer_label,
-      COUNT(*)::bigint AS response_count
+      max(br.answer_label) AS answer_label,
+      sum(br.response_count)::bigint AS response_count
     FROM public.project_version_prompts p
     INNER JOIN bucketed_responses br ON br.prompt_id = p.id
     WHERE p.project_id = p_project_id
@@ -606,8 +610,7 @@ AS $$
       p.options,
       p.sort_order,
       p.source,
-      br.answer_value,
-      br.answer_label
+      br.answer_value
   ),
   short_text_rows AS (
     SELECT
