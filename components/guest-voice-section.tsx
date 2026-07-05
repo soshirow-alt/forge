@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { GuestDeepFeedbackForm } from "@/components/guest-deep-feedback-form";
+import { FeedbackPublicDisplayConsent } from "@/components/feedback-public-display-consent";
 import { VoicePromptCard } from "@/components/voice-prompt-card";
 import { useGames } from "@/components/games-provider";
 import { GAME_DEEP_FEEDBACK_ENTRY_ID } from "@/lib/game-feedback-ui";
 import { ensureGuestSubmitter, postGuestVoice } from "@/lib/guest-feedback/client";
 import { resolvePlayableVersion } from "@/lib/playable-version";
-import { buildVoiceAnswerLabel } from "@/lib/version-prompt-form";
 import type { VersionPrompt, VoiceAnswerDraft } from "@/lib/version-prompt-types";
 
 type DraftAnswers = Record<
@@ -47,6 +47,7 @@ export function GuestVoiceSection({
   const [drafts, setDrafts] = useState<DraftAnswers>({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [publicDisplayConsent, setPublicDisplayConsent] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [voiceComplete, setVoiceComplete] = useState(false);
   const [deepOpen, setDeepOpen] = useState(false);
@@ -83,14 +84,15 @@ export function GuestVoiceSection({
         answers.push({
           promptId: prompt.id,
           answerValue: draft.value.trim(),
-          answerLabel: buildVoiceAnswerLabel(draft.label, draft.comment),
+          answerLabel: draft.label.trim() || draft.value.trim(),
+          optionalComment: draft.comment?.trim() || undefined,
         });
       }
     }
     return answers;
   }, [drafts, prompts]);
 
-  const canSubmit = pendingAnswers.length >= 1;
+  const canSubmit = pendingAnswers.length >= 1 && publicDisplayConsent;
 
   async function handleSubmitVoice() {
     if (!canSubmit) {
@@ -107,6 +109,7 @@ export function GuestVoiceSection({
           promptId: answer.promptId,
           answerValue: answer.answerValue,
           answerLabel: answer.answerLabel,
+          optionalComment: answer.optionalComment,
         })),
       );
       setSubmittedPromptIds((prev) => {
@@ -251,6 +254,14 @@ export function GuestVoiceSection({
           {submitError}
         </p>
       ) : null}
+
+      <div className="mt-4">
+        <FeedbackPublicDisplayConsent
+          idPrefix={`guest-voice-${gameId}`}
+          checked={publicDisplayConsent}
+          onCheckedChange={setPublicDisplayConsent}
+        />
+      </div>
 
       <button
         type="button"

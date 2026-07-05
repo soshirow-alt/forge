@@ -41,6 +41,7 @@ export type VoiceAnswerDraft = {
   promptId: string;
   answerValue: string;
   answerLabel?: string;
+  optionalComment?: string;
 };
 
 export const MAX_PROMPTS_PER_VERSION = 10;

@@ -103,6 +103,7 @@ export async function POST(request: Request, context: RouteContext) {
         submitterKey,
         answerValue: validated.answerValue,
         answerLabel: validated.answerLabel,
+        optionalComment: validated.optionalComment,
       });
       saved.push(row);
     } catch (error) {

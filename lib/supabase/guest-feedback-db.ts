@@ -10,6 +10,7 @@ type UpsertGuestVoiceInput = {
   submitterKey: string;
   answerValue: string;
   answerLabel: string | null;
+  optionalComment: string | null;
 };
 
 export async function upsertGuestVoiceResponse(
@@ -26,6 +27,7 @@ export async function upsertGuestVoiceResponse(
         submitter_key: input.submitterKey,
         answer_value: input.answerValue,
         answer_label: input.answerLabel,
+        optional_comment: input.optionalComment,
       },
       { onConflict: "submitter_key,prompt_id" },
     )

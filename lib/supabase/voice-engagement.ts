@@ -428,12 +428,15 @@ export async function upsertVoiceResponses(
       .eq("prompt_id", promptId)
       .maybeSingle();
 
+    const optionalComment = answer.optionalComment?.trim() || null;
+
     if (existing?.id) {
       const { data, error } = await supabase
         .from("project_voice_responses")
         .update({
           answer_value: answer.answerValue,
           answer_label: answer.answerLabel ?? null,
+          optional_comment: optionalComment,
           updated_at: new Date().toISOString(),
         })
         .eq("id", existing.id)
@@ -454,6 +457,7 @@ export async function upsertVoiceResponses(
           prompt_id: promptId,
           answer_value: answer.answerValue,
           answer_label: answer.answerLabel ?? null,
+          optional_comment: optionalComment,
         })
         .select("*")
         .single();

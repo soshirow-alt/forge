@@ -4,6 +4,7 @@ export type GuestVoiceAnswerInput = {
   promptId: string;
   answerValue: string;
   answerLabel?: string;
+  optionalComment?: string;
 };
 
 export type PostGuestVoiceRequest = {

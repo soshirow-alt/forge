@@ -122,6 +122,7 @@ import {
 import type { DeveloperPromptInput } from "@/lib/version-prompt-form";
 import type { VoiceAnswerDraft, VersionPrompt, VoiceResponse } from "@/lib/version-prompt-types";
 import type { PublicVoiceAggregateRow } from "@/lib/voice-aggregates";
+import { fetchPublicFeedbackCards, type PublicFeedbackCard } from "@/lib/public-feedback-cards";
 import {
   deleteProjectDevlogsByProjectId,
   fetchAllProjectDevlogs,
@@ -327,6 +328,11 @@ type GamesContextValue = {
     gameId: string,
     versionKey: string,
   ) => Promise<PublicVoiceAggregateRow[]>;
+  getPublicFeedbackCards: (
+    gameId: string,
+    versionKey: string,
+    options?: { limit?: number; offset?: number },
+  ) => Promise<PublicFeedbackCard[]>;
   getOwnerVoiceAggregates: (
     gameId: string,
     versionKey: string,
@@ -1448,6 +1454,22 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const getPublicFeedbackCards = useCallback(
+    async (
+      gameId: string,
+      versionKey: string,
+      options?: { limit?: number; offset?: number },
+    ) => {
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return [];
+      }
+
+      return fetchPublicFeedbackCards(supabase, gameId, versionKey, options);
+    },
+    [],
+  );
+
   const getOwnerVoiceAggregates = useCallback(
     async (gameId: string, versionKey: string) => {
       const supabase = getOptionalSupabaseClient();
@@ -2179,6 +2201,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       getMyVoiceResponses,
       submitVoiceResponses,
       getPublicVoiceAggregates,
+      getPublicFeedbackCards,
       getOwnerVoiceAggregates,
       getOwnerVoiceResponseDetails,
       getOwnerStudioVoiceResponseCount,
@@ -2263,6 +2286,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       getMyVoiceResponses,
       submitVoiceResponses,
       getPublicVoiceAggregates,
+      getPublicFeedbackCards,
       getOwnerVoiceAggregates,
       getOwnerVoiceResponseDetails,
       getOwnerStudioVoiceResponseCount,

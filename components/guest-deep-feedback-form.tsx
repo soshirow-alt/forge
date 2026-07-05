@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
+import { FeedbackPublicDisplayConsent } from "@/components/feedback-public-display-consent";
 import { postGuestFeedback } from "@/lib/guest-feedback/client";
 import type { GuestDetailedFeedbackInput } from "@/lib/guest-feedback/types";
 import { resolvePlayableVersion } from "@/lib/playable-version";
@@ -36,6 +37,7 @@ export function GuestDeepFeedbackForm({
   const [otherNotes, setOtherNotes] = useState("");
   const [saved, setSaved] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [publicDisplayConsent, setPublicDisplayConsent] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -49,7 +51,7 @@ export function GuestDeepFeedbackForm({
       otherNotes: otherNotes.trim() || undefined,
     };
 
-    if (!hasDeepContent(payload)) {
+    if (!hasDeepContent(payload) || !publicDisplayConsent) {
       return;
     }
 
@@ -152,9 +154,14 @@ export function GuestDeepFeedbackForm({
           {saveError}
         </p>
       ) : null}
+      <FeedbackPublicDisplayConsent
+        idPrefix={`guest-deep-${gameId}`}
+        checked={publicDisplayConsent}
+        onCheckedChange={setPublicDisplayConsent}
+      />
       <button
         type="submit"
-        disabled={submitting}
+        disabled={submitting || !publicDisplayConsent}
         className="rounded-lg border border-zinc-700 px-4 py-2 text-xs font-medium text-zinc-300 transition-colors hover:border-orange-500/40 hover:text-orange-300 disabled:opacity-60"
       >
         {submitting ? "送信中..." : "詳しい感想を届ける"}

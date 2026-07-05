@@ -4,7 +4,16 @@
 
 ---
 
-## 2026-07-05 — 041 Phase 1 DB 適用完了 + migration 正本 GRANT 同期（preview/landing-01）
+## 2026-07-05 — みんなのFB 個別カード公開 Phase 2 UI（preview/landing-01）
+
+- **送信前同意** — 初声/ゲスト初声/詳しい感想フォームに必須チェック追加（同意時刻・policy version は DB に保存しない）
+- **optional_comment** — 選択式のひと言コメントを `answer_label` から分離して登録/ゲスト API 両方で書き込み
+- **EveryonesVoiceSection v2** — 上段=選択式集計 + 回答数/公開FB件数、下段=`get_public_feedback_cards` 個別カード（初期3件・すべて見る）
+- **旧文言差し替え** — 「個別の回答内容は公開されません」等を新方針（集計 + 文章FB公開）に更新
+- **PublicFeedbackCardView** — ゲスト/登録の投稿者表示、将来の共感・通報用アクション領域のみ（本実装は Phase 4）
+- **未実施** — main 反映 / 本番 deploy / 追加 migration / 共感・通報本実装
+
+---
 
 - **本番 DB** — `041_public_feedback_cards.sql` Dashboard 適用済み（`bpnisgzxuwdxelhnduuf`）。post-check B（`feedback_reports` policy 0 行）・D（`resolve_feedback_card_id` は postgres / service_role のみ EXECUTE）確認済み
 - **041 正本** — `resolve_feedback_card_id` に `REVOKE … FROM anon/authenticated` を明示（Dashboard 追加 REVOKE と同期）

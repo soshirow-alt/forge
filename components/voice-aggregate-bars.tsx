@@ -72,7 +72,7 @@ function PublicStackedDistribution({
       </ul>
       {!compact ? (
         <p className="text-[11px] text-zinc-600">
-          合計 {aggregate.totalResponses} 件の回答（個別の内容は非公開）
+          合計 {aggregate.totalResponses} 件の回答（選択式の集計）
         </p>
       ) : null}
     </div>
@@ -117,7 +117,7 @@ function StudioRowDistribution({
       })}
       {!compact ? (
         <p className="pt-1 text-[11px] text-zinc-600">
-          合計 {aggregate.totalResponses} 件の回答（個別の内容は非公開）
+          合計 {aggregate.totalResponses} 件の回答
         </p>
       ) : null}
     </div>

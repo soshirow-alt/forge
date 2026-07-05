@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { FeedbackPublicDisplayConsent } from "@/components/feedback-public-display-consent";
 import { useGames } from "@/components/games-provider";
 import type { GameFeedbackItem } from "@/lib/game-feedback-storage";
 
@@ -37,6 +38,7 @@ export function GameDeepFeedbackForm({ gameId }: GameDeepFeedbackFormProps) {
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [publicDisplayConsent, setPublicDisplayConsent] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -73,7 +75,7 @@ export function GameDeepFeedbackForm({ gameId }: GameDeepFeedbackFormProps) {
       otherNotes: otherNotes.trim() || undefined,
     };
 
-    if (!hasDeepContent(feedback)) {
+    if (!hasDeepContent(feedback) || !publicDisplayConsent) {
       return;
     }
 
@@ -172,17 +174,22 @@ export function GameDeepFeedbackForm({ gameId }: GameDeepFeedbackFormProps) {
           placeholder="例：このシーンの雰囲気が好きでした / 続編が楽しみです"
         />
       </div>
-      {saveError && (
+      {saveError ? (
         <p
           role="alert"
           className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200"
         >
           {saveError}
         </p>
-      )}
+      ) : null}
+      <FeedbackPublicDisplayConsent
+        idPrefix={`game-deep-${gameId}`}
+        checked={publicDisplayConsent}
+        onCheckedChange={setPublicDisplayConsent}
+      />
       <button
         type="submit"
-        disabled={submitting}
+        disabled={submitting || !publicDisplayConsent}
         className="rounded-lg border border-zinc-700 px-4 py-2 text-xs font-medium text-zinc-300 transition-colors hover:border-orange-500/40 hover:text-orange-300 disabled:opacity-60"
       >
         {submitting ? "送信中..." : "詳しい感想を届ける"}

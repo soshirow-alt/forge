@@ -4,6 +4,7 @@ import { resolvePlayableVersion } from "@/lib/playable-version";
 import {
   GUEST_DETAILED_FIELD_MAX,
   GUEST_VOICE_ANSWER_MAX,
+  GUEST_VOICE_OPTIONAL_COMMENT_MAX,
 } from "@/lib/guest-feedback/constants";
 import type {
   GuestDetailedFeedbackInput,
@@ -103,11 +104,22 @@ function optionLabel(
 export function validateGuestVoiceAnswer(
   prompt: GuestPromptRecord,
   answer: GuestVoiceAnswerInput,
-): { ok: true; answerValue: string; answerLabel: string | null } | { ok: false } {
+):
+  | { ok: true; answerValue: string; answerLabel: string | null; optionalComment: string | null }
+  | { ok: false } {
   const answerValue = answer.answerValue.trim();
   if (!answerValue || answerValue.length > GUEST_VOICE_ANSWER_MAX) {
     return { ok: false };
   }
+
+  const optionalCommentRaw = answer.optionalComment?.trim();
+  if (
+    optionalCommentRaw &&
+    optionalCommentRaw.length > GUEST_VOICE_OPTIONAL_COMMENT_MAX
+  ) {
+    return { ok: false };
+  }
+  const optionalComment = optionalCommentRaw || null;
 
   const kind = prompt.responseKind as VersionPromptResponseKind;
 
@@ -152,7 +164,7 @@ export function validateGuestVoiceAnswer(
     return { ok: false };
   }
 
-  return { ok: true, answerValue, answerLabel };
+  return { ok: true, answerValue, answerLabel, optionalComment };
 }
 
 function trimField(value: string | undefined, max: number): string | undefined {
