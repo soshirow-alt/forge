@@ -20,7 +20,7 @@ import { YourInvolvementCard } from "@/components/your-involvement-card";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePlayerProjectInvolvement } from "@/hooks/use-player-project-involvement";
-import { usePublicXProfile } from "@/hooks/use-public-x-profile";
+import { useProjectAuthorXUsername } from "@/hooks/use-resource-public-x-username";
 import {
   FeedbackFormV0Modal,
   FeedbackSuccessV0Modal,
@@ -313,7 +313,9 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   const [following, setFollowing] = useState(game.developer.following);
   const developerUserId =
     isRealProject && submittedGame?.ownerId ? submittedGame.ownerId : null;
-  const { profile: developerXProfile } = usePublicXProfile(developerUserId);
+  const { xUsername: developerXUsername } = useProjectAuthorXUsername(
+    isRealProject ? resolvedId : null,
+  );
   const creatorRouteKey = game.developer.id;
   const realFollowing = developerUserId ? isFollowing(creatorRouteKey) : following;
   const showDeveloperFollow =
@@ -686,8 +688,8 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                     imageSrc={developerAvatarSrc}
                   />
                   <span className="break-words">{game.developer.name}</span>
-                  {developerXProfile?.xUsername ? (
-                    <XLinkedHandleBadge username={developerXProfile.xUsername} />
+                  {developerXUsername ? (
+                    <XLinkedHandleBadge username={developerXUsername} />
                   ) : null}
                 </Link>
                 <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-zinc-500">
@@ -907,8 +909,8 @@ function GameDetailV0PageBody({ id }: { id: string }) {
               />
               <div className="min-w-0">
                 <p className="truncate font-semibold text-white">{game.developer.name}</p>
-                {developerXProfile?.xUsername ? (
-                  <XLinkedHandleBadge username={developerXProfile.xUsername} className="mt-1" />
+                {developerXUsername ? (
+                  <XLinkedHandleBadge username={developerXUsername} className="mt-1" />
                 ) : null}
                 {developerUserId || (!isRealProject && game.developer.followers > 0) ? (
                   <p className="text-xs text-zinc-500">

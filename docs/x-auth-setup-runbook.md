@@ -148,8 +148,10 @@ Forge /login → signInWithOAuth('x')
 **RPC**
 
 - `upsert_own_x_profile` — 本人のみ（callback / 連携後）
-- `get_public_x_profile(uuid)` — 公開表示用（handle / name / avatar のみ）
-- `get_public_x_profiles(uuid[])` — バッチ公開 read
+- 公開 X 表示は **user_id キーの RPC を使わない**
+  - FB カード: `get_public_feedback_cards.author_x_username`
+  - 作品作者: `GET /api/projects/[projectId]/public-author-x`（service_role、返却は `xUsername` のみ）
+  - 開発者プロフィール: `GET /api/creators/[routeId]/public-x`（service_role、返却は `xUsername` のみ）
 
 **RLS**: 本人 SELECT のみ。書き込みは SECURITY DEFINER RPC。
 

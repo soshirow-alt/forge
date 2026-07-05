@@ -100,51 +100,9 @@ $$;
 REVOKE ALL ON FUNCTION public.upsert_own_x_profile(text, text, text, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.upsert_own_x_profile(text, text, text, text) TO authenticated;
 
-CREATE OR REPLACE FUNCTION public.get_public_x_profile(p_user_id uuid)
-RETURNS TABLE (
-  x_username text,
-  x_display_name text,
-  x_avatar_url text
-)
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT
-    x_username,
-    x_display_name,
-    x_avatar_url
-  FROM public.user_x_profiles
-  WHERE user_id = p_user_id;
-$$;
-
-REVOKE ALL ON FUNCTION public.get_public_x_profile(uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.get_public_x_profile(uuid) TO anon, authenticated;
-
-CREATE OR REPLACE FUNCTION public.get_public_x_profiles(p_user_ids uuid[])
-RETURNS TABLE (
-  user_id uuid,
-  x_username text,
-  x_display_name text,
-  x_avatar_url text
-)
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT
-    uxp.user_id,
-    uxp.x_username,
-    uxp.x_display_name,
-    uxp.x_avatar_url
-  FROM public.user_x_profiles uxp
-  WHERE uxp.user_id = ANY(p_user_ids);
-$$;
-
-REVOKE ALL ON FUNCTION public.get_public_x_profiles(uuid[]) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.get_public_x_profiles(uuid[]) TO anon, authenticated;
+-- Public X display does NOT use user_id-keyed RPCs.
+-- - FB cards: get_public_feedback_cards.author_x_username
+-- - Project author / creator profile: Next.js API (service_role) keyed by project_id / creator route
 
 CREATE OR REPLACE FUNCTION public.anonymize_own_account_data()
 RETURNS void

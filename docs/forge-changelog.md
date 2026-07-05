@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07-06 — X連携 042 プライバシー修正（preview/landing-01）
+
+- **042 正本修正** — `get_public_x_profile` / `get_public_x_profiles` を削除（user_id キー公開 RPC を廃止）
+- **公開 X 表示** — リソース起点のみ: FB カード `author_x_username`、作品 `GET /api/projects/[id]/public-author-x`、開発者 `GET /api/creators/[routeId]/public-x`（いずれも `xUsername` のみ、user_id / x_user_id / token なし）
+- **未実施** — 042 Dashboard 適用 / X Developer / Supabase Provider / main / 本番 deploy
+
+---
+
 ## 2026-07-06 — X アカウント連携（preview/landing-01）
 
 - **Xでログイン** — ログイン / 新規登録画面に「Xでログイン」を追加（Supabase Auth `provider: 'x'`）。メールログイン・ゲスト参加は維持

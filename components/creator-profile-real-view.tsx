@@ -11,7 +11,7 @@ import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { PlayerShell, GameThumbnail } from "@/components/player-shell";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
-import { usePublicXProfile } from "@/hooks/use-public-x-profile";
+import { useCreatorPublicXUsername } from "@/hooks/use-resource-public-x-username";
 import type { CreatorProfileResolved } from "@/hooks/use-creator-profile";
 import {
   buildCreatorProfileTabHref,
@@ -71,7 +71,7 @@ export function CreatorProfileRealView({
 }) {
   const hideV0Mock = shouldHideV0MockContent();
   useRequireAuth();
-  const { profile: linkedXProfile } = usePublicXProfile(profile.userId);
+  const { xUsername: linkedXUsername } = useCreatorPublicXUsername(profile.routeId);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { getFollowerCount, refreshFollowerCount } = useGames();
@@ -107,9 +107,9 @@ export function CreatorProfileRealView({
                   <BadgeCheck className="size-5 text-violet-400" aria-hidden="true" />
                 </div>
                 <p className="mt-1 text-sm text-zinc-500">
-                  {linkedXProfile?.xUsername ? (
+                  {linkedXUsername ? (
                     <>
-                      <XLinkedHandleBadge username={linkedXProfile.xUsername} />
+                      <XLinkedHandleBadge username={linkedXUsername} />
                       <span className="mx-2 text-zinc-700" aria-hidden="true">
                         ·
                       </span>
