@@ -7,7 +7,9 @@
 ## 2026-07-06 — Studio X連携導線 + OAuth scope 調査
 
 - **Studio設定 / Studioプロフィール** — X OAuth UI は複製せず、`/settings` へ誘導する「Xアカウント連携」カードを追加（未連携: 「アカウント設定で連携する」/ 連携済み: `@handle` + 「アカウント設定を開く」）。解除・変更の誤解を招く文言なし
-- **OAuth scope 調査** — Supabase Auth X provider は `users.read` / `users.email` / `tweet.read` / `offline.access` を **固定要求**。クライアント `options.scopes` では削減不可。email 表示は X Developer の Request email OFF でも Supabase 側仕様
+- **OAuth scope 実測** — Supabase 経由 X URL の `scope=` は `users.email tweet.read users.read offline.access`。Forge は scopes 未指定。`options.scopes: tweet.read users.read` でも削減不可（append のみ）。write/DM 系なし
+- **email 表示** — Request email OFF でも `users.email` scope が URL に載るため同意画面に出うる
+- **日本語化** — X authorize URL に lang 系パラメータなし。Forge から確実な日本語化は未確認
 - **本番 GO 前（オーナー）** — X Developer App 表示名を **`Forge`** に修正。同意画面の権限表示と Forge 実利用の差は runbook §4.1 参照
 - **本番 GO 前（確認）** — 本番 hostname で `NEXT_PUBLIC_X_AUTH_ENABLED` 未設定時に X ボタンが **出ない**こと（意図どおり）。Preview hostname 判定の退行がないこと
 - **未実施** — main / 本番 deploy

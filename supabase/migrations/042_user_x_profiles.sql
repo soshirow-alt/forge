@@ -98,6 +98,7 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.upsert_own_x_profile(text, text, text, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.upsert_own_x_profile(text, text, text, text) FROM anon;
 GRANT EXECUTE ON FUNCTION public.upsert_own_x_profile(text, text, text, text) TO authenticated;
 
 -- Public X display does NOT use user_id-keyed RPCs.
@@ -160,6 +161,7 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.anonymize_own_account_data() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.anonymize_own_account_data() FROM anon;
 GRANT EXECUTE ON FUNCTION public.anonymize_own_account_data() TO authenticated;
 
 DROP FUNCTION IF EXISTS public.get_public_feedback_cards(text, text, boolean, integer, integer);
@@ -386,6 +388,7 @@ AS $$
   OFFSET greatest(coalesce(p_offset, 0), 0);
 $$;
 
+REVOKE ALL ON FUNCTION public.get_public_feedback_cards(text, text, boolean, integer, integer) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_public_feedback_cards(text, text, boolean, integer, integer)
   TO anon, authenticated;
 

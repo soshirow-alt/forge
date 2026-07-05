@@ -133,35 +133,60 @@ Cursor が参照する既存変数（変更不要）:
 
 **Forge 方針**: X の `@handle` 表示のみ。投稿/DM なし。OAuth token 非保存。
 
-**Supabase Auth（GoTrue）の X provider は scope を固定**しており、Forge クライアントの `signInWithOAuth` / `linkIdentity` の `options.scopes` では **削れない**（追加のみ）。
+#### Forge コードが渡している scope
 
-| scope | Supabase 側 | 同意画面での見え方（例） | Forge での利用 |
-|---|---|---|---|
-| `users.read` | 固定 | プロフィール read | **必要**（@handle / 表示名 / アイコン） |
-| `users.email` | 固定 | *Your email address* | Supabase が `confirmed_email` を取得するため要求。**Forge は X メールを保存・表示しない** |
-| `tweet.read` | 固定 | *All the posts you can view…* | Supabase コメント上「OAuth 2.0 user context に必要」。**Forge は投稿を読まない** |
-| `offline.access` | 固定 | （refresh token） | Supabase Auth セッション維持用。**Forge は provider token を DB 保存しない** |
+`components/auth-provider.tsx` の `signInWithOAuth` / `linkOAuthIdentity` は **`options.scopes` 未指定**（`redirectTo` のみ）。
 
-根拠: [supabase/auth `internal/api/provider/x.go`](https://github.com/supabase/auth/blob/master/internal/api/provider/x.go) — デフォルト 4 scope を常に付与。`options.scopes` は **append** のみ。
+#### 実測: X 同意 URL の `scope=`（Supabase `bpnisgzxuwdxelhnduuf` / 2026-07-06）
 
-**email が出る理由**: X Developer で Request email OFF でも、Supabase が `users.email` + `/2/users/me?...confirmed_email` を使うため。
+`scripts/tmp-inspect-x-oauth-scopes.mjs` が `/auth/v1/authorize?provider=x` の 302 Location を解析:
 
-**本番 GO 前の対応案**（優先順）:
+| ケース | Supabase に渡した scopes | X URL の `scope=` 実値 |
+|---|---|---|
+| **現行 Forge 同等（未指定）** | なし | `users.email tweet.read users.read offline.access` |
+| **`options.scopes: "tweet.read users.read"` 試験** | `tweet.read users.read` | `users.email tweet.read users.read offline.access tweet.read users.read`（**削減不可・重複 append**） |
 
-1. **オーナー**: X Developer の **App 表示名を `Forge` に修正**（同意画面の信頼性）
-2. **オーナー**: 同意画面スクショを残し、利用規約/プライバシーで「X連携時に要求される権限と Forge の実利用の差」を明記するか検討
-3. **Cursor / 将来**: Supabase へ X provider の scope 最小化 feature request、または self-hosted GoTrue カスタム（本番 GO 条件には含めない）
+- **write / DM 系 scope**: 実測 URL に **なし**
+- **`users.email`**: 実測 URL に **あり** → 同意画面 *Your email address* の直接原因
+- **`offline.access`**: 実測 URL に **あり** → Supabase Auth セッション用 refresh token。Forge DB には保存しない
+- **`tweet.read` + `users.read`**: 実測 URL に **あり** → GPT 見立ての最小候補。ただし **Supabase 托管 Auth ではこの 2 つだけには絞れない**
 
-**`signInWithOAuth` / `linkIdentity` で scope 指定**:
+根拠（コード）: [supabase/auth `internal/api/provider/x.go`](https://github.com/supabase/auth/blob/master/internal/api/provider/x.go) — デフォルト 4 scope を常に付与。`options.scopes` は **append** のみ（置換不可）。
+
+#### なぜ Request email OFF でも *Your email address* が出るか
+
+1. **同意画面の表示** — X URL に `users.email` scope が含まれるため（上記実測）。これは **X Developer の Request email from users 設定とは独立**して scope パラメータに載る
+2. **Supabase の API 呼び出し** — GoTrue が `/2/users/me?user.fields=...,confirmed_email` を叩く設計
+3. **Request email OFF の効果** — 同意画面に email が出ても、API 応答の `confirmed_email` は空になりうる（Forge は X メールを使わない）
+
+#### `users.read` のみで `/2/users/me` が通るか
+
+- X API v2 の OAuth 2.0 user context では **`tweet.read` + `users.read` がセットで必要**とされる（Supabase コメント・コミュニティ実装例と一致）
+- **`users.read` 単体** — Supabase 托管 Auth では未検証（4 scope 固定のため）。独自 OAuth 実装なら実験対象
+
+#### 本番 GO 前の対応案（優先順）
+
+1. **オーナー**: X Developer の **App 表示名を `Forge` に修正**（`2073817817313427457Forge_game_` 問題）
+2. **オーナー**: 同意画面スクショを残し、利用規約/プライバシーで「要求 scope と Forge 実利用の差」を明記するか検討
+3. **Cursor / 将来**: Supabase へ X provider scope 最小化 feature request（`tweet.read users.read` のみ + `offline.access`/`users.email` オプトアウト）
+
+**`signInWithOAuth` / `linkIdentity` で scope 指定**（現状 Forge 未使用）:
 
 ```typescript
 await supabase.auth.signInWithOAuth({
   provider: "x",
-  options: { scopes: "..." }, // 追加 scope のみ。固定 4 scope は消せない
+  options: { scopes: "tweet.read users.read" }, // 追加のみ。4 固定 scope は消えない
 });
 ```
 
-### 4.2 フロー図
+### 4.2 同意画面の言語（日本語化）
+
+- X OAuth 2.0 公式 authorize パラメータ: `response_type` / `client_id` / `redirect_uri` / `scope` / `state` / `code_challenge` 等
+- **実測 X URL** に `lang=ja` / `ui_locales=ja` **なし**（Supabase 経由フロー）
+- Forge / Supabase クライアントから **同意画面を確実に日本語化する公式手段は未確認**
+- ブラウザ言語・X アカウント表示言語に依存する可能性あり。`queryParams` での実験は **公式保証なし**
+
+### 4.3 フロー図
 
 ```
 Forge /login → signInWithOAuth('x')
