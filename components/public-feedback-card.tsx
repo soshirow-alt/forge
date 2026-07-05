@@ -2,6 +2,7 @@
 
 import { UserRound } from "lucide-react";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { formatPlayableVersionLabel } from "@/lib/playable-version";
 import type { PublicFeedbackCard } from "@/lib/public-feedback-cards";
 
 type PublicFeedbackCardViewProps = {
@@ -23,12 +24,28 @@ function formatCardDate(iso: string): string {
   });
 }
 
+function ChoiceAnswerPill({ label }: { label: string }) {
+  return (
+    <span className="inline-flex max-w-[14rem] items-center rounded-full border border-orange-500/25 bg-orange-500/10 px-2.5 py-1 text-[11px] font-medium leading-tight text-orange-200/95">
+      回答: {label}
+    </span>
+  );
+}
+
+function VersionBadge({ versionKey }: { versionKey: string }) {
+  return (
+    <span className="inline-flex shrink-0 items-center rounded-md border border-zinc-700/80 bg-zinc-900/90 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+      {formatPlayableVersionLabel(versionKey)}
+    </span>
+  );
+}
+
 function CardAuthor({ card }: { card: PublicFeedbackCard }) {
   if (card.authorKind === "guest") {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 items-center gap-2">
         <span
-          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-zinc-500"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-zinc-500"
           aria-hidden="true"
         >
           <UserRound className="size-4" />
@@ -43,18 +60,18 @@ function CardAuthor({ card }: { card: PublicFeedbackCard }) {
   const displayName = card.authorDisplayName?.trim() || "プレイヤー";
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex min-w-0 items-center gap-2">
       {card.authorAvatarUrl ? (
-        <ProfileAvatar src={card.authorAvatarUrl} alt="" className="size-8" size={32} />
+        <ProfileAvatar src={card.authorAvatarUrl} alt="" className="size-9" size={36} />
       ) : (
         <span
-          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-medium text-zinc-400"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-medium text-zinc-400"
           aria-hidden="true"
         >
           {displayName.slice(0, 1)}
         </span>
       )}
-      <span className="text-sm font-medium text-zinc-200">{displayName}</span>
+      <span className="truncate text-sm font-semibold text-zinc-100">{displayName}</span>
     </div>
   );
 }
@@ -64,11 +81,11 @@ function CardBody({ card }: { card: PublicFeedbackCard }) {
     const visibleFields = DETAILED_FIELDS.filter((field) => card[field.key]?.trim());
 
     return (
-      <div className="mt-3 space-y-3">
+      <div className="mt-4 space-y-3.5">
         {visibleFields.map((field) => (
-          <div key={field.key}>
+          <div key={field.key} className="rounded-lg border border-zinc-800/50 bg-zinc-950/40 px-3 py-2.5">
             <p className="text-[11px] font-medium text-zinc-500">{field.label}</p>
-            <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-zinc-200">
+            <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-zinc-100">
               {card[field.key]}
             </p>
           </div>
@@ -78,25 +95,32 @@ function CardBody({ card }: { card: PublicFeedbackCard }) {
   }
 
   return (
-    <div className="mt-3 space-y-2">
+    <div className="mt-4 space-y-2.5">
       {card.promptText ? (
-        <p className="text-xs font-medium text-zinc-500">{card.promptText}</p>
+        <p className="text-xs font-medium leading-relaxed text-zinc-500">{card.promptText}</p>
       ) : null}
       {card.bodyText ? (
-        <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-200">
-          {card.bodyText}
-        </p>
+        <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-100">{card.bodyText}</p>
       ) : null}
     </div>
   );
 }
 
 export function PublicFeedbackCardView({ card }: PublicFeedbackCardViewProps) {
+  const showChoicePill =
+    card.cardKind === "voice_supplement" && Boolean(card.choiceAnswerLabel?.trim());
+
   return (
-    <li className="rounded-xl border border-zinc-800/80 bg-zinc-950/30 px-4 py-4 sm:px-5 sm:py-5">
-      <CardAuthor card={card} />
+    <li className="rounded-xl border border-zinc-800/90 bg-zinc-950/50 px-4 py-4 shadow-sm shadow-black/10 sm:px-5 sm:py-5">
+      <div className="flex items-start justify-between gap-3">
+        <CardAuthor card={card} />
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+          {showChoicePill ? <ChoiceAnswerPill label={card.choiceAnswerLabel!.trim()} /> : null}
+          <VersionBadge versionKey={card.versionKey} />
+        </div>
+      </div>
       <CardBody card={card} />
-      <div className="mt-4 flex items-center justify-between gap-3 border-t border-zinc-800/60 pt-3">
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-zinc-800/70 pt-3">
         <time className="text-[11px] text-zinc-600" dateTime={card.createdAt}>
           {formatCardDate(card.createdAt)}
         </time>

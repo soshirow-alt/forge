@@ -31,7 +31,7 @@ function PublicStackedDistribution({
   return (
     <div className={compact ? "space-y-2" : "space-y-3"}>
       <div
-        className="flex h-2.5 w-full overflow-hidden rounded-full bg-zinc-800/80"
+        className="flex h-3 w-full overflow-hidden rounded-full bg-zinc-800/80"
         role="img"
         aria-label={`${aggregate.promptText} の回答分布`}
       >
@@ -62,7 +62,7 @@ function PublicStackedDistribution({
                 className={`size-2 shrink-0 rounded-full ${STACKED_SEGMENT_CLASS_NAMES[index % STACKED_SEGMENT_CLASS_NAMES.length]}`}
                 aria-hidden="true"
               />
-              <span className="text-zinc-300">{bucket.answerLabel}</span>
+              <span className="font-medium text-zinc-200">{bucket.answerLabel}</span>
               <span className="tabular-nums text-zinc-500">
                 {bucket.count}件 ({pct}%)
               </span>

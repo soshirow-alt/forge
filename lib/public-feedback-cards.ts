@@ -8,17 +8,26 @@ export type PublicFeedbackAuthorKind = "guest" | "registered";
 export type PublicFeedbackCard = {
   cardId: string;
   cardKind: PublicFeedbackCardKind;
+  versionKey: string;
   createdAt: string;
   authorKind: PublicFeedbackAuthorKind;
   authorDisplayName: string | null;
   authorAvatarUrl: string | null;
   promptText: string | null;
   bodyText: string | null;
+  /** voice_supplement — related choice answer label (not the card body) */
+  choiceAnswerLabel?: string | null;
   goodPoints: string | null;
   concerns: string | null;
   bugs: string | null;
   otherNotes: string | null;
   empathyCount: number;
+};
+
+export type PublicFeedbackCardsResult = {
+  cards: PublicFeedbackCard[];
+  playableVersion: string;
+  availableVersions: string[];
 };
 
 type PublicFeedbackCardRow = {
@@ -45,7 +54,7 @@ function isPublicFeedbackAuthorKind(value: string): value is PublicFeedbackAutho
   return value === "guest" || value === "registered";
 }
 
-function rowToCard(row: PublicFeedbackCardRow): PublicFeedbackCard | null {
+function rowToCard(row: PublicFeedbackCardRow, versionKey: string): PublicFeedbackCard | null {
   if (!isPublicFeedbackCardKind(row.card_kind)) {
     return null;
   }
@@ -56,6 +65,7 @@ function rowToCard(row: PublicFeedbackCardRow): PublicFeedbackCard | null {
   return {
     cardId: row.card_id,
     cardKind: row.card_kind,
+    versionKey,
     createdAt: row.created_at,
     authorKind: row.author_kind,
     authorDisplayName: row.author_display_name,
@@ -70,6 +80,7 @@ function rowToCard(row: PublicFeedbackCardRow): PublicFeedbackCard | null {
   };
 }
 
+/** Legacy direct-RPC fetch — prefer fetchPublicFeedbackCardsFromApi for enriched cards. */
 export async function fetchPublicFeedbackCards(
   supabase: SupabaseClient,
   projectId: string,
@@ -101,6 +112,45 @@ export async function fetchPublicFeedbackCards(
   }
 
   return ((data ?? []) as PublicFeedbackCardRow[])
-    .map(rowToCard)
+    .map((row) => rowToCard(row, version))
     .filter((card): card is PublicFeedbackCard => card !== null);
+}
+
+export async function fetchPublicFeedbackCardsFromApi(
+  projectId: string,
+  versionKey: string | "all",
+  options?: { limit?: number },
+): Promise<PublicFeedbackCardsResult> {
+  const params = new URLSearchParams();
+  params.set("version", versionKey === "all" ? "all" : resolvePlayableVersion(versionKey));
+  if (options?.limit) {
+    params.set("limit", String(options.limit));
+  }
+
+  const response = await fetch(
+    `/api/projects/${encodeURIComponent(projectId)}/public-feedback-cards?${params.toString()}`,
+  );
+
+  const body = (await response.json()) as
+    | ({
+        ok: true;
+        cards: PublicFeedbackCard[];
+        playableVersion: string;
+        availableVersions: string[];
+      })
+    | { ok: false; message?: string };
+
+  if (!response.ok || !body.ok) {
+    return {
+      cards: [],
+      playableVersion: resolvePlayableVersion(undefined),
+      availableVersions: [],
+    };
+  }
+
+  return {
+    cards: body.cards,
+    playableVersion: body.playableVersion,
+    availableVersions: body.availableVersions,
+  };
 }

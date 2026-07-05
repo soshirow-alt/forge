@@ -4,7 +4,15 @@
 
 ---
 
-## 2026-07-05 — みんなのFB 個別カード公開 Phase 2 UI（preview/landing-01）
+## 2026-07-06 — みんなのFB Phase 2 表示仕様修正（preview/landing-01）
+
+- **個別カード** — `voice_supplement` に関連選択肢ピル（回答: …）を表示。service role API で `answer_label` を enrich（DB migration なし）
+- **上段集計** — 回答1件から内訳・比率バーを常時表示（3件未満非表示を廃止）
+- **バージョン** — 初期表示は最新 playable ver のみ。ver フィルタ（最新 / すべて / 各ver）+ カードに v0.x バッジ
+- **UI** — 上段サマリ / 下段個別FB の区切り・文字階層・余白を軽く改善
+- **未実施** — main / 本番 deploy / migration / テスト投稿 / 共感・通報
+
+---
 
 - **送信前同意** — 初声/ゲスト初声/詳しい感想フォームに必須チェック追加（同意時刻・policy version は DB に保存しない）
 - **optional_comment** — 選択式のひと言コメントを `answer_label` から分離して登録/ゲスト API 両方で書き込み

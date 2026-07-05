@@ -5,15 +5,25 @@ import { PublicFeedbackCardView } from "@/components/public-feedback-card";
 import { VoiceAggregateBars } from "@/components/voice-aggregate-bars";
 import { useGames } from "@/components/games-provider";
 import type { PublicFeedbackCard } from "@/lib/public-feedback-cards";
-import { resolvePlayableVersion } from "@/lib/playable-version";
+import {
+  formatPlayableVersionLabel,
+  resolvePlayableVersion,
+} from "@/lib/playable-version";
 import {
   buildVoicePromptAggregates,
-  canShowPublicVoiceTrend,
+  type PublicVoiceAggregateRow,
   type VoicePromptAggregate,
 } from "@/lib/voice-aggregates";
 import { isFreeTextResponseKind } from "@/lib/version-prompt-types";
 
 const INITIAL_CARD_COUNT = 3;
+const ALL_FILTER_AGGREGATE_PREVIEW = 3;
+
+type VersionFilter = "latest" | "all" | string;
+
+type VersionedVoicePromptAggregate = VoicePromptAggregate & {
+  versionKey: string;
+};
 
 type EveryonesVoiceSectionProps = {
   gameId: string;
@@ -24,22 +34,36 @@ type EveryonesVoiceSectionProps = {
   onSendVoice?: () => void;
 };
 
+function versionFilterLabel(filter: VersionFilter, latestVersion: string): string {
+  if (filter === "latest") {
+    return `最新 ${formatPlayableVersionLabel(latestVersion)}`;
+  }
+  if (filter === "all") {
+    return "すべて";
+  }
+  return formatPlayableVersionLabel(filter);
+}
+
 function PromptAggregateCard({
   aggregate,
-  versionLabel,
 }: {
-  aggregate: VoicePromptAggregate;
-  versionLabel: string;
+  aggregate: VersionedVoicePromptAggregate;
 }) {
-  const { promptText, totalResponses, responseKind } = aggregate;
+  const { promptText, totalResponses, responseKind, versionKey } = aggregate;
+  const versionLabel = formatPlayableVersionLabel(versionKey);
 
   if (isFreeTextResponseKind(responseKind)) {
     return (
-      <li className="rounded-xl border border-zinc-800/80 bg-zinc-950/30 px-4 py-4 sm:px-5 sm:py-5">
-        <h3 className="text-sm font-medium text-zinc-200">{promptText}</h3>
-        <p className="mt-2 text-sm text-zinc-400">
-          自由記述のフィードバック{" "}
-          <span className="font-semibold text-zinc-200">{totalResponses}</span> 件
+      <li className="rounded-xl border border-zinc-800/90 bg-zinc-950/50 px-4 py-4 sm:px-5 sm:py-5">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <h4 className="text-sm font-semibold text-zinc-100">{promptText}</h4>
+          <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+            {versionLabel}
+          </span>
+        </div>
+        <p className="mt-3 text-sm text-zinc-400">
+          自由記述{" "}
+          <span className="font-semibold text-zinc-100">{totalResponses}</span> 件
         </p>
         <p className="mt-2 text-xs leading-relaxed text-zinc-600">
           文章として読める内容は、下の一覧に表示されます。
@@ -48,41 +72,82 @@ function PromptAggregateCard({
     );
   }
 
-  if (!canShowPublicVoiceTrend(totalResponses)) {
-    return (
-      <li className="rounded-xl border border-zinc-800/80 bg-zinc-950/30 px-4 py-4 sm:px-5 sm:py-5">
-        <h3 className="text-sm font-medium text-zinc-200">{promptText}</h3>
-        <p className="mt-2 text-sm text-zinc-400">
-          回答 <span className="font-semibold text-zinc-200">{totalResponses}</span> 件
-        </p>
-        <p className="mt-2 text-xs leading-relaxed text-zinc-600">
-          まだ回答が集まりはじめたところです。もう少し回答が集まると、傾向が表示されます。
-        </p>
-      </li>
-    );
-  }
-
   return (
-    <li className="rounded-xl border border-zinc-800/80 bg-zinc-950/30 px-4 py-4 sm:px-5 sm:py-5">
-      <h3 className="text-sm font-medium text-zinc-200">{promptText}</h3>
-      <p className="mt-1 text-xs text-zinc-600">
-        {versionLabel} · 回答 {totalResponses} 件
+    <li className="rounded-xl border border-zinc-800/90 bg-zinc-950/50 px-4 py-4 sm:px-5 sm:py-5">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <h4 className="text-sm font-semibold text-zinc-100">{promptText}</h4>
+        <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+          {versionLabel}
+        </span>
+      </div>
+      <p className="mt-2 text-xs text-zinc-500">
+        回答 <span className="font-semibold text-zinc-300">{totalResponses}</span> 件
       </p>
-      <div className="mt-3">
+      <div className="mt-4">
         <VoiceAggregateBars aggregate={aggregate} variant="public" />
       </div>
     </li>
   );
 }
 
-function PublicFeedbackCardsList({ cards }: { cards: PublicFeedbackCard[] }) {
+function VersionFilterBar({
+  latestVersion,
+  availableVersions,
+  value,
+  onChange,
+}: {
+  latestVersion: string;
+  availableVersions: string[];
+  value: VersionFilter;
+  onChange: (next: VersionFilter) => void;
+}) {
+  if (availableVersions.length <= 1) {
+    return null;
+  }
+
+  const options: VersionFilter[] = [
+    "latest",
+    "all",
+    ...availableVersions.filter((version) => version !== latestVersion),
+  ];
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((option) => {
+        const selected = value === option;
+        return (
+          <button
+            key={option}
+            type="button"
+            onClick={() => onChange(option)}
+            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+              selected
+                ? "border-orange-500/40 bg-orange-500/10 text-orange-200"
+                : "border-zinc-700/80 bg-zinc-900/60 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
+            }`}
+          >
+            {versionFilterLabel(option, latestVersion)}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function PublicFeedbackCardsList({
+  cards,
+  totalCount,
+}: {
+  cards: PublicFeedbackCard[];
+  totalCount: number;
+}) {
   const [expanded, setExpanded] = useState(false);
   const visibleCards = expanded ? cards : cards.slice(0, INITIAL_CARD_COUNT);
-  const hasMore = cards.length > INITIAL_CARD_COUNT;
+  const hasMore = totalCount > INITIAL_CARD_COUNT;
 
   if (cards.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-zinc-800 bg-zinc-950/20 px-4 py-6 text-center">
+      <div className="rounded-xl border border-dashed border-zinc-800 bg-zinc-950/20 px-4 py-8 text-center">
         <p className="text-sm text-zinc-500">まだ公開されているフィードバックはありません</p>
         <p className="mt-2 text-xs leading-relaxed text-zinc-600">
           ひと言コメントや自由記述、詳しい感想が投稿されると、ここに表示されます。
@@ -104,11 +169,21 @@ function PublicFeedbackCardsList({ cards }: { cards: PublicFeedbackCard[] }) {
           onClick={() => setExpanded(true)}
           className="mt-4 text-xs font-medium text-orange-400/90 transition-colors hover:text-orange-300"
         >
-          すべて見る（{cards.length}件）
+          すべて見る（{totalCount}件）
         </button>
       ) : null}
     </div>
   );
+}
+
+function buildVersionedAggregates(
+  rows: PublicVoiceAggregateRow[],
+  versionKey: string,
+): VersionedVoicePromptAggregate[] {
+  return buildVoicePromptAggregates(rows).map((aggregate) => ({
+    ...aggregate,
+    versionKey,
+  }));
 }
 
 export function EveryonesVoiceSection({
@@ -120,40 +195,116 @@ export function EveryonesVoiceSection({
 }: EveryonesVoiceSectionProps) {
   const { getGameById, getPublicVoiceAggregates, getPublicFeedbackCards } = useGames();
   const game = getGameById(gameId);
-  const version = resolvePlayableVersion(playableVersion ?? game?.playableVersion);
-  const versionLabel = `v${version}`;
+  const latestVersion = resolvePlayableVersion(playableVersion ?? game?.playableVersion);
   const [loaded, setLoaded] = useState(false);
-  const [aggregates, setAggregates] = useState(buildVoicePromptAggregates([]));
+  const [versionFilter, setVersionFilter] = useState<VersionFilter>("latest");
+  const [aggregatesExpanded, setAggregatesExpanded] = useState(false);
+
+  function handleVersionFilterChange(next: VersionFilter) {
+    setVersionFilter(next);
+    setAggregatesExpanded(false);
+  }
+  const [availableVersions, setAvailableVersions] = useState<string[]>([]);
+  const [aggregates, setAggregates] = useState<VersionedVoicePromptAggregate[]>([]);
   const [feedbackCards, setFeedbackCards] = useState<PublicFeedbackCard[]>([]);
   const isTab = variant === "tab";
 
   useEffect(() => {
-    void Promise.all([
-      getPublicVoiceAggregates(gameId, version),
-      getPublicFeedbackCards(gameId, version),
-    ])
-      .then(([aggregateRows, cards]) => {
-        setAggregates(buildVoicePromptAggregates(aggregateRows));
-        setFeedbackCards(cards);
-      })
-      .catch(() => {
-        setAggregates(buildVoicePromptAggregates([]));
-        setFeedbackCards([]);
-      })
-      .finally(() => {
-        setLoaded(true);
-      });
-  }, [gameId, version, refreshKey, getPublicVoiceAggregates, getPublicFeedbackCards]);
+    let cancelled = false;
+
+    async function load() {
+      const cardVersionParam =
+        versionFilter === "all"
+          ? "all"
+          : versionFilter === "latest"
+            ? latestVersion
+            : versionFilter;
+
+      try {
+        const cardsResult = await getPublicFeedbackCards(gameId, cardVersionParam);
+        if (cancelled) {
+          return;
+        }
+
+        setFeedbackCards(cardsResult.cards);
+        const versions =
+          cardsResult.availableVersions.length > 0
+            ? cardsResult.availableVersions
+            : [latestVersion];
+        setAvailableVersions(versions);
+
+        const versionKeysForAggregates =
+          versionFilter === "all"
+            ? versions
+            : [versionFilter === "latest" ? latestVersion : versionFilter];
+
+        const aggregateGroups = await Promise.all(
+          versionKeysForAggregates.map((version) =>
+            getPublicVoiceAggregates(gameId, version),
+          ),
+        );
+
+        if (cancelled) {
+          return;
+        }
+
+        setAggregates(
+          aggregateGroups.flatMap((rows, index) =>
+            buildVersionedAggregates(rows, versionKeysForAggregates[index] ?? latestVersion),
+          ),
+        );
+      } catch {
+        if (!cancelled) {
+          setAggregates([]);
+          setFeedbackCards([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoaded(true);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    gameId,
+    latestVersion,
+    versionFilter,
+    refreshKey,
+    getPublicVoiceAggregates,
+    getPublicFeedbackCards,
+  ]);
 
   const promptsWithResponses = useMemo(
     () => aggregates.filter((item) => item.totalResponses > 0),
     [aggregates],
   );
 
+  const visibleAggregates = useMemo(() => {
+    if (versionFilter !== "all" || aggregatesExpanded) {
+      return promptsWithResponses;
+    }
+
+    return [...promptsWithResponses]
+      .sort((a, b) => b.totalResponses - a.totalResponses)
+      .slice(0, ALL_FILTER_AGGREGATE_PREVIEW);
+  }, [aggregatesExpanded, promptsWithResponses, versionFilter]);
+
   const totalAnswerCount = useMemo(
     () => promptsWithResponses.reduce((sum, item) => sum + item.totalResponses, 0),
     [promptsWithResponses],
   );
+
+  const activeVersionLabel =
+    versionFilter === "latest"
+      ? formatPlayableVersionLabel(latestVersion)
+      : versionFilter === "all"
+        ? "すべてのバージョン"
+        : formatPlayableVersionLabel(versionFilter);
 
   const sectionClassName = isTab
     ? "rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6"
@@ -180,10 +331,20 @@ export function EveryonesVoiceSection({
         みんなのフィードバック
       </h2>
       <p className={`${isTab ? "mt-2" : "mt-1"} text-xs leading-relaxed text-zinc-600`}>
-        {isTab
-          ? "選択式回答は集計で表示されます。文章として読めるフィードバックは下の一覧に表示されます。"
-          : `${versionLabel} への回答集計と、作品ページに公開されているフィードバックです。`}
+        {versionFilter === "latest"
+          ? `${activeVersionLabel} のフィードバックです。選択式回答は集計、文章は下の一覧に表示されます。`
+          : "バージョンを選ぶと、その版の集計と個別フィードバックを表示します。"}
       </p>
+      <div className={`${isTab ? "mt-4" : "mt-3"}`}>
+        <VersionFilterBar
+          latestVersion={latestVersion}
+          availableVersions={
+            availableVersions.length > 0 ? availableVersions : [latestVersion]
+          }
+          value={versionFilter}
+          onChange={handleVersionFilterChange}
+        />
+      </div>
     </>
   );
 
@@ -195,7 +356,9 @@ export function EveryonesVoiceSection({
     return (
       <section className={sectionClassName}>
         {header}
-        <div className={`${isTab ? "mt-6" : "mt-3"} rounded-xl border border-dashed border-zinc-800 bg-zinc-950/20 px-4 py-8 text-center`}>
+        <div
+          className={`${isTab ? "mt-6" : "mt-3"} rounded-xl border border-dashed border-zinc-800 bg-zinc-950/20 px-4 py-8 text-center`}
+        >
           <p className="text-sm text-zinc-400">まだフィードバックが集まりはじめたところです</p>
           <p className="mt-2 text-xs leading-relaxed text-zinc-600">
             プレイ後、開発者の質問に答えると、ここに反応の傾向が表示されます。
@@ -219,7 +382,13 @@ export function EveryonesVoiceSection({
       {header}
 
       {(totalAnswerCount > 0 || hasPublicCards) && (
-        <div className={`${isTab ? "mt-4" : "mt-3"} flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500`}>
+        <div
+          className={`${isTab ? "mt-4" : "mt-3"} flex flex-wrap gap-x-4 gap-y-1 rounded-lg border border-zinc-800/60 bg-zinc-950/30 px-3 py-2 text-xs text-zinc-500`}
+        >
+          <span>
+            表示中{" "}
+            <span className="font-semibold text-zinc-300">{activeVersionLabel}</span>
+          </span>
           {totalAnswerCount > 0 ? (
             <span>
               回答数{" "}
@@ -236,30 +405,47 @@ export function EveryonesVoiceSection({
       )}
 
       {hasAggregateContent ? (
-        <div className={`${isTab ? "mt-5" : "mt-3"}`}>
-          <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-600">
-            回答の傾向
-          </h3>
-          <ul className="mt-3 space-y-4">
-            {promptsWithResponses.map((aggregate) => (
+        <div
+          className={`${isTab ? "mt-6" : "mt-5"} rounded-xl border border-zinc-800/70 bg-zinc-950/35 p-4 sm:p-5`}
+        >
+          <div className="border-b border-zinc-800/70 pb-3">
+            <h3 className="text-sm font-semibold text-zinc-100">回答の傾向</h3>
+            <p className="mt-1 text-xs text-zinc-500">選択式回答の集計</p>
+          </div>
+          <ul className="mt-4 space-y-4">
+            {visibleAggregates.map((aggregate) => (
               <PromptAggregateCard
-                key={aggregate.promptId}
+                key={`${aggregate.versionKey}:${aggregate.promptId}`}
                 aggregate={aggregate}
-                versionLabel={versionLabel}
               />
             ))}
           </ul>
+          {versionFilter === "all" &&
+          promptsWithResponses.length > ALL_FILTER_AGGREGATE_PREVIEW &&
+          !aggregatesExpanded ? (
+            <button
+              type="button"
+              onClick={() => setAggregatesExpanded(true)}
+              className="mt-4 text-xs font-medium text-orange-400/90 transition-colors hover:text-orange-300"
+            >
+              もっと見る（{promptsWithResponses.length}問）
+            </button>
+          ) : null}
         </div>
       ) : null}
 
-      <div className={`${isTab ? "mt-8" : "mt-6"}`}>
-        <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-600">
-          みんなのフィードバック
-        </h3>
-        <div className="mt-3">
+      <div
+        className={`${isTab ? "mt-8" : "mt-6"} rounded-xl border border-zinc-800/70 bg-zinc-950/20 p-4 sm:p-5`}
+      >
+        <div className="border-b border-zinc-800/70 pb-3">
+          <h3 className="text-sm font-semibold text-zinc-100">個別のフィードバック</h3>
+          <p className="mt-1 text-xs text-zinc-500">ひと言コメント・自由記述・詳しい感想</p>
+        </div>
+        <div className="mt-4">
           <PublicFeedbackCardsList
-            key={`${gameId}:${version}:${refreshKey}`}
+            key={`${gameId}:${versionFilter}:${refreshKey}`}
             cards={feedbackCards}
+            totalCount={feedbackCards.length}
           />
         </div>
       </div>
