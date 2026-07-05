@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { getAuthErrorMessage } from "@/lib/auth";
+import { isXAuthEnabled } from "@/lib/x-auth";
 import type { Provider } from "@supabase/supabase-js";
 
 export function XOAuthLoginSection({
@@ -18,6 +19,10 @@ export function XOAuthLoginSection({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const verb = mode === "login" ? "ログイン" : "登録";
+
+  if (!isXAuthEnabled()) {
+    return null;
+  }
 
   async function handleXAuth() {
     setLoading(true);

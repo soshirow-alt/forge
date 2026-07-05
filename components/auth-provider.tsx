@@ -16,6 +16,7 @@ import { clearEntryMode } from "@/lib/entry-mode";
 import { isAnonymousSupabaseUser } from "@/lib/guest-auth";
 import { createClient } from "@/lib/supabase/client";
 import type { AuthChangeEvent, Provider, User as SupabaseAuthUser } from "@supabase/supabase-js";
+import { isXAuthEnabled } from "@/lib/x-auth";
 
 type AuthContextValue = {
   user: User | null;
@@ -227,6 +228,10 @@ export function AuthProvider({
         throw new Error("Supabase is not configured.");
       }
 
+      if (provider === "x" && !isXAuthEnabled()) {
+        throw new Error("x_auth_disabled");
+      }
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
@@ -249,6 +254,10 @@ export function AuthProvider({
     async (provider: Provider, nextPath?: string | null) => {
       if (!supabase) {
         throw new Error("Supabase is not configured.");
+      }
+
+      if (provider === "x" && !isXAuthEnabled()) {
+        throw new Error("x_auth_disabled");
       }
 
       const auth = supabase.auth as typeof supabase.auth & {

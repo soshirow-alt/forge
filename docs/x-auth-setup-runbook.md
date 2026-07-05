@@ -112,8 +112,15 @@ Cursor が参照する既存変数（変更不要）:
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | クライアント Auth |
 | `SUPABASE_SERVICE_ROLE_KEY` | サーバー enrich（既存） |
 | `NEXT_PUBLIC_SITE_URL` | OAuth `redirectTo` 生成（未設定時は `window.location.origin`） |
+| `NEXT_PUBLIC_X_AUTH_ENABLED` | **`true` のときのみ** `/login`・`/register`・`/settings` に X 導線を表示。Supabase X Provider 有効化 + Redirect URLs 設定後に Preview/本番 Vercel で ON |
 
 **X Client Secret は Forge 側に置かない**（Supabase Dashboard のみ。Vercel env にも追加しない）。
+
+**`NEXT_PUBLIC_X_AUTH_ENABLED` 運用**
+
+1. 初期（Provider 未設定）: **未設定 or `false`** → X ボタン非表示（Supabase 生 JSON 画面への遷移を防ぐ）
+2. Supabase Providers → X ON + Manual linking ON + Redirect URLs 追加後: Preview Vercel で `NEXT_PUBLIC_X_AUTH_ENABLED=true` → redeploy
+3. Preview E2E 通過後、本番 deploy GO 時に本番 Vercel でも同様に `true`
 
 ---
 

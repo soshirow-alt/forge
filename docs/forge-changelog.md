@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-06 — X Auth feature flag（NEXT_PUBLIC_X_AUTH_ENABLED）
+
+- **Phase A 再修正** — Provider 未設定時に Supabase 生 JSON へ遷移する事故を防ぐため、`NEXT_PUBLIC_X_AUTH_ENABLED=true` 時のみ X 導線を表示
+- **既定** — 未設定/false で `/login`・`/register` の X ボタン非表示、`/settings` の Xで連携非表示（連携済みは read-only 表示）
+- **有効化手順** — Supabase X Provider ON 後、Preview Vercel で `NEXT_PUBLIC_X_AUTH_ENABLED=true` → redeploy → E2E
+- **未実施** — Vercel env 設定 / Provider E2E / main / 本番 deploy
+
+---
+
 ## 2026-07-06 — Xログイン/連携 UI修正（preview/landing-01）
 
 - **ログイン画面** — CTA中心に整理。並び: メールでログイン → Xでログイン → ゲストで参加（確認モーダル）→ 新規登録。説明文削除

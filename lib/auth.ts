@@ -112,6 +112,8 @@ export function getAuthErrorMessage(
       return "このXアカウントは別のForgeアカウントに連携済みです。";
     case "Identity linking is not available in this client version.":
       return resolveFlowFallback("x_link") ?? X_LINK_START_ERROR;
+    case "x_auth_disabled":
+      return resolveFlowFallback(flow) ?? X_OAUTH_LOGIN_START_ERROR;
     case "Email rate limit exceeded":
       return "確認メールの送信回数が上限に達しました。しばらく待ってから再送してください。";
     default:

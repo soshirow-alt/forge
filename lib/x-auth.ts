@@ -15,6 +15,11 @@ export type PublicXProfile = {
 
 const X_PROVIDER_IDS = new Set(["x", "twitter"]);
 
+/** Preview/本番で Supabase X Provider 有効化後にのみ true。未設定時は X 導線を出さない。 */
+export function isXAuthEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_X_AUTH_ENABLED === "true";
+}
+
 export function isXProviderId(provider: string | undefined | null): boolean {
   return Boolean(provider && X_PROVIDER_IDS.has(provider));
 }

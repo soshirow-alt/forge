@@ -6,7 +6,7 @@ import { useAuth } from "@/components/auth-provider";
 import { getAuthErrorMessage } from "@/lib/auth";
 import { fetchOwnXProfile } from "@/lib/supabase/user-x-profiles-db";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
-import { formatXHandleLabel, hasLinkedXIdentity } from "@/lib/x-auth";
+import { formatXHandleLabel, hasLinkedXIdentity, isXAuthEnabled } from "@/lib/x-auth";
 import type { Provider } from "@supabase/supabase-js";
 
 function readXLinkStatusMessage(searchParams: URLSearchParams) {
@@ -112,6 +112,11 @@ export function XAccountLinkSection() {
   const isLinked = Boolean(handleLabel) || authLinked;
   const message = actionMessage ?? statusMessage;
   const loading = Boolean(supabase) && !profileLoaded;
+  const xAuthEnabled = isXAuthEnabled();
+
+  if (!xAuthEnabled && !isLinked && !message) {
+    return null;
+  }
 
   return (
     <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
@@ -150,6 +155,7 @@ export function XAccountLinkSection() {
             )}
           </div>
           {!isLinked ? (
+            xAuthEnabled ? (
             <button
               type="button"
               disabled={linking}
@@ -158,6 +164,7 @@ export function XAccountLinkSection() {
             >
               {linking ? "移動中…" : "Xで連携"}
             </button>
+            ) : null
           ) : (
             <span className="shrink-0 text-xs text-zinc-600">連携済み</span>
           )}
