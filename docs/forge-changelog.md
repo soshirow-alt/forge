@@ -12,7 +12,26 @@
 - **UI** — 上段サマリ / 下段個別FB の区切り・文字階層・余白を軽く改善
 - **未実施** — main / 本番 deploy / migration / テスト投稿 / 共感・通報
 
+### 後続 TODO（Phase 2 完了時点・未着手）
+
+**通報（Phase 4 想定）**
+
+- 公開FBカードへの通報導線は後続実装（`PublicFeedbackCardView` の `data-feedback-card-actions` スロット）
+- 初期は**登録ユーザーのみ**通報可能でよい
+- `feedback_reports` + `POST /api/feedback/report` + opaque `card_id`（`resolve_feedback_card_id` は service role のみ）
+- **自動非表示は初期では行わない**（通報 ≠ 即 hidden）
+- Studio / 管理側で通報一覧・確認できるようにする
+- オーナーによる hidden 導線も後続で検討
+
+**共感** — 未着手（`empathy_count` は RPC 返却のみ。UI/DB 本実装は後続）
+
+**UI メリハリ** — Phase 2 で軽く改善済み。さらなる typography / 余白 / 強調の磨き込みは後続
+
+**RPC 正本** — `choice_answer_label` / `version_key` を `get_public_feedback_cards` 返却に含める migration 更新は、Dashboard 再適用 GO 後に API enrich を簡略化可能
+
 ---
+
+## 2026-07-05 — みんなのFB 個別カード公開 Phase 2 UI（preview/landing-01）
 
 - **送信前同意** — 初声/ゲスト初声/詳しい感想フォームに必須チェック追加（同意時刻・policy version は DB に保存しない）
 - **optional_comment** — 選択式のひと言コメントを `answer_label` から分離して登録/ゲスト API 両方で書き込み
@@ -22,6 +41,8 @@
 - **未実施** — main 反映 / 本番 deploy / 追加 migration / 共感・通報本実装
 
 ---
+
+## 2026-07-05 — 041 Phase 1 DB 適用完了 + migration 正本 GRANT 同期（preview/landing-01）
 
 - **本番 DB** — `041_public_feedback_cards.sql` Dashboard 適用済み（`bpnisgzxuwdxelhnduuf`）。post-check B（`feedback_reports` policy 0 行）・D（`resolve_feedback_card_id` は postgres / service_role のみ EXECUTE）確認済み
 - **041 正本** — `resolve_feedback_card_id` に `REVOKE … FROM anon/authenticated` を明示（Dashboard 追加 REVOKE と同期）

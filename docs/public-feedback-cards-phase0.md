@@ -113,3 +113,16 @@ Preview 確認時も **本番 DB 共有** であることを前提に E2E する
 | 法務 UI | `components/privacy-policy-document.tsx`, `components/terms-of-service-document.tsx` |
 | Migration 草案 | `supabase/migrations/041_public_feedback_cards.sql` |
 | ゲスト FB（040） | `supabase/migrations/040_project_guest_feedback.sql` |
+
+---
+
+## 後続 TODO（Phase 2 完了時点）
+
+詳細は `docs/forge-changelog.md`（2026-07-06 後続 TODO）を正とする。
+
+| テーマ | 方針 |
+|--------|------|
+| **通報** | 公開FBカードに通報導線（後続）。初期は登録ユーザーのみ。`feedback_reports` + `POST /api/feedback/report`。自動非表示なし。Studio/管理側確認 + オーナー hidden は後続 |
+| **共感** | 未着手 |
+| **UI メリハリ** | Phase 2 で軽改善済み。追加磨き込みは後続 |
+| **RPC enrich** | `choice_answer_label` / `version_key` を RPC 返却に含める正本更新は Dashboard 再適用 GO 後 |
