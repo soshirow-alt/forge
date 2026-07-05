@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-07-06 — X Developer クレジット $5 購入 + Preview OAuth E2E 開始
+
+- **X Developer** — **$5 credit 購入済み**。自動チャージ **OFF**（ON にしない）。Premium+ / xAI / 追加自動課金なし
+- **運用** — OAuth E2E 中は残高推移を軽く確認。想定外の減少時は停止して切り分け。残高不足エラーのみ最小追加購入を検討
+- **Phase A UI** — **PASS**（オーナー確認済み）
+- **次** — テスト用 X で Preview OAuth E2E（§runbook 7: 連携 / callback / `user_x_profiles` / `@handle` / `already_linked`）
+- **未実施** — main / 本番 deploy
+
+---
+
 ## 2026-07-06 — /settings X連携カード文言（プレイヤー向け）
 
 - **説明** — 「OAuth tokenも保存しません」を削除。`Forge上にXの@handleを表示できます。ForgeからXへの投稿やDMは行いません。` に統一（技術用語は runbook / プライバシーポリシー側）

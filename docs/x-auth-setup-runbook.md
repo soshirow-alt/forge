@@ -70,6 +70,22 @@ OAuth 2.0 コールバック後、`auth.users` / `identities` の metadata か�
 8. **Request email from users**: X Developer 側は **OFF 推奨**（Forge は X メールを使わない）— ただし **Supabase Auth が `users.email` scope を固定要求**するため、同意画面に *Your email address* が出続ける可能性あり（後述 §4.1）
 9. **Client ID** / **Client Secret** を控える（Secret は **Supabase Dashboard のみ**。Forge `.env` / Vercel env には置かない）
 
+**課金・クレジット（2026-07-06 方針）**
+
+| 項目 | 状態 |
+|---|---|
+| X API 課金モデル | pay-per-use / クレジット制（OAuth 同意・token 交換は通常無課金。`/2/users/me` 等の read は metered の可能性） |
+| 購入クレジット | **$5 購入済み** |
+| 自動チャージ（Auto recharge） | **OFF**（ON にしない） |
+| Premium+ / xAI 連携 / 追加自動課金 | **未設定** |
+
+**運用ルール**
+
+- OAuth E2E 中は Developer Console で **残高推移を軽く確認**
+- **想定外に大きく減る**場合は E2E を停止し、呼び出し元（Supabase Auth callback / Forge）を切り分け
+- 残高不足エラー（ユーザー情報取得失敗）が出た場合のみ **最小限の追加購入**を検討。自動チャージは使わない
+- Forge は X 投稿 / DM / API 大量利用をしない前提
+
 ---
 
 ## 2. Supabase Dashboard — Auth Provider
@@ -249,36 +265,49 @@ Forge /login → signInWithOAuth('x')
 
 ---
 
-## 7. Preview 確認ポイント
+## 7. Preview OAuth E2E（テスト用 X アカウント）
 
-1. `/login` — 「Xでログイン」表示。メール / ゲスト導線は従来通り
-2. X ログイン成功 → セッション確立 → `user_x_profiles` 行が作成
-3. `/settings` — 連携状態・「Xで連携」
-4. 公開FBカード — 登録ユーザー + X 連携時 `@handle` バッジ
-5. `/creators/...` — X 連携済みなら `@handle`
-6. 作品詳細 — 作者名横に `@handle`
-7. Provider 未有効時 — 「このログイン方法は現在利用できません」
+**前提**: テスト用 X アカウントで実施。Forge 運営 X は紐づけない。
 
-**プレイヤープロフィール（`/players/[handle]`）** — X `@handle` 表示は **未実装**（v0 mock ページのみ。実プロフィール公開と別 TODO）。今回の Provider E2E 対象外。
+| # | 確認項目 | 期待結果 |
+|---|---|---|
+| 1 | `/settings` → **Xで連携** | X 同意画面へ遷移 |
+| 2 | X 同意画面 | アプリ名 **Forge**（または Forge game）表示。scope 表示は runbook §4.1 参照 |
+| 3 | callback 後 | `/settings?x=linked`（または next 指定先） |
+| 4 | DB | `user_x_profiles` 行が作成（`x_username` 等） |
+| 5 | UI | `/settings` 連携済み `@handle` 表示 |
+| 6 | 公開表示 | 公開FB / 作品詳細作者 / `/creators/...` に `@handle`（連携後） |
+| 7 | 衝突 | **同一 X** を別 Forge アカウントで連携 → 拒否（`already_linked` メッセージ） |
+
+**Phase A UI**（OAuth なし）— **PASS**（2026-07-06 オーナー確認済み）
+
+**その他 Preview 確認**
+
+1. `/login` — 「Xでログイン」表示。メール → X → ゲストの順
+2. `/studio/settings` / `/studio/profile` — X 誘導カード（OAuth 本体は `/settings`）
+3. Provider 未有効時 — 汎用エラー（生 JSON なし）
+
+**プレイヤープロフィール（`/players/[handle]`）** — X `@handle` 表示は **未実装**（v0 mock ページのみ。実プロフィール公開と別 TODO）。今回 E2E 対象外。
 
 ---
 
-## 8. コスト試算（目安）
+## 8. コスト（2026-07-06 更新）
 
-| 項目 | 試算 |
+| 項目 | 試算 / 現状 |
 |---|---|
-| X Developer API | OAuth ログインのみ → **Basic 無料枠内**（Sign in with X は通常 read 系 scope のみ。Write / 投稿 API 未使用） |
-| Supabase Auth MAU | 既存プランに含まれる OAuth ログイン（追加従量はプラン依存。小規模 Preview 検証は **実質 ¥0 増**） |
-| Supabase DB | `user_x_profiles` 1 ユーザー 1 行 → **無視できる増分** |
-| Vercel | UI 変更のみ → **追加コストなし** |
+| X Developer API | **pay-per-use / クレジット制**。OAuth ログイン + `/2/users/me`（Supabase Auth 経由）程度なら **$5 クレジットで Preview E2E 可能**想定 |
+| 購入済み | **$5**（2026-07-06）。自動チャージ **OFF** |
+| 監視 | E2E 中に残高推移を確認。想定外の減少時は停止して切り分け |
+| Supabase Auth MAU | 既存プランに含まれる OAuth ログイン |
+| Supabase DB | `user_x_profiles` 1 ユーザー 1 行 → 無視できる増分 |
+| Vercel | UI 変更のみ → 追加コストなし |
 
-**まとめ**: 今回スコープ（ログイン + プロフィール metadata 保存 + 表示）なら **月額追加はほぼ ¥0**。X API の有料 tier が将来必要になるのは投稿/DM/分析などを追加した場合。
+**まとめ**: Forge は投稿/DM/大量 API を使わない。$5 + 自動チャージ OFF で Preview E2E を進め、不足時のみ最小追加購入。
 
 ---
 
 ## 9. 未実施（明示）
 
-- Supabase Auth Provider（X）設定変更 — **GPT [A] Run推奨**（Site URL は本番維持、Redirect URLs 3 件追加）
-- X Developer Console 設定変更
-- Preview X ログイン / 連携 E2E 確認
+- Preview OAuth E2E（テスト用 X）— **実施中**（§7 チェックリスト）
 - main 反映 / production deploy
+- 本番 Vercel `NEXT_PUBLIC_X_AUTH_ENABLED=true`（deploy GO 時）
