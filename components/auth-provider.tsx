@@ -12,6 +12,8 @@ import {
 } from "react";
 import { getEmailConfirmRedirectUrl, getOAuthRedirectUrl } from "@/lib/auth-redirect";
 import { isRegisteredAppUser, mapSupabaseUser, type User } from "@/lib/auth";
+import { clearEntryMode } from "@/lib/entry-mode";
+import { isAnonymousSupabaseUser } from "@/lib/guest-auth";
 import { createClient } from "@/lib/supabase/client";
 import type { AuthChangeEvent, Provider, User as SupabaseAuthUser } from "@supabase/supabase-js";
 
@@ -21,12 +23,9 @@ type AuthContextValue = {
   hydrated: boolean;
   /** Client auth bootstrap finished; safe to gate on `user`. */
   authResolved: boolean;
-  /** Supabase anonymous (guest) player session */
-  isGuest: boolean;
-  /** Email/OAuth registered account (not guest) */
+  /** Email/OAuth registered account */
   isRegisteredUser: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signInAnonymously: () => Promise<void>;
   signUp: (
     email: string,
     password: string,
@@ -93,14 +92,23 @@ export function AuthProvider({
 
     let active = true;
 
-    void supabase.auth.getUser().then(({ data: { user: authUser } }) => {
+    void supabase.auth.getUser().then(async ({ data: { user: authUser } }) => {
       if (!active) {
+        return;
+      }
+
+      if (authUser && isAnonymousSupabaseUser(authUser)) {
+        await supabase.auth.signOut();
+        setUser(null);
+        hadServerUserRef.current = false;
+        setAuthResolved(true);
         return;
       }
 
       if (authUser) {
         setUser(mapSupabaseUser(authUser));
         hadServerUserRef.current = false;
+        clearEntryMode();
       } else if (!hadServerUserRef.current) {
         setUser(null);
       }
@@ -127,6 +135,13 @@ export function AuthProvider({
           hadServerUserRef.current,
           setUser,
         );
+
+        if (session?.user && isAnonymousSupabaseUser(session.user)) {
+          void supabase.auth.signOut();
+          setUser(null);
+        } else if (session?.user) {
+          clearEntryMode();
+        }
 
         if (session?.user || event === "SIGNED_OUT") {
           hadServerUserRef.current = false;
@@ -159,6 +174,7 @@ export function AuthProvider({
 
       if (data.user) {
         hadServerUserRef.current = false;
+        clearEntryMode();
         setUser(mapSupabaseUser(data.user));
         setAuthResolved(true);
       }
@@ -194,6 +210,7 @@ export function AuthProvider({
 
       if (data.session?.user) {
         hadServerUserRef.current = false;
+        clearEntryMode();
         setUser(mapSupabaseUser(data.session.user));
         setAuthResolved(true);
       }
@@ -227,29 +244,12 @@ export function AuthProvider({
     [supabase],
   );
 
-  const signInAnonymously = useCallback(async () => {
-    if (!supabase) {
-      throw new Error("Supabase is not configured.");
-    }
-
-    const { data, error } = await supabase.auth.signInAnonymously();
-
-    if (error) {
-      throw error;
-    }
-
-    if (data.user) {
-      hadServerUserRef.current = false;
-      setUser(mapSupabaseUser(data.user));
-      setAuthResolved(true);
-    }
-  }, [supabase]);
-
   const logout = useCallback(async () => {
     if (supabase) {
       await supabase.auth.signOut();
     }
 
+    clearEntryMode();
     hadServerUserRef.current = false;
     setUser(null);
     setAuthResolved(true);
@@ -281,7 +281,6 @@ export function AuthProvider({
     [supabase],
   );
 
-  const isGuest = Boolean(user?.isAnonymous);
   const isRegisteredUser = isRegisteredAppUser(user);
 
   const value = useMemo(
@@ -289,10 +288,8 @@ export function AuthProvider({
       user,
       hydrated: authResolved,
       authResolved,
-      isGuest,
       isRegisteredUser,
       signIn,
-      signInAnonymously,
       signUp,
       signInWithOAuth,
       updateDisplayName,
@@ -301,10 +298,8 @@ export function AuthProvider({
     [
       user,
       authResolved,
-      isGuest,
       isRegisteredUser,
       signIn,
-      signInAnonymously,
       signUp,
       signInWithOAuth,
       updateDisplayName,

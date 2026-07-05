@@ -2,6 +2,7 @@ import { AppGateProviders } from "@/components/app-gate-providers";
 import { AuthProvider } from "@/components/auth-provider";
 import { GamesProvider } from "@/components/games-provider";
 import { mapSupabaseUser } from "@/lib/auth";
+import { isAnonymousSupabaseUser } from "@/lib/guest-auth";
 import { ForgeDeploymentProvider } from "@/lib/forge-deployment-context";
 import { getForgeDeploymentModeForServer } from "@/lib/production-mode";
 import { createClient } from "@/lib/supabase/server";
@@ -18,7 +19,7 @@ export async function AppProviders({
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (user) {
+    if (user && !isAnonymousSupabaseUser(user)) {
       initialUser = mapSupabaseUser(user);
     }
   }

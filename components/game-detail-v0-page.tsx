@@ -266,7 +266,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     }
     return applyProjectOverviewV0(game, resolvedId);
   }, [game, resolvedId, overviewRevision, isRealProject]);
-  const { isLoggedIn, hydrated, requireAuth, user } = useRequireAuth();
+  const { isLoggedIn, isGuestEntry, hydrated, requireAuth, user } = useRequireAuth();
   const returnPath = gameDetailReturnPath(resolvedId);
   const detailId = resolveGameDetailId(id);
   const ownerProjectId = useMemo(() => {
@@ -398,22 +398,30 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     [markPlayOpened],
   );
 
-  const handlePlay = useCallback(() => {
-    requireAuth(() => {
+  const openPlayUrlOnly = useCallback((url: string) => {
+    const opened = openExternalPlayUrl(url);
+    if (!opened) {
+      setPlayUrlMissingVisible(true);
+    }
+  }, []);
+
+  const resolveAndOpenPlay = useCallback(
+    (recordSession: boolean) => {
       if (!hasPlayDestination) {
         setPlayUrlMissingVisible(true);
         return;
       }
 
-      // 本番作品: projects.play_url を最優先で確実に開く（公式サイト等との選択モーダルを挟まない）
+      const openUrl = recordSession ? navigateToPlayDestination : openPlayUrlOnly;
+
       if (isRealProject) {
         if (primaryPlayUrl && playSourceGame?.playUrl?.trim()) {
-          navigateToPlayDestination(primaryPlayUrl);
+          openUrl(primaryPlayUrl);
           return;
         }
 
         if (playDestinations.length === 1) {
-          navigateToPlayDestination(playDestinations[0].url);
+          openUrl(playDestinations[0].url);
           return;
         }
 
@@ -427,30 +435,43 @@ function GameDetailV0PageBody({ id }: { id: string }) {
       }
 
       if (primaryPlayUrl) {
-        navigateToPlayDestination(primaryPlayUrl);
+        openUrl(primaryPlayUrl);
         return;
       }
 
       setFeedbackStep("play-stub");
+    },
+    [
+      hasPlayDestination,
+      isRealProject,
+      primaryPlayUrl,
+      playSourceGame?.playUrl,
+      playDestinations,
+      navigateToPlayDestination,
+      openPlayUrlOnly,
+    ],
+  );
+
+  const handlePlay = useCallback(() => {
+    if (isGuestEntry) {
+      resolveAndOpenPlay(false);
+      return;
+    }
+
+    requireAuth(() => {
+      resolveAndOpenPlay(true);
     }, returnPath);
-  }, [
-    requireAuth,
-    returnPath,
-    hasPlayDestination,
-    isRealProject,
-    playSourceGame?.playUrl,
-    playDestinations,
-    primaryPlayUrl,
-    navigateToPlayDestination,
-  ]);
+  }, [isGuestEntry, requireAuth, returnPath, resolveAndOpenPlay]);
 
   const handlePlayDestinationSelect = useCallback(
     (_destination: PlayDestination) => {
       // <a target="_blank"> が新規タブを開く。ここでは記録のみ（二重 window.open しない）
       setPlayDestinationPickerOpen(false);
-      markPlayOpened();
+      if (!isGuestEntry) {
+        markPlayOpened();
+      }
     },
-    [markPlayOpened],
+    [isGuestEntry, markPlayOpened],
   );
 
   const handlePrimaryPlayAnchorClick = useCallback(() => {
@@ -663,7 +684,9 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                 className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Play className="size-4" aria-hidden="true" />
-                {hydrated && !isLoggedIn ? "ログインしてプレイ" : "プレイする"}
+                {hydrated && (isLoggedIn || isGuestEntry)
+                  ? "プレイする"
+                  : "ログインしてプレイ"}
               </button>
             )}
             <button

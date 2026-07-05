@@ -7,7 +7,7 @@ export type User = {
   email: string;
   name: string;
   avatarInitial: string;
-  /** Supabase anonymous (guest) player session */
+  /** Legacy field when a leftover Supabase anonymous session exists (cleared on bootstrap). */
   isAnonymous: boolean;
 };
 

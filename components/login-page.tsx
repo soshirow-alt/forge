@@ -10,6 +10,7 @@ import {
   useAuthAutofillUnlock,
 } from "@/components/auth-layout";
 import { useAuth } from "@/components/auth-provider";
+import { useEntryMode } from "@/components/entry-mode-provider";
 import { loginAction, type LoginActionState } from "@/lib/auth-login-action";
 import { getAuthErrorMessage } from "@/lib/auth";
 import {
@@ -35,58 +36,42 @@ export function LoginPage({
   callbackError: string | null;
   notice: string | null;
 }) {
-  const { user, authResolved, isGuest, signInAnonymously } = useAuth();
+  const { user, authResolved, isRegisteredUser } = useAuth();
+  const { isGuestEntry, setGuestEntryMode } = useEntryMode();
   const [state, formAction, pending] = useActionState(loginAction, initialLoginState);
-  const [guestPending, setGuestPending] = useState(false);
-  const [guestError, setGuestError] = useState<string | null>(null);
-  const error = state.error ?? callbackError ?? guestError;
   const autofill = useAuthAutofillUnlock();
   const postSubmitRedirectStartedRef = useRef(false);
   const alreadySignedInRedirectStartedRef = useRef(false);
 
   useEffect(() => {
-    if (!authResolved || !user || alreadySignedInRedirectStartedRef.current) {
+    if (!authResolved || alreadySignedInRedirectStartedRef.current) {
       return;
     }
 
-    const target = isGuest
-      ? resolvePostGuestLoginPath(returnParam)
-      : resolvePostLoginPath(returnParam);
-
-    if (target === LOGIN_PATH || target.startsWith(`${LOGIN_PATH}?`)) {
-      return;
-    }
-
-    alreadySignedInRedirectStartedRef.current = true;
-    window.location.replace(target);
-  }, [authResolved, user, isGuest, returnParam]);
-
-  async function handleGuestContinue() {
-    setGuestError(null);
-    setGuestPending(true);
-    try {
-      await signInAnonymously();
-      const target = resolvePostGuestLoginPath(returnParam);
-      window.location.assign(target);
-    } catch (caught) {
-      const message =
-        caught instanceof Error
-          ? getAuthErrorMessage(caught.message)
-          : "ゲストログインに失敗しました。";
-      if (
-        caught instanceof Error &&
-        (caught.message.toLowerCase().includes("anonymous") ||
-          caught.message.toLowerCase().includes("disabled"))
-      ) {
-        setGuestError(
-          "ゲストログインは現在利用できません。Supabase で Anonymous Sign-ins を有効にしてください。",
-        );
-      } else {
-        setGuestError(message);
+    if (isRegisteredUser && user) {
+      const target = resolvePostLoginPath(returnParam);
+      if (target === LOGIN_PATH || target.startsWith(`${LOGIN_PATH}?`)) {
+        return;
       }
-    } finally {
-      setGuestPending(false);
+      alreadySignedInRedirectStartedRef.current = true;
+      window.location.replace(target);
+      return;
     }
+
+    if (isGuestEntry) {
+      const target = resolvePostGuestLoginPath(returnParam);
+      if (target === LOGIN_PATH || target.startsWith(`${LOGIN_PATH}?`)) {
+        return;
+      }
+      alreadySignedInRedirectStartedRef.current = true;
+      window.location.replace(target);
+    }
+  }, [authResolved, user, isRegisteredUser, isGuestEntry, returnParam]);
+
+  function handleGuestContinue() {
+    setGuestEntryMode();
+    const target = resolvePostGuestLoginPath(returnParam);
+    window.location.assign(target);
   }
 
   useEffect(() => {
@@ -182,15 +167,15 @@ export function LoginPage({
             </Link>
           </div>
 
-          {error && (
+          {state.error && (
             <div className="rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
-              {error}
+              {state.error}
             </div>
           )}
 
           <button
             type="submit"
-            disabled={pending || guestPending || !supabaseConfigured}
+            disabled={pending || !supabaseConfigured}
             className="w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-violet-500/20 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {pending ? "処理中..." : "ログイン"}
@@ -200,19 +185,17 @@ export function LoginPage({
         <div className="mt-6 space-y-3">
           <button
             type="button"
-            disabled={pending || guestPending || !supabaseConfigured}
-            onClick={() => {
-              void handleGuestContinue();
-            }}
+            disabled={pending}
+            onClick={handleGuestContinue}
             className="w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-6 py-3.5 text-base font-semibold text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {guestPending ? "処理中..." : "ゲストで続ける"}
+            ゲストで続ける
           </button>
           <p className="text-center text-xs leading-relaxed text-zinc-500">
-            ログインせずに試せます。あとでアカウント登録できます。
+            アカウントなしで作品を見たり、外部プレイやフィードバックができます。
           </p>
           <p className="text-center text-xs leading-relaxed text-zinc-600">
-            ゲストの記録はこのブラウザに紐づきます。別の端末でも使う場合はアカウント登録してください。
+            ゲストの記録は通常ログイン後に引き継がれません。
           </p>
         </div>
 

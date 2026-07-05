@@ -1,6 +1,6 @@
 import type { User as SupabaseAuthUser } from "@supabase/supabase-js";
 
-/** Default landing after guest sign-in when return URL is absent or not allowed. */
+/** Default landing after guest entry-mode selection when return URL is absent or not allowed. */
 export const DEFAULT_POST_GUEST_LOGIN_PATH = "/home";
 
 export const ACCOUNT_REGISTRATION_REQUIRED_NOTICE = "account-required";
@@ -8,7 +8,7 @@ export const ACCOUNT_REGISTRATION_REQUIRED_NOTICE = "account-required";
 export const ACCOUNT_REGISTRATION_REQUIRED_MESSAGE =
   "この機能を使うにはアカウント登録が必要です。";
 
-/** Routes that require a registered (non-anonymous) account in all deployment modes. */
+/** Routes that require a registered Supabase account in all deployment modes. */
 export const REGISTERED_ACCOUNT_REQUIRED_PREFIXES = [
   "/studio",
   "/mypage",
@@ -22,6 +22,7 @@ export const REGISTERED_ACCOUNT_REQUIRED_PREFIXES = [
 
 const PROJECT_STUDIO_PATH = /^\/projects\/[^/]+\/studio(?:\/|$)/;
 
+/** Legacy: detect leftover Supabase anonymous sessions (auto sign-out on bootstrap). */
 export function isAnonymousSupabaseUser(
   user: SupabaseAuthUser | null | undefined,
 ): boolean {

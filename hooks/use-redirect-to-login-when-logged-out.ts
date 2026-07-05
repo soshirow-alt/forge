@@ -1,30 +1,23 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
+import { useEntryMode } from "@/components/entry-mode-provider";
 import { ACCOUNT_REGISTRATION_REQUIRED_NOTICE } from "@/lib/guest-auth";
-import {
-  buildLoginUrlWithReturn,
-  buildPathWithSearch,
-} from "@/lib/login-return-url";
+import { buildLoginUrlWithReturn } from "@/lib/login-return-url";
 
 /**
- * authResolved 後に未ログイン、またはゲストなら /login?return=現在URL へ replace。
- * fixedReturnPath を渡すと pathname の代わりにそれを return に使う。
+ * authResolved 後に未ログイン（登録アカウントなし）なら /login?return=現在URL へ replace。
+ * entry-mode ゲストも登録導線へ誘導する。
  */
-export function useRedirectToLoginWhenLoggedOut(fixedReturnPath?: string) {
+export function useRedirectToLoginWhenLoggedOut(returnPath?: string) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const { user, hydrated, isGuest, isRegisteredUser } = useAuth();
-
-  const returnPath = useMemo(() => {
-    if (fixedReturnPath) {
-      return fixedReturnPath;
-    }
-    return buildPathWithSearch(pathname, searchParams.toString());
-  }, [fixedReturnPath, pathname, searchParams]);
+  const { hydrated, isRegisteredUser } = useAuth();
+  const { isGuestEntry } = useEntryMode();
+  const resolvedReturnPath =
+    returnPath ?? `${pathname}${typeof window !== "undefined" ? window.location.search : ""}`;
 
   useEffect(() => {
     if (!hydrated || isRegisteredUser) {
@@ -32,9 +25,9 @@ export function useRedirectToLoginWhenLoggedOut(fixedReturnPath?: string) {
     }
 
     router.replace(
-      buildLoginUrlWithReturn(returnPath, {
-        notice: isGuest ? ACCOUNT_REGISTRATION_REQUIRED_NOTICE : undefined,
+      buildLoginUrlWithReturn(resolvedReturnPath, {
+        notice: isGuestEntry ? ACCOUNT_REGISTRATION_REQUIRED_NOTICE : undefined,
       }),
     );
-  }, [hydrated, user, isGuest, isRegisteredUser, router, returnPath]);
+  }, [hydrated, isRegisteredUser, isGuestEntry, router, resolvedReturnPath]);
 }

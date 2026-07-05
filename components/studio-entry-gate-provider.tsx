@@ -12,6 +12,7 @@ import {
   type ReactNode,
 } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { useEntryMode } from "@/components/entry-mode-provider";
 import { DeveloperPageOnboardingModal } from "@/components/developer-page-onboarding-modal";
 import {
   acceptDeveloperPage,
@@ -45,7 +46,8 @@ function studioPathsEqual(current: string, target: string): boolean {
 export function StudioEntryGateProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, hydrated, isGuest } = useAuth();
+  const { user, hydrated, isRegisteredUser } = useAuth();
+  const { isGuestEntry } = useEntryMode();
   const [modalOpen, setModalOpen] = useState(false);
   const [pendingHref, setPendingHref] = useState("/studio");
   const directAccessPromptedRef = useRef(false);
@@ -120,7 +122,7 @@ export function StudioEntryGateProvider({ children }: { children: ReactNode }) {
 
   const attemptStudioEntry = useCallback(
     (href = "/studio") => {
-      if (isGuest) {
+      if (isGuestEntry) {
         router.push(
           buildLoginUrlWithReturn(href, {
             notice: ACCOUNT_REGISTRATION_REQUIRED_NOTICE,
@@ -145,7 +147,7 @@ export function StudioEntryGateProvider({ children }: { children: ReactNode }) {
         router.push(href);
       }
     },
-    [user, isGuest, pathname, router, promptDeveloperOnboardingIfNeeded],
+    [user, isGuestEntry, pathname, router, promptDeveloperOnboardingIfNeeded],
   );
 
   const value = useMemo(
@@ -178,7 +180,8 @@ export function StudioDirectAccessGuard() {
   const router = useRouter();
   const pathname = usePathname();
   const deploymentMode = useForgeDeploymentMode();
-  const { user, authResolved, isGuest } = useAuth();
+  const { user, authResolved, isRegisteredUser } = useAuth();
+  const { isGuestEntry } = useEntryMode();
   const { attemptStudioEntry } = useStudioEntryGate();
 
   useEffect(() => {
@@ -186,7 +189,7 @@ export function StudioDirectAccessGuard() {
       return;
     }
 
-    if (isGuest) {
+    if (isGuestEntry) {
       const returnPath = pathname.startsWith("/studio") ? pathname : "/studio";
       router.replace(
         buildLoginUrlWithReturn(returnPath, {
@@ -217,7 +220,7 @@ export function StudioDirectAccessGuard() {
     if (shouldPromptDeveloperPage(user.id)) {
       attemptStudioEntry(pathname.startsWith("/studio") ? pathname : "/studio");
     }
-  }, [authResolved, user, isGuest, attemptStudioEntry, pathname, router, deploymentMode]);
+  }, [authResolved, user, isGuestEntry, isRegisteredUser, attemptStudioEntry, pathname, router, deploymentMode]);
 
   return null;
 }

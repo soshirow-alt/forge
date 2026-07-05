@@ -4,12 +4,24 @@
 
 ---
 
+## 2026-07-05 — ゲスト方針確定: entry mode（Anonymous Auth 廃止）
+
+- **原典 v2 追補** — `docs/forge-principles.md` §3 を entry mode 方式に更新（Anonymous Auth 不使用・ゲストプレイ DB 非記録・ゲスト FB 方針・038/039 維持）
+- **Supabase Anonymous Auth は使わない** — `signInAnonymously` を通常 UI から削除。既存匿名セッションは起動時に sign-out
+- **entry mode** — `localStorage` で `guest` を保存。「ゲストで続ける」は Auth を呼ばず return 先へ
+- **入口ゲート** — 未選択時に `/home` `/games/*` 等でクライアントオーバーレイ（OGP 用 middleware 全リダイレクトなし）
+- **ゲストプレイ** — `project_plays` / `project_play_sessions` 非記録。外部リンクのみ。プレイ人数に含めない
+- **038/039** — ロールバック不要。安全側ガードとして維持（Allow anonymous sign-ins は OFF）
+- **Phase 1 待ち** — ゲスト FB のみ DB 保存（「ゲスト」名義・user_id なし）は別 migration/API 設計
+
+---
+
 ## 2026-07-05 — RLS: 匿名ユーザーのプレイヤー系 write 遮断（migration 039）
 
 - **`039_block_anonymous_player_writes.sql`** — voice_responses / feedback / plays / play_sessions / bookmarks / watches / supports / community apply・replies / platform_feedback / content_reports / disputes / notification既読 等の write を匿名 JWT から拒否
 - **SECURITY DEFINER 補強** — `ensure_platform_default_prompt`・`anonymize_own_account_data` も匿名呼び出し拒否
 - **SELECT は未変更** — Phase 1 で play/初回 FB 開放時に対象テーブルだけ匿名許可 migration を別途作成予定
-- **適用順** — 038 → 039 → Anonymous Sign-ins 有効化
+- **適用** — 038 → 039。Allow anonymous sign-ins は **OFF 維持**（entry mode ゲストは Auth 非使用）
 
 ---
 

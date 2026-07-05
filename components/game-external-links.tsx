@@ -36,7 +36,7 @@ export function GameExternalLinks({
   tags = [],
   compact = false,
 }: GameExternalLinksProps) {
-  const { isLoggedIn, requireAuth } = useRequireAuth();
+  const { isLoggedIn, isGuestEntry, requireAuth } = useRequireAuth();
   const { recordPlay } = useGames();
   const links = getExternalLinks({
     steamUrl,
@@ -88,7 +88,7 @@ export function GameExternalLinks({
       ) : (
         <ExternalLinkSafetyNote className={compact ? "mt-1.5 text-xs" : "mt-2"} />
       )}
-      {!isLoggedIn && (
+      {!isLoggedIn && !isGuestEntry && (
         <AuthGatedHint
           hint="ログインすると使えます"
           className={compact ? "mt-1.5" : "mt-2"}
@@ -109,6 +109,16 @@ export function GameExternalLinks({
               onClick={() => {
                 void recordPlay(gameId).catch(() => undefined);
               }}
+              className={linkClassName}
+            >
+              {link.label}
+            </a>
+          ) : isGuestEntry ? (
+            <a
+              key={link.label}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
               className={linkClassName}
             >
               {link.label}

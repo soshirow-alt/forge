@@ -2,20 +2,17 @@
 
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
+import { useEntryMode } from "@/components/entry-mode-provider";
 import { isRegisteredAppUser } from "@/lib/auth";
-import {
-  ACCOUNT_REGISTRATION_REQUIRED_NOTICE,
-} from "@/lib/guest-auth";
-import {
-  buildLoginUrlWithReturn,
-  LOGIN_PATH,
-} from "@/lib/login-return-url";
+import { ACCOUNT_REGISTRATION_REQUIRED_NOTICE } from "@/lib/guest-auth";
+import { buildLoginUrlWithReturn, LOGIN_PATH } from "@/lib/login-return-url";
 
 export { LOGIN_PATH } from "@/lib/login-return-url";
 
 export function useRequireAuth() {
   const router = useRouter();
-  const { user, hydrated, isGuest, isRegisteredUser } = useAuth();
+  const { user, hydrated, isRegisteredUser } = useAuth();
+  const { isGuestEntry } = useEntryMode();
   const registered = isRegisteredAppUser(user);
 
   function requireAuth(action: () => void, returnPath?: string) {
@@ -27,7 +24,9 @@ export function useRequireAuth() {
       router.push(
         returnPath
           ? buildLoginUrlWithReturn(returnPath, {
-              notice: isGuest ? ACCOUNT_REGISTRATION_REQUIRED_NOTICE : undefined,
+              notice: isGuestEntry
+                ? ACCOUNT_REGISTRATION_REQUIRED_NOTICE
+                : undefined,
             })
           : LOGIN_PATH,
       );
@@ -40,9 +39,9 @@ export function useRequireAuth() {
   return {
     user,
     hydrated,
-    isGuest,
+    isGuestEntry,
     isRegisteredUser,
-    /** Registered account only — guests are not "logged in" for engagement actions. */
+    /** Registered Supabase account only — entry-mode guest is not logged in. */
     isLoggedIn: isRegisteredUser,
     requireAuth,
     goToLogin: (returnPath?: string) =>
