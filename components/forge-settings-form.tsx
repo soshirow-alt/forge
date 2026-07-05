@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Suspense, useState } from "react";
 import { AccountSettingsPanel } from "@/components/account-settings-panel";
+import { XAccountLinkSection } from "@/components/x-account-link-section";
 import {
   FORGE_LEGAL_CONTACT_EMAIL,
   PRIVACY_PATH,
@@ -236,6 +237,10 @@ export function ForgeSettingsForm({ context }: { context: "player" | "studio" })
     <div className="space-y-8">
       <Suspense fallback={<AccountSettingsFallback />}>
         <AccountSettingsPanel section="credentials" />
+      </Suspense>
+
+      <Suspense fallback={<AccountSettingsFallback />}>
+        <XAccountLinkSection />
       </Suspense>
 
       <PreferenceSettingsPanel context={context} />

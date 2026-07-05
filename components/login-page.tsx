@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useActionState, useEffect, useRef } from "react";
 import {
   AuthPageShell,
-  OAuthComingSoonSection,
   authInputClassName,
   handleAuthFormEnterKey,
   useAuthAutofillUnlock,
 } from "@/components/auth-layout";
+import { XOAuthLoginSection } from "@/components/x-oauth-login-section";
 import { useAuth } from "@/components/auth-provider";
 import { useEntryMode } from "@/components/entry-mode-provider";
 import { loginAction, type LoginActionState } from "@/lib/auth-login-action";
@@ -189,7 +189,11 @@ export function LoginPage({
           </p>
         </div>
 
-        <OAuthComingSoonSection />
+        <XOAuthLoginSection
+          nextPath={resolvePostLoginPath(returnParam)}
+          disabled={pending || !supabaseConfigured}
+          mode="login"
+        />
 
         <p className="mt-8 text-center text-sm text-zinc-500">
           アカウントをお持ちでない方は{" "}

@@ -6,11 +6,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import {
   AuthPageShell,
-  OAuthComingSoonSection,
   PasswordInput,
   authInputClassName,
   handleAuthFormEnterKey,
 } from "@/components/auth-layout";
+import { XOAuthLoginSection } from "@/components/x-oauth-login-section";
 import { useAuth } from "@/components/auth-provider";
 import { markNewRegistrationPending } from "@/lib/developer-onboarding-v0-store";
 import { AUTH_ALREADY_REGISTERED_MESSAGE, getAuthErrorMessage } from "@/lib/auth";
@@ -209,7 +209,11 @@ export function RegisterPage({
           </button>
         </form>
 
-        <OAuthComingSoonSection description="Google / Discord / GitHub 登録は Coming Soon です。メールアドレスで登録できます。" />
+        <XOAuthLoginSection
+          nextPath={resolvePostLoginPath(null)}
+          disabled={submitting || !supabaseConfigured}
+          mode="register"
+        />
 
         <p className="mt-8 text-center text-sm text-zinc-500">
           すでにアカウントをお持ちですか？{" "}

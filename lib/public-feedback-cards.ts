@@ -13,6 +13,7 @@ export type PublicFeedbackCard = {
   authorKind: PublicFeedbackAuthorKind;
   authorDisplayName: string | null;
   authorAvatarUrl: string | null;
+  authorXUsername: string | null;
   promptText: string | null;
   bodyText: string | null;
   /** voice_supplement — related choice answer label (not the card body) */
@@ -37,6 +38,7 @@ type PublicFeedbackCardRow = {
   author_kind: string;
   author_display_name: string | null;
   author_avatar_url: string | null;
+  author_x_username?: string | null;
   prompt_text: string | null;
   body_text: string | null;
   good_points: string | null;
@@ -70,6 +72,7 @@ function rowToCard(row: PublicFeedbackCardRow, versionKey: string): PublicFeedba
     authorKind: row.author_kind,
     authorDisplayName: row.author_display_name,
     authorAvatarUrl: row.author_avatar_url,
+    authorXUsername: row.author_x_username?.trim() || null,
     promptText: row.prompt_text,
     bodyText: row.body_text,
     goodPoints: row.good_points,

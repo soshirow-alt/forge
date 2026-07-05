@@ -20,6 +20,7 @@ import { YourInvolvementCard } from "@/components/your-involvement-card";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePlayerProjectInvolvement } from "@/hooks/use-player-project-involvement";
+import { usePublicXProfile } from "@/hooks/use-public-x-profile";
 import {
   FeedbackFormV0Modal,
   FeedbackSuccessV0Modal,
@@ -33,6 +34,7 @@ import { GameDevlogV0Tab } from "@/components/game-devlog-v0-tab";
 import { EveryonesVoiceSection } from "@/components/everyones-voice-section";
 import { GameVoicesV0Tab } from "@/components/game-voices-v0-tab";
 import { GameNotFoundPanel } from "@/components/game-not-found-panel";
+import { XLinkedHandleBadge } from "@/components/x-linked-handle-badge";
 import { ContentReportButton } from "@/components/content-report-button";
 import { GameThumbnail, PlayerShell } from "@/components/player-shell";
 import { useGames } from "@/components/games-provider";
@@ -311,6 +313,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   const [following, setFollowing] = useState(game.developer.following);
   const developerUserId =
     isRealProject && submittedGame?.ownerId ? submittedGame.ownerId : null;
+  const { profile: developerXProfile } = usePublicXProfile(developerUserId);
   const creatorRouteKey = game.developer.id;
   const realFollowing = developerUserId ? isFollowing(creatorRouteKey) : following;
   const showDeveloperFollow =
@@ -683,6 +686,9 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                     imageSrc={developerAvatarSrc}
                   />
                   <span className="break-words">{game.developer.name}</span>
+                  {developerXProfile?.xUsername ? (
+                    <XLinkedHandleBadge username={developerXProfile.xUsername} />
+                  ) : null}
                 </Link>
                 <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-zinc-500">
                   <Clock className="size-3.5 shrink-0" aria-hidden="true" />
@@ -901,6 +907,9 @@ function GameDetailV0PageBody({ id }: { id: string }) {
               />
               <div className="min-w-0">
                 <p className="truncate font-semibold text-white">{game.developer.name}</p>
+                {developerXProfile?.xUsername ? (
+                  <XLinkedHandleBadge username={developerXProfile.xUsername} className="mt-1" />
+                ) : null}
                 {developerUserId || (!isRealProject && game.developer.followers > 0) ? (
                   <p className="text-xs text-zinc-500">
                     フォロワー{" "}

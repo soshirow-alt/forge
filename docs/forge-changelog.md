@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-07-06 — X アカウント連携（preview/landing-01）
+
+- **Xでログイン** — ログイン / 新規登録画面に「Xでログイン」を追加（Supabase Auth `provider: 'x'`）。メールログイン・ゲスト参加は維持
+- **既存ユーザーのX連携** — 設定画面に「Xアカウント連携」（`linkIdentity`）。Manual linking は Dashboard で ON 必須
+- **保存** — `user_x_profiles`（`x_user_id`, `x_username`, `x_display_name`, `x_avatar_url`, `x_connected_at`, `x_last_synced_at`）。OAuth token は保存しない
+- **表示** — 公開FBカード / 開発者プロフィール / 作品作者に `@handle`。表示名・アイコンは X 初期値（Forge 未設定時のみ上書き seed）
+- **042 migration** — ファイル作成済み。**Dashboard 適用は未実施**
+- **手順** — `docs/x-auth-setup-runbook.md`
+- **未実施** — main / 本番 deploy / Dashboard・X Developer 設定 / 042 適用
+
+---
+
 ## 2026-07-06 — みんなのFB Phase 2 表示仕様修正（preview/landing-01）
 
 - **個別カード** — `voice_supplement` に関連選択肢ピル（回答: …）を表示。service role API で `answer_label` を enrich（DB migration なし）

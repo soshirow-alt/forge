@@ -63,6 +63,10 @@ export function getAuthErrorMessage(message: string, code?: string): string {
     case "Provider is not enabled":
     case "Unsupported provider: provider is not enabled":
       return "このログイン方法は現在利用できません。メールアドレスで登録・ログインしてください。";
+    case "x_account_already_linked":
+      return "このXアカウントは別のForgeアカウントに連携済みです。";
+    case "Identity linking is not available in this client version.":
+      return "X連携機能の準備中です。しばらくしてから再度お試しください。";
     case "Email rate limit exceeded":
       return "確認メールの送信回数が上限に達しました。しばらく待ってから再送してください。";
     default:

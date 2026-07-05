@@ -2,6 +2,7 @@
 
 import { UserRound } from "lucide-react";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { XLinkedHandleBadge } from "@/components/x-linked-handle-badge";
 import { formatPlayableVersionLabel } from "@/lib/playable-version";
 import type { PublicFeedbackCard } from "@/lib/public-feedback-cards";
 
@@ -71,7 +72,12 @@ function CardAuthor({ card }: { card: PublicFeedbackCard }) {
           {displayName.slice(0, 1)}
         </span>
       )}
-      <span className="truncate text-sm font-semibold text-zinc-100">{displayName}</span>
+      <div className="min-w-0">
+        <span className="block truncate text-sm font-semibold text-zinc-100">{displayName}</span>
+        {card.authorXUsername ? (
+          <XLinkedHandleBadge username={card.authorXUsername} className="mt-1" />
+        ) : null}
+      </div>
     </div>
   );
 }
