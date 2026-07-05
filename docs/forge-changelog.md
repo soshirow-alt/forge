@@ -4,11 +4,11 @@
 
 ---
 
-## 2026-07-05 — 041 migration レビュー修正 + Phase 1 runbook（preview/landing-01）
+## 2026-07-05 — 041 Phase 1 DB 適用完了 + migration 正本 GRANT 同期（preview/landing-01）
 
-- **041 SQL** — `get_public_voice_aggregates`: `bucketed_responses` で `count(*)` 保持、`bucketed_rows` で `sum(response_count)`（registered + guest 同一 `answer_value` 合算）。`feedback_reports.reason_code` を設計どおり 5 値に修正（`rights` 削除、`inappropriate` 追加）
-- **runbook** — `docs/public-feedback-041-apply-runbook.md` 追加（Dashboard 適用手順・pre/post SQL・ロールバック範囲）
-- **未実施** — Supabase Dashboard 041 適用 / main / 本番 deploy
+- **本番 DB** — `041_public_feedback_cards.sql` Dashboard 適用済み（`bpnisgzxuwdxelhnduuf`）。post-check B（`feedback_reports` policy 0 行）・D（`resolve_feedback_card_id` は postgres / service_role のみ EXECUTE）確認済み
+- **041 正本** — `resolve_feedback_card_id` に `REVOKE … FROM anon/authenticated` を明示（Dashboard 追加 REVOKE と同期）
+- **未実施** — main / 本番 deploy / Phase 2 UI
 
 ---
 

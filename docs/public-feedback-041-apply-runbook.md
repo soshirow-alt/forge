@@ -137,12 +137,13 @@ WHERE n.nspname = 'public'
   )
 ORDER BY 1;
 
--- D) resolve は service_role のみ（anon に EXECUTE 無いこと）
+-- D) resolve は service_role のみ（anon / authenticated に EXECUTE 無いこと）
 SELECT grantee, privilege_type
 FROM information_schema.routine_privileges
 WHERE routine_schema = 'public'
-  AND routine_name = 'resolve_feedback_card_id';
--- service_role に EXECUTE。anon/authenticated 無し
+  AND routine_name = 'resolve_feedback_card_id'
+ORDER BY grantee;
+-- 期待: postgres + service_role のみ EXECUTE（041 正本は PUBLIC / anon / authenticated を REVOKE）
 
 -- E) 公開 RPC スモーク（公開作品 ID / version_key に差し替え）
 -- SELECT * FROM public.get_public_feedback_cards('<project_id>', '<version_key>', true, 5, 0);
