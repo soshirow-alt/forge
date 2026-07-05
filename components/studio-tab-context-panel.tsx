@@ -123,7 +123,7 @@ export function StudioTabContextPanel({
   initialOverviewEditMode = null,
   onInitialOverviewEditHandled,
 }: StudioTabContextPanelProps) {
-  const { getDevlogsByProject } = useGames();
+  const { getDevlogsByProject, getOwnerStudioVoiceResponseCount } = useGames();
   const [overviewEditMode, setOverviewEditMode] = useState<StudioOverviewEditMode | null>(null);
   const [devlogEditMode, setDevlogEditMode] = useState<DevlogEditMode>(null);
 
@@ -131,14 +131,27 @@ export function StudioTabContextPanel({
   const versionLabel = `v${versionKey}`;
   const { isRead: voiceRead, markRead } = useNurtureVoiceRead(game.id, versionKey);
 
-  const quickFbCount = growth.totalVoiceResponseCount;
+  const registeredQuickFbCount = growth.totalVoiceResponseCount;
+  const [studioVoiceCount, setStudioVoiceCount] = useState(registeredQuickFbCount);
+  const quickFbCount = studioVoiceCount;
   const detailedFbCount = useMemo(
     () => filterDeepFeedbackForVersion(feedbackEntries, versionKey).length,
     [feedbackEntries, versionKey],
   );
   const hasFeedback = quickFbCount > 0 || detailedFbCount > 0;
-  const hasUnreadVoice = !voiceRead && quickFbCount > 0;
+  const hasUnreadVoice = !voiceRead && registeredQuickFbCount > 0;
   const totalFeedbackCount = quickFbCount + detailedFbCount;
+
+  useEffect(() => {
+    void getOwnerStudioVoiceResponseCount(projectId, versionKey)
+      .then(setStudioVoiceCount)
+      .catch(() => setStudioVoiceCount(registeredQuickFbCount));
+  }, [
+    projectId,
+    versionKey,
+    getOwnerStudioVoiceResponseCount,
+    registeredQuickFbCount,
+  ]);
 
   const latestDevlog = useMemo(() => {
     const devlogs = sortDevlogsNewestFirst(getDevlogsByProject(projectId));
@@ -436,7 +449,7 @@ export function StudioTabContextPanel({
                 emphasize={initialOpenFeedback}
                 embeddedInStudioPane
                 hidePaneHeading
-                unreadVoiceCount={hasUnreadVoice ? quickFbCount : 0}
+                unreadVoiceCount={hasUnreadVoice ? registeredQuickFbCount : 0}
                 totalFeedbackCount={totalFeedbackCount}
               />
             </div>

@@ -356,6 +356,7 @@ export async function fetchProjectFeedback(
 export type ProjectFeedbackEntry = {
   projectId: string;
   item: GameFeedbackItem;
+  isGuest?: boolean;
 };
 
 export async function fetchFeedbackForProjects(

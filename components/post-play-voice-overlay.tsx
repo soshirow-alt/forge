@@ -11,6 +11,8 @@ type PostPlayVoiceOverlayProps = {
   onDismiss: () => void;
   onOpenForm: () => void;
   children: ReactNode;
+  title?: string;
+  subtitle?: string;
 };
 
 function ModalBackdrop({ onClose }: { onClose: () => void }) {
@@ -30,6 +32,8 @@ export function PostPlayVoiceOverlay({
   onDismiss,
   onOpenForm,
   children,
+  title = "プレイありがとう",
+  subtitle = "開発者から質問があります",
 }: PostPlayVoiceOverlayProps) {
   if (mode === "hidden") {
     return <div className="hidden">{children}</div>;
@@ -53,11 +57,9 @@ export function PostPlayVoiceOverlay({
                 id="post-play-voice-title"
                 className="text-lg font-semibold text-white"
               >
-                プレイありがとう
+                {title}
               </h2>
-              <p className="mt-1 text-sm text-zinc-400">
-                開発者から質問があります
-              </p>
+              <p className="mt-1 text-sm text-zinc-400">{subtitle}</p>
             </div>
             <button
               type="button"

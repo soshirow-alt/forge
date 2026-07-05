@@ -523,13 +523,26 @@ export async function fetchOwnerVoiceAggregates(
     return [];
   }
 
+  const { data: guestResponses } = await supabase
+    .from("project_guest_voice_responses")
+    .select("prompt_id, answer_value, answer_label")
+    .eq("project_id", projectId)
+    .eq("version_key", version);
+
   return buildVoiceAggregateRows(
     (prompts ?? []) as PromptAggregateSource[],
-    (responses ?? []) as {
-      prompt_id: string;
-      answer_value: string;
-      answer_label: string | null;
-    }[],
+    [
+      ...((responses ?? []) as {
+        prompt_id: string;
+        answer_value: string;
+        answer_label: string | null;
+      }[]),
+      ...((guestResponses ?? []) as {
+        prompt_id: string;
+        answer_value: string;
+        answer_label: string | null;
+      }[]),
+    ],
   );
 }
 
@@ -539,7 +552,8 @@ export function hasInitialVoiceComplete(responses: VoiceResponse[]): boolean {
 
 export type OwnerVoiceResponseDetail = {
   id: string;
-  userId: string;
+  userId?: string;
+  isGuest?: boolean;
   promptId: string;
   promptText: string;
   answerValue: string;
@@ -628,43 +642,92 @@ export async function fetchVoiceNurtureSignalsForProjects(
   });
 }
 
+export async function fetchOwnerStudioVoiceResponseCount(
+  supabase: SupabaseClient,
+  projectId: string,
+  versionKey: string,
+): Promise<number> {
+  const version = resolvePlayableVersion(versionKey);
+  const [registered, guest] = await Promise.all([
+    supabase
+      .from("project_voice_responses")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", projectId)
+      .eq("version_key", version),
+    supabase
+      .from("project_guest_voice_responses")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", projectId)
+      .eq("version_key", version),
+  ]);
+
+  if (registered.error && guest.error) {
+    return 0;
+  }
+
+  return (registered.count ?? 0) + (guest.count ?? 0);
+}
+
 export async function fetchOwnerVoiceResponseDetails(
   supabase: SupabaseClient,
   projectId: string,
   versionKey: string,
 ): Promise<OwnerVoiceResponseDetail[]> {
   const version = resolvePlayableVersion(versionKey);
-  const { data: responses, error: responseError } = await supabase
-    .from("project_voice_responses")
-    .select("id, user_id, prompt_id, answer_value, answer_label, created_at")
-    .eq("project_id", projectId)
-    .eq("version_key", version)
-    .order("created_at", { ascending: false });
-
-  if (responseError || !responses?.length) {
-    return [];
-  }
-
-  const { data: prompts } = await supabase
-    .from("project_version_prompts")
-    .select("id, prompt_text")
-    .eq("project_id", projectId)
-    .eq("version_key", version);
+  const [registeredResult, guestResult, promptsResult] = await Promise.all([
+    supabase
+      .from("project_voice_responses")
+      .select("id, user_id, prompt_id, answer_value, answer_label, created_at")
+      .eq("project_id", projectId)
+      .eq("version_key", version),
+    supabase
+      .from("project_guest_voice_responses")
+      .select("id, prompt_id, answer_value, answer_label, created_at")
+      .eq("project_id", projectId)
+      .eq("version_key", version),
+    supabase
+      .from("project_version_prompts")
+      .select("id, prompt_text")
+      .eq("project_id", projectId)
+      .eq("version_key", version),
+  ]);
 
   const promptTextById = new Map(
-    ((prompts ?? []) as { id: string; prompt_text: string }[]).map((prompt) => [
-      prompt.id,
-      prompt.prompt_text,
-    ]),
+    ((promptsResult.data ?? []) as { id: string; prompt_text: string }[]).map(
+      (prompt) => [prompt.id, prompt.prompt_text],
+    ),
   );
 
-  return (responses as ResponseRow[]).map((row) => ({
+  const registered = ((registeredResult.data ?? []) as ResponseRow[]).map((row) => ({
     id: row.id,
     userId: row.user_id,
+    isGuest: false as const,
     promptId: row.prompt_id,
     promptText: promptTextById.get(row.prompt_id) ?? "（質問）",
     answerValue: row.answer_value,
     answerLabel: row.answer_label,
     createdAt: row.created_at,
   }));
+
+  const guest = (
+    (guestResult.data ?? []) as {
+      id: string;
+      prompt_id: string;
+      answer_value: string;
+      answer_label: string | null;
+      created_at: string;
+    }[]
+  ).map((row) => ({
+    id: row.id,
+    isGuest: true as const,
+    promptId: row.prompt_id,
+    promptText: promptTextById.get(row.prompt_id) ?? "（質問）",
+    answerValue: row.answer_value,
+    answerLabel: row.answer_label,
+    createdAt: row.created_at,
+  }));
+
+  return [...registered, ...guest].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
 }

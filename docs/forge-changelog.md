@@ -4,6 +4,33 @@
 
 ---
 
+## 2026-07-05 — ゲスト FB Phase 1: UI + Studio 表示マージ（preview/landing-01・未 push）
+
+- **作品詳細** — entry mode = guest でも FB 導線をログインモーダルで止めない。`GameDetailGuestVoiceLayer` + `GuestVoiceSection` / `GuestDeepFeedbackForm` で guest-voice / guest-feedback API へ送信。成功時「ゲストとして開発者に届けました」。ゲストプレイは DB 記録・プレイ人数加算なし
+- **Studio** — 質問への回答・自由な意見に登録ユーザー + ゲストを時系列マージ。ゲスト行に「ゲスト」バッジ。helpful mark はゲスト行に非表示。Studio 件数のみ `fetchOwnerStudioVoiceResponseCount`（通知・ranking・growth 信号は登録者のみのまま）
+- **みんなの FB** — 既存 RPC（ゲスト含む）で問い回答集計は反映。short_text 本文は公開しない
+- **未反映** — main merge / 本番 deploy なし（Preview 確認待ち）
+
+---
+
+## 2026-07-05 — ゲスト FB Phase 1: migration 040 本番 DB 適用
+
+- **040 適用** — Supabase Dashboard（`bpnisgzxuwdxelhnduuf`）に `040_project_guest_feedback.sql` 適用済み
+- **追加** — `project_guest_voice_responses` / `project_guest_feedback` / `guest_feedback_rate_events`
+- **RPC** — `get_public_voice_aggregates(text,text,boolean)` に更新。2 キー呼び出し後方互換（DEFAULT true）
+- **確認** — 2 キー / `p_include_guest:false` RPC 200、anon direct INSERT は RLS 拒否、本番 guest-voice / guest-feedback API upsert 成功、みんなの FB 表示維持
+
+---
+
+## 2026-07-05 — ゲスト FB Phase 1: main deploy（040 後方互換コード・DB 未適用）
+
+- **main 反映** — `825b267` → `4c5925a` fast-forward（`preview/landing-01` と同期済み）
+- **本番 deploy** — `dpl_ALbDsanGACwafNZ7TYtJtcDpY953`（https://forge-flame-gamma.vercel.app）
+- **040** — migration ファイルはリポジトリにあり。**本番 DB Dashboard 適用は別途**（Preview/Production 共通 Supabase `bpnisgzxuwdxelhnduuf`）
+- **deploy 後確認** — LP / login / ゲストで参加 / 作品詳細 / みんなのFB / privacy 正常。040 未適用時 guest API はテーブル未作成で失敗（想定）
+
+---
+
 ## 2026-07-05 — ゲスト FB Phase 1: migration 040 草案 + API 骨組み（DB 未適用）
 
 - **DB** — `supabase/migrations/040_project_guest_feedback.sql` をリポジトリに追加（Preview / 本番とも **未適用**）。`project_guest_voice_responses` / `project_guest_feedback` / `guest_feedback_rate_events`。038/039・登録者テーブルは変更なし

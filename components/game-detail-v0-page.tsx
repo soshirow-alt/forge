@@ -9,6 +9,10 @@ import {
   useGameDetailEngagement,
   type GameDetailRealVoiceHandle,
 } from "@/components/game-detail-real-voice-layer";
+import {
+  GameDetailGuestVoiceLayer,
+  type GameDetailGuestVoiceHandle,
+} from "@/components/game-detail-guest-voice-layer";
 import { GameDetailHeroGallery } from "@/components/game-detail-hero-gallery";
 import { GameHeroPreviewGallery } from "@/components/game-hero-preview-gallery";
 import { GameDetailPhaseBadge } from "@/components/game-detail-phase-badge";
@@ -322,7 +326,9 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   const [mockWatching, setMockWatching] = useState(game.watching);
   const [mockSaved, setMockSaved] = useState(game.saved);
   const [played, setPlayed] = useState(false);
+  const [guestPlayed, setGuestPlayed] = useState(false);
   const voiceLayerRef = useRef<GameDetailRealVoiceHandle>(null);
+  const guestVoiceLayerRef = useRef<GameDetailGuestVoiceHandle>(null);
   const {
     watching: realWatching,
     saved: realSaved,
@@ -371,6 +377,12 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     setFeedbackStep("first-voice");
   }, [isRealProject]);
 
+  const markGuestPlayOpened = useCallback(() => {
+    setPlayUrlMissingVisible(false);
+    setGuestPlayed(true);
+    guestVoiceLayerRef.current?.notifyPlayComplete();
+  }, []);
+
   const recordPlayInBackground = useCallback(() => {
     const projectId = submittedGame?.id ?? (isRealProject ? resolvedId : null);
     if (!projectId) {
@@ -398,12 +410,17 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     [markPlayOpened],
   );
 
-  const openPlayUrlOnly = useCallback((url: string) => {
-    const opened = openExternalPlayUrl(url);
-    if (!opened) {
-      setPlayUrlMissingVisible(true);
-    }
-  }, []);
+  const openGuestPlayUrl = useCallback(
+    (url: string) => {
+      const opened = openExternalPlayUrl(url);
+      if (!opened) {
+        setPlayUrlMissingVisible(true);
+        return;
+      }
+      markGuestPlayOpened();
+    },
+    [markGuestPlayOpened],
+  );
 
   const resolveAndOpenPlay = useCallback(
     (recordSession: boolean) => {
@@ -412,7 +429,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
         return;
       }
 
-      const openUrl = recordSession ? navigateToPlayDestination : openPlayUrlOnly;
+      const openUrl = recordSession ? navigateToPlayDestination : openGuestPlayUrl;
 
       if (isRealProject) {
         if (primaryPlayUrl && playSourceGame?.playUrl?.trim()) {
@@ -448,7 +465,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
       playSourceGame?.playUrl,
       playDestinations,
       navigateToPlayDestination,
-      openPlayUrlOnly,
+      openGuestPlayUrl,
     ],
   );
 
@@ -467,11 +484,13 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     (_destination: PlayDestination) => {
       // <a target="_blank"> が新規タブを開く。ここでは記録のみ（二重 window.open しない）
       setPlayDestinationPickerOpen(false);
-      if (!isGuestEntry) {
-        markPlayOpened();
+      if (isGuestEntry) {
+        markGuestPlayOpened();
+        return;
       }
+      markPlayOpened();
     },
-    [isGuestEntry, markPlayOpened],
+    [isGuestEntry, markPlayOpened, markGuestPlayOpened],
   );
 
   const handlePrimaryPlayAnchorClick = useCallback(() => {
@@ -480,6 +499,11 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   }, [markPlayOpened]);
 
   const handleFeedback = useCallback(() => {
+    if (isGuestEntry && isRealProject) {
+      guestVoiceLayerRef.current?.openForm();
+      return;
+    }
+
     requireAuth(() => {
       if (isRealProject) {
         voiceLayerRef.current?.openForm();
@@ -487,7 +511,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
       }
       setFeedbackStep("full-form");
     }, returnPath);
-  }, [requireAuth, returnPath, isRealProject]);
+  }, [isGuestEntry, requireAuth, returnPath, isRealProject]);
 
   const handleProtectedAction = useCallback(
     (action: () => void) => {
@@ -542,6 +566,8 @@ function GameDetailV0PageBody({ id }: { id: string }) {
 
   useFeedbackFlowLock(isRealProject ? "closed" : feedbackStep);
 
+  const guestFeedbackLoginHref = buildLoginUrlWithReturn(returnPath);
+
   if (waitingForCatalog) {
     return (
       <PlayerShell>
@@ -559,14 +585,24 @@ function GameDetailV0PageBody({ id }: { id: string }) {
           onClose={() => setPlayDestinationPickerOpen(false)}
         />
       ) : null}
-      {isRealProject ? (
+      {isRealProject && isGuestEntry ? (
+        <GameDetailGuestVoiceLayer
+          ref={guestVoiceLayerRef}
+          gameId={resolvedId}
+          played={guestPlayed}
+          loginHref={guestFeedbackLoginHref}
+          onVoiceComplete={handleRealVoiceComplete}
+        />
+      ) : null}
+      {isRealProject && !isGuestEntry ? (
         <GameDetailRealVoiceLayer
           ref={voiceLayerRef}
           gameId={resolvedId}
           played={played}
           onVoiceComplete={handleRealVoiceComplete}
         />
-      ) : (
+      ) : null}
+      {!isRealProject ? (
         <>
           {feedbackStep === "play-stub" && (
             <PlayStubV0Modal
@@ -598,7 +634,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
             <FeedbackSuccessV0Modal game={game} onClose={() => setFeedbackStep("closed")} />
           )}
         </>
-      )}
+      ) : null}
 
       <div className="flex flex-col gap-8 xl:flex-row xl:items-start">
         <div className="min-w-0 flex-1 space-y-5">
@@ -799,11 +835,15 @@ function GameDetailV0PageBody({ id }: { id: string }) {
               publication={overviewPublication}
               playDestinations={playDestinations}
               onPlayDestinationOpen={
-                hydrated && isLoggedIn ? markPlayOpened : undefined
+                hydrated && isLoggedIn
+                  ? markPlayOpened
+                  : hydrated && isGuestEntry
+                    ? markGuestPlayOpened
+                    : undefined
               }
               onFeedback={handleFeedback}
               feedbackCtaLabel={
-                hydrated && !isLoggedIn
+                hydrated && !isLoggedIn && !isGuestEntry
                   ? "ログインしてフィードバックする"
                   : "フィードバックする"
               }

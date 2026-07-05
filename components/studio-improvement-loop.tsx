@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { DeveloperVoiceInsights } from "@/components/developer-voice-insights";
+import { GuestBadge } from "@/components/guest-badge";
 import { NurtureDeepFeedbackSection } from "@/components/nurture-deep-feedback-section";
 import { OwnerVoiceResponseList } from "@/components/owner-voice-response-list";
 import { StudioFreeOpinionsDetailModal } from "@/components/studio-free-opinions-detail-modal";
@@ -244,11 +245,16 @@ export function StudioPlayerFeedbackPanel({
               <p className="text-sm font-medium text-zinc-200">自由な意見</p>
               <p className="mt-1 text-xs text-zinc-500">{detailedFbCount}件</p>
               <ul className="mt-3 space-y-2">
-                {detailedFb.slice(0, FREE_OPINION_INLINE_MAX).map(({ item }) => (
+                {detailedFb.slice(0, FREE_OPINION_INLINE_MAX).map(({ item, isGuest }) => (
                   <li
                     key={item.id}
                     className="rounded-lg border border-zinc-800/60 bg-zinc-950/40 px-3 py-2"
                   >
+                    {isGuest ? (
+                      <div className="mb-2">
+                        <GuestBadge />
+                      </div>
+                    ) : null}
                     <FeedbackStructuredCard item={item} compact showDate={false} />
                   </li>
                 ))}

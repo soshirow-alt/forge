@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { DeveloperHelpfulMarkButton } from "@/components/developer-helpful-mark-button";
 import { FeedbackStructuredCard } from "@/components/feedback-structured-card";
+import { GuestBadge } from "@/components/guest-badge";
 import { formatFeedbackDate } from "@/lib/feedback-display";
 import type { HelpfulMarkSourceType } from "@/lib/developer-helpful-mark";
 import { buildDeepFeedbackSummary } from "@/lib/feedback-voice-summary";
@@ -21,24 +22,31 @@ type NurtureDeepFeedbackSectionProps = {
 
 function DeepFeedbackRow({
   item,
+  isGuest = false,
   marked,
   onToggleHelpful,
 }: {
   item: ProjectFeedbackEntry["item"];
+  isGuest?: boolean;
   marked: boolean;
   onToggleHelpful?: (sourceType: HelpfulMarkSourceType, sourceId: string, marked: boolean) => void;
 }) {
   return (
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0 flex-1">
+        {isGuest ? (
+          <div className="mb-2">
+            <GuestBadge />
+          </div>
+        ) : null}
         <FeedbackStructuredCard item={item} showDate={false} />
       </div>
-      {onToggleHelpful && (
+      {onToggleHelpful && !isGuest ? (
         <DeveloperHelpfulMarkButton
           marked={marked}
           onToggle={() => onToggleHelpful("project_feedback", item.id, !marked)}
         />
-      )}
+      ) : null}
     </div>
   );
 }
@@ -95,6 +103,7 @@ export function NurtureDeepFeedbackSection({
           <div className="mt-2">
             <DeepFeedbackRow
               item={latestFeedback.item}
+              isGuest={latestFeedback.isGuest}
               marked={isMarked(latestFeedback.item.id)}
               onToggleHelpful={onToggleHelpful}
             />
@@ -111,7 +120,7 @@ export function NurtureDeepFeedbackSection({
               </button>
               {showPastFeedback && (
                 <div className="mt-3 space-y-3">
-                  {pastFeedback.map(({ item }) => (
+                  {pastFeedback.map(({ item, isGuest }) => (
                     <div
                       key={item.id}
                       className="rounded-md border border-zinc-800/50 bg-zinc-950/30 p-3"
@@ -122,6 +131,7 @@ export function NurtureDeepFeedbackSection({
                       <div className="mt-2">
                         <DeepFeedbackRow
                           item={item}
+                          isGuest={isGuest}
                           marked={isMarked(item.id)}
                           onToggleHelpful={onToggleHelpful}
                         />

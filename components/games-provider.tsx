@@ -105,8 +105,10 @@ import {
 } from "@/lib/supabase/user-engagement";
 import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
 import type { GameFeedbackItem } from "@/lib/game-feedback-storage";
+import { fetchGuestFeedbackForProjects } from "@/lib/supabase/guest-feedback-db";
 import {
   fetchOwnerVoiceAggregates,
+  fetchOwnerStudioVoiceResponseCount,
   fetchOwnerVoiceResponseDetails,
   fetchPublicVoiceAggregates,
   fetchDeveloperVersionPrompts,
@@ -333,6 +335,10 @@ type GamesContextValue = {
     gameId: string,
     versionKey: string,
   ) => Promise<OwnerVoiceResponseDetail[]>;
+  getOwnerStudioVoiceResponseCount: (
+    gameId: string,
+    versionKey: string,
+  ) => Promise<number>;
   getApplicantCount: (id: string, defaultCount?: number) => number;
   incrementApplicantCount: (id: string, defaultCount?: number) => number;
   isSubmittedGame: (id: string) => boolean;
@@ -1466,6 +1472,18 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const getOwnerStudioVoiceResponseCount = useCallback(
+    async (gameId: string, versionKey: string) => {
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        return 0;
+      }
+
+      return fetchOwnerStudioVoiceResponseCount(supabase, gameId, versionKey);
+    },
+    [],
+  );
+
   const getOwnedProjectFeedback = useCallback(
     async (userId: string | undefined) => {
       if (!userId) {
@@ -1482,7 +1500,15 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         return [];
       }
 
-      return fetchFeedbackForProjects(supabase, ownedIds);
+      const [registered, guest] = await Promise.all([
+        fetchFeedbackForProjects(supabase, ownedIds),
+        fetchGuestFeedbackForProjects(supabase, ownedIds).catch(() => []),
+      ]);
+
+      return [...registered, ...guest].sort(
+        (a, b) =>
+          new Date(b.item.createdAt).getTime() - new Date(a.item.createdAt).getTime(),
+      );
     },
     [getOwnedProjects],
   );
@@ -2155,6 +2181,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       getPublicVoiceAggregates,
       getOwnerVoiceAggregates,
       getOwnerVoiceResponseDetails,
+      getOwnerStudioVoiceResponseCount,
       getApplicantCount,
       incrementApplicantCount,
       isSubmittedGame,
@@ -2238,6 +2265,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       getPublicVoiceAggregates,
       getOwnerVoiceAggregates,
       getOwnerVoiceResponseDetails,
+      getOwnerStudioVoiceResponseCount,
       getApplicantCount,
       incrementApplicantCount,
       isSubmittedGame,

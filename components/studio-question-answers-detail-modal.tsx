@@ -1,6 +1,7 @@
 "use client";
 
 import { V0SimpleModal } from "@/components/v0-simple-modal";
+import { GuestBadge } from "@/components/guest-badge";
 import { VoiceAggregateBars } from "@/components/voice-aggregate-bars";
 import type { OwnerVoiceResponseDetail } from "@/lib/supabase/voice-engagement";
 import type { VoicePromptAggregate } from "@/lib/voice-aggregates";
@@ -74,6 +75,9 @@ export function StudioQuestionAnswersDetailModal({
                         key={response.id}
                         className="rounded-lg border border-zinc-800/60 bg-zinc-950/50 px-3 py-2 text-sm leading-relaxed text-zinc-300"
                       >
+                        <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                          {response.isGuest ? <GuestBadge /> : null}
+                        </div>
                         {response.answerLabel?.trim() || response.answerValue}
                       </li>
                     ))}
