@@ -14,6 +14,7 @@ import {
  */
 
 export const LOGIN_PATH = "/login";
+export const REGISTER_PATH = "/register";
 
 /** return なしログイン・登録セッション確立後のデフォルト遷移先（開発者マイページ） */
 export const DEFAULT_POST_LOGIN_PATH = "/studio/mypage";
@@ -202,6 +203,16 @@ export function buildLoginUrlWithReturn(
 
   const query = params.toString();
   return query ? `${LOGIN_PATH}?${query}` : LOGIN_PATH;
+}
+
+export function buildRegisterUrlWithReturn(returnPath: string): string {
+  const safe = sanitizeLoginReturnUrl(returnPath);
+  if (!safe) {
+    return REGISTER_PATH;
+  }
+
+  const params = new URLSearchParams({ return: safe });
+  return `${REGISTER_PATH}?${params.toString()}`;
 }
 
 export function gameDetailReturnPath(gameId: string): string {

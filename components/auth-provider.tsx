@@ -33,6 +33,7 @@ type AuthContextValue = {
     email: string,
     password: string,
     displayName: string,
+    returnParam?: string | null,
   ) => Promise<boolean>;
   signInWithOAuth: (provider: Provider, nextPath?: string | null) => Promise<void>;
   linkOAuthIdentity: (provider: Provider, nextPath?: string | null) => Promise<void>;
@@ -193,7 +194,12 @@ export function AuthProvider({
   );
 
   const signUp = useCallback(
-    async (email: string, password: string, displayName: string) => {
+    async (
+      email: string,
+      password: string,
+      displayName: string,
+      returnParam?: string | null,
+    ) => {
       if (!supabase) {
         throw new Error("Supabase is not configured.");
       }
@@ -205,7 +211,7 @@ export function AuthProvider({
           data: {
             display_name: displayName.trim(),
           },
-          emailRedirectTo: getEmailConfirmRedirectUrl(),
+          emailRedirectTo: getEmailConfirmRedirectUrl(returnParam),
         },
       });
 

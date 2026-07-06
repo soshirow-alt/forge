@@ -122,7 +122,7 @@ function VersionFilterBar({
             onClick={() => onChange(option)}
             className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
               selected
-                ? "border-orange-500/40 bg-orange-500/10 text-orange-200"
+                ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
                 : "border-zinc-700/80 bg-zinc-900/60 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
             }`}
           >
@@ -167,7 +167,7 @@ function PublicFeedbackCardsList({
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="mt-4 text-xs font-medium text-orange-400/90 transition-colors hover:text-orange-300"
+          className="mt-4 text-xs font-medium text-violet-400/90 transition-colors hover:text-violet-300"
         >
           すべて見る（{totalCount}件）
         </button>
@@ -367,7 +367,7 @@ export function EveryonesVoiceSection({
             <button
               type="button"
               onClick={onSendVoice}
-              className="mt-5 inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+              className="mt-5 inline-flex items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900/60 px-5 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-violet-500/40 hover:text-violet-200"
             >
               フィードバックする
             </button>
@@ -426,7 +426,7 @@ export function EveryonesVoiceSection({
             <button
               type="button"
               onClick={() => setAggregatesExpanded(true)}
-              className="mt-4 text-xs font-medium text-orange-400/90 transition-colors hover:text-orange-300"
+              className="mt-4 text-xs font-medium text-violet-400/90 transition-colors hover:text-violet-300"
             >
               もっと見る（{promptsWithResponses.length}問）
             </button>

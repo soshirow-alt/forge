@@ -38,11 +38,10 @@ export function GameDetailOwnerShareBar({
       >
         {isPublic ? (
           <>
-            <p className="text-sm font-medium text-zinc-200">このページを共有できます</p>
-            <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-              公開ページのURLをコピーして、プレイヤーに共有できます。
+            <p className="text-sm font-medium text-zinc-200">
+              このURLをプレイヤーに共有できます
             </p>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-2.5 flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => setShareOpen(true)}

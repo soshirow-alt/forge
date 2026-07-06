@@ -7,9 +7,14 @@ import {
 } from "@/components/auth-layout";
 import { useAuth } from "@/components/auth-provider";
 import { useRedirectToLoginWhenLoggedOut } from "@/hooks/use-redirect-to-login-when-logged-out";
+import {
+  DEFAULT_POST_PLAYER_HOME_PATH,
+  resolvePostLoginPath,
+  sanitizeLoginReturnUrl,
+} from "@/lib/login-return-url";
 import { CheckCircle2 } from "lucide-react";
 
-export function AuthWelcomePage() {
+export function AuthWelcomePage({ returnParam }: { returnParam: string | null }) {
   const { user, hydrated } = useAuth();
 
   useRedirectToLoginWhenLoggedOut();
@@ -21,6 +26,12 @@ export function AuthWelcomePage() {
       </div>
     );
   }
+
+  const hasReturn = Boolean(sanitizeLoginReturnUrl(returnParam));
+  const continueHref = hasReturn
+    ? resolvePostLoginPath(returnParam)
+    : DEFAULT_POST_PLAYER_HOME_PATH;
+  const continueLabel = hasReturn ? "続ける" : "ホームへ進む";
 
   return (
     <AuthPageShell active="register">
@@ -38,8 +49,8 @@ export function AuthWelcomePage() {
         </p>
 
         <div className="mt-8">
-          <Link href="/home" className={authPrimaryButtonClassName}>
-            ホームへ進む
+          <Link href={continueHref} className={authPrimaryButtonClassName}>
+            {continueLabel}
           </Link>
         </div>
       </div>

@@ -15,8 +15,10 @@ import { Mail } from "lucide-react";
 
 export function AuthVerifyEmailPage({
   supabaseConfigured,
+  returnParam,
 }: {
   supabaseConfigured: boolean;
+  returnParam: string | null;
 }) {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "";
@@ -39,7 +41,7 @@ export function AuthVerifyEmailPage({
         type: "signup",
         email,
         options: {
-          emailRedirectTo: getEmailConfirmRedirectUrl(),
+          emailRedirectTo: getEmailConfirmRedirectUrl(returnParam),
         },
       });
 

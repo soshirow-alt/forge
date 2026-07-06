@@ -1,3 +1,5 @@
+import { sanitizeLoginReturnUrl } from "@/lib/login-return-url";
+
 const DEFAULT_WELCOME_PATH = "/auth/welcome";
 
 /** Supabase Redirect URLs allowlist と一致必須（末尾スラッシュなし）。 */
@@ -28,8 +30,18 @@ export function getClientAuthOrigin(): string {
   return normalizeOrigin(window.location.origin);
 }
 
-export function getEmailConfirmRedirectUrl(): string {
-  const next = encodeURIComponent(DEFAULT_WELCOME_PATH);
+export function buildAuthWelcomePath(returnParam?: string | null): string {
+  const safe = sanitizeLoginReturnUrl(returnParam);
+  if (!safe) {
+    return DEFAULT_WELCOME_PATH;
+  }
+
+  const params = new URLSearchParams({ return: safe });
+  return `${DEFAULT_WELCOME_PATH}?${params.toString()}`;
+}
+
+export function getEmailConfirmRedirectUrl(returnParam?: string | null): string {
+  const next = encodeURIComponent(buildAuthWelcomePath(returnParam));
   return `${getAuthOrigin()}/auth/callback?next=${next}`;
 }
 

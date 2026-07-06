@@ -275,6 +275,8 @@ export const GameDetailOverviewV0Tab = forwardRef<
         onPlayDestinationOpen={onPlayDestinationOpen}
         showUnsetPlayPlaceholders={showUnsetPlayPlaceholders}
         mutedIntroduction={mutedIntroduction}
+        onFeedback={onFeedback}
+        feedbackCtaLabel={feedbackCtaLabel}
       />
     );
   }

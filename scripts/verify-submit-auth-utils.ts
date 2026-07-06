@@ -20,7 +20,7 @@ import {
   readOAuthFlowCookies,
 } from "../lib/oauth-flow-cookie";
 import { mapProjectSubmitErrorMessage } from "../lib/error-message";
-import { sanitizeLoginReturnUrl } from "../lib/login-return-url";
+import { buildRegisterUrlWithReturn, sanitizeLoginReturnUrl } from "../lib/login-return-url";
 import { projectThumbnailsForDb, sanitizeProjectThumbnailUrls } from "../lib/project-thumbnails";
 import { reorderArrayItem } from "../lib/reorder-array-item";
 import {
@@ -163,6 +163,12 @@ function testLoginReturnSanitize() {
     sanitizeLoginReturnUrl("/games/abc?tab=devlog") === "/games/abc?tab=devlog",
     "allow game detail devlog tab",
   );
+  ok(
+    buildRegisterUrlWithReturn("/games/abc?tab=voices") ===
+      "/register?return=%2Fgames%2Fabc%3Ftab%3Dvoices",
+    "register url carries sanitized return",
+  );
+  ok(buildRegisterUrlWithReturn("//evil.com") === "/register", "reject unsafe register return");
   ok(sanitizeLoginReturnUrl("//evil.com") === null, "reject protocol-relative");
   ok(sanitizeLoginReturnUrl("https://evil.com") === null, "reject absolute url");
   ok(sanitizeLoginReturnUrl("%2F%2Fevil.com") === null, "reject encoded protocol-relative");

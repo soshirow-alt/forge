@@ -14,7 +14,7 @@ export function GameDetailPhaseBadge({
       className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold ${
         muted
           ? "border-zinc-700/60 bg-zinc-900/50 text-zinc-500"
-          : "border-orange-500/35 bg-orange-500/10 text-orange-200"
+          : "border-violet-500/35 bg-violet-500/10 text-violet-200"
       }`}
     >
       {meta.phaseLabel}

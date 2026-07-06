@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal-routes";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   AuthPageShell,
   PasswordInput,
@@ -14,12 +14,19 @@ import { XOAuthLoginSection } from "@/components/x-oauth-login-section";
 import { useAuth } from "@/components/auth-provider";
 import { markNewRegistrationPending } from "@/lib/developer-onboarding-v0-store";
 import { AUTH_ALREADY_REGISTERED_MESSAGE, getAuthErrorMessage } from "@/lib/auth";
-import { DEFAULT_POST_PLAYER_HOME_PATH, resolvePostLoginPath } from "@/lib/login-return-url";
+import {
+  DEFAULT_POST_PLAYER_HOME_PATH,
+  buildLoginUrlWithReturn,
+  resolvePostLoginPath,
+  sanitizeLoginReturnUrl,
+} from "@/lib/login-return-url";
 
 export function RegisterPage({
   supabaseConfigured,
+  returnParam,
 }: {
   supabaseConfigured: boolean;
+  returnParam: string | null;
 }) {
   const router = useRouter();
   const { user, authResolved, isRegisteredUser, signUp } = useAuth();
@@ -31,11 +38,21 @@ export function RegisterPage({
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const postRegisterPath = useMemo(
+    () => resolvePostLoginPath(returnParam),
+    [returnParam],
+  );
+  const hasSafeReturn = Boolean(sanitizeLoginReturnUrl(returnParam));
+  const xOAuthNextPath = hasSafeReturn
+    ? postRegisterPath
+    : DEFAULT_POST_PLAYER_HOME_PATH;
+  const loginHref = buildLoginUrlWithReturn(returnParam ?? "");
+
   useEffect(() => {
     if (authResolved && isRegisteredUser) {
-      window.location.href = resolvePostLoginPath(null);
+      window.location.href = postRegisterPath;
     }
-  }, [authResolved, isRegisteredUser]);
+  }, [authResolved, isRegisteredUser, postRegisterPath]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -54,15 +71,19 @@ export function RegisterPage({
     setSubmitting(true);
 
     try {
-      const hasSession = await signUp(email, password, username);
+      const hasSession = await signUp(email, password, username, returnParam);
       markNewRegistrationPending();
 
       if (hasSession) {
-        window.location.href = resolvePostLoginPath(null);
+        window.location.href = postRegisterPath;
         return;
       }
 
       const params = new URLSearchParams({ email });
+      const safeReturn = sanitizeLoginReturnUrl(returnParam);
+      if (safeReturn) {
+        params.set("return", safeReturn);
+      }
       router.push(`/auth/verify-email?${params.toString()}`);
     } catch (caught) {
       const authError = caught as { message?: string; code?: string };
@@ -192,7 +213,7 @@ export function RegisterPage({
               <p>{error}</p>
               {error === AUTH_ALREADY_REGISTERED_MESSAGE ? (
                 <p className="mt-2">
-                  <Link href="/login" className="font-medium text-violet-300 hover:text-violet-200">
+                  <Link href={loginHref} className="font-medium text-violet-300 hover:text-violet-200">
                     ログイン画面へ
                   </Link>
                 </p>
@@ -211,14 +232,14 @@ export function RegisterPage({
 
         <div className="mt-6">
           <XOAuthLoginSection
-            nextPath={DEFAULT_POST_PLAYER_HOME_PATH}
+            nextPath={xOAuthNextPath}
             disabled={submitting || !supabaseConfigured}
           />
         </div>
 
         <p className="mt-8 text-center text-sm text-zinc-500">
           すでにアカウントをお持ちですか？{" "}
-          <Link href="/login" className="font-medium text-violet-400 hover:text-violet-300">
+          <Link href={loginHref} className="font-medium text-violet-400 hover:text-violet-300">
             ログイン
           </Link>
         </p>

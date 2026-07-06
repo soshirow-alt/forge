@@ -24,6 +24,7 @@ import {
 import {
   DEFAULT_POST_PLAYER_HOME_PATH,
   LOGIN_PATH,
+  buildRegisterUrlWithReturn,
   resolvePostGuestLoginPath,
   resolvePostLoginPath,
 } from "@/lib/login-return-url";
@@ -287,7 +288,10 @@ export function LoginPage({
 
         <p className="mt-8 text-center text-sm text-zinc-500">
           アカウントをお持ちでない方は{" "}
-          <Link href="/register" className="font-medium text-violet-400 hover:text-violet-300">
+          <Link
+            href={buildRegisterUrlWithReturn(returnParam ?? "")}
+            className="font-medium text-violet-400 hover:text-violet-300"
+          >
             新規登録
           </Link>
         </p>

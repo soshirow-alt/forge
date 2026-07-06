@@ -16,7 +16,7 @@ import {
   REGISTERED_FEATURE_REQUIRES_LOGIN_BODY,
   REGISTERED_FEATURE_REQUIRES_LOGIN_TITLE,
 } from "@/lib/guest-auth";
-import { buildLoginUrlWithReturn, LOGIN_PATH } from "@/lib/login-return-url";
+import { buildLoginUrlWithReturn, buildRegisterUrlWithReturn, LOGIN_PATH } from "@/lib/login-return-url";
 
 type PromptState = {
   returnPath?: string;
@@ -48,6 +48,9 @@ export function RegisteredAccountPromptProvider({
   const loginHref = prompt?.returnPath
     ? buildLoginUrlWithReturn(prompt.returnPath)
     : LOGIN_PATH;
+  const registerHref = prompt?.returnPath
+    ? buildRegisterUrlWithReturn(prompt.returnPath)
+    : "/register";
 
   const value = useMemo(
     () => ({ promptRegisteredAccountAccess, closePrompt }),
@@ -82,7 +85,7 @@ export function RegisteredAccountPromptProvider({
           <p className="mt-4 text-center text-sm text-zinc-500">
             アカウントをお持ちでない方は{" "}
             <Link
-              href="/register"
+              href={registerHref}
               onClick={closePrompt}
               className="font-medium text-violet-400 hover:text-violet-300"
             >

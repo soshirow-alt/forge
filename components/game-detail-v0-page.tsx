@@ -647,8 +647,13 @@ function GameDetailV0PageBody({
 
   const feedbackCtaLabel =
     hydrated && !isLoggedIn && !isGuestEntry
-      ? "ログインしてフィードバックする"
-      : "フィードバックする";
+      ? "ログインして声を届ける"
+      : "プレイ後に声を届ける";
+
+  const heroLeadText = game.lead.trim();
+  const phaseDescription = playerMeta?.phaseDescription?.trim() ?? "";
+  const heroDescriptionText = heroLeadText || phaseDescription;
+  const showPhaseHintBelowTitle = Boolean(heroLeadText && phaseDescription);
 
   const overviewPanel = useMemo(
     () => (
@@ -811,6 +816,11 @@ function GameDetailV0PageBody({
                   </h1>
                   {playerMeta ? <GameDetailPhaseBadge meta={playerMeta} /> : null}
                 </div>
+                {showPhaseHintBelowTitle ? (
+                  <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+                    {phaseDescription}
+                  </p>
+                ) : null}
                 {isRealProject && !isOwnerPreview ? (
                   <div className="mt-2">
                     <ContentReportButton
@@ -823,7 +833,11 @@ function GameDetailV0PageBody({
                     />
                   </div>
                 ) : null}
-                <p className="mt-2 break-words text-sm leading-relaxed text-zinc-400">{game.lead}</p>
+                {heroDescriptionText ? (
+                  <p className="mt-2 break-words text-sm leading-relaxed text-zinc-400">
+                    {heroDescriptionText}
+                  </p>
+                ) : null}
                 <Link
                   href={`/creators/${game.developer.id}`}
                   className="mt-4 inline-flex min-w-0 max-w-full flex-wrap items-center gap-2 break-words text-sm text-zinc-300 transition-colors hover:text-violet-300"
@@ -845,91 +859,100 @@ function GameDetailV0PageBody({
             </div>
           </section>
 
-          <div className="flex flex-col gap-2">
-          <div className="flex flex-wrap gap-3">
-            {hydrated &&
-            isLoggedIn &&
-            primaryPlayUrl &&
-            !playUnavailableOnPublic &&
-            (isRealProject ? Boolean(playSourceGame?.playUrl?.trim()) : true) ? (
-              <a
-                href={primaryPlayUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={handlePrimaryPlayAnchorClick}
-                className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
-              >
-                <Play className="size-4" aria-hidden="true" />
-                プレイする
-              </a>
-            ) : (
-              <button
-                type="button"
-                onClick={handlePlay}
-                disabled={!hydrated || playUnavailableOnPublic}
-                title={
-                  playUnavailableOnPublic ? PLAY_URL_MISSING_MESSAGE : undefined
-                }
-                className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <Play className="size-4" aria-hidden="true" />
-                {hydrated && (isLoggedIn || isGuestEntry)
-                  ? "プレイする"
-                  : "ログインしてプレイ"}
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={handleWatchToggle}
-              className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
-                watching
-                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
-                  : "border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-white"
-              }`}
-            >
-              <Check className="size-4" aria-hidden="true" />
-              {watching ? WATCH_BUTTON_ON : WATCH_BUTTON_OFF}
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                handleProtectedAction(() => {
-                  if (isRealProject) {
-                    void toggleSaved();
-                    return;
+          <div className="flex flex-col gap-2.5">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              {hydrated &&
+              isLoggedIn &&
+              primaryPlayUrl &&
+              !playUnavailableOnPublic &&
+              (isRealProject ? Boolean(playSourceGame?.playUrl?.trim()) : true) ? (
+                <a
+                  href={primaryPlayUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={handlePrimaryPlayAnchorClick}
+                  className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
+                >
+                  <Play className="size-4" aria-hidden="true" />
+                  プレイする
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handlePlay}
+                  disabled={!hydrated || playUnavailableOnPublic}
+                  title={
+                    playUnavailableOnPublic ? PLAY_URL_MISSING_MESSAGE : undefined
                   }
-                  setMockSaved((value) => !value);
-                })
-              }
-              className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
-                saved
-                  ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
-                  : "border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-white"
-              }`}
-            >
-              <Bookmark className="size-4" aria-hidden="true" />
-              {saved ? "保存済み" : "あとで遊ぶ"}
-            </button>
-            {showDeveloperFollow ? (
+                  className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Play className="size-4" aria-hidden="true" />
+                  {hydrated && (isLoggedIn || isGuestEntry)
+                    ? "プレイする"
+                    : "ログインしてプレイ"}
+                </button>
+              )}
               <button
                 type="button"
-                onClick={handleToggleDeveloperFollow}
-                className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
-                  realFollowing
-                    ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
-                    : "border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-white"
+                onClick={handleFeedback}
+                className="inline-flex items-center gap-2 rounded-xl border border-zinc-700/80 bg-transparent px-4 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200"
+              >
+                {feedbackCtaLabel}
+              </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleWatchToggle}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors sm:gap-2 sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-sm ${
+                  watching
+                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                    : "border-zinc-800 bg-zinc-950/40 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
                 }`}
               >
-                <Heart className="size-4" aria-hidden="true" />
-                {realFollowing ? "開発者フォロー中" : "開発者をフォロー"}
+                <Check className="size-3.5 sm:size-4" aria-hidden="true" />
+                {watching ? WATCH_BUTTON_ON : WATCH_BUTTON_OFF}
               </button>
+              <button
+                type="button"
+                onClick={() =>
+                  handleProtectedAction(() => {
+                    if (isRealProject) {
+                      void toggleSaved();
+                      return;
+                    }
+                    setMockSaved((value) => !value);
+                  })
+                }
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors sm:gap-2 sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-sm ${
+                  saved
+                    ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
+                    : "border-zinc-800 bg-zinc-950/40 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                }`}
+              >
+                <Bookmark className="size-3.5 sm:size-4" aria-hidden="true" />
+                {saved ? "保存済み" : "あとで遊ぶ"}
+              </button>
+              {showDeveloperFollow ? (
+                <button
+                  type="button"
+                  onClick={handleToggleDeveloperFollow}
+                  className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors sm:gap-2 sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-sm ${
+                    realFollowing
+                      ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
+                      : "border-zinc-800 bg-zinc-950/40 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                  }`}
+                >
+                  <Heart className="size-3.5 sm:size-4" aria-hidden="true" />
+                  {realFollowing ? "開発者フォロー中" : "開発者をフォロー"}
+                </button>
+              ) : null}
+            </div>
+            {playUnavailableOnPublic || playUrlMissingVisible ? (
+              <p className="text-xs text-zinc-500" role="status">
+                {PLAY_URL_MISSING_MESSAGE}
+              </p>
             ) : null}
-          </div>
-          {playUnavailableOnPublic || playUrlMissingVisible ? (
-            <p className="text-xs text-amber-300/90" role="status">
-              {PLAY_URL_MISSING_MESSAGE}
-            </p>
-          ) : null}
           </div>
 
           {isRealProject && !isOwnerPreview ? (

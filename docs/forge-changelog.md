@@ -4,6 +4,27 @@
 
 ---
 
+## 2026-07-06 — 作品ページ 共有前提 UI/UX 軽量改善（preview/landing-01）
+
+- **対象** — `/games/[id]`（初見プレイヤー・共有URL着地）
+- **ヒーロー** — lead 未設定時は `phaseDescription` を補助説明に表示。lead あり時はタイトル下にフェーズ説明を短く併記。フェーズバッジを violet/zinc に統一
+- **CTA** — 主CTA「プレイする」維持。セカンダリ「プレイ後に声を届ける」をヒーロー直下に追加（outline）。追跡・保存・フォローは2行目・軽量表示
+- **概要タブ** — `onFeedback` / `feedbackCtaLabel` を `GameDetailPlayerOverview` へ接続。「最近の動き」内に控えめなテキスト導線
+- **色味** — みんなのFBタブ内 orange/amber CTA・フィルタ選択を violet/zinc に。play URL 未設定警告を zinc 寄りに
+- **オーナー共有バー** — 説明を1行に圧縮（「このURLをプレイヤーに共有できます」）
+- **DB / auth / EntryGate 変更なし**
+
+---
+
+## 2026-07-06 — 共有リンク向け 登録 return 受け渡し（preview/landing-01）
+
+- **登録 return** — `buildRegisterUrlWithReturn` を追加。ログイン画面・保護CTAモーダル・登録画面・登録画面のログインリンクで `return` を引き継ぐ
+- **登録完了後** — `resolvePostLoginPath(returnParam)` で作品ページ等へ復帰（return なしは従来どおり）
+- **メール確認** — `emailRedirectTo` 経由で `/auth/welcome?return=...` を渡す。ウェルカム画面の続行ボタンが return 先へ（なしは `/home`）
+- **DB / EntryGate / RLS 変更なし**
+
+---
+
 ## 2026-07-06 — 投稿後・作品ページ共有導線 本番反映
 
 - **commit** — `cf10c67`（`a272840`〜`cf10c67` を `main` FF。`origin/main` = `origin/preview/landing-01`）

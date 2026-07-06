@@ -256,9 +256,13 @@ function PublicationPanel({
 function RecentActivityPanel({
   activity,
   focusNotes,
+  onFeedback,
+  feedbackCtaLabel,
 }: {
   activity: GameDetailOverviewActivity;
   focusNotes: string | null;
+  onFeedback?: () => void;
+  feedbackCtaLabel?: string;
 }) {
   return (
     <>
@@ -270,6 +274,16 @@ function RecentActivityPanel({
         </li>
         <li>{feedbackStatusLabel(activity.voiceCount)}</li>
       </ul>
+
+      {onFeedback && feedbackCtaLabel ? (
+        <button
+          type="button"
+          onClick={onFeedback}
+          className="mt-3 text-sm text-zinc-500 underline-offset-2 transition-colors hover:text-violet-300 hover:underline"
+        >
+          {feedbackCtaLabel}
+        </button>
+      ) : null}
 
       {focusNotes ? (
         <p className="mt-4 break-words border-l-2 border-violet-500/30 pl-3 text-sm leading-relaxed text-zinc-300">
@@ -293,6 +307,8 @@ type GameDetailPlayerOverviewProps = {
   onPlayDestinationOpen?: () => void;
   showUnsetPlayPlaceholders?: boolean;
   mutedIntroduction?: boolean;
+  onFeedback?: () => void;
+  feedbackCtaLabel?: string;
 };
 
 export function GameDetailPlayerOverview({
@@ -305,6 +321,8 @@ export function GameDetailPlayerOverview({
   onPlayDestinationOpen,
   showUnsetPlayPlaceholders = false,
   mutedIntroduction = false,
+  onFeedback,
+  feedbackCtaLabel,
 }: GameDetailPlayerOverviewProps) {
   const introText = resolveIntroText(game.introduction, heroLead);
   const displayFeatures = game.features.filter(
@@ -332,6 +350,8 @@ export function GameDetailPlayerOverview({
           <RecentActivityPanel
             activity={activity}
             focusNotes={playerMeta.focusNotes}
+            onFeedback={onFeedback}
+            feedbackCtaLabel={feedbackCtaLabel}
           />
         </OverviewCard>
       </div>
