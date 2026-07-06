@@ -31,7 +31,7 @@ export function ProjectSubmitModal({ open, onClose }: ProjectSubmitModalProps) {
     setSuccessState(null);
   }
 
-  const title = successState ? "作品を投稿しました" : "作品を投稿する";
+  const title = successState ? "投稿しました！" : "作品を投稿する";
   const subtitle = successState
     ? undefined
     : "開発中のゲーム情報を入力して、Forgeに掲載しましょう";
