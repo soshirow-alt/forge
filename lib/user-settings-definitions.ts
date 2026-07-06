@@ -82,15 +82,14 @@ export const forgeNotificationStudioItems: SettingsToggleItem[] = [
     id: "witness",
     label: "作品フォロー",
     enabled: true,
-    helpText: "あなたの作品を誰かが「作品を追う」したとき",
+    helpText: "あなたの作品が新しくフォローされたとき",
   },
   {
     id: "version-play",
     label: "初プレイ・ver更新後プレイ",
     enabled: true,
     comingSoon: true,
-    helpText:
-      "プレイのたびには通知しません。将来は初プレイ・ver更新後の初プレイなど節目のみ対象予定",
+    helpText: "初めて遊ばれたときや、ver更新後に初めて遊ばれたとき",
   },
   {
     id: "community",
@@ -117,14 +116,14 @@ export const privacySettingsSection: ForgeSettingsSection = {
       label: "プロフィールの公開",
       enabled: true,
       comingSoon: true,
-      helpText: "公開プロフィール機能の公開時に利用できます",
+      helpText: "公開プロフィールに表示する情報",
     },
     {
       id: "activity",
       label: "最近の活動の表示",
       enabled: true,
       comingSoon: true,
-      helpText: "活動表示機能の公開時に利用できます",
+      helpText: "最近遊んだ作品やFBなどの活動表示",
     },
     {
       id: "ranking",
@@ -133,7 +132,7 @@ export const privacySettingsSection: ForgeSettingsSection = {
       comingSoon: true,
       // DB/RPC: privacy.ranking is wired in get_monthly_player_influence_ranking,
       // but the ranking product surface is inactive — keep Coming Soon in UI.
-      helpText: "ランキング機能の公開時に利用できます",
+      helpText: "ランキングに自分を表示するかどうか",
     },
   ],
 };
@@ -147,7 +146,7 @@ export const studioPublicSettingsSection: ForgeSettingsSection = {
       id: "dev-profile",
       label: "開発者プロフィールを公開",
       enabled: true,
-      helpText: "OFF にすると /creators/ ページは非公開（作品ページからは辿れません）",
+      helpText: "開発者プロフィールページ（/creators/）を公開するかどうか",
     },
   ],
 };
