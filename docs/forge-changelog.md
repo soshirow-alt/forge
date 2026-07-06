@@ -9,6 +9,12 @@
 - **投稿成功パネル** — 「もう1本投稿する」→「続けて投稿する」のみ変更。見出し・説明・その他CTAは従来どおり維持
 - **DB / auth 変更なし**
 
+### 本番反映（同日）
+
+- **commit** — `10260fb`（`origin/main` = `origin/preview/landing-01`）
+- **本番 URL** — https://forge-flame-gamma.vercel.app
+- **deploy** — `dpl_Eoyu9qDDNTqGuScFyAYdLmvkLyeR`（`vercel deploy --prod`）
+
 ---
 
 ## 2026-07-06 — 作品ページ共有導線・ログイン return・オーナーUI 本番反映
