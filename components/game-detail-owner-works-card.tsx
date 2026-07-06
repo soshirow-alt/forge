@@ -1,10 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useState } from "react";
-import { Check, Copy } from "lucide-react";
+import { useState } from "react";
 import { ProjectShareLinkModal } from "@/components/project-share-link-modal";
-import { getClientProjectPageUrl } from "@/lib/project-share";
 import { studioOverviewEditHref } from "@/lib/studio-edit-url";
 import { isGamePublic } from "@/lib/project-visibility";
 import type { ProjectVisibility } from "@/lib/project-visibility";
@@ -29,19 +27,8 @@ export function GameDetailOwnerWorksCard({
   studioHref,
 }: GameDetailOwnerWorksCardProps) {
   const [shareOpen, setShareOpen] = useState(false);
-  const [urlCopied, setUrlCopied] = useState(false);
   const isPublic = isGamePublic({ visibility: visibility ?? "public" });
   const visibilityEditHref = studioOverviewEditHref(projectId, "visibility");
-
-  const handleCopyUrl = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(getClientProjectPageUrl(projectId));
-      setUrlCopied(true);
-      window.setTimeout(() => setUrlCopied(false), 2000);
-    } catch {
-      /* clipboard unavailable */
-    }
-  }, [projectId]);
 
   return (
     <>
@@ -60,23 +47,6 @@ export function GameDetailOwnerWorksCard({
                 className={primaryActionButtonClassName}
               >
                 外部に共有する
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleCopyUrl()}
-                className={actionButtonClassName}
-              >
-                {urlCopied ? (
-                  <>
-                    <Check className="size-4" aria-hidden="true" />
-                    URLをコピーしました
-                  </>
-                ) : (
-                  <>
-                    <Copy className="size-4" aria-hidden="true" />
-                    URLをコピー
-                  </>
-                )}
               </button>
               <Link href={studioHref} className={actionButtonClassName}>
                 Studioで作品を編集する
