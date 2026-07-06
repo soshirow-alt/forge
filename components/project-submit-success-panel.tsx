@@ -124,7 +124,7 @@ export function ProjectSubmitSuccessPanel({
               onClick={onSubmitAnother}
               className={tertiaryCtaClassName}
             >
-              もう1本投稿する
+              続けて投稿する
             </button>
           ) : (
             <Link
@@ -132,7 +132,7 @@ export function ProjectSubmitSuccessPanel({
               onClick={onClose}
               className={tertiaryCtaClassName}
             >
-              もう1本投稿する
+              続けて投稿する
             </Link>
           )}
         </div>

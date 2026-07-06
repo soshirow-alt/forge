@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-06 — 投稿完了画面 CTA 文言のみ調整（preview/landing-01）
+
+- **投稿成功パネル** — 「もう1本投稿する」→「続けて投稿する」のみ変更。見出し・説明・その他CTAは従来どおり維持
+- **DB / auth 変更なし**
+
+---
+
 ## 2026-07-06 — 作品ページ共有導線・ログイン return・オーナーUI 本番反映
 
 - **commit** — `be4f4b8`（`fd53bbb`〜`be4f4b8` を `main` FF。`origin/main` = `origin/preview/landing-01`）
