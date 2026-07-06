@@ -89,7 +89,7 @@ export function YourInvolvementCard({
           ログインすると、この作品との関わりが残ります。
         </p>
         <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-          プレイ履歴や届けた声をあとから見られます。
+          プレイ履歴や送ったフィードバックをあとから見られます。
         </p>
         <Link
           href={loginHref.startsWith(LOGIN_PATH) ? loginHref : LOGIN_PATH}
@@ -119,7 +119,7 @@ export function YourInvolvementCard({
 
       {!hasInvolvement || !involvement ? (
         <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-          まだこの作品との関わりはありません。プレイや声を届けると、ここに残ります。
+          まだこの作品との関わりはありません。プレイやフィードバックを送ると、ここに残ります。
         </p>
       ) : (
         <dl className="mt-4 space-y-2.5">
@@ -141,10 +141,10 @@ export function YourInvolvementCard({
           />
           <Row label="プレイ回数" value={`${involvement.playCount}回`} />
           <Row label="再プレイ" value={`${involvement.replayCount}回`} />
-          <Row label="届けた声" value={voiceFeedbackLabel(involvement)} />
+          <Row label="送ったフィードバック" value={voiceFeedbackLabel(involvement)} />
           {involvement.lastVoiceVersion ? (
             <Row
-              label="最後に声を届けた版"
+              label="最後にフィードバックした版"
               value={formatPlayableVersionLabel(involvement.lastVoiceVersion)}
             />
           ) : null}

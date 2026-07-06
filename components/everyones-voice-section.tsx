@@ -220,7 +220,36 @@ export function EveryonesVoiceSection({
             ? latestVersion
             : versionFilter;
 
+      const singleAggregateVersionKey =
+        versionFilter === "latest"
+          ? latestVersion
+          : versionFilter !== "all"
+            ? versionFilter
+            : null;
+
       try {
+        if (singleAggregateVersionKey) {
+          const [cardsResult, aggregateRows] = await Promise.all([
+            getPublicFeedbackCards(gameId, cardVersionParam),
+            getPublicVoiceAggregates(gameId, singleAggregateVersionKey),
+          ]);
+
+          if (cancelled) {
+            return;
+          }
+
+          setFeedbackCards(cardsResult.cards);
+          const versions =
+            cardsResult.availableVersions.length > 0
+              ? cardsResult.availableVersions
+              : [latestVersion];
+          setAvailableVersions(versions);
+          setAggregates(
+            buildVersionedAggregates(aggregateRows, singleAggregateVersionKey),
+          );
+          return;
+        }
+
         const cardsResult = await getPublicFeedbackCards(gameId, cardVersionParam);
         if (cancelled) {
           return;
@@ -233,15 +262,8 @@ export function EveryonesVoiceSection({
             : [latestVersion];
         setAvailableVersions(versions);
 
-        const versionKeysForAggregates =
-          versionFilter === "all"
-            ? versions
-            : [versionFilter === "latest" ? latestVersion : versionFilter];
-
         const aggregateGroups = await Promise.all(
-          versionKeysForAggregates.map((version) =>
-            getPublicVoiceAggregates(gameId, version),
-          ),
+          versions.map((version) => getPublicVoiceAggregates(gameId, version)),
         );
 
         if (cancelled) {
@@ -250,7 +272,7 @@ export function EveryonesVoiceSection({
 
         setAggregates(
           aggregateGroups.flatMap((rows, index) =>
-            buildVersionedAggregates(rows, versionKeysForAggregates[index] ?? latestVersion),
+            buildVersionedAggregates(rows, versions[index] ?? latestVersion),
           ),
         );
       } catch {
