@@ -66,7 +66,7 @@ OAuth 2.0 コールバック後、`auth.users` / `identities` の metadata か�
    - Production: `https://forge-flame-gamma.vercel.app`
 
 6. **App permissions**: 最小（Sign in with X に必要な read 系のみ。**Write 不要**）
-7. **App name（表示名）**: 同意画面に出る名称。**`Forge`** に設定する（Client ID や内部 App name がそのまま出ると `2073817817313427457Forge_game_` のように数字付きで怪しく見える）
+7. **App name（表示名）**: 同意画面に出る名称。**`Forge game`** に設定する（`Forge` 単体は取得不可だったため。Client ID や内部 App name がそのまま出ると数字付きで怪しく見える）
 8. **Request email from users**: X Developer 側は **OFF 推奨**（Forge は X メールを使わない）— ただし **Supabase Auth が `users.email` scope を固定要求**するため、同意画面に *Your email address* が出続ける可能性あり（後述 §4.1）
 9. **Client ID** / **Client Secret** を控える（Secret は **Supabase Dashboard のみ**。Forge `.env` / Vercel env には置かない）
 
@@ -112,7 +112,20 @@ https://forge-flame-gamma.vercel.app/auth/callback
 http://localhost:3000/auth/callback
 ```
 
-**Site URL を Preview に変えない理由**: `bpnisgzxuwdxelhnduuf` は Preview / 本番共通。Site URL を Preview にすると本番のメール認証・パスワードリセット・デフォルトリダイレクトに影響しうる。X OAuth はコード側 `redirectTo`（`getOAuthRedirectUrl()` = 各環境の `origin` + `/auth/callback`）で Preview も動くため、**Redirect URLs 追加のみで足りる**。
+**Site URL を Preview に変えない理由**: `bpnisgzxuwdxelhnduuf` は Preview / 本番共通。Site URL を Preview にすると本番のメール認証・パスワードリセット・デフォルトリダイレクトに影響しうる。X OAuth はコード側 `getOAuthRedirectUrl()` = **開始したページの origin** + `/auth/callback` で Preview / 本番を分離するため、**Redirect URLs allowlist 追加が必須**。
+
+**Redirect URL 未登録時の挙動（2026-07-06 E2E FAIL 原因）**
+
+- Supabase は `redirectTo` が allowlist に **完全一致しない**と **Site URL（本番 LP）へフォールバック**する
+- 症状: Preview `/settings` → X 許可 → **本番 LP**（`forge-flame-gamma.vercel.app`）へ飛ぶ
+- 対処: Dashboard → Authentication → URL Configuration → Redirect URLs に **Preview host を正確に追加**（末尾スラッシュなし）
+- 推奨（将来の Preview host 変更に強い）: `https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app/auth/callback` に加え、必要なら `https://*.vercel.app/auth/callback` を検討（セキュリティと運用のトレードオフ — オーナー判断）
+
+**E2E 前チェック（オーナー）**
+
+1. Redirect URLs に上記 3 件（Preview / 本番 / localhost）が **すべて** 入っている
+2. Preview `/settings` → Xで連携 → X 同意 URL の `redirect_uri` は Supabase（`…supabase.co/auth/v1/callback`）であること
+3. X 許可後、ブラウザが **Preview host** の `/auth/callback?flow=x_link&next=/settings` を経由すること（本番 host なら NG）
 
 **Authentication → Settings（Identity linking）**
 
@@ -129,7 +142,7 @@ Cursor が参照する既存変数（変更不要）:
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase プロジェクト URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | クライアント Auth |
 | `SUPABASE_SERVICE_ROLE_KEY` | サーバー enrich（既存） |
-| `NEXT_PUBLIC_SITE_URL` | OAuth `redirectTo` 生成（未設定時は `window.location.origin`） |
+| `NEXT_PUBLIC_SITE_URL` | メタデータ OGP 等。**OAuth `redirectTo` には使わない**（ブラウザ `window.location.origin` を使用） |
 | `NEXT_PUBLIC_X_AUTH_ENABLED` | **`true`** — 本番含め全環境 ON。**`false`** — 本番/local OFF（Preview branch デプロイは **常に ON** — E2E 用）。**未設定** — local ON、本番 release OFF |
 
 **X Client Secret は Forge 側に置かない**（Supabase Dashboard のみ。Vercel env にも追加しない）。
@@ -182,7 +195,7 @@ Cursor が参照する既存変数（変更不要）:
 
 #### 本番 GO 前の対応案（優先順）
 
-1. **オーナー**: X Developer の **App 表示名を `Forge` に修正**（`2073817817313427457Forge_game_` 問題）
+1. **オーナー**: X Developer の **App 表示名を `Forge game` に設定**（同意画面 E2E で確認）
 2. **オーナー**: 同意画面スクショを残し、利用規約/プライバシーで「要求 scope と Forge 実利用の差」を明記するか検討
 3. **Cursor / 将来**: Supabase へ X provider scope 最小化 feature request（`tweet.read users.read` のみ + `offline.access`/`users.email` オプトアウト）
 
@@ -208,19 +221,25 @@ await supabase.auth.signInWithOAuth({
 Forge /login → signInWithOAuth('x')
   → X 同意画面
   → Supabase /auth/v1/callback
-  → Forge /auth/callback?code=...&next=...
+  → Forge /auth/callback?code=...&flow=x_login&next=...
   → exchangeCodeForSession
   → upsert_own_x_profile RPC
-  → next へ redirect
+  → next へ redirect（同一 origin 内）
 ```
 
 連携導線（ログイン済み）:
 
 ```
-/settings → linkIdentity({ provider: 'x' })
-  → 同上 callback
-  → /settings?x=linked
+/settings → linkIdentity('x')
+  → X 同意画面
+  → Supabase /auth/v1/callback
+  → Forge /auth/callback?code=...&flow=x_link&next=/settings
+  → exchangeCodeForSession
+  → upsert_own_x_profile RPC
+  → /settings?x=linked（同一 origin 内）
 ```
+
+**禁止**: Preview で開始した OAuth が `forge-flame-gamma.vercel.app` の `/auth/callback` または本番 LP へ戻ること。
 
 ---
 
@@ -272,7 +291,7 @@ Forge /login → signInWithOAuth('x')
 | # | 確認項目 | 期待結果 |
 |---|---|---|
 | 1 | `/settings` → **Xで連携** | X 同意画面へ遷移 |
-| 2 | X 同意画面 | アプリ名 **Forge**（または Forge game）表示。scope 表示は runbook §4.1 参照 |
+| 2 | X 同意画面 | アプリ名 **Forge game** 表示。scope 表示は runbook §4.1 参照 |
 | 3 | callback 後 | `/settings?x=linked`（または next 指定先） |
 | 4 | DB | `user_x_profiles` 行が作成（`x_username` 等） |
 | 5 | UI | `/settings` 連携済み `@handle` 表示 |
@@ -306,8 +325,27 @@ Forge /login → signInWithOAuth('x')
 
 ---
 
-## 9. 未実施（明示）
+## 9. 本番 deploy GO 条件（E2E 後）
+
+**041 migration** — `bpnisgzxuwdxelhnduuf`（Preview / 本番共通 DB）に **適用済み**（2026-07-05 Dashboard 適用 + 2026-07-06 post-check 再確認 PASS: FB 4 テーブル / `optional_comment` / `moderation_status` / `feedback_reports` / `get_public_feedback_cards`）
+
+**042 / 043** — Dashboard 適用済み + post-check PASS（別途 changelog 参照）
+
+**本番 Vercel env（deploy GO 直前に必須）**
+
+| 変数 | 値 | 備考 |
+|---|---|---|
+| `NEXT_PUBLIC_X_AUTH_ENABLED` | **`true`** | 未設定のまま deploy すると本番で X ボタン非表示 |
+| X Client Secret | **設定しない** | Supabase Dashboard のみ |
+
+**X Developer App 表示名** — **`Forge game`**（同意画面 E2E で確認）
+
+**オーナー GO 後の手順** — main fast-forward merge → push（本番 deploy）→ `preview/landing-01` を main に同期 push → 本番 smoke（/login, /settings, メールログイン, ゲスト, 作品詳細, 公開FB, creators）
+
+---
+
+## 10. 未実施（明示）
 
 - Preview OAuth E2E（テスト用 X）— **実施中**（§7 チェックリスト）
 - main 反映 / production deploy
-- 本番 Vercel `NEXT_PUBLIC_X_AUTH_ENABLED=true`（deploy GO 時）
+- 本番 Vercel `NEXT_PUBLIC_X_AUTH_ENABLED=true`（§9 deploy GO 直前）

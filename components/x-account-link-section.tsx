@@ -37,6 +37,13 @@ function readXLinkStatusMessage(searchParams: URLSearchParams) {
     };
   }
 
+  if (reason === "callback_failed") {
+    return {
+      tone: "error" as const,
+      text: "X連携の完了処理に失敗しました。もう一度お試しください。",
+    };
+  }
+
   return null;
 }
 
@@ -89,7 +96,7 @@ export function XAccountLinkSection() {
     setActionMessage(null);
 
     try {
-      await linkOAuthIdentity("x" as Provider, "/settings?x=linked");
+      await linkOAuthIdentity("x" as Provider, "/settings");
     } catch (caught) {
       const authError = caught as { message?: string; code?: string };
       setActionMessage({

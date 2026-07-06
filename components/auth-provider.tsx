@@ -235,7 +235,10 @@ export function AuthProvider({
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: getOAuthRedirectUrl(nextPath),
+          redirectTo: getOAuthRedirectUrl(
+            nextPath,
+            provider === "x" ? "x_login" : undefined,
+          ),
         },
       });
 
@@ -277,7 +280,10 @@ export function AuthProvider({
       const { data, error } = await auth.linkIdentity({
         provider,
         options: {
-          redirectTo: getOAuthRedirectUrl(nextPath),
+          redirectTo: getOAuthRedirectUrl(
+            nextPath,
+            provider === "x" ? "x_link" : undefined,
+          ),
         },
       });
 

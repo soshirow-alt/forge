@@ -4,6 +4,28 @@
 
 ---
 
+## 2026-07-06 — Preview OAuth E2E FAIL → redirect 修正（NO-GO 継続）
+
+- **事象** — Preview `/settings` → X 許可後、Preview に戻らず **本番 LP** へ遷移。E2E **FAIL** → main / 本番 deploy **NO-GO**
+- **原因（最有力）** — Supabase Redirect URLs allowlist に Preview `/auth/callback` が未登録 or 不一致 → Site URL（本番）へフォールバック
+- **コード修正** — OAuth `redirectTo` を **`window.location.origin` 固定**（`getClientAuthOrigin`）。`flow=x_login` / `flow=x_link` を callback に付与。`x_link` 成功時は必ず同一 origin の `/settings?x=linked`。エラー時も `x_link` は `/settings?x=error…`（本番 login へ飛ばさない）
+- **旧ログイン UI** — `OAuthComingSoonSection` / `OAuthButtons`（Google/Discord/GitHub Coming Soon 文言）を repo から削除。現行 `/login` は X + メール + ゲストのみ。**本番（main 未 merge）では旧 UI が残る** — merge 後解消
+- **初回開発者導線** — 「いいえ」→ `/studio` 上なら `/home`（発見）へ。Studio ボタンは後から利用可
+- **オーナー必須** — Supabase Redirect URLs に Preview callback を **正確に** 追加してから E2E 再試行。`user_x_profiles` 既存行は Dashboard SQL で確認（テスト X が既連携なら `already_linked` 用に整理）
+- **未実施** — Preview OAuth E2E 再試行 / main / 本番 deploy
+
+---
+
+## 2026-07-06 — 本番 deploy 前 GO 条件更新（041 再確認 / App名 / env）
+
+- **041 適用済み再確認** — `bpnisgzxuwdxelhnduuf` で post-check REST **PASS**（FB 4 テーブル / `optional_comment` / `moderation_status` / `hidden_at` / `report_count` / `feedback_reports` / `get_public_feedback_cards`）。042 pre-check 時と同一 DB 上で 041 前提 OK
+- **X Developer App 表示名** — **`Forge game`**（`Forge` 単体は取得不可）。E2E 同意画面で **Forge game** 表示を確認すること
+- **本番 deploy 直前 env** — Vercel Production で `NEXT_PUBLIC_X_AUTH_ENABLED=true` **必須**。X Client Secret は Supabase Dashboard のみ（Vercel 不可）
+- **GPT 判定** — Preview OAuth E2E PASS 後に本番 deploy **GO 寄り**
+- **未実施** — Preview OAuth E2E / main / 本番 deploy
+
+---
+
 ## 2026-07-06 — X Developer クレジット $5 購入 + Preview OAuth E2E 開始
 
 - **X Developer** — **$5 credit 購入済み**。自動チャージ **OFF**（ON にしない）。Premium+ / xAI / 追加自動課金なし
@@ -26,7 +48,7 @@
 - **OAuth scope 実測** — Supabase 経由 X URL の `scope=` は `users.email tweet.read users.read offline.access`。Forge は scopes 未指定。`options.scopes: tweet.read users.read` でも削減不可（append のみ）。write/DM 系なし
 - **email 表示** — Request email OFF でも `users.email` scope が URL に載るため同意画面に出うる
 - **日本語化** — X authorize URL に lang 系パラメータなし。Forge から確実な日本語化は未確認
-- **本番 GO 前（オーナー）** — X Developer App 表示名を **`Forge`** に修正。同意画面の権限表示と Forge 実利用の差は runbook §4.1 参照
+- **本番 GO 前（オーナー）** — X Developer App 表示名 **`Forge game`**（`Forge` 単体は取得不可）。同意画面の権限表示と Forge 実利用の差は runbook §4.1 参照
 - **本番 GO 前（確認）** — 本番 hostname で `NEXT_PUBLIC_X_AUTH_ENABLED` 未設定時に X ボタンが **出ない**こと（意図どおり）。Preview hostname 判定の退行がないこと
 - **未実施** — main / 本番 deploy
 

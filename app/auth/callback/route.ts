@@ -1,5 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { resolveSafeAuthNextPath } from "@/lib/auth-redirect";
+import {
+  resolveOAuthCallbackDestination,
+  resolveOAuthCallbackErrorPath,
+  resolveSafeAuthNextPath,
+} from "@/lib/auth-redirect";
 import { syncUserXProfileAfterAuth } from "@/lib/sync-user-x-profile";
 import { createClient } from "@/lib/supabase/server";
 
@@ -16,20 +20,21 @@ function withQuery(path: string, params: Record<string, string>): string {
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
+  const flow = searchParams.get("flow");
   const next = resolveSafeAuthNextPath(searchParams.get("next"));
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/login?error=auth_callback`);
+    return NextResponse.redirect(`${origin}${resolveOAuthCallbackErrorPath(flow)}`);
   }
 
   const supabase = await createClient();
   if (!supabase) {
-    return NextResponse.redirect(`${origin}/login?error=auth_callback`);
+    return NextResponse.redirect(`${origin}${resolveOAuthCallbackErrorPath(flow)}`);
   }
 
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
-    return NextResponse.redirect(`${origin}/login?error=auth_callback`);
+    return NextResponse.redirect(`${origin}${resolveOAuthCallbackErrorPath(flow)}`);
   }
 
   const syncResult = await syncUserXProfileAfterAuth(supabase);
@@ -40,12 +45,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (syncResult.code === "sync_failed" && next.startsWith("/settings")) {
+    if (syncResult.code === "sync_failed" && (flow === "x_link" || next.startsWith("/settings"))) {
       return NextResponse.redirect(
-        `${origin}${withQuery(next, { x: "error", reason: "sync_failed" })}`,
+        `${origin}${withQuery("/settings", { x: "error", reason: "sync_failed" })}`,
       );
     }
   }
 
-  return NextResponse.redirect(`${origin}${next}`);
+  const destination = resolveOAuthCallbackDestination({ flow, next });
+  return NextResponse.redirect(`${origin}${destination}`);
 }

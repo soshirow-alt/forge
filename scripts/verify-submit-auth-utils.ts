@@ -6,6 +6,11 @@
  */
 import type { PostgrestError } from "@supabase/supabase-js";
 import assert from "node:assert/strict";
+import {
+  buildAuthCallbackUrl,
+  resolveOAuthCallbackDestination,
+  resolveOAuthCallbackErrorPath,
+} from "../lib/auth-redirect";
 import { mapProjectSubmitErrorMessage } from "../lib/error-message";
 import { sanitizeLoginReturnUrl } from "../lib/login-return-url";
 import { projectThumbnailsForDb, sanitizeProjectThumbnailUrls } from "../lib/project-thumbnails";
@@ -517,6 +522,109 @@ function testAuthRedirectLoopGuardContract() {
   );
 }
 
+function testOAuthRedirectOriginContract() {
+  const fs = require("node:fs") as typeof import("node:fs");
+  const path = require("node:path") as typeof import("node:path");
+  const authRedirect = fs.readFileSync(
+    path.join(import.meta.dirname, "../lib/auth-redirect.ts"),
+    "utf8",
+  );
+  const authProvider = fs.readFileSync(
+    path.join(import.meta.dirname, "../components/auth-provider.tsx"),
+    "utf8",
+  );
+  const callbackRoute = fs.readFileSync(
+    path.join(import.meta.dirname, "../app/auth/callback/route.ts"),
+    "utf8",
+  );
+  const loginPage = fs.readFileSync(
+    path.join(import.meta.dirname, "../components/login-page.tsx"),
+    "utf8",
+  );
+
+  ok(
+    authRedirect.includes("getClientAuthOrigin") &&
+      authRedirect.includes("window.location.origin"),
+    "OAuth redirect uses browser origin",
+  );
+  ok(
+    authRedirect.includes('flow === "x_link"') &&
+      authRedirect.includes("/settings?x=linked"),
+    "x_link callback resolves to /settings?x=linked",
+  );
+  ok(
+    authProvider.includes('provider === "x" ? "x_login"') &&
+      authProvider.includes('provider === "x" ? "x_link"'),
+    "auth-provider tags X OAuth flows",
+  );
+  ok(
+    callbackRoute.includes("resolveOAuthCallbackDestination") &&
+      !callbackRoute.includes("NEXT_PUBLIC_SITE_URL"),
+    "callback route uses request origin, not SITE_URL",
+  );
+  ok(
+    loginPage.includes("XOAuthLoginSection") &&
+      !loginPage.includes("OAuthComingSoonSection") &&
+      !loginPage.includes("Google / Discord / GitHub"),
+    "login page uses current X OAuth UI only",
+  );
+}
+
+function testOAuthRedirectUrlValues() {
+  const previewOrigin =
+    "https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app";
+  const prodOrigin = "https://forge-flame-gamma.vercel.app";
+
+  const xLink = buildAuthCallbackUrl({
+    origin: previewOrigin,
+    nextPath: "/settings",
+    flow: "x_link",
+  });
+  const xLinkUrl = new URL(xLink);
+  ok(xLinkUrl.origin === previewOrigin, `x_link origin: ${xLinkUrl.origin}`);
+  ok(xLinkUrl.pathname === "/auth/callback", `x_link path: ${xLinkUrl.pathname}`);
+  ok(xLinkUrl.searchParams.get("flow") === "x_link", "x_link flow param");
+  ok(xLinkUrl.searchParams.get("next") === "/settings", "x_link next param");
+  ok(!xLink.includes(prodOrigin), "x_link must not use production origin");
+
+  const xLogin = buildAuthCallbackUrl({
+    origin: previewOrigin,
+    nextPath: "/studio/mypage",
+    flow: "x_login",
+  });
+  const xLoginUrl = new URL(xLogin);
+  ok(xLoginUrl.origin === previewOrigin, `x_login origin: ${xLoginUrl.origin}`);
+  ok(xLoginUrl.pathname === "/auth/callback", `x_login path: ${xLoginUrl.pathname}`);
+  ok(xLoginUrl.searchParams.get("flow") === "x_login", "x_login flow param");
+  ok(xLoginUrl.searchParams.get("next") === "/studio/mypage", "x_login next param");
+
+  const prodLink = buildAuthCallbackUrl({
+    origin: prodOrigin,
+    nextPath: "/settings",
+    flow: "x_link",
+  });
+  ok(new URL(prodLink).origin === prodOrigin, "production origin for prod start");
+
+  ok(
+    resolveOAuthCallbackDestination({ flow: "x_link", next: "/settings" }) ===
+      "/settings?x=linked",
+    "x_link success destination",
+  );
+  ok(
+    resolveOAuthCallbackErrorPath("x_link") ===
+      "/settings?x=error&reason=callback_failed",
+    "x_link error destination",
+  );
+  ok(
+    resolveOAuthCallbackErrorPath("x_login") === "/login?error=auth_callback",
+    "x_login error destination",
+  );
+  ok(
+    resolveOAuthCallbackErrorPath(null) === "/login?error=auth_callback",
+    "default error destination",
+  );
+}
+
 function testLoginPageSourceContract() {
   const fs = require("node:fs") as typeof import("node:fs");
   const path = require("node:path") as typeof import("node:path");
@@ -666,6 +774,8 @@ async function main() {
     ["public catalog auth independence contract", testPublicCatalogAuthIndependenceContract],
     ["home search public catalog contract", testHomeSearchPublicCatalogContract],
     ["auth redirect loop guard contract", testAuthRedirectLoopGuardContract],
+    ["OAuth redirect origin contract", testOAuthRedirectOriginContract],
+    ["OAuth redirect URL values", testOAuthRedirectUrlValues],
     ["login page source contract", testLoginPageSourceContract],
     ["game detail tabs", testGameDetailTabs],
     ["real devlog mapping", testRealDevlogMapping],
