@@ -1,81 +1,181 @@
-import { type NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import {
   resolveOAuthCallbackDestination,
-  resolveOAuthCallbackErrorPath,
   resolveSafeAuthNextPath,
 } from "@/lib/auth-redirect";
 import {
+  logOAuthCallbackStep,
+  loginAuthErrorPath,
+  mapExchangeErrorMessage,
+  settingsXErrorPath,
+  type OAuthCallbackFailReason,
+} from "@/lib/oauth-callback-errors";
+import {
   readOAuthFlowCookies,
-  redirectWithOAuthCookieClear,
+  clearOAuthFlowCookies,
 } from "@/lib/oauth-flow-cookie";
 import { syncUserXProfileAfterAuth } from "@/lib/sync-user-x-profile";
-import { createClient } from "@/lib/supabase/server";
+import {
+  createRouteHandlerSupabase,
+  redirectWithSupabaseCookies,
+} from "@/lib/supabase/route-handler";
 
-function withQuery(path: string, params: Record<string, string>): string {
-  const [pathname, existingQuery = ""] = path.split("?");
-  const searchParams = new URLSearchParams(existingQuery);
-  for (const [key, value] of Object.entries(params)) {
-    searchParams.set(key, value);
-  }
-  const query = searchParams.toString();
-  return query ? `${pathname}?${query}` : pathname;
+function finalizeRedirect(
+  targetUrl: string,
+  cookieResponse: () => NextResponse,
+) {
+  const redirect = redirectWithSupabaseCookies(targetUrl, cookieResponse());
+  clearOAuthFlowCookies(redirect);
+  return redirect;
+}
+
+function xLinkErrorRedirect(
+  origin: string,
+  reason: OAuthCallbackFailReason,
+  cookieResponse: () => NextResponse,
+) {
+  return finalizeRedirect(`${origin}${settingsXErrorPath(reason)}`, cookieResponse);
+}
+
+function xLoginErrorRedirect(
+  origin: string,
+  reason: OAuthCallbackFailReason,
+  cookieResponse: () => NextResponse,
+) {
+  return finalizeRedirect(`${origin}${loginAuthErrorPath(reason)}`, cookieResponse);
 }
 
 function readOAuthState(request: NextRequest) {
   const fromCookies = readOAuthFlowCookies((name) => request.cookies.get(name)?.value);
-
-  if (fromCookies.flow) {
-    return fromCookies;
-  }
-
-  // Email/password flows may still pass next via query (not Supabase OAuth redirectTo).
   const { searchParams } = new URL(request.url);
+
   return {
     flow: fromCookies.flow,
-    next: resolveSafeAuthNextPath(searchParams.get("next")),
+    next: fromCookies.flow
+      ? fromCookies.next
+      : resolveSafeAuthNextPath(searchParams.get("next")),
+    hasFlowCookie: Boolean(fromCookies.flow),
   };
 }
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const { flow, next } = readOAuthState(request);
+  const oauthError = searchParams.get("error");
+  const oauthErrorDescription = searchParams.get("error_description");
+  const { flow, next, hasFlowCookie } = readOAuthState(request);
+
+  const routeSupabase = createRouteHandlerSupabase(request);
+  if (!routeSupabase) {
+    logOAuthCallbackStep("supabase_not_configured", { flow: flow ?? "none" });
+    const reason: OAuthCallbackFailReason = "callback_failed";
+    const target =
+      flow === "x_link"
+        ? `${origin}${settingsXErrorPath(reason)}`
+        : `${origin}${loginAuthErrorPath(reason)}`;
+    return NextResponse.redirect(target);
+  }
+
+  const { supabase, cookieResponse } = routeSupabase;
+
+  logOAuthCallbackStep("start", {
+    flow: flow ?? "none",
+    hasFlowCookie,
+    hasCode: Boolean(code),
+    oauthError: oauthError ?? "none",
+  });
+
+  if (oauthError) {
+    logOAuthCallbackStep("oauth_provider_error", {
+      flow: flow ?? "none",
+      oauthError,
+      detail: oauthErrorDescription?.slice(0, 200) ?? null,
+    });
+    if (flow === "x_link") {
+      return xLinkErrorRedirect(origin, "oauth_provider_error", cookieResponse);
+    }
+    return xLoginErrorRedirect(origin, "oauth_provider_error", cookieResponse);
+  }
 
   if (!code) {
-    return redirectWithOAuthCookieClear(
-      `${origin}${resolveOAuthCallbackErrorPath(flow)}`,
-    );
+    logOAuthCallbackStep("missing_code", { flow: flow ?? "none", hasFlowCookie });
+    if (flow === "x_link") {
+      return xLinkErrorRedirect(
+        origin,
+        hasFlowCookie ? "missing_code" : "missing_oauth_flow_cookie",
+        cookieResponse,
+      );
+    }
+    return xLoginErrorRedirect(origin, "missing_code", cookieResponse);
   }
 
-  const supabase = await createClient();
-  if (!supabase) {
-    return redirectWithOAuthCookieClear(
-      `${origin}${resolveOAuthCallbackErrorPath(flow)}`,
-    );
+  const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+  if (exchangeError) {
+    logOAuthCallbackStep("exchange_failed", {
+      flow: flow ?? "none",
+      detail: exchangeError.message.slice(0, 200),
+    });
+    const reason = mapExchangeErrorMessage(exchangeError.message);
+    if (flow === "x_link") {
+      return xLinkErrorRedirect(origin, reason, cookieResponse);
+    }
+    return xLoginErrorRedirect(origin, reason, cookieResponse);
   }
 
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error) {
-    return redirectWithOAuthCookieClear(
-      `${origin}${resolveOAuthCallbackErrorPath(flow)}`,
-    );
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    logOAuthCallbackStep("missing_user_after_exchange", {
+      flow: flow ?? "none",
+      detail: userError?.message?.slice(0, 200) ?? null,
+    });
+    if (flow === "x_link") {
+      return xLinkErrorRedirect(origin, "missing_user", cookieResponse);
+    }
+    return xLoginErrorRedirect(origin, "missing_user", cookieResponse);
   }
 
-  const syncResult = await syncUserXProfileAfterAuth(supabase);
+  const identityProviders = (user.identities ?? [])
+    .map((identity) => identity.provider)
+    .join(",");
+
+  logOAuthCallbackStep("session_ready", {
+    flow: flow ?? "none",
+    userId: user.id,
+    identityProviders: identityProviders || "none",
+    hasXIdentity:
+      identityProviders.includes("twitter") || identityProviders.includes("x"),
+  });
+
+  const requireXIdentity = flow === "x_link";
+  const syncResult = await syncUserXProfileAfterAuth(supabase, { requireXIdentity });
+
   if (!syncResult.ok) {
+    logOAuthCallbackStep("sync_failed", {
+      flow: flow ?? "none",
+      code: syncResult.code,
+      detail: syncResult.detail?.slice(0, 200) ?? null,
+    });
+    if (flow === "x_link" || next.startsWith("/settings")) {
+      return xLinkErrorRedirect(origin, syncResult.code, cookieResponse);
+    }
     if (syncResult.code === "x_account_already_linked") {
-      return redirectWithOAuthCookieClear(
-        `${origin}${withQuery("/settings", { x: "error", reason: "already_linked" })}`,
-      );
+      return xLinkErrorRedirect(origin, syncResult.code, cookieResponse);
     }
+  }
 
-    if (syncResult.code === "sync_failed" && (flow === "x_link" || next.startsWith("/settings"))) {
-      return redirectWithOAuthCookieClear(
-        `${origin}${withQuery("/settings", { x: "error", reason: "sync_failed" })}`,
-      );
-    }
+  if (requireXIdentity && syncResult.ok && !syncResult.synced) {
+    logOAuthCallbackStep("missing_x_identity_after_link", {
+      flow: flow ?? "none",
+      identityProviders,
+    });
+    return xLinkErrorRedirect(origin, "missing_x_identity", cookieResponse);
   }
 
   const destination = resolveOAuthCallbackDestination({ flow, next });
-  return redirectWithOAuthCookieClear(`${origin}${destination}`);
+  logOAuthCallbackStep("success", { flow: flow ?? "none", destination });
+  return finalizeRedirect(`${origin}${destination}`, cookieResponse);
 }

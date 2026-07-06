@@ -569,9 +569,11 @@ function testOAuthRedirectOriginContract() {
   );
   ok(
     callbackRoute.includes("readOAuthFlowCookies") &&
-      callbackRoute.includes("redirectWithOAuthCookieClear") &&
-      !callbackRoute.includes("searchParams.get(\"flow\")"),
-    "callback route reads OAuth flow from cookies",
+      callbackRoute.includes("exchangeCodeForSession") &&
+      callbackRoute.includes("createRouteHandlerSupabase") &&
+      callbackRoute.includes("settingsXErrorPath") &&
+      !callbackRoute.includes("NEXT_PUBLIC_SITE_URL"),
+    "callback route uses request cookies and granular x_link errors",
   );
   ok(
     loginPage.includes("XOAuthLoginSection") &&

@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-07-06 — X連携 callback 完了処理修正 + reason 細分化（E2E FAIL 継続）
+
+- **事象** — `af53bba` 後: Preview に戻るが **「X連携の完了処理に失敗」**（`callback_failed` 想定）。本番 LP 問題は改善
+- **修正** — Route Handler で **Supabase session cookie を redirect に載せる**（`createRouteHandlerSupabase`）。`exchangeCodeForSession` 失敗の切り分けを server log + URL `reason` に細分化（`exchange_failed` / `missing_x_identity` / `upsert_failed` 等）
+- **identity 抽出** — `provider_id` / `screen_name` / `nickname` 等を追加。`x_link` 時は X identity 必須
+- **DB** — `user_x_profiles` **0行**（連携未完了）。`auth.identities` はオーナー Dashboard SQL で確認
+- **未実施** — Preview E2E 再試行 / main / 本番 deploy
+
+---
+
 ## 2026-07-06 — OAuth redirectTo を query なし + cookie 方式に変更（E2E FAIL 再発）
 
 - **事象** — `29dc1a7` 後も Preview `/settings` → X 許可 → **本番 LP** へ遷移。E2E **FAIL** 継続

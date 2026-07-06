@@ -23,21 +23,40 @@ function readXLinkStatusMessage(searchParams: URLSearchParams) {
   }
 
   const reason = searchParams.get("reason");
-  if (reason === "already_linked") {
+  if (reason === "already_linked" || reason === "x_account_already_linked") {
     return {
       tone: "error" as const,
       text: "このXアカウントは別のForgeアカウントに連携済みです。",
     };
   }
 
-  if (reason === "sync_failed") {
+  if (reason === "sync_failed" || reason === "upsert_failed" || reason === "sync_failed_unknown") {
     return {
       tone: "error" as const,
       text: "X連携情報の保存に失敗しました。時間をおいて再度お試しください。",
     };
   }
 
-  if (reason === "callback_failed") {
+  if (
+    reason === "callback_failed" ||
+    reason === "exchange_failed" ||
+    reason === "missing_code" ||
+    reason === "missing_oauth_flow_cookie" ||
+    reason === "oauth_provider_error" ||
+    reason === "missing_session" ||
+    reason === "missing_user" ||
+    reason === "missing_x_identity" ||
+    reason === "missing_x_user_id" ||
+    reason === "missing_x_username" ||
+    reason === "anonymous_not_allowed"
+  ) {
+    return {
+      tone: "error" as const,
+      text: "X連携の完了処理に失敗しました。もう一度お試しください。",
+    };
+  }
+
+  if (reason) {
     return {
       tone: "error" as const,
       text: "X連携の完了処理に失敗しました。もう一度お試しください。",

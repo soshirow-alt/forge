@@ -91,15 +91,31 @@ function readString(source: Record<string, unknown>, keys: string[]): string {
 
 export function extractXProfileFromAuthUser(user: SupabaseUser): XProfilePayload | null {
   const identity = findXIdentity(user);
-  const identityData = (identity?.identity_data ?? {}) as Record<string, unknown>;
+  if (!identity) {
+    return null;
+  }
+
+  const identityData = (identity.identity_data ?? {}) as Record<string, unknown>;
   const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
 
-  const xUserId = readString(identityData, ["sub", "provider_id", "id"]) ||
+  const xUserId =
+    String(identity.id ?? "").trim() ||
+    readString(identityData, ["sub", "provider_id", "id", "user_id"]) ||
     readString(meta, ["sub", "provider_id"]);
 
   const xUsername = formatXUsername(
-    readString(identityData, ["preferred_username", "user_name"]) ||
-      readString(meta, ["preferred_username", "user_name"]),
+    readString(identityData, [
+      "preferred_username",
+      "user_name",
+      "screen_name",
+      "nickname",
+    ]) ||
+      readString(meta, [
+        "preferred_username",
+        "user_name",
+        "screen_name",
+        "nickname",
+      ]),
   );
 
   if (!xUserId || !xUsername) {
@@ -107,11 +123,12 @@ export function extractXProfileFromAuthUser(user: SupabaseUser): XProfilePayload
   }
 
   const xDisplayName =
-    readString(identityData, ["name", "full_name"]) || readString(meta, ["name", "full_name"]) ||
+    readString(identityData, ["name", "full_name", "display_name"]) ||
+    readString(meta, ["name", "full_name", "display_name"]) ||
     null;
   const xAvatarUrl =
-    readString(identityData, ["picture", "avatar_url"]) ||
-    readString(meta, ["picture", "avatar_url"]) ||
+    readString(identityData, ["picture", "avatar_url", "profile_image_url"]) ||
+    readString(meta, ["picture", "avatar_url", "profile_image_url"]) ||
     null;
 
   return {

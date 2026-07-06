@@ -1,24 +1,66 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { mapRpcErrorMessage, type OAuthCallbackFailReason } from "@/lib/oauth-callback-errors";
 import { extractXProfileFromAuthUser } from "@/lib/x-auth";
 
 export type SyncUserXProfileResult =
   | { ok: true; synced: boolean }
-  | { ok: false; code: "no_user" | "x_account_already_linked" | "sync_failed" };
+  | { ok: false; code: OAuthCallbackFailReason; detail?: string };
 
 export async function syncUserXProfileAfterAuth(
   supabase: SupabaseClient,
+  options?: { requireXIdentity?: boolean },
 ): Promise<SyncUserXProfileResult> {
   const {
     data: { user },
     error: userError,
   } = await supabase.auth.getUser();
 
-  if (userError || !user) {
-    return { ok: false, code: "no_user" };
+  if (userError) {
+    return {
+      ok: false,
+      code: "missing_user",
+      detail: userError.message,
+    };
+  }
+
+  if (!user) {
+    return { ok: false, code: "missing_user" };
   }
 
   const payload = extractXProfileFromAuthUser(user);
   if (!payload) {
+    if (options?.requireXIdentity) {
+      const identity = user.identities?.find((item) =>
+        item.provider === "x" || item.provider === "twitter",
+      );
+      if (!identity) {
+        return { ok: false, code: "missing_x_identity" };
+      }
+
+      const data = (identity.identity_data ?? {}) as Record<string, unknown>;
+      const hasUserId = Boolean(
+        identity.id ||
+          data.sub ||
+          data.provider_id ||
+          data.id,
+      );
+      const hasUsername = Boolean(
+        data.preferred_username ||
+          data.user_name ||
+          data.screen_name ||
+          data.nickname,
+      );
+
+      if (!hasUserId) {
+        return { ok: false, code: "missing_x_user_id" };
+      }
+      if (!hasUsername) {
+        return { ok: false, code: "missing_x_username" };
+      }
+
+      return { ok: false, code: "missing_x_identity" };
+    }
+
     return { ok: true, synced: false };
   }
 
@@ -30,11 +72,11 @@ export async function syncUserXProfileAfterAuth(
   });
 
   if (rpcError) {
-    const message = rpcError.message.toLowerCase();
-    if (message.includes("x_account_already_linked")) {
-      return { ok: false, code: "x_account_already_linked" };
-    }
-    return { ok: false, code: "sync_failed" };
+    return {
+      ok: false,
+      code: mapRpcErrorMessage(rpcError.message),
+      detail: rpcError.message,
+    };
   }
 
   const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
