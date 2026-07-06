@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07-07 — 設定画面UI文言整理（preview/landing-01・Preview のみ）
+
+- **設定（/settings・/studio/settings）** — 通知・プライバシーの説明文を通常表示から削除。項目名 + ON/OFF（または近日対応ピル）のみ。補足は「？」アイコン（hover）に移動
+- **通知** — Studio「作品を追われたとき」→「作品フォロー」。Player/Studio サブ見出しを簡素化
+- **DB / 通知ロジック変更なし・本番未反映**
+
+---
+
 ## 2026-07-06 — 通知コアループ整理（preview/landing-01・Preview のみ）
 
 - **Player: フォロー中の開発者** — 新作公開・正式版公開時にフォロワーへアプリ内通知（`developer-follow` 設定でON/OFF）。devlogのみの更新は通知しない

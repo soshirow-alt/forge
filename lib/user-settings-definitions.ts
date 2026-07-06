@@ -1,34 +1,15 @@
 export type SettingsToggleItem = {
   id: string;
   label: string;
-  description: string;
   enabled: boolean;
   /**
    * UI-only gate: toggle is visible but not operable.
    * Reasons vary — unwired prefs, or wired prefs whose product surface is inactive.
    */
   comingSoon?: boolean;
-  comingSoonNote?: string;
+  /** Shown only via the "?" help control — not in normal settings layout. */
+  helpText?: string;
 };
-
-/** Notification prefs saved but not yet enforced in send paths. */
-const NOTIFY_COMING_SOON_NOTE =
-  "近日対応予定（現在はまだ通知には反映されません）";
-
-/** Studio play notifications — milestone-only in future; not per-play. */
-const STUDIO_PLAY_COMING_SOON_NOTE =
-  "近日対応予定。プレイのたびには通知しません。将来は初プレイ・新ver後初プレイなど節目のみ対象予定";
-
-/** Privacy prefs with no product read path yet (profile / activity). */
-const PRIVACY_UNWIRED_NOTE =
-  "近日対応予定（現在はまだ公開範囲の設定には反映されません）";
-
-/**
- * privacy.ranking is stored and enforced in get_monthly_player_influence_ranking,
- * but the ranking feature is inactive/unpublished in the product for now.
- */
-const PRIVACY_RANKING_INACTIVE_NOTE =
-  "近日対応予定（ランキング機能は現時点では非活性のため、この設定はまだ利用できません）";
 
 export type PlayerNotificationPrefKey =
   | "watch-updates"
@@ -75,62 +56,53 @@ export const forgeNotificationPlayerItems: SettingsToggleItem[] = [
   {
     id: "watch-updates",
     label: "更新を追っている作品",
-    description: "「更新を追う」をONにした作品の開発ログ・新版公開・確認依頼",
     enabled: true,
   },
   {
     id: "developer-follow",
     label: "フォロー中の開発者",
-    description: "フォロー中の開発者が新作を公開したとき、または作品が正式版になったとき",
     enabled: true,
   },
   {
     id: "community",
     label: "参加コミュニティ",
-    description: "参加申請の承認・却下、承認済みコミュニティからのお知らせ",
     enabled: true,
     comingSoon: true,
-    comingSoonNote: NOTIFY_COMING_SOON_NOTE,
   },
   {
     id: "system",
-    label: "Forge からのお知らせ",
-    description: "利用規約の更新、実績バッジなど",
+    label: "Forgeからのお知らせ",
     enabled: false,
     comingSoon: true,
-    comingSoonNote: NOTIFY_COMING_SOON_NOTE,
   },
 ];
 
 export const forgeNotificationStudioItems: SettingsToggleItem[] = [
   {
     id: "witness",
-    label: "作品を追われたとき",
-    description: "誰かがあなたの作品を「作品を追う」したとき（見届け人称号とは別）",
+    label: "作品フォロー",
     enabled: true,
+    helpText: "あなたの作品を誰かが「作品を追う」したとき",
   },
   {
     id: "version-play",
     label: "プレイ",
-    description: "公開中のverがプレイされたとき",
     enabled: true,
     comingSoon: true,
-    comingSoonNote: STUDIO_PLAY_COMING_SOON_NOTE,
+    helpText:
+      "プレイのたびには通知しません。将来は初プレイ・新ver後初プレイなど節目のみ対象予定",
   },
   {
     id: "community",
     label: "コミュニティ",
-    description: "参加申請・メンバー管理に関するお知らせ",
     enabled: true,
     comingSoon: true,
-    comingSoonNote: NOTIFY_COMING_SOON_NOTE,
   },
 ];
 
 export type ForgeSettingsSection = {
   id: string;
   title: string;
-  description: string;
   kind: "toggles";
   items: SettingsToggleItem[];
 };
@@ -138,32 +110,30 @@ export type ForgeSettingsSection = {
 export const privacySettingsSection: ForgeSettingsSection = {
   id: "privacy",
   title: "プライバシー",
-  description: "プレイヤーとしての公開範囲。",
   kind: "toggles",
   items: [
     {
       id: "profile",
-      label: "プロフィールを公開",
-      description: "他のプレイヤーから見える",
+      label: "プロフィール公開",
       enabled: true,
       comingSoon: true,
-      comingSoonNote: PRIVACY_UNWIRED_NOTE,
+      helpText: "公開プロフィール機能の公開時に利用できます",
     },
     {
       id: "activity",
-      label: "最近の活動を表示",
-      description: "プロフィールに活動を載せる",
+      label: "最近の活動",
       enabled: true,
       comingSoon: true,
-      comingSoonNote: PRIVACY_UNWIRED_NOTE,
+      helpText: "活動表示機能の公開時に利用できます",
     },
     {
       id: "ranking",
-      label: "ランキングに表示",
-      description: "月間影響度ランキングへの参加（機能公開時に利用可能）",
+      label: "ランキング表示",
       enabled: true,
       comingSoon: true,
-      comingSoonNote: PRIVACY_RANKING_INACTIVE_NOTE,
+      // DB/RPC: privacy.ranking is wired in get_monthly_player_influence_ranking,
+      // but the ranking product surface is inactive — keep Coming Soon in UI.
+      helpText: "ランキング機能の公開時に利用できます",
     },
   ],
 };
@@ -171,14 +141,13 @@ export const privacySettingsSection: ForgeSettingsSection = {
 export const studioPublicSettingsSection: ForgeSettingsSection = {
   id: "studio-public",
   title: "公開設定",
-  description: "開発者プロフィールページ（/creators/）を公開するかどうか。",
   kind: "toggles",
   items: [
     {
       id: "dev-profile",
       label: "開発者プロフィールを公開",
-      description: "OFF にすると /creators/ ページは非公開（作品ページからは辿れません）",
       enabled: true,
+      helpText: "OFF にすると /creators/ ページは非公開（作品ページからは辿れません）",
     },
   ],
 };

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CircleHelp } from "lucide-react";
 import { Suspense, useState } from "react";
 import { AccountSettingsPanel } from "@/components/account-settings-panel";
 import { XAccountLinkSection } from "@/components/x-account-link-section";
@@ -16,11 +17,43 @@ import {
   studioPublicSettingsSection,
 } from "@/lib/user-settings-definitions";
 
-function partitionNotificationItems(items: SettingsToggleItem[]) {
-  return {
-    active: items.filter((item) => !item.comingSoon),
-    comingSoon: items.filter((item) => item.comingSoon),
-  };
+function SettingsHelpButton({ label, helpText }: { label: string; helpText: string }) {
+  return (
+    <button
+      type="button"
+      className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300"
+      aria-label={`${label}の説明`}
+      title={helpText}
+    >
+      <CircleHelp className="size-3.5" aria-hidden="true" />
+    </button>
+  );
+}
+
+function ComingSoonPill() {
+  return (
+    <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
+      近日対応
+    </span>
+  );
+}
+
+function SettingsItemLabel({
+  item,
+}: {
+  item: SettingsToggleItem;
+}) {
+  return (
+    <div className="flex min-w-0 flex-wrap items-center gap-2">
+      <p
+        className={`text-sm font-medium ${item.comingSoon ? "text-zinc-400" : "text-zinc-200"}`}
+      >
+        {item.label}
+      </p>
+      {item.comingSoon ? <ComingSoonPill /> : null}
+      {item.helpText ? <SettingsHelpButton label={item.label} helpText={item.helpText} /> : null}
+    </div>
+  );
 }
 
 function ToggleSwitch({
@@ -55,7 +88,7 @@ function ToggleSwitch({
   );
 }
 
-function ToggleRow({
+function SettingsToggleRow({
   item,
   disabled,
   onToggle,
@@ -64,97 +97,71 @@ function ToggleRow({
   disabled?: boolean;
   onToggle: () => void;
 }) {
-  const rowDisabled = disabled || item.comingSoon;
-
   return (
-    <li className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0">
-      <div>
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-sm font-medium text-zinc-200">{item.label}</p>
-          {item.comingSoon ? (
-            <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
-              近日対応
-            </span>
-          ) : null}
-        </div>
-        <p className="mt-0.5 text-xs text-zinc-500">{item.description}</p>
-        {item.comingSoon ? (
-          <p className="mt-1 text-[11px] leading-relaxed text-zinc-600">
-            {item.comingSoonNote ??
-              "近日対応予定（現在はまだ通知・公開範囲には反映されません）"}
-          </p>
-        ) : null}
-      </div>
+    <li className="flex items-center justify-between gap-4 py-3.5 first:pt-0 last:pb-0">
+      <SettingsItemLabel item={item} />
       <ToggleSwitch
         enabled={item.enabled}
-        disabled={rowDisabled}
-        onToggle={rowDisabled ? () => {} : onToggle}
+        disabled={disabled}
+        onToggle={onToggle}
         label={item.label}
       />
     </li>
   );
 }
 
-function ComingSoonNotificationRow({ item }: { item: SettingsToggleItem }) {
+function SettingsComingSoonRow({ item }: { item: SettingsToggleItem }) {
   return (
-    <li className="py-3 first:pt-0 last:pb-0">
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="text-sm text-zinc-400">{item.label}</p>
-        <span className="rounded-full bg-zinc-800/80 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
-          近日対応
-        </span>
-      </div>
-      <p className="mt-0.5 text-xs text-zinc-600">{item.description}</p>
-      {item.comingSoonNote ? (
-        <p className="mt-1 text-[11px] leading-relaxed text-zinc-600">{item.comingSoonNote}</p>
-      ) : null}
+    <li className="py-3.5 first:pt-0 last:pb-0">
+      <SettingsItemLabel item={item} />
     </li>
   );
 }
 
-function NotificationToggleSection({
+function SettingsItemList({
+  items,
+  disabled,
+  onToggle,
+}: {
+  items: SettingsToggleItem[];
+  disabled: boolean;
+  onToggle: (id: string, enabled: boolean) => void;
+}) {
+  return (
+    <ul className="divide-y divide-zinc-800/80">
+      {items.map((item) =>
+        item.comingSoon ? (
+          <SettingsComingSoonRow key={item.id} item={item} />
+        ) : (
+          <SettingsToggleRow
+            key={item.id}
+            item={item}
+            disabled={disabled}
+            onToggle={() => onToggle(item.id, !item.enabled)}
+          />
+        ),
+      )}
+    </ul>
+  );
+}
+
+function SettingsGroup({
   title,
-  description,
   items,
   disabled,
   onToggle,
 }: {
   title: string;
-  description: string;
   items: SettingsToggleItem[];
   disabled: boolean;
   onToggle: (id: string, enabled: boolean) => void;
 }) {
-  const { active, comingSoon } = partitionNotificationItems(items);
-
   return (
     <div>
       <h3 className="text-sm font-medium text-violet-200">{title}</h3>
-      <p className="mt-0.5 text-xs text-zinc-500">{description}</p>
-      {active.length > 0 ? (
-        <ul className="mt-3 divide-y divide-zinc-800/80">
-          {active.map((item) => (
-            <ToggleRow
-              key={item.id}
-              item={item}
-              disabled={disabled}
-              onToggle={() => void onToggle(item.id, !item.enabled)}
-            />
-          ))}
-        </ul>
-      ) : null}
-      {comingSoon.length > 0 ? (
-        <div className={active.length > 0 ? "mt-5 border-t border-zinc-800/60 pt-4" : "mt-3"}>
-          <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-600">
-            近日対応予定
-          </p>
-          <ul className="mt-2 divide-y divide-zinc-800/50">
-            {comingSoon.map((item) => (
-              <ComingSoonNotificationRow key={item.id} item={item} />
-            ))}
-          </ul>
-        </div>
-      ) : null}
+      <div className="mt-3">
+        <SettingsItemList items={items} disabled={disabled} onToggle={onToggle} />
+      </div>
     </div>
   );
 }
@@ -205,16 +212,18 @@ function PreferenceSettingsPanel({ context }: { context: "player" | "studio" }) 
     return (
       <section className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5 sm:p-6">
         <p className="font-medium text-amber-200">設定の保存機能は Coming Soon です</p>
-        <p className="mt-2 text-sm leading-relaxed text-amber-100/80">
-          通知・プライバシー設定の保存は Coming Soon です。
-        </p>
       </section>
     );
   }
 
   const disabled = saving;
-  const playerPartition = partitionNotificationItems(playerNotifications);
-  const studioPartition = partitionNotificationItems(studioNotifications);
+  const preferenceItems = context === "player" ? privacyItems : studioPublicItems;
+  const preferenceTitle =
+    context === "player" ? privacySettingsSection.title : studioPublicSettingsSection.title;
+  const onPreferenceToggle = (id: string, enabled: boolean) =>
+    void handleToggle(() =>
+      context === "player" ? updatePrivacy(id, enabled) : updateStudioPublic(id, enabled),
+    );
 
   return (
     <>
@@ -226,14 +235,10 @@ function PreferenceSettingsPanel({ context }: { context: "player" | "studio" }) 
 
       <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
         <h2 className="text-base font-semibold text-white">通知</h2>
-        <p className="mt-1 text-sm text-zinc-500">
-          アプリ内通知の受け取り設定です。メール通知は対象外です。
-        </p>
 
-        <div className="mt-6 space-y-6">
-          <NotificationToggleSection
-            title="Player 向けの通知"
-            description="プレイヤーとして受け取るお知らせ"
+        <div className="mt-5 space-y-6">
+          <SettingsGroup
+            title="Player"
             items={playerNotifications}
             disabled={disabled}
             onToggle={(id, enabled) =>
@@ -242,54 +247,27 @@ function PreferenceSettingsPanel({ context }: { context: "player" | "studio" }) 
           />
 
           <div className="border-t border-zinc-800/80 pt-6">
-            <NotificationToggleSection
-              title="Studio 向けの通知"
-              description="開発者として受け取るお知らせ"
+            <SettingsGroup
+              title="Studio"
               items={studioNotifications}
               disabled={disabled}
               onToggle={(id, enabled) =>
                 void handleToggle(() => updateNotifyStudio(id, enabled))
               }
             />
-            <p className="mt-4 text-[11px] leading-relaxed text-zinc-600">
-              プレイヤーの声・フィードバックは、見逃し防止のため既定で届きます（ON/OFF
-              設定は今回対象外）。
-            </p>
           </div>
         </div>
-
-        {(playerPartition.active.length > 0 || studioPartition.active.length > 0) && (
-          <p className="mt-5 text-xs text-zinc-600">
-            上記の操作可能な項目は、保存後すぐに通知の送受信に反映されます。
-          </p>
-        )}
       </section>
 
       <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
-        <h2 className="text-base font-semibold text-white">
-          {context === "player" ? privacySettingsSection.title : studioPublicSettingsSection.title}
-        </h2>
-        <p className="mt-1 text-sm text-zinc-500">
-          {context === "player"
-            ? privacySettingsSection.description
-            : studioPublicSettingsSection.description}
-        </p>
-        <ul className="mt-5 divide-y divide-zinc-800/80">
-          {(context === "player" ? privacyItems : studioPublicItems).map((item) => (
-            <ToggleRow
-              key={item.id}
-              item={item}
-              disabled={disabled}
-              onToggle={() =>
-                void handleToggle(() =>
-                  context === "player"
-                    ? updatePrivacy(item.id, !item.enabled)
-                    : updateStudioPublic(item.id, !item.enabled),
-                )
-              }
-            />
-          ))}
-        </ul>
+        <h2 className="text-base font-semibold text-white">{preferenceTitle}</h2>
+        <div className="mt-5">
+          <SettingsItemList
+            items={preferenceItems}
+            disabled={disabled}
+            onToggle={onPreferenceToggle}
+          />
+        </div>
       </section>
     </>
   );
