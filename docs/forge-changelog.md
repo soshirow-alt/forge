@@ -4,7 +4,14 @@
 
 ---
 
-## 2026-07-06 — 主要導線パフォーマンス改善 本番反映
+## 2026-07-06 — PlayerShell 共通 layout Phase 1（preview/landing-01）
+
+- **対象** — `/home` `/search` `/mypage` `/mypage/community` `/settings` を `app/(player)/` route group 化
+- **構造** — `PlayerShellLayout` が layout で1回だけ mount。page 側は main content のみ
+- **検索欄** — `HeaderSearchForm` が pathname + searchParams から `q` を自己解決
+- **未移行** — `/games/[id]` Studio 系 rankings / notifications / guide / creators 等は従来どおり page 内 Shell
+
+---
 
 - **commit** — `122cb6b`（`origin/main` = `origin/preview/landing-01`）
 - **本番 URL** — https://forge-flame-gamma.vercel.app

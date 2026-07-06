@@ -10,7 +10,7 @@ import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { MyPageLoopPanel } from "@/components/mypage-loop-panel";
 import { MyPageSavedRealPanel } from "@/components/mypage-real-panels";
 import { PlayHistorySection } from "@/components/play-history-section";
-import { MyPageTabs, PlayerShell } from "@/components/player-shell";
+import { MyPageTabs } from "@/components/player-shell";
 import { ForgeTabPanel } from "@/components/forge-tab-panel";
 import { PageLoadingSkeleton } from "@/components/forge-loading-skeletons";
 import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
@@ -91,15 +91,11 @@ function MyPagePageContent() {
   );
 
   if (tabParam === "developer") {
-    return (
-      <PlayerShell activeNav="mypage">
-        <p className="text-zinc-500">Studio へ移動しています…</p>
-      </PlayerShell>
-    );
+    return <p className="text-zinc-500">Studio へ移動しています…</p>;
   }
 
   return (
-    <PlayerShell activeNav="mypage">
+    <>
       <MyPageTabs activeTab={activeTab} onTabChange={(tab) => setTab(tab as MyPageTab)} />
 
       <div role="tabpanel">
@@ -140,19 +136,13 @@ function MyPagePageContent() {
           </ForgeTabPanel>
         ) : null}
       </div>
-    </PlayerShell>
+    </>
   );
 }
 
 export function MyPagePage() {
   return (
-    <Suspense
-      fallback={
-        <PlayerShell activeNav="mypage">
-          <PageLoadingSkeleton lines={4} />
-        </PlayerShell>
-      }
-    >
+    <Suspense fallback={<PageLoadingSkeleton lines={4} />}>
       <MyPagePageContent />
     </Suspense>
   );

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Bell,
   Bookmark,
@@ -12,7 +12,7 @@ import {
   Search,
   User,
 } from "lucide-react";
-import { type FormEvent, type ReactNode, useEffect, useState } from "react";
+import { type FormEvent, type ReactNode, Suspense, useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import {
   ForgeShellMobileDrawer,
@@ -46,9 +46,24 @@ function SidebarDivider() {
   return <div className="my-3 border-t border-zinc-800/80" role="separator" />;
 }
 
-function HeaderSearchForm({ defaultValue }: { defaultValue?: string }) {
+function resolveHeaderSearchQuery(pathname: string, searchParams: URLSearchParams): string {
+  if (pathname === "/search" || pathname.startsWith("/search/")) {
+    return searchParams.get("q")?.trim() ?? "";
+  }
+  return "";
+}
+
+function HeaderSearchFormInner({ legacyDefault }: { legacyDefault?: string }) {
   const router = useRouter();
-  const [query, setQuery] = useState(defaultValue ?? "");
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const urlQuery = resolveHeaderSearchQuery(pathname, searchParams);
+  const resolvedDefault = legacyDefault ?? urlQuery;
+  const [query, setQuery] = useState(resolvedDefault);
+
+  useEffect(() => {
+    setQuery(resolvedDefault);
+  }, [resolvedDefault]);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -70,6 +85,31 @@ function HeaderSearchForm({ defaultValue }: { defaultValue?: string }) {
         className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-500 focus:border-violet-500/40 focus:outline-none focus:ring-1 focus:ring-violet-500/30"
       />
     </form>
+  );
+}
+
+function HeaderSearchFormFallback() {
+  return (
+    <form className="relative min-w-0 flex-1" onSubmit={(event) => event.preventDefault()}>
+      <Search
+        className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500"
+        aria-hidden="true"
+      />
+      <input
+        type="search"
+        readOnly
+        placeholder="ゲームやジャンルを検索（例：RPG、ピクセルアート）"
+        className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-500"
+      />
+    </form>
+  );
+}
+
+function HeaderSearchForm({ legacyDefault }: { legacyDefault?: string }) {
+  return (
+    <Suspense fallback={<HeaderSearchFormFallback />}>
+      <HeaderSearchFormInner legacyDefault={legacyDefault} />
+    </Suspense>
   );
 }
 
@@ -265,7 +305,7 @@ export function PlayerShell({
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-zinc-800/80 bg-[#0a0a0a]/95 px-4 py-3 backdrop-blur-md sm:gap-3 sm:px-6">
           <ForgeShellMobileMenuButton onClick={() => setMobileNavOpen(true)} />
-          <HeaderSearchForm defaultValue={headerSearchDefault} />
+          <HeaderSearchForm legacyDefault={headerSearchDefault} />
           <RegisteredOnlyLink
             href="/notifications"
             className="relative rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"

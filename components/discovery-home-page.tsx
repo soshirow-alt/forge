@@ -9,7 +9,6 @@ import { useGames } from "@/components/games-provider";
 import { DiscoveryHomeSkeleton } from "@/components/forge-loading-skeletons";
 import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
 import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
-import { PlayerShell } from "@/components/player-shell";
 import { useHideV0MockContent } from "@/lib/forge-deployment-context";
 import {
   gameToHomeCard,
@@ -295,16 +294,11 @@ export function DiscoveryHomePage() {
   }, [publicGames, getSupportCount, hideV0Mock]);
 
   if (!publicCatalogReady) {
-    return (
-      <PlayerShell activeNav="home">
-        <DiscoveryHomeSkeleton />
-      </PlayerShell>
-    );
+    return <DiscoveryHomeSkeleton />;
   }
 
   return (
-    <PlayerShell activeNav="home">
-      <div className="space-y-10">
+    <div className="space-y-10">
         {heroItems.length > 0 ? (
           <HeroCarousel slides={heroItems} />
         ) : (
@@ -360,7 +354,6 @@ export function DiscoveryHomePage() {
             <DiscoverySectionEmpty message="新着作品はまだありません" />
           )}
         </section>
-      </div>
-    </PlayerShell>
+    </div>
   );
 }

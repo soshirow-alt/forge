@@ -7,9 +7,6 @@ import {
   DiscoveryGameThumbnail,
 } from "@/components/discovery-game-thumbnail";
 import {
-  PlayerShell,
-} from "@/components/player-shell";
-import {
   filterSearchWorks,
   gameToSearchResult,
   mergeSearchResults,
@@ -239,16 +236,11 @@ function WorksSearchContent() {
   };
 
   if (!publicCatalogReady) {
-    return (
-      <PlayerShell activeNav="search" headerSearchDefault={queryFromUrl}>
-        <DiscoveryHomeSkeleton />
-      </PlayerShell>
-    );
+    return <DiscoveryHomeSkeleton />;
   }
 
   return (
-    <PlayerShell activeNav="search" headerSearchDefault={queryFromUrl}>
-      <div className="flex flex-col gap-8 xl:flex-row">
+    <div className="flex flex-col gap-8 xl:flex-row">
         <div className="min-w-0 flex-1">
           <header>
             <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
@@ -566,8 +558,7 @@ function WorksSearchContent() {
             </button>
           </section>
         </aside>
-      </div>
-    </PlayerShell>
+    </div>
   );
 }
 
