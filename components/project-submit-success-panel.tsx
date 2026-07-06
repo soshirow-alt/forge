@@ -21,7 +21,7 @@ type ProjectSubmitSuccessPanelProps = {
 };
 
 const primaryCtaClassName =
-  "rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3.5 text-sm font-semibold text-zinc-950 shadow-sm shadow-orange-500/20 transition-opacity hover:opacity-90";
+  "rounded-xl bg-violet-600 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500";
 
 const secondaryCtaClassName =
   "rounded-xl border border-zinc-700 bg-zinc-900 px-6 py-3.5 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-600 hover:text-white";
@@ -61,9 +61,9 @@ export function ProjectSubmitSuccessPanel({
     <>
       <div className={shellClassName}>
         <div>
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-orange-500/30 bg-orange-500/10">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-violet-500/30 bg-violet-600/10">
             <svg
-              className="h-7 w-7 text-orange-400"
+              className="h-7 w-7 text-violet-400"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -128,7 +128,7 @@ export function ProjectSubmitSuccessPanel({
             onClick={onClose}
             className={tertiaryCtaClassName}
           >
-            Studioで管理する
+            投稿した作品を編集する
           </Link>
           {onSubmitAnother ? (
             <button
