@@ -55,17 +55,17 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
 export const forgeNotificationPlayerItems: SettingsToggleItem[] = [
   {
     id: "watch-updates",
-    label: "更新を追っている作品",
+    label: "追っている作品の更新",
     enabled: true,
   },
   {
     id: "developer-follow",
-    label: "フォロー中の開発者",
+    label: "フォロー中の開発者の新作・正式版公開",
     enabled: true,
   },
   {
     id: "community",
-    label: "参加コミュニティ",
+    label: "参加コミュニティの更新",
     enabled: true,
     comingSoon: true,
   },
@@ -86,15 +86,15 @@ export const forgeNotificationStudioItems: SettingsToggleItem[] = [
   },
   {
     id: "version-play",
-    label: "プレイ",
+    label: "初プレイ・ver更新後プレイ",
     enabled: true,
     comingSoon: true,
     helpText:
-      "プレイのたびには通知しません。将来は初プレイ・新ver後初プレイなど節目のみ対象予定",
+      "プレイのたびには通知しません。将来は初プレイ・ver更新後の初プレイなど節目のみ対象予定",
   },
   {
     id: "community",
-    label: "コミュニティ",
+    label: "コミュニティの申請・反応",
     enabled: true,
     comingSoon: true,
   },
@@ -114,21 +114,21 @@ export const privacySettingsSection: ForgeSettingsSection = {
   items: [
     {
       id: "profile",
-      label: "プロフィール公開",
+      label: "プロフィールの公開",
       enabled: true,
       comingSoon: true,
       helpText: "公開プロフィール機能の公開時に利用できます",
     },
     {
       id: "activity",
-      label: "最近の活動",
+      label: "最近の活動の表示",
       enabled: true,
       comingSoon: true,
       helpText: "活動表示機能の公開時に利用できます",
     },
     {
       id: "ranking",
-      label: "ランキング表示",
+      label: "ランキングへの表示",
       enabled: true,
       comingSoon: true,
       // DB/RPC: privacy.ranking is wired in get_monthly_player_influence_ranking,

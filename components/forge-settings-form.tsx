@@ -38,19 +38,14 @@ function ComingSoonPill() {
   );
 }
 
-function SettingsItemLabel({
-  item,
-}: {
-  item: SettingsToggleItem;
-}) {
+function SettingsItemLabel({ item }: { item: SettingsToggleItem }) {
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-2">
+    <div className="flex min-w-0 items-center gap-1.5">
       <p
         className={`text-sm font-medium ${item.comingSoon ? "text-zinc-400" : "text-zinc-200"}`}
       >
         {item.label}
       </p>
-      {item.comingSoon ? <ComingSoonPill /> : null}
       {item.helpText ? <SettingsHelpButton label={item.label} helpText={item.helpText} /> : null}
     </div>
   );
@@ -112,8 +107,9 @@ function SettingsToggleRow({
 
 function SettingsComingSoonRow({ item }: { item: SettingsToggleItem }) {
   return (
-    <li className="py-3.5 first:pt-0 last:pb-0">
+    <li className="flex items-center justify-between gap-4 py-3.5 first:pt-0 last:pb-0">
       <SettingsItemLabel item={item} />
+      <ComingSoonPill />
     </li>
   );
 }
