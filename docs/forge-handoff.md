@@ -1,6 +1,6 @@
 # Forge Handoff
 
-最終更新：**2026-07-06**（X Auth 本番 GO 完了 — `6192348`）
+最終更新：**2026-07-06**（主要導線パフォーマンス改善 本番反映完了 — `e980842`）
 
 ---
 
@@ -11,13 +11,62 @@
 | **本番 URL** | https://forge-flame-gamma.vercel.app |
 | **Preview URL** | https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app |
 | **Supabase** | `bpnisgzxuwdxelhnduuf`（Preview / 本番共通 DB） |
-| **最新 commit** | `619234829dac80978c172fd13eb9e6449e5bb2b9` |
+| **最新 commit** | `e980842b9938265e9e178954f5d95f553c33a6dc` |
 | **ブランチ** | `origin/main` = `origin/preview/landing-01`（同期済み） |
-| **本番 deploy** | **完了**（2026-07-06 smoke PASS） |
+| **本番 deploy** | **完了**（`dpl_ARS8yDJzg9gD4iQbhpKoSDEiLYnD`） |
 
 ---
 
-## 直近完了 — X Auth 本番 GO（2026-07-06）
+## 直近完了 — 主要導線パフォーマンス改善 本番反映（2026-07-06）
+
+**正本**: `docs/forge-changelog.md`（2026-07-06 エントリ）
+
+| 項目 | 内容 |
+|------|------|
+| **本番反映** | ✅ 完了（Preview 確認 → main merge → Production deploy） |
+| **同期 commit** | `e980842`（`origin/main` = `origin/preview/landing-01`） |
+| **deploy ID** | `dpl_ARS8yDJzg9gD4iQbhpKoSDEiLYnD` |
+| **コア機能 commit** | `46d40f3` までの一連（`122cb6b` で本番記録、`e980842` は changelog deploy ID 追記） |
+
+### 実装済み（今後の前提）
+
+| テーマ | 内容 |
+|--------|------|
+| **作品詳細 1件直取得** | `fetchPublicProjectById` / `useGameDetailProject` — catalog 全件待ちを廃止 |
+| **タブ即時切替** | `useInstantQueryTab` + `history.replaceState`（Next navigation なし） |
+| **横展開** | `/mypage`・`/studio/mypage` に instant tab + 遅延マウント |
+| **みんなのFB スクロール** | タブ切替で上部へ戻る問題を修正（`preserve-scroll` + パネル `min-h`） |
+| **ログイン入力保持** | `revalidatePath` 削除、controlled input、「ログイン中…」表示 |
+| **GamesProvider 遅延** | グローバル devlog / release / support counts を `setTimeout(0)` で後追い |
+| **基盤** | skeleton 化、`[forge:perf]` 計測、`ForgeTabPanel` keep-alive |
+
+### 本番確認（オーナー実機）
+
+- 作品詳細タブが Preview 同様に速いこと
+- みんなのFBタブで上部へ戻らないこと
+- `/mypage`・`/studio/mypage` タブが速いこと
+- メールログイン時に入力欄が遷移前に消えないこと
+- Xログイン導線が壊れていないこと
+
+### 残課題（次フェーズ）
+
+- **サイドバー遷移がまだ 1〜2秒**（`/home` `/search` `/mypage` `/community` 等）
+- 原因候補: Shell のページごと再 mount、Next navigation、遷移先初期 fetch、GamesProvider 一括取得、auth/profile/getUser 系、prefetch 不足
+
+### 次フェーズ候補
+
+1. PlayerShell / StudioShell **共通 layout 化**
+2. サイドバーリンクの **prefetch**
+3. 遷移先 **初期 fetch の分解**
+4. `/home` `/search` の **catalog 取得改善**
+
+### 未移行（router.replace 監査）
+
+- `creator-profile-real-view` / `developer-profile-v0-page` / `studio-project-detail-page` 等 — 次フェーズで検討
+
+---
+
+## 完了済み — X Auth 本番 GO（2026-07-06）
 
 **正本**: `docs/x-auth-setup-runbook.md`
 
@@ -30,19 +79,6 @@
 | 公開表示 | 設定・公開FB・作品作者・`/creators/...` の `@handle` |
 | env | 本番 `NEXT_PUBLIC_X_AUTH_ENABLED=true` |
 | X App 表示名 | **Forge game** |
-| E2E | Preview 全項目 PASS → 本番 smoke P0 PASS |
-
-**本番 smoke 確認済み（P0）**
-
-- `/login`・`/register` に「Xでログイン」
-- `/login` → X → `/home`
-- `/settings` で `@Forge_game_0601` 連携済み（`forge.operation@gmail.com` 側）
-- メールログイン / ゲスト参加 / `/games/[id]` 退行なし / 旧ログイン UI 非表示
-
-**ロールバック（問題時）**
-
-1. Vercel `NEXT_PUBLIC_X_AUTH_ENABLED=false` + Redeploy（X 導線のみ OFF）
-2. 必要なら Supabase X Provider OFF / Vercel 直前デプロイへ Rollback
 
 **未実装（明示）**
 
@@ -85,11 +121,12 @@
 
 ---
 
-## Cursor 推奨 1 位（本番 GO 後）
+## Cursor 推奨 1 位（パフォーマンス本番反映後）
 
-1. **X Auth フォロー** — unlink UI 方針 / `/players/[handle]` X 表示 / 開発者初回導線（別 TODO）
-2. **公開FBカード** — 本番での表示・モデレーション運用確認
-3. **改善ループ Studio** — `/projects/{id}/studio` 実機レビュー継続
+1. **サイドバー遷移パフォーマンス** — Shell 共通 layout 化、prefetch、初期 fetch 分解、`/home` `/search` catalog 改善
+2. **X Auth フォロー** — unlink UI 方針 / `/players/[handle]` X 表示 / 開発者初回導線（別 TODO）
+3. **公開FBカード** — 本番での表示・モデレーション運用確認
+4. **改善ループ Studio** — `/projects/{id}/studio` 実機レビュー継続
 
 ---
 

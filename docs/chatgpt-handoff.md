@@ -1,5 +1,5 @@
 ■ ChatGPT 新チャット引継ぎ — 全量スナップショット
-更新日: 2026-07-06（X Auth 本番 GO 完了）
+更新日: 2026-07-06（主要導線パフォーマンス改善 本番反映完了）
 用途: 新 GPT スレッドの最初に1回だけ貼る。日常タスクは返答本文 + `docs/forge-changelog.md`（GPT 用厚いメモは廃止済み）。
 正本: `docs/forge-handoff.md`（Cursor 向け）/ 本ファイル（GPT 向け）
 
@@ -7,19 +7,81 @@
 ■ 現在の状態（2026-07-06）
 ================================================================
 
-本番 deploy: **完了**（smoke PASS）
-最新 commit: **619234829dac80978c172fd13eb9e6449e5bb2b9**
+本番 deploy: **完了**
+最新 commit: **e980842b9938265e9e178954f5d95f553c33a6dc**
 ブランチ: **origin/main = origin/preview/landing-01**（同期済み）
+deploy ID: **dpl_ARS8yDJzg9gD4iQbhpKoSDEiLYnD**
 
 URL:
 - 本番: https://forge-flame-gamma.vercel.app
 - Preview: https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app
 - Supabase: bpnisgzxuwdxelhnduuf（Preview / 本番共通）
 
-Cursor 推奨 1 位（本番 GO 後）:
-1. X Auth フォロー（unlink UI / `/players/[handle]` X 表示 / 開発者初回導線は別 TODO）
-2. 公開FBカード本番運用確認
-3. 改善ループ Studio 実機レビュー（`/projects/{id}/studio`）
+Cursor 推奨 1 位（パフォーマンス本番反映後）:
+1. サイドバー遷移パフォーマンス（Shell 共通 layout / prefetch / 初期 fetch 分解 / catalog 改善）
+2. X Auth フォロー（unlink UI / `/players/[handle]` X 表示 / 開発者初回導線は別 TODO）
+3. 公開FBカード本番運用確認
+4. 改善ループ Studio 実機レビュー（`/projects/{id}/studio`）
+
+================================================================
+■ 主要導線パフォーマンス改善 本番反映完了（2026-07-06）
+================================================================
+
+正本: docs/forge-changelog.md（2026-07-06 エントリ）
+
+状態:
+- パフォーマンス改善 **本番反映済み**（Preview 確認 → main merge → Production deploy）
+- 同期 commit: **e980842**（origin/main = origin/preview/landing-01）
+- deploy ID: **dpl_ARS8yDJzg9gD4iQbhpKoSDEiLYnD**
+- コア機能: 46d40f3 までの一連（122cb6b で本番記録、e980842 は changelog deploy ID 追記）
+
+実装済み（今後の前提）:
+
+1. **作品詳細 1件直取得**
+   - fetchPublicProjectById / useGameDetailProject
+   - catalog 全件待ちを廃止し、作品詳細を単体 fetch
+
+2. **タブ即時切替**
+   - useInstantQueryTab + history.replaceState
+   - router.replace による Next navigation を回避
+   - /games/[id] の概要 / 開発ログ / みんなのFB
+
+3. **横展開**
+   - /mypage / /studio/mypage に instant tab + 遅延マウント
+
+4. **みんなのFB タブ スクロール戻り修正**
+   - preserve-scroll + タブパネル min-h
+   - タブ切替で上部へ戻る問題を解消
+
+5. **ログインフォーム入力消失防止**
+   - auth-login-action から revalidatePath 削除
+   - controlled input + 「ログイン中…」表示
+
+6. **GamesProvider fetch 遅延**
+   - グローバル devlog / release events / support counts を setTimeout(0) で後追い
+
+7. **基盤**
+   - skeleton 化、[forge:perf] 計測、ForgeTabPanel keep-alive
+
+本番確認（オーナー実機）:
+- 作品詳細タブが Preview 同様に速いこと
+- みんなのFBタブで上部へ戻らないこと
+- /mypage / /studio/mypage タブが速いこと
+- メールログイン時に入力欄が遷移前に消えないこと
+- Xログイン導線が壊れていないこと
+
+残課題:
+- **サイドバー遷移がまだ 1〜2秒**（/home /search /mypage /community 等）
+- 原因候補: Shell ページごと再 mount / Next navigation / 遷移先初期 fetch / GamesProvider 一括取得 / auth・profile・getUser waterfall / prefetch 不足
+
+次フェーズ候補:
+1. PlayerShell / StudioShell 共通 layout 化
+2. サイドバーリンクの prefetch
+3. 遷移先初期 fetch の分解
+4. /home /search の catalog 取得改善
+
+未移行（router.replace 監査）:
+- creator-profile / developer-profile / studio-project-detail 等
 
 ================================================================
 ■ X Auth 本番 GO 完了（2026-07-06）
@@ -64,13 +126,14 @@ X Developer:
 - /players/[handle] の X 表示
 
 ================================================================
-■ 同梱本番デプロイ（6192348）
+■ 同梱本番デプロイ（6192348 以降）
 ================================================================
 
 - 041 公開FBカード Phase 2 UI（migration 適用済み）
 - ゲスト深掘りFB Phase 1
 - 声 aggregate バケット修正
 - X Auth コード一式（migration は事前適用済み）
+- 主要導線パフォーマンス改善（e980842 時点で本番反映済み）
 
 ================================================================
 ■ DB / Supabase（2026-07-06）
@@ -83,6 +146,7 @@ X Developer:
 - 043 RPC grants fixup（anon REVOKE 等）
 
 deploy 時に migration 再 Run 不要。
+パフォーマンス改善は **DB / migration 変更なし**（アプリ層のみ）。
 
 ================================================================
 ■ 本番・Preview 運用
@@ -152,4 +216,4 @@ Cursor 完了時: docs/forge-changelog.md 更新。handoff は節目のみ（今
 | AGENTS.md / docs/forge-triage-operations.md | 開発・deploy ルール |
 
 画面マップ・2026-06 以前の詳細スナップショットは docs/forge-screen-inventory.md 等を参照。
-（本ファイルは 2026-07-06 時点の全量スナップショットに刷新。旧 728 行版は履歴として置き換え。）
+（本ファイルは 2026-07-06 時点の全量スナップショットに刷新。）
