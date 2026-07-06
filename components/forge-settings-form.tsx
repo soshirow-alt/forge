@@ -57,16 +57,31 @@ function ToggleRow({
   disabled?: boolean;
   onToggle: () => void;
 }) {
+  const rowDisabled = disabled || item.comingSoon;
+
   return (
     <li className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0">
       <div>
-        <p className="text-sm font-medium text-zinc-200">{item.label}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm font-medium text-zinc-200">{item.label}</p>
+          {item.comingSoon ? (
+            <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
+              近日対応
+            </span>
+          ) : null}
+        </div>
         <p className="mt-0.5 text-xs text-zinc-500">{item.description}</p>
+        {item.comingSoon ? (
+          <p className="mt-1 text-[11px] leading-relaxed text-zinc-600">
+            {item.comingSoonNote ??
+              "近日対応予定（現在はまだ通知・公開範囲には反映されません）"}
+          </p>
+        ) : null}
       </div>
       <ToggleSwitch
         enabled={item.enabled}
-        disabled={disabled}
-        onToggle={onToggle}
+        disabled={rowDisabled}
+        onToggle={rowDisabled ? () => {} : onToggle}
         label={item.label}
       />
     </li>

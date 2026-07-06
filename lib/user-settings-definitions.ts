@@ -3,7 +3,13 @@ export type SettingsToggleItem = {
   label: string;
   description: string;
   enabled: boolean;
+  /** Saved in DB but not yet wired to product behavior. */
+  comingSoon?: boolean;
+  comingSoonNote?: string;
 };
+
+const COMING_SOON_NOTE =
+  "近日対応予定（現在はまだ通知・公開範囲には反映されません）";
 
 export type PlayerNotificationPrefKey =
   | "watch-updates"
@@ -58,18 +64,24 @@ export const forgeNotificationPlayerItems: SettingsToggleItem[] = [
     label: "フォロー中の開発者",
     description: "フォローした開発者が新作を公開したとき",
     enabled: true,
+    comingSoon: true,
+    comingSoonNote: COMING_SOON_NOTE,
   },
   {
     id: "community",
     label: "参加コミュニティ",
     description: "参加申請の承認・却下、承認済みコミュニティからのお知らせ",
     enabled: true,
+    comingSoon: true,
+    comingSoonNote: COMING_SOON_NOTE,
   },
   {
     id: "system",
     label: "Forge からのお知らせ",
     description: "利用規約の更新、実績バッジなど",
     enabled: false,
+    comingSoon: true,
+    comingSoonNote: COMING_SOON_NOTE,
   },
 ];
 
@@ -79,18 +91,24 @@ export const forgeNotificationStudioItems: SettingsToggleItem[] = [
     label: "見届け人",
     description: "作品の見届け人が増えたとき",
     enabled: true,
+    comingSoon: true,
+    comingSoonNote: COMING_SOON_NOTE,
   },
   {
     id: "version-play",
     label: "プレイ",
     description: "公開中のverがプレイされたとき",
     enabled: true,
+    comingSoon: true,
+    comingSoonNote: COMING_SOON_NOTE,
   },
   {
     id: "community",
     label: "コミュニティ",
     description: "参加申請・メンバー管理に関するお知らせ",
     enabled: true,
+    comingSoon: true,
+    comingSoonNote: COMING_SOON_NOTE,
   },
 ];
 
@@ -111,20 +129,26 @@ export const privacySettingsSection: ForgeSettingsSection = {
     {
       id: "profile",
       label: "プロフィールを公開",
-      description: "他のプレイヤーから見える（公開プロフィール実装時に反映）",
+      description: "他のプレイヤーから見える",
       enabled: true,
+      comingSoon: true,
+      comingSoonNote: COMING_SOON_NOTE,
     },
     {
       id: "activity",
       label: "最近の活動を表示",
-      description: "プロフィールに活動を載せる（公開プロフィール実装時に反映）",
+      description: "プロフィールに活動を載せる",
       enabled: true,
+      comingSoon: true,
+      comingSoonNote: COMING_SOON_NOTE,
     },
     {
       id: "ranking",
       label: "ランキングに表示",
       description: "月間影響度ランキングへの参加",
       enabled: true,
+      comingSoon: true,
+      comingSoonNote: COMING_SOON_NOTE,
     },
   ],
 };

@@ -129,6 +129,28 @@ export function buildPlayerProjectInvolvement(input: {
   };
 }
 
+export function resolveHasPlayedLatestVersion(input: {
+  sessions: ProjectPlaySession[];
+  firstPlayedAt: string | null;
+  playableVersion: string | undefined | null;
+}): boolean | null {
+  const sessionsAsc = [...input.sessions].sort(
+    (left, right) =>
+      new Date(left.playedAt).getTime() - new Date(right.playedAt).getTime(),
+  );
+
+  const latestVersion = normalizeVersionKey(input.playableVersion);
+  const playedVersions = new Set(
+    sessionsAsc.map((session) => normalizeVersionKey(session.versionKey)),
+  );
+
+  if (sessionsAsc.length === 0) {
+    return input.firstPlayedAt ? null : false;
+  }
+
+  return playedVersions.has(latestVersion);
+}
+
 export function formatInvolvementDate(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) {

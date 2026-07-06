@@ -222,7 +222,7 @@ export function StudioShell({
   const router = useRouter();
   const pathname = usePathname();
   const { user, hydrated, logout } = useAuth();
-  const { getUnreadNotificationCount } = useGames();
+  const { getUnreadNotificationCount, reloadNotifications } = useGames();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const resolvedNotificationBadge =
     notificationBadge ?? (user ? getUnreadNotificationCount() : 0);
@@ -293,6 +293,9 @@ export function StudioShell({
           <HeaderSearchForm defaultValue={headerSearchDefault} />
           <Link
             href="/notifications"
+            onClick={() => {
+              void reloadNotifications();
+            }}
             className="relative rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
             aria-label="通知"
             title="通知（プレイヤー画面）"

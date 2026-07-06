@@ -82,6 +82,7 @@ export function usePlayerPlayHistory() {
         devlogs,
         releaseEvents,
         witnessGrantProjectIds,
+        getPlayableVersion: (projectId) => getGameById(projectId)?.playableVersion,
       }).filter((timeline) => getGameById(timeline.projectId));
 
       setTimelines(built);

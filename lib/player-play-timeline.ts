@@ -1,4 +1,5 @@
 import type { DevlogEntry } from "@/lib/devlogs";
+import { resolveHasPlayedLatestVersion } from "@/lib/player-project-involvement";
 import {
   getFirstReleasedEvent,
   type ProjectReleaseEvent,
@@ -58,8 +59,16 @@ export function buildPlayHistoryRelationshipBadges(input: {
   updateWatchCount: number;
   distinctVersionsPlayed: number;
   hasPlayed: boolean;
+  hasPlayedLatestVersion?: boolean | null;
 }): PlayHistoryRelationshipBadge[] {
   const badges: PlayHistoryRelationshipBadge[] = [];
+
+  if (
+    input.hasPlayed &&
+    input.hasPlayedLatestVersion === false
+  ) {
+    badges.push({ id: "latest-unplayed", emoji: "✨", label: "最新版未プレイ" });
+  }
 
   if (input.hasWitnessGrant) {
     badges.push({ id: "witness", emoji: "🏅", label: "見届け人" });
@@ -177,6 +186,7 @@ export function buildPlayHistoryProjectTimeline(input: {
   devlogs: DevlogEntry[];
   releaseEvents?: ProjectReleaseEvent[];
   hasWitnessGrant?: boolean;
+  playableVersion?: string | null;
 }): PlayHistoryProjectTimeline {
   const releaseEvents = input.releaseEvents ?? [];
   const firstReleased = getFirstReleasedEvent(releaseEvents);
@@ -202,12 +212,22 @@ export function buildPlayHistoryProjectTimeline(input: {
     ? daysBetween(input.firstPlayedAt)
     : 0;
 
+  const hasPlayed = input.sessions.length > 0 || Boolean(input.firstPlayedAt);
+  const hasPlayedLatestVersion = input.playableVersion
+    ? resolveHasPlayedLatestVersion({
+        sessions: input.sessions,
+        firstPlayedAt: input.firstPlayedAt,
+        playableVersion: input.playableVersion,
+      })
+    : null;
+
   const badges = buildPlayHistoryRelationshipBadges({
     hasWitnessGrant: input.hasWitnessGrant ?? false,
     voiceCount: input.voices.length,
     updateWatchCount,
     distinctVersionsPlayed: countDistinctVersions(input.sessions),
-    hasPlayed: input.sessions.length > 0 || Boolean(input.firstPlayedAt),
+    hasPlayed,
+    hasPlayedLatestVersion,
   });
 
   const latestActivityAt =
@@ -239,6 +259,7 @@ export function buildPlayHistoryForProjects(input: {
   devlogs: DevlogEntry[];
   releaseEvents?: ProjectReleaseEvent[];
   witnessGrantProjectIds?: Set<string>;
+  getPlayableVersion?: (projectId: string) => string | undefined;
 }): PlayHistoryProjectTimeline[] {
   const sessionsByProject = new Map<string, ProjectPlaySession[]>();
   const voicesByProject = new Map<string, VoiceResponse[]>();
@@ -280,6 +301,7 @@ export function buildPlayHistoryForProjects(input: {
         devlogs: devlogsByProject.get(projectId) ?? [],
         releaseEvents: releasesByProject.get(projectId) ?? [],
         hasWitnessGrant: witnessProjects.has(projectId),
+        playableVersion: input.getPlayableVersion?.(projectId),
       }),
     )
     .sort(

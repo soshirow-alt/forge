@@ -17,6 +17,7 @@ import {
 import { ViewModeToggle, type ViewMode } from "@/components/view-mode-toggle";
 import { PageLoadingSkeleton } from "@/components/forge-loading-skeletons";
 import { useOwnedProjectVoiceSignals } from "@/hooks/use-owned-project-voice-signals";
+import { useNurtureVoiceRead } from "@/hooks/use-nurture-feedback-read";
 import { matchesOwnedProjectPhaseFilter } from "@/lib/owned-project-filters";
 import {
   buildProjectGrowthSnapshot,
@@ -120,7 +121,8 @@ function OwnedProjectGridCard({
   showDelete: boolean;
 }) {
   const { game, growth, notificationCount, voiceLoaded } = row;
-  const statusBadges = voiceLoaded ? getProjectStatusBadges(growth, false) : [];
+  const { isRead: voiceRead } = useNurtureVoiceRead(game.id, growth.playableVersion);
+  const statusBadges = voiceLoaded ? getProjectStatusBadges(growth, voiceRead) : [];
   const hasHighlight = notificationCount > 0 || statusBadges.length > 0;
   const responseCountLabel = formatVoiceResponseCount(
     growth.totalVoiceResponseCount,
@@ -220,7 +222,8 @@ function OwnedProjectListRow({
   showDelete: boolean;
 }) {
   const { game, growth, notificationCount, voiceLoaded } = row;
-  const statusBadges = voiceLoaded ? getProjectStatusBadges(growth, false) : [];
+  const { isRead: voiceRead } = useNurtureVoiceRead(game.id, growth.playableVersion);
+  const statusBadges = voiceLoaded ? getProjectStatusBadges(growth, voiceRead) : [];
   const hasHighlight = notificationCount > 0 || statusBadges.length > 0;
   const responseCountLabel = formatVoiceResponseCount(
     growth.totalVoiceResponseCount,

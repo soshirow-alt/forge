@@ -1106,6 +1106,53 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     );
   }, [user, submittedGames]);
 
+  useEffect(() => {
+    if (!authHydrated || !user) {
+      return;
+    }
+
+    const minReloadIntervalMs = 5_000;
+    let inFlight = false;
+    let lastReloadAt = 0;
+
+    async function reloadThrottled() {
+      if (inFlight) {
+        return;
+      }
+
+      const now = Date.now();
+      if (now - lastReloadAt < minReloadIntervalMs) {
+        return;
+      }
+
+      inFlight = true;
+      try {
+        await reloadNotifications();
+        lastReloadAt = Date.now();
+      } finally {
+        inFlight = false;
+      }
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        void reloadThrottled();
+      }
+    }
+
+    function handleWindowFocus() {
+      void reloadThrottled();
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleWindowFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleWindowFocus);
+    };
+  }, [authHydrated, reloadNotifications, user]);
+
   const getGamesBySection = useCallback(
     (section: Game["section"]) => {
       const publicSubmitted = submittedGames.filter(isGamePublic);

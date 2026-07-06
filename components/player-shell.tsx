@@ -227,7 +227,7 @@ export function PlayerShell({
   const router = useRouter();
   const pathname = usePathname();
   const { user, hydrated, logout, isRegisteredUser } = useAuth();
-  const { getUnreadNotificationCount } = useGames();
+  const { getUnreadNotificationCount, reloadNotifications } = useGames();
   const { attemptStudioEntry } = useStudioEntryGate();
   const previewStudioBypass = useStudioLoginHrefBypass();
   const needsStudioOnboarding = Boolean(user && shouldPromptDeveloperPage(user.id));
@@ -308,6 +308,9 @@ export function PlayerShell({
           <HeaderSearchForm legacyDefault={headerSearchDefault} />
           <RegisteredOnlyLink
             href="/notifications"
+            onClick={() => {
+              void reloadNotifications();
+            }}
             className="relative rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
             aria-label="通知"
           >
