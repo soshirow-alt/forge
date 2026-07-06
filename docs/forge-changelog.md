@@ -6,8 +6,9 @@
 
 ## 2026-07-06 — PlayerShell 共通 layout Phase 1 本番反映
 
-- **commit** — `6fdfd00`（Phase 1 コア。本番記録時点で `origin/main` = `origin/preview/landing-01` に同期予定）
+- **commit** — `0f84b67`（Phase 1 コア `6fdfd00` + changelog。`origin/main` = `origin/preview/landing-01`）
 - **本番 URL** — https://forge-flame-gamma.vercel.app
+- **deploy** — `dpl_uwDZJxL2YRvhcppkkp45JLASy7B5`（`vercel deploy --prod`）
 - **内容** — `/home` `/search` `/mypage` `/mypage/community` `/settings` を `app/(player)/` route group 化。`PlayerShellLayout` で sidebar/header を遷移間維持。`HeaderSearchForm` が URL から `q` を自己解決
 - **未移行（別タスク）** — 残り Player ルート、StudioShell layout 化、GamesProvider 分解、auth/getUser 整理
 - **残課題** — サイドバー遷移はまだ少し遅いが現時点ではギリ許容範囲。さらなる改善は別タスクで慎重に（Phase 2 / Studio layout / GamesProvider / auth 整理）。route-level `loading.tsx` 全画面 skeleton は不採用（UX 悪化のため revert 済み）
