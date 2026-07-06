@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import { forgePerfLog, forgePerfMark, forgePerfMeasure } from "@/lib/forge-perf-log";
-import { forgeSidebarPerfContentReady } from "@/lib/forge-sidebar-perf";
 
 type ForgePerfRouteOptions = {
   route: string;
@@ -46,7 +45,6 @@ export function useForgePerfRoute({
       route,
       ...context,
     });
-    forgeSidebarPerfContentReady(route, context);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- log ready milestone once
   }, [ready, readyLabel, route]);
 }

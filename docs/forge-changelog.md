@@ -4,14 +4,7 @@
 
 ---
 
-## 2026-07-06 — サイドバー遷移パフォーマンス調査（preview/landing-01）
-
-- **調査** — Shell 再mount・Next navigation・route別初期 fetch・prefetch・auth/getUser のクリティカルパスを整理
-- **計測** — `[forge:perf] sidebar.click / route-start / shell-ready / content-skeleton / content-ready` と click→各段階の duration
-- **低リスク改善** — 主要ルートに `loading.tsx`（即時 skeleton）、Studio home metrics 60秒セッションキャッシュ、community Suspense fallback を skeleton 化
-- **未着手（要設計）** — PlayerShell/StudioShell 共通 layout 化、GamesProvider 大分解、middleware/auth 整理
-
----
+## 2026-07-06 — 主要導線パフォーマンス改善 本番反映
 
 - **commit** — `122cb6b`（`origin/main` = `origin/preview/landing-01`）
 - **本番 URL** — https://forge-flame-gamma.vercel.app

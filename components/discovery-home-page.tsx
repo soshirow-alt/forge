@@ -4,11 +4,10 @@ import { HorizontalCardPager } from "@/components/horizontal-card-pager";
 import { DiscoveryGameThumbnail } from "@/components/discovery-game-thumbnail";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useGames } from "@/components/games-provider";
 import { DiscoveryHomeSkeleton } from "@/components/forge-loading-skeletons";
 import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
-import { forgeSidebarPerfContentSkeleton } from "@/lib/forge-sidebar-perf";
 import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
 import { PlayerShell } from "@/components/player-shell";
 import { useHideV0MockContent } from "@/lib/forge-deployment-context";
@@ -244,14 +243,6 @@ export function DiscoveryHomePage() {
     ready: publicCatalogReady,
     context: { gameCount: publicGames.length },
   });
-
-  useEffect(() => {
-    if (!publicCatalogReady) {
-      forgeSidebarPerfContentSkeleton("/home", "publicCatalogReady", {
-        gameCount: publicGames.length,
-      });
-    }
-  }, [publicCatalogReady, publicGames.length]);
 
   const realNewGames = useMemo(
     () =>

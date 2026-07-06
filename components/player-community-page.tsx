@@ -2,13 +2,9 @@
 
 import { Suspense } from "react";
 import { CommunityHubPage } from "@/components/community-hub-page";
-import { PageLoadingSkeleton } from "@/components/forge-loading-skeletons";
 import { PlayerShell } from "@/components/player-shell";
-import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
 
 function PlayerCommunityPageContent() {
-  useForgePerfRoute({ route: "/mypage/community", ready: true });
-
   return (
     <PlayerShell activeNav="community">
       <CommunityHubPage variant="player" />
@@ -21,7 +17,9 @@ export function PlayerCommunityPage() {
     <Suspense
       fallback={
         <PlayerShell activeNav="community">
-          <PageLoadingSkeleton lines={4} />
+          <div className="mx-auto max-w-3xl">
+            <p className="text-zinc-500">読み込み中…</p>
+          </div>
         </PlayerShell>
       }
     >

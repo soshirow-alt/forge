@@ -25,8 +25,6 @@ import { PlatformFeedbackSidebarBox } from "@/components/platform-feedback-sideb
 import { RegisteredOnlyLink } from "@/components/registered-account-prompt-provider";
 import { shouldPromptDeveloperPage } from "@/lib/developer-onboarding-v0-store";
 import { useStudioLoginHrefBypass } from "@/lib/forge-deployment-context";
-import { useForgePerfSidebarShell } from "@/hooks/use-forge-perf-sidebar-shell";
-import { forgeSidebarPerfNavClickCapture } from "@/lib/forge-sidebar-perf";
 import { WATCH_TAB_LABEL } from "@/lib/watch-ui-labels";
 
 const primaryLinks = [
@@ -200,7 +198,6 @@ export function PlayerShell({
   const resolvedNotificationBadge =
     notificationBadge ?? (user ? getUnreadNotificationCount() : 0);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  useForgePerfSidebarShell("player");
 
   useEffect(() => {
     setMobileNavOpen(false);
@@ -225,10 +222,7 @@ export function PlayerShell({
           </Link>
         </div>
 
-        <nav
-          className="flex min-h-0 flex-1 flex-col px-3 py-4"
-          onClickCapture={forgeSidebarPerfNavClickCapture}
-        >
+        <nav className="flex min-h-0 flex-1 flex-col px-3 py-4">
           <PlayerSidebarNavBody />
         </nav>
       </aside>

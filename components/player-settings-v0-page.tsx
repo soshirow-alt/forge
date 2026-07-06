@@ -3,11 +3,8 @@
 import Link from "next/link";
 import { PlayerShell } from "@/components/player-shell";
 import { ForgeSettingsForm } from "@/components/forge-settings-form";
-import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
 
 export function PlayerSettingsV0Page() {
-  useForgePerfRoute({ route: "/settings", ready: true });
-
   return (
     <PlayerShell activeNav="settings">
       <div className="mx-auto max-w-3xl space-y-8">
