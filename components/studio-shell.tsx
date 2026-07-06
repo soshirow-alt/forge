@@ -18,6 +18,8 @@ import {
   ForgeShellModeSwitch,
 } from "@/components/forge-shell-mobile-nav";
 import { PlatformFeedbackSidebarBox } from "@/components/platform-feedback-sidebar-box";
+import { useForgePerfSidebarShell } from "@/hooks/use-forge-perf-sidebar-shell";
+import { forgeSidebarPerfNavClickCapture } from "@/lib/forge-sidebar-perf";
 import { studioProjectTabs } from "@/lib/studio-project-detail-v0-mock-data";
 
 const primaryLinks = [
@@ -224,6 +226,7 @@ export function StudioShell({
   const { user, hydrated, logout } = useAuth();
   const { getUnreadNotificationCount } = useGames();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  useForgePerfSidebarShell("studio");
   const resolvedNotificationBadge =
     notificationBadge ?? (user ? getUnreadNotificationCount() : 0);
 
@@ -250,7 +253,10 @@ export function StudioShell({
           </Link>
         </div>
 
-        <nav className="flex min-h-0 flex-1 flex-col px-3 py-4">
+        <nav
+          className="flex min-h-0 flex-1 flex-col px-3 py-4"
+          onClickCapture={forgeSidebarPerfNavClickCapture}
+        >
           <StudioSidebarNavBody />
         </nav>
       </aside>

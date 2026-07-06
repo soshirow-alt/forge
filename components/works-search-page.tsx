@@ -18,6 +18,7 @@ import {
 import { useGames } from "@/components/games-provider";
 import { DiscoveryHomeSkeleton } from "@/components/forge-loading-skeletons";
 import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
+import { forgeSidebarPerfContentSkeleton } from "@/lib/forge-sidebar-perf";
 import {
   paginateSearchResults,
   searchFeatureTagFilters,
@@ -88,6 +89,15 @@ function WorksSearchContent() {
     ready: publicCatalogReady,
     context: { gameCount: publicGames.length },
   });
+
+  useEffect(() => {
+    if (!publicCatalogReady) {
+      forgeSidebarPerfContentSkeleton("/search", "publicCatalogReady", {
+        gameCount: publicGames.length,
+      });
+    }
+  }, [publicCatalogReady, publicGames.length]);
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryFromUrl = searchParams.get("q")?.trim() ?? "";

@@ -32,6 +32,7 @@ import {
 } from "@/components/studio-home-charts";
 import { useStudioHomeHighlights } from "@/hooks/use-studio-home-highlights";
 import { useStudioHomeMetrics } from "@/hooks/use-studio-home-metrics";
+import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
 import {
   STUDIO_HOME_DEV_HINTS,
   STUDIO_HOME_GRANULARITY_OPTIONS,
@@ -884,6 +885,12 @@ export function StudioHomePage() {
   const { metrics, initialLoading, fetching, rpcReady, granularityFallback } =
     useStudioHomeMetrics(granularity);
   const { highlights, loading: highlightsLoading } = useStudioHomeHighlights();
+
+  useForgePerfRoute({
+    route: "/studio",
+    ready: !initialLoading,
+    context: { granularity, highlightsLoading },
+  });
 
   return (
     <StudioShell activeNav="home">
