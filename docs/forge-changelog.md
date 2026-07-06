@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-07-06 — 投稿後・作品ページ共有導線 本番反映
+
+- **commit** — `cf10c67`（`a272840`〜`cf10c67` を `main` FF。`origin/main` = `origin/preview/landing-01`）
+- **本番 URL** — https://forge-flame-gamma.vercel.app
+- **deploy** — `dpl_UNzYHP35JhfAtRbCiQMx9wKYZJzv`（`vercel deploy --prod`）
+- **投稿成功画面** — 作品タイトル表示。「Player表示で作品ページを見る」/ 外部に共有 / 投稿した作品を編集する / もう1本投稿。非公開は Player 表示・共有を非活性/非表示、編集へ誘導
+- **共有モーダル** — 共有URL目視表示。violet + zinc トーン
+- **作品ページ（オーナーのみ）** — 薄い共有バー（外部に共有する / 作品を編集する）。非公開は共有不可案内
+- **DB migration なし**
+
+---
+
 ## 2026-07-06 — 投稿後・作品ページ共有導線の補強（preview/landing-01）
 
 - **commit** — `a272840`（`preview/landing-01` のみ。本番未反映）
