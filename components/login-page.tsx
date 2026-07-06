@@ -17,6 +17,7 @@ import {
   ACCOUNT_REGISTRATION_REQUIRED_NOTICE,
 } from "@/lib/guest-auth";
 import {
+  DEFAULT_POST_PLAYER_HOME_PATH,
   LOGIN_PATH,
   resolvePostGuestLoginPath,
   resolvePostLoginPath,
@@ -227,9 +228,12 @@ export function LoginPage({
 
         <div className="mt-3">
           <XOAuthLoginSection
-            nextPath={resolvePostLoginPath(returnParam)}
+            nextPath={
+              returnParam
+                ? resolvePostLoginPath(returnParam)
+                : DEFAULT_POST_PLAYER_HOME_PATH
+            }
             disabled={pending || !supabaseConfigured}
-            mode="login"
           />
         </div>
 

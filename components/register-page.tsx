@@ -14,7 +14,7 @@ import { XOAuthLoginSection } from "@/components/x-oauth-login-section";
 import { useAuth } from "@/components/auth-provider";
 import { markNewRegistrationPending } from "@/lib/developer-onboarding-v0-store";
 import { AUTH_ALREADY_REGISTERED_MESSAGE, getAuthErrorMessage } from "@/lib/auth";
-import { resolvePostLoginPath } from "@/lib/login-return-url";
+import { DEFAULT_POST_PLAYER_HOME_PATH, resolvePostLoginPath } from "@/lib/login-return-url";
 
 export function RegisterPage({
   supabaseConfigured,
@@ -211,10 +211,9 @@ export function RegisterPage({
 
         <div className="mt-6">
           <XOAuthLoginSection
-          nextPath={resolvePostLoginPath(null)}
-          disabled={submitting || !supabaseConfigured}
-          mode="register"
-        />
+            nextPath={DEFAULT_POST_PLAYER_HOME_PATH}
+            disabled={submitting || !supabaseConfigured}
+          />
         </div>
 
         <p className="mt-8 text-center text-sm text-zinc-500">

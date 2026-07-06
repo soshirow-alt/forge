@@ -15,8 +15,11 @@ import {
 
 export const LOGIN_PATH = "/login";
 
-/** return なしログイン・登録セッション確立後のデフォルト遷移先 */
+/** return なしログイン・登録セッション確立後のデフォルト遷移先（開発者マイページ） */
 export const DEFAULT_POST_LOGIN_PATH = "/studio/mypage";
+
+/** プレイヤー発見・ホーム（ゲスト参加後と同系統） */
+export const DEFAULT_POST_PLAYER_HOME_PATH = "/home";
 
 const ID_SEGMENT = `[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}`;
 const GAME_TAB_VALUES = new Set(["devlog", "voices", "overview"]);

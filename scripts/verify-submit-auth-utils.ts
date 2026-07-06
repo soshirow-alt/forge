@@ -549,6 +549,14 @@ function testOAuthRedirectOriginContract() {
     path.join(import.meta.dirname, "../components/login-page.tsx"),
     "utf8",
   );
+  const registerPage = fs.readFileSync(
+    path.join(import.meta.dirname, "../components/register-page.tsx"),
+    "utf8",
+  );
+  const xOAuthSection = fs.readFileSync(
+    path.join(import.meta.dirname, "../components/x-oauth-login-section.tsx"),
+    "utf8",
+  );
 
   ok(
     authRedirect.includes("getClientAuthOrigin") &&
@@ -580,9 +588,19 @@ function testOAuthRedirectOriginContract() {
   );
   ok(
     loginPage.includes("XOAuthLoginSection") &&
+      loginPage.includes("DEFAULT_POST_PLAYER_HOME_PATH") &&
       !loginPage.includes("OAuthComingSoonSection") &&
       !loginPage.includes("Google / Discord / GitHub"),
-    "login page uses current X OAuth UI only",
+    "login page uses current X OAuth UI and player home default",
+  );
+  ok(
+    registerPage.includes("DEFAULT_POST_PLAYER_HOME_PATH") &&
+      registerPage.includes("XOAuthLoginSection"),
+    "register page X OAuth defaults to player home",
+  );
+  ok(
+    xOAuthSection.includes("Xでログイン") && !xOAuthSection.includes("続ける"),
+    "X OAuth button label is Xでログイン",
   );
 }
 
@@ -623,6 +641,17 @@ function testOAuthRedirectUrlValues() {
     resolveOAuthCallbackErrorPath("x_link") ===
       "/settings?x=error&reason=callback_failed",
     "x_link error destination",
+  );
+  ok(
+    resolveOAuthCallbackDestination({ flow: "x_login", next: "/home" }) === "/home",
+    "x_login success uses cookie next (/home default)",
+  );
+  ok(
+    resolveOAuthCallbackDestination({
+      flow: "x_login",
+      next: "/studio/mypage",
+    }) === "/studio/mypage",
+    "x_login respects explicit cookie next when set",
   );
   ok(
     resolveOAuthCallbackErrorPath("x_login") === "/login?error=auth_callback",

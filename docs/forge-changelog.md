@@ -4,21 +4,36 @@
 
 ---
 
+## 2026-07-06 — X OAuth ログイン後のデフォルト遷移を /home に統一
+
+- **文言** — `/login`・`/register` とも X ボタンは **「Xでログイン」**
+- **遷移** — X ログイン（`/login` / `/register`）で return 未指定時は **新規・既存を問わず `/home`**。`/settings` X連携は **`/settings?x=linked`** のまま
+- **意図** — 初回体験は Player 発見側へ。Studio はユーザーが明示的に入る（メール新規登録のデフォルト `/studio/mypage` は別経路のまま）
+- **削除** — `forge_oauth_entry` cookie と初回作成時のみ `/home` へ寄せる分岐
+
+---
+
+## 2026-07-06 — Preview X OAuth E2E 全項目 PASS
+
+- **`/login` X** — ログアウト後 Preview `/login` → X同意 → 同一 origin 完結。`forge.operation@gmail.com` / `@Forge_game_0601` でログイン。`/settings` 連携済み表示
+- **合わせて PASS** — settings 連携 / `user_x_profiles` / redirect / callback / 旧ログイン UI 非表示
+
+---
+
 ## 2026-07-06 — Preview `/settings` X連携 通常系 E2E PASS（DB 確認済み）
 
 - **経路** — 別 Forge アカウントでメールログイン → Preview `/settings` → Xで連携（`linkIdentity` / `x_link`）。**`/login` Xログインは未使用**
 - **結果** — X 同意後 **Preview** `/settings?x=linked` に復帰（本番 LP へ飛ばない）。「Xアカウントを連携しました。」・連携済み・`@Forge_game_0601` 表示
 - **DB** — `public.user_x_profiles` 1行: `user_id=dffa79de-...` / `x_user_id=1346719389022707712` / `x_username=Forge_game_0601` / `x_display_name=Forge 運営`
-- **PASS** — Preview redirect / settings 連携通常系 / `linkIdentity`+`x_link` / `syncUserXProfileAfterAuth`→`upsert_own_x_profile` / 成功 UI / `@handle` / 旧紐づけ解除後の再連携
-- **未確認** — `/login` → Xでログイン / 本番環境 `NEXT_PUBLIC_X_AUTH_ENABLED` 下での同一 E2E
+- **PASS** — Preview redirect / settings 連携通常系 / `linkIdentity`+`x_link` / `syncUserXProfileAfterAuth`→`upsert_own_x_profile` / 成功 UI / `@handle` / 旧紐づけ解除後の再連携 / **`/login` X**（後続エントリ参照）
+- **未確認** — 本番環境 `NEXT_PUBLIC_X_AUTH_ENABLED` 下での同一 E2E
 - **未実施** — main merge / 本番 deploy
 
 ---
 
-## 2026-07-06 — 新規登録画面の X ボタン文言
+## 2026-07-06 — 新規登録画面の X ボタン文言（一時変更・差し戻し）
 
-- **変更** — `/register` の X 導線を「Xで登録」→ **「Xで続ける」**（`/login` の「Xでログイン」は維持）
-- **理由** — 実装は `signInWithOAuth` のみで、既存 X は既存ユーザーにログイン・未登録 X は新規作成。新規登録専用 API ではないため
+- ~~「Xで続ける」~~ → **`Xでログイン` に戻した**（後続エントリ参照）
 
 ---
 
