@@ -8,7 +8,7 @@ import {
  *
  * Allowed paths:
  * - /games/{id} (?tab=devlog|voices|overview, ?adoption={id})
- * - /submit, /my-projects
+ * - /submit, /my-projects, /mypage, /mypage/..., /settings, /bookmarks, /notifications
  * - /studio, /studio/...
  * - /projects/{id}/studio (?devlog=1, ?edit=project|prompts)
  */
@@ -25,6 +25,7 @@ export const DEFAULT_POST_PLAYER_HOME_PATH = "/home";
 const ID_SEGMENT = `[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}`;
 const GAME_TAB_VALUES = new Set(["devlog", "voices", "overview"]);
 const STUDIO_PATH = /^\/studio(?:\/[a-zA-Z0-9][a-zA-Z0-9/_-]*)?$/;
+const MYPAGE_PATH = /^\/mypage(?:\/[a-zA-Z0-9][a-zA-Z0-9/_-]*)?$/;
 
 function isUnsafeRelativePath(value: string): boolean {
   return (
@@ -118,8 +119,13 @@ export function sanitizeLoginReturnUrl(
       pathname === "/submit" ||
       pathname === "/my-projects" ||
       pathname === "/bookmarks" ||
-      pathname === "/notifications"
+      pathname === "/notifications" ||
+      pathname === "/settings"
     ) {
+      return search.toString() ? null : pathname;
+    }
+
+    if (MYPAGE_PATH.test(pathname)) {
       return search.toString() ? null : pathname;
     }
 
@@ -217,4 +223,11 @@ export function buildRegisterUrlWithReturn(returnPath: string): string {
 
 export function gameDetailReturnPath(gameId: string): string {
   return `/games/${gameId}`;
+}
+
+export function isGuestEligibleReturnParam(
+  returnParam: string | null | undefined,
+): boolean {
+  const safe = sanitizeLoginReturnUrl(returnParam);
+  return Boolean(safe && isGuestReturnPathAllowed(safe));
 }

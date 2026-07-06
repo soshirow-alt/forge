@@ -1,26 +1,48 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useEntryMode } from "@/components/entry-mode-provider";
 import { buildLoginUrlWithReturn } from "@/lib/login-return-url";
-import { shouldShowForgeEntryGate } from "@/lib/entry-mode";
+import {
+  shouldClientRedirectToLoginFromEntryGate,
+  shouldShowForgeEntryGate,
+} from "@/lib/entry-mode";
 
 /**
- * Client overlay gate for first-time Forge entry (login vs guest).
- * Avoids middleware redirects so crawlers/OGP can still fetch public HTML.
+ * First-time entry choice (login vs guest).
+ * Shared game URLs redirect to /login (client-side) so OGP/crawlers still get HTML.
+ * Other discovery paths keep the in-page overlay gate.
  */
 export function ForgeEntryGate() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, authResolved } = useAuth();
   const { entryModeResolved, isEntryUnset, setGuestEntryMode } = useEntryMode();
 
-  if (!authResolved || !entryModeResolved || user || !isEntryUnset) {
-    return null;
-  }
+  const gateEligible =
+    authResolved &&
+    entryModeResolved &&
+    !user &&
+    isEntryUnset &&
+    shouldShowForgeEntryGate(pathname);
 
-  if (!shouldShowForgeEntryGate(pathname)) {
+  const redirectToLogin = gateEligible && shouldClientRedirectToLoginFromEntryGate(pathname);
+
+  useEffect(() => {
+    if (!redirectToLogin) {
+      return;
+    }
+
+    const search =
+      typeof window !== "undefined" ? window.location.search : "";
+    const returnPath = `${pathname}${search}`;
+    router.replace(buildLoginUrlWithReturn(returnPath));
+  }, [redirectToLogin, pathname, router]);
+
+  if (!gateEligible || redirectToLogin) {
     return null;
   }
 

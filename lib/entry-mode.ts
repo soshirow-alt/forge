@@ -66,3 +66,8 @@ export function shouldShowForgeEntryGate(pathname: string): boolean {
     pathname.startsWith("/creators/")
   );
 }
+
+/** Shared game pages — redirect to login instead of overlay gate (OGP-safe client nav). */
+export function shouldClientRedirectToLoginFromEntryGate(pathname: string): boolean {
+  return pathname.startsWith("/games/");
+}

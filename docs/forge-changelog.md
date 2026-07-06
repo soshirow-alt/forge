@@ -25,6 +25,15 @@
 
 ---
 
+## 2026-07-06 — 共有作品URLの EntryGate → ログインページ遷移（preview/landing-01）
+
+- **`/games/[id]`** — 未ログイン・entry未選択時、ForgeEntryGate モーダルではなくクライアント側で `/login?return=...` へ遷移（OGP/HTMLは作品ページのまま）
+- **ログインページ** — return がゲスト許可パス（作品ページ等）のときだけ「ゲストで参加」を表示。Studio 等の return では非表示
+- **return 許可拡張** — `/mypage`・`/mypage/*`・`/settings` を sanitize 対象に追加（ブックマーク復帰用）
+- **DB / middleware 変更なし**
+
+---
+
 ## 2026-07-06 — 投稿後・作品ページ共有導線 本番反映
 
 - **commit** — `cf10c67`（`a272840`〜`cf10c67` を `main` FF。`origin/main` = `origin/preview/landing-01`）

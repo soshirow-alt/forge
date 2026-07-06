@@ -25,6 +25,7 @@ import {
   DEFAULT_POST_PLAYER_HOME_PATH,
   LOGIN_PATH,
   buildRegisterUrlWithReturn,
+  isGuestEligibleReturnParam,
   resolvePostGuestLoginPath,
   resolvePostLoginPath,
 } from "@/lib/login-return-url";
@@ -104,6 +105,7 @@ export function LoginPage({
   const alreadySignedInRedirectStartedRef = useRef(false);
   const [guestConfirmOpen, setGuestConfirmOpen] = useState(false);
   const loginSubmitMarkRef = useRef<string | null>(null);
+  const showGuestEntry = isGuestEligibleReturnParam(returnParam);
 
   useEffect(() => {
     if (pending && !loginSubmitMarkRef.current) {
@@ -275,16 +277,19 @@ export function LoginPage({
           />
         </div>
 
-        <div className="my-8 border-t border-zinc-800" aria-hidden="true" />
-
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() => setGuestConfirmOpen(true)}
-          className="w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-6 py-3.5 text-base font-semibold text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          ゲストで参加
-        </button>
+        {showGuestEntry ? (
+          <>
+            <div className="my-8 border-t border-zinc-800" aria-hidden="true" />
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => setGuestConfirmOpen(true)}
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-6 py-3.5 text-base font-semibold text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              ゲストで参加
+            </button>
+          </>
+        ) : null}
 
         <p className="mt-8 text-center text-sm text-zinc-500">
           アカウントをお持ちでない方は{" "}

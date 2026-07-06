@@ -20,7 +20,7 @@ import {
   readOAuthFlowCookies,
 } from "../lib/oauth-flow-cookie";
 import { mapProjectSubmitErrorMessage } from "../lib/error-message";
-import { buildRegisterUrlWithReturn, sanitizeLoginReturnUrl } from "../lib/login-return-url";
+import { buildRegisterUrlWithReturn, isGuestEligibleReturnParam, sanitizeLoginReturnUrl } from "../lib/login-return-url";
 import { projectThumbnailsForDb, sanitizeProjectThumbnailUrls } from "../lib/project-thumbnails";
 import { reorderArrayItem } from "../lib/reorder-array-item";
 import {
@@ -190,6 +190,17 @@ function testLoginReturnSanitize() {
   );
   ok(sanitizeLoginReturnUrl("/submit") === "/submit", "allow submit path");
   ok(sanitizeLoginReturnUrl("/my-projects") === "/my-projects", "allow my-projects path");
+  ok(sanitizeLoginReturnUrl("/mypage") === "/mypage", "allow mypage path");
+  ok(sanitizeLoginReturnUrl("/mypage/profile") === "/mypage/profile", "allow mypage profile");
+  ok(sanitizeLoginReturnUrl("/settings") === "/settings", "allow settings path");
+  ok(
+    isGuestEligibleReturnParam("/games/abc?tab=voices") === true,
+    "guest eligible for game detail return",
+  );
+  ok(
+    isGuestEligibleReturnParam("/studio/mypage") === false,
+    "guest ineligible for studio return",
+  );
   ok(sanitizeLoginReturnUrl("/bookmarks") === "/bookmarks", "allow bookmarks path");
   ok(
     sanitizeLoginReturnUrl("/notifications") === "/notifications",
