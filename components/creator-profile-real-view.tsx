@@ -22,6 +22,7 @@ import { buildGameDetailTabHref } from "@/lib/game-detail-tabs";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { XLinkedHandleBadge } from "@/components/x-linked-handle-badge";
+import { DiscoveryCardStatPills } from "@/components/discovery-card-stat-pills";
 import { BadgeCheck, MapPin } from "lucide-react";
 
 type CreatorTab = CreatorProfileTab;
@@ -74,7 +75,7 @@ export function CreatorProfileRealView({
   const { xUsername: linkedXUsername } = useCreatorPublicXUsername(profile.routeId);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { getFollowerCount, refreshFollowerCount } = useGames();
+  const { getFollowerCount, refreshFollowerCount, getPublicProjectStats } = useGames();
   const activeTab = parseCreatorProfileTab(searchParams.get("tab"));
   const followerCount = getFollowerCount(profile.routeId, 0);
 
@@ -213,6 +214,15 @@ export function CreatorProfileRealView({
                             <h3 className="mt-2 font-semibold text-white">{game.title}</h3>
                             <p className="mt-1 text-sm text-zinc-400">{game.description}</p>
                             <p className="mt-2 text-xs text-zinc-500">最終更新 {game.lastUpdated}</p>
+                            <div className="mt-2">
+                              <DiscoveryCardStatPills
+                                feedbackCount={
+                                  getPublicProjectStats(game.id).feedbackParticipantCount
+                                }
+                                watchCount={getPublicProjectStats(game.id).watchCount}
+                                compact
+                              />
+                            </div>
                           </div>
                         </Link>
                       </li>
@@ -234,6 +244,15 @@ export function CreatorProfileRealView({
                             </span>
                             <h3 className="mt-2 font-semibold text-white">{game.title}</h3>
                             <p className="mt-1 text-sm text-zinc-400">{game.description}</p>
+                            <div className="mt-2">
+                              <DiscoveryCardStatPills
+                                feedbackCount={
+                                  getPublicProjectStats(game.id).feedbackParticipantCount
+                                }
+                                watchCount={getPublicProjectStats(game.id).watchCount}
+                                compact
+                              />
+                            </div>
                           </div>
                         </Link>
                       </li>

@@ -19,8 +19,8 @@ export const screenshotFlagship = {
   version: "v0.4.0",
   updatedLabel: "3時間前更新",
   lastUpdatedLabel: "3日前",
-  voiceCount: 48,
-  witnessCount: 32,
+  feedbackCount: 48,
+  watchCount: 32,
   lead: "失われた星の記憶を探す、夜の森の旅。ランタンの光を頼りに、静かな物語を辿る。",
 } as const;
 
@@ -79,8 +79,8 @@ function homeCard(
   image: string,
   genre: string,
   updatedLabel: string,
-  voiceCount: number,
-  witnessCount: number,
+  feedbackCount: number,
+  watchCount: number,
   version = "v0.3.2",
 ): HomeGameCard {
   return {
@@ -91,8 +91,8 @@ function homeCard(
     image,
     genre,
     updatedLabel,
-    voiceCount,
-    witnessCount,
+    feedbackCount,
+    watchCount,
   };
 }
 
@@ -105,8 +105,8 @@ export const screenshotHeroSlides: HomeGameCard[] = [
     image: screenshotFlagship.thumbnail,
     genre: screenshotFlagship.genre,
     updatedLabel: "昨日更新",
-    voiceCount: screenshotFlagship.voiceCount,
-    witnessCount: screenshotFlagship.witnessCount,
+    feedbackCount: screenshotFlagship.feedbackCount,
+    watchCount: screenshotFlagship.watchCount,
   },
   homeCard(
     "ss-roshin",
@@ -326,7 +326,7 @@ export function getScreenshotStudioHomeMetrics(
     { played: 102, voiced: 62, deep: 22 },
     {
       played: 124,
-      voiced: Math.max(screenshotFlagship.voiceCount, 72),
+      voiced: Math.max(screenshotFlagship.feedbackCount, 72),
       deep: 26,
     },
   ];
@@ -338,7 +338,7 @@ export function getScreenshotStudioHomeMetrics(
     { watching: 24, communityMembers: 13 },
     { watching: 28, communityMembers: 16 },
     {
-      watching: screenshotFlagship.witnessCount,
+      watching: screenshotFlagship.watchCount,
       communityMembers: 18,
     },
   ];

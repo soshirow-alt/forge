@@ -19,7 +19,6 @@ export type CreatorProfileGameCard = {
   tags: string[];
   status: "in-dev" | "completed";
   lastUpdated: string;
-  witnessCount: number;
 };
 
 export type CreatorProfileResolved = {
@@ -49,7 +48,7 @@ export type CreatorProfileResolved = {
   };
 };
 
-function gameToCreatorCard(game: Game, witnessCount: number): CreatorProfileGameCard {
+function gameToCreatorCard(game: Game): CreatorProfileGameCard {
   const genres = resolveProjectGenres(game);
   const featureTags = pickFeatureTagsFromGameTags(getPublicGameTags(game.tags));
   const tags = [...genres, ...featureTags];
@@ -61,7 +60,6 @@ function gameToCreatorCard(game: Game, witnessCount: number): CreatorProfileGame
     tags,
     status: game.releaseStatus === "released" ? "completed" : "in-dev",
     lastUpdated: game.lastUpdated,
-    witnessCount,
   };
 }
 
@@ -93,7 +91,6 @@ export function useCreatorProfile(routeId: string) {
     getDeveloperProfileByRouteId,
     submittedGames,
     getDevlogsByProject,
-    getSupportCount,
     dataReady,
   } = useGames();
 
@@ -126,9 +123,7 @@ export function useCreatorProfile(routeId: string) {
     const creatorId = stored?.creatorId ?? `dev-${userId}`;
     const handle = creatorId.replace(/^dev-/, "").slice(0, 8);
 
-    const games = ownerGames.map((game) =>
-      gameToCreatorCard(game, getSupportCount(game.id, 0)),
-    );
+    const games = ownerGames.map((game) => gameToCreatorCard(game));
     const inDevelopment = games.filter((game) => game.status === "in-dev").length;
     const completed = games.filter((game) => game.status === "completed").length;
 
@@ -163,7 +158,6 @@ export function useCreatorProfile(routeId: string) {
     submittedGames,
     routeId,
     getDevlogsByProject,
-    getSupportCount,
   ]);
 
   return {

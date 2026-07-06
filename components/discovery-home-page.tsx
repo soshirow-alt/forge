@@ -2,6 +2,7 @@
 
 import { HorizontalCardPager } from "@/components/horizontal-card-pager";
 import { DiscoveryGameThumbnail } from "@/components/discovery-game-thumbnail";
+import { DiscoveryCardStatPills } from "@/components/discovery-card-stat-pills";
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -24,50 +25,7 @@ import {
   recentlyUpdatedGames,
   type HomeGameCard,
 } from "@/lib/home-v0-mock-data";
-import {
-  ChevronLeft,
-  ChevronRight,
-  MessageSquare,
-  Users,
-} from "lucide-react";
-
-function StatPills({
-  voiceCount,
-  witnessCount,
-  compact = false,
-}: {
-  voiceCount: number;
-  witnessCount: number;
-  compact?: boolean;
-}) {
-  if (compact) {
-    return (
-      <div className="flex flex-wrap gap-x-2 gap-y-1 text-xs text-zinc-400">
-        <span className="inline-flex items-center gap-1">
-          <MessageSquare className="size-3.5 text-violet-400" aria-hidden="true" />
-          フィードバック {voiceCount}
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <Users className="size-3.5 text-violet-400" aria-hidden="true" />
-          見届け人 {witnessCount}
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-wrap gap-3 text-sm text-zinc-400">
-      <span className="inline-flex items-center gap-1.5">
-        <MessageSquare className="size-4 text-violet-400" aria-hidden="true" />
-        フィードバック {voiceCount}
-      </span>
-      <span className="inline-flex items-center gap-1.5">
-        <Users className="size-4 text-violet-400" aria-hidden="true" />
-        見届け人 {witnessCount}
-      </span>
-    </div>
-  );
-}
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 function HorizontalGameCard({
   game,
@@ -106,7 +64,11 @@ function HorizontalGameCard({
         {game.version} · {game.updatedLabel}
       </p>
       <div className={compact ? "mt-1.5" : "mt-2"}>
-        <StatPills voiceCount={game.voiceCount} witnessCount={game.witnessCount} compact={compact} />
+        <DiscoveryCardStatPills
+          feedbackCount={game.feedbackCount}
+          watchCount={game.watchCount}
+          compact={compact}
+        />
       </div>
       </article>
     </Link>
@@ -180,7 +142,10 @@ function HeroCarousel({ slides }: { slides: HomeGameCard[] }) {
             {slide.description}
           </p>
           <div className="mt-4">
-            <StatPills voiceCount={slide.voiceCount} witnessCount={slide.witnessCount} />
+            <DiscoveryCardStatPills
+              feedbackCount={slide.feedbackCount}
+              watchCount={slide.watchCount}
+            />
           </div>
           <Link
             href={gameDetailHref(slide.id)}
@@ -234,7 +199,8 @@ function DiscoverySectionEmpty({ message }: { message: string }) {
 }
 
 export function DiscoveryHomePage() {
-  const { publicGames, publicCatalogReady, getSupportCount } = useGames();
+  const { publicGames, publicCatalogReady, getPublicProjectStats, getSupportCount } =
+    useGames();
   const hideV0Mock = useHideV0MockContent();
 
   useForgePerfRoute({
@@ -243,20 +209,31 @@ export function DiscoveryHomePage() {
     context: { gameCount: publicGames.length },
   });
 
+  const cardStatsFor = useMemo(
+    () => (gameId: string) => {
+      const stats = getPublicProjectStats(gameId);
+      return {
+        feedbackParticipantCount: stats.feedbackParticipantCount,
+        watchCount: stats.watchCount,
+      };
+    },
+    [getPublicProjectStats],
+  );
+
   const realNewGames = useMemo(
     () =>
       sortGamesByNewest(publicGames).map((game) =>
-        gameToHomeCard(game, getSupportCount(game.id)),
+        gameToHomeCard(game, cardStatsFor(game.id)),
       ),
-    [publicGames, getSupportCount],
+    [publicGames, cardStatsFor],
   );
 
   const realUpdatedGames = useMemo(
     () =>
       sortGamesByUpdated(publicGames).map((game) =>
-        gameToHomeCard(game, getSupportCount(game.id)),
+        gameToHomeCard(game, cardStatsFor(game.id)),
       ),
-    [publicGames, getSupportCount],
+    [publicGames, cardStatsFor],
   );
 
   const heroItems = useMemo(() => {
@@ -283,15 +260,13 @@ export function DiscoveryHomePage() {
 
   const popularItems = useMemo(() => {
     const realPopular = [...publicGames]
-      .sort(
-        (a, b) => getSupportCount(b.id) - getSupportCount(a.id),
-      )
-      .map((game) => gameToHomeCard(game, getSupportCount(game.id)));
+      .sort((a, b) => getSupportCount(b.id) - getSupportCount(a.id))
+      .map((game) => gameToHomeCard(game, cardStatsFor(game.id)));
     if (hideV0Mock) {
       return realPopular;
     }
     return mergeHomeCards(realPopular, popularGames, false);
-  }, [publicGames, getSupportCount, hideV0Mock]);
+  }, [publicGames, getSupportCount, cardStatsFor, hideV0Mock]);
 
   if (!publicCatalogReady) {
     return <DiscoveryHomeSkeleton />;

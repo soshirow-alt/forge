@@ -89,6 +89,10 @@ import {
 } from "@/lib/supabase/projects";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import type { ProjectVoiceNurtureSignal } from "@/lib/project-voice-nurture";
+import {
+  fetchProjectPublicStatsMap,
+  type ProjectPublicStats,
+} from "@/lib/supabase/project-public-stats-db";
 
 import {
   addProjectBookmark,
@@ -258,6 +262,8 @@ type GamesContextValue = {
   /** visibility=public のみ — /home・検索用（auth 非依存） */
   publicGames: Game[];
   publicCatalogReady: boolean;
+  /** 公開作品の集計 stats（045 RPC）。migration 未適用時は 0 */
+  getPublicProjectStats: (projectId: string) => ProjectPublicStats;
   catalogReady: boolean;
   dataReady: boolean;
   /** Supabase project_devlogs の初回取得完了（実作品 devlog タブ用） */
@@ -467,6 +473,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   const [submittedGames, setSubmittedGames] = useState<Game[]>([]);
   const [publicGames, setPublicGames] = useState<Game[]>([]);
   const [publicCatalogReady, setPublicCatalogReady] = useState(false);
+  const [publicProjectStats, setPublicProjectStats] = useState<
+    Record<string, ProjectPublicStats>
+  >({});
   const [supportCounts, setSupportCounts] = useState<Counts>({});
   const [userEngagement, setUserEngagement] =
     useState<UserEngagementState>(EMPTY_USER_ENGAGEMENT);
@@ -525,13 +534,26 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     const supabase = getOptionalSupabaseClient();
     if (!supabase) {
       setPublicGames([]);
+      setPublicProjectStats({});
       return;
     }
 
     const projects = await forgePerfTimed("supabase.fetchPublicProjects", () =>
       fetchPublicProjects(supabase),
     );
-    setPublicGames(projects.map((game) => mergeGameWithExtras(game)));
+    const games = projects.map((game) => mergeGameWithExtras(game));
+    setPublicGames(games);
+
+    const projectIds = games.map((game) => game.id);
+    if (projectIds.length === 0) {
+      setPublicProjectStats({});
+      return;
+    }
+
+    const stats = await forgePerfTimed("supabase.fetchPublicProjectStats", () =>
+      fetchProjectPublicStatsMap(supabase, projectIds),
+    ).catch(() => ({} as Record<string, ProjectPublicStats>));
+    setPublicProjectStats(stats);
   }, []);
 
   const resolveDeveloperUserId = useCallback(
@@ -585,6 +607,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     } else {
       setPublicCatalogReady(true);
       setDevlogsReady(true);
+      setPublicProjectStats({});
     }
   }, [reloadPublicCatalog]);
 
@@ -1199,6 +1222,20 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       return defaultCount;
     },
     [supportCounts],
+  );
+
+  const getPublicProjectStats = useCallback(
+    (projectId: string): ProjectPublicStats => {
+      return (
+        publicProjectStats[projectId] ?? {
+          feedbackParticipantCount: 0,
+          watchCount: 0,
+          witnessGrantCount: 0,
+          latestDevlogAt: null,
+        }
+      );
+    },
+    [publicProjectStats],
   );
 
   const isSupported = useCallback(
@@ -2313,6 +2350,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       submittedGames,
       publicGames,
       publicCatalogReady,
+      getPublicProjectStats,
       catalogReady,
       dataReady: authHydrated && catalogReady,
       devlogsReady,
@@ -2399,6 +2437,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       submittedGames,
       publicGames,
       publicCatalogReady,
+      getPublicProjectStats,
       authHydrated,
       catalogReady,
       devlogsReady,

@@ -24,14 +24,13 @@ import {
 } from "@/lib/search-v0-mock-data";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import { useHideV0MockContent } from "@/lib/forge-deployment-context";
+import { DiscoveryCardStatPills } from "@/components/discovery-card-stat-pills";
 import {
   BadgeCheck,
   ChevronDown,
   ChevronRight,
   LayoutGrid,
   List,
-  MessageSquare,
-  Users,
 } from "lucide-react";
 
 const PAGE_SIZE = 5;
@@ -40,8 +39,8 @@ type SearchViewMode = "list" | "grid";
 
 const SORT_OPTIONS: { id: SearchSortId; label: string }[] = [
   { id: "recommended", label: "おすすめ順" },
-  { id: "witness", label: "見届け人が多い順" },
-  { id: "voices", label: "フィードバックが多い順" },
+  { id: "watch", label: "フォローが多い順" },
+  { id: "feedback", label: "フィードバックが多い順" },
 ];
 
 function parseView(param: string | null): SearchViewMode {
@@ -49,8 +48,11 @@ function parseView(param: string | null): SearchViewMode {
 }
 
 function parseSort(param: string | null): SearchSortId {
-  if (param === "witness" || param === "voices") {
-    return param;
+  if (param === "watch" || param === "witness") {
+    return "watch";
+  }
+  if (param === "feedback" || param === "voices") {
+    return "feedback";
   }
   return "recommended";
 }
@@ -78,7 +80,7 @@ function parseFeatures(param: string | null): string[] {
 
 function WorksSearchContent() {
   const hideV0Mock = useHideV0MockContent();
-  const { publicGames, publicCatalogReady, getSupportCount } = useGames();
+  const { publicGames, publicCatalogReady, getPublicProjectStats } = useGames();
 
   useForgePerfRoute({
     route: "/search",
@@ -107,12 +109,23 @@ function WorksSearchContent() {
     setSelectedFeatures(parseFeatures(featureParam));
   }, [queryFromUrl, genreParam, featureParam]);
 
+  const cardStatsFor = useMemo(
+    () => (gameId: string) => {
+      const stats = getPublicProjectStats(gameId);
+      return {
+        feedbackParticipantCount: stats.feedbackParticipantCount,
+        watchCount: stats.watchCount,
+      };
+    },
+    [getPublicProjectStats],
+  );
+
   const catalog = useMemo(() => {
     const realWorks = publicGames.map((game) =>
-      gameToSearchResult(game, getSupportCount(game.id)),
+      gameToSearchResult(game, cardStatsFor(game.id)),
     );
     return mergeSearchResults(realWorks, searchWorkResults, hideV0Mock);
-  }, [publicGames, getSupportCount, hideV0Mock]);
+  }, [publicGames, cardStatsFor, hideV0Mock]);
 
   const filtered = useMemo(
     () => filterSearchWorks(catalog, queryFromUrl, genresFromUrl, featuresFromUrl),
@@ -351,15 +364,12 @@ function WorksSearchContent() {
                         )}
                       </p>
                       <p className="text-xs text-zinc-500">更新: {work.updatedAgo}</p>
-                      <div className="flex items-center gap-4 text-xs text-zinc-500">
-                        <span className="inline-flex items-center gap-1">
-                          <Users className="size-3.5" aria-hidden="true" />
-                          {work.witnessCount.toLocaleString()}
-                        </span>
-                        <span className="inline-flex items-center gap-1">
-                          <MessageSquare className="size-3.5" aria-hidden="true" />
-                          {work.voiceCount}
-                        </span>
+                      <div className="mt-2">
+                        <DiscoveryCardStatPills
+                          feedbackCount={work.feedbackCount}
+                          watchCount={work.watchCount}
+                          compact
+                        />
                       </div>
                       <p className="text-xs text-zinc-600">{work.platforms.join(" · ")}</p>
                     </div>
@@ -401,15 +411,12 @@ function WorksSearchContent() {
                       {work.description}
                     </p>
                     <p className="mt-2 text-xs text-zinc-500">{work.updatedAgo}</p>
-                    <div className="mt-auto flex items-center gap-3 pt-3 text-xs text-zinc-500">
-                      <span className="inline-flex items-center gap-1">
-                        <Users className="size-3.5" aria-hidden="true" />
-                        {work.witnessCount.toLocaleString()}
-                      </span>
-                      <span className="inline-flex items-center gap-1">
-                        <MessageSquare className="size-3.5" aria-hidden="true" />
-                        {work.voiceCount}
-                      </span>
+                    <div className="mt-auto pt-3">
+                      <DiscoveryCardStatPills
+                        feedbackCount={work.feedbackCount}
+                        watchCount={work.watchCount}
+                        compact
+                      />
                     </div>
                   </div>
                 </Link>

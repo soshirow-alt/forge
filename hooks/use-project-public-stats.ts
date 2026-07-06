@@ -8,8 +8,9 @@ import {
 } from "@/lib/supabase/project-public-stats-db";
 
 const EMPTY_STATS: ProjectPublicStats = {
-  witnessCount: 0,
   feedbackParticipantCount: 0,
+  watchCount: 0,
+  witnessGrantCount: 0,
   latestDevlogAt: null,
 };
 

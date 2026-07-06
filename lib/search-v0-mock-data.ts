@@ -24,8 +24,8 @@ export type SearchWorkResult = {
   developer: string;
   verified: boolean;
   updatedAgo: string;
-  witnessCount: number;
-  voiceCount: number;
+  watchCount: number;
+  feedbackCount: number;
   platforms: string[];
 };
 
@@ -40,8 +40,8 @@ export const searchWorkResults: SearchWorkResult[] = [
     developer: "Sora Games",
     verified: true,
     updatedAgo: "3日前",
-    witnessCount: 1248,
-    voiceCount: 312,
+    watchCount: 1248,
+    feedbackCount: 312,
     platforms: ["Steam", "PC"],
   },
   {
@@ -54,8 +54,8 @@ export const searchWorkResults: SearchWorkResult[] = [
     developer: "LunaWorks",
     verified: true,
     updatedAgo: "5日前",
-    witnessCount: 892,
-    voiceCount: 198,
+    watchCount: 892,
+    feedbackCount: 198,
     platforms: ["PC", "Switch"],
   },
   {
@@ -68,8 +68,8 @@ export const searchWorkResults: SearchWorkResult[] = [
     developer: "Sky Pirate Studio",
     verified: false,
     updatedAgo: "1週間前",
-    witnessCount: 654,
-    voiceCount: 124,
+    watchCount: 654,
+    feedbackCount: 124,
     platforms: ["ブラウザ", "PC"],
   },
   {
@@ -82,8 +82,8 @@ export const searchWorkResults: SearchWorkResult[] = [
     developer: "Studio Aurora",
     verified: true,
     updatedAgo: "2日前",
-    witnessCount: 2104,
-    voiceCount: 567,
+    watchCount: 2104,
+    feedbackCount: 567,
     platforms: ["Steam", "PC"],
   },
   {
@@ -96,8 +96,8 @@ export const searchWorkResults: SearchWorkResult[] = [
     developer: "GreenSmith",
     verified: false,
     updatedAgo: "4日前",
-    witnessCount: 421,
-    voiceCount: 89,
+    watchCount: 421,
+    feedbackCount: 89,
     platforms: ["PC", "Switch"],
   },
   {
@@ -110,8 +110,8 @@ export const searchWorkResults: SearchWorkResult[] = [
     developer: "GreenSmith",
     verified: true,
     updatedAgo: "6日前",
-    witnessCount: 738,
-    voiceCount: 156,
+    watchCount: 738,
+    feedbackCount: 156,
     platforms: ["ブラウザ", "PC"],
   },
   {
@@ -124,8 +124,8 @@ export const searchWorkResults: SearchWorkResult[] = [
     developer: "Pixel Knights",
     verified: true,
     updatedAgo: "1日前",
-    witnessCount: 1567,
-    voiceCount: 402,
+    watchCount: 1567,
+    feedbackCount: 402,
     platforms: ["Steam", "PC", "Switch"],
   },
   {
@@ -138,8 +138,8 @@ export const searchWorkResults: SearchWorkResult[] = [
     developer: "Catnip Lab",
     verified: false,
     updatedAgo: "2週間前",
-    witnessCount: 312,
-    voiceCount: 67,
+    watchCount: 312,
+    feedbackCount: 67,
     platforms: ["ブラウザ", "スマホ"],
   },
 ];
@@ -227,18 +227,18 @@ export function filterSearchResults(
   });
 }
 
-export type SearchSortId = "recommended" | "witness" | "voices";
+export type SearchSortId = "recommended" | "watch" | "feedback";
 
 export function sortSearchResults(
   results: SearchWorkResult[],
   sort: SearchSortId,
 ): SearchWorkResult[] {
   const copy = [...results];
-  if (sort === "witness") {
-    return copy.sort((a, b) => b.witnessCount - a.witnessCount);
+  if (sort === "watch") {
+    return copy.sort((a, b) => b.watchCount - a.watchCount);
   }
-  if (sort === "voices") {
-    return copy.sort((a, b) => b.voiceCount - a.voiceCount);
+  if (sort === "feedback") {
+    return copy.sort((a, b) => b.feedbackCount - a.feedbackCount);
   }
   return copy;
 }

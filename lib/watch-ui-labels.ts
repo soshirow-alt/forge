@@ -15,6 +15,12 @@ export const WATCH_BADGE_LABEL = "更新追跡中";
 /** プロフィール統計など */
 export const WATCH_STAT_LABEL = "更新追跡中";
 
+/** 発見カード（/home・/search・開発者プロフィール）— project_watches 件数 */
+export const DISCOVERY_CARD_WATCH_STAT_LABEL = "フォロー";
+
+/** 発見カード — 登録ユーザーのフィードバック人数 */
+export const DISCOVERY_CARD_FEEDBACK_STAT_LABEL = "フィードバック";
+
 export const WATCH_FIRST_HINT =
   "更新を追い始めました。開発ログや新版の通知が届きます。「見届け人」は作品が正式版になったとき、プレイやフィードバックなどの関与で付与される称号で、このボタン1回では付与されません。";
 

@@ -8,6 +8,10 @@ import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import { isGamePublic } from "@/lib/project-visibility";
 import type { SearchWorkResult } from "@/lib/search-v0-mock-data";
+import {
+  EMPTY_DISCOVERY_CARD_STATS,
+  type DiscoveryCardStats,
+} from "@/lib/supabase/project-public-stats-db";
 
 export function getPublicSubmittedGames(games: Game[]): Game[] {
   return games.filter(isGamePublic);
@@ -64,8 +68,7 @@ export function sortGamesByUpdated(games: Game[]): Game[] {
 
 export function gameToHomeCard(
   game: Game,
-  witnessCount = 0,
-  voiceCount = 0,
+  stats: DiscoveryCardStats = EMPTY_DISCOVERY_CARD_STATS,
 ): HomeGameCard {
   return {
     id: game.id,
@@ -75,15 +78,14 @@ export function gameToHomeCard(
     image: game.thumbnailUrl?.trim() ?? "",
     genre: game.genre,
     updatedLabel: formatRelativeUpdateLabel(game.lastUpdated),
-    voiceCount,
-    witnessCount,
+    feedbackCount: stats.feedbackParticipantCount,
+    watchCount: stats.watchCount,
   };
 }
 
 export function gameToSearchResult(
   game: Game,
-  witnessCount = 0,
-  voiceCount = 0,
+  stats: DiscoveryCardStats = EMPTY_DISCOVERY_CARD_STATS,
 ): SearchWorkResult {
   const genres = resolveProjectGenres(game);
   const featureTags = pickFeatureTagsFromGameTags(getPublicGameTags(game.tags));
@@ -98,8 +100,8 @@ export function gameToSearchResult(
     developer: game.ownerName || game.creator,
     verified: Boolean(game.ownerId),
     updatedAgo: formatRelativeUpdateLabel(game.lastUpdated).replace(/更新$/, ""),
-    witnessCount,
-    voiceCount,
+    watchCount: stats.watchCount,
+    feedbackCount: stats.feedbackParticipantCount,
     platforms: ["ブラウザ"],
   };
 }
@@ -187,14 +189,14 @@ export function filterSearchWorks(
 
 export function sortSearchWorks(
   works: SearchWorkResult[],
-  sortId: "recommended" | "witness" | "voices",
+  sortId: "recommended" | "watch" | "feedback",
 ): SearchWorkResult[] {
   const sorted = [...works];
   switch (sortId) {
-    case "witness":
-      return sorted.sort((a, b) => b.witnessCount - a.witnessCount);
-    case "voices":
-      return sorted.sort((a, b) => b.voiceCount - a.voiceCount);
+    case "watch":
+      return sorted.sort((a, b) => b.watchCount - a.watchCount);
+    case "feedback":
+      return sorted.sort((a, b) => b.feedbackCount - a.feedbackCount);
     case "recommended":
     default:
       return sorted;

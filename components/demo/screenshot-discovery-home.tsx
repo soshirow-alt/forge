@@ -10,30 +10,9 @@ import {
 } from "@/lib/demo/screenshot-catalog";
 import { screenshotGameHref } from "@/lib/demo/screenshot-routes";
 import type { HomeGameCard } from "@/lib/home-v0-mock-data";
-import { MessageSquare, Users } from "lucide-react";
+import { DiscoveryCardStatPills } from "@/components/discovery-card-stat-pills";
 import Image from "next/image";
 import Link from "next/link";
-
-function StatPills({
-  voiceCount,
-  witnessCount,
-}: {
-  voiceCount: number;
-  witnessCount: number;
-}) {
-  return (
-    <div className="flex flex-wrap gap-x-2 gap-y-1 text-xs text-zinc-400">
-      <span className="inline-flex items-center gap-1">
-        <MessageSquare className="size-3.5 text-violet-400" aria-hidden="true" />
-        フィードバック {voiceCount}
-      </span>
-      <span className="inline-flex items-center gap-1">
-        <Users className="size-3.5 text-violet-400" aria-hidden="true" />
-        見届け人 {witnessCount}
-      </span>
-    </div>
-  );
-}
 
 function ScreenshotGameCard({
   game,
@@ -68,7 +47,11 @@ function ScreenshotGameCard({
           {game.version} · {game.updatedLabel}
         </p>
         <div className="mt-1.5">
-          <StatPills voiceCount={game.voiceCount} witnessCount={game.witnessCount} />
+          <DiscoveryCardStatPills
+            feedbackCount={game.feedbackCount}
+            watchCount={game.watchCount}
+            compact
+          />
         </div>
       </article>
     </Link>
@@ -119,7 +102,10 @@ function HeroCarousel({ slides }: { slides: HomeGameCard[] }) {
             {slide.description}
           </p>
           <div className="mt-4">
-            <StatPills voiceCount={slide.voiceCount} witnessCount={slide.witnessCount} />
+            <DiscoveryCardStatPills
+              feedbackCount={slide.feedbackCount}
+              watchCount={slide.watchCount}
+            />
           </div>
           <Link
             href={screenshotGameHref(slide.id)}

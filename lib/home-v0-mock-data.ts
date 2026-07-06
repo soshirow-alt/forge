@@ -6,8 +6,8 @@ export type HomeGameCard = {
   image: string;
   genre?: string;
   updatedLabel: string;
-  voiceCount: number;
-  witnessCount: number;
+  feedbackCount: number;
+  watchCount: number;
 };
 
 export const heroSlides: HomeGameCard[] = [
@@ -18,8 +18,8 @@ export const heroSlides: HomeGameCard[] = [
     description: "夜の森を旅する短編アドベンチャー。ランタンの光を頼りに、失われた記憶を辿る物語。",
     image: "/images/landing/hero-bg.png",
     updatedLabel: "昨日更新",
-    voiceCount: 24,
-    witnessCount: 15,
+    feedbackCount: 24,
+    watchCount: 15,
   },
   {
     id: "hero-2",
@@ -28,8 +28,8 @@ export const heroSlides: HomeGameCard[] = [
     description: "心の奥に残る、静かな物語。廃坑都市を舞台に、灯りと記憶をめぐるナラティブRPG。",
     image: "/images/landing/game-2.png",
     updatedLabel: "3日前更新",
-    voiceCount: 18,
-    witnessCount: 11,
+    feedbackCount: 18,
+    watchCount: 11,
   },
   {
     id: "hero-3",
@@ -38,8 +38,8 @@ export const heroSlides: HomeGameCard[] = [
     description: "空に浮かぶ島々をめぐるクラフトサバイバル。風と雲を利用して新たな土地を開拓しよう。",
     image: "/images/landing/game-3.png",
     updatedLabel: "1週間前更新",
-    voiceCount: 31,
-    witnessCount: 22,
+    feedbackCount: 31,
+    watchCount: 22,
   },
 ];
 
@@ -51,8 +51,8 @@ export const recentlyUpdatedGames: HomeGameCard[] = [
     description: "",
     image: "/images/landing/game-1.png",
     updatedLabel: "3時間前更新",
-    voiceCount: 24,
-    witnessCount: 15,
+    feedbackCount: 24,
+    watchCount: 15,
   },
   {
     id: "ru-2",
@@ -61,8 +61,8 @@ export const recentlyUpdatedGames: HomeGameCard[] = [
     description: "",
     image: "/images/landing/game-5.png",
     updatedLabel: "8時間前更新",
-    voiceCount: 31,
-    witnessCount: 19,
+    feedbackCount: 31,
+    watchCount: 19,
   },
   {
     id: "ru-3",
@@ -71,8 +71,8 @@ export const recentlyUpdatedGames: HomeGameCard[] = [
     description: "",
     image: "/images/landing/game-4.png",
     updatedLabel: "1日前更新",
-    voiceCount: 15,
-    witnessCount: 8,
+    feedbackCount: 15,
+    watchCount: 8,
   },
   {
     id: "ru-4",
@@ -81,8 +81,8 @@ export const recentlyUpdatedGames: HomeGameCard[] = [
     description: "",
     image: "/images/landing/game-5.png",
     updatedLabel: "2日前更新",
-    voiceCount: 12,
-    witnessCount: 6,
+    feedbackCount: 12,
+    watchCount: 6,
   },
   {
     id: "ru-5",
@@ -91,8 +91,8 @@ export const recentlyUpdatedGames: HomeGameCard[] = [
     description: "",
     image: "/images/landing/game-4.png",
     updatedLabel: "3日前更新",
-    voiceCount: 20,
-    witnessCount: 10,
+    feedbackCount: 20,
+    watchCount: 10,
   },
 ];
 
@@ -104,8 +104,8 @@ export const popularGames: HomeGameCard[] = [
     description: "",
     image: "/images/landing/game-1.png",
     updatedLabel: "今週",
-    voiceCount: 48,
-    witnessCount: 32,
+    feedbackCount: 48,
+    watchCount: 32,
   },
   {
     id: "pop-2",
@@ -114,8 +114,8 @@ export const popularGames: HomeGameCard[] = [
     description: "",
     image: "/images/landing/game-2.png",
     updatedLabel: "今週",
-    voiceCount: 36,
-    witnessCount: 24,
+    feedbackCount: 36,
+    watchCount: 24,
   },
   {
     id: "pop-3",
@@ -124,8 +124,8 @@ export const popularGames: HomeGameCard[] = [
     description: "",
     image: "/images/landing/game-3.png",
     updatedLabel: "今週",
-    voiceCount: 29,
-    witnessCount: 18,
+    feedbackCount: 29,
+    watchCount: 18,
   },
   {
     id: "pop-4",
@@ -134,8 +134,8 @@ export const popularGames: HomeGameCard[] = [
     description: "",
     image: "/images/landing/game-5.png",
     updatedLabel: "今週",
-    voiceCount: 27,
-    witnessCount: 16,
+    feedbackCount: 27,
+    watchCount: 16,
   },
   {
     id: "pop-5",
@@ -144,8 +144,8 @@ export const popularGames: HomeGameCard[] = [
     description: "",
     image: "/images/landing/game-4.png",
     updatedLabel: "今週",
-    voiceCount: 22,
-    witnessCount: 14,
+    feedbackCount: 22,
+    watchCount: 14,
   },
 ];
 
@@ -157,8 +157,8 @@ export const newGames: HomeGameCard[] = [
     description: "",
     image: "/images/landing/game-3.png",
     updatedLabel: "1日前",
-    voiceCount: 5,
-    witnessCount: 3,
+    feedbackCount: 5,
+    watchCount: 3,
   },
   {
     id: "new-2",
@@ -167,8 +167,8 @@ export const newGames: HomeGameCard[] = [
     description: "",
     image: "/images/landing/game-2.png",
     updatedLabel: "2日前",
-    voiceCount: 8,
-    witnessCount: 4,
+    feedbackCount: 8,
+    watchCount: 4,
   },
   {
     id: "new-3",
@@ -177,8 +177,8 @@ export const newGames: HomeGameCard[] = [
     description: "",
     image: "/images/landing/game-1.png",
     updatedLabel: "3日前",
-    voiceCount: 6,
-    witnessCount: 2,
+    feedbackCount: 6,
+    watchCount: 2,
   },
   {
     id: "new-4",
@@ -187,8 +187,8 @@ export const newGames: HomeGameCard[] = [
     description: "",
     image: "/images/landing/game-4.png",
     updatedLabel: "4日前",
-    voiceCount: 4,
-    witnessCount: 2,
+    feedbackCount: 4,
+    watchCount: 2,
   },
   {
     id: "new-5",
@@ -197,8 +197,8 @@ export const newGames: HomeGameCard[] = [
     description: "",
     image: "/images/landing/game-3.png",
     updatedLabel: "5日前",
-    voiceCount: 7,
-    witnessCount: 3,
+    feedbackCount: 7,
+    watchCount: 3,
   },
 ];
 

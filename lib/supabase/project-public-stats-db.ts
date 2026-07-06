@@ -1,19 +1,60 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { isWitnessGrantsTableMissingError } from "@/lib/supabase/witness-grants-db";
+import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 
 export type ProjectPublicStats = {
-  /** `project_witness_grants` — 見届け人の人数 */
-  witnessCount: number;
   /** voice_responses + feedback の distinct user_id — 投稿件数ではない */
   feedbackParticipantCount: number;
+  /** project_watches — 作品フォロー / 更新追跡人数 */
+  watchCount: number;
+  /** project_witness_grants — 見届け人称号（発見カードでは使わない） */
+  witnessGrantCount: number;
   latestDevlogAt: string | null;
 };
 
 const EMPTY_STATS: ProjectPublicStats = {
-  witnessCount: 0,
   feedbackParticipantCount: 0,
+  watchCount: 0,
+  witnessGrantCount: 0,
   latestDevlogAt: null,
 };
+
+type PublicProjectStatsRow = {
+  project_id: string;
+  feedback_participant_count: number | string | null;
+  watch_count: number | string | null;
+  witness_grant_count: number | string | null;
+  latest_devlog_at: string | null;
+};
+
+export function isPublicProjectStatsRpcMissingError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+  const row = error as PostgrestError;
+  const message = row.message ?? "";
+  return (
+    row.code === "PGRST202" ||
+    row.code === "42883" ||
+    message.includes("get_public_project_stats") ||
+    message.includes("Could not find the function")
+  );
+}
+
+function toCount(value: number | string | null | undefined): number {
+  if (value === null || value === undefined) {
+    return 0;
+  }
+  const parsed = typeof value === "number" ? value : Number.parseInt(String(value), 10);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function rowToStats(row: PublicProjectStatsRow): ProjectPublicStats {
+  return {
+    feedbackParticipantCount: toCount(row.feedback_participant_count),
+    watchCount: toCount(row.watch_count),
+    witnessGrantCount: toCount(row.witness_grant_count),
+    latestDevlogAt: row.latest_devlog_at,
+  };
+}
 
 export async function fetchProjectPublicStats(
   supabase: SupabaseClient,
@@ -27,95 +68,40 @@ export async function fetchProjectPublicStatsMap(
   supabase: SupabaseClient,
   projectIds: string[],
 ): Promise<Record<string, ProjectPublicStats>> {
-  if (projectIds.length === 0) {
-    return {};
-  }
-
-  const [witnessResult, voiceResult, feedbackResult, devlogResult] =
-    await Promise.all([
-      supabase
-        .from("project_witness_grants")
-        .select("project_id")
-        .in("project_id", projectIds),
-      supabase
-        .from("project_voice_responses")
-        .select("project_id, user_id")
-        .in("project_id", projectIds),
-      supabase
-        .from("project_feedback")
-        .select("project_id, user_id")
-        .in("project_id", projectIds),
-      supabase
-        .from("project_devlogs")
-        .select("project_id, created_at")
-        .in("project_id", projectIds)
-        .order("created_at", { ascending: false }),
-    ]);
-
+  const uniqueIds = [...new Set(projectIds.filter(Boolean))];
   const result: Record<string, ProjectPublicStats> = {};
-  for (const projectId of projectIds) {
+  for (const projectId of uniqueIds) {
     result[projectId] = { ...EMPTY_STATS };
   }
 
-  if (
-    witnessResult.error &&
-    !isWitnessGrantsTableMissingError(witnessResult.error)
-  ) {
-    throw witnessResult.error;
+  if (uniqueIds.length === 0) {
+    return result;
   }
 
-  if (voiceResult.error) {
-    throw voiceResult.error;
-  }
-  if (feedbackResult.error) {
-    throw feedbackResult.error;
-  }
-  if (devlogResult.error) {
-    throw devlogResult.error;
+  const { data, error } = await supabase.rpc("get_public_project_stats", {
+    p_project_ids: uniqueIds,
+  });
+
+  if (error) {
+    if (isPublicProjectStatsRpcMissingError(error)) {
+      return result;
+    }
+    throw error;
   }
 
-  for (const row of witnessResult.data ?? []) {
-    const projectId = row.project_id as string;
-    result[projectId]!.witnessCount += 1;
-  }
-
-  const voiceUsersByProject = new Map<string, Set<string>>();
-  for (const row of voiceResult.data ?? []) {
-    const projectId = row.project_id as string;
-    const userId = row.user_id as string;
-    if (!voiceUsersByProject.has(projectId)) {
-      voiceUsersByProject.set(projectId, new Set());
-    }
-    voiceUsersByProject.get(projectId)!.add(userId);
-  }
-  for (const row of feedbackResult.data ?? []) {
-    const projectId = row.project_id as string;
-    const userId = row.user_id as string;
-    if (!voiceUsersByProject.has(projectId)) {
-      voiceUsersByProject.set(projectId, new Set());
-    }
-    voiceUsersByProject.get(projectId)!.add(userId);
-  }
-  for (const [projectId, users] of voiceUsersByProject) {
-    if (result[projectId]) {
-      result[projectId].feedbackParticipantCount = users.size;
-    }
-  }
-
-  for (const row of devlogResult.data ?? []) {
-    const projectId = row.project_id as string;
-    const createdAt = row.created_at as string;
-    const current = result[projectId];
-    if (!current) {
-      continue;
-    }
-    if (
-      !current.latestDevlogAt ||
-      new Date(createdAt).getTime() > new Date(current.latestDevlogAt).getTime()
-    ) {
-      current.latestDevlogAt = createdAt;
-    }
+  for (const row of (data ?? []) as PublicProjectStatsRow[]) {
+    result[row.project_id] = rowToStats(row);
   }
 
   return result;
 }
+
+export type DiscoveryCardStats = Pick<
+  ProjectPublicStats,
+  "feedbackParticipantCount" | "watchCount"
+>;
+
+export const EMPTY_DISCOVERY_CARD_STATS: DiscoveryCardStats = {
+  feedbackParticipantCount: 0,
+  watchCount: 0,
+};

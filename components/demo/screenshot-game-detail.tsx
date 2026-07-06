@@ -90,7 +90,7 @@ const screenshotOverviewActivity: GameDetailOverviewActivity = {
   lastUpdated: screenshotFlagship.lastUpdatedLabel,
   hasDevlog: true,
   devlogLabel: "3日前 — チュートリアル短縮と序盤イベント調整",
-  voiceCount: screenshotFlagship.voiceCount,
+  voiceCount: screenshotFlagship.feedbackCount,
 };
 
 export function ScreenshotGameDetailPage({
@@ -110,8 +110,8 @@ export function ScreenshotGameDetailPage({
       currentVersion: screenshotFlagship.version,
       lastUpdated: screenshotFlagship.lastUpdatedLabel,
       devlogUpdatedAgo: "3日前",
-      voiceCount: screenshotFlagship.voiceCount,
-      witnessCount: screenshotFlagship.witnessCount,
+      voiceCount: screenshotFlagship.feedbackCount,
+      witnessCount: screenshotFlagship.watchCount,
     };
   }, [resolvedId]);
 
