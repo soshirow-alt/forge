@@ -14,9 +14,10 @@ import { MyPageTabs, PlayerShell } from "@/components/player-shell";
 import { ForgeTabPanel } from "@/components/forge-tab-panel";
 import { PageLoadingSkeleton } from "@/components/forge-loading-skeletons";
 import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
+import { useInstantQueryTab } from "@/hooks/use-instant-query-tab";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 
 export type MyPageTab =
   | "witnessing"
@@ -50,6 +51,15 @@ function MyPagePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
+  const { activeTab, setActiveTab } = useInstantQueryTab<MyPageTab>({
+    parse: parseTab,
+    buildHref: (tab) => tabHref(tab),
+    perfScope: "mypage-tab",
+  });
+  const [visitedTabs, setVisitedTabs] = useState<Set<MyPageTab>>(() => {
+    const initial = parseTab(tabParam);
+    return new Set([initial]);
+  });
 
   useEffect(() => {
     if (tabParam === "developer") {
@@ -57,7 +67,6 @@ function MyPagePageContent() {
     }
   }, [router, tabParam]);
 
-  const activeTab = parseTab(tabParam);
   const hideV0Mock = shouldHideV0MockContent();
   const useMockPlayerTabs = !hideV0Mock;
 
@@ -68,9 +77,17 @@ function MyPagePageContent() {
 
   const setTab = useCallback(
     (tab: MyPageTab) => {
-      router.replace(tabHref(tab));
+      setActiveTab(tab);
+      setVisitedTabs((prev) => {
+        if (prev.has(tab)) {
+          return prev;
+        }
+        const next = new Set(prev);
+        next.add(tab);
+        return next;
+      });
     },
-    [router],
+    [setActiveTab],
   );
 
   if (tabParam === "developer") {
@@ -92,9 +109,11 @@ function MyPagePageContent() {
         <ForgeTabPanel active={activeTab === "saved"}>
           <MyPageSavedRealPanel />
         </ForgeTabPanel>
-        <ForgeTabPanel active={activeTab === "play-history"}>
-          <PlayHistorySection />
-        </ForgeTabPanel>
+        {visitedTabs.has("play-history") ? (
+          <ForgeTabPanel active={activeTab === "play-history"}>
+            <PlayHistorySection />
+          </ForgeTabPanel>
+        ) : null}
         <ForgeTabPanel active={activeTab === "feedback"}>
           {useMockPlayerTabs ? (
             <FeedbackTabPanel />
@@ -115,9 +134,11 @@ function MyPagePageContent() {
             />
           )}
         </ForgeTabPanel>
-        <ForgeTabPanel active={activeTab === "following"}>
-          {hideV0Mock ? <FollowingDevelopersPanel /> : <FollowingTabPanel />}
-        </ForgeTabPanel>
+        {visitedTabs.has("following") ? (
+          <ForgeTabPanel active={activeTab === "following"}>
+            {hideV0Mock ? <FollowingDevelopersPanel /> : <FollowingTabPanel />}
+          </ForgeTabPanel>
+        ) : null}
       </div>
     </PlayerShell>
   );

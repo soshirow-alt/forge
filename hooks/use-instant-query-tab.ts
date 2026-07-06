@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { replaceUrlWithoutNavigation } from "@/lib/instant-url-sync";
+import { captureScrollPosition } from "@/lib/preserve-scroll";
 import {
   forgePerfLog,
   forgePerfMark,
@@ -14,6 +15,8 @@ type UseInstantQueryTabOptions<T extends string> = {
   parse: (value: string | null) => T;
   buildHref: (tab: T, searchParams: URLSearchParams) => string;
   perfScope?: string;
+  /** Restore window scroll after tab switch (default true). */
+  preserveScroll?: boolean;
 };
 
 /**
@@ -25,6 +28,7 @@ export function useInstantQueryTab<T extends string>({
   parse,
   buildHref,
   perfScope = "tab",
+  preserveScroll = true,
 }: UseInstantQueryTabOptions<T>) {
   const searchParams = useSearchParams();
   const searchParamsRef = useRef(searchParams);
@@ -57,19 +61,25 @@ export function useInstantQueryTab<T extends string>({
       forgePerfMark(mark);
       forgePerfLog(`${perfScope}.switch`, { tab, method: "instant" });
 
+      const restoreScroll = preserveScroll ? captureScrollPosition() : null;
+
       setActiveTabState(tab);
 
       const href = buildHref(tab, new URLSearchParams(searchParamsRef.current.toString()));
       replaceUrlWithoutNavigation(href);
 
+      restoreScroll?.();
+
       requestAnimationFrame(() => {
+        restoreScroll?.();
         forgePerfMeasure(`${perfScope}.underline`, mark, { tab, phase: "rAF1" });
         requestAnimationFrame(() => {
+          restoreScroll?.();
           forgePerfMeasure(`${perfScope}.panel`, mark, { tab, phase: "rAF2" });
         });
       });
     },
-    [buildHref, perfScope],
+    [buildHref, perfScope, preserveScroll],
   );
 
   return {

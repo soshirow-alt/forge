@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { StudioAchievementsTabPanel } from "@/components/studio-achievements-tab-panel";
 import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { StudioFollowersTabPanel } from "@/components/studio-followers-tab-panel";
@@ -10,6 +10,7 @@ import { StudioMyPageTabs, StudioShell } from "@/components/studio-shell";
 import { ForgeTabPanel } from "@/components/forge-tab-panel";
 import { PageLoadingSkeleton } from "@/components/forge-loading-skeletons";
 import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
+import { useInstantQueryTab } from "@/hooks/use-instant-query-tab";
 import { useHideV0MockContent } from "@/lib/forge-deployment-context";
 import { STUDIO_SUBMIT_SEARCH_PARAM } from "@/lib/project-nurture-links";
 
@@ -40,8 +41,19 @@ function StudioMypagePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const hideV0Mock = useHideV0MockContent();
-  const activeTab = parseTab(searchParams.get("tab"));
   const initialQuery = searchParams.get("q") ?? "";
+  const initialQueryRef = useRef(initialQuery);
+  initialQueryRef.current = initialQuery;
+  const { activeTab, setActiveTab } = useInstantQueryTab<StudioMypageTab>({
+    parse: parseTab,
+    buildHref: (tab, params) =>
+      tabHref(tab, params.get("q") ?? initialQueryRef.current),
+    perfScope: "studio-mypage-tab",
+  });
+  const [visitedTabs, setVisitedTabs] = useState<Set<StudioMypageTab>>(() => {
+    const initial = parseTab(searchParams.get("tab"));
+    return new Set([initial]);
+  });
 
   useForgePerfRoute({
     route: `/studio/mypage?tab=${activeTab}`,
@@ -56,9 +68,17 @@ function StudioMypagePageContent() {
 
   const handleTabChange = useCallback(
     (tab: StudioMypageTab) => {
-      router.push(tabHref(tab, initialQuery));
+      setActiveTab(tab);
+      setVisitedTabs((prev) => {
+        if (prev.has(tab)) {
+          return prev;
+        }
+        const next = new Set(prev);
+        next.add(tab);
+        return next;
+      });
     },
-    [router, initialQuery],
+    [setActiveTab],
   );
 
   return (
@@ -71,19 +91,23 @@ function StudioMypagePageContent() {
             onOpenSubmit={() => router.push("/studio/submit")}
           />
         </ForgeTabPanel>
-        <ForgeTabPanel active={activeTab === "achievements"}>
-          {hideV0Mock ? (
-            <FeatureComingSoonPanel
-              title="実績"
-              description="開発者実績の集計・表示は Coming Soon です。"
-            />
-          ) : (
-            <StudioAchievementsTabPanel />
-          )}
-        </ForgeTabPanel>
-        <ForgeTabPanel active={activeTab === "followers"}>
-          <StudioFollowersTabPanel />
-        </ForgeTabPanel>
+        {visitedTabs.has("achievements") ? (
+          <ForgeTabPanel active={activeTab === "achievements"}>
+            {hideV0Mock ? (
+              <FeatureComingSoonPanel
+                title="実績"
+                description="開発者実績の集計・表示は Coming Soon です。"
+              />
+            ) : (
+              <StudioAchievementsTabPanel />
+            )}
+          </ForgeTabPanel>
+        ) : null}
+        {visitedTabs.has("followers") ? (
+          <ForgeTabPanel active={activeTab === "followers"}>
+            <StudioFollowersTabPanel />
+          </ForgeTabPanel>
+        ) : null}
       </div>
     </StudioShell>
   );

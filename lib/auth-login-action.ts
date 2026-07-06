@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { getAuthErrorMessage } from "@/lib/auth";
 import { clearGuestSubmitterCookie } from "@/lib/guest-feedback/submitter-cookie";
 import { resolvePostLoginPath } from "@/lib/login-return-url";
@@ -41,6 +40,5 @@ export async function loginAction(
   await clearGuestSubmitterCookie();
 
   const redirectTo = resolvePostLoginPath(returnParam);
-  revalidatePath("/", "layout");
   return { error: null, redirectTo };
 }

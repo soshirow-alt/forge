@@ -4,7 +4,13 @@
 
 ---
 
-## 2026-07-06 — 作品詳細タブ切り替えの即時化（router.replace 廃止）
+## 2026-07-06 — タブ切替スクロール維持 + mypage/Studio instant tab + ログイン体感
+
+- **voices スクロール戻り** — 非アクティブパネル `hidden` によるドキュメント高さ崩れが原因。`captureScrollPosition` + タブ領域 `min-h-[28rem]`
+- **横展開** — `/mypage` `/studio/mypage` を `useInstantQueryTab` 化（play-history / followers は lazy mount）
+- **ログイン** — `revalidatePath("/", "layout")` 削除（submit 後の layout 再検証でフォームが remount→入力消去）。controlled inputs + 「ログイン中…」+ `[forge:perf] login.submit.*`
+
+---
 
 - **原因** — タブ切替で `router.replace(?tab=)` → Next.js navigation → `useSearchParams` 経由で GameDetail 全体が再レンダー
 - **修正** — `useInstantQueryTab` + `history.replaceState` で **ローカル state を即時更新**、URL は navigation なしで同期

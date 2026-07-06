@@ -13,6 +13,11 @@ import { useAuth } from "@/components/auth-provider";
 import { useEntryMode } from "@/components/entry-mode-provider";
 import { loginAction, type LoginActionState } from "@/lib/auth-login-action";
 import {
+  forgePerfLog,
+  forgePerfMark,
+  forgePerfMeasure,
+} from "@/lib/forge-perf-log";
+import {
   ACCOUNT_REGISTRATION_REQUIRED_MESSAGE,
   ACCOUNT_REGISTRATION_REQUIRED_NOTICE,
 } from "@/lib/guest-auth";
@@ -92,9 +97,33 @@ export function LoginPage({
   const { setGuestEntryMode } = useEntryMode();
   const [state, formAction, pending] = useActionState(loginAction, initialLoginState);
   const autofill = useAuthAutofillUnlock();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const postSubmitRedirectStartedRef = useRef(false);
   const alreadySignedInRedirectStartedRef = useRef(false);
   const [guestConfirmOpen, setGuestConfirmOpen] = useState(false);
+  const loginSubmitMarkRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (pending && !loginSubmitMarkRef.current) {
+      const mark = `login.submit:${Date.now()}`;
+      loginSubmitMarkRef.current = mark;
+      forgePerfMark(mark);
+      forgePerfLog("login.submit.start");
+    }
+    if (!pending) {
+      loginSubmitMarkRef.current = null;
+    }
+  }, [pending]);
+
+  useEffect(() => {
+    if (state.error && loginSubmitMarkRef.current) {
+      forgePerfMeasure("login.submit.error", loginSubmitMarkRef.current, {
+        error: state.error,
+      });
+      loginSubmitMarkRef.current = null;
+    }
+  }, [state.error]);
 
   useEffect(() => {
     if (!authResolved || alreadySignedInRedirectStartedRef.current) {
@@ -123,6 +152,10 @@ export function LoginPage({
     }
 
     postSubmitRedirectStartedRef.current = true;
+    if (loginSubmitMarkRef.current) {
+      forgePerfMeasure("login.submit.success", loginSubmitMarkRef.current);
+      forgePerfMark("login.redirect");
+    }
     window.location.assign(state.redirectTo);
   }, [state.redirectTo]);
 
@@ -177,6 +210,8 @@ export function LoginPage({
               autoComplete="username email"
               inputMode="email"
               spellCheck={false}
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
               readOnly={autofill.readOnly}
               onFocus={autofill.onFocus}
               className={authInputClassName}
@@ -195,6 +230,8 @@ export function LoginPage({
               required
               autoComplete="current-password"
               minLength={6}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
               readOnly={autofill.readOnly}
               onFocus={autofill.onFocus}
               className={authInputClassName}
@@ -222,7 +259,7 @@ export function LoginPage({
             disabled={pending || !supabaseConfigured}
             className="w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-violet-500/20 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {pending ? "処理中..." : "メールでログイン"}
+            {pending ? "ログイン中…" : "メールでログイン"}
           </button>
         </form>
 

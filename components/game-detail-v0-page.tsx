@@ -94,8 +94,9 @@ import {
 } from "@/components/game-detail-tabs-region";
 import { useAuth } from "@/components/auth-provider";
 import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
-import { useGameDetailProject } from "@/hooks/use-game-detail-project";
 import { useInstantQueryTab } from "@/hooks/use-instant-query-tab";
+import { captureScrollPosition } from "@/lib/preserve-scroll";
+import { useGameDetailProject } from "@/hooks/use-game-detail-project";
 import {
   Bookmark,
   Check,
@@ -204,6 +205,7 @@ function GameDetailV0PageBody({
   });
   const setDetailTab = useCallback(
     (tab: GameDetailTab) => {
+      const restoreScroll = captureScrollPosition();
       setActiveTab(tab);
       setVisitedTabs((prev) => {
         if (prev.has(tab)) {
@@ -213,6 +215,8 @@ function GameDetailV0PageBody({
         next.add(tab);
         return next;
       });
+      restoreScroll();
+      requestAnimationFrame(restoreScroll);
     },
     [setActiveTab],
   );

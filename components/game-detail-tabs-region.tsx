@@ -59,7 +59,7 @@ export const GameDetailTabPanels = memo(function GameDetailTabPanels({
   voices,
 }: GameDetailTabPanelsProps) {
   return (
-    <>
+    <div className="min-h-[28rem]">
       <ForgeTabPanel active={activeTab === "overview"}>{overview}</ForgeTabPanel>
       {visitedTabs.has("devlog") ? (
         <ForgeTabPanel active={activeTab === "devlog"}>{devlog}</ForgeTabPanel>
@@ -67,6 +67,6 @@ export const GameDetailTabPanels = memo(function GameDetailTabPanels({
       {visitedTabs.has("voices") ? (
         <ForgeTabPanel active={activeTab === "voices"}>{voices}</ForgeTabPanel>
       ) : null}
-    </>
+    </div>
   );
 });
