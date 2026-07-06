@@ -3,13 +3,28 @@ export type SettingsToggleItem = {
   label: string;
   description: string;
   enabled: boolean;
-  /** Saved in DB but not yet wired to product behavior. */
+  /**
+   * UI-only gate: toggle is visible but not operable.
+   * Reasons vary — unwired prefs, or wired prefs whose product surface is inactive.
+   */
   comingSoon?: boolean;
   comingSoonNote?: string;
 };
 
-const COMING_SOON_NOTE =
-  "近日対応予定（現在はまだ通知・公開範囲には反映されません）";
+/** Notification prefs saved but not yet enforced in send paths. */
+const NOTIFY_COMING_SOON_NOTE =
+  "近日対応予定（現在はまだ通知には反映されません）";
+
+/** Privacy prefs with no product read path yet (profile / activity). */
+const PRIVACY_UNWIRED_NOTE =
+  "近日対応予定（現在はまだ公開範囲の設定には反映されません）";
+
+/**
+ * privacy.ranking is stored and enforced in get_monthly_player_influence_ranking,
+ * but the ranking feature is inactive/unpublished in the product for now.
+ */
+const PRIVACY_RANKING_INACTIVE_NOTE =
+  "近日対応予定（ランキング機能は現時点では非活性のため、この設定はまだ利用できません）";
 
 export type PlayerNotificationPrefKey =
   | "watch-updates"
@@ -65,7 +80,7 @@ export const forgeNotificationPlayerItems: SettingsToggleItem[] = [
     description: "フォローした開発者が新作を公開したとき",
     enabled: true,
     comingSoon: true,
-    comingSoonNote: COMING_SOON_NOTE,
+    comingSoonNote: NOTIFY_COMING_SOON_NOTE,
   },
   {
     id: "community",
@@ -73,7 +88,7 @@ export const forgeNotificationPlayerItems: SettingsToggleItem[] = [
     description: "参加申請の承認・却下、承認済みコミュニティからのお知らせ",
     enabled: true,
     comingSoon: true,
-    comingSoonNote: COMING_SOON_NOTE,
+    comingSoonNote: NOTIFY_COMING_SOON_NOTE,
   },
   {
     id: "system",
@@ -81,7 +96,7 @@ export const forgeNotificationPlayerItems: SettingsToggleItem[] = [
     description: "利用規約の更新、実績バッジなど",
     enabled: false,
     comingSoon: true,
-    comingSoonNote: COMING_SOON_NOTE,
+    comingSoonNote: NOTIFY_COMING_SOON_NOTE,
   },
 ];
 
@@ -92,7 +107,7 @@ export const forgeNotificationStudioItems: SettingsToggleItem[] = [
     description: "作品の見届け人が増えたとき",
     enabled: true,
     comingSoon: true,
-    comingSoonNote: COMING_SOON_NOTE,
+    comingSoonNote: NOTIFY_COMING_SOON_NOTE,
   },
   {
     id: "version-play",
@@ -100,7 +115,7 @@ export const forgeNotificationStudioItems: SettingsToggleItem[] = [
     description: "公開中のverがプレイされたとき",
     enabled: true,
     comingSoon: true,
-    comingSoonNote: COMING_SOON_NOTE,
+    comingSoonNote: NOTIFY_COMING_SOON_NOTE,
   },
   {
     id: "community",
@@ -108,7 +123,7 @@ export const forgeNotificationStudioItems: SettingsToggleItem[] = [
     description: "参加申請・メンバー管理に関するお知らせ",
     enabled: true,
     comingSoon: true,
-    comingSoonNote: COMING_SOON_NOTE,
+    comingSoonNote: NOTIFY_COMING_SOON_NOTE,
   },
 ];
 
@@ -132,7 +147,7 @@ export const privacySettingsSection: ForgeSettingsSection = {
       description: "他のプレイヤーから見える",
       enabled: true,
       comingSoon: true,
-      comingSoonNote: COMING_SOON_NOTE,
+      comingSoonNote: PRIVACY_UNWIRED_NOTE,
     },
     {
       id: "activity",
@@ -140,15 +155,15 @@ export const privacySettingsSection: ForgeSettingsSection = {
       description: "プロフィールに活動を載せる",
       enabled: true,
       comingSoon: true,
-      comingSoonNote: COMING_SOON_NOTE,
+      comingSoonNote: PRIVACY_UNWIRED_NOTE,
     },
     {
       id: "ranking",
       label: "ランキングに表示",
-      description: "月間影響度ランキングへの参加",
+      description: "月間影響度ランキングへの参加（機能公開時に利用可能）",
       enabled: true,
       comingSoon: true,
-      comingSoonNote: COMING_SOON_NOTE,
+      comingSoonNote: PRIVACY_RANKING_INACTIVE_NOTE,
     },
   ],
 };
