@@ -8,7 +8,6 @@ import {
   projectStudioPath,
   studioSubmitModalHref,
 } from "@/lib/project-nurture-links";
-import { studioOverviewEditHref } from "@/lib/studio-edit-url";
 import type { ProjectVisibility } from "@/lib/project-visibility";
 
 type ProjectSubmitSuccessPanelProps = {
@@ -20,14 +19,16 @@ type ProjectSubmitSuccessPanelProps = {
   onClose?: () => void;
 };
 
+const playerPageCtaLabel = "Player表示で作品ページを見る";
+
 const primaryCtaClassName =
   "rounded-xl bg-violet-600 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500";
 
+const primaryDisabledClassName =
+  "cursor-not-allowed rounded-xl border border-zinc-800 bg-zinc-950/50 px-6 py-3.5 text-sm font-semibold text-zinc-600";
+
 const secondaryCtaClassName =
   "rounded-xl border border-zinc-700 bg-zinc-900 px-6 py-3.5 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-600 hover:text-white";
-
-const secondaryDisabledClassName =
-  "cursor-not-allowed rounded-xl border border-zinc-800 bg-zinc-950/50 px-6 py-3.5 text-sm font-semibold text-zinc-600";
 
 const tertiaryCtaClassName =
   "rounded-xl border border-zinc-800 bg-transparent px-6 py-3 text-sm font-medium text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200";
@@ -43,10 +44,8 @@ export function ProjectSubmitSuccessPanel({
   const [shareOpen, setShareOpen] = useState(false);
   const isPublic = visibility !== "private";
   const displayTitle = title?.trim() || "作品";
-  const visibilityEditHref = studioOverviewEditHref(gameId, "visibility");
   const studioHref = projectStudioPath(gameId);
   const submitAnotherHref = studioSubmitModalHref();
-  const viewPageLabel = isPublic ? "作品ページを見る" : "確認用ページを見る";
   const successHeading = `『${displayTitle}』を投稿しました`;
 
   const shellClassName = compact
@@ -54,8 +53,8 @@ export function ProjectSubmitSuccessPanel({
     : "mt-12 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-6 py-16 text-center";
 
   const bodyText = isPublic
-    ? "作品ページが公開されました。外部に共有して、プレイヤーに遊んでもらいましょう。"
-    : "非公開で保存しました。公開するときは作品情報から切り替えられます。";
+    ? "Player表示の作品ページが公開されました。外部に共有して、プレイヤーに遊んでもらいましょう。"
+    : "非公開で保存しました。公開すると、Player表示の作品ページを共有できます。公開設定は編集画面から変更できます。";
 
   return (
     <>
@@ -90,13 +89,19 @@ export function ProjectSubmitSuccessPanel({
         </div>
 
         <div className="mx-auto flex w-full max-w-sm flex-col gap-3">
-          <Link
-            href={gamePlayHref(gameId)}
-            onClick={onClose}
-            className={primaryCtaClassName}
-          >
-            {viewPageLabel}
-          </Link>
+          {isPublic ? (
+            <Link
+              href={gamePlayHref(gameId)}
+              onClick={onClose}
+              className={primaryCtaClassName}
+            >
+              {playerPageCtaLabel}
+            </Link>
+          ) : (
+            <button type="button" disabled className={primaryDisabledClassName}>
+              {playerPageCtaLabel}
+            </button>
+          )}
           {isPublic ? (
             <button
               type="button"
@@ -105,24 +110,7 @@ export function ProjectSubmitSuccessPanel({
             >
               外部に共有する
             </button>
-          ) : (
-            <div className="space-y-2">
-              <button type="button" disabled className={`w-full ${secondaryDisabledClassName}`}>
-                外部に共有する
-              </button>
-              <p className="text-xs leading-relaxed text-zinc-500">
-                非公開のままでは外部に共有できません。{" "}
-                <Link
-                  href={visibilityEditHref}
-                  onClick={onClose}
-                  className="text-violet-400 underline-offset-2 hover:text-violet-300 hover:underline"
-                >
-                  公開設定を変更
-                </Link>
-                してください。
-              </p>
-            </div>
-          )}
+          ) : null}
           <Link
             href={studioHref}
             onClick={onClose}

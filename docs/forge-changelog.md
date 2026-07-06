@@ -23,6 +23,13 @@
 
 ---
 
+## 2026-07-06 — 投稿成功画面 Player表示文言・非公開CTA整理（preview/landing-01）
+
+- **公開** — primary「Player表示で作品ページを見る」（`/games/{id}`）。CTA: 共有 / 投稿した作品を編集する / もう1本投稿
+- **非公開** — 「Player表示で作品ページを見る」は非活性。外部共有CTAは非表示。説明文で公開後の共有を案内。編集へ進める構成
+
+---
+
 ## 2026-07-06 — PlayerShell 共通 layout Phase 1 本番反映
 
 - **commit** — `0f84b67`（Phase 1 コア `6fdfd00` + changelog。`origin/main` = `origin/preview/landing-01`）
