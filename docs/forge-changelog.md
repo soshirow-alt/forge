@@ -6,8 +6,9 @@
 
 ## 2026-07-06 — 主要導線パフォーマンス改善 本番反映
 
-- **commit** — `46d40f3`（`origin/main` = `origin/preview/landing-01`）
+- **commit** — `122cb6b`（`origin/main` = `origin/preview/landing-01`）
 - **本番 URL** — https://forge-flame-gamma.vercel.app
+- **deploy** — `dpl_ARS8yDJzg9gD4iQbhpKoSDEiLYnD`（`vercel deploy --prod`）
 - **内容** — 作品詳細1件直取得、GamesProvider グローバル取得遅延、instant tab（`useInstantQueryTab`）、タブスクロール維持、ログイン入力保持、mypage/Studio タブ即時化、skeleton 化、`[forge:perf]` 計測基盤
 - **残課題（次フェーズ）** — サイドバー遷移 1〜2秒（Shell 再mount・Next navigation・GamesProvider 一括取得・getUser  waterfall）。対策候補: PlayerShell/StudioShell 共通 layout 化、prefetch、遷移先初期 fetch 分解、`/home` `/search` catalog 改善
 
