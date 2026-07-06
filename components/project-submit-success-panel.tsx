@@ -19,8 +19,6 @@ type ProjectSubmitSuccessPanelProps = {
   onClose?: () => void;
 };
 
-const playerPageCtaLabel = "Player表示で作品ページを見る";
-
 const primaryCtaClassName =
   "rounded-xl bg-violet-600 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500";
 
@@ -32,6 +30,9 @@ const secondaryCtaClassName =
 
 const tertiaryCtaClassName =
   "rounded-xl border border-zinc-800 bg-transparent px-6 py-3 text-sm font-medium text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200";
+
+const lightCtaClassName =
+  "rounded-xl px-6 py-2 text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-300";
 
 export function ProjectSubmitSuccessPanel({
   gameId,
@@ -46,15 +47,14 @@ export function ProjectSubmitSuccessPanel({
   const displayTitle = title?.trim() || "作品";
   const studioHref = projectStudioPath(gameId);
   const submitAnotherHref = studioSubmitModalHref();
-  const successHeading = `『${displayTitle}』を投稿しました`;
 
   const shellClassName = compact
     ? "space-y-6 py-2 text-center"
     : "mt-12 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-6 py-16 text-center";
 
   const bodyText = isPublic
-    ? "Player表示の作品ページが公開されました。外部に共有して、プレイヤーに遊んでもらいましょう。"
-    : "非公開で保存しました。公開すると、Player表示の作品ページを共有できます。公開設定は編集画面から変更できます。";
+    ? "公開ページを確認して、プレイヤーに共有できます。内容の編集や更新はStudioから行えます。"
+    : "非公開で保存しました。公開設定を変更すると、公開ページを共有できます。編集や更新はStudioから行えます。";
 
   return (
     <>
@@ -78,14 +78,20 @@ export function ProjectSubmitSuccessPanel({
           </div>
           {!compact ? (
             <h1 className="mt-6 text-2xl font-bold tracking-tight text-zinc-100">
-              {successHeading}
+              作品を投稿しました
             </h1>
           ) : (
-            <p className="mt-4 text-base font-semibold text-zinc-100">{successHeading}</p>
+            <p className="mt-4 text-base font-semibold text-zinc-100">作品を投稿しました</p>
           )}
-          <p className={`text-zinc-500 ${compact ? "mt-2 text-sm" : "mt-2"}`}>
+          <p className={`font-medium text-zinc-300 ${compact ? "mt-2 text-sm" : "mt-2"}`}>
+            『{displayTitle}』
+          </p>
+          <p className={`text-zinc-500 ${compact ? "mt-2 text-sm" : "mt-3 text-sm leading-relaxed"}`}>
             {bodyText}
           </p>
+          {!isPublic ? (
+            <p className="mt-2 text-xs text-zinc-600">現在の公開設定: 非公開</p>
+          ) : null}
         </div>
 
         <div className="mx-auto flex w-full max-w-sm flex-col gap-3">
@@ -95,11 +101,11 @@ export function ProjectSubmitSuccessPanel({
               onClick={onClose}
               className={primaryCtaClassName}
             >
-              {playerPageCtaLabel}
+              公開ページを見る
             </Link>
           ) : (
             <button type="button" disabled className={primaryDisabledClassName}>
-              {playerPageCtaLabel}
+              公開ページを見る
             </button>
           )}
           {isPublic ? (
@@ -114,25 +120,25 @@ export function ProjectSubmitSuccessPanel({
           <Link
             href={studioHref}
             onClick={onClose}
-            className={tertiaryCtaClassName}
+            className={isPublic ? tertiaryCtaClassName : secondaryCtaClassName}
           >
-            投稿した作品を編集する
+            Studioで作品を編集する
           </Link>
           {onSubmitAnother ? (
             <button
               type="button"
               onClick={onSubmitAnother}
-              className={tertiaryCtaClassName}
+              className={lightCtaClassName}
             >
-              もう1本投稿する
+              続けて投稿する
             </button>
           ) : (
             <Link
               href={submitAnotherHref}
               onClick={onClose}
-              className={tertiaryCtaClassName}
+              className={lightCtaClassName}
             >
-              もう1本投稿する
+              続けて投稿する
             </Link>
           )}
         </div>
