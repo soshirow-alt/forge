@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-07-06 — PlayerShell 共通 layout Phase 1 本番反映
+
+- **commit** — `6fdfd00`（Phase 1 コア。本番記録時点で `origin/main` = `origin/preview/landing-01` に同期予定）
+- **本番 URL** — https://forge-flame-gamma.vercel.app
+- **内容** — `/home` `/search` `/mypage` `/mypage/community` `/settings` を `app/(player)/` route group 化。`PlayerShellLayout` で sidebar/header を遷移間維持。`HeaderSearchForm` が URL から `q` を自己解決
+- **未移行（別タスク）** — 残り Player ルート、StudioShell layout 化、GamesProvider 分解、auth/getUser 整理
+- **残課題** — サイドバー遷移はまだ少し遅いが現時点ではギリ許容範囲。さらなる改善は別タスクで慎重に（Phase 2 / Studio layout / GamesProvider / auth 整理）。route-level `loading.tsx` 全画面 skeleton は不採用（UX 悪化のため revert 済み）
+
+---
+
 ## 2026-07-06 — PlayerShell 共通 layout Phase 1（preview/landing-01）
 
 - **対象** — `/home` `/search` `/mypage` `/mypage/community` `/settings` を `app/(player)/` route group 化
@@ -13,11 +23,13 @@
 
 ---
 
-- **commit** — `122cb6b`（`origin/main` = `origin/preview/landing-01`）
+## 2026-07-06 — 主要導線パフォーマンス改善 本番反映
+
+- **commit** — `122cb6b`
 - **本番 URL** — https://forge-flame-gamma.vercel.app
 - **deploy** — `dpl_ARS8yDJzg9gD4iQbhpKoSDEiLYnD`（`vercel deploy --prod`）
 - **内容** — 作品詳細1件直取得、GamesProvider グローバル取得遅延、instant tab（`useInstantQueryTab`）、タブスクロール維持、ログイン入力保持、mypage/Studio タブ即時化、skeleton 化、`[forge:perf]` 計測基盤
-- **残課題（次フェーズ）** — サイドバー遷移 1〜2秒（Shell 再mount・Next navigation・GamesProvider 一括取得・getUser  waterfall）。対策候補: PlayerShell/StudioShell 共通 layout 化、prefetch、遷移先初期 fetch 分解、`/home` `/search` catalog 改善
+- **残課題（次フェーズ）** — サイドバー遷移のさらなる改善は Phase 1 layout 化で一部緩和。完全解消は別タスク
 
 ---
 
