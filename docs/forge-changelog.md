@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-07-06 — 作品ページ共有導線・ログイン return・オーナーUI 本番反映
+
+- **commit** — `be4f4b8`（`fd53bbb`〜`be4f4b8` を `main` FF。`origin/main` = `origin/preview/landing-01`）
+- **本番 URL** — https://forge-flame-gamma.vercel.app
+- **deploy** — `dpl_D7XKA4jQZ64o98V8Xi9XvKWvqQip`（`vercel deploy --prod`）
+- **含む** — 作品ページUI改善 / 共有URL未ログイン→ログインページ遷移 / ログイン・登録 return / returnなし→`/home` / オーナー右カラム「これはあなたの作品です」 / 「フィードバックする」文言統一 / みんなのFB初回並列fetch / オーナーカード2ボタン化
+- **smoke** — `/home` 200、作品ページ・ログイン bundle 文言/導線、public-feedback API 200 — すべて PASS
+- **DB migration なし**
+
+---
+
 ## 2026-07-06 — 作品ページ オーナー差分の右カラム集約・文言整理（preview/landing-01）
 
 - **オーナー共有バー** — ヒーロー上の共有バーを廃止。公開ページは誰が見ても同じ見た目に
