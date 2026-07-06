@@ -10,6 +10,9 @@
 - **設定** — 通知・プライバシーUI整理（「？」ヒント、近日対応ピル、ラベル調整）。Studio「作品フォロー」
 - **設定（アカウント）** — セクション見出し「アカウント削除」、実行リンク「アカウントを削除する」に統一（説明文・モーダル内の「退会」表現は維持）
 - **コアループ小改善** — Studio未確認ワッペン修正、通知 reload、プレイヤーマイページ「最新版未プレイ」ワッペン
+- **commit** — `444ca92`（`origin/main` = `origin/preview/landing-01`）
+- **本番 URL** — https://forge-flame-gamma.vercel.app
+- **deploy** — `dpl_8AwJ9PNuU9tNXHtBARRqpFH8zfh3`（`vercel deploy --prod`）
 
 ---
 
