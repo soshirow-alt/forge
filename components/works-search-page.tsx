@@ -16,6 +16,8 @@ import {
   sortSearchWorks,
 } from "@/lib/discovery-public-games";
 import { useGames } from "@/components/games-provider";
+import { DiscoveryHomeSkeleton } from "@/components/forge-loading-skeletons";
+import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
 import {
   paginateSearchResults,
   searchFeatureTagFilters,
@@ -80,6 +82,12 @@ function parseFeatures(param: string | null): string[] {
 function WorksSearchContent() {
   const hideV0Mock = useHideV0MockContent();
   const { publicGames, publicCatalogReady, getSupportCount } = useGames();
+
+  useForgePerfRoute({
+    route: "/search",
+    ready: publicCatalogReady,
+    context: { gameCount: publicGames.length },
+  });
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryFromUrl = searchParams.get("q")?.trim() ?? "";
@@ -233,7 +241,7 @@ function WorksSearchContent() {
   if (!publicCatalogReady) {
     return (
       <PlayerShell activeNav="search" headerSearchDefault={queryFromUrl}>
-        <p className="text-sm text-zinc-500">読み込み中...</p>
+        <DiscoveryHomeSkeleton />
       </PlayerShell>
     );
   }

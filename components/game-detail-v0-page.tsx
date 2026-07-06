@@ -87,6 +87,10 @@ import {
   type PlayDestination,
 } from "@/lib/game-play-destinations";
 import { GamePlayDestinationModal } from "@/components/game-play-destination-modal";
+import { GameDetailSkeleton } from "@/components/forge-loading-skeletons";
+import { ForgeTabPanel } from "@/components/forge-tab-panel";
+import { useAuth } from "@/components/auth-provider";
+import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
 import {
   Bookmark,
   Check,
@@ -140,26 +144,47 @@ function GameDetailDeveloperAvatar({
 }
 
 function GameDetailV0PageContent({ id }: { id: string }) {
-  const { getSubmittedGameById, dataReady, publicCatalogReady } = useGames();
+  const { user } = useAuth();
+  const {
+    getOwnedProjectById,
+    getPublicGameById,
+    publicCatalogReady,
+    catalogReady,
+  } = useGames();
   const hideV0Mock = useHideV0MockContent();
   const isPublicProjectId = isSupabaseProjectId(id);
-  const submittedGame = dataReady ? getSubmittedGameById(id) : undefined;
-  // 公開 UUID は publicGames 待ち。オーナー作品は submittedGames で先に見つかる
-  const waitingForPublicCatalog =
-    isPublicProjectId && !publicCatalogReady && !submittedGame;
+  const ownedGame = getOwnedProjectById(id);
+  const publicGame = getPublicGameById(id);
+  const resolvedGame = ownedGame ?? publicGame;
+  const stillLoading =
+    hideV0Mock &&
+    isPublicProjectId &&
+    !resolvedGame &&
+    (!publicCatalogReady || (Boolean(user) && !catalogReady));
+
+  useForgePerfRoute({
+    route: `/games/${id}`,
+    ready: Boolean(resolvedGame) || (!stillLoading && hideV0Mock),
+    context: {
+      publicCatalogReady,
+      catalogReady,
+      hasResolvedGame: Boolean(resolvedGame),
+    },
+  });
+
+  if (stillLoading) {
+    return (
+      <PlayerShell>
+        <GameDetailSkeleton />
+      </PlayerShell>
+    );
+  }
 
   if (hideV0Mock) {
-    if (!dataReady || waitingForPublicCatalog) {
-      return (
-        <PlayerShell>
-          <p className="text-sm text-zinc-500">読み込み中...</p>
-        </PlayerShell>
-      );
-    }
     const hasRealProject = Boolean(
       isPublicProjectId &&
-        submittedGame &&
-        isSupabaseProjectId(submittedGame.id),
+        resolvedGame &&
+        isSupabaseProjectId(resolvedGame.id),
     );
     if (!hasRealProject) {
       return <GameNotFoundPanel />;
@@ -172,11 +197,14 @@ function GameDetailV0PageContent({ id }: { id: string }) {
 function GameDetailV0PageBody({ id }: { id: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
   const activeTab = parseGameDetailTab(searchParams.get("tab"));
   const {
     getSubmittedGameById,
+    getOwnedProjectById,
+    getPublicGameById,
     getGameById,
-    dataReady,
+    catalogReady,
     publicCatalogReady,
     recordPlay,
     hasPlayedGame,
@@ -187,12 +215,15 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     getFollowerCount,
     refreshFollowerCount,
   } = useGames();
-  const submittedGame = dataReady ? getSubmittedGameById(id) : undefined;
+  const ownedGame = getOwnedProjectById(id);
+  const publicGame = getPublicGameById(id);
+  const submittedGame = ownedGame ?? publicGame ?? getSubmittedGameById(id);
   const hideV0Mock = useHideV0MockContent();
   const resolvedId = isSupabaseProjectId(id) ? id : resolveGameDetailId(id);
   const waitingForCatalog =
     isSupabaseProjectId(id) &&
-    (!dataReady || (!publicCatalogReady && !submittedGame));
+    !submittedGame &&
+    (!publicCatalogReady || (Boolean(user) && !catalogReady));
 
   const isRealProject = Boolean(
     submittedGame && isSupabaseProjectId(submittedGame.id),
@@ -272,7 +303,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     }
     return applyProjectOverviewV0(game, resolvedId);
   }, [game, resolvedId, overviewRevision, isRealProject]);
-  const { isLoggedIn, isGuestEntry, hydrated, requireAuth, user } = useRequireAuth();
+  const { isLoggedIn, isGuestEntry, hydrated, requireAuth } = useRequireAuth();
   const returnPath = gameDetailReturnPath(resolvedId);
   const detailId = resolveGameDetailId(id);
   const ownerProjectId = useMemo(() => {
@@ -576,7 +607,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   if (waitingForCatalog) {
     return (
       <PlayerShell>
-        <p className="text-sm text-zinc-500">読み込み中...</p>
+        <GameDetailSkeleton />
       </PlayerShell>
     );
   }
@@ -824,7 +855,7 @@ function GameDetailV0PageBody({ id }: { id: string }) {
             </div>
           </div>
 
-          {activeTab === "overview" && (
+          <ForgeTabPanel active={activeTab === "overview"}>
             <GameDetailOverviewV0Tab
               game={displayGame}
               gameId={resolvedId}
@@ -856,17 +887,18 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                   : "フィードバックする"
               }
             />
-          )}
+          </ForgeTabPanel>
 
-          {activeTab === "devlog" && (
+          <ForgeTabPanel active={activeTab === "devlog"}>
             <GameDevlogV0Tab
               gameId={resolvedId}
               projectId={isRealProject ? resolvedId : undefined}
               onPlayLatest={handlePlay}
             />
-          )}
-          {activeTab === "voices" &&
-            (isRealProject ? (
+          </ForgeTabPanel>
+
+          <ForgeTabPanel active={activeTab === "voices"}>
+            {isRealProject ? (
               <EveryonesVoiceSection
                 gameId={resolvedId}
                 playableVersion={submittedGame?.playableVersion}
@@ -881,7 +913,8 @@ function GameDetailV0PageBody({ id }: { id: string }) {
                 refreshKey={voicesRefreshKey}
                 onSendVoice={handleFeedback}
               />
-            ))}
+            )}
+          </ForgeTabPanel>
         </div>
 
         <aside className="w-full shrink-0 space-y-5 xl:w-72">
@@ -999,7 +1032,7 @@ export function GameDetailV0Page({ id }: { id: string }) {
     <Suspense
       fallback={
         <PlayerShell>
-          <p className="text-sm text-zinc-500">読み込み中...</p>
+          <GameDetailSkeleton />
         </PlayerShell>
       }
     >

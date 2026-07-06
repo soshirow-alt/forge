@@ -17,6 +17,7 @@ import { clearEntryMode } from "@/lib/entry-mode";
 import { isAnonymousSupabaseUser } from "@/lib/guest-auth";
 import { createClient } from "@/lib/supabase/client";
 import type { AuthChangeEvent, Provider, User as SupabaseAuthUser } from "@supabase/supabase-js";
+import { forgePerfLog, forgePerfTimed } from "@/lib/forge-perf-log";
 import { isXAuthEnabled } from "@/lib/x-auth";
 
 type AuthContextValue = {
@@ -74,7 +75,8 @@ export function AuthProvider({
   initialUser = null,
 }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(initialUser);
-  const [authResolved, setAuthResolved] = useState(false);
+  // Root layout already validated session server-side; don't block first paint.
+  const [authResolved, setAuthResolved] = useState(true);
   const hadServerUserRef = useRef(Boolean(initialUser));
   const supabase = useMemo(() => {
     if (
@@ -89,13 +91,13 @@ export function AuthProvider({
 
   useEffect(() => {
     if (!supabase) {
-      setAuthResolved(true);
       return;
     }
 
     let active = true;
 
-    void supabase.auth.getUser().then(async ({ data: { user: authUser } }) => {
+    void forgePerfTimed("auth.getUser", async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!active) {
         return;
       }
@@ -105,6 +107,7 @@ export function AuthProvider({
         setUser(null);
         hadServerUserRef.current = false;
         setAuthResolved(true);
+        forgePerfLog("auth resolved", { user: null, reason: "anonymous-sign-out" });
         return;
       }
 
@@ -117,6 +120,10 @@ export function AuthProvider({
       }
 
       setAuthResolved(true);
+      forgePerfLog("auth resolved", {
+        user: authUser ? "registered" : "none",
+        hadServerUser: hadServerUserRef.current,
+      });
     });
 
     const {

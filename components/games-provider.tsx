@@ -54,6 +54,7 @@ import {
   getCreatorId as getMockCreatorId,
   type Creator,
 } from "@/lib/creators";
+import { forgePerfMark, forgePerfMeasure, forgePerfTimed } from "@/lib/forge-perf-log";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 import {
   countDeveloperFollowersInDb,
@@ -253,6 +254,7 @@ type GamesContextValue = {
   /** visibility=public のみ — /home・検索用（auth 非依存） */
   publicGames: Game[];
   publicCatalogReady: boolean;
+  catalogReady: boolean;
   dataReady: boolean;
   /** Supabase project_devlogs の初回取得完了（実作品 devlog タブ用） */
   devlogsReady: boolean;
@@ -270,6 +272,8 @@ type GamesContextValue = {
   updateProjectOverview: (id: string, data: ProjectOverviewUpdate) => Promise<void>;
   deleteSubmittedGame: (id: string) => Promise<void>;
   getSubmittedGameById: (id: string) => Game | undefined;
+  /** Player 向け — publicCatalogReady 後に publicGames から取得 */
+  getPublicGameById: (id: string) => Game | undefined;
   /** Studio 編集用 — submittedGames のみ（publicGames フォールバックなし） */
   getOwnedProjectById: (id: string) => Game | undefined;
   getGameById: (id: string) => Game | undefined;
@@ -484,6 +488,11 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [catalogReady, setCatalogReady] = useState(false);
   const catalogUserIdRef = useRef<string | undefined>(undefined);
+  const submittedGamesForNotificationsRef = useRef<Game[]>([]);
+
+  useEffect(() => {
+    submittedGamesForNotificationsRef.current = submittedGames;
+  }, [submittedGames]);
 
   const reloadFromStorage = useCallback(async () => {
     const supabase = getOptionalSupabaseClient();
@@ -493,10 +502,14 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const [projects, profiles] = await Promise.all([
-      fetchProjects(supabase),
-      fetchDeveloperProfiles(supabase),
-    ]);
+    const [projects, profiles] = await forgePerfTimed(
+      "supabase.fetchUserCatalog",
+      () =>
+        Promise.all([
+          fetchProjects(supabase),
+          fetchDeveloperProfiles(supabase),
+        ]),
+    );
 
     setSubmittedGames(projects.map((game) => mergeGameWithExtras(game)));
     setDeveloperProfiles(profiles);
@@ -509,7 +522,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const projects = await fetchPublicProjects(supabase);
+    const projects = await forgePerfTimed("supabase.fetchPublicProjects", () =>
+      fetchPublicProjects(supabase),
+    );
     setPublicGames(projects.map((game) => mergeGameWithExtras(game)));
   }, []);
 
@@ -526,20 +541,30 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       setLocalNotifications(loadLocalNotifications());
     }
     setHydrated(true);
+    forgePerfMark("games-provider-mount");
 
     const supabase = getOptionalSupabaseClient();
     if (supabase) {
       void reloadPublicCatalog()
         .catch(() => setPublicGames([]))
-        .finally(() => setPublicCatalogReady(true));
-      void fetchSupportCounts(supabase)
+        .finally(() => {
+          setPublicCatalogReady(true);
+          forgePerfMeasure("games.publicCatalogReady", "games-provider-mount");
+        });
+      void forgePerfTimed("supabase.fetchSupportCounts", () =>
+        fetchSupportCounts(supabase),
+      )
         .then(setSupportCounts)
         .catch(() => setSupportCounts({}));
-      void fetchAllProjectDevlogs(supabase)
+      void forgePerfTimed("supabase.fetchAllProjectDevlogs", () =>
+        fetchAllProjectDevlogs(supabase),
+      )
         .then(setDevlogs)
         .catch(() => setDevlogs([]))
         .finally(() => setDevlogsReady(true));
-      void fetchAllProjectReleaseEvents(supabase)
+      void forgePerfTimed("supabase.fetchAllProjectReleaseEvents", () =>
+        fetchAllProjectReleaseEvents(supabase),
+      )
         .then(setReleaseEvents)
         .catch(() => setReleaseEvents([]));
     } else {
@@ -573,12 +598,16 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       .then(setFollowedDeveloperUserIds)
       .catch(() => setFollowedDeveloperUserIds([]));
 
-    void fetchUserNotifications(supabase, user.id)
+    void forgePerfTimed("supabase.fetchUserNotifications", () =>
+      fetchUserNotifications(supabase, user.id),
+    )
       .then((rows) =>
         rows.map((row) =>
           notificationRowToNotification(
             row,
-            submittedGames.find((game) => game.id === row.project_id)?.title ??
+            submittedGamesForNotificationsRef.current.find(
+              (game) => game.id === row.project_id,
+            )?.title ??
               getMockGameById(row.project_id)?.title ??
               "作品",
           ),
@@ -586,7 +615,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       )
       .then(setDbNotifications)
       .catch(() => setDbNotifications([]));
-  }, [authHydrated, user?.id, submittedGames]);
+  }, [authHydrated, user?.id]);
 
   useEffect(() => {
     if (!authHydrated) {
@@ -619,6 +648,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       .finally(() => {
         if (!cancelled) {
           setCatalogReady(true);
+          forgePerfMeasure("games.catalogReady", "games-provider-mount", {
+            userId: user?.id ?? null,
+          });
         }
       });
 
@@ -857,6 +889,16 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       return submittedGames.find((game) => game.id === id);
     },
     [submittedGames, catalogReady],
+  );
+
+  const getPublicGameById = useCallback(
+    (id: string) => {
+      if (!publicCatalogReady) {
+        return undefined;
+      }
+      return publicGames.find((game) => game.id === id);
+    },
+    [publicGames, publicCatalogReady],
   );
 
   const isSubmittedGame = useCallback(
@@ -2163,6 +2205,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       submittedGames,
       publicGames,
       publicCatalogReady,
+      catalogReady,
       dataReady: authHydrated && catalogReady,
       devlogsReady,
       addSubmittedGame,
@@ -2172,6 +2215,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       updateProjectOverview,
       deleteSubmittedGame,
       getSubmittedGameById,
+      getPublicGameById,
       getOwnedProjectById,
       getGameById,
       getGamesBySection,
@@ -2257,6 +2301,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       updateProjectOverview,
       deleteSubmittedGame,
       getSubmittedGameById,
+      getPublicGameById,
       getOwnedProjectById,
       getGameById,
       getGamesBySection,

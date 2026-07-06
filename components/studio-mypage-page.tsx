@@ -7,6 +7,9 @@ import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { StudioFollowersTabPanel } from "@/components/studio-followers-tab-panel";
 import { StudioOwnedProjectsDirectoryPanel } from "@/components/studio-owned-projects-directory-panel";
 import { StudioMyPageTabs, StudioShell } from "@/components/studio-shell";
+import { ForgeTabPanel } from "@/components/forge-tab-panel";
+import { PageLoadingSkeleton } from "@/components/forge-loading-skeletons";
+import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
 import { useHideV0MockContent } from "@/lib/forge-deployment-context";
 import { STUDIO_SUBMIT_SEARCH_PARAM } from "@/lib/project-nurture-links";
 
@@ -40,6 +43,11 @@ function StudioMypagePageContent() {
   const activeTab = parseTab(searchParams.get("tab"));
   const initialQuery = searchParams.get("q") ?? "";
 
+  useForgePerfRoute({
+    route: `/studio/mypage?tab=${activeTab}`,
+    ready: true,
+  });
+
   useEffect(() => {
     if (searchParams.get(STUDIO_SUBMIT_SEARCH_PARAM) === "1") {
       router.replace("/studio/submit");
@@ -57,23 +65,25 @@ function StudioMypagePageContent() {
     <StudioShell activeNav="mypage" headerSearchDefault={initialQuery}>
       <div className="mx-auto max-w-7xl space-y-6">
         <StudioMyPageTabs activeTab={activeTab} onTabChange={handleTabChange} />
-        {activeTab === "projects" ? (
+        <ForgeTabPanel active={activeTab === "projects"}>
           <StudioOwnedProjectsDirectoryPanel
             initialQuery={initialQuery}
             onOpenSubmit={() => router.push("/studio/submit")}
           />
-        ) : activeTab === "achievements" ? (
-          hideV0Mock ? (
+        </ForgeTabPanel>
+        <ForgeTabPanel active={activeTab === "achievements"}>
+          {hideV0Mock ? (
             <FeatureComingSoonPanel
               title="実績"
               description="開発者実績の集計・表示は Coming Soon です。"
             />
           ) : (
             <StudioAchievementsTabPanel />
-          )
-        ) : (
+          )}
+        </ForgeTabPanel>
+        <ForgeTabPanel active={activeTab === "followers"}>
           <StudioFollowersTabPanel />
-        )}
+        </ForgeTabPanel>
       </div>
     </StudioShell>
   );
@@ -81,7 +91,13 @@ function StudioMypagePageContent() {
 
 export function StudioMypagePage() {
   return (
-    <Suspense fallback={<StudioShell activeNav="mypage"><p className="text-zinc-500">読み込み中…</p></StudioShell>}>
+    <Suspense
+      fallback={
+        <StudioShell activeNav="mypage">
+          <PageLoadingSkeleton lines={4} />
+        </StudioShell>
+      }
+    >
       <StudioMypagePageContent />
     </Suspense>
   );

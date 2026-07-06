@@ -6,6 +6,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useGames } from "@/components/games-provider";
+import { DiscoveryHomeSkeleton } from "@/components/forge-loading-skeletons";
+import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
 import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
 import { PlayerShell } from "@/components/player-shell";
 import { useHideV0MockContent } from "@/lib/forge-deployment-context";
@@ -236,6 +238,12 @@ export function DiscoveryHomePage() {
   const { publicGames, publicCatalogReady, getSupportCount } = useGames();
   const hideV0Mock = useHideV0MockContent();
 
+  useForgePerfRoute({
+    route: "/home",
+    ready: publicCatalogReady,
+    context: { gameCount: publicGames.length },
+  });
+
   const realNewGames = useMemo(
     () =>
       sortGamesByNewest(publicGames).map((game) =>
@@ -289,7 +297,7 @@ export function DiscoveryHomePage() {
   if (!publicCatalogReady) {
     return (
       <PlayerShell activeNav="home">
-        <p className="text-sm text-zinc-500">読み込み中...</p>
+        <DiscoveryHomeSkeleton />
       </PlayerShell>
     );
   }

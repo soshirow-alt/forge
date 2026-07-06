@@ -15,6 +15,7 @@ import {
   StudioInlineSelect,
 } from "@/components/studio-shell";
 import { ViewModeToggle, type ViewMode } from "@/components/view-mode-toggle";
+import { PageLoadingSkeleton } from "@/components/forge-loading-skeletons";
 import { useOwnedProjectVoiceSignals } from "@/hooks/use-owned-project-voice-signals";
 import { matchesOwnedProjectPhaseFilter } from "@/lib/owned-project-filters";
 import {
@@ -373,7 +374,7 @@ export function StudioOwnedProjectsDirectoryPanel({
   );
 
   if (!hydrated || !dataReady) {
-    return <p className="text-sm text-zinc-500">読み込み中…</p>;
+    return <PageLoadingSkeleton lines={4} />;
   }
 
   return (

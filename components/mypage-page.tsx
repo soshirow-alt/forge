@@ -11,6 +11,9 @@ import { MyPageLoopPanel } from "@/components/mypage-loop-panel";
 import { MyPageSavedRealPanel } from "@/components/mypage-real-panels";
 import { PlayHistorySection } from "@/components/play-history-section";
 import { MyPageTabs, PlayerShell } from "@/components/player-shell";
+import { ForgeTabPanel } from "@/components/forge-tab-panel";
+import { PageLoadingSkeleton } from "@/components/forge-loading-skeletons";
+import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect } from "react";
@@ -58,6 +61,11 @@ function MyPagePageContent() {
   const hideV0Mock = shouldHideV0MockContent();
   const useMockPlayerTabs = !hideV0Mock;
 
+  useForgePerfRoute({
+    route: `/mypage?tab=${activeTab}`,
+    ready: true,
+  });
+
   const setTab = useCallback(
     (tab: MyPageTab) => {
       router.replace(tabHref(tab));
@@ -78,29 +86,38 @@ function MyPagePageContent() {
       <MyPageTabs activeTab={activeTab} onTabChange={(tab) => setTab(tab as MyPageTab)} />
 
       <div role="tabpanel">
-        {activeTab === "witnessing" && <MyPageLoopPanel />}
-        {activeTab === "saved" && <MyPageSavedRealPanel />}
-        {activeTab === "play-history" && <PlayHistorySection />}
-        {activeTab === "feedback" &&
-          (useMockPlayerTabs ? (
+        <ForgeTabPanel active={activeTab === "witnessing"}>
+          <MyPageLoopPanel />
+        </ForgeTabPanel>
+        <ForgeTabPanel active={activeTab === "saved"}>
+          <MyPageSavedRealPanel />
+        </ForgeTabPanel>
+        <ForgeTabPanel active={activeTab === "play-history"}>
+          <PlayHistorySection />
+        </ForgeTabPanel>
+        <ForgeTabPanel active={activeTab === "feedback"}>
+          {useMockPlayerTabs ? (
             <FeedbackTabPanel />
           ) : (
             <FeatureComingSoonPanel
               title="FB履歴"
               description="あなたが届けたフィードバックの履歴は Coming Soon です。"
             />
-          ))}
-        {activeTab === "achievements" &&
-          (useMockPlayerTabs ? (
+          )}
+        </ForgeTabPanel>
+        <ForgeTabPanel active={activeTab === "achievements"}>
+          {useMockPlayerTabs ? (
             <AchievementsTabPanel />
           ) : (
             <FeatureComingSoonPanel
               title="実績"
               description="プレイヤー実績バッジの表示は Coming Soon です。"
             />
-          ))}
-        {activeTab === "following" &&
-          (hideV0Mock ? <FollowingDevelopersPanel /> : <FollowingTabPanel />)}
+          )}
+        </ForgeTabPanel>
+        <ForgeTabPanel active={activeTab === "following"}>
+          {hideV0Mock ? <FollowingDevelopersPanel /> : <FollowingTabPanel />}
+        </ForgeTabPanel>
       </div>
     </PlayerShell>
   );
@@ -110,9 +127,9 @@ export function MyPagePage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-full items-center justify-center bg-[#0a0a0a] text-zinc-500">
-          読み込み中...
-        </div>
+        <PlayerShell activeNav="mypage">
+          <PageLoadingSkeleton lines={4} />
+        </PlayerShell>
       }
     >
       <MyPagePageContent />

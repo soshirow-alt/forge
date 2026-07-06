@@ -8,6 +8,7 @@ import {
   ACCOUNT_REGISTRATION_REQUIRED_MESSAGE,
   ACCOUNT_REGISTRATION_REQUIRED_NOTICE,
 } from "@/lib/guest-auth";
+import { PageLoadingSkeleton } from "@/components/forge-loading-skeletons";
 import {
   buildLoginUrlWithReturn,
   buildPathWithSearch,
@@ -51,8 +52,14 @@ export function RegisteredAccountGuard({
 
   if (!authResolved || !isRegisteredUser) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center text-sm text-zinc-500">
-        {isGuestEntry ? ACCOUNT_REGISTRATION_REQUIRED_MESSAGE : "読み込み中..."}
+      <div className="mx-auto max-w-2xl px-6 py-16">
+        {isGuestEntry ? (
+          <p className="text-center text-sm text-zinc-500">
+            {ACCOUNT_REGISTRATION_REQUIRED_MESSAGE}
+          </p>
+        ) : (
+          <PageLoadingSkeleton lines={3} />
+        )}
       </div>
     );
   }

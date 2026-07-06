@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-07-06 — 主要導線のパフォーマンス改善（計測 + 初回改善）
+
+- **計測** — dev 環境で `[forge:perf]` ログ（`lib/forge-perf-log.ts`）。route 表示開始〜コンテンツ ready、Supabase fetch、provider 初期化を計測。Preview でも `NEXT_PUBLIC_FORGE_PERF_LOG=1` で有効化可
+- **auth** — サーバーで session 確認済みのため `authResolved` の初期値を `true` に。クライアント `getUser()` 完了まで全画面をブロックしない
+- **作品詳細** — 公開作品は `publicCatalogReady` 後すぐ表示（ログイン済みユーザーの owner catalog 待ちを不要化）。`getPublicGameById` 追加
+- **loading UX** — `/home`・`/search`・作品詳細・マイページ・Studio で「読み込み中…」全画面を skeleton に置換
+- **タブ** — 作品詳細・マイページ・Studio マイページのタブを mount 維持（`ForgeTabPanel`）。再訪時の不要 refetch を削減
+- **通知 fetch** — `submittedGames` 変化による二重 `fetchUserNotifications` を解消
+
+---
+
 ## 2026-07-06 — X Auth 本番 deploy GO 完了
 
 - **commit** — `6192348`（`origin/main` = `origin/preview/landing-01`）
