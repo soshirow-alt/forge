@@ -7,10 +7,15 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 import assert from "node:assert/strict";
 import {
-  buildAuthCallbackUrl,
+  buildOAuthCallbackRedirectUrl,
   resolveOAuthCallbackDestination,
   resolveOAuthCallbackErrorPath,
 } from "../lib/auth-redirect";
+import {
+  OAUTH_FLOW_COOKIE,
+  OAUTH_NEXT_COOKIE,
+  readOAuthFlowCookies,
+} from "../lib/oauth-flow-cookie";
 import { mapProjectSubmitErrorMessage } from "../lib/error-message";
 import { sanitizeLoginReturnUrl } from "../lib/login-return-url";
 import { projectThumbnailsForDb, sanitizeProjectThumbnailUrls } from "../lib/project-thumbnails";
@@ -553,14 +558,20 @@ function testOAuthRedirectOriginContract() {
     "x_link callback resolves to /settings?x=linked",
   );
   ok(
-    authProvider.includes('provider === "x" ? "x_login"') &&
-      authProvider.includes('provider === "x" ? "x_link"'),
-    "auth-provider tags X OAuth flows",
+    authProvider.includes('setOAuthFlowCookies("x_login"') &&
+      authProvider.includes('setOAuthFlowCookies("x_link"'),
+    "auth-provider stores X OAuth flow in cookies",
   );
   ok(
-    callbackRoute.includes("resolveOAuthCallbackDestination") &&
-      !callbackRoute.includes("NEXT_PUBLIC_SITE_URL"),
-    "callback route uses request origin, not SITE_URL",
+    authProvider.includes("getOAuthRedirectUrl()") &&
+      !authProvider.includes("getOAuthRedirectUrl(nextPath"),
+    "auth-provider uses queryless OAuth redirectTo",
+  );
+  ok(
+    callbackRoute.includes("readOAuthFlowCookies") &&
+      callbackRoute.includes("redirectWithOAuthCookieClear") &&
+      !callbackRoute.includes("searchParams.get(\"flow\")"),
+    "callback route reads OAuth flow from cookies",
   );
   ok(
     loginPage.includes("XOAuthLoginSection") &&
@@ -575,35 +586,28 @@ function testOAuthRedirectUrlValues() {
     "https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app";
   const prodOrigin = "https://forge-flame-gamma.vercel.app";
 
-  const xLink = buildAuthCallbackUrl({
-    origin: previewOrigin,
-    nextPath: "/settings",
-    flow: "x_link",
-  });
-  const xLinkUrl = new URL(xLink);
-  ok(xLinkUrl.origin === previewOrigin, `x_link origin: ${xLinkUrl.origin}`);
-  ok(xLinkUrl.pathname === "/auth/callback", `x_link path: ${xLinkUrl.pathname}`);
-  ok(xLinkUrl.searchParams.get("flow") === "x_link", "x_link flow param");
-  ok(xLinkUrl.searchParams.get("next") === "/settings", "x_link next param");
-  ok(!xLink.includes(prodOrigin), "x_link must not use production origin");
+  const previewRedirect = buildOAuthCallbackRedirectUrl(previewOrigin);
+  const previewUrl = new URL(previewRedirect);
+  ok(previewUrl.origin === previewOrigin, `preview redirect origin: ${previewUrl.origin}`);
+  ok(previewUrl.pathname === "/auth/callback", `preview redirect path: ${previewUrl.pathname}`);
+  ok(previewUrl.search === "", "OAuth redirectTo must not include query params");
+  ok(!previewRedirect.includes(prodOrigin), "preview redirect must not use production origin");
 
-  const xLogin = buildAuthCallbackUrl({
-    origin: previewOrigin,
-    nextPath: "/studio/mypage",
-    flow: "x_login",
-  });
-  const xLoginUrl = new URL(xLogin);
-  ok(xLoginUrl.origin === previewOrigin, `x_login origin: ${xLoginUrl.origin}`);
-  ok(xLoginUrl.pathname === "/auth/callback", `x_login path: ${xLoginUrl.pathname}`);
-  ok(xLoginUrl.searchParams.get("flow") === "x_login", "x_login flow param");
-  ok(xLoginUrl.searchParams.get("next") === "/studio/mypage", "x_login next param");
+  const prodRedirect = buildOAuthCallbackRedirectUrl(prodOrigin);
+  ok(new URL(prodRedirect).origin === prodOrigin, "production redirect origin");
+  ok(new URL(prodRedirect).search === "", "production redirectTo has no query");
 
-  const prodLink = buildAuthCallbackUrl({
-    origin: prodOrigin,
-    nextPath: "/settings",
-    flow: "x_link",
+  const cookieState = readOAuthFlowCookies((name) => {
+    if (name === OAUTH_FLOW_COOKIE) {
+      return "x_link";
+    }
+    if (name === OAUTH_NEXT_COOKIE) {
+      return encodeURIComponent("/settings");
+    }
+    return undefined;
   });
-  ok(new URL(prodLink).origin === prodOrigin, "production origin for prod start");
+  ok(cookieState.flow === "x_link", "cookie flow read");
+  ok(cookieState.next === "/settings", "cookie next read");
 
   ok(
     resolveOAuthCallbackDestination({ flow: "x_link", next: "/settings" }) ===

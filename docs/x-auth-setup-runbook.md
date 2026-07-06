@@ -114,18 +114,17 @@ http://localhost:3000/auth/callback
 
 **Site URL を Preview に変えない理由**: `bpnisgzxuwdxelhnduuf` は Preview / 本番共通。Site URL を Preview にすると本番のメール認証・パスワードリセット・デフォルトリダイレクトに影響しうる。X OAuth はコード側 `getOAuthRedirectUrl()` = **開始したページの origin** + `/auth/callback` で Preview / 本番を分離するため、**Redirect URLs allowlist 追加が必須**。
 
-**Redirect URL 未登録時の挙動（2026-07-06 E2E FAIL 原因）**
+**Redirect URL 一致ルール（2026-07-06 更新 — E2E FAIL 再発後）**
 
-- Supabase は `redirectTo` が allowlist に **完全一致しない**と **Site URL（本番 LP）へフォールバック**する
-- 症状: Preview `/settings` → X 許可 → **本番 LP**（`forge-flame-gamma.vercel.app`）へ飛ぶ
-- 対処: Dashboard → Authentication → URL Configuration → Redirect URLs に **Preview host を正確に追加**（末尾スラッシュなし）
-- 推奨（将来の Preview host 変更に強い）: `https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app/auth/callback` に加え、必要なら `https://*.vercel.app/auth/callback` を検討（セキュリティと運用のトレードオフ — オーナー判断）
+- Supabase allowlist は **path まで完全一致**（`…/auth/callback`）。**query 付き `redirectTo` は不一致**となり Site URL（本番 LP）へフォールバックしうる
+- **X OAuth の `redirectTo`** — **`${origin}/auth/callback` のみ**（query なし）
+- **flow / next** — OAuth 開始前に短命 cookie（`forge_oauth_flow` / `forge_oauth_next`、600s、SameSite=Lax、Secure）。`/auth/callback` が読み取り、処理後削除
+- 症状（旧設計）: `redirectTo=…/auth/callback?next=…&flow=…` → 本番 LP へ飛ぶ
 
 **E2E 前チェック（オーナー）**
 
 1. Redirect URLs に上記 3 件（Preview / 本番 / localhost）が **すべて** 入っている
-2. Preview `/settings` → Xで連携 → X 同意 URL の `redirect_uri` は Supabase（`…supabase.co/auth/v1/callback`）であること
-3. X 許可後、ブラウザが **Preview host** の `/auth/callback?flow=x_link&next=/settings` を経由すること（本番 host なら NG）
+2. Preview `/settings` → Xで連携 → X 許可後、**Preview host** の `/auth/callback`（query なし可。`code=` は Supabase 付与）を経由すること
 
 **Authentication → Settings（Identity linking）**
 
@@ -219,10 +218,12 @@ await supabase.auth.signInWithOAuth({
 
 ```
 Forge /login → signInWithOAuth('x')
+  → cookie: forge_oauth_flow=x_login, forge_oauth_next=…
+  → redirectTo: {origin}/auth/callback （query なし）
   → X 同意画面
   → Supabase /auth/v1/callback
-  → Forge /auth/callback?code=...&flow=x_login&next=...
-  → exchangeCodeForSession
+  → Forge /auth/callback?code=…
+  → exchangeCodeForSession → cookie から flow/next 読取 → cookie 削除
   → upsert_own_x_profile RPC
   → next へ redirect（同一 origin 内）
 ```
@@ -231,10 +232,12 @@ Forge /login → signInWithOAuth('x')
 
 ```
 /settings → linkIdentity('x')
+  → cookie: forge_oauth_flow=x_link, forge_oauth_next=/settings
+  → redirectTo: {origin}/auth/callback （query なし）
   → X 同意画面
   → Supabase /auth/v1/callback
-  → Forge /auth/callback?code=...&flow=x_link&next=/settings
-  → exchangeCodeForSession
+  → Forge /auth/callback?code=…
+  → exchangeCodeForSession → cookie から flow/next 読取 → cookie 削除
   → upsert_own_x_profile RPC
   → /settings?x=linked（同一 origin 内）
 ```

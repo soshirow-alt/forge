@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { getEmailConfirmRedirectUrl, getOAuthRedirectUrl } from "@/lib/auth-redirect";
+import { setOAuthFlowCookies } from "@/lib/oauth-flow-cookie";
 import { isRegisteredAppUser, mapSupabaseUser, type User } from "@/lib/auth";
 import { clearEntryMode } from "@/lib/entry-mode";
 import { isAnonymousSupabaseUser } from "@/lib/guest-auth";
@@ -232,13 +233,14 @@ export function AuthProvider({
         throw new Error("x_auth_disabled");
       }
 
+      if (provider === "x") {
+        setOAuthFlowCookies("x_login", nextPath ?? null);
+      }
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: getOAuthRedirectUrl(
-            nextPath,
-            provider === "x" ? "x_login" : undefined,
-          ),
+          redirectTo: getOAuthRedirectUrl(),
         },
       });
 
@@ -277,13 +279,14 @@ export function AuthProvider({
         throw new Error("Identity linking is not available in this client version.");
       }
 
+      if (provider === "x") {
+        setOAuthFlowCookies("x_link", nextPath ?? null);
+      }
+
       const { data, error } = await auth.linkIdentity({
         provider,
         options: {
-          redirectTo: getOAuthRedirectUrl(
-            nextPath,
-            provider === "x" ? "x_link" : undefined,
-          ),
+          redirectTo: getOAuthRedirectUrl(),
         },
       });
 

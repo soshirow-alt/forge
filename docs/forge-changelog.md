@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-07-06 — OAuth redirectTo を query なし + cookie 方式に変更（E2E FAIL 再発）
+
+- **事象** — `29dc1a7` 後も Preview `/settings` → X 許可 → **本番 LP** へ遷移。E2E **FAIL** 継続
+- **仮説** — Supabase Redirect URLs は path のみ allowlist。`redirectTo` に `?next=&flow=` があると **完全一致せず** Site URL へフォールバック
+- **修正** — `redirectTo` は **`${origin}/auth/callback` のみ**（query なし）。`flow` / `next` は OAuth 開始前に短命 cookie（`forge_oauth_flow` / `forge_oauth_next`、600s、SameSite=Lax、Secure）。`/auth/callback` が cookie から分岐し処理後削除
+- **維持** — Preview OAuth 導線 / Supabase Redirect URLs 3 件 / flow 分離（`x_login` vs `x_link`）
+- **未実施** — Preview OAuth E2E 再試行 / main / 本番 deploy
+
+---
+
 ## 2026-07-06 — Preview OAuth E2E FAIL → redirect 修正（NO-GO 継続）
 
 - **事象** — Preview `/settings` → X 許可後、Preview に戻らず **本番 LP** へ遷移。E2E **FAIL** → main / 本番 deploy **NO-GO**

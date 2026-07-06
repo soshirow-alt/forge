@@ -43,28 +43,13 @@ export function getEmailChangeRedirectUrl(): string {
   return `${getAuthOrigin()}/auth/callback?next=${next}`;
 }
 
-export function buildAuthCallbackUrl(options: {
-  origin: string;
-  nextPath?: string | null;
-  flow?: OAuthFlow;
-}): string {
-  const params = new URLSearchParams();
-  params.set("next", resolveSafeAuthNextPath(options.nextPath ?? null));
-  if (options.flow) {
-    params.set("flow", options.flow);
-  }
-  return `${normalizeOrigin(options.origin)}/auth/callback?${params.toString()}`;
+/** Supabase redirectTo — query なし（allowlist 完全一致）。flow/next は cookie で渡す。 */
+export function getOAuthRedirectUrl(): string {
+  return `${getClientAuthOrigin()}/auth/callback`;
 }
 
-export function getOAuthRedirectUrl(
-  nextPath?: string | null,
-  flow?: OAuthFlow,
-): string {
-  return buildAuthCallbackUrl({
-    origin: getClientAuthOrigin(),
-    nextPath,
-    flow,
-  });
+export function buildOAuthCallbackRedirectUrl(origin: string): string {
+  return `${normalizeOrigin(origin)}/auth/callback`;
 }
 
 export function resolveSafeAuthNextPath(next: string | null): string {
