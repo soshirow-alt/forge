@@ -4,7 +4,17 @@
 
 ---
 
-## 2026-07-06 — X OAuth ログイン後のデフォルト遷移を /home に統一
+## 2026-07-06 — X Auth 本番 deploy GO 完了
+
+- **commit** — `6192348`（`origin/main` = `origin/preview/landing-01`）
+- **env** — Vercel Production `NEXT_PUBLIC_X_AUTH_ENABLED=true`
+- **Supabase** — Site URL 本番維持 / Redirect URLs×3 / X Provider ON / Manual linking ON（目視確認済み）
+- **merge** — `git merge --ff-only origin/preview/landing-01` → `main` push → preview 同期
+- **本番 smoke PASS** — `/login`・`/register`「Xでログイン」/ X→`/home` / `@Forge_game_0601` 連携済み / メール・ゲスト・作品詳細・旧ログイン UI 非表示
+- **同梱** — 041 公開FB Phase 2 UI / ゲストFB Phase 1 / X OAuth 一式（042/043 DB は事前適用済み）
+- **ロールバック方針** — 問題時は `NEXT_PUBLIC_X_AUTH_ENABLED=false` + Redeploy を第一手段
+
+---
 
 - **文言** — `/login`・`/register` とも X ボタンは **「Xでログイン」**
 - **遷移** — X ログイン（`/login` / `/register`）で return 未指定時は **新規・既存を問わず `/home`**。`/settings` X連携は **`/settings?x=linked`** のまま

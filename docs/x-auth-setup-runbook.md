@@ -347,8 +347,9 @@ Forge /login → signInWithOAuth('x')
 
 ---
 
-## 10. 未実施（明示）
+## 10. 完了（2026-07-06）
 
-- Preview OAuth E2E（テスト用 X）— **実施中**（§7 チェックリスト）
-- main 反映 / production deploy
-- 本番 Vercel `NEXT_PUBLIC_X_AUTH_ENABLED=true`（§9 deploy GO 直前）
+- Preview OAuth E2E — **PASS**（§7）
+- main 反映 / production deploy — **完了**（`6192348`）
+- 本番 Vercel `NEXT_PUBLIC_X_AUTH_ENABLED=true` — **設定済み**
+- 本番 smoke — **PASS**（changelog 2026-07-06 本番 deploy GO 完了 参照）
