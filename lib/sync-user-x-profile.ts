@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { mapRpcErrorMessage, type OAuthCallbackFailReason } from "@/lib/oauth-callback-errors";
-import { extractXProfileFromAuthUser } from "@/lib/x-auth";
+import { extractXProfileFromAuthUser, findXIdentity, hasLinkedXIdentity } from "@/lib/x-auth";
 
 export type SyncUserXProfileResult =
   | { ok: true; synced: boolean }
@@ -8,7 +8,7 @@ export type SyncUserXProfileResult =
 
 export async function syncUserXProfileAfterAuth(
   supabase: SupabaseClient,
-  options?: { requireXIdentity?: boolean },
+  options?: { requireXIdentity?: boolean; syncIfXIdentityPresent?: boolean },
 ): Promise<SyncUserXProfileResult> {
   const {
     data: { user },
@@ -30,9 +30,7 @@ export async function syncUserXProfileAfterAuth(
   const payload = extractXProfileFromAuthUser(user);
   if (!payload) {
     if (options?.requireXIdentity) {
-      const identity = user.identities?.find((item) =>
-        item.provider === "x" || item.provider === "twitter",
-      );
+      const identity = findXIdentity(user);
       if (!identity) {
         return { ok: false, code: "missing_x_identity" };
       }
@@ -59,6 +57,10 @@ export async function syncUserXProfileAfterAuth(
       }
 
       return { ok: false, code: "missing_x_identity" };
+    }
+
+    if (options?.syncIfXIdentityPresent && hasLinkedXIdentity(user)) {
+      return { ok: true, synced: false };
     }
 
     return { ok: true, synced: false };
@@ -96,4 +98,19 @@ export async function syncUserXProfileAfterAuth(
   }
 
   return { ok: true, synced: true };
+}
+
+/** Auth identity exists but user_x_profiles row is missing — backfill when possible. */
+export async function reconcileOwnXProfileFromAuth(
+  supabase: SupabaseClient,
+): Promise<SyncUserXProfileResult> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user || !hasLinkedXIdentity(user)) {
+    return { ok: true, synced: false };
+  }
+
+  return syncUserXProfileAfterAuth(supabase, { syncIfXIdentityPresent: true });
 }

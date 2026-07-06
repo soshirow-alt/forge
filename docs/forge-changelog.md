@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-07-06 — identity_already_exists 文言 + user_x_profiles 回復同期
+
+- **E2E 切り分け** — Preview redirect **PASS寄り**。`@Forge_game_0601` は既に別 Forge ユーザー（`soshirow@gmail.com` / `auth.identities`）に紐づき。**`identity_already_exists` 拒否は正しい挙動**
+- **文言** — `identity_already_exists` / `error_code` を `reason=x_account_already_linked` に正規化。表示: 「このXアカウントは別のForgeアカウントに連携済みです。別のXアカウントを使うか、Xでログインしてください。」
+- **回復** — `auth.identities` に X があるが `user_x_profiles` が無い場合: Xログイン callback で同期試行、`/settings` 表示時に `reconcileOwnXProfileFromAuth` で backfill
+- **未確認** — 未使用 X での `/settings` 連携成功 / `user_x_profiles` 作成 / `/login` Xログイン
+- **未実施** — main / 本番 deploy
+
+---
+
 ## 2026-07-06 — X連携 callback 完了処理修正 + reason 細分化（E2E FAIL 継続）
 
 - **事象** — `af53bba` 後: Preview に戻るが **「X連携の完了処理に失敗」**（`callback_failed` 想定）。本番 LP 問題は改善

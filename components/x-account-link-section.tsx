@@ -4,6 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { getAuthErrorMessage } from "@/lib/auth";
+import {
+  isXAccountAlreadyLinkedReason,
+  X_ACCOUNT_ALREADY_LINKED_USER_MESSAGE,
+} from "@/lib/oauth-callback-errors";
+import { reconcileOwnXProfileFromAuth } from "@/lib/sync-user-x-profile";
 import { fetchOwnXProfile } from "@/lib/supabase/user-x-profiles-db";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 import { formatXHandleLabel, hasLinkedXIdentity, isXAuthEnabled } from "@/lib/x-auth";
@@ -23,10 +28,12 @@ function readXLinkStatusMessage(searchParams: URLSearchParams) {
   }
 
   const reason = searchParams.get("reason");
-  if (reason === "already_linked" || reason === "x_account_already_linked") {
+  const errorCode = searchParams.get("error_code");
+
+  if (isXAccountAlreadyLinkedReason(reason) || isXAccountAlreadyLinkedReason(errorCode)) {
     return {
       tone: "error" as const,
-      text: "このXアカウントは別のForgeアカウントに連携済みです。",
+      text: X_ACCOUNT_ALREADY_LINKED_USER_MESSAGE,
     };
   }
 
@@ -56,7 +63,7 @@ function readXLinkStatusMessage(searchParams: URLSearchParams) {
     };
   }
 
-  if (reason) {
+  if (reason || errorCode) {
     return {
       tone: "error" as const,
       text: "X連携の完了処理に失敗しました。もう一度お試しください。",
@@ -100,8 +107,22 @@ export function XAccountLinkSection() {
         return;
       }
 
-      setAuthLinked(authUser.user ? hasLinkedXIdentity(authUser.user) : false);
-      setLinkedHandle(storedProfile?.x_username ?? null);
+      const hasAuthX = authUser.user ? hasLinkedXIdentity(authUser.user) : false;
+      let profile = storedProfile;
+
+      if (hasAuthX && !profile) {
+        const syncResult = await reconcileOwnXProfileFromAuth(supabase);
+        if (!cancelled && syncResult.ok && syncResult.synced) {
+          profile = await fetchOwnXProfile(supabase);
+        }
+      }
+
+      if (cancelled) {
+        return;
+      }
+
+      setAuthLinked(hasAuthX);
+      setLinkedHandle(profile?.x_username ?? null);
       setProfileLoaded(true);
     })();
 

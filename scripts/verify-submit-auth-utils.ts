@@ -12,6 +12,9 @@ import {
   resolveOAuthCallbackErrorPath,
 } from "../lib/auth-redirect";
 import {
+  normalizeOAuthFailureReason,
+} from "../lib/oauth-callback-errors";
+import {
   OAUTH_FLOW_COOKIE,
   OAUTH_NEXT_COOKIE,
   readOAuthFlowCookies,
@@ -626,8 +629,15 @@ function testOAuthRedirectUrlValues() {
     "x_login error destination",
   );
   ok(
-    resolveOAuthCallbackErrorPath(null) === "/login?error=auth_callback",
-    "default error destination",
+    normalizeOAuthFailureReason({ errorCode: "identity_already_exists" }) ===
+      "x_account_already_linked",
+    "identity_already_exists maps to x_account_already_linked",
+  );
+  ok(
+    normalizeOAuthFailureReason({
+      exchangeMessage: "Identity is already linked to another user",
+    }) === "x_account_already_linked",
+    "exchange already linked maps to x_account_already_linked",
   );
 }
 

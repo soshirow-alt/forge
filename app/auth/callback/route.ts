@@ -7,6 +7,7 @@ import {
   logOAuthCallbackStep,
   loginAuthErrorPath,
   mapExchangeErrorMessage,
+  normalizeOAuthFailureReason,
   settingsXErrorPath,
   type OAuthCallbackFailReason,
 } from "@/lib/oauth-callback-errors";
@@ -62,6 +63,7 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const oauthError = searchParams.get("error");
+  const oauthErrorCode = searchParams.get("error_code");
   const oauthErrorDescription = searchParams.get("error_description");
   const { flow, next, hasFlowCookie } = readOAuthState(request);
 
@@ -85,16 +87,24 @@ export async function GET(request: NextRequest) {
     oauthError: oauthError ?? "none",
   });
 
-  if (oauthError) {
+  if (oauthError || oauthErrorCode) {
+    const reason =
+      normalizeOAuthFailureReason({
+        error: oauthError,
+        errorCode: oauthErrorCode,
+        errorDescription: oauthErrorDescription,
+      }) ?? "oauth_provider_error";
     logOAuthCallbackStep("oauth_provider_error", {
       flow: flow ?? "none",
-      oauthError,
+      oauthError: oauthError ?? "none",
+      oauthErrorCode: oauthErrorCode ?? "none",
       detail: oauthErrorDescription?.slice(0, 200) ?? null,
+      reason,
     });
     if (flow === "x_link") {
-      return xLinkErrorRedirect(origin, "oauth_provider_error", cookieResponse);
+      return xLinkErrorRedirect(origin, reason, cookieResponse);
     }
-    return xLoginErrorRedirect(origin, "oauth_provider_error", cookieResponse);
+    return xLoginErrorRedirect(origin, reason, cookieResponse);
   }
 
   if (!code) {
@@ -115,7 +125,10 @@ export async function GET(request: NextRequest) {
       flow: flow ?? "none",
       detail: exchangeError.message.slice(0, 200),
     });
-    const reason = mapExchangeErrorMessage(exchangeError.message);
+    const reason = mapExchangeErrorMessage(
+      exchangeError.message,
+      exchangeError.code,
+    );
     if (flow === "x_link") {
       return xLinkErrorRedirect(origin, reason, cookieResponse);
     }
@@ -150,8 +163,14 @@ export async function GET(request: NextRequest) {
       identityProviders.includes("twitter") || identityProviders.includes("x"),
   });
 
-  const requireXIdentity = flow === "x_link";
-  const syncResult = await syncUserXProfileAfterAuth(supabase, { requireXIdentity });
+  const hasXIdentity = (user.identities ?? []).some(
+    (identity) => identity.provider === "x" || identity.provider === "twitter",
+  );
+
+  const syncResult = await syncUserXProfileAfterAuth(supabase, {
+    requireXIdentity: flow === "x_link",
+    syncIfXIdentityPresent: flow === "x_login" && hasXIdentity,
+  });
 
   if (!syncResult.ok) {
     logOAuthCallbackStep("sync_failed", {
@@ -167,7 +186,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  if (requireXIdentity && syncResult.ok && !syncResult.synced) {
+  if (flow === "x_link" && syncResult.ok && !syncResult.synced) {
     logOAuthCallbackStep("missing_x_identity_after_link", {
       flow: flow ?? "none",
       identityProviders,

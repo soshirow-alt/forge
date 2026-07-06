@@ -1,6 +1,7 @@
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 import { isAnonymousSupabaseUser } from "@/lib/guest-auth";
+import { X_ACCOUNT_ALREADY_LINKED_USER_MESSAGE } from "@/lib/oauth-callback-errors";
 
 export type User = {
   id: string;
@@ -109,7 +110,8 @@ export function getAuthErrorMessage(
         "このログイン方法は現在利用できません。メールアドレスで登録・ログインしてください。"
       );
     case "x_account_already_linked":
-      return "このXアカウントは別のForgeアカウントに連携済みです。";
+    case "identity_already_exists":
+      return X_ACCOUNT_ALREADY_LINKED_USER_MESSAGE;
     case "Identity linking is not available in this client version.":
       return resolveFlowFallback("x_link") ?? X_LINK_START_ERROR;
     case "x_auth_disabled":

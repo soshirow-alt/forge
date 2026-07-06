@@ -14,18 +14,81 @@ export type OAuthCallbackFailReason =
   | "sync_failed_unknown"
   | "callback_failed";
 
+export const X_ACCOUNT_ALREADY_LINKED_USER_MESSAGE =
+  "このXアカウントは別のForgeアカウントに連携済みです。別のXアカウントを使うか、Xでログインしてください。";
+
+export function isXAccountAlreadyLinkedReason(
+  reason: string | null | undefined,
+): boolean {
+  if (!reason) {
+    return false;
+  }
+  const lower = reason.toLowerCase();
+  return (
+    lower === "already_linked" ||
+    lower === "x_account_already_linked" ||
+    lower === "identity_already_exists"
+  );
+}
+
 export function settingsXErrorPath(reason: OAuthCallbackFailReason): string {
-  return `/settings?x=error&reason=${encodeURIComponent(reason)}`;
+  const normalized =
+    reason === "x_account_already_linked" ? "x_account_already_linked" : reason;
+  return `/settings?x=error&reason=${encodeURIComponent(normalized)}`;
 }
 
 export function loginAuthErrorPath(reason: OAuthCallbackFailReason): string {
+  if (reason === "x_account_already_linked") {
+    return `/login?error=auth_callback&reason=${encodeURIComponent(reason)}`;
+  }
   if (reason === "exchange_failed" || reason === "missing_code") {
     return `/login?error=auth_callback&reason=${encodeURIComponent(reason)}`;
   }
   return "/login?error=auth_callback";
 }
 
-export function mapExchangeErrorMessage(message: string): OAuthCallbackFailReason {
+export function normalizeOAuthFailureReason(parts: {
+  error?: string | null;
+  errorCode?: string | null;
+  errorDescription?: string | null;
+  exchangeMessage?: string | null;
+  exchangeCode?: string | null;
+}): OAuthCallbackFailReason | null {
+  const blob = [
+    parts.error,
+    parts.errorCode,
+    parts.errorDescription,
+    parts.exchangeMessage,
+    parts.exchangeCode,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (
+    blob.includes("identity_already_exists") ||
+    blob.includes("identity is already linked") ||
+    blob.includes("x_account_already_linked") ||
+    blob.includes("already linked to another user")
+  ) {
+    return "x_account_already_linked";
+  }
+
+  return null;
+}
+
+export function mapExchangeErrorMessage(
+  message: string,
+  code?: string | null,
+): OAuthCallbackFailReason {
+  const normalized = normalizeOAuthFailureReason({
+    exchangeMessage: message,
+    exchangeCode: code,
+  });
+  if (normalized) {
+    return normalized;
+  }
+
   const lower = message.toLowerCase();
   if (lower.includes("pkce") || lower.includes("code verifier")) {
     return "exchange_failed";
@@ -37,10 +100,12 @@ export function mapExchangeErrorMessage(message: string): OAuthCallbackFailReaso
 }
 
 export function mapRpcErrorMessage(message: string): OAuthCallbackFailReason {
-  const lower = message.toLowerCase();
-  if (lower.includes("x_account_already_linked")) {
-    return "x_account_already_linked";
+  const normalized = normalizeOAuthFailureReason({ exchangeMessage: message });
+  if (normalized) {
+    return normalized;
   }
+
+  const lower = message.toLowerCase();
   if (lower.includes("not_authenticated")) {
     return "missing_session";
   }
