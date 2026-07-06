@@ -89,6 +89,13 @@ export async function fetchProjectDevlogsForProjects(
   return ((data ?? []) as DevlogRow[]).map(devlogRowToEntry);
 }
 
+export async function fetchProjectDevlogsForProject(
+  supabase: SupabaseClient,
+  projectId: string,
+): Promise<DevlogEntry[]> {
+  return fetchProjectDevlogsForProjects(supabase, [projectId]);
+}
+
 export async function deleteProjectDevlogsByProjectId(
   supabase: SupabaseClient,
   projectId: string,

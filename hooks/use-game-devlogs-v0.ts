@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useGames } from "@/components/games-provider";
+import { forgePerfTimed } from "@/lib/forge-perf-log";
 import {
   getDevlogsForGame,
   type GameDevlogEntry,
@@ -10,6 +11,8 @@ import { sortDevlogsNewestFirst, type DevlogEntry } from "@/lib/devlogs";
 import { isVersionPublishDevlog } from "@/lib/player-update-display";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { isSupabaseProjectId } from "@/lib/submitted-game-v0-adapter";
+import { getOptionalSupabaseClient } from "@/lib/supabase/client";
+import { fetchProjectDevlogsForProject } from "@/lib/supabase/project-devlogs";
 import {
   getStudioDevlogExtrasServerSnapshot,
   getStudioDevlogExtrasSnapshot,
@@ -117,20 +120,59 @@ function mergeMockDevlogEntries(
 
 function useRealGameDevlogs(gameId: string, enabled: boolean) {
   const { getDevlogsByProject, devlogsReady } = useGames();
+  const [directLoaded, setDirectLoaded] = useState(false);
+  const [directDevlogs, setDirectDevlogs] = useState<DevlogEntry[]>([]);
+
+  useEffect(() => {
+    if (!enabled || devlogsReady) {
+      return;
+    }
+
+    let cancelled = false;
+    const supabase = getOptionalSupabaseClient();
+    if (!supabase) {
+      setDirectLoaded(true);
+      return;
+    }
+
+    void forgePerfTimed("supabase.fetchProjectDevlogsForProject", () =>
+      fetchProjectDevlogsForProject(supabase, gameId),
+    )
+      .then((rows) => {
+        if (!cancelled) {
+          setDirectDevlogs(rows);
+          setDirectLoaded(true);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setDirectDevlogs([]);
+          setDirectLoaded(true);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [devlogsReady, enabled, gameId]);
 
   const entries = useMemo(() => {
     if (!enabled) {
       return [];
     }
 
-    return sortDevlogsNewestFirst(getDevlogsByProject(gameId))
+    const source = devlogsReady
+      ? getDevlogsByProject(gameId)
+      : directDevlogs;
+
+    return sortDevlogsNewestFirst(source)
       .filter(isValidDevlogEntry)
       .map((entry, index) => realDevlogToV0(entry, index === 0));
-  }, [enabled, gameId, getDevlogsByProject, devlogsReady]);
+  }, [directDevlogs, devlogsReady, enabled, gameId, getDevlogsByProject]);
 
   return {
     entries,
-    loaded: !enabled || devlogsReady,
+    loaded: !enabled || devlogsReady || directLoaded,
   };
 }
 

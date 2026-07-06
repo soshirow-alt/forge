@@ -91,6 +91,7 @@ import { GameDetailSkeleton } from "@/components/forge-loading-skeletons";
 import { ForgeTabPanel } from "@/components/forge-tab-panel";
 import { useAuth } from "@/components/auth-provider";
 import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
+import { useGameDetailProject } from "@/hooks/use-game-detail-project";
 import {
   Bookmark,
   Check,
@@ -144,35 +145,21 @@ function GameDetailDeveloperAvatar({
 }
 
 function GameDetailV0PageContent({ id }: { id: string }) {
-  const { user } = useAuth();
-  const {
-    getOwnedProjectById,
-    getPublicGameById,
-    publicCatalogReady,
-    catalogReady,
-  } = useGames();
+  const project = useGameDetailProject(id);
   const hideV0Mock = useHideV0MockContent();
   const isPublicProjectId = isSupabaseProjectId(id);
-  const ownedGame = getOwnedProjectById(id);
-  const publicGame = getPublicGameById(id);
-  const resolvedGame = ownedGame ?? publicGame;
-  const stillLoading =
-    hideV0Mock &&
-    isPublicProjectId &&
-    !resolvedGame &&
-    (!publicCatalogReady || (Boolean(user) && !catalogReady));
 
   useForgePerfRoute({
     route: `/games/${id}`,
-    ready: Boolean(resolvedGame) || (!stillLoading && hideV0Mock),
+    ready: project.loaded && (!hideV0Mock || !project.notFound),
     context: {
-      publicCatalogReady,
-      catalogReady,
-      hasResolvedGame: Boolean(resolvedGame),
+      hasGame: Boolean(project.game),
+      isOwner: project.isOwner,
+      directFetch: isPublicProjectId,
     },
   });
 
-  if (stillLoading) {
+  if (isPublicProjectId && !project.loaded) {
     return (
       <PlayerShell>
         <GameDetailSkeleton />
@@ -180,32 +167,38 @@ function GameDetailV0PageContent({ id }: { id: string }) {
     );
   }
 
-  if (hideV0Mock) {
-    const hasRealProject = Boolean(
-      isPublicProjectId &&
-        resolvedGame &&
-        isSupabaseProjectId(resolvedGame.id),
-    );
-    if (!hasRealProject) {
-      return <GameNotFoundPanel />;
-    }
+  if (hideV0Mock && isPublicProjectId && project.notFound) {
+    return <GameNotFoundPanel />;
   }
 
-  return <GameDetailV0PageBody id={id} />;
+  return (
+    <GameDetailV0PageBody
+      id={id}
+      detailProject={project.game}
+      detailIsOwner={project.isOwner}
+    />
+  );
 }
 
-function GameDetailV0PageBody({ id }: { id: string }) {
+type GameDetailV0PageBodyProps = {
+  id: string;
+  detailProject: ReturnType<typeof useGameDetailProject>["game"];
+  detailIsOwner: boolean;
+};
+
+function GameDetailV0PageBody({
+  id,
+  detailProject,
+  detailIsOwner,
+}: GameDetailV0PageBodyProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const activeTab = parseGameDetailTab(searchParams.get("tab"));
+  const [visitedTabs, setVisitedTabs] = useState<Set<GameDetailTab>>(
+    () => new Set(["overview"]),
+  );
   const {
-    getSubmittedGameById,
-    getOwnedProjectById,
-    getPublicGameById,
-    getGameById,
-    catalogReady,
-    publicCatalogReady,
     recordPlay,
     hasPlayedGame,
     isProjectOwner,
@@ -215,20 +208,13 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     getFollowerCount,
     refreshFollowerCount,
   } = useGames();
-  const ownedGame = getOwnedProjectById(id);
-  const publicGame = getPublicGameById(id);
-  const submittedGame = ownedGame ?? publicGame ?? getSubmittedGameById(id);
+  const submittedGame = detailProject ?? undefined;
   const hideV0Mock = useHideV0MockContent();
   const resolvedId = isSupabaseProjectId(id) ? id : resolveGameDetailId(id);
-  const waitingForCatalog =
-    isSupabaseProjectId(id) &&
-    !submittedGame &&
-    (!publicCatalogReady || (Boolean(user) && !catalogReady));
-
   const isRealProject = Boolean(
     submittedGame && isSupabaseProjectId(submittedGame.id),
   );
-  const externalLinkGame = getGameById(resolvedId) ?? submittedGame;
+  const externalLinkGame = submittedGame;
   const playerMeta = useMemo(
     () => resolveGameDetailPlayerMeta(externalLinkGame ?? submittedGame),
     [externalLinkGame, submittedGame],
@@ -307,6 +293,9 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   const returnPath = gameDetailReturnPath(resolvedId);
   const detailId = resolveGameDetailId(id);
   const ownerProjectId = useMemo(() => {
+    if (detailIsOwner && submittedGame?.id) {
+      return submittedGame.id;
+    }
     if (!user?.id) {
       return null;
     }
@@ -324,7 +313,16 @@ function GameDetailV0PageBody({ id }: { id: string }) {
       return gameDetailIdFromTitle(project.title) === detailId;
     });
     return match?.id ?? null;
-  }, [user?.id, isProjectOwner, getOwnedProjects, resolvedId, id, detailId]);
+  }, [
+    detailIsOwner,
+    submittedGame?.id,
+    user?.id,
+    isProjectOwner,
+    getOwnedProjects,
+    resolvedId,
+    id,
+    detailId,
+  ]);
   const isOwnerPreview = ownerProjectId !== null;
   const ownerStudioHref = ownerProjectId
     ? isSupabaseProjectId(ownerProjectId)
@@ -337,6 +335,17 @@ function GameDetailV0PageBody({ id }: { id: string }) {
     },
     [id, router, searchParams],
   );
+
+  useEffect(() => {
+    setVisitedTabs((prev) => {
+      if (prev.has(activeTab)) {
+        return prev;
+      }
+      const next = new Set(prev);
+      next.add(activeTab);
+      return next;
+    });
+  }, [activeTab]);
   const [feedbackStep, setFeedbackStep] = useState<FeedbackFlowStep>("closed");
   const [playDestinationPickerOpen, setPlayDestinationPickerOpen] = useState(false);
   const [playUrlMissingVisible, setPlayUrlMissingVisible] = useState(false);
@@ -603,14 +612,6 @@ function GameDetailV0PageBody({ id }: { id: string }) {
   useFeedbackFlowLock(isRealProject ? "closed" : feedbackStep);
 
   const guestFeedbackLoginHref = buildLoginUrlWithReturn(returnPath);
-
-  if (waitingForCatalog) {
-    return (
-      <PlayerShell>
-        <GameDetailSkeleton />
-      </PlayerShell>
-    );
-  }
 
   return (
     <PlayerShell>
@@ -889,32 +890,36 @@ function GameDetailV0PageBody({ id }: { id: string }) {
             />
           </ForgeTabPanel>
 
-          <ForgeTabPanel active={activeTab === "devlog"}>
-            <GameDevlogV0Tab
-              gameId={resolvedId}
-              projectId={isRealProject ? resolvedId : undefined}
-              onPlayLatest={handlePlay}
-            />
-          </ForgeTabPanel>
+          {visitedTabs.has("devlog") ? (
+            <ForgeTabPanel active={activeTab === "devlog"}>
+              <GameDevlogV0Tab
+                gameId={resolvedId}
+                projectId={isRealProject ? resolvedId : undefined}
+                onPlayLatest={handlePlay}
+              />
+            </ForgeTabPanel>
+          ) : null}
 
-          <ForgeTabPanel active={activeTab === "voices"}>
-            {isRealProject ? (
-              <EveryonesVoiceSection
-                gameId={resolvedId}
-                playableVersion={submittedGame?.playableVersion}
-                variant="tab"
-                refreshKey={voicesRefreshKey}
-                onSendVoice={handleFeedback}
-              />
-            ) : (
-              <GameVoicesV0Tab
-                gameId={resolvedId}
-                currentVersion={game.currentVersion}
-                refreshKey={voicesRefreshKey}
-                onSendVoice={handleFeedback}
-              />
-            )}
-          </ForgeTabPanel>
+          {visitedTabs.has("voices") ? (
+            <ForgeTabPanel active={activeTab === "voices"}>
+              {isRealProject ? (
+                <EveryonesVoiceSection
+                  gameId={resolvedId}
+                  playableVersion={submittedGame?.playableVersion}
+                  variant="tab"
+                  refreshKey={voicesRefreshKey}
+                  onSendVoice={handleFeedback}
+                />
+              ) : (
+                <GameVoicesV0Tab
+                  gameId={resolvedId}
+                  currentVersion={game.currentVersion}
+                  refreshKey={voicesRefreshKey}
+                  onSendVoice={handleFeedback}
+                />
+              )}
+            </ForgeTabPanel>
+          ) : null}
         </div>
 
         <aside className="w-full shrink-0 space-y-5 xl:w-72">

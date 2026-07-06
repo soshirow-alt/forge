@@ -143,6 +143,45 @@ export async function fetchPublicProjects(
   return ((data ?? []) as ProjectRow[]).map(projectRowToGame);
 }
 
+/** Player-facing single project — public visibility only. */
+export async function fetchPublicProjectById(
+  supabase: SupabaseClient,
+  projectId: string,
+): Promise<Game | null> {
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("id", projectId)
+    .eq("visibility", "public")
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return projectRowToGame(data as ProjectRow);
+}
+
+/** Owner's project by id — includes non-public visibility (RLS applies). */
+export async function fetchOwnedProjectById(
+  supabase: SupabaseClient,
+  projectId: string,
+  ownerId: string,
+): Promise<Game | null> {
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("id", projectId)
+    .eq("owner_id", ownerId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return projectRowToGame(data as ProjectRow);
+}
+
 export async function updateProjectPlayableVersion(
   supabase: SupabaseClient,
   projectId: string,

@@ -274,6 +274,8 @@ type GamesContextValue = {
   getSubmittedGameById: (id: string) => Game | undefined;
   /** Player 向け — publicCatalogReady 後に publicGames から取得 */
   getPublicGameById: (id: string) => Game | undefined;
+  /** 作品詳細の1件取得結果を provider キャッシュへ反映 */
+  upsertGameDetailProject: (game: Game, source: "public" | "owned") => void;
   /** Studio 編集用 — submittedGames のみ（publicGames フォールバックなし） */
   getOwnedProjectById: (id: string) => Game | undefined;
   getGameById: (id: string) => Game | undefined;
@@ -551,22 +553,31 @@ export function GamesProvider({ children }: { children: ReactNode }) {
           setPublicCatalogReady(true);
           forgePerfMeasure("games.publicCatalogReady", "games-provider-mount");
         });
-      void forgePerfTimed("supabase.fetchSupportCounts", () =>
-        fetchSupportCounts(supabase),
-      )
-        .then(setSupportCounts)
-        .catch(() => setSupportCounts({}));
-      void forgePerfTimed("supabase.fetchAllProjectDevlogs", () =>
-        fetchAllProjectDevlogs(supabase),
-      )
-        .then(setDevlogs)
-        .catch(() => setDevlogs([]))
-        .finally(() => setDevlogsReady(true));
-      void forgePerfTimed("supabase.fetchAllProjectReleaseEvents", () =>
-        fetchAllProjectReleaseEvents(supabase),
-      )
-        .then(setReleaseEvents)
-        .catch(() => setReleaseEvents([]));
+
+      const loadSecondaryCatalogData = () => {
+        void forgePerfTimed("supabase.fetchSupportCounts", () =>
+          fetchSupportCounts(supabase),
+        )
+          .then(setSupportCounts)
+          .catch(() => setSupportCounts({}));
+        void forgePerfTimed("supabase.fetchAllProjectDevlogs", () =>
+          fetchAllProjectDevlogs(supabase),
+        )
+          .then(setDevlogs)
+          .catch(() => setDevlogs([]))
+          .finally(() => setDevlogsReady(true));
+        void forgePerfTimed("supabase.fetchAllProjectReleaseEvents", () =>
+          fetchAllProjectReleaseEvents(supabase),
+        )
+          .then(setReleaseEvents)
+          .catch(() => setReleaseEvents([]));
+      };
+
+      if (typeof window !== "undefined") {
+        window.setTimeout(loadSecondaryCatalogData, 0);
+      } else {
+        loadSecondaryCatalogData();
+      }
     } else {
       setPublicCatalogReady(true);
       setDevlogsReady(true);
@@ -899,6 +910,35 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       return publicGames.find((game) => game.id === id);
     },
     [publicGames, publicCatalogReady],
+  );
+
+  const upsertGameDetailProject = useCallback(
+    (game: Game, source: "public" | "owned") => {
+      const merged = mergeGameWithExtras(game);
+      if (source === "owned") {
+        setSubmittedGames((prev) => {
+          const index = prev.findIndex((entry) => entry.id === merged.id);
+          if (index >= 0) {
+            const next = [...prev];
+            next[index] = merged;
+            return next;
+          }
+          return [...prev, merged];
+        });
+      }
+      if (merged.visibility === "public") {
+        setPublicGames((prev) => {
+          const index = prev.findIndex((entry) => entry.id === merged.id);
+          if (index >= 0) {
+            const next = [...prev];
+            next[index] = merged;
+            return next;
+          }
+          return [...prev, merged];
+        });
+      }
+    },
+    [],
   );
 
   const isSubmittedGame = useCallback(
@@ -2216,6 +2256,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       deleteSubmittedGame,
       getSubmittedGameById,
       getPublicGameById,
+      upsertGameDetailProject,
       getOwnedProjectById,
       getGameById,
       getGamesBySection,
@@ -2302,6 +2343,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       deleteSubmittedGame,
       getSubmittedGameById,
       getPublicGameById,
+      upsertGameDetailProject,
       getOwnedProjectById,
       getGameById,
       getGamesBySection,

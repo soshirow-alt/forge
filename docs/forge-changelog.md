@@ -4,7 +4,15 @@
 
 ---
 
-## 2026-07-06 — 主要導線のパフォーマンス改善（計測 + 初回改善）
+## 2026-07-06 — 作品詳細の1件直取得 + GamesProvider グローバル取得の遅延
+
+- **作品詳細** — `useGameDetailProject` で `fetchPublicProjectById` / `fetchOwnedProjectById` を並列実行。`publicCatalogReady` / owner catalog 完了を待たず初期表示
+- **GamesProvider** — `fetchAllProjectDevlogs` / `fetchAllProjectReleaseEvents` / `support counts` をマウント直後から `setTimeout(0)` で遅延（public catalog との帯域競合を緩和）
+- **devlog タブ** — グローバル devlogs 未完了時は `fetchProjectDevlogsForProject` で当該作品のみ取得
+- **タブ遅延 mount** — devlog / voices は初回タブ訪問まで mount しない（初期表示で voices API を走らせない）
+- **計測** — `[forge:perf] game-detail.projectReady` / `supabase.fetchPublicProjectById` 等
+
+---
 
 - **計測** — dev 環境で `[forge:perf]` ログ（`lib/forge-perf-log.ts`）。route 表示開始〜コンテンツ ready、Supabase fetch、provider 初期化を計測。Preview でも `NEXT_PUBLIC_FORGE_PERF_LOG=1` で有効化可
 - **auth** — サーバーで session 確認済みのため `authResolved` の初期値を `true` に。クライアント `getUser()` 完了まで全画面をブロックしない
