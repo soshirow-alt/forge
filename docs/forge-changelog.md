@@ -4,16 +4,19 @@
 
 ---
 
-## 2026-07-07 — 発見カード集計の RPC 配線（migration 045・Dashboard 未適用）
+## 2026-07-07 — 発見カード集計の RPC 配線（migration 045）本番反映
 
 - **発見カード（/home・/search・/creators/[id]）** — 2指標を統一
   - **フィードバック N** — 登録ユーザーの distinct user_id（`project_voice_responses ∪ project_feedback`、`moderation_status = visible`）。ゲストFBは含めない
   - **フォロー N** — `project_watches` 件数（作品の更新追跡 / 作品フォロー）
 - **撤去** — カード上の「見届け人」ラベル、`project_supports`（応援）の誤配線
 - **見届け人（称号）** — `project_witness_grants` は RPC で返すがカード常設には使わない（詳細・バッジ文脈用）
-- **DB** — `045_public_project_stats_rpc.sql`（`get_public_project_stats`）追加。**Dashboard 手動適用は未実施** — migration 未適用時は 0 表示（RPC missing 時フォールバック）
+- **DB** — `045_public_project_stats_rpc.sql`（`get_public_project_stats`）Dashboard 適用済み
 - **検索ソート** — 「フォローが多い順」「フィードバックが多い順」（旧 URL `sort=witness` / `sort=voices` は互換読み取り）
 - **今週人気** — ソート定義（`project_supports` 応援数）は変更なし
+- **commit** — `b15f93a`（`origin/main` = `origin/preview/landing-01`）
+- **本番 URL** — https://forge-flame-gamma.vercel.app
+- **deploy** — `dpl_2g1YrCE3kSs7ajGzSU7GFijNw65g`（`vercel deploy --prod`）
 
 ---
 
