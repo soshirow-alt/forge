@@ -4,12 +4,39 @@
 
 ---
 
+## 2026-07-06 — Preview `/settings` X連携 通常系 E2E PASS（DB 確認済み）
+
+- **経路** — 別 Forge アカウントでメールログイン → Preview `/settings` → Xで連携（`linkIdentity` / `x_link`）。**`/login` Xログインは未使用**
+- **結果** — X 同意後 **Preview** `/settings?x=linked` に復帰（本番 LP へ飛ばない）。「Xアカウントを連携しました。」・連携済み・`@Forge_game_0601` 表示
+- **DB** — `public.user_x_profiles` 1行: `user_id=dffa79de-...` / `x_user_id=1346719389022707712` / `x_username=Forge_game_0601` / `x_display_name=Forge 運営`
+- **PASS** — Preview redirect / settings 連携通常系 / `linkIdentity`+`x_link` / `syncUserXProfileAfterAuth`→`upsert_own_x_profile` / 成功 UI / `@handle` / 旧紐づけ解除後の再連携
+- **未確認** — `/login` → Xでログイン / 本番環境 `NEXT_PUBLIC_X_AUTH_ENABLED` 下での同一 E2E
+- **未実施** — main merge / 本番 deploy
+
+---
+
+## 2026-07-06 — 新規登録画面の X ボタン文言
+
+- **変更** — `/register` の X 導線を「Xで登録」→ **「Xで続ける」**（`/login` の「Xでログイン」は維持）
+- **理由** — 実装は `signInWithOAuth` のみで、既存 X は既存ユーザーにログイン・未登録 X は新規作成。新規登録専用 API ではないため
+
+---
+
+## 2026-07-06 — E2E用 X identity 手動解除（Dashboard SQL・Cursor 未実行）
+
+- **目的** — `@Forge_game_0601`（`provider_id=1346719389022707712`）を `soshirow@gmail.com` から外し、別 Forge アカウントで E2E 連携できるようにする
+- **Pre-check（REST Admin API）** — `user_id=d05c457b-6bd0-4ebb-b493-315bf01bcb99` / `email=soshirow@gmail.com` / X identity 1件（`preferred_username` / `user_name` = `Forge_game_0601`）。`user_x_profiles` は **0行**
+- **未実行** — `.env.local` に `DATABASE_URL` 無し。`auth.identities` DELETE は **Supabase Dashboard SQL** でオーナー実施（本番運用パターンではない）
+- **将来** — ユーザー向け解除は `supabase.auth.unlinkIdentity()` を想定（**未実装**。今回は検証用の手動 SQL のみ）
+
+---
+
 ## 2026-07-06 — identity_already_exists 文言 + user_x_profiles 回復同期
 
 - **E2E 切り分け** — Preview redirect **PASS寄り**。`@Forge_game_0601` は既に別 Forge ユーザー（`soshirow@gmail.com` / `auth.identities`）に紐づき。**`identity_already_exists` 拒否は正しい挙動**
 - **文言** — `identity_already_exists` / `error_code` を `reason=x_account_already_linked` に正規化。表示: 「このXアカウントは別のForgeアカウントに連携済みです。別のXアカウントを使うか、Xでログインしてください。」
 - **回復** — `auth.identities` に X があるが `user_x_profiles` が無い場合: Xログイン callback で同期試行、`/settings` 表示時に `reconcileOwnXProfileFromAuth` で backfill
-- **未確認** — 未使用 X での `/settings` 連携成功 / `user_x_profiles` 作成 / `/login` Xログイン
+- **未確認（当時）** — 未使用 X での `/settings` 連携成功 / `user_x_profiles` 作成 / `/login` Xログイン（settings 通常系は後続エントリで **PASS**）
 - **未実施** — main / 本番 deploy
 
 ---
