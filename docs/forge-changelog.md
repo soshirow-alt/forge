@@ -4,7 +4,14 @@
 
 ---
 
-## 2026-07-06 — タブ切替スクロール維持 + mypage/Studio instant tab + ログイン体感
+## 2026-07-06 — 主要導線パフォーマンス改善 本番反映
+
+- **commit** — `46d40f3`（`origin/main` = `origin/preview/landing-01`）
+- **本番 URL** — https://forge-flame-gamma.vercel.app
+- **内容** — 作品詳細1件直取得、GamesProvider グローバル取得遅延、instant tab（`useInstantQueryTab`）、タブスクロール維持、ログイン入力保持、mypage/Studio タブ即時化、skeleton 化、`[forge:perf]` 計測基盤
+- **残課題（次フェーズ）** — サイドバー遷移 1〜2秒（Shell 再mount・Next navigation・GamesProvider 一括取得・getUser  waterfall）。対策候補: PlayerShell/StudioShell 共通 layout 化、prefetch、遷移先初期 fetch 分解、`/home` `/search` catalog 改善
+
+---
 
 - **voices スクロール戻り** — 非アクティブパネル `hidden` によるドキュメント高さ崩れが原因。`captureScrollPosition` + タブ領域 `min-h-[28rem]`
 - **横展開** — `/mypage` `/studio/mypage` を `useInstantQueryTab` 化（play-history / followers は lazy mount）
