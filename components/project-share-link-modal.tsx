@@ -93,6 +93,20 @@ export function ProjectShareLinkModal({
   return (
     <V0SimpleModal title="外部に共有する" onClose={onClose} size="md">
       <div className="space-y-5">
+        {pageUrl ? (
+          <section className="space-y-2">
+            <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+              共有URL
+            </h3>
+            <p
+              className="break-all rounded-lg border border-zinc-800 bg-zinc-950/60 px-3 py-2.5 font-mono text-xs leading-relaxed text-zinc-300"
+              aria-label="共有URL"
+            >
+              {pageUrl}
+            </p>
+          </section>
+        ) : null}
+
         <section className="space-y-2">
           <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500">
             投稿する

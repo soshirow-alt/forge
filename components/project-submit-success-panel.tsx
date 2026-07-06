@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ProjectShareLinkModal } from "@/components/project-share-link-modal";
 import {
   gamePlayHref,
+  projectStudioPath,
   studioSubmitModalHref,
 } from "@/lib/project-nurture-links";
 import { studioOverviewEditHref } from "@/lib/studio-edit-url";
@@ -41,9 +42,12 @@ export function ProjectSubmitSuccessPanel({
 }: ProjectSubmitSuccessPanelProps) {
   const [shareOpen, setShareOpen] = useState(false);
   const isPublic = visibility !== "private";
-  const editHref = studioOverviewEditHref(gameId, "basic-info");
+  const displayTitle = title?.trim() || "作品";
+  const visibilityEditHref = studioOverviewEditHref(gameId, "visibility");
+  const studioHref = projectStudioPath(gameId);
   const submitAnotherHref = studioSubmitModalHref();
   const viewPageLabel = isPublic ? "作品ページを見る" : "確認用ページを見る";
+  const successHeading = `『${displayTitle}』を投稿しました`;
 
   const shellClassName = compact
     ? "space-y-6 py-2 text-center"
@@ -75,10 +79,12 @@ export function ProjectSubmitSuccessPanel({
           </div>
           {!compact ? (
             <h1 className="mt-6 text-2xl font-bold tracking-tight text-zinc-100">
-              投稿しました！
+              {successHeading}
             </h1>
-          ) : null}
-          <p className={`text-zinc-500 ${compact ? "mt-4 text-sm" : "mt-2"}`}>
+          ) : (
+            <p className="mt-4 text-base font-semibold text-zinc-100">{successHeading}</p>
+          )}
+          <p className={`text-zinc-500 ${compact ? "mt-2 text-sm" : "mt-2"}`}>
             {bodyText}
           </p>
         </div>
@@ -107,22 +113,22 @@ export function ProjectSubmitSuccessPanel({
               <p className="text-xs leading-relaxed text-zinc-500">
                 非公開のままでは外部に共有できません。{" "}
                 <Link
-                  href={editHref}
+                  href={visibilityEditHref}
                   onClick={onClose}
                   className="text-violet-400 underline-offset-2 hover:text-violet-300 hover:underline"
                 >
-                  作品情報を編集して公開
+                  公開設定を変更
                 </Link>
                 してください。
               </p>
             </div>
           )}
           <Link
-            href={editHref}
+            href={studioHref}
             onClick={onClose}
             className={tertiaryCtaClassName}
           >
-            作品情報を編集する
+            Studioで管理する
           </Link>
           {onSubmitAnother ? (
             <button

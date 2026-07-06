@@ -33,6 +33,7 @@ import { GameDetailOverviewV0Tab } from "@/components/game-detail-overview-v0-ta
 import { GameDevlogV0Tab } from "@/components/game-devlog-v0-tab";
 import { EveryonesVoiceSection } from "@/components/everyones-voice-section";
 import { GameVoicesV0Tab } from "@/components/game-voices-v0-tab";
+import { GameDetailOwnerShareBar } from "@/components/game-detail-owner-share-bar";
 import { GameNotFoundPanel } from "@/components/game-not-found-panel";
 import { XLinkedHandleBadge } from "@/components/x-linked-handle-badge";
 import { ContentReportButton } from "@/components/content-report-button";
@@ -779,6 +780,14 @@ function GameDetailV0PageBody({
 
       <div className="flex flex-col gap-8 xl:flex-row xl:items-start">
         <div className="min-w-0 flex-1 space-y-5">
+          {isRealProject && detailIsOwner && ownerStudioHref && ownerProjectId ? (
+            <GameDetailOwnerShareBar
+              projectId={ownerProjectId}
+              title={game.title}
+              visibility={submittedGame?.visibility}
+              studioHref={ownerStudioHref}
+            />
+          ) : null}
           <section className="overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/30">
             <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
               {isRealProject && posterFallback ? (

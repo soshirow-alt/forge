@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-06 — 投稿後・作品ページ共有導線の補強（preview/landing-01）
+
+- **投稿成功画面** — 作品タイトル（『{title}』を投稿しました）を表示。「Studioで管理する」を追加（`/projects/{id}/studio`）。「作品情報を編集する」は Studio 管理に集約。非公開時の案内は「公開設定を変更」へ
+- **共有モーダル** — 共有URLを読み取り専用で目視表示（コピー/X Intent は従来どおり）
+- **作品ページ（オーナーのみ）** — 公開作品に薄い共有バー（このページを共有できます / 外部に共有する / Studioで管理する）。非公開は共有不可の案内のみ。プレビュー説明バーは復活させない
+- **DB migration なし**
+
+---
+
 ## 2026-07-06 — PlayerShell 共通 layout Phase 1 本番反映
 
 - **commit** — `0f84b67`（Phase 1 コア `6fdfd00` + changelog。`origin/main` = `origin/preview/landing-01`）
