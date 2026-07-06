@@ -15,6 +15,10 @@ export type SettingsToggleItem = {
 const NOTIFY_COMING_SOON_NOTE =
   "近日対応予定（現在はまだ通知には反映されません）";
 
+/** Studio play notifications — milestone-only in future; not per-play. */
+const STUDIO_PLAY_COMING_SOON_NOTE =
+  "近日対応予定。プレイのたびには通知しません。将来は初プレイ・新ver後初プレイなど節目のみ対象予定";
+
 /** Privacy prefs with no product read path yet (profile / activity). */
 const PRIVACY_UNWIRED_NOTE =
   "近日対応予定（現在はまだ公開範囲の設定には反映されません）";
@@ -77,10 +81,8 @@ export const forgeNotificationPlayerItems: SettingsToggleItem[] = [
   {
     id: "developer-follow",
     label: "フォロー中の開発者",
-    description: "フォローした開発者が新作を公開したとき",
+    description: "フォロー中の開発者が新作を公開したとき、または作品が正式版になったとき",
     enabled: true,
-    comingSoon: true,
-    comingSoonNote: NOTIFY_COMING_SOON_NOTE,
   },
   {
     id: "community",
@@ -103,11 +105,9 @@ export const forgeNotificationPlayerItems: SettingsToggleItem[] = [
 export const forgeNotificationStudioItems: SettingsToggleItem[] = [
   {
     id: "witness",
-    label: "見届け人",
-    description: "作品の見届け人が増えたとき",
+    label: "作品を追われたとき",
+    description: "誰かがあなたの作品を「作品を追う」したとき（見届け人称号とは別）",
     enabled: true,
-    comingSoon: true,
-    comingSoonNote: NOTIFY_COMING_SOON_NOTE,
   },
   {
     id: "version-play",
@@ -115,7 +115,7 @@ export const forgeNotificationStudioItems: SettingsToggleItem[] = [
     description: "公開中のverがプレイされたとき",
     enabled: true,
     comingSoon: true,
-    comingSoonNote: NOTIFY_COMING_SOON_NOTE,
+    comingSoonNote: STUDIO_PLAY_COMING_SOON_NOTE,
   },
   {
     id: "community",

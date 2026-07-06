@@ -121,6 +121,30 @@ export async function filterUsersByPlayerNotificationPref(
   return (data as string[] | null) ?? userIds;
 }
 
+export async function filterUsersByStudioNotificationPref(
+  supabase: SupabaseClient,
+  userIds: string[],
+  prefKey: StudioNotificationPrefKey,
+): Promise<string[]> {
+  if (userIds.length === 0) {
+    return [];
+  }
+
+  const { data, error } = await supabase.rpc("filter_users_by_studio_notification_pref", {
+    p_user_ids: userIds,
+    p_pref_key: prefKey,
+  });
+
+  if (error) {
+    if (error.message.includes("filter_users_by_studio_notification_pref")) {
+      return userIds;
+    }
+    throw error;
+  }
+
+  return (data as string[] | null) ?? userIds;
+}
+
 export async function fetchStudioPublicSettings(
   supabase: SupabaseClient,
   userId: string,

@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-07-06 — 通知コアループ整理（preview/landing-01・Preview のみ）
+
+- **Player: フォロー中の開発者** — 新作公開・正式版公開時にフォロワーへアプリ内通知（`developer-follow` 設定でON/OFF）。devlogのみの更新は通知しない
+- **Studio: 作品を追われたとき** — `project_watches` 新規作成時にオーナーへ通知（`notify_studio.witness` 設定でON/OFF）。ラベルを「作品を追われたとき」に整理
+- **設定画面（通知のみ）** — 操作可能: 更新追跡・フォロー中の開発者・作品を追われたとき。近日対応はスイッチなしの控えめ行に分離。プレイ通知は「毎回ではなく将来は節目のみ」と明記。voice_received は既定ONの説明のみ
+- **既存維持** — 更新追跡（devlog/version/confirmation）、voice_received（DB trigger）、通知 reload 強化
+- **DB migration** — `044_follow_and_watch_notifications.sql` 追加（型制約・project_watches trigger・studio pref RPC）。**Dashboard 手動適用が必要・本番未反映**
+
+---
+
 ## 2026-07-06 — コアループ小改善パッケージ（preview/landing-01・Preview のみ）
 
 - **Studio マイページ** — 作品カードの未確認ワッペンが `useNurtureVoiceRead`（`project_voice_reads` 正本）を参照するよう修正。既読後に未確認バッジが残り続ける不具合を解消

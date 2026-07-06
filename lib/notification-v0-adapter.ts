@@ -19,6 +19,11 @@ function notificationKind(type: Notification["type"]): NotificationKind {
     case "voice_received":
     case "feedback":
       return "new_feedback";
+    case "project_watched":
+      return "follow";
+    case "followed_developer_new_project":
+    case "followed_developer_released_project":
+      return "follow";
     case "support":
     case "tester_apply":
       return "system";
@@ -38,6 +43,12 @@ function notificationTitle(notification: Notification): string {
     case "voice_received":
     case "feedback":
       return "フィードバック関連のお知らせ";
+    case "project_watched":
+      return "作品を追われました";
+    case "followed_developer_new_project":
+      return "フォロー中の開発者の新作";
+    case "followed_developer_released_project":
+      return "フォロー中の開発者の正式版";
     default:
       return getNotificationTypeLabel(notification.type);
   }

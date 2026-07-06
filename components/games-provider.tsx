@@ -62,6 +62,10 @@ import {
   followDeveloperInDb,
   unfollowDeveloperInDb,
 } from "@/lib/supabase/developer-follows-db";
+import {
+  notifyDeveloperFollowersOfNewProject,
+  notifyDeveloperFollowersOfReleasedProject,
+} from "@/lib/supabase/developer-follower-notifications";
 import { mergeGameWithExtras } from "@/lib/game-extra-storage";
 import { useForgeDeploymentMode } from "@/lib/forge-deployment-context";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
@@ -722,6 +726,14 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       ]);
       if (game.visibility !== "private") {
         void reloadPublicCatalog().catch(() => undefined);
+      }
+      if (isGamePublic(game)) {
+        void notifyDeveloperFollowersOfNewProject(supabase, {
+          ownerUserId: owner.ownerId,
+          projectId: game.id,
+          projectTitle: game.title,
+          developerName: owner.ownerName,
+        }).catch(() => undefined);
       }
       try {
         await mergeDeveloperProfileSocialLinks(supabase, owner.ownerId, {
@@ -2017,6 +2029,15 @@ export function GamesProvider({ children }: { children: ReactNode }) {
           entry.id === projectId ? { ...entry, releaseStatus: "released" } : entry,
         ),
       );
+
+      if (game && isGamePublic(game)) {
+        void notifyDeveloperFollowersOfReleasedProject(supabase, {
+          ownerUserId: user.id,
+          projectId,
+          projectTitle: game.title,
+          developerName: game.ownerName ?? game.creator ?? "開発者",
+        }).catch(() => undefined);
+      }
     },
     [getDevlogsByProject, getSubmittedGameById, isProjectOwner, user],
   );

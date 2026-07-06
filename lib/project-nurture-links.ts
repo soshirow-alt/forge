@@ -81,6 +81,11 @@ export function notificationTargetHref(notification: Notification): string {
       return projectStudioFeedbackHref(notification.projectId);
     case "voice_received":
       return projectStudioFeedbackHref(notification.projectId);
+    case "project_watched":
+      return projectStudioPath(notification.projectId);
+    case "followed_developer_new_project":
+    case "followed_developer_released_project":
+      return gamePlayHref(notification.projectId);
     default:
       return gamePlayHref(notification.projectId);
   }

@@ -5,7 +5,10 @@ export type NotificationType =
   | "devlog"
   | "version_published"
   | "voice_received"
-  | "confirmation_request";
+  | "confirmation_request"
+  | "project_watched"
+  | "followed_developer_new_project"
+  | "followed_developer_released_project";
 
 export type Notification = {
   id: string;
@@ -34,6 +37,12 @@ export function getNotificationTypeLabel(type: NotificationType): string {
       return "新しいプレイ可能ver";
     case "confirmation_request":
       return "確認依頼";
+    case "project_watched":
+      return "作品を追われた";
+    case "followed_developer_new_project":
+      return "フォロー中の開発者の新作";
+    case "followed_developer_released_project":
+      return "フォロー中の開発者の正式版";
   }
 }
 
@@ -56,6 +65,12 @@ export function createNotificationMessage(
       return `「${projectTitle}」の新しいプレイ可能verが公開されました — 再プレイして回答できます`;
     case "confirmation_request":
       return `「${projectTitle}」から確認依頼が届きました`;
+    case "project_watched":
+      return `誰かが「${projectTitle}」を追い始めました`;
+    case "followed_developer_new_project":
+      return `フォロー中の開発者が新作「${projectTitle}」を公開しました`;
+    case "followed_developer_released_project":
+      return `フォロー中の開発者の「${projectTitle}」が正式版になりました`;
   }
 }
 
@@ -76,6 +91,11 @@ export function getNotificationActionHint(type: NotificationType): string {
       return "新verを確認して再プレイ →";
     case "confirmation_request":
       return "変化を確認する →";
+    case "project_watched":
+      return "作品を見る →";
+    case "followed_developer_new_project":
+    case "followed_developer_released_project":
+      return "作品詳細を見る →";
   }
 }
 

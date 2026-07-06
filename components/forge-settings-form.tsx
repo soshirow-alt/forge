@@ -16,6 +16,13 @@ import {
   studioPublicSettingsSection,
 } from "@/lib/user-settings-definitions";
 
+function partitionNotificationItems(items: SettingsToggleItem[]) {
+  return {
+    active: items.filter((item) => !item.comingSoon),
+    comingSoon: items.filter((item) => item.comingSoon),
+  };
+}
+
 function ToggleSwitch({
   enabled,
   disabled,
@@ -88,6 +95,70 @@ function ToggleRow({
   );
 }
 
+function ComingSoonNotificationRow({ item }: { item: SettingsToggleItem }) {
+  return (
+    <li className="py-3 first:pt-0 last:pb-0">
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="text-sm text-zinc-400">{item.label}</p>
+        <span className="rounded-full bg-zinc-800/80 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
+          近日対応
+        </span>
+      </div>
+      <p className="mt-0.5 text-xs text-zinc-600">{item.description}</p>
+      {item.comingSoonNote ? (
+        <p className="mt-1 text-[11px] leading-relaxed text-zinc-600">{item.comingSoonNote}</p>
+      ) : null}
+    </li>
+  );
+}
+
+function NotificationToggleSection({
+  title,
+  description,
+  items,
+  disabled,
+  onToggle,
+}: {
+  title: string;
+  description: string;
+  items: SettingsToggleItem[];
+  disabled: boolean;
+  onToggle: (id: string, enabled: boolean) => void;
+}) {
+  const { active, comingSoon } = partitionNotificationItems(items);
+
+  return (
+    <div>
+      <h3 className="text-sm font-medium text-violet-200">{title}</h3>
+      <p className="mt-0.5 text-xs text-zinc-500">{description}</p>
+      {active.length > 0 ? (
+        <ul className="mt-3 divide-y divide-zinc-800/80">
+          {active.map((item) => (
+            <ToggleRow
+              key={item.id}
+              item={item}
+              disabled={disabled}
+              onToggle={() => void onToggle(item.id, !item.enabled)}
+            />
+          ))}
+        </ul>
+      ) : null}
+      {comingSoon.length > 0 ? (
+        <div className={active.length > 0 ? "mt-5 border-t border-zinc-800/60 pt-4" : "mt-3"}>
+          <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-600">
+            近日対応予定
+          </p>
+          <ul className="mt-2 divide-y divide-zinc-800/50">
+            {comingSoon.map((item) => (
+              <ComingSoonNotificationRow key={item.id} item={item} />
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function AccountSettingsFallback() {
   return (
     <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
@@ -142,6 +213,8 @@ function PreferenceSettingsPanel({ context }: { context: "player" | "studio" }) 
   }
 
   const disabled = saving;
+  const playerPartition = partitionNotificationItems(playerNotifications);
+  const studioPartition = partitionNotificationItems(studioNotifications);
 
   return (
     <>
@@ -154,44 +227,42 @@ function PreferenceSettingsPanel({ context }: { context: "player" | "studio" }) 
       <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
         <h2 className="text-base font-semibold text-white">通知</h2>
         <p className="mt-1 text-sm text-zinc-500">
-          通知設定はアカウントに保存されます。Player 向けと Studio 向けをそれぞれ選べます。
+          アプリ内通知の受け取り設定です。メール通知は対象外です。
         </p>
 
         <div className="mt-6 space-y-6">
-          <div>
-            <h3 className="text-sm font-medium text-violet-200">Player 向けの通知</h3>
-            <p className="mt-0.5 text-xs text-zinc-500">プレイヤーとして受け取るお知らせ</p>
-            <ul className="mt-3 divide-y divide-zinc-800/80">
-              {playerNotifications.map((item) => (
-                <ToggleRow
-                  key={item.id}
-                  item={item}
-                  disabled={disabled}
-                  onToggle={() =>
-                    void handleToggle(() => updateNotifyPlayer(item.id, !item.enabled))
-                  }
-                />
-              ))}
-            </ul>
-          </div>
+          <NotificationToggleSection
+            title="Player 向けの通知"
+            description="プレイヤーとして受け取るお知らせ"
+            items={playerNotifications}
+            disabled={disabled}
+            onToggle={(id, enabled) =>
+              void handleToggle(() => updateNotifyPlayer(id, enabled))
+            }
+          />
 
           <div className="border-t border-zinc-800/80 pt-6">
-            <h3 className="text-sm font-medium text-violet-200">Studio 向けの通知</h3>
-            <p className="mt-0.5 text-xs text-zinc-500">開発者として受け取るお知らせ</p>
-            <ul className="mt-3 divide-y divide-zinc-800/80">
-              {studioNotifications.map((item) => (
-                <ToggleRow
-                  key={item.id}
-                  item={item}
-                  disabled={disabled}
-                  onToggle={() =>
-                    void handleToggle(() => updateNotifyStudio(item.id, !item.enabled))
-                  }
-                />
-              ))}
-            </ul>
+            <NotificationToggleSection
+              title="Studio 向けの通知"
+              description="開発者として受け取るお知らせ"
+              items={studioNotifications}
+              disabled={disabled}
+              onToggle={(id, enabled) =>
+                void handleToggle(() => updateNotifyStudio(id, enabled))
+              }
+            />
+            <p className="mt-4 text-[11px] leading-relaxed text-zinc-600">
+              プレイヤーの声・フィードバックは、見逃し防止のため既定で届きます（ON/OFF
+              設定は今回対象外）。
+            </p>
           </div>
         </div>
+
+        {(playerPartition.active.length > 0 || studioPartition.active.length > 0) && (
+          <p className="mt-5 text-xs text-zinc-600">
+            上記の操作可能な項目は、保存後すぐに通知の送受信に反映されます。
+          </p>
+        )}
       </section>
 
       <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
