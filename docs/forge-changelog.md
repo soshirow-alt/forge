@@ -4,7 +4,14 @@
 
 ---
 
-## 2026-07-06 — 作品詳細の1件直取得 + GamesProvider グローバル取得の遅延
+## 2026-07-06 — 作品詳細タブ切り替えの即時化（router.replace 廃止）
+
+- **原因** — タブ切替で `router.replace(?tab=)` → Next.js navigation → `useSearchParams` 経由で GameDetail 全体が再レンダー
+- **修正** — `useInstantQueryTab` + `history.replaceState` で **ローカル state を即時更新**、URL は navigation なしで同期
+- **分離** — `GameDetailTabBar` / `GameDetailTabPanels` を memo 化、タブパネルを `useMemo` で安定化
+- **計測** — `[forge:perf] game-detail-tab.underline` / `.panel`（rAF1/rAF2）
+
+---
 
 - **作品詳細** — `useGameDetailProject` で `fetchPublicProjectById` / `fetchOwnedProjectById` を並列実行。`publicCatalogReady` / owner catalog 完了を待たず初期表示
 - **GamesProvider** — `fetchAllProjectDevlogs` / `fetchAllProjectReleaseEvents` / `support counts` をマウント直後から `setTimeout(0)` で遅延（public catalog との帯域競合を緩和）

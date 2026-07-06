@@ -17,7 +17,7 @@ import { GameDetailHeroGallery } from "@/components/game-detail-hero-gallery";
 import { GameHeroPreviewGallery } from "@/components/game-hero-preview-gallery";
 import { GameDetailPhaseBadge } from "@/components/game-detail-phase-badge";
 import { YourInvolvementCard } from "@/components/your-involvement-card";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePlayerProjectInvolvement } from "@/hooks/use-player-project-involvement";
 import { useProjectAuthorXUsername } from "@/hooks/use-resource-public-x-username";
@@ -88,10 +88,14 @@ import {
 } from "@/lib/game-play-destinations";
 import { GamePlayDestinationModal } from "@/components/game-play-destination-modal";
 import { GameDetailSkeleton } from "@/components/forge-loading-skeletons";
-import { ForgeTabPanel } from "@/components/forge-tab-panel";
+import {
+  GameDetailTabBar,
+  GameDetailTabPanels,
+} from "@/components/game-detail-tabs-region";
 import { useAuth } from "@/components/auth-provider";
 import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
 import { useGameDetailProject } from "@/hooks/use-game-detail-project";
+import { useInstantQueryTab } from "@/hooks/use-instant-query-tab";
 import {
   Bookmark,
   Check,
@@ -101,11 +105,7 @@ import {
   Users,
 } from "lucide-react";
 
-const tabs: { id: GameDetailTab; label: string }[] = [
-  { id: "overview", label: "概要" },
-  { id: "devlog", label: "開発ログ" },
-  { id: "voices", label: "みんなのフィードバック" },
-];
+const TAB_PARSE = parseGameDetailTab;
 
 function TagPill({ children }: { children: React.ReactNode }) {
   return (
@@ -191,12 +191,30 @@ function GameDetailV0PageBody({
   detailProject,
   detailIsOwner,
 }: GameDetailV0PageBodyProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
-  const activeTab = parseGameDetailTab(searchParams.get("tab"));
-  const [visitedTabs, setVisitedTabs] = useState<Set<GameDetailTab>>(
-    () => new Set(["overview"]),
+  const { activeTab, setActiveTab } = useInstantQueryTab<GameDetailTab>({
+    parse: TAB_PARSE,
+    buildHref: (tab, params) => buildGameDetailTabHref(id, tab, params),
+    perfScope: "game-detail-tab",
+  });
+  const [visitedTabs, setVisitedTabs] = useState<Set<GameDetailTab>>(() => {
+    const initial = TAB_PARSE(searchParams.get("tab"));
+    return new Set([initial]);
+  });
+  const setDetailTab = useCallback(
+    (tab: GameDetailTab) => {
+      setActiveTab(tab);
+      setVisitedTabs((prev) => {
+        if (prev.has(tab)) {
+          return prev;
+        }
+        const next = new Set(prev);
+        next.add(tab);
+        return next;
+      });
+    },
+    [setActiveTab],
   );
   const {
     recordPlay,
@@ -329,23 +347,6 @@ function GameDetailV0PageBody({
       ? projectStudioPath(ownerProjectId)
       : `/studio/projects/${encodeURIComponent(ownerProjectId)}`
     : null;
-  const setDetailTab = useCallback(
-    (tab: GameDetailTab) => {
-      router.replace(buildGameDetailTabHref(id, tab, searchParams), { scroll: false });
-    },
-    [id, router, searchParams],
-  );
-
-  useEffect(() => {
-    setVisitedTabs((prev) => {
-      if (prev.has(activeTab)) {
-        return prev;
-      }
-      const next = new Set(prev);
-      next.add(activeTab);
-      return next;
-    });
-  }, [activeTab]);
   const [feedbackStep, setFeedbackStep] = useState<FeedbackFlowStep>("closed");
   const [playDestinationPickerOpen, setPlayDestinationPickerOpen] = useState(false);
   const [playUrlMissingVisible, setPlayUrlMissingVisible] = useState(false);
@@ -613,6 +614,105 @@ function GameDetailV0PageBody({
 
   const guestFeedbackLoginHref = buildLoginUrlWithReturn(returnPath);
 
+  const overviewActivity = useMemo(
+    () =>
+      playerMeta
+        ? {
+            lastUpdated: game.lastUpdated,
+            hasDevlog: hasDevlogForOverview,
+            devlogLabel: devlogOverviewLabel,
+            voiceCount: voiceCountForOverview,
+          }
+        : null,
+    [
+      playerMeta,
+      game.lastUpdated,
+      hasDevlogForOverview,
+      devlogOverviewLabel,
+      voiceCountForOverview,
+    ],
+  );
+
+  const onPlayDestinationOpen =
+    hydrated && isLoggedIn
+      ? markPlayOpened
+      : hydrated && isGuestEntry
+        ? markGuestPlayOpened
+        : undefined;
+
+  const feedbackCtaLabel =
+    hydrated && !isLoggedIn && !isGuestEntry
+      ? "ログインしてフィードバックする"
+      : "フィードバックする";
+
+  const overviewPanel = useMemo(
+    () => (
+      <GameDetailOverviewV0Tab
+        game={displayGame}
+        gameId={resolvedId}
+        heroLead={game.lead}
+        playerMeta={playerMeta}
+        overviewActivity={overviewActivity}
+        publication={overviewPublication}
+        playDestinations={playDestinations}
+        onPlayDestinationOpen={onPlayDestinationOpen}
+        onFeedback={handleFeedback}
+        feedbackCtaLabel={feedbackCtaLabel}
+      />
+    ),
+    [
+      displayGame,
+      resolvedId,
+      game.lead,
+      playerMeta,
+      overviewActivity,
+      overviewPublication,
+      playDestinations,
+      onPlayDestinationOpen,
+      handleFeedback,
+      feedbackCtaLabel,
+    ],
+  );
+
+  const devlogPanel = useMemo(
+    () => (
+      <GameDevlogV0Tab
+        gameId={resolvedId}
+        projectId={isRealProject ? resolvedId : undefined}
+        onPlayLatest={handlePlay}
+      />
+    ),
+    [resolvedId, isRealProject, handlePlay],
+  );
+
+  const voicesPanel = useMemo(
+    () =>
+      isRealProject ? (
+        <EveryonesVoiceSection
+          gameId={resolvedId}
+          playableVersion={submittedGame?.playableVersion}
+          variant="tab"
+          refreshKey={voicesRefreshKey}
+          onSendVoice={handleFeedback}
+        />
+      ) : (
+        <GameVoicesV0Tab
+          gameId={resolvedId}
+          currentVersion={game.currentVersion}
+          refreshKey={voicesRefreshKey}
+          onSendVoice={handleFeedback}
+        />
+      ),
+    [
+      isRealProject,
+      resolvedId,
+      submittedGame?.playableVersion,
+      voicesRefreshKey,
+      handleFeedback,
+      game.currentVersion,
+    ],
+  );
+
   return (
     <PlayerShell>
       {playDestinationPickerOpen ? (
@@ -837,89 +937,15 @@ function GameDetailV0PageBody({
             />
           ) : null}
 
-          <div className="border-b border-zinc-800/80">
-            <div className="flex gap-1 overflow-x-auto">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setDetailTab(tab.id)}
-                  className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
-                    activeTab === tab.id
-                      ? "border-violet-500 text-violet-200"
-                      : "border-transparent text-zinc-500 hover:text-zinc-300"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <GameDetailTabBar activeTab={activeTab} onTabChange={setDetailTab} />
 
-          <ForgeTabPanel active={activeTab === "overview"}>
-            <GameDetailOverviewV0Tab
-              game={displayGame}
-              gameId={resolvedId}
-              heroLead={game.lead}
-              playerMeta={playerMeta}
-              overviewActivity={
-                playerMeta
-                  ? {
-                      lastUpdated: game.lastUpdated,
-                      hasDevlog: hasDevlogForOverview,
-                      devlogLabel: devlogOverviewLabel,
-                      voiceCount: voiceCountForOverview,
-                    }
-                  : null
-              }
-              publication={overviewPublication}
-              playDestinations={playDestinations}
-              onPlayDestinationOpen={
-                hydrated && isLoggedIn
-                  ? markPlayOpened
-                  : hydrated && isGuestEntry
-                    ? markGuestPlayOpened
-                    : undefined
-              }
-              onFeedback={handleFeedback}
-              feedbackCtaLabel={
-                hydrated && !isLoggedIn && !isGuestEntry
-                  ? "ログインしてフィードバックする"
-                  : "フィードバックする"
-              }
-            />
-          </ForgeTabPanel>
-
-          {visitedTabs.has("devlog") ? (
-            <ForgeTabPanel active={activeTab === "devlog"}>
-              <GameDevlogV0Tab
-                gameId={resolvedId}
-                projectId={isRealProject ? resolvedId : undefined}
-                onPlayLatest={handlePlay}
-              />
-            </ForgeTabPanel>
-          ) : null}
-
-          {visitedTabs.has("voices") ? (
-            <ForgeTabPanel active={activeTab === "voices"}>
-              {isRealProject ? (
-                <EveryonesVoiceSection
-                  gameId={resolvedId}
-                  playableVersion={submittedGame?.playableVersion}
-                  variant="tab"
-                  refreshKey={voicesRefreshKey}
-                  onSendVoice={handleFeedback}
-                />
-              ) : (
-                <GameVoicesV0Tab
-                  gameId={resolvedId}
-                  currentVersion={game.currentVersion}
-                  refreshKey={voicesRefreshKey}
-                  onSendVoice={handleFeedback}
-                />
-              )}
-            </ForgeTabPanel>
-          ) : null}
+          <GameDetailTabPanels
+            activeTab={activeTab}
+            visitedTabs={visitedTabs}
+            overview={overviewPanel}
+            devlog={devlogPanel}
+            voices={voicesPanel}
+          />
         </div>
 
         <aside className="w-full shrink-0 space-y-5 xl:w-72">
