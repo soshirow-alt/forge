@@ -34,6 +34,14 @@
 
 ---
 
+## 2026-07-06 — return なしログイン/登録のデフォルトを `/home` に（preview/landing-01）
+
+- **`DEFAULT_POST_LOGIN_PATH`** — `/studio/mypage` から `/home`（`DEFAULT_POST_PLAYER_HOME_PATH` と統一）
+- **return あり** — 従来どおり `resolvePostLoginPath(returnParam)` で作品ページ・Studio・settings 等へ復帰
+- **Studio へ行くのは return 明示時のみ**（例: `/login?return=/studio/mypage`）
+
+---
+
 ## 2026-07-06 — 投稿後・作品ページ共有導線 本番反映
 
 - **commit** — `cf10c67`（`a272840`〜`cf10c67` を `main` FF。`origin/main` = `origin/preview/landing-01`）

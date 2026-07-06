@@ -20,7 +20,7 @@ import {
   readOAuthFlowCookies,
 } from "../lib/oauth-flow-cookie";
 import { mapProjectSubmitErrorMessage } from "../lib/error-message";
-import { buildRegisterUrlWithReturn, isGuestEligibleReturnParam, sanitizeLoginReturnUrl } from "../lib/login-return-url";
+import { buildRegisterUrlWithReturn, isGuestEligibleReturnParam, resolvePostLoginPath, sanitizeLoginReturnUrl } from "../lib/login-return-url";
 import { projectThumbnailsForDb, sanitizeProjectThumbnailUrls } from "../lib/project-thumbnails";
 import { reorderArrayItem } from "../lib/reorder-array-item";
 import {
@@ -200,6 +200,11 @@ function testLoginReturnSanitize() {
   ok(
     isGuestEligibleReturnParam("/studio/mypage") === false,
     "guest ineligible for studio return",
+  );
+  ok(resolvePostLoginPath(null) === "/home", "no-return login defaults to /home");
+  ok(
+    resolvePostLoginPath("/studio/mypage") === "/studio/mypage",
+    "explicit studio return preserved after login",
   );
   ok(sanitizeLoginReturnUrl("/bookmarks") === "/bookmarks", "allow bookmarks path");
   ok(
