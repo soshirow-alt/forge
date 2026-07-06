@@ -239,7 +239,7 @@ export function AccountSettingsPanel({
         ) : null}
 
         <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
-          <h2 className="text-base font-semibold text-zinc-200">アカウント退会</h2>
+          <h2 className="text-base font-semibold text-zinc-200">アカウント削除</h2>
           <p className="mt-2 text-sm leading-relaxed text-zinc-500">
             退会するとログインできなくなり、プロフィール名は「退会済みユーザー」に置き換わります。
             作品へのフィードバックなど、コミュニティに残した記録は匿名のまま保持されます。
@@ -249,7 +249,7 @@ export function AccountSettingsPanel({
             onClick={() => openEdit("delete")}
             className="mt-4 text-sm text-red-400 underline-offset-2 transition-colors hover:text-red-300 hover:underline"
           >
-            アカウントを退会する
+            アカウントを削除する
           </button>
         </section>
 
