@@ -68,6 +68,7 @@ function rowToReleaseEvent(row: {
   event_type: "released" | "release_reopened";
   actor_user_id: string;
   note: string | null;
+  source?: "studio" | "onboarding" | null;
   created_at: string;
 }): ProjectReleaseEvent {
   return {
@@ -76,6 +77,7 @@ function rowToReleaseEvent(row: {
     eventType: row.event_type,
     actorUserId: row.actor_user_id,
     note: row.note,
+    source: row.source ?? "studio",
     createdAt: row.created_at,
   };
 }

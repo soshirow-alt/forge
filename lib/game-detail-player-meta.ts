@@ -6,6 +6,13 @@ import {
   supportsPc,
   type DistributionType,
 } from "@/lib/play-environment";
+import { getPlayAccessBadgeLabel } from "@/lib/play-access-type";
+import {
+  getCompletedProductBadge,
+  getReleaseReopenedBadge,
+  isReleaseReopenedForPlayerDisplay,
+  isReleasedForPlayerDisplay,
+} from "@/lib/game-player-display";
 import { PLAY_TIME_OPTIONS } from "@/lib/play-time-options";
 import type { Game } from "@/lib/mock-games";
 
@@ -32,6 +39,10 @@ export type PlayerPlayInfoDisplay = {
 export type GameDetailPlayerMeta = {
   phaseLabel: string;
   phaseDescription: string;
+  releaseBadgeLabel: string | null;
+  releaseBadgeEmoji?: string;
+  releaseBadgeTone?: "completed" | "reopened";
+  playAccessBadgeLabel: string | null;
   estimatedPlayTime: string | null;
   environmentLabels: string[];
   playInfo: PlayerPlayInfoDisplay;
@@ -81,9 +92,24 @@ export function resolveGameDetailPlayerMeta(
   const environmentLabels = getPlayEnvironmentLabels(game);
   const playInfo = resolvePlayerPlayInfoDisplay(game);
 
+  const completedBadge = isReleasedForPlayerDisplay(game.releaseStatus)
+    ? getCompletedProductBadge()
+    : null;
+  const reopenedBadge = isReleaseReopenedForPlayerDisplay(game.releaseStatus)
+    ? getReleaseReopenedBadge()
+    : null;
+  const releaseBadge = completedBadge ?? reopenedBadge;
+
   return {
     phaseLabel: displayPhase(game.phase),
     phaseDescription: getPhasePlayerDescription(game.phase),
+    releaseBadgeLabel: releaseBadge?.label ?? null,
+    releaseBadgeEmoji: releaseBadge?.emoji,
+    releaseBadgeTone:
+      releaseBadge?.tone === "completed" || releaseBadge?.tone === "reopened"
+        ? releaseBadge.tone
+        : undefined,
+    playAccessBadgeLabel: getPlayAccessBadgeLabel(game.playAccessType),
     estimatedPlayTime: game.estimatedPlayTime?.trim() || null,
     environmentLabels,
     playInfo,

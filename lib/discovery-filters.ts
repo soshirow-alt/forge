@@ -5,6 +5,11 @@ import {
   type DevelopmentPhase,
 } from "@/lib/development-phases";
 import { PLAY_TIME_OPTIONS } from "@/lib/play-time-options";
+import {
+  PLAY_ACCESS_FILTER_OPTIONS,
+  PLAY_ACCESS_BADGE_LABELS,
+  type PlayAccessFilter,
+} from "@/lib/play-access-type";
 import { matchesPlayEnvironmentFilter } from "@/lib/play-environment";
 
 export const GENRE_FILTER_OPTIONS = [
@@ -39,6 +44,8 @@ export const PHASE_FILTER_OPTIONS = DEVELOPMENT_PHASE_OPTIONS.map(
 
 export const PLAY_TIME_FILTER_OPTIONS = PLAY_TIME_OPTIONS;
 
+export const PLAY_ACCESS_CHIP_FILTER_OPTIONS = PLAY_ACCESS_FILTER_OPTIONS;
+
 export type GenreFilter = (typeof GENRE_FILTER_OPTIONS)[number];
 export type PlatformFilter = (typeof PLATFORM_FILTER_OPTIONS)[number];
 export type PhaseFilter = (typeof PHASE_FILTER_OPTIONS)[number];
@@ -49,6 +56,7 @@ export type DiscoveryChipFilters = {
   platforms: PlatformFilter[];
   phases: PhaseFilter[];
   playTimes: PlayTimeFilter[];
+  playAccessTypes: PlayAccessFilter[];
 };
 
 export const EMPTY_DISCOVERY_FILTERS: DiscoveryChipFilters = {
@@ -56,6 +64,7 @@ export const EMPTY_DISCOVERY_FILTERS: DiscoveryChipFilters = {
   platforms: [],
   phases: [],
   playTimes: [],
+  playAccessTypes: [],
 };
 
 export {
@@ -122,11 +131,19 @@ export function matchesPlayTimeFilter(game: Game, playTime: PlayTimeFilter): boo
   return game.estimatedPlayTime === playTime;
 }
 
+export function matchesPlayAccessFilter(game: Game, playAccess: PlayAccessFilter): boolean {
+  return game.playAccessType === playAccess;
+}
+
+export function playAccessFilterLabel(playAccess: PlayAccessFilter): string {
+  return PLAY_ACCESS_BADGE_LABELS[playAccess];
+}
+
 export function applyDiscoveryChipFilters(
   games: Game[],
   filters: DiscoveryChipFilters,
 ): Game[] {
-  const { genres, platforms, phases, playTimes } = filters;
+  const { genres, platforms, phases, playTimes, playAccessTypes } = filters;
 
   return games.filter((game) => {
     if (genres.length > 0 && !genres.some((genre) => matchesGenreFilter(game, genre))) {
@@ -147,6 +164,12 @@ export function applyDiscoveryChipFilters(
     ) {
       return false;
     }
+    if (
+      playAccessTypes.length > 0 &&
+      !playAccessTypes.some((playAccess) => matchesPlayAccessFilter(game, playAccess))
+    ) {
+      return false;
+    }
     return true;
   });
 }
@@ -156,6 +179,7 @@ export function hasActiveChipFilters(filters: DiscoveryChipFilters): boolean {
     filters.genres.length > 0 ||
     filters.platforms.length > 0 ||
     filters.phases.length > 0 ||
-    filters.playTimes.length > 0
+    filters.playTimes.length > 0 ||
+    filters.playAccessTypes.length > 0
   );
 }

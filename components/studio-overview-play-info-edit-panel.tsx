@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
-import { ProjectAccessEnvironmentFields } from "@/components/project-access-environment-fields";
+import { ProjectPlayAccessFormFields } from "@/components/project-play-access-form-fields";
 import { ProjectEstimatedPlayTimeField } from "@/components/project-estimated-play-time-field";
 import {
   StudioPanelEditShell,
@@ -16,8 +16,13 @@ import {
   type ExternalLinkFormValues,
   type ProjectExternalLinksInput,
 } from "@/lib/game-links";
+import { ProjectAccessEnvironmentFields } from "@/components/project-access-environment-fields";
 import { validatePlayAccess } from "@/lib/project-access-form";
 import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
+import {
+  isSpecifiedPlayAccessType,
+  type SubmitPlayAccessType,
+} from "@/lib/play-access-type";
 import type { Game } from "@/lib/mock-games";
 import {
   EMPTY_PLAY_ENVIRONMENT_FORM,
@@ -69,6 +74,7 @@ export function StudioOverviewPlayInfoEditPanel({
   );
   const [playUrl, setPlayUrl] = useState("");
   const [estimatedPlayTime, setEstimatedPlayTime] = useState("");
+  const [playAccessType, setPlayAccessType] = useState<SubmitPlayAccessType | "">("free");
   const [externalLinks, setExternalLinks] = useState<ExternalLinkFormValues>(
     emptyExternalLinkFormValues(),
   );
@@ -85,6 +91,9 @@ export function StudioOverviewPlayInfoEditPanel({
     setPlayEnvironment(parsePlayEnvironmentFromTags(game.tags ?? []));
     setPlayUrl(game.playUrl ?? "");
     setEstimatedPlayTime(game.estimatedPlayTime ?? "");
+    setPlayAccessType(
+      isSpecifiedPlayAccessType(game.playAccessType) ? game.playAccessType : "",
+    );
     setExternalLinks(externalLinksFromGame(game));
     setFormLoaded(true);
   }, [game, formLoaded]);
@@ -96,8 +105,9 @@ export function StudioOverviewPlayInfoEditPanel({
         playUrl,
         estimatedPlayTime,
         externalLinks,
+        playAccessType,
       }),
-    [playEnvironment, playUrl, estimatedPlayTime, externalLinks],
+    [playEnvironment, playUrl, estimatedPlayTime, externalLinks, playAccessType],
   );
 
   useEffect(() => {
@@ -120,6 +130,9 @@ export function StudioOverviewPlayInfoEditPanel({
       playUrl: nextPlayUrl,
       estimatedPlayTime: nextEstimatedPlayTime || undefined,
       tags: mergePlayEnvironmentIntoTags(featureTags, nextEnvironment),
+      ...(isSpecifiedPlayAccessType(playAccessType)
+        ? { playAccessType }
+        : {}),
       ...externalLinksPayload(nextExternalLinks),
     });
   }
@@ -145,6 +158,10 @@ export function StudioOverviewPlayInfoEditPanel({
       setValidationError(accessError);
       return;
     }
+    if (!isSpecifiedPlayAccessType(playAccessType)) {
+      setValidationError("プレイ条件を選んでください。");
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -155,6 +172,7 @@ export function StudioOverviewPlayInfoEditPanel({
         ...buildProjectEditFormDataFromGame(game),
         playUrl: playUrl.trim(),
         estimatedPlayTime: estimatedPlayTime || undefined,
+        playAccessType,
         tags: mergePlayEnvironmentIntoTags(featureTags, playEnvironment),
         ...externalLinksPayload(externalLinks),
       });
@@ -183,6 +201,13 @@ export function StudioOverviewPlayInfoEditPanel({
       saveError={saveError}
       validationError={validationError}
     >
+      <ProjectPlayAccessFormFields
+        value={playAccessType}
+        onChange={setPlayAccessType}
+        radioName={`studio-play-access-${projectId}`}
+        showUnspecifiedHint={!isSpecifiedPlayAccessType(playAccessType)}
+      />
+
       <ProjectEstimatedPlayTimeField
         value={estimatedPlayTime}
         onChange={(value) => {

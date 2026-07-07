@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ProjectAlreadyReleasedConfirmModal } from "@/components/project-already-released-confirm-modal";
+import { ProjectAlreadyReleasedFormFields } from "@/components/project-already-released-form-fields";
 import { ProjectPhaseFormFields } from "@/components/project-phase-form-fields";
 import { ProjectOneLineDescriptionField } from "@/components/project-one-line-description-field";
 import { ProjectTitleField } from "@/components/project-title-field";
@@ -10,6 +12,7 @@ import {
 } from "@/components/studio-panel-edit-shell";
 import type { StudioOverviewEditPanelCommonProps } from "@/components/studio-overview-edit-panel-types";
 import { useGames } from "@/components/games-provider";
+import { hasEverBeenReleasedForEdit } from "@/lib/game-player-display";
 import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
 import {
   clampProjectOneLineDescription,
@@ -31,10 +34,14 @@ export function StudioOverviewBasicInfoEditPanel({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [phase, setPhase] = useState("");
+  const [declareAlreadyReleased, setDeclareAlreadyReleased] = useState(false);
   const [formLoaded, setFormLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [releaseConfirmOpen, setReleaseConfirmOpen] = useState(false);
+
+  const readOnlyReleased = game ? hasEverBeenReleasedForEdit(game) : false;
 
   useEffect(() => {
     if (!game || formLoaded) {
@@ -44,12 +51,13 @@ export function StudioOverviewBasicInfoEditPanel({
     setTitle(clampProjectTitle(game.title));
     setDescription(clampProjectOneLineDescription(game.description ?? ""));
     setPhase(game.phase);
+    setDeclareAlreadyReleased(false);
     setFormLoaded(true);
   }, [game, formLoaded]);
 
   useEffect(() => {
     setValidationError(null);
-  }, [title, description, phase]);
+  }, [title, description, phase, declareAlreadyReleased]);
 
   function emitPreview(next: { title: string; description: string; phase: string }) {
     onPreviewPatchChange?.({
@@ -57,6 +65,33 @@ export function StudioOverviewBasicInfoEditPanel({
       description: clampProjectOneLineDescription(next.description),
       phase: next.phase,
     });
+  }
+
+  async function performSave() {
+    if (!game) {
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await updateProjectDetails(projectId, {
+        ...buildProjectEditFormDataFromGame(game),
+        title: title.trim(),
+        description: description.trim(),
+        phase,
+        declareAlreadyReleased: declareAlreadyReleased || undefined,
+      });
+      onSaved?.();
+      setReleaseConfirmOpen(false);
+    } catch (error) {
+      setSaveError(
+        error instanceof Error
+          ? error.message
+          : "保存に失敗しました。時間をおいて再度お試しください。",
+      );
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   async function handleSave() {
@@ -88,24 +123,12 @@ export function StudioOverviewBasicInfoEditPanel({
       return;
     }
 
-    setIsSaving(true);
-    try {
-      await updateProjectDetails(projectId, {
-        ...buildProjectEditFormDataFromGame(game),
-        title: trimmedTitle,
-        description: description.trim(),
-        phase,
-      });
-      onSaved?.();
-    } catch (error) {
-      setSaveError(
-        error instanceof Error
-          ? error.message
-          : "保存に失敗しました。時間をおいて再度お試しください。",
-      );
-    } finally {
-      setIsSaving(false);
+    if (declareAlreadyReleased && !readOnlyReleased) {
+      setReleaseConfirmOpen(true);
+      return;
     }
+
+    await performSave();
   }
 
   if (!dataReady || !game || !formLoaded) {
@@ -113,43 +136,59 @@ export function StudioOverviewBasicInfoEditPanel({
   }
 
   return (
-    <StudioPanelEditShell
-      title="基本情報を編集"
-      onCancel={onCancel}
-      onSave={() => void handleSave()}
-      isSaving={isSaving}
-      saveError={saveError}
-      validationError={validationError}
-    >
-      <ProjectTitleField
-        id={`studio-basic-title-${projectId}`}
-        value={title}
-        onChange={(nextTitle) => {
-          setTitle(nextTitle);
-          emitPreview({ title: nextTitle, description, phase });
-        }}
-        inputClassName={studioPanelInputClassName}
-        required
-      />
+    <>
+      <StudioPanelEditShell
+        title="基本情報を編集"
+        onCancel={onCancel}
+        onSave={() => void handleSave()}
+        isSaving={isSaving}
+        saveError={saveError}
+        validationError={validationError}
+      >
+        <ProjectTitleField
+          id={`studio-basic-title-${projectId}`}
+          value={title}
+          onChange={(nextTitle) => {
+            setTitle(nextTitle);
+            emitPreview({ title: nextTitle, description, phase });
+          }}
+          inputClassName={studioPanelInputClassName}
+          required
+        />
 
-      <ProjectOneLineDescriptionField
-        id={`studio-basic-lead-${projectId}`}
-        value={description}
-        onChange={(nextDescription) => {
-          setDescription(nextDescription);
-          emitPreview({ title, description: nextDescription, phase });
-        }}
-        inputClassName={studioPanelInputClassName}
-      />
+        <ProjectOneLineDescriptionField
+          id={`studio-basic-lead-${projectId}`}
+          value={description}
+          onChange={(nextDescription) => {
+            setDescription(nextDescription);
+            emitPreview({ title, description: nextDescription, phase });
+          }}
+          inputClassName={studioPanelInputClassName}
+        />
 
-      <ProjectPhaseFormFields
-        value={phase}
-        onChange={(nextPhase) => {
-          setPhase(nextPhase);
-          emitPreview({ title, description, phase: nextPhase });
-        }}
-        radioName={`studio-basic-phase-${projectId}`}
+        <ProjectPhaseFormFields
+          value={phase}
+          onChange={(nextPhase) => {
+            setPhase(nextPhase);
+            emitPreview({ title, description, phase: nextPhase });
+          }}
+          radioName={`studio-basic-phase-${projectId}`}
+        />
+
+        <ProjectAlreadyReleasedFormFields
+          checked={readOnlyReleased || declareAlreadyReleased}
+          onChange={setDeclareAlreadyReleased}
+          readOnlyReleased={readOnlyReleased}
+          inputId={`studio-basic-already-released-${projectId}`}
+        />
+      </StudioPanelEditShell>
+
+      <ProjectAlreadyReleasedConfirmModal
+        open={releaseConfirmOpen}
+        busy={isSaving}
+        onCancel={() => setReleaseConfirmOpen(false)}
+        onConfirm={() => void performSave()}
       />
-    </StudioPanelEditShell>
+    </>
   );
 }

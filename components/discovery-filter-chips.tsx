@@ -5,6 +5,8 @@ import {
   PHASE_FILTER_OPTIONS,
   PLATFORM_FILTER_OPTIONS,
   PLAY_TIME_FILTER_OPTIONS,
+  PLAY_ACCESS_CHIP_FILTER_OPTIONS,
+  playAccessFilterLabel,
   type DiscoveryChipFilters,
   type GenreFilter,
   type PhaseFilter,
@@ -100,12 +102,20 @@ export function DiscoveryFilterChips({
     onChange({ ...filters, playTimes: toggleValue(filters.playTimes, playTime) });
   }
 
+  function togglePlayAccess(playAccess: (typeof PLAY_ACCESS_CHIP_FILTER_OPTIONS)[number]) {
+    onChange({
+      ...filters,
+      playAccessTypes: toggleValue(filters.playAccessTypes, playAccess),
+    });
+  }
+
   function clearAll() {
     onChange({
       genres: [],
       platforms: [],
       phases: [],
       playTimes: [],
+      playAccessTypes: [],
     });
   }
 
@@ -130,6 +140,13 @@ export function DiscoveryFilterChips({
           options={PLAY_TIME_FILTER_OPTIONS}
           selected={filters.playTimes}
           onToggle={togglePlayTime}
+        />
+        <FilterGroup
+          title="プレイ条件"
+          options={PLAY_ACCESS_CHIP_FILTER_OPTIONS}
+          selected={filters.playAccessTypes}
+          onToggle={togglePlayAccess}
+          labelForOption={playAccessFilterLabel}
         />
         <FilterGroup
           title="プレイ環境"

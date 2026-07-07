@@ -3,6 +3,8 @@
 import { ProjectAccessEnvironmentFields } from "@/components/project-access-environment-fields";
 import { ProjectEstimatedPlayTimeField } from "@/components/project-estimated-play-time-field";
 import { ProjectPhaseFormFields } from "@/components/project-phase-form-fields";
+import { ProjectAlreadyReleasedFormFields } from "@/components/project-already-released-form-fields";
+import { ProjectPlayAccessFormFields } from "@/components/project-play-access-form-fields";
 import { ProjectThumbnailFields } from "@/components/project-thumbnail-fields";
 import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
 import { ProjectOneLineDescriptionField } from "@/components/project-one-line-description-field";
@@ -68,6 +70,11 @@ export function StudioSubmitBasicInfoEditPanel({
         onChange={(phase) => onApply({ phase })}
         radioName="submit-phase"
         required={false}
+      />
+      <ProjectAlreadyReleasedFormFields
+        checked={draft.declareAlreadyReleased}
+        onChange={(declareAlreadyReleased) => onApply({ declareAlreadyReleased })}
+        inputId="submit-declare-already-released"
       />
     </StudioPanelEditShell>
   );
@@ -227,6 +234,12 @@ export function StudioSubmitPlayInfoEditPanel({
       onSave={onCancel}
       saveLabel="反映する"
     >
+      <ProjectPlayAccessFormFields
+        value={draft.playAccessType}
+        onChange={(playAccessType) => onApply({ playAccessType })}
+        radioName="submit-play-access-type"
+      />
+
       <ProjectEstimatedPlayTimeField
         value={draft.estimatedPlayTime}
         onChange={(estimatedPlayTime) => onApply({ estimatedPlayTime })}

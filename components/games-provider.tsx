@@ -158,6 +158,7 @@ import {
   unmarkFeedbackHelpful,
 } from "@/lib/supabase/developer-feedback-helpful-db";
 import {
+  declareProjectReleasedOnboardingInDb,
   fetchAllProjectReleaseEvents,
   insertProjectReleaseEvent,
 } from "@/lib/supabase/project-release-events-db";
@@ -254,6 +255,7 @@ function applyProjectDetailsPayloadToGame(
         : merged.description,
     phase: data.phase,
     status: data.lookingForTesters ? "テスター募集中" : data.phase,
+    ...(data.playAccessType ? { playAccessType: data.playAccessType } : {}),
   };
 }
 
@@ -387,6 +389,7 @@ type GamesContextValue = {
   getDevlogsByProject: (projectId: string) => DevlogEntry[];
   getReleaseEventsForProject: (projectId: string) => ProjectReleaseEvent[];
   declareProjectReleased: (projectId: string, note?: string) => Promise<void>;
+  declareProjectReleasedOnboarding: (projectId: string) => Promise<void>;
   declareProjectReleaseReopened: (projectId: string, note?: string) => Promise<void>;
   hasDevlogs: (projectId: string) => boolean;
   addDevlog: (
@@ -747,14 +750,42 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         game,
         ...prev.filter((item) => item.id !== game.id),
       ]);
-      if (game.visibility !== "private") {
+
+      let finalGame = game;
+
+      if (data.declareAlreadyReleased) {
+        const onboardingResult = await declareProjectReleasedOnboardingInDb(
+          supabase,
+          game.id,
+        );
+        finalGame = { ...game, releaseStatus: "released" as const };
+        setSubmittedGames((prev) =>
+          prev.map((item) => (item.id === game.id ? finalGame : item)),
+        );
+        if (!onboardingResult.alreadyReleased && onboardingResult.eventId) {
+          setReleaseEvents((prev) => [
+            ...prev,
+            {
+              id: onboardingResult.eventId!,
+              projectId: game.id,
+              eventType: "released",
+              actorUserId: owner.ownerId,
+              note: null,
+              source: "onboarding",
+              createdAt: new Date().toISOString(),
+            },
+          ]);
+        }
+      }
+
+      if (finalGame.visibility !== "private") {
         void reloadPublicCatalog().catch(() => undefined);
       }
-      if (isGamePublic(game)) {
+      if (isGamePublic(finalGame)) {
         void notifyDeveloperFollowersOfNewProject(supabase, {
           ownerUserId: owner.ownerId,
           projectId: game.id,
-          projectTitle: game.title,
+          projectTitle: finalGame.title,
           developerName: owner.ownerName,
         }).catch(() => undefined);
       }
@@ -768,7 +799,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       } catch {
         // Project post succeeded; developer-wide social defaults are best-effort.
       }
-      return game;
+      return finalGame;
     },
     [reloadPublicCatalog],
   );
@@ -819,10 +850,33 @@ export function GamesProvider({ children }: { children: ReactNode }) {
 
       const game = await updateProjectDetailsInDb(supabase, id, data);
       warnProjectDetailsDbPayloadMismatch(id, data, game);
-      const merged = applyProjectDetailsPayloadToGame(
+      let merged = applyProjectDetailsPayloadToGame(
         mergeGameWithExtras(game),
         data,
       );
+
+      if (data.declareAlreadyReleased) {
+        const onboardingResult = await declareProjectReleasedOnboardingInDb(
+          supabase,
+          id,
+        );
+        merged = { ...merged, releaseStatus: "released" };
+        if (!onboardingResult.alreadyReleased && onboardingResult.eventId && user) {
+          setReleaseEvents((prev) => [
+            ...prev,
+            {
+              id: onboardingResult.eventId!,
+              projectId: id,
+              eventType: "released",
+              actorUserId: user.id,
+              note: null,
+              source: "onboarding",
+              createdAt: new Date().toISOString(),
+            },
+          ]);
+        }
+      }
+
       setSubmittedGames((prev) => upsertGameInList(prev, merged));
       setPublicGames((prev) => {
         if (merged.visibility !== "public") {
@@ -850,7 +904,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         })();
       }
     },
-    [reloadPublicCatalog],
+    [reloadPublicCatalog, user],
   );
 
   const updateProjectOverview = useCallback(
@@ -2058,6 +2112,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         eventType: "released",
         actorUserId: user.id,
         note,
+        source: "studio",
       });
 
       setReleaseEvents((prev) => [...prev, event]);
@@ -2077,6 +2132,51 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       }
     },
     [getDevlogsByProject, getSubmittedGameById, isProjectOwner, user],
+  );
+
+  const declareProjectReleasedOnboarding = useCallback(
+    async (projectId: string) => {
+      if (!user || !isProjectOwner(projectId, user.id)) {
+        throw new Error("Owner only");
+      }
+
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      const onboardingResult = await declareProjectReleasedOnboardingInDb(
+        supabase,
+        projectId,
+      );
+
+      setSubmittedGames((prev) =>
+        prev.map((entry) =>
+          entry.id === projectId ? { ...entry, releaseStatus: "released" } : entry,
+        ),
+      );
+      setPublicGames((prev) =>
+        prev.map((entry) =>
+          entry.id === projectId ? { ...entry, releaseStatus: "released" } : entry,
+        ),
+      );
+
+      if (!onboardingResult.alreadyReleased && onboardingResult.eventId) {
+        setReleaseEvents((prev) => [
+          ...prev,
+          {
+            id: onboardingResult.eventId!,
+            projectId,
+            eventType: "released",
+            actorUserId: user.id,
+            note: null,
+            source: "onboarding",
+            createdAt: new Date().toISOString(),
+          },
+        ]);
+      }
+    },
+    [isProjectOwner, user],
   );
 
   const declareProjectReleaseReopened = useCallback(
@@ -2416,6 +2516,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       getDevlogsByProject,
       getReleaseEventsForProject,
       declareProjectReleased,
+      declareProjectReleasedOnboarding,
       declareProjectReleaseReopened,
       hasDevlogs,
       addDevlog,
@@ -2504,6 +2605,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       getDevlogsByProject,
       getReleaseEventsForProject,
       declareProjectReleased,
+      declareProjectReleasedOnboarding,
       declareProjectReleaseReopened,
       hasDevlogs,
       addDevlog,

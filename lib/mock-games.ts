@@ -33,6 +33,12 @@ export type Game = {
   focusNotes?: string;
   playableVersion?: string;
   releaseStatus?: "in_development" | "released" | "release_reopened";
+  playAccessType?:
+    | "unspecified"
+    | "free"
+    | "demo_available"
+    | "paid"
+    | "other";
   overviewIntroduction?: string | null;
   overviewFeatures?: ProjectOverviewFeature[] | null;
 };

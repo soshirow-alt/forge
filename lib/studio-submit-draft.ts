@@ -8,18 +8,24 @@ import type { ForgeGenreOption } from "@/lib/forge-genre-options";
 import type { GameDetailPlayerMeta } from "@/lib/game-detail-player-meta";
 import type { GameDetailV0 } from "@/lib/game-detail-v0-mock-data";
 import type { Game } from "@/lib/mock-games";
+import {
+  getCompletedProductBadge,
+  getPlayAccessPlayerBadge,
+} from "@/lib/game-player-display";
+import { getPlayAccessBadgeLabel } from "@/lib/play-access-type";
 import { PLAY_TIME_OPTIONS } from "@/lib/play-time-options";
 import {
   EMPTY_PLAY_ENVIRONMENT_FORM,
   mergePlayEnvironmentIntoTags,
   type PlayEnvironmentFormState,
 } from "@/lib/play-environment";
-import type { SubmitFormData } from "@/lib/project-form";
+import type { SubmitPlayAccessType } from "@/lib/play-access-type";
 import {
   genresToLegacyGenreColumn,
   sanitizeProjectGenresForSave,
 } from "@/lib/project-genres";
 import { DEFAULT_PLAYABLE_VERSION } from "@/lib/playable-version";
+import type { SubmitFormData } from "@/lib/project-form";
 import type { ProjectVisibility } from "@/lib/project-visibility";
 import {
   createEmptyPromptDraft,
@@ -80,6 +86,8 @@ export type SubmitDraftState = {
   visibility: ProjectVisibility;
   promptMode: "none" | "custom";
   promptDrafts: DeveloperPromptDraft[];
+  playAccessType: SubmitPlayAccessType;
+  declareAlreadyReleased: boolean;
 };
 
 export type SubmitDraftOwner = {
@@ -110,6 +118,8 @@ export function createEmptySubmitDraft(): SubmitDraftState {
     visibility: "public",
     promptMode: "none",
     promptDrafts: [createEmptyPromptDraft()],
+    playAccessType: "free",
+    declareAlreadyReleased: false,
   };
 }
 
@@ -154,7 +164,8 @@ export function buildDraftGame(
     githubUrl: draft.githubUrl.trim() || undefined,
     visibility: draft.visibility,
     playableVersion: DEFAULT_PLAYABLE_VERSION,
-    releaseStatus: "in_development",
+    releaseStatus: draft.declareAlreadyReleased ? "released" : "in_development",
+    playAccessType: draft.playAccessType,
     overviewFeatures: null,
   };
 }
@@ -211,12 +222,18 @@ export function resolveSubmitDraftPreviewPlayerMeta(
   const phase = draft.phase.trim();
   const playTime = draft.estimatedPlayTime.trim();
   const distribution = draft.playEnvironment.distribution;
+  const releaseBadge = draft.declareAlreadyReleased ? getCompletedProductBadge() : null;
+  const playAccessBadge = getPlayAccessPlayerBadge(draft.playAccessType);
 
   return {
     phaseLabel: phase ? displayPhase(phase) : SUBMIT_DRAFT_PHASE_PLACEHOLDER,
     phaseDescription: phase
       ? getPhasePlayerDescription(phase)
       : "右パネルで開発フェーズを設定できます",
+    releaseBadgeLabel: releaseBadge?.label ?? null,
+    releaseBadgeEmoji: releaseBadge?.emoji,
+    releaseBadgeTone: releaseBadge?.tone === "completed" ? "completed" : undefined,
+    playAccessBadgeLabel: playAccessBadge?.label ?? getPlayAccessBadgeLabel(draft.playAccessType),
     estimatedPlayTime: playTime || null,
     environmentLabels: ["公開先未設定"],
     playInfo: {
@@ -263,6 +280,8 @@ export function draftToSubmitFormData(
     youtubeUrl: draft.youtubeUrl.trim() || undefined,
     githubUrl: draft.githubUrl.trim() || undefined,
     visibility: draft.visibility,
+    playAccessType: draft.playAccessType,
+    declareAlreadyReleased: draft.declareAlreadyReleased,
   };
 }
 

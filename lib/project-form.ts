@@ -22,6 +22,9 @@ export type SubmitFormData = {
   xUrl?: string;
   youtubeUrl?: string;
   visibility?: "public" | "private";
+  playAccessType?: "free" | "demo_available" | "paid" | "other";
+  /** Submit/edit only — triggers onboarding release after save when true and not yet released */
+  declareAlreadyReleased?: boolean;
 };
 
 export type ProjectEditFormData = {
@@ -44,4 +47,7 @@ export type ProjectEditFormData = {
   xUrl?: string;
   youtubeUrl?: string;
   visibility: "public" | "private";
+  playAccessType?: "free" | "demo_available" | "paid" | "other";
+  /** Edit only — triggers onboarding release after save when true and not yet released */
+  declareAlreadyReleased?: boolean;
 };

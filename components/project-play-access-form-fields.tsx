@@ -1,0 +1,60 @@
+"use client";
+
+import {
+  SUBMIT_PLAY_ACCESS_OPTIONS,
+  type SubmitPlayAccessType,
+} from "@/lib/play-access-type";
+
+type ProjectPlayAccessFormFieldsProps = {
+  value: SubmitPlayAccessType | "";
+  onChange: (value: SubmitPlayAccessType) => void;
+  radioName?: string;
+  required?: boolean;
+  showUnspecifiedHint?: boolean;
+};
+
+export function ProjectPlayAccessFormFields({
+  value,
+  onChange,
+  radioName = "play-access-type",
+  required = true,
+  showUnspecifiedHint = false,
+}: ProjectPlayAccessFormFieldsProps) {
+  return (
+    <fieldset className="space-y-3">
+      <legend className="text-sm font-medium text-zinc-400">プレイ条件</legend>
+      <p className="text-xs text-zinc-600">
+        プレイヤーに、遊ぶ前の前提が伝わるように設定してください。
+      </p>
+      {showUnspecifiedHint ? (
+        <p className="text-xs text-amber-400/90">未設定 — いずれかを選んでください。</p>
+      ) : null}
+      <div className="space-y-2">
+        {SUBMIT_PLAY_ACCESS_OPTIONS.map((option) => (
+          <label
+            key={option.value}
+            className={`flex cursor-pointer gap-3 rounded-lg border px-3 py-3 transition-colors ${
+              value === option.value
+                ? "border-orange-500/40 bg-orange-500/5"
+                : "border-zinc-800 bg-zinc-950/50"
+            }`}
+          >
+            <input
+              type="radio"
+              name={radioName}
+              required={required}
+              value={option.value}
+              checked={value === option.value}
+              onChange={() => onChange(option.value)}
+              className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+            />
+            <span>
+              <span className="block text-sm font-medium text-zinc-300">{option.label}</span>
+              <span className="mt-0.5 block text-xs text-zinc-600">{option.hint}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}

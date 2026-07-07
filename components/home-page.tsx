@@ -18,6 +18,10 @@ import {
   type SortOption,
 } from "@/lib/game-filters";
 import { displayPhase } from "@/lib/development-phases";
+import {
+  getDiscoveryCardBadges,
+  getDiscoveryCardPhaseLabel,
+} from "@/lib/game-player-display";
 import { DiscoveryFilterChips } from "@/components/discovery-filter-chips";
 import { GameActivityBadges } from "@/components/game-activity-badges";
 import { PlayEnvironmentBadges } from "@/components/play-environment-badges";
@@ -68,7 +72,7 @@ const sortOptions: { value: SortOption; label: string }[] = [
 const inputClassName =
   "w-full rounded-xl border border-zinc-700/80 bg-zinc-900/80 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 backdrop-blur-sm focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
 
-type BadgeVariant = "new" | "play" | "update" | "phase" | "trending" | "firstPublish";
+type BadgeVariant = "new" | "play" | "update" | "phase" | "trending" | "firstPublish" | "completed" | "play-access" | "reopened";
 
 const badgeStyles: Record<BadgeVariant, string> = {
   new: "border-orange-500/35 bg-orange-500/10 text-orange-300",
@@ -78,6 +82,9 @@ const badgeStyles: Record<BadgeVariant, string> = {
   update: "border-amber-500/35 bg-amber-500/10 text-amber-300",
   phase: "border-zinc-600/50 bg-zinc-950/70 text-zinc-300",
   trending: "border-rose-500/35 bg-rose-500/10 text-rose-300",
+  completed: "border-amber-500/35 bg-amber-500/10 text-amber-200",
+  "play-access": "border-zinc-600/50 bg-zinc-950/70 text-zinc-300",
+  reopened: "border-sky-500/35 bg-sky-500/10 text-sky-200",
 };
 
 function DiscoveryBadge({
@@ -110,6 +117,17 @@ function DiscoveryGameCard({
   const { hasDevlogs } = useGames();
   const playLabel = getPlayTypeLabel(game.playUrl);
   const hasUpdate = hasDevlogs(game.id);
+  const discoveryBadges = getDiscoveryCardBadges(game);
+  const phaseLabel = getDiscoveryCardPhaseLabel(game);
+
+  function badgeVariantForTone(
+    tone: ReturnType<typeof getDiscoveryCardBadges>[number]["tone"],
+  ): BadgeVariant {
+    if (tone === "completed") return "completed";
+    if (tone === "reopened") return "reopened";
+    if (tone === "play-access") return "play-access";
+    return "phase";
+  }
 
   return (
     <article
@@ -133,7 +151,7 @@ function DiscoveryGameCard({
             projectId={game.id}
             title={game.title}
             genre={game.genre}
-            phase={displayPhase(game.phase)}
+            phase={phaseLabel ?? displayPhase(game.phase)}
             showStatus={false}
           />
           <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
@@ -143,10 +161,21 @@ function DiscoveryGameCard({
             {showTrendingBadge && (
               <DiscoveryBadge variant="trending">急上昇</DiscoveryBadge>
             )}
+            {discoveryBadges.map((badge) => (
+              <DiscoveryBadge
+                key={badge.id}
+                variant={badgeVariantForTone(badge.tone)}
+              >
+                {badge.emoji ? `${badge.emoji} ` : ""}
+                {badge.label}
+              </DiscoveryBadge>
+            ))}
           </div>
-          <div className="absolute bottom-3 left-3">
-            <DiscoveryBadge variant="phase">{displayPhase(game.phase)}</DiscoveryBadge>
-          </div>
+          {phaseLabel ? (
+            <div className="absolute bottom-3 left-3">
+              <DiscoveryBadge variant="phase">{phaseLabel}</DiscoveryBadge>
+            </div>
+          ) : null}
         </div>
 
         <div className="relative p-5">

@@ -64,6 +64,8 @@ function TagPill({ children }: { children: React.ReactNode }) {
 const screenshotPlayerMeta: GameDetailPlayerMeta = {
   phaseLabel: "通しプレイ版",
   phaseDescription: "最初から最後まで一通りプレイできる版です。",
+  releaseBadgeLabel: null,
+  playAccessBadgeLabel: null,
   estimatedPlayTime: "30分〜1時間",
   environmentLabels: ["ブラウザ"],
   playInfo: {

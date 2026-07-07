@@ -5,12 +5,15 @@ export type ProjectReleaseStatus =
 
 export type ProjectReleaseEventType = "released" | "release_reopened";
 
+export type ProjectReleaseEventSource = "studio" | "onboarding";
+
 export type ProjectReleaseEvent = {
   id: string;
   projectId: string;
   eventType: ProjectReleaseEventType;
   actorUserId: string;
   note: string | null;
+  source: ProjectReleaseEventSource;
   createdAt: string;
 };
 

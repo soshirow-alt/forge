@@ -12,6 +12,7 @@ const OPTIONAL_PROJECT_COLUMNS = [
   "youtube_url",
   "playable_version",
   "release_status",
+  "play_access_type",
 ] as const;
 
 export function getMissingProjectColumn(error: unknown): string | null {

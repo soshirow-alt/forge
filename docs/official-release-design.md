@@ -176,7 +176,21 @@ Forge は **現在状態** ではなく **育成履歴** を評価する。
 
 ---
 
-## 8. 関連 doc
+## 9. スコープイン（2026-07-08）
+
+投稿/編集フォームから「すでに正式版として公開済み」を申告できる。詳細は `docs/formal-release-scope-in-design.md`。
+
+| 項目 | 方針 |
+|---|---|
+| 正式版公開済み | `phase` ではなく `release_status` / `project_release_events` |
+| onboarding 入口 | `source = onboarding`、devlog/playable 不要、**フォロワー通知なし** |
+| Studio 入口 | `source = studio`（既存）、バリデーション・通知は現行維持 |
+| v1 取り消し | 通常編集画面では不可。Studio Release Reopened は維持 |
+| プレイ条件 | `projects.play_access_type`（default `unspecified`）、掲載ゲートではない |
+
+migration: `046_formal_release_scope_in.sql`
+
+---
 
 - `docs/player-badges-design-review.md`
 - `docs/forge-principles.md`

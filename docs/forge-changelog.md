@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-07-08 — 正式版スコープイン（投稿時申告・プレイ条件）
+
+- **三軸の分離** — 開発フェーズ（`phase`）/ 正式版公開済み（`release_status` + events）/ プレイ条件（`play_access_type`）を投稿・編集フォームで別入力
+- **正式版公開済み（onboarding）** — 投稿・編集でチェック → 保存前確認モーダル → `source=onboarding` で event 作成。**フォロワー通知なし**、devlog/playable 不要。v1 では通常編集で取り消し不可
+- **Studio 正式版宣言** — 現行維持（`source=studio`、devlog + playable 必須、フォロワー通知あり）
+- **プレイ条件** — 無料 / 体験版あり / 有料 / その他。既存作品は `unspecified`（バッジ非表示）。新規投稿は UI 初期値 `free`
+- **表示** — 完成品バッジ優先、料金バッジ、CTA 文言変更、発見フィルタにプレイ条件追加
+- **migration** — `046_formal_release_scope_in.sql`（Dashboard 適用はオーナー GO 後）
+- **設計** — `docs/formal-release-scope-in-design.md`
+
+---
+
 ## 2026-07-07 — 開発フェーズ表示ラベル更新（α版 / β版 / 正式版候補）
 
 - **開発フェーズ（表示のみ）** — DB値 `projects.phase` は変更なし。プレイヤー・作者向けラベルを更新

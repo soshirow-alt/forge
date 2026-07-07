@@ -10,6 +10,7 @@ import {
 } from "@/lib/project-overview";
 import type { ProjectRow } from "@/lib/supabase/schema";
 import { writeProjectRowWithSchemaFallback } from "@/lib/supabase/project-write-compat";
+import { normalizePlayAccessType } from "@/lib/play-access-type";
 import type { ProjectEditFormData, SubmitFormData } from "@/lib/project-form";
 import {
   genresToLegacyGenreColumn,
@@ -62,6 +63,7 @@ export function projectRowToGame(row: ProjectRow): Game {
     visibility: row.visibility,
     playableVersion: row.playable_version ?? DEFAULT_PLAYABLE_VERSION,
     releaseStatus: row.release_status ?? "in_development",
+    playAccessType: normalizePlayAccessType(row.play_access_type),
     estimatedPlayTime: row.estimated_play_time ?? undefined,
   };
 }
@@ -110,6 +112,9 @@ function submitFormToInsertRow(
     visibility: data.visibility ?? ("public" as const),
     playable_version: DEFAULT_PLAYABLE_VERSION,
     estimated_play_time: data.estimatedPlayTime ?? null,
+    ...(data.playAccessType
+      ? { play_access_type: data.playAccessType }
+      : {}),
   };
 }
 
@@ -252,6 +257,9 @@ export async function updateProjectFromSubmitForm(
       official_url: normalizeExternalUrlForDb(data.officialUrl),
       x_url: normalizeExternalUrlForDb(data.xUrl),
       youtube_url: normalizeExternalUrlForDb(data.youtubeUrl),
+      ...(data.playAccessType
+        ? { play_access_type: data.playAccessType }
+        : {}),
     },
   );
 
@@ -290,6 +298,9 @@ export async function updateProjectDetailsInDb(
       x_url: normalizeExternalUrlForDb(data.xUrl),
       youtube_url: normalizeExternalUrlForDb(data.youtubeUrl),
       visibility: data.visibility,
+      ...(data.playAccessType
+        ? { play_access_type: data.playAccessType }
+        : {}),
     },
   );
 

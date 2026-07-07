@@ -28,6 +28,12 @@ export type ProjectRow = {
   visibility: "public" | "private";
   playable_version?: string;
   release_status?: "in_development" | "released" | "release_reopened";
+  play_access_type?:
+    | "unspecified"
+    | "free"
+    | "demo_available"
+    | "paid"
+    | "other";
   estimated_play_time?: string | null;
   created_at: string;
   updated_at: string;

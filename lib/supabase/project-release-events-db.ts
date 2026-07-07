@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   ProjectReleaseEvent,
+  ProjectReleaseEventSource,
   ProjectReleaseEventType,
   ProjectReleaseStatus,
 } from "@/lib/project-release-state";
@@ -12,6 +13,7 @@ type ReleaseEventRow = {
   event_type: ProjectReleaseEventType;
   actor_user_id: string;
   note: string | null;
+  source?: ProjectReleaseEventSource | null;
   created_at: string;
 };
 
@@ -22,6 +24,7 @@ function rowToEvent(row: ReleaseEventRow): ProjectReleaseEvent {
     eventType: row.event_type,
     actorUserId: row.actor_user_id,
     note: row.note,
+    source: row.source ?? "studio",
     createdAt: row.created_at,
   };
 }
@@ -38,7 +41,8 @@ export function isReleaseEventsTableMissingError(error: unknown): boolean {
 
   return (
     (message.includes("project_release_events") ||
-      message.includes("release_status")) &&
+      message.includes("release_status") ||
+      message.includes("declare_project_released_onboarding")) &&
     (message.includes("does not exist") || message.includes("Could not find"))
   );
 }
@@ -110,6 +114,7 @@ export type InsertReleaseEventInput = {
   eventType: ProjectReleaseEventType;
   actorUserId: string;
   note?: string | null;
+  source?: ProjectReleaseEventSource;
 };
 
 export async function insertProjectReleaseEvent(
@@ -125,6 +130,7 @@ export async function insertProjectReleaseEvent(
       event_type: input.eventType,
       actor_user_id: input.actorUserId,
       note: input.note?.trim() || null,
+      source: input.source ?? "studio",
     })
     .select("*")
     .single();
@@ -143,6 +149,36 @@ export async function insertProjectReleaseEvent(
   }
 
   return rowToEvent(eventRow as ReleaseEventRow);
+}
+
+export type OnboardingReleaseResult = {
+  alreadyReleased: boolean;
+  eventId?: string;
+};
+
+export async function declareProjectReleasedOnboardingInDb(
+  supabase: SupabaseClient,
+  projectId: string,
+): Promise<OnboardingReleaseResult> {
+  const { data, error } = await supabase.rpc("declare_project_released_onboarding", {
+    p_project_id: projectId,
+  });
+
+  if (error) {
+    if (isReleaseEventsTableMissingError(error)) {
+      throw new Error(
+        "正式版公開済みの登録に必要なデータベース更新が未適用です。時間をおいて再度お試しください。",
+      );
+    }
+    throw error;
+  }
+
+  const payload = data as { already_released?: boolean; event_id?: string } | null;
+
+  return {
+    alreadyReleased: Boolean(payload?.already_released),
+    eventId: payload?.event_id,
+  };
 }
 
 export async function fetchProjectReleaseStatus(

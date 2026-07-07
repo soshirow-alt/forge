@@ -73,6 +73,7 @@ import {
 } from "@/lib/watch-ui-labels";
 import { useProjectOverviewV0 } from "@/hooks/use-project-overview-v0";
 import { formatDevlogPublishedAt } from "@/hooks/use-game-devlogs-v0";
+import { getPrimaryPlayCtaLabel } from "@/lib/game-player-display";
 import { useProjectPublicStats } from "@/hooks/use-project-public-stats";
 import { resolveGameDetailPlayerMeta } from "@/lib/game-detail-player-meta";
 import { resolveProjectGenres } from "@/lib/project-genres";
@@ -300,6 +301,10 @@ function GameDetailV0PageBody({
   );
   const primaryPlayUrl = useMemo(
     () => resolvePrimaryPlayUrl(playSourceGame),
+    [playSourceGame],
+  );
+  const primaryPlayCtaLabel = useMemo(
+    () => (playSourceGame ? getPrimaryPlayCtaLabel(playSourceGame) : "プレイする"),
     [playSourceGame],
   );
   const hasPlayDestination = Boolean(primaryPlayUrl);
@@ -866,7 +871,7 @@ function GameDetailV0PageBody({
                   className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
                 >
                   <Play className="size-4" aria-hidden="true" />
-                  プレイする
+                  {primaryPlayCtaLabel}
                 </a>
               ) : (
                 <button
@@ -880,7 +885,7 @@ function GameDetailV0PageBody({
                 >
                   <Play className="size-4" aria-hidden="true" />
                   {hydrated && (isLoggedIn || isGuestEntry)
-                    ? "プレイする"
+                    ? primaryPlayCtaLabel
                     : "ログインしてプレイ"}
                 </button>
               )}

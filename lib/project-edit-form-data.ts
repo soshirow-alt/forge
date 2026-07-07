@@ -1,5 +1,6 @@
 import type { ProjectEditFormData } from "@/lib/project-form";
 import { pickFeatureTagsFromGameTags, sanitizeFeatureTagsForSave } from "@/lib/forge-feature-tag-options";
+import { isSpecifiedPlayAccessType } from "@/lib/play-access-type";
 import {
   pickForgeGenresFromList,
   resolveProjectGenres,
@@ -43,5 +44,8 @@ export function buildProjectEditFormDataFromGame(game: Game): ProjectEditFormDat
     xUrl: game.xUrl,
     youtubeUrl: game.youtubeUrl,
     visibility: game.visibility ?? "public",
+    ...(isSpecifiedPlayAccessType(game.playAccessType)
+      ? { playAccessType: game.playAccessType }
+      : {}),
   };
 }

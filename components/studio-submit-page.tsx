@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { ProjectAlreadyReleasedConfirmModal } from "@/components/project-already-released-confirm-modal";
 import { StudioSubmitPlayerPreview } from "@/components/studio-submit-player-preview";
 import { StudioShell } from "@/components/studio-shell";
 import { StudioMypageBackLink } from "@/components/studio-mypage-back-link";
@@ -42,6 +43,7 @@ export function StudioSubmitPage() {
   const [successState, setSuccessState] = useState<SubmitDraftSuccessResult | null>(
     null,
   );
+  const [releaseConfirmOpen, setReleaseConfirmOpen] = useState(false);
   const socialPrefillDoneRef = useRef(false);
 
   const developerProfile = user ? getDeveloperProfileByUserId(user.id) : undefined;
@@ -124,17 +126,13 @@ export function StudioSubmitPage() {
     socialPrefillDoneRef.current = false;
   }
 
-  async function handleSubmit() {
+  async function performSubmit() {
     if (!user) {
       router.push("/login");
       return;
     }
 
-    setSubmitError(null);
-    setShowPromptValidation(false);
-    setFocusEditMode(null);
     setSubmitting(true);
-
     const result = await submitDraft(draft, user);
     if (!result.ok) {
       setSubmitError(result.message);
@@ -153,6 +151,39 @@ export function StudioSubmitPage() {
 
     setSuccessState(result);
     setSubmitting(false);
+    setReleaseConfirmOpen(false);
+  }
+
+  async function handleSubmit() {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    setSubmitError(null);
+    setShowPromptValidation(false);
+    setFocusEditMode(null);
+
+    const validation = validateSubmitDraftForPost(draft);
+    if (!validation.ok) {
+      setSubmitError(validation.message);
+      if (validation.editMode) {
+        setFocusEditMode(validation.editMode);
+        setFailedEditMode(validation.editMode);
+      }
+      if (draft.promptMode === "custom") {
+        setShowPromptValidation(true);
+      }
+      return;
+    }
+
+    if (draft.declareAlreadyReleased) {
+      setReleaseConfirmOpen(true);
+      return;
+    }
+
+    setSubmitting(true);
+    await performSubmit();
   }
 
   if (!hydrated || !user || !submitOwner) {
@@ -212,6 +243,13 @@ export function StudioSubmitPage() {
           onFocusEditModeHandled={() => setFocusEditMode(null)}
         />
       </div>
+
+      <ProjectAlreadyReleasedConfirmModal
+        open={releaseConfirmOpen}
+        busy={submitting}
+        onCancel={() => setReleaseConfirmOpen(false)}
+        onConfirm={() => void performSubmit()}
+      />
     </StudioShell>
   );
 }
