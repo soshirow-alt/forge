@@ -1,23 +1,30 @@
 export const DEVELOPMENT_PHASE_OPTIONS = [
   {
     value: "試作版",
-    hint: "操作感や面白さの確認向け。章やステージの一部だけ遊べる段階",
-    playerDescription: "一部だけ遊べます",
+    label: "試作版",
+    hint: "操作感や面白さを試している段階。一部だけ遊べる場合があります。",
+    playerDescription:
+      "操作感や面白さを試している段階。一部だけ遊べる場合があります。",
   },
   {
     value: "プレイ可能版",
-    hint: "コアは遊べるが、通しではない。主要部分の体験ができる段階",
-    playerDescription: "主要部分は遊べますが、通しではありません",
+    label: "α版",
+    hint: "主要な体験は遊べるが、未実装・未調整の要素が残っている段階。",
+    playerDescription:
+      "主要な体験は遊べるが、未実装・未調整の要素が残っている段階。",
   },
   {
     value: "通しプレイ版",
-    hint: "最後までクリア可能。バランス・バグ・UX のテスト向け",
-    playerDescription: "最後まで遊べます。調整・バグ修正中です",
+    label: "β版",
+    hint: "最後まで遊べる状態。バランス・バグ・UXの確認中。",
+    playerDescription: "最後まで遊べる状態。バランス・バグ・UXの確認中。",
   },
   {
     value: "公開準備中",
-    hint: "ほぼ完成。最終調整と仕上げのテスト向け",
-    playerDescription: "ほぼ完成verに近い体験ができます",
+    label: "正式版候補",
+    hint: "正式版に近い状態。大きな問題がなければ、正式版として公開する予定の段階。",
+    playerDescription:
+      "正式版に近い状態。大きな問題がなければ、正式版として公開する予定の段階。",
   },
 ] as const;
 
@@ -32,8 +39,16 @@ const PLAYER_DESCRIPTION_BY_PHASE: Record<DevelopmentPhase, string> =
     ]),
   ) as Record<DevelopmentPhase, string>;
 
+const LABEL_BY_PHASE: Record<DevelopmentPhase, string> = Object.fromEntries(
+  DEVELOPMENT_PHASE_OPTIONS.map((option) => [option.value, option.label]),
+) as Record<DevelopmentPhase, string>;
+
 export function displayPhase(phase: string): string {
-  return normalizePhase(phase);
+  const normalized = normalizePhase(phase);
+  if (isCanonicalPhase(normalized)) {
+    return LABEL_BY_PHASE[normalized];
+  }
+  return normalized;
 }
 
 export function normalizePhase(phase: string): DevelopmentPhase | string {
@@ -55,7 +70,8 @@ export function normalizePhase(phase: string): DevelopmentPhase | string {
 
   if (
     value.includes("公開準備") ||
-    value.includes("公開間近")
+    value.includes("公開間近") ||
+    value.includes("正式版候補")
   ) {
     return "公開準備中";
   }

@@ -41,7 +41,7 @@ export function ProjectPhaseFormFields({
               className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
             />
             <span>
-              <span className="block text-sm font-medium text-zinc-300">{option.value}</span>
+              <span className="block text-sm font-medium text-zinc-300">{option.label}</span>
               <span className="mt-0.5 block text-xs text-zinc-600">{option.hint}</span>
             </span>
           </label>

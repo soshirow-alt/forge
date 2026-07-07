@@ -12,6 +12,7 @@ import {
   type PlayTimeFilter,
   hasActiveChipFilters,
 } from "@/lib/discovery-filters";
+import { displayPhase } from "@/lib/development-phases";
 
 type DiscoveryFilterChipsProps = {
   filters: DiscoveryChipFilters;
@@ -48,11 +49,13 @@ function FilterGroup<T extends string>({
   options,
   selected,
   onToggle,
+  labelForOption,
 }: {
   title: string;
   options: readonly T[];
   selected: T[];
   onToggle: (value: T) => void;
+  labelForOption?: (value: T) => string;
 }) {
   return (
     <div>
@@ -61,7 +64,7 @@ function FilterGroup<T extends string>({
         {options.map((option) => (
           <FilterChip
             key={option}
-            label={option}
+            label={labelForOption ? labelForOption(option) : option}
             active={selected.includes(option)}
             onClick={() => onToggle(option)}
           />
@@ -120,6 +123,7 @@ export function DiscoveryFilterChips({
           options={PHASE_FILTER_OPTIONS}
           selected={filters.phases}
           onToggle={togglePhase}
+          labelForOption={displayPhase}
         />
         <FilterGroup
           title="想定プレイ時間"
