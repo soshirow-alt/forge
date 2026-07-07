@@ -119,6 +119,7 @@ export const GameDetailOverviewV0Tab = forwardRef<
   mutedIntroduction?: boolean;
   /** Studio 編集プレビュー — 未保存の作品紹介を左プレビューへ反映 */
   onIntroductionDraftChange?: (introduction: string) => void;
+  onEditTarget?: (target: import("@/lib/studio-preview-edit-targets").StudioPreviewEditTarget) => void;
 }
 >(function GameDetailOverviewV0Tab(
   {
@@ -142,6 +143,7 @@ export const GameDetailOverviewV0Tab = forwardRef<
   showUnsetPlayPlaceholders = false,
   mutedIntroduction = false,
   onIntroductionDraftChange,
+  onEditTarget,
 },
   ref,
 ) {
@@ -277,6 +279,7 @@ export const GameDetailOverviewV0Tab = forwardRef<
         mutedIntroduction={mutedIntroduction}
         onFeedback={onFeedback}
         feedbackCtaLabel={feedbackCtaLabel}
+        onEditTarget={onEditTarget}
       />
     );
   }

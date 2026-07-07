@@ -1,6 +1,8 @@
 "use client";
 
+import { StudioPreviewEditTarget } from "@/components/studio-preview-edit-target";
 import type { GameDetailPlayerMeta } from "@/lib/game-detail-player-meta";
+import type { StudioPreviewEditTarget as StudioPreviewEditTargetId } from "@/lib/studio-preview-edit-targets";
 
 function MetaBadge({
   label,
@@ -33,33 +35,48 @@ function MetaBadge({
 export function GameDetailPhaseBadge({
   meta,
   muted = false,
+  onEditTarget,
 }: {
   meta: GameDetailPlayerMeta;
   muted?: boolean;
+  onEditTarget?: (target: StudioPreviewEditTargetId) => void;
 }) {
-  return (
-    <span className="inline-flex flex-wrap items-center gap-1.5">
-      {meta.releaseBadgeLabel ? (
+  const releaseBadge =
+    meta.releaseBadgeLabel ? (
+      <StudioPreviewEditTarget target="already-released" onEditTarget={onEditTarget} inline>
         <MetaBadge
           label={meta.releaseBadgeLabel}
           emoji={meta.releaseBadgeEmoji}
           tone={meta.releaseBadgeTone ?? "completed"}
         />
-      ) : null}
-      {meta.playAccessBadgeLabel ? (
-        <MetaBadge label={meta.playAccessBadgeLabel} tone="play-access" />
-      ) : null}
-      {meta.phaseLabel ? (
-        <span
-          className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold ${
-            muted || meta.releaseBadgeLabel
-              ? "border-zinc-700/60 bg-zinc-900/50 text-zinc-500"
-              : "border-violet-500/35 bg-violet-500/10 text-violet-200"
-          }`}
-        >
-          {meta.phaseLabel}
-        </span>
-      ) : null}
+      </StudioPreviewEditTarget>
+    ) : null;
+
+  const playAccessBadge = meta.playAccessBadgeLabel ? (
+    <StudioPreviewEditTarget target="play-access" onEditTarget={onEditTarget} inline>
+      <MetaBadge label={meta.playAccessBadgeLabel} tone="play-access" />
+    </StudioPreviewEditTarget>
+  ) : null;
+
+  const phaseBadge = meta.phaseLabel ? (
+    <StudioPreviewEditTarget target="phase" onEditTarget={onEditTarget} inline>
+      <span
+        className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold ${
+          muted || meta.releaseBadgeLabel
+            ? "border-zinc-700/60 bg-zinc-900/50 text-zinc-500"
+            : "border-violet-500/35 bg-violet-500/10 text-violet-200"
+        }`}
+      >
+        {meta.phaseLabel}
+      </span>
+    </StudioPreviewEditTarget>
+  ) : null;
+
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1.5">
+      {releaseBadge}
+      {playAccessBadge}
+      {phaseBadge}
     </span>
   );
 }

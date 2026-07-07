@@ -29,9 +29,13 @@ import {
   studioOperationPanelAsideClassName,
   studioOperationPanelBlockClassName,
   studioOperationPanelGroupLabelClassName,
+  studioOperationPanelGuidanceClassName,
   studioOperationPanelHeaderAccentClassName,
   studioOperationPanelOuterClassName,
+  studioOperationPanelScrollBodyClassName,
+  studioOperationPanelScrollClassName,
 } from "@/lib/studio-operation-panel-styles";
+import type { StudioFieldId, StudioPanelFocusRequest } from "@/lib/studio-preview-edit-targets";
 
 const panelButtonClassName =
   "inline-flex w-full items-center gap-2 rounded-lg border border-zinc-800/60 bg-zinc-950/40 px-3 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70 hover:text-zinc-100";
@@ -101,8 +105,24 @@ function SubmitValidationAlert({ message }: { message: string }) {
   );
 }
 
+function StudioPanelScrollShell({ children }: { children: ReactNode }) {
+  return (
+    <div className={studioOperationPanelScrollClassName}>
+      <div className={studioOperationPanelScrollBodyClassName}>{children}</div>
+    </div>
+  );
+}
+
 function GroupLabel({ children }: { children: ReactNode }) {
   return <p className={studioOperationPanelGroupLabelClassName}>{children}</p>;
+}
+
+function StudioPanelGuidance() {
+  return (
+    <p className={studioOperationPanelGuidanceClassName}>
+      右の項目を編集すると、左の公開ページプレビューに反映されます。左のプレビュー上の項目をクリックして、対応する入力欄へ移動することもできます。
+    </p>
+  );
 }
 
 export type StudioSubmitPanelProps = {
@@ -114,6 +134,8 @@ export type StudioSubmitPanelProps = {
   showPromptValidation: boolean;
   focusEditMode?: SubmitValidationEditMode | null;
   onFocusEditModeHandled?: () => void;
+  panelFocus?: StudioPanelFocusRequest | null;
+  onPanelFocusHandled?: () => void;
 };
 
 export function StudioSubmitPanel({
@@ -125,8 +147,11 @@ export function StudioSubmitPanel({
   showPromptValidation,
   focusEditMode = null,
   onFocusEditModeHandled,
+  panelFocus = null,
+  onPanelFocusHandled,
 }: StudioSubmitPanelProps) {
   const [editMode, setEditMode] = useState<SubmitEditMode>(null);
+  const [highlightFieldId, setHighlightFieldId] = useState<StudioFieldId | null>(null);
   const visibilityLabel = getVisibilityBadgeLabel(draft.visibility);
   const promptSummary = summarizeVersionPromptSettings(draft.promptMode, draft.promptDrafts);
 
@@ -139,8 +164,21 @@ export function StudioSubmitPanel({
     onFocusEditModeHandled?.();
   }, [focusEditMode, onFocusEditModeHandled]);
 
+  useEffect(() => {
+    if (!panelFocus) {
+      return;
+    }
+    setEditMode(panelFocus.editMode as SubmitEditMode);
+    setHighlightFieldId(panelFocus.fieldId);
+    scrollStudioPanelToTop();
+    onPanelFocusHandled?.();
+    const timer = window.setTimeout(() => setHighlightFieldId(null), 2400);
+    return () => window.clearTimeout(timer);
+  }, [panelFocus, onPanelFocusHandled]);
+
   function openEdit(mode: Exclude<SubmitEditMode, null>) {
     setEditMode(mode);
+    setHighlightFieldId(null);
     scrollStudioPanelToTop();
   }
 
@@ -150,71 +188,108 @@ export function StudioSubmitPanel({
 
   function closeEdit() {
     setEditMode(null);
+    setHighlightFieldId(null);
   }
+
+  const editHighlight = highlightFieldId;
 
   if (editMode === "basic-info") {
     return (
       <aside aria-label="Studioパネル" className={submitPanelAsideClassName}>
-        {submitError ? <SubmitValidationAlert message={submitError} /> : null}
-        <StudioSubmitBasicInfoEditPanel draft={draft} onApply={applyPatch} onCancel={closeEdit} />
+        <StudioPanelScrollShell>
+          {submitError ? <SubmitValidationAlert message={submitError} /> : null}
+          <StudioSubmitBasicInfoEditPanel
+            draft={draft}
+            onApply={applyPatch}
+            onCancel={closeEdit}
+            highlightFieldId={editHighlight}
+          />
+        </StudioPanelScrollShell>
       </aside>
     );
   }
   if (editMode === "genres-tags") {
     return (
       <aside aria-label="Studioパネル" className={submitPanelAsideClassName}>
-        {submitError ? <SubmitValidationAlert message={submitError} /> : null}
-        <StudioSubmitGenresTagsEditPanel draft={draft} onApply={applyPatch} onCancel={closeEdit} />
+        <StudioPanelScrollShell>
+          {submitError ? <SubmitValidationAlert message={submitError} /> : null}
+          <StudioSubmitGenresTagsEditPanel draft={draft} onApply={applyPatch} onCancel={closeEdit} />
+        </StudioPanelScrollShell>
       </aside>
     );
   }
   if (editMode === "introduction") {
     return (
       <aside aria-label="Studioパネル" className={submitPanelAsideClassName}>
-        {submitError ? <SubmitValidationAlert message={submitError} /> : null}
-        <StudioSubmitIntroductionEditPanel draft={draft} onApply={applyPatch} onCancel={closeEdit} />
+        <StudioPanelScrollShell>
+          {submitError ? <SubmitValidationAlert message={submitError} /> : null}
+          <StudioSubmitIntroductionEditPanel
+            draft={draft}
+            onApply={applyPatch}
+            onCancel={closeEdit}
+            highlightFieldId={editHighlight}
+          />
+        </StudioPanelScrollShell>
       </aside>
     );
   }
   if (editMode === "images") {
     return (
       <aside aria-label="Studioパネル" className={submitPanelAsideClassName}>
-        <StudioSubmitImagesEditPanel draft={draft} onApply={applyPatch} onCancel={closeEdit} />
+        <StudioPanelScrollShell>
+          <StudioSubmitImagesEditPanel
+            draft={draft}
+            onApply={applyPatch}
+            onCancel={closeEdit}
+            highlightFieldId={editHighlight}
+          />
+        </StudioPanelScrollShell>
       </aside>
     );
   }
   if (editMode === "play-info") {
     return (
       <aside aria-label="Studioパネル" className={submitPanelAsideClassName}>
-        {submitError ? <SubmitValidationAlert message={submitError} /> : null}
-        <StudioSubmitPlayInfoEditPanel draft={draft} onApply={applyPatch} onCancel={closeEdit} />
+        <StudioPanelScrollShell>
+          {submitError ? <SubmitValidationAlert message={submitError} /> : null}
+          <StudioSubmitPlayInfoEditPanel
+            draft={draft}
+            onApply={applyPatch}
+            onCancel={closeEdit}
+            highlightFieldId={editHighlight}
+          />
+        </StudioPanelScrollShell>
       </aside>
     );
   }
   if (editMode === "visibility") {
     return (
       <aside aria-label="Studioパネル" className={submitPanelAsideClassName}>
-        <StudioSubmitVisibilityEditPanel draft={draft} onApply={applyPatch} onCancel={closeEdit} />
+        <StudioPanelScrollShell>
+          <StudioSubmitVisibilityEditPanel draft={draft} onApply={applyPatch} onCancel={closeEdit} />
+        </StudioPanelScrollShell>
       </aside>
     );
   }
 
   return (
     <aside aria-label="Studioパネル" className={submitPanelAsideClassName}>
-      <div className={studioOperationPanelOuterClassName}>
-        <div className="space-y-4">
-          <div className={studioOperationPanelHeaderAccentClassName}>
-            <div className="flex items-center gap-2">
-              <span
-                className="h-4 w-0.5 shrink-0 rounded-full bg-orange-500/80"
-                aria-hidden="true"
-              />
-              <SlidersHorizontal className="size-3.5 shrink-0 text-orange-400/90" aria-hidden="true" />
-              <h2 className="text-sm font-semibold tracking-tight text-zinc-100">Studioパネル</h2>
+      <div className={`${studioOperationPanelOuterClassName} ${studioOperationPanelScrollClassName}`}>
+        <div className={studioOperationPanelScrollBodyClassName}>
+          <div className="space-y-4">
+            <div className={studioOperationPanelHeaderAccentClassName}>
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-4 w-0.5 shrink-0 rounded-full bg-orange-500/80"
+                  aria-hidden="true"
+                />
+                <SlidersHorizontal className="size-3.5 shrink-0 text-orange-400/90" aria-hidden="true" />
+                <h2 className="text-sm font-semibold tracking-tight text-zinc-100">Studioパネル</h2>
+              </div>
             </div>
-          </div>
 
-          <p className="text-xs font-medium text-zinc-500">作品を投稿する</p>
+            <p className="text-xs font-medium text-zinc-500">作品を投稿する</p>
+            <StudioPanelGuidance />
 
           <div className="space-y-5">
             <div className="space-y-2">
@@ -268,7 +343,7 @@ export function StudioSubmitPanel({
                 <PanelBlock
                   title="プレイ情報・公開先"
                   requirement="required"
-                  fieldHint="配布形式・プレイURL"
+                  fieldHint="料金・公開形態・配布形式・プレイURL"
                 >
                   <p className={panelSummaryClassName}>{summarizeSubmitDraftPlayInfo(draft)}</p>
                   <button type="button" onClick={() => openEdit("play-info")} className={panelButtonClassName}>
@@ -319,7 +394,10 @@ export function StudioSubmitPanel({
               {submitError}
             </p>
           ) : null}
+          </div>
+        </div>
 
+        <div className="sticky bottom-0 shrink-0 border-t border-zinc-800/80 bg-zinc-900/95 pt-3">
           <button
             type="button"
             onClick={onSubmit}

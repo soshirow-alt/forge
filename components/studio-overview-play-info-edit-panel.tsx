@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
 import { ProjectPlayAccessFormFields } from "@/components/project-play-access-form-fields";
 import { ProjectEstimatedPlayTimeField } from "@/components/project-estimated-play-time-field";
+import { StudioFieldAnchor } from "@/components/studio-field-anchor";
 import {
   StudioPanelEditShell,
   studioPanelInputClassName,
@@ -31,8 +32,11 @@ import {
   parsePlayEnvironmentFromTags,
   type PlayEnvironmentFormState,
 } from "@/lib/play-environment";
+import { STUDIO_FIELD_IDS, type StudioFieldId } from "@/lib/studio-preview-edit-targets";
 
-export type StudioOverviewPlayInfoEditPanelProps = StudioOverviewEditPanelCommonProps;
+export type StudioOverviewPlayInfoEditPanelProps = StudioOverviewEditPanelCommonProps & {
+  highlightFieldId?: StudioFieldId | null;
+};
 
 function externalLinksFromGame(game: Game): ExternalLinkFormValues {
   return {
@@ -65,6 +69,7 @@ export function StudioOverviewPlayInfoEditPanel({
   onCancel,
   onSaved,
   onPreviewPatchChange,
+  highlightFieldId = null,
 }: StudioOverviewPlayInfoEditPanelProps) {
   const { getOwnedProjectById, updateProjectDetails, dataReady } = useGames();
   const game = getOwnedProjectById(projectId);
@@ -119,6 +124,7 @@ export function StudioOverviewPlayInfoEditPanel({
     nextPlayUrl: string,
     nextEstimatedPlayTime: string,
     nextExternalLinks: ExternalLinkFormValues,
+    nextPlayAccessType: SubmitPlayAccessType | "" = playAccessType,
   ) {
     if (!game) {
       return;
@@ -130,8 +136,8 @@ export function StudioOverviewPlayInfoEditPanel({
       playUrl: nextPlayUrl,
       estimatedPlayTime: nextEstimatedPlayTime || undefined,
       tags: mergePlayEnvironmentIntoTags(featureTags, nextEnvironment),
-      ...(isSpecifiedPlayAccessType(playAccessType)
-        ? { playAccessType }
+      ...(isSpecifiedPlayAccessType(nextPlayAccessType)
+        ? { playAccessType: nextPlayAccessType }
         : {}),
       ...externalLinksPayload(nextExternalLinks),
     });
@@ -159,7 +165,7 @@ export function StudioOverviewPlayInfoEditPanel({
       return;
     }
     if (!isSpecifiedPlayAccessType(playAccessType)) {
-      setValidationError("プレイ条件を選んでください。");
+      setValidationError("料金・公開形態を選んでください。");
       return;
     }
 
@@ -201,45 +207,76 @@ export function StudioOverviewPlayInfoEditPanel({
       saveError={saveError}
       validationError={validationError}
     >
-      <ProjectPlayAccessFormFields
-        value={playAccessType}
-        onChange={setPlayAccessType}
-        radioName={`studio-play-access-${projectId}`}
-        showUnspecifiedHint={!isSpecifiedPlayAccessType(playAccessType)}
-      />
+      <p className="text-xs text-zinc-600">
+        プレイヤーが遊ぶ前に知っておきたい情報をまとめて設定します。
+      </p>
 
-      <ProjectEstimatedPlayTimeField
-        value={estimatedPlayTime}
-        onChange={(value) => {
-          setEstimatedPlayTime(value);
-          emitPreview(playEnvironment, playUrl, value, externalLinks);
-        }}
-        inputClassName={studioPanelInputClassName}
-        inputId={`studio-play-time-${projectId}`}
-      />
+      <StudioFieldAnchor
+        fieldId={STUDIO_FIELD_IDS.playAccess}
+        highlight={highlightFieldId === STUDIO_FIELD_IDS.playAccess}
+      >
+        <ProjectPlayAccessFormFields
+          value={playAccessType}
+          onChange={(value) => {
+            setPlayAccessType(value);
+            emitPreview(playEnvironment, playUrl, estimatedPlayTime, externalLinks, value);
+          }}
+          radioName={`studio-play-access-${projectId}`}
+          showUnspecifiedHint={!isSpecifiedPlayAccessType(playAccessType)}
+        />
+      </StudioFieldAnchor>
 
-      <ProjectAccessEnvironmentFields
-        playEnvironment={playEnvironment}
-        onPlayEnvironmentChange={(value) => {
-          setPlayEnvironment(value);
-          emitPreview(value, playUrl, estimatedPlayTime, externalLinks);
-        }}
-        playUrl={playUrl}
-        onPlayUrlChange={(value) => {
-          setPlayUrl(value);
-          emitPreview(playEnvironment, value, estimatedPlayTime, externalLinks);
-        }}
-        inputClassName={studioPanelInputClassName}
-        playUrlInputId={`studio-play-url-${projectId}`}
-        distributionRadioName={`studio-distribution-${projectId}`}
-      />
+      <StudioFieldAnchor
+        fieldId={STUDIO_FIELD_IDS.playInfo}
+        highlight={highlightFieldId === STUDIO_FIELD_IDS.playInfo}
+      >
+        <div className="space-y-4">
+          <p className="text-xs font-medium text-zinc-500">プレイ情報</p>
+          <ProjectEstimatedPlayTimeField
+            value={estimatedPlayTime}
+            onChange={(value) => {
+              setEstimatedPlayTime(value);
+              emitPreview(playEnvironment, playUrl, value, externalLinks);
+            }}
+            inputClassName={studioPanelInputClassName}
+            inputId={`studio-play-time-${projectId}`}
+          />
+        </div>
+      </StudioFieldAnchor>
 
-      <ExternalLinksFormFields
-        formKey={`studio-play-info-${projectId}`}
-        values={externalLinks}
-        onChange={setExternalLinkField}
-        inputClassName={studioPanelInputClassName}
-      />
+      <StudioFieldAnchor
+        fieldId={STUDIO_FIELD_IDS.distribution}
+        highlight={highlightFieldId === STUDIO_FIELD_IDS.distribution}
+      >
+        <div className="space-y-4">
+          <p className="text-xs font-medium text-zinc-500">アクセス方法</p>
+          <ProjectAccessEnvironmentFields
+            playEnvironment={playEnvironment}
+            onPlayEnvironmentChange={(value) => {
+              setPlayEnvironment(value);
+              emitPreview(value, playUrl, estimatedPlayTime, externalLinks);
+            }}
+            playUrl={playUrl}
+            onPlayUrlChange={(value) => {
+              setPlayUrl(value);
+              emitPreview(playEnvironment, value, estimatedPlayTime, externalLinks);
+            }}
+            inputClassName={studioPanelInputClassName}
+            playUrlInputId={`studio-play-url-${projectId}`}
+            distributionRadioName={`studio-distribution-${projectId}`}
+          />
+        </div>
+      </StudioFieldAnchor>
+
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-zinc-500">公開先リンク</p>
+        <ExternalLinksFormFields
+          formKey={`studio-play-info-${projectId}`}
+          values={externalLinks}
+          onChange={setExternalLinkField}
+          inputClassName={studioPanelInputClassName}
+        />
+      </div>
     </StudioPanelEditShell>
   );
 }

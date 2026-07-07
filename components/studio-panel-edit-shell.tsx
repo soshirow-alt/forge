@@ -40,41 +40,46 @@ export function StudioPanelEditShell({
   backLabel = "← 概要に戻る",
 }: StudioPanelEditShellProps) {
   return (
-    <section aria-label={title} className={studioOperationEditShellClassName}>
-      <button
-        type="button"
-        onClick={onCancel}
-        disabled={isSaving}
-        className={backBarClassName}
-      >
-        {backLabel}
-      </button>
-
-      <h3 className="mt-3 text-sm font-semibold text-zinc-100">{title}</h3>
-
-      {validationError ? (
-        <p
-          role="alert"
-          className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200"
+    <section
+      aria-label={title}
+      className={`flex max-h-[calc(100vh-1.5rem)] flex-col ${studioOperationEditShellClassName}`}
+    >
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isSaving}
+          className={backBarClassName}
         >
-          {validationError}
-        </p>
-      ) : null}
+          {backLabel}
+        </button>
 
-      {saveError ? (
-        <p
-          role="alert"
-          className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200"
-        >
-          {saveError}
-        </p>
-      ) : null}
+        <h3 className="mt-3 text-sm font-semibold text-zinc-100">{title}</h3>
 
-      <div className="mt-4 space-y-4">{children}</div>
+        {validationError ? (
+          <p
+            role="alert"
+            className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200"
+          >
+            {validationError}
+          </p>
+        ) : null}
 
-      {footerNote ? <div className="mt-3">{footerNote}</div> : null}
+        {saveError ? (
+          <p
+            role="alert"
+            className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200"
+          >
+            {saveError}
+          </p>
+        ) : null}
 
-      <div className={`mt-4 flex gap-2`}>
+        <div className="mt-4 space-y-4">{children}</div>
+
+        {footerNote ? <div className="mt-3">{footerNote}</div> : null}
+      </div>
+
+      <div className="sticky bottom-0 mt-4 flex shrink-0 gap-2 border-t border-zinc-800/80 bg-zinc-900/95 pt-3">
         <button type="button" onClick={onCancel} disabled={isSaving} className={cancelButtonClassName}>
           {hideSave ? "戻る" : "キャンセル"}
         </button>

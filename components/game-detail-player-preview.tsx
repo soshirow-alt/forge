@@ -21,6 +21,8 @@ import { PROJECT_TITLE_HERO_CLASS } from "@/lib/project-title";
 import { getUserFacingGameTags } from "@/lib/user-labels";
 import { gameToDetailV0 } from "@/lib/submitted-game-v0-adapter";
 import { Clock } from "lucide-react";
+import { StudioPreviewEditTarget } from "@/components/studio-preview-edit-target";
+import type { StudioPreviewEditTarget as StudioPreviewEditTargetId } from "@/lib/studio-preview-edit-targets";
 
 const previewTabs: { id: GameDetailTab; label: string }[] = [
   { id: "overview", label: "概要" },
@@ -43,6 +45,7 @@ export type GameDetailPlayerPreviewProps = {
   onTestPlay?: () => void;
   /** Studio 編集画面: 親の最新 game を渡すと保存後の左プレビュー更新を確実にする */
   sourceGame?: Game;
+  onEditTarget?: (target: StudioPreviewEditTargetId) => void;
 };
 
 /**
@@ -55,6 +58,7 @@ export function GameDetailPlayerPreview({
   onTabChange,
   onTestPlay,
   sourceGame,
+  onEditTarget,
 }: GameDetailPlayerPreviewProps) {
   const { getSubmittedGameById } = useGames();
   const submittedGame = sourceGame ?? getSubmittedGameById(projectId);
@@ -112,10 +116,12 @@ export function GameDetailPlayerPreview({
 
       <section className="overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/30">
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-          <StudioHeroPreviewGallery
-            images={thumbnailUrls}
-            posterFallback={posterFallback}
-          />
+          <StudioPreviewEditTarget target="thumbnail" onEditTarget={onEditTarget}>
+            <StudioHeroPreviewGallery
+              images={thumbnailUrls}
+              posterFallback={posterFallback}
+            />
+          </StudioPreviewEditTarget>
 
           <div className="flex min-w-0 flex-col justify-center p-6 lg:p-8">
             <div className="flex flex-wrap gap-2">
@@ -124,14 +130,20 @@ export function GameDetailPlayerPreview({
               ))}
             </div>
             <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2">
-              <p className={`${PROJECT_TITLE_HERO_CLASS} text-white`}>
-                {displayGame.title}
-              </p>
-              {playerMeta ? <GameDetailPhaseBadge meta={playerMeta} /> : null}
+              <StudioPreviewEditTarget target="title" onEditTarget={onEditTarget} inline>
+                <p className={`${PROJECT_TITLE_HERO_CLASS} text-white`}>
+                  {displayGame.title}
+                </p>
+              </StudioPreviewEditTarget>
+              {playerMeta ? (
+                <GameDetailPhaseBadge meta={playerMeta} onEditTarget={onEditTarget} />
+              ) : null}
             </div>
-            <p className={`${PROJECT_ONE_LINE_DESCRIPTION_HERO_CLASS} text-zinc-400`}>
-              {displayGame.lead}
-            </p>
+            <StudioPreviewEditTarget target="catch-copy" onEditTarget={onEditTarget}>
+              <p className={`${PROJECT_ONE_LINE_DESCRIPTION_HERO_CLASS} text-zinc-400`}>
+                {displayGame.lead}
+              </p>
+            </StudioPreviewEditTarget>
             <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2 text-sm text-zinc-300">
               {hasCustomThumbnails ? (
                 <span className="relative size-7 shrink-0 overflow-hidden rounded-full bg-zinc-800">
@@ -186,6 +198,7 @@ export function GameDetailPlayerPreview({
             voiceCount: publicStats.feedbackParticipantCount,
           }}
           publication={overviewPublication}
+          onEditTarget={onEditTarget}
         />
       ) : null}
 

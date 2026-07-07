@@ -5,6 +5,7 @@ import { ProjectEstimatedPlayTimeField } from "@/components/project-estimated-pl
 import { ProjectPhaseFormFields } from "@/components/project-phase-form-fields";
 import { ProjectAlreadyReleasedFormFields } from "@/components/project-already-released-form-fields";
 import { ProjectPlayAccessFormFields } from "@/components/project-play-access-form-fields";
+import { StudioFieldAnchor } from "@/components/studio-field-anchor";
 import { ProjectThumbnailFields } from "@/components/project-thumbnail-fields";
 import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
 import { ProjectOneLineDescriptionField } from "@/components/project-one-line-description-field";
@@ -31,18 +32,22 @@ import { PROJECT_VISIBILITY_FORM_OPTIONS, type ProjectVisibility } from "@/lib/p
 import { PROJECT_VISIBILITY_SECTION_HINT } from "@/lib/project-form-copy";
 import type { SubmitDraftState } from "@/lib/studio-submit-draft";
 import { SUBMIT_DRAFT_PREVIEW_ID } from "@/lib/studio-submit-draft";
+import { STUDIO_FIELD_IDS } from "@/lib/studio-preview-edit-targets";
+import type { StudioFieldId } from "@/lib/studio-preview-edit-targets";
 import type { ProjectExternalLinksInput } from "@/lib/game-links";
 
 type SubmitEditPanelProps = {
   draft: SubmitDraftState;
   onApply: (patch: Partial<SubmitDraftState>) => void;
   onCancel: () => void;
+  highlightFieldId?: StudioFieldId | null;
 };
 
 export function StudioSubmitBasicInfoEditPanel({
   draft,
   onApply,
   onCancel,
+  highlightFieldId = null,
 }: SubmitEditPanelProps) {
   return (
     <StudioPanelEditShell
@@ -52,30 +57,50 @@ export function StudioSubmitBasicInfoEditPanel({
       onSave={onCancel}
       saveLabel="反映する"
     >
-      <ProjectTitleField
-        id="submit-title"
-        value={draft.title}
-        onChange={(title) => onApply({ title })}
-        inputClassName={studioPanelInputClassName}
-        placeholder="ゲームのタイトル"
-      />
-      <ProjectOneLineDescriptionField
-        id="submit-lead"
-        value={draft.description}
-        onChange={(description) => onApply({ description })}
-        inputClassName={studioPanelInputClassName}
-      />
-      <ProjectPhaseFormFields
-        value={draft.phase}
-        onChange={(phase) => onApply({ phase })}
-        radioName="submit-phase"
-        required={false}
-      />
-      <ProjectAlreadyReleasedFormFields
-        checked={draft.declareAlreadyReleased}
-        onChange={(declareAlreadyReleased) => onApply({ declareAlreadyReleased })}
-        inputId="submit-declare-already-released"
-      />
+      <StudioFieldAnchor
+        fieldId={STUDIO_FIELD_IDS.title}
+        highlight={highlightFieldId === STUDIO_FIELD_IDS.title}
+      >
+        <ProjectTitleField
+          id="submit-title"
+          value={draft.title}
+          onChange={(title) => onApply({ title })}
+          inputClassName={studioPanelInputClassName}
+          placeholder="ゲームのタイトル"
+        />
+      </StudioFieldAnchor>
+      <StudioFieldAnchor
+        fieldId={STUDIO_FIELD_IDS.catchCopy}
+        highlight={highlightFieldId === STUDIO_FIELD_IDS.catchCopy}
+      >
+        <ProjectOneLineDescriptionField
+          id="submit-lead"
+          value={draft.description}
+          onChange={(description) => onApply({ description })}
+          inputClassName={studioPanelInputClassName}
+        />
+      </StudioFieldAnchor>
+      <StudioFieldAnchor
+        fieldId={STUDIO_FIELD_IDS.phase}
+        highlight={highlightFieldId === STUDIO_FIELD_IDS.phase}
+      >
+        <ProjectPhaseFormFields
+          value={draft.phase}
+          onChange={(phase) => onApply({ phase })}
+          radioName="submit-phase"
+          required={false}
+        />
+      </StudioFieldAnchor>
+      <StudioFieldAnchor
+        fieldId={STUDIO_FIELD_IDS.alreadyReleased}
+        highlight={highlightFieldId === STUDIO_FIELD_IDS.alreadyReleased}
+      >
+        <ProjectAlreadyReleasedFormFields
+          scheduled={draft.declareAlreadyReleased}
+          onSchedule={() => onApply({ declareAlreadyReleased: true })}
+          onCancelSchedule={() => onApply({ declareAlreadyReleased: false })}
+        />
+      </StudioFieldAnchor>
     </StudioPanelEditShell>
   );
 }
@@ -165,6 +190,7 @@ export function StudioSubmitIntroductionEditPanel({
   draft,
   onApply,
   onCancel,
+  highlightFieldId = null,
 }: SubmitEditPanelProps) {
   return (
     <StudioPanelEditShell
@@ -175,13 +201,18 @@ export function StudioSubmitIntroductionEditPanel({
       saveLabel="反映する"
     >
       <p className="text-xs text-zinc-600">{PROJECT_INTRO_HINT}</p>
-      <textarea
-        value={draft.introduction}
-        onChange={(event) => onApply({ introduction: event.target.value })}
-        rows={8}
-        className={`${studioPanelInputClassName} resize-y`}
-        placeholder="世界観・遊び方・この作品の魅力を紹介してください"
-      />
+      <StudioFieldAnchor
+        fieldId={STUDIO_FIELD_IDS.introduction}
+        highlight={highlightFieldId === STUDIO_FIELD_IDS.introduction}
+      >
+        <textarea
+          value={draft.introduction}
+          onChange={(event) => onApply({ introduction: event.target.value })}
+          rows={8}
+          className={`${studioPanelInputClassName} resize-y`}
+          placeholder="世界観・遊び方・この作品の魅力を紹介してください"
+        />
+      </StudioFieldAnchor>
     </StudioPanelEditShell>
   );
 }
@@ -190,6 +221,7 @@ export function StudioSubmitImagesEditPanel({
   draft,
   onApply,
   onCancel,
+  highlightFieldId = null,
 }: SubmitEditPanelProps) {
   const primaryGenre = sanitizeProjectGenresForSave(draft.genres)[0] ?? "その他";
 
@@ -201,18 +233,23 @@ export function StudioSubmitImagesEditPanel({
       onSave={onCancel}
       saveLabel="反映する"
     >
-      <ProjectThumbnailFields
-        inputId="submit-draft-thumbnails"
-        thumbnails={draft.thumbnailUrls}
-        onChange={(thumbnailUrls) => onApply({ thumbnailUrls })}
-        posterFallback={{
-          projectId: SUBMIT_DRAFT_PREVIEW_ID,
-          title: draft.title.trim() || "タイトル未入力",
-          genre: primaryGenre,
-          phase: draft.phase,
-          styleSeed: SUBMIT_DRAFT_PREVIEW_ID,
-        }}
-      />
+      <StudioFieldAnchor
+        fieldId={STUDIO_FIELD_IDS.thumbnail}
+        highlight={highlightFieldId === STUDIO_FIELD_IDS.thumbnail}
+      >
+        <ProjectThumbnailFields
+          inputId="submit-draft-thumbnails"
+          thumbnails={draft.thumbnailUrls}
+          onChange={(thumbnailUrls) => onApply({ thumbnailUrls })}
+          posterFallback={{
+            projectId: SUBMIT_DRAFT_PREVIEW_ID,
+            title: draft.title.trim() || "タイトル未入力",
+            genre: primaryGenre,
+            phase: draft.phase,
+            styleSeed: SUBMIT_DRAFT_PREVIEW_ID,
+          }}
+        />
+      </StudioFieldAnchor>
     </StudioPanelEditShell>
   );
 }
@@ -221,6 +258,7 @@ export function StudioSubmitPlayInfoEditPanel({
   draft,
   onApply,
   onCancel,
+  highlightFieldId = null,
 }: SubmitEditPanelProps) {
   function setExternalLinkField(field: keyof ProjectExternalLinksInput, value: string) {
     onApply({ [field]: value } as Partial<SubmitDraftState>);
@@ -234,43 +272,71 @@ export function StudioSubmitPlayInfoEditPanel({
       onSave={onCancel}
       saveLabel="反映する"
     >
-      <ProjectPlayAccessFormFields
-        value={draft.playAccessType}
-        onChange={(playAccessType) => onApply({ playAccessType })}
-        radioName="submit-play-access-type"
-      />
+      <p className="text-xs text-zinc-600">
+        プレイヤーが遊ぶ前に知っておきたい情報をまとめて設定します。
+      </p>
 
-      <ProjectEstimatedPlayTimeField
-        value={draft.estimatedPlayTime}
-        onChange={(estimatedPlayTime) => onApply({ estimatedPlayTime })}
-        inputClassName={studioPanelInputClassName}
-        inputId="submit-estimated-play-time"
-      />
+      <StudioFieldAnchor
+        fieldId={STUDIO_FIELD_IDS.playAccess}
+        highlight={highlightFieldId === STUDIO_FIELD_IDS.playAccess}
+      >
+        <ProjectPlayAccessFormFields
+          value={draft.playAccessType}
+          onChange={(playAccessType) => onApply({ playAccessType })}
+          radioName="submit-play-access-type"
+        />
+      </StudioFieldAnchor>
 
-      <ProjectAccessEnvironmentFields
-        playEnvironment={draft.playEnvironment}
-        onPlayEnvironmentChange={(playEnvironment) => onApply({ playEnvironment })}
-        playUrl={draft.playUrl}
-        onPlayUrlChange={(playUrl) => onApply({ playUrl })}
-        inputClassName={studioPanelInputClassName}
-        playUrlInputId="submit-play-url"
-        distributionRadioName="submit-distribution"
-      />
+      <StudioFieldAnchor
+        fieldId={STUDIO_FIELD_IDS.playInfo}
+        highlight={highlightFieldId === STUDIO_FIELD_IDS.playInfo}
+      >
+        <div className="space-y-4">
+          <p className="text-xs font-medium text-zinc-500">プレイ情報</p>
+          <ProjectEstimatedPlayTimeField
+            value={draft.estimatedPlayTime}
+            onChange={(estimatedPlayTime) => onApply({ estimatedPlayTime })}
+            inputClassName={studioPanelInputClassName}
+            inputId="submit-estimated-play-time"
+          />
+        </div>
+      </StudioFieldAnchor>
 
-      <ExternalLinksFormFields
-        formKey="submit-external"
-        values={{
-          steamUrl: draft.steamUrl,
-          itchUrl: draft.itchUrl,
-          discordUrl: draft.discordUrl,
-          xUrl: draft.xUrl,
-          officialUrl: draft.officialUrl,
-          youtubeUrl: draft.youtubeUrl,
-          githubUrl: draft.githubUrl,
-        }}
-        onChange={setExternalLinkField}
-        inputClassName={studioPanelInputClassName}
-      />
+      <StudioFieldAnchor
+        fieldId={STUDIO_FIELD_IDS.distribution}
+        highlight={highlightFieldId === STUDIO_FIELD_IDS.distribution}
+      >
+        <div className="space-y-4">
+          <p className="text-xs font-medium text-zinc-500">アクセス方法</p>
+          <ProjectAccessEnvironmentFields
+            playEnvironment={draft.playEnvironment}
+            onPlayEnvironmentChange={(playEnvironment) => onApply({ playEnvironment })}
+            playUrl={draft.playUrl}
+            onPlayUrlChange={(playUrl) => onApply({ playUrl })}
+            inputClassName={studioPanelInputClassName}
+            playUrlInputId="submit-play-url"
+            distributionRadioName="submit-distribution"
+          />
+        </div>
+      </StudioFieldAnchor>
+
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-zinc-500">公開先リンク</p>
+        <ExternalLinksFormFields
+          formKey="submit-external"
+          values={{
+            steamUrl: draft.steamUrl,
+            itchUrl: draft.itchUrl,
+            discordUrl: draft.discordUrl,
+            xUrl: draft.xUrl,
+            officialUrl: draft.officialUrl,
+            youtubeUrl: draft.youtubeUrl,
+            githubUrl: draft.githubUrl,
+          }}
+          onChange={setExternalLinkField}
+          inputClassName={studioPanelInputClassName}
+        />
+      </div>
     </StudioPanelEditShell>
   );
 }

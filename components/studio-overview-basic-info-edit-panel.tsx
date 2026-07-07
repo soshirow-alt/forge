@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ProjectAlreadyReleasedConfirmModal } from "@/components/project-already-released-confirm-modal";
 import { ProjectAlreadyReleasedFormFields } from "@/components/project-already-released-form-fields";
 import { ProjectPhaseFormFields } from "@/components/project-phase-form-fields";
 import { ProjectOneLineDescriptionField } from "@/components/project-one-line-description-field";
 import { ProjectTitleField } from "@/components/project-title-field";
+import { StudioFieldAnchor } from "@/components/studio-field-anchor";
 import {
   StudioPanelEditShell,
   studioPanelInputClassName,
@@ -19,14 +19,18 @@ import {
   validateProjectOneLineDescription,
 } from "@/lib/project-one-line-description";
 import { clampProjectTitle, validateProjectTitle } from "@/lib/project-title";
+import { STUDIO_FIELD_IDS, type StudioFieldId } from "@/lib/studio-preview-edit-targets";
 
-export type StudioOverviewBasicInfoEditPanelProps = StudioOverviewEditPanelCommonProps;
+export type StudioOverviewBasicInfoEditPanelProps = StudioOverviewEditPanelCommonProps & {
+  highlightFieldId?: StudioFieldId | null;
+};
 
 export function StudioOverviewBasicInfoEditPanel({
   projectId,
   onCancel,
   onSaved,
   onPreviewPatchChange,
+  highlightFieldId = null,
 }: StudioOverviewBasicInfoEditPanelProps) {
   const { getOwnedProjectById, updateProjectDetails, dataReady } = useGames();
   const game = getOwnedProjectById(projectId);
@@ -39,7 +43,6 @@ export function StudioOverviewBasicInfoEditPanel({
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [releaseConfirmOpen, setReleaseConfirmOpen] = useState(false);
 
   const readOnlyReleased = game ? hasEverBeenReleasedForEdit(game) : false;
 
@@ -59,39 +62,20 @@ export function StudioOverviewBasicInfoEditPanel({
     setValidationError(null);
   }, [title, description, phase, declareAlreadyReleased]);
 
-  function emitPreview(next: { title: string; description: string; phase: string }) {
+  function emitPreview(next: {
+    title: string;
+    description: string;
+    phase: string;
+    declareAlreadyReleased?: boolean;
+  }) {
     onPreviewPatchChange?.({
       title: clampProjectTitle(next.title),
       description: clampProjectOneLineDescription(next.description),
       phase: next.phase,
+      ...(next.declareAlreadyReleased || readOnlyReleased
+        ? { releaseStatus: "released" as const }
+        : { releaseStatus: "in_development" as const }),
     });
-  }
-
-  async function performSave() {
-    if (!game) {
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await updateProjectDetails(projectId, {
-        ...buildProjectEditFormDataFromGame(game),
-        title: title.trim(),
-        description: description.trim(),
-        phase,
-        declareAlreadyReleased: declareAlreadyReleased || undefined,
-      });
-      onSaved?.();
-      setReleaseConfirmOpen(false);
-    } catch (error) {
-      setSaveError(
-        error instanceof Error
-          ? error.message
-          : "保存に失敗しました。時間をおいて再度お試しください。",
-      );
-    } finally {
-      setIsSaving(false);
-    }
   }
 
   async function handleSave() {
@@ -123,12 +107,25 @@ export function StudioOverviewBasicInfoEditPanel({
       return;
     }
 
-    if (declareAlreadyReleased && !readOnlyReleased) {
-      setReleaseConfirmOpen(true);
-      return;
+    setIsSaving(true);
+    try {
+      await updateProjectDetails(projectId, {
+        ...buildProjectEditFormDataFromGame(game),
+        title: title.trim(),
+        description: description.trim(),
+        phase,
+        declareAlreadyReleased: declareAlreadyReleased || undefined,
+      });
+      onSaved?.();
+    } catch (error) {
+      setSaveError(
+        error instanceof Error
+          ? error.message
+          : "保存に失敗しました。時間をおいて再度お試しください。",
+      );
+    } finally {
+      setIsSaving(false);
     }
-
-    await performSave();
   }
 
   if (!dataReady || !game || !formLoaded) {
@@ -136,59 +133,81 @@ export function StudioOverviewBasicInfoEditPanel({
   }
 
   return (
-    <>
-      <StudioPanelEditShell
-        title="基本情報を編集"
-        onCancel={onCancel}
-        onSave={() => void handleSave()}
-        isSaving={isSaving}
-        saveError={saveError}
-        validationError={validationError}
+    <StudioPanelEditShell
+      title="基本情報を編集"
+      onCancel={onCancel}
+      onSave={() => void handleSave()}
+      isSaving={isSaving}
+      saveError={saveError}
+      validationError={validationError}
+    >
+      <StudioFieldAnchor
+        fieldId={STUDIO_FIELD_IDS.title}
+        highlight={highlightFieldId === STUDIO_FIELD_IDS.title}
       >
         <ProjectTitleField
           id={`studio-basic-title-${projectId}`}
           value={title}
           onChange={(nextTitle) => {
             setTitle(nextTitle);
-            emitPreview({ title: nextTitle, description, phase });
+            emitPreview({ title: nextTitle, description, phase, declareAlreadyReleased });
           }}
           inputClassName={studioPanelInputClassName}
           required
         />
+      </StudioFieldAnchor>
 
+      <StudioFieldAnchor
+        fieldId={STUDIO_FIELD_IDS.catchCopy}
+        highlight={highlightFieldId === STUDIO_FIELD_IDS.catchCopy}
+      >
         <ProjectOneLineDescriptionField
           id={`studio-basic-lead-${projectId}`}
           value={description}
           onChange={(nextDescription) => {
             setDescription(nextDescription);
-            emitPreview({ title, description: nextDescription, phase });
+            emitPreview({
+              title,
+              description: nextDescription,
+              phase,
+              declareAlreadyReleased,
+            });
           }}
           inputClassName={studioPanelInputClassName}
         />
+      </StudioFieldAnchor>
 
+      <StudioFieldAnchor
+        fieldId={STUDIO_FIELD_IDS.phase}
+        highlight={highlightFieldId === STUDIO_FIELD_IDS.phase}
+      >
         <ProjectPhaseFormFields
           value={phase}
           onChange={(nextPhase) => {
             setPhase(nextPhase);
-            emitPreview({ title, description, phase: nextPhase });
+            emitPreview({ title, description, phase: nextPhase, declareAlreadyReleased });
           }}
           radioName={`studio-basic-phase-${projectId}`}
         />
+      </StudioFieldAnchor>
 
+      <StudioFieldAnchor
+        fieldId={STUDIO_FIELD_IDS.alreadyReleased}
+        highlight={highlightFieldId === STUDIO_FIELD_IDS.alreadyReleased}
+      >
         <ProjectAlreadyReleasedFormFields
-          checked={readOnlyReleased || declareAlreadyReleased}
-          onChange={setDeclareAlreadyReleased}
+          scheduled={readOnlyReleased || declareAlreadyReleased}
           readOnlyReleased={readOnlyReleased}
-          inputId={`studio-basic-already-released-${projectId}`}
+          onSchedule={() => {
+            setDeclareAlreadyReleased(true);
+            emitPreview({ title, description, phase, declareAlreadyReleased: true });
+          }}
+          onCancelSchedule={() => {
+            setDeclareAlreadyReleased(false);
+            emitPreview({ title, description, phase, declareAlreadyReleased: false });
+          }}
         />
-      </StudioPanelEditShell>
-
-      <ProjectAlreadyReleasedConfirmModal
-        open={releaseConfirmOpen}
-        busy={isSaving}
-        onCancel={() => setReleaseConfirmOpen(false)}
-        onConfirm={() => void performSave()}
-      />
-    </>
+      </StudioFieldAnchor>
+    </StudioPanelEditShell>
   );
 }

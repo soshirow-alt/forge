@@ -12,7 +12,7 @@ export type PlayAccessType = (typeof PLAY_ACCESS_TYPES)[number];
 export const SUBMIT_PLAY_ACCESS_OPTIONS = [
   {
     value: "free" as const,
-    label: "無料",
+    label: "無料で遊べる",
     hint: "無料で遊べる作品です。",
   },
   {
@@ -22,13 +22,13 @@ export const SUBMIT_PLAY_ACCESS_OPTIONS = [
   },
   {
     value: "paid" as const,
-    label: "有料",
+    label: "購入が必要",
     hint: "購入や有料版が必要な作品です。",
   },
   {
     value: "other" as const,
-    label: "その他",
-    hint: "上記以外のプレイ条件です。",
+    label: "その他・外部条件あり",
+    hint: "上記以外の料金・公開形態です。",
   },
 ] as const;
 

@@ -27,6 +27,11 @@ import { useRedirectToLoginWhenLoggedOut } from "@/hooks/use-redirect-to-login-w
 import { getVisibilityBadgeLabel } from "@/lib/project-visibility";
 import { parseStudioOverviewEditMode } from "@/lib/studio-edit-url";
 import { scrollStudioPanelToTop } from "@/lib/studio-panel-scroll";
+import {
+  STUDIO_PREVIEW_EDIT_ROUTES,
+  type StudioPanelFocusRequest,
+  type StudioPreviewEditTarget,
+} from "@/lib/studio-preview-edit-targets";
 
 type StudioOwnerAccess = "loading" | "owner" | "notOwner";
 
@@ -83,8 +88,24 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   const [activeSection, setActiveSection] = useState<GameDetailTab>("overview");
   const [devlogModalOpen, setDevlogModalOpen] = useState(false);
   const [previewPatch, setPreviewPatch] = useState<StudioEditPreviewPatch | null>(null);
+  const [panelFocus, setPanelFocus] = useState<StudioPanelFocusRequest | null>(null);
+  const [panelFocusRequestId, setPanelFocusRequestId] = useState(0);
 
   const initialOverviewEditMode = parseStudioOverviewEditMode(searchParams.get("edit"));
+
+  function handlePreviewEditTarget(target: StudioPreviewEditTarget) {
+    setActiveSection("overview");
+    setPanelFocusRequestId((current) => {
+      const next = current + 1;
+      const route = STUDIO_PREVIEW_EDIT_ROUTES[target];
+      setPanelFocus({
+        editMode: route.editMode,
+        fieldId: route.fieldId,
+        requestId: next,
+      });
+      return next;
+    });
+  }
 
   const previewGame = useMemo(() => {
     if (!game) {
@@ -202,6 +223,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
               activeTab={activeSection}
               onTabChange={setActiveSection}
               onTestPlay={handleTestPlay}
+              onEditTarget={handlePreviewEditTarget}
             />
           </div>
         </div>
@@ -219,6 +241,8 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
           onPreviewPatchChange={setPreviewPatch}
           initialOverviewEditMode={initialOverviewEditMode}
           onInitialOverviewEditHandled={clearOverviewEditQuery}
+          panelFocus={panelFocus}
+          onPanelFocusHandled={() => setPanelFocus(null)}
         />
       </div>
     </StudioShell>

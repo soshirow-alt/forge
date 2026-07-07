@@ -28,6 +28,8 @@ import {
   INITIAL_PROJECT_DEVLOG_TITLE,
 } from "@/lib/initial-project-devlog";
 import { Clock } from "lucide-react";
+import { StudioPreviewEditTarget } from "@/components/studio-preview-edit-target";
+import type { StudioPreviewEditTarget as StudioPreviewEditTargetId } from "@/lib/studio-preview-edit-targets";
 
 const previewTabs: { id: GameDetailTab; label: string }[] = [
   { id: "overview", label: "概要" },
@@ -60,6 +62,7 @@ export type StudioSubmitPlayerPreviewProps = {
   submitOwner: SubmitDraftOwner;
   activeTab: GameDetailTab;
   onTabChange: (tab: GameDetailTab) => void;
+  onEditTarget?: (target: StudioPreviewEditTargetId) => void;
 };
 
 /** /studio/submit 専用 — 既存 Studio 編集プレビューとは完全分離 */
@@ -68,6 +71,7 @@ export function StudioSubmitPlayerPreview({
   submitOwner,
   activeTab,
   onTabChange,
+  onEditTarget,
 }: StudioSubmitPlayerPreviewProps) {
   const displayGame = useMemo(
     () => buildSubmitDraftDetailV0(submitDraft, submitOwner),
@@ -121,10 +125,12 @@ export function StudioSubmitPlayerPreview({
 
       <section className="overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/30">
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-          <StudioHeroPreviewGallery
-            images={hasGalleryImages ? displayGame.galleryImages : []}
-            posterFallback={posterFallback}
-          />
+          <StudioPreviewEditTarget target="thumbnail" onEditTarget={onEditTarget}>
+            <StudioHeroPreviewGallery
+              images={hasGalleryImages ? displayGame.galleryImages : []}
+              posterFallback={posterFallback}
+            />
+          </StudioPreviewEditTarget>
 
           <div className="flex min-w-0 flex-col justify-center p-6 lg:p-8">
             <div className="flex flex-wrap gap-2">
@@ -135,26 +141,34 @@ export function StudioSubmitPlayerPreview({
               ))}
             </div>
             <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2">
+              <StudioPreviewEditTarget target="title" onEditTarget={onEditTarget} inline>
+                <p
+                  className={
+                    titleIsPlaceholder
+                      ? `${PROJECT_TITLE_HERO_CLASS} text-zinc-500`
+                      : `${PROJECT_TITLE_HERO_CLASS} text-white`
+                  }
+                >
+                  {displayGame.title}
+                </p>
+              </StudioPreviewEditTarget>
+              <GameDetailPhaseBadge
+                meta={playerMeta}
+                muted={phaseIsPlaceholder}
+                onEditTarget={onEditTarget}
+              />
+            </div>
+            <StudioPreviewEditTarget target="catch-copy" onEditTarget={onEditTarget}>
               <p
                 className={
-                  titleIsPlaceholder
-                    ? `${PROJECT_TITLE_HERO_CLASS} text-zinc-500`
-                    : `${PROJECT_TITLE_HERO_CLASS} text-white`
+                  leadIsPlaceholder
+                    ? `${PROJECT_ONE_LINE_DESCRIPTION_HERO_CLASS} text-zinc-600`
+                    : `${PROJECT_ONE_LINE_DESCRIPTION_HERO_CLASS} text-zinc-400`
                 }
               >
-                {displayGame.title}
+                {displayGame.lead}
               </p>
-              <GameDetailPhaseBadge meta={playerMeta} muted={phaseIsPlaceholder} />
-            </div>
-            <p
-              className={
-                leadIsPlaceholder
-                  ? `${PROJECT_ONE_LINE_DESCRIPTION_HERO_CLASS} text-zinc-600`
-                  : `${PROJECT_ONE_LINE_DESCRIPTION_HERO_CLASS} text-zinc-400`
-              }
-            >
-              {displayGame.lead}
-            </p>
+            </StudioPreviewEditTarget>
             <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2 text-sm text-zinc-300">
               {hasGalleryImages ? (
                 <span className="relative size-7 overflow-hidden rounded-full bg-zinc-800">
@@ -216,6 +230,7 @@ export function StudioSubmitPlayerPreview({
           publication={overviewPublication}
           showUnsetPlayPlaceholders
           mutedIntroduction={introIsPlaceholder}
+          onEditTarget={onEditTarget}
         />
       ) : null}
 

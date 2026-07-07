@@ -142,7 +142,7 @@ export function DiscoveryFilterChips({
           onToggle={togglePlayTime}
         />
         <FilterGroup
-          title="プレイ条件"
+          title="料金・公開形態"
           options={PLAY_ACCESS_CHIP_FILTER_OPTIONS}
           selected={filters.playAccessTypes}
           onToggle={togglePlayAccess}

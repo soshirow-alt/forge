@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { ProjectAlreadyReleasedConfirmModal } from "@/components/project-already-released-confirm-modal";
 import { StudioSubmitPlayerPreview } from "@/components/studio-submit-player-preview";
 import { StudioShell } from "@/components/studio-shell";
 import { StudioMypageBackLink } from "@/components/studio-mypage-back-link";
@@ -25,6 +24,11 @@ import {
   type SubmitDraftOwner,
   type SubmitDraftState,
 } from "@/lib/studio-submit-draft";
+import {
+  STUDIO_PREVIEW_EDIT_ROUTES,
+  type StudioPanelFocusRequest,
+  type StudioPreviewEditTarget,
+} from "@/lib/studio-preview-edit-targets";
 
 export function StudioSubmitPage() {
   const router = useRouter();
@@ -43,7 +47,8 @@ export function StudioSubmitPage() {
   const [successState, setSuccessState] = useState<SubmitDraftSuccessResult | null>(
     null,
   );
-  const [releaseConfirmOpen, setReleaseConfirmOpen] = useState(false);
+  const [panelFocus, setPanelFocus] = useState<StudioPanelFocusRequest | null>(null);
+  const [panelFocusRequestId, setPanelFocusRequestId] = useState(0);
   const socialPrefillDoneRef = useRef(false);
 
   const developerProfile = user ? getDeveloperProfileByUserId(user.id) : undefined;
@@ -116,6 +121,20 @@ export function StudioSubmitPage() {
     setDraft((current) => ({ ...current, ...patch }));
   }
 
+  function handlePreviewEditTarget(target: StudioPreviewEditTarget) {
+    setActiveTab("overview");
+    setPanelFocusRequestId((current) => {
+      const next = current + 1;
+      const route = STUDIO_PREVIEW_EDIT_ROUTES[target];
+      setPanelFocus({
+        editMode: route.editMode,
+        fieldId: route.fieldId,
+        requestId: next,
+      });
+      return next;
+    });
+  }
+
   function handleSubmitAnother() {
     setSuccessState(null);
     setDraft(createEmptySubmitDraft());
@@ -124,34 +143,6 @@ export function StudioSubmitPage() {
     setFocusEditMode(null);
     setActiveTab("overview");
     socialPrefillDoneRef.current = false;
-  }
-
-  async function performSubmit() {
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-
-    setSubmitting(true);
-    const result = await submitDraft(draft, user);
-    if (!result.ok) {
-      setSubmitError(result.message);
-      if (result.editMode) {
-        setFocusEditMode(result.editMode);
-        setFailedEditMode(result.editMode);
-      } else {
-        setFailedEditMode(null);
-      }
-      if (draft.promptMode === "custom") {
-        setShowPromptValidation(true);
-      }
-      setSubmitting(false);
-      return;
-    }
-
-    setSuccessState(result);
-    setSubmitting(false);
-    setReleaseConfirmOpen(false);
   }
 
   async function handleSubmit() {
@@ -177,13 +168,25 @@ export function StudioSubmitPage() {
       return;
     }
 
-    if (draft.declareAlreadyReleased) {
-      setReleaseConfirmOpen(true);
+    setSubmitting(true);
+    const result = await submitDraft(draft, user);
+    if (!result.ok) {
+      setSubmitError(result.message);
+      if (result.editMode) {
+        setFocusEditMode(result.editMode);
+        setFailedEditMode(result.editMode);
+      } else {
+        setFailedEditMode(null);
+      }
+      if (draft.promptMode === "custom") {
+        setShowPromptValidation(true);
+      }
+      setSubmitting(false);
       return;
     }
 
-    setSubmitting(true);
-    await performSubmit();
+    setSuccessState(result);
+    setSubmitting(false);
   }
 
   if (!hydrated || !user || !submitOwner) {
@@ -228,6 +231,7 @@ export function StudioSubmitPage() {
               submitOwner={submitOwner}
               activeTab={activeTab}
               onTabChange={setActiveTab}
+              onEditTarget={handlePreviewEditTarget}
             />
           </div>
         </div>
@@ -241,15 +245,10 @@ export function StudioSubmitPage() {
           showPromptValidation={showPromptValidation}
           focusEditMode={focusEditMode}
           onFocusEditModeHandled={() => setFocusEditMode(null)}
+          panelFocus={panelFocus}
+          onPanelFocusHandled={() => setPanelFocus(null)}
         />
       </div>
-
-      <ProjectAlreadyReleasedConfirmModal
-        open={releaseConfirmOpen}
-        busy={submitting}
-        onCancel={() => setReleaseConfirmOpen(false)}
-        onConfirm={() => void performSubmit()}
-      />
     </StudioShell>
   );
 }

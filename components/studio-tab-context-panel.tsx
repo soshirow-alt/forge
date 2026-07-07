@@ -35,8 +35,12 @@ import {
   studioOperationPanelAsideClassName,
   studioOperationPanelBlockClassName,
   studioOperationPanelGroupLabelClassName,
+  studioOperationPanelGuidanceClassName,
   studioOperationPanelOuterClassName,
+  studioOperationPanelScrollBodyClassName,
+  studioOperationPanelScrollClassName,
 } from "@/lib/studio-operation-panel-styles";
+import type { StudioFieldId, StudioPanelFocusRequest } from "@/lib/studio-preview-edit-targets";
 import { getVisibilityBadgeLabel, isGamePublic } from "@/lib/project-visibility";
 import { scrollStudioPanelToTop } from "@/lib/studio-panel-scroll";
 import type { StudioOverviewEditMode } from "@/lib/studio-edit-url";
@@ -66,8 +70,10 @@ function openOverviewEdit(
 function StudioEditPaneShell({ children }: { children: ReactNode }) {
   return (
     <aside aria-label="Studioパネル" className={studioOperationPanelAsideClassName}>
-      <div className={studioOperationPanelOuterClassName}>
-        <div className="space-y-4">{children}</div>
+      <div className={`${studioOperationPanelOuterClassName} ${studioOperationPanelScrollClassName}`}>
+        <div className={studioOperationPanelScrollBodyClassName}>
+          <div className="space-y-4">{children}</div>
+        </div>
       </div>
     </aside>
   );
@@ -107,6 +113,8 @@ export type StudioTabContextPanelProps = {
   onPreviewPatchChange?: (patch: StudioEditPreviewPatch | null) => void;
   initialOverviewEditMode?: StudioOverviewEditMode | null;
   onInitialOverviewEditHandled?: () => void;
+  panelFocus?: StudioPanelFocusRequest | null;
+  onPanelFocusHandled?: () => void;
 };
 
 export function StudioTabContextPanel({
@@ -122,10 +130,13 @@ export function StudioTabContextPanel({
   onPreviewPatchChange,
   initialOverviewEditMode = null,
   onInitialOverviewEditHandled,
+  panelFocus = null,
+  onPanelFocusHandled,
 }: StudioTabContextPanelProps) {
   const { getDevlogsByProject, getOwnerStudioVoiceResponseCount } = useGames();
   const [overviewEditMode, setOverviewEditMode] = useState<StudioOverviewEditMode | null>(null);
   const [devlogEditMode, setDevlogEditMode] = useState<DevlogEditMode>(null);
+  const [highlightFieldId, setHighlightFieldId] = useState<StudioFieldId | null>(null);
 
   const versionKey = resolvePlayableVersion(growth.playableVersion);
   const versionLabel = `v${versionKey}`;
@@ -170,6 +181,19 @@ export function StudioTabContextPanel({
     scrollStudioPanelToTop();
     onInitialOverviewEditHandled?.();
   }, [initialOverviewEditMode, onInitialOverviewEditHandled]);
+
+  useEffect(() => {
+    if (!panelFocus) {
+      return;
+    }
+    onSectionChange("overview");
+    setOverviewEditMode(panelFocus.editMode as StudioOverviewEditMode);
+    setHighlightFieldId(panelFocus.fieldId);
+    scrollStudioPanelToTop();
+    onPanelFocusHandled?.();
+    const timer = window.setTimeout(() => setHighlightFieldId(null), 2400);
+    return () => window.clearTimeout(timer);
+  }, [panelFocus, onPanelFocusHandled, onSectionChange]);
 
   useEffect(() => {
     if (activeSection !== "voices" || !hasFeedback || voiceRead || quickFbCount === 0) {
@@ -217,6 +241,7 @@ export function StudioTabContextPanel({
           onCancel={closeOverviewEdit}
           onSaved={handleOverviewSaved}
           onPreviewPatchChange={onPreviewPatchChange}
+          highlightFieldId={highlightFieldId}
         />
       );
     } else if (overviewEditMode === "genres-tags") {
@@ -267,11 +292,15 @@ export function StudioTabContextPanel({
           onCancel={closeOverviewEdit}
           onSaved={handleOverviewSaved}
           onPreviewPatchChange={onPreviewPatchChange}
+          highlightFieldId={highlightFieldId}
         />
       );
     } else {
       sectionContent = (
         <div className="space-y-5">
+          <p className={studioOperationPanelGuidanceClassName}>
+            右の項目を編集すると、左の公開ページプレビューに反映されます。左のプレビュー上の項目をクリックして、対応する入力欄へ移動することもできます。
+          </p>
           <div className="space-y-2">
             <OverviewGroupLabel>ページの内容</OverviewGroupLabel>
             <div className="space-y-2">

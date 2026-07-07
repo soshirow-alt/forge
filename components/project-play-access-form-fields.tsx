@@ -22,9 +22,9 @@ export function ProjectPlayAccessFormFields({
 }: ProjectPlayAccessFormFieldsProps) {
   return (
     <fieldset className="space-y-3">
-      <legend className="text-sm font-medium text-zinc-400">プレイ条件</legend>
+      <legend className="text-sm font-medium text-zinc-400">料金・公開形態</legend>
       <p className="text-xs text-zinc-600">
-        プレイヤーに、遊ぶ前の前提が伝わるように設定してください。
+        プレイヤーに、無料で遊べるのか、体験版なのか、購入が必要なのかを伝えます。
       </p>
       {showUnspecifiedHint ? (
         <p className="text-xs text-amber-400/90">未設定 — いずれかを選んでください。</p>

@@ -23,6 +23,8 @@ export type StudioEditPreviewPatch = Partial<
     | "officialUrl"
     | "youtubeUrl"
     | "githubUrl"
+    | "playAccessType"
+    | "releaseStatus"
   >
 >;
 

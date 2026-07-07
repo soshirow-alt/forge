@@ -12,6 +12,8 @@ import type {
   PlayDestination,
   PublicationDisplay,
 } from "@/lib/game-play-destinations";
+import { StudioPreviewEditTarget } from "@/components/studio-preview-edit-target";
+import type { StudioPreviewEditTarget as StudioPreviewEditTargetId } from "@/lib/studio-preview-edit-targets";
 
 const INTRO_COLLAPSE_THRESHOLD = 200;
 
@@ -309,6 +311,7 @@ type GameDetailPlayerOverviewProps = {
   mutedIntroduction?: boolean;
   onFeedback?: () => void;
   feedbackCtaLabel?: string;
+  onEditTarget?: (target: StudioPreviewEditTargetId) => void;
 };
 
 export function GameDetailPlayerOverview({
@@ -323,6 +326,7 @@ export function GameDetailPlayerOverview({
   mutedIntroduction = false,
   onFeedback,
   feedbackCtaLabel,
+  onEditTarget,
 }: GameDetailPlayerOverviewProps) {
   const introText = resolveIntroText(game.introduction, heroLead);
   const displayFeatures = game.features.filter(
@@ -341,9 +345,11 @@ export function GameDetailPlayerOverview({
     <div className="grid gap-5 lg:grid-cols-3 lg:gap-6">
       <div className="min-w-0 space-y-5 lg:col-span-2">
         {introText ? (
-          <OverviewCard title="作品紹介">
-            <IntroBody text={introText} muted={mutedIntroduction} />
-          </OverviewCard>
+          <StudioPreviewEditTarget target="introduction" onEditTarget={onEditTarget}>
+            <OverviewCard title="作品紹介">
+              <IntroBody text={introText} muted={mutedIntroduction} />
+            </OverviewCard>
+          </StudioPreviewEditTarget>
         ) : null}
 
         <OverviewCard title="最近の動き">
@@ -358,23 +364,27 @@ export function GameDetailPlayerOverview({
 
       <aside className="min-w-0 space-y-4">
         {showPlayInfoSection ? (
-          <SidebarCard title="プレイ情報">
-            {showPlayInfoCard ? (
-              <PlayInfoPanel playerMeta={playerMeta} />
-            ) : showUnsetPlayPlaceholders ? (
-              <UnsetPlayInfoPanel />
-            ) : null}
-          </SidebarCard>
+          <StudioPreviewEditTarget target="play-info" onEditTarget={onEditTarget}>
+            <SidebarCard title="プレイ情報">
+              {showPlayInfoCard ? (
+                <PlayInfoPanel playerMeta={playerMeta} />
+              ) : showUnsetPlayPlaceholders ? (
+                <UnsetPlayInfoPanel />
+              ) : null}
+            </SidebarCard>
+          </StudioPreviewEditTarget>
         ) : null}
 
         {publication ? (
-          <SidebarCard title="公開先">
-            <PublicationPanel
-              publication={publication}
-              destinations={playDestinations}
-              onDestinationOpen={onPlayDestinationOpen}
-            />
-          </SidebarCard>
+          <StudioPreviewEditTarget target="distribution" onEditTarget={onEditTarget}>
+            <SidebarCard title="公開先">
+              <PublicationPanel
+                publication={publication}
+                destinations={playDestinations}
+                onDestinationOpen={onPlayDestinationOpen}
+              />
+            </SidebarCard>
+          </StudioPreviewEditTarget>
         ) : null}
 
         {displayFeatures.length > 0 ? (
