@@ -4,11 +4,13 @@
 
 ---
 
-## 2026-07-07 — ジャンルに「カードゲーム」追加（緊急・Preview 未確認）
+## 2026-07-07 — ジャンルに「カードゲーム」追加（緊急）本番反映
 
 - **作品投稿 / 編集 / 検索フィルタ** — 共通ジャンル一覧に **カードゲーム** を追加（作者登録ブロッカー解消）
 - **DB migration 不要** — `projects.genres text[]` は値制約なし。正本は `lib/forge-genre-options.ts`
-- **本番反映** — 未実施（Preview 確認後）
+- **commit** — `44bc8f5`（`origin/main` = `origin/preview/landing-01`）
+- **本番 URL** — https://forge-flame-gamma.vercel.app
+- **deploy** — `dpl_6G1xCXuBv5Q8m4XUcAywVTAwq36F`（`vercel deploy --prod`）
 
 ---
 
