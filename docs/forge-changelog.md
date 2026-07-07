@@ -13,7 +13,10 @@
   - 公開準備中 → **正式版候補**
 - **正本** — `lib/development-phases.ts`（`displayPhase` / 投稿フォーム / 発見フィルタ / 作品詳細バッジ）
 - **触らない** — `playable_version`、正式版（`release_status`）、phase への「公開済み」追加
-- **Preview** — 未確認
+- **commit** — `647614e`（`origin/main` = `origin/preview/landing-01`）
+- **本番 URL** — https://forge-flame-gamma.vercel.app
+- **deploy** — `dpl_3jqereSD3BYxhXBTyzPF8KkYGm7C`（`npx vercel deploy --prod`）
+- **本番確認** — 作品詳細 `β版` / `正式版候補` 表示、旧フェーズラベルなし、`/home` カード `0.1` 維持
 
 ---
 
