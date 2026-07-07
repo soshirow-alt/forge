@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07-07 — ジャンルに「カードゲーム」追加（緊急・Preview 未確認）
+
+- **作品投稿 / 編集 / 検索フィルタ** — 共通ジャンル一覧に **カードゲーム** を追加（作者登録ブロッカー解消）
+- **DB migration 不要** — `projects.genres text[]` は値制約なし。正本は `lib/forge-genre-options.ts`
+- **本番反映** — 未実施（Preview 確認後）
+
+---
+
 ## 2026-07-07 — 発見カード集計の RPC 配線（migration 045）本番反映
 
 - **発見カード（/home・/search・/creators/[id]）** — 2指標を統一
