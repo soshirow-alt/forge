@@ -45,17 +45,22 @@ export async function fetchPublicProjectForOg(
 export type ProjectOgImageSource = {
   id: string;
   title: string;
+  /** Only set when http(s); data: thumbs are not loaded for OG cards. */
   thumbnailUrl: string | null;
 };
 
-/** Image route only — selects primary thumbnail fields (may be large). */
+/**
+ * Image route fetch — title only for now.
+ * Skip thumbnail columns so cold OG generation never downloads ~500KB data URLs.
+ * When Storage http(s) thumbs exist later, select a dedicated og_image_url column.
+ */
 export async function fetchPublicProjectForOgImage(
   supabase: SupabaseClient,
   projectId: string,
 ): Promise<ProjectOgImageSource | null> {
   const { data, error } = await supabase
     .from("projects")
-    .select("id, title, thumbnail_url, visibility")
+    .select("id, title, visibility")
     .eq("id", projectId)
     .eq("visibility", "public")
     .maybeSingle();
@@ -64,15 +69,11 @@ export async function fetchPublicProjectForOgImage(
     return null;
   }
 
-  const row = data as {
-    id: string;
-    title: string;
-    thumbnail_url: string | null;
-  };
+  const row = data as { id: string; title: string };
 
   return {
     id: row.id,
     title: row.title,
-    thumbnailUrl: row.thumbnail_url?.trim() || null,
+    thumbnailUrl: null,
   };
 }

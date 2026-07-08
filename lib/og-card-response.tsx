@@ -6,8 +6,12 @@ import { isOgDataUrlImage } from "@/lib/og-data-url-image";
 export const OG_CARD_WIDTH = 1200;
 export const OG_CARD_HEIGHT = 630;
 
-/** Skip unsafe / oversized data URLs — keep first Twitterbot crawl fast. */
-const MAX_THUMB_DATA_URL_CHARS = 180_000;
+/**
+ * Do not embed `data:` thumbnails into next/og cards.
+ * Even ~100KB JPEG data URLs explode into multi-MB PNGs and slow cold Twitterbot crawls.
+ * Prefer branded title cards until thumbnails live on public http(s) Storage.
+ */
+const MAX_THUMB_DATA_URL_CHARS = 0;
 
 const OG_CACHE_HEADERS = {
   "Cache-Control":
@@ -30,16 +34,20 @@ async function readDefaultOgPng(): Promise<Buffer> {
 
 function safeThumbSrc(candidate: string | null | undefined): string | null {
   const trimmed = candidate?.trim() ?? "";
-  if (!trimmed || trimmed.length > MAX_THUMB_DATA_URL_CHARS) {
+  if (!trimmed) {
     return null;
   }
-  if (!isOgDataUrlImage(trimmed)) {
-    if (/^https?:\/\//i.test(trimmed) && trimmed.length <= 2048) {
+  // data: / blob: — never embed (X cold-start & payload size).
+  if (isOgDataUrlImage(trimmed) || trimmed.toLowerCase().startsWith("data:")) {
+    if (trimmed.length <= MAX_THUMB_DATA_URL_CHARS) {
       return trimmed;
     }
     return null;
   }
-  return trimmed;
+  if (/^https?:\/\//i.test(trimmed) && trimmed.length <= 2048) {
+    return trimmed;
+  }
+  return null;
 }
 
 function CoverCard({ title, thumb }: { title: string; thumb: string }) {
