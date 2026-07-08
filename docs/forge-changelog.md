@@ -8,7 +8,7 @@
 
 - **HTMLメタ取得** — `fetchPublicProjectForOg` は `id/title/description/overview_introduction/visibility` のみ（巨大 `thumbnail_url` / `thumbnail_urls` を HTML 経路から除外）
 - **og:image** — 常に `/api/projects/{id}/og-image.png`（next/og の PNG に合わせて拡張子一致）。`width`/`height` 1200×630
-- **画像ルート** — `.png` は rewrite → extensionless handler（Vercel で `*.png` フォルダが 404 になるため）。両 URL で 1200×630 ブランドカード。巨大 data URL サムネはスキップ、失敗時も 500 せずデフォルト PNG
+- **画像ルート** — `.png` は middleware + beforeFiles rewrite → extensionless handler（Vercel で `*.png` フォルダ/静的扱いが 404 になるため）。両 URL で 1200×630 ブランドカード。巨大 data URL サムネはスキップ、失敗時も 500 せずデフォルト PNG
 - **共有モーダル** — 開いたときにページ＋ og-image.png を fire-and-forget で prewarm。X反映に数十秒〜数分かかる旨の注記
 - **対象** — Preview のみ（main / 本番未変更）
 

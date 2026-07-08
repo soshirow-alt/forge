@@ -6,16 +6,18 @@ const nextConfig: NextConfig = {
   },
   /**
    * Public crawler URL ends with `.png` (X sniffing + Content-Type honesty).
-   * App Router folders named `*.png` are unreliable on Vercel (404), so rewrite
-   * to the extensionless route handler that serves ImageResponse PNG bytes.
+   * App Router folders named `*.png` 404 on Vercel; beforeFiles rewrite avoids
+   * static-extension handling that skips afterFiles rewrites.
    */
   async rewrites() {
-    return [
-      {
-        source: "/api/projects/:projectId/og-image.png",
-        destination: "/api/projects/:projectId/og-image",
-      },
-    ];
+    return {
+      beforeFiles: [
+        {
+          source: "/api/projects/:projectId/og-image.png",
+          destination: "/api/projects/:projectId/og-image",
+        },
+      ],
+    };
   },
 };
 
