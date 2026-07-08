@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07-08 — OGP: data URL サムネをクロール可能な画像URLに
+
+- **og:image / twitter:image** — DB に `data:image/...;base64,...` で保存されたプロジェクトサムネを、公開 API `/api/projects/{id}/og-image` 経由の絶対 HTTP URL で返す（social crawler 向け）
+- **説明文** — キャッチコピー（`description`）→ 概要導入（`overview_introduction`）→ 定型文の優先。版・ステータス接尾辞は付けない
+- **対象** — 公開（`visibility=public`）プロジェクトのみ。Studio UI / DB migration / 本番 main は変更なし
+
+---
+
 ## 2026-07-08 — Studio右パネルUI再調整（二重スクロール解消・パネル分割・正式版控えめ化）
 
 - **二重スクロール解消** — 縦スクロールは右パネル本文1本のみ。`StudioPanelEditShell` から内側スクロールを除去

@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import { displayPhase } from "@/lib/development-phases";
 import {
   DEFAULT_GAME_OG_PATH,
   resolveOgImageUrl,
+  resolveProjectOgImageUrl,
 } from "@/lib/og-image-url";
-import { formatPlayableVersionLabel } from "@/lib/playable-version";
-import { RELEASE_STATUS_LABELS, type ProjectReleaseStatus } from "@/lib/project-release-state";
 import { getSiteOrigin, toAbsoluteUrl } from "@/lib/site-url";
 import type { ProjectOgData } from "@/lib/supabase/project-og";
 
@@ -15,6 +13,8 @@ export const FALLBACK_GAME_METADATA: Metadata = {
   title: "Forge",
   description: "完成前のゲームの最新版・声・更新をまとめる場所",
 };
+
+const GAME_OG_DESCRIPTION_FALLBACK = "Forgeで公開中の開発中ゲームです。";
 
 function truncateOneLine(text: string, maxLength = 120): string {
   const normalized = text.replace(/\s+/g, " ").trim();
@@ -27,28 +27,12 @@ function truncateOneLine(text: string, maxLength = 120): string {
   return `${normalized.slice(0, maxLength - 1)}…`;
 }
 
-function statusLabel(project: ProjectOgData): string | null {
-  const release = project.releaseStatus;
-  if (release && release in RELEASE_STATUS_LABELS) {
-    return RELEASE_STATUS_LABELS[release as ProjectReleaseStatus];
-  }
-  const phase = project.phase.trim();
-  if (!phase) {
-    return null;
-  }
-  return displayPhase(phase);
-}
-
 export function buildGameOgDescription(project: ProjectOgData): string {
-  const lead =
+  return (
     truncateOneLine(project.description) ||
-    "完成前のゲームを見つけて、声を届けよう";
-  const parts = [lead, `最新版 ${formatPlayableVersionLabel(project.playableVersion)}`];
-  const status = statusLabel(project);
-  if (status) {
-    parts.push(status);
-  }
-  return parts.join(" · ");
+    truncateOneLine(project.overviewIntroduction) ||
+    GAME_OG_DESCRIPTION_FALLBACK
+  );
 }
 
 export function buildGameDetailMetadata(project: ProjectOgData): Metadata {
@@ -57,7 +41,11 @@ export function buildGameDetailMetadata(project: ProjectOgData): Metadata {
   const description = buildGameOgDescription(project);
   const path = `/games/${project.id}`;
   const pageUrl = toAbsoluteUrl(path, origin);
-  const imageUrl = resolveOgImageUrl(project.thumbnailUrl, origin);
+  const imageUrl = resolveProjectOgImageUrl(
+    project.id,
+    project.thumbnailUrl,
+    origin,
+  );
 
   return {
     title,

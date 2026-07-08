@@ -7,6 +7,7 @@ export type ProjectOgData = {
   id: string;
   title: string;
   description: string;
+  overviewIntroduction: string;
   playableVersion: string;
   phase: string;
   releaseStatus: string | null;
@@ -20,7 +21,7 @@ export async function fetchPublicProjectForOg(
   const { data, error } = await supabase
     .from("projects")
     .select(
-      "id, title, description, playable_version, phase, release_status, thumbnail_url, thumbnail_urls, visibility",
+      "id, title, description, overview_introduction, playable_version, phase, release_status, thumbnail_url, thumbnail_urls, visibility",
     )
     .eq("id", projectId)
     .eq("visibility", "public")
@@ -35,6 +36,7 @@ export async function fetchPublicProjectForOg(
     | "id"
     | "title"
     | "description"
+    | "overview_introduction"
     | "playable_version"
     | "phase"
     | "release_status"
@@ -47,6 +49,7 @@ export async function fetchPublicProjectForOg(
     id: row.id,
     title: row.title,
     description: row.description ?? "",
+    overviewIntroduction: row.overview_introduction ?? "",
     playableVersion: row.playable_version?.trim() || DEFAULT_PLAYABLE_VERSION,
     phase: row.phase ?? "",
     releaseStatus: row.release_status ?? null,
