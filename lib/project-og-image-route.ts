@@ -1,3 +1,4 @@
+import { shouldBlockOgProjectDbWrite } from "@/lib/og-incident-guard";
 import { isSupabaseProjectId } from "@/lib/submitted-game-v0-adapter";
 import { ensurePublicProjectOgImage } from "@/lib/supabase/project-og-sync";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
@@ -22,6 +23,10 @@ export async function handleProjectOgImageGet(
 
     const service = createServiceRoleClient();
     if (!service) {
+      return emptyOgResponse();
+    }
+
+    if (shouldBlockOgProjectDbWrite("handleProjectOgImageGet")) {
       return emptyOgResponse();
     }
 

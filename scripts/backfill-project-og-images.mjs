@@ -399,6 +399,18 @@ for (const row of projects ?? []) {
   }
 
   const ogUrl = storagePublicUrl(PROJECT_OG_BUCKET, objectPath);
+
+  if (OG_SYNC_INCIDENT_PAUSED) {
+    entry.result = {
+      og_image_url: ogUrl,
+      note: "incident: og_image_url DB write skipped",
+      thumbnailActions: thumbResult.actions,
+    };
+    entry.status = "ok-skipped-db";
+    report.projects.push(entry);
+    continue;
+  }
+
   const { error: dbErr } = await supabase
     .from("projects")
     .update({ og_image_url: ogUrl })

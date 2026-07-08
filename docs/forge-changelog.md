@@ -4,6 +4,23 @@
 
 ---
 
+## 2026-07-09 — インシデント止血（追加）: Preview→本番 DB 書き込みガード + Studio 空上書き防止
+
+- **ガード** — `lib/og-incident-guard.ts`: `OG_SYNC_INCIDENT_PAUSED` 中は OGP 経路の `thumbnail_*` / `og_image_url` 更新をすべて拒否。`VERCEL_ENV !== production` でも拒否（Preview/local から本番 Supabase への OGP 書き込みをブロック）
+- **Studio 保存** — サムネ未変更・空配列の誤送信時は `thumbnail_url` / `thumbnail_urls` を UPDATE ペイロードから省略。画像パネル（`explicitThumbnailUpdate`）のみ意図的な全削除を許可
+- **対象** — 作業ツリー未コミット（本番 main 未変更）
+
+---
+
+## 2026-07-09 — インシデント止血: OGP sync によるサムネ上書き停止
+
+- **止血** — `OG_SYNC_INCIDENT_PAUSED` で og-sync API・prewarm・`generateMetadata` lazy sync・保存後 og-sync をすべて停止
+- **恒久ルール** — OGP 経路は `thumbnail_url` / `thumbnail_urls` を**決して更新しない**（`normalizeProjectThumbnailsInStorage` の DB 書き込みを削除）
+- **backfill** — 実行モードは即終了。サムネ列の UPDATE も無効化
+- **対象** — Preview のみ（`6f0be3d`）。本番 main 未変更。047 未適用のまま
+
+---
+
 ## 2026-07-09 — OGP: Storage 静的画像（作品サムネ主役・1200×630）
 
 - **方針** — 動的API＋Forgeブランドカード暫定を撤回。作品サムネを全面にした 1200×630 JPEG を Supabase Storage（`project-og`）へ保存し、`og:image` / `twitter:image` はその公開URLを指す

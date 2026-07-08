@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import {
-  OG_PIPELINE_PAUSE_REASON,
-  OG_PIPELINE_PAUSED,
-} from "@/lib/og-incident-guard";
+  OG_SYNC_INCIDENT_MESSAGE,
+  OG_SYNC_INCIDENT_PAUSED,
+} from "@/lib/og-sync-incident-pause";
+import { shouldBlockOgProjectDbWrite } from "@/lib/og-incident-guard";
 import { isSupabaseProjectId } from "@/lib/submitted-game-v0-adapter";
+import { ensurePublicProjectOgImage } from "@/lib/supabase/project-og-sync";
+import { syncProjectOgAfterPublicSave } from "@/lib/server/sync-project-og-after-save";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 export const runtime = "nodejs";
 
@@ -13,14 +17,14 @@ type RouteContext = {
 
 function pausedResponse() {
   return NextResponse.json(
-    { ok: false, paused: true, reason: OG_PIPELINE_PAUSE_REASON },
+    { ok: false, paused: true, reason: OG_SYNC_INCIDENT_MESSAGE },
     { status: 503 },
   );
 }
 
 /** Prewarm / lazy backfill — paused during thumbnail incident. */
 export async function GET(_request: Request, context: RouteContext) {
-  if (OG_PIPELINE_PAUSED) {
+  if (OG_SYNC_INCIDENT_PAUSED || shouldBlockOgProjectDbWrite("og-sync GET")) {
     return pausedResponse();
   }
 
@@ -30,14 +34,31 @@ export async function GET(_request: Request, context: RouteContext) {
     return NextResponse.json({ ok: false }, { status: 404 });
   }
 
-  return NextResponse.json({ ok: false, reason: "og-sync not available" }, { status: 503 });
+  const service = createServiceRoleClient();
+  if (!service) {
+    return NextResponse.json({ ok: false }, { status: 503 });
+  }
+
+  const url = await ensurePublicProjectOgImage(service, projectId);
+  if (!url) {
+    return NextResponse.json({ ok: false }, { status: 404 });
+  }
+
+  return NextResponse.json({ ok: true, url });
 }
 
 /** Save-time sync — paused during thumbnail incident. */
 export async function POST(_request: Request, context: RouteContext) {
-  if (OG_PIPELINE_PAUSED) {
+  if (OG_SYNC_INCIDENT_PAUSED || shouldBlockOgProjectDbWrite("og-sync POST")) {
     return pausedResponse();
   }
 
-  return NextResponse.json({ ok: false, reason: "og-sync not available" }, { status: 503 });
+  const { projectId } = await context.params;
+
+  if (!isSupabaseProjectId(projectId)) {
+    return NextResponse.json({ ok: false }, { status: 404 });
+  }
+
+  await syncProjectOgAfterPublicSave(projectId);
+  return NextResponse.json({ ok: true });
 }

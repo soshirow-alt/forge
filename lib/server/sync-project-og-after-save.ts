@@ -1,4 +1,6 @@
 import "server-only";
+
+import { shouldBlockOgProjectDbWrite } from "@/lib/og-incident-guard";
 import { OG_SYNC_INCIDENT_PAUSED } from "@/lib/og-sync-incident-pause";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import {
@@ -10,7 +12,7 @@ import {
 export async function syncProjectOgAfterPublicSave(
   projectId: string,
 ): Promise<void> {
-  if (OG_SYNC_INCIDENT_PAUSED) {
+  if (OG_SYNC_INCIDENT_PAUSED || shouldBlockOgProjectDbWrite("syncProjectOgAfterPublicSave")) {
     return;
   }
 

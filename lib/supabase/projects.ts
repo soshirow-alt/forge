@@ -20,12 +20,57 @@ import {
 import { normalizeExternalUrlForDb } from "@/lib/game-links";
 import {
   projectThumbnailsForDb,
+  projectThumbnailsForDbUpdate,
   resolveProjectPrimaryThumbnail,
   resolveProjectThumbnailUrlsFromRow,
 } from "@/lib/project-thumbnails";
 
 import { OG_SYNC_INCIDENT_PAUSED } from "@/lib/og-sync-incident-pause";
 import { getSiteOrigin } from "@/lib/site-url";
+
+function applyThumbnailFieldsForUpdate(
+  payload: Record<string, unknown>,
+  thumbnailUrls: string[] | undefined,
+  existing: {
+    thumbnail_url?: string | null;
+    thumbnail_urls?: string[] | null;
+  },
+  options?: { allowClear?: boolean },
+): void {
+  const fields = projectThumbnailsForDbUpdate(
+    thumbnailUrls,
+    existing,
+    options,
+  );
+  if (fields) {
+    payload.thumbnail_url = fields.thumbnail_url;
+    payload.thumbnail_urls = fields.thumbnail_urls;
+  }
+}
+
+async function fetchExistingProjectThumbnails(
+  supabase: SupabaseClient,
+  projectId: string,
+): Promise<{
+  thumbnail_url: string | null;
+  thumbnail_urls: string[] | null;
+}> {
+  const { data, error } = await supabase
+    .from("projects")
+    .select("thumbnail_url, thumbnail_urls")
+    .eq("id", projectId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return { thumbnail_url: null, thumbnail_urls: null };
+  }
+
+  return {
+    thumbnail_url: (data as { thumbnail_url?: string | null }).thumbnail_url ?? null,
+    thumbnail_urls:
+      (data as { thumbnail_urls?: string[] | null }).thumbnail_urls ?? null,
+  };
+}
 
 function formatDateOnly(iso: string) {
   return iso.split("T")[0];
@@ -252,13 +297,10 @@ export async function updateProjectFromSubmitForm(
   id: string,
   data: SubmitFormData,
 ): Promise<Game> {
+  const existingThumbs = await fetchExistingProjectThumbnails(supabase, id);
   const intro = data.introduction?.trim() ?? data.description?.trim() ?? "";
   const { genres, genre } = projectGenresForDb(data.genres);
-  const thumbnails = projectThumbnailsForDb(data.thumbnailUrls);
-  const row = await writeProjectRowWithSchemaFallback(
-    async (payload) =>
-      supabase.from("projects").update(payload).eq("id", id).select("*").single(),
-    {
+  const payload: Record<string, unknown> = {
       title: data.title,
       creator: data.creator,
       genre,
@@ -269,8 +311,6 @@ export async function updateProjectFromSubmitForm(
       status: data.lookingForTesters ? "テスター募集中" : data.phase,
       looking_for_testers: data.lookingForTesters,
       tester_slots: data.lookingForTesters ? (data.testerSlots ?? null) : null,
-      thumbnail_url: thumbnails.thumbnail_url,
-      thumbnail_urls: thumbnails.thumbnail_urls,
       tags: mergeTagsWithRecruitment(data.tags, data.lookingForTesters),
       play_url: data.playUrl,
       estimated_play_time: data.estimatedPlayTime ?? null,
@@ -284,7 +324,12 @@ export async function updateProjectFromSubmitForm(
       ...(data.playAccessType
         ? { play_access_type: data.playAccessType }
         : {}),
-    },
+    };
+  applyThumbnailFieldsForUpdate(payload, data.thumbnailUrls, existingThumbs);
+  const row = await writeProjectRowWithSchemaFallback(
+    async (p) =>
+      supabase.from("projects").update(p).eq("id", id).select("*").single(),
+    payload,
   );
 
   const game = projectRowToGame(row as ProjectRow);
@@ -299,12 +344,9 @@ export async function updateProjectDetailsInDb(
   id: string,
   data: ProjectEditFormData,
 ): Promise<Game> {
+  const existingThumbs = await fetchExistingProjectThumbnails(supabase, id);
   const { genres, genre } = projectGenresForDb(data.genres);
-  const thumbnails = projectThumbnailsForDb(data.thumbnailUrls);
-  const row = await writeProjectRowWithSchemaFallback(
-    async (payload) =>
-      supabase.from("projects").update(payload).eq("id", id).select("*").single(),
-    {
+  const payload: Record<string, unknown> = {
       title: data.title,
       ...(data.description !== undefined ? { description: data.description.trim() } : {}),
       genre,
@@ -313,8 +355,6 @@ export async function updateProjectDetailsInDb(
       status: data.lookingForTesters ? "テスター募集中" : data.phase,
       looking_for_testers: data.lookingForTesters,
       tester_slots: data.lookingForTesters ? (data.testerSlots ?? null) : null,
-      thumbnail_url: thumbnails.thumbnail_url,
-      thumbnail_urls: thumbnails.thumbnail_urls,
       tags: mergeTagsWithRecruitment(data.tags, data.lookingForTesters),
       play_url: data.playUrl,
       estimated_play_time: data.estimatedPlayTime ?? null,
@@ -329,7 +369,14 @@ export async function updateProjectDetailsInDb(
       ...(data.playAccessType
         ? { play_access_type: data.playAccessType }
         : {}),
-    },
+    };
+  applyThumbnailFieldsForUpdate(payload, data.thumbnailUrls, existingThumbs, {
+    allowClear: data.explicitThumbnailUpdate === true,
+  });
+  const row = await writeProjectRowWithSchemaFallback(
+    async (p) =>
+      supabase.from("projects").update(p).eq("id", id).select("*").single(),
+    payload,
   );
 
   const game = projectRowToGame(row as ProjectRow);

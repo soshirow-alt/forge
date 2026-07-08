@@ -2,8 +2,11 @@ import "server-only";
 
 import sharp from "sharp";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { OG_PIPELINE_PAUSED } from "@/lib/og-incident-guard";
 import { OG_SYNC_INCIDENT_PAUSED } from "@/lib/og-sync-incident-pause";
+import {
+  filterOgProjectDbWritePayload,
+  shouldBlockOgProjectDbWrite,
+} from "@/lib/og-incident-guard";
 import { parseOgDataUrlImage } from "@/lib/og-data-url-image";
 import {
   generateProjectOgJpeg,
@@ -187,9 +190,21 @@ export async function syncPublicProjectOgImage(
     return null;
   }
 
+  if (shouldBlockOgProjectDbWrite("syncPublicProjectOgImage")) {
+    return publicUrl;
+  }
+
+  const updatePayload = filterOgProjectDbWritePayload(
+    { og_image_url: publicUrl },
+    "syncPublicProjectOgImage",
+  );
+  if (!("og_image_url" in updatePayload)) {
+    return publicUrl;
+  }
+
   const { error } = await supabase
     .from("projects")
-    .update({ og_image_url: publicUrl })
+    .update(updatePayload)
     .eq("id", project.id);
 
   if (error) {
