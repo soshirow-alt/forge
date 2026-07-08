@@ -10,6 +10,10 @@ type StudioFieldAnchorProps = {
   className?: string;
 };
 
+/**
+ * Scroll/focus target for left-preview → right-panel navigation.
+ * Layout-neutral: no ring/border/padding that can widen the panel.
+ */
 export function StudioFieldAnchor({
   fieldId,
   highlight = false,
@@ -40,9 +44,7 @@ export function StudioFieldAnchor({
       ref={ref}
       id={fieldId}
       data-studio-field={fieldId}
-      className={`rounded-lg transition-shadow duration-500 ${
-        highlight ? "ring-2 ring-orange-500/45 ring-offset-2 ring-offset-zinc-950" : ""
-      } ${className}`}
+      className={`w-full min-w-0 max-w-full ${className}`}
     >
       {children}
     </div>

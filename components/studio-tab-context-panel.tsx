@@ -46,10 +46,10 @@ import { scrollStudioPanelToTop } from "@/lib/studio-panel-scroll";
 import type { StudioOverviewEditMode } from "@/lib/studio-edit-url";
 
 const primaryButtonClassName =
-  "inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 shadow-sm shadow-orange-500/20 transition-opacity hover:opacity-90";
+  "inline-flex w-full min-w-0 max-w-full box-border items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 shadow-sm shadow-orange-500/20 transition-opacity hover:opacity-90";
 
 const panelButtonClassName =
-  "inline-flex w-full items-center gap-2 rounded-lg border border-zinc-800/60 bg-zinc-950/40 px-3 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70 hover:text-zinc-100";
+  "inline-flex w-full min-w-0 max-w-full box-border items-center gap-2 rounded-lg border border-zinc-800/60 bg-zinc-950/40 px-3 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70 hover:text-zinc-100";
 
 const SECTION_CONTENT_HEADINGS: Record<GameDetailTab, string> = {
   overview: "公開ページを編集",
@@ -72,7 +72,7 @@ function StudioEditPaneShell({ children }: { children: ReactNode }) {
     <aside aria-label="Studioパネル" className={studioOperationPanelAsideClassName}>
       <div className={`${studioOperationPanelOuterClassName} ${studioOperationPanelScrollClassName}`}>
         <div className={studioOperationPanelScrollBodyClassName}>
-          <div className="space-y-4">{children}</div>
+          <div className="w-full min-w-0 max-w-full space-y-4">{children}</div>
         </div>
       </div>
     </aside>

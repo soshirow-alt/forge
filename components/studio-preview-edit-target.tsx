@@ -34,16 +34,15 @@ export function StudioPreviewEditTarget({
           onEditTarget(target);
         }
       }}
-      className={`group/studio-edit relative rounded-lg transition-colors hover:bg-zinc-800/25 hover:outline hover:outline-1 hover:outline-zinc-700/50 focus-visible:outline focus-visible:outline-1 focus-visible:outline-orange-500/40 ${
+      className={`group/studio-edit relative min-w-0 max-w-full rounded-lg transition-colors hover:bg-zinc-800/25 hover:outline hover:outline-1 hover:outline-zinc-700/50 focus-visible:outline focus-visible:outline-1 focus-visible:outline-orange-500/40 ${
         inline ? "inline-flex max-w-full cursor-pointer" : "cursor-pointer"
       } ${className}`}
     >
       <span
-        className="pointer-events-none absolute right-1.5 top-1.5 z-10 inline-flex items-center gap-0.5 rounded border border-zinc-700/80 bg-zinc-900/95 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 opacity-80 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/studio-edit:opacity-100 [@media(hover:hover)]:group-focus-visible/studio-edit:opacity-100"
+        className="pointer-events-none absolute right-1.5 top-1.5 z-10 flex size-5 items-center justify-center rounded border border-zinc-700/80 bg-zinc-900/95 text-zinc-400 opacity-80 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/studio-edit:opacity-100 [@media(hover:hover)]:group-focus-visible/studio-edit:opacity-100"
         aria-hidden="true"
       >
         <Pencil className="size-2.5" />
-        編集
       </span>
       {children}
     </div>

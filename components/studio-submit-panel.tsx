@@ -38,14 +38,14 @@ import {
 import type { StudioFieldId, StudioPanelFocusRequest } from "@/lib/studio-preview-edit-targets";
 
 const panelButtonClassName =
-  "inline-flex w-full items-center gap-2 rounded-lg border border-zinc-800/60 bg-zinc-950/40 px-3 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70 hover:text-zinc-100";
+  "inline-flex w-full min-w-0 max-w-full box-border items-center gap-2 rounded-lg border border-zinc-800/60 bg-zinc-950/40 px-3 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70 hover:text-zinc-100";
 
 const primaryButtonClassName =
-  "inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 shadow-sm shadow-orange-500/20 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex w-full min-w-0 max-w-full box-border items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 shadow-sm shadow-orange-500/20 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
 
 const submitPanelAsideClassName = studioOperationPanelAsideClassName;
 
-const panelSummaryClassName = "break-words text-sm text-zinc-300";
+const panelSummaryClassName = "min-w-0 max-w-full break-words text-sm text-zinc-300";
 
 type SubmitEditMode = SubmitValidationEditMode | "images" | "visibility" | null;
 
@@ -79,17 +79,17 @@ function PanelBlock({
   return (
     <section className={studioOperationPanelBlockClassName}>
       {title ? (
-        <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="min-w-0 space-y-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-orange-300/80">
               {title}
             </h3>
             {requirement ? <RequirementLabel kind={requirement} /> : null}
           </div>
-          {fieldHint ? <p className="text-[11px] text-zinc-600">{fieldHint}</p> : null}
+          {fieldHint ? <p className="break-words text-[11px] text-zinc-600">{fieldHint}</p> : null}
         </div>
       ) : null}
-      <div className={title ? "mt-3 space-y-2" : "space-y-2"}>{children}</div>
+      <div className={`min-w-0 ${title ? "mt-3 space-y-2" : "space-y-2"}`}>{children}</div>
     </section>
   );
 }
@@ -107,8 +107,10 @@ function SubmitValidationAlert({ message }: { message: string }) {
 
 function StudioPanelScrollShell({ children }: { children: ReactNode }) {
   return (
-    <div className={studioOperationPanelScrollClassName}>
-      <div className={studioOperationPanelScrollBodyClassName}>{children}</div>
+    <div className={`${studioOperationPanelOuterClassName} ${studioOperationPanelScrollClassName}`}>
+      <div className={studioOperationPanelScrollBodyClassName}>
+        <div className="w-full min-w-0 max-w-full space-y-3">{children}</div>
+      </div>
     </div>
   );
 }
@@ -276,22 +278,24 @@ export function StudioSubmitPanel({
     <aside aria-label="Studioパネル" className={submitPanelAsideClassName}>
       <div className={`${studioOperationPanelOuterClassName} ${studioOperationPanelScrollClassName}`}>
         <div className={studioOperationPanelScrollBodyClassName}>
-          <div className="space-y-4">
+          <div className="w-full min-w-0 max-w-full space-y-4">
             <div className={studioOperationPanelHeaderAccentClassName}>
-              <div className="flex items-center gap-2">
+              <div className="flex min-w-0 items-center gap-2">
                 <span
                   className="h-4 w-0.5 shrink-0 rounded-full bg-orange-500/80"
                   aria-hidden="true"
                 />
                 <SlidersHorizontal className="size-3.5 shrink-0 text-orange-400/90" aria-hidden="true" />
-                <h2 className="text-sm font-semibold tracking-tight text-zinc-100">Studioパネル</h2>
+                <h2 className="min-w-0 text-sm font-semibold tracking-tight text-zinc-100">
+                  Studioパネル
+                </h2>
               </div>
             </div>
 
             <p className="text-xs font-medium text-zinc-500">作品を投稿する</p>
             <StudioPanelGuidance />
 
-          <div className="space-y-5">
+          <div className="w-full min-w-0 max-w-full space-y-5">
             <div className="space-y-2">
               <GroupLabel>ページの内容</GroupLabel>
               <div className="space-y-2">
@@ -397,7 +401,7 @@ export function StudioSubmitPanel({
           </div>
         </div>
 
-        <div className="sticky bottom-0 shrink-0 border-t border-zinc-800/80 bg-zinc-900/95 pt-3">
+        <div className="w-full min-w-0 max-w-full shrink-0 box-border border-t border-zinc-800/80 bg-zinc-900/95 pt-3">
           <button
             type="button"
             onClick={onSubmit}
