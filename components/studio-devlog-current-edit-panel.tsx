@@ -159,7 +159,7 @@ export function StudioDevlogCurrentEditPanel({
           onSaved?.();
         }}
         dialogTitle="プレイヤーに見てほしいこと・答えてほしいこと"
-        dialogSubtitle={`${versionLabel} — 未設定の場合はデフォルトの問いが表示されます`}
+        dialogSubtitle={versionLabel}
       />
     </>
   );
