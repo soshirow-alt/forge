@@ -6,7 +6,7 @@ type RouteContext = {
   params: Promise<{ projectId: string }>;
 };
 
-/** Legacy extensionless path — same PNG card for already-crawled URLs. */
+/** Primary OGP card — 1200×630 PNG for X / social crawlers. */
 export async function GET(_request: Request, context: RouteContext) {
   const { projectId } = await context.params;
   return handleProjectOgImageGet(projectId);

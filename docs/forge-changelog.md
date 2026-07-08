@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-07-09 — OGP cold-start: 軽量メタ + 1200×630 PNG カード
+
+- **HTMLメタ取得** — `fetchPublicProjectForOg` は `id/title/description/overview_introduction/visibility` のみ（巨大 `thumbnail_url` / `thumbnail_urls` を HTML 経路から除外）
+- **og:image** — 常に `/api/projects/{id}/og-image.png`（next/og の PNG に合わせて拡張子一致）。`width`/`height` 1200×630
+- **画像ルート** — 新規 `.png` + レガシー extensionless 両方で 1200×630 ブランドカード。巨大 data URL サムネはスキップ、失敗時も 500 せずデフォルト PNG
+- **共有モーダル** — 開いたときにページ＋ og-image.png を fire-and-forget で prewarm。X反映に数十秒〜数分かかる旨の注記
+- **対象** — Preview のみ（main / 本番未変更）
+
+---
+
 ## 2026-07-08 — Studio投稿パネル: キャンセル破棄 + 関連リンク導線復旧
 
 - **キャンセル破棄** — 投稿右パネルの各編集画面をローカル一時バッファ化。入力変更は「反映する」まで親 draft / 左プレビューに載せない。キャンセルは編集開始前のまま

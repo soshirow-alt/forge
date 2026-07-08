@@ -45,7 +45,20 @@ export function ProjectShareLinkModal({
       setCopyFeedback(null);
       return;
     }
-    setPageUrl(getClientProjectPageUrl(projectId));
+    const url = getClientProjectPageUrl(projectId);
+    setPageUrl(url);
+
+    // Fire-and-forget prewarm for X / OG crawlers (ignore errors).
+    void fetch(url, { method: "GET", credentials: "omit" }).catch(() => {});
+    try {
+      const origin = window.location.origin;
+      void fetch(`${origin}/api/projects/${projectId}/og-image.png`, {
+        method: "GET",
+        credentials: "omit",
+      }).catch(() => {});
+    } catch {
+      /* ignore */
+    }
   }, [open, projectId]);
 
   const showCopyFeedback = useCallback((kind: Exclude<CopyFeedback, null>) => {
@@ -103,6 +116,9 @@ export function ProjectShareLinkModal({
               aria-label="共有URL"
             >
               {pageUrl}
+            </p>
+            <p className="text-xs leading-relaxed text-zinc-500">
+              Xへの反映に数十秒〜数分かかることがあります。
             </p>
           </section>
         ) : null}

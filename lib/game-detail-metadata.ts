@@ -41,11 +41,7 @@ export function buildGameDetailMetadata(project: ProjectOgData): Metadata {
   const description = buildGameOgDescription(project);
   const path = `/games/${project.id}`;
   const pageUrl = toAbsoluteUrl(path, origin);
-  const imageUrl = resolveProjectOgImageUrl(
-    project.id,
-    project.thumbnailUrl,
-    origin,
-  );
+  const imageUrl = resolveProjectOgImageUrl(project.id, null, origin);
 
   return {
     title,
@@ -63,6 +59,8 @@ export function buildGameDetailMetadata(project: ProjectOgData): Metadata {
       images: [
         {
           url: imageUrl,
+          width: 1200,
+          height: 630,
           alt: project.title,
         },
       ],
@@ -89,7 +87,7 @@ export function buildFallbackGameDetailMetadata(): Metadata {
       siteName: "Forge",
       locale: "ja_JP",
       type: "website",
-      images: [{ url: imageUrl, alt: "Forge" }],
+      images: [{ url: imageUrl, width: 1200, height: 630, alt: "Forge" }],
     },
     twitter: {
       card: "summary_large_image",
