@@ -3,10 +3,9 @@ export const PROJECT_INTRO_HINT =
 
 export const PROJECT_VISIBILITY_SECTION_HINT = "";
 
-export const THUMBNAIL_LABEL = "サムネイル画像（推奨）";
+export const THUMBNAIL_LABEL = "サムネイル";
 
-export const THUMBNAIL_HINT =
-  "最大10枚まで。1枚目が一覧用です。未設定でも仮サムネイルを自動生成します。";
+export const THUMBNAIL_HINT = "";
 
 export const PROJECT_ACCESS_SECTION_TITLE = "アクセス方法";
 

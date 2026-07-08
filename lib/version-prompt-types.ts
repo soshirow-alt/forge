@@ -44,7 +44,7 @@ export type VoiceAnswerDraft = {
   optionalComment?: string;
 };
 
-export const MAX_PROMPTS_PER_VERSION = 10;
+export const MAX_PROMPTS_PER_VERSION = 5;
 
 export const DEFAULT_REPLAY_PROMPT_TEXT = "もう一度遊びたい？";
 

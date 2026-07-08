@@ -60,11 +60,6 @@ export function ProjectAlreadyReleasedFormFields({
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-sm text-zinc-400">正式版公開済み（任意）</span>
-            {!expanded ? (
-              <span className="mt-1 block text-xs text-zinc-600">
-                完成版として公開済みの作品向けです。
-              </span>
-            ) : null}
           </span>
         </button>
 

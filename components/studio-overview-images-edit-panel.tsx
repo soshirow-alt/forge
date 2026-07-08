@@ -8,7 +8,6 @@ import {
 import type { StudioOverviewEditPanelCommonProps } from "@/components/studio-overview-edit-panel-types";
 import { useGames } from "@/components/games-provider";
 import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
-import { resolveProjectGenres } from "@/lib/project-genres";
 import { resolveProjectThumbnailUrls } from "@/lib/project-thumbnails";
 
 export type StudioOverviewImagesEditPanelProps = StudioOverviewEditPanelCommonProps;
@@ -72,11 +71,9 @@ export function StudioOverviewImagesEditPanel({
     return <p className="text-sm text-zinc-500">読み込み中…</p>;
   }
 
-  const genres = resolveProjectGenres(game);
-
   return (
     <StudioPanelEditShell
-      title="画像を編集"
+      title="サムネイルを編集"
       onCancel={onCancel}
       onSave={() => void handleSave()}
       isSaving={isSaving}
@@ -86,13 +83,6 @@ export function StudioOverviewImagesEditPanel({
         inputId={`studio-images-${projectId}`}
         thumbnails={thumbnailUrls}
         onChange={handleThumbnailChange}
-        posterFallback={{
-          projectId: game.id,
-          title: game.title,
-          genre: genres[0] ?? "その他",
-          phase: game.phase,
-          styleSeed: game.id,
-        }}
       />
     </StudioPanelEditShell>
   );

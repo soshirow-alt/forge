@@ -30,7 +30,6 @@ import {
 } from "@/lib/project-genres";
 import { PROJECT_VISIBILITY_FORM_OPTIONS, type ProjectVisibility } from "@/lib/project-visibility";
 import type { SubmitDraftState } from "@/lib/studio-submit-draft";
-import { SUBMIT_DRAFT_PREVIEW_ID } from "@/lib/studio-submit-draft";
 import { STUDIO_FIELD_IDS } from "@/lib/studio-preview-edit-targets";
 import type { StudioFieldId } from "@/lib/studio-preview-edit-targets";
 import type { ProjectExternalLinksInput } from "@/lib/game-links";
@@ -228,11 +227,9 @@ export function StudioSubmitImagesEditPanel({
   onCancel,
   highlightFieldId = null,
 }: SubmitEditPanelProps) {
-  const primaryGenre = sanitizeProjectGenresForSave(draft.genres)[0] ?? "その他";
-
   return (
     <StudioPanelEditShell
-      title="画像"
+      title="サムネイル"
       backLabel="← 投稿内容に戻る"
       onCancel={onCancel}
       onSave={onCancel}
@@ -246,13 +243,7 @@ export function StudioSubmitImagesEditPanel({
           inputId="submit-draft-thumbnails"
           thumbnails={draft.thumbnailUrls}
           onChange={(thumbnailUrls) => onApply({ thumbnailUrls })}
-          posterFallback={{
-            projectId: SUBMIT_DRAFT_PREVIEW_ID,
-            title: draft.title.trim() || "タイトル未入力",
-            genre: primaryGenre,
-            phase: draft.phase,
-            styleSeed: SUBMIT_DRAFT_PREVIEW_ID,
-          }}
+          required
         />
       </StudioFieldAnchor>
     </StudioPanelEditShell>

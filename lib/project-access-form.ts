@@ -4,7 +4,7 @@ export function getAccessUrlField(distribution: DistributionType) {
   switch (distribution) {
     case "browser":
       return {
-        label: "遊べるURL",
+        label: "ゲームプレイURL",
         placeholder: "https://...",
         hint: null,
       };
@@ -16,7 +16,7 @@ export function getAccessUrlField(distribution: DistributionType) {
       };
     case "external":
       return {
-        label: "ゲームページURL",
+        label: "ストア・外部ページURL",
         placeholder: "https://...",
         hint: null,
       };

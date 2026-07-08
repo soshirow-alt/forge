@@ -77,10 +77,6 @@ export function VersionPromptEditor({
             プレイヤーへの問い{" "}
             <span className="font-normal text-zinc-600">（任意）</span>
           </p>
-          <p className="mt-1 text-xs leading-relaxed text-zinc-600">
-            {versionLabel}向けに、プレイ後に届けてほしい短い問いを設定できます。
-            未設定の場合は「もう一度遊びたい？」が表示されます。
-          </p>
         </div>
       ) : null}
 

@@ -56,13 +56,11 @@ export function ProjectAlreadyReleasedConfirmModal({
         </p>
         <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-zinc-400">
           <li>作品カードや作品ページに「完成品」と表示されます</li>
-          <li>プレイヤーに、完成版として受け取られます</li>
-          <li>開発中の作品に設定すると、期待値がずれる可能性があります</li>
+          <li>プレイヤーに完成版として受け取られます</li>
+          <li>開発中の作品に設定すると期待値がずれます</li>
           <li>通常の編集画面では元に戻せません</li>
+          <li>将来、見届け人やSpecial Thanksなどの判定に使う可能性があります</li>
         </ul>
-        <p className="mt-3 text-xs leading-relaxed text-zinc-500">
-          将来、見届け人・Special Thanks などの判定に使う可能性があります。
-        </p>
 
         {requireAcknowledgement ? (
           <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-3">

@@ -347,7 +347,7 @@ export function StudioTabContextPanel({
                   className={panelButtonClassName}
                 >
                   <ImageIcon className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                  画像を編集
+                  サムネイルを編集
                 </button>
               </PanelBlock>
             </div>

@@ -36,17 +36,19 @@ import {
 
 export const SUBMIT_DRAFT_PREVIEW_ID = "submit-draft-preview";
 
-/** 投稿バリデーション失敗時に開く編集パネル（任意項目・画像・公開設定は含まない） */
+/** 投稿バリデーション失敗時に開く編集パネル */
 export type SubmitValidationEditMode =
   | "basic-info"
   | "genres-tags"
   | "introduction"
+  | "images"
   | "play-info";
 
 export const SUBMIT_VALIDATION_PANEL_LABELS: Record<SubmitValidationEditMode, string> = {
   "basic-info": "基本情報",
   "genres-tags": "ジャンル・タグ",
   introduction: "作品紹介",
+  images: "サムネイル",
   "play-info": "プレイ情報",
 };
 

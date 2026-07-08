@@ -83,6 +83,10 @@ export function validateSubmitDraftForPost(
     return validationFailure("introduction", "作品紹介を入力してください。");
   }
 
+  if (draft.thumbnailUrls.length === 0) {
+    return validationFailure("images", "サムネイルを追加してください。");
+  }
+
   if (!draft.phase.trim()) {
     return validationFailure("basic-info", "開発フェーズを選んでください。");
   }
@@ -138,6 +142,12 @@ export function validateSubmitDraftSection(
     case "introduction": {
       if (!draft.introduction.trim()) {
         return validationFailure("introduction", "作品紹介を入力してください。");
+      }
+      return { ok: true };
+    }
+    case "images": {
+      if (draft.thumbnailUrls.length === 0) {
+        return validationFailure("images", "サムネイルを追加してください。");
       }
       return { ok: true };
     }

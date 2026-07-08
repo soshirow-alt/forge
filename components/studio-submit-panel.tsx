@@ -13,23 +13,11 @@ import {
   StudioSubmitPublicationEditPanel,
 } from "@/components/studio-submit-edit-panels";
 import type { SubmitValidationEditMode } from "@/lib/studio-submit-draft";
-import {
-  summarizeSubmitDraftBasic,
-  summarizeSubmitDraftGenres,
-  summarizeSubmitDraftImages,
-  summarizeSubmitDraftIntroduction,
-  summarizeSubmitDraftPlayInfo,
-  summarizeSubmitDraftPublication,
-  type SubmitDraftState,
-} from "@/lib/studio-submit-draft";
-import {
-  summarizeVersionPromptSettings,
-} from "@/components/version-prompt-editor-dialog";
+import type { SubmitDraftState } from "@/lib/studio-submit-draft";
 import {
   studioOperationPanelAsideClassName,
   studioOperationPanelBlockClassName,
   studioOperationPanelGroupLabelClassName,
-  studioOperationPanelGuidanceClassName,
   studioOperationPanelHeaderAccentClassName,
   studioOperationPanelOuterClassName,
   studioOperationPanelScrollBodyClassName,
@@ -44,8 +32,6 @@ const primaryButtonClassName =
   "inline-flex w-full min-w-0 max-w-full box-border items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 shadow-sm shadow-orange-500/20 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
 
 const submitPanelAsideClassName = studioOperationPanelAsideClassName;
-
-const panelSummaryClassName = "min-w-0 max-w-full break-words text-sm text-zinc-300";
 
 type SubmitEditMode = SubmitValidationEditMode | "images" | "publication" | "visibility" | null;
 
@@ -147,7 +133,6 @@ export function StudioSubmitPanel({
   const [editMode, setEditMode] = useState<SubmitEditMode>(null);
   const [highlightFieldId, setHighlightFieldId] = useState<StudioFieldId | null>(null);
   const [scrollOnHighlight, setScrollOnHighlight] = useState(true);
-  const promptSummary = summarizeVersionPromptSettings(draft.promptMode, draft.promptDrafts);
 
   useEffect(() => {
     if (!focusEditMode) {
@@ -301,8 +286,6 @@ export function StudioSubmitPanel({
               </div>
             </div>
 
-            <p className="text-xs font-medium text-zinc-500">作品を投稿する</p>
-
           <div className="w-full min-w-0 max-w-full space-y-5">
             <div className="space-y-2">
               <GroupLabel>ページの内容</GroupLabel>
@@ -312,19 +295,13 @@ export function StudioSubmitPanel({
                   requirement="required"
                   fieldHint="タイトル・キャッチコピー・開発フェーズ"
                 >
-                  <p className={panelSummaryClassName}>{summarizeSubmitDraftBasic(draft)}</p>
                   <button type="button" onClick={() => openEdit("basic-info")} className={panelButtonClassName}>
                     <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
                     編集する
                   </button>
                 </PanelBlock>
 
-                <PanelBlock
-                  title="ジャンル・タグ"
-                  requirement="required"
-                  fieldHint="ジャンル（必須）・特徴タグ（任意）"
-                >
-                  <p className={panelSummaryClassName}>{summarizeSubmitDraftGenres(draft)}</p>
+                <PanelBlock title="ジャンル・タグ" requirement="required">
                   <button type="button" onClick={() => openEdit("genres-tags")} className={panelButtonClassName}>
                     <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
                     編集する
@@ -332,15 +309,13 @@ export function StudioSubmitPanel({
                 </PanelBlock>
 
                 <PanelBlock title="作品紹介" requirement="required">
-                  <p className={panelSummaryClassName}>{summarizeSubmitDraftIntroduction(draft)}</p>
                   <button type="button" onClick={() => openEdit("introduction")} className={panelButtonClassName}>
                     <Sparkles className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
                     編集する
                   </button>
                 </PanelBlock>
 
-                <PanelBlock title="画像" requirement="optional" fieldHint="未設定でも投稿できます">
-                  <p className={panelSummaryClassName}>{summarizeSubmitDraftImages(draft)}</p>
+                <PanelBlock title="サムネイル" requirement="required">
                   <button type="button" onClick={() => openEdit("images")} className={panelButtonClassName}>
                     <ImageIcon className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
                     編集する
@@ -352,24 +327,14 @@ export function StudioSubmitPanel({
             <div className="space-y-2">
               <GroupLabel>遊び方・公開</GroupLabel>
               <div className="space-y-2">
-                <PanelBlock
-                  title="プレイ情報"
-                  requirement="required"
-                  fieldHint="料金・公開形態・想定時間・アクセス方法"
-                >
-                  <p className={panelSummaryClassName}>{summarizeSubmitDraftPlayInfo(draft)}</p>
+                <PanelBlock title="プレイ情報" requirement="required">
                   <button type="button" onClick={() => openEdit("play-info")} className={panelButtonClassName}>
                     <Link2 className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
                     編集する
                   </button>
                 </PanelBlock>
 
-                <PanelBlock
-                  title="公開先・公開設定"
-                  requirement="optional"
-                  fieldHint="外部リンク・公開 / 非公開"
-                >
-                  <p className={panelSummaryClassName}>{summarizeSubmitDraftPublication(draft)}</p>
+                <PanelBlock title="公開先・公開設定" requirement="optional">
                   <button
                     type="button"
                     onClick={() => openEdit("publication")}
@@ -385,7 +350,6 @@ export function StudioSubmitPanel({
             <div className="space-y-2">
               <GroupLabel>フィードバック設定</GroupLabel>
               <PanelBlock title="プレイヤーに聞きたいこと" requirement="optional">
-                <p className={panelSummaryClassName}>{promptSummary}</p>
                 <VersionPromptSettingsTrigger
                   mode={draft.promptMode}
                   onModeChange={(promptMode) => onDraftChange({ promptMode })}

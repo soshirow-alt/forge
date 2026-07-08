@@ -27,7 +27,7 @@ export const SUBMIT_PLAY_ACCESS_OPTIONS = [
   },
   {
     value: "other" as const,
-    label: "その他・外部条件あり",
+    label: "その他",
     hint: "上記以外の料金・公開形態です。",
   },
 ] as const;

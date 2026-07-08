@@ -221,6 +221,11 @@ export function ProjectSubmitForm({
       return;
     }
 
+    if (thumbnailUrls.length === 0) {
+      setPromptSaveError("サムネイルを追加してください。");
+      return;
+    }
+
     const accessError = validatePlayAccess(playEnvironment, playUrl);
     if (accessError) {
       setPromptSaveError(accessError);
@@ -529,16 +534,7 @@ export function ProjectSubmitForm({
           inputId={`${formKey}-thumbnail`}
           thumbnails={thumbnailUrls}
           onChange={setThumbnailUrls}
-          posterFallback={
-            title.trim()
-              ? {
-                  projectId: "submit-preview",
-                  title,
-                  genre: selectedGenres[0] || "Indie",
-                  phase,
-                }
-              : undefined
-          }
+          required
         />
 
         <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-3">

@@ -37,7 +37,12 @@ export function ProjectPhaseFormFields({
               onChange={() => onChange(option.value)}
               className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
             />
-            <span className="text-sm font-medium text-zinc-300">{option.label}</span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium text-zinc-300">{option.label}</span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-zinc-500">
+                {option.hint}
+              </span>
+            </span>
           </label>
         ))}
       </div>

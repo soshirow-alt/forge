@@ -44,10 +44,7 @@ export function VersionPromptEditorDialog({
   return (
     <V0SimpleModal
       title={title}
-      subtitle={
-        subtitle ??
-        `${versionLabel} — 未設定の場合は「もう一度遊びたい？」などのデフォルト問いが表示されます`
-      }
+      subtitle={subtitle ?? versionLabel}
       onClose={onClose}
       size="lg"
     >
