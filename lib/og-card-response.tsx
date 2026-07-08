@@ -190,7 +190,8 @@ export async function buildProjectOgCardResponse(input: {
   } catch {
     try {
       const png = await readDefaultOgPng();
-      return new Response(png, {
+      // Uint8Array — Buffer is not assignable to BodyInit under Next's TS check.
+      return new Response(new Uint8Array(png), {
         status: 200,
         headers: {
           "Content-Type": "image/png",
@@ -199,9 +200,11 @@ export async function buildProjectOgCardResponse(input: {
       });
     } catch {
       // Last resort 1x1 PNG so crawlers never see 500.
-      const tinyPng = Buffer.from(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-        "base64",
+      const tinyPng = new Uint8Array(
+        Buffer.from(
+          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+          "base64",
+        ),
       );
       return new Response(tinyPng, {
         status: 200,

@@ -1,12 +1,33 @@
+import { FORGE_PRODUCTION_OAUTH_ORIGIN } from "@/lib/auth-redirect";
+import { projectOgImageApiPath } from "@/lib/og-image-url";
 import { gamePlayHref } from "@/lib/project-nurture-links";
 
-/** Client-side absolute URL for the public project page (current origin). */
+/**
+ * Absolute URL for external share (X / clipboard).
+ * Always production origin — never Preview / localhost host —
+ * so cards and pasted links resolve where Twitterbot can cache.
+ */
 export function getClientProjectPageUrl(projectId: string): string {
   const path = gamePlayHref(projectId);
+  return `${FORGE_PRODUCTION_OAUTH_ORIGIN}${path}`;
+}
+
+/** Fire-and-forget GET to warm edge/CDN before the user pastes to X. */
+export function prewarmProjectOgCard(projectId: string): void {
   if (typeof window === "undefined") {
-    return path;
+    return;
   }
-  return `${window.location.origin}${path}`;
+  try {
+    const url = `${window.location.origin}${projectOgImageApiPath(projectId)}`;
+    void fetch(url, {
+      method: "GET",
+      credentials: "omit",
+      mode: "no-cors",
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    /* ignore */
+  }
 }
 
 export function buildProjectShareIntroText(

@@ -8,6 +8,7 @@ import {
   buildProjectShareIntroText,
   getClientProjectPageUrl,
   openXComposeInNewTab,
+  prewarmProjectOgCard,
 } from "@/lib/project-share";
 
 type ProjectShareLinkModalProps = {
@@ -48,17 +49,15 @@ export function ProjectShareLinkModal({
     const url = getClientProjectPageUrl(projectId);
     setPageUrl(url);
 
-    // Fire-and-forget prewarm for X / OG crawlers (ignore errors).
-    void fetch(url, { method: "GET", credentials: "omit" }).catch(() => {});
-    try {
-      const origin = window.location.origin;
-      void fetch(`${origin}/api/projects/${projectId}/og-image.png`, {
-        method: "GET",
-        credentials: "omit",
-      }).catch(() => {});
-    } catch {
-      /* ignore */
-    }
+    // Share URL is always production. Warm prod HTML + current-origin OG card
+    // so the first X crawl after paste is less likely to cold-start.
+    void fetch(url, {
+      method: "GET",
+      credentials: "omit",
+      mode: "no-cors",
+      keepalive: true,
+    }).catch(() => {});
+    prewarmProjectOgCard(projectId);
   }, [open, projectId]);
 
   const showCopyFeedback = useCallback((kind: Exclude<CopyFeedback, null>) => {
@@ -118,7 +117,7 @@ export function ProjectShareLinkModal({
               {pageUrl}
             </p>
             <p className="text-xs leading-relaxed text-zinc-500">
-              Xへの反映に数十秒〜数分かかることがあります。
+              Xのカード表示に数分かかることがあります。
             </p>
           </section>
         ) : null}

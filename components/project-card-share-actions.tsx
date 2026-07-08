@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Copy, ExternalLink } from "lucide-react";
 import { ProjectShareLinkModal } from "@/components/project-share-link-modal";
 import { gamePlayHref } from "@/lib/project-nurture-links";
+import { prewarmProjectOgCard } from "@/lib/project-share";
 import { isGamePublic } from "@/lib/project-visibility";
 import type { Game } from "@/lib/mock-games";
 
@@ -38,7 +39,13 @@ export function ProjectCardShareActions({ game, className }: ProjectCardShareAct
         </Link>
         <button
           type="button"
-          onClick={() => isPublic && setShareOpen(true)}
+          onClick={() => {
+            if (!isPublic) {
+              return;
+            }
+            prewarmProjectOgCard(game.id);
+            setShareOpen(true);
+          }}
           disabled={!isPublic}
           title={
             isPublic
