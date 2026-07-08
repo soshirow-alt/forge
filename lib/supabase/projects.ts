@@ -24,13 +24,20 @@ import {
   resolveProjectThumbnailUrlsFromRow,
 } from "@/lib/project-thumbnails";
 
+import { getSiteOrigin } from "@/lib/site-url";
+
 function formatDateOnly(iso: string) {
   return iso.split("T")[0];
 }
 
 async function syncOgAfterPublicProjectSave(projectId: string): Promise<void> {
   try {
-    await fetch(`/api/projects/${projectId}/og-sync`, { method: "POST", cache: "no-store" });
+    const origin =
+      typeof window !== "undefined" ? window.location.origin : getSiteOrigin();
+    await fetch(`${origin}/api/projects/${projectId}/og-sync`, {
+      method: "POST",
+      cache: "no-store",
+    });
   } catch {
     // best-effort OGP backfill after public save
   }
