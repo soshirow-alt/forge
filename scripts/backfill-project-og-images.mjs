@@ -250,9 +250,13 @@ const migration = await checkMigration047();
 const bucketOg = await probeBucket(PROJECT_OG_BUCKET);
 const bucketThumbs = await probeBucket(PROJECT_THUMBNAILS_BUCKET);
 
+const selectWithOg =
+  "id, title, thumbnail_url, thumbnail_urls, og_image_url, visibility";
+const selectBase = "id, title, thumbnail_url, thumbnail_urls, visibility";
+
 let query = supabase
   .from("projects")
-  .select("id, title, thumbnail_url, thumbnail_urls, og_image_url, visibility")
+  .select(migration.applied ? selectWithOg : selectBase)
   .eq("visibility", "public")
   .order("created_at", { ascending: false });
 
@@ -281,7 +285,11 @@ const report = {
   projects: [],
 };
 
-for (const project of projects ?? []) {
+for (const row of projects ?? []) {
+  const project = {
+    ...row,
+    og_image_url: migration.applied ? (row.og_image_url ?? null) : null,
+  };
   const entry = {
     id: project.id,
     title: project.title,
@@ -332,6 +340,13 @@ for (const project of projects ?? []) {
     action: "update-og_image_url",
     column: "projects.og_image_url",
   });
+
+  if (args.dryRun && !migration.applied) {
+    entry.planned.push({
+      action: "requires-migration-047",
+      note: "execute blocked until og_image_url column and buckets exist",
+    });
+  }
 
   if (args.dryRun) {
     const thumbPlan = await normalizeThumbnails(project, true);
@@ -394,11 +409,16 @@ for (const project of projects ?? []) {
 
 console.log(JSON.stringify(report, null, 2));
 process.exit(
-  report.projects.some((p) =>
-    ["upload-fail", "db-fail", "blocked-migration-047", "thumbnail-normalize-fail"].includes(
-      p.status,
-    ),
-  )
-    ? 2
-    : 0,
+  args.dryRun
+    ? 0
+    : report.projects.some((p) =>
+        [
+          "upload-fail",
+          "db-fail",
+          "blocked-migration-047",
+          "thumbnail-normalize-fail",
+        ].includes(p.status),
+      )
+      ? 2
+      : 0,
 );
