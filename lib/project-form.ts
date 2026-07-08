@@ -39,6 +39,8 @@ export type ProjectEditFormData = {
   lookingForTesters: boolean;
   testerSlots?: number;
   thumbnailUrls?: string[];
+  /** Images panel only — allows intentional removal of all thumbnails */
+  explicitThumbnailUpdate?: boolean;
   steamUrl?: string;
   itchUrl?: string;
   githubUrl?: string;

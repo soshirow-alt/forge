@@ -21,7 +21,7 @@ import {
 } from "../lib/oauth-flow-cookie";
 import { mapProjectSubmitErrorMessage } from "../lib/error-message";
 import { buildRegisterUrlWithReturn, isGuestEligibleReturnParam, resolvePostLoginPath, sanitizeLoginReturnUrl } from "../lib/login-return-url";
-import { projectThumbnailsForDb, sanitizeProjectThumbnailUrls } from "../lib/project-thumbnails";
+import { projectThumbnailsForDb, projectThumbnailsForDbUpdate, sanitizeProjectThumbnailUrls } from "../lib/project-thumbnails";
 import { reorderArrayItem } from "../lib/reorder-array-item";
 import {
   getMissingProjectColumn,
@@ -77,6 +77,37 @@ function testThumbnailSanitize() {
     JSON.stringify(db.thumbnail_urls) === JSON.stringify(["https://first", "https://second"]),
     "thumbnail: array preserved",
   );
+}
+
+function testThumbnailUpdateGuard() {
+  const existing = {
+    thumbnail_url: "data:image/png;base64,abc",
+    thumbnail_urls: ["data:image/png;base64,abc"],
+  };
+
+  ok(
+    projectThumbnailsForDbUpdate([], existing) === null,
+    "thumbnail update: empty incoming preserves existing (no allowClear)",
+  );
+
+  ok(
+    projectThumbnailsForDbUpdate([], existing, { allowClear: true })?.thumbnail_url === null,
+    "thumbnail update: explicit clear writes null",
+  );
+
+  ok(
+    projectThumbnailsForDbUpdate(
+      ["data:image/png;base64,abc"],
+      existing,
+    ) === null,
+    "thumbnail update: unchanged list omitted",
+  );
+
+  const changed = projectThumbnailsForDbUpdate(
+    ["https://new/thumb.jpg"],
+    existing,
+  );
+  ok(changed?.thumbnail_url === "https://new/thumb.jpg", "thumbnail update: real change writes");
 }
 
 function testSchemaFallbackDetection() {
@@ -827,6 +858,7 @@ async function main() {
   const tests: Array<[string, () => void | Promise<void>]> = [
     ["reorderArrayItem", testReorderArrayItem],
     ["thumbnail sanitize", testThumbnailSanitize],
+    ["thumbnail update guard", testThumbnailUpdateGuard],
     ["schema fallback detection", testSchemaFallbackDetection],
     ["schema fallback write", testSchemaFallbackWrite],
     ["schema fallback error masking", testSchemaFallbackDoesNotMaskOtherErrors],

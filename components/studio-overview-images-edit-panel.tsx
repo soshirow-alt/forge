@@ -55,6 +55,7 @@ export function StudioOverviewImagesEditPanel({
       await updateProjectDetails(projectId, {
         ...buildProjectEditFormDataFromGame(game),
         thumbnailUrls,
+        explicitThumbnailUpdate: true,
       });
       onSaved?.();
     } catch (error) {
