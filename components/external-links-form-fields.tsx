@@ -65,12 +65,6 @@ export function ExternalLinksFormFields({
           {PROJECT_LINKS_SECTION_TITLE}{" "}
           <span className="font-normal text-zinc-600">（任意）</span>
         </p>
-        <p className="mt-1 text-xs leading-relaxed text-zinc-600">
-          作品ページに載せる Steam・Discord・SNS などです。プレイ URL や配布形式の「外部サイト」とは別です。Discord・X など
-          開発者共通のリンクは、プロフィールや前回の作品から自動入力されます（必要なものだけ
-          <span className="text-zinc-500"> ＋ </span>
-          で追加・編集できます）。
-        </p>
       </div>
 
       {EXTERNAL_LINK_GROUPS.map((group) => {
@@ -83,7 +77,6 @@ export function ExternalLinksFormFields({
             className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-4"
           >
             <h3 className="text-sm font-medium text-zinc-300">{group.title}</h3>
-            <p className="mt-1 text-xs text-zinc-600">{group.description}</p>
 
             {visibleInGroup.length > 0 ? (
               <ul className="mt-3 space-y-3">

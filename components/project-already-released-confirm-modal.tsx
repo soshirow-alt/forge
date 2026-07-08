@@ -17,7 +17,7 @@ export function ProjectAlreadyReleasedConfirmModal({
   onCancel,
   onConfirm,
   requireAcknowledgement = true,
-  confirmLabel = "正式版公開済みに設定する",
+  confirmLabel = "設定する",
 }: ProjectAlreadyReleasedConfirmModalProps) {
   const [understood, setUnderstood] = useState(false);
 
@@ -49,19 +49,20 @@ export function ProjectAlreadyReleasedConfirmModal({
           id="already-released-confirm-title"
           className="text-base font-semibold text-zinc-100"
         >
-          開発中ではなく「完成品」として扱います
+          完成品として扱います
         </h2>
-        <div className="mt-3 space-y-3 text-sm leading-relaxed text-zinc-400">
-          <p>
-            この設定をすると、作品カードや作品ページで「完成品」として表示されます。プレイヤーは、テスト中・開発中ではなく、完成版に近い作品として受け取ります。
-          </p>
-          <p>
-            間違えて設定すると、開発中の作品でも完成品に見えてしまいます。通常の編集画面では元に戻せません。
-          </p>
-          <p className="text-zinc-500">
-            開発中・テスト中・完成版候補の作品には設定しないでください。
-          </p>
-        </div>
+        <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+          この作品を、開発中ではなく「完成品」として表示します。
+        </p>
+        <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-zinc-400">
+          <li>作品カードや作品ページに「完成品」と表示されます</li>
+          <li>プレイヤーに、完成版として受け取られます</li>
+          <li>開発中の作品に設定すると、期待値がずれる可能性があります</li>
+          <li>通常の編集画面では元に戻せません</li>
+        </ul>
+        <p className="mt-3 text-xs leading-relaxed text-zinc-500">
+          将来、見届け人・Special Thanks などの判定に使う可能性があります。
+        </p>
 
         {requireAcknowledgement ? (
           <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-3">

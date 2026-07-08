@@ -119,14 +119,6 @@ function GroupLabel({ children }: { children: ReactNode }) {
   return <p className={studioOperationPanelGroupLabelClassName}>{children}</p>;
 }
 
-function StudioPanelGuidance() {
-  return (
-    <p className={studioOperationPanelGuidanceClassName}>
-      右の項目を編集すると、左の公開ページプレビューに反映されます。左のプレビュー上の項目をクリックして、対応する入力欄へ移動することもできます。
-    </p>
-  );
-}
-
 export type StudioSubmitPanelProps = {
   draft: SubmitDraftState;
   onDraftChange: (patch: Partial<SubmitDraftState>) => void;
@@ -310,7 +302,6 @@ export function StudioSubmitPanel({
             </div>
 
             <p className="text-xs font-medium text-zinc-500">作品を投稿する</p>
-            <StudioPanelGuidance />
 
           <div className="w-full min-w-0 max-w-full space-y-5">
             <div className="space-y-2">
@@ -394,9 +385,6 @@ export function StudioSubmitPanel({
             <div className="space-y-2">
               <GroupLabel>フィードバック設定</GroupLabel>
               <PanelBlock title="プレイヤーに聞きたいこと" requirement="optional">
-                <p className="text-xs leading-relaxed text-zinc-600">
-                  未設定の場合は、プレイ後にデフォルトの問いが表示されます。
-                </p>
                 <p className={panelSummaryClassName}>{promptSummary}</p>
                 <VersionPromptSettingsTrigger
                   mode={draft.promptMode}

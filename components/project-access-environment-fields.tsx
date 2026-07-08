@@ -1,10 +1,7 @@
 "use client";
 
 import { PlayEnvironmentFormFields } from "@/components/play-environment-form-fields";
-import {
-  PROJECT_ACCESS_SECTION_HINT,
-  PROJECT_ACCESS_SECTION_TITLE,
-} from "@/lib/project-form-copy";
+import { PROJECT_ACCESS_SECTION_TITLE } from "@/lib/project-form-copy";
 import { getAccessUrlField } from "@/lib/project-access-form";
 import type { PlayEnvironmentFormState } from "@/lib/play-environment";
 
@@ -31,10 +28,7 @@ export function ProjectAccessEnvironmentFields({
 
   return (
     <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
-      <div>
-        <p className="text-sm font-medium text-zinc-400">{PROJECT_ACCESS_SECTION_TITLE}</p>
-        <p className="mt-1 text-xs text-zinc-600">{PROJECT_ACCESS_SECTION_HINT}</p>
-      </div>
+      <p className="text-sm font-medium text-zinc-400">{PROJECT_ACCESS_SECTION_TITLE}</p>
       <PlayEnvironmentFormFields
         value={playEnvironment}
         onChange={onPlayEnvironmentChange}
@@ -46,7 +40,6 @@ export function ProjectAccessEnvironmentFields({
           <label htmlFor={playUrlInputId} className="text-sm font-medium text-zinc-400">
             {accessUrlField.label}
           </label>
-          <p className="mt-1 text-xs text-zinc-600">{accessUrlField.hint}</p>
           <input
             id={playUrlInputId}
             type="url"

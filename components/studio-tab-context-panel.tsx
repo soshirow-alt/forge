@@ -304,9 +304,6 @@ export function StudioTabContextPanel({
     } else {
       sectionContent = (
         <div className="space-y-5">
-          <p className={studioOperationPanelGuidanceClassName}>
-            右の項目を編集すると、左の公開ページプレビューに反映されます。左のプレビュー上の項目をクリックして、対応する入力欄へ移動することもできます。
-          </p>
           <div className="space-y-2">
             <OverviewGroupLabel>ページの内容</OverviewGroupLabel>
             <div className="space-y-2">

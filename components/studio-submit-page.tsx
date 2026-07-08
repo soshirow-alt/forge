@@ -221,9 +221,6 @@ export function StudioSubmitPage() {
           <header className="border-b border-zinc-800/80 pb-3">
             <StudioMypageBackLink />
             <p className="mt-2 text-sm text-zinc-400">作品を投稿する</p>
-            <p className="mt-0.5 text-xs text-zinc-500">
-              右のStudioパネルで入力すると、左に公開ページの見え方が反映されます。
-            </p>
           </header>
 
           <div className="mt-5">

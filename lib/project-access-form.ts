@@ -4,21 +4,21 @@ export function getAccessUrlField(distribution: DistributionType) {
   switch (distribution) {
     case "browser":
       return {
-        label: "プレイURL",
-        placeholder: "https://example.com/play",
-        hint: "プレイヤーがブラウザで開いて遊べるURL",
+        label: "遊べるURL",
+        placeholder: "https://...",
+        hint: null,
       };
     case "download":
       return {
         label: "ダウンロードURL",
-        placeholder: "https://example.com/game.zip",
-        hint: "zip など配布ファイルのURL",
+        placeholder: "https://...",
+        hint: null,
       };
     case "external":
       return {
         label: "ゲームページURL",
-        placeholder: "https://store.steampowered.com/...",
-        hint: "Steam・itch.io 等、プレイヤーがゲームにアクセスするURL",
+        placeholder: "https://...",
+        hint: null,
       };
     default:
       return null;

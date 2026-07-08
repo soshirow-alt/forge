@@ -15,7 +15,6 @@ import {
   type ProjectExternalLinksInput,
 } from "@/lib/game-links";
 import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
-import { PROJECT_VISIBILITY_SECTION_HINT } from "@/lib/project-form-copy";
 import {
   PROJECT_VISIBILITY_FORM_OPTIONS,
   type ProjectVisibility,
@@ -143,29 +142,21 @@ export function StudioOverviewPublicationEditPanel({
       isSaving={isSaving}
       saveError={saveError}
     >
-      <p className="text-xs text-zinc-600">
-        外部ストアやSNSなどの公開先リンクと、Forge上の公開状態を設定します。
-      </p>
-
       <StudioFieldAnchor
         fieldId={STUDIO_FIELD_IDS.publication}
         highlight={highlightFieldId === STUDIO_FIELD_IDS.publication}
         scrollOnHighlight={false}
       >
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-zinc-500">公開先リンク</p>
-          <ExternalLinksFormFields
-            formKey={`studio-publication-${projectId}`}
-            values={externalLinks}
-            onChange={setExternalLinkField}
-            inputClassName={studioPanelInputClassName}
-          />
-        </div>
+        <ExternalLinksFormFields
+          formKey={`studio-publication-${projectId}`}
+          values={externalLinks}
+          onChange={setExternalLinkField}
+          inputClassName={studioPanelInputClassName}
+        />
       </StudioFieldAnchor>
 
       <div className="space-y-2">
-        <p className="text-xs font-medium text-zinc-500">公開設定</p>
-        <p className="text-xs text-zinc-600">{PROJECT_VISIBILITY_SECTION_HINT}</p>
+        <p className="text-sm font-medium text-zinc-400">公開設定</p>
         <div className="space-y-2">
           {PROJECT_VISIBILITY_FORM_OPTIONS.map((option) => (
             <label
@@ -188,7 +179,6 @@ export function StudioOverviewPublicationEditPanel({
               />
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-medium text-zinc-300">{option.label}</span>
-                <span className="mt-0.5 block text-xs text-zinc-600">{option.hint}</span>
               </span>
             </label>
           ))}

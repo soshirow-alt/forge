@@ -28,11 +28,8 @@ export function ProjectAlreadyReleasedFormFields({
   if (readOnlyReleased) {
     return (
       <div className="rounded-lg border border-zinc-800 bg-zinc-950/40 px-3 py-3">
-        <p className="text-sm font-medium text-zinc-300">正式版公開済みとして表示中</p>
-        <p className="mt-1.5 text-xs leading-relaxed text-zinc-500">
-          Forge上で「完成品」として表示されています。通常の編集画面では元に戻せません。
-          説明文・プレイURL・開発フェーズなどは更新できます。
-        </p>
+        <p className="text-sm font-medium text-zinc-300">正式版公開済み</p>
+        <p className="mt-1 text-xs text-zinc-500">完成品として表示中です。</p>
       </div>
     );
   }
@@ -40,12 +37,10 @@ export function ProjectAlreadyReleasedFormFields({
   if (scheduled) {
     return (
       <div className="space-y-3 rounded-lg border border-zinc-700/80 bg-zinc-950/40 px-3 py-3">
-        <p className="text-sm font-medium text-zinc-300">正式版公開済みとして設定予定</p>
-        <p className="text-xs leading-relaxed text-zinc-500">
-          保存すると、この作品はForge上で「完成品」として表示されます。保存前であれば取り消せます。
-        </p>
+        <p className="text-sm font-medium text-zinc-300">正式版公開済み（設定予定）</p>
+        <p className="text-xs text-zinc-500">保存前であれば取り消せます。</p>
         <button type="button" onClick={onCancelSchedule} className={cancelScheduleButtonClassName}>
-          設定予定を取り消す
+          取り消す
         </button>
       </div>
     );
@@ -64,10 +59,10 @@ export function ProjectAlreadyReleasedFormFields({
             {expanded ? "−" : "＋"}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-sm text-zinc-400">正式版公開済みにする（任意）</span>
+            <span className="block text-sm text-zinc-400">正式版公開済み（任意）</span>
             {!expanded ? (
-              <span className="mt-1 block text-xs leading-relaxed text-zinc-600">
-                Steamなどで、すでに完成版として公開済みの作品向けです。
+              <span className="mt-1 block text-xs text-zinc-600">
+                完成版として公開済みの作品向けです。
               </span>
             ) : null}
           </span>
@@ -75,16 +70,14 @@ export function ProjectAlreadyReleasedFormFields({
 
         {expanded ? (
           <div className="mt-3 space-y-3 border-t border-zinc-800/80 pt-3">
-            <p className="text-sm font-medium text-zinc-300">正式版公開済みにする</p>
-            <p className="text-xs leading-relaxed text-zinc-500">
-              完成版として公開済みの作品だけ設定してください。設定すると、Forge上で開発中作品ではなく「完成品」として扱われます。
-            </p>
+            <p className="text-sm font-medium text-zinc-300">正式版公開済み</p>
+            <p className="text-xs text-zinc-500">完成品として扱う設定です。</p>
             <button
               type="button"
               onClick={() => setConfirmOpen(true)}
               className={mutedActionButtonClassName}
             >
-              正式版公開済みに設定する
+              設定する
             </button>
           </div>
         ) : null}

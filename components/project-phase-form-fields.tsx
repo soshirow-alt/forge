@@ -18,9 +18,6 @@ export function ProjectPhaseFormFields({
   return (
     <fieldset className="space-y-3">
       <legend className="text-sm font-medium text-zinc-400">開発フェーズ</legend>
-      <p className="text-xs text-zinc-600">
-        今の完成度を選んでください。プレイヤーがどこまで遊べるかの目安になります
-      </p>
       <div className="space-y-2">
         {DEVELOPMENT_PHASE_OPTIONS.map((option) => (
           <label
@@ -40,10 +37,7 @@ export function ProjectPhaseFormFields({
               onChange={() => onChange(option.value)}
               className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
             />
-            <span>
-              <span className="block text-sm font-medium text-zinc-300">{option.label}</span>
-              <span className="mt-0.5 block text-xs text-zinc-600">{option.hint}</span>
-            </span>
+            <span className="text-sm font-medium text-zinc-300">{option.label}</span>
           </label>
         ))}
       </div>

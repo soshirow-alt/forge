@@ -158,10 +158,6 @@ export function StudioOverviewPlayInfoEditPanel({
       saveError={saveError}
       validationError={validationError}
     >
-      <p className="text-xs text-zinc-600">
-        プレイヤーが遊ぶ前に知っておきたい料金・時間・アクセス方法を設定します。
-      </p>
-
       <StudioFieldAnchor
         fieldId={STUDIO_FIELD_IDS.playAccess}
         highlight={highlightFieldId === STUDIO_FIELD_IDS.playAccess}
@@ -182,42 +178,36 @@ export function StudioOverviewPlayInfoEditPanel({
         highlight={highlightFieldId === STUDIO_FIELD_IDS.playInfo}
         scrollOnHighlight={false}
       >
-        <div className="space-y-4">
-          <p className="text-xs font-medium text-zinc-500">想定プレイ時間</p>
-          <ProjectEstimatedPlayTimeField
-            value={estimatedPlayTime}
-            onChange={(value) => {
-              setEstimatedPlayTime(value);
-              emitPreview(playEnvironment, playUrl, value);
-            }}
-            inputClassName={studioPanelInputClassName}
-            inputId={`studio-play-time-${projectId}`}
-          />
-        </div>
+        <ProjectEstimatedPlayTimeField
+          value={estimatedPlayTime}
+          onChange={(value) => {
+            setEstimatedPlayTime(value);
+            emitPreview(playEnvironment, playUrl, value);
+          }}
+          inputClassName={studioPanelInputClassName}
+          inputId={`studio-play-time-${projectId}`}
+        />
       </StudioFieldAnchor>
 
       <StudioFieldAnchor
         fieldId={STUDIO_FIELD_IDS.distribution}
         highlight={highlightFieldId === STUDIO_FIELD_IDS.distribution}
       >
-        <div className="space-y-4">
-          <p className="text-xs font-medium text-zinc-500">アクセス方法・対応環境</p>
-          <ProjectAccessEnvironmentFields
-            playEnvironment={playEnvironment}
-            onPlayEnvironmentChange={(value) => {
-              setPlayEnvironment(value);
-              emitPreview(value, playUrl, estimatedPlayTime);
-            }}
-            playUrl={playUrl}
-            onPlayUrlChange={(value) => {
-              setPlayUrl(value);
-              emitPreview(playEnvironment, value, estimatedPlayTime);
-            }}
-            inputClassName={studioPanelInputClassName}
-            playUrlInputId={`studio-play-url-${projectId}`}
-            distributionRadioName={`studio-distribution-${projectId}`}
-          />
-        </div>
+        <ProjectAccessEnvironmentFields
+          playEnvironment={playEnvironment}
+          onPlayEnvironmentChange={(value) => {
+            setPlayEnvironment(value);
+            emitPreview(value, playUrl, estimatedPlayTime);
+          }}
+          playUrl={playUrl}
+          onPlayUrlChange={(value) => {
+            setPlayUrl(value);
+            emitPreview(playEnvironment, value, estimatedPlayTime);
+          }}
+          inputClassName={studioPanelInputClassName}
+          playUrlInputId={`studio-play-url-${projectId}`}
+          distributionRadioName={`studio-distribution-${projectId}`}
+        />
       </StudioFieldAnchor>
     </StudioPanelEditShell>
   );

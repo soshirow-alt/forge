@@ -29,7 +29,6 @@ import {
   toggleForgeGenre,
 } from "@/lib/project-genres";
 import { PROJECT_VISIBILITY_FORM_OPTIONS, type ProjectVisibility } from "@/lib/project-visibility";
-import { PROJECT_VISIBILITY_SECTION_HINT } from "@/lib/project-form-copy";
 import type { SubmitDraftState } from "@/lib/studio-submit-draft";
 import { SUBMIT_DRAFT_PREVIEW_ID } from "@/lib/studio-submit-draft";
 import { STUDIO_FIELD_IDS } from "@/lib/studio-preview-edit-targets";
@@ -274,10 +273,6 @@ export function StudioSubmitPlayInfoEditPanel({
       onSave={onCancel}
       saveLabel="反映する"
     >
-      <p className="text-xs text-zinc-600">
-        プレイヤーが遊ぶ前に知っておきたい料金・時間・アクセス方法を設定します。
-      </p>
-
       <StudioFieldAnchor
         fieldId={STUDIO_FIELD_IDS.playAccess}
         highlight={highlightFieldId === STUDIO_FIELD_IDS.playAccess}
@@ -294,33 +289,27 @@ export function StudioSubmitPlayInfoEditPanel({
         highlight={highlightFieldId === STUDIO_FIELD_IDS.playInfo}
         scrollOnHighlight={false}
       >
-        <div className="space-y-4">
-          <p className="text-xs font-medium text-zinc-500">想定プレイ時間</p>
-          <ProjectEstimatedPlayTimeField
-            value={draft.estimatedPlayTime}
-            onChange={(estimatedPlayTime) => onApply({ estimatedPlayTime })}
-            inputClassName={studioPanelInputClassName}
-            inputId="submit-estimated-play-time"
-          />
-        </div>
+        <ProjectEstimatedPlayTimeField
+          value={draft.estimatedPlayTime}
+          onChange={(estimatedPlayTime) => onApply({ estimatedPlayTime })}
+          inputClassName={studioPanelInputClassName}
+          inputId="submit-estimated-play-time"
+        />
       </StudioFieldAnchor>
 
       <StudioFieldAnchor
         fieldId={STUDIO_FIELD_IDS.distribution}
         highlight={highlightFieldId === STUDIO_FIELD_IDS.distribution}
       >
-        <div className="space-y-4">
-          <p className="text-xs font-medium text-zinc-500">アクセス方法・対応環境</p>
-          <ProjectAccessEnvironmentFields
-            playEnvironment={draft.playEnvironment}
-            onPlayEnvironmentChange={(playEnvironment) => onApply({ playEnvironment })}
-            playUrl={draft.playUrl}
-            onPlayUrlChange={(playUrl) => onApply({ playUrl })}
-            inputClassName={studioPanelInputClassName}
-            playUrlInputId="submit-play-url"
-            distributionRadioName="submit-distribution"
-          />
-        </div>
+        <ProjectAccessEnvironmentFields
+          playEnvironment={draft.playEnvironment}
+          onPlayEnvironmentChange={(playEnvironment) => onApply({ playEnvironment })}
+          playUrl={draft.playUrl}
+          onPlayUrlChange={(playUrl) => onApply({ playUrl })}
+          inputClassName={studioPanelInputClassName}
+          playUrlInputId="submit-play-url"
+          distributionRadioName="submit-distribution"
+        />
       </StudioFieldAnchor>
     </StudioPanelEditShell>
   );
@@ -344,37 +333,29 @@ export function StudioSubmitPublicationEditPanel({
       onSave={onCancel}
       saveLabel="反映する"
     >
-      <p className="text-xs text-zinc-600">
-        外部ストアやSNSなどの公開先リンクと、Forge上の公開状態を設定します。
-      </p>
-
       <StudioFieldAnchor
         fieldId={STUDIO_FIELD_IDS.publication}
         highlight={highlightFieldId === STUDIO_FIELD_IDS.publication}
         scrollOnHighlight={false}
       >
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-zinc-500">公開先リンク</p>
-          <ExternalLinksFormFields
-            formKey="submit-external"
-            values={{
-              steamUrl: draft.steamUrl,
-              itchUrl: draft.itchUrl,
-              discordUrl: draft.discordUrl,
-              xUrl: draft.xUrl,
-              officialUrl: draft.officialUrl,
-              youtubeUrl: draft.youtubeUrl,
-              githubUrl: draft.githubUrl,
-            }}
-            onChange={setExternalLinkField}
-            inputClassName={studioPanelInputClassName}
-          />
-        </div>
+        <ExternalLinksFormFields
+          formKey="submit-external"
+          values={{
+            steamUrl: draft.steamUrl,
+            itchUrl: draft.itchUrl,
+            discordUrl: draft.discordUrl,
+            xUrl: draft.xUrl,
+            officialUrl: draft.officialUrl,
+            youtubeUrl: draft.youtubeUrl,
+            githubUrl: draft.githubUrl,
+          }}
+          onChange={setExternalLinkField}
+          inputClassName={studioPanelInputClassName}
+        />
       </StudioFieldAnchor>
 
       <div className="space-y-2">
-        <p className="text-xs font-medium text-zinc-500">公開設定</p>
-        <p className="text-xs text-zinc-600">{PROJECT_VISIBILITY_SECTION_HINT}</p>
+        <p className="text-sm font-medium text-zinc-400">公開設定</p>
         <div className="space-y-2">
           {PROJECT_VISIBILITY_FORM_OPTIONS.map((option) => (
             <label
@@ -394,7 +375,6 @@ export function StudioSubmitPublicationEditPanel({
               />
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-medium text-zinc-300">{option.label}</span>
-                <span className="mt-0.5 block text-xs text-zinc-600">{option.hint}</span>
               </span>
             </label>
           ))}

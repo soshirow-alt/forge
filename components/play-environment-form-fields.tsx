@@ -1,8 +1,6 @@
 "use client";
 
-import { DistributionTypeHelp } from "@/components/distribution-type-help";
 import {
-  DISTRIBUTION_TYPE_HINTS,
   DISTRIBUTION_TYPE_LABELS,
   type DistributionType,
   type PlayEnvironmentFormState,
@@ -18,13 +16,9 @@ type PlayEnvironmentFormFieldsProps = {
 const distributionOptions: {
   value: Exclude<DistributionType, "">;
   label: string;
-  hint: string;
-}[] = (
-  ["browser", "download", "external"] as const
-).map((value) => ({
+}[] = (["browser", "download", "external"] as const).map((value) => ({
   value,
   label: DISTRIBUTION_TYPE_LABELS[value],
-  hint: DISTRIBUTION_TYPE_HINTS[value],
 }));
 
 export function PlayEnvironmentFormFields({
@@ -72,9 +66,6 @@ export function PlayEnvironmentFormFields({
             <span className="text-zinc-600">（任意）</span>
           ) : null}
         </p>
-        <p className="mt-1 text-xs text-zinc-600">
-          プレイヤーが遊ぶ方法の目安です。下の「関連リンク」とは別です
-        </p>
         <div className="mt-3 space-y-2">
           {distributionOptions.map((option) => (
             <label
@@ -91,20 +82,11 @@ export function PlayEnvironmentFormFields({
                 }
                 className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
               />
-              <span>
-                <span className="inline-flex items-center text-sm text-zinc-300">
-                  {option.label}
-                  <DistributionTypeHelp type={option.value} />
-                </span>
-                <span className="mt-0.5 block text-xs text-zinc-600">
-                  {option.hint}
-                </span>
-              </span>
+              <span className="text-sm text-zinc-300">{option.label}</span>
             </label>
           ))}
         </div>
       </div>
-
     </div>
   );
 }

@@ -7,7 +7,6 @@ import {
 import type { StudioOverviewEditPanelCommonProps } from "@/components/studio-overview-edit-panel-types";
 import { useGames } from "@/components/games-provider";
 import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
-import { PROJECT_VISIBILITY_SECTION_HINT } from "@/lib/project-form-copy";
 import {
   PROJECT_VISIBILITY_FORM_OPTIONS,
   type ProjectVisibility,
@@ -74,7 +73,6 @@ export function StudioOverviewVisibilityEditPanel({
       isSaving={isSaving}
       saveError={saveError}
     >
-      <p className="text-xs text-zinc-600">{PROJECT_VISIBILITY_SECTION_HINT}</p>
       <div className="space-y-2">
         {PROJECT_VISIBILITY_FORM_OPTIONS.map((option) => (
           <label
@@ -95,10 +93,7 @@ export function StudioOverviewVisibilityEditPanel({
               }}
               className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
             />
-            <span>
-              <span className="block text-sm font-medium text-zinc-300">{option.label}</span>
-              <span className="mt-0.5 block text-xs text-zinc-600">{option.hint}</span>
-            </span>
+            <span className="block text-sm font-medium text-zinc-300">{option.label}</span>
           </label>
         ))}
       </div>
