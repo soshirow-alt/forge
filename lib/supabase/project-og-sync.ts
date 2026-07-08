@@ -1,3 +1,5 @@
+import "server-only";
+
 import sharp from "sharp";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { parseOgDataUrlImage } from "@/lib/og-data-url-image";
@@ -208,20 +210,38 @@ export async function fetchProjectForOgSync(
   supabase: SupabaseClient,
   projectId: string,
 ): Promise<OgSyncInput | null> {
-  const { data, error } = await supabase
+  const fullSelect =
+    "id, title, visibility, thumbnail_url, thumbnail_urls, og_image_url";
+  const baseSelect = "id, title, visibility, thumbnail_url, thumbnail_urls";
+
+  const first = await supabase
     .from("projects")
-    .select(
-      "id, title, visibility, thumbnail_url, thumbnail_urls, og_image_url",
-    )
+    .select(fullSelect)
     .eq("id", projectId)
     .eq("visibility", "public")
     .maybeSingle();
 
-  if (error || !data) {
-    return null;
+  if (!first.error && first.data) {
+    return first.data as OgSyncInput;
   }
 
-  return data as OgSyncInput;
+  if (
+    first.error?.message?.includes("og_image_url") ||
+    first.error?.message?.includes("does not exist")
+  ) {
+    const fallback = await supabase
+      .from("projects")
+      .select(baseSelect)
+      .eq("id", projectId)
+      .eq("visibility", "public")
+      .maybeSingle();
+    if (fallback.error || !fallback.data) {
+      return null;
+    }
+    return { ...(fallback.data as OgSyncInput), og_image_url: null };
+  }
+
+  return null;
 }
 
 export async function ensurePublicProjectOgImage(

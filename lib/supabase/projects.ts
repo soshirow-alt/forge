@@ -28,6 +28,14 @@ function formatDateOnly(iso: string) {
   return iso.split("T")[0];
 }
 
+async function syncOgAfterPublicProjectSave(projectId: string): Promise<void> {
+  try {
+    await fetch(`/api/projects/${projectId}/og-sync`, { method: "POST", cache: "no-store" });
+  } catch {
+    // best-effort OGP backfill after public save
+  }
+}
+
 export function projectRowToGame(row: ProjectRow): Game {
   const genres = resolveGenresFromDbRow(row);
 
@@ -217,7 +225,11 @@ export async function insertProject(
         supabase.from("projects").insert(payload).select("*").single(),
       submitFormToInsertRow(data, owner),
     );
-    return projectRowToGame(row as ProjectRow);
+    const game = projectRowToGame(row as ProjectRow);
+    if (game.visibility === "public") {
+      await syncOgAfterPublicProjectSave(game.id);
+    }
+    return game;
   } catch (error) {
     throw new Error(mapProjectSubmitErrorMessage(error));
   }
@@ -263,7 +275,11 @@ export async function updateProjectFromSubmitForm(
     },
   );
 
-  return projectRowToGame(row as ProjectRow);
+  const game = projectRowToGame(row as ProjectRow);
+  if (game.visibility === "public") {
+    await syncOgAfterPublicProjectSave(game.id);
+  }
+  return game;
 }
 
 export async function updateProjectDetailsInDb(
@@ -304,7 +320,11 @@ export async function updateProjectDetailsInDb(
     },
   );
 
-  return projectRowToGame(row as ProjectRow);
+  const game = projectRowToGame(row as ProjectRow);
+  if (game.visibility === "public") {
+    await syncOgAfterPublicProjectSave(game.id);
+  }
+  return game;
 }
 
 export type ProjectOverviewUpdate = {

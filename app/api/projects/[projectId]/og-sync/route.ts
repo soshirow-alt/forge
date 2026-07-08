@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isSupabaseProjectId } from "@/lib/submitted-game-v0-adapter";
 import { ensurePublicProjectOgImage } from "@/lib/supabase/project-og-sync";
+import { syncProjectOgAfterPublicSave } from "@/lib/server/sync-project-og-after-save";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 export const runtime = "nodejs";
@@ -28,4 +29,16 @@ export async function GET(_request: Request, context: RouteContext) {
   }
 
   return NextResponse.json({ ok: true, url });
+}
+
+/** Save-time sync — regenerates Storage OGP after public project updates. */
+export async function POST(_request: Request, context: RouteContext) {
+  const { projectId } = await context.params;
+
+  if (!isSupabaseProjectId(projectId)) {
+    return NextResponse.json({ ok: false }, { status: 404 });
+  }
+
+  await syncProjectOgAfterPublicSave(projectId);
+  return NextResponse.json({ ok: true });
 }

@@ -1,3 +1,5 @@
+import "server-only";
+
 import sharp from "sharp";
 
 export const OG_CARD_WIDTH = 1200;
