@@ -56,8 +56,51 @@ export function resolveProjectThumbnailUrls(game: {
   return legacy ? [legacy] : [];
 }
 
-export function projectThumbnailsForDb(thumbnailUrls: string[] | undefined) {
+export type ProjectThumbnailDbFields = {
+  thumbnail_url: string | null;
+  thumbnail_urls: string[];
+};
+
+export function projectThumbnailsForDb(
+  thumbnailUrls: string[] | undefined,
+): ProjectThumbnailDbFields {
   const sanitized = sanitizeProjectThumbnailUrls(thumbnailUrls);
+  return {
+    thumbnail_urls: sanitized,
+    thumbnail_url: sanitized[0] ?? null,
+  };
+}
+
+function thumbnailListsEqual(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((url, index) => url === b[index]);
+}
+
+/**
+ * Studio/submit updates: omit thumbnail columns when unchanged, and never
+ * replace existing thumbs with null/[] unless allowClear is set (images panel).
+ */
+export function projectThumbnailsForDbUpdate(
+  incomingUrls: string[] | undefined,
+  existing: {
+    thumbnail_url?: string | null;
+    thumbnail_urls?: string[] | null;
+  },
+  options?: { allowClear?: boolean },
+): ProjectThumbnailDbFields | null {
+  const sanitized = sanitizeProjectThumbnailUrls(incomingUrls);
+  const existingUrls = resolveProjectThumbnailUrlsFromRow(existing);
+
+  if (sanitized.length === 0) {
+    if (existingUrls.length > 0 && !options?.allowClear) {
+      return null;
+    }
+    return { thumbnail_url: null, thumbnail_urls: [] };
+  }
+
+  if (thumbnailListsEqual(sanitized, existingUrls)) {
+    return null;
+  }
+
   return {
     thumbnail_urls: sanitized,
     thumbnail_url: sanitized[0] ?? null,
