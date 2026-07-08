@@ -24,6 +24,7 @@ import {
   resolveProjectThumbnailUrlsFromRow,
 } from "@/lib/project-thumbnails";
 
+import { OG_SYNC_INCIDENT_PAUSED } from "@/lib/og-sync-incident-pause";
 import { getSiteOrigin } from "@/lib/site-url";
 
 function formatDateOnly(iso: string) {
@@ -31,6 +32,10 @@ function formatDateOnly(iso: string) {
 }
 
 async function syncOgAfterPublicProjectSave(projectId: string): Promise<void> {
+  if (OG_SYNC_INCIDENT_PAUSED) {
+    return;
+  }
+
   try {
     const origin =
       typeof window !== "undefined" ? window.location.origin : getSiteOrigin();

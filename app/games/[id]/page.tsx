@@ -6,9 +6,7 @@ import {
 } from "@/lib/game-detail-metadata";
 import { isSupabaseProjectId } from "@/lib/submitted-game-v0-adapter";
 import { fetchPublicProjectForOg } from "@/lib/supabase/project-og";
-import { ensurePublicProjectOgImage } from "@/lib/supabase/project-og-sync";
 import { createClient } from "@/lib/supabase/server";
-import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 export async function generateMetadata({
   params,
@@ -27,19 +25,9 @@ export async function generateMetadata({
       return buildFallbackGameDetailMetadata();
     }
 
-    let project = await fetchPublicProjectForOg(supabase, id);
+    const project = await fetchPublicProjectForOg(supabase, id);
     if (!project) {
       return buildFallbackGameDetailMetadata();
-    }
-
-    if (!project.ogImageUrl) {
-      const service = createServiceRoleClient();
-      if (service) {
-        const synced = await ensurePublicProjectOgImage(service, id);
-        if (synced) {
-          project = { ...project, ogImageUrl: synced };
-        }
-      }
     }
 
     return buildGameDetailMetadata(project);

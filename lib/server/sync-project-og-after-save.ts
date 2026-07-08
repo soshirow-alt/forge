@@ -1,4 +1,5 @@
 import "server-only";
+import { OG_SYNC_INCIDENT_PAUSED } from "@/lib/og-sync-incident-pause";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import {
   fetchProjectForOgSync,
@@ -9,6 +10,10 @@ import {
 export async function syncProjectOgAfterPublicSave(
   projectId: string,
 ): Promise<void> {
+  if (OG_SYNC_INCIDENT_PAUSED) {
+    return;
+  }
+
   const service = createServiceRoleClient();
   if (!service) {
     return;

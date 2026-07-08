@@ -61,7 +61,25 @@ function parseArgs(argv) {
 
 loadEnvLocal();
 
+/** Incident 2026-07-09 — never execute writes until owner GO. */
+const OG_SYNC_INCIDENT_PAUSED = true;
+
 const args = parseArgs(process.argv);
+
+if (OG_SYNC_INCIDENT_PAUSED && !args.dryRun) {
+  console.error(
+    JSON.stringify(
+      {
+        ok: false,
+        paused: true,
+        message: "incident: og sync paused — use --dry-run for read-only planning",
+      },
+      null,
+      2,
+    ),
+  );
+  process.exit(2);
+}
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!url || !serviceKey) {
@@ -205,19 +223,11 @@ async function normalizeThumbnails(project, dryRun) {
 
   if (wouldUpdateDb) {
     actions.push({
-      type: "update-thumbnail-columns",
+      type: "update-thumbnail-columns-skipped",
+      reason: "incident: og sync must not write thumbnail_url/thumbnail_urls",
       thumbnail_url,
       thumbnail_urls,
     });
-    if (!dryRun) {
-      const { error } = await supabase
-        .from("projects")
-        .update({ thumbnail_url, thumbnail_urls })
-        .eq("id", project.id);
-      if (error) {
-        return { ok: false, error: error.message, actions };
-      }
-    }
   }
 
   return { ok: true, actions, thumbnail_url, thumbnail_urls };

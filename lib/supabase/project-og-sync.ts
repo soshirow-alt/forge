@@ -2,6 +2,8 @@ import "server-only";
 
 import sharp from "sharp";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { OG_PIPELINE_PAUSED } from "@/lib/og-incident-guard";
+import { OG_SYNC_INCIDENT_PAUSED } from "@/lib/og-sync-incident-pause";
 import { parseOgDataUrlImage } from "@/lib/og-data-url-image";
 import {
   generateProjectOgJpeg,
@@ -137,6 +139,10 @@ export async function syncPublicProjectOgImage(
   supabase: SupabaseClient,
   project: OgSyncInput,
 ): Promise<string | null> {
+  if (OG_SYNC_INCIDENT_PAUSED) {
+    return null;
+  }
+
   if (project.visibility !== "public") {
     return null;
   }
@@ -148,19 +154,7 @@ export async function syncPublicProjectOgImage(
     project.thumbnail_urls,
   );
 
-  if (
-    thumbs.thumbnail_url !== project.thumbnail_url ||
-    JSON.stringify(thumbs.thumbnail_urls) !==
-      JSON.stringify(project.thumbnail_urls ?? [])
-  ) {
-    await supabase
-      .from("projects")
-      .update({
-        thumbnail_url: thumbs.thumbnail_url,
-        thumbnail_urls: thumbs.thumbnail_urls,
-      })
-      .eq("id", project.id);
-  }
+  // OGP must never mutate thumbnail_url / thumbnail_urls (incident 2026-07-09).
 
   const primary =
     thumbs.thumbnail_url ??
@@ -248,6 +242,10 @@ export async function ensurePublicProjectOgImage(
   supabase: SupabaseClient,
   projectId: string,
 ): Promise<string | null> {
+  if (OG_SYNC_INCIDENT_PAUSED) {
+    return null;
+  }
+
   const project = await fetchProjectForOgSync(supabase, projectId);
   if (!project) {
     return null;

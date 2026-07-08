@@ -1,4 +1,5 @@
 import { FORGE_PRODUCTION_OAUTH_ORIGIN } from "@/lib/auth-redirect";
+import { OG_SYNC_INCIDENT_PAUSED } from "@/lib/og-sync-incident-pause";
 import {
   projectOgImageApiPath,
   projectOgSyncApiPath,
@@ -17,7 +18,7 @@ export function getClientProjectPageUrl(projectId: string): string {
 
 /** Fire-and-forget GET to warm Storage OGP card before the user pastes to X. */
 export function prewarmProjectOgCard(projectId: string): void {
-  if (typeof window === "undefined") {
+  if (OG_SYNC_INCIDENT_PAUSED || typeof window === "undefined") {
     return;
   }
   try {
