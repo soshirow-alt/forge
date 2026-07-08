@@ -136,7 +136,7 @@ export function StudioOverviewPublicationEditPanel({
 
   return (
     <StudioPanelEditShell
-      title="公開先・公開設定を編集"
+      title="公開先・関連リンクを編集"
       onCancel={onCancel}
       onSave={() => void handleSave()}
       isSaving={isSaving}

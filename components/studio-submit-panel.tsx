@@ -334,7 +334,7 @@ export function StudioSubmitPanel({
                   </button>
                 </PanelBlock>
 
-                <PanelBlock title="公開先・公開設定" requirement="optional">
+                <PanelBlock title="公開先・関連リンク" requirement="optional">
                   <button
                     type="button"
                     onClick={() => openEdit("publication")}

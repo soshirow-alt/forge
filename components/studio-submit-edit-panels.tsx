@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { ProjectAccessEnvironmentFields } from "@/components/project-access-environment-fields";
 import { ProjectEstimatedPlayTimeField } from "@/components/project-estimated-play-time-field";
 import { ProjectPhaseFormFields } from "@/components/project-phase-form-fields";
@@ -25,7 +26,6 @@ import {
 import { PROJECT_INTRO_HINT } from "@/lib/project-form-copy";
 import {
   MAX_PROJECT_GENRES,
-  sanitizeProjectGenresForSave,
   toggleForgeGenre,
 } from "@/lib/project-genres";
 import { PROJECT_VISIBILITY_FORM_OPTIONS, type ProjectVisibility } from "@/lib/project-visibility";
@@ -33,6 +33,8 @@ import type { SubmitDraftState } from "@/lib/studio-submit-draft";
 import { STUDIO_FIELD_IDS } from "@/lib/studio-preview-edit-targets";
 import type { StudioFieldId } from "@/lib/studio-preview-edit-targets";
 import type { ProjectExternalLinksInput } from "@/lib/game-links";
+import type { PlayEnvironmentFormState } from "@/lib/play-environment";
+import type { SubmitPlayAccessType } from "@/lib/play-access-type";
 
 type SubmitEditPanelProps = {
   draft: SubmitDraftState;
@@ -47,12 +49,24 @@ export function StudioSubmitBasicInfoEditPanel({
   onCancel,
   highlightFieldId = null,
 }: SubmitEditPanelProps) {
+  const [title, setTitle] = useState(draft.title);
+  const [description, setDescription] = useState(draft.description);
+  const [phase, setPhase] = useState(draft.phase);
+  const [declareAlreadyReleased, setDeclareAlreadyReleased] = useState(
+    draft.declareAlreadyReleased,
+  );
+
+  function handleApply() {
+    onApply({ title, description, phase, declareAlreadyReleased });
+    onCancel();
+  }
+
   return (
     <StudioPanelEditShell
       title="基本情報"
       backLabel="← 投稿内容に戻る"
       onCancel={onCancel}
-      onSave={onCancel}
+      onSave={handleApply}
       saveLabel="反映する"
     >
       <StudioFieldAnchor
@@ -61,8 +75,8 @@ export function StudioSubmitBasicInfoEditPanel({
       >
         <ProjectTitleField
           id="submit-title"
-          value={draft.title}
-          onChange={(title) => onApply({ title })}
+          value={title}
+          onChange={setTitle}
           inputClassName={studioPanelInputClassName}
           placeholder="ゲームのタイトル"
         />
@@ -73,8 +87,8 @@ export function StudioSubmitBasicInfoEditPanel({
       >
         <ProjectOneLineDescriptionField
           id="submit-lead"
-          value={draft.description}
-          onChange={(description) => onApply({ description })}
+          value={description}
+          onChange={setDescription}
           inputClassName={studioPanelInputClassName}
         />
       </StudioFieldAnchor>
@@ -83,8 +97,8 @@ export function StudioSubmitBasicInfoEditPanel({
         highlight={highlightFieldId === STUDIO_FIELD_IDS.phase}
       >
         <ProjectPhaseFormFields
-          value={draft.phase}
-          onChange={(phase) => onApply({ phase })}
+          value={phase}
+          onChange={setPhase}
           radioName="submit-phase"
           required={false}
         />
@@ -94,9 +108,9 @@ export function StudioSubmitBasicInfoEditPanel({
         highlight={highlightFieldId === STUDIO_FIELD_IDS.alreadyReleased}
       >
         <ProjectAlreadyReleasedFormFields
-          scheduled={draft.declareAlreadyReleased}
-          onSchedule={() => onApply({ declareAlreadyReleased: true })}
-          onCancelSchedule={() => onApply({ declareAlreadyReleased: false })}
+          scheduled={declareAlreadyReleased}
+          onSchedule={() => setDeclareAlreadyReleased(true)}
+          onCancelSchedule={() => setDeclareAlreadyReleased(false)}
         />
       </StudioFieldAnchor>
     </StudioPanelEditShell>
@@ -109,12 +123,20 @@ export function StudioSubmitGenresTagsEditPanel({
   onCancel,
   highlightFieldId = null,
 }: SubmitEditPanelProps) {
+  const [genres, setGenres] = useState(draft.genres);
+  const [featureTags, setFeatureTags] = useState(draft.featureTags);
+
+  function handleApply() {
+    onApply({ genres, featureTags });
+    onCancel();
+  }
+
   return (
     <StudioPanelEditShell
       title="ジャンル・タグ"
       backLabel="← 投稿内容に戻る"
       onCancel={onCancel}
-      onSave={onCancel}
+      onSave={handleApply}
       saveLabel="反映する"
     >
       <StudioFieldAnchor
@@ -123,11 +145,7 @@ export function StudioSubmitGenresTagsEditPanel({
       >
         <CollapsibleFormSection
           title="ジャンル"
-          summary={
-            draft.genres.length > 0
-              ? draft.genres.join("・")
-              : "未選択"
-          }
+          summary={genres.length > 0 ? genres.join("・") : "未選択"}
         >
           <p className="text-xs text-zinc-600">最大 {MAX_PROJECT_GENRES} つまで。</p>
           <div className="mt-2 grid grid-cols-2 gap-1.5">
@@ -135,18 +153,16 @@ export function StudioSubmitGenresTagsEditPanel({
               <label
                 key={option}
                 className={`flex cursor-pointer items-center justify-center rounded-lg border px-2 py-2 text-xs transition-colors ${
-                  draft.genres.includes(option)
+                  genres.includes(option)
                     ? "border-orange-500/50 bg-orange-500/10 text-orange-300"
                     : "border-zinc-800 bg-zinc-950/50 text-zinc-300 hover:border-zinc-700"
                 }`}
               >
                 <input
                   type="checkbox"
-                  checked={draft.genres.includes(option)}
+                  checked={genres.includes(option)}
                   onChange={() =>
-                    onApply({
-                      genres: toggleForgeGenre(draft.genres, option) as ForgeGenreOption[],
-                    })
+                    setGenres(toggleForgeGenre(genres, option) as ForgeGenreOption[])
                   }
                   className="sr-only"
                 />
@@ -159,7 +175,7 @@ export function StudioSubmitGenresTagsEditPanel({
 
       <CollapsibleFormSection
         title="特徴タグ"
-        summary={draft.featureTags.length > 0 ? draft.featureTags.join("・") : "なし（任意）"}
+        summary={featureTags.length > 0 ? featureTags.join("・") : "なし（任意）"}
       >
         <p className="text-xs text-zinc-600">任意・最大 {MAX_PROJECT_FEATURE_TAGS} つ。</p>
         <div className="mt-2 grid grid-cols-2 gap-2">
@@ -170,14 +186,11 @@ export function StudioSubmitGenresTagsEditPanel({
             >
               <input
                 type="checkbox"
-                checked={draft.featureTags.includes(tag)}
+                checked={featureTags.includes(tag)}
                 onChange={() =>
-                  onApply({
-                    featureTags: toggleForgeFeatureTag(
-                      draft.featureTags,
-                      tag,
-                    ) as ForgeFeatureTagOption[],
-                  })
+                  setFeatureTags(
+                    toggleForgeFeatureTag(featureTags, tag) as ForgeFeatureTagOption[],
+                  )
                 }
                 className="h-3.5 w-3.5 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
               />
@@ -196,12 +209,19 @@ export function StudioSubmitIntroductionEditPanel({
   onCancel,
   highlightFieldId = null,
 }: SubmitEditPanelProps) {
+  const [introduction, setIntroduction] = useState(draft.introduction);
+
+  function handleApply() {
+    onApply({ introduction });
+    onCancel();
+  }
+
   return (
     <StudioPanelEditShell
       title="作品紹介"
       backLabel="← 投稿内容に戻る"
       onCancel={onCancel}
-      onSave={onCancel}
+      onSave={handleApply}
       saveLabel="反映する"
     >
       <p className="text-xs text-zinc-600">{PROJECT_INTRO_HINT}</p>
@@ -210,8 +230,8 @@ export function StudioSubmitIntroductionEditPanel({
         highlight={highlightFieldId === STUDIO_FIELD_IDS.introduction}
       >
         <textarea
-          value={draft.introduction}
-          onChange={(event) => onApply({ introduction: event.target.value })}
+          value={introduction}
+          onChange={(event) => setIntroduction(event.target.value)}
           rows={8}
           className={`${studioPanelInputClassName} resize-y`}
           placeholder="世界観・遊び方・この作品の魅力を紹介してください"
@@ -227,12 +247,19 @@ export function StudioSubmitImagesEditPanel({
   onCancel,
   highlightFieldId = null,
 }: SubmitEditPanelProps) {
+  const [thumbnailUrls, setThumbnailUrls] = useState(draft.thumbnailUrls);
+
+  function handleApply() {
+    onApply({ thumbnailUrls });
+    onCancel();
+  }
+
   return (
     <StudioPanelEditShell
       title="サムネイル"
       backLabel="← 投稿内容に戻る"
       onCancel={onCancel}
-      onSave={onCancel}
+      onSave={handleApply}
       saveLabel="反映する"
     >
       <StudioFieldAnchor
@@ -241,8 +268,8 @@ export function StudioSubmitImagesEditPanel({
       >
         <ProjectThumbnailFields
           inputId="submit-draft-thumbnails"
-          thumbnails={draft.thumbnailUrls}
-          onChange={(thumbnailUrls) => onApply({ thumbnailUrls })}
+          thumbnails={thumbnailUrls}
+          onChange={setThumbnailUrls}
           required
         />
       </StudioFieldAnchor>
@@ -256,12 +283,29 @@ export function StudioSubmitPlayInfoEditPanel({
   onCancel,
   highlightFieldId = null,
 }: SubmitEditPanelProps) {
+  const [playAccessType, setPlayAccessType] = useState(draft.playAccessType);
+  const [estimatedPlayTime, setEstimatedPlayTime] = useState(draft.estimatedPlayTime);
+  const [playEnvironment, setPlayEnvironment] = useState<PlayEnvironmentFormState>(
+    draft.playEnvironment,
+  );
+  const [playUrl, setPlayUrl] = useState(draft.playUrl);
+
+  function handleApply() {
+    onApply({
+      playAccessType,
+      estimatedPlayTime,
+      playEnvironment,
+      playUrl,
+    });
+    onCancel();
+  }
+
   return (
     <StudioPanelEditShell
       title="プレイ情報"
       backLabel="← 投稿内容に戻る"
       onCancel={onCancel}
-      onSave={onCancel}
+      onSave={handleApply}
       saveLabel="反映する"
     >
       <StudioFieldAnchor
@@ -269,8 +313,8 @@ export function StudioSubmitPlayInfoEditPanel({
         highlight={highlightFieldId === STUDIO_FIELD_IDS.playAccess}
       >
         <ProjectPlayAccessFormFields
-          value={draft.playAccessType}
-          onChange={(playAccessType) => onApply({ playAccessType })}
+          value={playAccessType}
+          onChange={(value: SubmitPlayAccessType) => setPlayAccessType(value)}
           radioName="submit-play-access-type"
         />
       </StudioFieldAnchor>
@@ -281,8 +325,8 @@ export function StudioSubmitPlayInfoEditPanel({
         scrollOnHighlight={false}
       >
         <ProjectEstimatedPlayTimeField
-          value={draft.estimatedPlayTime}
-          onChange={(estimatedPlayTime) => onApply({ estimatedPlayTime })}
+          value={estimatedPlayTime}
+          onChange={setEstimatedPlayTime}
           inputClassName={studioPanelInputClassName}
           inputId="submit-estimated-play-time"
         />
@@ -293,10 +337,10 @@ export function StudioSubmitPlayInfoEditPanel({
         highlight={highlightFieldId === STUDIO_FIELD_IDS.distribution}
       >
         <ProjectAccessEnvironmentFields
-          playEnvironment={draft.playEnvironment}
-          onPlayEnvironmentChange={(playEnvironment) => onApply({ playEnvironment })}
-          playUrl={draft.playUrl}
-          onPlayUrlChange={(playUrl) => onApply({ playUrl })}
+          playEnvironment={playEnvironment}
+          onPlayEnvironmentChange={setPlayEnvironment}
+          playUrl={playUrl}
+          onPlayUrlChange={setPlayUrl}
           inputClassName={studioPanelInputClassName}
           playUrlInputId="submit-play-url"
           distributionRadioName="submit-distribution"
@@ -312,16 +356,32 @@ export function StudioSubmitPublicationEditPanel({
   onCancel,
   highlightFieldId = null,
 }: SubmitEditPanelProps) {
+  const [links, setLinks] = useState({
+    steamUrl: draft.steamUrl,
+    itchUrl: draft.itchUrl,
+    discordUrl: draft.discordUrl,
+    xUrl: draft.xUrl,
+    officialUrl: draft.officialUrl,
+    youtubeUrl: draft.youtubeUrl,
+    githubUrl: draft.githubUrl,
+  });
+  const [visibility, setVisibility] = useState(draft.visibility);
+
   function setExternalLinkField(field: keyof ProjectExternalLinksInput, value: string) {
-    onApply({ [field]: value } as Partial<SubmitDraftState>);
+    setLinks((current) => ({ ...current, [field]: value }));
+  }
+
+  function handleApply() {
+    onApply({ ...links, visibility });
+    onCancel();
   }
 
   return (
     <StudioPanelEditShell
-      title="公開先・公開設定"
+      title="公開先・関連リンク"
       backLabel="← 投稿内容に戻る"
       onCancel={onCancel}
-      onSave={onCancel}
+      onSave={handleApply}
       saveLabel="反映する"
     >
       <StudioFieldAnchor
@@ -331,15 +391,7 @@ export function StudioSubmitPublicationEditPanel({
       >
         <ExternalLinksFormFields
           formKey="submit-external"
-          values={{
-            steamUrl: draft.steamUrl,
-            itchUrl: draft.itchUrl,
-            discordUrl: draft.discordUrl,
-            xUrl: draft.xUrl,
-            officialUrl: draft.officialUrl,
-            youtubeUrl: draft.youtubeUrl,
-            githubUrl: draft.githubUrl,
-          }}
+          values={links}
           onChange={setExternalLinkField}
           inputClassName={studioPanelInputClassName}
         />
@@ -352,7 +404,7 @@ export function StudioSubmitPublicationEditPanel({
             <label
               key={option.value}
               className={`flex w-full min-w-0 max-w-full box-border cursor-pointer gap-3 rounded-lg border px-3 py-3 transition-colors ${
-                draft.visibility === option.value
+                visibility === option.value
                   ? "border-orange-500/40 bg-orange-500/5"
                   : "border-zinc-800 bg-zinc-950/50"
               }`}
@@ -360,8 +412,8 @@ export function StudioSubmitPublicationEditPanel({
               <input
                 type="radio"
                 name="submit-visibility"
-                checked={draft.visibility === option.value}
-                onChange={() => onApply({ visibility: option.value as ProjectVisibility })}
+                checked={visibility === option.value}
+                onChange={() => setVisibility(option.value as ProjectVisibility)}
                 className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
               />
               <span className="min-w-0 flex-1">

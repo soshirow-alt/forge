@@ -1,12 +1,15 @@
 "use client";
 
 import { MessageCircleQuestion } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   summarizeVersionPromptSettings,
   VersionPromptEditorDialog,
 } from "@/components/version-prompt-editor-dialog";
-import type { DeveloperPromptDraft } from "@/lib/version-prompt-form";
+import {
+  createEmptyPromptDraft,
+  type DeveloperPromptDraft,
+} from "@/lib/version-prompt-form";
 
 type VersionPromptSettingsTriggerProps = {
   mode: "none" | "custom";
@@ -18,6 +21,13 @@ type VersionPromptSettingsTriggerProps = {
   title?: string;
   buttonLabel?: string;
 };
+
+function clonePromptDrafts(drafts: DeveloperPromptDraft[]): DeveloperPromptDraft[] {
+  return drafts.map((draft) => ({
+    ...draft,
+    choiceOptions: draft.choiceOptions ? [...draft.choiceOptions] : undefined,
+  }));
+}
 
 /** 投稿フォーム用 — 問い設定ボタン + モーダル（DB 保存は親フォームの投稿時） */
 export function VersionPromptSettingsTrigger({
@@ -31,7 +41,29 @@ export function VersionPromptSettingsTrigger({
   buttonLabel = "問いを設定",
 }: VersionPromptSettingsTriggerProps) {
   const [open, setOpen] = useState(false);
+  const [localMode, setLocalMode] = useState(mode);
+  const [localDrafts, setLocalDrafts] = useState(drafts);
   const summary = summarizeVersionPromptSettings(mode, drafts);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    setLocalMode(mode);
+    setLocalDrafts(
+      drafts.length > 0 ? clonePromptDrafts(drafts) : [createEmptyPromptDraft()],
+    );
+  }, [open, mode, drafts]);
+
+  function handleApply() {
+    onModeChange(localMode);
+    onDraftsChange(clonePromptDrafts(localDrafts));
+    setOpen(false);
+  }
+
+  function handleCancel() {
+    setOpen(false);
+  }
 
   return (
     <>
@@ -55,13 +87,15 @@ export function VersionPromptSettingsTrigger({
 
       <VersionPromptEditorDialog
         open={open}
-        onClose={() => setOpen(false)}
-        mode={mode}
-        onModeChange={onModeChange}
-        drafts={drafts}
-        onDraftsChange={onDraftsChange}
+        onClose={handleCancel}
+        mode={localMode}
+        onModeChange={setLocalMode}
+        drafts={localDrafts}
+        onDraftsChange={setLocalDrafts}
         versionLabel={versionLabel}
         showValidation={showValidation}
+        onConfirm={handleApply}
+        confirmLabel="反映する"
       />
     </>
   );

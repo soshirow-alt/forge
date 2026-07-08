@@ -34,7 +34,7 @@ export type ExternalLink = {
 export const PROJECT_LINKS_SECTION_TITLE = "関連リンク";
 
 export const PROJECT_LINKS_SECTION_HINT =
-  "メインの遊び先は「プレイ情報」に入力します。";
+  "主な遊び先は「プレイ情報」に設定します。";
 
 /** Display order: Steam → itch → Discord → X → 公式 → YouTube → GitHub */
 export type ProjectExternalLinksInput = {
@@ -98,9 +98,6 @@ export type ExternalLinkFormKey =
   | "youtube"
   | "github";
 
-/** Store pages: shown only when already saved (main entrance belongs in play info). */
-export const STORE_EXTERNAL_LINK_KEYS: ExternalLinkFormKey[] = ["steam", "itch"];
-
 export const EXTERNAL_LINK_FORM_SPECS: {
   key: ExternalLinkFormKey;
   field: keyof ProjectExternalLinksInput;
@@ -116,7 +113,7 @@ export const EXTERNAL_LINK_FORM_SPECS: {
   { key: "github", field: "githubUrl", label: "GitHub", placeholder: "https://github.com/..." },
 ];
 
-export type ExternalLinkGroupId = "community" | "development";
+export type ExternalLinkGroupId = "additional" | "community" | "development";
 
 export const EXTERNAL_LINK_GROUPS: {
   id: ExternalLinkGroupId;
@@ -124,14 +121,19 @@ export const EXTERNAL_LINK_GROUPS: {
   keys: ExternalLinkFormKey[];
 }[] = [
   {
+    id: "additional",
+    title: "追加の掲載先",
+    keys: ["steam", "itch"],
+  },
+  {
     id: "community",
     title: "コミュニティ・広報",
-    keys: ["x", "discord", "youtube", "official"],
+    keys: ["x", "discord", "youtube"],
   },
   {
     id: "development",
     title: "開発情報",
-    keys: ["github"],
+    keys: ["official", "github"],
   },
 ];
 
