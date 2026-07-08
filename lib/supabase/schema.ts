@@ -35,6 +35,7 @@ export type ProjectRow = {
     | "paid"
     | "other";
   estimated_play_time?: string | null;
+  og_image_url?: string | null;
   created_at: string;
   updated_at: string;
 };

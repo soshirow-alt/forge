@@ -15,6 +15,9 @@ export const FALLBACK_GAME_METADATA: Metadata = {
 };
 
 const GAME_OG_DESCRIPTION_FALLBACK = "Forgeで公開中の開発中ゲームです。";
+const OG_IMAGE_WIDTH = 1200;
+const OG_IMAGE_HEIGHT = 630;
+const OG_IMAGE_TYPE = "image/jpeg";
 
 function truncateOneLine(text: string, maxLength = 120): string {
   const normalized = text.replace(/\s+/g, " ").trim();
@@ -41,7 +44,14 @@ export function buildGameDetailMetadata(project: ProjectOgData): Metadata {
   const description = buildGameOgDescription(project);
   const path = `/games/${project.id}`;
   const pageUrl = toAbsoluteUrl(path, origin);
-  const imageUrl = resolveProjectOgImageUrl(project.id, null, origin);
+  const imageUrl = resolveProjectOgImageUrl(
+    project.id,
+    project.ogImageUrl,
+    origin,
+  );
+  const usesStorage = Boolean(
+    project.ogImageUrl?.trim() && /^https?:\/\//i.test(project.ogImageUrl),
+  );
 
   return {
     title,
@@ -59,9 +69,10 @@ export function buildGameDetailMetadata(project: ProjectOgData): Metadata {
       images: [
         {
           url: imageUrl,
-          width: 1200,
-          height: 630,
+          width: OG_IMAGE_WIDTH,
+          height: OG_IMAGE_HEIGHT,
           alt: project.title,
+          ...(usesStorage ? { type: OG_IMAGE_TYPE } : {}),
         },
       ],
     },
@@ -71,6 +82,14 @@ export function buildGameDetailMetadata(project: ProjectOgData): Metadata {
       description,
       images: [imageUrl],
     },
+    other: usesStorage
+      ? {
+          "og:image:width": String(OG_IMAGE_WIDTH),
+          "og:image:height": String(OG_IMAGE_HEIGHT),
+          "og:image:type": OG_IMAGE_TYPE,
+          "og:image:alt": project.title,
+        }
+      : undefined,
   };
 }
 
@@ -87,7 +106,15 @@ export function buildFallbackGameDetailMetadata(): Metadata {
       siteName: "Forge",
       locale: "ja_JP",
       type: "website",
-      images: [{ url: imageUrl, width: 1200, height: 630, alt: "Forge" }],
+      images: [
+        {
+          url: imageUrl,
+          width: OG_IMAGE_WIDTH,
+          height: OG_IMAGE_HEIGHT,
+          alt: "Forge",
+          type: "image/png",
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",

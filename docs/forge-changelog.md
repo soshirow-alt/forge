@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-07-09 — OGP: Storage 静的画像（作品サムネ主役・1200×630）
+
+- **方針** — 動的API＋Forgeブランドカード暫定を撤回。作品サムネを全面にした 1200×630 JPEG を Supabase Storage（`project-og`）へ保存し、`og:image` / `twitter:image` はその公開URLを指す
+- **投稿/編集** — 公開作品の保存時に data URL サムネを `project-thumbnails` へ正規化し、OGPカードを生成・アップロード（`og_image_url` 更新）
+- **初回クロール** — `og_image_url` 未設定の公開作品は `generateMetadata` と `/api/projects/{id}/og-sync` で lazy 生成。共有モーダルから prewarm
+- **migration** — `047_project_og_storage.sql`（`og_image_url` 列 + Storage バケット）。Dashboard 適用後に `node scripts/backfill-project-og-images.mjs` で既存公開作品を backfill
+- **対象** — Preview のみ（main / 本番未変更）
+
+---
+
 ## 2026-07-09 — OGP cold-start: 軽量メタ + 1200×630 PNG カード
 
 - **HTMLメタ取得** — `fetchPublicProjectForOg` は `id/title/description/overview_introduction/visibility` のみ（巨大 `thumbnail_url` / `thumbnail_urls` を HTML 経路から除外）

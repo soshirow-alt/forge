@@ -7,32 +7,21 @@ export const DEFAULT_GAME_OG_PATH = "/images/og-default.png";
 const MAX_OG_IMAGE_URL_LENGTH = 2048;
 
 /**
- * Extensionful path so Vercel/middleware treat it like a static asset path,
- * and X can sniff image URLs more reliably than extensionless API routes.
- * next/og ImageResponse emits PNG — use .png to match Content-Type.
+ * Extensionful API path — lazy-generates Storage card when og_image_url is unset.
  */
 export function projectOgImageApiPath(projectId: string): string {
   return `/api/projects/${projectId}/og-image.png`;
 }
 
-/** Legacy extensionless path — keep serving for already-crawled cards. */
+export function projectOgSyncApiPath(projectId: string): string {
+  return `/api/projects/${projectId}/og-sync`;
+}
+
+/** Legacy extensionless path. */
 export function projectOgImageApiPathLegacy(projectId: string): string {
   return `/api/projects/${projectId}/og-image`;
 }
 
-/**
- * Resolve a safe absolute URL for og:image / twitter:image.
- *
- * Accepts:
- * - http(s) absolute URLs
- * - same-origin relative paths (`/images/...`)
- *
- * Rejects (falls back to default):
- * - data: / blob:
- * - empty / oversized strings
- * - broken forms like `https://host/data:image/...`
- * - other non-http(s) schemes
- */
 export function resolveOgImageUrl(
   candidate: string | null | undefined,
   origin = getSiteOrigin(),
@@ -50,7 +39,6 @@ export function resolveOgImageUrl(
     return fallback;
   }
 
-  // Already-broken absolute form from prior bug: https://host/data:image/...
   if (/^https?:\/\/[^/?#]+\/data:/i.test(trimmed)) {
     return fallback;
   }
@@ -85,13 +73,16 @@ export function resolveOgImageUrl(
 }
 
 /**
- * Public game pages always use the Forge OG card endpoint (1200×630 PNG),
- * never raw data: thumbnails and never embed thumbnails into HTML metadata.
+ * Prefer Storage `og_image_url`; until backfill, fall back to lazy-sync API path.
  */
 export function resolveProjectOgImageUrl(
   projectId: string,
-  _candidate?: string | null | undefined,
+  ogImageUrl: string | null | undefined,
   origin = getSiteOrigin(),
 ): string {
+  const fromStorage = ogImageUrl?.trim() ?? "";
+  if (fromStorage && /^https?:\/\//i.test(fromStorage)) {
+    return fromStorage;
+  }
   return toAbsoluteUrl(projectOgImageApiPath(projectId), origin);
 }

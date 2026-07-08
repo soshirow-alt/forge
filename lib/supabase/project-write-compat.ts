@@ -13,6 +13,7 @@ const OPTIONAL_PROJECT_COLUMNS = [
   "playable_version",
   "release_status",
   "play_access_type",
+  "og_image_url",
 ] as const;
 
 export function getMissingProjectColumn(error: unknown): string | null {

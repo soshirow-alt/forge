@@ -6,10 +6,7 @@ type RouteContext = {
   params: Promise<{ projectId: string }>;
 };
 
-/**
- * Lazy OGP card — ensures Storage JPEG exists, then proxies bytes.
- * Metadata should prefer og_image_url (Storage); this route is for prewarm / legacy.
- */
+/** Primary lazy OGP path (rewritten from `.png` URL). */
 export async function GET(_request: Request, context: RouteContext) {
   const { projectId } = await context.params;
   return handleProjectOgImageGet(projectId);

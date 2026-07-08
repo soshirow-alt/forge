@@ -1,5 +1,8 @@
 import { FORGE_PRODUCTION_OAUTH_ORIGIN } from "@/lib/auth-redirect";
-import { projectOgImageApiPath } from "@/lib/og-image-url";
+import {
+  projectOgImageApiPath,
+  projectOgSyncApiPath,
+} from "@/lib/og-image-url";
 import { gamePlayHref } from "@/lib/project-nurture-links";
 
 /**
@@ -12,14 +15,19 @@ export function getClientProjectPageUrl(projectId: string): string {
   return `${FORGE_PRODUCTION_OAUTH_ORIGIN}${path}`;
 }
 
-/** Fire-and-forget GET to warm edge/CDN before the user pastes to X. */
+/** Fire-and-forget GET to warm Storage OGP card before the user pastes to X. */
 export function prewarmProjectOgCard(projectId: string): void {
   if (typeof window === "undefined") {
     return;
   }
   try {
-    const url = `${window.location.origin}${projectOgImageApiPath(projectId)}`;
-    void fetch(url, {
+    const origin = window.location.origin;
+    void fetch(`${origin}${projectOgSyncApiPath(projectId)}`, {
+      method: "GET",
+      credentials: "omit",
+      keepalive: true,
+    }).catch(() => {});
+    void fetch(`${origin}${projectOgImageApiPath(projectId)}`, {
       method: "GET",
       credentials: "omit",
       mode: "no-cors",
