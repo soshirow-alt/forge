@@ -109,6 +109,7 @@ export function StudioSubmitGenresTagsEditPanel({
   draft,
   onApply,
   onCancel,
+  highlightFieldId = null,
 }: SubmitEditPanelProps) {
   return (
     <StudioPanelEditShell
@@ -118,40 +119,45 @@ export function StudioSubmitGenresTagsEditPanel({
       onSave={onCancel}
       saveLabel="反映する"
     >
-      <CollapsibleFormSection
-        title="ジャンル"
-        summary={
-          draft.genres.length > 0
-            ? draft.genres.join("・")
-            : "未選択"
-        }
+      <StudioFieldAnchor
+        fieldId={STUDIO_FIELD_IDS.genres}
+        highlight={highlightFieldId === STUDIO_FIELD_IDS.genres}
       >
-        <p className="text-xs text-zinc-600">最大 {MAX_PROJECT_GENRES} つまで。</p>
-        <div className="mt-2 grid grid-cols-2 gap-1.5">
-          {FORGE_GENRE_OPTIONS.map((option) => (
-            <label
-              key={option}
-              className={`flex cursor-pointer items-center justify-center rounded-lg border px-2 py-2 text-xs transition-colors ${
-                draft.genres.includes(option)
-                  ? "border-orange-500/50 bg-orange-500/10 text-orange-300"
-                  : "border-zinc-800 bg-zinc-950/50 text-zinc-300 hover:border-zinc-700"
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={draft.genres.includes(option)}
-                onChange={() =>
-                  onApply({
-                    genres: toggleForgeGenre(draft.genres, option) as ForgeGenreOption[],
-                  })
-                }
-                className="sr-only"
-              />
-              {option}
-            </label>
-          ))}
-        </div>
-      </CollapsibleFormSection>
+        <CollapsibleFormSection
+          title="ジャンル"
+          summary={
+            draft.genres.length > 0
+              ? draft.genres.join("・")
+              : "未選択"
+          }
+        >
+          <p className="text-xs text-zinc-600">最大 {MAX_PROJECT_GENRES} つまで。</p>
+          <div className="mt-2 grid grid-cols-2 gap-1.5">
+            {FORGE_GENRE_OPTIONS.map((option) => (
+              <label
+                key={option}
+                className={`flex cursor-pointer items-center justify-center rounded-lg border px-2 py-2 text-xs transition-colors ${
+                  draft.genres.includes(option)
+                    ? "border-orange-500/50 bg-orange-500/10 text-orange-300"
+                    : "border-zinc-800 bg-zinc-950/50 text-zinc-300 hover:border-zinc-700"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={draft.genres.includes(option)}
+                  onChange={() =>
+                    onApply({
+                      genres: toggleForgeGenre(draft.genres, option) as ForgeGenreOption[],
+                    })
+                  }
+                  className="sr-only"
+                />
+                {option}
+              </label>
+            ))}
+          </div>
+        </CollapsibleFormSection>
+      </StudioFieldAnchor>
 
       <CollapsibleFormSection
         title="特徴タグ"
@@ -260,20 +266,16 @@ export function StudioSubmitPlayInfoEditPanel({
   onCancel,
   highlightFieldId = null,
 }: SubmitEditPanelProps) {
-  function setExternalLinkField(field: keyof ProjectExternalLinksInput, value: string) {
-    onApply({ [field]: value } as Partial<SubmitDraftState>);
-  }
-
   return (
     <StudioPanelEditShell
-      title="プレイ情報・公開先"
+      title="プレイ情報"
       backLabel="← 投稿内容に戻る"
       onCancel={onCancel}
       onSave={onCancel}
       saveLabel="反映する"
     >
       <p className="text-xs text-zinc-600">
-        プレイヤーが遊ぶ前に知っておきたい情報をまとめて設定します。
+        プレイヤーが遊ぶ前に知っておきたい料金・時間・アクセス方法を設定します。
       </p>
 
       <StudioFieldAnchor
@@ -290,9 +292,10 @@ export function StudioSubmitPlayInfoEditPanel({
       <StudioFieldAnchor
         fieldId={STUDIO_FIELD_IDS.playInfo}
         highlight={highlightFieldId === STUDIO_FIELD_IDS.playInfo}
+        scrollOnHighlight={false}
       >
         <div className="space-y-4">
-          <p className="text-xs font-medium text-zinc-500">プレイ情報</p>
+          <p className="text-xs font-medium text-zinc-500">想定プレイ時間</p>
           <ProjectEstimatedPlayTimeField
             value={draft.estimatedPlayTime}
             onChange={(estimatedPlayTime) => onApply({ estimatedPlayTime })}
@@ -307,7 +310,7 @@ export function StudioSubmitPlayInfoEditPanel({
         highlight={highlightFieldId === STUDIO_FIELD_IDS.distribution}
       >
         <div className="space-y-4">
-          <p className="text-xs font-medium text-zinc-500">アクセス方法</p>
+          <p className="text-xs font-medium text-zinc-500">アクセス方法・対応環境</p>
           <ProjectAccessEnvironmentFields
             playEnvironment={draft.playEnvironment}
             onPlayEnvironmentChange={(playEnvironment) => onApply({ playEnvironment })}
@@ -319,23 +322,83 @@ export function StudioSubmitPlayInfoEditPanel({
           />
         </div>
       </StudioFieldAnchor>
+    </StudioPanelEditShell>
+  );
+}
+
+export function StudioSubmitPublicationEditPanel({
+  draft,
+  onApply,
+  onCancel,
+  highlightFieldId = null,
+}: SubmitEditPanelProps) {
+  function setExternalLinkField(field: keyof ProjectExternalLinksInput, value: string) {
+    onApply({ [field]: value } as Partial<SubmitDraftState>);
+  }
+
+  return (
+    <StudioPanelEditShell
+      title="公開先・公開設定"
+      backLabel="← 投稿内容に戻る"
+      onCancel={onCancel}
+      onSave={onCancel}
+      saveLabel="反映する"
+    >
+      <p className="text-xs text-zinc-600">
+        外部ストアやSNSなどの公開先リンクと、Forge上の公開状態を設定します。
+      </p>
+
+      <StudioFieldAnchor
+        fieldId={STUDIO_FIELD_IDS.publication}
+        highlight={highlightFieldId === STUDIO_FIELD_IDS.publication}
+        scrollOnHighlight={false}
+      >
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-zinc-500">公開先リンク</p>
+          <ExternalLinksFormFields
+            formKey="submit-external"
+            values={{
+              steamUrl: draft.steamUrl,
+              itchUrl: draft.itchUrl,
+              discordUrl: draft.discordUrl,
+              xUrl: draft.xUrl,
+              officialUrl: draft.officialUrl,
+              youtubeUrl: draft.youtubeUrl,
+              githubUrl: draft.githubUrl,
+            }}
+            onChange={setExternalLinkField}
+            inputClassName={studioPanelInputClassName}
+          />
+        </div>
+      </StudioFieldAnchor>
 
       <div className="space-y-2">
-        <p className="text-xs font-medium text-zinc-500">公開先リンク</p>
-        <ExternalLinksFormFields
-          formKey="submit-external"
-          values={{
-            steamUrl: draft.steamUrl,
-            itchUrl: draft.itchUrl,
-            discordUrl: draft.discordUrl,
-            xUrl: draft.xUrl,
-            officialUrl: draft.officialUrl,
-            youtubeUrl: draft.youtubeUrl,
-            githubUrl: draft.githubUrl,
-          }}
-          onChange={setExternalLinkField}
-          inputClassName={studioPanelInputClassName}
-        />
+        <p className="text-xs font-medium text-zinc-500">公開設定</p>
+        <p className="text-xs text-zinc-600">{PROJECT_VISIBILITY_SECTION_HINT}</p>
+        <div className="space-y-2">
+          {PROJECT_VISIBILITY_FORM_OPTIONS.map((option) => (
+            <label
+              key={option.value}
+              className={`flex w-full min-w-0 max-w-full box-border cursor-pointer gap-3 rounded-lg border px-3 py-3 transition-colors ${
+                draft.visibility === option.value
+                  ? "border-orange-500/40 bg-orange-500/5"
+                  : "border-zinc-800 bg-zinc-950/50"
+              }`}
+            >
+              <input
+                type="radio"
+                name="submit-visibility"
+                checked={draft.visibility === option.value}
+                onChange={() => onApply({ visibility: option.value as ProjectVisibility })}
+                className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium text-zinc-300">{option.label}</span>
+                <span className="mt-0.5 block text-xs text-zinc-600">{option.hint}</span>
+              </span>
+            </label>
+          ))}
+        </div>
       </div>
     </StudioPanelEditShell>
   );
@@ -347,38 +410,10 @@ export function StudioSubmitVisibilityEditPanel({
   onCancel,
 }: SubmitEditPanelProps) {
   return (
-    <StudioPanelEditShell
-      title="公開設定"
-      backLabel="← 投稿内容に戻る"
+    <StudioSubmitPublicationEditPanel
+      draft={draft}
+      onApply={onApply}
       onCancel={onCancel}
-      onSave={onCancel}
-      saveLabel="反映する"
-    >
-      <p className="text-xs text-zinc-600">{PROJECT_VISIBILITY_SECTION_HINT}</p>
-      <div className="space-y-2">
-        {PROJECT_VISIBILITY_FORM_OPTIONS.map((option) => (
-          <label
-            key={option.value}
-            className={`flex cursor-pointer gap-3 rounded-lg border px-3 py-3 transition-colors ${
-              draft.visibility === option.value
-                ? "border-orange-500/40 bg-orange-500/5"
-                : "border-zinc-800 bg-zinc-950/50"
-            }`}
-          >
-            <input
-              type="radio"
-              name="submit-visibility"
-              checked={draft.visibility === option.value}
-              onChange={() => onApply({ visibility: option.value as ProjectVisibility })}
-              className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
-            />
-            <span>
-              <span className="block text-sm font-medium text-zinc-300">{option.label}</span>
-              <span className="mt-0.5 block text-xs text-zinc-600">{option.hint}</span>
-            </span>
-          </label>
-        ))}
-      </div>
-    </StudioPanelEditShell>
+    />
   );
 }

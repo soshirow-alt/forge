@@ -10,16 +10,16 @@ import {
   StudioSubmitImagesEditPanel,
   StudioSubmitIntroductionEditPanel,
   StudioSubmitPlayInfoEditPanel,
-  StudioSubmitVisibilityEditPanel,
+  StudioSubmitPublicationEditPanel,
 } from "@/components/studio-submit-edit-panels";
 import type { SubmitValidationEditMode } from "@/lib/studio-submit-draft";
-import { getVisibilityBadgeLabel } from "@/lib/project-visibility";
 import {
   summarizeSubmitDraftBasic,
   summarizeSubmitDraftGenres,
   summarizeSubmitDraftImages,
   summarizeSubmitDraftIntroduction,
   summarizeSubmitDraftPlayInfo,
+  summarizeSubmitDraftPublication,
   type SubmitDraftState,
 } from "@/lib/studio-submit-draft";
 import {
@@ -47,7 +47,7 @@ const submitPanelAsideClassName = studioOperationPanelAsideClassName;
 
 const panelSummaryClassName = "min-w-0 max-w-full break-words text-sm text-zinc-300";
 
-type SubmitEditMode = SubmitValidationEditMode | "images" | "visibility" | null;
+type SubmitEditMode = SubmitValidationEditMode | "images" | "publication" | "visibility" | null;
 
 type RequirementBadge = "required" | "optional";
 
@@ -108,7 +108,7 @@ function SubmitValidationAlert({ message }: { message: string }) {
 function StudioPanelScrollShell({ children }: { children: ReactNode }) {
   return (
     <div className={`${studioOperationPanelOuterClassName} ${studioOperationPanelScrollClassName}`}>
-      <div className={studioOperationPanelScrollBodyClassName}>
+      <div className={studioOperationPanelScrollBodyClassName} data-studio-panel-scroll-body>
         <div className="w-full min-w-0 max-w-full space-y-3">{children}</div>
       </div>
     </div>
@@ -154,7 +154,7 @@ export function StudioSubmitPanel({
 }: StudioSubmitPanelProps) {
   const [editMode, setEditMode] = useState<SubmitEditMode>(null);
   const [highlightFieldId, setHighlightFieldId] = useState<StudioFieldId | null>(null);
-  const visibilityLabel = getVisibilityBadgeLabel(draft.visibility);
+  const [scrollOnHighlight, setScrollOnHighlight] = useState(true);
   const promptSummary = summarizeVersionPromptSettings(draft.promptMode, draft.promptDrafts);
 
   useEffect(() => {
@@ -162,6 +162,8 @@ export function StudioSubmitPanel({
       return;
     }
     setEditMode(focusEditMode);
+    setHighlightFieldId(null);
+    setScrollOnHighlight(false);
     scrollStudioPanelToTop();
     onFocusEditModeHandled?.();
   }, [focusEditMode, onFocusEditModeHandled]);
@@ -170,8 +172,11 @@ export function StudioSubmitPanel({
     if (!panelFocus) {
       return;
     }
-    setEditMode(panelFocus.editMode as SubmitEditMode);
-    setHighlightFieldId(panelFocus.fieldId);
+    const nextMode = panelFocus.editMode as SubmitEditMode;
+    const shouldScrollToField = panelFocus.scrollToField !== false;
+    setEditMode(nextMode);
+    setScrollOnHighlight(shouldScrollToField);
+    setHighlightFieldId(shouldScrollToField ? panelFocus.fieldId : null);
     scrollStudioPanelToTop();
     onPanelFocusHandled?.();
     const timer = window.setTimeout(() => setHighlightFieldId(null), 2400);
@@ -181,6 +186,7 @@ export function StudioSubmitPanel({
   function openEdit(mode: Exclude<SubmitEditMode, null>) {
     setEditMode(mode);
     setHighlightFieldId(null);
+    setScrollOnHighlight(false);
     scrollStudioPanelToTop();
   }
 
@@ -204,7 +210,7 @@ export function StudioSubmitPanel({
             draft={draft}
             onApply={applyPatch}
             onCancel={closeEdit}
-            highlightFieldId={editHighlight}
+            highlightFieldId={scrollOnHighlight ? editHighlight : null}
           />
         </StudioPanelScrollShell>
       </aside>
@@ -215,7 +221,12 @@ export function StudioSubmitPanel({
       <aside aria-label="Studioパネル" className={submitPanelAsideClassName}>
         <StudioPanelScrollShell>
           {submitError ? <SubmitValidationAlert message={submitError} /> : null}
-          <StudioSubmitGenresTagsEditPanel draft={draft} onApply={applyPatch} onCancel={closeEdit} />
+          <StudioSubmitGenresTagsEditPanel
+            draft={draft}
+            onApply={applyPatch}
+            onCancel={closeEdit}
+            highlightFieldId={scrollOnHighlight ? editHighlight : null}
+          />
         </StudioPanelScrollShell>
       </aside>
     );
@@ -258,17 +269,23 @@ export function StudioSubmitPanel({
             draft={draft}
             onApply={applyPatch}
             onCancel={closeEdit}
-            highlightFieldId={editHighlight}
+            highlightFieldId={scrollOnHighlight ? editHighlight : null}
           />
         </StudioPanelScrollShell>
       </aside>
     );
   }
-  if (editMode === "visibility") {
+  if (editMode === "publication" || editMode === "visibility") {
     return (
       <aside aria-label="Studioパネル" className={submitPanelAsideClassName}>
         <StudioPanelScrollShell>
-          <StudioSubmitVisibilityEditPanel draft={draft} onApply={applyPatch} onCancel={closeEdit} />
+          {submitError ? <SubmitValidationAlert message={submitError} /> : null}
+          <StudioSubmitPublicationEditPanel
+            draft={draft}
+            onApply={applyPatch}
+            onCancel={closeEdit}
+            highlightFieldId={scrollOnHighlight ? editHighlight : null}
+          />
         </StudioPanelScrollShell>
       </aside>
     );
@@ -345,9 +362,9 @@ export function StudioSubmitPanel({
               <GroupLabel>遊び方・公開</GroupLabel>
               <div className="space-y-2">
                 <PanelBlock
-                  title="プレイ情報・公開先"
+                  title="プレイ情報"
                   requirement="required"
-                  fieldHint="料金・公開形態・配布形式・プレイURL"
+                  fieldHint="料金・公開形態・想定時間・アクセス方法"
                 >
                   <p className={panelSummaryClassName}>{summarizeSubmitDraftPlayInfo(draft)}</p>
                   <button type="button" onClick={() => openEdit("play-info")} className={panelButtonClassName}>
@@ -356,12 +373,17 @@ export function StudioSubmitPanel({
                   </button>
                 </PanelBlock>
 
-                <PanelBlock title="公開設定" requirement="optional">
-                  <div className="flex items-center justify-between rounded-lg border border-zinc-800/60 bg-zinc-950/30 px-3 py-2">
-                    <span className="text-xs text-zinc-500">公開状態</span>
-                    <span className="text-sm font-medium text-zinc-200">{visibilityLabel}</span>
-                  </div>
-                  <button type="button" onClick={() => openEdit("visibility")} className={panelButtonClassName}>
+                <PanelBlock
+                  title="公開先・公開設定"
+                  requirement="optional"
+                  fieldHint="外部リンク・公開 / 非公開"
+                >
+                  <p className={panelSummaryClassName}>{summarizeSubmitDraftPublication(draft)}</p>
+                  <button
+                    type="button"
+                    onClick={() => openEdit("publication")}
+                    className={panelButtonClassName}
+                  >
                     <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
                     編集する
                   </button>

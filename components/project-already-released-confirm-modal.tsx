@@ -49,14 +49,18 @@ export function ProjectAlreadyReleasedConfirmModal({
           id="already-released-confirm-title"
           className="text-base font-semibold text-zinc-100"
         >
-          正式版公開済みに設定しますか？
+          開発中ではなく「完成品」として扱います
         </h2>
         <div className="mt-3 space-y-3 text-sm leading-relaxed text-zinc-400">
-          <p>この作品はForge上で「完成品」として表示されます。</p>
           <p>
-            正式版後に追加改善を続けることはできますが、「正式版として公開済み」という履歴は残ります。
+            この設定をすると、作品カードや作品ページで「完成品」として表示されます。プレイヤーは、テスト中・開発中ではなく、完成版に近い作品として受け取ります。
           </p>
-          <p className="text-zinc-500">通常の編集画面では取り消せません。</p>
+          <p>
+            間違えて設定すると、開発中の作品でも完成品に見えてしまいます。通常の編集画面では元に戻せません。
+          </p>
+          <p className="text-zinc-500">
+            開発中・テスト中・完成版候補の作品には設定しないでください。
+          </p>
         </div>
 
         {requireAcknowledgement ? (
@@ -65,9 +69,9 @@ export function ProjectAlreadyReleasedConfirmModal({
               type="checkbox"
               checked={understood}
               onChange={(event) => setUnderstood(event.target.checked)}
-              className="mt-0.5 h-4 w-4 shrink-0 rounded border-zinc-600 bg-zinc-900 text-amber-500 focus:ring-amber-500/50"
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-zinc-600 bg-zinc-900 text-zinc-300 focus:ring-zinc-500/40"
             />
-            <span className="text-sm text-zinc-300">内容を理解しました</span>
+            <span className="text-sm text-zinc-300">上記を理解しました</span>
           </label>
         ) : null}
 
@@ -84,7 +88,7 @@ export function ProjectAlreadyReleasedConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={busy || !canConfirm}
-            className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg border border-zinc-600 bg-zinc-800 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500 hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {busy ? "処理中…" : confirmLabel}
           </button>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
 import { ProjectPlayAccessFormFields } from "@/components/project-play-access-form-fields";
 import { ProjectEstimatedPlayTimeField } from "@/components/project-estimated-play-time-field";
 import { StudioFieldAnchor } from "@/components/studio-field-anchor";
@@ -12,11 +11,6 @@ import {
 import type { StudioOverviewEditPanelCommonProps } from "@/components/studio-overview-edit-panel-types";
 import { useGames } from "@/components/games-provider";
 import { pickFeatureTagsFromGameTags, sanitizeFeatureTagsForSave } from "@/lib/forge-feature-tag-options";
-import {
-  emptyExternalLinkFormValues,
-  type ExternalLinkFormValues,
-  type ProjectExternalLinksInput,
-} from "@/lib/game-links";
 import { ProjectAccessEnvironmentFields } from "@/components/project-access-environment-fields";
 import { validatePlayAccess } from "@/lib/project-access-form";
 import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
@@ -24,7 +18,6 @@ import {
   isSpecifiedPlayAccessType,
   type SubmitPlayAccessType,
 } from "@/lib/play-access-type";
-import type { Game } from "@/lib/mock-games";
 import {
   EMPTY_PLAY_ENVIRONMENT_FORM,
   getPublicGameTags,
@@ -37,32 +30,6 @@ import { STUDIO_FIELD_IDS, type StudioFieldId } from "@/lib/studio-preview-edit-
 export type StudioOverviewPlayInfoEditPanelProps = StudioOverviewEditPanelCommonProps & {
   highlightFieldId?: StudioFieldId | null;
 };
-
-function externalLinksFromGame(game: Game): ExternalLinkFormValues {
-  return {
-    steamUrl: game.steamUrl ?? "",
-    itchUrl: game.itchUrl ?? "",
-    discordUrl: game.discordUrl ?? "",
-    xUrl: game.xUrl ?? "",
-    officialUrl: game.officialUrl ?? "",
-    youtubeUrl: game.youtubeUrl ?? "",
-    githubUrl: game.githubUrl ?? "",
-  };
-}
-
-function externalLinksPayload(
-  values: ExternalLinkFormValues,
-): ProjectExternalLinksInput {
-  return {
-    steamUrl: values.steamUrl.trim() || undefined,
-    itchUrl: values.itchUrl.trim() || undefined,
-    discordUrl: values.discordUrl.trim() || undefined,
-    xUrl: values.xUrl.trim() || undefined,
-    officialUrl: values.officialUrl.trim() || undefined,
-    youtubeUrl: values.youtubeUrl.trim() || undefined,
-    githubUrl: values.githubUrl.trim() || undefined,
-  };
-}
 
 export function StudioOverviewPlayInfoEditPanel({
   projectId,
@@ -80,9 +47,6 @@ export function StudioOverviewPlayInfoEditPanel({
   const [playUrl, setPlayUrl] = useState("");
   const [estimatedPlayTime, setEstimatedPlayTime] = useState("");
   const [playAccessType, setPlayAccessType] = useState<SubmitPlayAccessType | "">("free");
-  const [externalLinks, setExternalLinks] = useState<ExternalLinkFormValues>(
-    emptyExternalLinkFormValues(),
-  );
   const [formLoaded, setFormLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -99,7 +63,6 @@ export function StudioOverviewPlayInfoEditPanel({
     setPlayAccessType(
       isSpecifiedPlayAccessType(game.playAccessType) ? game.playAccessType : "",
     );
-    setExternalLinks(externalLinksFromGame(game));
     setFormLoaded(true);
   }, [game, formLoaded]);
 
@@ -109,10 +72,9 @@ export function StudioOverviewPlayInfoEditPanel({
         playEnvironment,
         playUrl,
         estimatedPlayTime,
-        externalLinks,
         playAccessType,
       }),
-    [playEnvironment, playUrl, estimatedPlayTime, externalLinks, playAccessType],
+    [playEnvironment, playUrl, estimatedPlayTime, playAccessType],
   );
 
   useEffect(() => {
@@ -123,7 +85,6 @@ export function StudioOverviewPlayInfoEditPanel({
     nextEnvironment: PlayEnvironmentFormState,
     nextPlayUrl: string,
     nextEstimatedPlayTime: string,
-    nextExternalLinks: ExternalLinkFormValues,
     nextPlayAccessType: SubmitPlayAccessType | "" = playAccessType,
   ) {
     if (!game) {
@@ -139,15 +100,6 @@ export function StudioOverviewPlayInfoEditPanel({
       ...(isSpecifiedPlayAccessType(nextPlayAccessType)
         ? { playAccessType: nextPlayAccessType }
         : {}),
-      ...externalLinksPayload(nextExternalLinks),
-    });
-  }
-
-  function setExternalLinkField(field: keyof ProjectExternalLinksInput, value: string) {
-    setExternalLinks((current) => {
-      const next = { ...current, [field]: value };
-      emitPreview(playEnvironment, playUrl, estimatedPlayTime, next);
-      return next;
     });
   }
 
@@ -180,7 +132,6 @@ export function StudioOverviewPlayInfoEditPanel({
         estimatedPlayTime: estimatedPlayTime || undefined,
         playAccessType,
         tags: mergePlayEnvironmentIntoTags(featureTags, playEnvironment),
-        ...externalLinksPayload(externalLinks),
       });
       onSaved?.();
     } catch (error) {
@@ -200,7 +151,7 @@ export function StudioOverviewPlayInfoEditPanel({
 
   return (
     <StudioPanelEditShell
-      title="プレイ情報・公開先を編集"
+      title="プレイ情報を編集"
       onCancel={onCancel}
       onSave={() => void handleSave()}
       isSaving={isSaving}
@@ -208,7 +159,7 @@ export function StudioOverviewPlayInfoEditPanel({
       validationError={validationError}
     >
       <p className="text-xs text-zinc-600">
-        プレイヤーが遊ぶ前に知っておきたい情報をまとめて設定します。
+        プレイヤーが遊ぶ前に知っておきたい料金・時間・アクセス方法を設定します。
       </p>
 
       <StudioFieldAnchor
@@ -219,7 +170,7 @@ export function StudioOverviewPlayInfoEditPanel({
           value={playAccessType}
           onChange={(value) => {
             setPlayAccessType(value);
-            emitPreview(playEnvironment, playUrl, estimatedPlayTime, externalLinks, value);
+            emitPreview(playEnvironment, playUrl, estimatedPlayTime, value);
           }}
           radioName={`studio-play-access-${projectId}`}
           showUnspecifiedHint={!isSpecifiedPlayAccessType(playAccessType)}
@@ -229,14 +180,15 @@ export function StudioOverviewPlayInfoEditPanel({
       <StudioFieldAnchor
         fieldId={STUDIO_FIELD_IDS.playInfo}
         highlight={highlightFieldId === STUDIO_FIELD_IDS.playInfo}
+        scrollOnHighlight={false}
       >
         <div className="space-y-4">
-          <p className="text-xs font-medium text-zinc-500">プレイ情報</p>
+          <p className="text-xs font-medium text-zinc-500">想定プレイ時間</p>
           <ProjectEstimatedPlayTimeField
             value={estimatedPlayTime}
             onChange={(value) => {
               setEstimatedPlayTime(value);
-              emitPreview(playEnvironment, playUrl, value, externalLinks);
+              emitPreview(playEnvironment, playUrl, value);
             }}
             inputClassName={studioPanelInputClassName}
             inputId={`studio-play-time-${projectId}`}
@@ -249,17 +201,17 @@ export function StudioOverviewPlayInfoEditPanel({
         highlight={highlightFieldId === STUDIO_FIELD_IDS.distribution}
       >
         <div className="space-y-4">
-          <p className="text-xs font-medium text-zinc-500">アクセス方法</p>
+          <p className="text-xs font-medium text-zinc-500">アクセス方法・対応環境</p>
           <ProjectAccessEnvironmentFields
             playEnvironment={playEnvironment}
             onPlayEnvironmentChange={(value) => {
               setPlayEnvironment(value);
-              emitPreview(value, playUrl, estimatedPlayTime, externalLinks);
+              emitPreview(value, playUrl, estimatedPlayTime);
             }}
             playUrl={playUrl}
             onPlayUrlChange={(value) => {
               setPlayUrl(value);
-              emitPreview(playEnvironment, value, estimatedPlayTime, externalLinks);
+              emitPreview(playEnvironment, value, estimatedPlayTime);
             }}
             inputClassName={studioPanelInputClassName}
             playUrlInputId={`studio-play-url-${projectId}`}
@@ -267,16 +219,6 @@ export function StudioOverviewPlayInfoEditPanel({
           />
         </div>
       </StudioFieldAnchor>
-
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-zinc-500">公開先リンク</p>
-        <ExternalLinksFormFields
-          formKey={`studio-play-info-${projectId}`}
-          values={externalLinks}
-          onChange={setExternalLinkField}
-          inputClassName={studioPanelInputClassName}
-        />
-      </div>
     </StudioPanelEditShell>
   );
 }

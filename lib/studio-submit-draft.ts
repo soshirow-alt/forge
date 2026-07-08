@@ -47,7 +47,7 @@ export const SUBMIT_VALIDATION_PANEL_LABELS: Record<SubmitValidationEditMode, st
   "basic-info": "基本情報",
   "genres-tags": "ジャンル・タグ",
   introduction: "作品紹介",
-  "play-info": "プレイ情報・公開先",
+  "play-info": "プレイ情報",
 };
 
 /** プレビュー表示専用 — 保存データには入れない */
@@ -331,9 +331,31 @@ export function summarizeSubmitDraftImages(draft: SubmitDraftState): string {
 }
 
 export function summarizeSubmitDraftPlayInfo(draft: SubmitDraftState): string {
-  if (!draft.playEnvironment.distribution) {
-    return "配布形式未設定";
+  const parts: string[] = [];
+  if (draft.playAccessType) {
+    parts.push("料金設定済み");
   }
-  const url = draft.playUrl.trim();
-  return url ? "配布形式・URL 設定済み" : "プレイURL未入力";
+  if (!draft.playEnvironment.distribution) {
+    parts.push("配布形式未設定");
+  } else {
+    parts.push(draft.playUrl.trim() ? "配布形式・URL 設定済み" : "プレイURL未入力");
+  }
+  return parts.join(" · ");
+}
+
+export function summarizeSubmitDraftPublication(draft: SubmitDraftState): string {
+  const links = [
+    draft.steamUrl,
+    draft.itchUrl,
+    draft.officialUrl,
+    draft.discordUrl,
+    draft.xUrl,
+    draft.youtubeUrl,
+    draft.githubUrl,
+  ].filter((value) => value.trim()).length;
+  const visibility = draft.visibility === "public" ? "公開" : "非公開";
+  if (links === 0) {
+    return `${visibility} · 外部リンク未設定`;
+  }
+  return `${visibility} · 外部リンク ${links} 件`;
 }

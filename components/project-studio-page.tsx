@@ -102,6 +102,7 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
         editMode: route.editMode,
         fieldId: route.fieldId,
         requestId: next,
+        scrollToField: route.scrollToField,
       });
       return next;
     });

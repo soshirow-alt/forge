@@ -6,6 +6,8 @@ import type { StudioFieldId } from "@/lib/studio-preview-edit-targets";
 type StudioFieldAnchorProps = {
   fieldId: StudioFieldId;
   highlight?: boolean;
+  /** When false, only marks the DOM id; no scrollIntoView */
+  scrollOnHighlight?: boolean;
   children: ReactNode;
   className?: string;
 };
@@ -17,6 +19,7 @@ type StudioFieldAnchorProps = {
 export function StudioFieldAnchor({
   fieldId,
   highlight = false,
+  scrollOnHighlight = true,
   children,
   className = "",
 }: StudioFieldAnchorProps) {
@@ -27,9 +30,14 @@ export function StudioFieldAnchor({
       return;
     }
 
-    ref.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (scrollOnHighlight) {
+      ref.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
 
     const timer = window.setTimeout(() => {
+      if (!scrollOnHighlight) {
+        return;
+      }
       const focusable = ref.current?.querySelector<HTMLElement>(
         "input:not([type=hidden]):not([type=radio]):not([type=checkbox]), textarea, select",
       );
@@ -37,7 +45,7 @@ export function StudioFieldAnchor({
     }, 320);
 
     return () => window.clearTimeout(timer);
-  }, [highlight]);
+  }, [highlight, scrollOnHighlight]);
 
   return (
     <div

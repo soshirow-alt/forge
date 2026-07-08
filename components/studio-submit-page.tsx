@@ -130,6 +130,7 @@ export function StudioSubmitPage() {
         editMode: route.editMode,
         fieldId: route.fieldId,
         requestId: next,
+        scrollToField: route.scrollToField,
       });
       return next;
     });

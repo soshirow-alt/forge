@@ -8,6 +8,7 @@ export type StudioOverviewEditMode =
   | "images"
   | "introduction"
   | "play-info"
+  | "publication"
   | "visibility";
 
 const OVERVIEW_EDIT_MODES = new Set<StudioOverviewEditMode>([
@@ -16,6 +17,7 @@ const OVERVIEW_EDIT_MODES = new Set<StudioOverviewEditMode>([
   "images",
   "introduction",
   "play-info",
+  "publication",
   "visibility",
 ]);
 

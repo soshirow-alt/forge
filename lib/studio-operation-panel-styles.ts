@@ -6,8 +6,9 @@ export const studioOperationPanelAsideClassName =
 export const studioOperationPanelScrollClassName =
   "flex max-h-[calc(100vh-1.5rem)] w-full min-w-0 max-w-full flex-col overflow-hidden";
 
+/** 本文はここだけが縦スクロール。横は隠す。薄いスクロールバー。 */
 export const studioOperationPanelScrollBodyClassName =
-  "min-h-0 min-w-0 w-full max-w-full flex-1 overflow-y-auto overflow-x-hidden";
+  "forge-thin-scrollbar min-h-0 min-w-0 w-full max-w-full flex-1 overflow-y-auto overflow-x-hidden";
 
 export const studioOperationPanelGuidanceClassName =
   "w-full min-w-0 max-w-full break-words rounded-lg border border-orange-500/15 bg-orange-500/5 px-3 py-2.5 text-xs leading-relaxed text-zinc-500";
@@ -24,5 +25,6 @@ export const studioOperationPanelBlockClassName =
 export const studioOperationPanelGroupLabelClassName =
   "text-[11px] font-medium uppercase tracking-wide text-orange-400/75";
 
+/** 編集シェル自体はスクロールしない（親の ScrollBody に任せる） */
 export const studioOperationEditShellClassName =
   "w-full min-w-0 max-w-full box-border rounded-xl border border-orange-500/15 bg-zinc-900/60 p-4";

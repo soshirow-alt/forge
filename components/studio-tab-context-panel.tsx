@@ -7,9 +7,9 @@ import { StudioEditSectionSwitcher } from "@/components/studio-edit-section-swit
 import { StudioOverviewBasicInfoEditPanel } from "@/components/studio-overview-basic-info-edit-panel";
 import { StudioOverviewGenresTagsEditPanel } from "@/components/studio-overview-genres-tags-edit-panel";
 import { StudioOverviewImagesEditPanel } from "@/components/studio-overview-images-edit-panel";
-import { StudioOverviewVisibilityEditPanel } from "@/components/studio-overview-visibility-edit-panel";
 import { StudioOverviewIntroductionEditPanel } from "@/components/studio-overview-introduction-edit-panel";
 import { StudioOverviewPlayInfoEditPanel } from "@/components/studio-overview-play-info-edit-panel";
+import { StudioOverviewPublicationEditPanel } from "@/components/studio-overview-publication-edit-panel";
 import { StudioDevlogCurrentEditPanel } from "@/components/studio-devlog-current-edit-panel";
 import { StudioReleaseAboutBlock } from "@/components/studio-release-about-block";
 import { StudioPlayerFeedbackPanel } from "@/components/studio-improvement-loop";
@@ -71,7 +71,7 @@ function StudioEditPaneShell({ children }: { children: ReactNode }) {
   return (
     <aside aria-label="Studioパネル" className={studioOperationPanelAsideClassName}>
       <div className={`${studioOperationPanelOuterClassName} ${studioOperationPanelScrollClassName}`}>
-        <div className={studioOperationPanelScrollBodyClassName}>
+        <div className={studioOperationPanelScrollBodyClassName} data-studio-panel-scroll-body>
           <div className="w-full min-w-0 max-w-full space-y-4">{children}</div>
         </div>
       </div>
@@ -137,6 +137,7 @@ export function StudioTabContextPanel({
   const [overviewEditMode, setOverviewEditMode] = useState<StudioOverviewEditMode | null>(null);
   const [devlogEditMode, setDevlogEditMode] = useState<DevlogEditMode>(null);
   const [highlightFieldId, setHighlightFieldId] = useState<StudioFieldId | null>(null);
+  const [scrollOnHighlight, setScrollOnHighlight] = useState(true);
 
   const versionKey = resolvePlayableVersion(growth.playableVersion);
   const versionLabel = `v${versionKey}`;
@@ -187,8 +188,11 @@ export function StudioTabContextPanel({
       return;
     }
     onSectionChange("overview");
-    setOverviewEditMode(panelFocus.editMode as StudioOverviewEditMode);
-    setHighlightFieldId(panelFocus.fieldId);
+    const nextMode = panelFocus.editMode as StudioOverviewEditMode;
+    const shouldScrollToField = panelFocus.scrollToField !== false;
+    setOverviewEditMode(nextMode);
+    setScrollOnHighlight(shouldScrollToField);
+    setHighlightFieldId(shouldScrollToField ? panelFocus.fieldId : null);
     scrollStudioPanelToTop();
     onPanelFocusHandled?.();
     const timer = window.setTimeout(() => setHighlightFieldId(null), 2400);
@@ -241,7 +245,7 @@ export function StudioTabContextPanel({
           onCancel={closeOverviewEdit}
           onSaved={handleOverviewSaved}
           onPreviewPatchChange={onPreviewPatchChange}
-          highlightFieldId={highlightFieldId}
+          highlightFieldId={scrollOnHighlight ? highlightFieldId : null}
         />
       );
     } else if (overviewEditMode === "genres-tags") {
@@ -252,6 +256,7 @@ export function StudioTabContextPanel({
           onCancel={closeOverviewEdit}
           onSaved={handleOverviewSaved}
           onPreviewPatchChange={onPreviewPatchChange}
+          highlightFieldId={scrollOnHighlight ? highlightFieldId : null}
         />
       );
     } else if (overviewEditMode === "images") {
@@ -264,14 +269,15 @@ export function StudioTabContextPanel({
           onPreviewPatchChange={onPreviewPatchChange}
         />
       );
-    } else if (overviewEditMode === "visibility") {
+    } else if (overviewEditMode === "publication" || overviewEditMode === "visibility") {
       sectionContent = (
-        <StudioOverviewVisibilityEditPanel
-          key={`${projectId}-visibility`}
+        <StudioOverviewPublicationEditPanel
+          key={`${projectId}-publication`}
           projectId={projectId}
           onCancel={closeOverviewEdit}
           onSaved={handleOverviewSaved}
           onPreviewPatchChange={onPreviewPatchChange}
+          highlightFieldId={scrollOnHighlight ? highlightFieldId : null}
         />
       );
     } else if (overviewEditMode === "introduction") {
@@ -292,7 +298,7 @@ export function StudioTabContextPanel({
           onCancel={closeOverviewEdit}
           onSaved={handleOverviewSaved}
           onPreviewPatchChange={onPreviewPatchChange}
-          highlightFieldId={highlightFieldId}
+          highlightFieldId={scrollOnHighlight ? highlightFieldId : null}
         />
       );
     } else {
@@ -360,22 +366,22 @@ export function StudioTabContextPanel({
                   className={panelButtonClassName}
                 >
                   <Link2 className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                  プレイ情報・公開先を編集
+                  プレイ情報を編集
                 </button>
               </PanelBlock>
 
-              <PanelBlock title="公開設定">
+              <PanelBlock title="公開先・公開設定">
                 <div className="flex items-center justify-between rounded-lg border border-zinc-800/60 bg-zinc-950/30 px-3 py-2">
                   <span className="text-xs text-zinc-500">公開状態</span>
                   <span className="text-sm font-medium text-zinc-200">{visibilityLabel}</span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => openOverviewEdit("visibility", setOverviewEditMode)}
+                  onClick={() => openOverviewEdit("publication", setOverviewEditMode)}
                   className={panelButtonClassName}
                 >
                   <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                  公開設定を編集
+                  公開先・公開設定を編集
                 </button>
               </PanelBlock>
 
@@ -468,7 +474,7 @@ export function StudioTabContextPanel({
       <>
         <PanelBlock title="届いたフィードバック">
           {hasFeedback ? (
-            <div className="max-h-[24rem] overflow-y-auto">
+            <div className="max-h-[24rem] overflow-y-auto forge-thin-scrollbar">
               <StudioPlayerFeedbackPanel
                 gameId={game.id}
                 playableVersion={versionKey}

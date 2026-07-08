@@ -39,7 +39,7 @@ export function StudioPreviewEditTarget({
       } ${className}`}
     >
       <span
-        className="pointer-events-none absolute right-1.5 top-1.5 z-10 flex size-5 items-center justify-center rounded border border-zinc-700/80 bg-zinc-900/95 text-zinc-400 opacity-80 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/studio-edit:opacity-100 [@media(hover:hover)]:group-focus-visible/studio-edit:opacity-100"
+        className="pointer-events-none absolute right-1.5 top-1.5 z-10 flex size-5 items-center justify-center rounded border border-zinc-700/70 bg-zinc-900/90 text-zinc-500 opacity-70 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/studio-edit:opacity-100 [@media(hover:hover)]:group-focus-visible/studio-edit:opacity-100"
         aria-hidden="true"
       >
         <Pencil className="size-2.5" />

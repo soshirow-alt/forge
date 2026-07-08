@@ -118,6 +118,30 @@ button:disabled,
   margin-top: 0.5rem;
 }
 
+/* Studio right-panel scrollbars — thin / low contrast */
+.forge-thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.28) transparent;
+}
+
+.forge-thin-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.forge-thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.forge-thin-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.24);
+  border-radius: 9999px;
+}
+
+.forge-thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.38);
+}
+
 .legal-prose a {
   text-decoration: underline;
   text-underline-offset: 2px;

@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ProjectAlreadyReleasedConfirmModal } from "@/components/project-already-released-confirm-modal";
-import { ProjectAlreadyReleasedHelpModal } from "@/components/project-already-released-help-modal";
 
 type ProjectAlreadyReleasedFormFieldsProps = {
   scheduled: boolean;
@@ -11,8 +10,8 @@ type ProjectAlreadyReleasedFormFieldsProps = {
   onCancelSchedule: () => void;
 };
 
-const actionButtonClassName =
-  "inline-flex w-full items-center justify-center rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-sm font-semibold text-amber-100 transition-colors hover:border-amber-500/55 hover:bg-amber-500/15";
+const mutedActionButtonClassName =
+  "inline-flex w-full items-center justify-center rounded-lg border border-zinc-700/80 bg-transparent px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-600 hover:bg-zinc-900/60 hover:text-zinc-100";
 
 const cancelScheduleButtonClassName =
   "inline-flex w-full items-center justify-center rounded-lg border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-600 hover:text-zinc-100";
@@ -23,16 +22,16 @@ export function ProjectAlreadyReleasedFormFields({
   onSchedule,
   onCancelSchedule,
 }: ProjectAlreadyReleasedFormFieldsProps) {
-  const [helpOpen, setHelpOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   if (readOnlyReleased) {
     return (
-      <div className="rounded-lg border border-amber-500/25 bg-amber-500/5 px-3 py-3">
-        <p className="text-sm font-medium text-amber-100">正式版公開済みとして表示中</p>
+      <div className="rounded-lg border border-zinc-800 bg-zinc-950/40 px-3 py-3">
+        <p className="text-sm font-medium text-zinc-300">正式版公開済みとして表示中</p>
         <p className="mt-1.5 text-xs leading-relaxed text-zinc-500">
-          この作品はForge上で「完成品」として表示されています。通常の編集画面では取り消せません。
-          正式版後も、説明文・プレイURL・開発フェーズなどは更新できます。
+          Forge上で「完成品」として表示されています。通常の編集画面では元に戻せません。
+          説明文・プレイURL・開発フェーズなどは更新できます。
         </p>
       </div>
     );
@@ -40,10 +39,10 @@ export function ProjectAlreadyReleasedFormFields({
 
   if (scheduled) {
     return (
-      <div className="space-y-3 rounded-lg border border-amber-500/30 bg-amber-500/8 px-3 py-3">
-        <p className="text-sm font-medium text-amber-100">正式版公開済みとして設定予定</p>
+      <div className="space-y-3 rounded-lg border border-zinc-700/80 bg-zinc-950/40 px-3 py-3">
+        <p className="text-sm font-medium text-zinc-300">正式版公開済みとして設定予定</p>
         <p className="text-xs leading-relaxed text-zinc-500">
-          保存すると、この作品はForge上で「完成品」として表示されます。この設定は、保存前であれば取り消せます。
+          保存すると、この作品はForge上で「完成品」として表示されます。保存前であれば取り消せます。
         </p>
         <button type="button" onClick={onCancelSchedule} className={cancelScheduleButtonClassName}>
           設定予定を取り消す
@@ -54,22 +53,41 @@ export function ProjectAlreadyReleasedFormFields({
 
   return (
     <>
-      <div className="space-y-3 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-3">
-        <p className="text-sm font-medium text-amber-100">正式版公開済みにする</p>
-        <p className="text-xs leading-relaxed text-zinc-500">
-          Steam・itch.io・BOOTH・自サイトなどで、すでに完成版として公開済みの作品だけ設定してください。
-          設定するとForge上で「完成品」として表示され、通常の編集画面では取り消せません。
-        </p>
-        <button type="button" onClick={() => setConfirmOpen(true)} className={actionButtonClassName}>
-          正式版公開済みに設定する
-        </button>
+      <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/30 px-3 py-2.5">
         <button
           type="button"
-          onClick={() => setHelpOpen(true)}
-          className="text-xs text-violet-400 transition-colors hover:text-violet-300"
+          onClick={() => setExpanded((value) => !value)}
+          className="flex w-full items-start gap-2 text-left"
+          aria-expanded={expanded}
         >
-          正式版公開済みとは？
+          <span className="mt-0.5 text-xs text-zinc-500" aria-hidden="true">
+            {expanded ? "−" : "＋"}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm text-zinc-400">正式版公開済みにする（任意）</span>
+            {!expanded ? (
+              <span className="mt-1 block text-xs leading-relaxed text-zinc-600">
+                Steamなどで、すでに完成版として公開済みの作品向けです。
+              </span>
+            ) : null}
+          </span>
         </button>
+
+        {expanded ? (
+          <div className="mt-3 space-y-3 border-t border-zinc-800/80 pt-3">
+            <p className="text-sm font-medium text-zinc-300">正式版公開済みにする</p>
+            <p className="text-xs leading-relaxed text-zinc-500">
+              完成版として公開済みの作品だけ設定してください。設定すると、Forge上で開発中作品ではなく「完成品」として扱われます。
+            </p>
+            <button
+              type="button"
+              onClick={() => setConfirmOpen(true)}
+              className={mutedActionButtonClassName}
+            >
+              正式版公開済みに設定する
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <ProjectAlreadyReleasedConfirmModal
@@ -80,8 +98,6 @@ export function ProjectAlreadyReleasedFormFields({
           onSchedule();
         }}
       />
-
-      <ProjectAlreadyReleasedHelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
     </>
   );
 }

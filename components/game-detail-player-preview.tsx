@@ -125,9 +125,13 @@ export function GameDetailPlayerPreview({
 
           <div className="flex min-w-0 flex-col justify-center p-6 lg:p-8">
             <div className="flex flex-wrap gap-2">
-              {getUserFacingGameTags(displayGame.tags).map((tag) => (
-                <TagPill key={tag}>{tag}</TagPill>
-              ))}
+              <StudioPreviewEditTarget target="genres" onEditTarget={onEditTarget} inline>
+                <span className="inline-flex flex-wrap gap-2">
+                  {getUserFacingGameTags(displayGame.tags).map((tag) => (
+                    <TagPill key={tag}>{tag}</TagPill>
+                  ))}
+                </span>
+              </StudioPreviewEditTarget>
             </div>
             <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2">
               <StudioPreviewEditTarget target="title" onEditTarget={onEditTarget} inline>

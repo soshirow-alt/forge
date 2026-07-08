@@ -26,6 +26,10 @@ export type StudioPanelEditShellProps = {
   backLabel?: string;
 };
 
+/**
+ * 編集フォーム本体。縦スクロールは持たない。
+ * 親の Studio 右パネル ScrollBody が唯一の縦スクロールになる。
+ */
 export function StudioPanelEditShell({
   title,
   onCancel,
@@ -42,44 +46,42 @@ export function StudioPanelEditShell({
   return (
     <section
       aria-label={title}
-      className={`flex max-h-[calc(100vh-1.5rem)] w-full min-w-0 max-w-full flex-col overflow-hidden ${studioOperationEditShellClassName}`}
+      className={`w-full min-w-0 max-w-full ${studioOperationEditShellClassName}`}
     >
-      <div className="min-h-0 w-full min-w-0 max-w-full flex-1 overflow-y-auto overflow-x-hidden">
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={isSaving}
-          className={backBarClassName}
+      <button
+        type="button"
+        onClick={onCancel}
+        disabled={isSaving}
+        className={backBarClassName}
+      >
+        {backLabel}
+      </button>
+
+      <h3 className="mt-3 break-words text-sm font-semibold text-zinc-100">{title}</h3>
+
+      {validationError ? (
+        <p
+          role="alert"
+          className="mt-3 w-full min-w-0 max-w-full break-words rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200"
         >
-          {backLabel}
-        </button>
+          {validationError}
+        </p>
+      ) : null}
 
-        <h3 className="mt-3 break-words text-sm font-semibold text-zinc-100">{title}</h3>
+      {saveError ? (
+        <p
+          role="alert"
+          className="mt-3 w-full min-w-0 max-w-full break-words rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200"
+        >
+          {saveError}
+        </p>
+      ) : null}
 
-        {validationError ? (
-          <p
-            role="alert"
-            className="mt-3 w-full min-w-0 max-w-full break-words rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200"
-          >
-            {validationError}
-          </p>
-        ) : null}
+      <div className="mt-4 w-full min-w-0 max-w-full space-y-4">{children}</div>
 
-        {saveError ? (
-          <p
-            role="alert"
-            className="mt-3 w-full min-w-0 max-w-full break-words rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200"
-          >
-            {saveError}
-          </p>
-        ) : null}
+      {footerNote ? <div className="mt-3 w-full min-w-0 max-w-full">{footerNote}</div> : null}
 
-        <div className="mt-4 w-full min-w-0 max-w-full space-y-4">{children}</div>
-
-        {footerNote ? <div className="mt-3 w-full min-w-0 max-w-full">{footerNote}</div> : null}
-      </div>
-
-      <div className="mt-4 flex w-full min-w-0 max-w-full shrink-0 box-border gap-2 border-t border-zinc-800/80 bg-zinc-900/95 pt-3">
+      <div className="sticky bottom-0 z-10 mt-4 flex w-full min-w-0 max-w-full shrink-0 box-border gap-2 border-t border-zinc-800/80 bg-zinc-900/95 pt-3">
         <button type="button" onClick={onCancel} disabled={isSaving} className={cancelButtonClassName}>
           {hideSave ? "戻る" : "キャンセル"}
         </button>

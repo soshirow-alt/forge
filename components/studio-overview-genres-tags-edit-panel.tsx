@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CollapsibleFormSection } from "@/components/collapsible-form-section";
+import { StudioFieldAnchor } from "@/components/studio-field-anchor";
 import {
   StudioPanelEditShell,
 } from "@/components/studio-panel-edit-shell";
@@ -30,14 +31,18 @@ import {
   parsePlayEnvironmentFromTags,
 } from "@/lib/play-environment";
 import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
+import { STUDIO_FIELD_IDS, type StudioFieldId } from "@/lib/studio-preview-edit-targets";
 
-export type StudioOverviewGenresTagsEditPanelProps = StudioOverviewEditPanelCommonProps;
+export type StudioOverviewGenresTagsEditPanelProps = StudioOverviewEditPanelCommonProps & {
+  highlightFieldId?: StudioFieldId | null;
+};
 
 export function StudioOverviewGenresTagsEditPanel({
   projectId,
   onCancel,
   onSaved,
   onPreviewPatchChange,
+  highlightFieldId = null,
 }: StudioOverviewGenresTagsEditPanelProps) {
   const { getOwnedProjectById, updateProjectDetails, dataReady } = useGames();
   const game = getOwnedProjectById(projectId);
@@ -137,36 +142,41 @@ export function StudioOverviewGenresTagsEditPanel({
       saveError={saveError}
       validationError={validationError}
     >
-      <CollapsibleFormSection
-        title="ジャンル"
-        summary={selectedGenres.length > 0 ? selectedGenres.join("・") : "未選択（1つ以上）"}
+      <StudioFieldAnchor
+        fieldId={STUDIO_FIELD_IDS.genres}
+        highlight={highlightFieldId === STUDIO_FIELD_IDS.genres}
       >
-        <p className="text-xs text-zinc-600">最大 {MAX_PROJECT_GENRES} つまで。</p>
-        <div className="mt-2 grid grid-cols-2 gap-1.5">
-          {FORGE_GENRE_OPTIONS.map((option) => (
-            <label
-              key={option}
-              className={`flex cursor-pointer items-center justify-center rounded-lg border px-2 py-2 text-xs transition-colors ${
-                selectedGenres.includes(option)
-                  ? "border-orange-500/50 bg-orange-500/10 text-orange-300"
-                  : "border-zinc-800 bg-zinc-950/50 text-zinc-300 hover:border-zinc-700"
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={selectedGenres.includes(option)}
-                onChange={() => {
-                  const nextGenres = toggleForgeGenre(selectedGenres, option);
-                  setSelectedGenres(nextGenres);
-                  emitPreview(nextGenres, selectedTags);
-                }}
-                className="sr-only"
-              />
-              {option}
-            </label>
-          ))}
-        </div>
-      </CollapsibleFormSection>
+        <CollapsibleFormSection
+          title="ジャンル"
+          summary={selectedGenres.length > 0 ? selectedGenres.join("・") : "未選択（1つ以上）"}
+        >
+          <p className="text-xs text-zinc-600">最大 {MAX_PROJECT_GENRES} つまで。</p>
+          <div className="mt-2 grid grid-cols-2 gap-1.5">
+            {FORGE_GENRE_OPTIONS.map((option) => (
+              <label
+                key={option}
+                className={`flex cursor-pointer items-center justify-center rounded-lg border px-2 py-2 text-xs transition-colors ${
+                  selectedGenres.includes(option)
+                    ? "border-orange-500/50 bg-orange-500/10 text-orange-300"
+                    : "border-zinc-800 bg-zinc-950/50 text-zinc-300 hover:border-zinc-700"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedGenres.includes(option)}
+                  onChange={() => {
+                    const nextGenres = toggleForgeGenre(selectedGenres, option);
+                    setSelectedGenres(nextGenres);
+                    emitPreview(nextGenres, selectedTags);
+                  }}
+                  className="sr-only"
+                />
+                {option}
+              </label>
+            ))}
+          </div>
+        </CollapsibleFormSection>
+      </StudioFieldAnchor>
 
       <CollapsibleFormSection
         title="特徴タグ"

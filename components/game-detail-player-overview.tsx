@@ -376,7 +376,7 @@ export function GameDetailPlayerOverview({
         ) : null}
 
         {publication ? (
-          <StudioPreviewEditTarget target="distribution" onEditTarget={onEditTarget}>
+          <StudioPreviewEditTarget target="publication" onEditTarget={onEditTarget}>
             <SidebarCard title="公開先">
               <PublicationPanel
                 publication={publication}
