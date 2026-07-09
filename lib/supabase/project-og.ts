@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { pickHttpThumbnailForOg } from "@/lib/og-image-url";
 import { DEFAULT_PLAYABLE_VERSION } from "@/lib/playable-version";
-import { resolveProjectPrimaryThumbnail } from "@/lib/project-thumbnails";
 import type { ProjectRow } from "@/lib/supabase/schema";
 
 export type ProjectOgData = {
@@ -53,6 +53,9 @@ export async function fetchPublicProjectForOg(
     playableVersion: row.playable_version?.trim() || DEFAULT_PLAYABLE_VERSION,
     phase: row.phase ?? "",
     releaseStatus: row.release_status ?? null,
-    thumbnailUrl: resolveProjectPrimaryThumbnail(row) ?? null,
+    thumbnailUrl: pickHttpThumbnailForOg({
+      thumbnail_urls: row.thumbnail_urls,
+      thumbnail_url: row.thumbnail_url,
+    }),
   };
 }

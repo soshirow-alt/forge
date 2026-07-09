@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-07-09 — Hotfix: 最小 read-only OGP（作品詳細 metadata）
+
+- **og:image** — 公開作品の `thumbnail_urls` / `thumbnail_url` から **http(s) のみ** 採用。data URL / 空は `/images/og-default.png`（絶対URL）
+- **read-only** — `generateMetadata` + `fetchPublicProjectForOg` の SELECT のみ。DB / Storage write なし
+- **非公開・不存在** — デフォルト OGP（Forge 定型）
+- **除外** — og-image API 経由の data URL カード、047 / Storage / backfill
+- **対象** — `hotfix/minimal-readonly-ogp`（main 起点）
+
+---
+
 ## 2026-07-09 — Hotfix準備: Studio保存のサムネ空上書き防止
 
 - **編集保存** — サムネ未変更時は `thumbnail_url` / `thumbnail_urls` を UPDATE payload に含めない

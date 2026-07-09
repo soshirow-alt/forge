@@ -1,4 +1,5 @@
 import { isOgDataUrlImage } from "@/lib/og-data-url-image";
+import { resolveProjectThumbnailUrlsFromRow } from "@/lib/project-thumbnails";
 import { getSiteOrigin, toAbsoluteUrl } from "@/lib/site-url";
 
 /** Default OGP image (PNG for X / social card compatibility). */
@@ -7,8 +8,31 @@ export const DEFAULT_GAME_OG_PATH = "/images/og-default.png";
 /** Social crawlers reject oversized / data-URI images. */
 const MAX_OG_IMAGE_URL_LENGTH = 2048;
 
-export function projectOgImageApiPath(projectId: string): string {
-  return `/api/projects/${projectId}/og-image`;
+/**
+ * First http(s) thumbnail suitable for og:image (read-only metadata).
+ * Skips null, empty, data:, blob:, and non-http schemes.
+ */
+export function pickHttpThumbnailForOg(row: {
+  thumbnail_urls?: string[] | null;
+  thumbnail_url?: string | null;
+}): string | null {
+  for (const url of resolveProjectThumbnailUrlsFromRow(row)) {
+    const trimmed = url.trim();
+    if (!trimmed || isOgDataUrlImage(trimmed)) {
+      continue;
+    }
+    if (/^https?:\/\//i.test(trimmed)) {
+      try {
+        const parsed = new URL(trimmed);
+        if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+          return trimmed;
+        }
+      } catch {
+        continue;
+      }
+    }
+  }
+  return null;
 }
 
 /**
@@ -19,7 +43,7 @@ export function projectOgImageApiPath(projectId: string): string {
  * - same-origin relative paths (`/images/...`)
  *
  * Rejects (falls back to default):
- * - data: / blob: (unless handled via resolveProjectOgImageUrl + og-image API)
+ * - data: / blob:
  * - empty / oversized strings
  * - broken forms like `https://host/data:image/...`
  * - other non-http(s) schemes
@@ -76,17 +100,13 @@ export function resolveOgImageUrl(
 }
 
 /**
- * Prefer http(s)/path thumbnails; if the project only has a data:image thumbnail,
- * point crawlers at the public `/api/projects/{id}/og-image` proxy.
+ * Read-only OGP: http(s) project thumbnail only; data URLs use default image.
  */
 export function resolveProjectOgImageUrl(
-  projectId: string,
+  _projectId: string,
   candidate: string | null | undefined,
   origin = getSiteOrigin(),
   fallbackPath: string = DEFAULT_GAME_OG_PATH,
 ): string {
-  if (isOgDataUrlImage(candidate)) {
-    return toAbsoluteUrl(projectOgImageApiPath(projectId), origin);
-  }
   return resolveOgImageUrl(candidate, origin, fallbackPath);
 }
