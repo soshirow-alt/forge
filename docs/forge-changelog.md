@@ -4,6 +4,39 @@
 
 ---
 
+## 2026-07-09 — Hotfix: non-production → 本番 Supabase write guard
+
+- **guard** — `lib/supabase/write-guard.ts` + `createServiceRoleClient()` で non-production から本番 ref への service role write を拒否
+- **fail closed** — `FORGE_PRODUCTION_SUPABASE_REF` 未設定または URL から ref 抽出不能時も拒否
+- **一時許可** — `FORGE_ALLOW_PRODUCTION_SUPABASE_WRITE=1`（script 用・常時設定禁止）
+- **script** — seed / shadow / restore execute / verify flow に `--execute` デフォルト dry-run + guard
+- **検証** — `npm run verify:supabase-write-guard`
+- **未実施** — main merge / production deploy / DB write
+
+---
+
+## 2026-07-09 — P0: 本番 / Staging 環境分離の準備（doc + read-only ツール）
+
+- **方針確定** — Production = 本番 Supabase のみ。Preview / local = Staging Supabase のみ。preview/landing-01 凍結・main 直 merge 禁止
+- **Staging 手順** — `docs/staging-supabase-environment-separation-guide.md` に migration 001–046（047 除外）・最小 seed 仕様を整理
+- **env チェックリスト** — `docs/vercel-local-env-separation-checklist.md`（秘密値なし）
+- **接続先確認** — `scripts/check-supabase-connection-target.mjs` / `npm run check:supabase-connection`（read-only、本番 ref 誤接続時は警告）
+- **script 監査** — `docs/script-safety-audit.md`（dry-run / guard 改修対象一覧）
+- **バックアップ方針** — `docs/supabase-backup-recovery-guide.md`（オーナー Dashboard 確認項目）
+- **guard 設計** — `docs/non-production-supabase-write-guard-design.md`（実装は未着手・main 起点 hotfix 予定）
+- **未実施** — DB / Storage / deploy / migration 047 / backfill / restore execute / OGP 再開
+
+---
+
+## 2026-07-09 — インシデント復旧: REALIA / 民俗STG サムネ復元
+
+- **対象** — 公開2作品のみ（`0aea6406-…` REALIA、`ca75ee30-…` インターネット民俗STG）
+- **方法** — 消失前 stash 証拠から `thumbnail_url` / `thumbnail_urls`（data URL）を本番DBへ書き戻し
+- **影響** — 他38作品のサムネ列・`updated_at` は不変。047 / Storage OGP / backfill は未実施
+- **UI** — 本番ホーム・作品詳細・`/api/projects/{id}/og-image` でサムネ復帰を確認
+
+---
+
 ## 2026-07-09 — Hotfix準備: Studio保存のサムネ空上書き防止
 
 - **編集保存** — サムネ未変更時は `thumbnail_url` / `thumbnail_urls` を UPDATE payload に含めない

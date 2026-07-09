@@ -3,18 +3,21 @@
  *
  * Usage:
  *   npm run verify:official-release:staging          # 013 適用チェックのみ
- *   npm run verify:official-release:staging:flow     # DB フロー検証（Released→Reopened→再Released）
- *
- * Env (optional):
- *   OFFICIAL_RELEASE_TEST_PROJECT_ID — 検証対象 project uuid
+ *   npm run verify:official-release:staging:flow -- --execute     # DB フロー検証（write）
  */
 import { readFileSync } from "fs";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
   getFirstReleasedEvent,
   wasActiveBeforeFirstRelease,
   type ProjectReleaseEvent,
 } from "../lib/project-release-state";
+import {
+  createScriptServiceClient,
+  exitIfDryRun,
+  logSupabaseTarget,
+  parseScriptExecuteArgs,
+} from "./lib/script-cli";
 
 function loadEnvLocal() {
   try {
@@ -35,19 +38,22 @@ function loadEnvLocal() {
 
 loadEnvLocal();
 
+const { execute } = parseScriptExecuteArgs(process.argv);
 const runFlow = process.argv.includes("--flow");
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const testProjectId = process.env.OFFICIAL_RELEASE_TEST_PROJECT_ID;
 
-if (!url || !serviceKey) {
-  console.error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-  process.exit(1);
+function createReadClient(): SupabaseClient {
+  if (!url || !anonKey) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  }
+  return createClient(url, anonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
 }
 
-const supabase = createClient(url, serviceKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+let supabase!: SupabaseClient;
 
 async function check013Applied(): Promise<boolean> {
   const { error: eventsError } = await supabase
@@ -244,21 +250,27 @@ async function verifyWitnessLogic(projectId: string) {
 
 async function main() {
   console.log("=== Official Release staging verify ===");
-  console.log("Supabase:", url);
+  console.log("Supabase:", url ? new URL(url).hostname : "missing");
   console.log("Mode:", runFlow ? "013 + flow" : "013 check only");
+
+  supabase = createReadClient();
 
   const applied = await check013Applied();
   if (!applied) {
     console.log("\nNext: Supabase Dashboard SQL Editor");
     console.log("File: supabase/migrations/013_project_release_events.sql");
-    console.log("Then: npm run verify:official-release:staging:flow");
+    console.log("Then: npm run verify:official-release:staging:flow -- --execute");
     process.exit(2);
   }
 
   if (!runFlow) {
-    console.log("\n013 OK. Run with --flow for Released/Reopened DB test.");
+    console.log("\n013 OK. Run with --flow --execute for Released/Reopened DB test.");
     process.exit(0);
   }
+
+  exitIfDryRun("verify:official-release:staging:flow", execute);
+  logSupabaseTarget("verify:official-release:staging:flow");
+  supabase = createScriptServiceClient("verify:official-release:staging:flow");
 
   const project = await findTestProject();
   if (!project) {

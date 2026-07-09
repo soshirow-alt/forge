@@ -4,12 +4,12 @@
  * Usage:
  *   npm run verify:witness:grants:staging
  *   npm run verify:witness:grants:staging -- --seed   # cleanup + reseed first
- *   npm run verify:witness:grants:staging -- --cleanup # remove sandbox after verify
- *
- * Requires 014 applied. Uses dedicated sandbox project only.
+ *   npm run verify:witness:grants:staging -- --execute
+ *   npm run verify:witness:grants:staging -- --seed --execute
+ *   npm run verify:witness:grants:staging -- --cleanup --execute
  */
 import { readFileSync } from "fs";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
   check014Applied,
   decodeSandboxUsersMeta,
@@ -17,6 +17,12 @@ import {
   resolveSandboxUsers,
 } from "./witness-sandbox-lib";
 import type { WitnessGrantPath } from "../lib/witness-eligibility";
+import {
+  createScriptServiceClient,
+  exitIfDryRun,
+  logSupabaseTarget,
+  parseScriptExecuteArgs,
+} from "./lib/script-cli";
 
 function loadEnvLocal() {
   try {
@@ -37,19 +43,22 @@ function loadEnvLocal() {
 
 loadEnvLocal();
 
+const { execute } = parseScriptExecuteArgs(process.argv);
 const shouldCleanup = process.argv.includes("--cleanup");
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!url || !serviceKey) {
-  console.error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-  process.exit(1);
+function createReadClient(): SupabaseClient {
+  if (!url || !anonKey) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  }
+  return createClient(url, anonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
 }
 
-const supabase = createClient(url, serviceKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+let supabase!: SupabaseClient;
 
 type GrantRow = {
   user_id: string;
@@ -58,7 +67,7 @@ type GrantRow = {
 
 async function runSeedScript() {
   const { execSync } = await import("child_process");
-  execSync(`npx --yes tsx scripts/witness-sandbox-seed.ts --fresh`, {
+  execSync(`npx --yes tsx scripts/witness-sandbox-seed.ts --fresh --execute`, {
     stdio: "inherit",
     cwd: process.cwd(),
   });
@@ -122,13 +131,19 @@ function countByPath(grants: GrantRow[]) {
 
 async function main() {
   console.log("=== Witness grants staging verify (W3) ===");
-  console.log("Supabase:", url);
+  console.log("Supabase:", url ? new URL(url).hostname : "missing");
+
+  supabase = createReadClient();
 
   const applied = await check014Applied(supabase);
   if (!applied) {
     console.log("\nApply: supabase/migrations/014_project_witness_grants.sql");
     process.exit(2);
   }
+
+  exitIfDryRun("verify:witness:grants:staging", execute);
+  logSupabaseTarget("verify:witness:grants:staging");
+  supabase = createScriptServiceClient("verify:witness:grants:staging");
 
   // Always create a fresh sandbox for grant trigger test
   console.log("\n--- Seed fresh sandbox ---");

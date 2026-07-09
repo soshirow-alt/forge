@@ -2,17 +2,20 @@
  * shadow A — テスト voice 投入 → devlog 新ver公開 → live matcher → FP レビュー報告
  *
  * Usage:
- *   npm run shadow:a -- [--project-id <id>]
- *
- * Requires .env.local (see docs/voice-adoptions-shadow-a-runbook.md)
+ *   npm run shadow:a -- --project-id <id> --execute
  */
-
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { type SupabaseClient } from "@supabase/supabase-js";
 import { runAdoptionMatcherForDevlog } from "../lib/voice-adoption/run-adoption-matcher";
 import { isVoiceAdoptionPlayerVisible } from "../lib/voice-adoption/constants";
 import { resolvePlayableVersion, DEFAULT_PLAYABLE_VERSION } from "../lib/playable-version";
+import {
+  createScriptServiceClient,
+  exitIfDryRun,
+  logSupabaseTarget,
+  parseScriptExecuteArgs,
+} from "./lib/script-cli";
 
 function loadEnvLocal(): void {
   const path = resolve(process.cwd(), ".env.local");
@@ -38,6 +41,8 @@ function loadEnvLocal(): void {
 }
 
 loadEnvLocal();
+
+const { execute } = parseScriptExecuteArgs(process.argv);
 
 const projectIdArg = process.argv.find((a) => a.startsWith("--project-id="))?.split("=")[1]
   ?? (process.argv.indexOf("--project-id") >= 0
@@ -260,8 +265,14 @@ async function upsertShadowVoice(
 }
 
 async function main() {
-  requireEnv("NEXT_PUBLIC_SUPABASE_URL");
-  requireEnv("SUPABASE_SERVICE_ROLE_KEY");
+  exitIfDryRun("shadow:a", execute);
+  logSupabaseTarget("shadow:a");
+
+  if (!projectIdArg) {
+    console.error("Missing required --project-id <uuid>");
+    process.exit(1);
+  }
+
   requireEnv("OPENAI_API_KEY");
 
   const fixture = process.env.NEXT_PUBLIC_VOICE_ADOPTION_FIXTURE?.trim().toLowerCase();
@@ -273,11 +284,7 @@ async function main() {
     throw new Error("VOICE_ADOPTION_MATCHER_MODE must be live for shadow A");
   }
 
-  const url = requireEnv("NEXT_PUBLIC_SUPABASE_URL");
-  const key = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
-  const supabase = createClient(url, key, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
+  const supabase = createScriptServiceClient("shadow:a");
 
   console.log("=== shadow A execute ===");
   console.log(`player UI visible: ${isVoiceAdoptionPlayerVisible()}`);

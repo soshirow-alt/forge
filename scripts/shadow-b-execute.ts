@@ -4,15 +4,20 @@
  * mix: direct 2 / indirect 3 / reject 5（計 10）
  *
  * Usage:
- *   npm run shadow:b -- [--project-id <id>]
+ *   npm run shadow:b -- --project-id <id> --execute
  */
-
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { type SupabaseClient } from "@supabase/supabase-js";
 import { runAdoptionMatcherForDevlog } from "../lib/voice-adoption/run-adoption-matcher";
 import { isVoiceAdoptionPlayerVisible } from "../lib/voice-adoption/constants";
 import { resolvePlayableVersion, DEFAULT_PLAYABLE_VERSION } from "../lib/playable-version";
+import {
+  createScriptServiceClient,
+  exitIfDryRun,
+  logSupabaseTarget,
+  parseScriptExecuteArgs,
+} from "./lib/script-cli";
 
 function loadEnvLocal(): void {
   const path = resolve(process.cwd(), ".env.local");
@@ -38,6 +43,8 @@ function loadEnvLocal(): void {
 }
 
 loadEnvLocal();
+
+const { execute } = parseScriptExecuteArgs(process.argv);
 
 const projectIdArg =
   process.argv.find((a) => a.startsWith("--project-id="))?.split("=")[1] ??
@@ -309,8 +316,14 @@ function voiceById(voiceIds: Map<string, string>, responseId: string): VoiceSpec
 }
 
 async function main() {
-  requireEnv("NEXT_PUBLIC_SUPABASE_URL");
-  requireEnv("SUPABASE_SERVICE_ROLE_KEY");
+  exitIfDryRun("shadow:b", execute);
+  logSupabaseTarget("shadow:b");
+
+  if (!projectIdArg) {
+    console.error("Missing required --project-id <uuid>");
+    process.exit(1);
+  }
+
   requireEnv("OPENAI_API_KEY");
 
   if (process.env.NEXT_PUBLIC_VOICE_ADOPTION_FIXTURE?.trim().toLowerCase() === "true") {
@@ -320,11 +333,7 @@ async function main() {
     throw new Error("VOICE_ADOPTION_MATCHER_MODE must be live");
   }
 
-  const supabase = createClient(
-    requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
-    requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
-    { auth: { autoRefreshToken: false, persistSession: false } },
-  );
+  const supabase = createScriptServiceClient("shadow:b");
 
   console.log("=== shadow B execute ===");
   console.log(`player UI visible: ${isVoiceAdoptionPlayerVisible()}`);

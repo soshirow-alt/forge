@@ -3,12 +3,14 @@
  *
  * Usage:
  *   npm run seed:witness:sandbox
- *   npm run seed:witness:sandbox -- --cleanup
+ *   npm run seed:witness:sandbox -- --execute
+ *   npm run seed:witness:sandbox -- --cleanup --execute
+ *   npm run seed:witness:sandbox -- --fresh --execute
  *
  * Creates dedicated sandbox project + A/B/C/negative engagement (no Released yet).
  */
 import { readFileSync } from "fs";
-import { createClient } from "@supabase/supabase-js";
+import { type SupabaseClient } from "@supabase/supabase-js";
 import {
   WITNESS_SANDBOX_MARKER,
   encodeSandboxUsersMeta,
@@ -16,6 +18,12 @@ import {
   resolveSandboxUsers,
   sandboxTitleFresh,
 } from "./witness-sandbox-lib";
+import {
+  createScriptServiceClient,
+  exitIfDryRun,
+  logSupabaseTarget,
+  parseScriptExecuteArgs,
+} from "./lib/script-cli";
 
 function loadEnvLocal() {
   try {
@@ -36,19 +44,11 @@ function loadEnvLocal() {
 
 loadEnvLocal();
 
+const { execute } = parseScriptExecuteArgs(process.argv);
 const cleanup = process.argv.includes("--cleanup");
 const fresh = process.argv.includes("--fresh");
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!url || !serviceKey) {
-  console.error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-  process.exit(1);
-}
-
-const supabase = createClient(url, serviceKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+let supabase!: SupabaseClient;
 
 const baseTime = new Date("2026-06-10T10:00:00.000Z");
 
@@ -147,6 +147,10 @@ async function insertSession(input: {
 }
 
 async function main() {
+  exitIfDryRun("seed:witness:sandbox", execute);
+  logSupabaseTarget("seed:witness:sandbox");
+  supabase = createScriptServiceClient("seed:witness:sandbox");
+
   console.log("=== Witness sandbox seed ===");
 
   const existing = await findSandboxProject(supabase);

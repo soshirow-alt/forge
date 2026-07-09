@@ -6,9 +6,13 @@
  *   npm run seed:future-demo:staging -- --fresh
  *   npm run hide:future-demo:staging
  *   npm run show:future-demo:staging
- *   npm run patch:veteran-developer:staging
+ *   npm run seed:future-demo:staging -- --execute
+ *   npm run seed:future-demo:staging -- --fresh --execute
+ *   npm run hide:future-demo:staging -- --execute
+ *   npm run show:future-demo:staging -- --execute
+ *   npm run patch:veteran-developer:staging -- --execute
  */
-import { createClient } from "@supabase/supabase-js";
+import { type SupabaseClient } from "@supabase/supabase-js";
 import {
   DEV_NPC_DEFS,
   DEMO_NEW_USER_EMAIL,
@@ -50,26 +54,30 @@ import {
   worldTs,
   type FutureDemoWorldMeta,
 } from "./future-demo-lib";
+import {
+  createScriptServiceClient,
+  exitIfDryRun,
+  logSupabaseTarget,
+  parseScriptExecuteArgs,
+} from "./lib/script-cli";
 
 loadEnvLocal();
 
+const { execute } = parseScriptExecuteArgs(process.argv);
 const fresh = process.argv.includes("--fresh");
 const hideWorld = process.argv.includes("--hide");
 const showWorld = process.argv.includes("--show");
 const patchVeteranVoices = process.argv.includes("--patch-veteran-voices");
 const patchVeteranDeveloper = process.argv.includes("--patch-veteran-developer");
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+let supabase!: SupabaseClient;
 
-if (!url || !serviceKey) {
-  console.error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-  process.exit(1);
+function requireSupabase(): SupabaseClient {
+  if (!supabase) {
+    supabase = createScriptServiceClient("seed:future-demo:staging");
+  }
+  return supabase;
 }
-
-const supabase = createClient(url, serviceKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
 
 type SeededProject = {
   id: string;
@@ -541,7 +549,12 @@ async function augmentVeteranVoices() {
 
 async function runSeed() {
   console.log("=== Future demo world seed (staging) ===");
-  console.log("Supabase:", url);
+  console.log(
+    "Supabase:",
+    process.env.NEXT_PUBLIC_SUPABASE_URL
+      ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+      : "missing",
+  );
 
   const applied = await check014Applied(supabase);
   if (!applied) {
@@ -764,6 +777,10 @@ async function runSeed() {
 }
 
 async function main() {
+  exitIfDryRun("seed:future-demo:staging", execute);
+  logSupabaseTarget("seed:future-demo:staging");
+  supabase = createScriptServiceClient("seed:future-demo:staging");
+
   if (hideWorld) {
     await runHide();
     return;

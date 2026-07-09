@@ -27,7 +27,9 @@
     "verify:future-demo:staging": "npx --yes tsx scripts/future-demo-verify.ts",
     "hide:future-demo:staging": "npx --yes tsx scripts/future-demo-seed.ts --hide",
     "show:future-demo:staging": "npx --yes tsx scripts/future-demo-seed.ts --show",
-    "patch:veteran-developer:staging": "npx --yes tsx scripts/future-demo-seed.ts --patch-veteran-developer"
+    "patch:veteran-developer:staging": "npx --yes tsx scripts/future-demo-seed.ts --patch-veteran-developer",
+    "check:supabase-connection": "node scripts/check-supabase-connection-target.mjs",
+    "verify:supabase-write-guard": "npx --yes tsx scripts/verify-supabase-write-guard.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
