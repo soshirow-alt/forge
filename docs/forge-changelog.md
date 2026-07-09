@@ -11,6 +11,8 @@
 - **非公開・不存在** — デフォルト OGP（Forge 定型）
 - **除外** — og-image API 経由の data URL カード、047 / Storage / backfill
 - **対象** — `hotfix/minimal-readonly-ogp`（main 起点）
+- **本番反映** — `main` FF `780838b` → `vercel deploy --prod`（`dpl_6g9LVKxms2nP8WysHm1855iYs2h6`、https://forge-flame-gamma.vercel.app）
+- **本番 smoke** — REALIA / 民俗STG: `og:image` = default png（data URL サムネは未使用）、`twitter:card=summary_large_image`、HTTP 200・`/login` リダイレクトなし
 
 ---
 
