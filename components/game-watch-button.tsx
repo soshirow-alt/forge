@@ -24,13 +24,17 @@ export function GameWatchButton({
   const watching = isWatching(gameId);
 
   function handleClick() {
-    requireAuth(() => {
-      if (watching) {
-        void unwatchGame(gameId);
-        return;
-      }
-      void watchGame(gameId);
-    });
+    requireAuth(
+      () => {
+        if (watching) {
+          void unwatchGame(gameId);
+          return;
+        }
+        void watchGame(gameId);
+      },
+      undefined,
+      { variant: "watch" },
+    );
   }
 
   const baseClassName = compact

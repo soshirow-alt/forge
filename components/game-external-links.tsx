@@ -128,7 +128,9 @@ export function GameExternalLinks({
               key={link.label}
               type="button"
               onClick={() =>
-                requireAuth(() => undefined, gameDetailReturnPath(gameId))
+                requireAuth(() => undefined, gameDetailReturnPath(gameId), {
+                  variant: "play",
+                })
               }
               title="ログインすると使えます"
               className={linkClassName}

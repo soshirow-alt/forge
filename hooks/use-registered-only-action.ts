@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/components/auth-provider";
 import { useRegisteredAccountPrompt } from "@/components/registered-account-prompt-provider";
+import type { RegisteredActionPromptVariant } from "@/lib/registered-action-prompt";
 
 export function useRegisteredOnlyAction() {
   const { authResolved, isRegisteredUser } = useAuth();
@@ -10,6 +11,7 @@ export function useRegisteredOnlyAction() {
   function runRegisteredOnlyAction(
     action: () => void,
     returnPath?: string,
+    variant: RegisteredActionPromptVariant = "default",
   ): boolean {
     if (!authResolved) {
       return false;
@@ -20,7 +22,7 @@ export function useRegisteredOnlyAction() {
       return true;
     }
 
-    promptRegisteredAccountAccess(returnPath);
+    promptRegisteredAccountAccess(returnPath, { variant });
     return false;
   }
 

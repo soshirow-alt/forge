@@ -10,8 +10,13 @@ import {
   buildLoginUrlWithReturn,
   LOGIN_PATH,
 } from "@/lib/login-return-url";
+import type { RegisteredActionPromptVariant } from "@/lib/registered-action-prompt";
 
 export { LOGIN_PATH } from "@/lib/login-return-url";
+
+export type RequireAuthOptions = {
+  variant?: RegisteredActionPromptVariant;
+};
 
 export function useRequireAuth() {
   const router = useRouter();
@@ -26,7 +31,11 @@ export function useRequireAuth() {
     [pathname, searchParams],
   );
 
-  function requireAuth(action: () => void, returnPath?: string) {
+  function requireAuth(
+    action: () => void,
+    returnPath?: string,
+    options?: RequireAuthOptions,
+  ) {
     if (!hydrated) {
       return;
     }
@@ -36,7 +45,9 @@ export function useRequireAuth() {
       return;
     }
 
-    promptRegisteredAccountAccess(returnPath ?? currentReturnPath);
+    promptRegisteredAccountAccess(returnPath ?? currentReturnPath, {
+      variant: options?.variant ?? "default",
+    });
   }
 
   return {

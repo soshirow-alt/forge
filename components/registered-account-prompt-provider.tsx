@@ -1,20 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   createContext,
   useCallback,
   useContext,
   useMemo,
+  useState,
   type ComponentProps,
   type ReactNode,
 } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { V0SimpleModal } from "@/components/v0-simple-modal";
 import { buildLoginUrlWithReturn } from "@/lib/login-return-url";
+import {
+  getRegisteredActionPromptBody,
+  REGISTERED_ACTION_PROMPT_TITLE,
+  type RegisteredActionPromptVariant,
+} from "@/lib/registered-action-prompt";
+
+type PromptState = {
+  returnPath: string;
+  variant: RegisteredActionPromptVariant;
+} | null;
+
+type RegisteredAccountPromptOptions = {
+  variant?: RegisteredActionPromptVariant;
+};
 
 type RegisteredAccountPromptContextValue = {
-  promptRegisteredAccountAccess: (returnPath?: string) => void;
+  promptRegisteredAccountAccess: (
+    returnPath?: string,
+    options?: RegisteredAccountPromptOptions,
+  ) => void;
   closePrompt: () => void;
 };
 
@@ -38,18 +56,25 @@ export function RegisteredAccountPromptProvider({
 }: {
   children: ReactNode;
 }) {
-  const router = useRouter();
+  const [prompt, setPrompt] = useState<PromptState>(null);
 
   const promptRegisteredAccountAccess = useCallback(
-    (returnPath?: string) => {
-      router.push(buildLoginUrlWithReturn(resolveActionReturnPath(returnPath)));
+    (returnPath?: string, options?: RegisteredAccountPromptOptions) => {
+      setPrompt({
+        returnPath: resolveActionReturnPath(returnPath),
+        variant: options?.variant ?? "default",
+      });
     },
-    [router],
+    [],
   );
 
   const closePrompt = useCallback(() => {
-    // No-op — kept for API compatibility after modal removal.
+    setPrompt(null);
   }, []);
+
+  const loginHref = prompt
+    ? buildLoginUrlWithReturn(prompt.returnPath)
+    : "/login";
 
   const value = useMemo(
     () => ({ promptRegisteredAccountAccess, closePrompt }),
@@ -59,6 +84,30 @@ export function RegisteredAccountPromptProvider({
   return (
     <RegisteredAccountPromptContext.Provider value={value}>
       {children}
+      {prompt ? (
+        <V0SimpleModal
+          title={REGISTERED_ACTION_PROMPT_TITLE}
+          subtitle={getRegisteredActionPromptBody(prompt.variant)}
+          onClose={closePrompt}
+        >
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link
+              href={loginHref}
+              onClick={closePrompt}
+              className="inline-flex flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 transition-opacity hover:opacity-90"
+            >
+              ログインして続ける
+            </Link>
+            <button
+              type="button"
+              onClick={closePrompt}
+              className="inline-flex flex-1 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900/60 px-6 py-3 text-sm font-semibold text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-900"
+            >
+              今はやめる
+            </button>
+          </div>
+        </V0SimpleModal>
+      ) : null}
     </RegisteredAccountPromptContext.Provider>
   );
 }
@@ -75,7 +124,7 @@ export function useRegisteredAccountPrompt() {
 
 type RegisteredOnlyLinkProps = ComponentProps<typeof Link>;
 
-/** Registered users navigate normally; guests redirect to /login with return. */
+/** Registered users navigate normally; guests see login confirmation modal. */
 export function RegisteredOnlyLink({
   href,
   onClick,
@@ -99,7 +148,7 @@ export function RegisteredOnlyLink({
     }
 
     event.preventDefault();
-    promptRegisteredAccountAccess(returnPath);
+    promptRegisteredAccountAccess(returnPath, { variant: "default" });
   }
 
   return <Link href={href} onClick={handleClick} {...props} />;

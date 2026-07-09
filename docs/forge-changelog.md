@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-10 — 公開ページの保護アクション: 確認モーダル復活（fix/public-discovery-auth-gate）
+
+- **変更** — 未ログインでフォロー・あとで見る・更新を追う・プレイ・FB 等を押したとき、即 `/login` 遷移せず確認モーダルを表示
+- **モーダル** — 「ログインして続ける」で `/login?return=現在URL`、「今はやめる」で閉じて元ページに残る。アクション別本文（follow / bookmark / watch / feedback / play）
+- **維持** — 入口ゲート（ForgeEntryGate）非表示、保護ページ直打ちの middleware redirect、閲覧の未ログイン開放
+- **対象** — `fix/public-discovery-auth-gate`（main merge 前）
+
+---
+
 ## 2026-07-10 — 発見閲覧の開放（入口ゲート廃止・A案）
 
 - **閲覧** — `/search` `/games/[id]` `/home` `/guide` `/creators/*` `/rankings/*` 等は未ログイン・entry 未選択でも**初期表示の「Forgeへようこそ」モーダルを出さない**

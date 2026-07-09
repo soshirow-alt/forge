@@ -128,7 +128,7 @@ export function StudioEntryGateProvider({ children }: { children: ReactNode }) {
       }
 
       if (!isRegisteredUser) {
-        promptRegisteredAccountAccess(href);
+        promptRegisteredAccountAccess(href, { variant: "default" });
         return;
       }
 
