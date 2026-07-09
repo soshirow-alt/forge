@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07-10 — 登録必須アクションの login: ゲスト参加を非表示（intent=registered）
+
+- **変更** — 確認モーダル等から登録必須アクションで `/login` に遷移するとき `intent=registered` を付与。`/login` ではゲスト参加ボタンを出さない
+- **維持** — `return` URL は従来どおり。プレイ導線（`variant: play`）は intent なしでゲスト参加を維持。middleware 直打ち保護は変更なし
+- **対象** — `fix/public-discovery-auth-gate`（main merge 前）
+
+---
+
 ## 2026-07-10 — 公開ページの保護アクション: 確認モーダル復活（fix/public-discovery-auth-gate）
 
 - **変更** — 未ログインでフォロー・あとで見る・更新を追う・プレイ・FB 等を押したとき、即 `/login` 遷移せず確認モーダルを表示

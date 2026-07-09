@@ -12,7 +12,10 @@ import {
 } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { V0SimpleModal } from "@/components/v0-simple-modal";
-import { buildLoginUrlWithReturn } from "@/lib/login-return-url";
+import {
+  buildLoginUrlWithReturn,
+  LOGIN_INTENT_REGISTERED,
+} from "@/lib/login-return-url";
 import {
   getRegisteredActionPromptBody,
   REGISTERED_ACTION_PROMPT_TITLE,
@@ -73,7 +76,10 @@ export function RegisteredAccountPromptProvider({
   }, []);
 
   const loginHref = prompt
-    ? buildLoginUrlWithReturn(prompt.returnPath)
+    ? buildLoginUrlWithReturn(prompt.returnPath, {
+        intent:
+          prompt.variant === "play" ? undefined : LOGIN_INTENT_REGISTERED,
+      })
     : "/login";
 
   const value = useMemo(

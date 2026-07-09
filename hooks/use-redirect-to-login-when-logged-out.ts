@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { useEntryMode } from "@/components/entry-mode-provider";
 import { ACCOUNT_REGISTRATION_REQUIRED_NOTICE } from "@/lib/guest-auth";
-import { buildLoginUrlWithReturn } from "@/lib/login-return-url";
+import { buildLoginUrlWithReturn, LOGIN_INTENT_REGISTERED } from "@/lib/login-return-url";
 
 /**
  * authResolved 後に未ログイン（登録アカウントなし）なら /login?return=現在URL へ replace。
@@ -27,6 +27,7 @@ export function useRedirectToLoginWhenLoggedOut(returnPath?: string) {
     router.replace(
       buildLoginUrlWithReturn(resolvedReturnPath, {
         notice: isGuestEntry ? ACCOUNT_REGISTRATION_REQUIRED_NOTICE : undefined,
+        intent: LOGIN_INTENT_REGISTERED,
       }),
     );
   }, [hydrated, isRegisteredUser, isGuestEntry, router, resolvedReturnPath]);

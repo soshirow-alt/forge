@@ -20,7 +20,15 @@ import {
   readOAuthFlowCookies,
 } from "../lib/oauth-flow-cookie";
 import { mapProjectSubmitErrorMessage } from "../lib/error-message";
-import { buildRegisterUrlWithReturn, isGuestEligibleReturnParam, resolvePostLoginPath, sanitizeLoginReturnUrl } from "../lib/login-return-url";
+import {
+  buildLoginUrlWithReturn,
+  buildRegisterUrlWithReturn,
+  isGuestEligibleReturnParam,
+  LOGIN_INTENT_REGISTERED,
+  resolvePostLoginPath,
+  sanitizeLoginReturnUrl,
+  shouldShowGuestLoginEntry,
+} from "../lib/login-return-url";
 import { projectThumbnailsForDb, projectThumbnailsForDbUpdate, sanitizeProjectThumbnailUrls } from "../lib/project-thumbnails";
 import { reorderArrayItem } from "../lib/reorder-array-item";
 import {
@@ -248,6 +256,19 @@ function testLoginReturnSanitize() {
   ok(
     isGuestEligibleReturnParam("/studio/mypage") === false,
     "guest ineligible for studio return",
+  );
+  ok(
+    shouldShowGuestLoginEntry("/games/abc", LOGIN_INTENT_REGISTERED) === false,
+    "registered intent hides guest for game detail return",
+  );
+  ok(
+    shouldShowGuestLoginEntry("/games/abc", null) === true,
+    "no intent allows guest for game detail return",
+  );
+  ok(
+    buildLoginUrlWithReturn("/games/abc", { intent: LOGIN_INTENT_REGISTERED }) ===
+      "/login?return=%2Fgames%2Fabc&intent=registered",
+    "login url carries registered intent",
   );
   ok(resolvePostLoginPath(null) === "/home", "no-return login defaults to /home");
   ok(

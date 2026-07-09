@@ -9,6 +9,7 @@ export default async function Login({
 }: {
   searchParams: Promise<{
     return?: string;
+    intent?: string;
     error?: string;
     notice?: string;
   }>;
@@ -24,6 +25,7 @@ export default async function Login({
     <LoginPage
       supabaseConfigured={supabaseConfigured}
       returnParam={returnParam}
+      intentParam={params.intent ?? null}
       callbackError={callbackError}
       notice={params.notice ?? null}
     />

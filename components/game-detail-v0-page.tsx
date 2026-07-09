@@ -43,6 +43,7 @@ import { useRequireAuth } from "@/hooks/use-require-auth";
 import {
   buildLoginUrlWithReturn,
   gameDetailReturnPath,
+  LOGIN_INTENT_REGISTERED,
 } from "@/lib/login-return-url";
 import {
   parseChangeCheckPreviewOverride,
@@ -402,7 +403,9 @@ function GameDetailV0PageBody({
     watching,
     enabled: isRealProject && hydrated && isLoggedIn,
   });
-  const involvementLoginHref = buildLoginUrlWithReturn(returnPath);
+  const involvementLoginHref = buildLoginUrlWithReturn(returnPath, {
+    intent: LOGIN_INTENT_REGISTERED,
+  });
 
   const changeCheckOverride = parseChangeCheckPreviewOverride(
     searchParams.get("changeCheck"),
@@ -633,7 +636,9 @@ function GameDetailV0PageBody({
 
   useFeedbackFlowLock(isRealProject ? "closed" : feedbackStep);
 
-  const guestFeedbackLoginHref = buildLoginUrlWithReturn(returnPath);
+  const guestFeedbackLoginHref = buildLoginUrlWithReturn(returnPath, {
+    intent: LOGIN_INTENT_REGISTERED,
+  });
 
   const overviewActivity = useMemo(
     () =>

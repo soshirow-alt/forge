@@ -17,6 +17,15 @@ import {
 export const LOGIN_PATH = "/login";
 export const REGISTER_PATH = "/register";
 
+/** Login from a registered-only action — suppress guest entry on /login. */
+export const LOGIN_INTENT_REGISTERED = "registered";
+
+export function isRegisteredOnlyLoginIntent(
+  intent: string | null | undefined,
+): boolean {
+  return intent === LOGIN_INTENT_REGISTERED;
+}
+
 /** プレイヤー発見・ホーム（return なしログイン/登録・ゲスト参加後と同系統） */
 export const DEFAULT_POST_PLAYER_HOME_PATH = "/home";
 
@@ -314,7 +323,7 @@ export function buildLocationReturnPath(pathname: string, search: string): strin
 
 export function buildLoginUrlWithReturn(
   returnPath: string,
-  options?: { notice?: string },
+  options?: { notice?: string; intent?: typeof LOGIN_INTENT_REGISTERED },
 ): string {
   const safe = sanitizeLoginReturnUrl(returnPath);
   const params = new URLSearchParams();
@@ -325,6 +334,10 @@ export function buildLoginUrlWithReturn(
 
   if (options?.notice) {
     params.set("notice", options.notice);
+  }
+
+  if (options?.intent === LOGIN_INTENT_REGISTERED) {
+    params.set("intent", LOGIN_INTENT_REGISTERED);
   }
 
   const query = params.toString();
@@ -350,4 +363,14 @@ export function isGuestEligibleReturnParam(
 ): boolean {
   const safe = sanitizeLoginReturnUrl(returnParam);
   return Boolean(safe && isGuestReturnPathAllowed(safe));
+}
+
+export function shouldShowGuestLoginEntry(
+  returnParam: string | null | undefined,
+  intentParam: string | null | undefined,
+): boolean {
+  if (isRegisteredOnlyLoginIntent(intentParam)) {
+    return false;
+  }
+  return isGuestEligibleReturnParam(returnParam);
 }
