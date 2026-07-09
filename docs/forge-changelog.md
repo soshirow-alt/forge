@@ -10,7 +10,7 @@
 - **fail closed** — `FORGE_PRODUCTION_SUPABASE_REF` 未設定または URL から ref 抽出不能時も拒否
 - **一時許可** — `FORGE_ALLOW_PRODUCTION_SUPABASE_WRITE=1`（script 用・常時設定禁止）
 - **script** — seed / shadow / restore execute / verify flow に `--execute` デフォルト dry-run + guard
-- **検証** — `npm run verify:supabase-write-guard`
+- **検証** — `npm run verify:supabase-write-guard`（8ケースを ts / mjs 両方 + parity チェック）
 - **未実施** — main merge / production deploy / DB write
 
 ---

@@ -1,25 +1,41 @@
 /**
- * Unit matrix for lib/supabase/write-guard.ts (no DB access).
+ * Unit matrix for lib/supabase/write-guard.ts and scripts/lib/supabase-write-guard.mjs.
+ * No DB access.
  *
- * Usage: npx tsx scripts/verify-supabase-write-guard.ts
+ * Usage: npm run verify:supabase-write-guard
  */
 import {
-  assertSupabaseWriteAllowed,
-  getSupabaseProjectRef,
+  assertSupabaseWriteAllowed as assertTs,
+  getSupabaseProjectRef as getSupabaseProjectRefTs,
   isVercelProductionDeployment,
-  SupabaseWriteGuardError,
 } from "../lib/supabase/write-guard";
+import {
+  assertSupabaseWriteAllowed as assertMjs,
+  getSupabaseProjectRef as getSupabaseProjectRefMjs,
+  SupabaseWriteGuardError as SupabaseWriteGuardErrorMjs,
+} from "./lib/supabase-write-guard.mjs";
 import { createServiceRoleClient } from "../lib/supabase/service-role";
 
 const PROD = "bpnisgzxuwdxelhnduuf";
 const STAGING = "stagingref123456";
+const CONTEXT = "verify-supabase-write-guard";
 
 type Snapshot = Record<string, string | undefined>;
+
+type GuardImpl = {
+  label: "ts" | "mjs";
+  assert: (context: string) => void;
+};
+
+const GUARD_IMPLS: GuardImpl[] = [
+  { label: "ts", assert: assertTs },
+  { label: "mjs", assert: assertMjs },
+];
 
 function withEnv(
   snapshot: Snapshot,
   fn: () => void,
-): { threw: boolean; error?: string } {
+): { threw: boolean; error?: string; errorName?: string } {
   const saved = new Map<string, string | undefined>();
   for (const key of Object.keys(snapshot)) {
     saved.set(key, process.env[key]);
@@ -33,11 +49,13 @@ function withEnv(
 
   let threw = false;
   let error: string | undefined;
+  let errorName: string | undefined;
   try {
     fn();
   } catch (err) {
     threw = true;
     error = err instanceof Error ? err.message : String(err);
+    errorName = err instanceof Error ? err.name : undefined;
   } finally {
     for (const [key, value] of saved) {
       if (value === undefined) {
@@ -48,7 +66,7 @@ function withEnv(
     }
   }
 
-  return { threw, error };
+  return { threw, error, errorName };
 }
 
 type Case = {
@@ -57,6 +75,7 @@ type Case = {
   expectAllow: boolean;
 };
 
+/** Shared matrix — both TS and mjs implementations must match. */
 const CASES: Case[] = [
   {
     name: "Vercel production + prod URL",
@@ -134,58 +153,147 @@ const CASES: Case[] = [
   },
 ];
 
+type ImplOutcome = {
+  allowed: boolean;
+  error?: string;
+  errorName?: string;
+};
+
+function runGuard(impl: GuardImpl, env: Snapshot): ImplOutcome {
+  const result = withEnv(env, () => {
+    impl.assert(CONTEXT);
+  });
+  return {
+    allowed: !result.threw,
+    error: result.error,
+    errorName: result.errorName,
+  };
+}
+
 function main(): void {
-  const ref = getSupabaseProjectRef(`https://${PROD}.supabase.co`);
-  if (ref !== PROD) {
-    console.error("FAIL ref extraction");
+  let failed = 0;
+
+  const prodUrl = `https://${PROD}.supabase.co`;
+  if (getSupabaseProjectRefTs(prodUrl) !== PROD) {
+    console.error("FAIL ts ref extraction");
     process.exit(1);
   }
+  if (getSupabaseProjectRefMjs(prodUrl) !== PROD) {
+    console.error("FAIL mjs ref extraction");
+    process.exit(1);
+  }
+  console.log("PASS getSupabaseProjectRef parity (ts / mjs)");
 
   if (isVercelProductionDeployment()) {
     console.log("SKIP isVercelProductionDeployment — set in CI only");
   }
 
-  let failed = 0;
   for (const testCase of CASES) {
-    const result = withEnv(testCase.env, () => {
-      assertSupabaseWriteAllowed("verify-supabase-write-guard");
-    });
+    const outcomes = GUARD_IMPLS.map((impl) => ({
+      impl,
+      outcome: runGuard(impl, testCase.env),
+    }));
 
-    const allowed = !result.threw;
-    const ok = allowed === testCase.expectAllow;
-    console.log(`${ok ? "PASS" : "FAIL"} ${testCase.name}`);
-    if (!ok) {
+    for (const { impl, outcome } of outcomes) {
+      const ok = outcome.allowed === testCase.expectAllow;
+      console.log(`${ok ? "PASS" : "FAIL"} [${impl.label}] ${testCase.name}`);
+      if (!ok) {
+        failed += 1;
+        console.log(
+          `  expected allow=${testCase.expectAllow}, got allow=${outcome.allowed}`,
+        );
+        if (outcome.error) {
+          console.log(`  error: ${outcome.error.slice(0, 120)}`);
+        }
+      }
+    }
+
+    const [tsOutcome, mjsOutcome] = outcomes.map((o) => o.outcome);
+    const parityAllow = tsOutcome.allowed === mjsOutcome.allowed;
+    const parityReason =
+      tsOutcome.error === mjsOutcome.error &&
+      tsOutcome.errorName === mjsOutcome.errorName;
+    const parityOk = parityAllow && parityReason;
+
+    console.log(`${parityOk ? "PASS" : "FAIL"} [parity] ${testCase.name}`);
+    if (!parityOk) {
       failed += 1;
-      console.log(`  expected allow=${testCase.expectAllow}, got allow=${allowed}`);
-      if (result.error) {
-        console.log(`  error: ${result.error.slice(0, 120)}`);
+      if (!parityAllow) {
+        console.log(
+          `  allow mismatch: ts=${tsOutcome.allowed} mjs=${mjsOutcome.allowed}`,
+        );
+      }
+      if (!parityReason) {
+        console.log(`  ts error: ${tsOutcome.error ?? "(none)"}`);
+        console.log(`  mjs error: ${mjsOutcome.error ?? "(none)"}`);
+        console.log(
+          `  errorName: ts=${tsOutcome.errorName ?? "(none)"} mjs=${mjsOutcome.errorName ?? "(none)"}`,
+        );
       }
     }
   }
 
-  const mustThrow = withEnv(
+  const errorTypeTs = withEnv(
     {
       VERCEL_ENV: undefined,
       NEXT_PUBLIC_SUPABASE_URL: `https://${PROD}.supabase.co`,
       FORGE_PRODUCTION_SUPABASE_REF: PROD,
     },
     () => {
-      assertSupabaseWriteAllowed("verify");
+      assertTs("verify");
     },
   );
-  if (!mustThrow.threw || !mustThrow.error?.includes("[supabase-write-guard]")) {
-    console.log("FAIL error type");
+  const errorTypeMjs = withEnv(
+    {
+      VERCEL_ENV: undefined,
+      NEXT_PUBLIC_SUPABASE_URL: `https://${PROD}.supabase.co`,
+      FORGE_PRODUCTION_SUPABASE_REF: PROD,
+    },
+    () => {
+      assertMjs("verify");
+    },
+  );
+
+  const tsErrorOk =
+    errorTypeTs.threw && errorTypeTs.errorName === "SupabaseWriteGuardError";
+  const mjsErrorOk =
+    errorTypeMjs.threw && errorTypeMjs.errorName === "SupabaseWriteGuardError";
+  const errorParityOk = errorTypeTs.error === errorTypeMjs.error;
+
+  console.log(`${tsErrorOk ? "PASS" : "FAIL"} [ts] throws SupabaseWriteGuardError`);
+  console.log(`${mjsErrorOk ? "PASS" : "FAIL"} [mjs] throws SupabaseWriteGuardError`);
+  console.log(
+    `${errorParityOk ? "PASS" : "FAIL"} [parity] SupabaseWriteGuardError message`,
+  );
+  if (!tsErrorOk || !mjsErrorOk || !errorParityOk) {
+    failed += 1;
+  }
+
+  const restoreBlock = withEnv(
+    {
+      VERCEL_ENV: undefined,
+      NEXT_PUBLIC_SUPABASE_URL: `https://${PROD}.supabase.co`,
+      FORGE_PRODUCTION_SUPABASE_REF: PROD,
+    },
+    () => {
+      assertMjs("tmp-restore-incident-thumbs");
+    },
+  );
+  if (!restoreBlock.threw) {
+    console.log("FAIL [mjs] restore context blocks prod write");
     failed += 1;
   } else {
-    console.log("PASS throws SupabaseWriteGuardError");
+    console.log("PASS [mjs] restore context blocks prod write");
   }
 
   if (failed > 0) {
     process.exit(1);
   }
-  console.log(`\nAll ${CASES.length} cases passed.`);
 
-  // createServiceRoleClient integration (no network)
+  console.log(
+    `\nAll ${CASES.length} cases passed for ts + mjs (${CASES.length * 2} impl runs, ${CASES.length} parity checks).`,
+  );
+
   const blocked = withEnv(
     {
       VERCEL_ENV: undefined,
@@ -222,6 +330,13 @@ function main(): void {
     process.exit(1);
   }
   console.log("PASS createServiceRoleClient allows staging from local");
+
+  // Sanity: mjs error class name matches TS
+  if (new SupabaseWriteGuardErrorMjs("x").name !== "SupabaseWriteGuardError") {
+    console.error("FAIL mjs SupabaseWriteGuardError class name");
+    process.exit(1);
+  }
+  console.log("PASS mjs SupabaseWriteGuardError class name");
 }
 
 main();
