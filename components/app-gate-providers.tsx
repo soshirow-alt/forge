@@ -1,6 +1,5 @@
 "use client";
 
-import { ForgeEntryGate } from "@/components/forge-entry-gate";
 import { EntryModeProvider, useEntryMode } from "@/components/entry-mode-provider";
 import { RegisteredAccountPromptProvider } from "@/components/registered-account-prompt-provider";
 import { StudioEntryGateProvider } from "@/components/studio-entry-gate-provider";
@@ -30,7 +29,6 @@ export function AppGateProviders({ children }: { children: React.ReactNode }) {
         <RegisteredAccountPromptProvider>
           <StudioEntryGateProvider>
             {children}
-            <ForgeEntryGate />
           </StudioEntryGateProvider>
         </RegisteredAccountPromptProvider>
       </EntryModeAuthSync>

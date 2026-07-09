@@ -191,6 +191,23 @@ function testSubmitErrorMapping() {
 function testLoginReturnSanitize() {
   ok(sanitizeLoginReturnUrl("/games/abc") === "/games/abc", "allow game detail return");
   ok(
+    sanitizeLoginReturnUrl("/search?q=Staging") === "/search?q=Staging",
+    "allow works search return with query",
+  );
+  ok(
+    sanitizeLoginReturnUrl("/search/creators?q=forge&sort=followers") ===
+      "/search/creators?q=forge&sort=followers",
+    "allow creator search return",
+  );
+  ok(
+    sanitizeLoginReturnUrl("/creators/dev-1") === "/creators/dev-1",
+    "allow creator profile return",
+  );
+  ok(
+    isGuestEligibleReturnParam("/search?q=Staging") === true,
+    "guest eligible for search return",
+  );
+  ok(
     sanitizeLoginReturnUrl("/games/abc?tab=devlog") === "/games/abc?tab=devlog",
     "allow game detail devlog tab",
   );
@@ -460,7 +477,8 @@ function testPublicCatalogAuthIndependenceContract() {
   ok(provider.includes("fetchPublicProjects"), "games-provider imports fetchPublicProjects");
   ok(
     provider.includes("void reloadPublicCatalog()") &&
-      provider.includes(".finally(() => setPublicCatalogReady(true))"),
+      provider.includes(".finally(() => {") &&
+      provider.includes("setPublicCatalogReady(true)"),
     "public catalog loads on mount and sets publicCatalogReady",
   );
   const mountEffectStart = provider.indexOf("setHydrated(true);");

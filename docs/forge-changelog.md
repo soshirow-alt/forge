@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-07-10 — 発見閲覧の開放（入口ゲート廃止・A案）
+
+- **閲覧** — `/search` `/games/[id]` `/home` `/guide` `/creators/*` `/rankings/*` 等は未ログイン・entry 未選択でも**初期表示の「Forgeへようこそ」モーダルを出さない**
+- **アクション時 login** — プレイ・フィードバック・応援・更新を追う・あとで見る等は画面上モーダルではなく **`/login?return=現在URL`** へ遷移（登録必須プロンプトモーダルも廃止）
+- **ゲスト参加** — `/login` の副導線は維持。return 先に `/search`（クエリ付き）・作品詳細等を追加
+- **削除** — `ForgeEntryGate` コンポーネント・`/games/[id]` 初回の login 強制リダイレクト
+- **DB / Storage / migration なし**
+- **対象** — `fix/public-discovery-auth-gate`（main 起点）
+
+---
+
 ## 2026-07-09 — Hotfix: 最小 read-only OGP（作品詳細 metadata）
 
 - **og:image** — 公開作品の `thumbnail_urls` / `thumbnail_url` から **http(s) のみ** 採用。data URL / 空は `/images/og-default.png`（絶対URL）
