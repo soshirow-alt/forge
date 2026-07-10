@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-11 — 作品詳細 Special Thanks: 横レイアウトカード + 密度確認用 seed
+
+- **変更** — カードを横方向レイアウト（左 avatar / 中央名前 / 右 日付・件数・ver）。desktop 2列・初期6件+「ほかN人を見る」
+- **文言** — 「声」不使用。フィードバック統一を維持
+- **Staging** — density seed / rollback script を追加（Admin API・staging ref ガード・default dry-run）。実行はオーナー GO 後
+- **未実施** — density seed 実行・10件以上 smoke・main / 本番
+
+---
+
 ## 2026-07-11 — 作品詳細 Special Thanks: プレイヤーカード UI
 
 - **変更** — 文字列列挙をやめ、avatar / 表示名 / handle / 理由・日付・版・件数つきのプレイヤーカードに変更

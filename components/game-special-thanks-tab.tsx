@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { XLinkedHandleBadge } from "@/components/x-linked-handle-badge";
 import { useProjectSpecialThanks } from "@/hooks/use-project-special-thanks";
 import {
@@ -18,6 +18,8 @@ import type {
 type GameSpecialThanksTabProps = {
   projectId: string | undefined;
 };
+
+const SECTION_PREVIEW_LIMIT = 6;
 
 function formatDateJa(iso: string): string {
   const d = new Date(iso);
@@ -42,7 +44,7 @@ function PlayerAvatar({
       <img
         src={src}
         alt=""
-        className="size-10 shrink-0 rounded-full bg-zinc-800 object-cover"
+        className="size-11 shrink-0 rounded-full bg-zinc-800 object-cover"
         loading="lazy"
         referrerPolicy="no-referrer"
       />
@@ -52,7 +54,7 @@ function PlayerAvatar({
   const initial = displayName.slice(0, 1) || "?";
   return (
     <span
-      className="flex size-10 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-sm font-medium text-zinc-300"
+      className="flex size-11 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-zinc-300"
       aria-hidden
     >
       {initial}
@@ -60,26 +62,57 @@ function PlayerAvatar({
   );
 }
 
-function PlayerCardShell({
+function PlayerCard({
   displayName,
   handle,
   avatarUrl,
-  children,
+  right,
+  secondaryLeft,
+  secondaryRight,
+  footer,
 }: {
   displayName: string;
   handle: string | null;
   avatarUrl: string | null;
-  children: ReactNode;
+  right?: ReactNode;
+  secondaryLeft?: ReactNode;
+  secondaryRight?: ReactNode;
+  footer?: ReactNode;
 }) {
   return (
-    <li className="flex gap-3 rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-3.5 py-3">
-      <PlayerAvatar displayName={displayName} avatarUrl={avatarUrl} />
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-          <span className="truncate text-sm font-medium text-zinc-100">{displayName}</span>
-          {handle ? <XLinkedHandleBadge username={handle} /> : null}
+    <li className="rounded-xl border border-zinc-800/80 bg-zinc-950/35 px-3.5 py-3.5">
+      <div className="flex items-start gap-3">
+        <PlayerAvatar displayName={displayName} avatarUrl={avatarUrl} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="truncate text-[15px] font-semibold leading-snug text-zinc-50">
+                  {displayName}
+                </span>
+                {handle ? <XLinkedHandleBadge username={handle} /> : null}
+              </div>
+              {secondaryLeft ? (
+                <p className="mt-1 text-sm leading-snug text-zinc-400">{secondaryLeft}</p>
+              ) : null}
+            </div>
+            {right || secondaryRight ? (
+              <div className="shrink-0 text-right">
+                {right ? (
+                  <p className="text-sm leading-snug text-zinc-300">{right}</p>
+                ) : null}
+                {secondaryRight ? (
+                  <p className="mt-1 max-w-[11rem] text-sm leading-snug text-zinc-400">
+                    {secondaryRight}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+          {footer ? (
+            <p className="mt-2 truncate text-sm leading-snug text-zinc-400">{footer}</p>
+          ) : null}
         </div>
-        <div className="mt-1.5 space-y-0.5 text-xs leading-relaxed text-zinc-500">{children}</div>
       </div>
     </li>
   );
@@ -93,23 +126,52 @@ function EmptyLine({ children }: { children: string }) {
   return <p className="mt-3 text-sm text-zinc-600">{children}</p>;
 }
 
+function ExpandablePlayerGrid({
+  totalCount,
+  children,
+}: {
+  totalCount: number;
+  children: (visibleCount: number) => ReactNode;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const hiddenCount = Math.max(0, totalCount - SECTION_PREVIEW_LIMIT);
+  const visibleCount =
+    expanded || hiddenCount === 0 ? totalCount : SECTION_PREVIEW_LIMIT;
+
+  return (
+    <div className="mt-3">
+      <ul className="grid grid-cols-1 gap-2.5 md:grid-cols-2">{children(visibleCount)}</ul>
+      {hiddenCount > 0 ? (
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          className="mt-3 text-sm font-medium text-zinc-300 underline-offset-4 hover:text-white hover:underline"
+        >
+          {expanded ? "閉じる" : `ほか${hiddenCount}人を見る`}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function WatchersSection({ data }: { data: ProjectSpecialThanks }) {
   return (
     <section>
       <SectionTitle>見届けているプレイヤー</SectionTitle>
       {data.watchers.length > 0 ? (
-        <ul className="mt-3 space-y-2.5">
-          {data.watchers.map((person: ProjectSpecialThanksWatcher, index) => (
-            <PlayerCardShell
-              key={`${person.displayName}-${person.handle ?? "no-handle"}-${person.watchedAt}-${index}`}
-              displayName={person.displayName}
-              handle={person.handle}
-              avatarUrl={person.avatarUrl}
-            >
-              <p>{formatDateJa(person.watchedAt)} から見届け中</p>
-            </PlayerCardShell>
-          ))}
-        </ul>
+        <ExpandablePlayerGrid totalCount={data.watchers.length}>
+          {(visibleCount) =>
+            data.watchers.slice(0, visibleCount).map((person: ProjectSpecialThanksWatcher, index) => (
+              <PlayerCard
+                key={`${person.displayName}-${person.handle ?? "no-handle"}-${person.watchedAt}-${index}`}
+                displayName={person.displayName}
+                handle={person.handle}
+                avatarUrl={person.avatarUrl}
+                right={`${formatDateJa(person.watchedAt)} から見届け中`}
+              />
+            ))
+          }
+        </ExpandablePlayerGrid>
       ) : (
         <EmptyLine>まだ表示できるプレイヤーがいません。</EmptyLine>
       )}
@@ -122,19 +184,20 @@ function WitnessSection({ data }: { data: ProjectSpecialThanks }) {
     <section>
       <SectionTitle>最後まで見届けたプレイヤー</SectionTitle>
       {data.witnesses.length > 0 ? (
-        <ul className="mt-3 space-y-2.5">
-          {data.witnesses.map((person: ProjectSpecialThanksWitness, index) => (
-            <PlayerCardShell
-              key={`${person.displayName}-${person.handle ?? "no-handle"}-${person.grantedAt}-${index}`}
-              displayName={person.displayName}
-              handle={person.handle}
-              avatarUrl={person.avatarUrl}
-            >
-              <p>正式版公開まで見届け</p>
-              <p>{formatDateJa(person.grantedAt)}</p>
-            </PlayerCardShell>
-          ))}
-        </ul>
+        <ExpandablePlayerGrid totalCount={data.witnesses.length}>
+          {(visibleCount) =>
+            data.witnesses.slice(0, visibleCount).map((person: ProjectSpecialThanksWitness, index) => (
+              <PlayerCard
+                key={`${person.displayName}-${person.handle ?? "no-handle"}-${person.grantedAt}-${index}`}
+                displayName={person.displayName}
+                handle={person.handle}
+                avatarUrl={person.avatarUrl}
+                right="正式版公開まで見届け"
+                secondaryRight={formatDateJa(person.grantedAt)}
+              />
+            ))
+          }
+        </ExpandablePlayerGrid>
       ) : (
         <EmptyLine>まだ表示できるプレイヤーがいません。</EmptyLine>
       )}
@@ -147,24 +210,27 @@ function UpdateContributorsSection({ data }: { data: ProjectSpecialThanks }) {
     <section>
       <SectionTitle>アップデートに貢献したプレイヤー</SectionTitle>
       {data.updateContributors.length > 0 ? (
-        <ul className="mt-3 space-y-2.5">
-          {data.updateContributors.map(
-            (person: ProjectSpecialThanksUpdateContributor, index) => (
-              <PlayerCardShell
-                key={`${person.displayName}-${person.handle ?? "no-handle"}-${person.latestAdoptedAt}-${index}`}
-                displayName={person.displayName}
-                handle={person.handle}
-                avatarUrl={person.avatarUrl}
-              >
-                <p>採用フィードバック {person.adoptedFeedbackCount}件</p>
-                {person.latestPublishedVersion ? (
-                  <p>最新反映 ver {person.latestPublishedVersion}</p>
-                ) : null}
-                {person.latestUpdateSummary ? <p>{person.latestUpdateSummary}</p> : null}
-              </PlayerCardShell>
-            ),
-          )}
-        </ul>
+        <ExpandablePlayerGrid totalCount={data.updateContributors.length}>
+          {(visibleCount) =>
+            data.updateContributors
+              .slice(0, visibleCount)
+              .map((person: ProjectSpecialThanksUpdateContributor, index) => (
+                <PlayerCard
+                  key={`${person.displayName}-${person.handle ?? "no-handle"}-${person.latestAdoptedAt}-${index}`}
+                  displayName={person.displayName}
+                  handle={person.handle}
+                  avatarUrl={person.avatarUrl}
+                  right={`採用フィードバック ${person.adoptedFeedbackCount}件`}
+                  secondaryLeft={
+                    person.latestPublishedVersion
+                      ? `最新反映 ver ${person.latestPublishedVersion}`
+                      : null
+                  }
+                  secondaryRight={person.latestUpdateSummary}
+                />
+              ))
+          }
+        </ExpandablePlayerGrid>
       ) : (
         <EmptyLine>まだ表示できるプレイヤーがいません。</EmptyLine>
       )}
@@ -177,19 +243,22 @@ function EarlyPlayersSection({ data }: { data: ProjectSpecialThanks }) {
     <section>
       <SectionTitle>初期にフィードバックしたプレイヤー</SectionTitle>
       {data.earlyPlayers.length > 0 ? (
-        <ul className="mt-3 space-y-2.5">
-          {data.earlyPlayers.map((person: ProjectSpecialThanksEarlyPlayer, index) => (
-            <PlayerCardShell
-              key={`${person.displayName}-${person.handle ?? "no-handle"}-${person.firstContributedAt}-${index}`}
-              displayName={person.displayName}
-              handle={person.handle}
-              avatarUrl={person.avatarUrl}
-            >
-              <p>{formatDateJa(person.firstContributedAt)} に初回フィードバック</p>
-              {person.firstVersionKey ? <p>ver {person.firstVersionKey}</p> : null}
-            </PlayerCardShell>
-          ))}
-        </ul>
+        <ExpandablePlayerGrid totalCount={data.earlyPlayers.length}>
+          {(visibleCount) =>
+            data.earlyPlayers
+              .slice(0, visibleCount)
+              .map((person: ProjectSpecialThanksEarlyPlayer, index) => (
+                <PlayerCard
+                  key={`${person.displayName}-${person.handle ?? "no-handle"}-${person.firstContributedAt}-${index}`}
+                  displayName={person.displayName}
+                  handle={person.handle}
+                  avatarUrl={person.avatarUrl}
+                  right={person.firstVersionKey ? `ver ${person.firstVersionKey}` : null}
+                  secondaryLeft={`${formatDateJa(person.firstContributedAt)} に初回フィードバック`}
+                />
+              ))
+          }
+        </ExpandablePlayerGrid>
       ) : (
         <EmptyLine>まだ表示できるプレイヤーがいません。</EmptyLine>
       )}

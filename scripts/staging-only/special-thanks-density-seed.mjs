@@ -1,0 +1,537 @@
+/**
+ * STAGING ONLY — Special Thanks density seed (10+ players).
+ *
+ * Default: dry-run (no writes).
+ * Writes require: --execute
+ *
+ * Safety:
+ * - Aborts unless NEXT_PUBLIC_SUPABASE_URL ref === vuqpwvjvgyxffmvpfrxo
+ * - Aborts if URL points to production ref bpnisgzxuwdxelhnduuf
+ * - Creates Auth users via Admin API only (no direct auth.users INSERT)
+ * - Email domain: forge-st-special-thanks.local
+ * - Does NOT touch production / 047 / 048 / OGP / Storage
+ *
+ * Usage:
+ *   node scripts/staging-only/special-thanks-density-seed.mjs
+ *   node scripts/staging-only/special-thanks-density-seed.mjs --execute
+ */
+
+import { createClient } from "@supabase/supabase-js";
+import { existsSync, readFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
+
+const STAGING_REF = "vuqpwvjvgyxffmvpfrxo";
+const PROD_REF = "bpnisgzxuwdxelhnduuf";
+const PROJECT_ID = "41ff5a96-105c-42a2-87b4-787bcfeacb45";
+const OWNER_ID = "4bdc4a2f-2a39-4599-a14c-91303310ef56";
+const PLAYER_A_ID = "075348c9-6009-464c-920c-4fe6d63249c7";
+const EMAIL_DOMAIN = "forge-st-special-thanks.local";
+const EMAIL_PREFIX = "st-st-density-";
+const MARKER = "st-special-thanks-density-v1";
+
+const PROMPT_IDS = {
+  "0.1": "bbbbbbbb-bbbb-4ccc-8ddd-000000000001",
+  "0.1.1": "bbbbbbbb-bbbb-4ccc-8ddd-000000000002",
+  "0.2": "bbbbbbbb-bbbb-4ccc-8ddd-000000000003",
+};
+const DEVLOG_IDS = {
+  "0.1.1": "bbbbbbbb-bbbb-4ccc-8ddd-000000000011",
+  "0.2": "bbbbbbbb-bbbb-4ccc-8ddd-000000000012",
+};
+const MATCHER_RUN_ID = "bbbbbbbb-bbbb-4ccc-8ddd-000000000021";
+
+const PLAYER_SPECS = [
+  {
+    key: "01",
+    reuseUserId: PLAYER_A_ID,
+    displayName: "ST Smoke Player A",
+    handle: "st_smoke_a",
+    avatar: true,
+    watch: true,
+    earlyVersion: "0.1",
+    adoptionCount: 1,
+    adoptionVersions: ["0.1.1"],
+    summaries: ["着地硬直を短縮した"],
+  },
+  {
+    key: "02",
+    displayName: "ST Density Watcher Two",
+    handle: "st_density_02",
+    avatar: true,
+    watch: true,
+    earlyVersion: "0.1",
+    adoptionCount: 3,
+    adoptionVersions: ["0.1.1", "0.1.1", "0.2"],
+    summaries: ["ジャンプの余韻を短くした", "カメラ揺れを弱めた", "チュートリアル文言を短くした"],
+  },
+  {
+    key: "03",
+    displayName: "ST Density NoHandle Three",
+    handle: null,
+    avatar: false,
+    watch: true,
+    earlyVersion: "0.1",
+    adoptionCount: 5,
+    adoptionVersions: ["0.1.1", "0.1.1", "0.2", "0.2", "0.2"],
+    summaries: [
+      "着地硬直を短縮した",
+      "壁キック判定を広げた",
+      "ボス前チェックポイントを追加した",
+      "SE音量バランスを調整した",
+      "リトライ導線を分かりやすくした",
+    ],
+  },
+  {
+    key: "04",
+    displayName: "ST Density Long Display Name Player Four For Layout",
+    handle: "st_density_04",
+    avatar: true,
+    watch: true,
+    earlyVersion: "0.1",
+    adoptionCount: 1,
+    adoptionVersions: ["0.2"],
+    summaries: ["マップ導線の迷いを減らした"],
+  },
+  {
+    key: "05",
+    displayName: "ST Density Five",
+    handle: null,
+    avatar: true,
+    watch: true,
+    earlyVersion: "0.1.1",
+    adoptionCount: 3,
+    adoptionVersions: ["0.2", "0.2", "0.2"],
+    summaries: ["操作説明を短くした", "UI余白を整えた", "セーブ頻度を上げた"],
+  },
+  {
+    key: "06",
+    displayName: "ST Density Six",
+    handle: "st_density_06",
+    avatar: false,
+    watch: true,
+    earlyVersion: "0.1",
+    adoptionCount: 1,
+    adoptionVersions: ["0.1.1"],
+    summaries: ["敵の出現間隔を調整した"],
+  },
+  {
+    key: "07",
+    displayName: "ST Density Seven AvatarOnly",
+    handle: null,
+    avatar: true,
+    watch: true,
+    earlyVersion: "0.2",
+    adoptionCount: 0,
+    adoptionVersions: [],
+    summaries: [],
+  },
+  {
+    key: "08",
+    displayName: "ST Density Eight",
+    handle: "st_density_08",
+    avatar: false,
+    watch: true,
+    earlyVersion: "0.1",
+    adoptionCount: 5,
+    adoptionVersions: ["0.1.1", "0.1.1", "0.2", "0.2", "0.2"],
+    summaries: [
+      "落下ダメージを緩和した",
+      "リスポーン位置を見直した",
+      "ヒント表示タイミングを早めた",
+      "難所の足場を広げた",
+      "クリア後の導線を追加した",
+    ],
+  },
+  {
+    key: "09",
+    displayName: "ST Density Nine Very Long Japanese Display Name For Truncation Check",
+    handle: "st_density_09",
+    avatar: true,
+    watch: true,
+    earlyVersion: "0.1.1",
+    adoptionCount: 0,
+    adoptionVersions: [],
+    summaries: [],
+  },
+  {
+    key: "10",
+    displayName: "ST Density Ten",
+    handle: null,
+    avatar: false,
+    watch: true,
+    earlyVersion: "0.1",
+    adoptionCount: 0,
+    adoptionVersions: [],
+    summaries: [],
+  },
+  {
+    key: "11",
+    displayName: "ST Density Eleven",
+    handle: "st_density_11",
+    avatar: true,
+    watch: true,
+    earlyVersion: "0.2",
+    adoptionCount: 3,
+    adoptionVersions: ["0.2", "0.2", "0.2"],
+    summaries: ["移動慣性を弱めた", "ダッシュの出だしを早くした", "カメラ追従を滑らかにした"],
+  },
+  {
+    key: "12",
+    displayName: "ST Density Twelve",
+    handle: "st_density_12",
+    avatar: false,
+    watch: true,
+    earlyVersion: "0.1",
+    adoptionCount: 0,
+    adoptionVersions: [],
+    summaries: [],
+  },
+];
+
+function loadEnv(path = ".env.local") {
+  const merged = { ...process.env };
+  if (!existsSync(path)) return merged;
+  for (const line of readFileSync(path, "utf8").split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#") || !trimmed.includes("=")) continue;
+    const i = trimmed.indexOf("=");
+    const key = trimmed.slice(0, i).trim();
+    let value = trimmed.slice(i + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    merged[key] = value;
+  }
+  return merged;
+}
+
+function extractRef(url) {
+  try {
+    const host = new URL(url).hostname;
+    const m = host.match(/^([a-z0-9]+)\.supabase\.co$/i);
+    return m ? m[1] : null;
+  } catch {
+    return null;
+  }
+}
+
+function assertStagingOnly(url) {
+  const ref = extractRef(url);
+  if (!ref) throw new Error("ABORT: could not parse Supabase ref");
+  if (ref === PROD_REF) throw new Error("ABORT: production Supabase ref — refuse to write");
+  if (ref !== STAGING_REF) {
+    throw new Error(`ABORT: expected staging ref ${STAGING_REF}, got ${ref}`);
+  }
+  return ref;
+}
+
+function avatarUrlFor(key) {
+  return `https://api.dicebear.com/7.x/thumbs/png?seed=st-density-${key}&size=96`;
+}
+
+function daysAgoIso(days) {
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+async function listAllUsers(supabase) {
+  const users = [];
+  for (let page = 1; page <= 5; page += 1) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) throw error;
+    const batch = data.users ?? [];
+    users.push(...batch);
+    if (batch.length < 200) break;
+  }
+  return users;
+}
+
+async function ensureUser(supabase, spec, existingUsers) {
+  const email = `${EMAIL_PREFIX}${spec.key}@${EMAIL_DOMAIN}`;
+  const password = `StDensity!${spec.key}!${MARKER}`;
+  const meta = {
+    display_name: spec.displayName,
+    forge_seed_marker: MARKER,
+    ...(spec.avatar ? { avatar_url: avatarUrlFor(spec.key) } : {}),
+  };
+
+  let userId = spec.reuseUserId ?? null;
+
+  if (!userId) {
+    const existing = existingUsers.find((u) => u.email === email);
+    userId = existing?.id ?? null;
+  }
+
+  if (!userId) {
+    const { data, error } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: meta,
+    });
+    if (error || !data.user) throw error ?? new Error(`createUser failed for ${email}`);
+    userId = data.user.id;
+  } else {
+    const { error } = await supabase.auth.admin.updateUserById(userId, {
+      email_confirm: true,
+      user_metadata: meta,
+    });
+    if (error) throw error;
+  }
+
+  if (spec.handle) {
+    const { error } = await supabase.from("user_x_profiles").upsert(
+      {
+        user_id: userId,
+        x_user_id: `st-density-${spec.key}`,
+        x_username: spec.handle,
+        x_display_name: spec.displayName,
+        x_avatar_url: spec.avatar ? avatarUrlFor(spec.key) : null,
+        x_connected_at: new Date().toISOString(),
+        x_last_synced_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id" },
+    );
+    if (error) throw error;
+  }
+
+  return { userId, email, spec };
+}
+
+async function main() {
+  const execute = process.argv.includes("--execute");
+  const env = loadEnv(".env.local");
+  const url = env.NEXT_PUBLIC_SUPABASE_URL?.trim() || "";
+  const serviceKey = (env.SUPABASE_SERVICE_ROLE_KEY || env.STAGING_SUPABASE_SERVICE_ROLE_KEY || "").trim();
+  const ref = assertStagingOnly(url);
+  if (!serviceKey) throw new Error("ABORT: SUPABASE_SERVICE_ROLE_KEY missing");
+
+  const plan = {
+    mode: execute ? "EXECUTE" : "DRY_RUN",
+    ref,
+    projectId: PROJECT_ID,
+    marker: MARKER,
+    watchers: PLAYER_SPECS.filter((p) => p.watch).length,
+    earlyPlayers: PLAYER_SPECS.length,
+    updateContributors: PLAYER_SPECS.filter((p) => p.adoptionCount > 0).length,
+    adoptionMix: PLAYER_SPECS.filter((p) => p.adoptionCount > 0).map((p) => ({
+      key: p.key,
+      count: p.adoptionCount,
+    })),
+    avatarMix: {
+      withAvatar: PLAYER_SPECS.filter((p) => p.avatar).length,
+      withoutAvatar: PLAYER_SPECS.filter((p) => !p.avatar).length,
+    },
+    handleMix: {
+      withHandle: PLAYER_SPECS.filter((p) => p.handle).length,
+      withoutHandle: PLAYER_SPECS.filter((p) => !p.handle).length,
+    },
+  };
+  console.log(JSON.stringify(plan, null, 2));
+
+  if (!execute) {
+    console.log("Dry-run only. Re-run with --execute to write Staging.");
+    return;
+  }
+
+  const supabase = createClient(url, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("id,visibility,release_status")
+    .eq("id", PROJECT_ID)
+    .maybeSingle();
+  if (projectError) throw projectError;
+  if (!project || project.visibility !== "public") {
+    throw new Error("ABORT: Smoke A missing or not public");
+  }
+  if (project.release_status !== "in_development") {
+    throw new Error(`ABORT: expected in_development, got ${project.release_status}`);
+  }
+
+  const existingUsers = await listAllUsers(supabase);
+  const players = [];
+  for (const spec of PLAYER_SPECS) {
+    players.push(await ensureUser(supabase, spec, existingUsers));
+  }
+
+  for (const [versionKey, id] of Object.entries(PROMPT_IDS)) {
+    const { error } = await supabase.from("project_version_prompts").upsert(
+      {
+        id,
+        project_id: PROJECT_ID,
+        version_key: versionKey,
+        prompt_text: `ST density: ${versionKey} の感想は？`,
+        response_kind: "short_text",
+        options: null,
+        sort_order: 0,
+        source: "developer",
+      },
+      { onConflict: "id" },
+    );
+    if (error) throw error;
+  }
+
+  for (const [publishedVersion, id] of Object.entries(DEVLOG_IDS)) {
+    const { error } = await supabase.from("project_devlogs").upsert(
+      {
+        id,
+        project_id: PROJECT_ID,
+        author_id: OWNER_ID,
+        title: `ST density: ${publishedVersion}`,
+        content: `${MARKER} temporary densify seed. Do not use in production.`,
+        published_version: publishedVersion,
+        published_at: daysAgoIso(publishedVersion === "0.1.1" ? 8 : 3),
+        created_at: daysAgoIso(publishedVersion === "0.1.1" ? 8 : 3),
+      },
+      { onConflict: "id" },
+    );
+    if (error) throw error;
+  }
+
+  {
+    const { error } = await supabase.from("voice_adoption_matcher_runs").upsert(
+      {
+        id: MATCHER_RUN_ID,
+        devlog_id: DEVLOG_IDS["0.2"],
+        project_id: PROJECT_ID,
+        trigger_type: "backfill",
+        trigger_version: MARKER,
+        status: "completed",
+        candidate_count: 40,
+        evaluated_count: 40,
+        adopted_count: 40,
+        model: "fixture",
+        prompt_version: MARKER,
+        started_at: daysAgoIso(2),
+        completed_at: daysAgoIso(2),
+      },
+      { onConflict: "id" },
+    );
+    if (error) throw error;
+  }
+
+  // Clear previous density adoptions for idempotent re-run
+  await supabase.from("voice_adoptions").delete().eq("matcher_run_id", MATCHER_RUN_ID);
+
+  let watchCount = 0;
+  let earlyCount = 0;
+  let adoptionRows = 0;
+
+  for (const [index, player] of players.entries()) {
+    const { userId, spec } = player;
+    const watchedAt = daysAgoIso(12 - index);
+
+    if (spec.watch) {
+      const { error } = await supabase.from("project_watches").upsert({
+        user_id: userId,
+        project_id: PROJECT_ID,
+        created_at: watchedAt,
+      });
+      if (error) throw error;
+      watchCount += 1;
+    }
+
+    const earlyAt = daysAgoIso(20 - index);
+    const earlyVoiceId = `bbbbbbbb-bbbb-4ccc-8eee-${spec.key.padStart(12, "0")}`;
+    {
+      const { error } = await supabase.from("project_voice_responses").upsert(
+        {
+          id: earlyVoiceId,
+          user_id: userId,
+          project_id: PROJECT_ID,
+          version_key: spec.earlyVersion,
+          prompt_id: PROMPT_IDS[spec.earlyVersion],
+          answer_value: `${spec.displayName} の初回フィードバック`,
+          answer_label: null,
+          moderation_status: "visible",
+          created_at: earlyAt,
+          updated_at: earlyAt,
+        },
+        { onConflict: "id" },
+      );
+      if (error) throw error;
+      earlyCount += 1;
+    }
+
+    for (let i = 0; i < spec.adoptionCount; i += 1) {
+      const publishedVersion = spec.adoptionVersions[i] ?? "0.1.1";
+      const voiceId = randomUUID();
+      const voiceAt = daysAgoIso(15 - i);
+      const sourceVersion = publishedVersion === "0.2" ? "0.1.1" : "0.1";
+      const { error: voiceError } = await supabase.from("project_voice_responses").insert({
+        id: voiceId,
+        user_id: userId,
+        project_id: PROJECT_ID,
+        version_key: sourceVersion,
+        prompt_id: PROMPT_IDS[sourceVersion],
+        answer_value: `density adoption ${spec.key}-${i + 1}`,
+        answer_label: null,
+        moderation_status: "visible",
+        created_at: voiceAt,
+        updated_at: voiceAt,
+      });
+      if (voiceError) throw voiceError;
+
+      const { error: adoptionError } = await supabase.from("voice_adoptions").insert({
+        id: randomUUID(),
+        project_id: PROJECT_ID,
+        user_id: userId,
+        voice_response_id: voiceId,
+        devlog_id: DEVLOG_IDS[publishedVersion],
+        voice_version_key: sourceVersion,
+        published_version: publishedVersion,
+        player_quote: `density adoption ${spec.key}-${i + 1}`,
+        update_summary: spec.summaries[i] ?? "改善を反映した",
+        prompt_text: `ST density: ${publishedVersion}`,
+        confidence: 0.9,
+        model: "fixture",
+        matcher_run_id: MATCHER_RUN_ID,
+        status: "active",
+        created_at: daysAgoIso(10 - i),
+        updated_at: daysAgoIso(10 - i),
+      });
+      if (adoptionError) throw adoptionError;
+      adoptionRows += 1;
+    }
+  }
+
+  const { data: rpc, error: rpcError } = await supabase.rpc("get_project_special_thanks", {
+    p_project_id: PROJECT_ID,
+  });
+  if (rpcError) throw rpcError;
+
+  console.log(
+    JSON.stringify(
+      {
+        wrote: {
+          players: players.length,
+          watchCount,
+          earlyCount,
+          adoptionRows,
+          updateContributorsPlanned: PLAYER_SPECS.filter((p) => p.adoptionCount > 0).length,
+        },
+        rpcSummary: {
+          watchers: Array.isArray(rpc?.watchers) ? rpc.watchers.length : null,
+          update_contributors: Array.isArray(rpc?.update_contributors)
+            ? rpc.update_contributors.length
+            : null,
+          early_players: Array.isArray(rpc?.early_players) ? rpc.early_players.length : null,
+          hasAvatarSample: Boolean(rpc?.watchers?.some((w) => w.avatar_url)),
+          keys: rpc ? Object.keys(rpc) : [],
+        },
+      },
+      null,
+      2,
+    ),
+  );
+}
+
+main().catch((err) => {
+  console.error(err instanceof Error ? err.message : err);
+  process.exit(1);
+});
