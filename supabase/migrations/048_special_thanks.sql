@@ -6,6 +6,10 @@
 
 BEGIN;
 
+-- Schema USAGE — Staging historically returned 401/42501 when REST lacked this.
+-- Does not widen table write privileges by itself.
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+
 -- ---------------------------------------------------------------------------
 -- A. forge_admin_users (Dashboard / service_role only; not client-readable)
 -- ---------------------------------------------------------------------------
