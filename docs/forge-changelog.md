@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-07-11 — 作品詳細 Special Thanks タブ（実装・未適用）
+
+- **場所** — `/games/[id]` 第4タブ「Special Thanks」（`?tab=special-thanks`）
+- **内容** — 作品ごとの関わり可視化（見届け人数 / 完走見届け名 / 採用FB / 早期初声・初FB）
+- **データ** — `get_project_special_thanks` SECURITY DEFINER RPC（`049_project_special_thanks_rpc.sql`）。公開作品のみ。`user_id` / email 非返却
+- **使わない** — `project_play_sessions`、`developer_feedback_helpful_marks`、`special_thanks_entries` / 047 / 048
+- **未実施** — Staging/本番 migration 適用、push、main merge、production deploy
+
+---
+
 ## 2026-07-10 — 本番反映: non-production → 本番 Supabase write guard
 
 - **main** — `b2408b2..cd65c52` FF（`78f1131` / `845263f` / merge `cd65c52`）

@@ -1,10 +1,10 @@
-export type GameDetailTab = "overview" | "devlog" | "voices";
+export type GameDetailTab = "overview" | "devlog" | "voices" | "special-thanks";
 
 export function parseGameDetailTab(param: string | null): GameDetailTab {
   if (param === "versions") {
     return "devlog";
   }
-  if (param === "devlog" || param === "voices") {
+  if (param === "devlog" || param === "voices" || param === "special-thanks") {
     return param;
   }
   return "overview";

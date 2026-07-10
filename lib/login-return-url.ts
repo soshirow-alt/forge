@@ -8,7 +8,7 @@ import {
  *
  * Allowed paths:
  * - /home, /search, /search/creators, /guide, /creators/{id}, /rankings/...
- * - /games/{id} (?tab=devlog|voices|overview, ?adoption={id})
+ * - /games/{id} (?tab=devlog|voices|overview|special-thanks, ?adoption={id})
  * - /submit, /my-projects, /mypage, /mypage/..., /settings, /bookmarks, /notifications
  * - /studio, /studio/...
  * - /projects/{id}/studio (?devlog=1, ?edit=project|prompts)
@@ -33,7 +33,7 @@ export const DEFAULT_POST_PLAYER_HOME_PATH = "/home";
 export const DEFAULT_POST_LOGIN_PATH = DEFAULT_POST_PLAYER_HOME_PATH;
 
 const ID_SEGMENT = `[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}`;
-const GAME_TAB_VALUES = new Set(["devlog", "voices", "overview"]);
+const GAME_TAB_VALUES = new Set(["devlog", "voices", "overview", "special-thanks"]);
 const STUDIO_PATH = /^\/studio(?:\/[a-zA-Z0-9][a-zA-Z0-9/_-]*)?$/;
 const MYPAGE_PATH = /^\/mypage(?:\/[a-zA-Z0-9][a-zA-Z0-9/_-]*)?$/;
 const CREATOR_PROFILE_PATH = new RegExp(`^/creators/(${ID_SEGMENT})$`);

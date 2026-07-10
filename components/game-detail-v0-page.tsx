@@ -33,6 +33,7 @@ import { GameDetailOverviewV0Tab } from "@/components/game-detail-overview-v0-ta
 import { GameDevlogV0Tab } from "@/components/game-devlog-v0-tab";
 import { EveryonesVoiceSection } from "@/components/everyones-voice-section";
 import { GameVoicesV0Tab } from "@/components/game-voices-v0-tab";
+import { GameSpecialThanksTab } from "@/components/game-special-thanks-tab";
 import { GameDetailOwnerWorksCard } from "@/components/game-detail-owner-works-card";
 import { GameNotFoundPanel } from "@/components/game-not-found-panel";
 import { XLinkedHandleBadge } from "@/components/x-linked-handle-badge";
@@ -744,6 +745,15 @@ function GameDetailV0PageBody({
     ],
   );
 
+  const specialThanksPanel = useMemo(
+    () => (
+      <GameSpecialThanksTab
+        projectId={isRealProject ? resolvedId : undefined}
+      />
+    ),
+    [isRealProject, resolvedId],
+  );
+
   return (
     <PlayerShell>
       {playDestinationPickerOpen ? (
@@ -994,6 +1004,7 @@ function GameDetailV0PageBody({
             overview={overviewPanel}
             devlog={devlogPanel}
             voices={voicesPanel}
+            specialThanks={specialThanksPanel}
           />
         </div>
 

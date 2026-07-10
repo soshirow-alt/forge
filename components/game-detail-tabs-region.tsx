@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useMemo, type ReactNode } from "react";
+import { memo, type ReactNode } from "react";
 import { ForgeTabPanel } from "@/components/forge-tab-panel";
 import type { GameDetailTab } from "@/lib/game-detail-tabs";
 
@@ -8,6 +8,7 @@ const TAB_ITEMS: { id: GameDetailTab; label: string }[] = [
   { id: "overview", label: "概要" },
   { id: "devlog", label: "開発ログ" },
   { id: "voices", label: "みんなのフィードバック" },
+  { id: "special-thanks", label: "Special Thanks" },
 ];
 
 type GameDetailTabBarProps = {
@@ -49,6 +50,7 @@ type GameDetailTabPanelsProps = {
   overview: ReactNode;
   devlog: ReactNode;
   voices: ReactNode;
+  specialThanks: ReactNode;
 };
 
 export const GameDetailTabPanels = memo(function GameDetailTabPanels({
@@ -57,6 +59,7 @@ export const GameDetailTabPanels = memo(function GameDetailTabPanels({
   overview,
   devlog,
   voices,
+  specialThanks,
 }: GameDetailTabPanelsProps) {
   return (
     <div className="min-h-[28rem]">
@@ -66,6 +69,11 @@ export const GameDetailTabPanels = memo(function GameDetailTabPanels({
       ) : null}
       {visitedTabs.has("voices") ? (
         <ForgeTabPanel active={activeTab === "voices"}>{voices}</ForgeTabPanel>
+      ) : null}
+      {visitedTabs.has("special-thanks") ? (
+        <ForgeTabPanel active={activeTab === "special-thanks"}>
+          {specialThanks}
+        </ForgeTabPanel>
       ) : null}
     </div>
   );

@@ -51,11 +51,21 @@ const primaryButtonClassName =
 const panelButtonClassName =
   "inline-flex w-full min-w-0 max-w-full box-border items-center gap-2 rounded-lg border border-zinc-800/60 bg-zinc-950/40 px-3 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70 hover:text-zinc-100";
 
-const SECTION_CONTENT_HEADINGS: Record<GameDetailTab, string> = {
+const SECTION_CONTENT_HEADINGS: Record<
+  Exclude<GameDetailTab, "special-thanks">,
+  string
+> = {
   overview: "公開ページを編集",
   devlog: "開発ログを更新",
   voices: "フィードバックを見る",
 };
+
+function sectionContentHeading(section: GameDetailTab): string {
+  if (section === "special-thanks") {
+    return "Special Thanks";
+  }
+  return SECTION_CONTENT_HEADINGS[section];
+}
 
 type DevlogEditMode = null | "current";
 
@@ -518,7 +528,7 @@ export function StudioTabContextPanel({
 
         {overviewEditMode || devlogEditMode ? null : (
           <p className="text-xs font-medium text-zinc-500">
-            {SECTION_CONTENT_HEADINGS[activeSection]}
+            {sectionContentHeading(activeSection)}
           </p>
         )}
 
