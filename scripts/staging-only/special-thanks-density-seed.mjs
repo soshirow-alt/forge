@@ -9,7 +9,12 @@
  * - Aborts if URL points to production ref bpnisgzxuwdxelhnduuf
  * - Creates Auth users via Admin API only (no direct auth.users INSERT)
  * - Email domain: forge-st-special-thanks.local
+ * - Does NOT reuse / update existing Player A, Owner, or production users
+ * - Does NOT mutate Smoke A title / thumbnail / playable_version / owner
  * - Does NOT touch production / 047 / 048 / OGP / Storage
+ *
+ * All density rows use fixed UUIDs under namespace bbbbbbbb-bbbb-4ccc-8ddd-*
+ * so rollback can delete by id without leftovers.
  *
  * Usage:
  *   node scripts/staging-only/special-thanks-density-seed.mjs
@@ -18,13 +23,11 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { existsSync, readFileSync } from "node:fs";
-import { randomUUID } from "node:crypto";
 
 const STAGING_REF = "vuqpwvjvgyxffmvpfrxo";
 const PROD_REF = "bpnisgzxuwdxelhnduuf";
 const PROJECT_ID = "41ff5a96-105c-42a2-87b4-787bcfeacb45";
 const OWNER_ID = "4bdc4a2f-2a39-4599-a14c-91303310ef56";
-const PLAYER_A_ID = "075348c9-6009-464c-920c-4fe6d63249c7";
 const EMAIL_DOMAIN = "forge-st-special-thanks.local";
 const EMAIL_PREFIX = "st-st-density-";
 const MARKER = "st-special-thanks-density-v1";
@@ -40,12 +43,22 @@ const DEVLOG_IDS = {
 };
 const MATCHER_RUN_ID = "bbbbbbbb-bbbb-4ccc-8ddd-000000000021";
 
+/** Fixed UUID helpers — all density rows stay in this namespace. */
+function earlyVoiceId(key) {
+  return `bbbbbbbb-bbbb-4ccc-8eee-${String(key).padStart(12, "0")}`;
+}
+function adoptionVoiceId(key, index1) {
+  return `bbbbbbbb-bbbb-4ccc-8eef-${String(key).padStart(2, "0")}${String(index1).padStart(10, "0")}`;
+}
+function adoptionId(key, index1) {
+  return `bbbbbbbb-bbbb-4ccc-8efa-${String(key).padStart(2, "0")}${String(index1).padStart(10, "0")}`;
+}
+
 const PLAYER_SPECS = [
   {
     key: "01",
-    reuseUserId: PLAYER_A_ID,
-    displayName: "ST Smoke Player A",
-    handle: "st_smoke_a",
+    displayName: "ST Density Player One",
+    handle: "st_density_01",
     avatar: true,
     watch: true,
     earlyVersion: "0.1",
@@ -236,6 +249,10 @@ function daysAgoIso(days) {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 }
 
+function densityEmail(key) {
+  return `${EMAIL_PREFIX}${key}@${EMAIL_DOMAIN}`;
+}
+
 async function listAllUsers(supabase) {
   const users = [];
   for (let page = 1; page <= 5; page += 1) {
@@ -248,8 +265,8 @@ async function listAllUsers(supabase) {
   return users;
 }
 
-async function ensureUser(supabase, spec, existingUsers) {
-  const email = `${EMAIL_PREFIX}${spec.key}@${EMAIL_DOMAIN}`;
+async function ensureDensityUser(supabase, spec, existingUsers) {
+  const email = densityEmail(spec.key);
   const password = `StDensity!${spec.key}!${MARKER}`;
   const meta = {
     display_name: spec.displayName,
@@ -257,12 +274,8 @@ async function ensureUser(supabase, spec, existingUsers) {
     ...(spec.avatar ? { avatar_url: avatarUrlFor(spec.key) } : {}),
   };
 
-  let userId = spec.reuseUserId ?? null;
-
-  if (!userId) {
-    const existing = existingUsers.find((u) => u.email === email);
-    userId = existing?.id ?? null;
-  }
+  const existing = existingUsers.find((u) => u.email === email);
+  let userId = existing?.id ?? null;
 
   if (!userId) {
     const { data, error } = await supabase.auth.admin.createUser({
@@ -300,6 +313,21 @@ async function ensureUser(supabase, spec, existingUsers) {
   return { userId, email, spec };
 }
 
+function plannedCounts() {
+  const adoptionRows = PLAYER_SPECS.reduce((sum, p) => sum + p.adoptionCount, 0);
+  return {
+    authUsersCreateOrUpdate: PLAYER_SPECS.length,
+    userXProfiles: PLAYER_SPECS.filter((p) => p.handle).length,
+    projectWatches: PLAYER_SPECS.filter((p) => p.watch).length,
+    projectVoiceResponses: PLAYER_SPECS.length + adoptionRows,
+    projectFeedback: 0,
+    voiceAdoptions: adoptionRows,
+    projectDevlogs: Object.keys(DEVLOG_IDS).length,
+    matcherRuns: 1,
+    projectVersionPrompts: Object.keys(PROMPT_IDS).length,
+  };
+}
+
 async function main() {
   const execute = process.argv.includes("--execute");
   const env = loadEnv(".env.local");
@@ -313,12 +341,20 @@ async function main() {
     ref,
     projectId: PROJECT_ID,
     marker: MARKER,
+    reusesPlayerA: false,
+    mutatesOwnerAuth: false,
+    mutatesSmokeAProjectFields: false,
     watchers: PLAYER_SPECS.filter((p) => p.watch).length,
     earlyPlayers: PLAYER_SPECS.length,
     updateContributors: PLAYER_SPECS.filter((p) => p.adoptionCount > 0).length,
-    adoptionMix: PLAYER_SPECS.filter((p) => p.adoptionCount > 0).map((p) => ({
+    plannedCounts: plannedCounts(),
+    users: PLAYER_SPECS.map((p) => ({
       key: p.key,
-      count: p.adoptionCount,
+      email: densityEmail(p.key),
+      display_name: p.displayName,
+      handle: p.handle,
+      avatar: p.avatar,
+      adoptionCount: p.adoptionCount,
     })),
     avatarMix: {
       withAvatar: PLAYER_SPECS.filter((p) => p.avatar).length,
@@ -342,7 +378,7 @@ async function main() {
 
   const { data: project, error: projectError } = await supabase
     .from("projects")
-    .select("id,visibility,release_status")
+    .select("id,visibility,release_status,owner_id")
     .eq("id", PROJECT_ID)
     .maybeSingle();
   if (projectError) throw projectError;
@@ -352,11 +388,14 @@ async function main() {
   if (project.release_status !== "in_development") {
     throw new Error(`ABORT: expected in_development, got ${project.release_status}`);
   }
+  if (project.owner_id !== OWNER_ID) {
+    throw new Error("ABORT: Smoke A owner_id unexpected — refuse to seed");
+  }
 
   const existingUsers = await listAllUsers(supabase);
   const players = [];
   for (const spec of PLAYER_SPECS) {
-    players.push(await ensureUser(supabase, spec, existingUsers));
+    players.push(await ensureDensityUser(supabase, spec, existingUsers));
   }
 
   for (const [versionKey, id] of Object.entries(PROMPT_IDS)) {
@@ -415,7 +454,7 @@ async function main() {
     if (error) throw error;
   }
 
-  // Clear previous density adoptions for idempotent re-run
+  // Idempotent: clear previous density adoptions / adoption voices by fixed ids
   await supabase.from("voice_adoptions").delete().eq("matcher_run_id", MATCHER_RUN_ID);
 
   let watchCount = 0;
@@ -437,16 +476,15 @@ async function main() {
     }
 
     const earlyAt = daysAgoIso(20 - index);
-    const earlyVoiceId = `bbbbbbbb-bbbb-4ccc-8eee-${spec.key.padStart(12, "0")}`;
     {
       const { error } = await supabase.from("project_voice_responses").upsert(
         {
-          id: earlyVoiceId,
+          id: earlyVoiceId(spec.key),
           user_id: userId,
           project_id: PROJECT_ID,
           version_key: spec.earlyVersion,
           prompt_id: PROMPT_IDS[spec.earlyVersion],
-          answer_value: `${spec.displayName} の初回フィードバック`,
+          answer_value: `${MARKER} early ${spec.key}`,
           answer_label: null,
           moderation_status: "visible",
           created_at: earlyAt,
@@ -460,41 +498,48 @@ async function main() {
 
     for (let i = 0; i < spec.adoptionCount; i += 1) {
       const publishedVersion = spec.adoptionVersions[i] ?? "0.1.1";
-      const voiceId = randomUUID();
+      const index1 = i + 1;
+      const voiceId = adoptionVoiceId(spec.key, index1);
       const voiceAt = daysAgoIso(15 - i);
       const sourceVersion = publishedVersion === "0.2" ? "0.1.1" : "0.1";
-      const { error: voiceError } = await supabase.from("project_voice_responses").insert({
-        id: voiceId,
-        user_id: userId,
-        project_id: PROJECT_ID,
-        version_key: sourceVersion,
-        prompt_id: PROMPT_IDS[sourceVersion],
-        answer_value: `density adoption ${spec.key}-${i + 1}`,
-        answer_label: null,
-        moderation_status: "visible",
-        created_at: voiceAt,
-        updated_at: voiceAt,
-      });
+      const { error: voiceError } = await supabase.from("project_voice_responses").upsert(
+        {
+          id: voiceId,
+          user_id: userId,
+          project_id: PROJECT_ID,
+          version_key: sourceVersion,
+          prompt_id: PROMPT_IDS[sourceVersion],
+          answer_value: `${MARKER} adoption ${spec.key}-${index1}`,
+          answer_label: null,
+          moderation_status: "visible",
+          created_at: voiceAt,
+          updated_at: voiceAt,
+        },
+        { onConflict: "id" },
+      );
       if (voiceError) throw voiceError;
 
-      const { error: adoptionError } = await supabase.from("voice_adoptions").insert({
-        id: randomUUID(),
-        project_id: PROJECT_ID,
-        user_id: userId,
-        voice_response_id: voiceId,
-        devlog_id: DEVLOG_IDS[publishedVersion],
-        voice_version_key: sourceVersion,
-        published_version: publishedVersion,
-        player_quote: `density adoption ${spec.key}-${i + 1}`,
-        update_summary: spec.summaries[i] ?? "改善を反映した",
-        prompt_text: `ST density: ${publishedVersion}`,
-        confidence: 0.9,
-        model: "fixture",
-        matcher_run_id: MATCHER_RUN_ID,
-        status: "active",
-        created_at: daysAgoIso(10 - i),
-        updated_at: daysAgoIso(10 - i),
-      });
+      const { error: adoptionError } = await supabase.from("voice_adoptions").upsert(
+        {
+          id: adoptionId(spec.key, index1),
+          project_id: PROJECT_ID,
+          user_id: userId,
+          voice_response_id: voiceId,
+          devlog_id: DEVLOG_IDS[publishedVersion],
+          voice_version_key: sourceVersion,
+          published_version: publishedVersion,
+          player_quote: `${MARKER} adoption ${spec.key}-${index1}`,
+          update_summary: spec.summaries[i] ?? "改善を反映した",
+          prompt_text: `ST density: ${publishedVersion}`,
+          confidence: 0.9,
+          model: "fixture",
+          matcher_run_id: MATCHER_RUN_ID,
+          status: "active",
+          created_at: daysAgoIso(10 - i),
+          updated_at: daysAgoIso(10 - i),
+        },
+        { onConflict: "id" },
+      );
       if (adoptionError) throw adoptionError;
       adoptionRows += 1;
     }
