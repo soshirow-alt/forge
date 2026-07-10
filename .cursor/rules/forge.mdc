@@ -9,10 +9,11 @@ Read `docs/forge-principles.md` before product or UX changes. Business hypothesi
 
 UI copy / density / Special Thanks purpose: **`docs/forge-ui-copy-rules.md`** (also summarized in `AGENTS.md`).
 
-- Judge features by whether they strengthen the **learning loop** (discover → play → first voice → next fix → next version). Change-watching, replay, witness are amplifiers
+- Judge features by whether they strengthen the **learning loop** (discover → play → first feedback → next fix → next version). Change-watching, replay, witness are amplifiers
 - Do not change specs for implementation convenience
 - Do not store shared production user data in localStorage (drafts/UI state only; Supabase for persistence)
 - **User-facing UI never uses 「声」** — use 「フィードバック」; short badges may use 「FB」. Do not ship 「声を届ける」「みんなの声」「プレイヤーの声」「届けた声」. Do not rename `voice_*` DB/internal identifiers casually. Details: `docs/forge-ui-copy-rules.md`
+- **User-facing UI prefers ver / バージョン over 「版」** — short UI: `ver` / `ver N` / `最新ver`; prose: `バージョン`. Avoid `最新版` / `次版` / `この版` / `N版` / `版ごとの声`. Do not rename DB `version_*` casually
 - **Prefer structure over prose** — before adding explanatory copy, try badges / chips / icons / tables / cards. Section blurbs: none by default (1 line max). Do not duplicate the same fact left/right or above/below. Dates / versions / counts belong in meta chips, not body sentences
 - **Special Thanks** = `/games/[id]` tab showing who contributed how to **that** project (not platform `/special-thanks`, not LP/footer). Not a changelog, analytics panel, or feedback-body list. Reasons to appear = badges/meta, not paragraphs. Same player may appear in multiple sections
 - **List/card UI verification** — never PASS on a single seeded row. Confirm with 10+ items, long names, avatar on/off, handle on/off, multiple versions/counts, desktop 2-col / expand / mobile

@@ -16,7 +16,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Feature decisions
 
-- 新機能・変更は **版ごとの学習ループ**（発見→プレイ→初声→次に直すこと→次版）を強化するかで判断。変化を見る・再プレイ・見届け人は増幅
+- 新機能・変更は **版ごとの学習ループ**（発見→プレイ→初回FB→改善→次ver）を強化するかで判断。変化を見る・再プレイ・見届け人は増幅
 - **実装都合で仕様を変更しない**
 - **正式リリース初期版** — 小さな MVP ではなく必要機能を初期から盛り込む（`docs/out-of-scope.md`）
 - 投げ銭、販売、SDK 実装（説明 UI 除く）は作らない
@@ -45,6 +45,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - 禁止例: 声を届ける / みんなの声 / プレイヤーの声 / 届けた声 / 届いた声 / プレイヤー向けの「初声」表示
 - 原則 **フィードバック**。短いバッジ内のみ **FB** 可
 - DB / 内部識別子の `voice_*` や historical docs は **即リネームしない**（表示文字列だけ直す）
+- **ユーザー向け UI で「版」を原則使わない** — 短い表示は **ver**（`ver N` / `最新ver`）、文章は **バージョン**
+- 禁止寄り: 最新版 / 次版 / この版 / N版 / 版ごとの声
+- 推奨: 最新ver / 次ver / このver / ver N / verごとのフィードバック
+- DB の `version_*` 等は即リネーム不要
 
 ### 文字量
 
