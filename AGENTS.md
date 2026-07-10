@@ -35,6 +35,36 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - モーダルで阻まない。redirect クエリは複雑化しない
 - 詳細は `docs/forge-principles.md` §ログイン方針
 
+## UI copy & information design（恒常）
+
+正本: **`docs/forge-ui-copy-rules.md`**（`.cursor/rules/forge.mdc` にも要約）
+
+### 用語
+
+- **ユーザー向け UI で「声」を使わない**
+- 禁止例: 声を届ける / みんなの声 / プレイヤーの声 / 届けた声 / 届いた声 / プレイヤー向けの「初声」表示
+- 原則 **フィードバック**。短いバッジ内のみ **FB** 可
+- DB / 内部識別子の `voice_*` や historical docs は **即リネームしない**（表示文字列だけ直す）
+
+### 文字量
+
+- 説明文を足す前に、バッジ・チップ・アイコン・表・カード構造を検討する
+- セクション説明文は原則なし（置くなら 1 行まで）
+- 日付・ver・件数は本文ではなくメタ / バッジ / チップ
+- 同じ意味の情報を左右・上下に重複表示しない
+
+### Special Thanks
+
+- `/games/[id]` タブのみ。プラットフォーム名簿・LP/footer ではない
+- 目的: **この作品に誰がどう関わったか**。開発ログ・分析・FB 本文一覧ではない
+- 載っている理由はバッジ / メタで示す。文章で補わない
+- 同じプレイヤーが複数セクションに出てもよい
+
+### 一覧 UI の確認
+
+- **1 件 seed で PASS にしない**
+- 10 件以上・長い名前・avatar 有無・handle 有無・複数 ver/件数・2 列/展開/mobile を確認する
+
 ## Documentation duty (every completed task)
 
 作業完了時に必ず更新：
