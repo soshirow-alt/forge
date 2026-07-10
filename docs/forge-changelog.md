@@ -4,13 +4,23 @@
 
 ---
 
+## 2026-07-10 — 本番反映: public discovery auth gate（A案）
+
+- **main** — `d72480b..09b6de9` FF（`8d9fd59` / `287799a` / `51e6c9e` / `09b6de9`）
+- **production deploy** — `dpl_D6YTTXm2LQJ5WZ158csGCdRcibAZ`（https://forge-flame-gamma.vercel.app）
+- **smoke PASS** — `/search`・REALIA 詳細で入口モーダルなし、プレイ CTA → `/login?return=/games/0aea6406-...`、ゲスト副導線あり、ゲスト後 return 復帰、`og:image` = default png（data URL なし）
+- **未実施** — DB / Storage / migration / 047 / backfill / restore
+- **preview 同期** — `preview/landing-01` = `09b6de9`（旧 tip `8832535` は `archive/ogp-storage-047-preview` に退避）
+
+---
+
 ## 2026-07-10 — 保護アクション: 確認モーダル廃止・/login 直接遷移（A案確定）
 
 - **方針** — 発見・閲覧前の全面モーダル（ForgeEntryGate）は使わない。ログイン誘導は価値ある行動の瞬間に寄せ、**画面上モーダルではなく** `/login?return=現在URL` へ遷移
 - **変更** — プレイ / FB / 応援 / 見届け / あとで見る等の保護アクションは即 `/login` へ。確認モーダルは出さない
 - **ゲスト** — `/login` ではログイン・新規登録が主導線、ゲスト参加は副導線。登録必須アクションは `intent=registered` でゲスト非表示、プレイは intent なしでゲスト可
 - **維持** — `/home` `/search` `/games/[id]` の未ログイン閲覧、Studio / mypage / settings 等のログイン必須
-- **対象** — `fix/public-discovery-auth-gate`（main merge 前）
+- **対象** — `fix/public-discovery-auth-gate` → main 反映済み
 
 ---
 
