@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-07-10 — 本番反映: non-production → 本番 Supabase write guard
+
+- **main** — `b2408b2..cd65c52` FF（`78f1131` / `845263f` / merge `cd65c52`）
+- **production deploy** — `dpl_GgPbTxd2MpsoSG2xG6Lb9upo5L3E`（https://forge-flame-gamma.vercel.app）
+- **smoke PASS** — `/search`・REALIA 詳細 200、プレイ CTA → `/login?return=/games/0aea6406-...`、`og:image` = default png（data URL なし）
+- **未実施** — DB / Storage write / migration / restore `--execute` / 047 / backfill
+- **preview 同期** — `origin/main` = `origin/preview/landing-01` = `cd65c52`
+
+---
+
 ## 2026-07-10 — 本番反映: public discovery auth gate（A案）
 
 - **main** — `d72480b..09b6de9` FF（`8d9fd59` / `287799a` / `51e6c9e` / `09b6de9`）
