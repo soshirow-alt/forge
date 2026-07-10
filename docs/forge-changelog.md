@@ -4,19 +4,28 @@
 
 ---
 
+## 2026-07-10 — 保護アクション: 確認モーダル廃止・/login 直接遷移（A案確定）
+
+- **方針** — 発見・閲覧前の全面モーダル（ForgeEntryGate）は使わない。ログイン誘導は価値ある行動の瞬間に寄せ、**画面上モーダルではなく** `/login?return=現在URL` へ遷移
+- **変更** — プレイ / FB / 応援 / 見届け / あとで見る等の保護アクションは即 `/login` へ。確認モーダルは出さない
+- **ゲスト** — `/login` ではログイン・新規登録が主導線、ゲスト参加は副導線。登録必須アクションは `intent=registered` でゲスト非表示、プレイは intent なしでゲスト可
+- **維持** — `/home` `/search` `/games/[id]` の未ログイン閲覧、Studio / mypage / settings 等のログイン必須
+- **対象** — `fix/public-discovery-auth-gate`（main merge 前）
+
+---
+
 ## 2026-07-10 — 登録必須アクションの login: ゲスト参加を非表示（intent=registered）
 
-- **変更** — 確認モーダル等から登録必須アクションで `/login` に遷移するとき `intent=registered` を付与。`/login` ではゲスト参加ボタンを出さない
+- **変更** — 登録必須アクションで `/login` に遷移するとき `intent=registered` を付与。`/login` ではゲスト参加ボタンを出さない
 - **維持** — `return` URL は従来どおり。プレイ導線（`variant: play`）は intent なしでゲスト参加を維持。middleware 直打ち保護は変更なし
 - **対象** — `fix/public-discovery-auth-gate`（main merge 前）
 
 ---
 
-## 2026-07-10 — 公開ページの保護アクション: 確認モーダル復活（fix/public-discovery-auth-gate）
+## 2026-07-10 — 公開ページの保護アクション: 確認モーダル（後に廃止）
 
-- **変更** — 未ログインでフォロー・あとで見る・更新を追う・プレイ・FB 等を押したとき、即 `/login` 遷移せず確認モーダルを表示
-- **モーダル** — 「ログインして続ける」で `/login?return=現在URL`、「今はやめる」で閉じて元ページに残る。アクション別本文（follow / bookmark / watch / feedback / play）
-- **維持** — 入口ゲート（ForgeEntryGate）非表示、保護ページ直打ちの middleware redirect、閲覧の未ログイン開放
+- **当時** — 未ログイン保護アクションで確認モーダルを表示（「ログインして続ける / 今はやめる」）
+- **その後** — A案確定により確認モーダルを廃止し、`/login?return=...` 直接遷移へ変更（上記「保護アクション: 確認モーダル廃止」参照）
 - **対象** — `fix/public-discovery-auth-gate`（main merge 前）
 
 ---
