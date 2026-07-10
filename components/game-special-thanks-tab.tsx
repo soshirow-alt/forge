@@ -44,7 +44,7 @@ function PlayerAvatar({
       <img
         src={src}
         alt=""
-        className="size-11 shrink-0 rounded-full bg-zinc-800 object-cover"
+        className="size-10 shrink-0 rounded-full bg-zinc-800 object-cover"
         loading="lazy"
         referrerPolicy="no-referrer"
       />
@@ -54,10 +54,26 @@ function PlayerAvatar({
   const initial = displayName.slice(0, 1) || "?";
   return (
     <span
-      className="flex size-11 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-zinc-300"
+      className="flex size-10 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-zinc-300"
       aria-hidden
     >
       {initial}
+    </span>
+  );
+}
+
+function MetaChip({ children }: { children: ReactNode }) {
+  return (
+    <span className="inline-flex shrink-0 items-center rounded-md border border-zinc-700/80 bg-zinc-900/80 px-2 py-0.5 text-xs font-medium text-zinc-300">
+      {children}
+    </span>
+  );
+}
+
+function RoleChip({ children }: { children: ReactNode }) {
+  return (
+    <span className="inline-flex shrink-0 items-center rounded-md border border-zinc-600 bg-zinc-800 px-2 py-0.5 text-xs font-semibold text-zinc-100">
+      {children}
     </span>
   );
 }
@@ -66,48 +82,30 @@ function PlayerCard({
   displayName,
   handle,
   avatarUrl,
-  right,
-  secondaryLeft,
-  secondaryRight,
+  chips,
   footer,
 }: {
   displayName: string;
   handle: string | null;
   avatarUrl: string | null;
-  right?: ReactNode;
-  secondaryLeft?: ReactNode;
-  secondaryRight?: ReactNode;
-  footer?: ReactNode;
+  chips: ReactNode;
+  footer?: string | null;
 }) {
   return (
-    <li className="rounded-xl border border-zinc-800/80 bg-zinc-950/35 px-3.5 py-3.5">
-      <div className="flex items-start gap-3">
+    <li className="rounded-xl border border-zinc-800/80 bg-zinc-950/35 px-3.5 py-3">
+      <div className="flex items-center gap-3">
         <PlayerAvatar displayName={displayName} avatarUrl={avatarUrl} />
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                 <span className="truncate text-[15px] font-semibold leading-snug text-zinc-50">
                   {displayName}
                 </span>
                 {handle ? <XLinkedHandleBadge username={handle} /> : null}
               </div>
-              {secondaryLeft ? (
-                <p className="mt-1 text-sm leading-snug text-zinc-400">{secondaryLeft}</p>
-              ) : null}
             </div>
-            {right || secondaryRight ? (
-              <div className="shrink-0 text-right">
-                {right ? (
-                  <p className="text-sm leading-snug text-zinc-300">{right}</p>
-                ) : null}
-                {secondaryRight ? (
-                  <p className="mt-1 max-w-[11rem] text-sm leading-snug text-zinc-400">
-                    {secondaryRight}
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
+            <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">{chips}</div>
           </div>
           {footer ? (
             <p className="mt-2 truncate text-sm leading-snug text-zinc-400">{footer}</p>
@@ -140,7 +138,7 @@ function ExpandablePlayerGrid({
 
   return (
     <div className="mt-3">
-      <ul className="grid grid-cols-1 gap-2.5 md:grid-cols-2">{children(visibleCount)}</ul>
+      <ul className="grid w-full grid-cols-1 gap-2.5 md:grid-cols-2">{children(visibleCount)}</ul>
       {hiddenCount > 0 ? (
         <button
           type="button"
@@ -167,7 +165,12 @@ function WatchersSection({ data }: { data: ProjectSpecialThanks }) {
                 displayName={person.displayName}
                 handle={person.handle}
                 avatarUrl={person.avatarUrl}
-                right={`${formatDateJa(person.watchedAt)} から見届け中`}
+                chips={
+                  <>
+                    <RoleChip>見届け中</RoleChip>
+                    <MetaChip>{formatDateJa(person.watchedAt)}〜</MetaChip>
+                  </>
+                }
               />
             ))
           }
@@ -192,8 +195,12 @@ function WitnessSection({ data }: { data: ProjectSpecialThanks }) {
                 displayName={person.displayName}
                 handle={person.handle}
                 avatarUrl={person.avatarUrl}
-                right="正式版公開まで見届け"
-                secondaryRight={formatDateJa(person.grantedAt)}
+                chips={
+                  <>
+                    <RoleChip>正式版まで見届け</RoleChip>
+                    <MetaChip>{formatDateJa(person.grantedAt)}</MetaChip>
+                  </>
+                }
               />
             ))
           }
@@ -220,13 +227,15 @@ function UpdateContributorsSection({ data }: { data: ProjectSpecialThanks }) {
                   displayName={person.displayName}
                   handle={person.handle}
                   avatarUrl={person.avatarUrl}
-                  right={`採用フィードバック ${person.adoptedFeedbackCount}件`}
-                  secondaryLeft={
-                    person.latestPublishedVersion
-                      ? `最新反映 ver ${person.latestPublishedVersion}`
-                      : null
+                  chips={
+                    <>
+                      <RoleChip>採用FB {person.adoptedFeedbackCount}件</RoleChip>
+                      {person.latestPublishedVersion ? (
+                        <MetaChip>ver {person.latestPublishedVersion}</MetaChip>
+                      ) : null}
+                    </>
                   }
-                  secondaryRight={person.latestUpdateSummary}
+                  footer={person.latestUpdateSummary}
                 />
               ))
           }
@@ -253,8 +262,15 @@ function EarlyPlayersSection({ data }: { data: ProjectSpecialThanks }) {
                   displayName={person.displayName}
                   handle={person.handle}
                   avatarUrl={person.avatarUrl}
-                  right={person.firstVersionKey ? `ver ${person.firstVersionKey}` : null}
-                  secondaryLeft={`${formatDateJa(person.firstContributedAt)} に初回フィードバック`}
+                  chips={
+                    <>
+                      <RoleChip>初期FB</RoleChip>
+                      {person.firstVersionKey ? (
+                        <MetaChip>ver {person.firstVersionKey}</MetaChip>
+                      ) : null}
+                      <MetaChip>{formatDateJa(person.firstContributedAt)}</MetaChip>
+                    </>
+                  }
                 />
               ))
           }
@@ -305,13 +321,8 @@ export function GameSpecialThanksTab({ projectId }: GameSpecialThanksTabProps) {
     data.earlyPlayers.length > 0;
 
   return (
-    <div className="space-y-8 py-6">
-      <div>
-        <h2 className="text-base font-semibold text-white">Special Thanks</h2>
-        <p className="mt-1.5 text-sm text-zinc-500">
-          この作品の更新や改善に関わったプレイヤーです。
-        </p>
-      </div>
+    <div className="w-full space-y-8 py-6">
+      <h2 className="text-base font-semibold text-white">Special Thanks</h2>
 
       {!hasAnyContent ? (
         <EmptyLine>まだ Special Thanks に載せる記録がありません。</EmptyLine>
