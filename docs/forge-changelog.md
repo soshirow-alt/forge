@@ -4,13 +4,20 @@
 
 ---
 
-## 2026-07-11 — 作品詳細 Special Thanks タブ（実装・未適用）
+## 2026-07-11 — 作品詳細 Special Thanks: watchers 名簿対応
+
+- **変更** — 見届けは人数のみではなく `watchers` 表示名一覧。正式版後は `witnesses`。採用FB / 早期声の見出しを更新。上部の抽象説明文を削除
+- **RPC** — `get_project_special_thanks` に `watchers[{display_name,handle,watched_at}]` を追加（`049` 更新）
+- **未実施** — Staging 再適用・非空 seed・push・main / 本番
+
+---
+
+## 2026-07-11 — 作品詳細 Special Thanks タブ（実装）
 
 - **場所** — `/games/[id]` 第4タブ「Special Thanks」（`?tab=special-thanks`）
-- **内容** — 作品ごとの関わり可視化（見届け人数 / 完走見届け名 / 採用FB / 早期初声・初FB）
+- **内容** — 作品ごとの関わり可視化（見届け / 完走見届け / 採用FB / 早期初声・初FB）
 - **データ** — `get_project_special_thanks` SECURITY DEFINER RPC（`049_project_special_thanks_rpc.sql`）。公開作品のみ。`user_id` / email 非返却
 - **使わない** — `project_play_sessions`、`developer_feedback_helpful_marks`、`special_thanks_entries` / 047 / 048
-- **未実施** — Staging/本番 migration 適用、push、main merge、production deploy
 
 ---
 

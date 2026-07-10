@@ -1,6 +1,12 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import type { ProjectReleaseStatus } from "@/lib/project-release-state";
 
+export type ProjectSpecialThanksWatcher = {
+  displayName: string;
+  handle: string | null;
+  watchedAt: string;
+};
+
 export type ProjectSpecialThanksWitness = {
   displayName: string;
   handle: string | null;
@@ -25,6 +31,7 @@ export type ProjectSpecialThanks = {
   projectId: string | null;
   releaseStatus: ProjectReleaseStatus | null;
   watchCount: number;
+  watchers: ProjectSpecialThanksWatcher[];
   witnesses: ProjectSpecialThanksWitness[];
   adoptions: ProjectSpecialThanksAdoption[];
   earlyPlayers: ProjectSpecialThanksEarlyPlayer[];
@@ -34,6 +41,7 @@ export const EMPTY_PROJECT_SPECIAL_THANKS: ProjectSpecialThanks = {
   projectId: null,
   releaseStatus: null,
   watchCount: 0,
+  watchers: [],
   witnesses: [],
   adoptions: [],
   earlyPlayers: [],
@@ -43,6 +51,7 @@ type RpcPayload = {
   project_id?: string | null;
   release_status?: string | null;
   watch_count?: number | string | null;
+  watchers?: unknown;
   witnesses?: unknown;
   adoptions?: unknown;
   early_players?: unknown;
@@ -81,6 +90,30 @@ function parseReleaseStatus(value: string | null | undefined): ProjectReleaseSta
     return value;
   }
   return null;
+}
+
+function parseWatchers(value: unknown): ProjectSpecialThanksWatcher[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const out: ProjectSpecialThanksWatcher[] = [];
+  for (const item of value) {
+    const row = asRecord(item);
+    if (!row) {
+      continue;
+    }
+    const displayName = readString(row, "display_name");
+    const watchedAt = readString(row, "watched_at");
+    if (!displayName || !watchedAt) {
+      continue;
+    }
+    out.push({
+      displayName,
+      handle: readString(row, "handle"),
+      watchedAt,
+    });
+  }
+  return out;
 }
 
 function parseWitnesses(value: unknown): ProjectSpecialThanksWitness[] {
@@ -167,6 +200,7 @@ function payloadToSpecialThanks(payload: RpcPayload): ProjectSpecialThanks {
         : null,
     releaseStatus: parseReleaseStatus(payload.release_status),
     watchCount: toCount(payload.watch_count),
+    watchers: parseWatchers(payload.watchers),
     witnesses: parseWitnesses(payload.witnesses),
     adoptions: parseAdoptions(payload.adoptions),
     earlyPlayers: parseEarlyPlayers(payload.early_players),

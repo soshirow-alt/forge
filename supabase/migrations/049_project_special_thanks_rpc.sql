@@ -2,6 +2,9 @@
 -- Prerequisite: 001–046 applied (041 moderation, 042 user_x_profiles)
 -- Additive only. No new tables. Does NOT use 047 / 048 / special_thanks_entries.
 -- Staging-first via Dashboard SQL. Do NOT apply to production without owner GO.
+--
+-- Returns watchers (named), witnesses, adoptions, early_players.
+-- No user_id / email. Guests / anonymized / empty / 退会済みユーザー excluded.
 
 BEGIN;
 
@@ -21,11 +24,13 @@ DECLARE
     'project_id', null,
     'release_status', null,
     'watch_count', 0,
+    'watchers', '[]'::jsonb,
     'witnesses', '[]'::jsonb,
     'adoptions', '[]'::jsonb,
     'early_players', '[]'::jsonb
   );
   v_watch_count bigint := 0;
+  v_watchers jsonb := '[]'::jsonb;
   v_witnesses jsonb := '[]'::jsonb;
   v_adoptions jsonb := '[]'::jsonb;
   v_early_players jsonb := '[]'::jsonb;
@@ -50,6 +55,54 @@ BEGIN
   INTO v_watch_count
   FROM public.project_watches w
   WHERE w.project_id = v_project_id_text;
+
+  SELECT COALESCE(
+    jsonb_agg(
+      jsonb_build_object(
+        'display_name', e.display_name,
+        'handle', e.handle,
+        'watched_at', e.watched_at
+      )
+      ORDER BY e.watched_at ASC
+    ),
+    '[]'::jsonb
+  )
+  INTO v_watchers
+  FROM (
+    SELECT
+      resolved.display_name,
+      resolved.handle,
+      w.created_at AS watched_at
+    FROM public.project_watches w
+    INNER JOIN LATERAL (
+      SELECT
+        nullif(
+          btrim(
+            coalesce(
+              nullif(btrim(au.raw_user_meta_data ->> 'display_name'), ''),
+              nullif(btrim(au.raw_user_meta_data ->> 'full_name'), ''),
+              nullif(btrim(au.raw_user_meta_data ->> 'name'), ''),
+              nullif(btrim(xp.x_display_name), '')
+            )
+          ),
+          ''
+        ) AS display_name,
+        nullif(btrim(xp.x_username), '') AS handle
+      FROM auth.users au
+      LEFT JOIN public.user_x_profiles xp ON xp.user_id = au.id
+      WHERE au.id = w.user_id
+        AND NOT EXISTS (
+          SELECT 1
+          FROM public.account_anonymizations aa
+          WHERE aa.user_id = au.id
+        )
+    ) resolved ON true
+    WHERE w.project_id = v_project_id_text
+      AND resolved.display_name IS NOT NULL
+      AND resolved.display_name <> '退会済みユーザー'
+    ORDER BY w.created_at ASC
+    LIMIT 24
+  ) e;
 
   SELECT COALESCE(
     jsonb_agg(
@@ -220,6 +273,7 @@ BEGIN
     'project_id', p_project_id,
     'release_status', v_release_status,
     'watch_count', v_watch_count,
+    'watchers', v_watchers,
     'witnesses', v_witnesses,
     'adoptions', v_adoptions,
     'early_players', v_early_players
@@ -228,7 +282,7 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.get_project_special_thanks(uuid) IS
-  'Public Special Thanks for a project detail tab. Public projects only. No user_id/email. Watches=count only. Guests/anonymized/empty names excluded.';
+  'Public Special Thanks for a project detail tab. Public projects only. Returns named watchers/witnesses/adoptions/early_players. No user_id/email.';
 
 REVOKE ALL ON FUNCTION public.get_project_special_thanks(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_project_special_thanks(uuid) TO anon;
