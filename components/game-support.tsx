@@ -23,9 +23,13 @@ export function GameSupport({
   const supported = isSupported(gameId);
 
   function handleSupport() {
-    requireAuth(() => {
-      void supportGame(gameId);
-    });
+    requireAuth(
+      () => {
+        void supportGame(gameId);
+      },
+      undefined,
+      { variant: "default" },
+    );
   }
 
   const label = !isLoggedIn

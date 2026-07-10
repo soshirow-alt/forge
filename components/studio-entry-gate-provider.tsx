@@ -27,7 +27,7 @@ import {
 } from "@/lib/developer-community-v0-store";
 import { useForgeDeploymentMode } from "@/lib/forge-deployment-context";
 import { ACCOUNT_REGISTRATION_REQUIRED_NOTICE } from "@/lib/guest-auth";
-import { buildLoginUrlWithReturn } from "@/lib/login-return-url";
+import { buildLoginUrlWithReturn, LOGIN_INTENT_REGISTERED } from "@/lib/login-return-url";
 import { shouldBypassStudioLoginGate, shouldHideV0MockContent } from "@/lib/production-mode";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 import { ensureDeveloperCommunity } from "@/lib/supabase/community-db";
@@ -128,7 +128,7 @@ export function StudioEntryGateProvider({ children }: { children: ReactNode }) {
       }
 
       if (!isRegisteredUser) {
-        promptRegisteredAccountAccess(href);
+        promptRegisteredAccountAccess(href, { variant: "default" });
         return;
       }
 
@@ -201,6 +201,7 @@ export function StudioDirectAccessGuard() {
       router.replace(
         buildLoginUrlWithReturn(returnPath, {
           notice: ACCOUNT_REGISTRATION_REQUIRED_NOTICE,
+          intent: LOGIN_INTENT_REGISTERED,
         }),
       );
       return;
@@ -221,7 +222,9 @@ export function StudioDirectAccessGuard() {
 
     if (!user) {
       const returnPath = pathname.startsWith("/studio") ? pathname : "/studio";
-      router.replace(buildLoginUrlWithReturn(returnPath));
+      router.replace(
+        buildLoginUrlWithReturn(returnPath, { intent: LOGIN_INTENT_REGISTERED }),
+      );
       return;
     }
     if (shouldPromptDeveloperPage(user.id)) {

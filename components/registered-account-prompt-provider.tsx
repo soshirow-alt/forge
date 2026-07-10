@@ -1,99 +1,77 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   createContext,
   useCallback,
   useContext,
   useMemo,
-  useState,
   type ComponentProps,
   type ReactNode,
 } from "react";
-import { V0SimpleModal } from "@/components/v0-simple-modal";
 import { useAuth } from "@/components/auth-provider";
 import {
-  REGISTERED_FEATURE_REQUIRES_LOGIN_BODY,
-  REGISTERED_FEATURE_REQUIRES_LOGIN_TITLE,
-} from "@/lib/guest-auth";
-import { buildLoginUrlWithReturn, buildRegisterUrlWithReturn, LOGIN_PATH } from "@/lib/login-return-url";
+  buildLoginUrlWithReturn,
+  LOGIN_INTENT_REGISTERED,
+} from "@/lib/login-return-url";
+import type { RegisteredActionPromptVariant } from "@/lib/registered-action-prompt";
 
-type PromptState = {
-  returnPath?: string;
-} | null;
+type RegisteredAccountPromptOptions = {
+  variant?: RegisteredActionPromptVariant;
+};
 
 type RegisteredAccountPromptContextValue = {
-  promptRegisteredAccountAccess: (returnPath?: string) => void;
-  closePrompt: () => void;
+  promptRegisteredAccountAccess: (
+    returnPath?: string,
+    options?: RegisteredAccountPromptOptions,
+  ) => void;
 };
 
 const RegisteredAccountPromptContext =
   createContext<RegisteredAccountPromptContextValue | null>(null);
+
+function resolveActionReturnPath(returnPath?: string): string {
+  if (returnPath?.trim()) {
+    return returnPath;
+  }
+
+  if (typeof window !== "undefined") {
+    return `${window.location.pathname}${window.location.search}`;
+  }
+
+  return "/home";
+}
 
 export function RegisteredAccountPromptProvider({
   children,
 }: {
   children: ReactNode;
 }) {
-  const [prompt, setPrompt] = useState<PromptState>(null);
+  const router = useRouter();
 
-  const promptRegisteredAccountAccess = useCallback((returnPath?: string) => {
-    setPrompt({ returnPath });
-  }, []);
-
-  const closePrompt = useCallback(() => {
-    setPrompt(null);
-  }, []);
-
-  const loginHref = prompt?.returnPath
-    ? buildLoginUrlWithReturn(prompt.returnPath)
-    : LOGIN_PATH;
-  const registerHref = prompt?.returnPath
-    ? buildRegisterUrlWithReturn(prompt.returnPath)
-    : "/register";
+  const promptRegisteredAccountAccess = useCallback(
+    (returnPath?: string, options?: RegisteredAccountPromptOptions) => {
+      const path = resolveActionReturnPath(returnPath);
+      const variant = options?.variant ?? "default";
+      router.push(
+        buildLoginUrlWithReturn(path, {
+          intent:
+            variant === "play" ? undefined : LOGIN_INTENT_REGISTERED,
+        }),
+      );
+    },
+    [router],
+  );
 
   const value = useMemo(
-    () => ({ promptRegisteredAccountAccess, closePrompt }),
-    [promptRegisteredAccountAccess, closePrompt],
+    () => ({ promptRegisteredAccountAccess }),
+    [promptRegisteredAccountAccess],
   );
 
   return (
     <RegisteredAccountPromptContext.Provider value={value}>
       {children}
-      {prompt ? (
-        <V0SimpleModal
-          title={REGISTERED_FEATURE_REQUIRES_LOGIN_TITLE}
-          subtitle={REGISTERED_FEATURE_REQUIRES_LOGIN_BODY}
-          onClose={closePrompt}
-        >
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Link
-              href={loginHref}
-              onClick={closePrompt}
-              className="inline-flex flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 transition-opacity hover:opacity-90"
-            >
-              ログインする
-            </Link>
-            <button
-              type="button"
-              onClick={closePrompt}
-              className="inline-flex flex-1 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900/60 px-6 py-3 text-sm font-semibold text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-900"
-            >
-              閉じる
-            </button>
-          </div>
-          <p className="mt-4 text-center text-sm text-zinc-500">
-            アカウントをお持ちでない方は{" "}
-            <Link
-              href={registerHref}
-              onClick={closePrompt}
-              className="font-medium text-violet-400 hover:text-violet-300"
-            >
-              新規登録
-            </Link>
-          </p>
-        </V0SimpleModal>
-      ) : null}
     </RegisteredAccountPromptContext.Provider>
   );
 }
@@ -110,7 +88,7 @@ export function useRegisteredAccountPrompt() {
 
 type RegisteredOnlyLinkProps = ComponentProps<typeof Link>;
 
-/** Registered users navigate normally; guests see an in-place login prompt. */
+/** Registered users navigate normally; guests go to /login?return=... */
 export function RegisteredOnlyLink({
   href,
   onClick,
@@ -134,7 +112,7 @@ export function RegisteredOnlyLink({
     }
 
     event.preventDefault();
-    promptRegisteredAccountAccess(returnPath);
+    promptRegisteredAccountAccess(returnPath, { variant: "default" });
   }
 
   return <Link href={href} onClick={handleClick} {...props} />;

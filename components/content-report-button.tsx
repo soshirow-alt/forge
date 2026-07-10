@@ -47,10 +47,14 @@ export function ContentReportButton({
   }
 
   function handleOpen() {
-    requireAuth(() => {
-      resetForm();
-      setOpen(true);
-    }, returnPath);
+    requireAuth(
+      () => {
+        resetForm();
+        setOpen(true);
+      },
+      returnPath,
+      { variant: "default" },
+    );
   }
 
   async function handleSubmit() {

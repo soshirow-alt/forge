@@ -67,17 +67,21 @@ function DeveloperProfileV0PageContent({ id }: { id: string }) {
   );
 
   const handleFollow = useCallback(() => {
-    requireAuth(() => setFollowing((value) => !value), returnPath);
+    requireAuth(() => setFollowing((value) => !value), returnPath, { variant: "follow" });
   }, [requireAuth, returnPath]);
 
   const handleCommunityJoin = useCallback(() => {
-    requireAuth(() => {
-      applyToCommunity({
-        communityId,
-        communityName: dev.name,
-        communityAvatar: dev.avatar,
-      });
-    }, returnPath);
+    requireAuth(
+      () => {
+        applyToCommunity({
+          communityId,
+          communityName: dev.name,
+          communityAvatar: dev.avatar,
+        });
+      },
+      returnPath,
+      { variant: "default" },
+    );
   }, [requireAuth, returnPath, communityId, dev.name, dev.avatar]);
 
   return (

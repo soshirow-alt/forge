@@ -168,27 +168,31 @@ function DeveloperSearchContent() {
 
   const handleFollow = useCallback(
     (devId: string) => {
-      requireAuth(() => {
-        if (hideV0Mock) {
-          void toggleFollowCreator(devId);
-          return;
-        }
-        setFollowingIds((prev) => {
-          const next = new Set(prev);
-          if (next.has(devId)) {
-            next.delete(devId);
-          } else {
-            next.add(devId);
+      requireAuth(
+        () => {
+          if (hideV0Mock) {
+            void toggleFollowCreator(devId);
+            return;
           }
-          return next;
-        });
-      }, buildCreatorsSearchUrl({
-        query: queryFromUrl,
-        sort: sortFromUrl,
-        order: orderFromUrl,
-        newOnly: newOnlyFromUrl,
-        genres: genresFromUrl,
-      }));
+          setFollowingIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(devId)) {
+              next.delete(devId);
+            } else {
+              next.add(devId);
+            }
+            return next;
+          });
+        },
+        buildCreatorsSearchUrl({
+          query: queryFromUrl,
+          sort: sortFromUrl,
+          order: orderFromUrl,
+          newOnly: newOnlyFromUrl,
+          genres: genresFromUrl,
+        }),
+        { variant: "follow" },
+      );
     },
     [
       genresFromUrl,

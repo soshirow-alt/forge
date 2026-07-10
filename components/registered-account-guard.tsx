@@ -12,6 +12,7 @@ import { PageLoadingSkeleton } from "@/components/forge-loading-skeletons";
 import {
   buildLoginUrlWithReturn,
   buildPathWithSearch,
+  LOGIN_INTENT_REGISTERED,
 } from "@/lib/login-return-url";
 
 type RegisteredAccountGuardProps = {
@@ -46,6 +47,7 @@ export function RegisteredAccountGuard({
     router.replace(
       buildLoginUrlWithReturn(resolvedReturnPath, {
         notice: isGuestEntry ? ACCOUNT_REGISTRATION_REQUIRED_NOTICE : undefined,
+        intent: LOGIN_INTENT_REGISTERED,
       }),
     );
   }, [authResolved, isRegisteredUser, isGuestEntry, router, resolvedReturnPath]);

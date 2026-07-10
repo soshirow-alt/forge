@@ -20,7 +20,15 @@ import {
   readOAuthFlowCookies,
 } from "../lib/oauth-flow-cookie";
 import { mapProjectSubmitErrorMessage } from "../lib/error-message";
-import { buildRegisterUrlWithReturn, isGuestEligibleReturnParam, resolvePostLoginPath, sanitizeLoginReturnUrl } from "../lib/login-return-url";
+import {
+  buildLoginUrlWithReturn,
+  buildRegisterUrlWithReturn,
+  isGuestEligibleReturnParam,
+  LOGIN_INTENT_REGISTERED,
+  resolvePostLoginPath,
+  sanitizeLoginReturnUrl,
+  shouldShowGuestLoginEntry,
+} from "../lib/login-return-url";
 import { projectThumbnailsForDb, projectThumbnailsForDbUpdate, sanitizeProjectThumbnailUrls } from "../lib/project-thumbnails";
 import { reorderArrayItem } from "../lib/reorder-array-item";
 import {
@@ -191,6 +199,23 @@ function testSubmitErrorMapping() {
 function testLoginReturnSanitize() {
   ok(sanitizeLoginReturnUrl("/games/abc") === "/games/abc", "allow game detail return");
   ok(
+    sanitizeLoginReturnUrl("/search?q=Staging") === "/search?q=Staging",
+    "allow works search return with query",
+  );
+  ok(
+    sanitizeLoginReturnUrl("/search/creators?q=forge&sort=followers") ===
+      "/search/creators?q=forge&sort=followers",
+    "allow creator search return",
+  );
+  ok(
+    sanitizeLoginReturnUrl("/creators/dev-1") === "/creators/dev-1",
+    "allow creator profile return",
+  );
+  ok(
+    isGuestEligibleReturnParam("/search?q=Staging") === true,
+    "guest eligible for search return",
+  );
+  ok(
     sanitizeLoginReturnUrl("/games/abc?tab=devlog") === "/games/abc?tab=devlog",
     "allow game detail devlog tab",
   );
@@ -231,6 +256,19 @@ function testLoginReturnSanitize() {
   ok(
     isGuestEligibleReturnParam("/studio/mypage") === false,
     "guest ineligible for studio return",
+  );
+  ok(
+    shouldShowGuestLoginEntry("/games/abc", LOGIN_INTENT_REGISTERED) === false,
+    "registered intent hides guest for game detail return",
+  );
+  ok(
+    shouldShowGuestLoginEntry("/games/abc", null) === true,
+    "no intent allows guest for game detail return",
+  );
+  ok(
+    buildLoginUrlWithReturn("/games/abc", { intent: LOGIN_INTENT_REGISTERED }) ===
+      "/login?return=%2Fgames%2Fabc&intent=registered",
+    "login url carries registered intent",
   );
   ok(resolvePostLoginPath(null) === "/home", "no-return login defaults to /home");
   ok(
@@ -460,7 +498,8 @@ function testPublicCatalogAuthIndependenceContract() {
   ok(provider.includes("fetchPublicProjects"), "games-provider imports fetchPublicProjects");
   ok(
     provider.includes("void reloadPublicCatalog()") &&
-      provider.includes(".finally(() => setPublicCatalogReady(true))"),
+      provider.includes(".finally(() => {") &&
+      provider.includes("setPublicCatalogReady(true)"),
     "public catalog loads on mount and sets publicCatalogReady",
   );
   const mountEffectStart = provider.indexOf("setHydrated(true);");

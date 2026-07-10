@@ -45,29 +45,3 @@ export function isGuestEntryMode(): boolean {
 export function isEntryModeUnset(): boolean {
   return readEntryMode() === null;
 }
-
-export function shouldShowForgeEntryGate(pathname: string): boolean {
-  if (
-    pathname === "/login" ||
-    pathname === "/register" ||
-    pathname.startsWith("/login/")
-  ) {
-    return false;
-  }
-
-  if (pathname === "/home" || pathname === "/search" || pathname === "/guide") {
-    return true;
-  }
-
-  return (
-    pathname.startsWith("/search/") ||
-    pathname.startsWith("/rankings") ||
-    pathname.startsWith("/games/") ||
-    pathname.startsWith("/creators/")
-  );
-}
-
-/** Shared game pages — redirect to login instead of overlay gate (OGP-safe client nav). */
-export function shouldClientRedirectToLoginFromEntryGate(pathname: string): boolean {
-  return pathname.startsWith("/games/");
-}

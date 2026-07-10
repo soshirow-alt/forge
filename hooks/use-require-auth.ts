@@ -1,20 +1,41 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useEntryMode } from "@/components/entry-mode-provider";
 import { useRegisteredAccountPrompt } from "@/components/registered-account-prompt-provider";
-import { buildLoginUrlWithReturn, LOGIN_PATH } from "@/lib/login-return-url";
+import {
+  buildLocationReturnPath,
+  buildLoginUrlWithReturn,
+  LOGIN_PATH,
+} from "@/lib/login-return-url";
+import type { RegisteredActionPromptVariant } from "@/lib/registered-action-prompt";
 
 export { LOGIN_PATH } from "@/lib/login-return-url";
 
+export type RequireAuthOptions = {
+  variant?: RegisteredActionPromptVariant;
+};
+
 export function useRequireAuth() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { user, hydrated, isRegisteredUser } = useAuth();
   const { isGuestEntry } = useEntryMode();
   const { promptRegisteredAccountAccess } = useRegisteredAccountPrompt();
 
-  function requireAuth(action: () => void, returnPath?: string) {
+  const currentReturnPath = useMemo(
+    () => buildLocationReturnPath(pathname, searchParams.toString()),
+    [pathname, searchParams],
+  );
+
+  function requireAuth(
+    action: () => void,
+    returnPath?: string,
+    options?: RequireAuthOptions,
+  ) {
     if (!hydrated) {
       return;
     }
@@ -24,7 +45,9 @@ export function useRequireAuth() {
       return;
     }
 
-    promptRegisteredAccountAccess(returnPath);
+    promptRegisteredAccountAccess(returnPath ?? currentReturnPath, {
+      variant: options?.variant ?? "default",
+    });
   }
 
   return {
@@ -37,7 +60,7 @@ export function useRequireAuth() {
     requireAuth,
     goToLogin: (returnPath?: string) =>
       router.push(
-        returnPath ? buildLoginUrlWithReturn(returnPath) : LOGIN_PATH,
+        buildLoginUrlWithReturn(returnPath ?? currentReturnPath),
       ),
   };
 }

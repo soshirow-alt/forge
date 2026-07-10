@@ -4,6 +4,53 @@
 
 ---
 
+## 2026-07-10 — 本番反映: public discovery auth gate（A案）
+
+- **main** — `d72480b..09b6de9` FF（`8d9fd59` / `287799a` / `51e6c9e` / `09b6de9`）
+- **production deploy** — `dpl_D6YTTXm2LQJ5WZ158csGCdRcibAZ`（https://forge-flame-gamma.vercel.app）
+- **smoke PASS** — `/search`・REALIA 詳細で入口モーダルなし、プレイ CTA → `/login?return=/games/0aea6406-...`、ゲスト副導線あり、ゲスト後 return 復帰、`og:image` = default png（data URL なし）
+- **未実施** — DB / Storage / migration / 047 / backfill / restore
+- **preview 同期** — `preview/landing-01` = `09b6de9`（旧 tip `8832535` は `archive/ogp-storage-047-preview` に退避）
+
+---
+
+## 2026-07-10 — 保護アクション: 確認モーダル廃止・/login 直接遷移（A案確定）
+
+- **方針** — 発見・閲覧前の全面モーダル（ForgeEntryGate）は使わない。ログイン誘導は価値ある行動の瞬間に寄せ、**画面上モーダルではなく** `/login?return=現在URL` へ遷移
+- **変更** — プレイ / FB / 応援 / 見届け / あとで見る等の保護アクションは即 `/login` へ。確認モーダルは出さない
+- **ゲスト** — `/login` ではログイン・新規登録が主導線、ゲスト参加は副導線。登録必須アクションは `intent=registered` でゲスト非表示、プレイは intent なしでゲスト可
+- **維持** — `/home` `/search` `/games/[id]` の未ログイン閲覧、Studio / mypage / settings 等のログイン必須
+- **対象** — `fix/public-discovery-auth-gate` → main 反映済み
+
+---
+
+## 2026-07-10 — 登録必須アクションの login: ゲスト参加を非表示（intent=registered）
+
+- **変更** — 登録必須アクションで `/login` に遷移するとき `intent=registered` を付与。`/login` ではゲスト参加ボタンを出さない
+- **維持** — `return` URL は従来どおり。プレイ導線（`variant: play`）は intent なしでゲスト参加を維持。middleware 直打ち保護は変更なし
+- **対象** — `fix/public-discovery-auth-gate`（main merge 前）
+
+---
+
+## 2026-07-10 — 公開ページの保護アクション: 確認モーダル（後に廃止）
+
+- **当時** — 未ログイン保護アクションで確認モーダルを表示（「ログインして続ける / 今はやめる」）
+- **その後** — A案確定により確認モーダルを廃止し、`/login?return=...` 直接遷移へ変更（上記「保護アクション: 確認モーダル廃止」参照）
+- **対象** — `fix/public-discovery-auth-gate`（main merge 前）
+
+---
+
+## 2026-07-10 — 発見閲覧の開放（入口ゲート廃止・A案）
+
+- **閲覧** — `/search` `/games/[id]` `/home` `/guide` `/creators/*` `/rankings/*` 等は未ログイン・entry 未選択でも**初期表示の「Forgeへようこそ」モーダルを出さない**
+- **アクション時 login** — プレイ・フィードバック・応援・更新を追う・あとで見る等は画面上モーダルではなく **`/login?return=現在URL`** へ遷移（登録必須プロンプトモーダルも廃止）
+- **ゲスト参加** — `/login` の副導線は維持。return 先に `/search`（クエリ付き）・作品詳細等を追加
+- **削除** — `ForgeEntryGate` コンポーネント・`/games/[id]` 初回の login 強制リダイレクト
+- **DB / Storage / migration なし**
+- **対象** — `fix/public-discovery-auth-gate`（main 起点）
+
+---
+
 ## 2026-07-09 — Hotfix: non-production → 本番 Supabase write guard
 
 - **guard** — `lib/supabase/write-guard.ts` + `createServiceRoleClient()` で non-production から本番 ref への service role write を拒否
@@ -34,6 +81,18 @@
 - **方法** — 消失前 stash 証拠から `thumbnail_url` / `thumbnail_urls`（data URL）を本番DBへ書き戻し
 - **影響** — 他38作品のサムネ列・`updated_at` は不変。047 / Storage OGP / backfill は未実施
 - **UI** — 本番ホーム・作品詳細・`/api/projects/{id}/og-image` でサムネ復帰を確認
+
+---
+
+## 2026-07-09 — Hotfix: 最小 read-only OGP（作品詳細 metadata）
+
+- **og:image** — 公開作品の `thumbnail_urls` / `thumbnail_url` から **http(s) のみ** 採用。data URL / 空は `/images/og-default.png`（絶対URL）
+- **read-only** — `generateMetadata` + `fetchPublicProjectForOg` の SELECT のみ。DB / Storage write なし
+- **非公開・不存在** — デフォルト OGP（Forge 定型）
+- **除外** — og-image API 経由の data URL カード、047 / Storage / backfill
+- **対象** — `hotfix/minimal-readonly-ogp`（main 起点）
+- **本番反映** — `main` FF `780838b` → `vercel deploy --prod`（`dpl_6g9LVKxms2nP8WysHm1855iYs2h6`、https://forge-flame-gamma.vercel.app）
+- **本番 smoke** — REALIA / 民俗STG: `og:image` = default png（data URL サムネは未使用）、`twitter:card=summary_large_image`、HTTP 200・`/login` リダイレクトなし
 
 ---
 

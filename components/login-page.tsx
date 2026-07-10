@@ -25,9 +25,9 @@ import {
   DEFAULT_POST_PLAYER_HOME_PATH,
   LOGIN_PATH,
   buildRegisterUrlWithReturn,
-  isGuestEligibleReturnParam,
   resolvePostGuestLoginPath,
   resolvePostLoginPath,
+  shouldShowGuestLoginEntry,
 } from "@/lib/login-return-url";
 
 const initialLoginState: LoginActionState = { error: null, redirectTo: null };
@@ -87,11 +87,13 @@ function GuestParticipationConfirmDialog({
 export function LoginPage({
   supabaseConfigured,
   returnParam,
+  intentParam,
   callbackError,
   notice,
 }: {
   supabaseConfigured: boolean;
   returnParam: string | null;
+  intentParam: string | null;
   callbackError: string | null;
   notice: string | null;
 }) {
@@ -105,7 +107,7 @@ export function LoginPage({
   const alreadySignedInRedirectStartedRef = useRef(false);
   const [guestConfirmOpen, setGuestConfirmOpen] = useState(false);
   const loginSubmitMarkRef = useRef<string | null>(null);
-  const showGuestEntry = isGuestEligibleReturnParam(returnParam);
+  const showGuestEntry = shouldShowGuestLoginEntry(returnParam, intentParam);
 
   useEffect(() => {
     if (pending && !loginSubmitMarkRef.current) {

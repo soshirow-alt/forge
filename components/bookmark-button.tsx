@@ -20,9 +20,13 @@ export function BookmarkButton({
   const saved = isBookmarked(gameId);
 
   function handleClick() {
-    requireAuth(() => {
-      void bookmarkGame(gameId);
-    });
+    requireAuth(
+      () => {
+        void bookmarkGame(gameId);
+      },
+      undefined,
+      { variant: "bookmark" },
+    );
   }
 
   const baseClassName = compact

@@ -43,6 +43,7 @@ import { useRequireAuth } from "@/hooks/use-require-auth";
 import {
   buildLoginUrlWithReturn,
   gameDetailReturnPath,
+  LOGIN_INTENT_REGISTERED,
 } from "@/lib/login-return-url";
 import {
   parseChangeCheckPreviewOverride,
@@ -402,7 +403,9 @@ function GameDetailV0PageBody({
     watching,
     enabled: isRealProject && hydrated && isLoggedIn,
   });
-  const involvementLoginHref = buildLoginUrlWithReturn(returnPath);
+  const involvementLoginHref = buildLoginUrlWithReturn(returnPath, {
+    intent: LOGIN_INTENT_REGISTERED,
+  });
 
   const changeCheckOverride = parseChangeCheckPreviewOverride(
     searchParams.get("changeCheck"),
@@ -531,9 +534,13 @@ function GameDetailV0PageBody({
       return;
     }
 
-    requireAuth(() => {
-      resolveAndOpenPlay(true);
-    }, returnPath);
+    requireAuth(
+      () => {
+        resolveAndOpenPlay(true);
+      },
+      returnPath,
+      { variant: "play" },
+    );
   }, [isGuestEntry, requireAuth, returnPath, resolveAndOpenPlay]);
 
   const handlePlayDestinationSelect = useCallback(
@@ -560,18 +567,25 @@ function GameDetailV0PageBody({
       return;
     }
 
-    requireAuth(() => {
-      if (isRealProject) {
-        voiceLayerRef.current?.openForm();
-        return;
-      }
-      setFeedbackStep("full-form");
-    }, returnPath);
+    requireAuth(
+      () => {
+        if (isRealProject) {
+          voiceLayerRef.current?.openForm();
+          return;
+        }
+        setFeedbackStep("full-form");
+      },
+      returnPath,
+      { variant: "feedback" },
+    );
   }, [isGuestEntry, requireAuth, returnPath, isRealProject]);
 
   const handleProtectedAction = useCallback(
-    (action: () => void) => {
-      requireAuth(action, returnPath);
+    (
+      action: () => void,
+      variant: "follow" | "watch" | "default" = "default",
+    ) => {
+      requireAuth(action, returnPath, { variant });
     },
     [requireAuth, returnPath],
   );
@@ -583,14 +597,14 @@ function GameDetailV0PageBody({
         return;
       }
       setMockWatching((value) => !value);
-    });
+    }, "watch");
   }, [handleProtectedAction, isRealProject, toggleWatch]);
 
   const handleToggleDeveloperFollow = useCallback(() => {
     if (developerUserId) {
       handleProtectedAction(() => {
         void toggleFollowCreator(creatorRouteKey);
-      });
+      }, "follow");
       return;
     }
     handleProtectedAction(() => setFollowing((value) => !value));
@@ -622,7 +636,9 @@ function GameDetailV0PageBody({
 
   useFeedbackFlowLock(isRealProject ? "closed" : feedbackStep);
 
-  const guestFeedbackLoginHref = buildLoginUrlWithReturn(returnPath);
+  const guestFeedbackLoginHref = buildLoginUrlWithReturn(returnPath, {
+    intent: LOGIN_INTENT_REGISTERED,
+  });
 
   const overviewActivity = useMemo(
     () =>

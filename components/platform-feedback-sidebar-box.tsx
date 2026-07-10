@@ -44,10 +44,14 @@ export function PlatformFeedbackSidebarBox({
   }
 
   function handleOpen() {
-    requireAuth(() => {
-      resetForm();
-      setOpen(true);
-    }, pathname);
+    requireAuth(
+      () => {
+        resetForm();
+        setOpen(true);
+      },
+      pathname,
+      { variant: "feedback" },
+    );
   }
 
   function handleClose() {

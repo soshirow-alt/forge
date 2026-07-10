@@ -24,9 +24,13 @@ export function GameTesterApply({
   const applicantCount = getApplicantCount(gameId, defaultCount);
 
   function handleApply() {
-    requireAuth(() => {
-      incrementApplicantCount(gameId, defaultCount);
-    });
+    requireAuth(
+      () => {
+        incrementApplicantCount(gameId, defaultCount);
+      },
+      undefined,
+      { variant: "default" },
+    );
   }
 
   return (

@@ -94,14 +94,18 @@ export function CreatorCommunityJoinButton({
     <button
       type="button"
       onClick={() =>
-        requireAuth(async () => {
-          const supabase = getOptionalSupabaseClient();
-          if (!supabase || !communityId) {
-            return;
-          }
-          await applyCommunityMembership(supabase, communityId, user!.id);
-          setStatus("pending");
-        }, `/creators/${developerUserId}`)
+        requireAuth(
+          async () => {
+            const supabase = getOptionalSupabaseClient();
+            if (!supabase || !communityId) {
+              return;
+            }
+            await applyCommunityMembership(supabase, communityId, user!.id);
+            setStatus("pending");
+          },
+          `/creators/${developerUserId}`,
+          { variant: "default" },
+        )
       }
       className={`inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-semibold ${
         status === "rejected"

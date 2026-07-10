@@ -38,9 +38,13 @@ export function CreatorFollowButton({
   const followerCount = getFollowerCount(creatorRouteKey, 0);
 
   function handleToggle() {
-    requireAuth(() => {
-      void toggleFollowCreator(creatorRouteKey);
-    }, `/creators/${creatorRouteKey}`);
+    requireAuth(
+      () => {
+        void toggleFollowCreator(creatorRouteKey);
+      },
+      `/creators/${creatorRouteKey}`,
+      { variant: "follow" },
+    );
   }
 
   return (
