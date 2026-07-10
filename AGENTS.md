@@ -48,6 +48,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **ユーザー向け UI で「版」を原則使わない** — 短い表示は **ver**（`ver N` / `最新ver`）、文章は **バージョン**
 - 禁止寄り: 最新版 / 次版 / この版 / N版 / 版ごとの声
 - 推奨: 最新ver / 次ver / このver / ver N / verごとのフィードバック
+- **例外（許容）**: 状態ラベルの **正式版** / **正式版候補**。これらを「正式ver」に置き換えない
 - DB の `version_*` 等は即リネーム不要
 
 ### 文字量
