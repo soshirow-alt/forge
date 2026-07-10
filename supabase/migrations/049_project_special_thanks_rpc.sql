@@ -3,8 +3,9 @@
 -- Additive only. No new tables. Does NOT use 047 / 048 / special_thanks_entries.
 -- Staging-first via Dashboard SQL. Do NOT apply to production without owner GO.
 --
--- Returns watchers (named), witnesses, adoptions, early_players.
--- No user_id / email. Guests / anonymized / empty / 退会済みユーザー excluded.
+-- Returns named player cards: watchers / witnesses / update_contributors / early_players.
+-- Includes avatar_url. No user_id / email.
+-- Guests / anonymized / empty / 退会済みユーザー excluded.
 
 BEGIN;
 
@@ -26,13 +27,13 @@ DECLARE
     'watch_count', 0,
     'watchers', '[]'::jsonb,
     'witnesses', '[]'::jsonb,
-    'adoptions', '[]'::jsonb,
+    'update_contributors', '[]'::jsonb,
     'early_players', '[]'::jsonb
   );
   v_watch_count bigint := 0;
   v_watchers jsonb := '[]'::jsonb;
   v_witnesses jsonb := '[]'::jsonb;
-  v_adoptions jsonb := '[]'::jsonb;
+  v_update_contributors jsonb := '[]'::jsonb;
   v_early_players jsonb := '[]'::jsonb;
 BEGIN
   IF p_project_id IS NULL THEN
@@ -61,6 +62,7 @@ BEGIN
       jsonb_build_object(
         'display_name', e.display_name,
         'handle', e.handle,
+        'avatar_url', e.avatar_url,
         'watched_at', e.watched_at
       )
       ORDER BY e.watched_at ASC
@@ -72,6 +74,7 @@ BEGIN
     SELECT
       resolved.display_name,
       resolved.handle,
+      resolved.avatar_url,
       w.created_at AS watched_at
     FROM public.project_watches w
     INNER JOIN LATERAL (
@@ -87,7 +90,17 @@ BEGIN
           ),
           ''
         ) AS display_name,
-        nullif(btrim(xp.x_username), '') AS handle
+        nullif(btrim(xp.x_username), '') AS handle,
+        nullif(
+          btrim(
+            coalesce(
+              nullif(btrim(xp.x_avatar_url), ''),
+              nullif(btrim(au.raw_user_meta_data ->> 'avatar_url'), ''),
+              nullif(btrim(au.raw_user_meta_data ->> 'picture'), '')
+            )
+          ),
+          ''
+        ) AS avatar_url
       FROM auth.users au
       LEFT JOIN public.user_x_profiles xp ON xp.user_id = au.id
       WHERE au.id = w.user_id
@@ -109,6 +122,7 @@ BEGIN
       jsonb_build_object(
         'display_name', e.display_name,
         'handle', e.handle,
+        'avatar_url', e.avatar_url,
         'granted_at', e.granted_at
       )
       ORDER BY e.granted_at ASC
@@ -120,6 +134,7 @@ BEGIN
     SELECT
       resolved.display_name,
       resolved.handle,
+      resolved.avatar_url,
       wg.granted_at
     FROM public.project_witness_grants wg
     INNER JOIN LATERAL (
@@ -135,7 +150,17 @@ BEGIN
           ),
           ''
         ) AS display_name,
-        nullif(btrim(xp.x_username), '') AS handle
+        nullif(btrim(xp.x_username), '') AS handle,
+        nullif(
+          btrim(
+            coalesce(
+              nullif(btrim(xp.x_avatar_url), ''),
+              nullif(btrim(au.raw_user_meta_data ->> 'avatar_url'), ''),
+              nullif(btrim(au.raw_user_meta_data ->> 'picture'), '')
+            )
+          ),
+          ''
+        ) AS avatar_url
       FROM auth.users au
       LEFT JOIN public.user_x_profiles xp ON xp.user_id = au.id
       WHERE au.id = wg.user_id
@@ -152,29 +177,47 @@ BEGIN
     LIMIT 24
   ) e;
 
+  -- Player-aggregated active adoptions (not raw feedback rows)
   SELECT COALESCE(
     jsonb_agg(
       jsonb_build_object(
         'display_name', e.display_name,
         'handle', e.handle,
-        'player_quote', e.player_quote,
-        'update_summary', e.update_summary,
-        'published_version', e.published_version
+        'avatar_url', e.avatar_url,
+        'adopted_feedback_count', e.adopted_feedback_count,
+        'latest_published_version', e.latest_published_version,
+        'latest_update_summary', e.latest_update_summary,
+        'latest_adopted_at', e.latest_adopted_at
       )
-      ORDER BY e.created_at DESC
+      ORDER BY e.latest_adopted_at DESC
     ),
     '[]'::jsonb
   )
-  INTO v_adoptions
+  INTO v_update_contributors
   FROM (
     SELECT
       resolved.display_name,
       resolved.handle,
-      a.player_quote,
-      a.update_summary,
-      a.published_version,
-      a.created_at
-    FROM public.voice_adoptions a
+      resolved.avatar_url,
+      agg.adopted_feedback_count,
+      agg.latest_published_version,
+      agg.latest_update_summary,
+      agg.latest_adopted_at
+    FROM (
+      SELECT
+        a.user_id,
+        COUNT(*)::int AS adopted_feedback_count,
+        (array_agg(a.published_version ORDER BY a.created_at DESC))[1]
+          AS latest_published_version,
+        (array_agg(a.update_summary ORDER BY a.created_at DESC))[1]
+          AS latest_update_summary,
+        MAX(a.created_at) AS latest_adopted_at
+      FROM public.voice_adoptions a
+      WHERE a.project_id = v_project_id_text
+        AND a.status = 'active'
+        AND a.user_id IS NOT NULL
+      GROUP BY a.user_id
+    ) agg
     INNER JOIN LATERAL (
       SELECT
         nullif(
@@ -188,21 +231,29 @@ BEGIN
           ),
           ''
         ) AS display_name,
-        nullif(btrim(xp.x_username), '') AS handle
+        nullif(btrim(xp.x_username), '') AS handle,
+        nullif(
+          btrim(
+            coalesce(
+              nullif(btrim(xp.x_avatar_url), ''),
+              nullif(btrim(au.raw_user_meta_data ->> 'avatar_url'), ''),
+              nullif(btrim(au.raw_user_meta_data ->> 'picture'), '')
+            )
+          ),
+          ''
+        ) AS avatar_url
       FROM auth.users au
       LEFT JOIN public.user_x_profiles xp ON xp.user_id = au.id
-      WHERE au.id = a.user_id
+      WHERE au.id = agg.user_id
         AND NOT EXISTS (
           SELECT 1
           FROM public.account_anonymizations aa
           WHERE aa.user_id = au.id
         )
     ) resolved ON true
-    WHERE a.project_id = v_project_id_text
-      AND a.status = 'active'
-      AND resolved.display_name IS NOT NULL
+    WHERE resolved.display_name IS NOT NULL
       AND resolved.display_name <> '退会済みユーザー'
-    ORDER BY a.created_at DESC
+    ORDER BY agg.latest_adopted_at DESC
     LIMIT 12
   ) e;
 
@@ -211,7 +262,9 @@ BEGIN
       jsonb_build_object(
         'display_name', e.display_name,
         'handle', e.handle,
-        'first_contributed_at', e.first_contributed_at
+        'avatar_url', e.avatar_url,
+        'first_contributed_at', e.first_contributed_at,
+        'first_version_key', e.first_version_key
       )
       ORDER BY e.first_contributed_at ASC
     ),
@@ -222,23 +275,28 @@ BEGIN
     SELECT
       resolved.display_name,
       resolved.handle,
-      first_hit.first_contributed_at
+      resolved.avatar_url,
+      first_hit.first_contributed_at,
+      first_hit.first_version_key
     FROM (
-      SELECT
+      SELECT DISTINCT ON (contrib.user_id)
         contrib.user_id,
-        MIN(contrib.contributed_at) AS first_contributed_at
+        contrib.contributed_at AS first_contributed_at,
+        contrib.version_key AS first_version_key
       FROM (
-        SELECT vr.user_id, vr.created_at AS contributed_at
+        SELECT vr.user_id, vr.created_at AS contributed_at, vr.version_key
         FROM public.project_voice_responses vr
         WHERE vr.project_id = v_project_id_text
           AND vr.moderation_status = 'visible'
+          AND vr.user_id IS NOT NULL
         UNION ALL
-        SELECT fb.user_id, fb.created_at AS contributed_at
+        SELECT fb.user_id, fb.created_at AS contributed_at, fb.version_key
         FROM public.project_feedback fb
         WHERE fb.project_id = v_project_id_text
           AND fb.moderation_status = 'visible'
+          AND fb.user_id IS NOT NULL
       ) contrib
-      GROUP BY contrib.user_id
+      ORDER BY contrib.user_id, contrib.contributed_at ASC
     ) first_hit
     INNER JOIN LATERAL (
       SELECT
@@ -253,7 +311,17 @@ BEGIN
           ),
           ''
         ) AS display_name,
-        nullif(btrim(xp.x_username), '') AS handle
+        nullif(btrim(xp.x_username), '') AS handle,
+        nullif(
+          btrim(
+            coalesce(
+              nullif(btrim(xp.x_avatar_url), ''),
+              nullif(btrim(au.raw_user_meta_data ->> 'avatar_url'), ''),
+              nullif(btrim(au.raw_user_meta_data ->> 'picture'), '')
+            )
+          ),
+          ''
+        ) AS avatar_url
       FROM auth.users au
       LEFT JOIN public.user_x_profiles xp ON xp.user_id = au.id
       WHERE au.id = first_hit.user_id
@@ -275,14 +343,14 @@ BEGIN
     'watch_count', v_watch_count,
     'watchers', v_watchers,
     'witnesses', v_witnesses,
-    'adoptions', v_adoptions,
+    'update_contributors', v_update_contributors,
     'early_players', v_early_players
   );
 END;
 $$;
 
 COMMENT ON FUNCTION public.get_project_special_thanks(uuid) IS
-  'Public Special Thanks for a project detail tab. Public projects only. Returns named watchers/witnesses/adoptions/early_players. No user_id/email.';
+  'Public Special Thanks player cards for a project detail tab. Public only. Named watchers/witnesses/update_contributors/early_players with avatar_url. No user_id/email.';
 
 REVOKE ALL ON FUNCTION public.get_project_special_thanks(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_project_special_thanks(uuid) TO anon;

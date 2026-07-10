@@ -1,244 +1,207 @@
-import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ProjectReleaseStatus } from "@/lib/project-release-state";
 
 export type ProjectSpecialThanksWatcher = {
   displayName: string;
   handle: string | null;
+  avatarUrl: string | null;
   watchedAt: string;
 };
 
 export type ProjectSpecialThanksWitness = {
   displayName: string;
   handle: string | null;
+  avatarUrl: string | null;
   grantedAt: string;
 };
 
-export type ProjectSpecialThanksAdoption = {
+export type ProjectSpecialThanksUpdateContributor = {
   displayName: string;
   handle: string | null;
-  playerQuote: string;
-  updateSummary: string;
-  publishedVersion: string;
+  avatarUrl: string | null;
+  adoptedFeedbackCount: number;
+  latestPublishedVersion: string | null;
+  latestUpdateSummary: string | null;
+  latestAdoptedAt: string;
 };
 
 export type ProjectSpecialThanksEarlyPlayer = {
   displayName: string;
   handle: string | null;
+  avatarUrl: string | null;
   firstContributedAt: string;
+  firstVersionKey: string | null;
 };
 
 export type ProjectSpecialThanks = {
   projectId: string | null;
   releaseStatus: ProjectReleaseStatus | null;
-  watchCount: number;
   watchers: ProjectSpecialThanksWatcher[];
   witnesses: ProjectSpecialThanksWitness[];
-  adoptions: ProjectSpecialThanksAdoption[];
+  updateContributors: ProjectSpecialThanksUpdateContributor[];
   earlyPlayers: ProjectSpecialThanksEarlyPlayer[];
 };
 
 export const EMPTY_PROJECT_SPECIAL_THANKS: ProjectSpecialThanks = {
   projectId: null,
   releaseStatus: null,
-  watchCount: 0,
   watchers: [],
   witnesses: [],
-  adoptions: [],
+  updateContributors: [],
   earlyPlayers: [],
 };
 
-type RpcPayload = {
-  project_id?: string | null;
-  release_status?: string | null;
-  watch_count?: number | string | null;
+type RpcRow = {
+  project_id?: unknown;
+  release_status?: unknown;
   watchers?: unknown;
   witnesses?: unknown;
-  adoptions?: unknown;
+  update_contributors?: unknown;
   early_players?: unknown;
 };
 
-function toCount(value: number | string | null | undefined): number {
-  if (value === null || value === undefined) {
-    return 0;
-  }
-  const parsed = typeof value === "number" ? value : Number.parseInt(String(value), 10);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
 function asRecord(value: unknown): Record<string, unknown> | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return null;
-  }
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   return value as Record<string, unknown>;
 }
 
-function readString(row: Record<string, unknown>, key: string): string | null {
-  const value = row[key];
-  if (typeof value !== "string") {
-    return null;
-  }
-  const trimmed = value.trim();
-  return trimmed ? trimmed : null;
+function asString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-function parseReleaseStatus(value: string | null | undefined): ProjectReleaseStatus | null {
-  if (
-    value === "in_development" ||
-    value === "released" ||
-    value === "release_reopened"
-  ) {
-    return value;
+function asIso(value: unknown): string | null {
+  const s = asString(value);
+  if (!s) return null;
+  const t = Date.parse(s);
+  return Number.isFinite(t) ? new Date(t).toISOString() : null;
+}
+
+function asCount(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
+    return Math.floor(value);
   }
-  return null;
+  if (typeof value === "string" && value.trim()) {
+    const n = Number(value);
+    if (Number.isFinite(n) && n >= 0) return Math.floor(n);
+  }
+  return 0;
+}
+
+function parsePersonBase(row: unknown): {
+  displayName: string;
+  handle: string | null;
+  avatarUrl: string | null;
+} | null {
+  const r = asRecord(row);
+  if (!r) return null;
+  const displayName = asString(r.display_name);
+  if (!displayName) return null;
+  return {
+    displayName,
+    handle: asString(r.handle),
+    avatarUrl: asString(r.avatar_url),
+  };
 }
 
 function parseWatchers(value: unknown): ProjectSpecialThanksWatcher[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
+  if (!Array.isArray(value)) return [];
   const out: ProjectSpecialThanksWatcher[] = [];
-  for (const item of value) {
-    const row = asRecord(item);
-    if (!row) {
-      continue;
-    }
-    const displayName = readString(row, "display_name");
-    const watchedAt = readString(row, "watched_at");
-    if (!displayName || !watchedAt) {
-      continue;
-    }
-    out.push({
-      displayName,
-      handle: readString(row, "handle"),
-      watchedAt,
-    });
+  for (const row of value) {
+    const base = parsePersonBase(row);
+    const r = asRecord(row);
+    const watchedAt = r ? asIso(r.watched_at) : null;
+    if (!base || !watchedAt) continue;
+    out.push({ ...base, watchedAt });
   }
   return out;
 }
 
 function parseWitnesses(value: unknown): ProjectSpecialThanksWitness[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
+  if (!Array.isArray(value)) return [];
   const out: ProjectSpecialThanksWitness[] = [];
-  for (const item of value) {
-    const row = asRecord(item);
-    if (!row) {
-      continue;
-    }
-    const displayName = readString(row, "display_name");
-    const grantedAt = readString(row, "granted_at");
-    if (!displayName || !grantedAt) {
-      continue;
-    }
-    out.push({
-      displayName,
-      handle: readString(row, "handle"),
-      grantedAt,
-    });
+  for (const row of value) {
+    const base = parsePersonBase(row);
+    const r = asRecord(row);
+    const grantedAt = r ? asIso(r.granted_at) : null;
+    if (!base || !grantedAt) continue;
+    out.push({ ...base, grantedAt });
   }
   return out;
 }
 
-function parseAdoptions(value: unknown): ProjectSpecialThanksAdoption[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-  const out: ProjectSpecialThanksAdoption[] = [];
-  for (const item of value) {
-    const row = asRecord(item);
-    if (!row) {
-      continue;
-    }
-    const displayName = readString(row, "display_name");
-    const playerQuote = readString(row, "player_quote");
-    const updateSummary = readString(row, "update_summary");
-    const publishedVersion = readString(row, "published_version");
-    if (!displayName || !playerQuote || !updateSummary || !publishedVersion) {
-      continue;
-    }
+function parseUpdateContributors(value: unknown): ProjectSpecialThanksUpdateContributor[] {
+  if (!Array.isArray(value)) return [];
+  const out: ProjectSpecialThanksUpdateContributor[] = [];
+  for (const row of value) {
+    const base = parsePersonBase(row);
+    const r = asRecord(row);
+    const latestAdoptedAt = r ? asIso(r.latest_adopted_at) : null;
+    if (!base || !r || !latestAdoptedAt) continue;
     out.push({
-      displayName,
-      handle: readString(row, "handle"),
-      playerQuote,
-      updateSummary,
-      publishedVersion,
+      ...base,
+      adoptedFeedbackCount: Math.max(1, asCount(r.adopted_feedback_count)),
+      latestPublishedVersion: asString(r.latest_published_version),
+      latestUpdateSummary: asString(r.latest_update_summary),
+      latestAdoptedAt,
     });
   }
   return out;
 }
 
 function parseEarlyPlayers(value: unknown): ProjectSpecialThanksEarlyPlayer[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
+  if (!Array.isArray(value)) return [];
   const out: ProjectSpecialThanksEarlyPlayer[] = [];
-  for (const item of value) {
-    const row = asRecord(item);
-    if (!row) {
-      continue;
-    }
-    const displayName = readString(row, "display_name");
-    const firstContributedAt = readString(row, "first_contributed_at");
-    if (!displayName || !firstContributedAt) {
-      continue;
-    }
+  for (const row of value) {
+    const base = parsePersonBase(row);
+    const r = asRecord(row);
+    const firstContributedAt = r ? asIso(r.first_contributed_at) : null;
+    if (!base || !firstContributedAt) continue;
     out.push({
-      displayName,
-      handle: readString(row, "handle"),
+      ...base,
       firstContributedAt,
+      firstVersionKey: r ? asString(r.first_version_key) : null,
     });
   }
   return out;
 }
 
-function payloadToSpecialThanks(payload: RpcPayload): ProjectSpecialThanks {
-  return {
-    projectId:
-      typeof payload.project_id === "string" && payload.project_id.trim()
-        ? payload.project_id
-        : null,
-    releaseStatus: parseReleaseStatus(payload.release_status),
-    watchCount: toCount(payload.watch_count),
-    watchers: parseWatchers(payload.watchers),
-    witnesses: parseWitnesses(payload.witnesses),
-    adoptions: parseAdoptions(payload.adoptions),
-    earlyPlayers: parseEarlyPlayers(payload.early_players),
-  };
+function parseReleaseStatus(value: unknown): ProjectReleaseStatus | null {
+  const s = asString(value);
+  if (s === "in_development" || s === "released" || s === "release_reopened") {
+    return s;
+  }
+  return null;
 }
 
-export function isProjectSpecialThanksRpcMissingError(error: unknown): boolean {
-  if (!error || typeof error !== "object") {
-    return false;
-  }
-  const row = error as PostgrestError;
-  const message = row.message ?? "";
-  return (
-    row.code === "PGRST202" ||
-    row.code === "42883" ||
-    message.includes("get_project_special_thanks") ||
-    message.includes("Could not find the function")
-  );
+function parsePayload(raw: unknown): ProjectSpecialThanks {
+  const row = asRecord(raw);
+  if (!row) return EMPTY_PROJECT_SPECIAL_THANKS;
+  return {
+    projectId: asString(row.project_id),
+    releaseStatus: parseReleaseStatus(row.release_status),
+    watchers: parseWatchers(row.watchers),
+    witnesses: parseWitnesses(row.witnesses),
+    updateContributors: parseUpdateContributors(row.update_contributors),
+    earlyPlayers: parseEarlyPlayers(row.early_players),
+  };
 }
 
 export async function fetchProjectSpecialThanks(
   supabase: SupabaseClient,
   projectId: string,
 ): Promise<ProjectSpecialThanks> {
+  const id = projectId.trim();
+  if (!id) return EMPTY_PROJECT_SPECIAL_THANKS;
+
   const { data, error } = await supabase.rpc("get_project_special_thanks", {
-    p_project_id: projectId,
+    p_project_id: id,
   });
 
   if (error) {
-    if (isProjectSpecialThanksRpcMissingError(error)) {
-      return { ...EMPTY_PROJECT_SPECIAL_THANKS };
-    }
+    console.error("[project-special-thanks] rpc failed", error.message);
     throw error;
   }
 
-  if (!data || typeof data !== "object") {
-    return { ...EMPTY_PROJECT_SPECIAL_THANKS };
-  }
-
-  return payloadToSpecialThanks(data as RpcPayload);
+  const row = Array.isArray(data) ? (data[0] as RpcRow | undefined) : (data as RpcRow | null);
+  return parsePayload(row);
 }

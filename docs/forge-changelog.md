@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-11 — 作品詳細 Special Thanks: プレイヤーカード UI
+
+- **変更** — 文字列列挙をやめ、avatar / 表示名 / handle / 理由・日付・版・件数つきのプレイヤーカードに変更
+- **見出し** — 見届けているプレイヤー / アップデートに貢献したプレイヤー / 初期にフィードバックしたプレイヤー（正式版後は最後まで見届けたプレイヤー）。「声」表現を排除
+- **RPC** — `avatar_url` 追加。`adoptions` 行一覧を `update_contributors`（user 集約）に変更。`early_players.first_version_key` 追加（`049` 更新）
+- **未実施** — Staging 049 再適用・Preview 非空 smoke・main / 本番
+
+---
+
 ## 2026-07-11 — 作品詳細 Special Thanks: watchers 名簿対応
 
 - **変更** — 見届けは人数のみではなく `watchers` 表示名一覧。正式版後は `witnesses`。採用FB / 早期声の見出しを更新。上部の抽象説明文を削除
