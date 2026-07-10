@@ -16,7 +16,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Feature decisions
 
-- 新機能・変更は **版ごとの学習ループ**（発見→プレイ→初声→次に直すこと→次版）を強化するかで判断。変化を見る・再プレイ・見届け人は増幅
+- 新機能・変更は **版ごとの学習ループ**（発見→プレイ→初回FB→改善→次ver）を強化するかで判断。変化を見る・再プレイ・見届け人は増幅
 - **実装都合で仕様を変更しない**
 - **正式リリース初期版** — 小さな MVP ではなく必要機能を初期から盛り込む（`docs/out-of-scope.md`）
 - 投げ銭、販売、SDK 実装（説明 UI 除く）は作らない
@@ -34,6 +34,40 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - プレイ以降はログイン必須。ボタンは隠さず `/login` へ
 - モーダルで阻まない。redirect クエリは複雑化しない
 - 詳細は `docs/forge-principles.md` §ログイン方針
+
+## UI copy & information design（恒常）
+
+正本: **`docs/forge-ui-copy-rules.md`**（`.cursor/rules/forge.mdc` にも要約）
+
+### 用語
+
+- **ユーザー向け UI で「声」を使わない**
+- 禁止例: 声を届ける / みんなの声 / プレイヤーの声 / 届けた声 / 届いた声 / プレイヤー向けの「初声」表示
+- 原則 **フィードバック**。短いバッジ内のみ **FB** 可
+- DB / 内部識別子の `voice_*` や historical docs は **即リネームしない**（表示文字列だけ直す）
+- **ユーザー向け UI で「版」を原則使わない** — 短い表示は **ver**（`ver N` / `最新ver`）、文章は **バージョン**
+- 禁止寄り: 最新版 / 次版 / この版 / N版 / 版ごとの声
+- 推奨: 最新ver / 次ver / このver / ver N / verごとのフィードバック
+- DB の `version_*` 等は即リネーム不要
+
+### 文字量
+
+- 説明文を足す前に、バッジ・チップ・アイコン・表・カード構造を検討する
+- セクション説明文は原則なし（置くなら 1 行まで）
+- 日付・ver・件数は本文ではなくメタ / バッジ / チップ
+- 同じ意味の情報を左右・上下に重複表示しない
+
+### Special Thanks
+
+- `/games/[id]` タブのみ。プラットフォーム名簿・LP/footer ではない
+- 目的: **この作品に誰がどう関わったか**。開発ログ・分析・FB 本文一覧ではない
+- 載っている理由はバッジ / メタで示す。文章で補わない
+- 同じプレイヤーが複数セクションに出てもよい
+
+### 一覧 UI の確認
+
+- **1 件 seed で PASS にしない**
+- 10 件以上・長い名前・avatar 有無・handle 有無・複数 ver/件数・2 列/展開/mobile を確認する
 
 ## Documentation duty (every completed task)
 
