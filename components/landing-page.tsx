@@ -11,8 +11,13 @@ import {
 } from "lucide-react";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal-routes";
 import { LandingFeaturedGamesSection } from "@/components/landing-featured-games-section";
+import { LandingSpecialThanksTeaser } from "@/components/landing-special-thanks-teaser";
 import { buildLoginUrlWithReturn } from "@/lib/login-return-url";
 import type { LandingFeaturedGame } from "@/lib/landing-featured-games";
+import {
+  SPECIAL_THANKS_PATH,
+  type SpecialThanksEntry,
+} from "@/lib/special-thanks";
 
 const valueProps = [
   {
@@ -118,10 +123,12 @@ export function LandingPage({
   logoHref = "/",
   featuredGames,
   useMockContent = false,
+  specialThanksPreview = [],
 }: {
   logoHref?: string;
   featuredGames: LandingFeaturedGame[];
   useMockContent?: boolean;
+  specialThanksPreview?: SpecialThanksEntry[];
 }) {
   return (
     <main className="relative min-h-screen bg-[#0a0a0a] text-zinc-100">
@@ -227,6 +234,8 @@ export function LandingPage({
 
       <LandingFeaturedGamesSection games={featuredGames} useMockContent={useMockContent} />
 
+      <LandingSpecialThanksTeaser entries={specialThanksPreview} />
+
       <footer className="mx-auto max-w-[1320px] px-6 pb-10 sm:px-8 sm:pb-12">
         {useMockContent && (
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 px-6 py-6 sm:px-7">
@@ -261,6 +270,12 @@ export function LandingPage({
             </Link>
             <Link href={PRIVACY_PATH} className="transition-colors hover:text-zinc-300">
               プライバシーポリシー
+            </Link>
+            <Link
+              href={SPECIAL_THANKS_PATH}
+              className="transition-colors hover:text-zinc-300"
+            >
+              Special Thanks
             </Link>
             <span className="text-zinc-600">ヘルプ</span>
             <span className="text-zinc-600">お問い合わせ</span>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Flame } from "lucide-react";
 import type { ReactNode } from "react";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal-routes";
+import { SPECIAL_THANKS_PATH } from "@/lib/special-thanks";
 
 export function LegalDocumentShell({
   title,
@@ -27,6 +28,12 @@ export function LegalDocumentShell({
             <Link href={PRIVACY_PATH} className="transition-colors hover:text-zinc-300">
               プライバシーポリシー
             </Link>
+            <Link
+              href={SPECIAL_THANKS_PATH}
+              className="transition-colors hover:text-zinc-300"
+            >
+              Special Thanks
+            </Link>
           </nav>
         </div>
       </header>
@@ -45,6 +52,12 @@ export function LegalDocumentShell({
             </Link>
             <Link href={PRIVACY_PATH} className="transition-colors hover:text-zinc-300">
               プライバシーポリシー
+            </Link>
+            <Link
+              href={SPECIAL_THANKS_PATH}
+              className="transition-colors hover:text-zinc-300"
+            >
+              Special Thanks
             </Link>
           </div>
         </div>

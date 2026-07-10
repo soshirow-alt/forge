@@ -11,6 +11,7 @@ import {
  * - /games/{id} (?tab=devlog|voices|overview, ?adoption={id})
  * - /submit, /my-projects, /mypage, /mypage/..., /settings, /bookmarks, /notifications
  * - /studio, /studio/...
+ * - /admin/special-thanks
  * - /projects/{id}/studio (?devlog=1, ?edit=project|prompts)
  */
 
@@ -221,7 +222,9 @@ export function sanitizeLoginReturnUrl(
       pathname === "/my-projects" ||
       pathname === "/bookmarks" ||
       pathname === "/notifications" ||
-      pathname === "/settings"
+      pathname === "/settings" ||
+      pathname === "/admin/special-thanks" ||
+      pathname === "/special-thanks"
     ) {
       return search.toString() ? null : pathname;
     }

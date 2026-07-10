@@ -5,7 +5,11 @@ import {
   loadLandingFeaturedGames,
 } from "@/lib/landing-featured-games";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
+import {
+  SPECIAL_THANKS_LP_TEASER_LIMIT,
+} from "@/lib/special-thanks";
 import { createClient } from "@/lib/supabase/server";
+import { listPublishedSpecialThanks } from "@/lib/supabase/special-thanks-db";
 
 export const metadata = {
   title: "Forge — ゲームを、育てる場所。",
@@ -29,12 +33,18 @@ export default async function RootPage() {
   const featuredGames = useMockContent
     ? landingMockFeaturedGames
     : await loadLandingFeaturedGames();
+  const specialThanksPreview = supabase
+    ? await listPublishedSpecialThanks(supabase, {
+        limit: SPECIAL_THANKS_LP_TEASER_LIMIT,
+      })
+    : [];
 
   return (
     <LandingPage
       logoHref="/"
       featuredGames={featuredGames}
       useMockContent={useMockContent}
+      specialThanksPreview={specialThanksPreview}
     />
   );
 }

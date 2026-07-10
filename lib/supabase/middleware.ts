@@ -12,6 +12,7 @@ import {
 import { buildLoginUrlWithReturn } from "@/lib/login-return-url";
 
 const ALWAYS_PROTECTED_PREFIXES = [
+  "/admin",
   "/submit",
   "/my-projects",
   "/bookmarks",

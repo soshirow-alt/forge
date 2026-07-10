@@ -14,6 +14,20 @@
 
 ---
 
+## 2026-07-10 — Special Thanks 管理機能（実装・Staging 未適用）
+
+- **スコープ** — プラットフォーム Special Thanks（作品ごと謝辞は対象外）
+- **DB** — `048_special_thanks.sql`（`047` は欠番。旧 OGP Storage 構想と混同回避）
+  - `forge_admin_users` + `is_forge_admin()`（SECURITY DEFINER / search_path 固定）
+  - `special_thanks_entries`（`handle` / `url` http(s) / `is_published` default false 等）
+  - RLS: 公開は published のみ SELECT。admin のみ INSERT/UPDATE。物理 DELETE は初期 UI なし
+  - GRANT 明示（anon SELECT / authenticated SELECT+INSERT+UPDATE / service_role）
+- **管理** — `/admin/special-thanks`（未ログイン → `/login?return=...`、非 admin → 404）
+- **公開** — `/special-thanks` 全件。LP 下部に公開中の数件 + フッターリンク。文言は初期検証・周知への協力のみ（提携・パートナー等は使わない）
+- **ブランチ** — `feature/special-thanks-admin`（main 起点）。Staging migration / 本番は未実施
+
+---
+
 ## 2026-07-10 — 本番反映: public discovery auth gate（A案）
 
 - **main** — `d72480b..09b6de9` FF（`8d9fd59` / `287799a` / `51e6c9e` / `09b6de9`）

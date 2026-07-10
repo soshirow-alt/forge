@@ -16,6 +16,7 @@ export const REGISTERED_FEATURE_REQUIRES_LOGIN_BODY =
 
 /** Routes that require a registered Supabase account in all deployment modes. */
 export const REGISTERED_ACCOUNT_REQUIRED_PREFIXES = [
+  "/admin",
   "/studio",
   "/mypage",
   "/notifications",
