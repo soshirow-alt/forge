@@ -21,7 +21,6 @@ export type ProjectSpecialThanksUpdateContributor = {
   avatarUrl: string | null;
   adoptedFeedbackCount: number;
   latestPublishedVersion: string | null;
-  latestUpdateSummary: string | null;
   latestAdoptedAt: string;
 };
 
@@ -141,7 +140,6 @@ function parseUpdateContributors(value: unknown): ProjectSpecialThanksUpdateCont
       ...base,
       adoptedFeedbackCount: Math.max(1, asCount(r.adopted_feedback_count)),
       latestPublishedVersion: asString(r.latest_published_version),
-      latestUpdateSummary: asString(r.latest_update_summary),
       latestAdoptedAt,
     });
   }

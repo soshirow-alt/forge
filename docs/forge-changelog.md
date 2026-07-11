@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-11 — Special Thanks RPC: latest_update_summary を非返却
+
+- **RPC** — `get_project_special_thanks` の `update_contributors` から `latest_update_summary` を削除（anon/authenticated 公開レスポンスに FB 要約を含めない）
+- **UI** — 参考FB N件 / ver のみ（summary 非表示を維持）。「採用」表記なし
+- **Staging** — 049 を CREATE OR REPLACE 再適用して確認。本番 049 は未適用
+- **未実施** — 本番 049 / main merge / production deploy / rollback execute
+
+---
+
 ## 2026-07-11 — 作品詳細 Special Thanks: 共通バッジ削除・参考FB表記
 
 - **見届け** — 全員共通の「見届け中」バッジを削除。日付チップ（YYYY/MM/DD〜）のみ

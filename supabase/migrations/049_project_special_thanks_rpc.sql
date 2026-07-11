@@ -4,7 +4,7 @@
 -- Staging-first via Dashboard SQL. Do NOT apply to production without owner GO.
 --
 -- Returns named player cards: watchers / witnesses / update_contributors / early_players.
--- Includes avatar_url. No user_id / email.
+-- Includes avatar_url. No user_id / email / latest_update_summary (feedback body not exposed).
 -- Guests / anonymized / empty / 退会済みユーザー excluded.
 
 BEGIN;
@@ -177,7 +177,7 @@ BEGIN
     LIMIT 24
   ) e;
 
-  -- Player-aggregated active adoptions (not raw feedback rows)
+  -- Player-aggregated active adoptions (not raw feedback rows; no update_summary in response)
   SELECT COALESCE(
     jsonb_agg(
       jsonb_build_object(
@@ -186,7 +186,6 @@ BEGIN
         'avatar_url', e.avatar_url,
         'adopted_feedback_count', e.adopted_feedback_count,
         'latest_published_version', e.latest_published_version,
-        'latest_update_summary', e.latest_update_summary,
         'latest_adopted_at', e.latest_adopted_at
       )
       ORDER BY e.latest_adopted_at DESC
@@ -201,7 +200,6 @@ BEGIN
       resolved.avatar_url,
       agg.adopted_feedback_count,
       agg.latest_published_version,
-      agg.latest_update_summary,
       agg.latest_adopted_at
     FROM (
       SELECT
@@ -209,8 +207,6 @@ BEGIN
         COUNT(*)::int AS adopted_feedback_count,
         (array_agg(a.published_version ORDER BY a.created_at DESC))[1]
           AS latest_published_version,
-        (array_agg(a.update_summary ORDER BY a.created_at DESC))[1]
-          AS latest_update_summary,
         MAX(a.created_at) AS latest_adopted_at
       FROM public.voice_adoptions a
       WHERE a.project_id = v_project_id_text
@@ -350,7 +346,7 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.get_project_special_thanks(uuid) IS
-  'Public Special Thanks player cards for a project detail tab. Public only. Named watchers/witnesses/update_contributors/early_players with avatar_url. No user_id/email.';
+  'Public Special Thanks player cards for a project detail tab. Public only. Named watchers/witnesses/update_contributors/early_players with avatar_url. No user_id/email/latest_update_summary.';
 
 REVOKE ALL ON FUNCTION public.get_project_special_thanks(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_project_special_thanks(uuid) TO anon;
