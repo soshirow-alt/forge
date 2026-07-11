@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-11 — ホーム発見ロジック Production 反映
+
+- **main** — `preview/landing-01` を fast-forward（`6941321`）。Production URL: https://forge-flame-gamma.vercel.app
+- **Production DB（オーナー手動）** — 050 / 051 / 052 適用。053〜055 は 052 が最終 LANGUAGE sql と同一のため省略。056 相当の publish 権限確定 + 初回公開devlog 7 ID の `is_initial_publish=true`
+- **本番ホーム** — 「注目の作品」+ trending / newest。updated 候補 0 のため「最近更新」非表示（仕様どおり）
+- **未実施の追加 DB** — この反映以降の DDL/DML なし
+
+---
+
 ## 2026-07-11 — publish RPC: anon EXECUTE を明示 REVOKE（056）
 
 - **051** — `publish_project_version_with_devlog` に `REVOKE … FROM anon` と grant 検証 DO を追加（PUBLIC のみでは anon が EXECUTE 可能な場合がある）
