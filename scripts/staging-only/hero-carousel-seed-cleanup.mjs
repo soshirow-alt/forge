@@ -1,7 +1,12 @@
 /**
  * STAGING ONLY — Hero carousel seed cleanup.
  *
- * Deletes all rows created by hero-carousel-seed.mjs from Staging only.
+ * Deletes rows created by hero-carousel-seed.mjs from Staging only.
+ * Targets are derived from live Staging DB using:
+ *   - marker forge-st-hero-carousel-v1
+ *   - email domain @forge-st-hero-carousel.local
+ *   - fixed UUID namespace dddddddd-dddd-4ddd-8ddd-*
+ *
  * Guard: aborts unless NEXT_PUBLIC_SUPABASE_URL ref === vuqpwvjvgyxffmvpfrxo
  *        and ref !== bpnisgzxuwdxelhnduuf (production).
  *
@@ -9,9 +14,10 @@
  *   - Smoke A (41ff5a96-105c-42a2-87b4-787bcfeacb45)
  *   - Smoke B (aa910df8-afdf-4cbb-a00e-42a9518afc52)
  *   - Owner  (4bdc4a2f-2a39-4599-a14c-91303310ef56)
+ *   - rows unrelated to seed users/projects (no public-wide deletes)
  *
  * Usage:
- *   node scripts/staging-only/hero-carousel-seed-cleanup.mjs           # dry-run
+ *   node scripts/staging-only/hero-carousel-seed-cleanup.mjs           # dry-run (counts from DB)
  *   node scripts/staging-only/hero-carousel-seed-cleanup.mjs --execute  # delete staging
  */
 
@@ -29,12 +35,10 @@ const SMOKE_A = "41ff5a96-105c-42a2-87b4-787bcfeacb45";
 const SMOKE_B = "aa910df8-afdf-4cbb-a00e-42a9518afc52";
 const MARKER = "forge-st-hero-carousel-v1";
 const EMAIL_DOMAIN = "forge-st-hero-carousel.local";
+const DESC_PREFIX = "[hero-carousel-seed]";
+const UUID_PREFIX = "dddddddd-dddd-4ddd-8ddd-";
 const STORAGE_BUCKET = "project-thumbnails";
 const STORAGE_PREFIX = "hero-carousel-seed";
-
-// ---------------------------------------------------------------------------
-// Fixed IDs (mirrors seed script)
-// ---------------------------------------------------------------------------
 
 const DEV_B_ID = "dddddddd-dddd-4ddd-8ddd-000000000001";
 const DEV_C_ID = "dddddddd-dddd-4ddd-8ddd-000000000002";
@@ -47,69 +51,15 @@ function projectUUID(n) {
   return `dddddddd-dddd-4ddd-8ddd-0000000002${String(n).padStart(2, "0")}`;
 }
 
-function playSessionUUID(userN, projectN, sessionIndex = 1) {
-  return `dddddddd-dddd-4ddd-8ddd-0003${String(userN).padStart(2, "0")}${String(projectN).padStart(2, "0")}${String(sessionIndex).padStart(4, "0")}`;
-}
-
-function feedbackUUID(userN, projectN) {
-  return `dddddddd-dddd-4ddd-8ddd-0004${String(userN).padStart(2, "0")}${String(projectN).padStart(2, "0")}000000`;
-}
-
-function devlogUUID(projectN, devlogIndex = 1) {
-  return `dddddddd-dddd-4ddd-8ddd-0005${String(projectN).padStart(2, "0")}${String(devlogIndex).padStart(6, "0")}`;
-}
-
-const PROJECT_IDS = [1, 2, 3, 4, 5, 6].map(projectUUID);
-
-const PLAYER_UUIDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(playerUUID);
-const DEV_UUIDS = [DEV_B_ID, DEV_C_ID];
-const ALL_SEED_USER_IDS = [...DEV_UUIDS, ...PLAYER_UUIDS];
-
-const FEEDBACK_IDS = [
-  feedbackUUID(1, 1), feedbackUUID(1, 4),
-  feedbackUUID(2, 3),
-  feedbackUUID(4, 1),
-  feedbackUUID(5, 6),
-  feedbackUUID(9, 4),
+const FIXED_PROJECT_IDS = [1, 2, 3, 4, 5, 6].map(projectUUID);
+const FIXED_USER_IDS = [
+  DEV_B_ID,
+  DEV_C_ID,
+  ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(playerUUID),
 ];
 
-const PLAY_SESSION_IDS = [
-  playSessionUUID(1, 1), playSessionUUID(1, 2), playSessionUUID(1, 4),
-  playSessionUUID(2, 1), playSessionUUID(2, 3), playSessionUUID(2, 5),
-  playSessionUUID(3, 2), playSessionUUID(3, 4),
-  playSessionUUID(4, 1),
-  playSessionUUID(5, 5), playSessionUUID(5, 6),
-  playSessionUUID(7, 3),
-  playSessionUUID(9, 4, 1), playSessionUUID(9, 4, 2),
-];
-
-const DEVLOG_IDS = [
-  devlogUUID(1, 1), devlogUUID(1, 2),
-  devlogUUID(2, 1),
-  devlogUUID(4, 1),
-  devlogUUID(5, 1),
-];
-
-// Watch pairs [userId-index, projectNum]
-const WATCH_PAIRS = [
-  [1, 1], [1, 2],
-  [3, 4],
-  [5, 5], [5, 6],
-  [6, 2],
-  [9, 4],
-];
-
-// Bookmark pairs
-const BOOKMARK_PAIRS = [
-  [2, 5],
-  [8, 1], [8, 6],
-];
-
-const SEED_EMAILS = [
-  `hc-dev-b@${EMAIL_DOMAIN}`,
-  `hc-dev-c@${EMAIL_DOMAIN}`,
-  ...Array.from({ length: 10 }, (_, i) => `hc-u${String(i + 1).padStart(2, "0")}@${EMAIL_DOMAIN}`),
-];
+const PROTECTED_PROJECT_IDS = new Set([SMOKE_A, SMOKE_B]);
+const PROTECTED_USER_IDS = new Set([OWNER_ID]);
 
 // ---------------------------------------------------------------------------
 // Env / client helpers
@@ -149,94 +99,26 @@ function assertStaging(env) {
   const ref = extractRef(url);
   if (!ref) throw new Error(`ABORT: could not parse Supabase ref from URL: ${url}`);
   if (ref === PROD_REF) throw new Error("ABORT: production Supabase ref — refuse to delete");
-  if (ref !== STAGING_REF) throw new Error(`ABORT: expected staging ref ${STAGING_REF}, got ${ref}`);
+  if (ref !== STAGING_REF) {
+    throw new Error(`ABORT: expected staging ref ${STAGING_REF}, got ${ref}`);
+  }
   return ref;
 }
 
 function makeClient(url, key) {
-  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 }
-
-// ---------------------------------------------------------------------------
-// Safe delete helpers
-// ---------------------------------------------------------------------------
 
 function step(label, ok, count, err) {
-  return { label, ok, count: count ?? null, error: err ? String(err?.message ?? err) : null };
+  return {
+    label,
+    ok,
+    count: count ?? null,
+    error: err ? String(err?.message ?? err) : null,
+  };
 }
-
-async function safeDelete(sb, table, filter, label) {
-  try {
-    const q = sb.from(table).delete();
-    const { error, count } = await filter(q).select("id", { count: "exact", head: true }).then(
-      // PostgREST delete returns count via Prefer: return=minimal or count header
-      // Use a workaround: just delete and log
-      async () => {
-        const r = await filter(sb.from(table).delete());
-        return r;
-      }
-    );
-    if (error) return step(label, false, null, error);
-    return step(label, true, null, null);
-  } catch (e) {
-    return step(label, false, null, e);
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Storage cleanup
-// ---------------------------------------------------------------------------
-
-async function removeStorageObjects(sb) {
-  const results = [];
-  try {
-    // List objects under STORAGE_PREFIX/
-    const { data: objects, error: listError } = await sb.storage
-      .from(STORAGE_BUCKET)
-      .list(STORAGE_PREFIX, { limit: 200 });
-
-    if (listError) {
-      results.push({ label: "storage-list", ok: false, error: listError.message });
-      return results;
-    }
-
-    if (!objects || objects.length === 0) {
-      results.push({ label: "storage-list", ok: true, count: 0 });
-      return results;
-    }
-
-    // For each project folder, list and delete
-    for (const folder of objects) {
-      const folderPath = `${STORAGE_PREFIX}/${folder.name}`;
-      const { data: files, error: filesErr } = await sb.storage
-        .from(STORAGE_BUCKET)
-        .list(folderPath, { limit: 100 });
-
-      if (filesErr) {
-        results.push({ label: `storage-list-${folderPath}`, ok: false, error: filesErr.message });
-        continue;
-      }
-
-      if (!files || files.length === 0) continue;
-
-      const paths = files.map((f) => `${folderPath}/${f.name}`);
-      const { error: removeErr } = await sb.storage.from(STORAGE_BUCKET).remove(paths);
-      if (removeErr) {
-        results.push({ label: `storage-remove-${folderPath}`, ok: false, error: removeErr.message });
-      } else {
-        results.push({ label: `storage-remove-${folderPath}`, ok: true, count: paths.length });
-      }
-    }
-  } catch (e) {
-    results.push({ label: "storage-cleanup", ok: false, error: String(e?.message ?? e) });
-  }
-  return results;
-}
-
-// ---------------------------------------------------------------------------
-// Resolve actual user IDs from emails (may differ from fixed IDs if user
-// already existed with a different UUID before seed ran)
-// ---------------------------------------------------------------------------
 
 async function listAllUsers(sb) {
   const users = [];
@@ -250,136 +132,338 @@ async function listAllUsers(sb) {
   return users;
 }
 
+function isSeedAuthUser(user) {
+  if (!user?.id || PROTECTED_USER_IDS.has(user.id)) return false;
+  const email = user.email || "";
+  const meta = user.user_metadata || {};
+  if (email.endsWith(`@${EMAIL_DOMAIN}`)) return true;
+  if (FIXED_USER_IDS.includes(user.id)) return true;
+  if (user.id.startsWith(UUID_PREFIX) && meta.forge_seed_marker === MARKER) return true;
+  if (meta.forge_seed_marker === MARKER && email.endsWith(`@${EMAIL_DOMAIN}`)) return true;
+  return false;
+}
+
+function tagsIncludeMarker(tags) {
+  if (!Array.isArray(tags)) return false;
+  return tags.some((t) => String(t) === MARKER);
+}
+
 // ---------------------------------------------------------------------------
-// Main
+// Discover seed scope from live DB
 // ---------------------------------------------------------------------------
 
-async function main() {
-  const execute = process.argv.includes("--execute");
-  const env = loadEnv(".env.local");
-
-  const ref = assertStaging(env);
-  console.log(`Staging ref: ${ref}`);
-
-  const url = env.NEXT_PUBLIC_SUPABASE_URL.trim();
-  const serviceKey = (env.SUPABASE_SERVICE_ROLE_KEY || env.STAGING_SUPABASE_SERVICE_ROLE_KEY || "").trim();
-  if (!serviceKey) throw new Error("ABORT: SUPABASE_SERVICE_ROLE_KEY missing");
-
-  const plan = {
-    mode: execute ? "EXECUTE" : "DRY_RUN",
-    staging_ref: ref,
-    marker: MARKER,
-    willDelete: {
-      project_bookmarks: BOOKMARK_PAIRS.length,
-      project_watches: WATCH_PAIRS.length,
-      project_feedback: FEEDBACK_IDS.length,
-      project_play_sessions: PLAY_SESSION_IDS.length,
-      developer_follows: 2,
-      project_devlogs: DEVLOG_IDS.length,
-      projects: PROJECT_IDS.length,
-      developer_profiles: 2,
-      auth_users: SEED_EMAILS.length,
-      storage_objects: "hero-carousel-seed/* (all under prefix)",
-    },
-    protectedIds: { SMOKE_A, SMOKE_B, OWNER_ID },
-    noteOnUsers: "auth.admin.deleteUser targets only @forge-st-hero-carousel.local emails",
-  };
-  console.log(JSON.stringify(plan, null, 2));
-
-  if (!execute) {
-    console.log("\nDry-run only. Re-run with --execute to delete from Staging.");
-    return;
-  }
-
-  const sb = makeClient(url, serviceKey);
-  const steps = [];
-
-  // Verify smoke projects before deletion
-  const { data: smokeABefore } = await sb.from("projects").select("id").eq("id", SMOKE_A).maybeSingle();
-  const { data: smokeBBefore } = await sb.from("projects").select("id").eq("id", SMOKE_B).maybeSingle();
-  if (!smokeABefore) throw new Error("ABORT: Smoke A not found before cleanup — check DB state");
-  if (!smokeBBefore) throw new Error("ABORT: Smoke B not found before cleanup — check DB state");
-
-  // Resolve actual user IDs from emails (seed may have reused pre-existing UUIDs)
+async function discoverSeedScope(sb) {
   const allUsers = await listAllUsers(sb);
-  const resolvedIds = {};
-  for (const email of SEED_EMAILS) {
-    const u = allUsers.find((x) => x.email === email);
-    if (u) resolvedIds[email] = u.id;
+  const seedAuthUsers = allUsers.filter(isSeedAuthUser);
+  const seedUserIds = [...new Set(seedAuthUsers.map((u) => u.id))];
+
+  // Projects: fixed UUID namespace OR marker in tags / description
+  const { data: byFixedIds, error: fixedErr } = await sb
+    .from("projects")
+    .select("id, title, tags, description, owner_id")
+    .in("id", FIXED_PROJECT_IDS);
+  if (fixedErr) throw fixedErr;
+
+  const { data: byMarkerTag, error: tagErr } = await sb
+    .from("projects")
+    .select("id, title, tags, description, owner_id")
+    .contains("tags", [MARKER]);
+  if (tagErr) throw tagErr;
+
+  const { data: byDesc, error: descErr } = await sb
+    .from("projects")
+    .select("id, title, tags, description, owner_id")
+    .ilike("description", `${DESC_PREFIX}%`);
+  if (descErr) throw descErr;
+
+  const projectMap = new Map();
+  for (const row of [...(byFixedIds || []), ...(byMarkerTag || []), ...(byDesc || [])]) {
+    if (!row?.id) continue;
+    if (PROTECTED_PROJECT_IDS.has(row.id)) continue;
+    const marked =
+      FIXED_PROJECT_IDS.includes(row.id) ||
+      tagsIncludeMarker(row.tags) ||
+      String(row.description || "").includes(DESC_PREFIX);
+    if (!marked) continue;
+    projectMap.set(row.id, row);
   }
 
-  function devId(email) { return resolvedIds[email] ?? null; }
-  function playerId(n) { return resolvedIds[`hc-u${String(n).padStart(2, "0")}@${EMAIL_DOMAIN}`] ?? PLAYER_UUIDS[n - 1]; }
-  const resolvedDevBId = devId(`hc-dev-b@${EMAIL_DOMAIN}`) ?? DEV_B_ID;
-  const resolvedDevCId = devId(`hc-dev-c@${EMAIL_DOMAIN}`) ?? DEV_C_ID;
-  const resolvedDevIds = [resolvedDevBId, resolvedDevCId];
-
-  // --- Delete in safe order ---
-
-  // 1. Bookmarks — delete by project_id (seed projects only, covers all user UUID variants)
-  {
-    const { error } = await sb.from("project_bookmarks").delete().in("project_id", PROJECT_IDS);
-    steps.push(step("project_bookmarks", !error, BOOKMARK_PAIRS.length, error));
+  const seedProjectIds = [...projectMap.keys()];
+  if (seedProjectIds.some((id) => PROTECTED_PROJECT_IDS.has(id))) {
+    throw new Error("ABORT: protected Smoke project leaked into seed project set");
   }
 
-  // 2. Watches — delete by project_id
-  {
-    const { error } = await sb.from("project_watches").delete().in("project_id", PROJECT_IDS);
-    steps.push(step("project_watches", !error, WATCH_PAIRS.length, error));
+  // Child rows related to seed projects (primary) or seed users
+  async function selectByProject(table, columns = "id") {
+    if (!seedProjectIds.length) return [];
+    const { data, error } = await sb
+      .from(table)
+      .select(columns)
+      .in("project_id", seedProjectIds);
+    if (error) throw error;
+    return data || [];
   }
 
-  // 3. Feedback — delete by id (fixed) + safety net by project_id
-  {
-    const { error } = await sb.from("project_feedback").delete().in("id", FEEDBACK_IDS);
-    await sb.from("project_feedback").delete().in("project_id", PROJECT_IDS);
-    steps.push(step("project_feedback", !error, FEEDBACK_IDS.length, error));
+  const bookmarks = await selectByProject("project_bookmarks", "user_id, project_id");
+  const watches = await selectByProject("project_watches", "user_id, project_id");
+  const feedback = await selectByProject("project_feedback", "id, user_id, project_id");
+  const playSessions = await selectByProject(
+    "project_play_sessions",
+    "id, user_id, project_id",
+  );
+  const devlogs = await selectByProject("project_devlogs", "id, project_id, author_id");
+
+  // developer_follows: follower is seed user OR developer is seed user
+  let follows = [];
+  if (seedUserIds.length) {
+    const { data: byFollower, error: e1 } = await sb
+      .from("developer_follows")
+      .select("follower_id, developer_user_id")
+      .in("follower_id", seedUserIds);
+    if (e1) throw e1;
+    const { data: byDeveloper, error: e2 } = await sb
+      .from("developer_follows")
+      .select("follower_id, developer_user_id")
+      .in("developer_user_id", seedUserIds);
+    if (e2) throw e2;
+    const key = (r) => `${r.follower_id}|${r.developer_user_id}`;
+    const map = new Map();
+    for (const r of [...(byFollower || []), ...(byDeveloper || [])]) {
+      map.set(key(r), r);
+    }
+    follows = [...map.values()];
   }
 
-  // 4. Play sessions — by fixed id + safety net by project_id
-  {
-    const { error } = await sb.from("project_play_sessions").delete().in("id", PLAY_SESSION_IDS);
-    await sb.from("project_play_sessions").delete().in("project_id", PROJECT_IDS);
-    steps.push(step("project_play_sessions", !error, PLAY_SESSION_IDS.length, error));
+  const { data: profiles, error: profileErr } = seedUserIds.length
+    ? await sb
+        .from("developer_profiles")
+        .select("user_id, creator_id, public_name")
+        .in("user_id", seedUserIds)
+    : { data: [], error: null };
+  if (profileErr) throw profileErr;
+
+  // Storage objects under prefix (optional; Staging may have no bucket)
+  let storageObjectCount = 0;
+  let storageNote = `${STORAGE_PREFIX}/*`;
+  try {
+    const { data: folders, error: listErr } = await sb.storage
+      .from(STORAGE_BUCKET)
+      .list(STORAGE_PREFIX, { limit: 200 });
+    if (listErr) {
+      storageNote = `bucket unavailable or empty: ${listErr.message}`;
+    } else {
+      for (const folder of folders || []) {
+        const folderPath = `${STORAGE_PREFIX}/${folder.name}`;
+        const { data: files } = await sb.storage
+          .from(STORAGE_BUCKET)
+          .list(folderPath, { limit: 100 });
+        storageObjectCount += files?.length ?? 0;
+      }
+    }
+  } catch (e) {
+    storageNote = `storage probe skipped: ${String(e?.message ?? e)}`;
   }
 
-  // 5. Developer follows — delete by resolved follower IDs and developer IDs
-  {
-    const resolvedPlayerIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(playerId).filter(Boolean);
-    const { error: e1 } = await sb.from("developer_follows").delete()
-      .in("follower_id", resolvedPlayerIds);
-    const { error: e2 } = await sb.from("developer_follows").delete()
-      .in("developer_user_id", resolvedDevIds);
-    steps.push(step("developer_follows", !e1 && !e2, 2, e1 ?? e2));
+  return {
+    seedAuthUsers: seedAuthUsers.map((u) => ({
+      id: u.id,
+      email: u.email,
+      marker: u.user_metadata?.forge_seed_marker ?? null,
+    })),
+    seedUserIds,
+    seedProjects: [...projectMap.values()].map((p) => ({
+      id: p.id,
+      title: p.title,
+      owner_id: p.owner_id,
+    })),
+    seedProjectIds,
+    counts: {
+      auth_users: seedAuthUsers.length,
+      projects: seedProjectIds.length,
+      project_feedback: feedback.length,
+      project_watches: watches.length,
+      project_bookmarks: bookmarks.length,
+      project_play_sessions: playSessions.length,
+      project_devlogs: devlogs.length,
+      developer_follows: follows.length,
+      developer_profiles: (profiles || []).length,
+      storage_objects: storageObjectCount,
+    },
+    rows: {
+      bookmarks,
+      watches,
+      feedback,
+      playSessions,
+      devlogs,
+      follows,
+      profiles: profiles || [],
+    },
+    storageNote,
+    protected: {
+      SMOKE_A,
+      SMOKE_B,
+      OWNER_ID,
+      smokeInSeedProjects: false,
+      ownerInSeedUsers: seedUserIds.includes(OWNER_ID),
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Storage cleanup (execute only)
+// ---------------------------------------------------------------------------
+
+async function removeStorageObjects(sb) {
+  const results = [];
+  try {
+    const { data: objects, error: listError } = await sb.storage
+      .from(STORAGE_BUCKET)
+      .list(STORAGE_PREFIX, { limit: 200 });
+
+    if (listError) {
+      results.push({ label: "storage-list", ok: false, error: listError.message, count: 0 });
+      return results;
+    }
+
+    if (!objects || objects.length === 0) {
+      results.push({ label: "storage-list", ok: true, count: 0 });
+      return results;
+    }
+
+    for (const folder of objects) {
+      const folderPath = `${STORAGE_PREFIX}/${folder.name}`;
+      const { data: files, error: filesErr } = await sb.storage
+        .from(STORAGE_BUCKET)
+        .list(folderPath, { limit: 100 });
+
+      if (filesErr) {
+        results.push({
+          label: `storage-list-${folderPath}`,
+          ok: false,
+          error: filesErr.message,
+          count: 0,
+        });
+        continue;
+      }
+
+      if (!files || files.length === 0) continue;
+
+      const paths = files.map((f) => `${folderPath}/${f.name}`);
+      const { error: removeErr } = await sb.storage.from(STORAGE_BUCKET).remove(paths);
+      if (removeErr) {
+        results.push({
+          label: `storage-remove-${folderPath}`,
+          ok: false,
+          error: removeErr.message,
+          count: 0,
+        });
+      } else {
+        results.push({
+          label: `storage-remove-${folderPath}`,
+          ok: true,
+          count: paths.length,
+        });
+      }
+    }
+  } catch (e) {
+    results.push({
+      label: "storage-cleanup",
+      ok: false,
+      error: String(e?.message ?? e),
+      count: 0,
+    });
+  }
+  return results;
+}
+
+// ---------------------------------------------------------------------------
+// Execute deletes (seed scope only)
+// ---------------------------------------------------------------------------
+
+async function executeCleanup(sb, scope) {
+  const steps = [];
+  const projectIds = scope.seedProjectIds;
+  const userIds = scope.seedUserIds;
+
+  if (projectIds.some((id) => PROTECTED_PROJECT_IDS.has(id))) {
+    throw new Error("ABORT: refuse to delete — Smoke project in scope");
+  }
+  if (userIds.some((id) => PROTECTED_USER_IDS.has(id))) {
+    throw new Error("ABORT: refuse to delete — protected user in scope");
   }
 
-  // 6. Devlogs — by fixed id + safety net by project_id
-  {
-    const { error } = await sb.from("project_devlogs").delete().in("id", DEVLOG_IDS);
-    await sb.from("project_devlogs").delete().in("project_id", PROJECT_IDS);
-    steps.push(step("project_devlogs", !error, DEVLOG_IDS.length, error));
+  const { data: smokeABefore } = await sb
+    .from("projects")
+    .select("id")
+    .eq("id", SMOKE_A)
+    .maybeSingle();
+  const { data: smokeBBefore } = await sb
+    .from("projects")
+    .select("id")
+    .eq("id", SMOKE_B)
+    .maybeSingle();
+  if (!smokeABefore) throw new Error("ABORT: Smoke A not found before cleanup");
+  if (!smokeBBefore) throw new Error("ABORT: Smoke B not found before cleanup");
+
+  // 1–6: child rows by seed project_id
+  for (const table of [
+    "project_bookmarks",
+    "project_watches",
+    "project_feedback",
+    "project_play_sessions",
+    "project_devlogs",
+  ]) {
+    if (!projectIds.length) {
+      steps.push(step(table, true, 0, null));
+      continue;
+    }
+    const expected = scope.counts[table];
+    const { error } = await sb.from(table).delete().in("project_id", projectIds);
+    steps.push(step(table, !error, expected, error));
   }
 
-  // 7. Projects — extra guard: never delete SMOKE_A/B
-  {
-    const safeIds = PROJECT_IDS.filter((id) => id !== SMOKE_A && id !== SMOKE_B);
-    const { error } = await sb.from("projects").delete().in("id", safeIds);
-    steps.push(step("projects", !error, safeIds.length, error));
-  }
-
-  // 8. Developer profiles — by resolved dev user IDs
-  {
-    const { error } = await sb.from("developer_profiles").delete().in("user_id", resolvedDevIds);
-    steps.push(step("developer_profiles", !error, resolvedDevIds.length, error));
-  }
-
-  // 9. Auth users — only @forge-st-hero-carousel.local, never OWNER_ID
-  {
-    const seedUsers = allUsers.filter(
-      (u) => u.email && u.email.endsWith(`@${EMAIL_DOMAIN}`) && u.id !== OWNER_ID,
+  // 7: developer_follows by seed users (follower or developer)
+  if (userIds.length) {
+    const { error: e1 } = await sb
+      .from("developer_follows")
+      .delete()
+      .in("follower_id", userIds);
+    const { error: e2 } = await sb
+      .from("developer_follows")
+      .delete()
+      .in("developer_user_id", userIds);
+    steps.push(
+      step("developer_follows", !e1 && !e2, scope.counts.developer_follows, e1 ?? e2),
     );
+  } else {
+    steps.push(step("developer_follows", true, 0, null));
+  }
+
+  // 8: projects (seed ids only; Smoke excluded by construction)
+  {
+    const { error } = await sb.from("projects").delete().in("id", projectIds);
+    steps.push(step("projects", !error, projectIds.length, error));
+  }
+
+  // 9: developer_profiles for seed users
+  if (userIds.length) {
+    const { error } = await sb
+      .from("developer_profiles")
+      .delete()
+      .in("user_id", userIds);
+    steps.push(
+      step("developer_profiles", !error, scope.counts.developer_profiles, error),
+    );
+  } else {
+    steps.push(step("developer_profiles", true, 0, null));
+  }
+
+  // 10: auth users (seed email / fixed UUID / marker only)
+  {
     let deleteOk = true;
     let deleteErr = null;
-    for (const u of seedUsers) {
+    for (const u of scope.seedAuthUsers) {
+      if (PROTECTED_USER_IDS.has(u.id)) continue;
       const { error } = await sb.auth.admin.deleteUser(u.id);
       if (error) {
         console.warn(`  deleteUser ${u.email}: ${error.message}`);
@@ -387,10 +471,10 @@ async function main() {
         deleteErr = error.message;
       }
     }
-    steps.push(step("auth_users", deleteOk, seedUsers.length, deleteErr));
+    steps.push(step("auth_users", deleteOk, scope.seedAuthUsers.length, deleteErr));
   }
 
-  // 10. Storage
+  // 11: storage prefix
   {
     const storageResults = await removeStorageObjects(sb);
     for (const r of storageResults) {
@@ -398,29 +482,116 @@ async function main() {
     }
   }
 
-  console.log(JSON.stringify({ steps }, null, 2));
+  const { data: smokeAAfter } = await sb
+    .from("projects")
+    .select("id")
+    .eq("id", SMOKE_A)
+    .maybeSingle();
+  const { data: smokeBAfter } = await sb
+    .from("projects")
+    .select("id")
+    .eq("id", SMOKE_B)
+    .maybeSingle();
 
-  // 11. Final: confirm Smoke A/B still present
-  const { data: smokeAAfter } = await sb.from("projects").select("id").eq("id", SMOKE_A).maybeSingle();
-  const { data: smokeBAfter } = await sb.from("projects").select("id").eq("id", SMOKE_B).maybeSingle();
-  const smokeAOk = !!smokeAAfter;
-  const smokeBOk = !!smokeBAfter;
-  console.log(JSON.stringify({
-    smokeA: { id: SMOKE_A, present: smokeAOk },
-    smokeB: { id: SMOKE_B, present: smokeBOk },
-  }, null, 2));
+  return {
+    steps,
+    smokeA: { id: SMOKE_A, present: !!smokeAAfter },
+    smokeB: { id: SMOKE_B, present: !!smokeBAfter },
+  };
+}
 
-  if (!smokeAOk || !smokeBOk) {
-    console.error("CRITICAL: Smoke A or B was deleted — investigate immediately!");
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
+async function main() {
+  const execute = process.argv.includes("--execute");
+  const env = loadEnv(".env.local");
+  const ref = assertStaging(env);
+  console.log(`Staging ref: ${ref}`);
+
+  const url = env.NEXT_PUBLIC_SUPABASE_URL.trim();
+  const serviceKey = (
+    env.SUPABASE_SERVICE_ROLE_KEY ||
+    env.STAGING_SUPABASE_SERVICE_ROLE_KEY ||
+    ""
+  ).trim();
+  if (!serviceKey) throw new Error("ABORT: SUPABASE_SERVICE_ROLE_KEY missing");
+
+  const sb = makeClient(url, serviceKey);
+  const scope = await discoverSeedScope(sb);
+
+  if (scope.protected.ownerInSeedUsers) {
+    throw new Error("ABORT: owner id matched seed user filter — refuse to proceed");
+  }
+
+  const expectedBaseline = {
+    auth_users: 12,
+    projects: 6,
+    project_feedback: 12,
+    project_watches: 16,
+    project_bookmarks: 6,
+    project_play_sessions: 25,
+    project_devlogs: 5,
+    developer_follows: 2,
+    developer_profiles: 2,
+  };
+
+  const mismatches = Object.entries(expectedBaseline)
+    .filter(([k, v]) => scope.counts[k] !== v)
+    .map(([k, v]) => ({ key: k, expected: v, actual: scope.counts[k] }));
+
+  const plan = {
+    mode: execute ? "EXECUTE" : "DRY_RUN",
+    staging_ref: ref,
+    production_detected: false,
+    marker: MARKER,
+    derivation: {
+      auth_users:
+        "email @forge-st-hero-carousel.local OR fixed UUID namespace OR user_metadata.forge_seed_marker",
+      projects:
+        "fixed project UUIDs OR tags contains marker OR description starts with [hero-carousel-seed]",
+      child_rows: "rows whose project_id is a seed project (follows: seed user as follower or developer)",
+      exclusions: "Smoke A/B, owner, non-marker / non-namespace rows",
+    },
+    willDelete: scope.counts,
+    storage_note: scope.storageNote,
+    seed_auth_user_emails: scope.seedAuthUsers.map((u) => u.email),
+    seed_project_titles: scope.seedProjects.map((p) => p.title),
+    protectedIds: { SMOKE_A, SMOKE_B, OWNER_ID },
+    baseline_check: {
+      expected: expectedBaseline,
+      mismatches,
+      ok: mismatches.length === 0,
+    },
+  };
+
+  console.log(JSON.stringify(plan, null, 2));
+
+  if (!execute) {
+    if (mismatches.length > 0) {
+      console.warn(
+        "\nWARNING: dry-run counts differ from expected seed baseline (see baseline_check).",
+      );
+    } else {
+      console.log("\nDry-run counts match expected seed baseline.");
+    }
+    console.log("Dry-run only. Re-run with --execute to delete from Staging.");
+    return;
+  }
+
+  const result = await executeCleanup(sb, scope);
+  console.log(JSON.stringify(result, null, 2));
+
+  if (!result.smokeA.present || !result.smokeB.present) {
+    console.error("CRITICAL: Smoke A or B missing after cleanup!");
     process.exit(1);
   }
 
-  const failed = steps.filter((s) => !s.ok);
+  const failed = result.steps.filter((s) => !s.ok);
   if (failed.length > 0) {
     console.error(`Cleanup completed with ${failed.length} step(s) with errors:`);
-    for (const f of failed) {
-      console.error(`  ${f.label}: ${f.error}`);
-    }
+    for (const f of failed) console.error(`  ${f.label}: ${f.error}`);
     process.exit(1);
   }
 

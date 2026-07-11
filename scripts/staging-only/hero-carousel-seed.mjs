@@ -99,60 +99,64 @@ const FIRST_PUB_DAYS_AGO = { 1: 10, 2: 7, 3: 2, 4: 6, 5: 5, 6: 4 };
 // ---------------------------------------------------------------------------
 
 /*
- U01: play P1,P2,P4; FB P1,P4; watch P1,P2
- U02: play P1,P3,P5; FB P3; bookmark P5
- U03: play P2,P4; watch P4; follow DevB
- U04: play P1; FB P1 (bugs field set, bug report), moderation_status=visible
- U05: play P5,P6; FB P6; watch P5,P6
- U06: watch P2 only
- U07: play P3 only
- U08: bookmark P1,P6
- U09: play P4 v0.1 + v0.2 (two sessions); FB P4 version_key 0.1; watch P4
- U10: follow DevC only
+ User personas (10 players — no identical action sets):
+
+ U01 Heavy:     play P1×2,P2,P3,P4; FB P1,P2,P4; watch P1,P2
+ U02 Heavy-mid: play P1,P2×2,P3,P4,P5; FB P1,P2,P3; watch P1,P2,P4
+                ※ bookmark なし（旧案の U02→P3 bookmark は採用しない）
+ U03 Mid:       play P1,P2,P4; FB P1; watch P1,P2,P4; follow DevB
+ U04 Bug FB:    play P1; FB P1 (bugs field); watch P1
+                ※ bugs 付き project_feedback も distinct FB 人数に含む
+ U05 Mid:       play P1,P2,P5; FB P1,P2; watch P1,P2,P5; bookmark P5
+ U06 Watch-only: watch P1,P2
+ U07 Play-only: play P1,P2,P3,P6
+ U08 Bookmark-only: bookmark P1,P3,P6
+ U09 Replay:    play P1, P4×2 (0.1+0.2); FB P1,P4; watch P1,P4
+ U10 Near-idle: bookmark P3,P6; follow DevC
+
+ Bookmark canonical (6 total):
+   U05→P5; U08→P1,P3,P6; U10→P3,P6
+   → P1:1 / P3:2 / P5:1 / P6:2 （P3 は U08+U10 のみ）
 */
 
-// ---------------------------------------------------------------------------
-// Expected totals (deterministic)
-// ---------------------------------------------------------------------------
-
 const EXPECTED = {
-  // Derived strictly from the engagement plan below.
+  // Deterministic from the plan above (not ranges).
   P1: {
-    feedback_users: 2, // U01, U04
-    watchers: 1, // U01
+    feedback_users: 6, // U01,U02,U03,U04,U05,U09
+    watchers: 7, // U01,U02,U03,U04,U05,U06,U09
     bookmarks: 1, // U08
-    play_users: 3, // U01, U02, U04
-    play_sessions: 3,
-    replay_users: 0,
+    play_users: 7, // U01,U02,U03,U04,U05,U07,U09
+    play_sessions: 8, // U01×2 + 6 singles
+    replay_users: 1, // U01
     devlog_count: 2,
     playable_version: "0.1",
   },
   P2: {
-    feedback_users: 0,
-    watchers: 2, // U01, U06
+    feedback_users: 3, // U01,U02,U05
+    watchers: 5, // U01,U02,U03,U05,U06
     bookmarks: 0,
-    play_users: 2, // U01, U03
-    play_sessions: 2,
-    replay_users: 0,
+    play_users: 5, // U01,U02,U03,U05,U07
+    play_sessions: 6, // U02×2 + 4 singles
+    replay_users: 1, // U02
     devlog_count: 1,
     playable_version: "0.1",
   },
   P3: {
     feedback_users: 1, // U02
     watchers: 0,
-    bookmarks: 0,
-    play_users: 2, // U02, U07
-    play_sessions: 2,
+    bookmarks: 2, // U08,U10
+    play_users: 3, // U01,U02,U07
+    play_sessions: 3,
     replay_users: 0,
     devlog_count: 0,
     playable_version: "0.1",
   },
   P4: {
-    feedback_users: 2, // U01, U09
-    watchers: 2, // U03, U09
+    feedback_users: 2, // U01,U09
+    watchers: 3, // U02,U03,U09
     bookmarks: 0,
-    play_users: 3, // U01, U03, U09
-    play_sessions: 4, // U01, U03, U09×2
+    play_users: 4, // U01,U02,U03,U09
+    play_sessions: 5, // U09×2 + 3 singles
     replay_users: 1, // U09
     devlog_count: 1,
     playable_version: "0.2",
@@ -160,18 +164,18 @@ const EXPECTED = {
   P5: {
     feedback_users: 0,
     watchers: 1, // U05
-    bookmarks: 1, // U02
-    play_users: 2, // U02, U05
+    bookmarks: 1, // U05
+    play_users: 2, // U02,U05
     play_sessions: 2,
     replay_users: 0,
     devlog_count: 1,
     playable_version: "0.1",
   },
   P6: {
-    feedback_users: 1, // U05
-    watchers: 1, // U05
-    bookmarks: 1, // U08
-    play_users: 1, // U05
+    feedback_users: 0,
+    watchers: 0,
+    bookmarks: 2, // U08,U10
+    play_users: 1, // U07
     play_sessions: 1,
     replay_users: 0,
     devlog_count: 0,
@@ -352,35 +356,32 @@ async function uploadImage(sb, pId, slot, width, height, rgb) {
 }
 
 /** Fallback URLs — distinct across all slots to avoid duplicate-image violations. */
-const FALLBACK_URLS = [
-  "/images/landing/game-1.png",
-  "/images/landing/game-2.png",
-  "/images/landing/game-3.png",
-  "/images/landing/game-4.png",
-  "/images/landing/game-5.png",
-  "/demo-thumbnails/neon-drift.svg",
-  "/demo-thumbnails/pixel-farm.svg",
-  "/demo-thumbnails/storm-tactics.svg",
-  "/demo-thumbnails/gravity-shift.svg",
-];
-let fallbackIndex = 0;
-function nextFallback() {
-  return FALLBACK_URLS[fallbackIndex++ % FALLBACK_URLS.length];
+/** Distinct existing repo assets (no Storage bucket on Staging). Never reuse same path twice. */
+const PROJECT_ASSET_URLS = {
+  1: [
+    "/images/landing/game-1.png",
+    "/demo-thumbnails/neon-drift.svg",
+    "/demo-thumbnails/emberfall.svg",
+  ],
+  2: [
+    "/images/landing/game-2.png",
+    "/demo-thumbnails/blade-of-ash.svg",
+    "/demo-thumbnails/aetherborn.svg",
+  ],
+  3: ["/images/landing/game-3.png", "/demo-thumbnails/crimson-vault.svg"],
+  4: ["/demo-thumbnails/titans-edge.svg"],
+  5: ["/images/landing/game-4.png", "/demo-thumbnails/hollow-signal.svg"],
+  6: ["/images/landing/game-5.png"],
+};
+
+async function resolveProjectUrls(_sb, pNum) {
+  const urls = PROJECT_ASSET_URLS[pNum];
+  if (!urls?.length) throw new Error(`No asset urls for P${pNum}`);
+  return { mainUrl: urls[0], allUrls: [...urls] };
 }
 
-async function resolveProjectUrls(sb, pNum) {
-  const spec = P[pNum];
-  const { main, extras } = spec.imageSpec;
-  const pId = spec.id;
-
-  const mainUrl = (await uploadImage(sb, pId, 0, main[0], main[1], main[2])) ?? nextFallback();
-  const extraUrls = [];
-  for (let i = 0; i < extras.length; i++) {
-    const ex = extras[i];
-    const url = (await uploadImage(sb, pId, i + 1, ex[0], ex[1], ex[2])) ?? nextFallback();
-    extraUrls.push(url);
-  }
-  return { mainUrl, allUrls: [mainUrl, ...extraUrls] };
+function minutesFromNowIso(minutes) {
+  return new Date(Date.now() + minutes * 60_000).toISOString();
 }
 
 // ---------------------------------------------------------------------------
@@ -518,9 +519,17 @@ async function upsertDevlogs(sb, devBId, devCId) {
   // P5: 1 non-initial
   // P6: 0
 
+  // Devlogs must be AFTER first_published_at (immutable = insert time).
+  // Use near-future timestamps so updated shelf picks them up.
+  const t1 = minutesFromNowIso(2);
+  const t2 = minutesFromNowIso(4);
+  const t3 = minutesFromNowIso(6);
+  const t4 = minutesFromNowIso(8);
+  const t5 = minutesFromNowIso(10);
+
   const rows = [];
 
-  // P1 devlog 1 (older)
+  // P1 devlog 1 (older of the two)
   rows.push({
     id: devlogUUID(1, 1),
     project_id: String(P[1].id),
@@ -529,8 +538,8 @@ async function upsertDevlogs(sb, devBId, devCId) {
     content: "Fixed rendering issues and improved level design.",
     published_version: "0.1.1",
     is_initial_publish: false,
-    created_at: hoursAgoIso(120),
-    published_at: hoursAgoIso(120),
+    created_at: t1,
+    published_at: t1,
   });
 
   // P1 devlog 2 (more recent)
@@ -542,8 +551,8 @@ async function upsertDevlogs(sb, devBId, devCId) {
     content: "Overhauled enemy AI and added two new zones.",
     published_version: "0.1.2",
     is_initial_publish: false,
-    created_at: hoursAgoIso(24),
-    published_at: hoursAgoIso(24),
+    created_at: t5,
+    published_at: t5,
   });
 
   // P2 devlog 1
@@ -555,8 +564,8 @@ async function upsertDevlogs(sb, devBId, devCId) {
     content: "Added winter crops and new tool upgrades.",
     published_version: "0.1.1",
     is_initial_publish: false,
-    created_at: hoursAgoIso(48),
-    published_at: hoursAgoIso(48),
+    created_at: t3,
+    published_at: t3,
   });
 
   // P4 devlog 1 (bump to 0.2)
@@ -568,8 +577,8 @@ async function upsertDevlogs(sb, devBId, devCId) {
     content: "New anti-gravity zones and 10 new puzzle levels.",
     published_version: "0.2",
     is_initial_publish: false,
-    created_at: hoursAgoIso(36),
-    published_at: hoursAgoIso(36),
+    created_at: t4,
+    published_at: t4,
   });
 
   // P5 devlog 1
@@ -581,8 +590,8 @@ async function upsertDevlogs(sb, devBId, devCId) {
     content: "Two new regions and branching dialogue system.",
     published_version: "0.1.1",
     is_initial_publish: false,
-    created_at: hoursAgoIso(72),
-    published_at: hoursAgoIso(72),
+    created_at: t2,
+    published_at: t2,
   });
 
   const { error } = await sb.from("project_devlogs").upsert(rows, { onConflict: "id" });
@@ -596,36 +605,49 @@ async function upsertDevlogs(sb, devBId, devCId) {
 async function upsertPlaySessions(sb, userIds) {
   // Delete existing seed sessions by fixed UUIDs first (idempotent)
   const allSessionIds = [
-    playSessionUUID(1, 1), playSessionUUID(1, 2), playSessionUUID(1, 4),
-    playSessionUUID(2, 1), playSessionUUID(2, 3), playSessionUUID(2, 5),
-    playSessionUUID(3, 2), playSessionUUID(3, 4),
+    playSessionUUID(1, 1, 1), playSessionUUID(1, 1, 2),
+    playSessionUUID(1, 2), playSessionUUID(1, 3), playSessionUUID(1, 4),
+    playSessionUUID(2, 1), playSessionUUID(2, 2, 1), playSessionUUID(2, 2, 2),
+    playSessionUUID(2, 3), playSessionUUID(2, 4), playSessionUUID(2, 5),
+    playSessionUUID(3, 1), playSessionUUID(3, 2), playSessionUUID(3, 4),
     playSessionUUID(4, 1),
-    playSessionUUID(5, 5), playSessionUUID(5, 6),
-    playSessionUUID(7, 3),
-    playSessionUUID(9, 4, 1), playSessionUUID(9, 4, 2),
+    playSessionUUID(5, 1), playSessionUUID(5, 2), playSessionUUID(5, 5),
+    playSessionUUID(7, 1), playSessionUUID(7, 2), playSessionUUID(7, 3), playSessionUUID(7, 6),
+    playSessionUUID(9, 1), playSessionUUID(9, 4, 1), playSessionUUID(9, 4, 2),
   ];
   await sb.from("project_play_sessions").delete().in("id", allSessionIds);
 
   const rows = [
-    // U01: play P1,P2,P4
-    { id: playSessionUUID(1, 1), user_id: userIds[1], project_id: String(P[1].id), version_key: "0.1", played_at: hoursAgoIso(150), context: "general" },
+    // U01 Heavy: P1×2, P2, P3, P4
+    { id: playSessionUUID(1, 1, 1), user_id: userIds[1], project_id: String(P[1].id), version_key: "0.1", played_at: hoursAgoIso(150), context: "general" },
+    { id: playSessionUUID(1, 1, 2), user_id: userIds[1], project_id: String(P[1].id), version_key: "0.1", played_at: hoursAgoIso(40), context: "new_version" },
     { id: playSessionUUID(1, 2), user_id: userIds[1], project_id: String(P[2].id), version_key: "0.1", played_at: hoursAgoIso(145), context: "general" },
+    { id: playSessionUUID(1, 3), user_id: userIds[1], project_id: String(P[3].id), version_key: "0.1", played_at: hoursAgoIso(142), context: "general" },
     { id: playSessionUUID(1, 4), user_id: userIds[1], project_id: String(P[4].id), version_key: "0.1", played_at: hoursAgoIso(140), context: "general" },
-    // U02: play P1,P3,P5
+    // U02 Heavy-mid: P1, P2×2, P3, P4, P5
     { id: playSessionUUID(2, 1), user_id: userIds[2], project_id: String(P[1].id), version_key: "0.1", played_at: hoursAgoIso(100), context: "general" },
+    { id: playSessionUUID(2, 2, 1), user_id: userIds[2], project_id: String(P[2].id), version_key: "0.1", played_at: hoursAgoIso(98), context: "general" },
+    { id: playSessionUUID(2, 2, 2), user_id: userIds[2], project_id: String(P[2].id), version_key: "0.1", played_at: hoursAgoIso(35), context: "new_version" },
     { id: playSessionUUID(2, 3), user_id: userIds[2], project_id: String(P[3].id), version_key: "0.1", played_at: hoursAgoIso(95), context: "general" },
+    { id: playSessionUUID(2, 4), user_id: userIds[2], project_id: String(P[4].id), version_key: "0.1", played_at: hoursAgoIso(92), context: "general" },
     { id: playSessionUUID(2, 5), user_id: userIds[2], project_id: String(P[5].id), version_key: "0.1", played_at: hoursAgoIso(90), context: "general" },
-    // U03: play P2,P4
-    { id: playSessionUUID(3, 2), user_id: userIds[3], project_id: String(P[2].id), version_key: "0.1", played_at: hoursAgoIso(80), context: "general" },
+    // U03 Mid: P1, P2, P4
+    { id: playSessionUUID(3, 1), user_id: userIds[3], project_id: String(P[1].id), version_key: "0.1", played_at: hoursAgoIso(80), context: "general" },
+    { id: playSessionUUID(3, 2), user_id: userIds[3], project_id: String(P[2].id), version_key: "0.1", played_at: hoursAgoIso(78), context: "general" },
     { id: playSessionUUID(3, 4), user_id: userIds[3], project_id: String(P[4].id), version_key: "0.1", played_at: hoursAgoIso(75), context: "general" },
-    // U04: play P1
+    // U04 Bug: P1
     { id: playSessionUUID(4, 1), user_id: userIds[4], project_id: String(P[1].id), version_key: "0.1", played_at: hoursAgoIso(60), context: "general" },
-    // U05: play P5,P6
+    // U05 Mid: P1, P2, P5
+    { id: playSessionUUID(5, 1), user_id: userIds[5], project_id: String(P[1].id), version_key: "0.1", played_at: hoursAgoIso(55), context: "general" },
+    { id: playSessionUUID(5, 2), user_id: userIds[5], project_id: String(P[2].id), version_key: "0.1", played_at: hoursAgoIso(52), context: "general" },
     { id: playSessionUUID(5, 5), user_id: userIds[5], project_id: String(P[5].id), version_key: "0.1", played_at: hoursAgoIso(50), context: "general" },
-    { id: playSessionUUID(5, 6), user_id: userIds[5], project_id: String(P[6].id), version_key: "0.1", played_at: hoursAgoIso(48), context: "general" },
-    // U07: play P3
-    { id: playSessionUUID(7, 3), user_id: userIds[7], project_id: String(P[3].id), version_key: "0.1", played_at: hoursAgoIso(30), context: "general" },
-    // U09: play P4 version 0.1 AND 0.2 (two sessions)
+    // U07 Play-only: P1, P2, P3, P6
+    { id: playSessionUUID(7, 1), user_id: userIds[7], project_id: String(P[1].id), version_key: "0.1", played_at: hoursAgoIso(30), context: "general" },
+    { id: playSessionUUID(7, 2), user_id: userIds[7], project_id: String(P[2].id), version_key: "0.1", played_at: hoursAgoIso(28), context: "general" },
+    { id: playSessionUUID(7, 3), user_id: userIds[7], project_id: String(P[3].id), version_key: "0.1", played_at: hoursAgoIso(26), context: "general" },
+    { id: playSessionUUID(7, 6), user_id: userIds[7], project_id: String(P[6].id), version_key: "0.1", played_at: hoursAgoIso(24), context: "general" },
+    // U09 Replay: P1, P4×2
+    { id: playSessionUUID(9, 1), user_id: userIds[9], project_id: String(P[1].id), version_key: "0.1", played_at: hoursAgoIso(22), context: "general" },
     { id: playSessionUUID(9, 4, 1), user_id: userIds[9], project_id: String(P[4].id), version_key: "0.1", played_at: hoursAgoIso(20), context: "general" },
     { id: playSessionUUID(9, 4, 2), user_id: userIds[9], project_id: String(P[4].id), version_key: "0.2", played_at: hoursAgoIso(10), context: "new_version" },
   ];
@@ -639,8 +661,14 @@ async function upsertPlaySessions(sb, userIds) {
 // ---------------------------------------------------------------------------
 
 async function upsertFeedback(sb, userIds) {
+  // Remove any prior seed feedback on P1–P6 (idempotent; covers plan revisions)
+  await sb
+    .from("project_feedback")
+    .delete()
+    .in("project_id", [1, 2, 3, 4, 5, 6].map((n) => String(P[n].id)));
+
   const rows = [
-    // U01: FB P1
+    // U01: FB P1, P2, P4
     {
       id: feedbackUUID(1, 1),
       user_id: userIds[1],
@@ -651,7 +679,16 @@ async function upsertFeedback(sb, userIds) {
       created_at: hoursAgoIso(148),
       updated_at: hoursAgoIso(148),
     },
-    // U01: FB P4
+    {
+      id: feedbackUUID(1, 2),
+      user_id: userIds[1],
+      project_id: String(P[2].id),
+      version_key: "0.1",
+      good_points: `${DESC_PREFIX} Farming loop is very chill.`,
+      moderation_status: "visible",
+      created_at: hoursAgoIso(144),
+      updated_at: hoursAgoIso(144),
+    },
     {
       id: feedbackUUID(1, 4),
       user_id: userIds[1],
@@ -662,7 +699,27 @@ async function upsertFeedback(sb, userIds) {
       created_at: hoursAgoIso(138),
       updated_at: hoursAgoIso(138),
     },
-    // U02: FB P3
+    // U02: FB P1, P2, P3
+    {
+      id: feedbackUUID(2, 1),
+      user_id: userIds[2],
+      project_id: String(P[1].id),
+      version_key: "0.1",
+      good_points: `${DESC_PREFIX} Neon art direction stands out.`,
+      moderation_status: "visible",
+      created_at: hoursAgoIso(99),
+      updated_at: hoursAgoIso(99),
+    },
+    {
+      id: feedbackUUID(2, 2),
+      user_id: userIds[2],
+      project_id: String(P[2].id),
+      version_key: "0.1",
+      good_points: `${DESC_PREFIX} Crop upgrades feel rewarding.`,
+      moderation_status: "visible",
+      created_at: hoursAgoIso(97),
+      updated_at: hoursAgoIso(97),
+    },
     {
       id: feedbackUUID(2, 3),
       user_id: userIds[2],
@@ -673,7 +730,18 @@ async function upsertFeedback(sb, userIds) {
       created_at: hoursAgoIso(93),
       updated_at: hoursAgoIso(93),
     },
-    // U04: FB P1 with bugs field (bug report)
+    // U03: FB P1
+    {
+      id: feedbackUUID(3, 1),
+      user_id: userIds[3],
+      project_id: String(P[1].id),
+      version_key: "0.1",
+      good_points: `${DESC_PREFIX} Boss fights are fair and readable.`,
+      moderation_status: "visible",
+      created_at: hoursAgoIso(79),
+      updated_at: hoursAgoIso(79),
+    },
+    // U04: FB P1 with bugs (counts toward distinct FB users)
     {
       id: feedbackUUID(4, 1),
       user_id: userIds[4],
@@ -685,18 +753,38 @@ async function upsertFeedback(sb, userIds) {
       created_at: hoursAgoIso(58),
       updated_at: hoursAgoIso(58),
     },
-    // U05: FB P6
+    // U05: FB P1, P2
     {
-      id: feedbackUUID(5, 6),
+      id: feedbackUUID(5, 1),
       user_id: userIds[5],
-      project_id: String(P[6].id),
+      project_id: String(P[1].id),
       version_key: "0.1",
-      good_points: `${DESC_PREFIX} High-speed racing feels great!`,
+      good_points: `${DESC_PREFIX} Movement feels snappy.`,
       moderation_status: "visible",
-      created_at: hoursAgoIso(46),
-      updated_at: hoursAgoIso(46),
+      created_at: hoursAgoIso(54),
+      updated_at: hoursAgoIso(54),
     },
-    // U09: FB on P4 version_key 0.1
+    {
+      id: feedbackUUID(5, 2),
+      user_id: userIds[5],
+      project_id: String(P[2].id),
+      version_key: "0.1",
+      good_points: `${DESC_PREFIX} Cute pixel characters.`,
+      moderation_status: "visible",
+      created_at: hoursAgoIso(51),
+      updated_at: hoursAgoIso(51),
+    },
+    // U09: FB P1, P4 (old version)
+    {
+      id: feedbackUUID(9, 1),
+      user_id: userIds[9],
+      project_id: String(P[1].id),
+      version_key: "0.1",
+      good_points: `${DESC_PREFIX} Came back after friends recommended it.`,
+      moderation_status: "visible",
+      created_at: hoursAgoIso(21),
+      updated_at: hoursAgoIso(21),
+    },
     {
       id: feedbackUUID(9, 4),
       user_id: userIds[9],
@@ -709,7 +797,6 @@ async function upsertFeedback(sb, userIds) {
     },
   ];
 
-  // Upsert by id
   const { error } = await sb.from("project_feedback").upsert(rows, { onConflict: "id" });
   if (error) throw new Error(`upsertFeedback failed: ${error.message}`);
 }
@@ -719,16 +806,17 @@ async function upsertFeedback(sb, userIds) {
 // ---------------------------------------------------------------------------
 
 async function upsertWatches(sb, userIds) {
-  // U01: watch P1,P2; U03: watch P4; U05: watch P5,P6; U06: watch P2; U09: watch P4
+  // U01: P1,P2; U02: P1,P2,P4; U03: P1,P2,P4; U04: P1; U05: P1,P2,P5; U06: P1,P2; U09: P1,P4
   const pairs = [
     [1, 1], [1, 2],
-    [3, 4],
-    [5, 5], [5, 6],
-    [6, 2],
-    [9, 4],
+    [2, 1], [2, 2], [2, 4],
+    [3, 1], [3, 2], [3, 4],
+    [4, 1],
+    [5, 1], [5, 2], [5, 5],
+    [6, 1], [6, 2],
+    [9, 1], [9, 4],
   ];
   for (const [uN, pN] of pairs) {
-    // delete first (idempotent), then insert
     await sb.from("project_watches")
       .delete()
       .eq("user_id", userIds[uN])
@@ -747,16 +835,19 @@ async function upsertWatches(sb, userIds) {
 // ---------------------------------------------------------------------------
 
 async function upsertBookmarks(sb, userIds) {
-  // U02: bookmark P5; U08: bookmark P1,P6
+  // Clear all seed-project bookmarks first (plan revisions / leftovers)
+  await sb
+    .from("project_bookmarks")
+    .delete()
+    .in("project_id", [1, 2, 3, 4, 5, 6].map((n) => String(P[n].id)));
+
+  // U05: P5; U08: P1,P3,P6; U10: P3,P6  (no U02→P3)
   const pairs = [
-    [2, 5],
-    [8, 1], [8, 6],
+    [5, 5],
+    [8, 1], [8, 3], [8, 6],
+    [10, 3], [10, 6],
   ];
   for (const [uN, pN] of pairs) {
-    await sb.from("project_bookmarks")
-      .delete()
-      .eq("user_id", userIds[uN])
-      .eq("project_id", String(P[pN].id));
     const { error } = await sb.from("project_bookmarks").insert({
       user_id: userIds[uN],
       project_id: String(P[pN].id),
@@ -973,11 +1064,11 @@ function buildPlan(ref) {
     auth_users: 12,
     developer_profiles: 2,
     projects: 6,
-    project_devlogs: 5,   // P1×2 + P2×1 + P4×1 + P5×1
-    project_play_sessions: 14,
-    project_feedback: 6,
-    project_watches: 7,   // U01×2 + U03×1 + U05×2 + U06×1 + U09×1
-    project_bookmarks: 3, // U02×1 + U08×2
+    project_devlogs: 5, // P1×2 + P2×1 + P4×1 + P5×1
+    project_play_sessions: 25,
+    project_feedback: 12,
+    project_watches: 16,
+    project_bookmarks: 6, // U05×1 + U08×3 + U10×2
     developer_follows: 2,
   };
 
@@ -1005,10 +1096,12 @@ function buildPlan(ref) {
     expectedRows,
     expectedTotals: EXPECTED,
     fbBreakdown: {
-      P1: "U01 + U04 = 2",
+      P1: "U01+U02+U03+U04(bugs)+U05+U09 = 6 (bugs FB counts)",
+      P2: "U01+U02+U05 = 3",
       P3: "U02 = 1",
-      P4: "U01 + U09 = 2",
-      P6: "U05 = 1",
+      P4: "U01+U09 = 2",
+      P5: "none = 0",
+      P6: "none = 0",
     },
     protectedIds: { SMOKE_A, SMOKE_B, OWNER_ID },
     note: "first_published_at is set by trigger on insert (now()), then backdated via service_role UPDATE. Trigger blocks client UPDATE of existing non-null value — if backdate fails, projects will have today's first_published_at.",
