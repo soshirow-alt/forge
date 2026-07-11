@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-11 — 本番反映: 作品詳細 Special Thanks タブ
+
+- **main / preview** — `feature/project-special-thanks-tab` を `main` FF（`dff280c`）。`origin/main` = `origin/preview/landing-01`
+- **本番 DB** — `049_project_special_thanks_rpc.sql` 適用済み（`latest_update_summary` / user_id / email 非返却。anon+authenticated EXECUTE）
+- **UI** — `/games/[id]` 第4タブ Special Thanks。参考FB N件。共通バッジ「見届け中」「初期FB」なし。summary 非表示
+- **未実施** — Staging density rollback / 048 / 047 / OGP / backfill / restore
+
+---
+
 ## 2026-07-11 — Special Thanks RPC: latest_update_summary を非返却
 
 - **RPC** — `get_project_special_thanks` の `update_contributors` から `latest_update_summary` を削除（anon/authenticated 公開レスポンスに FB 要約を含めない）
