@@ -165,12 +165,7 @@ function WatchersSection({ data }: { data: ProjectSpecialThanks }) {
                 displayName={person.displayName}
                 handle={person.handle}
                 avatarUrl={person.avatarUrl}
-                chips={
-                  <>
-                    <RoleChip>見届け中</RoleChip>
-                    <MetaChip>{formatDateJa(person.watchedAt)}〜</MetaChip>
-                  </>
-                }
+                chips={<MetaChip>{formatDateJa(person.watchedAt)}〜</MetaChip>}
               />
             ))
           }
@@ -213,31 +208,38 @@ function WitnessSection({ data }: { data: ProjectSpecialThanks }) {
 }
 
 function UpdateContributorsSection({ data }: { data: ProjectSpecialThanks }) {
+  // 1人1カード（RPC集約済み）。表示順: 参考FB件数 desc → 最新評価日時 desc
+  const contributors = [...data.updateContributors].sort((a, b) => {
+    if (b.adoptedFeedbackCount !== a.adoptedFeedbackCount) {
+      return b.adoptedFeedbackCount - a.adoptedFeedbackCount;
+    }
+    return (
+      new Date(b.latestAdoptedAt).getTime() - new Date(a.latestAdoptedAt).getTime()
+    );
+  });
+
   return (
     <section>
       <SectionTitle>アップデートに貢献したプレイヤー</SectionTitle>
-      {data.updateContributors.length > 0 ? (
-        <ExpandablePlayerGrid totalCount={data.updateContributors.length}>
+      {contributors.length > 0 ? (
+        <ExpandablePlayerGrid totalCount={contributors.length}>
           {(visibleCount) =>
-            data.updateContributors
-              .slice(0, visibleCount)
-              .map((person: ProjectSpecialThanksUpdateContributor, index) => (
-                <PlayerCard
-                  key={`${person.displayName}-${person.handle ?? "no-handle"}-${person.latestAdoptedAt}-${index}`}
-                  displayName={person.displayName}
-                  handle={person.handle}
-                  avatarUrl={person.avatarUrl}
-                  chips={
-                    <>
-                      <RoleChip>採用FB {person.adoptedFeedbackCount}件</RoleChip>
-                      {person.latestPublishedVersion ? (
-                        <MetaChip>ver {person.latestPublishedVersion}</MetaChip>
-                      ) : null}
-                    </>
-                  }
-                  footer={person.latestUpdateSummary}
-                />
-              ))
+            contributors.slice(0, visibleCount).map((person: ProjectSpecialThanksUpdateContributor, index) => (
+              <PlayerCard
+                key={`${person.displayName}-${person.handle ?? "no-handle"}-${person.latestAdoptedAt}-${index}`}
+                displayName={person.displayName}
+                handle={person.handle}
+                avatarUrl={person.avatarUrl}
+                chips={
+                  <>
+                    <RoleChip>参考FB {person.adoptedFeedbackCount}件</RoleChip>
+                    {person.latestPublishedVersion ? (
+                      <MetaChip>ver {person.latestPublishedVersion}</MetaChip>
+                    ) : null}
+                  </>
+                }
+              />
+            ))
           }
         </ExpandablePlayerGrid>
       ) : (
@@ -264,7 +266,6 @@ function EarlyPlayersSection({ data }: { data: ProjectSpecialThanks }) {
                   avatarUrl={person.avatarUrl}
                   chips={
                     <>
-                      <RoleChip>初期FB</RoleChip>
                       {person.firstVersionKey ? (
                         <MetaChip>ver {person.firstVersionKey}</MetaChip>
                       ) : null}
