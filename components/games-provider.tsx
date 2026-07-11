@@ -83,10 +83,10 @@ import {
   updateProjectDetailsInDb,
   updateProjectFromSubmitForm,
   updateProjectOverviewInDb,
-  updateProjectPlayableVersion,
   updateProjectsOwnerDisplayName,
   type ProjectOverviewUpdate,
 } from "@/lib/supabase/projects";
+import { publishProjectVersionWithDevlog } from "@/lib/supabase/home-discovery-db";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import type { ProjectVoiceNurtureSignal } from "@/lib/project-voice-nurture";
 import {
@@ -817,7 +817,10 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         projectId,
         INITIAL_PROJECT_DEVLOG_TITLE,
         buildInitialProjectDevlogContent(introduction),
-        { publishedVersion: INITIAL_PROJECT_DEVLOG_PUBLISHED_VERSION },
+        {
+          publishedVersion: INITIAL_PROJECT_DEVLOG_PUBLISHED_VERSION,
+          isInitialPublish: true,
+        },
       );
       setDevlogs((prev) => [entry, ...prev]);
       return entry;
@@ -2241,17 +2244,47 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       const projectTitle = game?.title ?? "作品";
       const publishVersion = options?.publishPlayableVersion?.trim();
 
-      const entry = await insertProjectDevlog(
-        supabase,
-        user.id,
-        projectId,
-        title,
-        content,
-        publishVersion
-          ? { publishedVersion: publishVersion }
-          : undefined,
-      );
-      setDevlogs((prev) => [entry, ...prev]);
+      let entry: DevlogEntry;
+      if (publishVersion && isSubmittedGame(projectId)) {
+        const published = await publishProjectVersionWithDevlog(supabase, {
+          projectId,
+          versionKey: publishVersion,
+          title,
+          content,
+        });
+        entry = {
+          id: published.devlogId,
+          projectId,
+          title: title.trim(),
+          content: content.trim(),
+          date: published.devlogCreatedAt.split("T")[0] ?? published.devlogCreatedAt,
+          publishedVersion: published.publishedVersion,
+        };
+        setDevlogs((prev) => [entry, ...prev]);
+        setSubmittedGames((prev) =>
+          prev.map((item) =>
+            item.id === projectId
+              ? mergeGameWithExtras({
+                  ...item,
+                  playableVersion: published.playableVersion,
+                })
+              : item,
+          ),
+        );
+        invokeAdoptionMatcherAfterPublish(entry.id);
+      } else {
+        entry = await insertProjectDevlog(
+          supabase,
+          user.id,
+          projectId,
+          title,
+          content,
+          publishVersion
+            ? { publishedVersion: publishVersion }
+            : undefined,
+        );
+        setDevlogs((prev) => [entry, ...prev]);
+      }
 
       const confirmationDraft = options?.confirmationRequest;
       const persistConfirmation =
@@ -2265,22 +2298,6 @@ export function GamesProvider({ children }: { children: ReactNode }) {
           publishedVersion: publishVersion ?? null,
           draft: confirmationDraft,
         });
-      }
-
-      if (publishVersion && isSubmittedGame(projectId)) {
-        const updated = await updateProjectPlayableVersion(
-          supabase,
-          projectId,
-          publishVersion,
-        );
-        setSubmittedGames((prev) =>
-          prev.map((item) =>
-            item.id === projectId
-              ? mergeGameWithExtras(updated)
-              : item,
-          ),
-        );
-        invokeAdoptionMatcherAfterPublish(entry.id);
       }
 
       const hasConfirmationPayload =

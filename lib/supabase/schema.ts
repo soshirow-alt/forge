@@ -37,6 +37,7 @@ export type ProjectRow = {
   estimated_play_time?: string | null;
   created_at: string;
   updated_at: string;
+  first_published_at?: string | null;
 };
 
 export type ProjectSupportRow = {
@@ -87,6 +88,7 @@ export type ProjectDevlogRow = {
   published_version: string | null;
   published_at?: string | null;
   content_hash?: string | null;
+  is_initial_publish?: boolean;
   created_at: string;
 };
 

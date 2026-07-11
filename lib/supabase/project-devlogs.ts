@@ -39,6 +39,8 @@ export async function fetchAllProjectDevlogs(
 
 export type InsertProjectDevlogOptions = {
   publishedVersion?: string | null;
+  /** Bootstrap submit log only — excluded from home "recently updated". */
+  isInitialPublish?: boolean;
 };
 
 export async function insertProjectDevlog(
@@ -49,17 +51,37 @@ export async function insertProjectDevlog(
   content: string,
   options?: InsertProjectDevlogOptions,
 ): Promise<DevlogEntry> {
-  const { data, error } = await supabase
+  const basePayload: Record<string, unknown> = {
+    project_id: projectId,
+    author_id: authorId,
+    title: title.trim(),
+    content: content.trim(),
+    published_version: options?.publishedVersion ?? null,
+  };
+
+  const withFlag = {
+    ...basePayload,
+    is_initial_publish: options?.isInitialPublish === true,
+  };
+
+  let { data, error } = await supabase
     .from("project_devlogs")
-    .insert({
-      project_id: projectId,
-      author_id: authorId,
-      title: title.trim(),
-      content: content.trim(),
-      published_version: options?.publishedVersion ?? null,
-    })
+    .insert(withFlag)
     .select("*")
     .single();
+
+  // Schema lag: column not yet applied — retry without flag (defaults false once added).
+  if (
+    error &&
+    /is_initial_publish/i.test(error.message) &&
+    /does not exist|schema cache|could not find/i.test(error.message)
+  ) {
+    ({ data, error } = await supabase
+      .from("project_devlogs")
+      .insert(basePayload)
+      .select("*")
+      .single());
+  }
 
   if (error) {
     throw error;

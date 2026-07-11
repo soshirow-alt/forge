@@ -4,6 +4,19 @@
 
 ---
 
+## 2026-07-11 — ホーム発見ロジック再設計（Staging / Preview）
+
+- **新着** — `first_published_at` 降順（初回 public 化時刻。不変。既存 public は `created_at` 近似バックフィル）
+- **最近更新** — `projects.updated_at` 廃止。初回以外の devlog（`is_initial_publish=false`）と studio `released`（onboarding 除外）の最新時刻
+- **直近7日で反応が集まった作品** — ローリング7日の FB UU / 新規フォロー継続中 / プレイ UU（`project_supports` 非使用）
+- **ヒーロー** — 「注目の作品」。trending→updated→newest の3軸ミックス。棚1ページ目のみヒーロー除外（2ページ目以降再登場可）
+- **日時ラベル** — 公開 / 更新 / 反応を混同しない
+- **RPC** — `get_home_discovery_feed`（anon+authenticated）、`publish_project_version_with_devlog`（authenticated / owner のみ）
+- **DB** — migrations `050`–`052`（Staging 適用手順あり。本番未適用）
+- **未実施** — Production migration / 本番 initial-devlog flag / main merge / 本番 deploy
+
+---
+
 ## 2026-07-11 — 本番反映: 作品詳細 Special Thanks タブ
 
 - **main / preview** — `feature/project-special-thanks-tab` を `main` FF（`dff280c`）。`origin/main` = `origin/preview/landing-01`

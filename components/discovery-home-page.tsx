@@ -1,75 +1,72 @@
 "use client";
 
-import { HorizontalCardPager } from "@/components/horizontal-card-pager";
-import { DiscoveryGameThumbnail } from "@/components/discovery-game-thumbnail";
-import { DiscoveryCardStatPills } from "@/components/discovery-card-stat-pills";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { useGames } from "@/components/games-provider";
-import { DiscoveryHomeSkeleton } from "@/components/forge-loading-skeletons";
-import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
-import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
-import { useHideV0MockContent } from "@/lib/forge-deployment-context";
-import {
-  gameToHomeCard,
-  mergeHomeCards,
-  sortGamesByNewest,
-  sortGamesByUpdated,
-} from "@/lib/discovery-public-games";
-import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
-import {
-  heroSlides,
-  newGames,
-  popularGames,
-  recentlyUpdatedGames,
-  type HomeGameCard,
-} from "@/lib/home-v0-mock-data";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { DiscoveryCardStatPills } from "@/components/discovery-card-stat-pills";
+import { DiscoveryGameThumbnail } from "@/components/discovery-game-thumbnail";
+import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
+import { HorizontalCardPager } from "@/components/horizontal-card-pager";
+import {
+  buildSectionCarouselItems,
+  selectHeroItems,
+} from "@/lib/home-discovery-selection";
+import {
+  fetchHomeDiscoveryFeed,
+  type HomeDiscoveryCard,
+} from "@/lib/supabase/home-discovery-db";
+import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
+import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
+import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 
 function HorizontalGameCard({
   game,
   rank,
   compact = false,
 }: {
-  game: HomeGameCard;
+  game: HomeDiscoveryCard;
   rank?: number;
   compact?: boolean;
 }) {
   return (
     <Link href={gameDetailHref(game.id)} className="block w-full">
       <article>
-      <div className="relative">
-        {rank !== undefined && (
-          <span className={`absolute left-1.5 top-1.5 z-10 flex items-center justify-center rounded-md bg-violet-600 font-bold text-white shadow-lg ${
-            compact ? "size-6 text-xs" : "left-2 top-2 size-7 text-sm"
-          }`}>
-            {rank}
-          </span>
-        )}
-        <DiscoveryGameThumbnail
-          id={game.id}
-          title={game.title}
-          genre={game.genre}
-          version={game.version}
-          image={game.image}
-          className="w-full aspect-[4/3]"
-          sizes="(max-width: 640px) 50vw, (max-width: 1280px) 25vw, 360px"
-        />
-      </div>
-      <h3 className={`truncate font-semibold text-white ${compact ? "mt-2 text-sm" : "mt-3"}`}>
-        {game.title}
-      </h3>
-      <p className="mt-0.5 text-xs text-zinc-500">
-        {game.version} · {game.updatedLabel}
-      </p>
-      <div className={compact ? "mt-1.5" : "mt-2"}>
-        <DiscoveryCardStatPills
-          feedbackCount={game.feedbackCount}
-          watchCount={game.watchCount}
-          compact={compact}
-        />
-      </div>
+        <div className="relative">
+          {rank !== undefined && (
+            <span
+              className={`absolute left-1.5 top-1.5 z-10 flex items-center justify-center rounded-md bg-violet-600 font-bold text-white shadow-lg ${
+                compact ? "size-6 text-xs" : "left-2 top-2 size-7 text-sm"
+              }`}
+            >
+              {rank}
+            </span>
+          )}
+          <DiscoveryGameThumbnail
+            id={game.id}
+            title={game.title}
+            genre={game.genre}
+            version={game.version}
+            image={game.image}
+            className="w-full aspect-[4/3]"
+            sizes="(max-width: 640px) 50vw, (max-width: 1280px) 25vw, 360px"
+          />
+        </div>
+        <h3
+          className={`truncate font-semibold text-white ${compact ? "mt-2 text-sm" : "mt-3"}`}
+        >
+          {game.title}
+        </h3>
+        <p className="mt-0.5 text-xs text-zinc-500">
+          {game.version} · {game.updatedLabel}
+        </p>
+        <div className={compact ? "mt-1.5" : "mt-2"}>
+          <DiscoveryCardStatPills
+            feedbackCount={game.feedbackCount}
+            watchCount={game.watchCount}
+            compact={compact}
+          />
+        </div>
       </article>
     </Link>
   );
@@ -80,7 +77,10 @@ function SectionHeader({ title, href }: { title: string; href?: string }) {
     <div className="flex items-center justify-between">
       <h2 className="text-lg font-semibold text-white sm:text-xl">{title}</h2>
       {href && (
-        <Link href={href} className="text-sm text-violet-400 transition-colors hover:text-violet-300">
+        <Link
+          href={href}
+          className="text-sm text-violet-400 transition-colors hover:text-violet-300"
+        >
           すべて見る →
         </Link>
       )}
@@ -88,7 +88,7 @@ function SectionHeader({ title, href }: { title: string; href?: string }) {
   );
 }
 
-function HeroCarousel({ slides }: { slides: HomeGameCard[] }) {
+function HeroCarousel({ slides }: { slides: HomeDiscoveryCard[] }) {
   const [index, setIndex] = useState(0);
   const slide = slides[index] ?? slides[0];
 
@@ -130,7 +130,7 @@ function HeroCarousel({ slides }: { slides: HomeGameCard[] }) {
 
         <div className="relative flex h-full flex-col justify-end p-6 sm:p-8 lg:max-w-2xl">
           <p className="text-xs font-medium uppercase tracking-wider text-violet-400">
-            注目の開発中ゲーム
+            注目の作品
           </p>
           <h1 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-4xl">
             {slide.title}
@@ -176,7 +176,7 @@ function HeroCarousel({ slides }: { slides: HomeGameCard[] }) {
       <div className="flex justify-center gap-2 border-t border-zinc-800/80 py-3">
         {slides.map((item, dotIndex) => (
           <button
-            key={item.id}
+            key={`${item.id}-${item.heroSource ?? "hero"}`}
             type="button"
             onClick={() => setIndex(dotIndex)}
             className={`size-2 rounded-full transition-colors ${
@@ -198,137 +198,180 @@ function DiscoverySectionEmpty({ message }: { message: string }) {
   );
 }
 
+function DiscoveryHomeSkeleton() {
+  return (
+    <div className="space-y-10">
+      <div className="aspect-[21/9] animate-pulse rounded-2xl bg-zinc-800/70" />
+      {[0, 1, 2].map((section) => (
+        <section key={section}>
+          <div className="flex items-center justify-between">
+            <div className="h-6 w-40 animate-pulse rounded bg-zinc-800/70" />
+            <div className="h-4 w-16 animate-pulse rounded bg-zinc-800/50" />
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {[0, 1, 2, 3].map((card) => (
+              <div key={card} className="space-y-2">
+                <div className="aspect-[4/3] animate-pulse rounded-xl bg-zinc-800/70" />
+                <div className="h-4 w-3/4 animate-pulse rounded bg-zinc-800/60" />
+                <div className="h-3 w-1/2 animate-pulse rounded bg-zinc-800/50" />
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
+
 export function DiscoveryHomePage() {
-  const { publicGames, publicCatalogReady, getPublicProjectStats, getSupportCount } =
-    useGames();
-  const hideV0Mock = useHideV0MockContent();
+  const [feed, setFeed] = useState<{
+    newest: HomeDiscoveryCard[];
+    updated: HomeDiscoveryCard[];
+    trending: HomeDiscoveryCard[];
+  } | null>(null);
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useForgePerfRoute({
     route: "/home",
-    ready: publicCatalogReady,
-    context: { gameCount: publicGames.length },
+    ready,
+    context: {
+      newest: feed?.newest.length ?? 0,
+      updated: feed?.updated.length ?? 0,
+      trending: feed?.trending.length ?? 0,
+    },
   });
 
-  const cardStatsFor = useMemo(
-    () => (gameId: string) => {
-      const stats = getPublicProjectStats(gameId);
-      return {
-        feedbackParticipantCount: stats.feedbackParticipantCount,
-        watchCount: stats.watchCount,
-      };
-    },
-    [getPublicProjectStats],
-  );
+  useEffect(() => {
+    let cancelled = false;
+    const supabase = getOptionalSupabaseClient();
 
-  const realNewGames = useMemo(
-    () =>
-      sortGamesByNewest(publicGames).map((game) =>
-        gameToHomeCard(game, cardStatsFor(game.id)),
-      ),
-    [publicGames, cardStatsFor],
-  );
+    void (async () => {
+      if (!supabase) {
+        if (cancelled) return;
+        setFeed({ newest: [], updated: [], trending: [] });
+        setReady(true);
+        return;
+      }
 
-  const realUpdatedGames = useMemo(
-    () =>
-      sortGamesByUpdated(publicGames).map((game) =>
-        gameToHomeCard(game, cardStatsFor(game.id)),
-      ),
-    [publicGames, cardStatsFor],
-  );
+      try {
+        const next = await fetchHomeDiscoveryFeed(supabase);
+        if (cancelled) return;
+        setFeed(next);
+        setError(null);
+      } catch (err: unknown) {
+        if (cancelled) return;
+        setFeed({ newest: [], updated: [], trending: [] });
+        setError(err instanceof Error ? err.message : "feed load failed");
+      } finally {
+        if (!cancelled) setReady(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const heroItems = useMemo(() => {
-    const primary = realUpdatedGames.slice(0, 3);
-    if (hideV0Mock) {
-      return primary;
-    }
-    return mergeHomeCards(primary, heroSlides, false);
-  }, [realUpdatedGames, hideV0Mock]);
+    if (!feed) return [];
+    return selectHeroItems(feed.trending, feed.updated, feed.newest).map(
+      (item) => {
+        // Keep the label/time from the discovery axis that won the hero slot.
+        return item;
+      },
+    );
+  }, [feed]);
 
-  const newItems = useMemo(() => {
-    if (hideV0Mock) {
-      return realNewGames;
-    }
-    return mergeHomeCards(realNewGames, newGames, false);
-  }, [realNewGames, hideV0Mock]);
+  const heroIds = useMemo(
+    () => new Set(heroItems.map((item) => item.id)),
+    [heroItems],
+  );
 
-  const updatedItems = useMemo(() => {
-    if (hideV0Mock) {
-      return realUpdatedGames;
-    }
-    return mergeHomeCards(realUpdatedGames, recentlyUpdatedGames, false);
-  }, [realUpdatedGames, hideV0Mock]);
+  const updatedCarousel = useMemo(
+    () =>
+      feed ? buildSectionCarouselItems(feed.updated, heroIds, 4) : [],
+    [feed, heroIds],
+  );
+  const trendingCarousel = useMemo(
+    () =>
+      feed ? buildSectionCarouselItems(feed.trending, heroIds, 4) : [],
+    [feed, heroIds],
+  );
+  const newestCarousel = useMemo(
+    () =>
+      feed ? buildSectionCarouselItems(feed.newest, heroIds, 4) : [],
+    [feed, heroIds],
+  );
 
-  const popularItems = useMemo(() => {
-    const realPopular = [...publicGames]
-      .sort((a, b) => getSupportCount(b.id) - getSupportCount(a.id))
-      .map((game) => gameToHomeCard(game, cardStatsFor(game.id)));
-    if (hideV0Mock) {
-      return realPopular;
-    }
-    return mergeHomeCards(realPopular, popularGames, false);
-  }, [publicGames, getSupportCount, cardStatsFor, hideV0Mock]);
-
-  if (!publicCatalogReady) {
+  if (!ready) {
     return <DiscoveryHomeSkeleton />;
   }
 
   return (
     <div className="space-y-10">
-        {heroItems.length > 0 ? (
-          <HeroCarousel slides={heroItems} />
-        ) : (
-          <DiscoverySectionEmpty message="まだ公開中の作品がありません" />
-        )}
+      {error ? (
+        <p className="rounded-xl border border-amber-800/60 bg-amber-950/30 px-4 py-3 text-sm text-amber-200">
+          ホームの発見データを読み込めませんでした。しばらくしてから再度お試しください。
+        </p>
+      ) : null}
 
+      {heroItems.length > 0 ? (
+        <HeroCarousel slides={heroItems} />
+      ) : (
+        <DiscoverySectionEmpty message="まだ公開中の作品がありません" />
+      )}
+
+      {updatedCarousel.length > 0 ? (
         <section>
           <SectionHeader title="最近更新された作品" href="/search" />
-          {updatedItems.length > 0 ? (
-            <div className="mt-4 px-2">
-              <HorizontalCardPager
-                items={updatedItems}
-                getKey={(game) => game.id}
-                pageSize={4}
-                renderItem={(game) => <HorizontalGameCard game={game} compact />}
-              />
-            </div>
-          ) : (
-            <DiscoverySectionEmpty message="更新された作品はまだありません" />
-          )}
+          <div className="mt-4 px-2">
+            <HorizontalCardPager
+              items={updatedCarousel}
+              getKey={(game) => `${game.id}-updated-${game.rank}`}
+              pageSize={4}
+              renderItem={(game) => (
+                <HorizontalGameCard game={game} compact />
+              )}
+            />
+          </div>
         </section>
+      ) : null}
 
+      {trendingCarousel.length > 0 ? (
         <section>
-          <SectionHeader title="今週人気の作品" href="/search" />
-          {popularItems.length > 0 ? (
-            <div className="mt-4 px-2">
-              <HorizontalCardPager
-                items={popularItems.map((game, index) => ({ game, rank: index + 1 }))}
-                getKey={({ game }) => game.id}
-                pageSize={4}
-                renderItem={({ game, rank }) => (
-                  <HorizontalGameCard game={game} rank={rank} compact />
-                )}
-              />
-            </div>
-          ) : (
-            <DiscoverySectionEmpty message="人気の作品はまだありません" />
-          )}
+          <SectionHeader title="直近7日で反応が集まった作品" href="/search" />
+          <div className="mt-4 px-2">
+            <HorizontalCardPager
+              items={trendingCarousel.map((game) => ({
+                game,
+                rank: game.rank,
+              }))}
+              getKey={({ game }) => `${game.id}-trending-${game.rank}`}
+              pageSize={4}
+              renderItem={({ game, rank }) => (
+                <HorizontalGameCard game={game} rank={rank} compact />
+              )}
+            />
+          </div>
         </section>
+      ) : null}
 
+      {newestCarousel.length > 0 ? (
         <section>
           <SectionHeader title="新着作品" href="/search" />
-          {newItems.length > 0 ? (
-            <div className="mt-4 px-2">
-              <HorizontalCardPager
-                items={newItems}
-                getKey={(game) => game.id}
-                pageSize={4}
-                renderItem={(game) => <HorizontalGameCard game={game} compact />}
-              />
-            </div>
-          ) : (
-            <DiscoverySectionEmpty message="新着作品はまだありません" />
-          )}
+          <div className="mt-4 px-2">
+            <HorizontalCardPager
+              items={newestCarousel}
+              getKey={(game) => `${game.id}-newest-${game.rank}`}
+              pageSize={4}
+              renderItem={(game) => (
+                <HorizontalGameCard game={game} compact />
+              )}
+            />
+          </div>
         </section>
+      ) : null}
     </div>
   );
 }
