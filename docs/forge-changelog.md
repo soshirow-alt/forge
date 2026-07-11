@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-11 — 作品詳細セグメントタブ Production 反映
+
+- **main** — `preview/landing-01` を fast-forward（`f7ea6bb`）。`origin/main` と `origin/preview/landing-01` 同一
+- **Production** — https://forge-flame-gamma.vercel.app（DB/RPC 変更なし）
+
+---
+
 ## 2026-07-11 — 作品詳細タブを一体型セグメントに
 
 - **UI** — `/games/[id]` の「概要 / 開発ログ / みんなのフィードバック / Special Thanks」を、枠付き一体型セグメントタブに変更（アイコン付き）
