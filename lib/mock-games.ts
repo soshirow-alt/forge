@@ -1,5 +1,9 @@
 import { getBuiltInThumbnailUrl, isBuiltInThumbnailId } from "@/lib/demo-thumbnails";
 import type { ProjectOverviewFeature } from "@/lib/project-overview";
+import type {
+  PublishDestination,
+  RelatedLink,
+} from "@/lib/project-publish-links";
 
 export type Game = {
   id: string;
@@ -25,6 +29,10 @@ export type Game = {
   officialUrl?: string;
   xUrl?: string;
   youtubeUrl?: string;
+  /** Structured publish destinations (JSONB). Empty/undefined → derive from legacy URL columns. */
+  publishDestinations?: PublishDestination[];
+  /** Structured related links (JSONB). Empty/undefined → derive from legacy URL columns. */
+  relatedLinks?: RelatedLink[];
   ownerId?: string;
   ownerName?: string;
   visibility?: "public" | "private";

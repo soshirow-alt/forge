@@ -12,6 +12,7 @@ import type {
   PlayDestination,
   PublicationDisplay,
 } from "@/lib/game-play-destinations";
+import type { RelatedLinkDisplay } from "@/lib/project-publish-links";
 import { StudioPreviewEditTarget } from "@/components/studio-preview-edit-target";
 import type { StudioPreviewEditTarget as StudioPreviewEditTargetId } from "@/lib/studio-preview-edit-targets";
 
@@ -217,27 +218,41 @@ function PublicationPanel({
   onDestinationOpen?: () => void;
 }) {
   if (destinations.length > 0) {
+    const [primary, ...secondary] = destinations;
     return (
-      <div className="mt-3 flex flex-col gap-2">
-        {destinations.map((destination) => (
-          <a
-            key={destination.url}
-            href={destination.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => onDestinationOpen?.()}
-            className="inline-flex w-full items-center justify-between rounded-lg border border-zinc-700/80 bg-zinc-800/40 px-3 py-2 text-left text-xs font-medium text-zinc-200 transition-colors hover:border-violet-500/40 hover:bg-violet-500/10 hover:text-white"
-          >
-            <span>{destination.actionLabel}</span>
-            <span className="text-zinc-500">{destination.label}</span>
-          </a>
-        ))}
+      <div className="mt-3 flex min-w-0 flex-col gap-2">
+        <a
+          href={primary.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => onDestinationOpen?.()}
+          className="inline-flex w-full min-w-0 items-center justify-center rounded-lg border border-violet-500/40 bg-violet-500/15 px-3 py-2.5 text-center text-sm font-semibold text-violet-100 transition-colors hover:border-violet-400/60 hover:bg-violet-500/25 hover:text-white"
+        >
+          <span className="truncate">{primary.actionLabel}</span>
+        </a>
+        {secondary.length > 0 ? (
+          <ul className="flex min-w-0 flex-col gap-1.5">
+            {secondary.map((destination) => (
+              <li key={destination.url} className="min-w-0">
+                <a
+                  href={destination.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => onDestinationOpen?.()}
+                  className="inline-flex w-full min-w-0 items-center rounded-md px-1 py-1.5 text-left text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-200"
+                >
+                  <span className="truncate">{destination.actionLabel}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
     );
   }
 
   return (
-    <div className="mt-3 flex flex-wrap gap-1.5">
+    <div className="mt-3 flex min-w-0 flex-col gap-1.5 sm:flex-row sm:flex-wrap">
       {publication.labels.map((label) => (
         <span
           key={label}
@@ -247,6 +262,28 @@ function PublicationPanel({
         </span>
       ))}
     </div>
+  );
+}
+
+function RelatedLinksPanel({ links }: { links: RelatedLinkDisplay[] }) {
+  return (
+    <ul className="mt-3 flex min-w-0 flex-col gap-2">
+      {links.map((link) => (
+        <li key={link.id} className="min-w-0">
+          <a
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex min-w-0 flex-col gap-0.5 rounded-md px-1 py-1.5 transition-colors hover:bg-zinc-800/40"
+          >
+            <span className="truncate text-[11px] text-zinc-500">{link.kindLabel}</span>
+            <span className="truncate text-xs font-medium text-zinc-400 hover:text-zinc-200">
+              {link.displayLabel}
+            </span>
+          </a>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -306,6 +343,7 @@ type GameDetailPlayerOverviewProps = {
   activity: GameDetailOverviewActivity;
   publication: PublicationDisplay | null;
   playDestinations?: PlayDestination[];
+  relatedLinks?: RelatedLinkDisplay[];
   onPlayDestinationOpen?: () => void;
   showUnsetPlayPlaceholders?: boolean;
   mutedIntroduction?: boolean;
@@ -321,6 +359,7 @@ export function GameDetailPlayerOverview({
   activity,
   publication,
   playDestinations = [],
+  relatedLinks = [],
   onPlayDestinationOpen,
   showUnsetPlayPlaceholders = false,
   mutedIntroduction = false,
@@ -385,6 +424,12 @@ export function GameDetailPlayerOverview({
               />
             </SidebarCard>
           </StudioPreviewEditTarget>
+        ) : null}
+
+        {relatedLinks.length > 0 ? (
+          <SidebarCard title="関連リンク">
+            <RelatedLinksPanel links={relatedLinks} />
+          </SidebarCard>
         ) : null}
 
         {displayFeatures.length > 0 ? (

@@ -79,9 +79,9 @@ const screenshotPlayerMeta: GameDetailPlayerMeta = {
       { label: "スマホ", active: false },
     ],
     playMethodOptions: [
-      { label: "ブラウザで起動", active: true },
-      { label: "ダウンロード", active: false },
-      { label: "外部サイトで開く", active: false },
+      { label: "ブラウザで遊ぶ", active: true },
+      { label: "ダウンロードする", active: false },
+      { label: "ストアで入手する", active: false },
     ],
   },
   focusNotes:

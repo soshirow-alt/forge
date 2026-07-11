@@ -11,6 +11,8 @@ type PlayEnvironmentFormFieldsProps = {
   onChange: (value: PlayEnvironmentFormState) => void;
   distributionRadioName?: string;
   distributionRequired?: boolean;
+  /** When false, only device checkboxes are shown (公開先へ利用方法を移したため). */
+  showDistribution?: boolean;
 };
 
 const distributionOptions: {
@@ -26,6 +28,7 @@ export function PlayEnvironmentFormFields({
   onChange,
   distributionRadioName = "distribution",
   distributionRequired = false,
+  showDistribution = true,
 }: PlayEnvironmentFormFieldsProps) {
   return (
     <div className="space-y-5 rounded-xl border border-zinc-800 bg-zinc-950/40 p-5">
@@ -59,34 +62,36 @@ export function PlayEnvironmentFormFields({
         </div>
       </div>
 
-      <div>
-        <p className="text-sm font-medium text-zinc-400">
-          配布形式{" "}
-          {!distributionRequired ? (
-            <span className="text-zinc-600">（任意）</span>
-          ) : null}
-        </p>
-        <div className="mt-3 space-y-2">
-          {distributionOptions.map((option) => (
-            <label
-              key={option.value}
-              className="flex cursor-pointer gap-3 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2"
-            >
-              <input
-                type="radio"
-                name={distributionRadioName}
-                required={distributionRequired}
-                checked={value.distribution === option.value}
-                onChange={() =>
-                  onChange({ ...value, distribution: option.value })
-                }
-                className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
-              />
-              <span className="text-sm text-zinc-300">{option.label}</span>
-            </label>
-          ))}
+      {showDistribution ? (
+        <div>
+          <p className="text-sm font-medium text-zinc-400">
+            配布形式{" "}
+            {!distributionRequired ? (
+              <span className="text-zinc-600">（任意）</span>
+            ) : null}
+          </p>
+          <div className="mt-3 space-y-2">
+            {distributionOptions.map((option) => (
+              <label
+                key={option.value}
+                className="flex cursor-pointer gap-3 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2"
+              >
+                <input
+                  type="radio"
+                  name={distributionRadioName}
+                  required={distributionRequired}
+                  checked={value.distribution === option.value}
+                  onChange={() =>
+                    onChange({ ...value, distribution: option.value })
+                  }
+                  className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+                />
+                <span className="text-sm text-zinc-300">{option.label}</span>
+              </label>
+            ))}
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

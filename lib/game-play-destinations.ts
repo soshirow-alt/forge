@@ -1,4 +1,11 @@
 import type { Game } from "@/lib/mock-games";
+import {
+  getPrimaryPublishDestination,
+  normalizePublishLinkUrl,
+  resolveGamePublishLinks,
+  toPublishDestinationDisplays,
+  type PublishDestinationDisplay,
+} from "@/lib/project-publish-links";
 
 export type PlayDestination = {
   label: string;
@@ -7,7 +14,7 @@ export type PlayDestination = {
 };
 
 export type PublicationDisplay = {
-  /** 公開プラットフォーム名（Steam / itch.io など）。情報表示専用。 */
+  /** 公開先の種類ラベル（Steam / itch.io など）。情報表示専用。 */
   labels: string[];
 };
 
@@ -18,87 +25,20 @@ export type PublicationDisplay = {
 export function normalizeExternalUrl(
   url: string | null | undefined,
 ): string | null {
-  const trimmed = url?.trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  if (/^https?:\/\//i.test(trimmed)) {
-    return trimmed;
-  }
-
-  // javascript: / data: 等は開かない
-  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed)) {
-    return null;
-  }
-
-  if (trimmed.startsWith("//")) {
-    return `https:${trimmed}`;
-  }
-
-  // "/path" だけだと同一オリジン相対になり Forge 404 になる。ホスト付きとみなして https を付与。
-  return `https://${trimmed.replace(/^\/+/, "")}`;
+  return normalizePublishLinkUrl(url);
 }
 
-function destinationKey(url: string): string {
-  return url.trim().replace(/\/+$/, "").toLowerCase();
-}
-
-function labelFromUrl(
-  url: string,
-  fieldHint?: "official",
-): Pick<PlayDestination, "label" | "actionLabel"> {
-  if (fieldHint === "official") {
-    return { label: "公式サイト", actionLabel: "公式サイトで開く" };
-  }
-
-  const lower = url.toLowerCase();
-
-  if (lower.includes("steampowered.com") || lower.includes("steamcommunity.com")) {
-    return { label: "Steam", actionLabel: "Steamで開く" };
-  }
-  if (lower.includes("itch.io")) {
-    return { label: "itch.io", actionLabel: "itch.ioで遊ぶ" };
-  }
-  if (lower.includes(".zip") || lower.includes("drive.google.com")) {
-    return { label: "ダウンロード", actionLabel: "ダウンロードする" };
-  }
-  if (
-    lower.includes("github.io") ||
-    lower.includes("vercel.app") ||
-    lower.includes("netlify.app") ||
-    lower.endsWith(".html")
-  ) {
-    return { label: "ブラウザ", actionLabel: "ブラウザで起動" };
-  }
-
-  return { label: "外部サイト", actionLabel: "外部サイトで開く" };
-}
-
-function appendDestination(
-  destinations: PlayDestination[],
-  seen: Set<string>,
-  url: string | undefined,
-  fieldHint?: "official",
-) {
-  const normalized = normalizeExternalUrl(url);
-  if (!normalized) {
-    return;
-  }
-
-  const key = destinationKey(normalized);
-  if (seen.has(key)) {
-    return;
-  }
-
-  seen.add(key);
-  const { label, actionLabel } = labelFromUrl(normalized, fieldHint);
-  destinations.push({ label, url: normalized, actionLabel });
+function toPlayDestination(item: PublishDestinationDisplay): PlayDestination {
+  return {
+    label: item.kindLabel,
+    url: item.url,
+    actionLabel: item.actionLabel,
+  };
 }
 
 /**
  * 「プレイする」から遷移できる公開先。
- * playUrl を優先し、Steam / itch.io / 公式サイトなど重複 URL は除外する。
+ * メイン公開先を先頭にし、その他の公開先が続く。
  */
 export function resolvePlayDestinations(
   game: Game | null | undefined,
@@ -107,27 +47,28 @@ export function resolvePlayDestinations(
     return [];
   }
 
-  const destinations: PlayDestination[] = [];
-  const seen = new Set<string>();
-
-  appendDestination(destinations, seen, game.playUrl);
-  appendDestination(destinations, seen, game.steamUrl);
-  appendDestination(destinations, seen, game.itchUrl);
-  appendDestination(destinations, seen, game.officialUrl, "official");
-
-  return destinations;
+  const { publishDestinations } = resolveGamePublishLinks(game);
+  const displays = toPublishDestinationDisplays(publishDestinations);
+  const primary = displays.filter((item) => item.isPrimary);
+  const secondary = displays.filter((item) => !item.isPrimary);
+  return [...primary, ...secondary].map(toPlayDestination);
 }
 
 /** Studio / projects.play_url に保存された主プレイ URL（CTA の第一候補）。 */
 export function resolvePrimaryPlayUrl(
   game: Game | null | undefined,
 ): string | null {
-  const playUrl = normalizeExternalUrl(game?.playUrl);
-  if (playUrl) {
-    return playUrl;
+  if (!game) {
+    return null;
   }
 
-  return resolvePlayDestinations(game)[0]?.url ?? null;
+  const { publishDestinations } = resolveGamePublishLinks(game);
+  const primary = getPrimaryPublishDestination(publishDestinations);
+  if (primary) {
+    return normalizeExternalUrl(primary.url);
+  }
+
+  return normalizeExternalUrl(game.playUrl) ?? resolvePlayDestinations(game)[0]?.url ?? null;
 }
 
 /**
@@ -159,7 +100,7 @@ export function openExternalPlayUrl(url: string): boolean {
 }
 
 export const PLAY_URL_MISSING_MESSAGE =
-  "この作品はまだプレイURLが設定されていません";
+  "この作品はまだ公開先が設定されていません";
 
 /** 概要タブ右カラム「公開先」の情報表示用（リンクにはしない）。 */
 export function resolvePublicationDisplay(

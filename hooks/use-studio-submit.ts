@@ -3,10 +3,11 @@
 import { useCallback } from "react";
 import { useGames } from "@/components/games-provider";
 import { mapProjectSubmitErrorMessage } from "@/lib/error-message";
-import { validatePlayAccess } from "@/lib/project-access-form";
+import { validatePublishAccess } from "@/lib/project-access-form";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import { normalizeDeveloperProfileText } from "@/lib/developer-profiles";
 import { resolveDeveloperPublicName } from "@/lib/developer-display-name";
+import { isSpecifiedPlayAccessType } from "@/lib/play-access-type";
 import {
   draftToSubmitFormData,
   getSubmitPromptsToSave,
@@ -87,9 +88,13 @@ export function validateSubmitDraftForPost(
     return validationFailure("basic-info", "開発フェーズを選んでください。");
   }
 
-  const accessError = validatePlayAccess(draft.playEnvironment, draft.playUrl);
-  if (accessError) {
-    return validationFailure("play-info", accessError);
+  if (!isSpecifiedPlayAccessType(draft.playAccessType)) {
+    return validationFailure("play-info", "料金・公開形態を選んでください。");
+  }
+
+  const publishError = validatePublishAccess(draft.publishDestinations);
+  if (publishError) {
+    return validationFailure("publication", publishError);
   }
 
   const promptValidation = validatePromptDrafts(draft.promptDrafts);
@@ -140,9 +145,15 @@ export function validateSubmitDraftSection(
       return { ok: true };
     }
     case "play-info": {
-      const accessError = validatePlayAccess(draft.playEnvironment, draft.playUrl);
-      if (accessError) {
-        return validationFailure("play-info", accessError);
+      if (!isSpecifiedPlayAccessType(draft.playAccessType)) {
+        return validationFailure("play-info", "料金・公開形態を選んでください。");
+      }
+      return { ok: true };
+    }
+    case "publication": {
+      const publishError = validatePublishAccess(draft.publishDestinations);
+      if (publishError) {
+        return validationFailure("publication", publishError);
       }
       return { ok: true };
     }

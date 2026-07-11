@@ -25,6 +25,8 @@ export type ProjectRow = {
   official_url: string | null;
   x_url?: string | null;
   youtube_url?: string | null;
+  publish_destinations?: unknown;
+  related_links?: unknown;
   visibility: "public" | "private";
   playable_version?: string;
   release_status?: "in_development" | "released" | "release_reopened";

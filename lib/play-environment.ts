@@ -52,7 +52,7 @@ export const DISTRIBUTION_TYPE_LABELS: Record<
 > = {
   browser: "ブラウザプレイ",
   download: "ダウンロード",
-  external: "外部サイト",
+  external: "ストア・公開先",
 };
 
 export const DISTRIBUTION_TYPE_HINTS: Record<
@@ -194,7 +194,7 @@ export function getPlayEnvironmentLabels(game: Game): string[] {
       labels.push("ダウンロードあり");
       break;
     case "external":
-      labels.push("外部サイト");
+      labels.push("公開先あり");
       break;
     default:
       break;

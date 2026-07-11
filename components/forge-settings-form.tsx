@@ -30,22 +30,10 @@ function SettingsHelpButton({ label, helpText }: { label: string; helpText: stri
   );
 }
 
-function ComingSoonPill() {
-  return (
-    <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
-      近日対応
-    </span>
-  );
-}
-
 function SettingsItemLabel({ item }: { item: SettingsToggleItem }) {
   return (
     <div className="flex min-w-0 items-center gap-1.5">
-      <p
-        className={`text-sm font-medium ${item.comingSoon ? "text-zinc-400" : "text-zinc-200"}`}
-      >
-        {item.label}
-      </p>
+      <p className="text-sm font-medium text-zinc-200">{item.label}</p>
       {item.helpText ? <SettingsHelpButton label={item.label} helpText={item.helpText} /> : null}
     </div>
   );
@@ -105,15 +93,6 @@ function SettingsToggleRow({
   );
 }
 
-function SettingsComingSoonRow({ item }: { item: SettingsToggleItem }) {
-  return (
-    <li className="flex items-center justify-between gap-4 py-3.5 first:pt-0 last:pb-0">
-      <SettingsItemLabel item={item} />
-      <ComingSoonPill />
-    </li>
-  );
-}
-
 function SettingsItemList({
   items,
   disabled,
@@ -123,20 +102,21 @@ function SettingsItemList({
   disabled: boolean;
   onToggle: (id: string, enabled: boolean) => void;
 }) {
+  const visibleItems = items.filter((item) => !item.comingSoon);
+  if (visibleItems.length === 0) {
+    return null;
+  }
+
   return (
     <ul className="divide-y divide-zinc-800/80">
-      {items.map((item) =>
-        item.comingSoon ? (
-          <SettingsComingSoonRow key={item.id} item={item} />
-        ) : (
-          <SettingsToggleRow
-            key={item.id}
-            item={item}
-            disabled={disabled}
-            onToggle={() => onToggle(item.id, !item.enabled)}
-          />
-        ),
-      )}
+      {visibleItems.map((item) => (
+        <SettingsToggleRow
+          key={item.id}
+          item={item}
+          disabled={disabled}
+          onToggle={() => onToggle(item.id, !item.enabled)}
+        />
+      ))}
     </ul>
   );
 }
@@ -152,11 +132,16 @@ function SettingsGroup({
   disabled: boolean;
   onToggle: (id: string, enabled: boolean) => void;
 }) {
+  const visibleItems = items.filter((item) => !item.comingSoon);
+  if (visibleItems.length === 0) {
+    return null;
+  }
+
   return (
     <div>
       <h3 className="text-sm font-medium text-violet-200">{title}</h3>
       <div className="mt-3">
-        <SettingsItemList items={items} disabled={disabled} onToggle={onToggle} />
+        <SettingsItemList items={visibleItems} disabled={disabled} onToggle={onToggle} />
       </div>
     </div>
   );
@@ -214,12 +199,18 @@ function PreferenceSettingsPanel({ context }: { context: "player" | "studio" }) 
 
   const disabled = saving;
   const preferenceItems = context === "player" ? privacyItems : studioPublicItems;
+  const visiblePreferenceItems = preferenceItems.filter((item) => !item.comingSoon);
   const preferenceTitle =
     context === "player" ? privacySettingsSection.title : studioPublicSettingsSection.title;
   const onPreferenceToggle = (id: string, enabled: boolean) =>
     void handleToggle(() =>
       context === "player" ? updatePrivacy(id, enabled) : updateStudioPublic(id, enabled),
     );
+
+  const visiblePlayerNotifications = playerNotifications.filter((item) => !item.comingSoon);
+  const visibleStudioNotifications = studioNotifications.filter((item) => !item.comingSoon);
+  const hasNotificationGroups =
+    visiblePlayerNotifications.length > 0 || visibleStudioNotifications.length > 0;
 
   return (
     <>
@@ -229,42 +220,56 @@ function PreferenceSettingsPanel({ context }: { context: "player" | "studio" }) 
         </p>
       )}
 
-      <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
-        <h2 className="text-base font-semibold text-white">通知</h2>
+      {hasNotificationGroups ? (
+        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
+          <h2 className="text-base font-semibold text-white">通知</h2>
 
-        <div className="mt-5 space-y-6">
-          <SettingsGroup
-            title="Player"
-            items={playerNotifications}
-            disabled={disabled}
-            onToggle={(id, enabled) =>
-              void handleToggle(() => updateNotifyPlayer(id, enabled))
-            }
-          />
+          <div className="mt-5 space-y-6">
+            {visiblePlayerNotifications.length > 0 ? (
+              <SettingsGroup
+                title="Player"
+                items={visiblePlayerNotifications}
+                disabled={disabled}
+                onToggle={(id, enabled) =>
+                  void handleToggle(() => updateNotifyPlayer(id, enabled))
+                }
+              />
+            ) : null}
 
-          <div className="border-t border-zinc-800/80 pt-6">
-            <SettingsGroup
-              title="Studio"
-              items={studioNotifications}
+            {visibleStudioNotifications.length > 0 ? (
+              <div
+                className={
+                  visiblePlayerNotifications.length > 0
+                    ? "border-t border-zinc-800/80 pt-6"
+                    : undefined
+                }
+              >
+                <SettingsGroup
+                  title="Studio"
+                  items={visibleStudioNotifications}
+                  disabled={disabled}
+                  onToggle={(id, enabled) =>
+                    void handleToggle(() => updateNotifyStudio(id, enabled))
+                  }
+                />
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
+      {visiblePreferenceItems.length > 0 ? (
+        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
+          <h2 className="text-base font-semibold text-white">{preferenceTitle}</h2>
+          <div className="mt-5">
+            <SettingsItemList
+              items={visiblePreferenceItems}
               disabled={disabled}
-              onToggle={(id, enabled) =>
-                void handleToggle(() => updateNotifyStudio(id, enabled))
-              }
+              onToggle={onPreferenceToggle}
             />
           </div>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
-        <h2 className="text-base font-semibold text-white">{preferenceTitle}</h2>
-        <div className="mt-5">
-          <SettingsItemList
-            items={preferenceItems}
-            disabled={disabled}
-            onToggle={onPreferenceToggle}
-          />
-        </div>
-      </section>
+        </section>
+      ) : null}
     </>
   );
 }

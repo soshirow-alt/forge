@@ -26,6 +26,14 @@ import {
 } from "@/lib/project-genres";
 import { DEFAULT_PLAYABLE_VERSION } from "@/lib/playable-version";
 import type { SubmitFormData } from "@/lib/project-form";
+import { resolveLinkFieldsForWrite } from "@/lib/project-link-write";
+import {
+  countConfiguredPublishLinks,
+  createEmptyPublishDestination,
+  distributionTypeFromPrimary,
+  type PublishDestination,
+  type RelatedLink,
+} from "@/lib/project-publish-links";
 import type { ProjectVisibility } from "@/lib/project-visibility";
 import {
   createEmptyPromptDraft,
@@ -36,18 +44,20 @@ import {
 
 export const SUBMIT_DRAFT_PREVIEW_ID = "submit-draft-preview";
 
-/** 投稿バリデーション失敗時に開く編集パネル（任意項目・画像・公開設定は含まない） */
+/** 投稿バリデーション失敗時に開く編集パネル（任意項目・画像は含まない） */
 export type SubmitValidationEditMode =
   | "basic-info"
   | "genres-tags"
   | "introduction"
-  | "play-info";
+  | "play-info"
+  | "publication";
 
 export const SUBMIT_VALIDATION_PANEL_LABELS: Record<SubmitValidationEditMode, string> = {
   "basic-info": "基本情報",
   "genres-tags": "ジャンル・タグ",
   introduction: "作品紹介",
   "play-info": "プレイ情報",
+  publication: "公開先・公開設定",
 };
 
 /** プレビュー表示専用 — 保存データには入れない */
@@ -59,9 +69,9 @@ export const SUBMIT_DRAFT_PHASE_PLACEHOLDER = "開発フェーズ未設定";
 export const SUBMIT_DRAFT_IMAGE_PLACEHOLDER = "画像を追加するとここに表示されます";
 
 const DRAFT_PLAY_METHOD_OPTIONS = [
-  { id: "browser" as const, label: "ブラウザで起動" },
-  { id: "download" as const, label: "ダウンロード" },
-  { id: "external" as const, label: "外部サイトで開く" },
+  { id: "browser" as const, label: "ブラウザで遊ぶ" },
+  { id: "download" as const, label: "ダウンロードする" },
+  { id: "external" as const, label: "ストアで入手する" },
 ];
 
 export type SubmitDraftState = {
@@ -74,6 +84,7 @@ export type SubmitDraftState = {
   introduction: string;
   thumbnailUrls: string[];
   playEnvironment: PlayEnvironmentFormState;
+  /** @deprecated synced from publishDestinations — kept for callers / preview */
   playUrl: string;
   estimatedPlayTime: string;
   steamUrl: string;
@@ -83,6 +94,8 @@ export type SubmitDraftState = {
   officialUrl: string;
   youtubeUrl: string;
   githubUrl: string;
+  publishDestinations: PublishDestination[];
+  relatedLinks: RelatedLink[];
   visibility: ProjectVisibility;
   promptMode: "none" | "custom";
   promptDrafts: DeveloperPromptDraft[];
@@ -95,6 +108,31 @@ export type SubmitDraftOwner = {
   ownerName: string;
   creator: string;
 };
+
+function resolveDraftLinkFields(draft: SubmitDraftState) {
+  return resolveLinkFieldsForWrite({
+    playUrl: draft.playUrl,
+    steamUrl: draft.steamUrl,
+    itchUrl: draft.itchUrl,
+    githubUrl: draft.githubUrl,
+    discordUrl: draft.discordUrl,
+    officialUrl: draft.officialUrl,
+    xUrl: draft.xUrl,
+    youtubeUrl: draft.youtubeUrl,
+    publishDestinations: draft.publishDestinations,
+    relatedLinks: draft.relatedLinks,
+  });
+}
+
+function playEnvironmentWithSyncedDistribution(
+  draft: SubmitDraftState,
+): PlayEnvironmentFormState {
+  const distribution = distributionTypeFromPrimary(draft.publishDestinations);
+  return {
+    ...draft.playEnvironment,
+    distribution: distribution || draft.playEnvironment.distribution,
+  };
+}
 
 export function createEmptySubmitDraft(): SubmitDraftState {
   return {
@@ -115,6 +153,14 @@ export function createEmptySubmitDraft(): SubmitDraftState {
     officialUrl: "",
     youtubeUrl: "",
     githubUrl: "",
+    publishDestinations: [
+      createEmptyPublishDestination({
+        isPrimary: true,
+        kind: "other",
+        usageMethod: "other",
+      }),
+    ],
+    relatedLinks: [],
     visibility: "public",
     promptMode: "custom",
     promptDrafts: [createEmptyPromptDraft()],
@@ -132,7 +178,9 @@ export function buildDraftGame(
   const lead = draft.description.trim();
   const genres = sanitizeProjectGenresForSave(draft.genres);
   const featureTags = sanitizeFeatureTagsForSave(draft.featureTags);
-  const tags = mergePlayEnvironmentIntoTags(featureTags, draft.playEnvironment);
+  const playEnvironment = playEnvironmentWithSyncedDistribution(draft);
+  const tags = mergePlayEnvironmentIntoTags(featureTags, playEnvironment);
+  const links = resolveDraftLinkFields(draft);
 
   return {
     id: SUBMIT_DRAFT_PREVIEW_ID,
@@ -153,15 +201,17 @@ export function buildDraftGame(
     thumbnailUrls: draft.thumbnailUrls,
     thumbnailUrl: draft.thumbnailUrls[0],
     tags,
-    playUrl: draft.playUrl.trim(),
+    playUrl: links.playUrl,
     estimatedPlayTime: draft.estimatedPlayTime.trim() || undefined,
-    steamUrl: draft.steamUrl.trim() || undefined,
-    itchUrl: draft.itchUrl.trim() || undefined,
-    discordUrl: draft.discordUrl.trim() || undefined,
-    xUrl: draft.xUrl.trim() || undefined,
-    officialUrl: draft.officialUrl.trim() || undefined,
-    youtubeUrl: draft.youtubeUrl.trim() || undefined,
-    githubUrl: draft.githubUrl.trim() || undefined,
+    steamUrl: links.steamUrl,
+    itchUrl: links.itchUrl,
+    discordUrl: links.discordUrl,
+    xUrl: links.xUrl,
+    officialUrl: links.officialUrl,
+    youtubeUrl: links.youtubeUrl,
+    githubUrl: links.githubUrl,
+    publishDestinations: links.publishDestinations,
+    relatedLinks: links.relatedLinks,
     visibility: draft.visibility,
     playableVersion: DEFAULT_PLAYABLE_VERSION,
     releaseStatus: draft.declareAlreadyReleased ? "released" : "in_development",
@@ -221,7 +271,7 @@ export function resolveSubmitDraftPreviewPlayerMeta(
 ): GameDetailPlayerMeta {
   const phase = draft.phase.trim();
   const playTime = draft.estimatedPlayTime.trim();
-  const distribution = draft.playEnvironment.distribution;
+  const distribution = distributionTypeFromPrimary(draft.publishDestinations);
   const releaseBadge = draft.declareAlreadyReleased ? getCompletedProductBadge() : null;
   const playAccessBadge = getPlayAccessPlayerBadge(draft.playAccessType);
 
@@ -259,6 +309,8 @@ export function draftToSubmitFormData(
   owner: SubmitDraftOwner,
 ): SubmitFormData {
   const featureTags = sanitizeFeatureTagsForSave(draft.featureTags);
+  const playEnvironment = playEnvironmentWithSyncedDistribution(draft);
+  const links = resolveDraftLinkFields(draft);
 
   return {
     title: draft.title.trim(),
@@ -269,16 +321,18 @@ export function draftToSubmitFormData(
     phase: draft.phase.trim(),
     thumbnailUrls: draft.thumbnailUrls,
     lookingForTesters: false,
-    tags: mergePlayEnvironmentIntoTags(featureTags, draft.playEnvironment),
-    playUrl: draft.playUrl.trim(),
+    tags: mergePlayEnvironmentIntoTags(featureTags, playEnvironment),
+    playUrl: links.playUrl,
     estimatedPlayTime: draft.estimatedPlayTime.trim() || undefined,
-    steamUrl: draft.steamUrl.trim() || undefined,
-    itchUrl: draft.itchUrl.trim() || undefined,
-    discordUrl: draft.discordUrl.trim() || undefined,
-    xUrl: draft.xUrl.trim() || undefined,
-    officialUrl: draft.officialUrl.trim() || undefined,
-    youtubeUrl: draft.youtubeUrl.trim() || undefined,
-    githubUrl: draft.githubUrl.trim() || undefined,
+    steamUrl: links.steamUrl,
+    itchUrl: links.itchUrl,
+    discordUrl: links.discordUrl,
+    xUrl: links.xUrl,
+    officialUrl: links.officialUrl,
+    youtubeUrl: links.youtubeUrl,
+    githubUrl: links.githubUrl,
+    publishDestinations: links.publishDestinations,
+    relatedLinks: links.relatedLinks,
     visibility: draft.visibility,
     playAccessType: draft.playAccessType,
     declareAlreadyReleased: draft.declareAlreadyReleased,
@@ -332,27 +386,35 @@ export function summarizeSubmitDraftPlayInfo(draft: SubmitDraftState): string {
   if (draft.playAccessType) {
     parts.push("料金設定済み");
   }
-  if (!draft.playEnvironment.distribution) {
-    parts.push("配布形式未設定");
+  const devices: string[] = [];
+  if (draft.playEnvironment.pc) {
+    devices.push("PC");
+  }
+  if (draft.playEnvironment.mobile) {
+    devices.push("スマホ");
+  }
+  if (devices.length > 0) {
+    parts.push(devices.join("・"));
   } else {
-    parts.push(draft.playUrl.trim() ? "配布形式・URL 設定済み" : "プレイURL未入力");
+    parts.push("対応環境未設定");
   }
   return parts.join(" · ");
 }
 
 export function summarizeSubmitDraftPublication(draft: SubmitDraftState): string {
-  const links = [
-    draft.steamUrl,
-    draft.itchUrl,
-    draft.officialUrl,
-    draft.discordUrl,
-    draft.xUrl,
-    draft.youtubeUrl,
-    draft.githubUrl,
-  ].filter((value) => value.trim()).length;
+  const { publishCount, relatedCount } = countConfiguredPublishLinks(
+    draft.publishDestinations,
+    draft.relatedLinks,
+  );
   const visibility = draft.visibility === "public" ? "公開" : "非公開";
-  if (links === 0) {
-    return `${visibility} · 外部リンク未設定`;
+  const linkParts: string[] = [];
+  if (publishCount > 0) {
+    linkParts.push(`公開先 ${publishCount} 件`);
+  } else {
+    linkParts.push("公開先未設定");
   }
-  return `${visibility} · 外部リンク ${links} 件`;
+  if (relatedCount > 0) {
+    linkParts.push(`関連リンク ${relatedCount} 件`);
+  }
+  return `${visibility} · ${linkParts.join(" · ")}`;
 }

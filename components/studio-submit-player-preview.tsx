@@ -9,7 +9,11 @@ import { GameSpecialThanksTab } from "@/components/game-special-thanks-tab";
 import { GameDetailTabBar } from "@/components/game-detail-tabs-region";
 import { StudioHeroPreviewGallery } from "@/components/studio-hero-preview-gallery";
 import type { GameDetailTab } from "@/lib/game-detail-tabs";
-import { resolvePublicationDisplay } from "@/lib/game-play-destinations";
+import { resolvePlayDestinations, resolvePublicationDisplay } from "@/lib/game-play-destinations";
+import {
+  resolveGamePublishLinks,
+  toRelatedLinkDisplays,
+} from "@/lib/project-publish-links";
 import {
   buildDraftGame,
   buildSubmitDraftDetailV0,
@@ -79,15 +83,24 @@ export function StudioSubmitPlayerPreview({
     [submitDraft],
   );
 
+  const draftGame = useMemo(
+    () => buildDraftGame(submitDraft, submitOwner),
+    [submitDraft, submitOwner],
+  );
+  const playDestinations = useMemo(
+    () => resolvePlayDestinations(draftGame),
+    [draftGame],
+  );
+  const relatedLinkDisplays = useMemo(() => {
+    const { relatedLinks } = resolveGamePublishLinks(draftGame);
+    return toRelatedLinkDisplays(relatedLinks);
+  }, [draftGame]);
   const overviewPublication = useMemo(() => {
-    const hasPlayDestination =
-      Boolean(submitDraft.playUrl.trim()) ||
-      Boolean(submitDraft.playEnvironment.distribution);
-    if (!hasPlayDestination) {
+    if (playDestinations.length === 0) {
       return { labels: ["公開先未設定"] };
     }
-    return resolvePublicationDisplay(buildDraftGame(submitDraft, submitOwner));
-  }, [submitDraft, submitOwner]);
+    return resolvePublicationDisplay(draftGame);
+  }, [draftGame, playDestinations.length]);
 
   const titleIsPlaceholder = !submitDraft.title.trim();
   const leadIsPlaceholder = !submitDraft.description.trim();
@@ -209,6 +222,8 @@ export function StudioSubmitPlayerPreview({
             voiceCount: 0,
           }}
           publication={overviewPublication}
+          playDestinations={playDestinations}
+          relatedLinks={relatedLinkDisplays}
           showUnsetPlayPlaceholders
           mutedIntroduction={introIsPlaceholder}
           onEditTarget={onEditTarget}

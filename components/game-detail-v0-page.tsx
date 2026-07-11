@@ -90,6 +90,10 @@ import {
   resolvePublicationDisplay,
   type PlayDestination,
 } from "@/lib/game-play-destinations";
+import {
+  resolveGamePublishLinks,
+  toRelatedLinkDisplays,
+} from "@/lib/project-publish-links";
 import { GamePlayDestinationModal } from "@/components/game-play-destination-modal";
 import { GameDetailSkeleton } from "@/components/forge-loading-skeletons";
 import {
@@ -318,6 +322,13 @@ function GameDetailV0PageBody({
     () => resolvePlayDestinations(playSourceGame),
     [playSourceGame],
   );
+  const relatedLinkDisplays = useMemo(() => {
+    if (!playSourceGame) {
+      return [];
+    }
+    const { relatedLinks } = resolveGamePublishLinks(playSourceGame);
+    return toRelatedLinkDisplays(relatedLinks);
+  }, [playSourceGame]);
   const primaryPlayUrl = useMemo(
     () => resolvePrimaryPlayUrl(playSourceGame),
     [playSourceGame],
@@ -704,6 +715,7 @@ function GameDetailV0PageBody({
         overviewActivity={overviewActivity}
         publication={overviewPublication}
         playDestinations={playDestinations}
+        relatedLinks={relatedLinkDisplays}
         onPlayDestinationOpen={onPlayDestinationOpen}
         onFeedback={handleFeedback}
         feedbackCtaLabel={feedbackCtaLabel}
@@ -717,6 +729,7 @@ function GameDetailV0PageBody({
       overviewActivity,
       overviewPublication,
       playDestinations,
+      relatedLinkDisplays,
       onPlayDestinationOpen,
       handleFeedback,
       feedbackCtaLabel,

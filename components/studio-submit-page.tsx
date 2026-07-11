@@ -16,7 +16,7 @@ import {
   type SubmitValidationEditMode,
 } from "@/hooks/use-studio-submit";
 import type { GameDetailTab } from "@/lib/game-detail-tabs";
-import { getDeveloperSocialLinkDefaults } from "@/lib/developer-external-link-defaults";
+import { getDeveloperSocialLinkDefaults, mergeRelatedLinkSocialDefaults } from "@/lib/developer-external-link-defaults";
 import { resolveDeveloperPublicName } from "@/lib/developer-display-name";
 import { useRedirectToLoginWhenLoggedOut } from "@/hooks/use-redirect-to-login-when-logged-out";
 import {
@@ -80,6 +80,7 @@ export function StudioSubmitPage() {
     const defaults = getDeveloperSocialLinkDefaults(developerProfile, ownedProjects);
     setDraft((current) => ({
       ...current,
+      relatedLinks: mergeRelatedLinkSocialDefaults(current.relatedLinks, defaults),
       discordUrl: current.discordUrl || defaults.discordUrl,
       xUrl: current.xUrl || defaults.xUrl,
       youtubeUrl: current.youtubeUrl || defaults.youtubeUrl,

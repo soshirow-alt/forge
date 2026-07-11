@@ -6,7 +6,7 @@ export function getPlayTypeLabel(playUrl: string): string {
   }
 
   if (lower.includes("itch.io")) {
-    return "外部サイト";
+    return "itch.io";
   }
 
   if (
@@ -22,7 +22,7 @@ export function getPlayTypeLabel(playUrl: string): string {
     return "ダウンロード";
   }
 
-  return "外部サイト";
+  return "公開先";
 }
 
 export type ExternalLink = {

@@ -14,6 +14,10 @@ import {
 } from "@/lib/play-environment";
 import { loadGameExtras } from "@/lib/game-extra-storage";
 import { resolveProjectThumbnailUrls } from "@/lib/project-thumbnails";
+import {
+  resolveGamePublishLinks,
+  syncLegacyFieldsFromPublishLinks,
+} from "@/lib/project-publish-links";
 
 export function buildProjectEditFormDataFromGame(game: Game): ProjectEditFormData {
   const featureTags = sanitizeFeatureTagsForSave(
@@ -22,6 +26,11 @@ export function buildProjectEditFormDataFromGame(game: Game): ProjectEditFormDat
   const playEnvironment = parsePlayEnvironmentFromTags(game.tags ?? []);
   const legacyExtra =
     typeof window !== "undefined" ? loadGameExtras()[game.id] : undefined;
+  const links = resolveGamePublishLinks(game);
+  const legacy = syncLegacyFieldsFromPublishLinks(
+    links.publishDestinations,
+    links.relatedLinks,
+  );
 
   return {
     title: game.title,
@@ -30,19 +39,21 @@ export function buildProjectEditFormDataFromGame(game: Game): ProjectEditFormDat
       pickForgeGenresFromList(resolveProjectGenres(game)),
     ),
     phase: game.phase,
-    playUrl: game.playUrl,
+    playUrl: legacy.playUrl || game.playUrl,
     estimatedPlayTime: game.estimatedPlayTime ?? legacyExtra?.estimatedPlayTime,
     lookingForTesters: game.lookingForTesters,
     testerSlots: game.testerSlots,
     tags: mergePlayEnvironmentIntoTags(featureTags, playEnvironment),
     thumbnailUrls: resolveProjectThumbnailUrls(game),
-    steamUrl: game.steamUrl,
-    itchUrl: game.itchUrl,
-    githubUrl: game.githubUrl,
-    discordUrl: game.discordUrl,
-    officialUrl: game.officialUrl,
-    xUrl: game.xUrl,
-    youtubeUrl: game.youtubeUrl,
+    steamUrl: legacy.steamUrl ?? game.steamUrl,
+    itchUrl: legacy.itchUrl ?? game.itchUrl,
+    githubUrl: legacy.githubUrl ?? game.githubUrl,
+    discordUrl: legacy.discordUrl ?? game.discordUrl,
+    officialUrl: legacy.officialUrl ?? game.officialUrl,
+    xUrl: legacy.xUrl ?? game.xUrl,
+    youtubeUrl: legacy.youtubeUrl ?? game.youtubeUrl,
+    publishDestinations: links.publishDestinations,
+    relatedLinks: links.relatedLinks,
     visibility: game.visibility ?? "public",
     ...(isSpecifiedPlayAccessType(game.playAccessType)
       ? { playAccessType: game.playAccessType }

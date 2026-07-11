@@ -11,8 +11,7 @@ import {
 import type { StudioOverviewEditPanelCommonProps } from "@/components/studio-overview-edit-panel-types";
 import { useGames } from "@/components/games-provider";
 import { pickFeatureTagsFromGameTags, sanitizeFeatureTagsForSave } from "@/lib/forge-feature-tag-options";
-import { ProjectAccessEnvironmentFields } from "@/components/project-access-environment-fields";
-import { validatePlayAccess } from "@/lib/project-access-form";
+import { ProjectDeviceEnvironmentFields } from "@/components/project-device-environment-fields";
 import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
 import {
   isSpecifiedPlayAccessType,
@@ -25,6 +24,10 @@ import {
   parsePlayEnvironmentFromTags,
   type PlayEnvironmentFormState,
 } from "@/lib/play-environment";
+import {
+  distributionTypeFromPrimary,
+  resolveGamePublishLinks,
+} from "@/lib/project-publish-links";
 import { STUDIO_FIELD_IDS, type StudioFieldId } from "@/lib/studio-preview-edit-targets";
 
 export type StudioOverviewPlayInfoEditPanelProps = StudioOverviewEditPanelCommonProps & {
@@ -44,7 +47,6 @@ export function StudioOverviewPlayInfoEditPanel({
   const [playEnvironment, setPlayEnvironment] = useState<PlayEnvironmentFormState>(
     EMPTY_PLAY_ENVIRONMENT_FORM,
   );
-  const [playUrl, setPlayUrl] = useState("");
   const [estimatedPlayTime, setEstimatedPlayTime] = useState("");
   const [playAccessType, setPlayAccessType] = useState<SubmitPlayAccessType | "">("free");
   const [formLoaded, setFormLoaded] = useState(false);
@@ -58,7 +60,6 @@ export function StudioOverviewPlayInfoEditPanel({
     }
 
     setPlayEnvironment(parsePlayEnvironmentFromTags(game.tags ?? []));
-    setPlayUrl(game.playUrl ?? "");
     setEstimatedPlayTime(game.estimatedPlayTime ?? "");
     setPlayAccessType(
       isSpecifiedPlayAccessType(game.playAccessType) ? game.playAccessType : "",
@@ -70,11 +71,10 @@ export function StudioOverviewPlayInfoEditPanel({
     () =>
       JSON.stringify({
         playEnvironment,
-        playUrl,
         estimatedPlayTime,
         playAccessType,
       }),
-    [playEnvironment, playUrl, estimatedPlayTime, playAccessType],
+    [playEnvironment, estimatedPlayTime, playAccessType],
   );
 
   useEffect(() => {
@@ -83,7 +83,6 @@ export function StudioOverviewPlayInfoEditPanel({
 
   function emitPreview(
     nextEnvironment: PlayEnvironmentFormState,
-    nextPlayUrl: string,
     nextEstimatedPlayTime: string,
     nextPlayAccessType: SubmitPlayAccessType | "" = playAccessType,
   ) {
@@ -93,10 +92,16 @@ export function StudioOverviewPlayInfoEditPanel({
     const featureTags = sanitizeFeatureTagsForSave(
       pickFeatureTagsFromGameTags(getPublicGameTags(game.tags ?? [])),
     );
+    const links = resolveGamePublishLinks(game);
+    const env = {
+      ...nextEnvironment,
+      distribution:
+        distributionTypeFromPrimary(links.publishDestinations) ||
+        nextEnvironment.distribution,
+    };
     onPreviewPatchChange?.({
-      playUrl: nextPlayUrl,
       estimatedPlayTime: nextEstimatedPlayTime || undefined,
-      tags: mergePlayEnvironmentIntoTags(featureTags, nextEnvironment),
+      tags: mergePlayEnvironmentIntoTags(featureTags, env),
       ...(isSpecifiedPlayAccessType(nextPlayAccessType)
         ? { playAccessType: nextPlayAccessType }
         : {}),
@@ -111,11 +116,6 @@ export function StudioOverviewPlayInfoEditPanel({
     setSaveError(null);
     setValidationError(null);
 
-    const accessError = validatePlayAccess(playEnvironment, playUrl);
-    if (accessError) {
-      setValidationError(accessError);
-      return;
-    }
     if (!isSpecifiedPlayAccessType(playAccessType)) {
       setValidationError("料金・公開形態を選んでください。");
       return;
@@ -126,12 +126,30 @@ export function StudioOverviewPlayInfoEditPanel({
       const featureTags = sanitizeFeatureTagsForSave(
         pickFeatureTagsFromGameTags(getPublicGameTags(game.tags ?? [])),
       );
+      const base = buildProjectEditFormDataFromGame(game);
+      const links = resolveGamePublishLinks(game);
+      const env = {
+        ...playEnvironment,
+        distribution:
+          distributionTypeFromPrimary(links.publishDestinations) ||
+          playEnvironment.distribution,
+      };
       await updateProjectDetails(projectId, {
-        ...buildProjectEditFormDataFromGame(game),
-        playUrl: playUrl.trim(),
+        ...base,
+        // Preserve publish destinations / related links / playUrl from existing game
+        playUrl: base.playUrl,
+        publishDestinations: base.publishDestinations,
+        relatedLinks: base.relatedLinks,
+        steamUrl: base.steamUrl,
+        itchUrl: base.itchUrl,
+        githubUrl: base.githubUrl,
+        discordUrl: base.discordUrl,
+        officialUrl: base.officialUrl,
+        xUrl: base.xUrl,
+        youtubeUrl: base.youtubeUrl,
         estimatedPlayTime: estimatedPlayTime || undefined,
         playAccessType,
-        tags: mergePlayEnvironmentIntoTags(featureTags, playEnvironment),
+        tags: mergePlayEnvironmentIntoTags(featureTags, env),
       });
       onSaved?.();
     } catch (error) {
@@ -166,7 +184,7 @@ export function StudioOverviewPlayInfoEditPanel({
           value={playAccessType}
           onChange={(value) => {
             setPlayAccessType(value);
-            emitPreview(playEnvironment, playUrl, estimatedPlayTime, value);
+            emitPreview(playEnvironment, estimatedPlayTime, value);
           }}
           radioName={`studio-play-access-${projectId}`}
           showUnspecifiedHint={!isSpecifiedPlayAccessType(playAccessType)}
@@ -182,7 +200,7 @@ export function StudioOverviewPlayInfoEditPanel({
           value={estimatedPlayTime}
           onChange={(value) => {
             setEstimatedPlayTime(value);
-            emitPreview(playEnvironment, playUrl, value);
+            emitPreview(playEnvironment, value);
           }}
           inputClassName={studioPanelInputClassName}
           inputId={`studio-play-time-${projectId}`}
@@ -193,20 +211,12 @@ export function StudioOverviewPlayInfoEditPanel({
         fieldId={STUDIO_FIELD_IDS.distribution}
         highlight={highlightFieldId === STUDIO_FIELD_IDS.distribution}
       >
-        <ProjectAccessEnvironmentFields
+        <ProjectDeviceEnvironmentFields
           playEnvironment={playEnvironment}
           onPlayEnvironmentChange={(value) => {
             setPlayEnvironment(value);
-            emitPreview(value, playUrl, estimatedPlayTime);
+            emitPreview(value, estimatedPlayTime);
           }}
-          playUrl={playUrl}
-          onPlayUrlChange={(value) => {
-            setPlayUrl(value);
-            emitPreview(playEnvironment, value, estimatedPlayTime);
-          }}
-          inputClassName={studioPanelInputClassName}
-          playUrlInputId={`studio-play-url-${projectId}`}
-          distributionRadioName={`studio-distribution-${projectId}`}
         />
       </StudioFieldAnchor>
     </StudioPanelEditShell>

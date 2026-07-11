@@ -1,13 +1,14 @@
 "use client";
 
-import { ProjectAccessEnvironmentFields } from "@/components/project-access-environment-fields";
+import { ProjectDeviceEnvironmentFields } from "@/components/project-device-environment-fields";
 import { ProjectEstimatedPlayTimeField } from "@/components/project-estimated-play-time-field";
 import { ProjectPhaseFormFields } from "@/components/project-phase-form-fields";
 import { ProjectAlreadyReleasedFormFields } from "@/components/project-already-released-form-fields";
 import { ProjectPlayAccessFormFields } from "@/components/project-play-access-form-fields";
 import { StudioFieldAnchor } from "@/components/studio-field-anchor";
 import { ProjectThumbnailFields } from "@/components/project-thumbnail-fields";
-import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
+import { PublishDestinationsFormFields } from "@/components/publish-destinations-form-fields";
+import { RelatedLinksFormFields } from "@/components/related-links-form-fields";
 import { ProjectOneLineDescriptionField } from "@/components/project-one-line-description-field";
 import { ProjectTitleField } from "@/components/project-title-field";
 import {
@@ -33,7 +34,7 @@ import type { SubmitDraftState } from "@/lib/studio-submit-draft";
 import { SUBMIT_DRAFT_PREVIEW_ID } from "@/lib/studio-submit-draft";
 import { STUDIO_FIELD_IDS } from "@/lib/studio-preview-edit-targets";
 import type { StudioFieldId } from "@/lib/studio-preview-edit-targets";
-import type { ProjectExternalLinksInput } from "@/lib/game-links";
+import { syncLegacyFieldsFromPublishLinks } from "@/lib/project-publish-links";
 
 type SubmitEditPanelProps = {
   draft: SubmitDraftState;
@@ -301,14 +302,9 @@ export function StudioSubmitPlayInfoEditPanel({
         fieldId={STUDIO_FIELD_IDS.distribution}
         highlight={highlightFieldId === STUDIO_FIELD_IDS.distribution}
       >
-        <ProjectAccessEnvironmentFields
+        <ProjectDeviceEnvironmentFields
           playEnvironment={draft.playEnvironment}
           onPlayEnvironmentChange={(playEnvironment) => onApply({ playEnvironment })}
-          playUrl={draft.playUrl}
-          onPlayUrlChange={(playUrl) => onApply({ playUrl })}
-          inputClassName={studioPanelInputClassName}
-          playUrlInputId="submit-play-url"
-          distributionRadioName="submit-distribution"
         />
       </StudioFieldAnchor>
     </StudioPanelEditShell>
@@ -321,8 +317,23 @@ export function StudioSubmitPublicationEditPanel({
   onCancel,
   highlightFieldId = null,
 }: SubmitEditPanelProps) {
-  function setExternalLinkField(field: keyof ProjectExternalLinksInput, value: string) {
-    onApply({ [field]: value } as Partial<SubmitDraftState>);
+  function applyPublishLinks(
+    publishDestinations: SubmitDraftState["publishDestinations"],
+    relatedLinks: SubmitDraftState["relatedLinks"],
+  ) {
+    const legacy = syncLegacyFieldsFromPublishLinks(publishDestinations, relatedLinks);
+    onApply({
+      publishDestinations,
+      relatedLinks,
+      playUrl: legacy.playUrl,
+      steamUrl: legacy.steamUrl ?? "",
+      itchUrl: legacy.itchUrl ?? "",
+      githubUrl: legacy.githubUrl ?? "",
+      discordUrl: legacy.discordUrl ?? "",
+      officialUrl: legacy.officialUrl ?? "",
+      xUrl: legacy.xUrl ?? "",
+      youtubeUrl: legacy.youtubeUrl ?? "",
+    });
   }
 
   return (
@@ -338,20 +349,24 @@ export function StudioSubmitPublicationEditPanel({
         highlight={highlightFieldId === STUDIO_FIELD_IDS.publication}
         scrollOnHighlight={false}
       >
-        <ExternalLinksFormFields
-          formKey="submit-external"
-          values={{
-            steamUrl: draft.steamUrl,
-            itchUrl: draft.itchUrl,
-            discordUrl: draft.discordUrl,
-            xUrl: draft.xUrl,
-            officialUrl: draft.officialUrl,
-            youtubeUrl: draft.youtubeUrl,
-            githubUrl: draft.githubUrl,
-          }}
-          onChange={setExternalLinkField}
-          inputClassName={studioPanelInputClassName}
-        />
+        <div className="space-y-4">
+          <PublishDestinationsFormFields
+            value={draft.publishDestinations}
+            onChange={(publishDestinations) =>
+              applyPublishLinks(publishDestinations, draft.relatedLinks)
+            }
+            inputClassName={studioPanelInputClassName}
+            formKey="submit-publish"
+          />
+          <RelatedLinksFormFields
+            value={draft.relatedLinks}
+            onChange={(relatedLinks) =>
+              applyPublishLinks(draft.publishDestinations, relatedLinks)
+            }
+            inputClassName={studioPanelInputClassName}
+            formKey="submit-related"
+          />
+        </div>
       </StudioFieldAnchor>
 
       <div className="space-y-2">

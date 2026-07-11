@@ -25,9 +25,9 @@ const PLAYER_PLAY_METHOD_OPTIONS: {
   id: Exclude<DistributionType, "">;
   label: string;
 }[] = [
-  { id: "browser", label: "ブラウザで起動" },
-  { id: "download", label: "ダウンロード" },
-  { id: "external", label: "外部サイトで開く" },
+  { id: "browser", label: "ブラウザで遊ぶ" },
+  { id: "download", label: "ダウンロードする" },
+  { id: "external", label: "ストアで入手する" },
 ];
 
 export type PlayerPlayInfoDisplay = {

@@ -28,6 +28,7 @@ import type {
   PlayDestination,
   PublicationDisplay,
 } from "@/lib/game-play-destinations";
+import type { RelatedLinkDisplay } from "@/lib/project-publish-links";
 import { GameDetailPlayerOverview } from "@/components/game-detail-player-overview";
 
 function validateFeatureDrafts(
@@ -112,6 +113,7 @@ export const GameDetailOverviewV0Tab = forwardRef<
   heroLead?: string;
   publication?: PublicationDisplay | null;
   playDestinations?: PlayDestination[];
+  relatedLinks?: RelatedLinkDisplay[];
   onPlayDestinationOpen?: () => void;
   /** 新規投稿プレビュー — 未設定のプレイ情報をプレースホルダー表示 */
   showUnsetPlayPlaceholders?: boolean;
@@ -139,6 +141,7 @@ export const GameDetailOverviewV0Tab = forwardRef<
   heroLead,
   publication = null,
   playDestinations = [],
+  relatedLinks = [],
   onPlayDestinationOpen,
   showUnsetPlayPlaceholders = false,
   mutedIntroduction = false,
@@ -274,6 +277,7 @@ export const GameDetailOverviewV0Tab = forwardRef<
         activity={overviewActivity}
         publication={publication}
         playDestinations={playDestinations}
+        relatedLinks={relatedLinks}
         onPlayDestinationOpen={onPlayDestinationOpen}
         showUnsetPlayPlaceholders={showUnsetPlayPlaceholders}
         mutedIntroduction={mutedIntroduction}

@@ -1,6 +1,10 @@
 import type { DeveloperProfile } from "@/lib/developer-profiles";
 import type { ExternalLinkFormValues, ProjectExternalLinksInput } from "@/lib/game-links";
 import type { Game } from "@/lib/mock-games";
+import {
+  createEmptyRelatedLink,
+  type RelatedLink,
+} from "@/lib/project-publish-links";
 
 /** 開発者単位で共通になりやすいリンク（作品ごとのストア URL とは別） */
 export const DEVELOPER_SOCIAL_LINK_FIELDS = [
@@ -109,4 +113,64 @@ export function mergeSocialLinkDefaults(
     youtubeUrl: current.youtubeUrl.trim() || defaults.youtubeUrl,
     officialUrl: current.officialUrl.trim() || defaults.officialUrl,
   };
+}
+
+/**
+ * 開発者ソーシャル既定値を relatedLinks に変換する（投稿ドラフト初期値用）。
+ * Discord / X → other、YouTube → pv_video、公式 → official_site。
+ */
+export function socialDefaultsToRelatedLinks(
+  defaults: Pick<ExternalLinkFormValues, DeveloperSocialLinkField>,
+): RelatedLink[] {
+  const links: RelatedLink[] = [];
+
+  if (defaults.officialUrl.trim()) {
+    links.push(
+      createEmptyRelatedLink({
+        kind: "official_site",
+        url: defaults.officialUrl.trim(),
+        label: null,
+      }),
+    );
+  }
+  if (defaults.youtubeUrl.trim()) {
+    links.push(
+      createEmptyRelatedLink({
+        kind: "pv_video",
+        url: defaults.youtubeUrl.trim(),
+        label: null,
+      }),
+    );
+  }
+  if (defaults.discordUrl.trim()) {
+    links.push(
+      createEmptyRelatedLink({
+        kind: "other",
+        url: defaults.discordUrl.trim(),
+        label: "Discord",
+      }),
+    );
+  }
+  if (defaults.xUrl.trim()) {
+    links.push(
+      createEmptyRelatedLink({
+        kind: "other",
+        url: defaults.xUrl.trim(),
+        label: "X",
+      }),
+    );
+  }
+
+  return links;
+}
+
+/** 既存 relatedLinks が空のときだけソーシャル既定をマージする */
+export function mergeRelatedLinkSocialDefaults(
+  current: RelatedLink[],
+  defaults: Pick<ExternalLinkFormValues, DeveloperSocialLinkField>,
+): RelatedLink[] {
+  if (current.some((item) => item.url.trim())) {
+    return current;
+  }
+  return socialDefaultsToRelatedLinks(defaults);
 }

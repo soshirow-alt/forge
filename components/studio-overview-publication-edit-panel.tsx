@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ExternalLinksFormFields } from "@/components/external-links-form-fields";
+import { PublishDestinationsFormFields } from "@/components/publish-destinations-form-fields";
+import { RelatedLinksFormFields } from "@/components/related-links-form-fields";
 import { StudioFieldAnchor } from "@/components/studio-field-anchor";
 import {
   StudioPanelEditShell,
@@ -9,48 +10,31 @@ import {
 } from "@/components/studio-panel-edit-shell";
 import type { StudioOverviewEditPanelCommonProps } from "@/components/studio-overview-edit-panel-types";
 import { useGames } from "@/components/games-provider";
-import {
-  emptyExternalLinkFormValues,
-  type ExternalLinkFormValues,
-  type ProjectExternalLinksInput,
-} from "@/lib/game-links";
 import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
+import { pickFeatureTagsFromGameTags, sanitizeFeatureTagsForSave } from "@/lib/forge-feature-tag-options";
+import {
+  getPublicGameTags,
+  mergePlayEnvironmentIntoTags,
+  parsePlayEnvironmentFromTags,
+} from "@/lib/play-environment";
+import {
+  createEmptyPublishDestination,
+  distributionTypeFromPrimary,
+  resolveGamePublishLinks,
+  syncLegacyFieldsFromPublishLinks,
+  validatePublishDestinations,
+  type PublishDestination,
+  type RelatedLink,
+} from "@/lib/project-publish-links";
 import {
   PROJECT_VISIBILITY_FORM_OPTIONS,
   type ProjectVisibility,
 } from "@/lib/project-visibility";
-import type { Game } from "@/lib/mock-games";
 import { STUDIO_FIELD_IDS, type StudioFieldId } from "@/lib/studio-preview-edit-targets";
 
 export type StudioOverviewPublicationEditPanelProps = StudioOverviewEditPanelCommonProps & {
   highlightFieldId?: StudioFieldId | null;
 };
-
-function externalLinksFromGame(game: Game): ExternalLinkFormValues {
-  return {
-    steamUrl: game.steamUrl ?? "",
-    itchUrl: game.itchUrl ?? "",
-    discordUrl: game.discordUrl ?? "",
-    xUrl: game.xUrl ?? "",
-    officialUrl: game.officialUrl ?? "",
-    youtubeUrl: game.youtubeUrl ?? "",
-    githubUrl: game.githubUrl ?? "",
-  };
-}
-
-function externalLinksPayload(
-  values: ExternalLinkFormValues,
-): ProjectExternalLinksInput {
-  return {
-    steamUrl: values.steamUrl.trim() || undefined,
-    itchUrl: values.itchUrl.trim() || undefined,
-    discordUrl: values.discordUrl.trim() || undefined,
-    xUrl: values.xUrl.trim() || undefined,
-    officialUrl: values.officialUrl.trim() || undefined,
-    youtubeUrl: values.youtubeUrl.trim() || undefined,
-    githubUrl: values.githubUrl.trim() || undefined,
-  };
-}
 
 export function StudioOverviewPublicationEditPanel({
   projectId,
@@ -63,46 +47,68 @@ export function StudioOverviewPublicationEditPanel({
   const game = getOwnedProjectById(projectId);
 
   const [visibility, setVisibility] = useState<ProjectVisibility>("public");
-  const [externalLinks, setExternalLinks] = useState<ExternalLinkFormValues>(
-    emptyExternalLinkFormValues(),
-  );
+  const [publishDestinations, setPublishDestinations] = useState<PublishDestination[]>([
+    createEmptyPublishDestination({
+      isPrimary: true,
+      kind: "other",
+      usageMethod: "other",
+    }),
+  ]);
+  const [relatedLinks, setRelatedLinks] = useState<RelatedLink[]>([]);
   const [formLoaded, setFormLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!game || formLoaded) {
       return;
     }
     setVisibility(game.visibility ?? "public");
-    setExternalLinks(externalLinksFromGame(game));
+    const links = resolveGamePublishLinks(game);
+    setPublishDestinations(
+      links.publishDestinations.length > 0
+        ? links.publishDestinations
+        : [
+            createEmptyPublishDestination({
+              isPrimary: true,
+              kind: "other",
+              usageMethod: "other",
+            }),
+          ],
+    );
+    setRelatedLinks(links.relatedLinks);
     setFormLoaded(true);
   }, [game, formLoaded]);
 
   const previewSignature = useMemo(
-    () => JSON.stringify({ visibility, externalLinks }),
-    [visibility, externalLinks],
+    () => JSON.stringify({ visibility, publishDestinations, relatedLinks }),
+    [visibility, publishDestinations, relatedLinks],
   );
 
   useEffect(() => {
     setSaveError(null);
+    setValidationError(null);
   }, [previewSignature]);
 
   function emitPreview(
     nextVisibility: ProjectVisibility,
-    nextExternalLinks: ExternalLinkFormValues,
+    nextDestinations: PublishDestination[],
+    nextRelated: RelatedLink[],
   ) {
+    const legacy = syncLegacyFieldsFromPublishLinks(nextDestinations, nextRelated);
     onPreviewPatchChange?.({
       visibility: nextVisibility,
-      ...externalLinksPayload(nextExternalLinks),
-    });
-  }
-
-  function setExternalLinkField(field: keyof ProjectExternalLinksInput, value: string) {
-    setExternalLinks((current) => {
-      const next = { ...current, [field]: value };
-      emitPreview(visibility, next);
-      return next;
+      publishDestinations: nextDestinations,
+      relatedLinks: nextRelated,
+      playUrl: legacy.playUrl,
+      steamUrl: legacy.steamUrl,
+      itchUrl: legacy.itchUrl,
+      githubUrl: legacy.githubUrl,
+      discordUrl: legacy.discordUrl,
+      officialUrl: legacy.officialUrl,
+      xUrl: legacy.xUrl,
+      youtubeUrl: legacy.youtubeUrl,
     });
   }
 
@@ -111,12 +117,40 @@ export function StudioOverviewPublicationEditPanel({
       return;
     }
     setSaveError(null);
+    setValidationError(null);
+
+    const publishError = validatePublishDestinations(publishDestinations);
+    if (publishError) {
+      setValidationError(publishError);
+      return;
+    }
+
     setIsSaving(true);
     try {
+      const legacy = syncLegacyFieldsFromPublishLinks(publishDestinations, relatedLinks);
+      const base = buildProjectEditFormDataFromGame(game);
+      const featureTags = sanitizeFeatureTagsForSave(
+        pickFeatureTagsFromGameTags(getPublicGameTags(base.tags ?? [])),
+      );
+      const playEnvironment = parsePlayEnvironmentFromTags(base.tags ?? []);
+      const distribution = distributionTypeFromPrimary(publishDestinations);
       await updateProjectDetails(projectId, {
-        ...buildProjectEditFormDataFromGame(game),
+        ...base,
         visibility,
-        ...externalLinksPayload(externalLinks),
+        publishDestinations,
+        relatedLinks,
+        playUrl: legacy.playUrl,
+        steamUrl: legacy.steamUrl,
+        itchUrl: legacy.itchUrl,
+        githubUrl: legacy.githubUrl,
+        discordUrl: legacy.discordUrl,
+        officialUrl: legacy.officialUrl,
+        xUrl: legacy.xUrl,
+        youtubeUrl: legacy.youtubeUrl,
+        tags: mergePlayEnvironmentIntoTags(featureTags, {
+          ...playEnvironment,
+          distribution: distribution || playEnvironment.distribution,
+        }),
       });
       onSaved?.();
     } catch (error) {
@@ -141,18 +175,33 @@ export function StudioOverviewPublicationEditPanel({
       onSave={() => void handleSave()}
       isSaving={isSaving}
       saveError={saveError}
+      validationError={validationError}
     >
       <StudioFieldAnchor
         fieldId={STUDIO_FIELD_IDS.publication}
         highlight={highlightFieldId === STUDIO_FIELD_IDS.publication}
         scrollOnHighlight={false}
       >
-        <ExternalLinksFormFields
-          formKey={`studio-publication-${projectId}`}
-          values={externalLinks}
-          onChange={setExternalLinkField}
-          inputClassName={studioPanelInputClassName}
-        />
+        <div className="space-y-4">
+          <PublishDestinationsFormFields
+            value={publishDestinations}
+            onChange={(next) => {
+              setPublishDestinations(next);
+              emitPreview(visibility, next, relatedLinks);
+            }}
+            inputClassName={studioPanelInputClassName}
+            formKey={`studio-publication-publish-${projectId}`}
+          />
+          <RelatedLinksFormFields
+            value={relatedLinks}
+            onChange={(next) => {
+              setRelatedLinks(next);
+              emitPreview(visibility, publishDestinations, next);
+            }}
+            inputClassName={studioPanelInputClassName}
+            formKey={`studio-publication-related-${projectId}`}
+          />
+        </div>
       </StudioFieldAnchor>
 
       <div className="space-y-2">
@@ -173,7 +222,7 @@ export function StudioOverviewPublicationEditPanel({
                 checked={visibility === option.value}
                 onChange={() => {
                   setVisibility(option.value);
-                  emitPreview(option.value, externalLinks);
+                  emitPreview(option.value, publishDestinations, relatedLinks);
                 }}
                 className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-violet-500 focus:ring-violet-500/50"
               />

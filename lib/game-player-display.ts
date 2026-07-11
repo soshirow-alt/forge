@@ -6,6 +6,11 @@ import {
   type PlayAccessType,
 } from "@/lib/play-access-type";
 import type { ProjectReleaseStatus } from "@/lib/project-release-state";
+import {
+  getPrimaryPublishDestination,
+  getPublishDestinationActionLabel,
+  resolveGamePublishLinks,
+} from "@/lib/project-publish-links";
 
 export type PlayerFacingBadge = {
   id: string;
@@ -89,9 +94,28 @@ export function getDiscoveryCardPhaseLabel(game: Game): string | null {
 }
 
 export function getPrimaryPlayCtaLabel(
-  game: Pick<Game, "playAccessType" | "playUrl">,
+  game: Pick<
+    Game,
+    | "playAccessType"
+    | "playUrl"
+    | "steamUrl"
+    | "itchUrl"
+    | "githubUrl"
+    | "discordUrl"
+    | "officialUrl"
+    | "xUrl"
+    | "youtubeUrl"
+    | "publishDestinations"
+    | "relatedLinks"
+    | "tags"
+  >,
   fallback = "プレイする",
 ): string {
+  const { publishDestinations } = resolveGamePublishLinks(game);
+  const primary = getPrimaryPublishDestination(publishDestinations);
+  if (primary?.url.trim()) {
+    return getPublishDestinationActionLabel(primary);
+  }
   return getPlayAccessCtaLabel(game.playAccessType, fallback);
 }
 

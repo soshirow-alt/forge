@@ -18,6 +18,11 @@ import {
   sanitizeProjectGenresForSave,
 } from "@/lib/project-genres";
 import { normalizeExternalUrlForDb } from "@/lib/game-links";
+import { resolveLinkFieldsForWrite } from "@/lib/project-link-write";
+import {
+  sanitizePublishDestinations,
+  sanitizeRelatedLinks,
+} from "@/lib/project-publish-links";
 import {
   projectThumbnailsForDb,
   projectThumbnailsForDbUpdate,
@@ -25,6 +30,32 @@ import {
   resolveProjectThumbnailUrlsFromRow,
 } from "@/lib/project-thumbnails";
 
+function linkColumnsFromForm(data: {
+  playUrl: string;
+  steamUrl?: string;
+  itchUrl?: string;
+  githubUrl?: string;
+  discordUrl?: string;
+  officialUrl?: string;
+  xUrl?: string;
+  youtubeUrl?: string;
+  publishDestinations?: import("@/lib/project-publish-links").PublishDestination[];
+  relatedLinks?: import("@/lib/project-publish-links").RelatedLink[];
+}) {
+  const links = resolveLinkFieldsForWrite(data);
+  return {
+    play_url: links.playUrl,
+    steam_url: normalizeExternalUrlForDb(links.steamUrl),
+    itch_url: normalizeExternalUrlForDb(links.itchUrl),
+    github_url: normalizeExternalUrlForDb(links.githubUrl),
+    discord_url: normalizeExternalUrlForDb(links.discordUrl),
+    official_url: normalizeExternalUrlForDb(links.officialUrl),
+    x_url: normalizeExternalUrlForDb(links.xUrl),
+    youtube_url: normalizeExternalUrlForDb(links.youtubeUrl),
+    publish_destinations: links.publishDestinations,
+    related_links: links.relatedLinks,
+  };
+}
 function applyThumbnailFieldsForUpdate(
   payload: Record<string, unknown>,
   thumbnailUrls: string[] | undefined,
@@ -103,6 +134,8 @@ export function projectRowToGame(row: ProjectRow): Game {
     officialUrl: row.official_url ?? undefined,
     xUrl: row.x_url ?? undefined,
     youtubeUrl: row.youtube_url ?? undefined,
+    publishDestinations: sanitizePublishDestinations(row.publish_destinations),
+    relatedLinks: sanitizeRelatedLinks(row.related_links),
     ownerId: row.owner_id,
     ownerName: row.owner_name,
     visibility: row.visibility,
@@ -129,6 +162,7 @@ function submitFormToInsertRow(
   const intro = data.introduction?.trim() ?? "";
   const { genres, genre } = projectGenresForDb(data.genres);
   const thumbnails = projectThumbnailsForDb(data.thumbnailUrls);
+  const linkColumns = linkColumnsFromForm(data);
   return {
     owner_id: owner.ownerId,
     owner_name: owner.ownerName,
@@ -146,14 +180,7 @@ function submitFormToInsertRow(
     thumbnail_url: thumbnails.thumbnail_url,
     thumbnail_urls: thumbnails.thumbnail_urls,
     tags: mergeTagsWithRecruitment(data.tags, data.lookingForTesters),
-    play_url: data.playUrl,
-    steam_url: normalizeExternalUrlForDb(data.steamUrl),
-    itch_url: normalizeExternalUrlForDb(data.itchUrl),
-    github_url: normalizeExternalUrlForDb(data.githubUrl),
-    discord_url: normalizeExternalUrlForDb(data.discordUrl),
-    official_url: normalizeExternalUrlForDb(data.officialUrl),
-    x_url: normalizeExternalUrlForDb(data.xUrl),
-    youtube_url: normalizeExternalUrlForDb(data.youtubeUrl),
+    ...linkColumns,
     visibility: data.visibility ?? ("public" as const),
     playable_version: DEFAULT_PLAYABLE_VERSION,
     estimated_play_time: data.estimatedPlayTime ?? null,
@@ -288,15 +315,8 @@ export async function updateProjectFromSubmitForm(
       looking_for_testers: data.lookingForTesters,
       tester_slots: data.lookingForTesters ? (data.testerSlots ?? null) : null,
       tags: mergeTagsWithRecruitment(data.tags, data.lookingForTesters),
-      play_url: data.playUrl,
       estimated_play_time: data.estimatedPlayTime ?? null,
-      steam_url: normalizeExternalUrlForDb(data.steamUrl),
-      itch_url: normalizeExternalUrlForDb(data.itchUrl),
-      github_url: normalizeExternalUrlForDb(data.githubUrl),
-      discord_url: normalizeExternalUrlForDb(data.discordUrl),
-      official_url: normalizeExternalUrlForDb(data.officialUrl),
-      x_url: normalizeExternalUrlForDb(data.xUrl),
-      youtube_url: normalizeExternalUrlForDb(data.youtubeUrl),
+      ...linkColumnsFromForm(data),
       ...(data.playAccessType
         ? { play_access_type: data.playAccessType }
         : {}),
@@ -328,15 +348,8 @@ export async function updateProjectDetailsInDb(
       looking_for_testers: data.lookingForTesters,
       tester_slots: data.lookingForTesters ? (data.testerSlots ?? null) : null,
       tags: mergeTagsWithRecruitment(data.tags, data.lookingForTesters),
-      play_url: data.playUrl,
       estimated_play_time: data.estimatedPlayTime ?? null,
-      steam_url: normalizeExternalUrlForDb(data.steamUrl),
-      itch_url: normalizeExternalUrlForDb(data.itchUrl),
-      github_url: normalizeExternalUrlForDb(data.githubUrl),
-      discord_url: normalizeExternalUrlForDb(data.discordUrl),
-      official_url: normalizeExternalUrlForDb(data.officialUrl),
-      x_url: normalizeExternalUrlForDb(data.xUrl),
-      youtube_url: normalizeExternalUrlForDb(data.youtubeUrl),
+      ...linkColumnsFromForm(data),
       visibility: data.visibility,
       ...(data.playAccessType
         ? { play_access_type: data.playAccessType }

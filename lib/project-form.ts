@@ -1,3 +1,8 @@
+import type {
+  PublishDestination,
+  RelatedLink,
+} from "@/lib/project-publish-links";
+
 export type SubmitFormData = {
   title: string;
   creator: string;
@@ -21,6 +26,8 @@ export type SubmitFormData = {
   officialUrl?: string;
   xUrl?: string;
   youtubeUrl?: string;
+  publishDestinations?: PublishDestination[];
+  relatedLinks?: RelatedLink[];
   visibility?: "public" | "private";
   playAccessType?: "free" | "demo_available" | "paid" | "other";
   /** Submit/edit only — triggers onboarding release after save when true and not yet released */
@@ -48,6 +55,8 @@ export type ProjectEditFormData = {
   officialUrl?: string;
   xUrl?: string;
   youtubeUrl?: string;
+  publishDestinations?: PublishDestination[];
+  relatedLinks?: RelatedLink[];
   visibility: "public" | "private";
   playAccessType?: "free" | "demo_available" | "paid" | "other";
   /** Edit only — triggers onboarding release after save when true and not yet released */

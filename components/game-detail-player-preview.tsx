@@ -14,7 +14,11 @@ import { formatDevlogPublishedAt } from "@/hooks/use-game-devlogs-v0";
 import { useProjectPublicStats } from "@/hooks/use-project-public-stats";
 import type { GameDetailTab } from "@/lib/game-detail-tabs";
 import { resolveGameDetailPlayerMeta } from "@/lib/game-detail-player-meta";
-import { resolvePublicationDisplay } from "@/lib/game-play-destinations";
+import { resolvePlayDestinations, resolvePublicationDisplay } from "@/lib/game-play-destinations";
+import {
+  resolveGamePublishLinks,
+  toRelatedLinkDisplays,
+} from "@/lib/project-publish-links";
 import type { Game } from "@/lib/mock-games";
 import { resolveProjectGenres } from "@/lib/project-genres";
 import { resolveProjectThumbnailUrls } from "@/lib/project-thumbnails";
@@ -90,6 +94,17 @@ export function GameDetailPlayerPreview({
     () => resolvePublicationDisplay(submittedGame),
     [submittedGame],
   );
+  const playDestinations = useMemo(
+    () => resolvePlayDestinations(submittedGame),
+    [submittedGame],
+  );
+  const relatedLinkDisplays = useMemo(() => {
+    if (!submittedGame) {
+      return [];
+    }
+    const { relatedLinks } = resolveGamePublishLinks(submittedGame);
+    return toRelatedLinkDisplays(relatedLinks);
+  }, [submittedGame]);
 
   const hasDevlogForOverview = Boolean(publicStats.latestDevlogAt);
   const devlogOverviewLabel = publicStats.latestDevlogAt
@@ -198,6 +213,8 @@ export function GameDetailPlayerPreview({
             voiceCount: publicStats.feedbackParticipantCount,
           }}
           publication={overviewPublication}
+          playDestinations={playDestinations}
+          relatedLinks={relatedLinkDisplays}
           onEditTarget={onEditTarget}
         />
       ) : null}
