@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-11 — publish RPC: anon EXECUTE を明示 REVOKE（056）
+
+- **051** — `publish_project_version_with_devlog` に `REVOKE … FROM anon` と grant 検証 DO を追加（PUBLIC のみでは anon が EXECUTE 可能な場合がある）
+- **056** — 既適用環境向けの同権限修正 + 検証。`authenticated` のみ GRANT。anon / service_role へは GRANT しない
+- **確認 SQL** — `scripts/staging-only/verify-publish-rpc-grants-READONLY.sql`
+- **未実施** — Production での手動 REVOKE / 056 適用、052 以降の Production 適用、main / 本番 deploy
+
+---
+
 ## 2026-07-11 — ホーム発見: Staging 棚 seed 実 UI 確認
 
 - **anon feed** — newest6 / updated3 / trending3。ヒーロー3軸: A(trending) / D(updated) / C(newest)

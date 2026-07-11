@@ -123,9 +123,39 @@ COMMENT ON FUNCTION public.publish_project_version_with_devlog(uuid, text, text,
 
 REVOKE ALL ON FUNCTION public.publish_project_version_with_devlog(uuid, text, text, text)
   FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.publish_project_version_with_devlog(uuid, text, text, text)
+  FROM anon;
 GRANT EXECUTE ON FUNCTION public.publish_project_version_with_devlog(uuid, text, text, text)
   TO authenticated;
--- anon intentionally NOT granted
+-- anon / service_role intentionally NOT granted
+
+-- Verify grants (abort if anon can execute)
+DO $$
+DECLARE
+  v_auth boolean;
+  v_anon boolean;
+BEGIN
+  SELECT has_function_privilege(
+    'authenticated',
+    'public.publish_project_version_with_devlog(uuid, text, text, text)',
+    'EXECUTE'
+  ) INTO v_auth;
+  SELECT has_function_privilege(
+    'anon',
+    'public.publish_project_version_with_devlog(uuid, text, text, text)',
+    'EXECUTE'
+  ) INTO v_anon;
+
+  IF v_auth IS NOT TRUE THEN
+    RAISE EXCEPTION
+      '051 grant check failed: authenticated must EXECUTE publish_project_version_with_devlog';
+  END IF;
+  IF v_anon IS TRUE THEN
+    RAISE EXCEPTION
+      '051 grant check failed: anon must NOT EXECUTE publish_project_version_with_devlog';
+  END IF;
+END;
+$$;
 
 COMMIT;
 
