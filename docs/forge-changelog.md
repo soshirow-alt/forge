@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07-12 — ホーム注目カルーセル hotfix（autoplay + 画像peek）
+
+- **autoplay** — マウスクリック後の残 focus による `focus-within` 永久停止を解消。`:focus-visible`（キーボード）のみ停止。`setTimeout` 1 本で 5 秒スケジュールを clear/reset
+- **左右 peek** — フルカード見切れを廃止し、隣作品のメイン画像のみ（object-cover、左は right / 右は left）。opacity ≈0.38・hover ≈0.5。中央 FeaturedGameCard・矢印は維持
+- **未変更** — 選定ロジック、棚、DB/RPC、seed
+
+---
+
 ## 2026-07-12 — ホーム注目カルーセル viewport 全幅・循環・自動送り（Preview）
 
 - **Home** — 3件以上で `md:max-w-[1424px]` 固定を廃止し、メイン領域 `w-full`。active は 1000×350 中央のまま、左右の同一フルカードが見切れ幅 `(viewport-1000)/2 - gap` で画面端まで連続
