@@ -67,27 +67,27 @@ export function selectHeroItems<T extends HomeDiscoveryCandidate>(
 }
 
 /**
- * Rebuild carousel so the first page excludes hero IDs, but heroes can
- * reappear from the 5th slot onward in original rank order.
+ * Rebuild section carousel with soft hero exclusion on the first page only.
+ *
+ * - First page is non-hero items only (up to 4).
+ * - If fewer than 4 non-hero items exist, return only those (do not pad with heroes).
+ * - If zero non-hero items, return [] (caller hides the section).
+ * - Heroes may reappear only after a full non-hero first page of 4.
  */
 export function buildSectionCarouselItems<T extends { id: string }>(
   candidates: T[],
   heroIds: ReadonlySet<string>,
   firstPageSize = 4,
 ): T[] {
-  const firstPageItems: T[] = [];
-  for (const item of candidates) {
-    if (heroIds.has(item.id)) continue;
-    firstPageItems.push(item);
-    if (firstPageItems.length >= firstPageSize) break;
+  const nonHeroItems = candidates.filter((item) => !heroIds.has(item.id));
+  const firstPageItems = nonHeroItems.slice(0, firstPageSize);
+
+  if (firstPageItems.length < firstPageSize) {
+    return firstPageItems;
   }
 
   const firstPageIds = new Set(firstPageItems.map((item) => item.id));
-  const remainingItems: T[] = [];
-  for (const item of candidates) {
-    if (firstPageIds.has(item.id)) continue;
-    remainingItems.push(item);
-  }
+  const remainingItems = candidates.filter((item) => !firstPageIds.has(item.id));
 
   return [...firstPageItems, ...remainingItems];
 }

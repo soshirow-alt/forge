@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-11 — ホーム発見: ヒーロー初回ページ除外の厳密化 + feed rank 修正
+
+- **carousel** — 非ヒーローが4件未満の棚はヒーローで埋めず、0件なら非表示。ヒーロー再登場は非ヒーロー初回4件が揃う場合のみ
+- **RPC** — `054` で PL/pgSQL `RETURNS TABLE(rank)` と CTE 列名衝突を解消（内部列 `rn`）
+- **Staging** — `053` 適用済みでも anon 実行が `rank` ambiguous のまま → `054` 要適用
+- **未実施** — Production / main / 本番 deploy
+
+---
+
 ## 2026-07-11 — ホーム発見ロジック再設計（Staging / Preview）
 
 - **新着** — `first_published_at` 降順（初回 public 化時刻。不変。既存 public は `created_at` 近似バックフィル）
