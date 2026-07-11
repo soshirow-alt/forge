@@ -7,10 +7,10 @@ const cancelButtonClassName =
   "inline-flex min-w-0 flex-1 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900/60 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-600 hover:bg-zinc-800/80 hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-50";
 
 const saveButtonClassName =
-  "inline-flex min-w-0 flex-1 items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-3 py-2 text-sm font-semibold text-zinc-950 shadow-sm shadow-orange-500/20 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex min-w-0 flex-1 items-center justify-center rounded-lg bg-violet-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50";
 
 const backBarClassName =
-  "inline-flex w-full max-w-full min-w-0 box-border items-center gap-1.5 rounded-lg border border-zinc-700/80 bg-zinc-950/70 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-orange-500/35 hover:bg-zinc-900/90 hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex w-full max-w-full min-w-0 box-border items-center gap-1.5 rounded-lg border border-zinc-700/80 bg-zinc-950/70 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-violet-500/35 hover:bg-zinc-900/90 hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-50";
 
 export type StudioPanelEditShellProps = {
   title: string;
@@ -101,4 +101,4 @@ export function StudioPanelEditShell({
 }
 
 export const studioPanelInputClassName =
-  "mt-1.5 box-border w-full max-w-full min-w-0 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
+  "mt-1.5 box-border w-full max-w-full min-w-0 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/50";

@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-07-11 — Studio / Home / Creator v0 UI 整理
+
+- **Studio** — 右パネルをアクションリスト化（`StudioActionRow`）。カテゴリ見出しは枠なし。選択タブ・主要CTA・編集選択・チャート装飾を紫へ。未確認FB・新着通知・Coming Soon・警告のオレンジ/amberは維持
+- **Preview tabs** — Studio 公開プレビュー／投稿プレビューを公開ページと同じ 4 タブに統一（`GameDetailTabBar` 共有）。投稿時は件数バッジなし
+- **Home** — 注目ヒーローを contain メイン＋追加画像枠＋メタ/CTA。追加画像は公開作品の `thumbnail_urls` をヒーロー ID 一括 SELECT（RPC 変更なし）。trending カードの順位バッジは削除（並びで表現）
+- **Detail / Creator** — 開発者カードはアバター+名前リンク化。「プロフィールを見る →」削除。Creator 上段に実績4項目を統合
+- **未変更** — 注目選定ロジック・DB/RPC・main / 本番
+
+---
+
 ## 2026-07-11 — 作品詳細セグメントタブ Production 反映
 
 - **main** — `preview/landing-01` を fast-forward（`f7ea6bb`）。`origin/main` と `origin/preview/landing-01` 同一

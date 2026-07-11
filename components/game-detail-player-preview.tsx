@@ -6,6 +6,8 @@ import { GameDetailOverviewV0Tab } from "@/components/game-detail-overview-v0-ta
 import { GameDetailPhaseBadge } from "@/components/game-detail-phase-badge";
 import { GameDevlogV0Tab } from "@/components/game-devlog-v0-tab";
 import { EveryonesVoiceSection } from "@/components/everyones-voice-section";
+import { GameSpecialThanksTab } from "@/components/game-special-thanks-tab";
+import { GameDetailTabBar } from "@/components/game-detail-tabs-region";
 import { StudioHeroPreviewGallery } from "@/components/studio-hero-preview-gallery";
 import { useGames } from "@/components/games-provider";
 import { formatDevlogPublishedAt } from "@/hooks/use-game-devlogs-v0";
@@ -23,12 +25,6 @@ import { gameToDetailV0 } from "@/lib/submitted-game-v0-adapter";
 import { Clock } from "lucide-react";
 import { StudioPreviewEditTarget } from "@/components/studio-preview-edit-target";
 import type { StudioPreviewEditTarget as StudioPreviewEditTargetId } from "@/lib/studio-preview-edit-targets";
-
-const previewTabs: { id: GameDetailTab; label: string }[] = [
-  { id: "overview", label: "概要" },
-  { id: "devlog", label: "開発ログ" },
-  { id: "voices", label: "みんなのフィードバック" },
-];
 
 function TagPill({ children }: { children: React.ReactNode }) {
   return (
@@ -73,7 +69,22 @@ export function GameDetailPlayerPreview({
     [submittedGame],
   );
 
-  const { stats: publicStats } = useProjectPublicStats(projectId);
+  const {
+    stats: publicStats,
+    loaded: publicStatsLoaded,
+    error: publicStatsError,
+  } = useProjectPublicStats(projectId);
+
+  const tabCounts = useMemo(() => {
+    if (!publicStatsLoaded || publicStatsError) {
+      return undefined;
+    }
+    return { voices: publicStats.feedbackParticipantCount };
+  }, [
+    publicStats.feedbackParticipantCount,
+    publicStatsError,
+    publicStatsLoaded,
+  ]);
 
   const overviewPublication = useMemo(
     () => resolvePublicationDisplay(submittedGame),
@@ -168,26 +179,11 @@ export function GameDetailPlayerPreview({
         </div>
       </section>
 
-      <div className="border-b border-zinc-800/60">
-        <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label="公開ページタブ">
-          {previewTabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className={`shrink-0 border-b-2 px-4 py-3 text-sm transition-colors ${
-                activeTab === tab.id
-                  ? "border-zinc-600 font-medium text-zinc-400"
-                  : "border-transparent font-normal text-zinc-600 hover:text-zinc-500"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <GameDetailTabBar
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        counts={tabCounts}
+      />
 
       {activeTab === "overview" && playerMeta ? (
         <GameDetailOverviewV0Tab
@@ -220,6 +216,10 @@ export function GameDetailPlayerPreview({
           playableVersion={submittedGame?.playableVersion}
           variant="tab"
         />
+      ) : null}
+
+      {activeTab === "special-thanks" ? (
+        <GameSpecialThanksTab projectId={projectId} />
       ) : null}
     </div>
   );

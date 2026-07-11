@@ -137,7 +137,7 @@ export function StudioSubmitGenresTagsEditPanel({
                 key={option}
                 className={`flex cursor-pointer items-center justify-center rounded-lg border px-2 py-2 text-xs transition-colors ${
                   draft.genres.includes(option)
-                    ? "border-orange-500/50 bg-orange-500/10 text-orange-300"
+                    ? "border-violet-500/50 bg-violet-500/10 text-violet-300"
                     : "border-zinc-800 bg-zinc-950/50 text-zinc-300 hover:border-zinc-700"
                 }`}
               >
@@ -180,7 +180,7 @@ export function StudioSubmitGenresTagsEditPanel({
                     ) as ForgeFeatureTagOption[],
                   })
                 }
-                className="h-3.5 w-3.5 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+                className="h-3.5 w-3.5 rounded border-zinc-600 bg-zinc-900 text-violet-500 focus:ring-violet-500/50"
               />
               <span className="text-xs text-zinc-300">{tag}</span>
             </label>
@@ -362,7 +362,7 @@ export function StudioSubmitPublicationEditPanel({
               key={option.value}
               className={`flex w-full min-w-0 max-w-full box-border cursor-pointer gap-3 rounded-lg border px-3 py-3 transition-colors ${
                 draft.visibility === option.value
-                  ? "border-orange-500/40 bg-orange-500/5"
+                  ? "border-violet-500/40 bg-violet-500/5"
                   : "border-zinc-800 bg-zinc-950/50"
               }`}
             >
@@ -371,7 +371,7 @@ export function StudioSubmitPublicationEditPanel({
                 name="submit-visibility"
                 checked={draft.visibility === option.value}
                 onChange={() => onApply({ visibility: option.value as ProjectVisibility })}
-                className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+                className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-violet-500 focus:ring-violet-500/50"
               />
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-medium text-zinc-300">{option.label}</span>

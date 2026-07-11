@@ -60,11 +60,11 @@ const FEEDBACK_DEPTH_COLORS = {
 };
 
 const WITNESS_COLORS = {
-  watching: "#f97316",
+  watching: "#a855f7",
   communityMembers: "#fb7185",
 };
 
-type CardAccent = "violet" | "sky" | "orange";
+type CardAccent = "violet" | "sky";
 
 const CARD_ACCENT_STYLES: Record<
   CardAccent,
@@ -89,13 +89,6 @@ const CARD_ACCENT_STYLES: Record<
     iconBg: "bg-sky-500/15 border-sky-500/25",
     icon: "text-sky-300",
     hover: "hover:border-sky-500/30 hover:shadow-sky-500/10",
-  },
-  orange: {
-    orb: "bg-orange-500/20",
-    border: "border-orange-500/15",
-    iconBg: "bg-orange-500/15 border-orange-500/25",
-    icon: "text-orange-300",
-    hover: "hover:border-orange-500/30 hover:shadow-orange-500/10",
   },
 };
 
@@ -618,7 +611,7 @@ function ConnectionMetricsSection({
           />
 
           <ConnectionChartCard
-            accent="orange"
+            accent="violet"
             icon={Heart}
             fetching={fetching}
             title="見届けの広がり"
@@ -658,7 +651,7 @@ function ConnectionMetricsSection({
                 row1={
                   <FooterStatRow
                     icon={Heart}
-                    iconClass="text-orange-400"
+                    iconClass="text-violet-400"
                     label="見届けている人"
                     value={`${witness.watching}人`}
                   />
@@ -707,20 +700,20 @@ function HighlightsSection({
         {showUnread && (
           <Link
             href="/studio/mypage"
-            className="group relative overflow-hidden rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 via-zinc-950/50 to-zinc-950/80 p-5 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-violet-500/35 hover:shadow-lg hover:shadow-violet-500/10"
+            className="group relative overflow-hidden rounded-2xl border border-orange-500/20 bg-gradient-to-br from-orange-500/10 via-zinc-950/50 to-zinc-950/80 p-5 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-orange-500/35 hover:shadow-lg hover:shadow-orange-500/10"
           >
             <ArrowUpRight
-              className="absolute right-4 top-4 size-4 text-zinc-600 transition-colors group-hover:text-violet-400"
+              className="absolute right-4 top-4 size-4 text-zinc-600 transition-colors group-hover:text-orange-400"
               aria-hidden="true"
             />
             <div className="flex items-start gap-3 pr-8">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-violet-500/25 bg-violet-500/15">
-                <MessageSquare className="size-5 text-violet-300" aria-hidden="true" />
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-orange-500/25 bg-orange-500/15">
+                <MessageSquare className="size-5 text-orange-300" aria-hidden="true" />
               </span>
               <div>
                 <p className="font-semibold text-zinc-100">未確認のフィードバックがあります</p>
                 <p className="mt-1 text-sm text-zinc-500">新しく届いた反応を確認できます</p>
-                <span className="mt-3 inline-block text-sm font-medium text-violet-300 group-hover:text-violet-200">
+                <span className="mt-3 inline-block text-sm font-medium text-orange-300 group-hover:text-orange-200">
                   作品一覧へ →
                 </span>
               </div>

@@ -157,7 +157,7 @@ export function StudioOverviewGenresTagsEditPanel({
                 key={option}
                 className={`flex cursor-pointer items-center justify-center rounded-lg border px-2 py-2 text-xs transition-colors ${
                   selectedGenres.includes(option)
-                    ? "border-orange-500/50 bg-orange-500/10 text-orange-300"
+                    ? "border-violet-500/50 bg-violet-500/10 text-violet-300"
                     : "border-zinc-800 bg-zinc-950/50 text-zinc-300 hover:border-zinc-700"
                 }`}
               >
@@ -197,7 +197,7 @@ export function StudioOverviewGenresTagsEditPanel({
                   setSelectedTags(nextTags);
                   emitPreview(selectedGenres, nextTags);
                 }}
-                className="h-3.5 w-3.5 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+                className="h-3.5 w-3.5 rounded border-zinc-600 bg-zinc-900 text-violet-500 focus:ring-violet-500/50"
               />
               <span className="text-xs text-zinc-300">{tag}</span>
             </label>

@@ -2,7 +2,21 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Image as ImageIcon, Pencil, Sparkles, Link2, FileText, Eye } from "lucide-react";
+import {
+  Eye,
+  FileText,
+  Gamepad2,
+  Globe,
+  Image as ImageIcon,
+  Info,
+  Sparkles,
+  Tags,
+} from "lucide-react";
+import {
+  StudioActionGroup,
+  StudioActionRow,
+  StudioStatusRow,
+} from "@/components/studio-action-row";
 import { StudioEditSectionSwitcher } from "@/components/studio-edit-section-switcher";
 import { StudioOverviewBasicInfoEditPanel } from "@/components/studio-overview-basic-info-edit-panel";
 import { StudioOverviewGenresTagsEditPanel } from "@/components/studio-overview-genres-tags-edit-panel";
@@ -34,19 +48,17 @@ import type { StudioEditPreviewPatch } from "@/lib/studio-edit-preview-merge";
 import {
   studioOperationPanelAsideClassName,
   studioOperationPanelBlockClassName,
-  studioOperationPanelGroupLabelClassName,
-  studioOperationPanelGuidanceClassName,
   studioOperationPanelOuterClassName,
   studioOperationPanelScrollBodyClassName,
   studioOperationPanelScrollClassName,
+  studioOperationPrimaryButtonClassName,
 } from "@/lib/studio-operation-panel-styles";
 import type { StudioFieldId, StudioPanelFocusRequest } from "@/lib/studio-preview-edit-targets";
 import { getVisibilityBadgeLabel, isGamePublic } from "@/lib/project-visibility";
 import { scrollStudioPanelToTop } from "@/lib/studio-panel-scroll";
 import type { StudioOverviewEditMode } from "@/lib/studio-edit-url";
 
-const primaryButtonClassName =
-  "inline-flex w-full min-w-0 max-w-full box-border items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 shadow-sm shadow-orange-500/20 transition-opacity hover:opacity-90";
+const primaryButtonClassName = studioOperationPrimaryButtonClassName;
 
 const panelButtonClassName =
   "inline-flex w-full min-w-0 max-w-full box-border items-center gap-2 rounded-lg border border-zinc-800/60 bg-zinc-950/40 px-3 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70 hover:text-zinc-100";
@@ -99,15 +111,11 @@ function PanelBlock({
   return (
     <section className={studioOperationPanelBlockClassName}>
       {title ? (
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-orange-300/80">{title}</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-violet-300/80">{title}</h3>
       ) : null}
       <div className={title ? "mt-3 space-y-2" : "space-y-2"}>{children}</div>
     </section>
   );
-}
-
-function OverviewGroupLabel({ children }: { children: ReactNode }) {
-  return <p className={studioOperationPanelGroupLabelClassName}>{children}</p>;
 }
 
 export type StudioTabContextPanelProps = {
@@ -314,98 +322,57 @@ export function StudioTabContextPanel({
     } else {
       sectionContent = (
         <div className="space-y-5">
-          <div className="space-y-2">
-            <OverviewGroupLabel>ページの内容</OverviewGroupLabel>
-            <div className="space-y-2">
-              <PanelBlock>
-                <button
-                  type="button"
-                  onClick={() => openOverviewEdit("basic-info", setOverviewEditMode)}
-                  className={panelButtonClassName}
-                >
-                  <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                  基本情報を編集
-                </button>
-              </PanelBlock>
+          <StudioActionGroup label="ページの内容">
+            <StudioActionRow
+              icon={Info}
+              label="基本情報を編集"
+              onClick={() => openOverviewEdit("basic-info", setOverviewEditMode)}
+            />
+            <StudioActionRow
+              icon={Tags}
+              label="ジャンル・タグを編集"
+              onClick={() => openOverviewEdit("genres-tags", setOverviewEditMode)}
+            />
+            <StudioActionRow
+              icon={Sparkles}
+              label="作品紹介を編集"
+              onClick={() => openOverviewEdit("introduction", setOverviewEditMode)}
+            />
+            <StudioActionRow
+              icon={ImageIcon}
+              label="画像を編集"
+              onClick={() => openOverviewEdit("images", setOverviewEditMode)}
+            />
+          </StudioActionGroup>
 
-              <PanelBlock>
-                <button
-                  type="button"
-                  onClick={() => openOverviewEdit("genres-tags", setOverviewEditMode)}
-                  className={panelButtonClassName}
-                >
-                  <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                  ジャンル・タグを編集
-                </button>
-              </PanelBlock>
+          <StudioActionGroup label="遊び方・公開">
+            <StudioActionRow
+              icon={Gamepad2}
+              label="プレイ情報を編集"
+              onClick={() => openOverviewEdit("play-info", setOverviewEditMode)}
+            />
+            <StudioStatusRow label="公開状態">
+              <span className="font-medium text-zinc-200">{visibilityLabel}</span>
+            </StudioStatusRow>
+            <StudioActionRow
+              icon={Globe}
+              label="公開先・公開設定を編集"
+              onClick={() => openOverviewEdit("publication", setOverviewEditMode)}
+            />
 
-              <PanelBlock>
-                <button
-                  type="button"
-                  onClick={() => openOverviewEdit("introduction", setOverviewEditMode)}
-                  className={panelButtonClassName}
-                >
-                  <Sparkles className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                  作品紹介を編集
-                </button>
-              </PanelBlock>
-
-              <PanelBlock>
-                <button
-                  type="button"
-                  onClick={() => openOverviewEdit("images", setOverviewEditMode)}
-                  className={panelButtonClassName}
-                >
-                  <ImageIcon className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                  画像を編集
-                </button>
-              </PanelBlock>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <OverviewGroupLabel>遊び方・公開</OverviewGroupLabel>
-            <div className="space-y-2">
-              <PanelBlock>
-                <button
-                  type="button"
-                  onClick={() => openOverviewEdit("play-info", setOverviewEditMode)}
-                  className={panelButtonClassName}
-                >
-                  <Link2 className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                  プレイ情報を編集
-                </button>
-              </PanelBlock>
-
-              <PanelBlock title="公開先・公開設定">
-                <div className="flex items-center justify-between rounded-lg border border-zinc-800/60 bg-zinc-950/30 px-3 py-2">
-                  <span className="text-xs text-zinc-500">公開状態</span>
-                  <span className="text-sm font-medium text-zinc-200">{visibilityLabel}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openOverviewEdit("publication", setOverviewEditMode)}
-                  className={panelButtonClassName}
-                >
-                  <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                  公開先・公開設定を編集
-                </button>
-              </PanelBlock>
-
-              <p className="pt-0.5 text-[11px] text-zinc-600">
-                <Link
-                  href={gamePlayHref(projectId)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-zinc-500 underline-offset-2 hover:text-violet-300 hover:underline"
-                >
-                  {publicPageLabel}
-                </Link>
-                <span className="text-zinc-700"> · </span>
-                共有はマイページの作品カードから
-              </p>
-            </div>
-          </div>
+            <p className="px-1 pt-0.5 text-[11px] text-zinc-600">
+              <Link
+                href={gamePlayHref(projectId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-zinc-500 underline-offset-2 hover:text-violet-300 hover:underline"
+              >
+                {publicPageLabel}
+              </Link>
+              <span className="text-zinc-700"> · </span>
+              共有はマイページの作品カードから
+            </p>
+          </StudioActionGroup>
         </div>
       );
     }

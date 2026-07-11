@@ -17,7 +17,7 @@ import { shouldBypassStudioLoginOnPreview } from "@/lib/preview-v0";
 function StudioOwnedProjectsLoadingSection() {
   return (
     <section
-      className="rounded-2xl border border-orange-500/30 bg-orange-500/5 p-5 sm:p-6"
+      className="rounded-2xl border border-violet-500/30 bg-violet-500/5 p-5 sm:p-6"
       aria-busy="true"
       aria-label="プレイヤーの反応を読み込み中"
     >
@@ -53,7 +53,7 @@ function StudioVoiceResponsesEmptyState() {
         </Link>
         <Link
           href={studioSubmitModalHref()}
-          className="inline-flex rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+          className="inline-flex rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
         >
           新規投稿する
         </Link>
@@ -116,14 +116,14 @@ export function StudioOwnedProjectsSection() {
 
   if (!user && !shouldBypassStudioLoginOnPreview()) {
     return (
-      <section className="rounded-2xl border border-orange-500/30 bg-orange-500/5 p-5 sm:p-6">
+      <section className="rounded-2xl border border-violet-500/30 bg-violet-500/5 p-5 sm:p-6">
         <h2 className="text-lg font-semibold text-zinc-100">あなたの作品</h2>
         <p className="mt-2 text-sm text-zinc-400">
           ログインすると、投稿した作品がここに表示されます。
         </p>
         <Link
           href="/login"
-          className="mt-4 inline-flex rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+          className="mt-4 inline-flex rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
         >
           ログインして作品を管理
         </Link>
@@ -133,14 +133,14 @@ export function StudioOwnedProjectsSection() {
 
   if (ownedGames.length === 0) {
     return (
-      <section className="rounded-2xl border border-orange-500/30 bg-orange-500/5 p-5 sm:p-6">
+      <section className="rounded-2xl border border-violet-500/30 bg-violet-500/5 p-5 sm:p-6">
         <h2 className="text-lg font-semibold text-zinc-100">あなたの作品</h2>
         <p className="mt-2 text-sm text-zinc-400">
           まだ投稿した作品がありません。投稿後、ここから各作品の Studio を開けます。
         </p>
         <Link
           href={studioSubmitModalHref()}
-          className="mt-4 inline-flex rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+          className="mt-4 inline-flex rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
         >
           最初の作品を投稿
         </Link>
@@ -153,7 +153,7 @@ export function StudioOwnedProjectsSection() {
   }
 
   return (
-    <section className="rounded-2xl border border-orange-500/30 bg-orange-500/5 p-5 sm:p-6">
+    <section className="rounded-2xl border border-violet-500/30 bg-violet-500/5 p-5 sm:p-6">
       <div>
         <h2 className="text-lg font-semibold text-zinc-100">
           確認したいプレイヤーの反応

@@ -1054,7 +1054,10 @@ function GameDetailV0PageBody({
           )}
 
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-            <div className="flex items-center gap-3">
+            <Link
+              href={`/creators/${game.developer.id}`}
+              className="flex items-center gap-3 rounded-xl transition-colors hover:text-violet-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500/70"
+            >
               <GameDetailDeveloperAvatar
                 name={game.developer.name}
                 imageSrc={developerAvatarSrc}
@@ -1062,7 +1065,9 @@ function GameDetailV0PageBody({
                 textClassName="text-sm"
               />
               <div className="min-w-0">
-                <p className="truncate font-semibold text-white">{game.developer.name}</p>
+                <p className="truncate font-semibold text-white transition-colors">
+                  {game.developer.name}
+                </p>
                 {developerXUsername ? (
                   <XLinkedHandleBadge username={developerXUsername} className="mt-1" />
                 ) : null}
@@ -1077,7 +1082,7 @@ function GameDetailV0PageBody({
                   </p>
                 ) : null}
               </div>
-            </div>
+            </Link>
             {game.developer.bio ? (
               <p className="mt-3 text-xs leading-relaxed text-zinc-500">{game.developer.bio}</p>
             ) : null}
@@ -1094,12 +1099,6 @@ function GameDetailV0PageBody({
                 {realFollowing ? "開発者フォロー中" : "開発者をフォローする"}
               </button>
             ) : null}
-            <Link
-              href={`/creators/${game.developer.id}`}
-              className="mt-2 block text-center text-xs text-violet-400 transition-colors hover:text-violet-300"
-            >
-              プロフィールを見る →
-            </Link>
           </section>
 
           {/*

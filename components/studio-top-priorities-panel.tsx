@@ -31,7 +31,7 @@ function PriorityList({ priorities }: { priorities: TopPriority[] }) {
           className="rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3 py-2.5"
         >
           <div className="flex items-start gap-2">
-            <span className="mt-0.5 text-xs font-semibold text-orange-400/90">
+            <span className="mt-0.5 text-xs font-semibold text-violet-400/90">
               {index + 1}
             </span>
             <div className="min-w-0 flex-1">
@@ -120,7 +120,7 @@ export function StudioTopPrioritiesPanel({
       className={`${
         hideHeading
           ? ""
-          : `rounded-xl border border-orange-500/25 bg-zinc-900/40 p-4 sm:p-5 ring-1 ring-orange-500/10 ${
+          : `rounded-xl border border-violet-500/25 bg-zinc-900/40 p-4 sm:p-5 ring-1 ring-violet-500/10 ${
               embedded ? "" : "mt-8"
             }`
       }`}

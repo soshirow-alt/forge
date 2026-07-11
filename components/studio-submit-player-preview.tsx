@@ -5,6 +5,8 @@ import { useMemo } from "react";
 import { GameDetailOverviewV0Tab } from "@/components/game-detail-overview-v0-tab";
 import { GameDetailPhaseBadge } from "@/components/game-detail-phase-badge";
 import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
+import { GameSpecialThanksTab } from "@/components/game-special-thanks-tab";
+import { GameDetailTabBar } from "@/components/game-detail-tabs-region";
 import { StudioHeroPreviewGallery } from "@/components/studio-hero-preview-gallery";
 import type { GameDetailTab } from "@/lib/game-detail-tabs";
 import { resolvePublicationDisplay } from "@/lib/game-play-destinations";
@@ -30,12 +32,6 @@ import {
 import { Clock } from "lucide-react";
 import { StudioPreviewEditTarget } from "@/components/studio-preview-edit-target";
 import type { StudioPreviewEditTarget as StudioPreviewEditTargetId } from "@/lib/studio-preview-edit-targets";
-
-const previewTabs: { id: GameDetailTab; label: string }[] = [
-  { id: "overview", label: "概要" },
-  { id: "devlog", label: "開発ログ" },
-  { id: "voices", label: "みんなのフィードバック" },
-];
 
 function TagPill({
   children,
@@ -198,26 +194,7 @@ export function StudioSubmitPlayerPreview({
         </div>
       </section>
 
-      <div className="border-b border-zinc-800/60">
-        <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label="公開ページタブ">
-          {previewTabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className={`shrink-0 border-b-2 px-4 py-3 text-sm transition-colors ${
-                activeTab === tab.id
-                  ? "border-zinc-600 font-medium text-zinc-400"
-                  : "border-transparent font-normal text-zinc-600 hover:text-zinc-500"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <GameDetailTabBar activeTab={activeTab} onTabChange={onTabChange} />
 
       {activeTab === "overview" ? (
         <GameDetailOverviewV0Tab
@@ -264,6 +241,10 @@ export function StudioSubmitPlayerPreview({
           title="みんなのフィードバック"
           description="他のプレイヤーのフィードバックの傾向や、よく挙がるテーマがここで見られるようになります。いまは準備中です。"
         />
+      ) : null}
+
+      {activeTab === "special-thanks" ? (
+        <GameSpecialThanksTab projectId={undefined} />
       ) : null}
     </div>
   );

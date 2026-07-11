@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useGames } from "@/components/games-provider";
 import { resolvePlayableVersion } from "@/lib/playable-version";
@@ -18,6 +18,7 @@ export function useStudioHomeHighlights() {
   const { getOwnedProjects } = useGames();
   const [highlights, setHighlights] = useState<StudioHomeHighlights>(EMPTY_HIGHLIGHTS);
   const [loading, setLoading] = useState(true);
+  const hasLoadedRef = useRef(false);
 
   const publicProjects = useMemo(() => {
     if (!user) {
@@ -33,6 +34,7 @@ export function useStudioHomeHighlights() {
 
   useEffect(() => {
     if (!user) {
+      hasLoadedRef.current = false;
       return;
     }
 
@@ -42,22 +44,26 @@ export function useStudioHomeHighlights() {
     }
 
     let active = true;
+    const blocking = !hasLoadedRef.current;
 
     queueMicrotask(() => {
       if (!active) {
         return;
       }
-      setLoading(true);
+      if (blocking) {
+        setLoading(true);
+      }
     });
 
     void fetchStudioHomeHighlights(supabase, user.id, publicProjects)
       .then((result) => {
         if (active) {
           setHighlights(result);
+          hasLoadedRef.current = true;
         }
       })
       .catch(() => {
-        if (active) {
+        if (active && blocking) {
           setHighlights(EMPTY_HIGHLIGHTS);
         }
       })

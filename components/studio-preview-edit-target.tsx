@@ -34,7 +34,7 @@ export function StudioPreviewEditTarget({
           onEditTarget(target);
         }
       }}
-      className={`group/studio-edit relative min-w-0 max-w-full rounded-lg transition-colors hover:bg-zinc-800/25 hover:outline hover:outline-1 hover:outline-zinc-700/50 focus-visible:outline focus-visible:outline-1 focus-visible:outline-orange-500/40 ${
+      className={`group/studio-edit relative min-w-0 max-w-full rounded-lg transition-colors hover:bg-zinc-800/25 hover:outline hover:outline-1 hover:outline-zinc-700/50 focus-visible:outline focus-visible:outline-1 focus-visible:outline-violet-500/40 ${
         inline ? "inline-flex max-w-full cursor-pointer" : "cursor-pointer"
       } ${className}`}
     >

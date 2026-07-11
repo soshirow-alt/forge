@@ -1,9 +1,23 @@
 "use client";
 
-import { SlidersHorizontal, Pencil, Sparkles, Image as ImageIcon, Link2 } from "lucide-react";
+import {
+  SlidersHorizontal,
+  Info,
+  Tags,
+  Sparkles,
+  Image as ImageIcon,
+  Gamepad2,
+  Globe,
+  MessageCircleQuestion,
+} from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { scrollStudioPanelToTop } from "@/lib/studio-panel-scroll";
 import { VersionPromptSettingsTrigger } from "@/components/version-prompt-settings-modal";
+import {
+  StudioActionGroup,
+  StudioActionRow,
+  StudioStatusRow,
+} from "@/components/studio-action-row";
 import {
   StudioSubmitBasicInfoEditPanel,
   StudioSubmitGenresTagsEditPanel,
@@ -27,72 +41,19 @@ import {
 } from "@/components/version-prompt-editor-dialog";
 import {
   studioOperationPanelAsideClassName,
-  studioOperationPanelBlockClassName,
-  studioOperationPanelGroupLabelClassName,
-  studioOperationPanelGuidanceClassName,
   studioOperationPanelHeaderAccentClassName,
   studioOperationPanelOuterClassName,
   studioOperationPanelScrollBodyClassName,
   studioOperationPanelScrollClassName,
+  studioOperationPrimaryButtonClassName,
 } from "@/lib/studio-operation-panel-styles";
 import type { StudioFieldId, StudioPanelFocusRequest } from "@/lib/studio-preview-edit-targets";
 
-const panelButtonClassName =
-  "inline-flex w-full min-w-0 max-w-full box-border items-center gap-2 rounded-lg border border-zinc-800/60 bg-zinc-950/40 px-3 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70 hover:text-zinc-100";
-
-const primaryButtonClassName =
-  "inline-flex w-full min-w-0 max-w-full box-border items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 shadow-sm shadow-orange-500/20 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
+const primaryButtonClassName = studioOperationPrimaryButtonClassName;
 
 const submitPanelAsideClassName = studioOperationPanelAsideClassName;
 
-const panelSummaryClassName = "min-w-0 max-w-full break-words text-sm text-zinc-300";
-
 type SubmitEditMode = SubmitValidationEditMode | "images" | "publication" | "visibility" | null;
-
-type RequirementBadge = "required" | "optional";
-
-function RequirementLabel({ kind }: { kind: RequirementBadge }) {
-  return (
-    <span
-      className={`rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
-        kind === "required"
-          ? "bg-orange-500/15 text-orange-300 ring-1 ring-orange-500/25"
-          : "bg-zinc-800/80 text-zinc-500"
-      }`}
-    >
-      {kind === "required" ? "必須" : "任意"}
-    </span>
-  );
-}
-
-function PanelBlock({
-  title,
-  requirement,
-  fieldHint,
-  children,
-}: {
-  title?: string;
-  requirement?: RequirementBadge;
-  fieldHint?: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className={studioOperationPanelBlockClassName}>
-      {title ? (
-        <div className="min-w-0 space-y-1">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-orange-300/80">
-              {title}
-            </h3>
-            {requirement ? <RequirementLabel kind={requirement} /> : null}
-          </div>
-          {fieldHint ? <p className="break-words text-[11px] text-zinc-600">{fieldHint}</p> : null}
-        </div>
-      ) : null}
-      <div className={`min-w-0 ${title ? "mt-3 space-y-2" : "space-y-2"}`}>{children}</div>
-    </section>
-  );
-}
 
 function SubmitValidationAlert({ message }: { message: string }) {
   return (
@@ -113,10 +74,6 @@ function StudioPanelScrollShell({ children }: { children: ReactNode }) {
       </div>
     </div>
   );
-}
-
-function GroupLabel({ children }: { children: ReactNode }) {
-  return <p className={studioOperationPanelGroupLabelClassName}>{children}</p>;
 }
 
 export type StudioSubmitPanelProps = {
@@ -291,10 +248,10 @@ export function StudioSubmitPanel({
             <div className={studioOperationPanelHeaderAccentClassName}>
               <div className="flex min-w-0 items-center gap-2">
                 <span
-                  className="h-4 w-0.5 shrink-0 rounded-full bg-orange-500/80"
+                  className="h-4 w-0.5 shrink-0 rounded-full bg-violet-500/80"
                   aria-hidden="true"
                 />
-                <SlidersHorizontal className="size-3.5 shrink-0 text-orange-400/90" aria-hidden="true" />
+                <SlidersHorizontal className="size-3.5 shrink-0 text-violet-400/90" aria-hidden="true" />
                 <h2 className="min-w-0 text-sm font-semibold tracking-tight text-zinc-100">
                   Studioパネル
                 </h2>
@@ -304,99 +261,82 @@ export function StudioSubmitPanel({
             <p className="text-xs font-medium text-zinc-500">作品を投稿する</p>
 
           <div className="w-full min-w-0 max-w-full space-y-5">
-            <div className="space-y-2">
-              <GroupLabel>ページの内容</GroupLabel>
-              <div className="space-y-2">
-                <PanelBlock
-                  title="基本情報"
-                  requirement="required"
-                  fieldHint="タイトル・キャッチコピー・開発フェーズ"
-                >
-                  <p className={panelSummaryClassName}>{summarizeSubmitDraftBasic(draft)}</p>
-                  <button type="button" onClick={() => openEdit("basic-info")} className={panelButtonClassName}>
-                    <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                    編集する
-                  </button>
-                </PanelBlock>
+            <StudioActionGroup label="ページの内容">
+              <StudioActionRow
+                icon={Info}
+                label="基本情報を編集"
+                summary={summarizeSubmitDraftBasic(draft)}
+                required
+                onClick={() => openEdit("basic-info")}
+              />
+              <StudioActionRow
+                icon={Tags}
+                label="ジャンル・タグを編集"
+                summary={summarizeSubmitDraftGenres(draft)}
+                required
+                onClick={() => openEdit("genres-tags")}
+              />
+              <StudioActionRow
+                icon={Sparkles}
+                label="作品紹介を編集"
+                summary={summarizeSubmitDraftIntroduction(draft)}
+                required
+                onClick={() => openEdit("introduction")}
+              />
+              <StudioActionRow
+                icon={ImageIcon}
+                label="画像を編集"
+                summary={summarizeSubmitDraftImages(draft)}
+                onClick={() => openEdit("images")}
+              />
+            </StudioActionGroup>
 
-                <PanelBlock
-                  title="ジャンル・タグ"
-                  requirement="required"
-                  fieldHint="ジャンル（必須）・特徴タグ（任意）"
-                >
-                  <p className={panelSummaryClassName}>{summarizeSubmitDraftGenres(draft)}</p>
-                  <button type="button" onClick={() => openEdit("genres-tags")} className={panelButtonClassName}>
-                    <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                    編集する
-                  </button>
-                </PanelBlock>
+            <StudioActionGroup label="遊び方・公開">
+              <StudioActionRow
+                icon={Gamepad2}
+                label="プレイ情報を編集"
+                summary={summarizeSubmitDraftPlayInfo(draft)}
+                required
+                onClick={() => openEdit("play-info")}
+              />
+              <StudioActionRow
+                icon={Globe}
+                label="公開先・公開設定を編集"
+                summary={summarizeSubmitDraftPublication(draft)}
+                onClick={() => openEdit("publication")}
+              />
+            </StudioActionGroup>
 
-                <PanelBlock title="作品紹介" requirement="required">
-                  <p className={panelSummaryClassName}>{summarizeSubmitDraftIntroduction(draft)}</p>
-                  <button type="button" onClick={() => openEdit("introduction")} className={panelButtonClassName}>
-                    <Sparkles className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                    編集する
-                  </button>
-                </PanelBlock>
-
-                <PanelBlock title="画像" requirement="optional" fieldHint="未設定でも投稿できます">
-                  <p className={panelSummaryClassName}>{summarizeSubmitDraftImages(draft)}</p>
-                  <button type="button" onClick={() => openEdit("images")} className={panelButtonClassName}>
-                    <ImageIcon className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                    編集する
-                  </button>
-                </PanelBlock>
+            <StudioActionGroup label="フィードバック設定">
+              <div className="space-y-2 px-1">
+                <div className="flex items-start gap-3 rounded-lg px-1.5 py-1">
+                  <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md border border-zinc-800/80 bg-zinc-950/60 text-zinc-400">
+                    <MessageCircleQuestion className="size-3.5" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div>
+                      <p className="text-sm font-medium text-zinc-100">プレイヤーに聞きたいこと</p>
+                      <p className="mt-0.5 text-xs text-zinc-500">{promptSummary}</p>
+                    </div>
+                    <VersionPromptSettingsTrigger
+                      mode={draft.promptMode}
+                      onModeChange={(promptMode) => onDraftChange({ promptMode })}
+                      drafts={draft.promptDrafts}
+                      onDraftsChange={(promptDrafts) => onDraftChange({ promptDrafts })}
+                      showValidation={showPromptValidation}
+                      versionLabel="初回のプレイ可能ver"
+                      title="プレイヤーに聞きたいこと"
+                      buttonLabel="問いを設定"
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
+            </StudioActionGroup>
 
-            <div className="space-y-2">
-              <GroupLabel>遊び方・公開</GroupLabel>
-              <div className="space-y-2">
-                <PanelBlock
-                  title="プレイ情報"
-                  requirement="required"
-                  fieldHint="料金・公開形態・想定時間・アクセス方法"
-                >
-                  <p className={panelSummaryClassName}>{summarizeSubmitDraftPlayInfo(draft)}</p>
-                  <button type="button" onClick={() => openEdit("play-info")} className={panelButtonClassName}>
-                    <Link2 className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                    編集する
-                  </button>
-                </PanelBlock>
-
-                <PanelBlock
-                  title="公開先・公開設定"
-                  requirement="optional"
-                  fieldHint="外部リンク・公開 / 非公開"
-                >
-                  <p className={panelSummaryClassName}>{summarizeSubmitDraftPublication(draft)}</p>
-                  <button
-                    type="button"
-                    onClick={() => openEdit("publication")}
-                    className={panelButtonClassName}
-                  >
-                    <Pencil className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
-                    編集する
-                  </button>
-                </PanelBlock>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <GroupLabel>フィードバック設定</GroupLabel>
-              <PanelBlock title="プレイヤーに聞きたいこと" requirement="optional">
-                <p className={panelSummaryClassName}>{promptSummary}</p>
-                <VersionPromptSettingsTrigger
-                  mode={draft.promptMode}
-                  onModeChange={(promptMode) => onDraftChange({ promptMode })}
-                  drafts={draft.promptDrafts}
-                  onDraftsChange={(promptDrafts) => onDraftChange({ promptDrafts })}
-                  showValidation={showPromptValidation}
-                  versionLabel="初回のプレイ可能ver"
-                  title="プレイヤーに聞きたいこと"
-                  buttonLabel="問いを設定"
-                />
-              </PanelBlock>
+            <div className="border-t border-zinc-800/80 pt-2">
+              <StudioStatusRow label="保存状態">
+                <span className="text-zinc-400">下書き（投稿前）</span>
+              </StudioStatusRow>
             </div>
           </div>
 

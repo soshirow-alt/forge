@@ -5,6 +5,7 @@ import {
   timeKindForSection,
 } from "@/lib/home-discovery-time-label";
 import type { HomeDiscoverySection, HeroSource } from "@/lib/home-discovery-selection";
+import { resolveProjectThumbnailUrlsFromRow } from "@/lib/project-thumbnails";
 
 export type HomeDiscoveryFeedRow = {
   section: HomeDiscoverySection;
@@ -117,6 +118,41 @@ export async function fetchHomeDiscoveryFeed(
     throw error;
   }
   return partitionHomeDiscoveryFeed((data ?? []) as HomeDiscoveryFeedRow[]);
+}
+
+/**
+ * 公開作品のみから thumbnail_urls を一括取得（anon 可: visibility=public RLS）。
+ * ホーム RPC を変更せず、ヒーロー最大3件の追加画像に使う。
+ */
+export async function fetchPublicProjectThumbnailUrlsByIds(
+  supabase: SupabaseClient,
+  projectIds: string[],
+): Promise<Record<string, string[]>> {
+  const uniqueIds = [...new Set(projectIds.filter(Boolean))];
+  const result: Record<string, string[]> = {};
+  if (uniqueIds.length === 0) {
+    return result;
+  }
+
+  const { data, error } = await supabase
+    .from("projects")
+    .select("id, thumbnail_url, thumbnail_urls")
+    .eq("visibility", "public")
+    .in("id", uniqueIds);
+
+  if (error) {
+    throw error;
+  }
+
+  for (const row of (data ?? []) as {
+    id: string;
+    thumbnail_url?: string | null;
+    thumbnail_urls?: string[] | null;
+  }[]) {
+    result[row.id] = resolveProjectThumbnailUrlsFromRow(row);
+  }
+
+  return result;
 }
 
 export type PublishVersionWithDevlogResult = {

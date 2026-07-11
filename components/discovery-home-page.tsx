@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Image as ImageIcon } from "lucide-react";
 import { DiscoveryCardStatPills } from "@/components/discovery-card-stat-pills";
 import { DiscoveryGameThumbnail } from "@/components/discovery-game-thumbnail";
 import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
@@ -14,6 +14,7 @@ import {
 } from "@/lib/home-discovery-selection";
 import {
   fetchHomeDiscoveryFeed,
+  fetchPublicProjectThumbnailUrlsByIds,
   type HomeDiscoveryCard,
 } from "@/lib/supabase/home-discovery-db";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
@@ -22,26 +23,15 @@ import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 
 function HorizontalGameCard({
   game,
-  rank,
   compact = false,
 }: {
   game: HomeDiscoveryCard;
-  rank?: number;
   compact?: boolean;
 }) {
   return (
     <Link href={gameDetailHref(game.id)} className="block w-full">
       <article>
         <div className="relative">
-          {rank !== undefined && (
-            <span
-              className={`absolute left-1.5 top-1.5 z-10 flex items-center justify-center rounded-md bg-violet-600 font-bold text-white shadow-lg ${
-                compact ? "size-6 text-xs" : "left-2 top-2 size-7 text-sm"
-              }`}
-            >
-              {rank}
-            </span>
-          )}
           <DiscoveryGameThumbnail
             id={game.id}
             title={game.title}
@@ -88,9 +78,89 @@ function SectionHeader({ title, href }: { title: string; href?: string }) {
   );
 }
 
-function HeroCarousel({ slides }: { slides: HomeDiscoveryCard[] }) {
+type HeroThumbnailsState =
+  | { status: "loading" }
+  | { status: "ready"; byId: Record<string, string[]> }
+  | { status: "error" };
+
+function MissingGameImage() {
+  return (
+    <div className="flex aspect-[4/3] items-center justify-center rounded-xl border border-dashed border-zinc-800 bg-black text-center">
+      <div className="space-y-1 text-zinc-600">
+        <ImageIcon className="mx-auto size-5" aria-hidden="true" />
+        <p className="text-[11px] font-medium">追加画像未登録</p>
+      </div>
+    </div>
+  );
+}
+
+function LoadingGameImageSlot() {
+  return (
+    <div
+      className="aspect-[4/3] animate-pulse rounded-xl border border-zinc-800/80 bg-zinc-900/80"
+      aria-hidden="true"
+    />
+  );
+}
+
+function GameImageThumbnail({
+  src,
+  selected,
+  onSelect,
+}: {
+  src: string;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`relative aspect-[4/3] overflow-hidden rounded-xl border bg-black transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-violet-500/70 ${
+        selected
+          ? "border-violet-500/70 ring-1 ring-violet-500/40"
+          : "border-zinc-800 hover:border-violet-500/40"
+      }`}
+      aria-pressed={selected}
+      aria-label="追加画像をメインに表示"
+    >
+      <Image src={src} alt="" fill className="object-contain" sizes="160px" />
+    </button>
+  );
+}
+
+function HeroCarousel({
+  slides,
+  thumbnails,
+}: {
+  slides: HomeDiscoveryCard[];
+  thumbnails: HeroThumbnailsState;
+}) {
   const [index, setIndex] = useState(0);
+  const [imageIndex, setImageIndex] = useState(0);
   const slide = slides[index] ?? slides[0];
+
+  const galleryUrls = useMemo(() => {
+    if (!slide) {
+      return [] as string[];
+    }
+    if (thumbnails.status === "ready") {
+      const fromDb = thumbnails.byId[slide.id];
+      if (fromDb && fromDb.length > 0) {
+        return fromDb;
+      }
+    }
+    return slide.image ? [slide.image] : [];
+  }, [slide, thumbnails]);
+
+  const currentImage = galleryUrls[imageIndex] ?? galleryUrls[0] ?? null;
+  const additionalSlots: Array<string | null | "loading"> = [0, 1].map((slot) => {
+    if (thumbnails.status === "loading") {
+      return "loading";
+    }
+    // ready or error: slot 0/1 map to gallery index 1/2 (additional only)
+    return galleryUrls[slot + 1] ?? null;
+  });
 
   if (!slide) {
     return null;
@@ -98,79 +168,107 @@ function HeroCarousel({ slides }: { slides: HomeDiscoveryCard[] }) {
 
   function goPrev() {
     setIndex((current) => (current === 0 ? slides.length - 1 : current - 1));
+    setImageIndex(0);
   }
 
   function goNext() {
     setIndex((current) => (current === slides.length - 1 ? 0 : current + 1));
+    setImageIndex(0);
+  }
+
+  function goToSlide(nextIndex: number) {
+    setIndex(nextIndex);
+    setImageIndex(0);
   }
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/40">
-      <div className="relative min-h-[280px] sm:min-h-[320px]">
-        {slide.image ? (
-          <Image
-            src={slide.image}
-            alt=""
-            fill
-            className="object-cover opacity-50"
-            priority
-          />
-        ) : (
-          <div className="absolute inset-0 opacity-50">
+    <section className="overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/40">
+      <div className="grid gap-0 lg:grid-cols-[minmax(0,68%)_minmax(0,32%)]">
+        <div className="relative flex min-h-[220px] items-center justify-center bg-black sm:min-h-[280px] lg:min-h-[320px]">
+          {currentImage ? (
+            <Image
+              src={currentImage}
+              alt=""
+              fill
+              className="object-contain"
+              priority
+              sizes="(max-width: 1024px) 100vw, 70vw"
+            />
+          ) : (
             <GeneratedThumbnailPoster
               projectId={slide.id}
               title={slide.title}
               genre={slide.genre ?? ""}
               phase={slide.version}
             />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/90 via-transparent to-transparent" />
+          )}
 
-        <div className="relative flex h-full flex-col justify-end p-6 sm:p-8 lg:max-w-2xl">
-          <p className="text-xs font-medium uppercase tracking-wider text-violet-400">
-            注目の作品
-          </p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-4xl">
-            {slide.title}
-          </h1>
-          <p className="mt-2 text-sm text-zinc-400">
-            {slide.version} · {slide.updatedLabel}
-          </p>
-          <p className="mt-3 max-w-lg text-sm leading-relaxed text-zinc-300">
-            {slide.description}
-          </p>
-          <div className="mt-4">
-            <DiscoveryCardStatPills
-              feedbackCount={slide.feedbackCount}
-              watchCount={slide.watchCount}
-            />
+          <button
+            type="button"
+            onClick={goPrev}
+            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-zinc-700/80 bg-zinc-950/80 p-2 text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
+            aria-label="前のスライド"
+          >
+            <ChevronLeft className="size-5" />
+          </button>
+          <button
+            type="button"
+            onClick={goNext}
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-zinc-700/80 bg-zinc-950/80 p-2 text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
+            aria-label="次のスライド"
+          >
+            <ChevronRight className="size-5" />
+          </button>
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-4 p-4 sm:p-5 lg:p-6">
+          <div className="grid grid-cols-2 gap-3">
+            {additionalSlots.map((slot, slotIndex) => {
+              if (slot === "loading") {
+                return <LoadingGameImageSlot key={`loading-${slotIndex}`} />;
+              }
+              if (typeof slot === "string") {
+                return (
+                  <GameImageThumbnail
+                    key={`${slide.id}-extra-${slotIndex}`}
+                    src={slot}
+                    selected={currentImage === slot}
+                    onSelect={() => setImageIndex(slotIndex + 1)}
+                  />
+                );
+              }
+              return <MissingGameImage key={`missing-${slotIndex}`} />;
+            })}
           </div>
+
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium uppercase tracking-wider text-violet-400">
+              注目の作品
+            </p>
+            <h1 className="mt-2 break-words text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              {slide.title}
+            </h1>
+            <p className="mt-2 text-sm text-zinc-400">
+              {slide.version} · {slide.updatedLabel}
+            </p>
+            <p className="mt-3 line-clamp-4 text-sm leading-relaxed text-zinc-300">
+              {slide.description}
+            </p>
+            <div className="mt-4">
+              <DiscoveryCardStatPills
+                feedbackCount={slide.feedbackCount}
+                watchCount={slide.watchCount}
+              />
+            </div>
+          </div>
+
           <Link
             href={gameDetailHref(slide.id)}
-            className="mt-6 inline-flex w-fit rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+            className="inline-flex w-fit rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
           >
             詳しく見る →
           </Link>
         </div>
-
-        <button
-          type="button"
-          onClick={goPrev}
-          className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-zinc-700/80 bg-zinc-950/80 p-2 text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
-          aria-label="前のスライド"
-        >
-          <ChevronLeft className="size-5" />
-        </button>
-        <button
-          type="button"
-          onClick={goNext}
-          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-zinc-700/80 bg-zinc-950/80 p-2 text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
-          aria-label="次のスライド"
-        >
-          <ChevronRight className="size-5" />
-        </button>
       </div>
 
       <div className="flex justify-center gap-2 border-t border-zinc-800/80 py-3">
@@ -178,7 +276,7 @@ function HeroCarousel({ slides }: { slides: HomeDiscoveryCard[] }) {
           <button
             key={`${item.id}-${item.heroSource ?? "hero"}`}
             type="button"
-            onClick={() => setIndex(dotIndex)}
+            onClick={() => goToSlide(dotIndex)}
             className={`size-2 rounded-full transition-colors ${
               dotIndex === index ? "bg-violet-500" : "bg-zinc-700 hover:bg-zinc-500"
             }`}
@@ -250,6 +348,13 @@ const EMPTY_FEED = {
   trending: [] as HomeDiscoveryCard[],
 };
 
+/** Client remount 時に前回成功分を即表示し、裏で再検証する */
+let homeDiscoveryFeedCache: {
+  newest: HomeDiscoveryCard[];
+  updated: HomeDiscoveryCard[];
+  trending: HomeDiscoveryCard[];
+} | null = null;
+
 async function loadHomeDiscoveryFeedWithRetry(
   supabase: NonNullable<ReturnType<typeof getOptionalSupabaseClient>>,
 ) {
@@ -267,10 +372,13 @@ async function loadHomeDiscoveryFeedWithRetry(
 }
 
 export function DiscoveryHomePage() {
-  const [state, setState] = useState<FeedState>({
+  const [state, setState] = useState<FeedState>(() =>
+    homeDiscoveryFeedCache
+      ? { status: "ready", feed: homeDiscoveryFeedCache, error: null }
+      : { status: "loading", feed: null, error: null },
+  );
+  const [heroThumbnails, setHeroThumbnails] = useState<HeroThumbnailsState>({
     status: "loading",
-    feed: null,
-    error: null,
   });
   const feed = state.feed;
   const ready = state.status !== "loading";
@@ -292,23 +400,57 @@ export function DiscoveryHomePage() {
 
     void (async () => {
       // Keep loading UI until a definitive success or failure — never flash error mid-fetch.
+      // Cached feed already shown; still revalidate in background.
       if (!supabase) {
         if (cancelled) return;
         setState({ status: "ready", feed: EMPTY_FEED, error: null });
+        setHeroThumbnails({ status: "error" });
         return;
       }
 
       try {
         const next = await loadHomeDiscoveryFeedWithRetry(supabase);
         if (cancelled) return;
+        homeDiscoveryFeedCache = next;
         setState({ status: "ready", feed: next, error: null });
+
+        const heroIds = selectHeroItems(
+          next.trending,
+          next.updated,
+          next.newest,
+        ).map((item) => item.id);
+
+        if (heroIds.length === 0) {
+          setHeroThumbnails({ status: "ready", byId: {} });
+          return;
+        }
+
+        setHeroThumbnails({ status: "loading" });
+        try {
+          const byId = await fetchPublicProjectThumbnailUrlsByIds(
+            supabase,
+            heroIds,
+          );
+          if (cancelled) return;
+          setHeroThumbnails({ status: "ready", byId });
+        } catch {
+          if (cancelled) return;
+          // Do not cache failure as empty success.
+          setHeroThumbnails({ status: "error" });
+        }
       } catch (err: unknown) {
         if (cancelled) return;
+        // Keep previous successful feed if revalidation fails.
+        if (homeDiscoveryFeedCache) {
+          setState({ status: "ready", feed: homeDiscoveryFeedCache, error: null });
+          return;
+        }
         setState({
           status: "error",
           feed: EMPTY_FEED,
           error: err instanceof Error ? err.message : "feed load failed",
         });
+        setHeroThumbnails({ status: "error" });
       }
     })();
 
@@ -361,7 +503,7 @@ export function DiscoveryHomePage() {
       ) : null}
 
       {heroItems.length > 0 ? (
-        <HeroCarousel slides={heroItems} />
+        <HeroCarousel slides={heroItems} thumbnails={heroThumbnails} />
       ) : error ? null : (
         <DiscoverySectionEmpty message="まだ公開中の作品がありません" />
       )}
@@ -387,14 +529,11 @@ export function DiscoveryHomePage() {
           <SectionHeader title="直近7日で反応が集まった作品" href="/search" />
           <div className="mt-4 px-2">
             <HorizontalCardPager
-              items={trendingCarousel.map((game) => ({
-                game,
-                rank: game.rank,
-              }))}
-              getKey={({ game }) => `${game.id}-trending-${game.rank}`}
+              items={trendingCarousel}
+              getKey={(game) => `${game.id}-trending-${game.rank}`}
               pageSize={4}
-              renderItem={({ game, rank }) => (
-                <HorizontalGameCard game={game} rank={rank} compact />
+              renderItem={(game) => (
+                <HorizontalGameCard game={game} compact />
               )}
             />
           </div>

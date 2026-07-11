@@ -92,78 +92,94 @@ export function CreatorProfileRealView({
 
   const inDevGames = profile.games.filter((game) => game.status === "in-dev");
   const completedGames = profile.games.filter((game) => game.status === "completed");
+  const achievementStats = [
+    ["公開中", profile.stats.inDevelopment + profile.stats.completed],
+    ["開発中", profile.stats.inDevelopment],
+    ["完成", profile.stats.completed],
+    ["開発ログ", profile.recentDevlogs.length],
+  ] as const;
 
   return (
     <PlayerShell activeNav="creator-search">
-      <div className="flex flex-col gap-8 xl:flex-row">
-        <div className="min-w-0 flex-1 space-y-6">
+      <div className="space-y-6">
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 sm:p-8">
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-              <span className="relative mx-auto size-24 shrink-0 overflow-hidden rounded-full bg-zinc-800 sm:mx-0">
-                <Image src={profile.avatar} alt="" fill className="object-cover" />
-              </span>
-              <div className="min-w-0 flex-1 text-center sm:text-left">
-                <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                  <h1 className="text-2xl font-bold text-white">{profile.name}</h1>
-                  <BadgeCheck className="size-5 text-violet-400" aria-hidden="true" />
-                </div>
-                <p className="mt-1 text-sm text-zinc-500">
-                  {linkedXUsername ? (
-                    <>
-                      <XLinkedHandleBadge username={linkedXUsername} />
-                      <span className="mx-2 text-zinc-700" aria-hidden="true">
-                        ·
-                      </span>
-                    </>
-                  ) : null}
-                  @{profile.handle}
-                  <span className="mx-2 text-zinc-700" aria-hidden="true">
-                    ·
-                  </span>
-                  フォロワー {followerCount.toLocaleString()}人
-                </p>
-                {profile.bio ? (
-                  <p className="mt-3 text-sm leading-relaxed text-zinc-400">{profile.bio}</p>
-                ) : null}
-                <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-500 sm:justify-start">
-                  <span className="inline-flex items-center gap-1">
-                    <MapPin className="size-3.5" aria-hidden="true" />
-                    日本
-                  </span>
-                  {profile.xAccount ? (
-                    <CreatorSocialLink
-                      href={xProfileHref(profile.xAccount)}
-                      label="X"
-                    />
-                  ) : null}
-                  {profile.website ? (
-                    <CreatorSocialLink href={websiteHref(profile.website)} label="公式サイト" />
-                  ) : null}
-                  {profile.discordUrl ? (
-                    <CreatorSocialLink href={profile.discordUrl} label="Discord" />
-                  ) : null}
-                  {profile.youtubeUrl ? (
-                    <CreatorSocialLink href={profile.youtubeUrl} label="YouTube" />
-                  ) : null}
-                </div>
-                {!isSelf ? (
-                  <div className="mt-5 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
-                    <CreatorFollowButton
-                      creatorRouteKey={profile.routeId}
-                      developerUserId={profile.userId}
-                    />
-                    <CreatorCommunityJoinButton developerUserId={profile.userId} />
-                    <ContentReportButton
-                      target={{
-                        targetType: "developer",
-                        targetId: profile.userId,
-                        contextLabel: profile.name,
-                      }}
-                      returnPath={`/creators/${profile.routeId}`}
-                    />
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)] lg:items-start">
+              <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+                <span className="relative mx-auto size-24 shrink-0 overflow-hidden rounded-full bg-zinc-800 sm:mx-0">
+                  <Image src={profile.avatar} alt="" fill className="object-cover" />
+                </span>
+                <div className="min-w-0 flex-1 text-center sm:text-left">
+                  <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                    <h1 className="text-2xl font-bold text-white">{profile.name}</h1>
+                    <BadgeCheck className="size-5 text-violet-400" aria-hidden="true" />
                   </div>
-                ) : null}
+                  <p className="mt-1 text-sm text-zinc-500">
+                    {linkedXUsername ? (
+                      <>
+                        <XLinkedHandleBadge username={linkedXUsername} />
+                        <span className="mx-2 text-zinc-700" aria-hidden="true">
+                          ·
+                        </span>
+                      </>
+                    ) : null}
+                    @{profile.handle}
+                    <span className="mx-2 text-zinc-700" aria-hidden="true">
+                      ·
+                    </span>
+                    フォロワー {followerCount.toLocaleString()}人
+                  </p>
+                  {profile.bio ? (
+                    <p className="mt-3 text-sm leading-relaxed text-zinc-400">{profile.bio}</p>
+                  ) : null}
+                  <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-500 sm:justify-start">
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin className="size-3.5" aria-hidden="true" />
+                      日本
+                    </span>
+                    {profile.xAccount ? (
+                      <CreatorSocialLink
+                        href={xProfileHref(profile.xAccount)}
+                        label="X"
+                      />
+                    ) : null}
+                    {profile.website ? (
+                      <CreatorSocialLink href={websiteHref(profile.website)} label="公式サイト" />
+                    ) : null}
+                    {profile.discordUrl ? (
+                      <CreatorSocialLink href={profile.discordUrl} label="Discord" />
+                    ) : null}
+                    {profile.youtubeUrl ? (
+                      <CreatorSocialLink href={profile.youtubeUrl} label="YouTube" />
+                    ) : null}
+                  </div>
+                  {!isSelf ? (
+                    <div className="mt-5 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
+                      <CreatorFollowButton
+                        creatorRouteKey={profile.routeId}
+                        developerUserId={profile.userId}
+                      />
+                      <CreatorCommunityJoinButton developerUserId={profile.userId} />
+                      <ContentReportButton
+                        target={{
+                          targetType: "developer",
+                          targetId: profile.userId,
+                          contextLabel: profile.name,
+                        }}
+                        returnPath={`/creators/${profile.routeId}`}
+                      />
+                    </div>
+                  ) : null}
+                </div>
               </div>
+
+              <dl className="grid grid-cols-2 gap-3 text-center">
+                {achievementStats.map(([label, value]) => (
+                  <div key={label} className="rounded-lg bg-zinc-950/40 px-2 py-3">
+                    <dt className="text-xs text-zinc-500">{label}</dt>
+                    <dd className="mt-1 text-lg font-bold text-white">{value}</dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           </section>
 
@@ -294,27 +310,6 @@ export function CreatorProfileRealView({
             ) : (
               <FeatureComingSoonPanel title="開発者の実績" />
             ))}
-
-        </div>
-
-        <aside className="w-full shrink-0 space-y-5 xl:w-72">
-          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-            <h2 className="text-sm font-semibold text-white">開発者の実績</h2>
-            <dl className="mt-4 grid grid-cols-2 gap-3 text-center">
-              {[
-                ["公開中", profile.stats.inDevelopment + profile.stats.completed],
-                ["開発中", profile.stats.inDevelopment],
-                ["完成", profile.stats.completed],
-                ["開発ログ", profile.recentDevlogs.length],
-              ].map(([label, value]) => (
-                <div key={String(label)} className="rounded-lg bg-zinc-950/40 px-2 py-3">
-                  <dt className="text-xs text-zinc-500">{label}</dt>
-                  <dd className="mt-1 text-lg font-bold text-white">{value}</dd>
-                </div>
-              ))}
-            </dl>
-          </section>
-        </aside>
       </div>
     </PlayerShell>
   );
