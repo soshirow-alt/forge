@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-11 — 作品詳細タブを一体型セグメントに
+
+- **UI** — `/games/[id]` の「概要 / 開発ログ / みんなのフィードバック / Special Thanks」を、枠付き一体型セグメントタブに変更（アイコン付き）
+- **件数** — 「みんなのフィードバック」のみ。`publicStats` 取得成功後の `feedbackParticipantCount` を表示（実データの 0 も表示）。未取得・取得中・失敗時はバッジ非表示
+- **見た目** — 選択中は紫アクセント背景＋白文字（主要CTAの `bg-violet-600` より弱め）。未選択 hover は薄い紫
+- **未変更** — タブ中身・URL・DB/RPC・認証・タブ以外のUI
+
+---
+
 ## 2026-07-11 — ホーム発見ロジック Production 反映
 
 - **main** — `preview/landing-01` を fast-forward（`6941321`）。Production URL: https://forge-flame-gamma.vercel.app

@@ -277,12 +277,29 @@ function GameDetailV0PageBody({
     }
     return game.developer.avatar;
   }, [isRealProject, thumbnailUrls, game.developer.avatar]);
-  const { stats: publicStats } = useProjectPublicStats(
-    isRealProject ? resolvedId : null,
-  );
+  const {
+    stats: publicStats,
+    loaded: publicStatsLoaded,
+    error: publicStatsError,
+  } = useProjectPublicStats(isRealProject ? resolvedId : null);
   const voiceCountForOverview = isRealProject
     ? publicStats.feedbackParticipantCount
     : game.voiceCount;
+  /**
+   * タブ件数: 取得成功後の実数のみ（0 含む）。
+   * 未取得・取得中・失敗・非実プロジェクトはバッジ非表示（便宜的な 0 にしない）。
+   */
+  const tabCounts = useMemo(() => {
+    if (!isRealProject || !publicStatsLoaded || publicStatsError) {
+      return undefined;
+    }
+    return { voices: publicStats.feedbackParticipantCount };
+  }, [
+    isRealProject,
+    publicStats.feedbackParticipantCount,
+    publicStatsError,
+    publicStatsLoaded,
+  ]);
   const hasDevlogForOverview = isRealProject
     ? Boolean(publicStats.latestDevlogAt)
     : Boolean(game.devlogUpdatedAgo && game.devlogUpdatedAgo !== "—");
@@ -996,7 +1013,11 @@ function GameDetailV0PageBody({
             />
           ) : null}
 
-          <GameDetailTabBar activeTab={activeTab} onTabChange={setDetailTab} />
+          <GameDetailTabBar
+            activeTab={activeTab}
+            onTabChange={setDetailTab}
+            counts={tabCounts}
+          />
 
           <GameDetailTabPanels
             activeTab={activeTab}
