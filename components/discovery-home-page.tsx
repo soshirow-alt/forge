@@ -85,10 +85,12 @@ type HeroThumbnailsState =
 
 function MissingGameImage() {
   return (
-    <div className="flex aspect-[4/3] items-center justify-center rounded-xl border border-dashed border-zinc-800 bg-black text-center">
-      <div className="space-y-1 text-zinc-600">
-        <ImageIcon className="mx-auto size-5" aria-hidden="true" />
-        <p className="text-[11px] font-medium">追加画像未登録</p>
+    <div className="flex aspect-[4/3] items-center justify-center rounded-lg border border-dashed border-zinc-800 bg-black px-1 text-center lg:rounded-md">
+      <div className="space-y-0.5 text-zinc-600">
+        <ImageIcon className="mx-auto size-4 lg:size-3.5" aria-hidden="true" />
+        <p className="text-[10px] font-medium leading-tight lg:text-[9px]">
+          追加画像未登録
+        </p>
       </div>
     </div>
   );
@@ -97,7 +99,7 @@ function MissingGameImage() {
 function LoadingGameImageSlot() {
   return (
     <div
-      className="aspect-[4/3] animate-pulse rounded-xl border border-zinc-800/80 bg-zinc-900/80"
+      className="aspect-[4/3] animate-pulse rounded-lg border border-zinc-800/80 bg-zinc-900/80 lg:rounded-md"
       aria-hidden="true"
     />
   );
@@ -116,7 +118,7 @@ function GameImageThumbnail({
     <button
       type="button"
       onClick={onSelect}
-      className={`relative aspect-[4/3] overflow-hidden rounded-xl border bg-black transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-violet-500/70 ${
+      className={`relative aspect-[4/3] overflow-hidden rounded-lg border bg-black transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-violet-500/70 lg:rounded-md ${
         selected
           ? "border-violet-500/70 ring-1 ring-violet-500/40"
           : "border-zinc-800 hover:border-violet-500/40"
@@ -124,7 +126,7 @@ function GameImageThumbnail({
       aria-pressed={selected}
       aria-label="追加画像をメインに表示"
     >
-      <Image src={src} alt="" fill className="object-contain" sizes="160px" />
+      <Image src={src} alt="" fill className="object-contain" sizes="96px" />
     </button>
   );
 }
@@ -182,9 +184,9 @@ function HeroCarousel({
   }
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/40">
-      <div className="grid gap-0 lg:grid-cols-[minmax(0,68%)_minmax(0,32%)]">
-        <div className="relative flex min-h-[220px] items-center justify-center bg-black sm:min-h-[280px] lg:min-h-[320px]">
+    <section className="mx-auto w-full max-w-[1280px] overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/40">
+      <div className="grid gap-0 lg:h-[300px] lg:grid-cols-[minmax(0,68%)_minmax(0,32%)]">
+        <div className="relative flex min-h-[200px] items-center justify-center bg-black sm:min-h-[240px] lg:h-full lg:min-h-0">
           {currentImage ? (
             <Image
               src={currentImage}
@@ -192,7 +194,7 @@ function HeroCarousel({
               fill
               className="object-contain"
               priority
-              sizes="(max-width: 1024px) 100vw, 70vw"
+              sizes="(max-width: 1024px) 100vw, 870px"
             />
           ) : (
             <GeneratedThumbnailPoster
@@ -221,8 +223,8 @@ function HeroCarousel({
           </button>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-4 p-4 sm:p-5 lg:p-6">
-          <div className="grid grid-cols-2 gap-3">
+        <div className="flex min-w-0 flex-col gap-3 p-4 sm:p-5 lg:h-full lg:justify-between lg:gap-2 lg:overflow-hidden lg:p-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:w-[10rem] lg:shrink-0 lg:gap-1.5">
             {additionalSlots.map((slot, slotIndex) => {
               if (slot === "loading") {
                 return <LoadingGameImageSlot key={`loading-${slotIndex}`} />;
@@ -241,20 +243,20 @@ function HeroCarousel({
             })}
           </div>
 
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 lg:min-h-0">
             <p className="text-xs font-medium uppercase tracking-wider text-violet-400">
               注目の作品
             </p>
-            <h1 className="mt-2 break-words text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            <h1 className="mt-1.5 break-words text-xl font-bold tracking-tight text-white sm:text-2xl lg:mt-1 lg:line-clamp-2 lg:text-xl lg:leading-snug">
               {slide.title}
             </h1>
-            <p className="mt-2 text-sm text-zinc-400">
+            <p className="mt-1.5 text-sm text-zinc-400 lg:mt-1">
               {slide.version} · {slide.updatedLabel}
             </p>
-            <p className="mt-3 line-clamp-4 text-sm leading-relaxed text-zinc-300">
+            <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-zinc-300 lg:mt-1.5 lg:line-clamp-2">
               {slide.description}
             </p>
-            <div className="mt-4">
+            <div className="mt-3 lg:mt-2">
               <DiscoveryCardStatPills
                 feedbackCount={slide.feedbackCount}
                 watchCount={slide.watchCount}
@@ -264,14 +266,14 @@ function HeroCarousel({
 
           <Link
             href={gameDetailHref(slide.id)}
-            className="inline-flex w-fit rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+            className="inline-flex w-fit shrink-0 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
           >
             詳しく見る →
           </Link>
         </div>
       </div>
 
-      <div className="flex justify-center gap-2 border-t border-zinc-800/80 py-3">
+      <div className="flex justify-center gap-2 border-t border-zinc-800/80 py-2.5">
         {slides.map((item, dotIndex) => (
           <button
             key={`${item.id}-${item.heroSource ?? "hero"}`}
@@ -299,7 +301,7 @@ function DiscoverySectionEmpty({ message }: { message: string }) {
 function DiscoveryHomeSkeleton() {
   return (
     <div className="space-y-10">
-      <div className="aspect-[21/9] animate-pulse rounded-2xl bg-zinc-800/70" />
+      <div className="mx-auto h-[240px] w-full max-w-[1280px] animate-pulse rounded-2xl bg-zinc-800/70 sm:h-[280px] lg:h-[332px]" />
       {[0, 1, 2].map((section) => (
         <section key={section}>
           <div className="flex items-center justify-between">
