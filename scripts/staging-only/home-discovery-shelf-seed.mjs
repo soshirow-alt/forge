@@ -245,18 +245,63 @@ async function rollback(sb) {
   const projectIds = Object.values(SEED).map((s) => s.id);
   const devlogIds = [SEED.D.devlogId, SEED.F.devlogId];
   const feedbackIds = [SEED.E.feedbackId, SEED.F.feedbackId];
+  const steps = [];
 
-  await sb.from("project_feedback").delete().in("id", feedbackIds);
-  await sb.from("project_feedback").delete().in("project_id", projectIds);
-  await sb.from("project_voice_responses").delete().in("project_id", projectIds);
-  await sb.from("project_watches").delete().in("project_id", projectIds);
-  await sb.from("project_devlogs").delete().in("id", devlogIds);
-  await sb.from("project_devlogs").delete().in("project_id", projectIds);
-  await sb.from("project_play_sessions").delete().in("project_id", projectIds);
-  const { error } = await sb.from("projects").delete().in("id", projectIds);
-  if (error) throw error;
+  for (const [label, run] of [
+    [
+      "project_feedback",
+      async () => {
+        await sb.from("project_feedback").delete().in("id", feedbackIds);
+        await sb.from("project_feedback").delete().in("project_id", projectIds);
+      },
+    ],
+    [
+      "project_voice_responses",
+      async () => {
+        await sb.from("project_voice_responses").delete().in("project_id", projectIds);
+      },
+    ],
+    [
+      "project_watches",
+      async () => {
+        await sb.from("project_watches").delete().in("project_id", projectIds);
+      },
+    ],
+    [
+      "project_devlogs",
+      async () => {
+        await sb.from("project_devlogs").delete().in("id", devlogIds);
+        await sb.from("project_devlogs").delete().in("project_id", projectIds);
+      },
+    ],
+    [
+      "project_play_sessions",
+      async () => {
+        await sb.from("project_play_sessions").delete().in("project_id", projectIds);
+      },
+    ],
+  ]) {
+    try {
+      await run();
+      steps.push({ table: label, ok: true });
+    } catch (error) {
+      steps.push({ table: label, ok: false, error: String(error?.message || error) });
+    }
+  }
 
-  return { deletedProjects: projectIds };
+  const { error: projectError } = await sb.from("projects").delete().in("id", projectIds);
+  if (projectError) {
+    steps.push({
+      table: "projects",
+      ok: false,
+      error: projectError.message,
+      hint: "Run scripts/staging-only/home-discovery-shelf-seed-rollback.sql in Staging SQL Editor",
+    });
+    return { deletedProjects: [], steps, needsSqlRollback: true };
+  }
+
+  steps.push({ table: "projects", ok: true });
+  return { deletedProjects: projectIds, steps, needsSqlRollback: false };
 }
 
 async function main() {

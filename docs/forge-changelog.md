@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-11 — ホーム発見: Staging 棚 seed 実 UI 確認
+
+- **anon feed** — newest6 / updated3 / trending3。ヒーロー3軸: A(trending) / D(updated) / C(newest)
+- **Preview** — 棚ラベル（公開/更新/反応）、ヒーロー除外、他棚非補完、PC/390px を確認。stats RPC と FB/フォロー一致
+- **rollback** — engagement/devlog は削除済み。`projects` は service_role DELETE 不可のため `home-discovery-shelf-seed-rollback.sql` の projects 削除を Staging SQL で要実行
+- **未実施** — Production / main / 本番 deploy
+
+---
+
 ## 2026-07-11 — ホーム発見: 初回ロード堅牢化 + Staging 棚確認用 seed
 
 - **UI** — `/home` feed 取得を `loading | ready | error` に整理。取得中はエラーを出さず skeleton。RPC 失敗時のみエラー。1回リトライ
