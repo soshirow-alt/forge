@@ -1,33 +1,8 @@
--- 052: get_home_discovery_feed — home discovery sections (newest / updated / trending)
--- Staging-first. Do NOT apply to production without owner GO.
---
--- Card stats: reuses get_public_project_stats(uuid[]) once per call (Option A).
--- Does NOT copy feedback/watch aggregation SQL.
--- Does NOT use project_supports.
--- project_id joins prefer text = id::text (no unsafe text::uuid casts on event tables).
+-- 053: fix get_home_discovery_feed ambiguous rank ORDER BY
+-- Staging-first. Replaces function body from 052.
+-- DO NOT apply to production without owner GO.
 
 BEGIN;
-
--- Supporting indexes for 7d engagement windows
-CREATE INDEX IF NOT EXISTS project_watches_created_at_idx
-  ON public.project_watches (created_at DESC);
-
-CREATE INDEX IF NOT EXISTS project_watches_project_created_idx
-  ON public.project_watches (project_id, created_at DESC);
-
-CREATE INDEX IF NOT EXISTS project_play_sessions_project_played_idx
-  ON public.project_play_sessions (project_id, played_at DESC);
-
-CREATE INDEX IF NOT EXISTS project_play_sessions_played_at_idx
-  ON public.project_play_sessions (played_at DESC);
-
-CREATE INDEX IF NOT EXISTS project_voice_responses_created_visible_idx
-  ON public.project_voice_responses (created_at DESC)
-  WHERE moderation_status = 'visible';
-
-CREATE INDEX IF NOT EXISTS project_feedback_created_visible_idx
-  ON public.project_feedback (created_at DESC)
-  WHERE moderation_status = 'visible';
 
 CREATE OR REPLACE FUNCTION public.get_home_discovery_feed()
 RETURNS TABLE (
@@ -297,23 +272,24 @@ BEGIN
     INNER JOIN public_projects pp ON pp.id = t.project_id
     LEFT JOIN stats st ON st.project_id = t.project_id
   )
-  SELECT feed.section,
-         feed.rank,
-         feed.project_id,
-         feed.title,
-         feed.description,
-         feed.playable_version,
-         feed.thumbnail_url,
-         feed.genre,
-         feed.first_published_at,
-         feed.meaningful_update_at,
-         feed.feedback_users_7d,
-         feed.watchers_7d,
-         feed.players_7d,
-         feed.last_engagement_at,
-         feed.card_time_at,
-         feed.feedback_participant_count,
-         feed.watch_count
+  SELECT
+    feed.section,
+    feed.rank,
+    feed.project_id,
+    feed.title,
+    feed.description,
+    feed.playable_version,
+    feed.thumbnail_url,
+    feed.genre,
+    feed.first_published_at,
+    feed.meaningful_update_at,
+    feed.feedback_users_7d,
+    feed.watchers_7d,
+    feed.players_7d,
+    feed.last_engagement_at,
+    feed.card_time_at,
+    feed.feedback_participant_count,
+    feed.watch_count
   FROM (
     SELECT * FROM newest_rows
     UNION ALL
@@ -326,10 +302,9 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.get_home_discovery_feed() IS
-  'Home discovery feed: newest (first_published_at), updated (devlog/release after first publish), '
-  'trending (rolling 7d FB UU / new watches / play sessions). '
-  '12 rows per section max. Card stats via get_public_project_stats once. '
-  'No project_supports. Onboarding release events excluded.';
+  'Home discovery feed: newest / updated / trending (rolling 7d). '
+  '12 rows per section. Stats via get_public_project_stats once. '
+  '053 fixes ambiguous rank in final ORDER BY.';
 
 REVOKE ALL ON FUNCTION public.get_home_discovery_feed() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_home_discovery_feed() TO anon;
@@ -337,11 +312,4 @@ GRANT EXECUTE ON FUNCTION public.get_home_discovery_feed() TO authenticated;
 
 COMMIT;
 
--- Rollback (manual, staging):
--- DROP FUNCTION IF EXISTS public.get_home_discovery_feed();
--- DROP INDEX IF EXISTS public.project_watches_created_at_idx;
--- DROP INDEX IF EXISTS public.project_watches_project_created_idx;
--- DROP INDEX IF EXISTS public.project_play_sessions_project_played_idx;
--- DROP INDEX IF EXISTS public.project_play_sessions_played_at_idx;
--- DROP INDEX IF EXISTS public.project_voice_responses_created_visible_idx;
--- DROP INDEX IF EXISTS public.project_feedback_created_visible_idx;
+-- Rollback: re-apply 052 body (or DROP and restore prior).
