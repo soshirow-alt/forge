@@ -83,11 +83,30 @@ type HeroThumbnailsState =
   | { status: "ready"; byId: Record<string, string[]> }
   | { status: "error" };
 
+const HERO_MAIN_IMAGE_WIDTH_PX = 587; // 16:9 at 330px height
+const HERO_EXTRA_THUMB_CLASS = "h-[90px] w-[160px]";
+const HERO_PEEK_WIDTH_CLASS = "w-[180px] 2xl:w-[240px]";
+
+function resolveHeroSlideImage(
+  slide: HomeDiscoveryCard,
+  thumbnails: HeroThumbnailsState,
+): string | null {
+  if (thumbnails.status === "ready") {
+    const fromDb = thumbnails.byId[slide.id];
+    if (fromDb && fromDb.length > 0) {
+      return fromDb[0] ?? null;
+    }
+  }
+  return slide.image ?? null;
+}
+
 function MissingGameImage() {
   return (
-    <div className="flex aspect-[4/3] items-center justify-center rounded-lg border border-dashed border-zinc-800 bg-black px-1 text-center">
+    <div
+      className={`flex ${HERO_EXTRA_THUMB_CLASS} shrink-0 items-center justify-center rounded-lg border border-dashed border-zinc-800 bg-black px-1 text-center`}
+    >
       <div className="space-y-0.5 text-zinc-600">
-        <ImageIcon className="mx-auto size-4" aria-hidden="true" />
+        <ImageIcon className="mx-auto size-5" aria-hidden="true" />
         <p className="text-[10px] font-medium leading-tight">追加画像未登録</p>
       </div>
     </div>
@@ -97,7 +116,7 @@ function MissingGameImage() {
 function LoadingGameImageSlot() {
   return (
     <div
-      className="aspect-[4/3] animate-pulse rounded-lg border border-zinc-800/80 bg-zinc-900/80"
+      className={`${HERO_EXTRA_THUMB_CLASS} shrink-0 animate-pulse rounded-lg border border-zinc-800/80 bg-zinc-900/80`}
       aria-hidden="true"
     />
   );
@@ -116,7 +135,7 @@ function GameImageThumbnail({
     <button
       type="button"
       onClick={onSelect}
-      className={`relative aspect-[4/3] overflow-hidden rounded-lg border bg-black transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-violet-500/70 ${
+      className={`relative ${HERO_EXTRA_THUMB_CLASS} shrink-0 overflow-hidden rounded-lg border bg-black transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-violet-500/70 ${
         selected
           ? "border-violet-500/70 ring-1 ring-violet-500/40"
           : "border-zinc-800 hover:border-violet-500/40"
@@ -124,7 +143,50 @@ function GameImageThumbnail({
       aria-pressed={selected}
       aria-label="追加画像をメインに表示"
     >
-      <Image src={src} alt="" fill className="object-contain" sizes="120px" />
+      <Image src={src} alt="" fill className="object-contain" sizes="160px" />
+    </button>
+  );
+}
+
+function AdjacentHeroPeek({
+  slide,
+  thumbnails,
+  onSelect,
+  side,
+}: {
+  slide: HomeDiscoveryCard;
+  thumbnails: HeroThumbnailsState;
+  onSelect: () => void;
+  side: "left" | "right";
+}) {
+  const image = resolveHeroSlideImage(slide, thumbnails);
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`relative my-auto hidden h-[300px] ${HERO_PEEK_WIDTH_CLASS} shrink-0 overflow-hidden bg-black opacity-40 transition hover:opacity-60 xl:block ${
+        side === "left" ? "rounded-l-xl" : "rounded-r-xl"
+      }`}
+      aria-label={side === "left" ? "前の作品" : "次の作品"}
+    >
+      {image ? (
+        <Image
+          src={image}
+          alt=""
+          fill
+          className="scale-95 object-cover"
+          sizes="240px"
+        />
+      ) : (
+        <GeneratedThumbnailPoster
+          projectId={slide.id}
+          title={slide.title}
+          genre={slide.genre ?? ""}
+          phase={slide.version}
+        />
+      )}
+      <span className="absolute inset-0 bg-zinc-950/55" aria-hidden="true" />
     </button>
   );
 }
@@ -166,6 +228,15 @@ function HeroCarousel({
     return null;
   }
 
+  const slideCount = slides.length;
+  const prevIndex = (index - 1 + slideCount) % slideCount;
+  const nextIndex = (index + 1) % slideCount;
+  // 1件: 隣接なし。2件: 同じ作品を左右両方へ出さず片側のみ。3件+: 左右とも表示。
+  const showLeftPeek = slideCount >= 2;
+  const showRightPeek = slideCount >= 3;
+  const prevSlide = slides[prevIndex];
+  const nextSlide = slides[nextIndex];
+
   function goPrev() {
     setIndex((current) => (current === 0 ? slides.length - 1 : current - 1));
     setImageIndex(0);
@@ -176,106 +247,127 @@ function HeroCarousel({
     setImageIndex(0);
   }
 
-  function goToSlide(nextIndex: number) {
-    setIndex(nextIndex);
+  function goToSlide(nextSlideIndex: number) {
+    setIndex(nextSlideIndex);
     setImageIndex(0);
   }
 
   return (
-    <section className="mx-auto w-full max-w-[1280px] overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/40">
-      {/*
-        Desktop: image column capped ~480–520px (not 68:32) so square thumbs
-        read near 330×330; minmax(0,520px) shrinks when the content width is tight.
-      */}
-      <div className="grid gap-0 lg:h-[330px] lg:grid-cols-[minmax(0,520px)_minmax(0,1fr)]">
-        <div className="relative flex min-h-[200px] items-center justify-center bg-black sm:min-h-[240px] lg:h-full lg:min-h-0 lg:w-full lg:max-w-[520px]">
-          {currentImage ? (
-            <Image
-              src={currentImage}
-              alt=""
-              fill
-              className="object-contain"
-              priority
-              sizes="(max-width: 1024px) 100vw, 520px"
-            />
-          ) : (
-            <GeneratedThumbnailPoster
-              projectId={slide.id}
-              title={slide.title}
-              genre={slide.genre ?? ""}
-              phase={slide.version}
-            />
-          )}
+    <section className="w-full">
+      <div className="relative flex items-stretch justify-center gap-0 lg:h-[330px]">
+        {showLeftPeek && prevSlide ? (
+          <AdjacentHeroPeek
+            slide={prevSlide}
+            thumbnails={thumbnails}
+            onSelect={goPrev}
+            side="left"
+          />
+        ) : null}
 
-          <button
-            type="button"
-            onClick={goPrev}
-            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-zinc-700/80 bg-zinc-950/80 p-2 text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
-            aria-label="前のスライド"
-          >
-            <ChevronLeft className="size-5" />
-          </button>
-          <button
-            type="button"
-            onClick={goNext}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-zinc-700/80 bg-zinc-950/80 p-2 text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
-            aria-label="次のスライド"
-          >
-            <ChevronRight className="size-5" />
-          </button>
-        </div>
-
-        <div className="flex min-w-0 flex-col gap-3 p-4 sm:p-5 lg:h-full lg:justify-between lg:gap-2 lg:overflow-hidden lg:p-4">
-          <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:w-[11.5rem] lg:shrink-0 lg:gap-2">
-            {additionalSlots.map((slot, slotIndex) => {
-              if (slot === "loading") {
-                return <LoadingGameImageSlot key={`loading-${slotIndex}`} />;
-              }
-              if (typeof slot === "string") {
-                return (
-                  <GameImageThumbnail
-                    key={`${slide.id}-extra-${slotIndex}`}
-                    src={slot}
-                    selected={currentImage === slot}
-                    onSelect={() => setImageIndex(slotIndex + 1)}
-                  />
-                );
-              }
-              return <MissingGameImage key={`missing-${slotIndex}`} />;
-            })}
-          </div>
-
-          <div className="min-w-0 flex-1 lg:min-h-0">
-            <p className="text-xs font-medium uppercase tracking-wider text-violet-400">
-              注目の作品
-            </p>
-            <h1 className="mt-1.5 break-words text-xl font-bold tracking-tight text-white sm:text-2xl lg:mt-1 lg:line-clamp-2 lg:text-xl lg:leading-snug">
-              {slide.title}
-            </h1>
-            <p className="mt-1.5 text-sm text-zinc-400 lg:mt-1">
-              {slide.version} · {slide.updatedLabel}
-            </p>
-            <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-zinc-300 lg:mt-1.5 lg:line-clamp-2">
-              {slide.description}
-            </p>
-            <div className="mt-3 lg:mt-2">
-              <DiscoveryCardStatPills
-                feedbackCount={slide.feedbackCount}
-                watchCount={slide.watchCount}
+        <div className="relative z-10 mx-auto flex w-full max-w-[950px] shrink-0 flex-col overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/40 lg:h-[330px] lg:flex-row">
+          <div className="relative flex min-h-[200px] w-full items-center justify-center bg-black sm:min-h-[240px] lg:h-full lg:min-h-0 lg:w-[587px] lg:shrink-0">
+            {currentImage ? (
+              <Image
+                src={currentImage}
+                alt=""
+                fill
+                className="object-contain"
+                priority
+                sizes={`(max-width: 1024px) 100vw, ${HERO_MAIN_IMAGE_WIDTH_PX}px`}
               />
-            </div>
+            ) : (
+              <GeneratedThumbnailPoster
+                projectId={slide.id}
+                title={slide.title}
+                genre={slide.genre ?? ""}
+                phase={slide.version}
+              />
+            )}
+
+            <button
+              type="button"
+              onClick={goPrev}
+              className="absolute left-3 top-1/2 z-20 -translate-y-1/2 rounded-full border border-zinc-700/80 bg-zinc-950/80 p-2 text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
+              aria-label="前のスライド"
+            >
+              <ChevronLeft className="size-5" />
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
+              className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full border border-zinc-700/80 bg-zinc-950/80 p-2 text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
+              aria-label="次のスライド"
+            >
+              <ChevronRight className="size-5" />
+            </button>
           </div>
 
-          <Link
-            href={gameDetailHref(slide.id)}
-            className="inline-flex w-fit shrink-0 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
-          >
-            詳しく見る →
-          </Link>
+          <div className="flex min-w-0 flex-1 flex-col gap-3 p-4 sm:p-5 lg:h-full lg:w-[363px] lg:max-w-[370px] lg:shrink-0 lg:justify-between lg:gap-2 lg:overflow-hidden lg:p-4">
+            <div className="flex flex-wrap gap-2 lg:flex-nowrap">
+              {additionalSlots.map((slot, slotIndex) => {
+                if (slot === "loading") {
+                  return <LoadingGameImageSlot key={`loading-${slotIndex}`} />;
+                }
+                if (typeof slot === "string") {
+                  return (
+                    <GameImageThumbnail
+                      key={`${slide.id}-extra-${slotIndex}`}
+                      src={slot}
+                      selected={currentImage === slot}
+                      onSelect={() => setImageIndex(slotIndex + 1)}
+                    />
+                  );
+                }
+                return <MissingGameImage key={`missing-${slotIndex}`} />;
+              })}
+            </div>
+
+            <div className="min-w-0 flex-1 lg:min-h-0">
+              <p className="text-xs font-medium uppercase tracking-wider text-violet-400">
+                注目の作品
+              </p>
+              <h1 className="mt-1 break-words text-xl font-bold tracking-tight text-white sm:text-2xl lg:line-clamp-2 lg:text-lg lg:leading-snug">
+                {slide.title}
+              </h1>
+              <p className="mt-1 text-sm text-zinc-400">
+                {slide.version} · {slide.updatedLabel}
+              </p>
+              <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-zinc-300">
+                {slide.description}
+              </p>
+              <div className="mt-2">
+                <DiscoveryCardStatPills
+                  feedbackCount={slide.feedbackCount}
+                  watchCount={slide.watchCount}
+                />
+              </div>
+            </div>
+
+            <Link
+              href={gameDetailHref(slide.id)}
+              className="inline-flex w-fit shrink-0 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+            >
+              詳しく見る →
+            </Link>
+          </div>
         </div>
+
+        {showRightPeek && nextSlide ? (
+          <AdjacentHeroPeek
+            slide={nextSlide}
+            thumbnails={thumbnails}
+            onSelect={goNext}
+            side="right"
+          />
+        ) : showLeftPeek && !showRightPeek ? (
+          <div
+            className={`hidden ${HERO_PEEK_WIDTH_CLASS} shrink-0 xl:block`}
+            aria-hidden="true"
+          />
+        ) : null}
       </div>
 
-      <div className="flex justify-center gap-2 border-t border-zinc-800/80 py-2.5">
+      <div className="flex justify-center gap-2 py-2.5">
         {slides.map((item, dotIndex) => (
           <button
             key={`${item.id}-${item.heroSource ?? "hero"}`}
@@ -303,7 +395,7 @@ function DiscoverySectionEmpty({ message }: { message: string }) {
 function DiscoveryHomeSkeleton() {
   return (
     <div className="space-y-10">
-      <div className="mx-auto h-[240px] w-full max-w-[1280px] animate-pulse rounded-2xl bg-zinc-800/70 sm:h-[280px] lg:h-[362px]" />
+      <div className="mx-auto h-[240px] w-full max-w-[950px] animate-pulse rounded-2xl bg-zinc-800/70 sm:h-[280px] lg:h-[330px]" />
       {[0, 1, 2].map((section) => (
         <section key={section}>
           <div className="flex items-center justify-between">
