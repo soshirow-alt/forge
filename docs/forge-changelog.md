@@ -4,6 +4,24 @@
 
 ---
 
+## 2026-07-11 — ホーム発見: 初回ロード堅牢化 + Staging 棚確認用 seed
+
+- **UI** — `/home` feed 取得を `loading | ready | error` に整理。取得中はエラーを出さず skeleton。RPC 失敗時のみエラー。1回リトライ
+- **Staging seed** — `scripts/staging-only/home-discovery-shelf-seed.sql`（C–F）。`service_role` は projects INSERT 不可のため Dashboard SQL 適用。Smoke A/B 非破壊。rollback 手順同梱
+- **cold-load** — anon RPC 12/12 PASS（Staging）。Preview HTML shell 12/12 HTTP 200
+- **未実施** — seed SQL の Staging 適用（オーナー Run 待ち）後の棚 UI 実確認 / Production / main
+
+---
+
+## 2026-07-11 — ホーム発見 RPC: Staging 055 適用確認
+
+- **Staging** — `055` LANGUAGE sql 適用後、anon `get_home_discovery_feed` PASS（newest2 / updated1 / trending1）
+- **Preview `/home`** — ヒーロー2件（A: 今日反応あり / B: 1日前公開）。3棚はヒーロー除外後0件で非表示（仕様どおり）
+- **権限** — feed: anon+authenticated OK / service_role DENY。publish RPC: anon DENY
+- **未実施** — Production migration / main / 本番 deploy。棚の「更新」ラベルは公開2件では棚非表示のため UI 未表示（RPC 側は生成済み）
+
+---
+
 ## 2026-07-11 — ホーム発見 RPC: LANGUAGE sql 決定版（055）
 
 - **RPC** — `get_home_discovery_feed` を **LANGUAGE sql** に全面置換。plpgsql の `RETURNS TABLE` 出力変数と SQL 列の 42702 衝突を根絶（`rank` → `project_id` の逐次再発を止める）

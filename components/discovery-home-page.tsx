@@ -223,14 +223,58 @@ function DiscoveryHomeSkeleton() {
   );
 }
 
+type FeedState =
+  | { status: "loading"; feed: null; error: null }
+  | {
+      status: "ready";
+      feed: {
+        newest: HomeDiscoveryCard[];
+        updated: HomeDiscoveryCard[];
+        trending: HomeDiscoveryCard[];
+      };
+      error: null;
+    }
+  | {
+      status: "error";
+      feed: {
+        newest: HomeDiscoveryCard[];
+        updated: HomeDiscoveryCard[];
+        trending: HomeDiscoveryCard[];
+      };
+      error: string;
+    };
+
+const EMPTY_FEED = {
+  newest: [] as HomeDiscoveryCard[],
+  updated: [] as HomeDiscoveryCard[],
+  trending: [] as HomeDiscoveryCard[],
+};
+
+async function loadHomeDiscoveryFeedWithRetry(
+  supabase: NonNullable<ReturnType<typeof getOptionalSupabaseClient>>,
+) {
+  try {
+    return await fetchHomeDiscoveryFeed(supabase);
+  } catch (firstError) {
+    // One retry covers transient cold-start / network blips without flashing error.
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    try {
+      return await fetchHomeDiscoveryFeed(supabase);
+    } catch {
+      throw firstError;
+    }
+  }
+}
+
 export function DiscoveryHomePage() {
-  const [feed, setFeed] = useState<{
-    newest: HomeDiscoveryCard[];
-    updated: HomeDiscoveryCard[];
-    trending: HomeDiscoveryCard[];
-  } | null>(null);
-  const [ready, setReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [state, setState] = useState<FeedState>({
+    status: "loading",
+    feed: null,
+    error: null,
+  });
+  const feed = state.feed;
+  const ready = state.status !== "loading";
+  const error = state.status === "error" ? state.error : null;
 
   useForgePerfRoute({
     route: "/home",
@@ -247,24 +291,24 @@ export function DiscoveryHomePage() {
     const supabase = getOptionalSupabaseClient();
 
     void (async () => {
+      // Keep loading UI until a definitive success or failure — never flash error mid-fetch.
       if (!supabase) {
         if (cancelled) return;
-        setFeed({ newest: [], updated: [], trending: [] });
-        setReady(true);
+        setState({ status: "ready", feed: EMPTY_FEED, error: null });
         return;
       }
 
       try {
-        const next = await fetchHomeDiscoveryFeed(supabase);
+        const next = await loadHomeDiscoveryFeedWithRetry(supabase);
         if (cancelled) return;
-        setFeed(next);
-        setError(null);
+        setState({ status: "ready", feed: next, error: null });
       } catch (err: unknown) {
         if (cancelled) return;
-        setFeed({ newest: [], updated: [], trending: [] });
-        setError(err instanceof Error ? err.message : "feed load failed");
-      } finally {
-        if (!cancelled) setReady(true);
+        setState({
+          status: "error",
+          feed: EMPTY_FEED,
+          error: err instanceof Error ? err.message : "feed load failed",
+        });
       }
     })();
 
@@ -318,7 +362,7 @@ export function DiscoveryHomePage() {
 
       {heroItems.length > 0 ? (
         <HeroCarousel slides={heroItems} />
-      ) : (
+      ) : error ? null : (
         <DiscoverySectionEmpty message="まだ公開中の作品がありません" />
       )}
 
