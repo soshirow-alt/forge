@@ -163,9 +163,7 @@ export function StudioSubmitPage() {
         setFocusEditMode(validation.editMode);
         setFailedEditMode(validation.editMode);
       }
-      if (draft.promptMode === "custom") {
-        setShowPromptValidation(true);
-      }
+      setShowPromptValidation(true);
       return;
     }
 
@@ -179,9 +177,7 @@ export function StudioSubmitPage() {
       } else {
         setFailedEditMode(null);
       }
-      if (draft.promptMode === "custom") {
-        setShowPromptValidation(true);
-      }
+      setShowPromptValidation(true);
       setSubmitting(false);
       return;
     }

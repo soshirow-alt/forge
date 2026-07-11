@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   createEmptyPromptDraft,
+  resolvePromptEditorMode,
   sanitizePromptDrafts,
   validatePromptDrafts,
   type DeveloperPromptDraft,
@@ -24,7 +25,7 @@ export function useDevlogComposePrompts({
   currentVersionKey,
   loadPrompts,
 }: UseDevlogComposePromptsOptions) {
-  const [promptMode, setPromptMode] = useState<"none" | "custom">("none");
+  const [promptMode, setPromptMode] = useState<"none" | "custom">("custom");
   const [promptDrafts, setPromptDrafts] = useState<DeveloperPromptDraft[]>([
     createEmptyPromptDraft(),
   ]);
@@ -43,10 +44,12 @@ export function useDevlogComposePrompts({
       }
 
       if (inputs.length > 0) {
-        setPromptMode("custom");
-        setPromptDrafts(promptInputsToDrafts(inputs));
+        const nextDrafts = promptInputsToDrafts(inputs);
+        setPromptMode(resolvePromptEditorMode(nextDrafts));
+        setPromptDrafts(nextDrafts);
       } else {
-        setPromptMode("none");
+        // 新規 / 未設定 — 自分で問いを設定する
+        setPromptMode("custom");
         setPromptDrafts([createEmptyPromptDraft()]);
       }
       setShowValidation(false);
@@ -61,10 +64,6 @@ export function useDevlogComposePrompts({
   function resolvePromptsForVersion(versionKey: string):
     | { ok: true; prompts: DeveloperPromptInput[]; versionKey: string }
     | { ok: false; message: string } {
-    if (promptMode !== "custom") {
-      return { ok: true, prompts: [], versionKey };
-    }
-
     const validation = validatePromptDrafts(promptDrafts);
     if (validation.blocking) {
       setShowValidation(true);

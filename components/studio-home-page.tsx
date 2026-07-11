@@ -873,7 +873,7 @@ export function StudioHomeView({
 }
 
 export function StudioHomePage() {
-  const [granularity, setGranularity] = useState<StudioHomeGranularity>("month");
+  const [granularity, setGranularity] = useState<StudioHomeGranularity>("week");
   const { metrics, initialLoading, fetching, rpcReady, granularityFallback } =
     useStudioHomeMetrics(granularity);
   const { highlights, loading: highlightsLoading } = useStudioHomeHighlights();

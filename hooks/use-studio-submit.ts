@@ -92,14 +92,12 @@ export function validateSubmitDraftForPost(
     return validationFailure("play-info", accessError);
   }
 
-  if (draft.promptMode === "custom") {
-    const validation = validatePromptDrafts(draft.promptDrafts);
-    if (validation.blocking) {
-      return {
-        ok: false,
-        message: validation.message ?? "質問の設定を確認してください。",
-      };
-    }
+  const promptValidation = validatePromptDrafts(draft.promptDrafts);
+  if (promptValidation.blocking) {
+    return {
+      ok: false,
+      message: promptValidation.message ?? "質問の設定を確認してください。",
+    };
   }
 
   return { ok: true };

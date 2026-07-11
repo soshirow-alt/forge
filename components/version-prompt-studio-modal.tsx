@@ -5,8 +5,9 @@ import { VersionPromptEditorDialog } from "@/components/version-prompt-editor-di
 import { useGames } from "@/components/games-provider";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import {
-  createEmptyPromptDraft,
+  createPresetPromptDraft,
   draftFromVersionPrompt,
+  resolvePromptEditorMode,
   sanitizePromptDrafts,
   validatePromptDrafts,
   type DeveloperPromptDraft,
@@ -34,7 +35,7 @@ export function VersionPromptStudioModal({
   const { getDeveloperVersionPrompts, saveDeveloperVersionPrompts } = useGames();
   const [mode, setMode] = useState<"none" | "custom">("none");
   const [drafts, setDrafts] = useState<DeveloperPromptDraft[]>([
-    createEmptyPromptDraft(),
+    createPresetPromptDraft("replay"),
   ]);
   const [loaded, setLoaded] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
@@ -58,11 +59,12 @@ export function VersionPromptStudioModal({
         return;
       }
       if (prompts.length > 0) {
-        setMode("custom");
-        setDrafts(prompts.map(draftFromVersionPrompt));
+        const nextDrafts = prompts.map(draftFromVersionPrompt);
+        setMode(resolvePromptEditorMode(nextDrafts));
+        setDrafts(nextDrafts);
       } else {
         setMode("none");
-        setDrafts([createEmptyPromptDraft()]);
+        setDrafts([createPresetPromptDraft("replay")]);
       }
       setLoaded(true);
     });
@@ -76,19 +78,16 @@ export function VersionPromptStudioModal({
     setSaveError(null);
     setShowValidation(false);
 
-    if (mode === "custom") {
-      const validation = validatePromptDrafts(drafts);
-      if (validation.blocking) {
-        setShowValidation(true);
-        setSaveError(validation.message);
-        return;
-      }
+    const validation = validatePromptDrafts(drafts);
+    if (validation.blocking) {
+      setShowValidation(true);
+      setSaveError(validation.message);
+      return;
     }
 
     setSaving(true);
     try {
-      const promptsToSave =
-        mode === "custom" ? sanitizePromptDrafts(drafts) : [];
+      const promptsToSave = sanitizePromptDrafts(drafts);
       await saveDeveloperVersionPrompts(projectId, versionKey, promptsToSave);
       onSaved?.();
       onClose();

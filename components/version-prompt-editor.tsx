@@ -2,14 +2,13 @@
 
 import { ChoicePromptFields } from "@/components/choice-prompt-fields";
 import { DeveloperChoicePreview } from "@/components/developer-choice-preview";
-import { DefaultVersionPromptPreview } from "@/components/default-version-prompt-preview";
 import {
   applyQuestionTemplate,
   createDefaultChoiceDraftPatch,
   createEmptyPromptDraft,
-  DEVELOPER_QUESTION_TEMPLATES,
+  createPresetPromptDraft,
+  DEVELOPER_PRESET_QUESTION_TEMPLATES,
   DEVELOPER_RESPONSE_FORMAT_OPTIONS,
-  getFormatDisplayLinesForDraft,
   inferTemplateFromDraft,
   resolveOptionsForDraft,
   type DeveloperPromptDraft,
@@ -18,7 +17,14 @@ import {
 import { MAX_PROMPTS_PER_VERSION } from "@/lib/version-prompt-types";
 
 const inputClassName =
-  "mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/50";
+  "mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/50";
+
+const modeSelectedClassName =
+  "border-violet-500/40 bg-violet-500/5 text-violet-300";
+const modeIdleClassName =
+  "border-zinc-800 bg-zinc-900/60 text-zinc-300";
+const radioClassName =
+  "h-4 w-4 border-zinc-600 bg-zinc-900 text-violet-500 focus:ring-violet-500/50";
 
 type VersionPromptEditorProps = {
   mode: "none" | "custom";
@@ -30,6 +36,45 @@ type VersionPromptEditorProps = {
   /** モーダル内 — 見出し・外枠を省略 */
   embeddedInModal?: boolean;
 };
+
+function responseFormatSelectValue(
+  draft: DeveloperPromptDraft,
+): DeveloperPromptDraft["responseKind"] {
+  return draft.responseKind === "replay_intent" ? "yes_no" : draft.responseKind;
+}
+
+function draftsForCustomMode(
+  drafts: DeveloperPromptDraft[],
+): DeveloperPromptDraft[] {
+  const next = drafts.map((draft) => ({
+    ...draft,
+    templateId: "custom" as const,
+    responseKind:
+      draft.responseKind === "replay_intent" ? "yes_no" : draft.responseKind,
+  }));
+  return next.length > 0 ? next : [createEmptyPromptDraft()];
+}
+
+function draftsForPresetMode(
+  drafts: DeveloperPromptDraft[],
+): DeveloperPromptDraft[] {
+  const presetDrafts = drafts
+    .map((draft) => {
+      const templateId = inferTemplateFromDraft(draft);
+      if (templateId === "custom") {
+        return null;
+      }
+      return {
+        ...draft,
+        ...applyQuestionTemplate(templateId),
+      };
+    })
+    .filter((draft): draft is DeveloperPromptDraft => draft != null);
+
+  return presetDrafts.length > 0
+    ? presetDrafts
+    : [createPresetPromptDraft("replay")];
+}
 
 export function VersionPromptEditor({
   mode,
@@ -54,12 +99,49 @@ export function VersionPromptEditor({
     if (drafts.length >= MAX_PROMPTS_PER_VERSION) {
       return;
     }
-    onDraftsChange([...drafts, createEmptyPromptDraft()]);
+    onDraftsChange([
+      ...drafts,
+      mode === "none"
+        ? createPresetPromptDraft("replay")
+        : createEmptyPromptDraft(),
+    ]);
   }
 
   function removeDraft(clientId: string) {
     const next = drafts.filter((draft) => draft.clientId !== clientId);
-    onDraftsChange(next.length > 0 ? next : [createEmptyPromptDraft()]);
+    if (next.length > 0) {
+      onDraftsChange(next);
+      return;
+    }
+    onDraftsChange(
+      mode === "none"
+        ? [createPresetPromptDraft("replay")]
+        : [createEmptyPromptDraft()],
+    );
+  }
+
+  function handleModeChange(nextMode: "none" | "custom") {
+    if (nextMode === mode) {
+      return;
+    }
+    onModeChange(nextMode);
+    onDraftsChange(
+      nextMode === "none"
+        ? draftsForPresetMode(drafts)
+        : draftsForCustomMode(drafts),
+    );
+  }
+
+  function handlePresetTemplateChange(
+    clientId: string,
+    templateId: Exclude<QuestionTemplateId, "custom">,
+  ) {
+    const applied = applyQuestionTemplate(templateId);
+    const patch: Partial<DeveloperPromptDraft> = { ...applied };
+    if (applied.responseKind === "choice") {
+      Object.assign(patch, createDefaultChoiceDraftPatch());
+    }
+    updateDraft(clientId, patch);
   }
 
   return (
@@ -87,46 +169,35 @@ export function VersionPromptEditor({
       <div className="flex flex-wrap gap-2">
         <label
           className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
-            mode === "none"
-              ? "border-orange-500/40 bg-orange-500/5 text-orange-300"
-              : "border-zinc-800 bg-zinc-900/60 text-zinc-300"
-          }`}
-        >
-          <input
-            type="radio"
-            name="versionPromptMode"
-            checked={mode === "none"}
-            onChange={() => onModeChange("none")}
-            className="h-4 w-4 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
-          />
-          デフォルト問いを使う
-        </label>
-        <label
-          className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
-            mode === "custom"
-              ? "border-orange-500/40 bg-orange-500/5 text-orange-300"
-              : "border-zinc-800 bg-zinc-900/60 text-zinc-300"
+            mode === "custom" ? modeSelectedClassName : modeIdleClassName
           }`}
         >
           <input
             type="radio"
             name="versionPromptMode"
             checked={mode === "custom"}
-            onChange={() => {
-              onModeChange("custom");
-              if (drafts.length === 0) {
-                onDraftsChange([createEmptyPromptDraft()]);
-              }
-            }}
-            className="h-4 w-4 border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500/50"
+            onChange={() => handleModeChange("custom")}
+            className={radioClassName}
           />
           自分で問いを設定する
         </label>
+        <label
+          className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
+            mode === "none" ? modeSelectedClassName : modeIdleClassName
+          }`}
+        >
+          <input
+            type="radio"
+            name="versionPromptMode"
+            checked={mode === "none"}
+            onChange={() => handleModeChange("none")}
+            className={radioClassName}
+          />
+          デフォルト問いを使う
+        </label>
       </div>
 
-      {mode === "none" && <DefaultVersionPromptPreview />}
-
-      {mode === "custom" && (
+      {(mode === "none" || mode === "custom") && (
         <div className="space-y-4">
           {activeCount >= 3 && (
             <p className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs leading-relaxed text-amber-200/90">
@@ -135,8 +206,9 @@ export function VersionPromptEditor({
           )}
 
           {drafts.map((draft, index) => {
-            const templateId = inferTemplateFromDraft(draft);
-            const isCustomTemplate = templateId === "custom";
+            const presetTemplateId = inferTemplateFromDraft(draft);
+            const selectTemplateId =
+              presetTemplateId === "custom" ? "replay" : presetTemplateId;
 
             return (
               <div
@@ -158,33 +230,34 @@ export function VersionPromptEditor({
                   )}
                 </div>
 
-                <div>
-                  <label
-                    htmlFor={`prompt-template-${draft.clientId}`}
-                    className="text-xs font-medium text-zinc-500"
-                  >
-                    質問テンプレート
-                  </label>
-                  <select
-                    id={`prompt-template-${draft.clientId}`}
-                    value={templateId}
-                    onChange={(event) => {
-                      const nextTemplateId = event.target
-                        .value as QuestionTemplateId;
-                      const patch = applyQuestionTemplate(nextTemplateId);
-                      updateDraft(draft.clientId, patch);
-                    }}
-                    className={inputClassName}
-                  >
-                    {DEVELOPER_QUESTION_TEMPLATES.map((template) => (
-                      <option key={template.id} value={template.id}>
-                        {template.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {isCustomTemplate && (
+                {mode === "none" ? (
+                  <div>
+                    <label
+                      htmlFor={`prompt-template-${draft.clientId}`}
+                      className="text-xs font-medium text-zinc-500"
+                    >
+                      質問テンプレート
+                    </label>
+                    <select
+                      id={`prompt-template-${draft.clientId}`}
+                      value={selectTemplateId}
+                      onChange={(event) =>
+                        handlePresetTemplateChange(
+                          draft.clientId,
+                          event.target
+                            .value as Exclude<QuestionTemplateId, "custom">,
+                        )
+                      }
+                      className={inputClassName}
+                    >
+                      {DEVELOPER_PRESET_QUESTION_TEMPLATES.map((template) => (
+                        <option key={template.id} value={template.id}>
+                          {template.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
                   <div>
                     <label
                       htmlFor={`prompt-text-${draft.clientId}`}
@@ -200,6 +273,7 @@ export function VersionPromptEditor({
                       onChange={(event) =>
                         updateDraft(draft.clientId, {
                           promptText: event.target.value,
+                          templateId: "custom",
                         })
                       }
                       className={inputClassName}
@@ -209,52 +283,57 @@ export function VersionPromptEditor({
                 )}
 
                 <div>
-                  <p className="text-xs font-medium text-zinc-500">回答形式</p>
-                  {isCustomTemplate ? (
-                    <>
-                      <select
-                        id={`prompt-kind-${draft.clientId}`}
-                        value={draft.responseKind}
-                        onChange={(event) => {
-                          const responseKind = event.target
-                            .value as DeveloperPromptDraft["responseKind"];
-                          const patch: Partial<DeveloperPromptDraft> = {
-                            responseKind,
-                          };
-                          if (
-                            responseKind === "choice" &&
-                            !draft.choiceOptions?.length
-                          ) {
-                            Object.assign(patch, createDefaultChoiceDraftPatch());
-                          }
-                          updateDraft(draft.clientId, patch);
-                        }}
-                        className={inputClassName}
-                      >
-                        {DEVELOPER_RESPONSE_FORMAT_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                      <p className="mt-1 text-[11px] text-zinc-600">
-                        {
-                          DEVELOPER_RESPONSE_FORMAT_OPTIONS.find(
-                            (option) => option.value === draft.responseKind,
-                          )?.hint
-                        }
-                      </p>
-                    </>
-                  ) : (
-                    <div className="mt-2 space-y-1 rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2 text-sm text-zinc-400">
-                      {getFormatDisplayLinesForDraft(draft).map((line) => (
-                        <p key={line}>{line}</p>
-                      ))}
-                    </div>
-                  )}
+                  <label
+                    htmlFor={`prompt-kind-${draft.clientId}`}
+                    className="text-xs font-medium text-zinc-500"
+                  >
+                    回答形式
+                  </label>
+                  <select
+                    id={`prompt-kind-${draft.clientId}`}
+                    value={responseFormatSelectValue(draft)}
+                    onChange={(event) => {
+                      let responseKind = event.target
+                        .value as DeveloperPromptDraft["responseKind"];
+                      if (
+                        mode === "none" &&
+                        selectTemplateId === "replay" &&
+                        responseKind === "yes_no"
+                      ) {
+                        responseKind = "replay_intent";
+                      }
+                      const patch: Partial<DeveloperPromptDraft> = {
+                        responseKind,
+                        templateId:
+                          mode === "none" ? selectTemplateId : "custom",
+                      };
+                      if (
+                        responseKind === "choice" &&
+                        !draft.choiceOptions?.length
+                      ) {
+                        Object.assign(patch, createDefaultChoiceDraftPatch());
+                      }
+                      updateDraft(draft.clientId, patch);
+                    }}
+                    className={inputClassName}
+                  >
+                    {DEVELOPER_RESPONSE_FORMAT_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-[11px] text-zinc-600">
+                    {
+                      DEVELOPER_RESPONSE_FORMAT_OPTIONS.find(
+                        (option) =>
+                          option.value === responseFormatSelectValue(draft),
+                      )?.hint
+                    }
+                  </p>
                 </div>
 
-                {draft.responseKind === "choice" && isCustomTemplate && (
+                {draft.responseKind === "choice" && (
                   <div className="space-y-3">
                     <ChoicePromptFields
                       draft={draft}
@@ -275,7 +354,7 @@ export function VersionPromptEditor({
             <button
               type="button"
               onClick={addDraft}
-              className="text-sm font-medium text-orange-400/90 transition-colors hover:text-orange-300"
+              className="text-sm font-medium text-violet-400 transition-colors hover:text-violet-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
             >
               + 問いを追加（最大 {MAX_PROMPTS_PER_VERSION} 問）
             </button>

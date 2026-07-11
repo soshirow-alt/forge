@@ -116,7 +116,7 @@ export function createEmptySubmitDraft(): SubmitDraftState {
     youtubeUrl: "",
     githubUrl: "",
     visibility: "public",
-    promptMode: "none",
+    promptMode: "custom",
     promptDrafts: [createEmptyPromptDraft()],
     playAccessType: "free",
     declareAlreadyReleased: false,
@@ -286,9 +286,6 @@ export function draftToSubmitFormData(
 }
 
 export function getSubmitPromptsToSave(draft: SubmitDraftState): DeveloperPromptInput[] {
-  if (draft.promptMode !== "custom") {
-    return [];
-  }
   return sanitizePromptDrafts(draft.promptDrafts);
 }
 

@@ -12,9 +12,9 @@ export function DefaultVersionPromptPreview({
 }: DefaultVersionPromptPreviewProps) {
   return (
     <div
-      className={`space-y-2 rounded-lg border border-orange-500/20 bg-orange-500/5 p-4 ${className}`}
+      className={`space-y-2 rounded-lg border border-violet-500/20 bg-violet-500/5 p-4 ${className}`}
     >
-      <p className="text-xs font-medium text-orange-300/90">
+      <p className="text-xs font-medium text-violet-300/90">
         プレイヤーにはこの問いが表示されます
       </p>
       <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3.5 py-3">

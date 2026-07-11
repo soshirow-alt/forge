@@ -10,8 +10,9 @@ import { formatDevlogPublishedAt } from "@/hooks/use-game-devlogs-v0";
 import { sortDevlogsNewestFirst } from "@/lib/devlogs";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import {
-  createEmptyPromptDraft,
+  createPresetPromptDraft,
   draftFromVersionPrompt,
+  resolvePromptEditorMode,
   type DeveloperPromptDraft,
 } from "@/lib/version-prompt-form";
 
@@ -44,7 +45,7 @@ export function StudioDevlogCurrentEditPanel({
 
   const [promptMode, setPromptMode] = useState<"none" | "custom">("none");
   const [promptDrafts, setPromptDrafts] = useState<DeveloperPromptDraft[]>([
-    createEmptyPromptDraft(),
+    createPresetPromptDraft("replay"),
   ]);
   const [promptsLoaded, setPromptsLoaded] = useState(false);
   const [promptModalOpen, setPromptModalOpen] = useState(false);
@@ -52,11 +53,12 @@ export function StudioDevlogCurrentEditPanel({
   async function loadPrompts() {
     const prompts = await getDeveloperVersionPrompts(projectId, versionKey);
     if (prompts.length > 0) {
-      setPromptMode("custom");
-      setPromptDrafts(prompts.map(draftFromVersionPrompt));
+      const nextDrafts = prompts.map(draftFromVersionPrompt);
+      setPromptMode(resolvePromptEditorMode(nextDrafts));
+      setPromptDrafts(nextDrafts);
     } else {
       setPromptMode("none");
-      setPromptDrafts([createEmptyPromptDraft()]);
+      setPromptDrafts([createPresetPromptDraft("replay")]);
     }
     setPromptsLoaded(true);
   }
@@ -68,11 +70,12 @@ export function StudioDevlogCurrentEditPanel({
         return;
       }
       if (prompts.length > 0) {
-        setPromptMode("custom");
-        setPromptDrafts(prompts.map(draftFromVersionPrompt));
+        const nextDrafts = prompts.map(draftFromVersionPrompt);
+        setPromptMode(resolvePromptEditorMode(nextDrafts));
+        setPromptDrafts(nextDrafts);
       } else {
         setPromptMode("none");
-        setPromptDrafts([createEmptyPromptDraft()]);
+        setPromptDrafts([createPresetPromptDraft("replay")]);
       }
       setPromptsLoaded(true);
     });

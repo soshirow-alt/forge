@@ -70,8 +70,9 @@ export const DEVELOPER_RESPONSE_FORMAT_OPTIONS: {
   },
 ];
 
-export const DEVELOPER_QUESTION_TEMPLATES: {
-  id: QuestionTemplateId;
+/** Preset templates only（「デフォルト問い」系・カスタム選択肢なし） */
+export const DEVELOPER_PRESET_QUESTION_TEMPLATES: {
+  id: Exclude<QuestionTemplateId, "custom">;
   label: string;
   promptText: string;
   responseKind: VersionPromptResponseKind;
@@ -98,6 +99,17 @@ export const DEVELOPER_QUESTION_TEMPLATES: {
     responseKind: "scale_3",
     formatLabel: "3段階（低・普通・高）",
   },
+];
+
+/** @deprecated Prefer DEVELOPER_PRESET_QUESTION_TEMPLATES; custom is not a selectable template in UI */
+export const DEVELOPER_QUESTION_TEMPLATES: {
+  id: QuestionTemplateId;
+  label: string;
+  promptText: string;
+  responseKind: VersionPromptResponseKind;
+  formatLabel: string;
+}[] = [
+  ...DEVELOPER_PRESET_QUESTION_TEMPLATES,
   {
     id: "custom",
     label: "カスタム",
@@ -200,6 +212,37 @@ export function applyQuestionTemplate(
     promptText: template.promptText,
     responseKind: template.responseKind,
   };
+}
+
+/** 「デフォルト問いを使う」用 — 3プリセットのいずれかで下書きを開始 */
+export function createPresetPromptDraft(
+  templateId: Exclude<QuestionTemplateId, "custom"> = "replay",
+): DeveloperPromptDraft {
+  return {
+    clientId: newClientId(),
+    ...applyQuestionTemplate(templateId),
+  };
+}
+
+/**
+ * 保存済み問いからエディタのモードを復元する。
+ * - 未保存（空）→ none（デフォルト問い）
+ * - すべてプリセット一致 → none
+ * - 1件でも自由入力 → custom
+ */
+export function resolvePromptEditorMode(
+  drafts: DeveloperPromptDraft[],
+): "none" | "custom" {
+  if (drafts.length === 0) {
+    return "none";
+  }
+  const active = drafts.filter((draft) => draft.promptText.trim().length > 0);
+  if (active.length === 0) {
+    return "none";
+  }
+  return active.every((draft) => inferTemplateFromDraft(draft) !== "custom")
+    ? "none"
+    : "custom";
 }
 
 export const OPTIONAL_FREE_TEXT_FORMAT_LABEL = "自由記述（任意）";
