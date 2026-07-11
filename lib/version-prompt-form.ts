@@ -426,6 +426,14 @@ export function resolveOptionsForDraft(
 export function validatePromptDrafts(
   drafts: DeveloperPromptDraft[],
 ): PromptDraftValidation {
+  const filledCount = drafts.filter((draft) => draft.promptText.trim()).length;
+  if (filledCount > MAX_PROMPTS_PER_VERSION) {
+    return {
+      blocking: true,
+      message: `問いは最大${MAX_PROMPTS_PER_VERSION}問までです。余分な問いを削除してから保存してください`,
+    };
+  }
+
   for (let index = 0; index < drafts.length; index += 1) {
     const draft = drafts[index]!;
     const questionNum = index + 1;
@@ -462,13 +470,19 @@ export function validatePromptDrafts(
 export function sanitizePromptDrafts(
   drafts: DeveloperPromptDraft[],
 ): DeveloperPromptInput[] {
+  // 超過分はここでは切らない（validatePromptDrafts でブロック）。既存超過データの誤削除を防ぐ。
   const trimmed = drafts
     .map((draft) => ({
       ...draft,
       promptText: draft.promptText.trim(),
     }))
-    .filter((draft) => draft.promptText.length > 0)
-    .slice(0, MAX_PROMPTS_PER_VERSION);
+    .filter((draft) => draft.promptText.length > 0);
+
+  if (trimmed.length > MAX_PROMPTS_PER_VERSION) {
+    throw new Error(
+      `問いは最大${MAX_PROMPTS_PER_VERSION}問までです。余分な問いを削除してから保存してください`,
+    );
+  }
 
   const results: DeveloperPromptInput[] = [];
 

@@ -133,7 +133,12 @@ export async function saveDeveloperVersionPrompts(
   prompts: DeveloperPromptInput[],
 ): Promise<VersionPrompt[]> {
   const version = resolvePlayableVersion(versionKey);
-  const normalized = prompts.slice(0, MAX_PROMPTS_PER_VERSION);
+  if (prompts.length > MAX_PROMPTS_PER_VERSION) {
+    throw new Error(
+      `問いは最大${MAX_PROMPTS_PER_VERSION}問までです。余分な問いを削除してから保存してください`,
+    );
+  }
+  const normalized = prompts;
   const now = new Date().toISOString();
 
   const { data: existingRows, error: existingError } = await supabase

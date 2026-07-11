@@ -350,13 +350,20 @@ export function VersionPromptEditor({
             );
           })}
 
+          {drafts.length > MAX_PROMPTS_PER_VERSION ? (
+            <p className="text-xs text-amber-200/90">
+              問いが最大{MAX_PROMPTS_PER_VERSION}問を超えています。保存するには
+              {MAX_PROMPTS_PER_VERSION}問以下にしてください（既存の問いは自動削除しません）。
+            </p>
+          ) : null}
+
           {drafts.length < MAX_PROMPTS_PER_VERSION && (
             <button
               type="button"
               onClick={addDraft}
               className="text-sm font-medium text-violet-400 transition-colors hover:text-violet-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
             >
-              + 問いを追加（最大 {MAX_PROMPTS_PER_VERSION} 問）
+              + 問いを追加（最大{MAX_PROMPTS_PER_VERSION}問）
             </button>
           )}
         </div>

@@ -44,7 +44,8 @@ export type VoiceAnswerDraft = {
   optionalComment?: string;
 };
 
-export const MAX_PROMPTS_PER_VERSION = 10;
+/** 新規追加・保存の上限。既存データが超過している場合は編集画面で全件表示し、手動削除まで残す。 */
+export const MAX_PROMPTS_PER_VERSION = 5;
 
 export const DEFAULT_REPLAY_PROMPT_TEXT = "もう一度遊びたい？";
 
