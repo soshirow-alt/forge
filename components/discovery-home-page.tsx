@@ -184,11 +184,11 @@ function HeroCarousel({
   return (
     <section className="mx-auto w-full max-w-[1280px] overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/40">
       {/*
-        Desktop: image column capped ~520–560px (not 68:32) so square thumbs
-        read near 360×360; minmax(0,560px) shrinks when the content width is tight.
+        Desktop: image column capped ~480–520px (not 68:32) so square thumbs
+        read near 330×330; minmax(0,520px) shrinks when the content width is tight.
       */}
-      <div className="grid gap-0 lg:h-[360px] lg:grid-cols-[minmax(0,560px)_minmax(0,1fr)]">
-        <div className="relative flex min-h-[200px] items-center justify-center bg-black sm:min-h-[240px] lg:h-full lg:min-h-0 lg:w-full lg:max-w-[560px]">
+      <div className="grid gap-0 lg:h-[330px] lg:grid-cols-[minmax(0,520px)_minmax(0,1fr)]">
+        <div className="relative flex min-h-[200px] items-center justify-center bg-black sm:min-h-[240px] lg:h-full lg:min-h-0 lg:w-full lg:max-w-[520px]">
           {currentImage ? (
             <Image
               src={currentImage}
@@ -196,7 +196,7 @@ function HeroCarousel({
               fill
               className="object-contain"
               priority
-              sizes="(max-width: 1024px) 100vw, 560px"
+              sizes="(max-width: 1024px) 100vw, 520px"
             />
           ) : (
             <GeneratedThumbnailPoster
@@ -225,8 +225,8 @@ function HeroCarousel({
           </button>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-3 p-4 sm:p-5 lg:h-full lg:justify-between lg:gap-2.5 lg:overflow-hidden lg:p-5">
-          <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:w-[12.5rem] lg:shrink-0 lg:gap-2">
+        <div className="flex min-w-0 flex-col gap-3 p-4 sm:p-5 lg:h-full lg:justify-between lg:gap-2 lg:overflow-hidden lg:p-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:w-[11.5rem] lg:shrink-0 lg:gap-2">
             {additionalSlots.map((slot, slotIndex) => {
               if (slot === "loading") {
                 return <LoadingGameImageSlot key={`loading-${slotIndex}`} />;
@@ -249,16 +249,16 @@ function HeroCarousel({
             <p className="text-xs font-medium uppercase tracking-wider text-violet-400">
               注目の作品
             </p>
-            <h1 className="mt-1.5 break-words text-xl font-bold tracking-tight text-white sm:text-2xl lg:mt-1.5 lg:line-clamp-2 lg:text-2xl lg:leading-snug">
+            <h1 className="mt-1.5 break-words text-xl font-bold tracking-tight text-white sm:text-2xl lg:mt-1 lg:line-clamp-2 lg:text-xl lg:leading-snug">
               {slide.title}
             </h1>
-            <p className="mt-1.5 text-sm text-zinc-400 lg:mt-1.5">
+            <p className="mt-1.5 text-sm text-zinc-400 lg:mt-1">
               {slide.version} · {slide.updatedLabel}
             </p>
-            <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-zinc-300 lg:mt-2 lg:line-clamp-3">
+            <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-zinc-300 lg:mt-1.5 lg:line-clamp-2">
               {slide.description}
             </p>
-            <div className="mt-3 lg:mt-2.5">
+            <div className="mt-3 lg:mt-2">
               <DiscoveryCardStatPills
                 feedbackCount={slide.feedbackCount}
                 watchCount={slide.watchCount}
@@ -268,7 +268,7 @@ function HeroCarousel({
 
           <Link
             href={gameDetailHref(slide.id)}
-            className="inline-flex w-fit shrink-0 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+            className="inline-flex w-fit shrink-0 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
           >
             詳しく見る →
           </Link>
@@ -303,7 +303,7 @@ function DiscoverySectionEmpty({ message }: { message: string }) {
 function DiscoveryHomeSkeleton() {
   return (
     <div className="space-y-10">
-      <div className="mx-auto h-[240px] w-full max-w-[1280px] animate-pulse rounded-2xl bg-zinc-800/70 sm:h-[280px] lg:h-[392px]" />
+      <div className="mx-auto h-[240px] w-full max-w-[1280px] animate-pulse rounded-2xl bg-zinc-800/70 sm:h-[280px] lg:h-[362px]" />
       {[0, 1, 2].map((section) => (
         <section key={section}>
           <div className="flex items-center justify-between">
