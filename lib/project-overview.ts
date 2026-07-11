@@ -73,7 +73,8 @@ export function normalizeOverviewIntroduction(intro: string): string | null {
 export const PROJECT_DESCRIPTION_MAX_LENGTH = 160;
 
 export function deriveProjectDescription(introduction: string): string {
-  const trimmed = introduction.trim();
+  // 一覧・ヒーロー用の1行説明 — 改行は空白に畳む（overview_introduction 本体は改行を維持）
+  const trimmed = introduction.trim().replace(/\s+/g, " ");
   if (!trimmed) {
     return "";
   }

@@ -107,7 +107,9 @@ function DeveloperProfileV0PageContent({ id }: { id: string }) {
                 <p className="mt-1 text-sm font-medium text-zinc-300">
                   {dev.followers.toLocaleString()} フォロワー
                 </p>
-                <p className="mt-3 text-sm leading-relaxed text-zinc-400">{dev.bio}</p>
+                <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-400">
+                  {dev.bio}
+                </p>
                 <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-500 sm:justify-start">
                   <span className="inline-flex items-center gap-1"><MapPin className="size-3.5" />{dev.location}</span>
                   {dev.website && (

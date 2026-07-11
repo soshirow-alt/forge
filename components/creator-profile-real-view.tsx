@@ -129,7 +129,9 @@ export function CreatorProfileRealView({
                     フォロワー {followerCount.toLocaleString()}人
                   </p>
                   {profile.bio ? (
-                    <p className="mt-3 text-sm leading-relaxed text-zinc-400">{profile.bio}</p>
+                    <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-400">
+                      {profile.bio}
+                    </p>
                   ) : null}
                   <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-500 sm:justify-start">
                     <span className="inline-flex items-center gap-1">

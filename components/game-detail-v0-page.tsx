@@ -1097,7 +1097,9 @@ function GameDetailV0PageBody({
               </div>
             </Link>
             {game.developer.bio ? (
-              <p className="mt-3 text-xs leading-relaxed text-zinc-500">{game.developer.bio}</p>
+              <p className="mt-3 whitespace-pre-wrap break-words text-xs leading-relaxed text-zinc-500">
+                {game.developer.bio}
+              </p>
             ) : null}
             {showDeveloperFollow ? (
               <button

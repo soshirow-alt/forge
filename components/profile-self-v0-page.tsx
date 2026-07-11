@@ -276,7 +276,9 @@ export function ProfileSelfV0Page() {
           <div className="grid gap-4 sm:grid-cols-2">
             <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
               <h3 className="text-sm font-semibold text-white">自己紹介</h3>
-              <p className="mt-3 text-sm leading-relaxed text-zinc-400">{displayProfile.bio}</p>
+              <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-400">
+                {displayProfile.bio}
+              </p>
             </section>
             <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
               <h3 className="text-sm font-semibold text-white">好きなジャンル</h3>

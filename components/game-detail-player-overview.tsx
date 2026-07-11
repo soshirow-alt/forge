@@ -90,7 +90,7 @@ function IntroBody({ text, muted = false }: { text: string; muted?: boolean }) {
   return (
     <div className="mt-4 min-h-[5.25rem]">
       <p
-        className={`break-words text-[15px] leading-7 ${
+        className={`whitespace-pre-wrap break-words text-[15px] leading-7 ${
           muted ? "text-zinc-600" : "text-zinc-300"
         } ${!expanded && needsExpand ? "line-clamp-4" : ""}`}
       >
@@ -126,7 +126,7 @@ function CompactFeatureList({ features }: { features: GameDetailFeature[] }) {
           {feature.description ? (
             <>
               <span className="text-zinc-600"> — </span>
-              <span className="break-words">{feature.description}</span>
+              <span className="whitespace-pre-wrap break-words">{feature.description}</span>
             </>
           ) : null}
         </li>
@@ -325,7 +325,7 @@ function RecentActivityPanel({
       ) : null}
 
       {focusNotes ? (
-        <p className="mt-4 break-words border-l-2 border-violet-500/30 pl-3 text-sm leading-relaxed text-zinc-300">
+        <p className="mt-4 break-words border-l-2 border-violet-500/30 pl-3 text-sm leading-relaxed text-zinc-300 whitespace-pre-wrap">
           <span className="mb-1 block text-xs font-medium text-violet-300/80">
             いま見てほしいこと
           </span>

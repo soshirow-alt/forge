@@ -59,7 +59,9 @@ function LatestDevlogCard({
         <span className="text-xs text-zinc-500">{entry.relativeLabel}</span>
       </div>
       <h2 className="mt-3 text-lg font-semibold text-white">{entry.title}</h2>
-      <p className="mt-2 text-sm leading-relaxed text-zinc-400">{entry.excerpt}</p>
+      <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-400">
+        {entry.excerpt}
+      </p>
       {highlights.length > 0 && (
         <ul className="mt-4 space-y-1.5">
           {highlights.map((item) => (
@@ -116,7 +118,9 @@ function DevlogTimelineItem({
           <span className="text-xs text-zinc-600">· {entry.relativeLabel}</span>
         </div>
         <h3 className="mt-3 font-semibold text-white">{entry.title}</h3>
-        <p className="mt-2 text-sm leading-relaxed text-zinc-400">{entry.excerpt}</p>
+        <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-400">
+          {entry.excerpt}
+        </p>
         {hasMore && expanded && (
           <ul className="mt-3 space-y-1 border-t border-zinc-800/80 pt-3">
             {highlights.map((item) => (

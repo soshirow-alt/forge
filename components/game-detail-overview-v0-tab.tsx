@@ -68,7 +68,9 @@ function FeatureCard({ title, description }: { title: string; description: strin
         <Sparkles className="size-4" aria-hidden="true" />
       </div>
       <h3 className="mt-3 text-sm font-semibold text-white">{title}</h3>
-      <p className="mt-1.5 text-xs leading-relaxed text-zinc-500">{description}</p>
+      <p className="mt-1.5 whitespace-pre-wrap break-words text-xs leading-relaxed text-zinc-500">
+        {description}
+      </p>
     </div>
   );
 }
@@ -317,7 +319,9 @@ export const GameDetailOverviewV0Tab = forwardRef<
             />
           ) : (
             <>
-              <p className="mt-3 text-sm leading-relaxed text-zinc-400">{introPreview}</p>
+              <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-400">
+                {introPreview}
+              </p>
               {introduction.length > 120 && (
                 <button
                   type="button"
@@ -475,7 +479,7 @@ export const GameDetailOverviewV0Tab = forwardRef<
                 className={`${fieldClassName} mt-3`}
               />
             ) : (
-              <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+              <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-400">
                 {game.developerWorry}
               </p>
             )}

@@ -74,7 +74,7 @@ export function GameDetailOverview({ game }: GameDetailOverviewProps) {
           <p className="text-[11px] font-medium text-zinc-500">
             開発者が特に見てほしい観点
           </p>
-          <p className="mt-1 text-sm leading-relaxed text-zinc-300">
+          <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-300">
             {game.focusNotes}
           </p>
         </div>

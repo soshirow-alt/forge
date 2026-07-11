@@ -108,7 +108,9 @@ export function StudioDevlogCurrentEditPanel({
                 {formatDevlogPublishedAt(latestDevlog.date)}
                 {latestDevlog.publishedVersion ? ` · ${latestDevlog.publishedVersion}` : ""}
               </p>
-              <p className="mt-2 text-xs leading-relaxed text-zinc-400">{latestDevlog.content}</p>
+              <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-relaxed text-zinc-400">
+                {latestDevlog.content}
+              </p>
             </div>
           ) : (
             <p className="mt-2 text-xs leading-relaxed text-zinc-500">
