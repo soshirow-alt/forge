@@ -4,6 +4,30 @@
 
 ---
 
+## 2026-07-11 — Staging hero carousel seed スクリプト追加
+
+- `scripts/staging-only/hero-carousel-seed.mjs` — 開発者 2 名・プレイヤー 10 名・プロジェクト P1〜P6・devlog・FB・watch・bookmark・developer_follows を固定 UUID (dddddddd 名前空間) で Staging に投入。デフォルト dry-run、`--execute` で書き込み。PNG サムネイルを zlib で in-memory 生成し storage へアップロード。事後に DB カウント検証 + `get_home_discovery_feed` RPC 確認
+- `scripts/staging-only/hero-carousel-seed-cleanup.mjs` — 上記 seed の全行を安全な順序で削除。Smoke A/B / Owner は削除しない
+- `scripts/staging-only/hero-carousel-seed-README.md` — 使い方説明
+
+---
+
+## 2026-07-11 — ホーム注目カルーセルを同一フルカード track へ（Preview）
+
+- **Home** — 左右の小型 AdjacentGamePreview を廃止。同一 `FeaturedGameCard`（1000×350）を横 track で並べ、`overflow-hidden` + `translateX` で左右約200px見切れ（viewport `md:max-w-[1424px]`、3件以上）。2件以下は peek なし中央表示
+- **Staging** — 検証用 hero-carousel seed（開発者2・プレイヤー10・作品6）を独立投入（Production 非接続）
+- **未変更** — 選定ロジック、PlayerShell、main / 本番
+
+---
+
+## 2026-07-11 — ホーム注目カルーセルを v0 構造へ移植（Preview・未 push）
+
+- **Home** — 最上段ヒーローを v0 参照と同じ DOM／分割／寸法へ置換（`FeaturedGameCarousel` ほか）。viewport `md:h-[350px]`、中央 `max-w-[1000px]`、メディア `md:w-[620px]`、追加画像 `aspect-video w-40`、隣接 `w-[140px] xl:w-[200px]`（3件以上で左右、2件は右のみ）
+- **データ** — 既存フィード選定・キャッシュ・`thumbnail_urls`・FB/フォロー件数はそのまま接続
+- **未変更** — PlayerShell／サイドバー、Studio・タブ・Creator 等の他 UI 改善、main / 本番、commit/push 待ち
+
+---
+
 ## 2026-07-11 — ホーム注目ヒーロー Steam風カルーセル（Preview）
 
 - **Home** — 中央カード約950px（画像16:9≈587×330＋情報≈363）。追加画像160×90。大画面で左右に隣接作品ピーク（xl+、2件時は片側のみ）

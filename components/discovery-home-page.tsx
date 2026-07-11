@@ -1,12 +1,13 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Image as ImageIcon } from "lucide-react";
 import { DiscoveryCardStatPills } from "@/components/discovery-card-stat-pills";
 import { DiscoveryGameThumbnail } from "@/components/discovery-game-thumbnail";
-import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
+import {
+  FeaturedGameCarousel,
+  type FeaturedThumbnailsState,
+} from "@/components/featured/featured-game-carousel";
 import { HorizontalCardPager } from "@/components/horizontal-card-pager";
 import {
   buildSectionCarouselItems,
@@ -38,7 +39,7 @@ function HorizontalGameCard({
             genre={game.genre}
             version={game.version}
             image={game.image}
-            className="w-full aspect-[4/3]"
+            className="aspect-[4/3] w-full"
             sizes="(max-width: 640px) 50vw, (max-width: 1280px) 25vw, 360px"
           />
         </div>
@@ -66,321 +67,15 @@ function SectionHeader({ title, href }: { title: string; href?: string }) {
   return (
     <div className="flex items-center justify-between">
       <h2 className="text-lg font-semibold text-white sm:text-xl">{title}</h2>
-      {href && (
+      {href ? (
         <Link
           href={href}
           className="text-sm text-violet-400 transition-colors hover:text-violet-300"
         >
           すべて見る →
         </Link>
-      )}
+      ) : null}
     </div>
-  );
-}
-
-type HeroThumbnailsState =
-  | { status: "loading" }
-  | { status: "ready"; byId: Record<string, string[]> }
-  | { status: "error" };
-
-const HERO_MAIN_IMAGE_WIDTH_PX = 587; // 16:9 at 330px height
-const HERO_EXTRA_THUMB_CLASS = "h-[90px] w-[160px]";
-const HERO_PEEK_WIDTH_CLASS = "w-[180px] 2xl:w-[240px]";
-
-function resolveHeroSlideImage(
-  slide: HomeDiscoveryCard,
-  thumbnails: HeroThumbnailsState,
-): string | null {
-  if (thumbnails.status === "ready") {
-    const fromDb = thumbnails.byId[slide.id];
-    if (fromDb && fromDb.length > 0) {
-      return fromDb[0] ?? null;
-    }
-  }
-  return slide.image ?? null;
-}
-
-function MissingGameImage() {
-  return (
-    <div
-      className={`flex ${HERO_EXTRA_THUMB_CLASS} shrink-0 items-center justify-center rounded-lg border border-dashed border-zinc-800 bg-black px-1 text-center`}
-    >
-      <div className="space-y-0.5 text-zinc-600">
-        <ImageIcon className="mx-auto size-5" aria-hidden="true" />
-        <p className="text-[10px] font-medium leading-tight">追加画像未登録</p>
-      </div>
-    </div>
-  );
-}
-
-function LoadingGameImageSlot() {
-  return (
-    <div
-      className={`${HERO_EXTRA_THUMB_CLASS} shrink-0 animate-pulse rounded-lg border border-zinc-800/80 bg-zinc-900/80`}
-      aria-hidden="true"
-    />
-  );
-}
-
-function GameImageThumbnail({
-  src,
-  selected,
-  onSelect,
-}: {
-  src: string;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`relative ${HERO_EXTRA_THUMB_CLASS} shrink-0 overflow-hidden rounded-lg border bg-black transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-violet-500/70 ${
-        selected
-          ? "border-violet-500/70 ring-1 ring-violet-500/40"
-          : "border-zinc-800 hover:border-violet-500/40"
-      }`}
-      aria-pressed={selected}
-      aria-label="追加画像をメインに表示"
-    >
-      <Image src={src} alt="" fill className="object-contain" sizes="160px" />
-    </button>
-  );
-}
-
-function AdjacentHeroPeek({
-  slide,
-  thumbnails,
-  onSelect,
-  side,
-}: {
-  slide: HomeDiscoveryCard;
-  thumbnails: HeroThumbnailsState;
-  onSelect: () => void;
-  side: "left" | "right";
-}) {
-  const image = resolveHeroSlideImage(slide, thumbnails);
-
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`relative my-auto hidden h-[300px] ${HERO_PEEK_WIDTH_CLASS} shrink-0 overflow-hidden bg-black opacity-40 transition hover:opacity-60 xl:block ${
-        side === "left" ? "rounded-l-xl" : "rounded-r-xl"
-      }`}
-      aria-label={side === "left" ? "前の作品" : "次の作品"}
-    >
-      {image ? (
-        <Image
-          src={image}
-          alt=""
-          fill
-          className="scale-95 object-cover"
-          sizes="240px"
-        />
-      ) : (
-        <GeneratedThumbnailPoster
-          projectId={slide.id}
-          title={slide.title}
-          genre={slide.genre ?? ""}
-          phase={slide.version}
-        />
-      )}
-      <span className="absolute inset-0 bg-zinc-950/55" aria-hidden="true" />
-    </button>
-  );
-}
-
-function HeroCarousel({
-  slides,
-  thumbnails,
-}: {
-  slides: HomeDiscoveryCard[];
-  thumbnails: HeroThumbnailsState;
-}) {
-  const [index, setIndex] = useState(0);
-  const [imageIndex, setImageIndex] = useState(0);
-  const slide = slides[index] ?? slides[0];
-
-  const galleryUrls = useMemo(() => {
-    if (!slide) {
-      return [] as string[];
-    }
-    if (thumbnails.status === "ready") {
-      const fromDb = thumbnails.byId[slide.id];
-      if (fromDb && fromDb.length > 0) {
-        return fromDb;
-      }
-    }
-    return slide.image ? [slide.image] : [];
-  }, [slide, thumbnails]);
-
-  const currentImage = galleryUrls[imageIndex] ?? galleryUrls[0] ?? null;
-  const additionalSlots: Array<string | null | "loading"> = [0, 1].map((slot) => {
-    if (thumbnails.status === "loading") {
-      return "loading";
-    }
-    // ready or error: slot 0/1 map to gallery index 1/2 (additional only)
-    return galleryUrls[slot + 1] ?? null;
-  });
-
-  if (!slide) {
-    return null;
-  }
-
-  const slideCount = slides.length;
-  const prevIndex = (index - 1 + slideCount) % slideCount;
-  const nextIndex = (index + 1) % slideCount;
-  // 1件: 隣接なし。2件: 同じ作品を左右両方へ出さず片側のみ。3件+: 左右とも表示。
-  const showLeftPeek = slideCount >= 2;
-  const showRightPeek = slideCount >= 3;
-  const prevSlide = slides[prevIndex];
-  const nextSlide = slides[nextIndex];
-
-  function goPrev() {
-    setIndex((current) => (current === 0 ? slides.length - 1 : current - 1));
-    setImageIndex(0);
-  }
-
-  function goNext() {
-    setIndex((current) => (current === slides.length - 1 ? 0 : current + 1));
-    setImageIndex(0);
-  }
-
-  function goToSlide(nextSlideIndex: number) {
-    setIndex(nextSlideIndex);
-    setImageIndex(0);
-  }
-
-  return (
-    <section className="w-full">
-      <div className="relative flex items-stretch justify-center gap-0 lg:h-[330px]">
-        {showLeftPeek && prevSlide ? (
-          <AdjacentHeroPeek
-            slide={prevSlide}
-            thumbnails={thumbnails}
-            onSelect={goPrev}
-            side="left"
-          />
-        ) : null}
-
-        <div className="relative z-10 mx-auto flex w-full max-w-[950px] shrink-0 flex-col overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/40 lg:h-[330px] lg:flex-row">
-          <div className="relative flex min-h-[200px] w-full items-center justify-center bg-black sm:min-h-[240px] lg:h-full lg:min-h-0 lg:w-[587px] lg:shrink-0">
-            {currentImage ? (
-              <Image
-                src={currentImage}
-                alt=""
-                fill
-                className="object-contain"
-                priority
-                sizes={`(max-width: 1024px) 100vw, ${HERO_MAIN_IMAGE_WIDTH_PX}px`}
-              />
-            ) : (
-              <GeneratedThumbnailPoster
-                projectId={slide.id}
-                title={slide.title}
-                genre={slide.genre ?? ""}
-                phase={slide.version}
-              />
-            )}
-
-            <button
-              type="button"
-              onClick={goPrev}
-              className="absolute left-3 top-1/2 z-20 -translate-y-1/2 rounded-full border border-zinc-700/80 bg-zinc-950/80 p-2 text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
-              aria-label="前のスライド"
-            >
-              <ChevronLeft className="size-5" />
-            </button>
-            <button
-              type="button"
-              onClick={goNext}
-              className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full border border-zinc-700/80 bg-zinc-950/80 p-2 text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
-              aria-label="次のスライド"
-            >
-              <ChevronRight className="size-5" />
-            </button>
-          </div>
-
-          <div className="flex min-w-0 flex-1 flex-col gap-3 p-4 sm:p-5 lg:h-full lg:w-[363px] lg:max-w-[370px] lg:shrink-0 lg:justify-between lg:gap-2 lg:overflow-hidden lg:p-4">
-            <div className="flex flex-wrap gap-2 lg:flex-nowrap">
-              {additionalSlots.map((slot, slotIndex) => {
-                if (slot === "loading") {
-                  return <LoadingGameImageSlot key={`loading-${slotIndex}`} />;
-                }
-                if (typeof slot === "string") {
-                  return (
-                    <GameImageThumbnail
-                      key={`${slide.id}-extra-${slotIndex}`}
-                      src={slot}
-                      selected={currentImage === slot}
-                      onSelect={() => setImageIndex(slotIndex + 1)}
-                    />
-                  );
-                }
-                return <MissingGameImage key={`missing-${slotIndex}`} />;
-              })}
-            </div>
-
-            <div className="min-w-0 flex-1 lg:min-h-0">
-              <p className="text-xs font-medium uppercase tracking-wider text-violet-400">
-                注目の作品
-              </p>
-              <h1 className="mt-1 break-words text-xl font-bold tracking-tight text-white sm:text-2xl lg:line-clamp-2 lg:text-lg lg:leading-snug">
-                {slide.title}
-              </h1>
-              <p className="mt-1 text-sm text-zinc-400">
-                {slide.version} · {slide.updatedLabel}
-              </p>
-              <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-zinc-300">
-                {slide.description}
-              </p>
-              <div className="mt-2">
-                <DiscoveryCardStatPills
-                  feedbackCount={slide.feedbackCount}
-                  watchCount={slide.watchCount}
-                />
-              </div>
-            </div>
-
-            <Link
-              href={gameDetailHref(slide.id)}
-              className="inline-flex w-fit shrink-0 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90"
-            >
-              詳しく見る →
-            </Link>
-          </div>
-        </div>
-
-        {showRightPeek && nextSlide ? (
-          <AdjacentHeroPeek
-            slide={nextSlide}
-            thumbnails={thumbnails}
-            onSelect={goNext}
-            side="right"
-          />
-        ) : showLeftPeek && !showRightPeek ? (
-          <div
-            className={`hidden ${HERO_PEEK_WIDTH_CLASS} shrink-0 xl:block`}
-            aria-hidden="true"
-          />
-        ) : null}
-      </div>
-
-      <div className="flex justify-center gap-2 py-2.5">
-        {slides.map((item, dotIndex) => (
-          <button
-            key={`${item.id}-${item.heroSource ?? "hero"}`}
-            type="button"
-            onClick={() => goToSlide(dotIndex)}
-            className={`size-2 rounded-full transition-colors ${
-              dotIndex === index ? "bg-violet-500" : "bg-zinc-700 hover:bg-zinc-500"
-            }`}
-            aria-label={`スライド ${dotIndex + 1}`}
-          />
-        ))}
-      </div>
-    </section>
   );
 }
 
@@ -395,7 +90,10 @@ function DiscoverySectionEmpty({ message }: { message: string }) {
 function DiscoveryHomeSkeleton() {
   return (
     <div className="space-y-10">
-      <div className="mx-auto h-[240px] w-full max-w-[950px] animate-pulse rounded-2xl bg-zinc-800/70 sm:h-[280px] lg:h-[330px]" />
+      <div>
+        <div className="mb-4 h-7 w-40 animate-pulse rounded bg-zinc-800/70" />
+        <div className="mx-auto h-[240px] w-full max-w-[1000px] animate-pulse rounded-xl bg-zinc-800/70 sm:h-[280px] md:h-[350px]" />
+      </div>
       {[0, 1, 2].map((section) => (
         <section key={section}>
           <div className="flex items-center justify-between">
@@ -473,7 +171,7 @@ export function DiscoveryHomePage() {
       ? { status: "ready", feed: homeDiscoveryFeedCache, error: null }
       : { status: "loading", feed: null, error: null },
   );
-  const [heroThumbnails, setHeroThumbnails] = useState<HeroThumbnailsState>({
+  const [heroThumbnails, setHeroThumbnails] = useState<FeaturedThumbnailsState>({
     status: "loading",
   });
   const feed = state.feed;
@@ -538,7 +236,11 @@ export function DiscoveryHomePage() {
         if (cancelled) return;
         // Keep previous successful feed if revalidation fails.
         if (homeDiscoveryFeedCache) {
-          setState({ status: "ready", feed: homeDiscoveryFeedCache, error: null });
+          setState({
+            status: "ready",
+            feed: homeDiscoveryFeedCache,
+            error: null,
+          });
           return;
         }
         setState({
@@ -557,12 +259,7 @@ export function DiscoveryHomePage() {
 
   const heroItems = useMemo(() => {
     if (!feed) return [];
-    return selectHeroItems(feed.trending, feed.updated, feed.newest).map(
-      (item) => {
-        // Keep the label/time from the discovery axis that won the hero slot.
-        return item;
-      },
-    );
+    return selectHeroItems(feed.trending, feed.updated, feed.newest);
   }, [feed]);
 
   const heroIds = useMemo(
@@ -571,18 +268,15 @@ export function DiscoveryHomePage() {
   );
 
   const updatedCarousel = useMemo(
-    () =>
-      feed ? buildSectionCarouselItems(feed.updated, heroIds, 4) : [],
+    () => (feed ? buildSectionCarouselItems(feed.updated, heroIds, 4) : []),
     [feed, heroIds],
   );
   const trendingCarousel = useMemo(
-    () =>
-      feed ? buildSectionCarouselItems(feed.trending, heroIds, 4) : [],
+    () => (feed ? buildSectionCarouselItems(feed.trending, heroIds, 4) : []),
     [feed, heroIds],
   );
   const newestCarousel = useMemo(
-    () =>
-      feed ? buildSectionCarouselItems(feed.newest, heroIds, 4) : [],
+    () => (feed ? buildSectionCarouselItems(feed.newest, heroIds, 4) : []),
     [feed, heroIds],
   );
 
@@ -599,7 +293,10 @@ export function DiscoveryHomePage() {
       ) : null}
 
       {heroItems.length > 0 ? (
-        <HeroCarousel slides={heroItems} thumbnails={heroThumbnails} />
+        <FeaturedGameCarousel
+          slides={heroItems}
+          thumbnails={heroThumbnails}
+        />
       ) : error ? null : (
         <DiscoverySectionEmpty message="まだ公開中の作品がありません" />
       )}
