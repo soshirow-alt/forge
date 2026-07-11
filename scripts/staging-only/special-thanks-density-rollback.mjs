@@ -228,18 +228,80 @@ async function main() {
   const densityIds = densityUsers.map((u) => u.id);
   const { voiceIds, adoptionIds } = allFixedVoiceIds();
 
+  // Live inventory of rows that rollback --execute would target (read-only).
+  let existingCounts = {
+    densityAuthUsers: densityUsers.length,
+    project_watches: 0,
+    user_x_profiles: 0,
+    project_voice_responses_by_user: 0,
+    project_voice_responses_by_fixed_ids: 0,
+    voice_adoptions_by_matcher: 0,
+    voice_adoptions_by_fixed_ids: 0,
+    voice_adoptions_by_user: 0,
+    project_version_prompts_fixed: 0,
+    project_devlogs_fixed: 0,
+    matcher_runs_fixed: 0,
+  };
+  {
+    const [{ count: voicesFixed }, { count: adoptionsMatcher }, { count: adoptionsFixed }, { count: prompts }, { count: devlogs }, { count: matcher }] =
+      await Promise.all([
+        supabase.from("project_voice_responses").select("id", { count: "exact", head: true }).in("id", voiceIds),
+        supabase.from("voice_adoptions").select("id", { count: "exact", head: true }).eq("matcher_run_id", DENSITY_MATCHER_ID),
+        supabase.from("voice_adoptions").select("id", { count: "exact", head: true }).in("id", adoptionIds),
+        supabase.from("project_version_prompts").select("id", { count: "exact", head: true }).in("id", DENSITY_PROMPT_IDS),
+        supabase.from("project_devlogs").select("id", { count: "exact", head: true }).in("id", DENSITY_DEVLOG_IDS),
+        supabase.from("voice_adoption_matcher_runs").select("id", { count: "exact", head: true }).eq("id", DENSITY_MATCHER_ID),
+      ]);
+    existingCounts.project_voice_responses_by_fixed_ids = voicesFixed ?? 0;
+    existingCounts.voice_adoptions_by_matcher = adoptionsMatcher ?? 0;
+    existingCounts.voice_adoptions_by_fixed_ids = adoptionsFixed ?? 0;
+    existingCounts.project_version_prompts_fixed = prompts ?? 0;
+    existingCounts.project_devlogs_fixed = devlogs ?? 0;
+    existingCounts.matcher_runs_fixed = matcher ?? 0;
+  }
+  if (densityIds.length > 0) {
+    const [w, x, v, a] = await Promise.all([
+      supabase
+        .from("project_watches")
+        .select("user_id", { count: "exact", head: true })
+        .eq("project_id", PROJECT_ID)
+        .in("user_id", densityIds),
+      supabase.from("user_x_profiles").select("user_id", { count: "exact", head: true }).in("user_id", densityIds),
+      supabase
+        .from("project_voice_responses")
+        .select("id", { count: "exact", head: true })
+        .eq("project_id", PROJECT_ID)
+        .in("user_id", densityIds),
+      supabase
+        .from("voice_adoptions")
+        .select("id", { count: "exact", head: true })
+        .eq("project_id", PROJECT_ID)
+        .in("user_id", densityIds),
+    ]);
+    existingCounts.project_watches = w.count ?? 0;
+    existingCounts.user_x_profiles = x.count ?? 0;
+    existingCounts.project_voice_responses_by_user = v.count ?? 0;
+    existingCounts.voice_adoptions_by_user = a.count ?? 0;
+  }
+
   const plan = {
     mode: execute ? "EXECUTE" : "DRY_RUN",
     ref,
     projectId: PROJECT_ID,
     marker: MARKER,
     densityUsersToDelete: densityUsers.map((u) => ({ id: u.id, email: u.email })),
+    existingCounts,
     fixedIds: {
       prompts: DENSITY_PROMPT_IDS,
       devlogs: DENSITY_DEVLOG_IDS,
       matcher: DENSITY_MATCHER_ID,
       voiceIdCount: voiceIds.length,
       adoptionIdCount: adoptionIds.length,
+    },
+    outOfScope: {
+      playerA: "075348c9-6009-464c-920c-4fe6d63249c7",
+      owner: "4bdc4a2f-2a39-4599-a14c-91303310ef56",
+      smokeAProjectMutations: false,
     },
     note: "Does not touch Player A / Owner auth. Does not mutate Smoke A project fields.",
   };

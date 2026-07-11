@@ -17,6 +17,13 @@ Special Thanks タブで **10件以上** のプレイヤーカード密度（2�
 - production ref なら即 abort
 - default は dry-run（`--execute` 必須）
 
+## execute 時の制約対応（記録）
+
+- `(project_id, version_key)` に既存 prompt がある場合は **再利用**（Phase A の `0.1` など）。無い version だけ density 固定 ID を作成
+- 既存 `published_version` の devlog がある場合も **再利用**（Phase A `0.1.1`）。無いものだけ density 固定 ID
+- DB の `unique (user_id, prompt_id)` のため、ユーザーあたり voice は early 1件。adoption はその early voice を再利用し、`(voice_response_id, devlog_id)` 単位で 1 行
+- 実行後 RPC 確認は **anon** 経路（service_role に EXECUTE が無くても可）
+
 ## 実行（オーナー GO 後）
 
 前提: Staging に更新版 `049` 適用済み

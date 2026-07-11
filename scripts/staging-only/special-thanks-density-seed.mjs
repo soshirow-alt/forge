@@ -314,12 +314,16 @@ async function ensureDensityUser(supabase, spec, existingUsers) {
 }
 
 function plannedCounts() {
-  const adoptionRows = PLAYER_SPECS.reduce((sum, p) => sum + p.adoptionCount, 0);
+  const adoptionRows = PLAYER_SPECS.reduce((sum, p) => {
+    const uniquePublished = new Set(p.adoptionVersions);
+    return sum + uniquePublished.size;
+  }, 0);
   return {
     authUsersCreateOrUpdate: PLAYER_SPECS.length,
     userXProfiles: PLAYER_SPECS.filter((p) => p.handle).length,
     projectWatches: PLAYER_SPECS.filter((p) => p.watch).length,
-    projectVoiceResponses: PLAYER_SPECS.length + adoptionRows,
+    // One voice per user (unique user_id+prompt_id). Adoptions reuse that early voice.
+    projectVoiceResponses: PLAYER_SPECS.length,
     projectFeedback: 0,
     voiceAdoptions: adoptionRows,
     projectDevlogs: Object.keys(DEVLOG_IDS).length,
@@ -398,10 +402,30 @@ async function main() {
     players.push(await ensureDensityUser(supabase, spec, existingUsers));
   }
 
-  for (const [versionKey, id] of Object.entries(PROMPT_IDS)) {
+  // Reuse Phase A / existing prompts when (project_id, version_key) already exists
+  // (unique: project_version_prompts_default_idx). Only insert density fixed IDs for missing keys.
+  /** @type {Record<string, string>} */
+  const promptIds = {};
+  /** @type {string[]} */
+  const promptsCreated = [];
+  /** @type {string[]} */
+  const promptsReused = [];
+  for (const [versionKey, densityId] of Object.entries(PROMPT_IDS)) {
+    const { data: existing, error: lookupError } = await supabase
+      .from("project_version_prompts")
+      .select("id")
+      .eq("project_id", PROJECT_ID)
+      .eq("version_key", versionKey)
+      .maybeSingle();
+    if (lookupError) throw lookupError;
+    if (existing?.id) {
+      promptIds[versionKey] = existing.id;
+      promptsReused.push(versionKey);
+      continue;
+    }
     const { error } = await supabase.from("project_version_prompts").upsert(
       {
-        id,
+        id: densityId,
         project_id: PROJECT_ID,
         version_key: versionKey,
         prompt_text: `ST density: ${versionKey} の感想は？`,
@@ -413,12 +437,34 @@ async function main() {
       { onConflict: "id" },
     );
     if (error) throw error;
+    promptIds[versionKey] = densityId;
+    promptsCreated.push(versionKey);
   }
 
-  for (const [publishedVersion, id] of Object.entries(DEVLOG_IDS)) {
+  // Reuse existing published_version devlog when present (Phase A 0.1.1); create density rows only when missing.
+  /** @type {Record<string, string>} */
+  const devlogIds = {};
+  /** @type {string[]} */
+  const devlogsCreated = [];
+  /** @type {string[]} */
+  const devlogsReused = [];
+  for (const [publishedVersion, densityId] of Object.entries(DEVLOG_IDS)) {
+    const { data: existing, error: lookupError } = await supabase
+      .from("project_devlogs")
+      .select("id")
+      .eq("project_id", PROJECT_ID)
+      .eq("published_version", publishedVersion)
+      .limit(1)
+      .maybeSingle();
+    if (lookupError) throw lookupError;
+    if (existing?.id) {
+      devlogIds[publishedVersion] = existing.id;
+      devlogsReused.push(publishedVersion);
+      continue;
+    }
     const { error } = await supabase.from("project_devlogs").upsert(
       {
-        id,
+        id: densityId,
         project_id: PROJECT_ID,
         author_id: OWNER_ID,
         title: `ST density: ${publishedVersion}`,
@@ -430,13 +476,15 @@ async function main() {
       { onConflict: "id" },
     );
     if (error) throw error;
+    devlogIds[publishedVersion] = densityId;
+    devlogsCreated.push(publishedVersion);
   }
 
   {
     const { error } = await supabase.from("voice_adoption_matcher_runs").upsert(
       {
         id: MATCHER_RUN_ID,
-        devlog_id: DEVLOG_IDS["0.2"],
+        devlog_id: devlogIds["0.2"] ?? devlogIds["0.1.1"],
         project_id: PROJECT_ID,
         trigger_type: "backfill",
         trigger_version: MARKER,
@@ -476,14 +524,17 @@ async function main() {
     }
 
     const earlyAt = daysAgoIso(20 - index);
+    const earlyId = earlyVoiceId(spec.key);
     {
+      const promptId = promptIds[spec.earlyVersion];
+      if (!promptId) throw new Error(`ABORT: missing prompt for earlyVersion ${spec.earlyVersion}`);
       const { error } = await supabase.from("project_voice_responses").upsert(
         {
-          id: earlyVoiceId(spec.key),
+          id: earlyId,
           user_id: userId,
           project_id: PROJECT_ID,
           version_key: spec.earlyVersion,
-          prompt_id: PROMPT_IDS[spec.earlyVersion],
+          prompt_id: promptId,
           answer_value: `${MARKER} early ${spec.key}`,
           answer_label: null,
           moderation_status: "visible",
@@ -496,40 +547,26 @@ async function main() {
       earlyCount += 1;
     }
 
-    for (let i = 0; i < spec.adoptionCount; i += 1) {
-      const publishedVersion = spec.adoptionVersions[i] ?? "0.1.1";
+    // DB: unique (user_id, prompt_id) and unique (voice_response_id, devlog_id).
+    // Reuse the early voice; one adoption per distinct published_version/devlog.
+    const uniquePublished = [...new Set(spec.adoptionVersions)];
+    for (let i = 0; i < uniquePublished.length; i += 1) {
+      const publishedVersion = uniquePublished[i];
       const index1 = i + 1;
-      const voiceId = adoptionVoiceId(spec.key, index1);
-      const voiceAt = daysAgoIso(15 - i);
-      const sourceVersion = publishedVersion === "0.2" ? "0.1.1" : "0.1";
-      const { error: voiceError } = await supabase.from("project_voice_responses").upsert(
-        {
-          id: voiceId,
-          user_id: userId,
-          project_id: PROJECT_ID,
-          version_key: sourceVersion,
-          prompt_id: PROMPT_IDS[sourceVersion],
-          answer_value: `${MARKER} adoption ${spec.key}-${index1}`,
-          answer_label: null,
-          moderation_status: "visible",
-          created_at: voiceAt,
-          updated_at: voiceAt,
-        },
-        { onConflict: "id" },
-      );
-      if (voiceError) throw voiceError;
-
+      const targetDevlogId = devlogIds[publishedVersion];
+      if (!targetDevlogId) throw new Error(`ABORT: missing devlog for publishedVersion ${publishedVersion}`);
+      const summaryIndex = spec.adoptionVersions.indexOf(publishedVersion);
       const { error: adoptionError } = await supabase.from("voice_adoptions").upsert(
         {
           id: adoptionId(spec.key, index1),
           project_id: PROJECT_ID,
           user_id: userId,
-          voice_response_id: voiceId,
-          devlog_id: DEVLOG_IDS[publishedVersion],
-          voice_version_key: sourceVersion,
+          voice_response_id: earlyId,
+          devlog_id: targetDevlogId,
+          voice_version_key: spec.earlyVersion,
           published_version: publishedVersion,
           player_quote: `${MARKER} adoption ${spec.key}-${index1}`,
-          update_summary: spec.summaries[i] ?? "改善を反映した",
+          update_summary: spec.summaries[summaryIndex] ?? spec.summaries[0] ?? "改善を反映した",
           prompt_text: `ST density: ${publishedVersion}`,
           confidence: 0.9,
           model: "fixture",
@@ -545,11 +582,18 @@ async function main() {
     }
   }
 
-  const { data: rpc, error: rpcError } = await supabase.rpc("get_project_special_thanks", {
+  // Post-write RPC check uses anon (GRANT is for anon/authenticated; service_role may be denied).
+  const anonKey = (env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "").trim();
+  if (!anonKey) throw new Error("ABORT: NEXT_PUBLIC_SUPABASE_ANON_KEY missing for post-seed RPC check");
+  const anonClient = createClient(url, anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data: rpc, error: rpcError } = await anonClient.rpc("get_project_special_thanks", {
     p_project_id: PROJECT_ID,
   });
   if (rpcError) throw rpcError;
 
+  const rpcJson = JSON.stringify(rpc ?? {});
   console.log(
     JSON.stringify(
       {
@@ -559,6 +603,12 @@ async function main() {
           earlyCount,
           adoptionRows,
           updateContributorsPlanned: PLAYER_SPECS.filter((p) => p.adoptionCount > 0).length,
+          promptsCreated,
+          promptsReused,
+          promptIds,
+          devlogsCreated,
+          devlogsReused,
+          devlogIds,
         },
         rpcSummary: {
           watchers: Array.isArray(rpc?.watchers) ? rpc.watchers.length : null,
@@ -568,6 +618,8 @@ async function main() {
           early_players: Array.isArray(rpc?.early_players) ? rpc.early_players.length : null,
           hasAvatarSample: Boolean(rpc?.watchers?.some((w) => w.avatar_url)),
           keys: rpc ? Object.keys(rpc) : [],
+          leaks_user_id: /"user_id"/.test(rpcJson),
+          leaks_email: /"email"/.test(rpcJson),
         },
       },
       null,
