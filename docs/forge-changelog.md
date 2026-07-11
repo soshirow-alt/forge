@@ -4,10 +4,19 @@
 
 ---
 
+## 2026-07-11 — ホーム発見 RPC: LANGUAGE sql 決定版（055）
+
+- **RPC** — `get_home_discovery_feed` を **LANGUAGE sql** に全面置換。plpgsql の `RETURNS TABLE` 出力変数と SQL 列の 42702 衝突を根絶（`rank` → `project_id` の逐次再発を止める）
+- **整合** — `052`–`055` の関数本体を同一最終定義に揃えた。Staging は **055 を 1 回 Run** すれば到達
+- **検証** — PGlite で empty / newest / updated / trending / 重複セクション / 不正 text project_id / GRANT 形状を PASS（Docker/本番 Postgres なし）
+- **未実施** — Staging 055 適用・Preview 再確認 / Production / main / 本番 deploy
+
+---
+
 ## 2026-07-11 — ホーム発見: ヒーロー初回ページ除外の厳密化 + feed rank 修正
 
 - **carousel** — 非ヒーローが4件未満の棚はヒーローで埋めず、0件なら非表示。ヒーロー再登場は非ヒーロー初回4件が揃う場合のみ
-- **RPC** — `054` で PL/pgSQL `RETURNS TABLE(rank)` と CTE 列名衝突を解消（内部列 `rn`）
+- **RPC** — `054` で PL/pgSQL `RETURNS TABLE(rank)` と CTE 列名衝突を解消（内部列 `rn`）※後続 `055` で LANGUAGE sql 決定版に置換
 - **Staging** — `053` 適用済みでも anon 実行が `rank` ambiguous のまま → `054` 要適用
 - **未実施** — Production / main / 本番 deploy
 
