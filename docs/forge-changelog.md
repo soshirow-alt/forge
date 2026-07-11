@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-07-12 — ホーム注目カルーセル viewport 全幅・循環・自動送り（Preview）
+
+- **Home** — 3件以上で `md:max-w-[1424px]` 固定を廃止し、メイン領域 `w-full`。active は 1000×350 中央のまま、左右の同一フルカードが見切れ幅 `(viewport-1000)/2 - gap` で画面端まで連続
+- **非active** — 黒塗り overlay をやめ opacity ≈0.38（hover ≈0.52）+ わずかな brightness。内部操作不可・カード全体クリックで切替
+- **循環** — 3件以上は先頭／末尾でも左右に前後カード（表示用 clone）。2件以下は peek なし中央
+- **自動送り** — 元実装に無し。3件以上で 5 秒間隔・右循環。hover / focus / タブ非表示 / `prefers-reduced-motion` で停止。操作でタイマーリセット
+- **未変更** — 矢印位置、カード寸法、選定ロジック、棚、DB/RPC、main / 本番
+
+---
+
 ## 2026-07-11 — Staging hero carousel seed スクリプト追加
 
 - `scripts/staging-only/hero-carousel-seed.mjs` — 開発者 2 名・プレイヤー 10 名・プロジェクト P1〜P6・devlog・FB・watch・bookmark・developer_follows を固定 UUID (dddddddd 名前空間) で Staging に投入。デフォルト dry-run、`--execute` で書き込み。PNG サムネイルを zlib で in-memory 生成し storage へアップロード。事後に DB カウント検証 + `get_home_discovery_feed` RPC 確認
