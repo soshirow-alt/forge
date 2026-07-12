@@ -30,6 +30,10 @@ function isDefaultOgImageUrl(imageUrl: string, origin: string): boolean {
   );
 }
 
+function isDerivedOgImageUrl(imageUrl: string): boolean {
+  return /\/og-[a-f0-9]+-1200x630\.(jpe?g|png)(?:\?|$)/i.test(imageUrl);
+}
+
 /** Default PNG and derived OGP JPEG both publish explicit 1200×630 metadata. */
 function buildGameOgImage(
   imageUrl: string,
@@ -42,6 +46,13 @@ function buildGameOgImage(
       width: OG_IMAGE_WIDTH,
       height: OG_IMAGE_HEIGHT,
       type: "image/png" as const,
+      alt,
+    };
+  }
+  // Only claim 1200×630 when the URL is the derived OG asset (not gallery thumbs).
+  if (!isDerivedOgImageUrl(imageUrl)) {
+    return {
+      url: imageUrl,
       alt,
     };
   }
