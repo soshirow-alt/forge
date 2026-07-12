@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
+import { MissingScreenshot } from "@/components/featured/missing-screenshot";
 
 interface GameScreenshotThumbnailProps {
   src: string;
@@ -19,6 +21,12 @@ export function GameScreenshotThumbnail({
   active,
   onSelect,
 }: GameScreenshotThumbnailProps) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return <MissingScreenshot />;
+  }
+
   return (
     <button
       type="button"
@@ -37,6 +45,7 @@ export function GameScreenshotThumbnail({
         width={160}
         height={90}
         className="h-full w-full object-cover"
+        onError={() => setFailed(true)}
       />
     </button>
   );

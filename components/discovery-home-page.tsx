@@ -17,8 +17,46 @@ import {
   fetchHomeDiscoveryFeedFromApi,
   type HomeDiscoveryCard,
 } from "@/lib/supabase/home-discovery-db";
+import { publicProjectThumbnailPaths } from "@/lib/public-project-thumbnail";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
+
+/** Hero UI uses cover + 2 extra slots only. */
+const HERO_THUMBNAIL_PATH_LIMIT = 3;
+
+async function fetchHeroThumbnailPathsById(
+  heroIds: string[],
+): Promise<Record<string, string[]>> {
+  const ids = heroIds.filter(Boolean).slice(0, HERO_THUMBNAIL_PATH_LIMIT);
+  const byId: Record<string, string[]> = {};
+  if (ids.length === 0) {
+    return byId;
+  }
+
+  const response = await fetch(
+    `/api/public/projects/thumbnail-counts?ids=${ids.map(encodeURIComponent).join(",")}`,
+    { method: "GET", cache: "no-store", credentials: "same-origin" },
+  );
+  if (!response.ok) {
+    throw new Error(`hero thumbnail counts failed (${response.status})`);
+  }
+  const payload = (await response.json()) as {
+    ok?: boolean;
+    counts?: Record<string, number>;
+  };
+  if (!payload.ok || !payload.counts) {
+    throw new Error("hero thumbnail counts failed");
+  }
+
+  for (const id of ids) {
+    const count = payload.counts[id] ?? 0;
+    byId[id] = publicProjectThumbnailPaths(
+      id,
+      Math.min(HERO_THUMBNAIL_PATH_LIMIT, count),
+    );
+  }
+  return byId;
+}
 
 function HorizontalGameCard({
   game,
@@ -194,18 +232,31 @@ export function DiscoveryHomePage() {
         const next = await loadHomeDiscoveryFeedWithRetry();
         if (cancelled) return;
         homeDiscoveryFeedCache = next;
+        // Feed ready first — hero cover uses slide.image; extras stay loading
+        // until counts arrive (do not block first paint on extras).
         setState({ status: "ready", feed: next, error: null });
+        setHeroThumbnails({ status: "loading" });
 
         const heroes = selectHeroItems(
           next.trending,
           next.updated,
           next.newest,
         );
-        const byId: Record<string, string[]> = {};
-        for (const hero of heroes) {
-          byId[hero.id] = hero.image ? [hero.image] : [];
+        try {
+          const byId = await fetchHeroThumbnailPathsById(
+            heroes.map((hero) => hero.id),
+          );
+          if (cancelled) return;
+          setHeroThumbnails({ status: "ready", byId });
+        } catch {
+          if (cancelled) return;
+          // Cover-only fallback; extras correctly show 未登録 if count unknown.
+          const byId: Record<string, string[]> = {};
+          for (const hero of heroes) {
+            byId[hero.id] = hero.image ? [hero.image] : [];
+          }
+          setHeroThumbnails({ status: "ready", byId });
         }
-        setHeroThumbnails({ status: "ready", byId });
       } catch (err: unknown) {
         if (cancelled) return;
         // Keep previous successful feed if revalidation fails.
