@@ -42,3 +42,7 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# Local audit / P0 temp artifacts (may contain Production secrets)
+.tmp-ogp-p0/
+**/prod-service.env
