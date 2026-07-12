@@ -264,6 +264,8 @@ type GamesContextValue = {
   /** visibility=public のみ — /home・検索用（auth 非依存） */
   publicGames: Game[];
   publicCatalogReady: boolean;
+  /** /search 表示時など — 公開カタログを再取得（同一セッションの古い件数を捨てる） */
+  refreshPublicCatalog: () => Promise<void>;
   /** 公開作品の集計 stats（045 RPC）。migration 未適用時は 0 */
   getPublicProjectStats: (projectId: string) => ProjectPublicStats;
   catalogReady: boolean;
@@ -533,31 +535,63 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     setDeveloperProfiles(profiles);
   }, []);
 
+  const publicCatalogReloadInFlightRef = useRef<Promise<void> | null>(null);
+  const lastPublicCatalogReloadAtRef = useRef(0);
+
   const reloadPublicCatalog = useCallback(async () => {
-    const supabase = getOptionalSupabaseClient();
-    if (!supabase) {
-      setPublicGames([]);
-      setPublicProjectStats({});
+    if (publicCatalogReloadInFlightRef.current) {
+      await publicCatalogReloadInFlightRef.current;
       return;
     }
 
-    const projects = await forgePerfTimed("supabase.fetchPublicProjects", () =>
-      fetchPublicProjects(supabase),
-    );
-    const games = projects.map((game) => mergeGameWithExtras(game));
-    setPublicGames(games);
+    const run = (async () => {
+      const supabase = getOptionalSupabaseClient();
+      if (!supabase) {
+        setPublicGames([]);
+        setPublicProjectStats({});
+        return;
+      }
 
-    const projectIds = games.map((game) => game.id);
-    if (projectIds.length === 0) {
-      setPublicProjectStats({});
-      return;
+      const projects = await forgePerfTimed("supabase.fetchPublicProjects", () =>
+        fetchPublicProjects(supabase),
+      );
+      const games = projects.map((game) => mergeGameWithExtras(game));
+      setPublicGames(games);
+      lastPublicCatalogReloadAtRef.current = Date.now();
+
+      const projectIds = games.map((game) => game.id);
+      if (projectIds.length === 0) {
+        setPublicProjectStats({});
+        return;
+      }
+
+      const stats = await forgePerfTimed("supabase.fetchPublicProjectStats", () =>
+        fetchProjectPublicStatsMap(supabase, projectIds),
+      ).catch(() => ({} as Record<string, ProjectPublicStats>));
+      setPublicProjectStats(stats);
+    })();
+
+    publicCatalogReloadInFlightRef.current = run;
+    try {
+      await run;
+    } finally {
+      if (publicCatalogReloadInFlightRef.current === run) {
+        publicCatalogReloadInFlightRef.current = null;
+      }
     }
-
-    const stats = await forgePerfTimed("supabase.fetchPublicProjectStats", () =>
-      fetchProjectPublicStatsMap(supabase, projectIds),
-    ).catch(() => ({} as Record<string, ProjectPublicStats>));
-    setPublicProjectStats(stats);
   }, []);
+
+  /** Search/revisit: refresh unless a recent fetch already completed (avoids mount+search double hit). */
+  const refreshPublicCatalog = useCallback(async () => {
+    const minIntervalMs = 3_000;
+    if (Date.now() - lastPublicCatalogReloadAtRef.current < minIntervalMs) {
+      if (publicCatalogReloadInFlightRef.current) {
+        await publicCatalogReloadInFlightRef.current;
+      }
+      return;
+    }
+    await reloadPublicCatalog();
+  }, [reloadPublicCatalog]);
 
   const resolveDeveloperUserId = useCallback(
     (key: string) => resolveDeveloperUserIdForFollow(key, developerProfiles),
@@ -2467,6 +2501,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       submittedGames,
       publicGames,
       publicCatalogReady,
+      refreshPublicCatalog,
       getPublicProjectStats,
       catalogReady,
       dataReady: authHydrated && catalogReady,
@@ -2555,6 +2590,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       submittedGames,
       publicGames,
       publicCatalogReady,
+      refreshPublicCatalog,
       getPublicProjectStats,
       authHydrated,
       catalogReady,

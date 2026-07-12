@@ -495,6 +495,7 @@ function testPublicCatalogAuthIndependenceContract() {
 
   ok(provider.includes("publicGames"), "games-provider exposes publicGames");
   ok(provider.includes("publicCatalogReady"), "games-provider exposes publicCatalogReady");
+  ok(provider.includes("refreshPublicCatalog"), "games-provider exposes refreshPublicCatalog");
   ok(provider.includes("fetchPublicProjects"), "games-provider imports fetchPublicProjects");
   ok(
     provider.includes("void reloadPublicCatalog()") &&
@@ -529,13 +530,20 @@ function testHomeSearchPublicCatalogContract() {
     "utf8",
   );
 
-  ok(home.includes("publicCatalogReady"), "discovery-home gates on publicCatalogReady");
-  ok(home.includes("publicGames"), "discovery-home reads publicGames");
+  ok(
+    home.includes("fetchHomeDiscoveryFeed") || home.includes("get_home_discovery_feed"),
+    "discovery-home loads via home discovery feed RPC",
+  );
   ok(!home.includes("dataReady"), "discovery-home does not use dataReady");
   ok(!home.includes("submittedGames"), "discovery-home does not use submittedGames");
+  ok(!home.includes("useGames("), "discovery-home does not depend on GamesProvider catalog");
 
   ok(search.includes("publicCatalogReady"), "works-search gates on publicCatalogReady");
   ok(search.includes("publicGames"), "works-search reads publicGames");
+  ok(
+    search.includes("refreshPublicCatalog"),
+    "works-search revalidates public catalog on display",
+  );
   ok(!search.includes("dataReady"), "works-search does not use dataReady");
   ok(!search.includes("submittedGames"), "works-search does not use submittedGames");
 }

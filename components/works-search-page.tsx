@@ -80,7 +80,16 @@ function parseFeatures(param: string | null): string[] {
 
 function WorksSearchContent() {
   const hideV0Mock = useHideV0MockContent();
-  const { publicGames, publicCatalogReady, getPublicProjectStats } = useGames();
+  const {
+    publicGames,
+    publicCatalogReady,
+    refreshPublicCatalog,
+    getPublicProjectStats,
+  } = useGames();
+
+  useEffect(() => {
+    void refreshPublicCatalog().catch(() => undefined);
+  }, [refreshPublicCatalog]);
 
   useForgePerfRoute({
     route: "/search",
