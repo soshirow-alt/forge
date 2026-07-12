@@ -8,8 +8,10 @@
 
 - **目的** — 作品固有サムネを OGP に安全表示（data URL を metadata 経路へ戻さない）
 - **保存** — 新規投稿・Studio 画像編集で Storage `project-thumbnails` へ upload し、DB には HTTPS URL のみ保存（hash 付きファイル名）
+- **書込経路** — server API + service role のみ。Storage は public read。anon / authenticated の直接 write policy なし
+- **検証** — magic bytes（jpeg/png/webp/gif）、SVG・非画像拒否、2MB/枚・最大10枚、不正 base64 拒否
 - **OGP** — `get_public_project_og_image_url` で短い https のみ取得。無ければ `og-default-v2.png`
-- **Staging** — Comet Rush のみ backfill。Production DB / Storage / deploy は未実施
+- **Staging** — Comet Rush backfill + 062 適用済み。Production DB / Storage / deploy は未実施
 
 ## 2026-07-13 — Xカード用 default OGP 画像 URL 更新（v2）
 

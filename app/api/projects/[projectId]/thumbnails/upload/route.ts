@@ -3,44 +3,37 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 import {
   MAX_PROJECT_THUMBNAIL_UPLOAD_BYTES,
   PROJECT_THUMBNAILS_BUCKET,
+  extensionForThumbnailMime,
   isHttpsThumbnailUrl,
-  publicObjectUrl,
+  isValidThumbnailUploadIndex,
   sha256Hex,
-} from "@/lib/supabase/project-thumbnail-storage";
+  sniffThumbnailImageMime,
+} from "@/lib/project-thumbnail-upload-rules";
+import { publicObjectUrl } from "@/lib/supabase/project-thumbnail-storage";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 export const runtime = "nodejs";
 
-function extensionForMime(mime: string): string {
-  const normalized = mime.toLowerCase();
-  if (normalized === "image/png") return "png";
-  if (normalized === "image/webp") return "webp";
-  if (normalized === "image/gif") return "gif";
-  return "jpg";
-}
-
-function normalizeMime(mime: string | null | undefined): string {
-  const raw = (mime ?? "").trim().toLowerCase().split(";")[0]?.trim() ?? "";
-  if (raw === "image/png" || raw === "image/webp" || raw === "image/gif") {
-    return raw;
-  }
-  if (raw === "image/jpeg" || raw === "image/jpg") {
-    return "image/jpeg";
-  }
-  return "";
-}
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 /**
- * Authenticated owner upload to project-thumbnails (service role write).
- * Staging can use this before Storage RLS policies are applied via Dashboard SQL.
+ * Authenticated owner upload to project-thumbnails via service role only.
+ * Clients cannot choose bucket/path; server derives `{projectId}/{index}-{hash}.{ext}`.
  */
 export async function POST(
   request: Request,
   context: { params: Promise<{ projectId: string }> },
 ) {
   const { projectId } = await context.params;
-  if (!projectId) {
-    return NextResponse.json({ error: "projectId required" }, { status: 400 });
+  if (!projectId || !UUID_RE.test(projectId)) {
+    return NextResponse.json({ error: "invalid projectId" }, { status: 400 });
+  }
+
+  // Reject client-supplied bucket/path overrides if somehow posted
+  const contentTypeHeader = request.headers.get("content-type") || "";
+  if (!contentTypeHeader.includes("multipart/form-data")) {
+    return NextResponse.json({ error: "multipart required" }, { status: 400 });
   }
 
   const supabase = await createServerClient();
@@ -60,32 +53,46 @@ export async function POST(
     .select("id, owner_id")
     .eq("id", projectId)
     .maybeSingle();
-  if (projectError || !project || project.owner_id !== user.id) {
+
+  if (projectError) {
+    return NextResponse.json({ error: "lookup failed" }, { status: 502 });
+  }
+  if (!project) {
+    return NextResponse.json({ error: "not found" }, { status: 404 });
+  }
+  if (project.owner_id !== user.id) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
   const form = await request.formData();
+  if (form.get("bucket") || form.get("path") || form.get("objectPath")) {
+    return NextResponse.json({ error: "path override forbidden" }, { status: 400 });
+  }
+
   const file = form.get("file");
   const indexRaw = form.get("index");
   const index = Number(indexRaw);
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "file required" }, { status: 400 });
   }
-  if (!Number.isInteger(index) || index < 0 || index > 99) {
+  if (!isValidThumbnailUploadIndex(index)) {
     return NextResponse.json({ error: "invalid index" }, { status: 400 });
   }
   if (file.size <= 0 || file.size > MAX_PROJECT_THUMBNAIL_UPLOAD_BYTES) {
     return NextResponse.json({ error: "invalid file size" }, { status: 400 });
   }
 
-  const contentType = normalizeMime(file.type);
-  if (!contentType) {
-    return NextResponse.json({ error: "unsupported mime" }, { status: 400 });
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const sniffed = sniffThumbnailImageMime(bytes);
+  if (!sniffed) {
+    return NextResponse.json(
+      { error: "unsupported or non-image file" },
+      { status: 400 },
+    );
   }
 
-  const bytes = new Uint8Array(await file.arrayBuffer());
   const hash = (await sha256Hex(bytes)).slice(0, 16);
-  const objectPath = `${projectId}/${index}-${hash}.${extensionForMime(contentType)}`;
+  const objectPath = `${projectId}/${index}-${hash}.${extensionForThumbnailMime(sniffed)}`;
 
   const admin = createServiceRoleClient();
   if (!admin) {
@@ -98,7 +105,7 @@ export async function POST(
   const { error: uploadError } = await admin.storage
     .from(PROJECT_THUMBNAILS_BUCKET)
     .upload(objectPath, bytes, {
-      contentType,
+      contentType: sniffed,
       upsert: true,
       cacheControl: "3600",
     });
@@ -114,5 +121,5 @@ export async function POST(
     return NextResponse.json({ error: "invalid public url" }, { status: 502 });
   }
 
-  return NextResponse.json({ url: publicUrl, path: objectPath });
+  return NextResponse.json({ url: publicUrl });
 }

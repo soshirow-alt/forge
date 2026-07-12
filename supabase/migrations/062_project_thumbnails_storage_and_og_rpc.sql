@@ -1,13 +1,11 @@
--- 062: project thumbnails Storage bucket + HTTPS-only OGP image RPC
+-- 062: project-thumbnails Storage (public read) + HTTPS-only OGP RPC
 -- Staging first. Do NOT apply to Production until owner GO + backfill plan.
 --
--- Bucket: project-thumbnails (public read)
--- Object path: {project_id}/{index}-{content_hash}.{ext}
--- OGP: get_public_project_og_image_url returns a short https URL only
---       (never returns data: / relative / http:).
+-- Write path: server API + service role only (NO authenticated/anon Storage write policies).
+-- Bucket may already exist (idempotent ON CONFLICT).
 
 -- ---------------------------------------------------------------------------
--- Storage bucket
+-- Storage bucket (idempotent)
 -- ---------------------------------------------------------------------------
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
@@ -23,7 +21,7 @@ SET
   file_size_limit = EXCLUDED.file_size_limit,
   allowed_mime_types = EXCLUDED.allowed_mime_types;
 
--- Public read
+-- Public read only
 DROP POLICY IF EXISTS "project_thumbnails_public_read" ON storage.objects;
 CREATE POLICY "project_thumbnails_public_read"
 ON storage.objects
@@ -31,61 +29,10 @@ FOR SELECT
 TO public
 USING (bucket_id = 'project-thumbnails');
 
--- Owner insert: first folder segment = project id owned by auth.uid()
+-- Remove any direct client write policies (server route is the only writer)
 DROP POLICY IF EXISTS "project_thumbnails_owner_insert" ON storage.objects;
-CREATE POLICY "project_thumbnails_owner_insert"
-ON storage.objects
-FOR INSERT
-TO authenticated
-WITH CHECK (
-  bucket_id = 'project-thumbnails'
-  AND (storage.foldername(name))[1] IS NOT NULL
-  AND EXISTS (
-    SELECT 1
-    FROM public.projects p
-    WHERE p.id::text = (storage.foldername(name))[1]
-      AND p.owner_id = auth.uid()
-  )
-);
-
 DROP POLICY IF EXISTS "project_thumbnails_owner_update" ON storage.objects;
-CREATE POLICY "project_thumbnails_owner_update"
-ON storage.objects
-FOR UPDATE
-TO authenticated
-USING (
-  bucket_id = 'project-thumbnails'
-  AND EXISTS (
-    SELECT 1
-    FROM public.projects p
-    WHERE p.id::text = (storage.foldername(name))[1]
-      AND p.owner_id = auth.uid()
-  )
-)
-WITH CHECK (
-  bucket_id = 'project-thumbnails'
-  AND EXISTS (
-    SELECT 1
-    FROM public.projects p
-    WHERE p.id::text = (storage.foldername(name))[1]
-      AND p.owner_id = auth.uid()
-  )
-);
-
 DROP POLICY IF EXISTS "project_thumbnails_owner_delete" ON storage.objects;
-CREATE POLICY "project_thumbnails_owner_delete"
-ON storage.objects
-FOR DELETE
-TO authenticated
-USING (
-  bucket_id = 'project-thumbnails'
-  AND EXISTS (
-    SELECT 1
-    FROM public.projects p
-    WHERE p.id::text = (storage.foldername(name))[1]
-      AND p.owner_id = auth.uid()
-  )
-);
 
 -- ---------------------------------------------------------------------------
 -- OGP: return one short https thumbnail URL for a public project
@@ -100,7 +47,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
   -- Only thumbnail_url (kept in sync as primary). Prefix check avoids adopting
-  -- data: / relative values. Length cap keeps OGP payloads short.
+  -- data: / relative / http values. Length cap keeps OGP payloads short.
   SELECT CASE
     WHEN p.visibility = 'public'
       AND p.thumbnail_url IS NOT NULL

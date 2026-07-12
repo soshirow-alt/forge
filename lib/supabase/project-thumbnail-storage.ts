@@ -1,71 +1,78 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { MAX_PROJECT_THUMBNAILS } from "@/lib/project-thumbnails";
+import {
+  ALLOWED_PROJECT_THUMBNAIL_MIME,
+  MAX_PROJECT_THUMBNAIL_UPLOAD_BYTES,
+  PROJECT_THUMBNAILS_BUCKET,
+  extensionForThumbnailMime,
+  isHttpsThumbnailUrl,
+  isValidThumbnailUploadIndex,
+  normalizeAllowedThumbnailMime,
+  sha256Hex,
+  sniffThumbnailImageMime,
+  type AllowedProjectThumbnailMime,
+} from "@/lib/project-thumbnail-upload-rules";
 
-export const PROJECT_THUMBNAILS_BUCKET = "project-thumbnails";
-export const MAX_PROJECT_THUMBNAIL_UPLOAD_BYTES = 2_000_000;
+export {
+  ALLOWED_PROJECT_THUMBNAIL_MIME,
+  MAX_PROJECT_THUMBNAIL_UPLOAD_BYTES,
+  PROJECT_THUMBNAILS_BUCKET,
+  isHttpsThumbnailUrl,
+  sha256Hex,
+} from "@/lib/project-thumbnail-upload-rules";
 
 const DATA_URL_RE = /^data:([^;,]+)?(;base64)?,([\s\S]*)$/i;
 
 export type DecodedThumbnail = {
   bytes: Uint8Array;
-  contentType: string;
+  contentType: AllowedProjectThumbnailMime;
   extension: string;
 };
 
-function extensionForMime(mime: string): string {
-  const normalized = mime.toLowerCase();
-  if (normalized === "image/png") return "png";
-  if (normalized === "image/webp") return "webp";
-  if (normalized === "image/gif") return "gif";
-  return "jpg";
-}
-
-function normalizeMime(mime: string | null | undefined): string {
-  const raw = (mime ?? "").trim().toLowerCase();
-  if (raw === "image/png" || raw === "image/webp" || raw === "image/gif") {
-    return raw;
+function finalizeDecoded(bytes: Uint8Array): DecodedThumbnail | null {
+  if (
+    bytes.byteLength === 0 ||
+    bytes.byteLength > MAX_PROJECT_THUMBNAIL_UPLOAD_BYTES
+  ) {
+    return null;
   }
-  return "image/jpeg";
-}
-
-export function isHttpsThumbnailUrl(value: string | null | undefined): boolean {
-  if (!value) return false;
-  const trimmed = value.trim();
-  return /^https:\/\//i.test(trimmed) && trimmed.length <= 2048;
-}
-
-export async function sha256Hex(bytes: Uint8Array): Promise<string> {
-  const copy = new Uint8Array(bytes.byteLength);
-  copy.set(bytes);
-  const digest = await crypto.subtle.digest("SHA-256", copy);
-  return [...new Uint8Array(digest)]
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  const sniffed = sniffThumbnailImageMime(bytes);
+  if (!sniffed) return null;
+  return {
+    bytes,
+    contentType: sniffed,
+    extension: extensionForThumbnailMime(sniffed),
+  };
 }
 
 export function decodeDataUrlImage(dataUrl: string): DecodedThumbnail | null {
   const match = dataUrl.trim().match(DATA_URL_RE);
   if (!match) return null;
-  const mime = normalizeMime(match[1] || "image/jpeg");
+  const declared = normalizeAllowedThumbnailMime(match[1] || "image/jpeg");
+  if (!declared) return null;
   const isBase64 = Boolean(match[2]?.toLowerCase().includes("base64"));
   const payload = match[3] ?? "";
   try {
-    if (isBase64) {
-      const binary = atob(payload);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i += 1) {
-        bytes[i] = binary.charCodeAt(i);
-      }
-      if (bytes.byteLength === 0 || bytes.byteLength > MAX_PROJECT_THUMBNAIL_UPLOAD_BYTES) {
-        return null;
-      }
-      return { bytes, contentType: mime, extension: extensionForMime(mime) };
-    }
-    const decoded = decodeURIComponent(payload);
-    const bytes = new TextEncoder().encode(decoded);
-    if (bytes.byteLength === 0 || bytes.byteLength > MAX_PROJECT_THUMBNAIL_UPLOAD_BYTES) {
+    if (!isBase64) {
+      // Only base64 data URLs are accepted for uploads.
       return null;
     }
-    return { bytes, contentType: mime, extension: extensionForMime(mime) };
+    // Reject obviously broken base64
+    if (!/^[A-Za-z0-9+/=\s]+$/.test(payload)) {
+      return null;
+    }
+    const binary = atob(payload.replace(/\s+/g, ""));
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    const decoded = finalizeDecoded(bytes);
+    if (!decoded) return null;
+    // Declared mime must match sniffed bytes
+    if (decoded.contentType !== declared) {
+      return null;
+    }
+    return decoded;
   } catch {
     return null;
   }
@@ -92,16 +99,8 @@ async function decodeRelativeOrHttpImage(
   try {
     const response = await fetch(absolute, { cache: "no-store" });
     if (!response.ok) return null;
-    const mime = normalizeMime(response.headers.get("content-type"));
     const buffer = new Uint8Array(await response.arrayBuffer());
-    if (buffer.byteLength === 0 || buffer.byteLength > MAX_PROJECT_THUMBNAIL_UPLOAD_BYTES) {
-      return null;
-    }
-    return {
-      bytes: buffer,
-      contentType: mime,
-      extension: extensionForMime(mime),
-    };
+    return finalizeDecoded(buffer);
   } catch {
     return null;
   }
@@ -115,11 +114,10 @@ export async function decodeThumbnailCandidate(
   if (trimmed.startsWith("data:")) {
     return decodeDataUrlImage(trimmed);
   }
-  if (isHttpsThumbnailUrl(trimmed) || trimmed.startsWith("http://") || trimmed.startsWith("/")) {
-    // Existing Storage https URLs are kept by caller; this path is for relative/http re-upload.
-    if (isHttpsThumbnailUrl(trimmed)) {
-      return null;
-    }
+  if (isHttpsThumbnailUrl(trimmed)) {
+    return null;
+  }
+  if (trimmed.startsWith("http://") || trimmed.startsWith("/")) {
     return decodeRelativeOrHttpImage(trimmed);
   }
   return null;
@@ -135,94 +133,95 @@ export function publicObjectUrl(
   return data.publicUrl;
 }
 
+/**
+ * Upload via same-origin server route only (service role write).
+ * Never writes Storage from the browser client directly.
+ */
 export async function uploadProjectThumbnailObject(
-  supabase: SupabaseClient,
+  _supabase: SupabaseClient,
   projectId: string,
   index: number,
   decoded: DecodedThumbnail,
 ): Promise<string> {
-  // Prefer same-origin upload API (works before Storage RLS is applied on Staging).
-  if (typeof window !== "undefined") {
-    const form = new FormData();
-    form.append(
-      "file",
-      new Blob([new Uint8Array(decoded.bytes)], { type: decoded.contentType }),
-      `thumb-${index}.${decoded.extension}`,
+  if (!isValidThumbnailUploadIndex(index)) {
+    throw new Error(`サムネイル index が不正です（0〜${MAX_PROJECT_THUMBNAILS - 1}）。`);
+  }
+  if (typeof window === "undefined") {
+    throw new Error(
+      "サムネイル upload はブラウザから /api/.../thumbnails/upload 経由でのみ行えます。",
     );
-    form.append("index", String(index));
-    const response = await fetch(
-      `/api/projects/${encodeURIComponent(projectId)}/thumbnails/upload`,
-      {
-        method: "POST",
-        body: form,
-        credentials: "same-origin",
-      },
-    );
-    const body = (await response.json().catch(() => null)) as {
-      url?: string;
-      error?: string;
-    } | null;
-    if (!response.ok || !body?.url || !isHttpsThumbnailUrl(body.url)) {
-      throw new Error(
-        body?.error || "サムネイルのアップロードに失敗しました。",
-      );
-    }
-    return body.url.trim();
   }
 
-  const hash = (await sha256Hex(decoded.bytes)).slice(0, 16);
-  const objectPath = `${projectId}/${index}-${hash}.${decoded.extension}`;
-  const { error } = await supabase.storage
-    .from(PROJECT_THUMBNAILS_BUCKET)
-    .upload(objectPath, decoded.bytes, {
-      contentType: decoded.contentType,
-      upsert: true,
-      cacheControl: "3600",
-    });
-  if (error) {
-    throw new Error(
-      error.message || "サムネイルのアップロードに失敗しました。",
-    );
+  const form = new FormData();
+  form.append(
+    "file",
+    new Blob([new Uint8Array(decoded.bytes)], { type: decoded.contentType }),
+    `thumb-${index}.${decoded.extension}`,
+  );
+  form.append("index", String(index));
+  const response = await fetch(
+    `/api/projects/${encodeURIComponent(projectId)}/thumbnails/upload`,
+    {
+      method: "POST",
+      body: form,
+      credentials: "same-origin",
+    },
+  );
+  const body = (await response.json().catch(() => null)) as {
+    url?: string;
+    error?: string;
+  } | null;
+  if (!response.ok || !body?.url || !isHttpsThumbnailUrl(body.url)) {
+    throw new Error(body?.error || "サムネイルのアップロードに失敗しました。");
   }
-  const url = publicObjectUrl(supabase, objectPath);
-  if (!isHttpsThumbnailUrl(url)) {
-    throw new Error("Storage public URL が https ではありません。");
-  }
-  return url;
+  return body.url.trim();
 }
 
 /**
  * Convert form thumbnail values to HTTPS Storage URLs.
- * - Existing https URLs are kept as-is (no re-upload).
- * - data: and relative paths are uploaded.
- * Throws if any non-empty candidate fails to materialize (caller must not clear DB).
+ * Uploads all non-https candidates first; throws before returning if any fail
+ * so callers must not update DB.
+ *
+ * Orphan note: failed mid-batch may leave newly uploaded objects in Storage
+ * under `{projectId}/{index}-{hash}.*`. Paths are content-hashed + upsert, so
+ * retries overwrite the same object and do not unbounded-duplicate identical bytes.
  */
 export async function materializeThumbnailUrlsToStorage(
   supabase: SupabaseClient,
   projectId: string,
   urls: string[],
 ): Promise<string[]> {
-  const out: string[] = [];
+  if (urls.length > MAX_PROJECT_THUMBNAILS) {
+    throw new Error(`サムネイルは最大 ${MAX_PROJECT_THUMBNAILS} 枚です。`);
+  }
+
+  const prepared: Array<{ index: number; value: string }> = [];
   for (let index = 0; index < urls.length; index += 1) {
     const raw = urls[index]?.trim() ?? "";
     if (!raw) continue;
-    if (isHttpsThumbnailUrl(raw)) {
-      out.push(raw);
+    prepared.push({ index, value: raw });
+  }
+
+  const out: string[] = new Array(prepared.length);
+  // Phase 1: resolve all uploads without returning partial success to caller.
+  for (let i = 0; i < prepared.length; i += 1) {
+    const { index, value } = prepared[i]!;
+    if (isHttpsThumbnailUrl(value)) {
+      out[i] = value;
       continue;
     }
-    const decoded = await decodeThumbnailCandidate(raw);
+    const decoded = await decodeThumbnailCandidate(value);
     if (!decoded) {
       throw new Error(
         `サムネイル ${index + 1} 枚目を Storage 用に変換できませんでした。`,
       );
     }
-    const uploaded = await uploadProjectThumbnailObject(
+    out[i] = await uploadProjectThumbnailObject(
       supabase,
       projectId,
       index,
       decoded,
     );
-    out.push(uploaded);
   }
   return out;
 }
