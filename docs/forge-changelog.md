@@ -4,11 +4,19 @@
 
 ---
 
+## 2026-07-12 — get_home_discovery_feed SQL 最適化（058・適用待ち）
+
+- **切り分け（本番）** — ブラウザ TTFB は軽い。`get_home_discovery_feed` 自体が cold 約2.3–3.9s / 再呼出し約1.0s。Staging REST は cold〜0.7s・warm〜0.1s。遅い主因は **Production 上の SQL/データ量（RPC 本体）** であり、ブラウザ専用でも REST 層単独でもない
+- **実装** — `058_optimize_home_discovery_feed.sql`（選定仕様は 055 と同一）。`project_id_text` を一度だけ生成、7d 集計を公開作品に限定、カード用 stats を candidate のみにインライン（未使用の witness / latest_devlog スキャンを feed から除外）
+- **適用** — Staging → Production の順で Dashboard SQL。適用後に warm ≤1s 目標で再計測
+
+---
+
 ## 2026-07-12 — /home 初回表示のネットワーク競合を緩和
 
 - **計測（本番・未ログイン hard reload）** — HTML TTFBは軽い一方、`get_home_discovery_feed` 約3.9s が実カード表示の待ち。同時に `GamesProvider` の `projects?select=*` 約5.8s と devlogs/supports/release_events が同一ホストへ並列発行され競合
 - **修正** — `/home`（および `/`）初回は公開カタログと副次取得を idle / 最大2.5s 遅延。`/search` は既存の `refreshPublicCatalog` で必要時に取得
-- **非対象** — RPC SQL 自体の高速化・Provider 全面改修は別途
+- **非対象** — RPC SQL 自体の高速化・Provider 全面改修は別途（上記 058）
 
 ---
 
