@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
 import {
+  OG_IMAGE_HEIGHT,
+  OG_IMAGE_MIME,
+  OG_IMAGE_WIDTH,
+} from "@/lib/og-image-constants";
+import {
   DEFAULT_GAME_OG_PATH,
   resolveOgImageUrl,
   resolveProjectOgImageUrl,
@@ -25,19 +30,26 @@ function isDefaultOgImageUrl(imageUrl: string, origin: string): boolean {
   );
 }
 
-/** Default OG image includes fixed 1200×630 PNG metadata. Per-game: url+alt only. */
-function buildGameOgImage(imageUrl: string, alt: string, isDefault: boolean) {
-  if (isDefault) {
+/** Default PNG and derived OGP JPEG both publish explicit 1200×630 metadata. */
+function buildGameOgImage(
+  imageUrl: string,
+  alt: string,
+  options: { isDefault: boolean; contentType?: string },
+) {
+  if (options.isDefault) {
     return {
       url: imageUrl,
-      width: 1200,
-      height: 630,
+      width: OG_IMAGE_WIDTH,
+      height: OG_IMAGE_HEIGHT,
       type: "image/png" as const,
       alt,
     };
   }
   return {
     url: imageUrl,
+    width: OG_IMAGE_WIDTH,
+    height: OG_IMAGE_HEIGHT,
+    type: (options.contentType || OG_IMAGE_MIME) as "image/jpeg" | "image/png",
     alt,
   };
 }
@@ -69,14 +81,19 @@ export function buildGameDetailMetadata(project: ProjectOgData): Metadata {
   const pageUrl = toAbsoluteUrl(path, origin);
   const imageUrl = resolveProjectOgImageUrl(
     project.id,
-    project.thumbnailUrl,
+    project.ogImageUrl,
     origin,
   );
-  const ogImage = buildGameOgImage(
-    imageUrl,
-    project.title,
-    isDefaultOgImageUrl(imageUrl, origin),
-  );
+  const isDefault = isDefaultOgImageUrl(imageUrl, origin);
+  const contentType = isDefault
+    ? "image/png"
+    : imageUrl.toLowerCase().endsWith(".png")
+      ? "image/png"
+      : OG_IMAGE_MIME;
+  const ogImage = buildGameOgImage(imageUrl, project.title, {
+    isDefault,
+    contentType,
+  });
 
   return {
     title,
@@ -106,7 +123,7 @@ export function buildFallbackGameDetailMetadata(): Metadata {
   const origin = getSiteOrigin();
   const imageUrl = resolveOgImageUrl(null, origin);
   const description = FALLBACK_GAME_METADATA.description as string;
-  const ogImage = buildGameOgImage(imageUrl, "Forge", true);
+  const ogImage = buildGameOgImage(imageUrl, "Forge", { isDefault: true });
 
   return {
     ...FALLBACK_GAME_METADATA,

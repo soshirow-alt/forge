@@ -11,14 +11,15 @@ export type ProjectOgData = {
   playableVersion: string;
   phase: string;
   releaseStatus: string | null;
-  thumbnailUrl: string | null;
+  /** Derived 1200×630 OGP HTTPS URL from RPC — never gallery thumbnail_url. */
+  ogImageUrl: string | null;
 };
 
 async function fetchHttpsOgImageUrl(
   supabase: SupabaseClient,
   projectId: string,
 ): Promise<string | null> {
-  // Preferred: short https-only RPC (migration 062).
+  // Preferred: https-only RPC over og_image_url (migration 063).
   try {
     const { data, error } = await supabase.rpc(
       "get_public_project_og_image_url" as never,
@@ -28,29 +29,28 @@ async function fetchHttpsOgImageUrl(
       return data.trim();
     }
   } catch {
-    // RPC may be missing until 062 is applied on the target DB.
+    // RPC may be missing until 063 is applied on the target DB.
   }
 
-  // Fallback: filter so non-https (incl. huge data URLs) are not returned to Next.
+  // Fallback: select og_image_url only (never thumbnail_url / data URLs).
   const { data, error } = await supabase
     .from("projects")
-    .select("thumbnail_url")
+    .select("og_image_url")
     .eq("id", projectId)
     .eq("visibility", "public")
-    .like("thumbnail_url", "https://%")
+    .like("og_image_url", "https://%")
     .maybeSingle();
 
   if (error || !data) {
     return null;
   }
 
-  const url = (data as { thumbnail_url?: string | null }).thumbnail_url;
+  const url = (data as { og_image_url?: string | null }).og_image_url;
   return isHttpsThumbnailUrl(url) ? url!.trim() : null;
 }
 
 /**
- * Load public project metadata for OGP without selecting data-URL thumbnail blobs
- * into the metadata path.
+ * Load public project metadata for OGP without selecting gallery thumbnail blobs.
  */
 export async function fetchPublicProjectForOg(
   supabase: SupabaseClient,
@@ -81,7 +81,7 @@ export async function fetchPublicProjectForOg(
     | "visibility"
   >;
 
-  const thumbnailUrl = await fetchHttpsOgImageUrl(supabase, projectId);
+  const ogImageUrl = await fetchHttpsOgImageUrl(supabase, projectId);
 
   return {
     id: row.id,
@@ -91,6 +91,6 @@ export async function fetchPublicProjectForOg(
     playableVersion: row.playable_version?.trim() || DEFAULT_PLAYABLE_VERSION,
     phase: row.phase ?? "",
     releaseStatus: row.release_status ?? null,
-    thumbnailUrl,
+    ogImageUrl,
   };
 }

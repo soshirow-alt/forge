@@ -39,6 +39,8 @@ function assert(condition: boolean, message: string): void {
 const httpThumb = "https://cdn.example.com/thumb.jpg";
 const dataThumb =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+const derivedOg =
+  "https://cdn.example.com/project/og-abc123-1200x630.jpg";
 
 assert(
   pickHttpThumbnailForOg({
@@ -90,7 +92,7 @@ const project: ProjectOgData = {
   playableVersion: "0.1",
   phase: "試作版",
   releaseStatus: "in_development",
-  thumbnailUrl: httpThumb,
+  ogImageUrl: derivedOg,
 };
 
 const meta = buildGameDetailMetadata(project);
@@ -103,8 +105,8 @@ assert(
   meta.alternates?.canonical === `${ORIGIN}/games/${project.id}`,
   "og:url / canonical present",
 );
-assert(ogImageUrl === httpThumb, "og:image uses https thumbnail");
-assert(twitterImage === httpThumb, "twitter:image uses https thumbnail");
+assert(ogImageUrl === derivedOg, "og:image uses derived https og_image_url");
+assert(twitterImage === derivedOg, "twitter:image uses derived https og_image_url");
 const twitterCard =
   meta.twitter && typeof meta.twitter === "object" && "card" in meta.twitter
     ? String(meta.twitter.card)
@@ -118,16 +120,21 @@ assert(
   Boolean(
     projectOgFirst &&
       typeof projectOgFirst === "object" &&
-      !("width" in projectOgFirst && projectOgFirst.width === 1200),
+      "width" in projectOgFirst &&
+      projectOgFirst.width === 1200 &&
+      "height" in projectOgFirst &&
+      projectOgFirst.height === 630 &&
+      "type" in projectOgFirst &&
+      projectOgFirst.type === "image/jpeg",
   ),
-  "per-game og image does not fake fixed 1200 width",
+  "per-game derived og image includes 1200×630 jpeg metadata",
 );
 
-const noThumbMeta = buildGameDetailMetadata({ ...project, thumbnailUrl: null });
+const noThumbMeta = buildGameDetailMetadata({ ...project, ogImageUrl: null });
 const noThumbOg = firstImageUrl(noThumbMeta.openGraph?.images);
 assert(
   noThumbOg === `${ORIGIN}${DEFAULT_GAME_OG_PATH}`,
-  "no thumbnail → default og:image",
+  "no og_image_url → default og:image",
 );
 const defaultImages = noThumbMeta.openGraph?.images;
 const defaultFirst = Array.isArray(defaultImages) ? defaultImages[0] : defaultImages;

@@ -16,6 +16,8 @@ export type ProjectRow = {
   section: "new" | "testers" | "beta";
   thumbnail_url: string | null;
   thumbnail_urls?: string[] | null;
+  /** Derived 1200×630 OGP HTTPS URL (Storage). Separate from gallery thumbs. */
+  og_image_url?: string | null;
   tags: string[];
   play_url: string;
   steam_url: string | null;

@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-13 — OGP専用 1200×630 派生画像（Staging / Preview）
+
+- **分離** — ギャラリー `thumbnail_url` と OGP `og_image_url` を分離。RPC は `og_image_url` の https のみ返す
+- **生成** — 先頭サムネから sharp で cover+center の 1200×630 JPEG。パス `{projectId}/og-{hash}-1200x630.jpg`
+- **metadata** — width/height/type 明示。無ければ `og-default-v2.png`
+- **Staging** — Comet Rush canary。Production migration / backfill / deploy は未実施
+
 ## 2026-07-13 — 作品サムネイル Storage 化（Staging / Preview）
 
 - **目的** — 作品固有サムネを OGP に安全表示（data URL を metadata 経路へ戻さない）

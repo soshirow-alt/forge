@@ -35,6 +35,7 @@ import {
   publicProjectThumbnailPaths,
 } from "@/lib/public-project-thumbnail";
 import { materializeThumbnailUrlsToStorage } from "@/lib/supabase/project-thumbnail-storage";
+import { requestProjectOgImageDerive } from "@/lib/supabase/request-project-og-derive";
 
 const PUBLIC_PROJECT_CATALOG_COLUMNS = [
   "id",
@@ -153,6 +154,7 @@ async function applyMaterializedThumbnailFieldsForUpdate(
   if (fields.thumbnail_urls.length === 0) {
     payload.thumbnail_url = null;
     payload.thumbnail_urls = [];
+    payload.og_image_url = null;
     return;
   }
   const httpsUrls = await materializeThumbnailUrlsToStorage(
@@ -162,6 +164,8 @@ async function applyMaterializedThumbnailFieldsForUpdate(
   );
   payload.thumbnail_url = httpsUrls[0] ?? null;
   payload.thumbnail_urls = httpsUrls;
+  // OGP derive runs after DB write (see callers) so a failed derive never
+  // rolls back gallery thumbnails.
 }
 
 async function persistProjectThumbnailHttpsUrls(
@@ -186,6 +190,8 @@ async function persistProjectThumbnailHttpsUrls(
   if (error || !data) {
     throw error ?? new Error("サムネイル URL の保存に失敗しました。");
   }
+  // Best-effort OGP derive; gallery thumbs already saved.
+  await requestProjectOgImageDerive(projectId);
   return data as ProjectRow;
 }
 
@@ -566,6 +572,13 @@ export async function updateProjectFromSubmitForm(
       supabase.from("projects").update(p).eq("id", id).select("*").single(),
     payload,
   );
+  if (
+    Object.prototype.hasOwnProperty.call(payload, "thumbnail_url") &&
+    typeof payload.thumbnail_url === "string" &&
+    payload.thumbnail_url.startsWith("https://")
+  ) {
+    await requestProjectOgImageDerive(id);
+  }
 
   return projectRowToGame(row as ProjectRow);
 }
@@ -609,6 +622,13 @@ export async function updateProjectDetailsInDb(
       supabase.from("projects").update(p).eq("id", id).select("*").single(),
     payload,
   );
+  if (
+    Object.prototype.hasOwnProperty.call(payload, "thumbnail_url") &&
+    typeof payload.thumbnail_url === "string" &&
+    payload.thumbnail_url.startsWith("https://")
+  ) {
+    await requestProjectOgImageDerive(id);
+  }
 
   return projectRowToGame(row as ProjectRow);
 }
