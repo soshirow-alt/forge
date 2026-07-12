@@ -1,5 +1,8 @@
+"use client";
+
+import Image from "next/image";
+import { useState } from "react";
 import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
-import { GameThumbnail } from "@/components/player-shell";
 
 export function DiscoveryGameThumbnail({
   id,
@@ -19,15 +22,21 @@ export function DiscoveryGameThumbnail({
   sizes?: string;
 }) {
   const resolvedImage = image?.trim();
+  const [failedImage, setFailedImage] = useState<string | null>(null);
 
-  if (resolvedImage) {
+  if (resolvedImage && failedImage !== resolvedImage) {
     return (
-      <GameThumbnail
-        src={resolvedImage}
-        alt={title}
-        className={className}
-        sizes={sizes}
-      />
+      <div className={`relative overflow-hidden rounded-xl bg-zinc-800 ${className}`}>
+        <Image
+          src={resolvedImage}
+          alt={title}
+          fill
+          className="object-cover"
+          sizes={sizes}
+          loading="lazy"
+          onError={() => setFailedImage(resolvedImage)}
+        />
+      </div>
     );
   }
 

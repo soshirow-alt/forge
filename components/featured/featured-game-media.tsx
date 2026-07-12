@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
 
 interface FeaturedGameMediaProps {
@@ -27,9 +28,11 @@ export function FeaturedGameMedia({
   genre,
   version,
 }: FeaturedGameMediaProps) {
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">
-      {src ? (
+      {src && failedSrc !== src ? (
         <Image
           key={src}
           src={src}
@@ -38,6 +41,7 @@ export function FeaturedGameMedia({
           className="object-contain"
           sizes="(max-width: 768px) 100vw, 620px"
           priority
+          onError={() => setFailedSrc(src)}
         />
       ) : projectId ? (
         <GeneratedThumbnailPoster

@@ -29,7 +29,11 @@ import {
   resolveProjectPrimaryThumbnail,
   resolveProjectThumbnailUrlsFromRow,
 } from "@/lib/project-thumbnails";
-import { safeHttpThumbnailUrl } from "@/lib/safe-http-thumbnail";
+import {
+  publicProjectThumbnailPath,
+  publicProjectThumbnailPathAtIndex,
+} from "@/lib/public-project-thumbnail";
+import { isHttpOrHttpsUrl } from "@/lib/safe-http-thumbnail";
 
 const PUBLIC_PROJECT_CATALOG_COLUMNS = [
   "id",
@@ -247,37 +251,12 @@ export async function fetchPublicProjects(
   const rows = (data ?? []) as unknown as Array<
     Omit<ProjectRow, "thumbnail_url" | "thumbnail_urls">
   >;
-  const ids = rows.map((row) => row.id);
-  const thumbnailById = new Map<string, string>();
-
-  if (ids.length > 0) {
-    const { data: thumbnails, error: thumbnailError } = await supabase
-      .from("projects")
-      .select("id, thumbnail_url")
-      .in("id", ids)
-      .eq("visibility", "public")
-      .like("thumbnail_url", "http%");
-
-    if (thumbnailError) {
-      throw thumbnailError;
-    }
-
-    for (const thumbnail of (thumbnails ?? []) as Array<{
-      id: string;
-      thumbnail_url: string | null;
-    }>) {
-      const safe = safeHttpThumbnailUrl(thumbnail.thumbnail_url);
-      if (safe) {
-        thumbnailById.set(thumbnail.id, safe);
-      }
-    }
-  }
 
   return rows.map((row) =>
     projectRowToGame({
       ...row,
-      thumbnail_url: thumbnailById.get(row.id) ?? null,
-      thumbnail_urls: null,
+      thumbnail_url: publicProjectThumbnailPath(row.id),
+      thumbnail_urls: [publicProjectThumbnailPath(row.id)],
     } as ProjectRow),
   );
 }
@@ -298,7 +277,19 @@ export async function fetchPublicProjectById(
     return null;
   }
 
-  return projectRowToGame(data as ProjectRow);
+  const row = data as ProjectRow;
+  const thumbnailUrls = resolveProjectThumbnailUrlsFromRow(row).map(
+    (url, index) =>
+      isHttpOrHttpsUrl(url)
+        ? url.trim()
+        : publicProjectThumbnailPathAtIndex(projectId, index),
+  );
+
+  return projectRowToGame({
+    ...row,
+    thumbnail_url: thumbnailUrls[0] ?? null,
+    thumbnail_urls: thumbnailUrls,
+  });
 }
 
 /** Owner's project by id — includes non-public visibility (RLS applies). */

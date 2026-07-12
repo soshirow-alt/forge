@@ -68,6 +68,8 @@ function NeighborPeek({
   onSelect: () => void;
   onMouseUp: (event: MouseEvent<HTMLElement>) => void;
 }) {
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+
   if (widthPx <= 0) return null;
 
   return (
@@ -82,7 +84,7 @@ function NeighborPeek({
       style={{ width: widthPx }}
     >
       <span className="relative block h-full w-full bg-black">
-        {coverSrc ? (
+        {coverSrc && failedSrc !== coverSrc ? (
           <Image
             key={coverSrc}
             src={coverSrc}
@@ -95,6 +97,8 @@ function NeighborPeek({
                 : "object-cover object-left"
             }
             sizes={`${Math.ceil(widthPx)}px`}
+            loading="lazy"
+            onError={() => setFailedSrc(coverSrc)}
           />
         ) : (
           <GeneratedThumbnailPoster

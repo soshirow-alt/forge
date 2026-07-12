@@ -7,6 +7,7 @@ import {
 import type { HomeDiscoverySection, HeroSource } from "@/lib/home-discovery-selection";
 import { safeHttpThumbnailUrl, safeHttpThumbnailUrls } from "@/lib/safe-http-thumbnail";
 import { resolveProjectThumbnailUrlsFromRow } from "@/lib/project-thumbnails";
+import { publicProjectThumbnailPath } from "@/lib/public-project-thumbnail";
 
 export type HomeDiscoveryFeedRow = {
   section: HomeDiscoverySection;
@@ -69,13 +70,13 @@ export function sanitizeHomeDiscoveryFeedRow(
 export function mapFeedRowToCard(row: HomeDiscoveryFeedRow): HomeDiscoveryCard {
   const section = row.section;
   const cardTimeAt = asNullableString(row.card_time_at);
-  const safeThumb = safeHttpThumbnailUrl(row.thumbnail_url);
+  const projectId = asString(row.project_id);
   return {
-    id: asString(row.project_id),
+    id: projectId,
     title: asString(row.title),
     version: asString(row.playable_version || "0.1"),
     description: asString(row.description ?? ""),
-    image: safeThumb ?? "",
+    image: publicProjectThumbnailPath(projectId),
     genre: asNullableString(row.genre) ?? undefined,
     updatedLabel: formatHomeDiscoveryTimeLabel(
       cardTimeAt,
