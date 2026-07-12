@@ -630,51 +630,17 @@ export function GamesProvider({ children }: { children: ReactNode }) {
           .catch(() => setReleaseEvents([]));
       };
 
-      const startPublicCatalog = () => {
-        void reloadPublicCatalog()
-          .catch(() => setPublicGames([]))
-          .finally(() => {
-            setPublicCatalogReady(true);
-            forgePerfMeasure("games.publicCatalogReady", "games-provider-mount");
-          });
-      };
+      // Load public catalog immediately (do not idle-defer on /home).
+      // requestIdleCallback often fires while the discovery RPC is in-flight
+      // (main thread idle during network wait), which contends with the feed
+      // and can worsen first-card time.
+      void reloadPublicCatalog()
+        .catch(() => setPublicGames([]))
+        .finally(() => {
+          setPublicCatalogReady(true);
+          forgePerfMeasure("games.publicCatalogReady", "games-provider-mount");
+        });
 
-      // /home discovery RPC is critical path. Defer GamesProvider catalog fetches so
-      // they do not contend on the same Supabase host during first paint.
-      const pathname =
-        typeof window !== "undefined" ? window.location.pathname : "";
-      const deferForHome = pathname === "/home" || pathname === "/";
-
-      if (typeof window !== "undefined" && deferForHome) {
-        const deferMs = 2_500;
-        const idle =
-          "requestIdleCallback" in window
-            ? window.requestIdleCallback(
-                () => {
-                  startPublicCatalog();
-                  loadSecondaryCatalogData();
-                },
-                { timeout: deferMs },
-              )
-            : null;
-        const timer =
-          idle == null
-            ? window.setTimeout(() => {
-                startPublicCatalog();
-                loadSecondaryCatalogData();
-              }, deferMs)
-            : null;
-        return () => {
-          if (idle != null && "cancelIdleCallback" in window) {
-            window.cancelIdleCallback(idle);
-          }
-          if (timer != null) {
-            window.clearTimeout(timer);
-          }
-        };
-      }
-
-      startPublicCatalog();
       if (typeof window !== "undefined") {
         window.setTimeout(loadSecondaryCatalogData, 0);
       } else {

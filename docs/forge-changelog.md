@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-12 — /home idle defer を撤回（体感悪化の是正）
+
+- **観測** — Production でオーナー実測、ゲームカード表示まで約10秒。計測上の RPC 約4秒との差が大きい
+- **原因** — `e884d19` の `/home` 向け `requestIdleCallback`（最大2.5s）は、RPC 待ちでメインスレッドが空いている間に**すぐ発火**し、公開カタログ取得が discovery RPC と帯域競合する。カード表示は feed ready 待ちのため defer は体感を改善せず悪化しうる
+- **修正** — idle/2.5s defer を撤回し、mount 時の即時 `reloadPublicCatalog` に戻す。`/search` 鮮度の `refreshPublicCatalog`（`d2b86e3`）は維持
+- **続く作業** — navigation→最初のカード描画の全工程計測、RPC SQL（058）は別途
+
+---
+
 ## 2026-07-12 — get_home_discovery_feed SQL 最適化（058・適用待ち）
 
 - **切り分け（本番）** — ブラウザ TTFB は軽い。`get_home_discovery_feed` 自体が cold 約2.3–3.9s / 再呼出し約1.0s。Staging REST は cold〜0.7s・warm〜0.1s。遅い主因は **Production 上の SQL/データ量（RPC 本体）** であり、ブラウザ専用でも REST 層単独でもない
@@ -12,11 +21,10 @@
 
 ---
 
-## 2026-07-12 — /home 初回表示のネットワーク競合を緩和
+## 2026-07-12 — /home 初回表示のネットワーク競合を緩和（撤回済み）
 
-- **計測（本番・未ログイン hard reload）** — HTML TTFBは軽い一方、`get_home_discovery_feed` 約3.9s が実カード表示の待ち。同時に `GamesProvider` の `projects?select=*` 約5.8s と devlogs/supports/release_events が同一ホストへ並列発行され競合
-- **修正** — `/home`（および `/`）初回は公開カタログと副次取得を idle / 最大2.5s 遅延。`/search` は既存の `refreshPublicCatalog` で必要時に取得
-- **非対象** — RPC SQL 自体の高速化・Provider 全面改修は別途（上記 058）
+- 当時の意図: `/home` で公開カタログを idle 遅延して RPC 競合を避ける
+- **撤回** — 上記「idle defer を撤回」を参照。`requestIdleCallback` が RPC 待ち中に発火し逆効果
 
 ---
 
