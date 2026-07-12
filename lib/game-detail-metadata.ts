@@ -16,13 +16,28 @@ export const FALLBACK_GAME_METADATA: Metadata = {
 
 const GAME_OG_DESCRIPTION_FALLBACK = "Forgeで公開中の開発中ゲームです。";
 
-/** Explicit OG image descriptor so crawlers get dimensions + MIME. */
-function buildGameOgImage(imageUrl: string, alt: string) {
+function isDefaultOgImageUrl(imageUrl: string, origin: string): boolean {
+  const fallback = resolveOgImageUrl(null, origin);
+  return (
+    imageUrl === fallback ||
+    imageUrl.endsWith(DEFAULT_GAME_OG_PATH) ||
+    imageUrl.includes("/images/og-default-v2.png")
+  );
+}
+
+/** Default OG image includes fixed 1200×630 PNG metadata. Per-game: url+alt only. */
+function buildGameOgImage(imageUrl: string, alt: string, isDefault: boolean) {
+  if (isDefault) {
+    return {
+      url: imageUrl,
+      width: 1200,
+      height: 630,
+      type: "image/png" as const,
+      alt,
+    };
+  }
   return {
     url: imageUrl,
-    width: 1200,
-    height: 630,
-    type: "image/png" as const,
     alt,
   };
 }
@@ -57,7 +72,11 @@ export function buildGameDetailMetadata(project: ProjectOgData): Metadata {
     project.thumbnailUrl,
     origin,
   );
-  const ogImage = buildGameOgImage(imageUrl, project.title);
+  const ogImage = buildGameOgImage(
+    imageUrl,
+    project.title,
+    isDefaultOgImageUrl(imageUrl, origin),
+  );
 
   return {
     title,
@@ -87,7 +106,7 @@ export function buildFallbackGameDetailMetadata(): Metadata {
   const origin = getSiteOrigin();
   const imageUrl = resolveOgImageUrl(null, origin);
   const description = FALLBACK_GAME_METADATA.description as string;
-  const ogImage = buildGameOgImage(imageUrl, "Forge");
+  const ogImage = buildGameOgImage(imageUrl, "Forge", true);
 
   return {
     ...FALLBACK_GAME_METADATA,

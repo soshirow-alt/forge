@@ -110,12 +110,37 @@ const twitterCard =
     ? String(meta.twitter.card)
     : "";
 assert(twitterCard === "summary_large_image", "twitter:card summary_large_image");
+const projectOgImages = meta.openGraph?.images;
+const projectOgFirst = Array.isArray(projectOgImages)
+  ? projectOgImages[0]
+  : projectOgImages;
+assert(
+  Boolean(
+    projectOgFirst &&
+      typeof projectOgFirst === "object" &&
+      !("width" in projectOgFirst && projectOgFirst.width === 1200),
+  ),
+  "per-game og image does not fake fixed 1200 width",
+);
 
 const noThumbMeta = buildGameDetailMetadata({ ...project, thumbnailUrl: null });
 const noThumbOg = firstImageUrl(noThumbMeta.openGraph?.images);
 assert(
   noThumbOg === `${ORIGIN}${DEFAULT_GAME_OG_PATH}`,
   "no thumbnail → default og:image",
+);
+const defaultImages = noThumbMeta.openGraph?.images;
+const defaultFirst = Array.isArray(defaultImages) ? defaultImages[0] : defaultImages;
+assert(
+  Boolean(
+    defaultFirst &&
+      typeof defaultFirst === "object" &&
+      "width" in defaultFirst &&
+      defaultFirst.width === 1200 &&
+      "type" in defaultFirst &&
+      defaultFirst.type === "image/png",
+  ),
+  "default og image includes 1200×630 png metadata",
 );
 
 console.log("\nAll minimal read-only OGP checks passed.");

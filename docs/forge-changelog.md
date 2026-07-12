@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-13 — 作品サムネイル Storage 化（Staging / Preview）
+
+- **目的** — 作品固有サムネを OGP に安全表示（data URL を metadata 経路へ戻さない）
+- **保存** — 新規投稿・Studio 画像編集で Storage `project-thumbnails` へ upload し、DB には HTTPS URL のみ保存（hash 付きファイル名）
+- **OGP** — `get_public_project_og_image_url` で短い https のみ取得。無ければ `og-default-v2.png`
+- **Staging** — Comet Rush のみ backfill。Production DB / Storage / deploy は未実施
+
 ## 2026-07-13 — Xカード用 default OGP 画像 URL 更新（v2）
 
 - **現象** — X投稿で title / description / domain は出るが、画像が汎用アイコンになる

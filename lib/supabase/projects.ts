@@ -34,6 +34,7 @@ import {
   publicProjectThumbnailPath,
   publicProjectThumbnailPaths,
 } from "@/lib/public-project-thumbnail";
+import { materializeThumbnailUrlsToStorage } from "@/lib/supabase/project-thumbnail-storage";
 
 const PUBLIC_PROJECT_CATALOG_COLUMNS = [
   "id",
@@ -125,7 +126,14 @@ function linkColumnsFromForm(data: {
     related_links: links.relatedLinks,
   };
 }
-function applyThumbnailFieldsForUpdate(
+/**
+ * If thumbs changed, upload non-https candidates to Storage first, then set
+ * HTTPS URLs on the payload. On upload failure, throw before DB write so
+ * existing thumbnails are preserved.
+ */
+async function applyMaterializedThumbnailFieldsForUpdate(
+  supabase: SupabaseClient,
+  projectId: string,
   payload: Record<string, unknown>,
   thumbnailUrls: string[] | undefined,
   existing: {
@@ -133,16 +141,52 @@ function applyThumbnailFieldsForUpdate(
     thumbnail_urls?: string[] | null;
   },
   options?: { allowClear?: boolean },
-): void {
+): Promise<void> {
   const fields = projectThumbnailsForDbUpdate(
     thumbnailUrls,
     existing,
     options,
   );
-  if (fields) {
-    payload.thumbnail_url = fields.thumbnail_url;
-    payload.thumbnail_urls = fields.thumbnail_urls;
+  if (!fields) {
+    return;
   }
+  if (fields.thumbnail_urls.length === 0) {
+    payload.thumbnail_url = null;
+    payload.thumbnail_urls = [];
+    return;
+  }
+  const httpsUrls = await materializeThumbnailUrlsToStorage(
+    supabase,
+    projectId,
+    fields.thumbnail_urls,
+  );
+  payload.thumbnail_url = httpsUrls[0] ?? null;
+  payload.thumbnail_urls = httpsUrls;
+}
+
+async function persistProjectThumbnailHttpsUrls(
+  supabase: SupabaseClient,
+  projectId: string,
+  urls: string[],
+): Promise<ProjectRow> {
+  const httpsUrls = await materializeThumbnailUrlsToStorage(
+    supabase,
+    projectId,
+    urls,
+  );
+  const { data, error } = await supabase
+    .from("projects")
+    .update({
+      thumbnail_url: httpsUrls[0] ?? null,
+      thumbnail_urls: httpsUrls,
+    })
+    .eq("id", projectId)
+    .select("*")
+    .single();
+  if (error || !data) {
+    throw error ?? new Error("サムネイル URL の保存に失敗しました。");
+  }
+  return data as ProjectRow;
 }
 
 async function fetchExistingProjectThumbnails(
@@ -226,11 +270,14 @@ function projectGenresForDb(genres: string[]) {
 function submitFormToInsertRow(
   data: SubmitFormData,
   owner: { ownerId: string; ownerName: string },
+  options?: { deferThumbnails?: boolean },
 ) {
   const lead = data.description?.trim() ?? "";
   const intro = data.introduction?.trim() ?? "";
   const { genres, genre } = projectGenresForDb(data.genres);
-  const thumbnails = projectThumbnailsForDb(data.thumbnailUrls);
+  const thumbnails = options?.deferThumbnails
+    ? { thumbnail_url: null as string | null, thumbnail_urls: [] as string[] }
+    : projectThumbnailsForDb(data.thumbnailUrls);
   const linkColumns = linkColumnsFromForm(data);
   return {
     owner_id: owner.ownerId,
@@ -460,12 +507,22 @@ export async function insertProject(
   owner: { ownerId: string; ownerName: string },
 ): Promise<Game> {
   try {
+    const pendingThumbs = projectThumbnailsForDb(data.thumbnailUrls).thumbnail_urls;
     const row = await writeProjectRowWithSchemaFallback(
       async (payload) =>
         supabase.from("projects").insert(payload).select("*").single(),
-      submitFormToInsertRow(data, owner),
+      submitFormToInsertRow(data, owner, { deferThumbnails: true }),
     );
-    return projectRowToGame(row as ProjectRow);
+    const inserted = row as ProjectRow;
+    if (pendingThumbs.length === 0) {
+      return projectRowToGame(inserted);
+    }
+    const withThumbs = await persistProjectThumbnailHttpsUrls(
+      supabase,
+      inserted.id,
+      pendingThumbs,
+    );
+    return projectRowToGame(withThumbs);
   } catch (error) {
     throw new Error(mapProjectSubmitErrorMessage(error));
   }
@@ -497,7 +554,13 @@ export async function updateProjectFromSubmitForm(
         ? { play_access_type: data.playAccessType }
         : {}),
     };
-  applyThumbnailFieldsForUpdate(payload, data.thumbnailUrls, existingThumbs);
+  await applyMaterializedThumbnailFieldsForUpdate(
+    supabase,
+    id,
+    payload,
+    data.thumbnailUrls,
+    existingThumbs,
+  );
   const row = await writeProjectRowWithSchemaFallback(
     async (p) =>
       supabase.from("projects").update(p).eq("id", id).select("*").single(),
@@ -531,9 +594,16 @@ export async function updateProjectDetailsInDb(
         ? { play_access_type: data.playAccessType }
         : {}),
     };
-  applyThumbnailFieldsForUpdate(payload, data.thumbnailUrls, existingThumbs, {
-    allowClear: data.explicitThumbnailUpdate === true,
-  });
+  await applyMaterializedThumbnailFieldsForUpdate(
+    supabase,
+    id,
+    payload,
+    data.thumbnailUrls,
+    existingThumbs,
+    {
+      allowClear: data.explicitThumbnailUpdate === true,
+    },
+  );
   const row = await writeProjectRowWithSchemaFallback(
     async (p) =>
       supabase.from("projects").update(p).eq("id", id).select("*").single(),
