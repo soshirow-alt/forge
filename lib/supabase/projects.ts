@@ -24,6 +24,7 @@ import {
   sanitizeRelatedLinks,
 } from "@/lib/project-publish-links";
 import {
+  MAX_PROJECT_THUMBNAILS,
   projectThumbnailsForDb,
   projectThumbnailsForDbUpdate,
   resolveProjectPrimaryThumbnail,
@@ -31,6 +32,7 @@ import {
 } from "@/lib/project-thumbnails";
 import {
   publicProjectThumbnailPath,
+  publicProjectThumbnailPaths,
 } from "@/lib/public-project-thumbnail";
 
 const PUBLIC_PROJECT_CATALOG_COLUMNS = [
@@ -298,6 +300,53 @@ export async function fetchPublicProjects(
 }
 
 /** Player-facing single project — public visibility only. */
+export async function fetchPublicProjectThumbnailCount(
+  supabase: SupabaseClient,
+  projectId: string,
+): Promise<number> {
+  const { data, error } = await supabase.rpc(
+    "get_public_project_thumbnail_count",
+    { p_project_id: projectId },
+  );
+  if (!error) {
+    const n = typeof data === "number" ? data : Number(data);
+    if (!Number.isFinite(n) || n < 0) {
+      return 0;
+    }
+    return Math.min(MAX_PROJECT_THUMBNAILS, Math.floor(n));
+  }
+
+  // Pre-migration 060 fallback: head-only probes (no thumbnail body in response).
+  let count = 0;
+  for (let index = 0; index < MAX_PROJECT_THUMBNAILS; index += 1) {
+    const { count: slotCount, error: probeError } = await supabase
+      .from("projects")
+      .select("id", { count: "exact", head: true })
+      .eq("id", projectId)
+      .eq("visibility", "public")
+      .not(`thumbnail_urls->>${index}`, "is", null);
+    if (probeError || !slotCount) {
+      break;
+    }
+    count += 1;
+  }
+  if (count > 0) {
+    return count;
+  }
+
+  const { count: primaryCount, error: primaryError } = await supabase
+    .from("projects")
+    .select("id", { count: "exact", head: true })
+    .eq("id", projectId)
+    .eq("visibility", "public")
+    .not("thumbnail_url", "is", null)
+    .neq("thumbnail_url", "");
+  if (primaryError || !primaryCount) {
+    return 0;
+  }
+  return 1;
+}
+/** Player-facing single project — public visibility only. */
 export async function fetchPublicProjectById(
   supabase: SupabaseClient,
   projectId: string,
@@ -317,13 +366,18 @@ export async function fetchPublicProjectById(
     ProjectRow,
     "thumbnail_url" | "thumbnail_urls"
   >;
-  // Never ship data URL blobs; cards/detail use the public image API.
-  const thumbPath = publicProjectThumbnailPath(projectId);
+
+  const thumbCount = await fetchPublicProjectThumbnailCount(
+    supabase,
+    projectId,
+  );
+
+  const paths = publicProjectThumbnailPaths(projectId, thumbCount);
 
   return projectRowToGame({
     ...row,
-    thumbnail_url: thumbPath,
-    thumbnail_urls: [thumbPath],
+    thumbnail_url: paths[0] ?? null,
+    thumbnail_urls: paths,
   } as ProjectRow);
 }
 

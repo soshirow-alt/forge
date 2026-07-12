@@ -9,26 +9,25 @@ import { createClient } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 
 type RouteContext = {
-  params: Promise<{ projectId: string }>;
+  params: Promise<{ projectId: string; imageIndex: string }>;
 };
 
 function notFound(): NextResponse {
   return new NextResponse(null, { status: 404 });
 }
 
-function parseLegacyIndex(request: Request): number {
-  const value = new URL(request.url).searchParams.get("index");
-  if (value === null) return 0;
-  if (!/^(0|[1-9]\d*)$/.test(value)) return -1;
-  const index = Number(value);
-  return Number.isSafeInteger(index) ? index : -1;
-}
+/**
+ * Path-based gallery index (next/image rejects ?query on local optimizer URLs).
+ * Example: /api/public/projects/{id}/thumbnail/3
+ */
+export async function GET(_request: Request, context: RouteContext) {
+  const { projectId, imageIndex } = await context.params;
+  if (!isSupabaseProjectId(projectId) || !/^(0|[1-9]\d*)$/.test(imageIndex)) {
+    return notFound();
+  }
 
-/** Default cover / legacy ?index= (prefer path /thumbnail/{n} for next/image). */
-export async function GET(request: Request, context: RouteContext) {
-  const { projectId } = await context.params;
-  const index = parseLegacyIndex(request);
-  if (!isSupabaseProjectId(projectId) || index < 0) {
+  const index = Number(imageIndex);
+  if (!Number.isSafeInteger(index) || index < 0 || index > 99) {
     return notFound();
   }
 

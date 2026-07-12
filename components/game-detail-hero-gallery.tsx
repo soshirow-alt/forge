@@ -7,14 +7,40 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 const AUTO_ADVANCE_MS = 5000;
 
 function GallerySlide({ src, active }: { src: string; active: boolean }) {
+  const [failed, setFailed] = useState(false);
   const visibility = active ? "opacity-100" : "opacity-0";
+
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
+  if (failed) {
+    return (
+      <div
+        className={`absolute inset-0 flex items-center justify-center bg-zinc-950 transition-opacity duration-700 ${visibility}`}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element -- static local placeholder */}
+        <img
+          src="/placeholder.svg"
+          alt=""
+          className="max-h-full max-w-full object-contain opacity-40"
+        />
+      </div>
+    );
+  }
 
   if (src.startsWith("data:") || src.startsWith("blob:")) {
     return (
       <div
         className={`absolute inset-0 flex items-center justify-center bg-zinc-950 transition-opacity duration-700 ${visibility}`}
       >
-        <img src={src} alt="" className="max-h-full max-w-full object-contain" />
+        {/* eslint-disable-next-line @next/next/no-img-element -- data/blob gallery drafts */}
+        <img
+          src={src}
+          alt=""
+          className="max-h-full max-w-full object-contain"
+          onError={() => setFailed(true)}
+        />
       </div>
     );
   }
@@ -30,6 +56,7 @@ function GallerySlide({ src, active }: { src: string; active: boolean }) {
         className="object-contain"
         sizes="(max-width: 1024px) 100vw, 60vw"
         priority={active}
+        onError={() => setFailed(true)}
       />
     </div>
   );

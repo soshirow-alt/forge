@@ -135,11 +135,18 @@ function GameDetailDeveloperAvatar({
   sizeClass?: string;
   textClassName?: string;
 }) {
+  const [failed, setFailed] = useState(false);
   const src = imageSrc?.trim();
-  if (src) {
+  if (src && !failed) {
     return (
       <span className={`relative ${sizeClass} shrink-0 overflow-hidden rounded-full bg-zinc-800`}>
-        <Image src={src} alt="" fill className="object-cover" />
+        <Image
+          src={src}
+          alt=""
+          fill
+          className="object-cover"
+          onError={() => setFailed(true)}
+        />
       </span>
     );
   }
@@ -276,11 +283,14 @@ function GameDetailV0PageBody({
     };
   }, [submittedGame, isRealProject]);
   const developerAvatarSrc = useMemo(() => {
+    // Real projects: do not reuse project thumbnails as developer avatars
+    // (next/Image + wrong asset caused broken avatar chrome). Initials only
+    // until a dedicated http(s) avatar source exists.
     if (isRealProject) {
-      return thumbnailUrls[0] ?? "";
+      return "";
     }
     return game.developer.avatar;
-  }, [isRealProject, thumbnailUrls, game.developer.avatar]);
+  }, [isRealProject, game.developer.avatar]);
   const {
     stats: publicStats,
     loaded: publicStatsLoaded,
