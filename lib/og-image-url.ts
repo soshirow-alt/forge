@@ -3,7 +3,7 @@ import { resolveProjectThumbnailUrlsFromRow } from "@/lib/project-thumbnails";
 import { getSiteOrigin, toAbsoluteUrl } from "@/lib/site-url";
 
 /** Default OGP image (PNG for X / social card compatibility). */
-export const DEFAULT_GAME_OG_PATH = "/images/og-default.png";
+export const DEFAULT_GAME_OG_PATH = "/images/og-default-v2.png";
 
 /** Social crawlers reject oversized / data-URI images. */
 const MAX_OG_IMAGE_URL_LENGTH = 2048;

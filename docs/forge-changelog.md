@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-13 — Xカード用 default OGP 画像 URL 更新（v2）
+
+- **現象** — X投稿で title / description / domain は出るが、画像が汎用アイコンになる
+- **対応** — default OGP を `/images/og-default-v2.png` に切替（同内容コピー）。`openGraph.images` に width/height/type を明示
+- **目的** — 旧 `/images/og-default.png` の画像取得失敗キャッシュを避ける
+- **未実施** — Production deploy（Preview 確認後にオーナー判断）
+
 ## 2026-07-13 — 作品詳細ギャラリー表示速度（A+B）
 
 - **A** — 詳細 REST 完了時点で先頭 `/thumbnail` を渡し、枚数 RPC は並列。count 後に 2枚目以降を追加

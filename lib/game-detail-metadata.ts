@@ -16,6 +16,17 @@ export const FALLBACK_GAME_METADATA: Metadata = {
 
 const GAME_OG_DESCRIPTION_FALLBACK = "Forgeで公開中の開発中ゲームです。";
 
+/** Explicit OG image descriptor so crawlers get dimensions + MIME. */
+function buildGameOgImage(imageUrl: string, alt: string) {
+  return {
+    url: imageUrl,
+    width: 1200,
+    height: 630,
+    type: "image/png" as const,
+    alt,
+  };
+}
+
 function truncateOneLine(text: string, maxLength = 120): string {
   const normalized = text.replace(/\s+/g, " ").trim();
   if (!normalized) {
@@ -46,6 +57,7 @@ export function buildGameDetailMetadata(project: ProjectOgData): Metadata {
     project.thumbnailUrl,
     origin,
   );
+  const ogImage = buildGameOgImage(imageUrl, project.title);
 
   return {
     title,
@@ -60,12 +72,7 @@ export function buildGameDetailMetadata(project: ProjectOgData): Metadata {
       siteName: "Forge",
       locale: "ja_JP",
       type: "website",
-      images: [
-        {
-          url: imageUrl,
-          alt: project.title,
-        },
-      ],
+      images: [ogImage],
     },
     twitter: {
       card: "summary_large_image",
@@ -80,6 +87,7 @@ export function buildFallbackGameDetailMetadata(): Metadata {
   const origin = getSiteOrigin();
   const imageUrl = resolveOgImageUrl(null, origin);
   const description = FALLBACK_GAME_METADATA.description as string;
+  const ogImage = buildGameOgImage(imageUrl, "Forge");
 
   return {
     ...FALLBACK_GAME_METADATA,
@@ -89,7 +97,7 @@ export function buildFallbackGameDetailMetadata(): Metadata {
       siteName: "Forge",
       locale: "ja_JP",
       type: "website",
-      images: [{ url: imageUrl, alt: "Forge" }],
+      images: [ogImage],
     },
     twitter: {
       card: "summary_large_image",
