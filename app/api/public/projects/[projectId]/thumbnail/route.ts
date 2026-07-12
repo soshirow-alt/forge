@@ -52,9 +52,18 @@ export async function GET(request: Request, context: RouteContext) {
     return notFound();
   }
 
+  // Prefer the primary column alone so we do not pull multi-MB thumbnail_urls
+  // arrays on the common card path (index omitted / index 0).
+  const needsUrlArray =
+    requestedIndex !== undefined && requestedIndex > 0;
+
   const { data, error } = await supabase
     .from("projects")
-    .select("thumbnail_url, thumbnail_urls, visibility")
+    .select(
+      needsUrlArray
+        ? "thumbnail_url, thumbnail_urls, visibility"
+        : "thumbnail_url, visibility",
+    )
     .eq("id", projectId)
     .eq("visibility", "public")
     .maybeSingle();
@@ -63,15 +72,48 @@ export async function GET(request: Request, context: RouteContext) {
     return notFound();
   }
 
-  const candidates = resolveProjectThumbnailUrlsFromRow(data);
-  const selectedCandidates =
-    requestedIndex === undefined
-      ? candidates
-      : candidates[requestedIndex]
-        ? [candidates[requestedIndex]]
-        : [];
+  let candidates: string[];
+  if (needsUrlArray) {
+    const all = resolveProjectThumbnailUrlsFromRow(data);
+    candidates = all[requestedIndex!] ? [all[requestedIndex!]] : [];
+  } else if (requestedIndex === 0) {
+    const all = resolveProjectThumbnailUrlsFromRow({
+      thumbnail_url: data.thumbnail_url,
+      thumbnail_urls: null,
+    });
+    // If primary column empty, fall back to full array once.
+    if (all.length > 0) {
+      candidates = [all[0]];
+    } else {
+      const { data: full, error: fullError } = await supabase
+        .from("projects")
+        .select("thumbnail_url, thumbnail_urls, visibility")
+        .eq("id", projectId)
+        .eq("visibility", "public")
+        .maybeSingle();
+      if (fullError || !full) return notFound();
+      const fromFull = resolveProjectThumbnailUrlsFromRow(full);
+      candidates = fromFull[0] ? [fromFull[0]] : [];
+    }
+  } else {
+    // Default card cover: primary column only; if empty, one fallback fetch.
+    const primary = typeof data.thumbnail_url === "string" ? data.thumbnail_url.trim() : "";
+    if (primary) {
+      candidates = [primary];
+    } else {
+      const { data: full, error: fullError } = await supabase
+        .from("projects")
+        .select("thumbnail_url, thumbnail_urls, visibility")
+        .eq("id", projectId)
+        .eq("visibility", "public")
+        .maybeSingle();
+      if (fullError || !full) return notFound();
+      const fromFull = resolveProjectThumbnailUrlsFromRow(full);
+      candidates = fromFull[0] ? [fromFull[0]] : [];
+    }
+  }
 
-  for (const candidate of selectedCandidates) {
+  for (const candidate of candidates) {
     const externalUrl = validExternalImageUrl(candidate);
     if (externalUrl) {
       return NextResponse.redirect(externalUrl, 302);
