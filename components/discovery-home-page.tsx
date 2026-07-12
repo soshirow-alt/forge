@@ -14,13 +14,11 @@ import {
   selectHeroItems,
 } from "@/lib/home-discovery-selection";
 import {
-  fetchHomeDiscoveryFeed,
-  fetchPublicProjectThumbnailUrlsByIds,
+  fetchHomeDiscoveryFeedFromApi,
   type HomeDiscoveryCard,
 } from "@/lib/supabase/home-discovery-db";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
-import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 
 function HorizontalGameCard({
   game,
@@ -149,16 +147,14 @@ let homeDiscoveryFeedCache: {
   trending: HomeDiscoveryCard[];
 } | null = null;
 
-async function loadHomeDiscoveryFeedWithRetry(
-  supabase: NonNullable<ReturnType<typeof getOptionalSupabaseClient>>,
-) {
+async function loadHomeDiscoveryFeedWithRetry() {
   try {
-    return await fetchHomeDiscoveryFeed(supabase);
+    return await fetchHomeDiscoveryFeedFromApi();
   } catch (firstError) {
     // One retry covers transient cold-start / network blips without flashing error.
     await new Promise((resolve) => setTimeout(resolve, 250));
     try {
-      return await fetchHomeDiscoveryFeed(supabase);
+      return await fetchHomeDiscoveryFeedFromApi();
     } catch {
       throw firstError;
     }
@@ -190,48 +186,26 @@ export function DiscoveryHomePage() {
 
   useEffect(() => {
     let cancelled = false;
-    const supabase = getOptionalSupabaseClient();
 
     void (async () => {
       // Keep loading UI until a definitive success or failure — never flash error mid-fetch.
       // Cached feed already shown; still revalidate in background.
-      if (!supabase) {
-        if (cancelled) return;
-        setState({ status: "ready", feed: EMPTY_FEED, error: null });
-        setHeroThumbnails({ status: "error" });
-        return;
-      }
-
       try {
-        const next = await loadHomeDiscoveryFeedWithRetry(supabase);
+        const next = await loadHomeDiscoveryFeedWithRetry();
         if (cancelled) return;
         homeDiscoveryFeedCache = next;
         setState({ status: "ready", feed: next, error: null });
 
-        const heroIds = selectHeroItems(
+        const heroes = selectHeroItems(
           next.trending,
           next.updated,
           next.newest,
-        ).map((item) => item.id);
-
-        if (heroIds.length === 0) {
-          setHeroThumbnails({ status: "ready", byId: {} });
-          return;
+        );
+        const byId: Record<string, string[]> = {};
+        for (const hero of heroes) {
+          byId[hero.id] = hero.image ? [hero.image] : [];
         }
-
-        setHeroThumbnails({ status: "loading" });
-        try {
-          const byId = await fetchPublicProjectThumbnailUrlsByIds(
-            supabase,
-            heroIds,
-          );
-          if (cancelled) return;
-          setHeroThumbnails({ status: "ready", byId });
-        } catch {
-          if (cancelled) return;
-          // Do not cache failure as empty success.
-          setHeroThumbnails({ status: "error" });
-        }
+        setHeroThumbnails({ status: "ready", byId });
       } catch (err: unknown) {
         if (cancelled) return;
         // Keep previous successful feed if revalidation fails.

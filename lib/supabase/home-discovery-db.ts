@@ -5,6 +5,7 @@ import {
   timeKindForSection,
 } from "@/lib/home-discovery-time-label";
 import type { HomeDiscoverySection, HeroSource } from "@/lib/home-discovery-selection";
+import { safeHttpThumbnailUrl, safeHttpThumbnailUrls } from "@/lib/safe-http-thumbnail";
 import { resolveProjectThumbnailUrlsFromRow } from "@/lib/project-thumbnails";
 
 export type HomeDiscoveryFeedRow = {
@@ -55,15 +56,26 @@ function asNullableString(value: unknown): string | null {
   return s.length > 0 ? s : null;
 }
 
+/** Drop non-http thumbnails so cards use placeholders; never ship data: URLs. */
+export function sanitizeHomeDiscoveryFeedRow(
+  row: HomeDiscoveryFeedRow,
+): HomeDiscoveryFeedRow {
+  return {
+    ...row,
+    thumbnail_url: safeHttpThumbnailUrl(row.thumbnail_url),
+  };
+}
+
 export function mapFeedRowToCard(row: HomeDiscoveryFeedRow): HomeDiscoveryCard {
   const section = row.section;
   const cardTimeAt = asNullableString(row.card_time_at);
+  const safeThumb = safeHttpThumbnailUrl(row.thumbnail_url);
   return {
     id: asString(row.project_id),
     title: asString(row.title),
     version: asString(row.playable_version || "0.1"),
     description: asString(row.description ?? ""),
-    image: asString(row.thumbnail_url ?? "").trim(),
+    image: safeThumb ?? "",
     genre: asNullableString(row.genre) ?? undefined,
     updatedLabel: formatHomeDiscoveryTimeLabel(
       cardTimeAt,
@@ -117,12 +129,42 @@ export async function fetchHomeDiscoveryFeed(
   if (error) {
     throw error;
   }
-  return partitionHomeDiscoveryFeed((data ?? []) as HomeDiscoveryFeedRow[]);
+  const rows = ((data ?? []) as HomeDiscoveryFeedRow[]).map(
+    sanitizeHomeDiscoveryFeedRow,
+  );
+  return partitionHomeDiscoveryFeed(rows);
 }
 
 /**
- * 公開作品のみから thumbnail_urls を一括取得（anon 可: visibility=public RLS）。
- * ホーム RPC を変更せず、ヒーロー最大3件の追加画像に使う。
+ * Browser entry: server API strips data URL thumbnails before the body
+ * reaches the client (RPC may still be fat until 059 is applied).
+ */
+export async function fetchHomeDiscoveryFeedFromApi(): Promise<HomeDiscoveryFeed> {
+  const response = await fetch("/api/discovery/home-feed", {
+    method: "GET",
+    cache: "no-store",
+    credentials: "same-origin",
+  });
+  if (!response.ok) {
+    const message = await response.text().catch(() => "");
+    throw new Error(
+      message || `home discovery feed failed (${response.status})`,
+    );
+  }
+  const payload = (await response.json()) as {
+    ok?: boolean;
+    feed?: HomeDiscoveryFeed;
+    message?: string;
+  };
+  if (!payload.ok || !payload.feed) {
+    throw new Error(payload.message || "home discovery feed failed");
+  }
+  return payload.feed;
+}
+
+/**
+ * http(s) thumbnails only — never select thumbnail_urls (may contain data URLs).
+ * Used for hero extras without pulling multi-MB payloads.
  */
 export async function fetchPublicProjectThumbnailUrlsByIds(
   supabase: SupabaseClient,
@@ -134,11 +176,13 @@ export async function fetchPublicProjectThumbnailUrlsByIds(
     return result;
   }
 
+  // like 'http%' matches http:// and https://; excludes data:image rows entirely.
   const { data, error } = await supabase
     .from("projects")
-    .select("id, thumbnail_url, thumbnail_urls")
+    .select("id, thumbnail_url")
     .eq("visibility", "public")
-    .in("id", uniqueIds);
+    .in("id", uniqueIds)
+    .like("thumbnail_url", "http%");
 
   if (error) {
     throw error;
@@ -147,9 +191,16 @@ export async function fetchPublicProjectThumbnailUrlsByIds(
   for (const row of (data ?? []) as {
     id: string;
     thumbnail_url?: string | null;
-    thumbnail_urls?: string[] | null;
   }[]) {
-    result[row.id] = resolveProjectThumbnailUrlsFromRow(row);
+    const safe = safeHttpThumbnailUrls(
+      resolveProjectThumbnailUrlsFromRow({
+        thumbnail_url: row.thumbnail_url,
+        thumbnail_urls: null,
+      }),
+    );
+    if (safe.length > 0) {
+      result[row.id] = safe;
+    }
   }
 
   return result;

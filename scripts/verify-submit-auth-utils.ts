@@ -487,9 +487,13 @@ function testPublicCatalogAuthIndependenceContract() {
   const provider = fs.readFileSync(
     path.join(import.meta.dirname, "../components/games-provider.tsx"),
     "utf8",
-  );
+  ).replace(/\r\n/g, "\n");
   const projects = fs.readFileSync(
     path.join(import.meta.dirname, "../lib/supabase/projects.ts"),
+    "utf8",
+  );
+  const search = fs.readFileSync(
+    path.join(import.meta.dirname, "../components/works-search-page.tsx"),
     "utf8",
   );
 
@@ -497,24 +501,32 @@ function testPublicCatalogAuthIndependenceContract() {
   ok(provider.includes("publicCatalogReady"), "games-provider exposes publicCatalogReady");
   ok(provider.includes("refreshPublicCatalog"), "games-provider exposes refreshPublicCatalog");
   ok(provider.includes("fetchPublicProjects"), "games-provider imports fetchPublicProjects");
+  const mountEffectStart = provider.indexOf("setHydrated(true);");
+  const authCatalogEffect = provider.indexOf(
+    'if (!authHydrated) {\n      return;\n    }\n\n    if (!user) {\n      setUserEngagement',
+  );
+  const mountEffect =
+    mountEffectStart > -1 && authCatalogEffect > mountEffectStart
+      ? provider.slice(mountEffectStart, authCatalogEffect)
+      : "";
   ok(
-    provider.includes("void reloadPublicCatalog()") &&
-      provider.includes("setPublicCatalogReady(true)"),
-    "public catalog loads on mount and sets publicCatalogReady",
+    mountEffect.length > 0 && !mountEffect.includes("void reloadPublicCatalog()"),
+    "public catalog does not load on provider mount",
   );
   ok(
     !provider.includes("requestIdleCallback") &&
       !provider.includes("deferForHome"),
-    "public catalog is not idle-deferred on /home (avoids RPC contention)",
+    "public catalog has no idle-deferred /home fetch",
   );
-  const mountEffectStart = provider.indexOf("setHydrated(true);");
-  const publicFetchIndex = provider.indexOf("void reloadPublicCatalog()");
-  const authCatalogEffect = provider.indexOf("if (!authHydrated) {\n      return;\n    }\n\n    if (!user) {\n      catalogUserIdRef");
   ok(
-    mountEffectStart > -1 &&
-      publicFetchIndex > mountEffectStart &&
-      (authCatalogEffect < 0 || publicFetchIndex < authCatalogEffect),
-    "reloadPublicCatalog is not gated behind authHydrated catalog effect",
+    search.includes("void refreshPublicCatalog()"),
+    "/search triggers the public catalog refresh",
+  );
+  ok(
+    provider.includes("setPublicCatalogReady(true)") &&
+      provider.indexOf("setPublicCatalogReady(true)") >
+        provider.indexOf("const reloadPublicCatalog = useCallback"),
+    "reloadPublicCatalog owns publicCatalogReady completion",
   );
   ok(
     projects.includes('.eq("visibility", "public")'),

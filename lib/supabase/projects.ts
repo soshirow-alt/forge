@@ -29,6 +29,33 @@ import {
   resolveProjectPrimaryThumbnail,
   resolveProjectThumbnailUrlsFromRow,
 } from "@/lib/project-thumbnails";
+import { safeHttpThumbnailUrl } from "@/lib/safe-http-thumbnail";
+
+const PUBLIC_PROJECT_CATALOG_COLUMNS = [
+  "id",
+  "owner_id",
+  "owner_name",
+  "title",
+  "creator",
+  "genre",
+  "genres",
+  "description",
+  "phase",
+  "status",
+  "looking_for_testers",
+  "tester_slots",
+  "section",
+  "tags",
+  "play_url",
+  "visibility",
+  "playable_version",
+  "release_status",
+  "play_access_type",
+  "estimated_play_time",
+  "created_at",
+  "updated_at",
+  "first_published_at",
+].join(", ");
 
 function linkColumnsFromForm(data: {
   playUrl: string;
@@ -209,7 +236,7 @@ export async function fetchPublicProjects(
 ): Promise<Game[]> {
   const { data, error } = await supabase
     .from("projects")
-    .select("*")
+    .select(PUBLIC_PROJECT_CATALOG_COLUMNS)
     .eq("visibility", "public")
     .order("created_at", { ascending: false });
 
@@ -217,7 +244,42 @@ export async function fetchPublicProjects(
     throw error;
   }
 
-  return ((data ?? []) as ProjectRow[]).map(projectRowToGame);
+  const rows = (data ?? []) as unknown as Array<
+    Omit<ProjectRow, "thumbnail_url" | "thumbnail_urls">
+  >;
+  const ids = rows.map((row) => row.id);
+  const thumbnailById = new Map<string, string>();
+
+  if (ids.length > 0) {
+    const { data: thumbnails, error: thumbnailError } = await supabase
+      .from("projects")
+      .select("id, thumbnail_url")
+      .in("id", ids)
+      .eq("visibility", "public")
+      .like("thumbnail_url", "http%");
+
+    if (thumbnailError) {
+      throw thumbnailError;
+    }
+
+    for (const thumbnail of (thumbnails ?? []) as Array<{
+      id: string;
+      thumbnail_url: string | null;
+    }>) {
+      const safe = safeHttpThumbnailUrl(thumbnail.thumbnail_url);
+      if (safe) {
+        thumbnailById.set(thumbnail.id, safe);
+      }
+    }
+  }
+
+  return rows.map((row) =>
+    projectRowToGame({
+      ...row,
+      thumbnail_url: thumbnailById.get(row.id) ?? null,
+      thumbnail_urls: null,
+    } as ProjectRow),
+  );
 }
 
 /** Player-facing single project — public visibility only. */

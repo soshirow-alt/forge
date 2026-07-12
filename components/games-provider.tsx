@@ -582,7 +582,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  /** Search/revisit: refresh unless a recent fetch already completed (avoids mount+search double hit). */
+  /** Search/revisit: refresh unless a recent fetch already completed. */
   const refreshPublicCatalog = useCallback(async () => {
     const minIntervalMs = 3_000;
     if (Date.now() - lastPublicCatalogReloadAtRef.current < minIntervalMs) {
@@ -630,28 +630,18 @@ export function GamesProvider({ children }: { children: ReactNode }) {
           .catch(() => setReleaseEvents([]));
       };
 
-      // Load public catalog immediately (do not idle-defer on /home).
-      // Deferring until "idle" often starts the catalog fetch while the discovery
-      // RPC is still in flight (main thread idle during network wait), which
-      // contends with the feed and can worsen first-card time.
-      void reloadPublicCatalog()
-        .catch(() => setPublicGames([]))
-        .finally(() => {
-          setPublicCatalogReady(true);
-          forgePerfMeasure("games.publicCatalogReady", "games-provider-mount");
-        });
-
+      // The public catalog is intentionally loaded by /search on entry.
+      // Keep /home focused on its compact discovery feed; no idle-deferred fetch.
       if (typeof window !== "undefined") {
         window.setTimeout(loadSecondaryCatalogData, 0);
       } else {
         loadSecondaryCatalogData();
       }
     } else {
-      setPublicCatalogReady(true);
       setDevlogsReady(true);
       setPublicProjectStats({});
     }
-  }, [reloadPublicCatalog]);
+  }, []);
 
   useEffect(() => {
     if (!authHydrated) {
