@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-07-13 — 作品詳細ギャラリー表示速度（A+B）
+
+- **A** — 詳細 REST 完了時点で先頭 `/thumbnail` を渡し、枚数 RPC は並列。count 後に 2枚目以降を追加
+- **B** — `get_public_project_thumbnail_value`（061）で index 1件だけ取得。`thumbnail_urls` 全配列 SELECT を廃止
+- **維持** — 詳細 JSON / ホーム feed に data URL を戻さない。RPC 未適用時は旧 SELECT にフォールバックせず 503
+
 ## 2026-07-13 — ホーム「注目＆おすすめ」追加画像枠の復旧
 
 - **修正** — ヒーロー追加画像2枠が常に「追加画像未登録」になっていた退行を解消。注目最大3作品だけ枚数を取得し、`/thumbnail/1`・`/thumbnail/2` を表示

@@ -367,18 +367,36 @@ export async function fetchPublicProjectById(
     "thumbnail_url" | "thumbnail_urls"
   >;
 
-  const thumbCount = await fetchPublicProjectThumbnailCount(
-    supabase,
-    projectId,
-  );
-
-  const paths = publicProjectThumbnailPaths(projectId, thumbCount);
+  // Index 0 path immediately — do not wait for count RPC (Fix A).
+  const path0 = publicProjectThumbnailPath(projectId);
 
   return projectRowToGame({
     ...row,
-    thumbnail_url: paths[0] ?? null,
-    thumbnail_urls: paths,
+    thumbnail_url: path0,
+    thumbnail_urls: [path0],
   } as ProjectRow);
+}
+
+/**
+ * Enrich gallery paths after count RPC (parallel with first image load).
+ * On failure, returns null so callers keep the index-0 path.
+ */
+export async function fetchPublicProjectGalleryPaths(
+  supabase: SupabaseClient,
+  projectId: string,
+): Promise<string[] | null> {
+  try {
+    const thumbCount = await fetchPublicProjectThumbnailCount(
+      supabase,
+      projectId,
+    );
+    if (thumbCount <= 0) {
+      return [];
+    }
+    return publicProjectThumbnailPaths(projectId, thumbCount);
+  } catch {
+    return null;
+  }
 }
 
 /** Lightweight ownership check — no thumbnail columns. */

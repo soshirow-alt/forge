@@ -1,22 +1,28 @@
 import { parseOgDataUrlImage } from "@/lib/og-data-url-image";
-import { resolveProjectThumbnailUrlsFromRow } from "@/lib/project-thumbnails";
 import {
   MAX_PUBLIC_PROJECT_THUMBNAIL_BYTES,
   PUBLIC_PROJECT_THUMBNAIL_CACHE_CONTROL,
 } from "@/lib/public-project-thumbnail";
 import { isHttpOrHttpsUrl } from "@/lib/safe-http-thumbnail";
-import type { SupabaseClient } from "@supabase/supabase-js";
-
-export type PublicThumbnailFullRow = {
-  thumbnail_url: string | null;
-  thumbnail_urls: string[] | null;
-  visibility: "public" | "private";
-};
+import { createServiceRoleReadClient } from "@/lib/supabase/service-role";
 
 export type ResolvedPublicThumbnail =
   | { kind: "redirect"; url: string }
   | { kind: "bytes"; contentType: string; bytes: Uint8Array }
-  | { kind: "missing" };
+  | { kind: "missing" }
+  | { kind: "unavailable"; message: string };
+
+type ThumbnailValueRpcResult = {
+  data: string | null;
+  error: { message: string; code?: string } | null;
+};
+
+type ThumbnailValueRpcClient = {
+  rpc(
+    fn: "get_public_project_thumbnail_value",
+    args: { p_project_id: string; p_index: number },
+  ): PromiseLike<ThumbnailValueRpcResult>;
+};
 
 function validExternalImageUrl(candidate: string): string | null {
   if (!isHttpOrHttpsUrl(candidate)) return null;
@@ -52,32 +58,47 @@ function resolveCandidate(candidate: string): ResolvedPublicThumbnail {
 }
 
 /**
- * Resolve a public project's thumbnail by gallery index.
- * Order: thumbnail_urls[i] when the array is non-empty; else thumbnail_url as index 0.
+ * Resolve one public thumbnail by index via lightweight RPC (no full array SELECT).
+ * Requires migration 061. Does not fall back to selecting thumbnail_urls.
  */
 export async function resolvePublicProjectThumbnail(
-  supabase: SupabaseClient,
   projectId: string,
   index: number,
 ): Promise<ResolvedPublicThumbnail> {
-  if (!Number.isInteger(index) || index < 0) {
+  if (!Number.isInteger(index) || index < 0 || index > 99) {
     return { kind: "missing" };
   }
 
-  const { data, error } = await supabase
-    .from("projects")
-    .select("thumbnail_url, thumbnail_urls, visibility")
-    .eq("id", projectId)
-    .eq("visibility", "public")
-    .maybeSingle();
+  const admin = createServiceRoleReadClient();
+  if (!admin) {
+    return {
+      kind: "unavailable",
+      message: "service role client unavailable for thumbnail RPC",
+    };
+  }
 
-  if (error || !data) {
+  const rpcClient = admin as unknown as ThumbnailValueRpcClient;
+  const { data, error } = await rpcClient.rpc(
+    "get_public_project_thumbnail_value",
+    {
+      p_project_id: projectId,
+      p_index: index,
+    },
+  );
+
+  if (error) {
+    return {
+      kind: "unavailable",
+      message: error.message || "thumbnail value RPC failed",
+    };
+  }
+
+  const candidate = typeof data === "string" ? data.trim() : "";
+  if (!candidate) {
     return { kind: "missing" };
   }
 
-  const all = resolveProjectThumbnailUrlsFromRow(data as PublicThumbnailFullRow);
-  const candidate = all[index];
-  return candidate ? resolveCandidate(candidate) : { kind: "missing" };
+  return resolveCandidate(candidate);
 }
 
 export function publicThumbnailResponseHeaders(contentType: string): HeadersInit {

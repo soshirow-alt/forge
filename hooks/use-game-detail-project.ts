@@ -15,6 +15,7 @@ import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 import {
   fetchOwnedProjectById,
   fetchPublicProjectById,
+  fetchPublicProjectGalleryPaths,
   isOwnedPublicOrPrivateProject,
 } from "@/lib/supabase/projects";
 import { isSupabaseProjectId } from "@/lib/submitted-game-v0-adapter";
@@ -77,6 +78,7 @@ export function useGameDetailProject(id: string): GameDetailProjectResult {
         return;
       }
 
+      // Detail REST first — index 0 gallery path included (count not awaited).
       const publicGame = await forgePerfTimed(
         "supabase.fetchPublicProjectById",
         () => fetchPublicProjectById(supabase, id),
@@ -87,13 +89,11 @@ export function useGameDetailProject(id: string): GameDetailProjectResult {
 
       if (user?.id) {
         if (publicGame) {
-          // Public detail: ownership flag only — avoid select=* thumbnail blobs.
           isOwner = await forgePerfTimed(
             "supabase.isOwnedPublicOrPrivateProject",
             () => isOwnedPublicOrPrivateProject(supabase, id, user.id),
           );
         } else {
-          // Private / unpublished owner preview still needs full owned row.
           ownedGame = await forgePerfTimed(
             "supabase.fetchOwnedProjectById",
             () => fetchOwnedProjectById(supabase, id, user.id),
@@ -127,6 +127,36 @@ export function useGameDetailProject(id: string): GameDetailProjectResult {
         isOwner,
         isRealProject: Boolean(game),
       });
+
+      // Count RPC in parallel with first image request (Fix A). Public only.
+      if (!publicGame || !game) {
+        return;
+      }
+
+      void (async () => {
+        const paths = await forgePerfTimed(
+          "supabase.fetchPublicProjectGalleryPaths",
+          () => fetchPublicProjectGalleryPaths(supabase, id),
+        );
+        if (cancelled || paths === null) {
+          // Keep index-0 path on count failure.
+          return;
+        }
+
+        const enriched: Game = {
+          ...game,
+          thumbnailUrl: paths[0],
+          thumbnailUrls: paths,
+        };
+        const merged = mergeGameWithExtras(enriched);
+        upsertGameDetailProject(merged, isOwner ? "owned" : "public");
+        if (!cancelled) {
+          setState((prev) => ({
+            ...prev,
+            game: merged,
+          }));
+        }
+      })();
     }
 
     setState({
