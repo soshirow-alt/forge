@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07-12 — /home 初回表示のネットワーク競合を緩和
+
+- **計測（本番・未ログイン hard reload）** — HTML TTFBは軽い一方、`get_home_discovery_feed` 約3.9s が実カード表示の待ち。同時に `GamesProvider` の `projects?select=*` 約5.8s と devlogs/supports/release_events が同一ホストへ並列発行され競合
+- **修正** — `/home`（および `/`）初回は公開カタログと副次取得を idle / 最大2.5s 遅延。`/search` は既存の `refreshPublicCatalog` で必要時に取得
+- **非対象** — RPC SQL 自体の高速化・Provider 全面改修は別途
+
+---
+
 ## 2026-07-12 — 公開カタログ鮮度（/search 再検証）
 
 - **事象** — 新規公開作品が作品詳細・ホーム注目には出る一方、「作品を探す」が同一セッション内で古い件数のまま残ることがあった

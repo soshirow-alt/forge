@@ -498,13 +498,16 @@ function testPublicCatalogAuthIndependenceContract() {
   ok(provider.includes("refreshPublicCatalog"), "games-provider exposes refreshPublicCatalog");
   ok(provider.includes("fetchPublicProjects"), "games-provider imports fetchPublicProjects");
   ok(
-    provider.includes("void reloadPublicCatalog()") &&
-      provider.includes(".finally(() => {") &&
+    (provider.includes("void reloadPublicCatalog()") ||
+      provider.includes("startPublicCatalog()")) &&
       provider.includes("setPublicCatalogReady(true)"),
-    "public catalog loads on mount and sets publicCatalogReady",
+    "public catalog loads on mount (or deferred home start) and sets publicCatalogReady",
   );
   const mountEffectStart = provider.indexOf("setHydrated(true);");
-  const publicFetchIndex = provider.indexOf("void reloadPublicCatalog()");
+  const publicFetchIndex = Math.max(
+    provider.indexOf("void reloadPublicCatalog()"),
+    provider.indexOf("startPublicCatalog()"),
+  );
   const authCatalogEffect = provider.indexOf("if (!authHydrated) {\n      return;\n    }\n\n    if (!user) {\n      catalogUserIdRef");
   ok(
     mountEffectStart > -1 &&
