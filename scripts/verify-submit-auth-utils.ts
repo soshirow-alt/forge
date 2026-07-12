@@ -541,6 +541,17 @@ function testHomeSearchPublicCatalogContract() {
   ok(!home.includes("dataReady"), "discovery-home does not use dataReady");
   ok(!home.includes("submittedGames"), "discovery-home does not use submittedGames");
   ok(!home.includes("useGames("), "discovery-home does not depend on GamesProvider catalog");
+  ok(
+    home.includes("feed?.newest ?? []") ||
+      /newestCarousel\s*=\s*useMemo\(\(\)\s*=>\s*feed\?\.newest/.test(home),
+    "newest carousel keeps RPC order without hero exclusion",
+  );
+  ok(
+    home.includes("buildSectionCarouselItems(feed.updated") &&
+      home.includes("buildSectionCarouselItems(feed.trending") &&
+      !home.includes("buildSectionCarouselItems(feed.newest"),
+    "only updated/trending carousels soft-exclude heroes",
+  );
 
   ok(search.includes("publicCatalogReady"), "works-search gates on publicCatalogReady");
   ok(search.includes("publicGames"), "works-search reads publicGames");

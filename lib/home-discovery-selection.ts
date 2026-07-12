@@ -68,6 +68,8 @@ export function selectHeroItems<T extends HomeDiscoveryCandidate>(
 
 /**
  * Rebuild section carousel with soft hero exclusion on the first page only.
+ * Used for updated / trending shelves. Newest keeps RPC order and does not
+ * call this helper (no hero exclusion).
  *
  * - First page is non-hero items only (up to 4).
  * - If fewer than 4 non-hero items exist, return only those (do not pad with heroes).

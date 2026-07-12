@@ -631,9 +631,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       };
 
       // Load public catalog immediately (do not idle-defer on /home).
-      // requestIdleCallback often fires while the discovery RPC is in-flight
-      // (main thread idle during network wait), which contends with the feed
-      // and can worsen first-card time.
+      // Deferring until "idle" often starts the catalog fetch while the discovery
+      // RPC is still in flight (main thread idle during network wait), which
+      // contends with the feed and can worsen first-card time.
       void reloadPublicCatalog()
         .catch(() => setPublicGames([]))
         .finally(() => {

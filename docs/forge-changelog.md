@@ -4,6 +4,60 @@
 
 ---
 
+## 2026-07-12 — 新着棚はヒーロー除外を廃止（first_published_at 順を維持）
+
+- **変更** — `/home`「新着作品」は RPC の `newest` 配列（`first_published_at DESC, project_id ASC`）をそのまま表示。ヒーロー選出作品の除外をやめる
+- **維持** — 「最近更新」「直近7日で反応が集まった作品」は従来どおり棚1ページ目のみヒーロー soft 除外
+
+---
+
+## 2026-07-12 — 注目の作品（ヒーロー）選定ロジック正本（コードどおり）
+
+RPC `get_home_discovery_feed`（055/058 同一選定）＋クライアント `selectHeroItems` / `buildSectionCarouselItems`。
+
+### 棚（RPC）共通前提
+- 対象作品: `visibility = 'public'` かつ `first_published_at IS NOT NULL`
+- 各棚の候補上限: **12件**（`feed_limit`）
+- 候補不足: 足りる分だけ返す（**補完なし**）。UI は件数0の棚を**非表示**
+
+### trending（反応・注目棚の元）
+- **期間**: 直近 **7日**（`now() - interval '7 days'`）
+- **反応イベント**（いずれも期間内）:
+  1. `project_voice_responses` — `moderation_status = 'visible'` かつ `user_id IS NOT NULL` → **distinct user_id** を `feedback_users_7d` に合算
+  2. `project_feedback` — 同上条件 → 同上（voice と UNION 後に distinct）
+  3. `project_watches` — 期間内の行数 → `watchers_7d`（**COUNT(*)**、ユーザー distinct ではない）
+  4. `project_play_sessions` — 期間内の **distinct user_id** → `players_7d`
+- **採用条件**: `feedback_users_7d + watchers_7d + players_7d > 0`（ゼロ反応は除外）
+- **重み付け**: 数値スコアの加重合計ではない。並べ替えキーの**優先順位**のみ:
+  1. `feedback_users_7d` DESC
+  2. `watchers_7d` DESC
+  3. `players_7d` DESC
+  4. `last_engagement_at` DESC NULLS LAST（上記3系統の最新時刻の GREATEST）
+  5. `first_published_at` DESC NULLS LAST
+  6. `project_id` ASC
+
+### updated（意味ある更新）
+- **イベント**:
+  - `project_devlogs` で `is_initial_publish = false` の `created_at`
+  - `project_release_events` で `event_type = 'released'` かつ `source IS DISTINCT FROM 'onboarding'` の `created_at`
+- **条件**: 上記イベントが **`first_published_at` より後**にあること。作品ごとの `MAX(event_at)` を `meaningful_update_at` とする
+- **並び**: `meaningful_update_at` DESC, `project_id` ASC
+
+### newest
+- **基準列**: `first_published_at` DESC, tie-break `project_id` ASC
+
+### 注目の作品（ヒーロー・最大3件）— クライアント
+- 入力: 各棚の rank 済み配列（trending / updated / newest）
+- **選出**: まず各軸の **1位**を trending → updated → newest の順で採取（既出 ID はスキップ）。足りなければ各軸の 2位以降を同じ軸順でラウンドロビン補充。最大 **3件**。足りなければそれ未満（補完なし）
+- **重複時**: 先に選ばれた軸が優先（同一作品は1回のみ）。heroSource は採用した軸名
+- **最終並び**: 選出順（上記ミックス順）。カルーセル表示順＝この配列順
+
+### 棚カルーセル（クライアント・ヒーロー除外）
+- **最近更新 / 直近7日反応**: 1ページ目（最大4件）はヒーロー ID を除外。非ヒーローが4未満ならパディングせずその件数のみ（0なら棚非表示）。4件揃った場合のみ、続きにヒーロー再登場可
+- **新着**: ヒーロー除外**なし**（本変更以降）。RPC の newest 順を維持
+
+---
+
 ## 2026-07-12 — /home idle defer を撤回（体感悪化の是正）
 
 - **観測** — Production でオーナー実測、ゲームカード表示まで約10秒。計測上の RPC 約4秒との差が大きい
@@ -18,6 +72,7 @@
 - **切り分け（本番）** — ブラウザ TTFB は軽い。`get_home_discovery_feed` 自体が cold 約2.3–3.9s / 再呼出し約1.0s。Staging REST は cold〜0.7s・warm〜0.1s。遅い主因は **Production 上の SQL/データ量（RPC 本体）** であり、ブラウザ専用でも REST 層単独でもない
 - **実装** — `058_optimize_home_discovery_feed.sql`（選定仕様は 055 と同一）。`project_id_text` を一度だけ生成、7d 集計を公開作品に限定、カード用 stats を candidate のみにインライン（未使用の witness / latest_devlog スキャンを feed から除外）
 - **適用** — Staging → Production の順で Dashboard SQL。適用後に warm ≤1s 目標で再計測
+- **選定ロジック正本** — 上記「注目の作品（ヒーロー）選定ロジック正本」を参照（058 でも選定意味は変更しない）
 
 ---
 
@@ -33,7 +88,7 @@
 - **事象** — 新規公開作品が作品詳細・ホーム注目には出る一方、「作品を探す」が同一セッション内で古い件数のまま残ることがあった
 - **原因** — `GamesProvider` が公開カタログをマウント時（と投稿ミューテート時）にしか再取得せず、`/search` 表示では再検証していなかった
 - **修正** — `/search` 表示時に `refreshPublicCatalog` で公開カタログを再取得（直近3秒内の取得は重複スキップ）。件数は最新取得結果から算出
-- **ホーム新着** — 「サキュバス行進曲」は新着候補に含まれる。先頭ページ非表示は注目ヒーローとの意図的な重複除外＋カルーセル別ページ（不具合ではない）
+- **ホーム新着** — 候補自体には含まれる。以前はヒーロー除外で先頭ページから外れることがあった（本変更で新着のヒーロー除外は廃止）
 
 ---
 

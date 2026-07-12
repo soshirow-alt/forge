@@ -275,10 +275,8 @@ export function DiscoveryHomePage() {
     () => (feed ? buildSectionCarouselItems(feed.trending, heroIds, 4) : []),
     [feed, heroIds],
   );
-  const newestCarousel = useMemo(
-    () => (feed ? buildSectionCarouselItems(feed.newest, heroIds, 4) : []),
-    [feed, heroIds],
-  );
+  /** 新着はヒーロー除外なし — RPC の first_published_at DESC（rank）順をそのまま使う */
+  const newestCarousel = useMemo(() => feed?.newest ?? [], [feed]);
 
   if (!ready) {
     return <DiscoveryHomeSkeleton />;
