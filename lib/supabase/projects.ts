@@ -31,9 +31,7 @@ import {
 } from "@/lib/project-thumbnails";
 import {
   publicProjectThumbnailPath,
-  publicProjectThumbnailPathAtIndex,
 } from "@/lib/public-project-thumbnail";
-import { isHttpOrHttpsUrl } from "@/lib/safe-http-thumbnail";
 
 const PUBLIC_PROJECT_CATALOG_COLUMNS = [
   "id",
@@ -51,6 +49,44 @@ const PUBLIC_PROJECT_CATALOG_COLUMNS = [
   "section",
   "tags",
   "play_url",
+  "visibility",
+  "playable_version",
+  "release_status",
+  "play_access_type",
+  "estimated_play_time",
+  "created_at",
+  "updated_at",
+  "first_published_at",
+].join(", ");
+
+/** Public /games/[id] — all detail fields except raw thumbnail blobs. */
+const PUBLIC_PROJECT_DETAIL_COLUMNS = [
+  "id",
+  "owner_id",
+  "owner_name",
+  "title",
+  "creator",
+  "genre",
+  "genres",
+  "description",
+  "overview_introduction",
+  "overview_features",
+  "phase",
+  "status",
+  "looking_for_testers",
+  "tester_slots",
+  "section",
+  "tags",
+  "play_url",
+  "steam_url",
+  "itch_url",
+  "github_url",
+  "discord_url",
+  "official_url",
+  "x_url",
+  "youtube_url",
+  "publish_destinations",
+  "related_links",
   "visibility",
   "playable_version",
   "release_status",
@@ -268,7 +304,7 @@ export async function fetchPublicProjectById(
 ): Promise<Game | null> {
   const { data, error } = await supabase
     .from("projects")
-    .select("*")
+    .select(PUBLIC_PROJECT_DETAIL_COLUMNS)
     .eq("id", projectId)
     .eq("visibility", "public")
     .maybeSingle();
@@ -277,19 +313,34 @@ export async function fetchPublicProjectById(
     return null;
   }
 
-  const row = data as ProjectRow;
-  const thumbnailUrls = resolveProjectThumbnailUrlsFromRow(row).map(
-    (url, index) =>
-      isHttpOrHttpsUrl(url)
-        ? url.trim()
-        : publicProjectThumbnailPathAtIndex(projectId, index),
-  );
+  const row = data as unknown as Omit<
+    ProjectRow,
+    "thumbnail_url" | "thumbnail_urls"
+  >;
+  // Never ship data URL blobs; cards/detail use the public image API.
+  const thumbPath = publicProjectThumbnailPath(projectId);
 
   return projectRowToGame({
     ...row,
-    thumbnail_url: thumbnailUrls[0] ?? null,
-    thumbnail_urls: thumbnailUrls,
-  });
+    thumbnail_url: thumbPath,
+    thumbnail_urls: [thumbPath],
+  } as ProjectRow);
+}
+
+/** Lightweight ownership check — no thumbnail columns. */
+export async function isOwnedPublicOrPrivateProject(
+  supabase: SupabaseClient,
+  projectId: string,
+  ownerId: string,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("id", projectId)
+    .eq("owner_id", ownerId)
+    .maybeSingle();
+
+  return !error && Boolean(data?.id);
 }
 
 /** Owner's project by id — includes non-public visibility (RLS applies). */

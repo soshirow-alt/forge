@@ -15,6 +15,7 @@ import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 import {
   fetchOwnedProjectById,
   fetchPublicProjectById,
+  isOwnedPublicOrPrivateProject,
 } from "@/lib/supabase/projects";
 import { isSupabaseProjectId } from "@/lib/submitted-game-v0-adapter";
 
@@ -76,23 +77,36 @@ export function useGameDetailProject(id: string): GameDetailProjectResult {
         return;
       }
 
-      const [publicGame, ownedGame] = await Promise.all([
-        forgePerfTimed("supabase.fetchPublicProjectById", () =>
-          fetchPublicProjectById(supabase, id),
-        ),
-        user?.id
-          ? forgePerfTimed("supabase.fetchOwnedProjectById", () =>
-              fetchOwnedProjectById(supabase, id, user.id),
-            )
-          : Promise.resolve(null),
-      ]);
+      const publicGame = await forgePerfTimed(
+        "supabase.fetchPublicProjectById",
+        () => fetchPublicProjectById(supabase, id),
+      );
+
+      let isOwner = false;
+      let ownedGame: Game | null = null;
+
+      if (user?.id) {
+        if (publicGame) {
+          // Public detail: ownership flag only — avoid select=* thumbnail blobs.
+          isOwner = await forgePerfTimed(
+            "supabase.isOwnedPublicOrPrivateProject",
+            () => isOwnedPublicOrPrivateProject(supabase, id, user.id),
+          );
+        } else {
+          // Private / unpublished owner preview still needs full owned row.
+          ownedGame = await forgePerfTimed(
+            "supabase.fetchOwnedProjectById",
+            () => fetchOwnedProjectById(supabase, id, user.id),
+          );
+          isOwner = Boolean(ownedGame);
+        }
+      }
 
       if (cancelled) {
         return;
       }
 
-      const isOwner = Boolean(ownedGame);
-      const resolved = ownedGame ?? publicGame;
+      const resolved = publicGame ?? ownedGame;
       const game = resolved ? mergeGameWithExtras(resolved) : null;
 
       if (game) {
