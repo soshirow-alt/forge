@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-07-14 — Cursor ALLOW / 工程ルール（Previewまで自律）
+
+- **内容** — `.cursor/permissions.json` / `.cursor/sandbox.json` と stall / AGENTS / triage §8 を更新。通常依頼は調査〜commit〜Preview push/deploy/smoke まで再確認なし。Staging DB write 可。Production 境界のみ確認
+- **分離** — Cursor ALLOW ≠ Forge Production GO（`docs/cursor-allow-vs-forge-go.md`）
+- **対象外** — プロダクト UI・本番データ・今回の Production deploy なし
+
 ## 2026-07-13 — Vercel prerender: useSearchParams CSR bailout 回避
 
 - **原因** — ヘッダー検索と `useRequireAuth`（Player shell のフィードバック等経由）が `useSearchParams` 依存で静的 prerender 失敗

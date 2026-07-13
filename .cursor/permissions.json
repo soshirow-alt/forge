@@ -1,0 +1,155 @@
+{
+  // Forge project terminal allowlist + Auto-review steering.
+  // Docs: https://cursor.com/docs/reference/permissions.md
+  //
+  // Cursor ALLOW ≠ Forge Production GO:
+  // - 通常依頼 = 調査〜編集〜verify〜local commit〜Preview push/deploy/smoke まで自律（追加確認不要）
+  // - 止まるのは Production 境界のみ（main push / --prod / Production DB write / secrets 等）
+  //
+  // Keep Run Mode = Auto-review (do NOT use Run Everything).
+  // Do NOT add broad prefixes: "git", "npm", "npx", "curl", "rm", "Remove-Item".
+  // This file replaces the in-app terminal allowlist for this workspace when present.
+
+  "terminalAllowlist": [
+    // --- shell / PowerShell inspection ---
+    "pwd",
+    "ls",
+    "dir",
+    "Get-ChildItem",
+    "Get-Location",
+    "Get-Content",
+    "Select-String",
+    "Get-Process",
+    "Stop-Process",
+    "Test-Path",
+    "Write-Host",
+    "Write-Output",
+    "echo",
+    "cat",
+    "type",
+    "head",
+    "tail",
+    "find",
+    "where.exe",
+    "which",
+
+    // --- repo search ---
+    "rg",
+    "ripgrep",
+
+    // --- git read / sync / local write (not main publish) ---
+    "git status",
+    "git diff",
+    "git log",
+    "git show",
+    "git branch",
+    "git rev-parse",
+    "git remote",
+    "git stash list",
+    "git describe",
+    "git ls-files",
+    "git fetch",
+    "git pull",
+    "git add",
+    "git commit",
+    "git checkout preview/landing-01",
+    "git switch preview/landing-01",
+
+    // Preview push only (explicit refs). NOT main.
+    "git push origin preview/landing-01",
+    "git push -u origin preview/landing-01",
+    "git push origin HEAD:preview/landing-01",
+    "git push -u origin HEAD:preview/landing-01",
+
+    // --- verify / build / test / local server ---
+    "npm run typecheck",
+    "npm run build",
+    "npm run lint",
+    "npm run test",
+    "npm test",
+    "npm run verify:",
+    "npm run check:",
+    "npm run dev",
+    "npm run start",
+    "npx tsc --noEmit",
+    "npx --yes tsc --noEmit",
+    "npx next dev",
+    "npx next build",
+    "npx --yes tsx scripts/verify-",
+    "npx tsx scripts/verify-",
+    "npx --yes tsx scripts/check-",
+    "npx tsx scripts/check-",
+    "npx --yes tsx scripts/staging-",
+    "npx tsx scripts/staging-",
+    "npx --yes tsx scripts/tmp-",
+    "npx tsx scripts/tmp-",
+    "npx --yes tsx .tmp-",
+    "npx tsx .tmp-",
+    "node scripts/verify-",
+    "node scripts/check-",
+    "node scripts/staging-",
+    "node scripts/tmp-",
+    "node .tmp-",
+    "node scripts/check-supabase-connection-target.mjs",
+
+    // in-repo tmp cleanup only (not outside repo)
+    "Remove-Item .tmp-",
+    "Remove-Item -Force .tmp-",
+    "Remove-Item -Recurse -Force .tmp-",
+    "rm .tmp-",
+    "rm -f .tmp-",
+    "rm -rf .tmp-",
+    "del .tmp-",
+
+    // --- Vercel Preview / read-only (NOT --prod / NOT env mutate) ---
+    "npx vercel ls",
+    "npx vercel list",
+    "npx vercel inspect",
+    "npx vercel logs",
+    "vercel ls",
+    "vercel list",
+    "vercel inspect",
+    "vercel logs",
+
+    // --- HTTP GET/HEAD smoke ---
+    "curl -I",
+    "curl -sI",
+    "curl --head",
+    "curl -sL https://forge-flame-gamma.vercel.app",
+    "curl -s https://forge-flame-gamma.vercel.app",
+    "curl -sL https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app",
+    "curl -s https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app",
+    "curl -I https://forge-flame-gamma.vercel.app",
+    "curl -I https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app",
+    "curl -sI https://forge-flame-gamma.vercel.app",
+    "curl -sI https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app",
+    "curl -I http://localhost",
+    "curl -sI http://localhost",
+    "curl -I http://127.0.0.1",
+    "curl -sI http://127.0.0.1",
+    "curl -s http://localhost",
+    "curl -s http://127.0.0.1",
+    "curl -sL http://localhost",
+    "curl -sL http://127.0.0.1"
+  ],
+
+  "autoRun": {
+    "allow_instructions": [
+      "For normal Forge tasks, allow investigation, in-repo file edits, typecheck/lint/test/build, local git add/commit, Preview branch push to preview/landing-01, Preview Vercel deploy without --prod, Preview inspect/logs, and Preview/localhost/production URL GET/HEAD smoke without asking again.",
+      "Allow shell inspection (pwd, ls, dir, Get-ChildItem, Get-Content, Select-String, rg, find) and creating/deleting in-repo .tmp-* audit files and temporary node/tsx/PowerShell audit scripts under the workspace.",
+      "Allow npm run typecheck/build/lint/test/verify:*/check:*/dev/start and npx tsc --noEmit / tsx scripts/{verify,check,staging,tmp}-* / node .tmp-* inside this repo.",
+      "Allow Staging Supabase (ref vuqpwvjvgyxffmvpfrxo) SELECT/INSERT/UPDATE/DELETE/RPC/migration/seed/backfill/Storage write-delete and Staging service-role verification, connection checks, and smoke test data cleanup.",
+      "Allow Production Supabase (ref bpnisgzxuwdxelhnduuf) read-only only: SELECT, REST GET, read-only RPC, schema checks, counts, and read-only row identification.",
+      "Allow Preview-oriented Vercel ls/list/inspect/logs and Preview deploys that are NOT --prod and do not mutate Production env.",
+      "Do not ask for extra commit confirmation or Preview GO on ordinary fix/investigate requests; proceed through Preview smoke, then report."
+    ],
+    "block_instructions": [
+      "Always ask before git push/merge that targets main, force push, git reset --hard, or git clean.",
+      "Always ask before Vercel Production deploy, promote, any command containing --prod, and Vercel Production env pull/get/add/rm/set.",
+      "Always ask before Production Supabase (bpnisgzxuwdxelhnduuf) INSERT/UPDATE/DELETE/upsert, migrations, seed, backfill, restore, Storage write/delete, or Production service-role writes. When asking, name exact table/target rows.",
+      "Always ask before printing, copying, or dumping secrets, JWTs, service role keys, or .env contents to the terminal.",
+      "Always ask before npm install/npm ci/package add/update/remove, and before deleting paths outside this repository.",
+      "Always ask before irreversible Production operations. Cursor allowlist is best-effort; prefer blocking Production boundary commands."
+    ]
+  }
+}

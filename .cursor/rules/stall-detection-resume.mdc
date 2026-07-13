@@ -1,5 +1,5 @@
 ---
-description: Stall detection and safe resume — Multitask vs P0/hotfix modes
+description: Stall detection and safe resume — normal Preview autonomy vs Production boundary
 alwaysApply: true
 ---
 
@@ -7,35 +7,42 @@ alwaysApply: true
 
 このルールは今後の作業に適用する。完了済み作業の再開・再実行指示ではない。
 
-## 1. 作業モードを分ける
+## 1. 作業モード
 
-### 通常調査・read-only監査
+### 通常作業（調査・修正・検証・Preview）
 
-Multitask／背景ワーカーの使用可。
+依頼を受けたら、追加の「commitしてよいですか」「Preview GOをください」なしで次まで自律進行する：
 
-背景ワーカーへ渡した後は、定期的なチャット報告は不要。親が報告するのは次のみ：
+1. 調査
+2. ファイル編集
+3. typecheck / lint / test / build
+4. ローカル commit
+5. `preview/landing-01` への push
+6. Preview deploy
+7. Preview smoke
 
-- 作業完了
+報告するのは次のみ：
+
+- 作業完了（Preview smoke まで含む）
 - エラーまたはタイムアウト
-- オーナー判断が必要なブロック
+- Production 境界でオーナー確認が必要
 - 背景ワーカーが終了・消失したのに結果がない
-- 次の工程が Production 変更、DB 変更、破壊的操作になる
 
-単に返答がしばらくないことだけで、停止とは判断しない。
+Multitask／背景ワーカーの使用可。単に返答がしばらくないことだけで停止とは判断しない。
 
 ### P0・Production退行・緊急hotfix
 
-原則 foreground で一工程ずつ進める。背景ワーカーへ一括で任せない：
+調査・修正・検証・Preview（commit / push / deploy / smoke）までは通常作業と同じく自律進行する。**P0 だからという理由だけで工程ごとに止めない。**
 
-- build / Preview deploy / smoke / Production deploy / migration 適用 / rollback
+Production 境界（main push / Production deploy / Production DB・Storage write / env・秘密・不可逆）の直前だけ確認を残す。
 
-**このモードでは禁止：**
+Production 工程を進めるときは原則 foreground。背景ワーカーへ Production 操作を一括で任せない。
 
-- Multitask／背景ワーカーへの委譲（調査含む）
+**禁止：**
+
 - Playwright 等の新規ツール・ブラウザ導入をブロッカーにすること
 - 非必須の承認待ちで沈黙すること
-
-調査も親エージェントが foreground で既存手段のみ使う。実装以降は親が工程ごとに状態を確認し、各完了時に短く報告する。
+- Production 操作を確認なしに開始すること
 
 ## 2. 明確な停止の判定
 
@@ -65,81 +72,81 @@ Multitask／背景ワーカーの使用可。
 - git status / branch と HEAD commit / 未commit変更
 - build 結果 / 既存 deploy ID と状態 / DB 変更の実行有無
 
-確認後、安全な read-only またはローカル工程だけ、最後の未完了地点から再開できる。作業全体を最初からやり直さず、同じ処理を二重実行しない。
+確認後、安全な read-only・ローカル・Preview・Staging 工程だけ、最後の未完了地点から再開できる。作業全体を最初からやり直さず、同じ処理を二重実行しない。
 
 ## 4. 自動再開してよいもの
 
 状態が明確で、二重実行の危険がない場合に限る。例：
 
-- 調査ワーカー停止 → 未完了の read-only 調査だけ再開
+- 調査ワーカー停止 → 未完了の調査を再開
 - typecheck 未開始 → typecheck から再開
 - typecheck 成功後に停止 → build から再開
-- build 成功後に停止 → 結果を報告し、次の deploy 可否を判断
+- build 成功後に停止 → Preview push / deploy / smoke へ進む
+- Preview Building／Queued → 既存 deploy を追跡
 
 同一工程の自動再試行は 1 回まで。同じ箇所で再度止まったら原因と現在状態を報告して停止。
 
-## 5. 自動再開してはいけないもの
+## 5. 自動再開してはいけないもの（Production 境界）
 
 勝手に再開・再実行しない：
 
-- Production deploy / migration 適用 / DB 書き込み / backfill / データ移行 / 削除 / rollback
-- 認証操作 / マジックリンク操作
-- オーナー確認待ちの Preview
-- 成否を判別できない書き込み処理
+- `git push origin main` / main merge の remote 反映
+- Production deploy / promote / `--prod`
+- Production Supabase INSERT/UPDATE/DELETE / migration / seed / backfill / restore
+- Production Storage write/delete / Production service role write
+- Vercel Production env の追加・変更・削除
+- secrets / JWT / service role / `.env` 内容の表示・コピー
+- force push / `git reset --hard` / `git clean`
+- リポジトリ外削除・その他の不可逆 Production 操作
 
 Production へ進めてよいのは次のどちらかだけ：
 
 - オーナーが今回の作業について明示的に Production まで GO している
 - 個別指示に「Preview 確認後、そのまま Production まで進める」と明記されている
 
-通常の「Preview 確認後にオーナー判断」では、Preview 成功後に自動で Production へ進めない。
+通常の「Preview 成功後にオーナー判断」では、Preview 成功後に自動で Production へ進めない。
+
+Staging DB write（ref `vuqpwvjvgyxffmvpfrxo`）は通常作業の一部として確認不要。
+
+Production DB write や不可逆操作が必要なときは、対象と対象行を提示してから確認する。
 
 ## 6. deploy待ちで停止した場合
 
-既存 deploy の状態確認から再開する。新しい deploy を作成しない。
+既存 deploy の状態確認から再開する。不必要に新しい deploy を作らない。
 
-- Ready → alias と commit を確認して次へ
+- Ready → alias と commit を確認して次へ（Preview smoke または報告）
 - Error → 原因を報告
 - Building／Queued → 既存 deploy を追跡
-- 状態不明 → 新規 deploy せず停止
+- 状態不明 → 新規 deploy せず状況を報告
 
 ## 7. 報告ルール
 
-通常 Multitask：完了・エラー・ブロック時のみ報告。
-
-P0：各工程終了時に短く報告（調査／実装／typecheck・build／Preview／smoke／Production）。
+通常・P0 とも：完了・エラー・Production 境界ブロック時に報告。工程ごとの途中確認は不要（Production Ready の中間報告を除く）。
 
 「バックグラウンドで続けます」とだけ報告して、結果確認なしに終了しない。
 
 ## 完了報告の最優先ルール
 
 - 合格条件を満たした時点で、以降のツール操作より先に完了報告を出す
-- 特に Production deploy が Ready になり、必要な smoke が通った時点では、次の操作を始める前に必ず以下を報告する
+- Preview smoke 完了時点で報告してよい（Production 未実施ならその旨）
+- Production deploy が Ready になった時点で、ブラウザ smoke を始める前に必ず中間報告を出す（commit / deploy ID / alias / ここまでの確認 / 未完了）
+- Production Ready 後の curl 等非対話 smoke が終わったら、目視・ブラウザ計測より先に結果を報告する
+- 報告に含めるもの（該当する範囲）:
   - commit
   - Preview / Production deploy ID
   - Production alias
-  - smoke結果
-  - 未完了事項
+  - smoke結果（自動確認分）
+  - 未完了事項（目視はオーナー確認事項として列挙）
 - browser unlock、ログ整理、一時ファイル削除、追加スクリーンショット、後片付け等は完了報告より後に行う
+- 承認が発生しうるブラウザ操作は、完了報告後の別工程として扱う（Production 境界では自動開始しない）
 - 完了報告後の後処理が不要なら、そのまま終了してよい
 
 ## 承認待ちの扱い
 
-- 非必須操作が承認待ち・Auto-review・権限確認でブロックされた場合は、待機せずその操作をスキップし、完了済み結果を即報告する
-- 必須操作が承認待ちになった場合も沈黙せず、以下を即報告して停止する
+- Cursor ALLOW（Auto-review）と Forge Production GO を混同しない
+- 非必須操作が承認待ちでブロックされた場合は、待機せずその操作をスキップし、完了済み結果を即報告する
+- Production 境界の必須操作が承認待ちになった場合は沈黙せず、以下を即報告して停止する
   - どこまで完了したか
   - 何の承認を待っているか
   - 承認なしで未完了となる項目
 - 承認カードが表示されていることを理由に、すでに確定している結果報告を遅らせない
-
-## P0の完了チェックポイント
-
-P0・Production退行・緊急hotfixでは、以下の各工程完了時に必ず短く報告する。
-
-- build完了
-- Preview deploy完了
-- Preview smoke完了
-- Production deploy完了
-- Production smoke完了
-
-特に Production smoke完了後は、それ以降の任意操作を行う前に最終報告を出す。

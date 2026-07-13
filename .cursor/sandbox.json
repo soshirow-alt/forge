@@ -1,0 +1,32 @@
+{
+  // Forge sandbox network allowlist for Auto-review sandboxed shell.
+  // Docs: https://cursor.com/docs/reference/sandbox.md
+  //
+  // type = workspace_readwrite only. Never insecure_none.
+  // Network reachability ≠ write permission:
+  // - Staging (vuqpwvjvgyxffmvpfrxo): writes allowed by Forge ops + autoRun
+  // - Production (bpnisgzxuwdxelhnduuf): read-only ops only; writes need owner confirmation
+  // Private IPs (127.x) may be blocked by Cursor SSRF inside sandbox;
+  // localhost smoke should use terminalAllowlist curl (often outside sandbox).
+
+  "type": "workspace_readwrite",
+  "enableSharedBuildCache": true,
+  "networkPolicy": {
+    "default": "deny",
+    "allow": [
+      "forge-flame-gamma.vercel.app",
+      "forge-git-preview-landing-01-soshirow-alts-projects.vercel.app",
+      "*.vercel.app",
+      "api.vercel.com",
+      "bpnisgzxuwdxelhnduuf.supabase.co",
+      "vuqpwvjvgyxffmvpfrxo.supabase.co",
+      "*.supabase.co",
+      "github.com",
+      "*.github.com",
+      "*.githubusercontent.com",
+      "registry.npmjs.org",
+      "registry.yarnpkg.com"
+    ],
+    "deny": []
+  }
+}

@@ -180,21 +180,23 @@ handoff 更新トリガー: 大テーマ完了 / migration 完了 / ロードマ
 
 ```text
 preview/landing-01 で実装
-  → commit + push（Vercel Preview デプロイ）
-  → オーナー Preview 確認
-  → main に merge + push（本番 deploy）
+  → commit + push + Preview deploy/smoke（Cursor 自律・追加 GO 不要）
+  → オーナー Preview 目視（本番へ進める判断）
+  → main に merge + push（本番 deploy）← Production 境界・確認あり
   → preview/landing-01 を main に追従（fast-forward）+ push
 ```
 
 | 段階 | Cursor がやること |
 |------|-------------------|
-| **1. Preview 反映** | `preview/landing-01` に commit + `git push origin preview/landing-01` |
-| **2. 確認待ち** | オーナーが Preview URL で目視（明示 GO または「本番に push」指示） |
-| **3. 本番反映** | `main` に merge（通常は `preview/landing-01` → `main`）+ `git push origin main` |
+| **1. Preview 反映** | `preview/landing-01` に commit + `git push origin preview/landing-01` + Preview smoke（**依頼時点で承認済み・再確認不要**） |
+| **2. オーナー目視** | Preview URL で確認。本番へ進める GO または「本番に push」指示を待つ |
+| **3. 本番反映** | `main` に merge（通常は `preview/landing-01` → `main`）+ `git push origin main`（**直前確認**） |
 | **4. ブランチ同期** | **`preview/landing-01` を `main` と同一 commit に揃える**（下記 §8.2） |
 
+- commit 前・Preview push 前の追加確認は不要（Staging DB write も確認不要）
 - Preview 未確認の **main 反映は禁止**（オーナーが Preview 省略を**明示**した場合のみ例外）
 - **main だけ push して Preview を古いままにしない**（本番だけ先に進んだ状態を残さない）
+- Cursor ALLOW / 工程ルール: `docs/cursor-allow-vs-forge-go.md`
 
 ### 8.2 本番 push 後の Preview 同期（必須）
 
@@ -236,11 +238,12 @@ git push origin preview/landing-01
 **機能タスク単位**で、次まで **承認待ちなし** で進めてよい:
 
 ```text
-設計 → 実装 → build → staging 確認 → main 反映準備
+設計 → 実装 → build → Staging 確認（write 可）→ commit → Preview push/deploy/smoke
 ```
 
-- 毎工程ごとの「Run判断」「GO/NG 待ち」は **不要**
-- main への commit / push も **main 反映準備** の一部として Cursor が実行してよい（staging 目視後を原則）
+- 毎工程ごとの「Run判断」「commit GO」「Preview GO」は **不要**
+- Staging DB write は確認不要
+- `main` push / Production deploy / Production DB write は **Production 境界**として直前確認（§10.2 および `docs/cursor-allow-vs-forge-go.md`）
 - `■ 今すぐ私がやるべきこと`（サマリ）には **本当にオーナーしかできないことだけ** 書く。Cursor が実行できる内容は書かない
 
 ### 10.2 必ず停止（GPT判断用メモ）

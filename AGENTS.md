@@ -114,11 +114,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 **§10.2 の 9 条件のみ**停止。`docs/forge-triage-operations.md` §10、`docs/gpt-run-decision-memo.md` 参照。
 
-一気通貫で進めてよい: 設計 → 実装 → build → staging 確認 → **main 反映準備**（commit / push 含む）。
+一気通貫で進めてよい: 設計 → 実装 → typecheck/lint/test/build → Staging 確認（write 可）→ local commit → **Preview push / deploy / smoke**。
 
-停止例: 課金・新規 API 契約・**本番公開**・PLAYER_VISIBLE=true・DB 破壊・データ移行・原典変更・ロードマップ順位変更・不可逆操作。
+通常依頼では commit 前・Preview push 前の再確認は不要。止まるのは **§10.2** および **Production 境界**（main push / Production deploy / Production DB・Storage write / Production env / secrets / 不可逆）。
+
+停止例: 課金・新規 API 契約・**本番公開**・PLAYER_VISIBLE=true・Production DB 破壊・Production データ移行・原典変更・ロードマップ順位変更・不可逆操作。
 
 サマリ `■ 今すぐ私がやるべきこと` は **オーナーしかできないことだけ**（Cursor 実行可能な項目は書かない）。※ 通常は返答本文に記載。GPT 用ファイルは更新しない。
+
+Cursor 技術 ALLOW: `.cursor/permissions.json` / `.cursor/sandbox.json` / `docs/cursor-allow-vs-forge-go.md`。
 
 ## Owner × ChatGPT × Cursor トリガー運用（恒久）
 
@@ -137,9 +141,9 @@ ChatGPT の役割は **コードレビューではなくプロダクトレビュ
 
 正本: **`docs/forge-triage-operations.md` §8**
 
-- 実装は **`preview/landing-01`** → commit + push（Preview デプロイ）
-- オーナー Preview 確認後、`main` merge + push（本番）
-- **本番 push 後は必ず `preview/landing-01` を `main` に fast-forward して push** — 両ブランチ同一 commit を維持（Preview だけ / 本番だけが進んだ状態を残さない）
+- 通常修正: **`preview/landing-01`** で実装 → commit + push → Preview deploy/smoke まで自律（追加 GO 不要）
+- オーナー Preview 目視後（または省略明示後）、`main` merge + push（本番）— **ここは確認を残す**
+- **本番 push 後は必ず `preview/landing-01` を `main` に fast-forward して push** — 両ブランチ同一 commit を維持
 
 ## Supabase migration（本番）
 
