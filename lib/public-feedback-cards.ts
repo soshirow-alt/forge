@@ -27,6 +27,8 @@ export type PublicFeedbackCard = {
 
 export type PublicFeedbackCardsResult = {
   cards: PublicFeedbackCard[];
+  /** Distinct registered users with public text — 1 user = 1 even with multi-prompt / deep FB */
+  participantCount: number;
   playableVersion: string;
   availableVersions: string[];
 };
@@ -94,19 +96,17 @@ export async function fetchPublicFeedbackCards(
   const rpcArgs: {
     p_project_id: string;
     p_version_key: string;
-    p_include_guest?: boolean;
+    p_include_guest: boolean;
     p_limit?: number;
     p_offset?: number;
   } = {
     p_project_id: projectId,
     p_version_key: version,
+    // Public list defaults to registered-only; opt-in required for guest rows.
+    p_include_guest: options?.includeGuest === true,
     p_limit: options?.limit ?? 50,
     p_offset: options?.offset ?? 0,
   };
-
-  if (options?.includeGuest === false) {
-    rpcArgs.p_include_guest = false;
-  }
 
   const { data, error } = await supabase.rpc("get_public_feedback_cards", rpcArgs);
 
@@ -116,7 +116,8 @@ export async function fetchPublicFeedbackCards(
 
   return ((data ?? []) as PublicFeedbackCardRow[])
     .map((row) => rowToCard(row, version))
-    .filter((card): card is PublicFeedbackCard => card !== null);
+    .filter((card): card is PublicFeedbackCard => card !== null)
+    .filter((card) => options?.includeGuest === true || card.authorKind !== "guest");
 }
 
 export async function fetchPublicFeedbackCardsFromApi(
@@ -138,6 +139,7 @@ export async function fetchPublicFeedbackCardsFromApi(
     | ({
         ok: true;
         cards: PublicFeedbackCard[];
+        participantCount?: number;
         playableVersion: string;
         availableVersions: string[];
       })
@@ -146,13 +148,20 @@ export async function fetchPublicFeedbackCardsFromApi(
   if (!response.ok || !body.ok) {
     return {
       cards: [],
+      participantCount: 0,
       playableVersion: resolvePlayableVersion(undefined),
       availableVersions: [],
     };
   }
 
+  const registeredCards = body.cards.filter((card) => card.authorKind !== "guest");
+
   return {
-    cards: body.cards,
+    cards: registeredCards,
+    participantCount:
+      typeof body.participantCount === "number"
+        ? body.participantCount
+        : registeredCards.length,
     playableVersion: body.playableVersion,
     availableVersions: body.availableVersions,
   };

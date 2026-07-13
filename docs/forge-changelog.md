@@ -10,6 +10,16 @@
 - **分離** — Cursor ALLOW ≠ Forge Production GO（`docs/cursor-allow-vs-forge-go.md`）
 - **対象外** — プロダクト UI・本番データ・今回の Production deploy なし
 
+## 2026-07-13 — みんなのFB: ゲスト行の誤表示・件数水増しを修正
+
+- **原因** — 公開 RPC / API が `p_include_guest: true` のため、過去のゲスト FB（例: `optional_comment = "test"`）が「ゲスト」カードとして表示され、登録ユーザー1件投稿後に通算が水増しされて見えた
+- **対応**
+  - 公開「みんなのフィードバック」は **登録ユーザーの永続データのみ**（カード・集計・バージョン一覧）
+  - 公開FB件数は **登録ユーザーの distinct 参加者数**（問い複数回答・深いFBでも1人1件）
+  - ゲスト FB 書き込み API を 403 無効化。作品詳細のゲスト FB 導線はログイン誘導へ
+- **DB** — 本番 `project_guest_voice_responses` に該当 `test` 行は残存（read-only 確認済み）。表示からは除外。削除は対象特定済みのため別途オーナー確認
+- **対象外** — Studio オーナー向けの届いたFB（ゲスト含む）は維持
+
 ## 2026-07-13 — Vercel prerender: useSearchParams CSR bailout 回避
 
 - **原因** — ヘッダー検索と `useRequireAuth`（Player shell のフィードバック等経由）が `useSearchParams` 依存で静的 prerender 失敗

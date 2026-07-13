@@ -53,7 +53,7 @@ export async function GET(request: Request, context: RouteContext) {
         ? resolvePlayableVersion(versionParam)
         : playableVersion;
 
-  const [cards, availableVersions] = await Promise.all([
+  const [cardsResult, availableVersions] = await Promise.all([
     fetchPublicFeedbackCardsEnriched(supabase, project.projectId, {
       versionKey,
       limit,
@@ -63,7 +63,8 @@ export async function GET(request: Request, context: RouteContext) {
 
   return NextResponse.json({
     ok: true,
-    cards,
+    cards: cardsResult.cards,
+    participantCount: cardsResult.participantCount,
     playableVersion,
     availableVersions,
   });

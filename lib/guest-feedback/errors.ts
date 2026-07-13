@@ -12,6 +12,7 @@ export type GuestFeedbackErrorCode =
   | "submitter_key_missing"
   | "submitter_key_invalid"
   | "rate_limited"
+  | "guest_feedback_disabled"
   | "supabase_not_configured"
   | "internal_error";
 
@@ -27,6 +28,8 @@ const ERROR_MESSAGES: Record<GuestFeedbackErrorCode, string> = {
   submitter_key_missing: "送信の準備ができていません。ページを再読み込みしてください。",
   submitter_key_invalid: "送信の準備が無効です。ページを再読み込みしてください。",
   rate_limited: "送信回数が上限に達しました。しばらくしてから再度お試しください。",
+  guest_feedback_disabled:
+    "フィードバックの送信にはログインが必要です。ゲストでは送信できません。",
   supabase_not_configured: "サービスが準備中です。",
   internal_error: "送信に失敗しました。時間をおいて再度お試しください。",
 };
@@ -43,6 +46,7 @@ const ERROR_STATUS: Record<GuestFeedbackErrorCode, number> = {
   submitter_key_missing: 400,
   submitter_key_invalid: 400,
   rate_limited: 429,
+  guest_feedback_disabled: 403,
   supabase_not_configured: 503,
   internal_error: 500,
 };

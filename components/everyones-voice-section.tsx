@@ -143,7 +143,7 @@ function PublicFeedbackCardsList({
 }) {
   const [expanded, setExpanded] = useState(false);
   const visibleCards = expanded ? cards : cards.slice(0, INITIAL_CARD_COUNT);
-  const hasMore = totalCount > INITIAL_CARD_COUNT;
+  const hasMore = cards.length > INITIAL_CARD_COUNT;
 
   if (cards.length === 0) {
     return (
@@ -207,6 +207,7 @@ export function EveryonesVoiceSection({
   const [availableVersions, setAvailableVersions] = useState<string[]>([]);
   const [aggregates, setAggregates] = useState<VersionedVoicePromptAggregate[]>([]);
   const [feedbackCards, setFeedbackCards] = useState<PublicFeedbackCard[]>([]);
+  const [participantCount, setParticipantCount] = useState(0);
   const isTab = variant === "tab";
 
   useEffect(() => {
@@ -239,6 +240,7 @@ export function EveryonesVoiceSection({
           }
 
           setFeedbackCards(cardsResult.cards);
+          setParticipantCount(cardsResult.participantCount);
           const versions =
             cardsResult.availableVersions.length > 0
               ? cardsResult.availableVersions
@@ -256,6 +258,7 @@ export function EveryonesVoiceSection({
         }
 
         setFeedbackCards(cardsResult.cards);
+        setParticipantCount(cardsResult.participantCount);
         const versions =
           cardsResult.availableVersions.length > 0
             ? cardsResult.availableVersions
@@ -279,6 +282,7 @@ export function EveryonesVoiceSection({
         if (!cancelled) {
           setAggregates([]);
           setFeedbackCards([]);
+          setParticipantCount(0);
         }
       } finally {
         if (!cancelled) {
@@ -320,6 +324,9 @@ export function EveryonesVoiceSection({
     () => promptsWithResponses.reduce((sum, item) => sum + item.totalResponses, 0),
     [promptsWithResponses],
   );
+
+  /** 通算公開FB件数 — 登録ユーザー1人あたり1件（カード行数ではない） */
+  const publicFeedbackCount = participantCount;
 
   const activeVersionLabel =
     versionFilter === "latest"
@@ -403,7 +410,7 @@ export function EveryonesVoiceSection({
     <section className={sectionClassName}>
       {header}
 
-      {(totalAnswerCount > 0 || hasPublicCards) && (
+      {(totalAnswerCount > 0 || publicFeedbackCount > 0) && (
         <div
           className={`${isTab ? "mt-4" : "mt-3"} flex flex-wrap gap-x-4 gap-y-1 rounded-lg border border-zinc-800/60 bg-zinc-950/30 px-3 py-2 text-xs text-zinc-500`}
         >
@@ -411,16 +418,10 @@ export function EveryonesVoiceSection({
             表示中{" "}
             <span className="font-semibold text-zinc-300">{activeVersionLabel}</span>
           </span>
-          {totalAnswerCount > 0 ? (
-            <span>
-              回答数{" "}
-              <span className="font-semibold text-zinc-300">{totalAnswerCount}</span>
-            </span>
-          ) : null}
-          {hasPublicCards ? (
+          {publicFeedbackCount > 0 ? (
             <span>
               公開FB{" "}
-              <span className="font-semibold text-zinc-300">{feedbackCards.length}</span> 件
+              <span className="font-semibold text-zinc-300">{publicFeedbackCount}</span> 件
             </span>
           ) : null}
         </div>

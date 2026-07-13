@@ -80,10 +80,11 @@ async function fetchRpcCards(
   versionKey: string,
   limit: number,
 ): Promise<PublicFeedbackCardRow[]> {
+  // Public 「みんなのFB」は登録ユーザーの永続データのみ。ゲスト行は表示・件数に含めない。
   const { data, error } = await supabase.rpc("get_public_feedback_cards", {
     p_project_id: projectId,
     p_version_key: resolvePlayableVersion(versionKey),
-    p_include_guest: true,
+    p_include_guest: false,
     p_limit: limit,
     p_offset: 0,
   });
@@ -177,6 +178,7 @@ export async function listPublicFeedbackVersionKeys(
   supabase: SupabaseClient,
   projectId: string,
 ): Promise<string[]> {
+  // Registered sources only — guest tables must not surface empty/non-empty version filters.
   const versionSets = await Promise.all([
     supabase
       .from("project_voice_responses")
@@ -184,22 +186,10 @@ export async function listPublicFeedbackVersionKeys(
       .eq("project_id", projectId)
       .eq("moderation_status", "visible"),
     supabase
-      .from("project_guest_voice_responses")
-      .select("version_key")
-      .eq("project_id", projectId)
-      .eq("moderation_status", "visible")
-      .eq("include_in_public_aggregate", true),
-    supabase
       .from("project_feedback")
       .select("version_key")
       .eq("project_id", projectId)
       .eq("moderation_status", "visible"),
-    supabase
-      .from("project_guest_feedback")
-      .select("version_key")
-      .eq("project_id", projectId)
-      .eq("moderation_status", "visible")
-      .eq("include_in_public_aggregate", true),
   ]);
 
   const versions = new Set<string>();
@@ -214,6 +204,82 @@ export async function listPublicFeedbackVersionKeys(
   return [...versions].sort((a, b) => comparePlayableVersions(b, a));
 }
 
+/**
+ * Distinct registered users who contributed any publicly listable feedback text
+ * for the given version scope. One user = one count even with multiple prompts / deep FB.
+ */
+export async function countPublicFeedbackParticipants(
+  supabase: SupabaseClient,
+  projectId: string,
+  versionKeys: string[],
+): Promise<number> {
+  if (versionKeys.length === 0) {
+    return 0;
+  }
+
+  const [voiceResult, feedbackResult] = await Promise.all([
+    supabase
+      .from("project_voice_responses")
+      .select("user_id, answer_value, optional_comment, prompt_id")
+      .eq("project_id", projectId)
+      .eq("moderation_status", "visible")
+      .in("version_key", versionKeys),
+    supabase
+      .from("project_feedback")
+      .select("user_id, good_points, concerns, bugs, other_notes")
+      .eq("project_id", projectId)
+      .eq("moderation_status", "visible")
+      .in("version_key", versionKeys),
+  ]);
+
+  const participants = new Set<string>();
+
+  for (const row of feedbackResult.data ?? []) {
+    const hasText =
+      Boolean(row.good_points?.trim()) ||
+      Boolean(row.concerns?.trim()) ||
+      Boolean(row.bugs?.trim()) ||
+      Boolean(row.other_notes?.trim());
+    if (hasText && row.user_id) {
+      participants.add(String(row.user_id));
+    }
+  }
+
+  const promptIds = [
+    ...new Set(
+      (voiceResult.data ?? [])
+        .map((row) => row.prompt_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+
+  const promptKindById = new Map<string, string>();
+  if (promptIds.length > 0) {
+    const { data: prompts } = await supabase
+      .from("project_version_prompts")
+      .select("id, response_kind")
+      .in("id", promptIds);
+    for (const prompt of prompts ?? []) {
+      promptKindById.set(String(prompt.id), String(prompt.response_kind));
+    }
+  }
+
+  for (const row of voiceResult.data ?? []) {
+    if (!row.user_id) {
+      continue;
+    }
+    const kind = promptKindById.get(String(row.prompt_id));
+    const hasPublicText =
+      (kind === "short_text" && Boolean(String(row.answer_value ?? "").trim())) ||
+      Boolean(String(row.optional_comment ?? "").trim());
+    if (hasPublicText) {
+      participants.add(String(row.user_id));
+    }
+  }
+
+  return participants.size;
+}
+
 export async function fetchPublicFeedbackCardsEnriched(
   supabase: SupabaseClient,
   projectId: string,
@@ -221,7 +287,7 @@ export async function fetchPublicFeedbackCardsEnriched(
     versionKey?: string | "all";
     limit?: number;
   },
-): Promise<PublicFeedbackCard[]> {
+): Promise<{ cards: PublicFeedbackCard[]; participantCount: number }> {
   const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
   const versionParam = options?.versionKey ?? resolvePlayableVersion(undefined);
 
@@ -231,7 +297,7 @@ export async function fetchPublicFeedbackCardsEnriched(
       : [resolvePlayableVersion(versionParam)];
 
   if (versionKeys.length === 0) {
-    return [];
+    return { cards: [], participantCount: 0 };
   }
 
   const cards: PublicFeedbackCard[] = [];
@@ -243,11 +309,22 @@ export async function fetchPublicFeedbackCardsEnriched(
       if (!card) {
         continue;
       }
+      // Defense in depth: never surface guest cards on the public list.
+      if (card.authorKind === "guest") {
+        continue;
+      }
       cards.push(await enrichCard(supabase, projectId, versionKey, card));
     }
   }
 
-  return cards.sort(
+  const sorted = cards.sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
+  const participantCount = await countPublicFeedbackParticipants(
+    supabase,
+    projectId,
+    versionKeys,
+  );
+
+  return { cards: sorted, participantCount };
 }

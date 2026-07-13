@@ -9,10 +9,6 @@ import {
   useGameDetailEngagement,
   type GameDetailRealVoiceHandle,
 } from "@/components/game-detail-real-voice-layer";
-import {
-  GameDetailGuestVoiceLayer,
-  type GameDetailGuestVoiceHandle,
-} from "@/components/game-detail-guest-voice-layer";
 import { GameDetailHeroGallery } from "@/components/game-detail-hero-gallery";
 import { GameHeroPreviewGallery } from "@/components/game-hero-preview-gallery";
 import { GameDetailPhaseBadge } from "@/components/game-detail-phase-badge";
@@ -422,9 +418,7 @@ function GameDetailV0PageBody({
   const [mockWatching, setMockWatching] = useState(game.watching);
   const [mockSaved, setMockSaved] = useState(game.saved);
   const [played, setPlayed] = useState(false);
-  const [guestPlayed, setGuestPlayed] = useState(false);
   const voiceLayerRef = useRef<GameDetailRealVoiceHandle>(null);
-  const guestVoiceLayerRef = useRef<GameDetailGuestVoiceHandle>(null);
   const {
     watching: realWatching,
     saved: realSaved,
@@ -477,8 +471,6 @@ function GameDetailV0PageBody({
 
   const markGuestPlayOpened = useCallback(() => {
     setPlayUrlMissingVisible(false);
-    setGuestPlayed(true);
-    guestVoiceLayerRef.current?.notifyPlayComplete();
   }, []);
 
   const recordPlayInBackground = useCallback(() => {
@@ -601,11 +593,7 @@ function GameDetailV0PageBody({
   }, [markPlayOpened]);
 
   const handleFeedback = useCallback(() => {
-    if (isGuestEntry && isRealProject) {
-      guestVoiceLayerRef.current?.openForm();
-      return;
-    }
-
+    // ゲストは DB へ FB を書き込めない。登録ログインへ誘導する。
     requireAuth(
       () => {
         if (isRealProject) {
@@ -617,7 +605,7 @@ function GameDetailV0PageBody({
       returnPath,
       { variant: "feedback" },
     );
-  }, [isGuestEntry, requireAuth, returnPath, isRealProject]);
+  }, [requireAuth, returnPath, isRealProject]);
 
   const handleProtectedAction = useCallback(
     (
@@ -675,10 +663,6 @@ function GameDetailV0PageBody({
 
   useFeedbackFlowLock(isRealProject ? "closed" : feedbackStep);
 
-  const guestFeedbackLoginHref = buildLoginUrlWithReturn(returnPath, {
-    intent: LOGIN_INTENT_REGISTERED,
-  });
-
   const overviewActivity = useMemo(
     () =>
       playerMeta
@@ -706,7 +690,7 @@ function GameDetailV0PageBody({
         : undefined;
 
   const feedbackCtaLabel =
-    hydrated && !isLoggedIn && !isGuestEntry
+    hydrated && !isLoggedIn
       ? "ログインしてフィードバックする"
       : "プレイ後にフィードバックする";
 
@@ -801,15 +785,6 @@ function GameDetailV0PageBody({
           destinations={playDestinations}
           onSelect={handlePlayDestinationSelect}
           onClose={() => setPlayDestinationPickerOpen(false)}
-        />
-      ) : null}
-      {isRealProject && isGuestEntry ? (
-        <GameDetailGuestVoiceLayer
-          ref={guestVoiceLayerRef}
-          gameId={resolvedId}
-          played={guestPlayed}
-          loginHref={guestFeedbackLoginHref}
-          onVoiceComplete={handleRealVoiceComplete}
         />
       ) : null}
       {isRealProject && !isGuestEntry ? (

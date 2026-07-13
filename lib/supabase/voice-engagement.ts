@@ -486,14 +486,13 @@ export async function fetchPublicVoiceAggregates(
   const rpcArgs: {
     p_project_id: string;
     p_version_key: string;
-    p_include_guest?: boolean;
+    p_include_guest: boolean;
   } = {
     p_project_id: projectId,
     p_version_key: version,
+    // Public 「みんなのFB」集計は登録ユーザーのみ（ゲストは opt-in）。
+    p_include_guest: options?.includeGuest === true,
   };
-  if (options?.includeGuest === false) {
-    rpcArgs.p_include_guest = false;
-  }
 
   const { data, error } = await supabase.rpc("get_public_voice_aggregates", rpcArgs);
 
