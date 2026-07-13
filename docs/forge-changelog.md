@@ -7,7 +7,7 @@
 ## 2026-07-14 — 公開プロフィール共通化 本番反映
 
 - **内容** — プレイヤー/Studio 公開プロフィール共通化（`071d372` / `508f881`）と関連 ops を Production コードへ反映。migration `064`（`avatar_url`）はオーナー適用済み前提
-- **deploy** — `dpl_8tiM6jGBpmb867KKNcgggWQGBcy1` / https://forge-flame-gamma.vercel.app（git main `53c036b`）
+- **deploy** — `dpl_4yrAAHb2JTJQETeE9QXSUxZuGs76` / https://forge-flame-gamma.vercel.app（git `5276438`；機能本体は `071d372`/`508f881`）
 - **対象外** — Production DB 追加 write・未commitのみんなのFB作業ファイル
 
 ## 2026-07-14 — Ops: full-auto Run Mode（コード本番一括 / Production DBは手動）
