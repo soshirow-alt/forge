@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-07-13 — robots.txt 最小追加（Twitterbot Allow）
+
+- **内容** — `public/robots.txt` のみ。`Twitterbot` / `*` に `Allow: /`
+- **目的** — OGP 画像不採用切り分けの最小 A/B（他経路は変更なし）
+
 ## 2026-07-13 — OGP診断 C/D（既知正常PNG / Skank正規化PNG）
 
 - **C** — `/__ogp-diagnostic/forge-known-good-20260713-c`（画像は既存 `/images/og-default-v2.png`）
