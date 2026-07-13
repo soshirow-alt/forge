@@ -23,8 +23,9 @@ UI copy / density / Special Thanks purpose: **`docs/forge-ui-copy-rules.md`** (a
 - When a **design decision** is involved (DB, auth, notifications, permissions, storage, extensibility): briefly note recommendation, reason, and concern in the response — not a long `■` template every time.
 - On completed tasks: update `docs/forge-changelog.md` only (not handoff/summary unless milestone).
 - Before **§10.2 stop conditions only** (billing, new API contracts, prod public launch, PLAYER_VISIBLE=true, destructive DB, data migration,原典 change, roadmap priority change, irreversible ops): output **GPT判断用メモ** from `docs/gpt-run-decision-memo.md`. Task flow through design→impl→build→staging→main prep runs without per-step approval. **`docs/forge-triage-operations.md` §10**.
-- **通常作業（2026-07-14〜）**: 調査〜編集〜verify〜local commit〜`preview/landing-01` push〜Preview deploy/smoke まで自律。commit前・Preview push前の追加確認は不要。詳細 `.cursor/rules/stall-detection-resume.mdc` / `docs/cursor-allow-vs-forge-go.md`
-- **本番リリース**: `main` merge/push の前にオーナーが Preview を目視確認（または Preview 省略を明示）。Production deploy / Production DB write / env / 不可逆は直前確認。Staging DB write は確認不要。
+- **通常作業（2026-07-14〜）**: 調査〜編集〜verify〜local commit〜`preview/landing-01` push〜Preview deploy/smoke まで自律。Staging は常時自律。詳細 `.cursor/rules/stall-detection-resume.mdc` / `docs/cursor-allow-vs-forge-go.md`
+- **オーナー指示 = スコープ承認**: 「Stagingに適用」「本番反映」「本番DBに適用」等の明示後は、その範囲の工程で再確認しない（commit / push / migration / deploy / smoke 含む）
+- **本番リリース**: オーナーが本番反映を明示した一度の指示で main push・Production deploy・必要 migration/DB・smoke・preview 同期まで進める。指示外の混在・範囲超過・大量破壊・secret 表示のみ停止
 - **Preview / main 同期（2026-06-28）**: 本番 push 後は **必ず** `preview/landing-01` を `main` に fast-forward + push。`origin/main` と `origin/preview/landing-01` を **同一 commit** に保つ。詳細 **`docs/forge-triage-operations.md` §8**.
 
 Full rules: `AGENTS.md`, `docs/forge-principles.md`, `docs/forge-ui-copy-rules.md`, `docs/forge-triage-operations.md`.

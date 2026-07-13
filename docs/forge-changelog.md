@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-07-14 — ALLOW / Forge GO: オーナー指示スコープ承認
+
+- **内容** — チャット明示指示を作業全体の承認として扱う。Staging 常時自律。通常修正は Preview まで自律。本番反映の一度の指示で main/deploy/必要 DB/smoke/同期まで一括。再確認禁止リストと停止条件7項を rules / AGENTS / permissions に反映
+- **正本** — `docs/cursor-allow-vs-forge-go.md` / `.cursor/rules/stall-detection-resume.mdc`
+- **対象外** — プロダクト UI・今回の Production 操作なし
 
 ## 2026-07-14 — developer_profiles upsert: avatar_url 未適用でも名前・自己紹介を保存
 

@@ -180,23 +180,22 @@ handoff 更新トリガー: 大テーマ完了 / migration 完了 / ロードマ
 
 ```text
 preview/landing-01 で実装
-  → commit + push + Preview deploy/smoke（Cursor 自律・追加 GO 不要）
-  → オーナー Preview 目視（本番へ進める判断）
-  → main に merge + push（本番 deploy）← Production 境界・確認あり
-  → preview/landing-01 を main に追従（fast-forward）+ push
+  → commit + push + Preview deploy/smoke（自律）
+  → オーナーが「本番反映」等を明示
+  → main merge/push + Production deploy + 必要 migration/DB + smoke + preview 同期（一括・工程再確認なし）
 ```
 
 | 段階 | Cursor がやること |
 |------|-------------------|
-| **1. Preview 反映** | `preview/landing-01` に commit + `git push origin preview/landing-01` + Preview smoke（**依頼時点で承認済み・再確認不要**） |
-| **2. オーナー目視** | Preview URL で確認。本番へ進める GO または「本番に push」指示を待つ |
-| **3. 本番反映** | `main` に merge（通常は `preview/landing-01` → `main`）+ `git push origin main`（**直前確認**） |
-| **4. ブランチ同期** | **`preview/landing-01` を `main` と同一 commit に揃える**（下記 §8.2） |
+| **1. Preview 反映** | commit + `git push origin preview/landing-01` + Preview smoke（通常依頼で自律） |
+| **2. 本番指示** | オーナーの「本番反映」「リリース」「本番DBに適用」等がスコープ承認 |
+| **3. 本番反映** | main merge/push・Production deploy・対象機能の必要 migration/DB/Storage・smoke（**追加確認なし**） |
+| **4. ブランチ同期** | `preview/landing-01` を `main` と同一 commit に揃える（§8.2） |
 
-- commit 前・Preview push 前の追加確認は不要（Staging DB write も確認不要）
-- Preview 未確認の **main 反映は禁止**（オーナーが Preview 省略を**明示**した場合のみ例外）
-- **main だけ push して Preview を古いままにしない**（本番だけ先に進んだ状態を残さない）
-- Cursor ALLOW / 工程ルール: `docs/cursor-allow-vs-forge-go.md`
+- Staging は常時自律。commit / Preview / 明示済み Production の再確認はしない
+- 本番未指示のまま main / `--prod` を始めない
+- 停止条件は `docs/cursor-allow-vs-forge-go.md`（範囲超過・混在・大量破壊・secret 表示等）
+- Cursor ALLOW: `.cursor/permissions.json`
 
 ### 8.2 本番 push 後の Preview 同期（必須）
 
@@ -218,7 +217,7 @@ git push origin preview/landing-01
 | NG | 理由 |
 |----|------|
 | `main` のみ push して `preview/landing-01` を放置 | オーナーの Preview 確認環境と本番が乖離する |
-| Preview 未確認で main 反映 | §8.1・`.cursor/rules/forge.mdc` の例外以外禁止 |
+| Preview 未指示で main 反映 | オーナーの本番反映明示が必要 |
 | 本番反映後に Preview 同期を省略 | 次の Preview 試行が本番と別物になる |
 
 ### 8.4 関連
@@ -238,12 +237,13 @@ git push origin preview/landing-01
 **機能タスク単位**で、次まで **承認待ちなし** で進めてよい:
 
 ```text
-設計 → 実装 → build → Staging 確認（write 可）→ commit → Preview push/deploy/smoke
+設計 → 実装 → build → Staging（常時自律）→ commit → Preview push/deploy/smoke
 ```
 
-- 毎工程ごとの「Run判断」「commit GO」「Preview GO」は **不要**
-- Staging DB write は確認不要
-- `main` push / Production deploy / Production DB write は **Production 境界**として直前確認（§10.2 および `docs/cursor-allow-vs-forge-go.md`）
+- オーナー明示指示はそのスコープ全体の承認（Staging 適用・本番反映・本番 DB 等）
+- 指示内では commit / push / migration / deploy / smoke の再確認は **不要**
+- Production 未指示なら main / `--prod` を始めない。指示後は一括実行（§8.1）
+- 停止条件は `docs/cursor-allow-vs-forge-go.md` および §10.2
 - `■ 今すぐ私がやるべきこと`（サマリ）には **本当にオーナーしかできないことだけ** 書く。Cursor が実行できる内容は書かない
 
 ### 10.2 必ず停止（GPT判断用メモ）

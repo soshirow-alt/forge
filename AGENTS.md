@@ -114,15 +114,19 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 **§10.2 の 9 条件のみ**停止。`docs/forge-triage-operations.md` §10、`docs/gpt-run-decision-memo.md` 参照。
 
-一気通貫で進めてよい: 設計 → 実装 → typecheck/lint/test/build → Staging 確認（write 可）→ local commit → **Preview push / deploy / smoke**。
+一気通貫で進めてよい: 設計 → 実装 → typecheck/lint/test/build → Staging（write 可・常時自律）→ local commit → **Preview push / deploy / smoke**。
 
-通常依頼では commit 前・Preview push 前の再確認は不要。止まるのは **§10.2** および **Production 境界**（main push / Production deploy / Production DB・Storage write / Production env / secrets / 不可逆）。
+オーナーの明示指示（「Stagingに適用」「Previewまで」「本番反映」「本番DBに適用」「リリース」等）はその作業範囲全体の承認。指示内では commit / push / migration / deploy / smoke の再確認をしない。
 
-停止例: 課金・新規 API 契約・**本番公開**・PLAYER_VISIBLE=true・Production DB 破壊・Production データ移行・原典変更・ロードマップ順位変更・不可逆操作。
+Production はオーナーが本番反映を明示した一度の指示で、main push・deploy・必要 migration/DB/Storage・smoke・changelog・main/preview 同期まで進める。
+
+停止するのは次のみ: 指示外差分の混在、依頼範囲超過、想定外の大量更新削除、対象特定不能、重大リスク判明、依頼外の不可逆操作、secret 本体の表示。加えて **§10.2**（課金・原典変更等）。
+
+停止例: 課金・新規 API 契約・**本番公開の未指示実行**・PLAYER_VISIBLE=true（未指示）・依頼外の Production 破壊・原典変更・ロードマップ順位変更。
 
 サマリ `■ 今すぐ私がやるべきこと` は **オーナーしかできないことだけ**（Cursor 実行可能な項目は書かない）。※ 通常は返答本文に記載。GPT 用ファイルは更新しない。
 
-Cursor 技術 ALLOW: `.cursor/permissions.json` / `.cursor/sandbox.json` / `docs/cursor-allow-vs-forge-go.md`。
+Cursor ALLOW / 工程: `.cursor/permissions.json` / `docs/cursor-allow-vs-forge-go.md` / `.cursor/rules/stall-detection-resume.mdc`。
 
 ## Owner × ChatGPT × Cursor トリガー運用（恒久）
 
@@ -141,8 +145,9 @@ ChatGPT の役割は **コードレビューではなくプロダクトレビュ
 
 正本: **`docs/forge-triage-operations.md` §8**
 
-- 通常修正: **`preview/landing-01`** で実装 → commit + push → Preview deploy/smoke まで自律（追加 GO 不要）
-- オーナー Preview 目視後（または省略明示後）、`main` merge + push（本番）— **ここは確認を残す**
+- 通常修正: **`preview/landing-01`** で実装 → commit + push → Preview deploy/smoke まで自律
+- Staging は常時自律
+- オーナーが本番反映を明示 → main merge + push・Production・必要 DB・smoke・preview 同期まで一括（工程再確認なし）
 - **本番 push 後は必ず `preview/landing-01` を `main` に fast-forward して push** — 両ブランチ同一 commit を維持
 
 ## Supabase migration（本番）
