@@ -6,8 +6,8 @@
 
 ## 2026-07-13 — /home Vercel build: header search Server Suspense
 
-- **原因** — Player ヘッダー検索の `useSearchParams`。Client 内 Suspense だけでは Production prerender（`/home`）の CSR bailout を満たせず build 失敗
-- **対応** — 検索フォームを分離し、`app/(player)/layout.tsx`（Server）でそのコンポーネントだけ Suspense 囲み。fallback は既存の検索入力見た目。ホーム本文・URL 挙動は変更なし
+- **原因** — Player ヘッダー検索の `useSearchParams`。Client 内 Suspense だけでは Production prerender（`/home`）の CSR bailout を満たせず build 失敗。Server Suspense を props 経由で Client Shell に渡すだけでも Vercel では不足
+- **対応** — 検索フォーム分離 + `app/(player)/layout.tsx` で Server Suspense。ヘッダーは `useSearchParams` を使わず window 同期。`dynamic = force-dynamic` で player 配下の静的 CSR bailout を回避。robots.txt Allow は維持
 
 ## 2026-07-13 — robots.txt 最小追加（Twitterbot Allow）
 

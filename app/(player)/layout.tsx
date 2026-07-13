@@ -5,9 +5,12 @@ import {
   HeaderSearchFormInner,
 } from "@/components/player-header-search-form";
 
+/** Match Vercel Production: avoid static CSR-bailout on player routes with useSearchParams. */
+export const dynamic = "force-dynamic";
+
 /**
- * Server Suspense wraps only the header search (useSearchParams).
- * Client-nested Suspense alone failed Vercel Production prerender of /home.
+ * Server Suspense wraps only the header search slot.
+ * Header search avoids useSearchParams so /home prerender cannot fail on the shell.
  */
 export default function PlayerRouteLayout({
   children,

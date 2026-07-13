@@ -1,15 +1,13 @@
 "use client";
 
 import { Search } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { type FormEvent, Suspense, useEffect, useState } from "react";
 
-function resolveHeaderSearchQuery(
-  pathname: string,
-  searchParams: URLSearchParams,
-): string {
+function readSearchQueryFromWindow(pathname: string): string {
+  if (typeof window === "undefined") return "";
   if (pathname === "/search" || pathname.startsWith("/search/")) {
-    return searchParams.get("q")?.trim() ?? "";
+    return new URLSearchParams(window.location.search).get("q")?.trim() ?? "";
   }
   return "";
 }
@@ -17,14 +15,15 @@ function resolveHeaderSearchQuery(
 function HeaderSearchFormInner({ legacyDefault }: { legacyDefault?: string }) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const urlQuery = resolveHeaderSearchQuery(pathname, searchParams);
-  const resolvedDefault = legacyDefault ?? urlQuery;
-  const [query, setQuery] = useState(resolvedDefault);
+  const [query, setQuery] = useState(legacyDefault ?? "");
 
   useEffect(() => {
-    setQuery(resolvedDefault);
-  }, [resolvedDefault]);
+    if (legacyDefault !== undefined) {
+      setQuery(legacyDefault);
+      return;
+    }
+    setQuery(readSearchQueryFromWindow(pathname));
+  }, [pathname, legacyDefault]);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
