@@ -4,12 +4,21 @@
 
 ---
 
+## 2026-07-13 — Xカード診断用一時 path（A/B）
+
+- **目的** — 既存 `/games/[id]`・DB・Storage・RPC を変えず、X の URL キャッシュ vs 画像ホストを切り分ける
+- **A** — `/__ogp-diagnostic/skank-supabase-20260713-a`（画像は Production Supabase 派生 JPEG）
+- **B** — `/__ogp-diagnostic/skank-forge-20260713-b`（同一 bytes を Forge origin から配信）
+- **画像** — `/__ogp-diagnostic-image/skank-ae21e70d34c58acf-1200x630.jpg`
+- **非対象** — 既存ゲームページ変更なし。残り8作品 backfill なし
+
 ## 2026-07-13 — OGP専用 1200×630 派生画像（Staging / Preview）
 
 - **分離** — ギャラリー `thumbnail_url` と OGP `og_image_url` を分離。RPC は `og_image_url` の https のみ返す
 - **生成** — 先頭サムネから sharp で cover+center の 1200×630 JPEG。パス `{projectId}/og-{hash}-1200x630.jpg`
 - **metadata** — width/height/type 明示。無ければ `og-default-v2.png`
-- **Staging** — Comet Rush canary。Production migration / backfill / deploy は未実施
+- **Staging** — Comet Rush canary 済み（派生 JPEG 1200×630・RPC一致・Preview probe smoke PASS）
+- **Production** — 063 適用・`10a8522` deploy Ready。Skank Boost のみ og 派生 canary（残り8作品は未 backfill）
 
 ## 2026-07-13 — 作品サムネイル Storage 化（Staging / Preview）
 
