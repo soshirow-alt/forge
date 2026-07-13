@@ -2,17 +2,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
   Bookmark,
   ChevronDown,
   Flame,
   Gamepad2,
-  Search,
   User,
 } from "lucide-react";
-import { type FormEvent, type ReactNode, Suspense, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import {
   ForgeShellMobileDrawer,
@@ -20,6 +19,7 @@ import {
   ForgeShellModeSwitch,
 } from "@/components/forge-shell-mobile-nav";
 import { useGames } from "@/components/games-provider";
+import { HeaderSearchForm } from "@/components/player-header-search-form";
 import { useStudioEntryGate } from "@/components/studio-entry-gate-provider";
 import { PlatformFeedbackSidebarBox } from "@/components/platform-feedback-sidebar-box";
 import { RegisteredOnlyLink } from "@/components/registered-account-prompt-provider";
@@ -44,73 +44,6 @@ export type PlayerShellNavId =
 
 function SidebarDivider() {
   return <div className="my-3 border-t border-zinc-800/80" role="separator" />;
-}
-
-function resolveHeaderSearchQuery(pathname: string, searchParams: URLSearchParams): string {
-  if (pathname === "/search" || pathname.startsWith("/search/")) {
-    return searchParams.get("q")?.trim() ?? "";
-  }
-  return "";
-}
-
-function HeaderSearchFormInner({ legacyDefault }: { legacyDefault?: string }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const urlQuery = resolveHeaderSearchQuery(pathname, searchParams);
-  const resolvedDefault = legacyDefault ?? urlQuery;
-  const [query, setQuery] = useState(resolvedDefault);
-
-  useEffect(() => {
-    setQuery(resolvedDefault);
-  }, [resolvedDefault]);
-
-  function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    const trimmed = query.trim();
-    router.push(trimmed ? `/search?q=${encodeURIComponent(trimmed)}` : "/search");
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="relative min-w-0 flex-1">
-      <Search
-        className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500"
-        aria-hidden="true"
-      />
-      <input
-        type="search"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder="ゲームやジャンルを検索（例：RPG、ピクセルアート）"
-        className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-500 focus:border-violet-500/40 focus:outline-none focus:ring-1 focus:ring-violet-500/30"
-      />
-    </form>
-  );
-}
-
-function HeaderSearchFormFallback() {
-  return (
-    <form className="relative min-w-0 flex-1" onSubmit={(event) => event.preventDefault()}>
-      <Search
-        className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500"
-        aria-hidden="true"
-      />
-      <input
-        type="search"
-        readOnly
-        placeholder="ゲームやジャンルを検索（例：RPG、ピクセルアート）"
-        className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-500"
-      />
-    </form>
-  );
-}
-
-function HeaderSearchForm({ legacyDefault }: { legacyDefault?: string }) {
-  return (
-    <Suspense fallback={<HeaderSearchFormFallback />}>
-      <HeaderSearchFormInner legacyDefault={legacyDefault} />
-    </Suspense>
-  );
 }
 
 function navLinkClass(active: boolean) {
@@ -216,11 +149,14 @@ export function PlayerShell({
   children,
   activeNav = "home",
   headerSearchDefault,
+  headerSearch,
   notificationBadge,
 }: {
   children: ReactNode;
   activeNav?: PlayerShellNavId;
   headerSearchDefault?: string;
+  /** Prefer Server Suspense slot from (player)/layout; falls back to client Suspense. */
+  headerSearch?: ReactNode;
   /** Override header badge; default uses unread DB notifications when logged in. */
   notificationBadge?: number;
 }) {
@@ -305,7 +241,7 @@ export function PlayerShell({
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-zinc-800/80 bg-[#0a0a0a]/95 px-4 py-3 backdrop-blur-md sm:gap-3 sm:px-6">
           <ForgeShellMobileMenuButton onClick={() => setMobileNavOpen(true)} />
-          <HeaderSearchForm legacyDefault={headerSearchDefault} />
+          {headerSearch ?? <HeaderSearchForm legacyDefault={headerSearchDefault} />}
           <RegisteredOnlyLink
             href="/notifications"
             onClick={() => {

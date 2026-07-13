@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-07-13 — /home Vercel build: header search Server Suspense
+
+- **原因** — Player ヘッダー検索の `useSearchParams`。Client 内 Suspense だけでは Production prerender（`/home`）の CSR bailout を満たせず build 失敗
+- **対応** — 検索フォームを分離し、`app/(player)/layout.tsx`（Server）でそのコンポーネントだけ Suspense 囲み。fallback は既存の検索入力見た目。ホーム本文・URL 挙動は変更なし
+
 ## 2026-07-13 — robots.txt 最小追加（Twitterbot Allow）
 
 - **内容** — `public/robots.txt` のみ。`Twitterbot` / `*` に `Allow: /`
