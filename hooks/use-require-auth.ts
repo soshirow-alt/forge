@@ -1,7 +1,6 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { useEntryMode } from "@/components/entry-mode-provider";
 import { useRegisteredAccountPrompt } from "@/components/registered-account-prompt-provider";
@@ -18,18 +17,24 @@ export type RequireAuthOptions = {
   variant?: RegisteredActionPromptVariant;
 };
 
+function readReturnPath(pathname: string): string {
+  if (typeof window === "undefined") {
+    return pathname;
+  }
+  return buildLocationReturnPath(pathname, window.location.search);
+}
+
+/**
+ * Auth gate for click actions. Avoids useSearchParams so static prerender
+ * of shells that mount this hook (e.g. PlatformFeedback) does not CSR-bailout.
+ * Return URL still includes current query via window.location at call time.
+ */
 export function useRequireAuth() {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { user, hydrated, isRegisteredUser } = useAuth();
   const { isGuestEntry } = useEntryMode();
   const { promptRegisteredAccountAccess } = useRegisteredAccountPrompt();
-
-  const currentReturnPath = useMemo(
-    () => buildLocationReturnPath(pathname, searchParams.toString()),
-    [pathname, searchParams],
-  );
 
   function requireAuth(
     action: () => void,
@@ -45,7 +50,7 @@ export function useRequireAuth() {
       return;
     }
 
-    promptRegisteredAccountAccess(returnPath ?? currentReturnPath, {
+    promptRegisteredAccountAccess(returnPath ?? readReturnPath(pathname), {
       variant: options?.variant ?? "default",
     });
   }
@@ -59,8 +64,6 @@ export function useRequireAuth() {
     isLoggedIn: isRegisteredUser,
     requireAuth,
     goToLogin: (returnPath?: string) =>
-      router.push(
-        buildLoginUrlWithReturn(returnPath ?? currentReturnPath),
-      ),
+      router.push(buildLoginUrlWithReturn(returnPath ?? readReturnPath(pathname))),
   };
 }

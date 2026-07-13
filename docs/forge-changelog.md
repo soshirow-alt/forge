@@ -4,10 +4,11 @@
 
 ---
 
-## 2026-07-13 — /home Vercel build: header search Server Suspense
+## 2026-07-13 — Vercel prerender: useSearchParams CSR bailout 回避
 
-- **原因** — Player ヘッダー検索の `useSearchParams` に加え、`PlayerShell` 内 `PlatformFeedbackSidebarBox` → `useRequireAuth` → `useSearchParams` が Client Suspense なしで静的 prerender に落ちる
-- **対応** — 検索フォーム分離 + layout Server Suspense（`useSearchParams` 撤去）。`PlayerShell` 全体を Suspense 囲み。`(player)/layout` に `dynamic = force-dynamic`。robots.txt Allow は維持
+- **原因** — ヘッダー検索と `useRequireAuth`（Player shell のフィードバック等経由）が `useSearchParams` 依存で静的 prerender 失敗
+- **対応** — クエリは `window.location` から読む（クリック／マウント時）。`force-dynamic` は使わない。`robots.txt` Allow は維持
+- **非対象** — ホーム UI・OGP・認証フローの意味変更なし
 
 ## 2026-07-13 — robots.txt 最小追加（Twitterbot Allow）
 

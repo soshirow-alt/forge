@@ -2,7 +2,7 @@
 
 import { Search } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { type FormEvent, Suspense, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 
 function readSearchQueryFromWindow(pathname: string): string {
   if (typeof window === "undefined") return "";
@@ -12,7 +12,25 @@ function readSearchQueryFromWindow(pathname: string): string {
   return "";
 }
 
-function HeaderSearchFormInner({ legacyDefault }: { legacyDefault?: string }) {
+export function HeaderSearchFormFallback() {
+  return (
+    <form className="relative min-w-0 flex-1" onSubmit={(event) => event.preventDefault()}>
+      <Search
+        className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500"
+        aria-hidden="true"
+      />
+      <input
+        type="search"
+        readOnly
+        placeholder="ゲームやジャンルを検索（例：RPG、ピクセルアート）"
+        className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-500"
+      />
+    </form>
+  );
+}
+
+/** Header search — syncs from window query on /search; no useSearchParams. */
+export function HeaderSearchForm({ legacyDefault }: { legacyDefault?: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const [query, setQuery] = useState(legacyDefault ?? "");
@@ -47,31 +65,3 @@ function HeaderSearchFormInner({ legacyDefault }: { legacyDefault?: string }) {
     </form>
   );
 }
-
-export function HeaderSearchFormFallback() {
-  return (
-    <form className="relative min-w-0 flex-1" onSubmit={(event) => event.preventDefault()}>
-      <Search
-        className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500"
-        aria-hidden="true"
-      />
-      <input
-        type="search"
-        readOnly
-        placeholder="ゲームやジャンルを検索（例：RPG、ピクセルアート）"
-        className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-500"
-      />
-    </form>
-  );
-}
-
-/** Client wrapper kept for non-server call sites; prefers Server Suspense from layout. */
-export function HeaderSearchForm({ legacyDefault }: { legacyDefault?: string }) {
-  return (
-    <Suspense fallback={<HeaderSearchFormFallback />}>
-      <HeaderSearchFormInner legacyDefault={legacyDefault} />
-    </Suspense>
-  );
-}
-
-export { HeaderSearchFormInner };

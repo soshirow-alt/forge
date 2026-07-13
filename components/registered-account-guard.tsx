@@ -1,7 +1,7 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, type ReactNode } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useEntryMode } from "@/components/entry-mode-provider";
 import {
@@ -28,21 +28,20 @@ export function RegisteredAccountGuard({
 }: RegisteredAccountGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { authResolved, isRegisteredUser } = useAuth();
   const { isGuestEntry } = useEntryMode();
-
-  const defaultReturnPath = useMemo(
-    () => buildPathWithSearch(pathname, searchParams.toString()),
-    [pathname, searchParams],
-  );
-
-  const resolvedReturnPath = returnPath ?? defaultReturnPath;
 
   useEffect(() => {
     if (!authResolved || isRegisteredUser) {
       return;
     }
+
+    const search =
+      typeof window !== "undefined"
+        ? window.location.search.replace(/^\?/, "")
+        : "";
+    const resolvedReturnPath =
+      returnPath ?? buildPathWithSearch(pathname, search);
 
     router.replace(
       buildLoginUrlWithReturn(resolvedReturnPath, {
@@ -50,7 +49,14 @@ export function RegisteredAccountGuard({
         intent: LOGIN_INTENT_REGISTERED,
       }),
     );
-  }, [authResolved, isRegisteredUser, isGuestEntry, router, resolvedReturnPath]);
+  }, [
+    authResolved,
+    isRegisteredUser,
+    isGuestEntry,
+    router,
+    returnPath,
+    pathname,
+  ]);
 
   if (!authResolved || !isRegisteredUser) {
     return (
