@@ -120,7 +120,13 @@ export function partitionHomeDiscoveryFeed(
   updated.sort((a, b) => a.rank - b.rank);
   trending.sort((a, b) => a.rank - b.rank);
 
-  return { newest, updated, trending };
+  // Defense in depth until/while Staging has migration 065: shelf must not
+  // show play-only "反応" (cards show FB/follow, not play UU).
+  const trendingVisible = trending.filter(
+    (card) => card.feedbackUsers7d + card.watchers7d > 0,
+  );
+
+  return { newest, updated, trending: trendingVisible };
 }
 
 export async function fetchHomeDiscoveryFeed(

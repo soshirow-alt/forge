@@ -1,5 +1,5 @@
 /**
- * Local PGlite smoke for get_home_discovery_feed (055 LANGUAGE sql).
+ * Local PGlite smoke for get_home_discovery_feed (065 visible-reaction trending).
  * Staging-only helper — does not touch remote DBs.
  */
 import { readFileSync } from "node:fs";
@@ -10,7 +10,7 @@ import { PGlite } from "@electric-sql/pglite";
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const migrationPath = join(
   root,
-  "supabase/migrations/055_fix_home_discovery_feed_variable_conflict.sql",
+  "supabase/migrations/065_home_trending_visible_reactions_only.sql",
 );
 
 const schemaSql = `
@@ -103,7 +103,7 @@ function extractMigrationBody(raw) {
   const begin = raw.indexOf("CREATE OR REPLACE FUNCTION");
   const commit = raw.lastIndexOf("\nCOMMIT;");
   if (begin < 0 || commit < 0) {
-    throw new Error("Could not extract function body from 055");
+    throw new Error("Could not extract function body from migration");
   }
   return raw.slice(begin, commit).trim();
 }
@@ -202,6 +202,29 @@ async function main() {
       overlap.rows.some((r) => r.id === idA && r.sections.includes("newest") && r.sections.includes("trending")),
   });
 
+  // 4b) play-only engagement must NOT qualify for trending (065)
+  const idPlay = "44444444-4444-4444-4444-444444444444";
+  await db.exec(`
+    INSERT INTO public.projects (id, title, description, playable_version, thumbnail_url, genre, visibility, first_published_at)
+    VALUES ('${idPlay}', 'Play Only', '', '0.1', NULL, NULL, 'public', now() - interval '2 days');
+    INSERT INTO public.project_play_sessions (project_id, user_id, played_at)
+    VALUES ('${idPlay}', '${user1}', now() - interval '1 hour');
+  `);
+  counts = await countBySection(db);
+  const playOnlyInTrending = await db.query(`
+    SELECT count(*)::int AS n
+    FROM public.get_home_discovery_feed()
+    WHERE section = 'trending' AND project_id = '${idPlay}'::uuid
+  `);
+  results.push({
+    case: "play_only_excluded_from_trending",
+    counts,
+    playOnlyRows: playOnlyInTrending.rows[0]?.n,
+    ok:
+      counts.trending === 1 &&
+      Number(playOnlyInTrending.rows[0]?.n ?? -1) === 0,
+  });
+
   // 5) invalid text project_id must not crash whole feed
   await db.exec(`
     INSERT INTO public.project_devlogs (project_id, created_at, is_initial_publish)
@@ -220,7 +243,7 @@ async function main() {
     results.push({
       case: "invalid_text_project_id",
       counts,
-      ok: counts.newest === 2 && counts.updated === 1 && counts.trending === 1,
+      ok: counts.newest === 3 && counts.updated === 1 && counts.trending === 1,
     });
   }
 

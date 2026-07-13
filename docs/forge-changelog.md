@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-14 — ホーム「直近7日で反応」棚: プレイ単独を候補から除外
+
+- **症状** — 「フィードバック 0 / フォロー 0」の作品が棚に混ざり、FB がある作品より前に見える（ヒーロー soft 除外と相まって）
+- **原因** — trending 採用条件が `feedback + watch + play > 0` のため、カード非表示のプレイ UU だけで候補入りできた
+- **修正** — migration `065`: 採用は `feedback_users_7d + watchers_7d > 0`。`players_7d` は順位の tie-break のみ。ヒーロー除外・空棚非表示・補完なしは維持
+- **対象外** — Production DB / Production deploy（Preview + Staging まで）
+
 ## 2026-07-14 — 公開プロフィール共通化 本番反映
 
 - **内容** — プレイヤー/Studio 公開プロフィール共通化（`071d372` / `508f881`）と関連 ops を Production コードへ反映。migration `064`（`avatar_url`）はオーナー適用済み前提
@@ -194,8 +201,8 @@ RPC `get_home_discovery_feed`（055/058 同一選定）＋クライアント `se
   1. `project_voice_responses` — `moderation_status = 'visible'` かつ `user_id IS NOT NULL` → **distinct user_id** を `feedback_users_7d` に合算
   2. `project_feedback` — 同上条件 → 同上（voice と UNION 後に distinct）
   3. `project_watches` — 期間内の行数 → `watchers_7d`（**COUNT(*)**、ユーザー distinct ではない）
-  4. `project_play_sessions` — 期間内の **distinct user_id** → `players_7d`
-- **採用条件**: `feedback_users_7d + watchers_7d + players_7d > 0`（ゼロ反応は除外）
+  4. `project_play_sessions` — 期間内の **distinct user_id** → `players_7d`（**順位 tie-break のみ**。単独では候補に入らない）
+- **採用条件**（065〜）: `feedback_users_7d + watchers_7d > 0`（カード指標と揃う FB / フォロー増のみ。プレイ単独は除外）
 - **重み付け**: 数値スコアの加重合計ではない。並べ替えキーの**優先順位**のみ:
   1. `feedback_users_7d` DESC
   2. `watchers_7d` DESC
@@ -203,6 +210,7 @@ RPC `get_home_discovery_feed`（055/058 同一選定）＋クライアント `se
   4. `last_engagement_at` DESC NULLS LAST（上記3系統の最新時刻の GREATEST）
   5. `first_published_at` DESC NULLS LAST
   6. `project_id` ASC
+- **オーナー FB**: 登録ユーザーなら `user_id IS NOT NULL` でカウント対象（オーナー除外なし）
 
 ### updated（意味ある更新）
 - **イベント**:

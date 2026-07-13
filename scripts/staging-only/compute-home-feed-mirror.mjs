@@ -202,7 +202,7 @@ const trending = publicProjects
   .map((p) => ({ p, ...engagement(p.id) }))
   .filter(
     (x) =>
-      x.feedback_users_7d + x.watchers_7d + x.players_7d > 0,
+      x.feedback_users_7d + x.watchers_7d > 0,
   )
   .sort((a, b) => {
     if (b.feedback_users_7d !== a.feedback_users_7d) {
