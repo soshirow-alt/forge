@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-07-13 — OGP診断ルートを %5F 公開セグメントへ
+
+- **原因** — App Router でフォルダ名 `__ogp-diagnostic` は private（先頭 `_`）扱いとなり、公開 URL `/__ogp-diagnostic/...` が 404 になる
+- **対応** — フォルダを `%5F%5Fogp-diagnostic` / `%5F%5Fogp-diagnostic-image` に変更（Next.js の URL エンコード規約）。公開パスは従来どおり `/__ogp-diagnostic/...`
+- **対象外** — 作品ページ・DB・Storage・RPC・残8作品 backfill は変更なし
+
 ## 2026-07-13 — Xカード診断用一時 path（A/B）
 
 - **目的** — 既存 `/games/[id]`・DB・Storage・RPC を変えず、X の URL キャッシュ vs 画像ホストを切り分ける
