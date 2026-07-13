@@ -10,7 +10,6 @@ import {
 } from "@/components/featured/featured-game-carousel";
 import { HorizontalCardPager } from "@/components/horizontal-card-pager";
 import {
-  buildSectionCarouselItems,
   selectHeroItems,
 } from "@/lib/home-discovery-selection";
 import {
@@ -287,20 +286,9 @@ export function DiscoveryHomePage() {
     return selectHeroItems(feed.trending, feed.updated, feed.newest);
   }, [feed]);
 
-  const heroIds = useMemo(
-    () => new Set(heroItems.map((item) => item.id)),
-    [heroItems],
-  );
-
-  const updatedCarousel = useMemo(
-    () => (feed ? buildSectionCarouselItems(feed.updated, heroIds, 4) : []),
-    [feed, heroIds],
-  );
-  const trendingCarousel = useMemo(
-    () => (feed ? buildSectionCarouselItems(feed.trending, heroIds, 4) : []),
-    [feed, heroIds],
-  );
-  /** 新着はヒーロー除外なし — RPC の first_published_at DESC（rank）順をそのまま使う */
+  /** RPC 順のまま表示（ヒーローとの重複を許可。除外・並べ替えなし） */
+  const updatedCarousel = useMemo(() => feed?.updated ?? [], [feed]);
+  const trendingCarousel = useMemo(() => feed?.trending ?? [], [feed]);
   const newestCarousel = useMemo(() => feed?.newest ?? [], [feed]);
 
   if (!ready) {

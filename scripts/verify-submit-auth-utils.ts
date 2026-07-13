@@ -556,13 +556,17 @@ function testHomeSearchPublicCatalogContract() {
   ok(
     home.includes("feed?.newest ?? []") ||
       /newestCarousel\s*=\s*useMemo\(\(\)\s*=>\s*feed\?\.newest/.test(home),
-    "newest carousel keeps RPC order without hero exclusion",
+    "newest carousel keeps RPC order",
   );
   ok(
-    home.includes("buildSectionCarouselItems(feed.updated") &&
-      home.includes("buildSectionCarouselItems(feed.trending") &&
-      !home.includes("buildSectionCarouselItems(feed.newest"),
-    "only updated/trending carousels soft-exclude heroes",
+    (home.includes("feed?.updated ?? []") ||
+      /updatedCarousel\s*=\s*useMemo\(\(\)\s*=>\s*feed\?\.updated/.test(home)) &&
+      (home.includes("feed?.trending ?? []") ||
+        /trendingCarousel\s*=\s*useMemo\(\(\)\s*=>\s*feed\?\.trending/.test(
+          home,
+        )) &&
+      !home.includes("buildSectionCarouselItems"),
+    "all shelves keep RPC order without hero soft-exclusion",
   );
 
   ok(search.includes("publicCatalogReady"), "works-search gates on publicCatalogReady");

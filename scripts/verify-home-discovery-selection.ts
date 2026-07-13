@@ -1,9 +1,9 @@
 /**
- * Unit checks for home discovery hero/carousel pure functions.
+ * Unit checks for home discovery hero selection (shelves keep RPC order;
+ * hero duplication in shelves is allowed — no soft exclusion).
  * Run: npx --yes tsx scripts/verify-home-discovery-selection.ts
  */
 import {
-  buildSectionCarouselItems,
   selectHeroItems,
   type HomeDiscoveryCandidate,
 } from "../lib/home-discovery-selection";
@@ -103,87 +103,16 @@ function assertUnique(items: { id: string }[], label: string) {
   assertUnique(hero, "two works");
 }
 
-// 8) full first page of non-heroes; hero reappears later
+// 8) shelf arrays stay untouched by hero pick (duplication allowed)
 {
-  const candidates = [
-    c("h1", "updated", 1),
-    c("a", "updated", 2),
-    c("b", "updated", 3),
-    c("c", "updated", 4),
-    c("d", "updated", 5),
-    c("e", "updated", 6),
-  ];
-  const heroIds = new Set(["h1"]);
-  const carousel = buildSectionCarouselItems(candidates, heroIds, 4);
-  assert(carousel.slice(0, 4).every((item) => item.id !== "h1"), "first page no hero");
-  assert(
-    carousel.slice(4).some((item) => item.id === "h1"),
-    "hero reappears after first page",
-  );
-  assertUnique(carousel, "carousel");
-  assert(ids(carousel).slice(0, 4).join(",") === "a,b,c,d", "first page order");
-}
-
-// 9) both candidates are heroes → empty shelf (hide)
-{
-  const candidates = [c("h1", "newest", 1), c("h2", "newest", 2)];
-  const carousel = buildSectionCarouselItems(candidates, new Set(["h1", "h2"]), 4);
-  assert(carousel.length === 0, "all-hero shelf empty");
-}
-
-// 10) 3 candidates, 2 heroes → only 1 non-hero
-{
-  const candidates = [
-    c("h1", "newest", 1),
-    c("a", "newest", 2),
-    c("h2", "newest", 3),
-  ];
-  const carousel = buildSectionCarouselItems(candidates, new Set(["h1", "h2"]), 4);
-  assert(ids(carousel).join(",") === "a", "one non-hero only");
-  assert(!carousel.some((item) => item.id === "h1" || item.id === "h2"), "no hero pad");
-}
-
-// 11) 3 non-heroes → show 3, do not pad with heroes
-{
-  const candidates = [
-    c("h1", "updated", 1),
-    c("a", "updated", 2),
-    c("b", "updated", 3),
-    c("c", "updated", 4),
-  ];
-  const carousel = buildSectionCarouselItems(candidates, new Set(["h1"]), 4);
-  assert(ids(carousel).join(",") === "a,b,c", "three non-heroes only");
-  assert(!carousel.some((item) => item.id === "h1"), "hero not used to pad");
-}
-
-// 12) exactly 4 non-heroes → first page has no hero
-{
-  const candidates = [
-    c("h1", "trending", 1),
+  const trending = [
+    c("slime", "trending", 1),
     c("a", "trending", 2),
     c("b", "trending", 3),
-    c("c", "trending", 4),
-    c("d", "trending", 5),
   ];
-  const carousel = buildSectionCarouselItems(candidates, new Set(["h1"]), 4);
-  assert(ids(carousel).slice(0, 4).join(",") === "a,b,c,d", "four non-heroes first");
-  assert(carousel.slice(0, 4).every((item) => item.id !== "h1"), "no hero on page1");
-}
-
-// 13) 4+ non-heroes → hero can reappear on page 2+
-{
-  const candidates = [
-    c("h1", "newest", 1),
-    c("a", "newest", 2),
-    c("b", "newest", 3),
-    c("c", "newest", 4),
-    c("d", "newest", 5),
-    c("e", "newest", 6),
-  ];
-  const carousel = buildSectionCarouselItems(candidates, new Set(["h1"]), 4);
-  assert(carousel.slice(0, 4).every((item) => item.id !== "h1"), "page1 clean");
-  assert(carousel.slice(4).some((item) => item.id === "h1"), "page2+ hero ok");
-  assertUnique(carousel, "4+ non-hero unique");
+  const hero = selectHeroItems(trending, [], []);
+  assert(hero[0]?.id === "slime", "hero is trending rank1");
+  assert(ids(trending).join(",") === "slime,a,b", "trending shelf order unchanged");
 }
 
 console.log("verify-home-discovery-selection: PASS");
