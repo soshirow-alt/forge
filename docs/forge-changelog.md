@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-14 — 公開プロフィールをプレイヤー／開発者で共通化
+
+- **原因** — プレイヤープロフィール編集が端末内 state のみ更新し、「端末のみ」文言付きで DB に保存していなかった
+- **正本** — `developer_profiles`（表示名・自己紹介・avatar_url・X・Webサイト）。migration `064` で `avatar_url` 追加
+- **UI** — `/profile` と Studio プロフィールが同じ行を読み書き。保存中／成功／失敗を明示。端末のみ文言を削除
+- **対象外** — 好きなジャンル等の v0 mock 項目、みんなのFB
+
 ## 2026-07-14 — Cursor ALLOW / 工程ルール（Previewまで自律）
 
 - **内容** — `.cursor/permissions.json` / `.cursor/sandbox.json` と stall / AGENTS / triage §8 を更新。通常依頼は調査〜commit〜Preview push/deploy/smoke まで再確認なし。Staging DB write 可。Production 境界のみ確認

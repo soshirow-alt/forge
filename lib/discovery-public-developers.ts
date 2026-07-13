@@ -1,5 +1,6 @@
 import type { DeveloperSearchResult } from "@/lib/developer-search-v0-mock-data";
 import type { DeveloperProfile } from "@/lib/developer-profiles";
+import { publicBioForDisplay } from "@/lib/public-profile";
 import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
 import { pickFeatureTagsFromGameTags } from "@/lib/forge-feature-tag-options";
 import { getGameCreatedTimestamp } from "@/lib/game-timestamp";
@@ -64,8 +65,8 @@ export function buildPublicDeveloperSearchResults(
       id: routeId,
       name,
       handle,
-      avatar: gameThumbs[0] ?? DEFAULT_AVATAR,
-      bio: profile?.profile ?? "",
+      avatar: profile?.avatarUrl?.trim() || gameThumbs[0] || DEFAULT_AVATAR,
+      bio: publicBioForDisplay(profile?.profile),
       verified: true,
       isNew: newestCreated > 0 && Date.now() - newestCreated < NEW_DEVELOPER_MS,
       inDevelopment: ownerGames.filter((game) => game.releaseStatus !== "released")

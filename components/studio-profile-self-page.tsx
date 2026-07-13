@@ -9,8 +9,13 @@ import { StudioShell } from "@/components/studio-shell";
 import { useGames } from "@/components/games-provider";
 import { V0SimpleModal } from "@/components/v0-simple-modal";
 import { resolveDeveloperPublicName } from "@/lib/developer-display-name";
-import { normalizeDeveloperProfileText } from "@/lib/developer-profiles";
+import {
+  publicBioForDisplay,
+  publicProfileFromDeveloperRow,
+  toDeveloperProfileInput,
+} from "@/lib/public-profile";
 import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
+import { profileAvatarPresets } from "@/lib/profile-avatar-presets";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
 import {
   STUDIO_DEVELOPMENT_GENRE_MAX,
@@ -18,6 +23,13 @@ import {
 } from "@/lib/studio-developer-profile-v0-mock-data";
 import { XAccountSettingsLinkSection } from "@/components/x-account-settings-link-section";
 import { Pencil, Sparkles } from "lucide-react";
+
+function defaultAvatarForUser(userId: string): string {
+  const index =
+    userId.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) %
+    profileAvatarPresets.length;
+  return profileAvatarPresets[index]!.src;
+}
 
 export function StudioProfileSelfPage() {
   const hideV0Mock = shouldHideV0MockContent();
@@ -47,14 +59,15 @@ export function StudioProfileSelfPage() {
       developerProfile?.creatorId.replace(/^dev-/, "").slice(0, 8) ??
       user.email.split("@")[0] ??
       "developer";
-    const publicName = resolveDeveloperPublicName(user, developerProfile);
+    const shared = publicProfileFromDeveloperRow(developerProfile, user.name);
 
     return {
       ...profile,
-      displayName: publicName,
+      displayName: shared.displayName,
       handle,
-      avatar: profile.avatar,
-      bio: developerProfile?.profile ?? (profile.bio === studioDeveloperSelfProfile.bio ? "" : profile.bio),
+      avatar: shared.avatarUrl || defaultAvatarForUser(user.id),
+      bio: shared.bio,
+      website: shared.website ?? "",
       stats: {
         ...profile.stats,
         projectCount: ownedCount,
@@ -75,6 +88,7 @@ export function StudioProfileSelfPage() {
     displayName: profile.displayName,
     bio: profile.bio,
     avatar: profile.avatar,
+    website: "",
     favoriteGenres: [...profile.favoriteGenres],
     developmentGenres: [...profile.developmentGenres],
   });
@@ -88,12 +102,14 @@ export function StudioProfileSelfPage() {
     }
     setDraft({
       displayName: displayProfile.displayName,
-      bio: displayProfile.bio,
+      bio: publicBioForDisplay(displayProfile.bio),
       avatar: displayProfile.avatar,
+      website: "website" in displayProfile ? String(displayProfile.website ?? "") : "",
       favoriteGenres: [...displayProfile.favoriteGenres],
       developmentGenres: [...displayProfile.developmentGenres],
     });
     setGenreLimitMessage(null);
+    setSaveError(null);
     setEditing(true);
   }
 
@@ -144,14 +160,19 @@ export function StudioProfileSelfPage() {
       try {
         const previousName = resolveDeveloperPublicName(user, developerProfile);
         await updateDisplayName(displayName);
-        await saveDeveloperProfile(user.id, {
-          publicName: displayName,
-          profile: normalizeDeveloperProfileText(draft.bio),
-          xAccount: developerProfile?.xAccount,
-          website: developerProfile?.website,
-          discordUrl: developerProfile?.discordUrl,
-          youtubeUrl: developerProfile?.youtubeUrl,
-        });
+        await saveDeveloperProfile(
+          user.id,
+          toDeveloperProfileInput(
+            {
+              displayName,
+              bio: draft.bio,
+              avatarUrl: draft.avatar.trim() || null,
+              website: draft.website.trim() || undefined,
+              xAccount: developerProfile?.xAccount,
+            },
+            developerProfile,
+          ),
+        );
         if (previousName !== displayName) {
           await syncOwnedProjectDisplayNames(user.id, displayName);
         }
@@ -234,6 +255,28 @@ export function StudioProfileSelfPage() {
                 className="mt-2 w-full rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-2.5 text-sm text-zinc-200 focus:border-violet-500/40 focus:outline-none"
               />
             </div>
+            {hideV0Mock ? (
+              <div>
+                <label
+                  className="block text-xs font-medium text-zinc-500"
+                  htmlFor="studio-profile-website"
+                >
+                  Webサイト
+                </label>
+                <input
+                  id="studio-profile-website"
+                  type="url"
+                  value={draft.website}
+                  onChange={(event) =>
+                    setDraft((current) => ({ ...current, website: event.target.value }))
+                  }
+                  placeholder="https://"
+                  className="mt-2 w-full rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-2.5 text-sm text-zinc-200 focus:border-violet-500/40 focus:outline-none"
+                />
+              </div>
+            ) : null}
+            {!hideV0Mock ? (
+            <>
             <fieldset>
               <legend className="text-xs font-medium text-zinc-500">
                 開発ジャンル（{STUDIO_DEVELOPMENT_GENRE_MAX}つまで）
@@ -285,6 +328,8 @@ export function StudioProfileSelfPage() {
                 </div>
               </div>
             </fieldset>
+            </>
+            ) : null}
           </div>
           <div className="mt-5 flex gap-2">
             <button
@@ -309,8 +354,10 @@ export function StudioProfileSelfPage() {
       <div className="mx-auto max-w-4xl space-y-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white sm:text-3xl">Studioプロフィール</h1>
-            <p className="mt-2 text-sm text-zinc-500">開発者として公開される自己紹介です。</p>
+            <h1 className="text-2xl font-bold text-white sm:text-3xl">プロフィール</h1>
+            <p className="mt-2 text-sm text-zinc-500">
+              プレイヤー・開発者で共通の公開プロフィールです。
+            </p>
           </div>
           <button
             type="button"
@@ -343,6 +390,9 @@ export function StudioProfileSelfPage() {
               <p className="mt-3 text-sm leading-relaxed text-zinc-400">
                 {displayProfile.bio || (hideV0Mock ? "自己紹介はまだ未設定です。" : displayProfile.bio)}
               </p>
+              {hideV0Mock && "website" in displayProfile && displayProfile.website ? (
+                <p className="mt-2 truncate text-xs text-zinc-500">{displayProfile.website}</p>
+              ) : null}
               {!hideV0Mock ? (
                 <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-zinc-500 sm:justify-start">
                   <span>Forge参加 {displayProfile.joinedAt}</span>

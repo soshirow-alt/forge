@@ -162,6 +162,7 @@ export type DeveloperProfileRow = {
   creator_id: string;
   public_name: string;
   profile: string;
+  avatar_url?: string | null;
   x_account: string | null;
   website: string | null;
   discord_url: string | null;

@@ -2,7 +2,9 @@ export type DeveloperProfile = {
   userId: string;
   creatorId: string;
   publicName: string;
+  /** Public bio (自己紹介). Empty string = unset. */
   profile: string;
+  avatarUrl?: string;
   xAccount?: string;
   website?: string;
   discordUrl?: string;
@@ -12,17 +14,22 @@ export type DeveloperProfile = {
 export type DeveloperProfileInput = {
   publicName: string;
   profile: string;
+  avatarUrl?: string;
   xAccount?: string;
   website?: string;
   discordUrl?: string;
   youtubeUrl?: string;
 };
 
+/** Legacy stored placeholder — treat as empty when reading. */
 export const EMPTY_DEVELOPER_PROFILE_TEXT = "（自己紹介は未設定）";
 
 export function normalizeDeveloperProfileText(profile: string): string {
   const trimmed = profile.trim();
-  return trimmed || EMPTY_DEVELOPER_PROFILE_TEXT;
+  if (!trimmed || trimmed === EMPTY_DEVELOPER_PROFILE_TEXT) {
+    return "";
+  }
+  return trimmed;
 }
 
 export function createDeveloperProfile(
@@ -34,6 +41,7 @@ export function createDeveloperProfile(
     creatorId: `dev-${userId}`,
     publicName: input.publicName.trim(),
     profile: normalizeDeveloperProfileText(input.profile),
+    avatarUrl: input.avatarUrl?.trim() || undefined,
     xAccount: input.xAccount?.trim() || undefined,
     website: input.website?.trim() || undefined,
     discordUrl: input.discordUrl?.trim() || undefined,

@@ -5,6 +5,7 @@ import { useGames } from "@/components/games-provider";
 import type { DevlogEntry } from "@/lib/devlogs";
 import { resolveDeveloperSocialLinksForDisplay } from "@/lib/developer-external-link-defaults";
 import { resolveOwnerUserIdFromRouteId } from "@/lib/developer-profiles";
+import { publicBioForDisplay } from "@/lib/public-profile";
 import type { Game } from "@/lib/mock-games";
 import { pickFeatureTagsFromGameTags } from "@/lib/forge-feature-tag-options";
 import { resolveProjectGenres } from "@/lib/project-genres";
@@ -119,7 +120,7 @@ export function useCreatorProfile(routeId: string) {
       ownerGames[0]?.ownerName ??
       ownerGames[0]?.creator ??
       "開発者";
-    const bio = stored?.profile ?? "";
+    const bio = publicBioForDisplay(stored?.profile);
     const creatorId = stored?.creatorId ?? `dev-${userId}`;
     const handle = creatorId.replace(/^dev-/, "").slice(0, 8);
 
@@ -141,7 +142,10 @@ export function useCreatorProfile(routeId: string) {
       name,
       handle,
       bio,
-      avatar: ownerGames[0]?.thumbnailUrl?.trim() || "/images/landing/game-1.png",
+      avatar:
+        stored?.avatarUrl?.trim() ||
+        ownerGames[0]?.thumbnailUrl?.trim() ||
+        "/images/landing/game-1.png",
       website: stored?.website || socialLinks.officialUrl || undefined,
       xAccount: stored?.xAccount || socialLinks.xUrl || undefined,
       discordUrl: socialLinks.discordUrl || undefined,
