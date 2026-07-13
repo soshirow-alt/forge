@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-07-13 — OGP診断 C/D（既知正常PNG / Skank正規化PNG）
+
+- **C** — `/__ogp-diagnostic/forge-known-good-20260713-c`（画像は既存 `/images/og-default-v2.png`）
+- **D** — `/__ogp-diagnostic/skank-normalized-png-20260713-d`（Skank 1200×630 を sRGB PNG 再エンコードして同一 origin 配信）
+- **対象外** — 作品ページ・DB・Storage・RPC・`og_image_url`・残8作品は変更なし
+
 ## 2026-07-13 — OGP診断ルートを %5F 公開セグメントへ
 
 - **原因** — App Router でフォルダ名 `__ogp-diagnostic` は private（先頭 `_`）扱いとなり、公開 URL `/__ogp-diagnostic/...` が 404 になる

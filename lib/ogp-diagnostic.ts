@@ -1,4 +1,4 @@
-/** Temporary X-card host A/B diagnostics. Do not use for product UI. */
+/** Temporary X-card diagnostics. Do not use for product UI. */
 
 export const SKANK_OG_TITLE = "Skank Boost - スカンク、飛び立て | Forge";
 export const SKANK_OG_DESCRIPTION =
@@ -10,10 +10,19 @@ export const SKANK_SUPABASE_OG_IMAGE_URL =
 export const SKANK_FORGE_OG_IMAGE_PATH =
   "/__ogp-diagnostic-image/skank-ae21e70d34c58acf-1200x630.jpg";
 
+export const KNOWN_GOOD_OG_IMAGE_PATH = "/images/og-default-v2.png";
+
+export const SKANK_NORMALIZED_PNG_PATH =
+  "/__ogp-diagnostic-image/skank-normalized-20260713-d.png";
+
 export const OGP_DIAGNOSTIC_PATH_A =
   "/__ogp-diagnostic/skank-supabase-20260713-a";
 export const OGP_DIAGNOSTIC_PATH_B =
   "/__ogp-diagnostic/skank-forge-20260713-b";
+export const OGP_DIAGNOSTIC_PATH_C =
+  "/__ogp-diagnostic/forge-known-good-20260713-c";
+export const OGP_DIAGNOSTIC_PATH_D =
+  "/__ogp-diagnostic/skank-normalized-png-20260713-d";
 
 export const OG_W = 1200;
 export const OG_H = 630;
@@ -35,6 +44,7 @@ export function absolutePageUrl(request: Request, pathname: string): string {
 export function buildDiagnosticOgHtml(opts: {
   pageUrl: string;
   imageUrl: string;
+  imageType?: "image/jpeg" | "image/png";
   title?: string;
   description?: string;
 }): string {
@@ -42,6 +52,7 @@ export function buildDiagnosticOgHtml(opts: {
   const description = escapeHtml(opts.description ?? SKANK_OG_DESCRIPTION);
   const pageUrl = escapeHtml(opts.pageUrl);
   const imageUrl = escapeHtml(opts.imageUrl);
+  const imageType = opts.imageType ?? "image/jpeg";
 
   return `<!DOCTYPE html>
 <html lang="ja">
@@ -56,7 +67,7 @@ export function buildDiagnosticOgHtml(opts: {
 <meta property="og:image" content="${imageUrl}">
 <meta property="og:image:width" content="${OG_W}">
 <meta property="og:image:height" content="${OG_H}">
-<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:type" content="${imageType}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${title}">
 <meta name="twitter:description" content="${description}">
