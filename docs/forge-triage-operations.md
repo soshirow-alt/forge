@@ -181,20 +181,22 @@ handoff 更新トリガー: 大テーマ完了 / migration 完了 / ロードマ
 ```text
 preview/landing-01 で実装
   → commit + push + Preview deploy/smoke（自律）
-  → オーナーが「本番反映」等を明示
-  → main merge/push + Production deploy + 必要 migration/DB + smoke + preview 同期（一括・工程再確認なし）
+  → オーナーが「本番反映して」「リリースして」等を明示
+  → main merge/push + Production deploy + smoke + preview 同期（一括・工程再確認なし）
+  → Production DB が必要なら SQL 一式を提示（オーナー手動適用 → Cursor が read-only 検証/smoke）
 ```
 
 | 段階 | Cursor がやること |
 |------|-------------------|
 | **1. Preview 反映** | commit + `git push origin preview/landing-01` + Preview smoke（通常依頼で自律） |
-| **2. 本番指示** | オーナーの「本番反映」「リリース」「本番DBに適用」等がスコープ承認 |
-| **3. 本番反映** | main merge/push・Vercel Production・smoke（**追加確認なし**）。**Production DB migration/write はオーナー手動** — Cursor は SQL 一式を提示 |
+| **2. 本番指示** | 「本番反映して」「リリースして」等 = **コード本番の一括承認**（工程再確認なし） |
+| **3. 本番反映** | main merge/push・Vercel Production・smoke・changelog・main↔preview 同期。**Production DB migration/INSERT/UPDATE/DELETE/backfill/Storage はオーナー手動** — Cursor は SQL 一式を提示 |
 | **4. ブランチ同期** | `preview/landing-01` を `main` と同一 commit に揃える（§8.2） |
 
 - Staging Supabase は常時自律
-- Production Supabase の破壊的変更はオーナー Dashboard 手動（適用後 read-only 検証は Cursor）
+- Production Supabase write はオーナー Dashboard 手動（適用後 read-only 検証は Cursor）
 - 本番未指示のまま main / `--prod` を始めない
+- Run Mode はオーナーの full-auto 寄り。Production DB 境界は維持
 - 正本: `docs/cursor-allow-vs-forge-go.md`
 
 ### 8.2 本番 push 後の Preview 同期（必須）
@@ -240,8 +242,9 @@ git push origin preview/landing-01
 設計 → 実装 → build → Staging（常時自律）→ commit → Preview push/deploy/smoke
 ```
 
-- Staging DB write は常時自律。Production DB migration/write はオーナー手動（SQL 提示＋適用後 read-only 検証は Cursor）
-- Production コード反映はオーナー明示後に一括（§8.1）
+- Staging DB write は常時自律。Production DB migration / INSERT / UPDATE / DELETE / backfill / Storage はオーナー手動（SQL 提示＋適用後 read-only 検証は Cursor）
+- 「本番反映して」「リリースして」等 = Production **コード**一括（main/deploy/smoke/同期・工程再確認なし。§8.1）
+- Run Mode はオーナーの full-auto 寄り。Production DB write だけは手動境界
 - 停止条件は `docs/cursor-allow-vs-forge-go.md` および §10.2
 - `■ 今すぐ私がやるべきこと`（サマリ）には **本当にオーナーしかできないことだけ** 書く。Cursor が実行できる内容は書かない
 
@@ -298,6 +301,7 @@ git push origin preview/landing-01
 
 ## 12. 変更履歴
 
+- **2026-07-14** — Run Mode full-auto 寄り: 「本番反映して」「リリースして」= コード本番一括。Production DB は手動維持。停止条件を整理
 - **2026-06-28** — §8 Preview / main デプロイ手順（Preview 確認 → 本番 → Preview 同期必須・ブランチ同一 commit）
 - **2026-06-16** — §10 Cursor 一気通貫運用（停止条件 9 項目・main 反映準備まで自動可・サマリオーナー欄ルール）
 - **2026-06-13** — 初版（CURSOR キーワード、Run 4 段階、サマリレビュー、UX レビュー、プロダクトレビュー優先順位、チャット移行）

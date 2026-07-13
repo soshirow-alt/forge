@@ -118,13 +118,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 オーナーの明示指示はその作業範囲全体の承認。指示内では commit / push / Staging migration / smoke の再確認をしない。
 
-**Production Supabase**（`bpnisgzxuwdxelhnduuf`）: migration / UPDATE / DELETE / backfill / Storage 変更は **オーナー手動**。Cursor は適用 SQL・実行順・影響範囲・適用後確認 SQL を提示。オーナー適用後の read-only 検証と smoke は自律。
+**Production Supabase**（`bpnisgzxuwdxelhnduuf`）: migration / INSERT / UPDATE / DELETE / backfill / Storage 変更は **オーナー手動**。Cursor は適用 SQL・実行順・影響範囲・適用後確認 SQL を提示。オーナー適用後の read-only 検証と smoke は自律。
 
-**Production コード**: オーナーが本番反映を明示 → main push・Vercel Production deploy・smoke・changelog・main/preview 同期（DB 手動分は上記）。
+**Production コード**: チャットの「本番反映して」「リリースして」等 = **一度の承認**で main 反映+push・Vercel Production deploy・smoke・changelog・main↔preview 同期（工程再確認なし。DB 手動分は上記）。
 
-停止するのは次のみ: 指示外差分の混在、依頼範囲超過、想定外の大量更新削除、対象特定不能（Staging 接続手段不足含む）、重大リスク判明、依頼外の不可逆操作、secret 本体の表示。加えて **§10.2**。
+停止するのは次のみ: 指示外未commit差分の混在、対象環境・行の特定不能、想定外の大量変更、依頼外の不可逆操作、secret 本体の表示（依頼超過データ変更・重大リスク判明も含む）。加えて **§10.2**。
 
-Cursor ALLOW / 境界: `docs/cursor-allow-vs-forge-go.md` / `.cursor/rules/stall-detection-resume.mdc`。
+Cursor ALLOW / Run Mode（full-auto 寄り・Production DB は手動）: `docs/cursor-allow-vs-forge-go.md` / `.cursor/rules/stall-detection-resume.mdc`。
 
 ## Owner × ChatGPT × Cursor トリガー運用（恒久）
 
@@ -143,13 +143,13 @@ ChatGPT の役割は **コードレビューではなくプロダクトレビュ
 
 正本: **`docs/forge-triage-operations.md` §8**
 
-- 通常修正: Preview まで自律。Staging DB 自律
-- オーナーが本番反映を明示 → コードの main / Vercel Production / smoke / 同期。**Production DB はオーナー手動**（SQL 一式を提示）
+- 通常修正: Preview まで自律（調査→編集→verify→commit→push→deploy→smoke）。Staging DB 自律
+- 「本番反映して」「リリースして」等 → コードの main / Vercel Production / smoke / 同期を一括（工程再確認なし）。**Production DB はオーナー手動**（SQL 一式を提示）
 - 本番 push 後は `preview/landing-01` を `main` に fast-forward + push
 
 ## Supabase migration
 
 - **Staging**: Cursor が自律適用（Dashboard / Management API / 利用可能な接続）
-- **Production**: オーナーが Dashboard SQL で手動適用（可視性優先）。手順提示は Cursor。適用後 read-only 検証は Cursor
+- **Production**: オーナーが Dashboard SQL で手動適用（可視性優先）。migration / INSERT / UPDATE / DELETE / backfill / Storage は手動。手順提示は Cursor。適用後 read-only 検証は Cursor
 - 手順メモ: `docs/supabase-dashboard-migration-guide.md`
 - 適用後確認: `docs/supabase-post-migration-checklist.md`<!-- END:forge-agent-rules -->

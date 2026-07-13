@@ -1,5 +1,5 @@
 ---
-description: Stall detection — Staging autonomous; Production DB owner-manual; code deploy when instructed
+description: Stall detection — full-auto Preview; chat release = code Production one-shot; Production DB owner-manual
 alwaysApply: true
 ---
 
@@ -11,6 +11,16 @@ alwaysApply: true
 
 チャット上の明示指示を、その作業全体の承認として扱う。指示範囲内では commit / Preview push / Staging migration / smoke /（コードの）本番反映 の再確認をしない。
 
+**「本番反映して」「リリースして」**（および同趣旨）= **一度の承認**で次を一括実行（工程再確認なし）:
+
+- main 反映 + push
+- Vercel Production deploy / promote
+- Production smoke
+- main ↔ `preview/landing-01` 同期
+- changelog（必要な範囲）
+
+**含めない**: Production Supabase の migration / INSERT / UPDATE / DELETE / backfill / Storage 変更（§1）。
+
 ## 1. Supabase 境界
 
 ### Staging（`vuqpwvjvgyxffmvpfrxo`）— 常時自律
@@ -19,7 +29,7 @@ migration / SELECT・INSERT・UPDATE・DELETE / seed・backfill / RPC / Storage 
 
 ### Production（`bpnisgzxuwdxelhnduuf`）— DB は原則オーナー手動
 
-migration / UPDATE / DELETE / backfill / Storage 変更は **オーナーが Dashboard 等で手動実行**。
+migration / INSERT / UPDATE / DELETE / backfill / Storage 変更は **オーナーが Dashboard 等で手動実行**。
 
 Cursor は次を提示して停止せず待ちに入る（チャットで SQL 一式を渡す）:
 
@@ -38,26 +48,26 @@ Production の read-only（SELECT / 件数 / 行特定）はいつでも可。
 
 調査 → 編集 → verify → commit → `preview/landing-01` push → Preview deploy → Preview smoke。
 
-### Production コード反映（オーナーが本番反映を明示）
+### Production コード反映（「本番反映して」「リリースして」等）
 
 一度の指示で: main merge/push・Vercel Production deploy/promote・Production smoke・changelog・main/preview 同期。
 
-**Production DB migration / 破壊的 write は含めない**（§1 のとおりオーナー手動）。必要な SQL 一式は同時に提示する。
+**Production DB migration / INSERT / UPDATE / DELETE / backfill / Storage は含めない**（§1 のとおりオーナー手動）。必要な SQL 一式は同時に提示する。
 
 ## 3. 停止条件（これだけ）
 
 1. 指示された変更以外の未commit差分が本番反映へ混ざる
-2. 当初の依頼範囲を超えるデータ変更が必要
-3. 想定外の大量 UPDATE／DELETE になる
-4. 対象環境や対象データを一意に特定できない（Staging 適用トークン／接続が無く進めない場合も含む）
-5. 調査により、当初説明とは異なる重大リスクが判明
-6. force push・履歴破壊・広範囲削除など、依頼されていない不可逆操作が必要
-7. secret の内容そのものを画面へ表示・共有する必要がある
+2. 対象環境や対象データを一意に特定できない（Staging 適用トークン／接続が無く進めない場合も含む）
+3. 想定外の大量変更（UPDATE／DELETE／backfill 等）になる
+4. force push・履歴破壊・広範囲削除など、依頼されていない不可逆操作が必要
+5. secret の内容そのものを画面へ表示・共有する必要がある
+
+（依頼範囲超過のデータ変更が必要、または当初と異なる重大リスクが判明した場合も停止。）
 
 ## 4. 報告
 
 完了・エラー・上記停止時のみ。工程ごとの途中確認は不要。
 
-## 5. Cursor ALLOW
+## 5. Cursor ALLOW / Run Mode
 
-Run Mode は Auto-review。Staging／Preview／明示済みコード本番はカードを減らし、Production DB write はオーナー手動のためエージェントから実行しない。正本: `docs/cursor-allow-vs-forge-go.md`。
+オーナーは **full-auto 寄り**の Run Mode を意図。Staging／Preview／チャットで指示済みのコード本番はカードを減らし自律実行。**Production DB write はオーナー手動のためエージェントから実行しない**。正本: `docs/cursor-allow-vs-forge-go.md`。

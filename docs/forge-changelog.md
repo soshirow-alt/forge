@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-14 — Ops: full-auto Run Mode（コード本番一括 / Production DBは手動）
+
+- **内容** — 「本番反映して」「リリースして」= main 反映+push・Production deploy・smoke・main↔preview 同期の一括承認（工程再確認なし）。通常作業は Preview まで自律
+- **境界** — Production Supabase の migration / INSERT / UPDATE / DELETE / backfill / Storage はオーナー手動。Cursor は SQL 一式＋適用後 read-only 検証/smoke
+- **文書** — AGENTS / stall / forge.mdc / permissions / `docs/cursor-allow-vs-forge-go.md` / triage §8・§10.1
+- **対象外** — プロダクト UI・今回の Production deploy なし
+
 ## 2026-07-14 — Supabase境界: Staging自律 / Production DBはオーナー手動
 
 - **Staging**（Preview 接続先）— migration・seed・CRUD・Storage を Cursor が自律実行

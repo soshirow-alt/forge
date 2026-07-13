@@ -6,7 +6,8 @@
   // Do NOT re-ask commit / Preview push / Staging migration / main / Production
   // when the owner already instructed that scope.
   //
-  // Keep Run Mode = Auto-review (do NOT use Run Everything).
+  // Run Mode: owner prefers full-auto for Preview + instructed Production code
+  // release. Production Supabase writes remain owner-manual (see block_instructions).
   // Do NOT add ultra-broad prefixes: "git", "npm", "npx", "curl", "rm".
 
   "terminalAllowlist": [
@@ -128,18 +129,18 @@
   "autoRun": {
     "allow_instructions": [
       "Treat the owner's explicit chat instruction as approval for the stated scope. Do not re-ask commit, Preview push, Staging migration, code Production deploy, or smoke inside that scope.",
+      "Phrases like 本番反映して / リリースして (and equivalents) are one-shot approval for: main reflect+push, Vercel Production deploy/promote, Production smoke, changelog, and main↔preview sync — no per-step confirmation.",
       "Always allow Staging Supabase (vuqpwvjvgyxffmvpfrxo) migration, CRUD, seed, backfill, RPC, Storage, service-role verification, and smoke/cleanup without asking.",
       "For ordinary fixes: investigation, edits, verify/build/test, commit, preview/landing-01 push, Preview deploy, Preview smoke without asking.",
-      "When the owner instructed Production code release: allow main push, vercel --prod/promote, Production HTTP smoke, changelog, and main/preview sync without re-asking.",
       "Allow Production Supabase (bpnisgzxuwdxelhnduuf) read-only SELECT/REST GET/read-only RPC/counts anytime.",
-      "Prefer execution paths that avoid extra ALLOW cards."
+      "Owner prefers full-auto Run Mode for Preview and instructed Production code release. Prefer execution paths that avoid extra ALLOW cards."
     ],
     "block_instructions": [
-      "Do NOT execute Production Supabase migration, UPDATE, DELETE, backfill, or Storage writes yourself. Those are owner-manual. Provide SQL, order, impact, and verification queries instead; after the owner applies, run read-only verify and smoke.",
-      "Stop and ask only for: unrelated uncommitted diffs mixing into Production release; data changes beyond scope; unexpectedly large UPDATE/DELETE; inability to identify target env/rows or missing Staging apply credentials; newly discovered major risk; unsolicited force push/history rewrite/broad delete; or displaying raw secrets/JWTs/service-role/.env contents.",
+      "Do NOT execute Production Supabase migration, INSERT, UPDATE, DELETE, backfill, or Storage writes yourself. Those are owner-manual even under full-auto Run Mode. Provide SQL, order, impact, and verification queries instead; after the owner applies, run read-only verify and smoke.",
+      "Stop and ask only for: unrelated uncommitted diffs mixing into Production release; inability to identify target env/rows or missing Staging apply credentials; unexpectedly large mass changes; unsolicited force push/history rewrite/broad delete; or displaying raw secrets/JWTs/service-role/.env contents. Also stop if data changes beyond scope are required or a newly discovered major risk appears.",
       "Block force push, git reset --hard, and git clean unless the owner explicitly requested that irreversible action.",
       "Block printing or copying secret values into chat or terminal output.",
-      "If Production code release was NOT instructed, do not start main push or vercel --prod after Preview."
+      "If Production code release was NOT instructed (no 本番反映して / リリースして / equivalent), do not start main push or vercel --prod after Preview."
     ]
   }
 }
