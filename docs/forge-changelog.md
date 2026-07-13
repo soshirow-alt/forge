@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-07-14 — 公開プロフィール共通化 本番反映
+
+- **内容** — プレイヤー/Studio 公開プロフィール共通化（`071d372` / `508f881`）と関連 ops を Production コードへ反映。migration `064`（`avatar_url`）はオーナー適用済み前提
+- **deploy** — （デプロイ完了後に追記）
+- **対象外** — Production DB 追加 write・未commitのみんなのFB作業ファイル
+
 ## 2026-07-14 — Ops: full-auto Run Mode（コード本番一括 / Production DBは手動）
 
 - **内容** — 「本番反映して」「リリースして」= main 反映+push・Production deploy・smoke・main↔preview 同期の一括承認（工程再確認なし）。通常作業は Preview まで自律
