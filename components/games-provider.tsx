@@ -264,6 +264,7 @@ type GamesContextValue = {
   /** visibility=public のみ — /home・検索用（auth 非依存） */
   publicGames: Game[];
   publicCatalogReady: boolean;
+  developerProfilesReady: boolean;
   /** /search 表示時など — 公開カタログを再取得（同一セッションの古い件数を捨てる） */
   refreshPublicCatalog: () => Promise<void>;
   /** 公開作品の集計 stats（045 RPC）。migration 未適用時は 0 */
@@ -478,6 +479,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
   const [submittedGames, setSubmittedGames] = useState<Game[]>([]);
   const [publicGames, setPublicGames] = useState<Game[]>([]);
   const [publicCatalogReady, setPublicCatalogReady] = useState(false);
+  const [developerProfilesReady, setDeveloperProfilesReady] = useState(false);
   const [publicProjectStats, setPublicProjectStats] = useState<
     Record<string, ProjectPublicStats>
   >({});
@@ -533,6 +535,24 @@ export function GamesProvider({ children }: { children: ReactNode }) {
 
     setSubmittedGames(projects.map((game) => mergeGameWithExtras(game)));
     setDeveloperProfiles(profiles);
+  }, []);
+
+  const reloadPublicDeveloperProfiles = useCallback(async () => {
+    const supabase = getOptionalSupabaseClient();
+    if (!supabase) {
+      setDeveloperProfiles([]);
+      setDeveloperProfilesReady(true);
+      return;
+    }
+
+    try {
+      const profiles = await fetchDeveloperProfiles(supabase);
+      setDeveloperProfiles(profiles);
+    } catch {
+      setDeveloperProfiles([]);
+    } finally {
+      setDeveloperProfilesReady(true);
+    }
   }, []);
 
   const publicCatalogReloadInFlightRef = useRef<Promise<void> | null>(null);
@@ -628,6 +648,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         )
           .then(setReleaseEvents)
           .catch(() => setReleaseEvents([]));
+        void reloadPublicDeveloperProfiles();
       };
 
       // The public catalog is intentionally loaded by /search on entry.
@@ -640,8 +661,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     } else {
       setDevlogsReady(true);
       setPublicProjectStats({});
+      setDeveloperProfilesReady(true);
     }
-  }, []);
+  }, [reloadPublicDeveloperProfiles]);
 
   useEffect(() => {
     if (!authHydrated) {
@@ -696,7 +718,8 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       catalogUserIdRef.current = undefined;
       setCatalogReady(true);
       setSubmittedGames([]);
-      setDeveloperProfiles([]);
+      // Keep publicly readable developer_profiles for /creators pages.
+      void reloadPublicDeveloperProfiles();
       return;
     }
 
@@ -718,6 +741,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       .finally(() => {
         if (!cancelled) {
           setCatalogReady(true);
+          setDeveloperProfilesReady(true);
           forgePerfMeasure("games.catalogReady", "games-provider-mount", {
             userId: user?.id ?? null,
           });
@@ -727,7 +751,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [authHydrated, user?.id, reloadFromStorage]);
+  }, [authHydrated, user?.id, reloadFromStorage, reloadPublicDeveloperProfiles]);
 
   useEffect(() => {
     if (!hydrated) {
@@ -2496,6 +2520,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       submittedGames,
       publicGames,
       publicCatalogReady,
+      developerProfilesReady,
       refreshPublicCatalog,
       getPublicProjectStats,
       catalogReady,
@@ -2585,6 +2610,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       submittedGames,
       publicGames,
       publicCatalogReady,
+      developerProfilesReady,
       refreshPublicCatalog,
       getPublicProjectStats,
       authHydrated,

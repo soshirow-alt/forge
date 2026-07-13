@@ -24,10 +24,8 @@ import { BadgeCheck, Globe, MapPin, Sprout, UserPlus, Users } from "lucide-react
 type DevTab = CreatorProfileTab;
 
 const tabs: { id: DevTab; label: string }[] = [
-  { id: "overview", label: "概要" },
+  { id: "games", label: "作品" },
   { id: "devlog", label: "開発ログ" },
-  { id: "achievements", label: "実績" },
-  { id: "followers", label: "フォロワー" },
 ];
 
 export function DeveloperProfileV0Page({ id }: { id: string }) {
@@ -50,9 +48,7 @@ function DeveloperProfileV0PageContent({ id }: { id: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnPath = `/creators/${id}`;
-  const activeTab = parseCreatorProfileTab(searchParams.get("tab"), {
-    includeFollowers: true,
-  });
+  const activeTab = parseCreatorProfileTab(searchParams.get("tab"));
   const [following, setFollowing] = useState(dev.following);
   const { getStatus } = useCommunityJoinV0();
   const communityId = communityIdFromDeveloperId(id);
@@ -182,7 +178,7 @@ function DeveloperProfileV0PageContent({ id }: { id: string }) {
             </div>
           </div>
 
-          {activeTab === "overview" && (
+          {activeTab === "games" && (
             <div className="space-y-8">
               <section>
                 <h2 className="text-base font-semibold text-white">開発中の作品（{dev.inDevGames.length}）</h2>
@@ -244,26 +240,6 @@ function DeveloperProfileV0PageContent({ id }: { id: string }) {
               ))}
             </ul>
           )}
-          {activeTab === "achievements" && (
-            <div className="grid grid-cols-3 gap-4 sm:grid-cols-4">
-              {dev.badges.map((b) => (
-                <div key={b.id} className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4 text-center">
-                  <span className="text-2xl">{b.emoji}</span>
-                  <p className="mt-2 text-xs text-zinc-400">{b.label}</p>
-                </div>
-              ))}
-            </div>
-          )}
-          {activeTab === "followers" && (
-            <ul className="space-y-3">
-              {["しゃねこ", "みかん", "クロノス"].map((name) => (
-                <li key={name} className="flex items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3">
-                  <span className="size-10 rounded-full bg-zinc-800" />
-                  <span className="text-sm text-zinc-300">{name}</span>
-                </li>
-              ))}
-            </ul>
-          )}
         </div>
 
         <aside className="w-full shrink-0 space-y-5 xl:w-72">
@@ -271,10 +247,8 @@ function DeveloperProfileV0PageContent({ id }: { id: string }) {
             <h2 className="text-sm font-semibold text-white">開発者の実績</h2>
             <dl className="mt-4 grid grid-cols-2 gap-3 text-center">
               {[
-                ["開発中", dev.stats.inDevelopment],
-                ["完成", dev.stats.completed],
+                ["作品", dev.stats.inDevelopment + dev.stats.completed],
                 ["フォロワー", dev.stats.followers.toLocaleString()],
-                ["総プレイ", dev.stats.totalPlays.toLocaleString()],
               ].map(([label, value]) => (
                 <div key={String(label)} className="rounded-lg bg-zinc-950/40 px-2 py-3">
                   <dt className="text-xs text-zinc-500">{label}</dt>

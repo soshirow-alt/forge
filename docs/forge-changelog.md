@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07-14 — 開発者公開プロフィール: 画像・FB指標・UI整理
+
+- **アイコン** — `developer_profiles.avatar_url` を正本。`ProfileAvatar` で data/http を安全表示し、失敗時は灰色フォールバック（壊れた画像・alt 非表示）。ゲームサムネへの誤フォールバックを廃止
+- **作品サムネ** — ホームと同じ `/api/public/projects/{id}/thumbnail` + `DiscoveryGameThumbnail`
+- **FB数** — 公開カタログの `get_public_project_stats`（登録ユーザー distinct）を利用。プロフィール表示時に public catalog を refresh
+- **UI** — ヘッダー縮小。参加申請・通報は三点メニューへ。指標は作品数/開発ログのみ。タブは作品・開発ログ。横長説明カードを発見カード型へ
+- **対象外** — Production 反映なし（Preview まで）
+
 ## 2026-07-14 — ホーム「直近7日で反応」棚: プレイ単独を候補から除外
 
 - **症状** — 「フィードバック 0 / フォロー 0」の作品が棚に混ざり、FB がある作品より前に見える（ヒーロー soft 除外と相まって）

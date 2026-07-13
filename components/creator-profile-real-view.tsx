@@ -1,14 +1,16 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CreatorFollowButton } from "@/components/creator-follow-button";
 import { CreatorCommunityJoinButton } from "@/components/creator-community-join-button";
 import { ContentReportButton } from "@/components/content-report-button";
-import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
-import { PlayerShell, GameThumbnail } from "@/components/player-shell";
+import { DiscoveryCardStatPills } from "@/components/discovery-card-stat-pills";
+import { DiscoveryGameThumbnail } from "@/components/discovery-game-thumbnail";
+import { PlayerShell } from "@/components/player-shell";
+import { ProfileAvatar } from "@/components/profile-avatar";
+import { XLinkedHandleBadge } from "@/components/x-linked-handle-badge";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { useCreatorPublicXUsername } from "@/hooks/use-resource-public-x-username";
@@ -20,17 +22,13 @@ import {
 } from "@/lib/creator-profile-tabs";
 import { buildGameDetailTabHref } from "@/lib/game-detail-tabs";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
-import { shouldHideV0MockContent } from "@/lib/production-mode";
-import { XLinkedHandleBadge } from "@/components/x-linked-handle-badge";
-import { DiscoveryCardStatPills } from "@/components/discovery-card-stat-pills";
-import { BadgeCheck, MapPin } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 
 type CreatorTab = CreatorProfileTab;
 
 const tabs: { id: CreatorTab; label: string }[] = [
-  { id: "overview", label: "概要" },
+  { id: "games", label: "作品" },
   { id: "devlog", label: "開発ログ" },
-  { id: "achievements", label: "実績" },
 ];
 
 function xProfileHref(account: string): string {
@@ -63,6 +61,57 @@ function CreatorSocialLink({
   );
 }
 
+function ProfileMoreMenu({
+  developerUserId,
+  name,
+  routeId,
+}: {
+  developerUserId: string;
+  name: string;
+  routeId: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        aria-label="その他"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+        className="inline-flex size-9 items-center justify-center rounded-lg border border-zinc-700 text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200"
+      >
+        <MoreHorizontal className="size-4" aria-hidden="true" />
+      </button>
+      {open ? (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-10 cursor-default"
+            aria-label="メニューを閉じる"
+            onClick={() => setOpen(false)}
+          />
+          <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-zinc-700 bg-zinc-950 p-2 shadow-xl">
+            <div className="px-2 py-1.5">
+              <CreatorCommunityJoinButton developerUserId={developerUserId} />
+            </div>
+            <div className="px-2 py-1.5">
+              <ContentReportButton
+                target={{
+                  targetType: "developer",
+                  targetId: developerUserId,
+                  contextLabel: name,
+                }}
+                returnPath={`/creators/${routeId}`}
+              />
+            </div>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 export function CreatorProfileRealView({
   profile,
   isSelf,
@@ -70,7 +119,6 @@ export function CreatorProfileRealView({
   profile: CreatorProfileResolved;
   isSelf: boolean;
 }) {
-  const hideV0Mock = shouldHideV0MockContent();
   useRequireAuth();
   const { xUsername: linkedXUsername } = useCreatorPublicXUsername(profile.routeId);
   const router = useRouter();
@@ -90,29 +138,22 @@ export function CreatorProfileRealView({
     void refreshFollowerCount(profile.userId);
   }, [profile.userId, refreshFollowerCount]);
 
-  const inDevGames = profile.games.filter((game) => game.status === "in-dev");
-  const completedGames = profile.games.filter((game) => game.status === "completed");
-  const achievementStats = [
-    ["公開中", profile.stats.inDevelopment + profile.stats.completed],
-    ["開発中", profile.stats.inDevelopment],
-    ["完成", profile.stats.completed],
-    ["開発ログ", profile.recentDevlogs.length],
-  ] as const;
-
   return (
     <PlayerShell activeNav="creator-search">
       <div className="space-y-6">
-          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 sm:p-8">
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)] lg:items-start">
-              <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-                <span className="relative mx-auto size-24 shrink-0 overflow-hidden rounded-full bg-zinc-800 sm:mx-0">
-                  <Image src={profile.avatar} alt="" fill className="object-cover" />
-                </span>
-                <div className="min-w-0 flex-1 text-center sm:text-left">
-                  <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                    <h1 className="text-2xl font-bold text-white">{profile.name}</h1>
-                    <BadgeCheck className="size-5 text-violet-400" aria-hidden="true" />
-                  </div>
+        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            <ProfileAvatar
+              src={profile.avatar}
+              className="mx-auto size-20 shrink-0 sm:mx-0 sm:size-24"
+              size={96}
+            />
+            <div className="min-w-0 flex-1 text-center sm:text-left">
+              <div className="flex flex-wrap items-start justify-center gap-3 sm:justify-between">
+                <div className="min-w-0">
+                  <h1 className="text-xl font-bold text-white sm:text-2xl">
+                    {profile.name}
+                  </h1>
                   <p className="mt-1 text-sm text-zinc-500">
                     {linkedXUsername ? (
                       <>
@@ -126,192 +167,164 @@ export function CreatorProfileRealView({
                     <span className="mx-2 text-zinc-700" aria-hidden="true">
                       ·
                     </span>
-                    フォロワー {followerCount.toLocaleString()}人
+                    フォロワー {followerCount.toLocaleString()}
                   </p>
-                  {profile.bio ? (
-                    <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-400">
-                      {profile.bio}
-                    </p>
-                  ) : null}
-                  <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-500 sm:justify-start">
-                    <span className="inline-flex items-center gap-1">
-                      <MapPin className="size-3.5" aria-hidden="true" />
-                      日本
-                    </span>
-                    {profile.xAccount ? (
-                      <CreatorSocialLink
-                        href={xProfileHref(profile.xAccount)}
-                        label="X"
-                      />
-                    ) : null}
-                    {profile.website ? (
-                      <CreatorSocialLink href={websiteHref(profile.website)} label="公式サイト" />
-                    ) : null}
-                    {profile.discordUrl ? (
-                      <CreatorSocialLink href={profile.discordUrl} label="Discord" />
-                    ) : null}
-                    {profile.youtubeUrl ? (
-                      <CreatorSocialLink href={profile.youtubeUrl} label="YouTube" />
-                    ) : null}
-                  </div>
-                  {!isSelf ? (
-                    <div className="mt-5 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
-                      <CreatorFollowButton
-                        creatorRouteKey={profile.routeId}
-                        developerUserId={profile.userId}
-                      />
-                      <CreatorCommunityJoinButton developerUserId={profile.userId} />
-                      <ContentReportButton
-                        target={{
-                          targetType: "developer",
-                          targetId: profile.userId,
-                          contextLabel: profile.name,
-                        }}
-                        returnPath={`/creators/${profile.routeId}`}
-                      />
-                    </div>
-                  ) : null}
                 </div>
+                {!isSelf ? (
+                  <div className="flex items-center gap-2">
+                    <CreatorFollowButton
+                      creatorRouteKey={profile.routeId}
+                      developerUserId={profile.userId}
+                    />
+                    <ProfileMoreMenu
+                      developerUserId={profile.userId}
+                      name={profile.name}
+                      routeId={profile.routeId}
+                    />
+                  </div>
+                ) : null}
               </div>
 
-              <dl className="grid grid-cols-2 gap-3 text-center">
-                {achievementStats.map(([label, value]) => (
-                  <div key={label} className="rounded-lg bg-zinc-950/40 px-2 py-3">
-                    <dt className="text-xs text-zinc-500">{label}</dt>
-                    <dd className="mt-1 text-lg font-bold text-white">{value}</dd>
-                  </div>
-                ))}
+              {profile.bio ? (
+                <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-400">
+                  {profile.bio}
+                </p>
+              ) : null}
+
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-500 sm:justify-start">
+                {profile.xAccount ? (
+                  <CreatorSocialLink
+                    href={xProfileHref(profile.xAccount)}
+                    label="X"
+                  />
+                ) : null}
+                {profile.website ? (
+                  <CreatorSocialLink
+                    href={websiteHref(profile.website)}
+                    label="Webサイト"
+                  />
+                ) : null}
+                {profile.discordUrl ? (
+                  <CreatorSocialLink href={profile.discordUrl} label="Discord" />
+                ) : null}
+                {profile.youtubeUrl ? (
+                  <CreatorSocialLink href={profile.youtubeUrl} label="YouTube" />
+                ) : null}
+              </div>
+
+              <dl className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm sm:justify-start">
+                <div className="flex items-baseline gap-1.5">
+                  <dt className="text-zinc-500">作品</dt>
+                  <dd className="font-semibold text-white">
+                    {profile.stats.gameCount}
+                  </dd>
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <dt className="text-zinc-500">開発ログ</dt>
+                  <dd className="font-semibold text-white">
+                    {profile.stats.devlogCount}
+                  </dd>
+                </div>
               </dl>
             </div>
-          </section>
-
-          <div className="border-b border-zinc-800/80">
-            <div className="flex gap-1 overflow-x-auto">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setTab(tab.id)}
-                  className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium ${
-                    activeTab === tab.id
-                      ? "border-violet-500 text-violet-200"
-                      : "border-transparent text-zinc-500 hover:text-zinc-300"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
           </div>
+        </section>
 
-          {activeTab === "overview" && (
-            <div className="space-y-8">
-              <section>
-                <h2 className="text-base font-semibold text-white">
-                  公開中の作品（{profile.games.length}）
-                </h2>
-                {profile.games.length === 0 ? (
-                  <p className="mt-4 text-sm text-zinc-500">まだ公開中の作品がありません。</p>
-                ) : (
-                  <ul className="mt-4 space-y-4">
-                    {inDevGames.map((game) => (
-                      <li key={game.id}>
-                        <Link
-                          href={gameDetailHref(game.id)}
-                          className="flex gap-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 transition-colors hover:border-zinc-700"
-                        >
-                          <GameThumbnail
-                            src={game.image}
-                            alt={game.title}
-                            className="size-24 shrink-0"
-                          />
-                          <div>
-                            <span className="rounded-md border border-violet-500/30 bg-violet-500/10 px-2 py-0.5 text-xs text-violet-300">
-                              開発中
-                            </span>
-                            <h3 className="mt-2 font-semibold text-white">{game.title}</h3>
-                            <p className="mt-1 text-sm text-zinc-400">{game.description}</p>
-                            <p className="mt-2 text-xs text-zinc-500">最終更新 {game.lastUpdated}</p>
-                            <div className="mt-2">
-                              <DiscoveryCardStatPills
-                                feedbackCount={
-                                  getPublicProjectStats(game.id).feedbackParticipantCount
-                                }
-                                watchCount={getPublicProjectStats(game.id).watchCount}
-                                compact
-                              />
-                            </div>
-                          </div>
-                        </Link>
-                      </li>
-                    ))}
-                    {completedGames.map((game) => (
-                      <li key={game.id}>
-                        <Link
-                          href={gameDetailHref(game.id)}
-                          className="flex gap-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 transition-colors hover:border-zinc-700"
-                        >
-                          <GameThumbnail
-                            src={game.image}
-                            alt={game.title}
-                            className="size-24 shrink-0"
-                          />
-                          <div>
-                            <span className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs text-amber-300">
-                              完成品
-                            </span>
-                            <h3 className="mt-2 font-semibold text-white">{game.title}</h3>
-                            <p className="mt-1 text-sm text-zinc-400">{game.description}</p>
-                            <div className="mt-2">
-                              <DiscoveryCardStatPills
-                                feedbackCount={
-                                  getPublicProjectStats(game.id).feedbackParticipantCount
-                                }
-                                watchCount={getPublicProjectStats(game.id).watchCount}
-                                compact
-                              />
-                            </div>
-                          </div>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-            </div>
-          )}
+        <div className="border-b border-zinc-800/80">
+          <div className="flex gap-1 overflow-x-auto">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setTab(tab.id)}
+                className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium ${
+                  activeTab === tab.id
+                    ? "border-violet-500 text-violet-200"
+                    : "border-transparent text-zinc-500 hover:text-zinc-300"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-          {activeTab === "devlog" &&
-            (profile.recentDevlogs.length === 0 ? (
-              <p className="text-sm text-zinc-500">開発ログはまだありません。</p>
+        {activeTab === "games" ? (
+          <section>
+            {profile.games.length === 0 ? (
+              <p className="text-sm text-zinc-500">まだ公開中の作品がありません。</p>
             ) : (
-              <ul className="space-y-3">
-                {profile.recentDevlogs.map((log) => (
-                  <li key={log.id}>
-                    <Link
-                      href={buildGameDetailTabHref(log.gameId, "devlog")}
-                      className="block rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-4 transition-colors hover:border-zinc-700"
-                    >
-                      <p className="text-xs text-zinc-500">
-                        {log.date} · {log.gameTitle}
-                      </p>
-                      <p className="mt-1 font-medium text-white">{log.title}</p>
-                      <p className="mt-2 text-sm leading-relaxed text-zinc-400">{log.excerpt}</p>
-                    </Link>
-                  </li>
-                ))}
+              <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {profile.games.map((game) => {
+                  const stats = getPublicProjectStats(game.id);
+                  return (
+                    <li key={game.id}>
+                      <Link href={gameDetailHref(game.id)} className="block">
+                        <article>
+                          <DiscoveryGameThumbnail
+                            id={game.id}
+                            title={game.title}
+                            genre={game.tags[0]}
+                            version={game.phaseLabel}
+                            image={game.image}
+                            className="aspect-[4/3] w-full"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          />
+                          <h3 className="mt-2 truncate text-sm font-semibold text-white">
+                            {game.title}
+                          </h3>
+                          <p className="mt-0.5 text-xs text-zinc-500">
+                            {game.phaseLabel}
+                            {game.lastUpdated
+                              ? ` · 最終更新 ${game.lastUpdated}`
+                              : null}
+                          </p>
+                          {game.description ? (
+                            <p className="mt-1 line-clamp-1 text-xs text-zinc-400">
+                              {game.description}
+                            </p>
+                          ) : null}
+                          <div className="mt-1.5">
+                            <DiscoveryCardStatPills
+                              feedbackCount={stats.feedbackParticipantCount}
+                              watchCount={stats.watchCount}
+                              compact
+                            />
+                          </div>
+                        </article>
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
-            ))}
+            )}
+          </section>
+        ) : null}
 
-          {activeTab === "achievements" &&
-            (hideV0Mock ? (
-              <FeatureComingSoonPanel
-                title="開発者の実績"
-                description="開発者バッジの表示は Coming Soon です。"
-              />
-            ) : (
-              <FeatureComingSoonPanel title="開発者の実績" />
-            ))}
+        {activeTab === "devlog" ? (
+          profile.recentDevlogs.length === 0 ? (
+            <p className="text-sm text-zinc-500">開発ログはまだありません。</p>
+          ) : (
+            <ul className="space-y-3">
+              {profile.recentDevlogs.map((log) => (
+                <li key={log.id}>
+                  <Link
+                    href={buildGameDetailTabHref(log.gameId, "devlog")}
+                    className="block rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-4 transition-colors hover:border-zinc-700"
+                  >
+                    <p className="text-xs text-zinc-500">
+                      {log.date} · {log.gameTitle}
+                    </p>
+                    <p className="mt-1 font-medium text-white">{log.title}</p>
+                    <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-zinc-400">
+                      {log.excerpt}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )
+        ) : null}
       </div>
     </PlayerShell>
   );

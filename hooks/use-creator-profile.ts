@@ -1,16 +1,19 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useGames } from "@/components/games-provider";
 import type { DevlogEntry } from "@/lib/devlogs";
 import { resolveDeveloperSocialLinksForDisplay } from "@/lib/developer-external-link-defaults";
 import { resolveOwnerUserIdFromRouteId } from "@/lib/developer-profiles";
+import { displayPhase } from "@/lib/development-phases";
 import { publicBioForDisplay } from "@/lib/public-profile";
 import type { Game } from "@/lib/mock-games";
 import { pickFeatureTagsFromGameTags } from "@/lib/forge-feature-tag-options";
 import { resolveProjectGenres } from "@/lib/project-genres";
 import { getPublicGameTags } from "@/lib/play-environment";
 import { isGamePublic } from "@/lib/project-visibility";
+import { publicProjectThumbnailPath } from "@/lib/public-project-thumbnail";
+import { profileAvatarPresets } from "@/lib/profile-avatar-presets";
 
 export type CreatorProfileGameCard = {
   id: string;
@@ -18,7 +21,7 @@ export type CreatorProfileGameCard = {
   description: string;
   image: string;
   tags: string[];
-  status: "in-dev" | "completed";
+  phaseLabel: string;
   lastUpdated: string;
 };
 
@@ -44,10 +47,23 @@ export type CreatorProfileResolved = {
     excerpt: string;
   }[];
   stats: {
-    inDevelopment: number;
-    completed: number;
+    gameCount: number;
+    devlogCount: number;
   };
 };
+
+function defaultAvatarForUser(userId: string): string {
+  const index =
+    userId.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) %
+    profileAvatarPresets.length;
+  return profileAvatarPresets[index]!.src;
+}
+
+function oneLineDescription(text: string): string {
+  const compact = text.replace(/\s+/g, " ").trim();
+  if (compact.length <= 80) return compact;
+  return `${compact.slice(0, 80)}…`;
+}
 
 function gameToCreatorCard(game: Game): CreatorProfileGameCard {
   const genres = resolveProjectGenres(game);
@@ -56,10 +72,10 @@ function gameToCreatorCard(game: Game): CreatorProfileGameCard {
   return {
     id: game.id,
     title: game.title,
-    description: game.description,
-    image: game.thumbnailUrl?.trim() || "",
+    description: oneLineDescription(game.description ?? ""),
+    image: publicProjectThumbnailPath(game.id),
     tags,
-    status: game.releaseStatus === "released" ? "completed" : "in-dev",
+    phaseLabel: displayPhase(game.phase || game.status || ""),
     lastUpdated: game.lastUpdated,
   };
 }
@@ -91,9 +107,17 @@ export function useCreatorProfile(routeId: string) {
   const {
     getDeveloperProfileByRouteId,
     submittedGames,
+    publicGames,
+    publicCatalogReady,
+    developerProfilesReady,
+    refreshPublicCatalog,
     getDevlogsByProject,
     dataReady,
   } = useGames();
+
+  useEffect(() => {
+    void refreshPublicCatalog();
+  }, [refreshPublicCatalog, routeId]);
 
   const resolved = useMemo(() => {
     const stored = getDeveloperProfileByRouteId(routeId);
@@ -104,10 +128,25 @@ export function useCreatorProfile(routeId: string) {
       return null;
     }
 
-    const ownerGames = submittedGames.filter(
-      (game) => game.ownerId === userId && isGamePublic(game),
-    );
-    const allOwnerGames = submittedGames.filter((game) => game.ownerId === userId);
+    const byId = new Map<string, Game>();
+    for (const game of publicGames) {
+      if (game.ownerId === userId && isGamePublic(game)) {
+        byId.set(game.id, game);
+      }
+    }
+    // Owner catalog may arrive before public catalog; include owned public games.
+    for (const game of submittedGames) {
+      if (game.ownerId === userId && isGamePublic(game) && !byId.has(game.id)) {
+        byId.set(game.id, game);
+      }
+    }
+    const ownerGames = [...byId.values()];
+    const allOwnerGames = [
+      ...publicGames.filter((game) => game.ownerId === userId),
+      ...submittedGames.filter(
+        (game) => game.ownerId === userId && !publicGames.some((p) => p.id === game.id),
+      ),
+    ];
 
     if (!stored && ownerGames.length === 0) {
       return null;
@@ -125,8 +164,6 @@ export function useCreatorProfile(routeId: string) {
     const handle = creatorId.replace(/^dev-/, "").slice(0, 8);
 
     const games = ownerGames.map((game) => gameToCreatorCard(game));
-    const inDevelopment = games.filter((game) => game.status === "in-dev").length;
-    const completed = games.filter((game) => game.status === "completed").length;
 
     const allDevlogs = ownerGames.flatMap((game) =>
       getDevlogsByProject(game.id),
@@ -142,10 +179,7 @@ export function useCreatorProfile(routeId: string) {
       name,
       handle,
       bio,
-      avatar:
-        stored?.avatarUrl?.trim() ||
-        ownerGames[0]?.thumbnailUrl?.trim() ||
-        "/images/landing/game-1.png",
+      avatar: stored?.avatarUrl?.trim() || defaultAvatarForUser(userId),
       website: stored?.website || socialLinks.officialUrl || undefined,
       xAccount: stored?.xAccount || socialLinks.xUrl || undefined,
       discordUrl: socialLinks.discordUrl || undefined,
@@ -153,19 +187,20 @@ export function useCreatorProfile(routeId: string) {
       games,
       recentDevlogs: buildRecentDevlogs(ownerGames, allDevlogs),
       stats: {
-        inDevelopment,
-        completed,
+        gameCount: games.length,
+        devlogCount: allDevlogs.length,
       },
     } satisfies CreatorProfileResolved;
   }, [
     getDeveloperProfileByRouteId,
     submittedGames,
+    publicGames,
     routeId,
     getDevlogsByProject,
   ]);
 
   return {
     profile: resolved,
-    loaded: dataReady,
+    loaded: dataReady && developerProfilesReady && publicCatalogReady,
   };
 }

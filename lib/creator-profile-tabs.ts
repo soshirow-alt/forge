@@ -1,24 +1,18 @@
-export type CreatorProfileTab = "overview" | "devlog" | "achievements" | "followers";
+export type CreatorProfileTab = "games" | "devlog";
 
-const TAB_IDS: CreatorProfileTab[] = [
-  "overview",
-  "devlog",
-  "achievements",
-  "followers",
-];
+const TAB_IDS: CreatorProfileTab[] = ["games", "devlog"];
 
 export function parseCreatorProfileTab(
   param: string | null,
-  options?: { includeFollowers?: boolean },
+  _options?: { includeFollowers?: boolean },
 ): CreatorProfileTab {
-  const includeFollowers = options?.includeFollowers ?? false;
-  if (param === "devlog" || param === "achievements") {
-    return param;
+  // Legacy aliases from older public profile URLs
+  if (param === "devlog") return "devlog";
+  if (param === "overview" || param === "achievements" || param === "followers") {
+    return "games";
   }
-  if (param === "followers" && includeFollowers) {
-    return "followers";
-  }
-  return "overview";
+  if (param === "games") return "games";
+  return "games";
 }
 
 export function buildCreatorProfileTabHref(
@@ -26,7 +20,7 @@ export function buildCreatorProfileTabHref(
   tab: CreatorProfileTab,
 ): string {
   const base = `/creators/${encodeURIComponent(creatorId)}`;
-  return tab === "overview" ? base : `${base}?tab=${tab}`;
+  return tab === "games" ? base : `${base}?tab=${tab}`;
 }
 
 export function isCreatorProfileTab(value: string): value is CreatorProfileTab {

@@ -29,7 +29,7 @@ export function DiscoveryGameThumbnail({
       <div className={`relative overflow-hidden rounded-xl bg-zinc-800 ${className}`}>
         <Image
           src={resolvedImage}
-          alt={title}
+          alt=""
           fill
           className="object-cover"
           sizes={sizes}
