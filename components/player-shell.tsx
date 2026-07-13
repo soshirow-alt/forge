@@ -11,7 +11,7 @@ import {
   Gamepad2,
   User,
 } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, Suspense, useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import {
   ForgeShellMobileDrawer,
@@ -145,7 +145,18 @@ function PlayerSidebarNavBody({ showFeedback = true }: { showFeedback?: boolean 
   );
 }
 
-export function PlayerShell({
+function PlayerShellFallback() {
+  return (
+    <div className="flex min-h-screen bg-[#0a0a0a] text-zinc-100">
+      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col">
+        <div className="h-14 border-b border-zinc-800/80" />
+        <div className="flex-1" />
+      </div>
+    </div>
+  );
+}
+
+function PlayerShellFrame({
   children,
   activeNav = "home",
   headerSearchDefault,
@@ -397,5 +408,20 @@ export function EmptyTabState({ title, description }: { title: string; descripti
       <h2 className="mt-4 text-lg font-semibold text-zinc-300">{title}</h2>
       <p className="mt-2 max-w-md text-sm leading-relaxed text-zinc-500">{description}</p>
     </div>
+  );
+}
+
+/** Suspense boundary for useRequireAuth (useSearchParams) in shell chrome. */
+export function PlayerShell(props: {
+  children: ReactNode;
+  activeNav?: PlayerShellNavId;
+  headerSearchDefault?: string;
+  headerSearch?: ReactNode;
+  notificationBadge?: number;
+}) {
+  return (
+    <Suspense fallback={<PlayerShellFallback />}>
+      <PlayerShellFrame {...props} />
+    </Suspense>
   );
 }
