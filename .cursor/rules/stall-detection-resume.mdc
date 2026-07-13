@@ -1,5 +1,5 @@
 ---
-description: Stall detection — owner chat scope approval; Staging/Preview always; Production when instructed
+description: Stall detection — Staging autonomous; Production DB owner-manual; code deploy when instructed
 alwaysApply: true
 ---
 
@@ -9,94 +9,55 @@ alwaysApply: true
 
 ## 0. オーナー指示 = 作業範囲の承認
 
-チャット上の明示指示を、その作業全体の承認として扱う。例:
+チャット上の明示指示を、その作業全体の承認として扱う。指示範囲内では commit / Preview push / Staging migration / smoke /（コードの）本番反映 の再確認をしない。
 
-- 「Stagingに適用して」
-- 「Previewまで進めて」
-- 「本番反映して」／「この修正をリリースして」
-- 「本番DBに適用して」
+## 1. Supabase 境界
 
-指示された範囲内では、次の再確認を**禁止**する:
+### Staging（`vuqpwvjvgyxffmvpfrxo`）— 常時自律
 
-- commit してよいか
-- Preview へ push してよいか
-- Staging migration を実行してよいか
-- main へ反映してよいか
-- Production deploy してよいか
-- 明示指示済みの Production migration／DB 更新を実行してよいか
-- smoke を実行してよいか
+migration / SELECT・INSERT・UPDATE・DELETE / seed・backfill / RPC / Storage / service role 検証 / テストデータ / smoke / 後片付け。再確認しない。
 
-## 1. 自律範囲
+### Production（`bpnisgzxuwdxelhnduuf`）— DB は原則オーナー手動
 
-### Staging（常時・再確認なし）
+migration / UPDATE / DELETE / backfill / Storage 変更は **オーナーが Dashboard 等で手動実行**。
 
-migration / SELECT・INSERT・UPDATE・DELETE / seed・backfill / RPC / Storage write・delete / service role 検証 / テストデータ作成・smoke・後片付け。
+Cursor は次を提示して停止せず待ちに入る（チャットで SQL 一式を渡す）:
+
+- 適用対象 SQL
+- 実行順
+- 影響範囲
+- 適用後の確認 SQL
+
+オーナー適用後の **read-only 検証と Production smoke は自律実行**。
+
+Production の read-only（SELECT / 件数 / 行特定）はいつでも可。
+
+## 2. コード・Preview・Production deploy
 
 ### 通常修正 → Preview まで自律
 
-調査 → 編集 → verify/typecheck/lint/build/test → commit → `preview/landing-01` push → Preview deploy → Preview smoke。
+調査 → 編集 → verify → commit → `preview/landing-01` push → Preview deploy → Preview smoke。
 
-### Production（オーナーが本番反映を明示した一度の指示で承認済み）
+### Production コード反映（オーナーが本番反映を明示）
 
-その指示で以下をまとめて実行してよい（工程ごとの追加承認不要）:
+一度の指示で: main merge/push・Vercel Production deploy/promote・Production smoke・changelog・main/preview 同期。
 
-- main への反映と push
-- Production deploy / promote
-- 対象機能に必要な Production migration
-- 対象機能に必要な Production DB write / Storage
-- Production smoke
-- changelog 記録
-- `main` と `preview/landing-01` の同期
+**Production DB migration / 破壊的 write は含めない**（§1 のとおりオーナー手動）。必要な SQL 一式は同時に提示する。
 
-Production を進めるときは原則 foreground。
-
-### 報告タイミング
-
-- 作業完了
-- エラーまたはタイムアウト
-- 下記「停止条件」に該当
-- 背景ワーカーが終了・消失したのに結果がない
-
-工程ごとの途中確認は不要。P0 だからという理由だけで止めない。
-
-## 2. 停止条件（これだけ）
-
-次の場合**だけ**停止して報告する:
+## 3. 停止条件（これだけ）
 
 1. 指示された変更以外の未commit差分が本番反映へ混ざる
 2. 当初の依頼範囲を超えるデータ変更が必要
 3. 想定外の大量 UPDATE／DELETE になる
-4. 対象環境や対象データを一意に特定できない
+4. 対象環境や対象データを一意に特定できない（Staging 適用トークン／接続が無く進めない場合も含む）
 5. 調査により、当初説明とは異なる重大リスクが判明
 6. force push・履歴破壊・広範囲削除など、依頼されていない不可逆操作が必要
 7. secret の内容そのものを画面へ表示・共有する必要がある
 
-オーナーが具体的に指示した削除や本番変更は、同じ内容を再確認しない。ただし実際の影響範囲が指示より広い場合は停止する。
+## 4. 報告
 
-## 3. 技術停止の判定（実行の詰まり）
+完了・エラー・上記停止時のみ。工程ごとの途中確認は不要。
 
-以下を確認できた場合も「停止」として状態を報告する:
+## 5. Cursor ALLOW
 
-- 背景ワーカーが終了または消失しており、結果が返っていない
-- コマンドが終了済みだが、次の予定工程が開始されていない
-- ツール呼び出しがエラーまたはタイムアウトしている
-- deploy が Error で終了している
-- 実行中プロセスが存在せず、未完了工程だけが残っている
-
-チャット出力がない・数分かかっているだけでは停止と判断しない。状態不明なら勝手に再起動せず報告する。
-
-## 4. 再開
-
-状態が明確で二重実行の危険がないとき、未完了地点から再開する（調査・typecheck・build・Preview・指示済み Production）。同一工程の自動再試行は 1 回まで。
-
-deploy 待ち: 既存 deploy を追跡。Ready → 次へ。Error → 原因報告。不必要に新規 deploy を増やさない。
-
-## 5. 完了報告
-
-合格条件を満たしたらツール操作より先に完了報告する。含めるもの（該当時）: commit / Preview・Production deploy ID / alias / smoke / 未完了（目視はオーナー確認事項）。
-
-承認カード待ちで確定結果の報告を遅らせない。
-
-## 6. Cursor ALLOW
-
-Run Mode は Auto-review。許可済み Staging／Preview／明示承認済み Production は追加 ALLOW カードを誘発しにくい実行を選ぶ。詳細は `docs/cursor-allow-vs-forge-go.md` と `.cursor/permissions.json`。
+Run Mode は Auto-review。Staging／Preview／明示済みコード本番はカードを減らし、Production DB write はオーナー手動のためエージェントから実行しない。正本: `docs/cursor-allow-vs-forge-go.md`。

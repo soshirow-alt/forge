@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-14 — Supabase境界: Staging自律 / Production DBはオーナー手動
+
+- **Staging**（Preview 接続先）— migration・seed・CRUD・Storage を Cursor が自律実行
+- **Production DB** — migration / UPDATE / DELETE / backfill / Storage はオーナー手動。Cursor は SQL・実行順・影響・確認 SQL を提示し、適用後 read-only 検証と smoke は自律
+- **文書** — AGENTS / stall / forge.mdc / permissions / `docs/cursor-allow-vs-forge-go.md`
+- **対象外** — プロダクト UI 変更なし
+
 ## 2026-07-14 — ALLOW / Forge GO: オーナー指示スコープ承認
 
 - **内容** — チャット明示指示を作業全体の承認として扱う。Staging 常時自律。通常修正は Preview まで自律。本番反映の一度の指示で main/deploy/必要 DB/smoke/同期まで一括。再確認禁止リストと停止条件7項を rules / AGENTS / permissions に反映

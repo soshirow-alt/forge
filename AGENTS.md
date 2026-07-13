@@ -114,19 +114,17 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 **§10.2 の 9 条件のみ**停止。`docs/forge-triage-operations.md` §10、`docs/gpt-run-decision-memo.md` 参照。
 
-一気通貫で進めてよい: 設計 → 実装 → typecheck/lint/test/build → Staging（write 可・常時自律）→ local commit → **Preview push / deploy / smoke**。
+一気通貫で進めてよい: 設計 → 実装 → typecheck/lint/test/build → **Staging Supabase（常時自律）** → commit → **Preview push / deploy / smoke**。
 
-オーナーの明示指示（「Stagingに適用」「Previewまで」「本番反映」「本番DBに適用」「リリース」等）はその作業範囲全体の承認。指示内では commit / push / migration / deploy / smoke の再確認をしない。
+オーナーの明示指示はその作業範囲全体の承認。指示内では commit / push / Staging migration / smoke の再確認をしない。
 
-Production はオーナーが本番反映を明示した一度の指示で、main push・deploy・必要 migration/DB/Storage・smoke・changelog・main/preview 同期まで進める。
+**Production Supabase**（`bpnisgzxuwdxelhnduuf`）: migration / UPDATE / DELETE / backfill / Storage 変更は **オーナー手動**。Cursor は適用 SQL・実行順・影響範囲・適用後確認 SQL を提示。オーナー適用後の read-only 検証と smoke は自律。
 
-停止するのは次のみ: 指示外差分の混在、依頼範囲超過、想定外の大量更新削除、対象特定不能、重大リスク判明、依頼外の不可逆操作、secret 本体の表示。加えて **§10.2**（課金・原典変更等）。
+**Production コード**: オーナーが本番反映を明示 → main push・Vercel Production deploy・smoke・changelog・main/preview 同期（DB 手動分は上記）。
 
-停止例: 課金・新規 API 契約・**本番公開の未指示実行**・PLAYER_VISIBLE=true（未指示）・依頼外の Production 破壊・原典変更・ロードマップ順位変更。
+停止するのは次のみ: 指示外差分の混在、依頼範囲超過、想定外の大量更新削除、対象特定不能（Staging 接続手段不足含む）、重大リスク判明、依頼外の不可逆操作、secret 本体の表示。加えて **§10.2**。
 
-サマリ `■ 今すぐ私がやるべきこと` は **オーナーしかできないことだけ**（Cursor 実行可能な項目は書かない）。※ 通常は返答本文に記載。GPT 用ファイルは更新しない。
-
-Cursor ALLOW / 工程: `.cursor/permissions.json` / `docs/cursor-allow-vs-forge-go.md` / `.cursor/rules/stall-detection-resume.mdc`。
+Cursor ALLOW / 境界: `docs/cursor-allow-vs-forge-go.md` / `.cursor/rules/stall-detection-resume.mdc`。
 
 ## Owner × ChatGPT × Cursor トリガー運用（恒久）
 
@@ -145,15 +143,13 @@ ChatGPT の役割は **コードレビューではなくプロダクトレビュ
 
 正本: **`docs/forge-triage-operations.md` §8**
 
-- 通常修正: **`preview/landing-01`** で実装 → commit + push → Preview deploy/smoke まで自律
-- Staging は常時自律
-- オーナーが本番反映を明示 → main merge + push・Production・必要 DB・smoke・preview 同期まで一括（工程再確認なし）
-- **本番 push 後は必ず `preview/landing-01` を `main` に fast-forward して push** — 両ブランチ同一 commit を維持
+- 通常修正: Preview まで自律。Staging DB 自律
+- オーナーが本番反映を明示 → コードの main / Vercel Production / smoke / 同期。**Production DB はオーナー手動**（SQL 一式を提示）
+- 本番 push 後は `preview/landing-01` を `main` に fast-forward + push
 
-## Supabase migration（本番）
+## Supabase migration
 
-- オーナー方針：**Supabase Dashboard SQL** で手動適用（CLI より可視性優先）
-- 手順: `docs/supabase-dashboard-migration-guide.md`
-- 適用後確認: `docs/supabase-post-migration-checklist.md`
-- プラン・課金: `docs/supabase-owner-operations.md`（オーナーが Dashboard で確認）
-<!-- END:forge-agent-rules -->
+- **Staging**: Cursor が自律適用（Dashboard / Management API / 利用可能な接続）
+- **Production**: オーナーが Dashboard SQL で手動適用（可視性優先）。手順提示は Cursor。適用後 read-only 検証は Cursor
+- 手順メモ: `docs/supabase-dashboard-migration-guide.md`
+- 適用後確認: `docs/supabase-post-migration-checklist.md`<!-- END:forge-agent-rules -->

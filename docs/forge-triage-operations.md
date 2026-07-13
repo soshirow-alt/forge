@@ -189,13 +189,13 @@ preview/landing-01 で実装
 |------|-------------------|
 | **1. Preview 反映** | commit + `git push origin preview/landing-01` + Preview smoke（通常依頼で自律） |
 | **2. 本番指示** | オーナーの「本番反映」「リリース」「本番DBに適用」等がスコープ承認 |
-| **3. 本番反映** | main merge/push・Production deploy・対象機能の必要 migration/DB/Storage・smoke（**追加確認なし**） |
+| **3. 本番反映** | main merge/push・Vercel Production・smoke（**追加確認なし**）。**Production DB migration/write はオーナー手動** — Cursor は SQL 一式を提示 |
 | **4. ブランチ同期** | `preview/landing-01` を `main` と同一 commit に揃える（§8.2） |
 
-- Staging は常時自律。commit / Preview / 明示済み Production の再確認はしない
+- Staging Supabase は常時自律
+- Production Supabase の破壊的変更はオーナー Dashboard 手動（適用後 read-only 検証は Cursor）
 - 本番未指示のまま main / `--prod` を始めない
-- 停止条件は `docs/cursor-allow-vs-forge-go.md`（範囲超過・混在・大量破壊・secret 表示等）
-- Cursor ALLOW: `.cursor/permissions.json`
+- 正本: `docs/cursor-allow-vs-forge-go.md`
 
 ### 8.2 本番 push 後の Preview 同期（必須）
 
@@ -240,9 +240,8 @@ git push origin preview/landing-01
 設計 → 実装 → build → Staging（常時自律）→ commit → Preview push/deploy/smoke
 ```
 
-- オーナー明示指示はそのスコープ全体の承認（Staging 適用・本番反映・本番 DB 等）
-- 指示内では commit / push / migration / deploy / smoke の再確認は **不要**
-- Production 未指示なら main / `--prod` を始めない。指示後は一括実行（§8.1）
+- Staging DB write は常時自律。Production DB migration/write はオーナー手動（SQL 提示＋適用後 read-only 検証は Cursor）
+- Production コード反映はオーナー明示後に一括（§8.1）
 - 停止条件は `docs/cursor-allow-vs-forge-go.md` および §10.2
 - `■ 今すぐ私がやるべきこと`（サマリ）には **本当にオーナーしかできないことだけ** 書く。Cursor が実行できる内容は書かない
 

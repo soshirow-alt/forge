@@ -1,28 +1,34 @@
-# Cursor ALLOW と Forge オーナー指示
+# Cursor ALLOW と Supabase 環境境界
 
 ## 用語
 
 | 用語 | 意味 |
 | --- | --- |
-| **オーナー指示** | チャット上の明示スコープ承認（「Stagingに適用」「Previewまで」「本番反映」「本番DBに適用」等） |
-| **Cursor ALLOW** | `permissions.json` / sandbox / Auto-review による技術的実行許可（best-effort） |
+| **オーナー指示** | チャット上の明示スコープ承認 |
+| **Cursor ALLOW** | `permissions.json` / Auto-review の技術的実行許可（best-effort） |
 
-オーナー指示の範囲内では工程ごとの再確認をしない。Cursor ALLOW カードも、許可済み操作では可能な限り出さない。
+## Supabase 境界（正本）
 
-## 自律範囲
+| 環境 | ref | Cursor の扱い |
+| --- | --- | --- |
+| **Staging**（Preview 接続先） | `vuqpwvjvgyxffmvpfrxo` | **常時自律**: migration / seed / CRUD / Storage / smoke / 後片付け。再確認しない |
+| **Production** | `bpnisgzxuwdxelhnduuf` | **原則オーナー手動**: migration / UPDATE / DELETE / backfill / Storage 変更。Cursor は適用 SQL・実行順・影響範囲・適用後確認 SQL を提示。オーナー適用後の **read-only 検証と smoke は自律** |
+
+Production の read-only（SELECT / REST GET / read-only RPC / 件数・行特定）はいつでも可。
+
+## その他の自律範囲
 
 | 範囲 | 内容 |
 | --- | --- |
-| **Staging** | 常時自律（migration / CRUD / seed / backfill / Storage / smoke / 後片付け） |
 | **通常修正** | 調査〜verify〜commit〜Preview push/deploy/smoke |
-| **Production** | 「本番反映」「リリース」「本番DBに適用」等の**一度の指示**で main push・deploy・必要 migration/DB/Storage・smoke・changelog・main/preview 同期まで一括 |
+| **Production コード反映** | オーナーが「本番反映」等を明示 → main push・Vercel Production deploy・smoke・changelog・main/preview 同期（工程再確認なし）。**DB migration / 破壊的 DB write はオーナー手動**（上記境界） |
 
 ## 停止する条件のみ
 
 1. 指示外の未commit差分が本番に混ざる
 2. 依頼範囲を超えるデータ変更が必要
 3. 想定外の大量 UPDATE／DELETE
-4. 対象環境・対象行を一意に特定できない
+4. 対象環境・対象行を一意に特定できない（または Staging 適用手段が無い）
 5. 当初と異なる重大リスクが判明
 6. 依頼されていない force push／履歴破壊／広範囲削除が必要
 7. secret 本体の表示・共有が必要
@@ -34,4 +40,4 @@
 - `.cursor/rules/stall-detection-resume.mdc`
 - `AGENTS.md` / `.cursor/rules/forge.mdc`
 
-Run Mode は **Auto-review を維持**（Run Everything にしない）。
+Run Mode は **Auto-review を維持**。

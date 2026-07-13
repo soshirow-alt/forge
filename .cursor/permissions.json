@@ -127,20 +127,19 @@
 
   "autoRun": {
     "allow_instructions": [
-      "Treat the owner's explicit chat instruction as approval for the entire stated scope. After they say things like apply to Staging, go to Preview, release to production, apply Production migration, or release this fix: do not ask again for commit, Preview push, Staging migration, main push, Production deploy, scoped Production DB/storage changes, or smoke.",
-      "Always allow Staging (vuqpwvjvgyxffmvpfrxo) migration, SELECT/INSERT/UPDATE/DELETE, seed, backfill, RPC, Storage write/delete, service-role verification, smoke data create/cleanup without asking.",
-      "For ordinary fix/investigate requests, allow investigation, edits, verify/typecheck/lint/build/test, commit, preview/landing-01 push, Preview deploy (including vercel deploy), Preview smoke end-to-end without asking.",
-      "When the owner already instructed Production release or Production DB apply, allow main merge/push, vercel --prod/promote, required Production migrations/DB writes/Storage ops for that feature, Production smoke, changelog, and main/preview branch sync without re-asking.",
-      "Allow Production Supabase (bpnisgzxuwdxelhnduuf) read-only anytime; allow Production writes only when the owner's current instruction includes Production apply/release.",
-      "Prefer execution paths that avoid extra ALLOW cards. Do not stop to ask for smoke permission.",
-      "Allow in-repo .tmp-* audit scripts and deleting .tmp-* only."
+      "Treat the owner's explicit chat instruction as approval for the stated scope. Do not re-ask commit, Preview push, Staging migration, code Production deploy, or smoke inside that scope.",
+      "Always allow Staging Supabase (vuqpwvjvgyxffmvpfrxo) migration, CRUD, seed, backfill, RPC, Storage, service-role verification, and smoke/cleanup without asking.",
+      "For ordinary fixes: investigation, edits, verify/build/test, commit, preview/landing-01 push, Preview deploy, Preview smoke without asking.",
+      "When the owner instructed Production code release: allow main push, vercel --prod/promote, Production HTTP smoke, changelog, and main/preview sync without re-asking.",
+      "Allow Production Supabase (bpnisgzxuwdxelhnduuf) read-only SELECT/REST GET/read-only RPC/counts anytime.",
+      "Prefer execution paths that avoid extra ALLOW cards."
     ],
     "block_instructions": [
-      "Stop and ask only for: unrelated uncommitted diffs mixing into a Production release; data changes beyond the requested scope; unexpectedly large UPDATE/DELETE; inability to uniquely identify target env/rows; newly discovered major risk vs the brief; unsolicited force push / history rewrite / broad delete; or displaying raw secrets/JWTs/service-role/.env contents to the user.",
+      "Do NOT execute Production Supabase migration, UPDATE, DELETE, backfill, or Storage writes yourself. Those are owner-manual. Provide SQL, order, impact, and verification queries instead; after the owner applies, run read-only verify and smoke.",
+      "Stop and ask only for: unrelated uncommitted diffs mixing into Production release; data changes beyond scope; unexpectedly large UPDATE/DELETE; inability to identify target env/rows or missing Staging apply credentials; newly discovered major risk; unsolicited force push/history rewrite/broad delete; or displaying raw secrets/JWTs/service-role/.env contents.",
       "Block force push, git reset --hard, and git clean unless the owner explicitly requested that irreversible action.",
-      "Block printing or copying secret values, JWTs, service role keys, or full .env contents into chat or terminal output.",
-      "Block npm install/ci/package add/update/remove and deletes outside this repository unless the owner explicitly asked.",
-      "If Production was NOT instructed in this task, do not start main push or vercel --prod on your own after Preview."
+      "Block printing or copying secret values into chat or terminal output.",
+      "If Production code release was NOT instructed, do not start main push or vercel --prod after Preview."
     ]
   }
 }
