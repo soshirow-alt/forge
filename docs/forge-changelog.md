@@ -4,6 +4,13 @@
 
 ---
 
+
+## 2026-07-14 — developer_profiles upsert: avatar_url 未適用でも名前・自己紹介を保存
+
+- **背景** — Staging に migration `064`（`avatar_url`）を適用する DB URL / Access Token がローカル env に無く、DDL 未適用のまま upsert が落ちうる
+- **対応** — `lib/supabase/developer-profiles-db.ts` で明示カラム select。`avatar_url` 欠落エラー時は同カラムなしで upsert 再試行（public_name / profile / x / website は保存）
+- **対象外** — Production / Staging DDL 適用そのもの（オーナーが Dashboard で `064` を貼る必要あり）
+
 ## 2026-07-14 — 公開プロフィールをプレイヤー／開発者で共通化
 
 - **原因** — プレイヤープロフィール編集が端末内 state のみ更新し、「端末のみ」文言付きで DB に保存していなかった

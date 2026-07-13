@@ -8,6 +8,35 @@ import { mapProjectSubmitErrorMessage } from "@/lib/error-message";
 import { normalizeExternalUrlForDb } from "@/lib/game-links";
 import type { DeveloperProfileRow } from "@/lib/supabase/schema";
 
+/** Explicit columns; avatar_url may be absent until migration 064. */
+const DEVELOPER_PROFILE_COLUMNS_WITH_AVATAR =
+  "user_id, creator_id, public_name, profile, avatar_url, x_account, website, discord_url, youtube_url, created_at, updated_at";
+
+const DEVELOPER_PROFILE_COLUMNS_WITHOUT_AVATAR =
+  "user_id, creator_id, public_name, profile, x_account, website, discord_url, youtube_url, created_at, updated_at";
+
+type DbErrorLike = {
+  message?: string;
+  details?: string;
+  hint?: string;
+  code?: string;
+};
+
+type ProfileQueryResult = {
+  data: unknown;
+  error: DbErrorLike | null;
+};
+
+function isMissingAvatarUrlColumnError(error: DbErrorLike): boolean {
+  const text = [error.message, error.details, error.hint, error.code]
+    .filter(Boolean)
+    .join(" ");
+  if (!/avatar_url/i.test(text)) {
+    return false;
+  }
+  return /does not exist|Could not find|schema cache|PGRST204|42703/i.test(text);
+}
+
 function profileRowToDeveloperProfile(row: DeveloperProfileRow): DeveloperProfile {
   return {
     userId: row.user_id,
@@ -36,13 +65,34 @@ function profileToRow(profile: DeveloperProfile) {
   };
 }
 
+function profileToRowWithoutAvatar(profile: DeveloperProfile) {
+  const { avatar_url: _omit, ...rest } = profileToRow(profile);
+  void _omit;
+  return rest;
+}
+
+async function queryWithOptionalAvatarColumn(
+  run: (columns: string) => PromiseLike<ProfileQueryResult>,
+): Promise<ProfileQueryResult> {
+  const withAvatar = await run(DEVELOPER_PROFILE_COLUMNS_WITH_AVATAR);
+  if (!withAvatar.error) {
+    return withAvatar;
+  }
+  if (!isMissingAvatarUrlColumnError(withAvatar.error)) {
+    return withAvatar;
+  }
+  return run(DEVELOPER_PROFILE_COLUMNS_WITHOUT_AVATAR);
+}
+
 export async function fetchDeveloperProfiles(
   supabase: SupabaseClient,
 ): Promise<DeveloperProfile[]> {
-  const { data, error } = await supabase
-    .from("developer_profiles")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const { data, error } = await queryWithOptionalAvatarColumn((columns) =>
+    supabase
+      .from("developer_profiles")
+      .select(columns)
+      .order("created_at", { ascending: false }),
+  );
 
   if (error) {
     throw error;
@@ -58,17 +108,31 @@ export async function upsertDeveloperProfile(
 ): Promise<DeveloperProfile> {
   const profile = createDeveloperProfile(userId, input);
 
-  const { data, error } = await supabase
+  const first = await supabase
     .from("developer_profiles")
     .upsert(profileToRow(profile), { onConflict: "user_id" })
-    .select("*")
+    .select(DEVELOPER_PROFILE_COLUMNS_WITH_AVATAR)
     .single();
 
-  if (error) {
-    throw new Error(mapProjectSubmitErrorMessage(error));
+  if (!first.error) {
+    return profileRowToDeveloperProfile(first.data as DeveloperProfileRow);
   }
 
-  return profileRowToDeveloperProfile(data as DeveloperProfileRow);
+  if (!isMissingAvatarUrlColumnError(first.error)) {
+    throw new Error(mapProjectSubmitErrorMessage(first.error));
+  }
+
+  const second = await supabase
+    .from("developer_profiles")
+    .upsert(profileToRowWithoutAvatar(profile), { onConflict: "user_id" })
+    .select(DEVELOPER_PROFILE_COLUMNS_WITHOUT_AVATAR)
+    .single();
+
+  if (second.error) {
+    throw new Error(mapProjectSubmitErrorMessage(second.error));
+  }
+
+  return profileRowToDeveloperProfile(second.data as DeveloperProfileRow);
 }
 
 export type DeveloperProfileSocialPatch = {
@@ -93,21 +157,22 @@ export async function mergeDeveloperProfileSocialLinks(
     return;
   }
 
-  const { data: existing, error: fetchError } = await supabase
-    .from("developer_profiles")
-    .select("*")
-    .eq("user_id", userId)
-    .maybeSingle();
+  const { data, error: fetchError } = await queryWithOptionalAvatarColumn((columns) =>
+    supabase
+      .from("developer_profiles")
+      .select(columns)
+      .eq("user_id", userId)
+      .maybeSingle(),
+  );
 
   if (fetchError) {
     throw fetchError;
   }
 
-  if (!existing) {
+  if (!data) {
     return;
   }
 
-  const row = existing as DeveloperProfileRow;
   const updates: Partial<DeveloperProfileRow> = {};
 
   if (discord) {
