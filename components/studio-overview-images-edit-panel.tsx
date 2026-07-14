@@ -25,6 +25,7 @@ export function StudioOverviewImagesEditPanel({
   const [thumbnailUrls, setThumbnailUrls] = useState<string[]>([]);
   const [formLoaded, setFormLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [thumbnailsBusy, setThumbnailsBusy] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,7 +46,7 @@ export function StudioOverviewImagesEditPanel({
   }
 
   async function handleSave() {
-    if (!game) {
+    if (!game || thumbnailsBusy) {
       return;
     }
 
@@ -80,13 +81,14 @@ export function StudioOverviewImagesEditPanel({
       title="画像を編集"
       onCancel={onCancel}
       onSave={() => void handleSave()}
-      isSaving={isSaving}
+      isSaving={isSaving || thumbnailsBusy}
       saveError={saveError}
     >
       <ProjectThumbnailFields
         inputId={`studio-images-${projectId}`}
         thumbnails={thumbnailUrls}
         onChange={handleThumbnailChange}
+        onBusyChange={setThumbnailsBusy}
         posterFallback={{
           projectId: game.id,
           title: game.title,

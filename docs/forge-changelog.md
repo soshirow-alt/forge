@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-15 — hotfix: 公開直後に OGP 画像が付かないレースを修正
+
+- **症状** — 新規公開作品（例: Time Battler）の X カードにタイトル/説明のみで画像が付かないことがある
+- **原因** — 投稿時に `visibility=public` で先に INSERT するため `first_published_at` が付き、サムネ Storage 保存・`og_image_url` 派生より前に作品ページがクロール可能になっていた。派生失敗も握りつぶしていた
+- **修正** — サムネありの公開投稿は先に private INSERT → HTTPS サムネ保存＋ OGP derive（1回リトライ）完了後に public へ昇格。ファイル読み込み中は投稿ボタン無効。「画像を読み込み中…／アップロード中…」。derive 後に `revalidatePath(/games/[id])`
+- **対象外** — Production DB / Storage 手動変更なし（コードのみ）
+
 ## 2026-07-15 — hotfix: LP / ログインのゲスト導線を復元
 
 - **症状** — Production LP にゲスト CTA がなく、`/login`（return なし）でも「ゲストで参加」が出ない。問い合わせ: 他人の作品を見られない／自分の作品も出せない

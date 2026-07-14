@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { isHttpsThumbnailUrl } from "@/lib/project-thumbnail-upload-rules";
 import { deriveAndUploadProjectOgImage } from "@/lib/supabase/project-og-derive";
@@ -90,6 +91,8 @@ export async function POST(
       { status: 502 },
     );
   }
+
+  revalidatePath(`/games/${projectId}`);
 
   return NextResponse.json({
     url: derived.url,

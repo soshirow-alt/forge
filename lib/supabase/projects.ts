@@ -34,8 +34,16 @@ import {
   publicProjectThumbnailPath,
   publicProjectThumbnailPaths,
 } from "@/lib/public-project-thumbnail";
-import { materializeThumbnailUrlsToStorage } from "@/lib/supabase/project-thumbnail-storage";
+import {
+  isHttpsThumbnailUrl,
+  materializeThumbnailUrlsToStorage,
+} from "@/lib/supabase/project-thumbnail-storage";
 import { requestProjectOgImageDerive } from "@/lib/supabase/request-project-og-derive";
+import {
+  resolveInsertVisibility,
+  shouldDeferPublicUntilThumbnailsReady,
+} from "@/lib/project-publish-og-gate";
+import type { ProjectVisibility } from "@/lib/project-visibility";
 
 const PUBLIC_PROJECT_CATALOG_COLUMNS = [
   "id",
@@ -168,6 +176,17 @@ async function applyMaterializedThumbnailFieldsForUpdate(
   // rolls back gallery thumbnails.
 }
 
+async function requestProjectOgImageDeriveWithRetry(
+  projectId: string,
+): Promise<void> {
+  const first = await requestProjectOgImageDerive(projectId);
+  if (first.ok) {
+    return;
+  }
+  // Storage public reads can briefly lag right after upload; one retry only.
+  await requestProjectOgImageDerive(projectId);
+}
+
 async function persistProjectThumbnailHttpsUrls(
   supabase: SupabaseClient,
   projectId: string,
@@ -178,6 +197,9 @@ async function persistProjectThumbnailHttpsUrls(
     projectId,
     urls,
   );
+  if (httpsUrls.length === 0 || !isHttpsThumbnailUrl(httpsUrls[0])) {
+    throw new Error("サムネイルのアップロードに失敗しました。");
+  }
   const { data, error } = await supabase
     .from("projects")
     .update({
@@ -190,8 +212,26 @@ async function persistProjectThumbnailHttpsUrls(
   if (error || !data) {
     throw error ?? new Error("サムネイル URL の保存に失敗しました。");
   }
-  // Best-effort OGP derive; gallery thumbs already saved.
-  await requestProjectOgImageDerive(projectId);
+  // Await derive (with one retry). Failure is non-fatal for gallery thumbs —
+  // metadata falls back to Forge default until a later edit re-derives.
+  await requestProjectOgImageDeriveWithRetry(projectId);
+  return data as ProjectRow;
+}
+
+async function promoteProjectVisibility(
+  supabase: SupabaseClient,
+  projectId: string,
+  visibility: ProjectVisibility,
+): Promise<ProjectRow> {
+  const { data, error } = await supabase
+    .from("projects")
+    .update({ visibility })
+    .eq("id", projectId)
+    .select("*")
+    .single();
+  if (error || !data) {
+    throw error ?? new Error("公開設定の更新に失敗しました。");
+  }
   return data as ProjectRow;
 }
 
@@ -276,7 +316,10 @@ function projectGenresForDb(genres: string[]) {
 function submitFormToInsertRow(
   data: SubmitFormData,
   owner: { ownerId: string; ownerName: string },
-  options?: { deferThumbnails?: boolean },
+  options?: {
+    deferThumbnails?: boolean;
+    visibilityOverride?: ProjectVisibility;
+  },
 ) {
   const lead = data.description?.trim() ?? "";
   const intro = data.introduction?.trim() ?? "";
@@ -285,6 +328,7 @@ function submitFormToInsertRow(
     ? { thumbnail_url: null as string | null, thumbnail_urls: [] as string[] }
     : projectThumbnailsForDb(data.thumbnailUrls);
   const linkColumns = linkColumnsFromForm(data);
+  const intendedVisibility = data.visibility ?? ("public" as const);
   return {
     owner_id: owner.ownerId,
     owner_name: owner.ownerName,
@@ -303,7 +347,7 @@ function submitFormToInsertRow(
     thumbnail_urls: thumbnails.thumbnail_urls,
     tags: mergeTagsWithRecruitment(data.tags, data.lookingForTesters),
     ...linkColumns,
-    visibility: data.visibility ?? ("public" as const),
+    visibility: options?.visibilityOverride ?? intendedVisibility,
     playable_version: DEFAULT_PLAYABLE_VERSION,
     estimated_play_time: data.estimatedPlayTime ?? null,
     ...(data.playAccessType
@@ -514,21 +558,43 @@ export async function insertProject(
 ): Promise<Game> {
   try {
     const pendingThumbs = projectThumbnailsForDb(data.thumbnailUrls).thumbnail_urls;
+    const intendedVisibility = data.visibility ?? "public";
+    const deferPublic = shouldDeferPublicUntilThumbnailsReady({
+      intendedVisibility,
+      pendingThumbnailCount: pendingThumbs.length,
+    });
+    const insertVisibility = resolveInsertVisibility({
+      intendedVisibility,
+      pendingThumbnailCount: pendingThumbs.length,
+    });
+
     const row = await writeProjectRowWithSchemaFallback(
       async (payload) =>
         supabase.from("projects").insert(payload).select("*").single(),
-      submitFormToInsertRow(data, owner, { deferThumbnails: true }),
+      submitFormToInsertRow(data, owner, {
+        deferThumbnails: true,
+        visibilityOverride: insertVisibility,
+      }),
     );
-    const inserted = row as ProjectRow;
-    if (pendingThumbs.length === 0) {
-      return projectRowToGame(inserted);
+    let current = row as ProjectRow;
+
+    if (pendingThumbs.length > 0) {
+      current = await persistProjectThumbnailHttpsUrls(
+        supabase,
+        current.id,
+        pendingThumbs,
+      );
+      if (!isHttpsThumbnailUrl(current.thumbnail_url)) {
+        throw new Error("サムネイルの保存に失敗しました。公開は取り消されました。");
+      }
     }
-    const withThumbs = await persistProjectThumbnailHttpsUrls(
-      supabase,
-      inserted.id,
-      pendingThumbs,
-    );
-    return projectRowToGame(withThumbs);
+
+    // Stamp first_published_at / discoverability only after thumbs + OG attempt.
+    if (deferPublic && current.visibility !== "public") {
+      current = await promoteProjectVisibility(supabase, current.id, "public");
+    }
+
+    return projectRowToGame(current);
   } catch (error) {
     throw new Error(mapProjectSubmitErrorMessage(error));
   }
@@ -577,7 +643,7 @@ export async function updateProjectFromSubmitForm(
     typeof payload.thumbnail_url === "string" &&
     payload.thumbnail_url.startsWith("https://")
   ) {
-    await requestProjectOgImageDerive(id);
+    await requestProjectOgImageDeriveWithRetry(id);
   }
 
   return projectRowToGame(row as ProjectRow);
@@ -627,7 +693,7 @@ export async function updateProjectDetailsInDb(
     typeof payload.thumbnail_url === "string" &&
     payload.thumbnail_url.startsWith("https://")
   ) {
-    await requestProjectOgImageDerive(id);
+    await requestProjectOgImageDeriveWithRetry(id);
   }
 
   return projectRowToGame(row as ProjectRow);

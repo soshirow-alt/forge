@@ -15,6 +15,8 @@ type ProjectThumbnailFieldsProps = {
   thumbnails: string[];
   onChange: (thumbnails: string[]) => void;
   inputId: string;
+  /** True while local files are being read into data URLs (disable publish). */
+  onBusyChange?: (busy: boolean) => void;
   posterFallback?: {
     projectId: string;
     title: string;
@@ -28,6 +30,7 @@ export function ProjectThumbnailFields({
   thumbnails,
   onChange,
   inputId,
+  onBusyChange,
   posterFallback,
 }: ProjectThumbnailFieldsProps) {
   const [fileInputKey, setFileInputKey] = useState(0);
@@ -44,9 +47,14 @@ export function ProjectThumbnailFields({
 
     const slots = MAX_PROJECT_THUMBNAILS - thumbnails.length;
     const toAdd = Array.from(files).slice(0, slots);
-    const dataUrls = await Promise.all(toAdd.map(readImageAsDataUrl));
-    onChange([...thumbnails, ...dataUrls]);
-    setFileInputKey((key) => key + 1);
+    onBusyChange?.(true);
+    try {
+      const dataUrls = await Promise.all(toAdd.map(readImageAsDataUrl));
+      onChange([...thumbnails, ...dataUrls]);
+    } finally {
+      onBusyChange?.(false);
+      setFileInputKey((key) => key + 1);
+    }
   }
 
   function removeAt(index: number) {

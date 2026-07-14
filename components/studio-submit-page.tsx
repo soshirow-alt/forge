@@ -40,6 +40,7 @@ export function StudioSubmitPage() {
   const [draft, setDraft] = useState<SubmitDraftState>(() => createEmptySubmitDraft());
   const [activeTab, setActiveTab] = useState<GameDetailTab>("overview");
   const [submitting, setSubmitting] = useState(false);
+  const [thumbnailsBusy, setThumbnailsBusy] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showPromptValidation, setShowPromptValidation] = useState(false);
   const [focusEditMode, setFocusEditMode] = useState<SubmitValidationEditMode | null>(null);
@@ -153,6 +154,10 @@ export function StudioSubmitPage() {
       return;
     }
 
+    if (thumbnailsBusy || submitting) {
+      return;
+    }
+
     setSubmitError(null);
     setShowPromptValidation(false);
     setFocusEditMode(null);
@@ -236,6 +241,8 @@ export function StudioSubmitPage() {
           onDraftChange={patchDraft}
           onSubmit={() => void handleSubmit()}
           submitting={submitting}
+          thumbnailsBusy={thumbnailsBusy}
+          onThumbnailsBusyChange={setThumbnailsBusy}
           submitError={submitError}
           showPromptValidation={showPromptValidation}
           focusEditMode={focusEditMode}
