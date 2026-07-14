@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import {
   ArrowRight,
   Flame,
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal-routes";
 import { LandingFeaturedGamesSection } from "@/components/landing-featured-games-section";
+import { LandingGuestEntryButton } from "@/components/landing-guest-entry-button";
 import { buildLoginUrlWithReturn } from "@/lib/login-return-url";
 import type { LandingFeaturedGame } from "@/lib/landing-featured-games";
 
@@ -55,6 +57,7 @@ function CtaCard({
   primaryLabel,
   primaryHref,
   primaryClass,
+  secondary,
 }: {
   accent: "player" | "developer";
   label: string;
@@ -64,6 +67,7 @@ function CtaCard({
   primaryLabel: string;
   primaryHref?: string;
   primaryClass: string;
+  secondary?: ReactNode;
 }) {
   const border =
     accent === "player" ? "border-violet-500/30" : "border-emerald-500/30";
@@ -110,6 +114,7 @@ function CtaCard({
           {primaryLabel}
         </span>
       )}
+      {secondary}
     </div>
   );
 }
@@ -129,6 +134,7 @@ export function LandingPage({
         <div className="mx-auto flex max-w-[1320px] items-center justify-between px-6 py-6 sm:px-8">
           <ForgeLogo href={logoHref} />
           <nav className="flex items-center gap-3">
+            <LandingGuestEntryButton className="hidden rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-900/70 hover:text-white sm:inline-flex" />
             <Link
               href="/login"
               className="rounded-lg border border-zinc-700 bg-zinc-950/40 px-4 py-2.5 text-sm font-medium text-zinc-100 backdrop-blur-sm transition-colors hover:bg-zinc-900/70 sm:px-5"
@@ -208,6 +214,9 @@ export function LandingPage({
                   primaryLabel="ゲームを探す"
                   primaryHref={buildLoginUrlWithReturn("/home")}
                   primaryClass="bg-white text-zinc-950 shadow-white/20"
+                  secondary={
+                    <LandingGuestEntryButton className="relative mt-3 w-full rounded-xl border border-zinc-700 bg-zinc-950/40 py-3 text-sm font-semibold text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-900/80" />
+                  }
                 />
                 <CtaCard
                   accent="developer"

@@ -372,5 +372,10 @@ export function shouldShowGuestLoginEntry(
   if (isRegisteredOnlyLoginIntent(intentParam)) {
     return false;
   }
-  return isGuestEligibleReturnParam(returnParam);
+  const safe = sanitizeLoginReturnUrl(returnParam);
+  // Plain /login (no return) — guest defaults to /home; still show CTA.
+  if (!safe) {
+    return true;
+  }
+  return isGuestReturnPathAllowed(safe);
 }
