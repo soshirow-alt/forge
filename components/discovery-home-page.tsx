@@ -10,18 +10,17 @@ import {
 import { HorizontalCardPager } from "@/components/horizontal-card-pager";
 import { ProjectThumbnail } from "@/components/project-thumbnail";
 import {
-  selectHeroItems,
-} from "@/lib/home-discovery-selection";
-import {
   fetchHomeDiscoveryFeedFromApi,
   type HomeDiscoveryCard,
+  type HomeDiscoveryFeed,
+  type HomeFeaturedHeroCard,
 } from "@/lib/supabase/home-discovery-db";
 import { publicProjectThumbnailPaths } from "@/lib/public-project-thumbnail";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
 
-/** Hero UI uses cover + 2 extra slots only. */
-const HERO_THUMBNAIL_PATH_LIMIT = 3;
+/** Hero UI uses cover + 2 extra slots; fetch counts for up to 4 featured slides. */
+const HERO_THUMBNAIL_PATH_LIMIT = 4;
 
 async function fetchHeroThumbnailPathsById(
   heroIds: string[],
@@ -154,35 +153,24 @@ type FeedState =
   | { status: "loading"; feed: null; error: null }
   | {
       status: "ready";
-      feed: {
-        newest: HomeDiscoveryCard[];
-        updated: HomeDiscoveryCard[];
-        trending: HomeDiscoveryCard[];
-      };
+      feed: HomeDiscoveryFeed;
       error: null;
     }
   | {
       status: "error";
-      feed: {
-        newest: HomeDiscoveryCard[];
-        updated: HomeDiscoveryCard[];
-        trending: HomeDiscoveryCard[];
-      };
+      feed: HomeDiscoveryFeed;
       error: string;
     };
 
-const EMPTY_FEED = {
-  newest: [] as HomeDiscoveryCard[],
-  updated: [] as HomeDiscoveryCard[],
-  trending: [] as HomeDiscoveryCard[],
+const EMPTY_FEED: HomeDiscoveryFeed = {
+  newest: [],
+  updated: [],
+  trending: [],
+  hero: [],
 };
 
 /** Client remount 時に前回成功分を即表示し、裏で再検証する */
-let homeDiscoveryFeedCache: {
-  newest: HomeDiscoveryCard[];
-  updated: HomeDiscoveryCard[];
-  trending: HomeDiscoveryCard[];
-} | null = null;
+let homeDiscoveryFeedCache: HomeDiscoveryFeed | null = null;
 
 async function loadHomeDiscoveryFeedWithRetry() {
   try {
@@ -236,11 +224,7 @@ export function DiscoveryHomePage() {
         setState({ status: "ready", feed: next, error: null });
         setHeroThumbnails({ status: "loading" });
 
-        const heroes = selectHeroItems(
-          next.trending,
-          next.updated,
-          next.newest,
-        );
+        const heroes: HomeFeaturedHeroCard[] = next.hero ?? [];
         try {
           const byId = await fetchHeroThumbnailPathsById(
             heroes.map((hero) => hero.id),
@@ -281,10 +265,7 @@ export function DiscoveryHomePage() {
     };
   }, []);
 
-  const heroItems = useMemo(() => {
-    if (!feed) return [];
-    return selectHeroItems(feed.trending, feed.updated, feed.newest);
-  }, [feed]);
+  const heroItems = useMemo(() => feed?.hero ?? [], [feed]);
 
   /** RPC 順のまま表示（ヒーローとの重複を許可。除外・並べ替えなし） */
   const updatedCarousel = useMemo(() => feed?.updated ?? [], [feed]);

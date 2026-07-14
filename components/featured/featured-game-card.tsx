@@ -71,8 +71,15 @@ export function FeaturedGameCard({
         {/* Work info */}
         <div className="flex min-h-0 flex-1 flex-col gap-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-violet-400">
-            注目の作品
+            {"featuredLabel" in game && typeof game.featuredLabel === "string"
+              ? game.featuredLabel
+              : "注目の作品"}
           </p>
+          {"featuredReason" in game &&
+          typeof game.featuredReason === "string" &&
+          game.featuredReason ? (
+            <p className="text-xs font-medium text-zinc-300">{game.featuredReason}</p>
+          ) : null}
           <h2 className="text-pretty text-lg font-bold leading-tight text-white">
             {game.title}
           </h2>

@@ -289,7 +289,7 @@ export function FeaturedGameCarousel({
   return (
     <section
       ref={sectionRef}
-      aria-label="注目＆おすすめ"
+      aria-label="注目の作品"
       className="w-full"
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
@@ -298,7 +298,7 @@ export function FeaturedGameCarousel({
         window.requestAnimationFrame(syncKeyboardFocusWithin);
       }}
     >
-      <h1 className="mb-4 text-xl font-bold text-white">注目＆おすすめ</h1>
+      <h1 className="mb-4 text-xl font-bold text-white">注目の作品</h1>
 
       <div
         ref={viewportRef}
