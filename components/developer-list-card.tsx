@@ -22,15 +22,18 @@ export function DeveloperListCard({
   href?: string;
 }) {
   const profileHref = href ?? developerProfileHref(dev.id);
-  const featured =
+  const featured = (
     dev.featuredWorks ??
     (dev.gameThumbs ?? []).map((image, index) => ({
       id: `${dev.id}-thumb-${index}`,
       title: "",
       image,
-    }));
+    }))
+  )
+    .filter((work) => Boolean(work.title?.trim()) && Boolean(work.id?.trim()))
+    .slice(0, 3);
   const publicGameCount =
-    dev.publicGameCount ?? dev.inDevelopment + dev.completed;
+    typeof dev.publicGameCount === "number" ? dev.publicGameCount : null;
 
   return (
     <Link
@@ -107,7 +110,11 @@ export function DeveloperListCard({
           ) : null}
 
           <p className="mt-2 text-xs text-zinc-500">
-            公開作品 {publicGameCount.toLocaleString()}
+            {publicGameCount == null ? (
+              <span className="inline-block h-3 w-20 animate-pulse rounded bg-zinc-800/80 align-middle" />
+            ) : (
+              <>公開作品 {publicGameCount.toLocaleString()}</>
+            )}
             {dev.followers == null ? (
               <span className="ml-2 inline-block h-3 w-16 animate-pulse rounded bg-zinc-800/80 align-middle" />
             ) : (

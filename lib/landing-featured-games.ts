@@ -17,7 +17,8 @@ export type LandingFeaturedGame = {
   image: string;
   genre: string;
   version: string;
-  feedback: number;
+  /** null until public stats are known — never treat unknown as confirmed 0 */
+  feedback: number | null;
   updated: string;
   href: string;
 };
@@ -101,7 +102,7 @@ export async function loadLandingFeaturedGames(): Promise<LandingFeaturedGame[]>
     image: publicProjectThumbnailPath(game.id),
     genre: game.genre,
     version: resolvePlayableVersion(game.playableVersion),
-    feedback: stats[game.id]?.feedbackParticipantCount ?? 0,
+    feedback: stats[game.id]?.feedbackParticipantCount ?? null,
     updated: formatRelativeUpdateLabel(game.lastUpdated).replace(/更新$/, ""),
     href: gameDetailHref(game.id),
   }));

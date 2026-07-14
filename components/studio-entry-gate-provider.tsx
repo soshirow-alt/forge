@@ -28,6 +28,7 @@ import {
 import { useForgeDeploymentMode } from "@/lib/forge-deployment-context";
 import { ACCOUNT_REGISTRATION_REQUIRED_NOTICE } from "@/lib/guest-auth";
 import { buildLoginUrlWithReturn, LOGIN_INTENT_REGISTERED } from "@/lib/login-return-url";
+import { defaultPublicAvatarSrc } from "@/lib/public-profile-display";
 import { shouldBypassStudioLoginGate, shouldHideV0MockContent } from "@/lib/production-mode";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 import { ensureDeveloperCommunity } from "@/lib/supabase/community-db";
@@ -75,7 +76,7 @@ export function StudioEntryGateProvider({ children }: { children: ReactNode }) {
           ownerId: user.id,
           name: `${user.name}コミュニティ`,
           description: "フォロワーと交流し、一緒にゲームを育てましょう",
-          avatarUrl: "/images/landing/game-1.png",
+          avatarUrl: defaultPublicAvatarSrc(user.id),
           handle: communityId,
         });
       }
@@ -83,7 +84,7 @@ export function StudioEntryGateProvider({ children }: { children: ReactNode }) {
       openDeveloperCommunity({
         id: communityId,
         name: `${user.name}コミュニティ`,
-        avatar: "/images/landing/game-1.png",
+        avatar: defaultPublicAvatarSrc(user.id),
         handle: communityId,
         description: "フォロワーと交流し、一緒にゲームを育てましょう",
         memberCountLabel: 0,

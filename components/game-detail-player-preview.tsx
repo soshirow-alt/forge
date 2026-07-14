@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useMemo } from "react";
 import { GameDetailOverviewV0Tab } from "@/components/game-detail-overview-v0-tab";
 import { GameDetailPhaseBadge } from "@/components/game-detail-phase-badge";
@@ -8,6 +7,7 @@ import { GameDevlogV0Tab } from "@/components/game-devlog-v0-tab";
 import { EveryonesVoiceSection } from "@/components/everyones-voice-section";
 import { GameSpecialThanksTab } from "@/components/game-special-thanks-tab";
 import { GameDetailTabBar } from "@/components/game-detail-tabs-region";
+import { ProfileAvatar } from "@/components/profile-avatar";
 import { StudioHeroPreviewGallery } from "@/components/studio-hero-preview-gallery";
 import { useGames } from "@/components/games-provider";
 import { formatDevlogPublishedAt } from "@/hooks/use-game-devlogs-v0";
@@ -22,8 +22,12 @@ import {
 import type { Game } from "@/lib/mock-games";
 import { resolveProjectGenres } from "@/lib/project-genres";
 import { resolveProjectThumbnailUrls } from "@/lib/project-thumbnails";
+import { publicProjectThumbnailPaths } from "@/lib/public-project-thumbnail";
 import { PROJECT_ONE_LINE_DESCRIPTION_HERO_CLASS } from "@/lib/project-one-line-description";
 import { PROJECT_TITLE_HERO_CLASS } from "@/lib/project-title";
+import {
+  resolvePublicProfileDisplay,
+} from "@/lib/public-profile-display";
 import { getUserFacingGameTags } from "@/lib/user-labels";
 import { gameToDetailV0 } from "@/lib/submitted-game-v0-adapter";
 import { Clock } from "lucide-react";
@@ -60,13 +64,35 @@ export function GameDetailPlayerPreview({
   sourceGame,
   onEditTarget,
 }: GameDetailPlayerPreviewProps) {
-  const { getSubmittedGameById } = useGames();
+  const { getSubmittedGameById, getDeveloperProfileByUserId } = useGames();
   const submittedGame = sourceGame ?? getSubmittedGameById(projectId);
 
-  const displayGame = useMemo(
-    () => (submittedGame ? gameToDetailV0(submittedGame) : null),
-    [submittedGame],
-  );
+  const displayGame = useMemo(() => {
+    if (!submittedGame) {
+      return null;
+    }
+    const base = gameToDetailV0(submittedGame);
+    const ownerId = submittedGame.ownerId;
+    if (!ownerId) {
+      return base;
+    }
+    const profile = getDeveloperProfileByUserId(ownerId);
+    const display = resolvePublicProfileDisplay(profile, {
+      userId: ownerId,
+      fallbackName: base.developer.name,
+    });
+    return {
+      ...base,
+      developer: {
+        ...base.developer,
+        id: display.routeId,
+        name: display.displayName,
+        avatar: display.avatarSrc,
+        bio: display.bio,
+        xAccount: display.xAccount,
+      },
+    };
+  }, [submittedGame, getDeveloperProfileByUserId]);
 
   const playerMeta = useMemo(
     () => resolveGameDetailPlayerMeta(submittedGame),
@@ -111,10 +137,13 @@ export function GameDetailPlayerPreview({
     ? formatDevlogPublishedAt(publicStats.latestDevlogAt)
     : "";
 
-  const thumbnailUrls = useMemo(
-    () => (submittedGame ? resolveProjectThumbnailUrls(submittedGame) : []),
-    [submittedGame],
-  );
+  const thumbnailUrls = useMemo(() => {
+    if (!submittedGame) {
+      return [];
+    }
+    const count = Math.max(1, resolveProjectThumbnailUrls(submittedGame).length || 1);
+    return publicProjectThumbnailPaths(submittedGame.id, count);
+  }, [submittedGame]);
 
   const posterFallback = useMemo(() => {
     if (!submittedGame) {
@@ -130,11 +159,11 @@ export function GameDetailPlayerPreview({
     };
   }, [submittedGame]);
 
-  const hasCustomThumbnails = thumbnailUrls.length > 0;
-
   if (!submittedGame || !displayGame || !posterFallback) {
     return null;
   }
+
+  const developerUserId = submittedGame.ownerId ?? displayGame.developer.id;
 
   return (
     <div aria-label="公開ページの見え方" className="min-w-0 space-y-4">
@@ -175,15 +204,12 @@ export function GameDetailPlayerPreview({
               </p>
             </StudioPreviewEditTarget>
             <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2 text-sm text-zinc-300">
-              {hasCustomThumbnails ? (
-                <span className="relative size-7 shrink-0 overflow-hidden rounded-full bg-zinc-800">
-                  <Image src={displayGame.developer.avatar} alt="" fill className="object-cover" />
-                </span>
-              ) : (
-                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-medium text-zinc-400">
-                  {displayGame.developer.name.slice(0, 1) || "?"}
-                </span>
-              )}
+              <ProfileAvatar
+                src={displayGame.developer.avatar}
+                userId={developerUserId}
+                className="size-7 shrink-0"
+                size={28}
+              />
               <span className="break-words">{displayGame.developer.name}</span>
             </div>
             <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-zinc-500">

@@ -340,6 +340,7 @@ export function FeaturedGameCarousel({
             extraSlots={activeGallery.extraSlots}
             selectedScreenshot={selectedScreenshot}
             onSelectScreenshot={setSelectedScreenshot}
+            statsLoaded
           />
         </div>
 

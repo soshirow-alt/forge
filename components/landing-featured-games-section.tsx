@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Clock, MessageSquare } from "lucide-react";
 import { ProjectThumbnail } from "@/components/project-thumbnail";
+import { PublicStatText } from "@/components/public-stat-text";
 import type { LandingFeaturedGame } from "@/lib/landing-featured-games";
 
 export function LandingFeaturedGamesSection({
@@ -53,22 +54,24 @@ export function LandingFeaturedGamesSection({
               <div className="p-4">
                 <h3 className="font-bold text-white">{game.title}</h3>
                 <p className="mt-1.5 line-clamp-1 text-sm text-zinc-500">{game.description}</p>
-                {(game.feedback > 0 || game.updated) && (
-                  <div className="mt-4 flex items-center gap-4 text-xs text-zinc-500">
-                    {game.feedback > 0 && (
-                      <span className="flex items-center gap-1.5">
-                        <MessageSquare className="size-3.5 text-violet-400" aria-hidden="true" />
-                        {game.feedback}
-                      </span>
-                    )}
-                    {game.updated && (
-                      <span className="flex items-center gap-1.5">
-                        <Clock className="size-3.5" aria-hidden="true" />
-                        {game.updated}
-                      </span>
-                    )}
-                  </div>
-                )}
+                <div className="mt-4 flex items-center gap-4 text-xs text-zinc-500">
+                  <span className="flex items-center gap-1.5">
+                    <MessageSquare className="size-3.5 text-violet-400" aria-hidden="true" />
+                    <PublicStatText
+                      loaded={game.feedback != null}
+                      value={game.feedback}
+                      label="FB"
+                      className="text-xs text-zinc-500"
+                      compact
+                    />
+                  </span>
+                  {game.updated ? (
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="size-3.5" aria-hidden="true" />
+                      {game.updated}
+                    </span>
+                  ) : null}
+                </div>
               </div>
             </Link>
           ))}

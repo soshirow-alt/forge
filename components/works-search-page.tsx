@@ -373,9 +373,10 @@ function WorksSearchContent() {
                       <p className="text-xs text-zinc-500">更新: {work.updatedAgo}</p>
                       <div className="mt-2">
                         <DiscoveryCardStatPills
-                          feedbackCount={work.feedbackCount}
-                          watchCount={work.watchCount}
+                          feedbackCount={publicCatalogReady ? work.feedbackCount : null}
+                          watchCount={publicCatalogReady ? work.watchCount : null}
                           compact
+                          loaded={publicCatalogReady}
                         />
                       </div>
                       <p className="text-xs text-zinc-600">{work.platforms.join(" · ")}</p>
@@ -420,9 +421,10 @@ function WorksSearchContent() {
                     <p className="mt-2 text-xs text-zinc-500">{work.updatedAgo}</p>
                     <div className="mt-auto pt-3">
                       <DiscoveryCardStatPills
-                        feedbackCount={work.feedbackCount}
-                        watchCount={work.watchCount}
+                        feedbackCount={publicCatalogReady ? work.feedbackCount : null}
+                        watchCount={publicCatalogReady ? work.watchCount : null}
                         compact
+                        loaded={publicCatalogReady}
                       />
                     </div>
                   </div>

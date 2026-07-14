@@ -6,8 +6,8 @@ import { BookmarkButton } from "@/components/bookmark-button";
 import { CreatorLink } from "@/components/creator-link";
 import { ForgeHeader } from "@/components/forge-header";
 import { GameTags } from "@/components/game-tags";
-import { GameThumbnail } from "@/components/game-thumbnail";
 import { PlayTypeLabel } from "@/components/play-type-label";
+import { ProjectThumbnail } from "@/components/project-thumbnail";
 import { useGames } from "@/components/games-provider";
 import { useRedirectToLoginWhenLoggedOut } from "@/hooks/use-redirect-to-login-when-logged-out";
 import { displayPhase } from "@/lib/development-phases";
@@ -58,13 +58,14 @@ export function BookmarksPage() {
                 className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/80"
               >
                 <Link href={`/games/${game.id}`} className="group block">
-                  <GameThumbnail
-                    thumbnailUrl={game.thumbnailUrl}
-                    status={game.status}
+                  <ProjectThumbnail
                     projectId={game.id}
                     title={game.title}
                     genre={game.genre}
-                    phase={displayPhase(game.phase)}
+                    version={displayPhase(game.phase)}
+                    variant="card"
+                    className="rounded-none"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
                   <div className="p-4">
                     <h2 className="font-semibold text-zinc-100 transition-colors group-hover:text-orange-400">

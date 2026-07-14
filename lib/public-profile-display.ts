@@ -23,10 +23,9 @@ export type ResolvedPublicProfileDisplay = {
   website?: string;
 };
 
-/** Stable non-game preset when `avatar_url` is empty (emoji SVG — never landing thumbs). */
+/** Stable emoji preset when `avatar_url` is empty (never game / landing thumbs). */
 export function defaultPublicAvatarSrc(userId: string): string {
-  const nonGame = profileAvatarPresets.filter((p) => !p.id.startsWith("landing-"));
-  const pool = nonGame.length > 0 ? nonGame : profileAvatarPresets;
+  const pool = profileAvatarPresets;
   const index =
     userId.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) %
     pool.length;

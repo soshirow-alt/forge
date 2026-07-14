@@ -1,6 +1,7 @@
 /** v0 — 開発者が開設したコミュニティ（localStorage + 既存 mock 併用） */
 
 import { shouldHideV0MockContent } from "@/lib/production-mode";
+import { defaultPublicAvatarSrc } from "@/lib/public-profile-display";
 
 export type DeveloperCommunityProfile = {
   id: string;
@@ -105,7 +106,7 @@ export function ensureOwnDeveloperCommunity(
   const profile: DeveloperCommunityProfile = {
     id,
     name: defaults?.name ?? `${userName}コミュニティ`,
-    avatar: defaults?.avatar ?? "/images/landing/game-1.png",
+    avatar: defaults?.avatar ?? defaultPublicAvatarSrc(userId),
     handle: defaults?.handle ?? id,
     description: defaults?.description ?? "フォロワーと交流し、一緒にゲームを育てましょう",
     memberCountLabel: 0,

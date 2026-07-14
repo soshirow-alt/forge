@@ -60,11 +60,11 @@ export function buildPublicDeveloperSearchResults(
         ownerGames[0]?.ownerName ?? ownerGames[0]?.creator ?? "開発者",
     });
     const newestCreated = Math.max(...ownerGames.map(getGameCreatedTimestamp), 0);
-    const featuredWorks = ownerGames.slice(0, 3).map((game) => ({
+  const featuredWorks = ownerGames.slice(0, 3).map((game) => ({
       id: game.id,
-      title: game.title,
+      title: game.title.trim(),
       image: publicProjectThumbnailPath(game.id),
-    }));
+    })).filter((work) => work.title.length > 0);
 
     return {
       id: display.routeId,

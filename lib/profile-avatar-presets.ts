@@ -20,32 +20,18 @@ const COLORS = [
   "#818cf8",
 ] as const;
 
-const LANDING_AVATARS = [
-  "/images/landing/game-1.png",
-  "/images/landing/game-2.png",
-  "/images/landing/game-3.png",
-  "/images/landing/game-4.png",
-  "/images/landing/game-5.png",
-];
-
 function svgPresetAvatar(emoji: string, color: string): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="${color}"/><text x="32" y="42" text-anchor="middle" font-size="28">${emoji}</text></svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
-/** プロフィール用アイコン候補（50件: ランディング5 + 絵文字45） */
-export const profileAvatarPresets: { id: string; src: string; label: string }[] = [
-  ...LANDING_AVATARS.map((src, index) => ({
-    id: `landing-${index + 1}`,
-    src,
-    label: `Forge ${index + 1}`,
-  })),
-  ...EMOJI_PRESETS.slice(0, 45).map((emoji, index) => ({
+/** Profile avatar presets — emoji only (never landing game images). */
+export const profileAvatarPresets: { id: string; src: string; label: string }[] =
+  EMOJI_PRESETS.map((emoji, index) => ({
     id: `preset-${index + 1}`,
-    src: svgPresetAvatar(emoji, COLORS[index % COLORS.length]),
+    src: svgPresetAvatar(emoji, COLORS[index % COLORS.length]!),
     label: emoji,
-  })),
-];
+  }));
 
 export function isDataOrBlobAvatar(src: string): boolean {
   return src.startsWith("data:") || src.startsWith("blob:");

@@ -5,7 +5,8 @@ import type {
   InfluenceRankingMonth,
 } from "@/lib/influence-ranking-v0-mock-data";
 import { RANKING_MAX } from "@/lib/ranking-v0-shared";
-import { defaultPublicAvatarSrc } from "@/lib/public-profile-display";
+import { resolvePublicProfileDisplay } from "@/lib/public-profile-display";
+import { fetchDeveloperProfilesByUserIds } from "@/lib/supabase/developer-profiles-db";
 
 type InfluenceRankingRow = {
   user_id: string;
@@ -69,13 +70,22 @@ function rowToMetrics(row: InfluenceRankingRow): InfluenceRankingMetrics {
   };
 }
 
-function rowToEntry(row: InfluenceRankingRow, rank: number): InfluenceRankingEntry {
+function rowToEntry(
+  row: InfluenceRankingRow,
+  rank: number,
+  profileByUserId: Map<string, Awaited<ReturnType<typeof fetchDeveloperProfilesByUserIds>>[number]>,
+): InfluenceRankingEntry {
   const title = TITLES[(rank - 1) % TITLES.length]!;
+  const display = resolvePublicProfileDisplay(profileByUserId.get(row.user_id), {
+    userId: row.user_id,
+    fallbackName: row.display_name?.trim() || "プレイヤー",
+  });
+  const handle = row.player_handle?.trim() || display.handle;
   return {
     rank,
-    name: row.display_name,
-    handle: row.player_handle,
-    avatar: defaultPublicAvatarSrc(row.user_id),
+    name: display.displayName,
+    handle,
+    avatar: display.avatarSrc,
     score: row.influence_score,
     title: title.title,
     titleColor: title.titleColor,
@@ -110,7 +120,13 @@ export async function fetchMonthlyPlayerInfluenceRanking(
     return [];
   }
 
-  return rows.map((row, index) => rowToEntry(row, index + 1));
+  const profiles = await fetchDeveloperProfilesByUserIds(
+    supabase,
+    rows.map((row) => row.user_id),
+  ).catch(() => []);
+  const profileByUserId = new Map(profiles.map((profile) => [profile.userId, profile]));
+
+  return rows.map((row, index) => rowToEntry(row, index + 1, profileByUserId));
 }
 
 export function buildInfluenceMonthFromEntries(

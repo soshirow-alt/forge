@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ConfirmationRequestQuoteRef } from "@/lib/community-types";
 import type { DevlogQuoteRef } from "@/lib/community-v0-mock-data";
 import type { CommunityPost, CommunityReply } from "@/lib/community-v0-mock-data";
+import { defaultPublicAvatarSrc } from "@/lib/public-profile-display";
 
 type CommunityRow = {
   id: string;
@@ -228,7 +229,8 @@ export type CommunityMembershipRecord = {
   joinedAt: string;
 };
 
-const DEFAULT_COMMUNITY_AVATAR = "/images/landing/game-1.png";
+/** Non-game emoji preset — never landing game art. */
+const DEFAULT_COMMUNITY_AVATAR = defaultPublicAvatarSrc("community-default");
 
 function mapCommunityRow(row: CommunityRow): DeveloperCommunityRecord {
   return {
@@ -567,7 +569,7 @@ export async function insertCommunityPost(
   const row = data as PostRow;
   return mapPostRow(
     { ...row, title: row.title ?? input.title.trim() },
-    { name: "あなた", handle: "you", avatar: "/images/landing/game-4.png" },
+    { name: "あなた", handle: "you", avatar: defaultPublicAvatarSrc("you") },
     [],
   );
 }

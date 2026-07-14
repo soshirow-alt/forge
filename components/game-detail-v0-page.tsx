@@ -103,6 +103,7 @@ import { useInstantQueryTab } from "@/hooks/use-instant-query-tab";
 import { captureScrollPosition } from "@/lib/preserve-scroll";
 import { useGameDetailProject } from "@/hooks/use-game-detail-project";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { PublicStatText } from "@/components/public-stat-text";
 import {
   Bookmark,
   Check,
@@ -125,15 +126,22 @@ function TagPill({ children }: { children: React.ReactNode }) {
 function GameDetailDeveloperAvatar({
   name: _name,
   imageSrc,
+  userId,
   sizeClass = "size-7",
 }: {
   name: string;
   imageSrc?: string;
+  userId?: string;
   sizeClass?: string;
   textClassName?: string;
 }) {
   return (
-    <ProfileAvatar src={imageSrc} className={`${sizeClass} shrink-0`} size={28} />
+    <ProfileAvatar
+      src={imageSrc}
+      userId={userId}
+      className={`${sizeClass} shrink-0`}
+      size={28}
+    />
   );
 }
 
@@ -393,6 +401,7 @@ function GameDetailV0PageBody({
   const [playUrlMissingVisible, setPlayUrlMissingVisible] = useState(false);
   const [voicesRefreshKey, setVoicesRefreshKey] = useState(0);
   const [following, setFollowing] = useState(game.developer.following);
+  const [followersLoaded, setFollowersLoaded] = useState(false);
   const developerUserId =
     isRealProject && submittedGame?.ownerId ? submittedGame.ownerId : null;
   const developerPublicX =
@@ -404,9 +413,20 @@ function GameDetailV0PageBody({
     (developerUserId ? user?.id !== developerUserId : !hideV0Mock);
 
   useEffect(() => {
-    if (developerUserId) {
-      void refreshFollowerCount(developerUserId);
+    if (!developerUserId) {
+      setFollowersLoaded(false);
+      return;
     }
+    let cancelled = false;
+    setFollowersLoaded(false);
+    void refreshFollowerCount(developerUserId).finally(() => {
+      if (!cancelled) {
+        setFollowersLoaded(true);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [developerUserId, refreshFollowerCount]);
 
   const [mockWatching, setMockWatching] = useState(game.watching);
@@ -877,6 +897,7 @@ function GameDetailV0PageBody({
                   <GameDetailDeveloperAvatar
                     name={game.developer.name}
                     imageSrc={developerAvatarSrc}
+                    userId={developerUserId ?? game.developer.id}
                   />
                   <span className="break-words">{game.developer.name}</span>
                   {developerPublicX ? (
@@ -1053,6 +1074,7 @@ function GameDetailV0PageBody({
               <GameDetailDeveloperAvatar
                 name={game.developer.name}
                 imageSrc={developerAvatarSrc}
+                userId={developerUserId ?? game.developer.id}
                 sizeClass="size-12"
                 textClassName="text-sm"
               />
@@ -1063,14 +1085,18 @@ function GameDetailV0PageBody({
                 {developerPublicX ? (
                   <PublicXLink accountOrUrl={developerPublicX} className="mt-1" />
                 ) : null}
-                {developerUserId || (!isRealProject && game.developer.followers > 0) ? (
+                {developerUserId ? (
                   <p className="text-xs text-zinc-500">
-                    フォロワー{" "}
-                    {(developerUserId
-                      ? getFollowerCount(creatorRouteKey, 0)
-                      : game.developer.followers
-                    ).toLocaleString()}
-                    人
+                    <PublicStatText
+                      loaded={followersLoaded}
+                      value={getFollowerCount(creatorRouteKey, 0)}
+                      label="フォロワー"
+                      className="text-xs text-zinc-500"
+                    />
+                  </p>
+                ) : !isRealProject && game.developer.followers > 0 ? (
+                  <p className="text-xs text-zinc-500">
+                    フォロワー {game.developer.followers.toLocaleString()}人
                   </p>
                 ) : null}
               </div>

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, MessageSquare, Users } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { DiscoveryCardStatPills } from "@/components/discovery-card-stat-pills";
 import { FeaturedGameMedia } from "@/components/featured/featured-game-media";
 import { GameScreenshotThumbnail } from "@/components/featured/game-screenshot-thumbnail";
 import {
@@ -21,6 +22,8 @@ interface FeaturedGameCardProps {
   /** index into extras currently shown as main, or null = cover (thumbnail_urls[0]) */
   selectedScreenshot: number | null;
   onSelectScreenshot: (index: number) => void;
+  /** When false, stats show skeleton instead of confirmed 0. */
+  statsLoaded?: boolean;
 }
 
 export function FeaturedGameCard({
@@ -29,6 +32,7 @@ export function FeaturedGameCard({
   extraSlots,
   selectedScreenshot,
   onSelectScreenshot,
+  statsLoaded = true,
 }: FeaturedGameCardProps) {
   return (
     <div className="flex w-full flex-col overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-900/40 shadow-xl md:h-[350px] md:flex-row">
@@ -90,15 +94,13 @@ export function FeaturedGameCard({
             {game.description}
           </p>
 
-          <div className="mt-auto flex items-center gap-4 pt-1 text-xs text-zinc-500">
-            <span className="flex items-center gap-1.5">
-              <MessageSquare className="size-3.5" aria-hidden="true" />
-              フィードバック {game.feedbackCount}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Users className="size-3.5" aria-hidden="true" />
-              フォロー {game.watchCount}
-            </span>
+          <div className="mt-auto pt-1">
+            <DiscoveryCardStatPills
+              feedbackCount={statsLoaded ? game.feedbackCount : null}
+              watchCount={statsLoaded ? game.watchCount : null}
+              loaded={statsLoaded}
+              compact
+            />
           </div>
         </div>
 

@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-14 — プロフィール統一の残ギャップ締め
+
+- **アバター** — 本番UIでゲーム画像をユーザー代用にしない（FBモーダル / community-db / Studio入場 / プリセットから `landing-*` 除去）
+- **影響度ランキング** — 表示名・アバターを `developer_profiles` 経由（`resolvePublicProfileDisplay`）
+- **統計** — 検索カード・LP注目・FeaturedGameCard・公開プロフィール/作品詳細のフォロワーは未ロード時に確定0を出さない
+- **サムネ** — ブックマークを `ProjectThumbnail` に。Studio公開プレビューは公開thumbnail API + `ProfileAvatar`
+- **開発者UI** — mockプロフィールを実公開と同じ骨格（三点メニューへコミュニティ、開発中/完成品分割とlocation・実績サイドバー撤去）
+- **対象外** — ヒーロー選出RPC / migration 066・067は未変更。commit / Production未反映
+
 ## 2026-07-14 — ホーム「注目の作品」4枠ヒーロー
 
 - **見出し** — 「注目＆おすすめ」→「注目の作品」（パーソナライズ推薦と誤認しない）

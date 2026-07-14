@@ -137,6 +137,7 @@ function NotificationRow({
       ) : item.avatar ? (
         <ProfileAvatar
           src={item.avatar}
+          userId={item.id}
           className="hidden size-10 shrink-0 sm:block"
           size={40}
         />

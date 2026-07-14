@@ -101,6 +101,26 @@ export async function fetchDeveloperProfiles(
   return ((data ?? []) as DeveloperProfileRow[]).map(profileRowToDeveloperProfile);
 }
 
+export async function fetchDeveloperProfilesByUserIds(
+  supabase: SupabaseClient,
+  userIds: string[],
+): Promise<DeveloperProfile[]> {
+  const unique = [...new Set(userIds.map((id) => id.trim()).filter(Boolean))];
+  if (unique.length === 0) {
+    return [];
+  }
+
+  const { data, error } = await queryWithOptionalAvatarColumn((columns) =>
+    supabase.from("developer_profiles").select(columns).in("user_id", unique),
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  return ((data ?? []) as DeveloperProfileRow[]).map(profileRowToDeveloperProfile);
+}
+
 export async function upsertDeveloperProfile(
   supabase: SupabaseClient,
   userId: string,

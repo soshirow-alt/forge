@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
 import { GameThumbnail } from "@/components/player-shell";
+import { ProfileAvatar } from "@/components/profile-avatar";
 import type { GameDetailV0 } from "@/lib/game-detail-v0-mock-data";
 import {
   feedbackChoiceQuestions,
@@ -99,21 +99,13 @@ function GameSummaryThumb({ game }: { game: GameDetailV0 }) {
 }
 
 function GameSummaryDeveloperAvatar({ game }: { game: GameDetailV0 }) {
-  const thumbSrc = game.heroImage.trim() || game.galleryImages[0]?.trim() || "";
-  const avatarSrc = game.developer.avatar.trim() || thumbSrc;
-
-  if (avatarSrc) {
-    return (
-      <span className="relative size-5 overflow-hidden rounded-full bg-zinc-800">
-        <Image src={avatarSrc} alt="" fill className="object-cover" />
-      </span>
-    );
-  }
-
   return (
-    <span className="flex size-5 items-center justify-center rounded-full bg-zinc-800 text-[10px] font-medium text-zinc-400">
-      {game.developer.name.slice(0, 1) || "?"}
-    </span>
+    <ProfileAvatar
+      src={game.developer.avatar.trim() || null}
+      userId={game.developer.id}
+      className="size-5"
+      size={20}
+    />
   );
 }
 
@@ -266,7 +258,7 @@ export function PlayStubV0Modal({
 }
 
 export function FirstVoiceV0Modal({
-  game,
+  game: _game,
   onClose,
   onOpenFullForm,
   onSubmitQuick,
@@ -276,6 +268,7 @@ export function FirstVoiceV0Modal({
   onOpenFullForm: () => void;
   onSubmitQuick: (answerLabel: string) => void;
 }) {
+  void _game;
   const [answer, setAnswer] = useState("just-right");
   const selectedLabel =
     firstVoiceQuestion.options.find((option) => option.id === answer)?.label ?? "";

@@ -90,6 +90,7 @@ function HorizontalGameCard({
             feedbackCount={game.feedbackCount}
             watchCount={game.watchCount}
             compact={compact}
+            loaded
           />
         </div>
       </article>

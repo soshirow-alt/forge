@@ -10,6 +10,7 @@ import { DiscoveryCardStatPills } from "@/components/discovery-card-stat-pills";
 import { PlayerShell } from "@/components/player-shell";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { ProjectThumbnail } from "@/components/project-thumbnail";
+import { PublicStatText } from "@/components/public-stat-text";
 import { PublicXLink } from "@/components/public-x-link";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
@@ -121,6 +122,7 @@ export function CreatorProfileRealView({
     publicCatalogReady,
   } = useGames();
   const activeTab = parseCreatorProfileTab(searchParams.get("tab"));
+  const [followersLoaded, setFollowersLoaded] = useState(false);
   const followerCount = getFollowerCount(profile.routeId, 0);
 
   const setTab = useCallback(
@@ -131,7 +133,16 @@ export function CreatorProfileRealView({
   );
 
   useEffect(() => {
-    void refreshFollowerCount(profile.userId);
+    let cancelled = false;
+    setFollowersLoaded(false);
+    void refreshFollowerCount(profile.userId).finally(() => {
+      if (!cancelled) {
+        setFollowersLoaded(true);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [profile.userId, refreshFollowerCount]);
 
   return (
@@ -156,7 +167,12 @@ export function CreatorProfileRealView({
                     <span className="mx-2 text-zinc-700" aria-hidden="true">
                       ·
                     </span>
-                    フォロワー {followerCount.toLocaleString()}
+                    <PublicStatText
+                      loaded={followersLoaded}
+                      value={followerCount}
+                      label="フォロワー"
+                      className="text-sm text-zinc-500"
+                    />
                   </p>
                 </div>
                 {!isSelf ? (
