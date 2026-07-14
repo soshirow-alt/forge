@@ -10,6 +10,7 @@
 - **共通部品** — `resolvePublicProfileDisplay` / `ProfileAvatar` / `ProjectThumbnail` / `PublicXLink` / `PublicStatText`。空アバターは絵文字プリセット（ランディングゲーム画像をユーザー代用にしない）
 - **対象** — 開発者一覧・公開プロフィール・マイページ・Studio・ホーム/検索カード・作品詳細・Special Thanks・FBカード・通知・コミュニティ・ヘッダー・ランキング等
 - **統計** — 未ロードの公開件数を `0` 確定表示しない（skeleton）。開発者カードは公開作品数／フォロワー＋タイトル付き代表作
+- **バグ修正** — 開発者一覧がオーナーの `submittedGames` を見ていたため未ログインで 0 件になっていたのを `publicGames` に修正
 - **対象外** — Production 反映なし（Preview まで）
 
 ## 2026-07-14 — ホーム: ヒーローと下棚の重複を許可
