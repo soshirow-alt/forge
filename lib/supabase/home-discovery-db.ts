@@ -13,6 +13,7 @@ import type { HomeDiscoverySection, HeroSource } from "@/lib/home-discovery-sele
 import { safeHttpThumbnailUrl, safeHttpThumbnailUrls } from "@/lib/safe-http-thumbnail";
 import { resolveProjectThumbnailUrlsFromRow } from "@/lib/project-thumbnails";
 import { publicProjectThumbnailPath } from "@/lib/public-project-thumbnail";
+import { fetchProjectPublicStatsMap } from "@/lib/supabase/project-public-stats-db";
 
 export type HomeDiscoveryFeedRow = {
   section: HomeDiscoverySection;
@@ -275,6 +276,43 @@ export async function fetchHomeFeaturedHero(
   }));
 }
 
+/**
+ * Home feed RPCs currently return FB/watch only. Merge play_player_count from
+ * get_public_project_stats so shelf/hero cards match search/detail pills.
+ */
+async function withPlayPlayerCounts(
+  supabase: SupabaseClient,
+  feed: HomeDiscoveryFeed,
+): Promise<HomeDiscoveryFeed> {
+  const ids = [
+    ...new Set(
+      [...feed.newest, ...feed.updated, ...feed.trending, ...feed.hero].map(
+        (card) => card.id,
+      ),
+    ),
+  ];
+  if (ids.length === 0) {
+    return feed;
+  }
+
+  const stats = await fetchProjectPublicStatsMap(supabase, ids).catch(
+    () => ({}) as Awaited<ReturnType<typeof fetchProjectPublicStatsMap>>,
+  );
+
+  const apply = <T extends HomeDiscoveryCard>(cards: T[]): T[] =>
+    cards.map((card) => ({
+      ...card,
+      playPlayerCount: stats[card.id]?.playPlayerCount ?? null,
+    }));
+
+  return {
+    newest: apply(feed.newest),
+    updated: apply(feed.updated),
+    trending: apply(feed.trending),
+    hero: apply(feed.hero) as HomeFeaturedHeroCard[],
+  };
+}
+
 export async function fetchHomeDiscoveryFeed(
   supabase: SupabaseClient,
 ): Promise<HomeDiscoveryFeed> {
@@ -293,7 +331,7 @@ export async function fetchHomeDiscoveryFeed(
     .filter((card): card is HomeFeaturedHeroCard => Boolean(card))
     .sort((a, b) => a.slotRank - b.slotRank);
 
-  return { ...shelves, hero };
+  return withPlayPlayerCounts(supabase, { ...shelves, hero });
 }
 
 export async function fetchHomeDiscoveryFeedFromApi(): Promise<HomeDiscoveryFeed> {
