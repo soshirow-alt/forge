@@ -685,6 +685,11 @@ function GameDetailV0PageBody({
             hasDevlog: hasDevlogForOverview,
             devlogLabel: devlogOverviewLabel,
             voiceCount: voiceCountForOverview,
+            playPlayerCount: isRealProject
+              ? publicStats.playPlayerCount
+              : null,
+            watchCount: isRealProject ? publicStats.watchCount : null,
+            statsLoaded: isRealProject ? publicStatsLoaded : true,
           }
         : null,
     [
@@ -693,6 +698,10 @@ function GameDetailV0PageBody({
       hasDevlogForOverview,
       devlogOverviewLabel,
       voiceCountForOverview,
+      isRealProject,
+      publicStats.playPlayerCount,
+      publicStats.watchCount,
+      publicStatsLoaded,
     ],
   );
 

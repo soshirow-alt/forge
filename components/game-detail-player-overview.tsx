@@ -13,6 +13,7 @@ import type {
   PublicationDisplay,
 } from "@/lib/game-play-destinations";
 import type { RelatedLinkDisplay } from "@/lib/project-publish-links";
+import { DiscoveryCardStatPills } from "@/components/discovery-card-stat-pills";
 import { StudioPreviewEditTarget } from "@/components/studio-preview-edit-target";
 import type { StudioPreviewEditTarget as StudioPreviewEditTargetId } from "@/lib/studio-preview-edit-targets";
 
@@ -305,6 +306,15 @@ function RecentActivityPanel({
 }) {
   return (
     <>
+      <div className="mt-3">
+        <DiscoveryCardStatPills
+          playCount={activity.playPlayerCount ?? null}
+          feedbackCount={activity.voiceCount}
+          watchCount={activity.watchCount ?? null}
+          loaded={activity.statsLoaded !== false}
+          compact
+        />
+      </div>
       <ul className="mt-3 space-y-1.5 break-words text-sm leading-relaxed text-zinc-400">
         <li>
           {activity.hasDevlog

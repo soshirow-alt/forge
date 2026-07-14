@@ -54,6 +54,10 @@ export type GameDetailOverviewActivity = {
   hasDevlog: boolean;
   devlogLabel: string;
   voiceCount: number;
+  /** Distinct registered players; null = hide (RPC unavailable / not loaded). */
+  playPlayerCount?: number | null;
+  watchCount?: number | null;
+  statsLoaded?: boolean;
 };
 
 /**
