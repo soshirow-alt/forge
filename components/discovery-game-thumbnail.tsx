@@ -49,7 +49,20 @@ function ThumbnailImage({
         }`}
         sizes={sizes}
         loading="lazy"
-        onLoad={() => setLoaded(true)}
+        onLoad={(event) => {
+          const img = event.currentTarget;
+          const displayW = Math.max(img.clientWidth, 1);
+          // Reject empty/corrupt or severely undersized bitmaps before they look soft when stretched.
+          if (
+            img.naturalWidth < 1 ||
+            img.naturalHeight < 1 ||
+            img.naturalWidth * 2 < displayW
+          ) {
+            setFailed(true);
+            return;
+          }
+          setLoaded(true);
+        }}
         onError={() => setFailed(true)}
       />
       {!loaded ? (
