@@ -1,13 +1,25 @@
--- 068: Add distinct play player_count to get_public_project_stats
+-- 068: Add play_player_count to get_public_project_stats
 -- Prerequisite: 045 (and project_plays from 002)
--- Definition: COUNT of project_plays rows = distinct registered users who recorded a play
---   (PK is user_id+project_id). Guests are not in project_plays.
+--
+-- Why DROP first: CREATE OR REPLACE cannot change RETURNS TABLE / OUT parameter
+-- shape (Postgres 42P13). Staging/Production never successfully applied the prior
+-- 068 draft, so this file is the canonical 068 (rewritten in place).
+--
+-- Play aggregation (canonical vs home rising_plays):
+-- - Home rising / players_7d uses project_play_sessions COUNT(DISTINCT user_id)
+--   in a 7-day window (event-based).
+-- - This all-time public card metric uses project_plays:
+--     PK (user_id, project_id) = one row per registered player who ever played.
+--     COUNT(DISTINCT user_id) == row count; guests are not stored in project_plays.
+-- - Label: 「プレイヤー N人」 (distinct registered players).
 -- Staging first. Production: owner-manual apply.
--- No PII returned.
+-- No PII returned. No CASCADE.
 
 BEGIN;
 
-CREATE OR REPLACE FUNCTION public.get_public_project_stats(
+DROP FUNCTION IF EXISTS public.get_public_project_stats(uuid[]);
+
+CREATE FUNCTION public.get_public_project_stats(
   p_project_ids uuid[]
 )
 RETURNS TABLE (
@@ -78,12 +90,15 @@ AS $$
     GROUP BY r.project_id
   ),
   play_players AS (
+    -- Distinct registered players (auth.users via project_plays.user_id).
+    -- Guests are not inserted into project_plays (explicit exclusion by table design).
     SELECT
       r.project_id,
-      COUNT(pp.*)::bigint AS play_player_count
+      COUNT(DISTINCT pp.user_id)::bigint AS play_player_count
     FROM requested r
     LEFT JOIN public.project_plays pp
       ON pp.project_id = r.project_id::text
+     AND pp.user_id IS NOT NULL
     GROUP BY r.project_id
   )
   SELECT
@@ -102,10 +117,11 @@ AS $$
 $$;
 
 COMMENT ON FUNCTION public.get_public_project_stats(uuid[]) IS
-  'Public aggregate stats: feedback participants (distinct), watches, witness grants, latest devlog, play_player_count (distinct registered players from project_plays). Guests excluded from plays.';
+  'Public aggregate stats: feedback participants (distinct visible), watches, witness grants, latest_devlog_at, play_player_count = COUNT(DISTINCT project_plays.user_id) for registered players only (guests excluded; project_plays has no guest rows). Idempotent after DROP+CREATE.';
 
 REVOKE ALL ON FUNCTION public.get_public_project_stats(uuid[]) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_public_project_stats(uuid[]) TO anon;
 GRANT EXECUTE ON FUNCTION public.get_public_project_stats(uuid[]) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_public_project_stats(uuid[]) TO service_role;
 
 COMMIT;

@@ -8,7 +8,8 @@ import { Gamepad2, MessageSquare, Users } from "lucide-react";
 
 /**
  * Unified discovery card metrics — order: プレイヤー → フィードバック → フォロー.
- * Play uses distinct registered players (project_plays). null = hide (not loaded / unavailable).
+ * Play uses COUNT(DISTINCT project_plays.user_id) — registered players only
+ * (project_plays PK is user_id+project_id; guests are not stored). null = hide.
  */
 export function DiscoveryCardStatPills({
   playCount = null,

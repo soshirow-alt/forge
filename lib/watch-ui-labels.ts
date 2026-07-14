@@ -22,8 +22,8 @@ export const DISCOVERY_CARD_WATCH_STAT_LABEL = "フォロー";
 export const DISCOVERY_CARD_FEEDBACK_STAT_LABEL = "フィードバック";
 
 /**
- * 発見カード — project_plays の distinct 登録プレイヤー人数。
- * UI では「プレイヤー N人」（人数保証があるため）。
+ * 発見カード — project_plays の COUNT(DISTINCT user_id)。
+ * 登録プレイヤーのみ（ゲスト行はテーブルに無い）。UI「プレイヤー N人」。
  */
 export const DISCOVERY_CARD_PLAY_STAT_LABEL = "プレイヤー";
 

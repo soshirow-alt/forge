@@ -12,6 +12,12 @@
 - **更新追跡中との分離** — FB 本文・履歴一覧は更新追跡中へ再掲しない（追跡カードの反映バッジは従来どおり adoption 正本のみ可）
 - **対象外** — Production 未反映。新評価機能・DB migration なし
 
+## 2026-07-15 — migration 068 修復（SQL のみ・未適用）
+
+- **Staging 失敗原因** — `CREATE OR REPLACE` では OUT/RETURNS TABLE 形を変えられず `42P13`。同一 BEGIN 内で `DROP FUNCTION …(uuid[])` → CREATE → COMMENT → REVOKE/GRANT
+- **play 集計** — `play_player_count` = `COUNT(DISTINCT project_plays.user_id)`（登録プレイヤー。ゲスト行なし＝除外）。表示は「プレイヤー N人」
+- **対象外** — Staging／Production への適用はオーナー手動。本作業では SQL 修正と検証のみ
+
 ## 2026-07-15 — 公開プレイ指標を詳細・ブックマークへ（Preview）
 
 - **作品詳細概要** — ホーム／検索と同じ `DiscoveryCardStatPills`（プレイヤー／フィードバック／フォロー）を最近の動きに表示。`play_player_count` 未取得時はプレイヤーだけ非表示
@@ -74,9 +80,9 @@
 
 ## 2026-07-14 — 公開カードにプレイ人数を追加（Preview / Staging RPC）
 
-- **正本** — `get_public_project_stats.play_player_count` = `project_plays` の件数（登録ユーザー distinct。ゲスト除外）
+- **正本** — `get_public_project_stats.play_player_count` = `COUNT(DISTINCT project_plays.user_id)`（登録プレイヤー。ゲストは `project_plays` に無いため除外）
 - **表示** — 「プレイヤー N人」。未取得・RPC未適用時は指標非表示（0 の誤表示なし）。並び: プレイヤー → FB → フォロー
-- **migration** — Staging `068`。Production はオーナー手動適用（本作業では未適用）
+- **migration** — `068`（DROP→CREATE 修復版）。Staging／Production はオーナー手動適用（本作業時点では未適用）
 - **対象外** — Production コード未反映
 
 ## 2026-07-14 — 開発者カード左右レイアウトとコミュニティ申請CTA（Preview）
