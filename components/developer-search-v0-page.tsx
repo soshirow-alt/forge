@@ -77,11 +77,13 @@ function DeveloperSearchContent() {
   const searchParams = useSearchParams();
   const hideV0Mock = shouldHideV0MockContent();
   const {
-    submittedGames,
+    publicGames,
+    publicCatalogReady,
     dataReady,
     getDeveloperProfileByUserId,
     isFollowing,
     toggleFollowCreator,
+    refreshPublicCatalog,
   } = useGames();
   const { requireAuth } = useRequireAuth();
   const queryFromUrl = searchParams.get("q")?.trim() ?? "";
@@ -97,6 +99,7 @@ function DeveloperSearchContent() {
   const [gachaOpen, setGachaOpen] = useState(false);
   const [gachaPick, setGachaPick] = useState<DeveloperSearchResult | null>(null);
   const [followerCounts, setFollowerCounts] = useState<Record<string, number>>({});
+  const [followersLoaded, setFollowersLoaded] = useState(false);
   const [followingIds, setFollowingIds] = useState<Set<string>>(() => {
     const initial = new Set<string>();
     for (const dev of developerSearchResults) {
@@ -107,19 +110,25 @@ function DeveloperSearchContent() {
     return initial;
   });
 
+  useEffect(() => {
+    if (hideV0Mock) {
+      void refreshPublicCatalog();
+    }
+  }, [hideV0Mock, refreshPublicCatalog]);
+
   const publicOwnerIds = useMemo(() => {
     if (!hideV0Mock) {
       return [];
     }
     return [
       ...new Set(
-        submittedGames
+        publicGames
           .filter(isGamePublic)
           .map((game) => game.ownerId)
           .filter((ownerId): ownerId is string => Boolean(ownerId)),
       ),
     ];
-  }, [hideV0Mock, submittedGames]);
+  }, [hideV0Mock, publicGames]);
 
   const publicDeveloperProfiles = useMemo(() => {
     return publicOwnerIds
@@ -128,19 +137,27 @@ function DeveloperSearchContent() {
   }, [getDeveloperProfileByUserId, publicOwnerIds]);
 
   useEffect(() => {
-    if (!hideV0Mock || !dataReady || publicOwnerIds.length === 0) {
+    if (!hideV0Mock || !publicCatalogReady || publicOwnerIds.length === 0) {
       return;
     }
 
     const supabase = getOptionalSupabaseClient();
     if (!supabase) {
+      setFollowersLoaded(true);
       return;
     }
 
+    setFollowersLoaded(false);
     void countDeveloperFollowersBatchInDb(supabase, publicOwnerIds)
-      .then(setFollowerCounts)
-      .catch(() => setFollowerCounts({}));
-  }, [dataReady, hideV0Mock, publicOwnerIds]);
+      .then((counts) => {
+        setFollowerCounts(counts);
+        setFollowersLoaded(true);
+      })
+      .catch(() => {
+        setFollowerCounts({});
+        setFollowersLoaded(true);
+      });
+  }, [hideV0Mock, publicCatalogReady, publicOwnerIds]);
 
   const catalog = useMemo(() => {
     if (!hideV0Mock) {
@@ -148,16 +165,18 @@ function DeveloperSearchContent() {
     }
     return buildPublicDeveloperSearchResults(
       publicDeveloperProfiles,
-      submittedGames,
+      publicGames,
       followerCounts,
       isFollowing,
+      { followersLoaded },
     );
   }, [
     followerCounts,
+    followersLoaded,
     hideV0Mock,
     isFollowing,
     publicDeveloperProfiles,
-    submittedGames,
+    publicGames,
   ]);
 
   useEffect(() => {
@@ -214,7 +233,7 @@ function DeveloperSearchContent() {
 
   const totalLabel = hideV0Mock ? String(catalog.length) : String(DEVELOPER_SEARCH_TOTAL);
 
-  if (hideV0Mock && !dataReady) {
+  if (hideV0Mock && (!dataReady || !publicCatalogReady)) {
     return (
       <PlayerShell activeNav="creator-search" headerSearchDefault={queryFromUrl}>
         <p className="text-sm text-zinc-500">読み込み中...</p>
