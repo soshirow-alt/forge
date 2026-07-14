@@ -130,12 +130,12 @@ export function ForgeShellModeSwitch({
   if (mode === "studio") {
     return (
       <Link
-        href="/home"
+        href="/search"
         onClick={onNavigate}
-        title="プレイヤー向け画面へ"
+        title="他の人の公開作品を探す"
         className={playerSwitchClassName}
       >
-        Player
+        作品を探す
       </Link>
     );
   }

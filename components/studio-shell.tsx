@@ -60,7 +60,7 @@ function HeaderSearchForm({ defaultValue }: { defaultValue?: string }) {
         type="search"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        placeholder="作品や機能を検索"
+        placeholder="自分の作品を検索"
         className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-500 focus:border-violet-500/40 focus:outline-none focus:ring-1 focus:ring-violet-500/30"
       />
     </form>
@@ -182,6 +182,12 @@ function StudioSidebarNavBody({ showFeedback = true }: { showFeedback?: boolean 
             {link.label}
           </Link>
         ))}
+        <Link
+          href="/search"
+          className={navLinkClass(pathname.startsWith("/search"))}
+        >
+          作品を探す
+        </Link>
       </div>
 
       <SidebarDivider />
