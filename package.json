@@ -21,6 +21,7 @@
     "verify:minimal-readonly-ogp": "npx --yes tsx scripts/verify-minimal-readonly-ogp.ts",
     "verify:ogp-publish-thumbnail-race": "npx --yes tsx scripts/verify-ogp-publish-thumbnail-race.ts",
     "verify:mypage-watch-cards": "npx --yes tsx scripts/verify-mypage-watch-cards.ts",
+    "verify:mypage-feedback-history": "npx --yes tsx scripts/verify-mypage-feedback-history.ts",
     "verify:witness:staging": "npx --yes tsx scripts/witness-staging-verify.ts",
     "seed:witness:sandbox": "npx --yes tsx scripts/witness-sandbox-seed.ts",
     "verify:witness:grants:staging": "npx --yes tsx scripts/witness-grants-staging-verify.ts",

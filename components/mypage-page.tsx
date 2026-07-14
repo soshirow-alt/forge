@@ -2,11 +2,11 @@
 
 import {
   AchievementsTabPanel,
-  FeedbackTabPanel,
   FollowingTabPanel,
 } from "@/components/mypage-v0-extra-tabs";
 import { FollowingDevelopersPanel } from "@/components/following-developers-panel";
 import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
+import { MyPageFeedbackHistoryPanel } from "@/components/mypage-feedback-history-panel";
 import { MyPageLoopPanel } from "@/components/mypage-loop-panel";
 import { MyPageSavedRealPanel } from "@/components/mypage-real-panels";
 import { PlayHistorySection } from "@/components/play-history-section";
@@ -111,14 +111,7 @@ function MyPagePageContent() {
           </ForgeTabPanel>
         ) : null}
         <ForgeTabPanel active={activeTab === "feedback"}>
-          {useMockPlayerTabs ? (
-            <FeedbackTabPanel />
-          ) : (
-            <FeatureComingSoonPanel
-              title="FB履歴"
-              description="あなたが届けたフィードバックの履歴は Coming Soon です。"
-            />
-          )}
+          <MyPageFeedbackHistoryPanel />
         </ForgeTabPanel>
         <ForgeTabPanel active={activeTab === "achievements"}>
           {useMockPlayerTabs ? (
