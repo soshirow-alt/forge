@@ -169,9 +169,7 @@ export function XAccountLinkSection() {
     <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
       <h2 className="text-base font-semibold text-white">Xアカウント連携</h2>
       <p className="mt-1 text-sm text-zinc-500">
-        Forge上にXの@handleを連携できます。公開プロフィールへの表示は連携とは別で、
-        プロフィール画面の「公開プロフィールに表示」で設定します。
-        ForgeからXへの投稿やDMは行いません。
+        Forge上のプロフィールにXの@handleを表示できます。連携と公開表示は別々に設定できます。
       </p>
 
       {message ? (

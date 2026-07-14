@@ -431,7 +431,7 @@ export function SharedSelfProfile({
         <ProfilePublicXCard
           publicXAccount={display.xAccount}
           busy={saving}
-          oauthReturnPath={shell === "studio" ? "/studio/profile" : "/mypage/profile"}
+          oauthReturnPath="/mypage/profile"
           onPublicPublishChange={handlePublicXPublish}
         />
       </Suspense>

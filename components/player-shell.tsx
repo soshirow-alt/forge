@@ -92,7 +92,7 @@ function MypageSidebarGroup() {
         href="/mypage/profile"
         className={`ml-4 block ${subNavLinkClass(isMypageProfile)}`}
       >
-        Playerプロフィール
+        プロフィール
       </RegisteredOnlyLink>
       <RegisteredOnlyLink
         href="/mypage/community"
@@ -260,7 +260,7 @@ function PlayerShellFrame({
           <RegisteredOnlyLink
             href="/mypage/profile"
             className="rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
-            aria-label="Playerプロフィール"
+            aria-label="プロフィール"
           >
             <User className="size-5" />
           </RegisteredOnlyLink>

@@ -343,8 +343,8 @@ export function ProjectSubmitForm({
           <h1 className="mt-8 text-3xl font-bold tracking-tight">作品を投稿する</h1>
           <p className="mt-2 text-zinc-500">
             開発中のゲーム情報を入力して、Forgeに掲載しましょう。公開名は{" "}
-            <Link href="/studio/profile" className="text-violet-300 hover:text-violet-200">
-              Studioプロフィール
+            <Link href="/mypage/profile" className="text-violet-300 hover:text-violet-200">
+              プロフィール
             </Link>
             から変更できます。
           </p>

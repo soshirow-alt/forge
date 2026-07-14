@@ -92,7 +92,8 @@ function StudioMypageSidebarGroup() {
     pathname.startsWith("/studio/mypage") ||
     pathname.startsWith("/studio/projects") ||
     (pathname.startsWith("/projects/") && pathname.endsWith("/studio"));
-  const isProfile = pathname === "/studio/profile";
+  const isProfile =
+    pathname === "/mypage/profile" || pathname === "/studio/profile";
   const isCommunity = pathname.startsWith("/studio/community");
 
   return (
@@ -101,10 +102,10 @@ function StudioMypageSidebarGroup() {
         マイページ
       </Link>
       <Link
-        href="/studio/profile"
+        href="/mypage/profile"
         className={`ml-4 block ${subNavLinkClass(isProfile)}`}
       >
-        Studioプロフィール
+        プロフィール
       </Link>
       <Link
         href="/studio/community"
@@ -190,7 +191,7 @@ function StudioSidebarNavBody({ showFeedback = true }: { showFeedback?: boolean 
       <SidebarDivider />
 
       <div className="space-y-1">
-        <Link href="/studio/settings" className={navLinkClass(pathname === "/studio/settings")}>
+        <Link href="/settings" className={navLinkClass(pathname === "/settings" || pathname === "/studio/settings")}>
           設定
         </Link>
         <Link href="/studio/guide" className={navLinkClass(pathname === "/studio/guide")}>
@@ -308,9 +309,9 @@ export function StudioShell({
             )}
           </Link>
           <Link
-            href="/studio/profile"
+            href="/mypage/profile"
             className="rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
-            aria-label="Studioプロフィール"
+            aria-label="プロフィール"
           >
             <User className="size-5" />
           </Link>

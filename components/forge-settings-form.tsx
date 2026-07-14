@@ -1,10 +1,12 @@
 "use client";
 
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { CircleHelp } from "lucide-react";
-import { Suspense, useState } from "react";
 import { AccountSettingsPanel } from "@/components/account-settings-panel";
 import { XAccountLinkSection } from "@/components/x-account-link-section";
+import { useAuth } from "@/components/auth-provider";
+import { useGames } from "@/components/games-provider";
 import {
   FORGE_LEGAL_CONTACT_EMAIL,
   PRIVACY_PATH,
@@ -154,7 +156,9 @@ function AccountSettingsFallback() {
   );
 }
 
-function PreferenceSettingsPanel({ context }: { context: "player" | "studio" }) {
+function PreferenceSettingsPanel() {
+  const { user } = useAuth();
+  const { getOwnedProjects } = useGames();
   const {
     loaded,
     saving,
@@ -170,6 +174,10 @@ function PreferenceSettingsPanel({ context }: { context: "player" | "studio" }) 
     updateStudioPublic,
   } = useUserSettings();
   const [toggleError, setToggleError] = useState<string | null>(null);
+
+  const hasDeveloperProjects = Boolean(
+    user && getOwnedProjects(user.id).length > 0,
+  );
 
   async function handleToggle(action: () => Promise<void>) {
     setToggleError(null);
@@ -197,15 +205,8 @@ function PreferenceSettingsPanel({ context }: { context: "player" | "studio" }) 
   }
 
   const disabled = saving;
-  const preferenceItems = context === "player" ? privacyItems : studioPublicItems;
-  const visiblePreferenceItems = preferenceItems.filter((item) => !item.comingSoon);
-  const preferenceTitle =
-    context === "player" ? privacySettingsSection.title : studioPublicSettingsSection.title;
-  const onPreferenceToggle = (id: string, enabled: boolean) =>
-    void handleToggle(() =>
-      context === "player" ? updatePrivacy(id, enabled) : updateStudioPublic(id, enabled),
-    );
-
+  const visiblePrivacyItems = privacyItems.filter((item) => !item.comingSoon);
+  const visibleStudioPublicItems = studioPublicItems.filter((item) => !item.comingSoon);
   const visiblePlayerNotifications = playerNotifications.filter((item) => !item.comingSoon);
   const visibleStudioNotifications = studioNotifications.filter((item) => !item.comingSoon);
   const hasNotificationGroups =
@@ -257,14 +258,40 @@ function PreferenceSettingsPanel({ context }: { context: "player" | "studio" }) 
         </section>
       ) : null}
 
-      {visiblePreferenceItems.length > 0 ? (
+      {visiblePrivacyItems.length > 0 ? (
         <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
-          <h2 className="text-base font-semibold text-white">{preferenceTitle}</h2>
+          <h2 className="text-base font-semibold text-white">
+            {privacySettingsSection.title}
+          </h2>
           <div className="mt-5">
             <SettingsItemList
-              items={visiblePreferenceItems}
+              items={visiblePrivacyItems}
               disabled={disabled}
-              onToggle={onPreferenceToggle}
+              onToggle={(id, enabled) =>
+                void handleToggle(() => updatePrivacy(id, enabled))
+              }
+            />
+          </div>
+        </section>
+      ) : null}
+
+      {visibleStudioPublicItems.length > 0 ? (
+        <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
+          <h2 className="text-base font-semibold text-white">
+            {studioPublicSettingsSection.title}
+          </h2>
+          {!hasDeveloperProjects ? (
+            <p className="mt-2 text-xs text-zinc-500">
+              作品を投稿すると、開発者プロフィールの公開を切り替えられます。
+            </p>
+          ) : null}
+          <div className="mt-5">
+            <SettingsItemList
+              items={visibleStudioPublicItems}
+              disabled={disabled || !hasDeveloperProjects}
+              onToggle={(id, enabled) =>
+                void handleToggle(() => updateStudioPublic(id, enabled))
+              }
             />
           </div>
         </section>
@@ -297,7 +324,8 @@ function SettingsLegalLinks() {
   );
 }
 
-export function ForgeSettingsForm({ context }: { context: "player" | "studio" }) {
+/** Canonical settings form — same surface for Player and Studio entry points. */
+export function ForgeSettingsForm() {
   return (
     <div className="space-y-8">
       <Suspense fallback={<AccountSettingsFallback />}>
@@ -308,7 +336,7 @@ export function ForgeSettingsForm({ context }: { context: "player" | "studio" })
         <XAccountLinkSection />
       </Suspense>
 
-      <PreferenceSettingsPanel context={context} />
+      <PreferenceSettingsPanel />
 
       <Suspense fallback={null}>
         <AccountSettingsPanel section="deletion" />
