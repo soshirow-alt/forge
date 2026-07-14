@@ -18,11 +18,17 @@
 - **更新追跡中との分離** — FB 本文・履歴一覧は更新追跡中へ再掲しない（追跡カードの反映バッジは従来どおり adoption 正本のみ可）
 - **対象外** — Production 未反映。新評価機能・DB migration なし
 
+## 2026-07-15 — migration 069 不採用（table GRANT 恒久化しない）
+
+- **背景** — Staging で `service_role` が `project_plays` を直接読めず（permission denied）、検証スクリプト用に GRANT 復元案 069 を置いていた
+- **結論** — **製品ランタイムには 069 不要**。公開「プレイヤー N人」は 068 の `get_public_project_stats`（SECURITY DEFINER）のみ。Production／Staging に 069 を適用しない
+- **扱い** — `supabase/migrations/069_*.sql.UNUSED`（適用禁止・履歴のみ）。検証は `scripts/staging-only/verify-068-play-player-count-rollback.sql`（Dashboard postgres・BEGIN/ROLLBACK）
+
 ## 2026-07-15 — migration 068 修復（SQL のみ・未適用）
 
 - **Staging 失敗原因** — `CREATE OR REPLACE` では OUT/RETURNS TABLE 形を変えられず `42P13`。同一 BEGIN 内で `DROP FUNCTION …(uuid[])` → CREATE → COMMENT → REVOKE/GRANT
 - **play 集計** — `play_player_count` = `COUNT(DISTINCT project_plays.user_id)`（登録プレイヤー。ゲスト行なし＝除外）。表示は「プレイヤー N人」
-- **対象外** — Staging／Production への適用はオーナー手動。本作業では SQL 修正と検証のみ
+- **対象外** — Staging／Production への適用はオーナー手動。本作業では SQL 修正と検証のみ。**069 table GRANT は不要**（上記）
 
 ## 2026-07-15 — 公開プレイ指標を詳細・ブックマークへ（Preview）
 

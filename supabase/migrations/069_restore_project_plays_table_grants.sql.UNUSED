@@ -1,0 +1,28 @@
+-- UNUSED / DO NOT APPLY (2026-07-15)
+-- ----------------------------------------------------------------------------
+-- 069 was drafted after Staging PostgREST showed
+--   "permission denied for table project_plays" for service_role (and supports).
+-- That blocked admin/smoke reconciliation scripts that SELECT project_plays
+-- directly. It is NOT required for product runtime:
+--   - Public 「プレイヤー N人」 reads via SECURITY DEFINER get_public_project_stats
+--     (migration 068); anon/authenticated need EXECUTE only — not table GRANT.
+--   - Client play recording uses authenticated upsert on project_plays
+--     (recordProjectPlay); that relies on existing table privileges + RLS from
+--     engagement setup, not this permanent restore migration.
+-- Do not apply to Staging or Production. Kept for history only (renamed .UNUSED).
+-- Keep 068. No FB-history relation.
+-- ----------------------------------------------------------------------------
+-- Original draft body (reference only):
+
+-- BEGIN;
+--
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.project_plays TO authenticated;
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.project_plays TO service_role;
+--
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.project_supports TO authenticated;
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.project_supports TO service_role;
+--
+-- GRANT SELECT ON TABLE public.project_plays TO anon;
+-- GRANT SELECT ON TABLE public.project_supports TO anon;
+--
+-- COMMIT;
