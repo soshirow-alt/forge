@@ -266,6 +266,26 @@ function testLoginReturnSanitize() {
     "no intent allows guest for game detail return",
   );
   ok(
+    shouldShowGuestLoginEntry(null, null) === true,
+    "plain /login shows guest entry (defaults to /home)",
+  );
+  ok(
+    shouldShowGuestLoginEntry("", null) === true,
+    "empty return shows guest entry",
+  );
+  ok(
+    shouldShowGuestLoginEntry("/home", null) === true,
+    "home return shows guest entry",
+  );
+  ok(
+    shouldShowGuestLoginEntry("/studio", null) === false,
+    "studio return hides guest entry",
+  );
+  ok(
+    shouldShowGuestLoginEntry(null, LOGIN_INTENT_REGISTERED) === false,
+    "registered intent hides guest even without return",
+  );
+  ok(
     buildLoginUrlWithReturn("/games/abc", { intent: LOGIN_INTENT_REGISTERED }) ===
       "/login?return=%2Fgames%2Fabc&intent=registered",
     "login url carries registered intent",
