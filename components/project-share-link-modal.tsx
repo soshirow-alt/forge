@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Check, Copy, ExternalLink } from "lucide-react";
+import { Check, Copy, ExternalLink, Info } from "lucide-react";
 import { V0SimpleModal } from "@/components/v0-simple-modal";
 import { useGames } from "@/components/games-provider";
 import {
@@ -9,6 +9,11 @@ import {
   getClientProjectPageUrl,
   openXComposeInNewTab,
 } from "@/lib/project-share";
+
+/** Shown only under the X compose action — not next to URL-copy alone. */
+export const X_SHARE_OGP_WAIT_NOTE =
+  "Xでは画像の反映に少し時間がかかることがあります。画像が表示されない場合は、少し待ってから共有してください。";
+
 
 type ProjectShareLinkModalProps = {
   projectId: string;
@@ -119,6 +124,13 @@ export function ProjectShareLinkModal({
             <ExternalLink className="size-4 shrink-0" aria-hidden="true" />
             Xで投稿画面を開く
           </button>
+          <p className="flex items-start gap-1.5 text-xs leading-relaxed text-zinc-500">
+            <Info
+              className="mt-0.5 size-3.5 shrink-0 text-zinc-500"
+              aria-hidden="true"
+            />
+            <span>{X_SHARE_OGP_WAIT_NOTE}</span>
+          </p>
         </section>
 
         <section className="space-y-2">
