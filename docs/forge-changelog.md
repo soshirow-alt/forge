@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07-14 — hotfix: プロフィール画像の保存失敗を修正
+
+- **症状** — プロフィール編集で画像を選んで保存すると「保存に失敗しました」になる
+- **原因** — アップロード画像を巨大な data URL のまま `developer_profiles.avatar_url` に書き込み、CHECK（≤20000文字）に抵触
+- **修正** — JPG/PNG/WebP をクライアント圧縮後、`/api/profile/avatar/upload`（service role）で Storage に保存し、短い公開 HTTPS URL のみ DB へ保存。絵文字プリセットは短い SVG data URI のまま
+- **共通** — Player/Studio 同一の `SharedSelfProfile` / `ProfileAvatarPicker`。失敗時は既存 `avatar_url` を消さず、DB失敗時は孤立アップロードを後片付け
+- **Storage** — 既存 `project-thumbnails` の `profile-avatars/{userId}/…`（新規 bucket / policy 変更なし）
+
 ## 2026-07-14 — 検索カードで REALIA 等のサムネが間欠的に欠ける件を修正
 
 - **症状** — `/search` で作品サムネ（特にソース幅が控えめな REALIA）が、リロードやリスト/グリッド切替のあと生成ポスターや欠落に見えることがあった

@@ -19,6 +19,11 @@ import { useCommunityHubSupabase } from "@/hooks/use-community-hub-supabase";
 import { creatorProfileHref } from "@/lib/mypage-navigation";
 import { isGamePublic } from "@/lib/project-visibility";
 import {
+  cleanupUploadedProfileAvatar,
+  mapProfileSaveError,
+  resolveAvatarUrlForSave,
+} from "@/lib/profile-avatar-client";
+import {
   publicBioForDisplay,
   publicProfileFromDeveloperRow,
   toDeveloperProfileInput,
@@ -204,6 +209,9 @@ export function SharedSelfProfile({
     setSaveError(null);
     setSaveMessage(null);
     setSaving(true);
+    let uploadedObjectPath: string | null = null;
+    const previousAvatarUrl =
+      publicProfileFromDeveloperRow(developerProfile, user.name).avatarUrl;
     try {
       const xRaw = draft.publicX.trim();
       const xNormalized = normalizePublicXHandle(xRaw);
@@ -211,17 +219,28 @@ export function SharedSelfProfile({
         setSaveError("公開Xは有効な@handleのみ設定できます。");
         return;
       }
+
+      const resolvedAvatar = await resolveAvatarUrlForSave(
+        draft.avatar,
+        previousAvatarUrl,
+      );
+      uploadedObjectPath = resolvedAvatar.uploadedObjectPath;
+
       await persistFields({
         displayName,
         bio: draft.bio,
-        avatarUrl: draft.avatar.trim() || null,
+        avatarUrl: resolvedAvatar.avatarUrl,
         website: draft.website.trim() || null,
         xAccount: xNormalized,
       });
       setEditing(false);
       setSaveMessage("プロフィールを更新しました。");
-    } catch {
-      setSaveError("保存に失敗しました。時間をおいて再度お試しください。");
+    } catch (error) {
+      console.error("[shared-self-profile] save failed", error);
+      if (uploadedObjectPath) {
+        await cleanupUploadedProfileAvatar(uploadedObjectPath);
+      }
+      setSaveError(mapProfileSaveError(error));
     } finally {
       setSaving(false);
     }

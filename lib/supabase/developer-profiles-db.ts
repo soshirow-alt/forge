@@ -139,6 +139,15 @@ export async function upsertDeveloperProfile(
   }
 
   if (!isMissingAvatarUrlColumnError(first.error)) {
+    const text = [first.error.message, first.error.details, first.error.code]
+      .filter(Boolean)
+      .join(" ");
+    if (/avatar_url|20000|check constraint|23514/i.test(text)) {
+      console.error("[developer-profiles] avatar_url upsert rejected", first.error);
+      throw new Error(
+        "プロフィール画像の保存に失敗しました。別の画像で再度お試しください。",
+      );
+    }
     throw new Error(mapProjectSubmitErrorMessage(first.error));
   }
 
