@@ -9,7 +9,12 @@ import {
   MAX_PROJECT_THUMBNAILS,
   canAddProjectThumbnails,
 } from "@/lib/project-thumbnails";
-import { THUMBNAIL_HINT, THUMBNAIL_LABEL } from "@/lib/project-form-copy";
+import {
+  THUMBNAIL_HINT,
+  THUMBNAIL_LABEL,
+  formatThumbnailCountDisplay,
+  getThumbnailCountHelper,
+} from "@/lib/project-form-copy";
 
 type ProjectThumbnailFieldsProps = {
   thumbnails: string[];
@@ -102,9 +107,10 @@ export function ProjectThumbnailFields({
         onChange={handleFilesChange}
         className="mt-3 block w-full text-sm text-zinc-400 file:mr-4 file:rounded-lg file:border-0 file:bg-zinc-800 file:px-4 file:py-2 file:text-sm file:font-medium file:text-zinc-200 hover:file:bg-zinc-700 disabled:opacity-50"
       />
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-        <span>
-          {thumbnails.length} / {MAX_PROJECT_THUMBNAILS} 枚
+      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500">
+        <span>{formatThumbnailCountDisplay(thumbnails.length)}</span>
+        <span className="w-full text-zinc-600 sm:w-auto">
+          {getThumbnailCountHelper(thumbnails.length)}
         </span>
         {remaining <= 0 ? (
           <span className="text-amber-400/90">上限に達しました</span>
