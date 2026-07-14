@@ -8,6 +8,8 @@ export type HomeGameCard = {
   updatedLabel: string;
   feedbackCount: number;
   watchCount: number;
+  /** Distinct registered players; null = hide / unavailable */
+  playPlayerCount?: number | null;
 };
 
 export const heroSlides: HomeGameCard[] = [

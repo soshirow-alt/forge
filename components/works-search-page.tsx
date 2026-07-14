@@ -122,6 +122,7 @@ function WorksSearchContent() {
       return {
         feedbackParticipantCount: stats.feedbackParticipantCount,
         watchCount: stats.watchCount,
+        playPlayerCount: stats.playPlayerCount,
       };
     },
     [getPublicProjectStats],
@@ -373,6 +374,7 @@ function WorksSearchContent() {
                       <p className="text-xs text-zinc-500">更新: {work.updatedAgo}</p>
                       <div className="mt-2">
                         <DiscoveryCardStatPills
+                          playCount={publicCatalogReady ? (work.playPlayerCount ?? null) : null}
                           feedbackCount={publicCatalogReady ? work.feedbackCount : null}
                           watchCount={publicCatalogReady ? work.watchCount : null}
                           compact
@@ -421,6 +423,7 @@ function WorksSearchContent() {
                     <p className="mt-2 text-xs text-zinc-500">{work.updatedAgo}</p>
                     <div className="mt-auto pt-3">
                       <DiscoveryCardStatPills
+                        playCount={publicCatalogReady ? (work.playPlayerCount ?? null) : null}
                         feedbackCount={publicCatalogReady ? work.feedbackCount : null}
                         watchCount={publicCatalogReady ? work.watchCount : null}
                         compact

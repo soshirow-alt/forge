@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-14 — 公開カードにプレイ人数を追加（Preview / Staging RPC）
+
+- **正本** — `get_public_project_stats.play_player_count` = `project_plays` の件数（登録ユーザー distinct。ゲスト除外）
+- **表示** — 「プレイヤー N人」。未取得・RPC未適用時は指標非表示（0 の誤表示なし）。並び: プレイヤー → FB → フォロー
+- **migration** — Staging `068`。Production はオーナー手動適用（本作業では未適用）
+- **対象外** — Production コード未反映
+
 ## 2026-07-14 — 開発者カード左右レイアウトとコミュニティ申請CTA（Preview）
 
 - **開発者一覧** — 左に開発者情報、右に代表作品（最大3・横並び）。自己紹介は line-clamp-2。作品0件は右側なし

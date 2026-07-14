@@ -8,6 +8,11 @@ export type ProjectPublicStats = {
   /** project_witness_grants — 見届け人称号（発見カードでは使わない） */
   witnessGrantCount: number;
   latestDevlogAt: string | null;
+  /**
+   * Distinct registered players from project_plays (PK user_id+project_id).
+   * null = not available (RPC未適用 / 未ロード). 0 is a real empty count.
+   */
+  playPlayerCount: number | null;
 };
 
 const EMPTY_STATS: ProjectPublicStats = {
@@ -15,6 +20,7 @@ const EMPTY_STATS: ProjectPublicStats = {
   watchCount: 0,
   witnessGrantCount: 0,
   latestDevlogAt: null,
+  playPlayerCount: null,
 };
 
 type PublicProjectStatsRow = {
@@ -23,6 +29,7 @@ type PublicProjectStatsRow = {
   watch_count: number | string | null;
   witness_grant_count: number | string | null;
   latest_devlog_at: string | null;
+  play_player_count?: number | string | null;
 };
 
 export function isPublicProjectStatsRpcMissingError(error: unknown): boolean {
@@ -47,12 +54,25 @@ function toCount(value: number | string | null | undefined): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+/** Preserve null when the RPC does not yet return play_player_count. */
+function toOptionalCount(
+  value: number | string | null | undefined,
+  present: boolean,
+): number | null {
+  if (!present) {
+    return null;
+  }
+  return toCount(value);
+}
+
 function rowToStats(row: PublicProjectStatsRow): ProjectPublicStats {
+  const hasPlay = Object.prototype.hasOwnProperty.call(row, "play_player_count");
   return {
     feedbackParticipantCount: toCount(row.feedback_participant_count),
     watchCount: toCount(row.watch_count),
     witnessGrantCount: toCount(row.witness_grant_count),
     latestDevlogAt: row.latest_devlog_at,
+    playPlayerCount: toOptionalCount(row.play_player_count, hasPlay),
   };
 }
 
@@ -98,10 +118,11 @@ export async function fetchProjectPublicStatsMap(
 
 export type DiscoveryCardStats = Pick<
   ProjectPublicStats,
-  "feedbackParticipantCount" | "watchCount"
+  "feedbackParticipantCount" | "watchCount" | "playPlayerCount"
 >;
 
 export const EMPTY_DISCOVERY_CARD_STATS: DiscoveryCardStats = {
   feedbackParticipantCount: 0,
   watchCount: 0,
+  playPlayerCount: null,
 };

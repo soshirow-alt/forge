@@ -1342,6 +1342,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
           watchCount: 0,
           witnessGrantCount: 0,
           latestDevlogAt: null,
+          playPlayerCount: null,
         }
       );
     },

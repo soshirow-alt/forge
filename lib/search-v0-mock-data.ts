@@ -26,6 +26,7 @@ export type SearchWorkResult = {
   updatedAgo: string;
   watchCount: number;
   feedbackCount: number;
+  playPlayerCount?: number | null;
   platforms: string[];
 };
 

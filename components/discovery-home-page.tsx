@@ -87,6 +87,7 @@ function HorizontalGameCard({
         </p>
         <div className={compact ? "mt-1.5" : "mt-2"}>
           <DiscoveryCardStatPills
+            playCount={game.playPlayerCount ?? null}
             feedbackCount={game.feedbackCount}
             watchCount={game.watchCount}
             compact={compact}

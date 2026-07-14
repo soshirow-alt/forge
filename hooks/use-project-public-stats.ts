@@ -12,6 +12,7 @@ const EMPTY_STATS: ProjectPublicStats = {
   watchCount: 0,
   witnessGrantCount: 0,
   latestDevlogAt: null,
+  playPlayerCount: null,
 };
 
 export function useProjectPublicStats(projectId: string | null | undefined) {

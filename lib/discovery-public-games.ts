@@ -80,6 +80,7 @@ export function gameToHomeCard(
     updatedLabel: formatRelativeUpdateLabel(game.lastUpdated),
     feedbackCount: stats.feedbackParticipantCount,
     watchCount: stats.watchCount,
+    playPlayerCount: stats.playPlayerCount,
   };
 }
 
@@ -102,6 +103,7 @@ export function gameToSearchResult(
     updatedAgo: formatRelativeUpdateLabel(game.lastUpdated).replace(/更新$/, ""),
     watchCount: stats.watchCount,
     feedbackCount: stats.feedbackParticipantCount,
+    playPlayerCount: stats.playPlayerCount,
     platforms: ["ブラウザ"],
   };
 }

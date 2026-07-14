@@ -21,6 +21,12 @@ export const DISCOVERY_CARD_WATCH_STAT_LABEL = "フォロー";
 /** 発見カード — 登録ユーザーのフィードバック人数 */
 export const DISCOVERY_CARD_FEEDBACK_STAT_LABEL = "フィードバック";
 
+/**
+ * 発見カード — project_plays の distinct 登録プレイヤー人数。
+ * UI では「プレイヤー N人」（人数保証があるため）。
+ */
+export const DISCOVERY_CARD_PLAY_STAT_LABEL = "プレイヤー";
+
 export const WATCH_FIRST_HINT =
   "更新を追い始めました。開発ログや新版の通知が届きます。「見届け人」は作品が正式版になったとき、プレイやフィードバックなどの関与で付与される称号で、このボタン1回では付与されません。";
 

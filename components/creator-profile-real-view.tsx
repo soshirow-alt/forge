@@ -288,9 +288,11 @@ export function CreatorProfileRealView({
                           <div className="mt-1.5">
                             {publicCatalogReady ? (
                               <DiscoveryCardStatPills
+                                playCount={stats.playPlayerCount}
                                 feedbackCount={stats.feedbackParticipantCount}
                                 watchCount={stats.watchCount}
                                 compact
+                                loaded
                               />
                             ) : (
                               <div className="h-4 w-28 animate-pulse rounded bg-zinc-800/80" />

@@ -96,6 +96,7 @@ export function FeaturedGameCard({
 
           <div className="mt-auto pt-1">
             <DiscoveryCardStatPills
+              playCount={statsLoaded ? (game.playPlayerCount ?? null) : null}
               feedbackCount={statsLoaded ? game.feedbackCount : null}
               watchCount={statsLoaded ? game.watchCount : null}
               loaded={statsLoaded}
