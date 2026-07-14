@@ -83,10 +83,7 @@ function ProfileMoreMenu({
             aria-label="メニューを閉じる"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-zinc-700 bg-zinc-950 p-2 shadow-xl">
-            <div className="px-2 py-1.5">
-              <CreatorCommunityJoinButton developerUserId={developerUserId} />
-            </div>
+          <div className="absolute right-0 z-20 mt-2 w-44 rounded-xl border border-zinc-700 bg-zinc-950 p-2 shadow-xl">
             <div className="px-2 py-1.5">
               <ContentReportButton
                 target={{
@@ -162,11 +159,15 @@ export function CreatorProfileRealView({
                   <p className="mt-0.5 text-sm text-zinc-500">@{profile.handle}</p>
                 </div>
                 {!isSelf ? (
-                  <div className="flex shrink-0 items-center gap-2">
+                  <div className="flex max-w-full flex-wrap items-center justify-center gap-2 sm:justify-end">
                     <CreatorFollowButton
                       creatorRouteKey={profile.routeId}
                       developerUserId={profile.userId}
                       showFollowerCount={false}
+                    />
+                    <CreatorCommunityJoinButton
+                      developerUserId={profile.userId}
+                      variant="secondary"
                     />
                     <ProfileMoreMenu
                       developerUserId={profile.userId}

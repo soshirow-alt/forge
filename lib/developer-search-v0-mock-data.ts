@@ -4,6 +4,8 @@ export type DeveloperFeaturedWork = {
   id: string;
   title: string;
   image: string;
+  /** Development phase label for list cards (optional). */
+  phase?: string;
 };
 
 export type DeveloperSearchResult = {

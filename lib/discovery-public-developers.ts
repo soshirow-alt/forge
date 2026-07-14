@@ -11,6 +11,7 @@ import {
   publicBioOneLine,
   resolvePublicProfileDisplay,
 } from "@/lib/public-profile-display";
+import { displayPhase } from "@/lib/development-phases";
 import { publicProjectThumbnailPath } from "@/lib/public-project-thumbnail";
 
 const NEW_DEVELOPER_MS = 30 * 24 * 60 * 60 * 1000;
@@ -64,6 +65,7 @@ export function buildPublicDeveloperSearchResults(
       id: game.id,
       title: game.title.trim(),
       image: publicProjectThumbnailPath(game.id),
+      phase: displayPhase(game.phase),
     })).filter((work) => work.title.length > 0);
 
     return {
