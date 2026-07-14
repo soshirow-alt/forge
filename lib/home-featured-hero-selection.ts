@@ -1,6 +1,6 @@
 /**
- * Deterministic featured-hero slot picking (mirrors 066 soft owner diversity).
- * Used for unit tests and fallback when RPC is unavailable.
+ * Deterministic featured-hero soft owner diversity (mirrors 066/067 SQL).
+ * Used by local unit verify only — runtime hero selection is get_home_featured_hero RPC.
  */
 import type { FeaturedHeroType } from "@/lib/home-featured-hero";
 import { FEATURED_HERO_TYPE_ORDER } from "@/lib/home-featured-hero";

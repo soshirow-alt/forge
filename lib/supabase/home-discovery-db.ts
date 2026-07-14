@@ -257,45 +257,17 @@ export function partitionHomeDiscoveryFeed(
   return { newest, updated, trending: trendingVisible, hero };
 }
 
-/**
- * While 066→067 rollout is in progress, any RPC failure must soft-fail so the
- * service-role compose fallback can still populate the hero. After 067 is
- * verified and the fallback is removed, tighten this again.
- */
-function isUnusableFeaturedHeroRpc(error: unknown): boolean {
-  if (!error) return false;
-  if (typeof error !== "object") return true;
-  const message =
-    "message" in error && typeof error.message === "string"
-      ? error.message
-      : String(error);
-  const code =
-    "code" in error && typeof error.code === "string" ? error.code : "";
-  return (
-    message.includes("does not exist") ||
-    message.includes("Could not find") ||
-    message.includes("permission denied") ||
-    message.includes("DROP TABLE is not allowed") ||
-    code === "0A000" ||
-    code === "42501" ||
-    code === "PGRST202" ||
-    code === "42883"
-  );
-}
-
 export async function fetchHomeFeaturedHero(
   supabase: SupabaseClient,
 ): Promise<HomeFeaturedHeroRow[]> {
   const { data, error } = await supabase.rpc("get_home_featured_hero");
   if (error) {
-    if (isUnusableFeaturedHeroRpc(error)) {
-      console.warn("[home-feed] get_home_featured_hero unavailable", {
-        code: "code" in error ? error.code : undefined,
-        message: error.message,
-      });
-      return [];
-    }
-    throw error;
+    console.error("[home-feed] get_home_featured_hero failed", {
+      code: "code" in error ? error.code : undefined,
+      message: error.message,
+    });
+    // No alternate selection — hero stays empty; shelves still load.
+    return [];
   }
   return ((data ?? []) as HomeFeaturedHeroRow[]).map((row) => ({
     ...row,
@@ -315,24 +287,11 @@ export async function fetchHomeDiscoveryFeed(
   );
   const shelves = partitionHomeDiscoveryFeed(rows, []);
 
-  const { buildHomeFeaturedHero } = await import(
-    "@/lib/supabase/home-featured-hero-server"
-  );
-  const { createServiceRoleReadClient } = await import(
-    "@/lib/supabase/service-role"
-  );
-
-  let hero: HomeFeaturedHeroCard[] = [];
-  try {
-    // Prefer anon RPC (EXECUTE granted). Service role is only for compose
-    // rising_plays when the RPC is missing/broken.
-    hero = await buildHomeFeaturedHero(supabase, shelves, {
-      composeClient: createServiceRoleReadClient() ?? supabase,
-    });
-  } catch (err) {
-    console.error("[home-feed] featured hero failed", err);
-    hero = [];
-  }
+  const heroRows = await fetchHomeFeaturedHero(supabase);
+  const hero = heroRows
+    .map(mapFeaturedHeroRowToCard)
+    .filter((card): card is HomeFeaturedHeroCard => Boolean(card))
+    .sort((a, b) => a.slotRank - b.slotRank);
 
   return { ...shelves, hero };
 }

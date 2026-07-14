@@ -4,7 +4,13 @@
 
 ---
 
-## 2026-07-14 — プロフィール統一の残ギャップ締め
+## 2026-07-14 — ホーム注目ヒーロー: Staging 067 成功後に RPC 正本へ統一
+
+- **Staging** — `067_fix_home_featured_hero_sql_stable.sql` 適用後、anon `get_home_featured_hero` が成功（4枠・重複なし）
+- **正本** — ヒーロー選出は RPC のみ。compose fallback / service-role compose を削除（RPC失敗時はヒーロー空・別ロジックで選出しない）
+- **棚** — `get_home_discovery_feed`（065）は変更なし
+- **対象外** — Production DB / Production deploy は未実施（Preview のみ）
+
 
 - **アバター** — 本番UIでゲーム画像をユーザー代用にしない（FBモーダル / community-db / Studio入場 / プリセットから `landing-*` 除去）
 - **影響度ランキング** — 表示名・アバターを `developer_profiles` 経由（`resolvePublicProfileDisplay`）
