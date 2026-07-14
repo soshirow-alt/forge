@@ -8,7 +8,9 @@
 
 - **見出し** — 「注目＆おすすめ」→「注目の作品」（パーソナライズ推薦と誤認しない）
 - **選出** — 独立4枠（各最大1作品）: 反応 / プレイ増加 / 新着 / 意味ある更新。候補なしは非表示・穴埋めなし。ヒーロー内ID重複なし・開発者ソフト分散
-- **RPC** — Staging migration `066` `get_home_featured_hero`（棚の `get_home_discovery_feed` 065 は変更なし）。下棚はヒーローと重複可・順位維持
+- **RPC** — Staging `get_home_featured_hero`（棚の `get_home_discovery_feed` 065 は変更なし）。下棚はヒーローと重複可・順位維持
+- **067** — 066 の plpgsql/temp が STABLE で実行失敗（`DROP TABLE is not allowed`）するため、純 SQL STABLE に置換。Staging に 067 適用後は RPC 正本・service-role fallback 削除予定
+- **暫定** — 066 適用直後に RPC エラーでヒーローが空になる退行を、RPC soft-fail → compose fallback で回避（匿名 RPC / service_role は compose のみ）
 - **対象外** — Production Supabase 未適用 / Production deploy なし
 
 ## 2026-07-14 — プロフィール・アバター・サムネ・公開統計の全画面共通化

@@ -271,20 +271,26 @@ async function enrichProjectCards(
 }
 
 export async function buildHomeFeaturedHero(
-  supabase: SupabaseClient,
+  rpcClient: SupabaseClient,
   shelves: {
     trending: HomeDiscoveryCard[];
     updated: HomeDiscoveryCard[];
     newest: HomeDiscoveryCard[];
   },
+  options?: {
+    /** Client used only for play-session / enrich fallback (often service role). */
+    composeClient?: SupabaseClient;
+  },
 ): Promise<HomeFeaturedHeroCard[]> {
-  const rpcRows = await fetchHomeFeaturedHero(supabase);
+  const rpcRows = await fetchHomeFeaturedHero(rpcClient);
   if (rpcRows.length > 0) {
     return rpcRows
       .map(mapFeaturedHeroRowToCard)
       .filter((c): c is HomeFeaturedHeroCard => Boolean(c))
       .sort((a, b) => a.slotRank - b.slotRank);
   }
+
+  const composeClient = options?.composeClient ?? rpcClient;
 
   const ownerByProject: Record<string, string | null> = {};
   for (const card of [
@@ -295,14 +301,17 @@ export async function buildHomeFeaturedHero(
     ownerByProject[card.id] = null;
   }
 
-  const risingRaw = await fetchRisingPlayCandidates(supabase, ownerByProject);
+  const risingRaw = await fetchRisingPlayCandidates(
+    composeClient,
+    ownerByProject,
+  );
   const enrichIds = [
     ...shelves.trending.map((c) => c.id),
     ...shelves.updated.map((c) => c.id),
     ...shelves.newest.map((c) => c.id),
     ...risingRaw.map((c) => c.id),
   ];
-  const enriched = await enrichProjectCards(supabase, enrichIds);
+  const enriched = await enrichProjectCards(composeClient, enrichIds);
 
   const reaction: AxisCandidate[] = shelves.trending.map((card, index) => ({
     id: card.id,
