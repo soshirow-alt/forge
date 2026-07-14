@@ -21,7 +21,7 @@ export const DEVELOPMENT_PHASE_OPTIONS = [
   },
   {
     value: "公開準備中",
-    label: "正式版候補",
+    label: "公開準備中",
     hint: "正式版に近い状態。大きな問題がなければ、正式版として公開する予定の段階。",
     playerDescription:
       "正式版に近い状態。大きな問題がなければ、正式版として公開する予定の段階。",

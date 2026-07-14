@@ -83,11 +83,7 @@ export function ownedProjectVisibilityLabel(game: Game): string {
 export function ownedProjectPhaseLabel(game: Game): string {
   const phase = normalizePhase(game.phase);
   const option = DEVELOPMENT_PHASE_OPTIONS.find((item) => item.value === phase);
-  if (option) {
-    // フィルター表記に合わせ、正式版候補は公開準備中と併記しない（badge は display）
-    return option.label === "正式版候補" ? "公開準備中" : option.label;
-  }
-  return String(phase);
+  return option?.label ?? String(phase);
 }
 
 export type { DevelopmentPhase };

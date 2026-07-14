@@ -20,6 +20,7 @@ import {
   developerDevlogHref,
   getDeveloperProfileV0,
 } from "@/lib/developer-profile-v0-mock-data";
+import { ContentReportButton } from "@/components/content-report-button";
 import { Globe, MoreHorizontal, UserPlus, Users } from "lucide-react";
 
 type DevTab = CreatorProfileTab;
@@ -29,22 +30,64 @@ const tabs: { id: DevTab; label: string }[] = [
   { id: "devlog", label: "開発ログ" },
 ];
 
-function ProfileMoreMenu({
+function MockCommunityJoinButton({
   hasOpenCommunity,
   communityStatus,
-  onCommunityJoin,
   communityId,
+  onCommunityJoin,
 }: {
   hasOpenCommunity: boolean;
   communityStatus: string;
-  onCommunityJoin: () => void;
   communityId: string;
+  onCommunityJoin: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-
   if (!hasOpenCommunity) {
     return null;
   }
+
+  if (communityStatus === "approved") {
+    return (
+      <Link
+        href={`/mypage/community?community=${communityId}`}
+        className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-300"
+      >
+        <Users className="size-4" aria-hidden="true" />
+        コミュニティ参加中
+      </Link>
+    );
+  }
+
+  if (communityStatus === "pending") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-300">
+        <Users className="size-4" aria-hidden="true" />
+        参加申請中
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onCommunityJoin}
+      className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-600 hover:text-zinc-100"
+    >
+      <Users className="size-4" aria-hidden="true" />
+      {communityStatus === "rejected" ? "再申請する" : "コミュニティの参加申請"}
+    </button>
+  );
+}
+
+function ProfileMoreMenu({
+  developerUserId,
+  name,
+  routeId,
+}: {
+  developerUserId: string;
+  name: string;
+  routeId: string;
+}) {
+  const [open, setOpen] = useState(false);
 
   return (
     <div className="relative">
@@ -65,35 +108,16 @@ function ProfileMoreMenu({
             aria-label="メニューを閉じる"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-zinc-700 bg-zinc-950 p-2 shadow-xl">
+          <div className="absolute right-0 z-20 mt-2 w-44 rounded-xl border border-zinc-700 bg-zinc-950 p-2 shadow-xl">
             <div className="px-2 py-1.5">
-              {communityStatus === "approved" ? (
-                <Link
-                  href={`/mypage/community?community=${communityId}`}
-                  className="inline-flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-emerald-300 hover:bg-zinc-900"
-                  onClick={() => setOpen(false)}
-                >
-                  <Users className="size-4" aria-hidden="true" />
-                  コミュニティ参加中
-                </Link>
-              ) : communityStatus === "pending" ? (
-                <span className="inline-flex w-full items-center gap-2 px-2 py-2 text-sm text-amber-300">
-                  <Users className="size-4" aria-hidden="true" />
-                  参加申請中
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onCommunityJoin();
-                    setOpen(false);
-                  }}
-                  className="inline-flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-zinc-300 hover:bg-zinc-900"
-                >
-                  <Users className="size-4" aria-hidden="true" />
-                  {communityStatus === "rejected" ? "再申請する" : "コミュニティの参加申請"}
-                </button>
-              )}
+              <ContentReportButton
+                target={{
+                  targetType: "developer",
+                  targetId: developerUserId,
+                  contextLabel: name,
+                }}
+                returnPath={`/creators/${routeId}`}
+              />
             </div>
           </div>
         </>
@@ -132,6 +156,8 @@ function DeveloperProfileV0PageContent({ id }: { id: string }) {
     (game) => Boolean(game.title?.trim()),
   );
   const publicGameCount = publicGames.length;
+  const developerName = dev.name;
+  const developerAvatar = dev.avatar;
 
   const setTab = useCallback(
     (tab: DevTab) => {
@@ -144,19 +170,19 @@ function DeveloperProfileV0PageContent({ id }: { id: string }) {
     requireAuth(() => setFollowing((value) => !value), returnPath, { variant: "follow" });
   }, [requireAuth, returnPath]);
 
-  const handleCommunityJoin = useCallback(() => {
+  function handleCommunityJoin() {
     requireAuth(
       () => {
         applyToCommunity({
           communityId,
-          communityName: dev.name,
-          communityAvatar: dev.avatar,
+          communityName: developerName,
+          communityAvatar: developerAvatar,
         });
       },
       returnPath,
       { variant: "default" },
     );
-  }, [requireAuth, returnPath, communityId, dev.name, dev.avatar]);
+  }
 
   return (
     <PlayerShell activeNav="creator-search">
@@ -175,7 +201,7 @@ function DeveloperProfileV0PageContent({ id }: { id: string }) {
                   <h1 className="text-xl font-bold text-white">{dev.name}</h1>
                   <p className="mt-0.5 text-sm text-zinc-500">@{dev.handle}</p>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex shrink-0 flex-wrap items-center justify-center gap-2">
                   <button
                     type="button"
                     onClick={handleFollow}
@@ -188,11 +214,16 @@ function DeveloperProfileV0PageContent({ id }: { id: string }) {
                     <UserPlus className="size-4" aria-hidden="true" />
                     {following ? "フォロー中" : "フォロー"}
                   </button>
-                  <ProfileMoreMenu
+                  <MockCommunityJoinButton
                     hasOpenCommunity={hasOpenCommunity}
                     communityStatus={communityStatus}
-                    onCommunityJoin={handleCommunityJoin}
                     communityId={communityId}
+                    onCommunityJoin={handleCommunityJoin}
+                  />
+                  <ProfileMoreMenu
+                    developerUserId={dev.id}
+                    name={dev.name}
+                    routeId={id}
                   />
                 </div>
               </div>
