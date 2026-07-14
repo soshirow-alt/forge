@@ -22,7 +22,7 @@ export function XAccountSettingsLinkSection() {
     <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
       <h2 className="text-base font-semibold text-white">Xアカウント連携</h2>
       <p className="mt-1 text-sm text-zinc-500">
-        作品作者や開発者プロフィールにXの@handleを表示できます。連携と公開表示は別々に設定できます。
+        Forge上のプロフィールにXの@handleを表示できます。連携と公開表示は別々に設定できます。
       </p>
 
       <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
