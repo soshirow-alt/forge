@@ -65,8 +65,11 @@ export function gamePlayHref(projectId: string): string {
   return `/games/${projectId}`;
 }
 
-export function mypageUpdatesHref(): string {
-  return `/mypage#${MYPAGE_UPDATES_SECTION_ID}`;
+export function mypageUpdatesHref(projectId?: string): string {
+  if (projectId?.trim()) {
+    return `/mypage?tab=witnessing&project=${encodeURIComponent(projectId.trim())}`;
+  }
+  return `/mypage?tab=witnessing`;
 }
 
 export function notificationTargetHref(notification: Notification): string {

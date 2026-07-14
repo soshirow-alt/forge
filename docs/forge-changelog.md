@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-07-15 — マイページ「更新追跡中」の責務整理（Preview）
+
+- **混在していたもの** — 「前回プレイ後の更新」「更新を追っている作品」「あとで遊ぶ」が同一タブに並び、同一作品の二重表示と保存作品タブとの重複が起きていた
+- **更新追跡中** — 追跡中作品のみ・1作品1カード。更新ありを先頭。状態チップは利用可能な正本のみ（前回プレイ後＝`meaningful_update_at > last_played_at`、新バージョン、最新ver未プレイ、FB反映＝`voice_adoptions`、更新なし）。あとで遊ぶは置かない
+- **保存作品** — ブックマークのみ（変更なしの責務。更新追跡中から再掲しない）
+- **フィルター** — すべて / 更新あり / 更新なし /（PLAYER_VISIBLE時のみ）FBが反映された。0件を他作品で補完しない
+- **カード** — コンパクトな横並び（16:9ミニサムネ＋状態＋CTA）。更新ありは紫系CTA、オレンジ警告用途は使わない
+- **通知** — 各更新通知は作品詳細へ。マイページ入口は `/mypage?tab=witnessing`（任意 `project=` でカード強調）
+- **対象外** — Production 未反映。DB migration なし（既存 meaningful / sessions / adoptions を利用）
+
 ## 2026-07-15 — `/studio/profile`・`/settings` 正本リダイレクトを auth より先に（Preview）
 
 - **症状** — 未ログインで `/studio/profile` / `/studio/settings` に来ると、ページ正本リダイレクトより先に Studio auth gate が走り、`login?return=/studio/...` になることがあった

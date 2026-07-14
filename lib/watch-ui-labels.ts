@@ -7,7 +7,7 @@ export const WATCH_BUTTON_ON = "更新を追跡中";
 export const WATCH_TAB_LABEL = "更新追跡中";
 
 /** 一覧見出し */
-export const WATCH_LIST_TITLE = "更新を追っている作品";
+export const WATCH_LIST_TITLE = "更新追跡中";
 
 /** カードバッジ */
 export const WATCH_BADGE_LABEL = "更新追跡中";

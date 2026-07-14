@@ -88,9 +88,9 @@ export function NotificationsPage() {
             </p>
             <Link
               href={mypageUpdatesHref()}
-              className="mt-3 inline-block text-sm font-medium text-orange-400 transition-colors hover:text-orange-300"
+              className="mt-3 inline-block text-sm font-medium text-violet-400 transition-colors hover:text-violet-300"
             >
-              更新を見る（マイページ） →
+              更新追跡中を見る（マイページ） →
             </Link>
           </div>
           {unreadCount > 0 && (
