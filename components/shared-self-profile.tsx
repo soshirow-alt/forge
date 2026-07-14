@@ -349,8 +349,7 @@ export function SharedSelfProfile({
         <div>
           <h1 className="text-2xl font-bold text-white sm:text-3xl">プロフィール</h1>
           <p className="mt-2 text-sm text-zinc-500">
-            プレイヤー・開発者で共通の公開プロフィールです
-            {shell === "studio" ? "（Studio）" : ""}。
+            プレイヤー・開発者で共通の公開プロフィールです。
           </p>
         </div>
         <button
