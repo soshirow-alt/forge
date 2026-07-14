@@ -183,6 +183,12 @@ export function useStudioEntryGate() {
   return context;
 }
 
+/** Pure redirect stubs under /studio — never auth-gate; middleware also remaps these first. */
+const STUDIO_CANONICAL_REDIRECTS: Readonly<Record<string, string>> = {
+  "/studio/profile": "/mypage/profile",
+  "/studio/settings": "/settings",
+};
+
 /** Studio URL 直打ち時 — 本番は未ログインを /login へ。未承諾ならモーダル */
 export function StudioDirectAccessGuard() {
   const router = useRouter();
@@ -193,6 +199,12 @@ export function StudioDirectAccessGuard() {
   const { attemptStudioEntry } = useStudioEntryGate();
 
   useEffect(() => {
+    const canonical = STUDIO_CANONICAL_REDIRECTS[pathname];
+    if (canonical) {
+      router.replace(canonical);
+      return;
+    }
+
     if (!authResolved) {
       return;
     }

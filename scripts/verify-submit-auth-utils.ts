@@ -250,6 +250,24 @@ function testLoginReturnSanitize() {
   ok(sanitizeLoginReturnUrl("/mypage/profile") === "/mypage/profile", "allow mypage profile");
   ok(sanitizeLoginReturnUrl("/settings") === "/settings", "allow settings path");
   ok(
+    sanitizeLoginReturnUrl("/studio/profile") === "/mypage/profile",
+    "canonicalize studio profile return to mypage profile",
+  );
+  ok(
+    sanitizeLoginReturnUrl("/studio/settings") === "/settings",
+    "canonicalize studio settings return to settings",
+  );
+  ok(
+    buildLoginUrlWithReturn("/studio/profile") ===
+      "/login?return=%2Fmypage%2Fprofile",
+    "login URL from studio profile uses canonical return",
+  );
+  ok(
+    buildLoginUrlWithReturn("/studio/settings") ===
+      "/login?return=%2Fsettings",
+    "login URL from studio settings uses canonical return",
+  );
+  ok(
     isGuestEligibleReturnParam("/games/abc?tab=voices") === true,
     "guest eligible for game detail return",
   );
@@ -678,6 +696,44 @@ function testAuthRedirectLoopGuardContract() {
   ok(
     studioGuard.includes('deploymentMode === "production"'),
     "StudioDirectAccessGuard defers login redirect to middleware in production",
+  );
+  ok(
+    studioGuard.includes('"/studio/profile": "/mypage/profile"') &&
+      studioGuard.includes('"/studio/settings": "/settings"') &&
+      studioGuard.includes("STUDIO_CANONICAL_REDIRECTS"),
+    "StudioDirectAccessGuard remaps profile/settings stubs before auth gate",
+  );
+
+  const middlewareSource = fs.readFileSync(
+    path.join(import.meta.dirname, "../middleware.ts"),
+    "utf8",
+  );
+  const legacyRedirects = fs.readFileSync(
+    path.join(import.meta.dirname, "../lib/v0-legacy-redirects.ts"),
+    "utf8",
+  );
+  const middlewareFnStart = middlewareSource.indexOf(
+    "export async function middleware",
+  );
+  const callLegacy = middlewareSource.indexOf(
+    "resolveV0LegacyRedirect(",
+    middlewareFnStart,
+  );
+  const callUpdateSession = middlewareSource.indexOf(
+    "updateSession(request)",
+    middlewareFnStart,
+  );
+  ok(
+    middlewareFnStart >= 0 &&
+      callLegacy >= 0 &&
+      callUpdateSession >= 0 &&
+      callLegacy < callUpdateSession,
+    "middleware resolves legacy redirects before auth session gate",
+  );
+  ok(
+    legacyRedirects.includes('"/studio/profile": "/mypage/profile"') &&
+      legacyRedirects.includes('"/studio/settings": "/settings"'),
+    "legacy redirects map studio profile/settings to canonical paths",
   );
 }
 

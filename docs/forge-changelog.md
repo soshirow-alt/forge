@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-15 — `/studio/profile`・`/settings` 正本リダイレクトを auth より先に（Preview）
+
+- **症状** — 未ログインで `/studio/profile` / `/studio/settings` に来ると、ページ正本リダイレクトより先に Studio auth gate が走り、`login?return=/studio/...` になることがあった
+- **修正** — middleware で auth 判定より前に `/mypage/profile`・`/settings` へ寄せる。login return の sanitize も同正本へ正規化。Studio ガードも stub 経路だけ先に正本へ
+- **結果** — ログイン後も旧 Studio 経路を経由しない。Studio 権限が必要な他ページの保護は維持
+- **対象外** — Production 未反映
+
 ## 2026-07-15 — hotfix: 公開直後に OGP 画像が付かないレースを修正
 
 - **症状** — 新規公開作品（例: Time Battler）の X カードにタイトル/説明のみで画像が付かないことがある
