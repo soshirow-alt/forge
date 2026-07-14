@@ -18,7 +18,15 @@ import { ViewModeToggle, type ViewMode } from "@/components/view-mode-toggle";
 import { PageLoadingSkeleton } from "@/components/forge-loading-skeletons";
 import { useOwnedProjectVoiceSignals } from "@/hooks/use-owned-project-voice-signals";
 import { useNurtureVoiceRead } from "@/hooks/use-nurture-feedback-read";
-import { matchesOwnedProjectPhaseFilter } from "@/lib/owned-project-filters";
+import {
+  matchesOwnedProjectDevPhaseFilter,
+  matchesOwnedProjectOfficialFilter,
+  matchesOwnedProjectVisibilityFilter,
+  ownedProjectVisibilityLabel,
+  isOwnedProjectOfficiallyReleased,
+  STUDIO_DEV_PHASE_FILTER_OPTIONS,
+  STUDIO_VISIBILITY_FILTER_OPTIONS,
+} from "@/lib/owned-project-filters";
 import {
   buildProjectGrowthSnapshot,
   getProjectStatusBadges,
@@ -32,10 +40,10 @@ import { isStudioMypagePreviewMockProject } from "@/lib/studio-mypage-owned-proj
 import type { Game } from "@/lib/mock-games";
 import {
   STUDIO_PROJECTS_PAGE_SIZE,
-  studioPhaseFilterOptions,
   studioSortOptions,
   type StudioSortId,
 } from "@/lib/studio-projects-v0-mock-data";
+import { displayPhase } from "@/lib/development-phases";
 import {
   ChevronLeft,
   ChevronRight,
@@ -171,6 +179,19 @@ function OwnedProjectGridCard({
             ))}
           </div>
           <p className="mt-1 truncate text-xs text-zinc-500">{game.genre}</p>
+          <div className="mt-2 flex flex-wrap gap-1.5 text-[10px]">
+            <span className="rounded-md border border-zinc-700 px-1.5 py-0.5 text-zinc-400">
+              {ownedProjectVisibilityLabel(game)}
+            </span>
+            <span className="rounded-md border border-zinc-700 px-1.5 py-0.5 text-zinc-400">
+              {displayPhase(game.phase)}
+            </span>
+            {isOwnedProjectOfficiallyReleased(game) ? (
+              <span className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-emerald-300">
+                正式版公開済み
+              </span>
+            ) : null}
+          </div>
           <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-zinc-400">
             <span className="inline-flex items-center gap-1.5">
               <MessageSquare className="size-3.5 shrink-0 text-violet-400" aria-hidden="true" />
@@ -308,7 +329,9 @@ export function StudioOwnedProjectsDirectoryPanel({
   const { requestDelete, modal } = useStudioProjectDeleteModal(deleteSubmittedGame);
 
   const [query, setQuery] = useState(initialQuery);
-  const [phase, setPhase] = useState("all");
+  const [visibility, setVisibility] = useState("all");
+  const [devPhase, setDevPhase] = useState("all");
+  const [onlyOfficial, setOnlyOfficial] = useState(false);
   const [sortId, setSortId] = useState<StudioSortId>("updated-desc");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [page, setPage] = useState(1);
@@ -349,9 +372,15 @@ export function StudioOwnedProjectsDirectoryPanel({
 
   const filtered = useMemo(() => {
     let list = [...ownedRows];
-    if (phase !== "all") {
-      list = list.filter((row) => matchesOwnedProjectPhaseFilter(row.game, phase));
-    }
+    list = list.filter((row) =>
+      matchesOwnedProjectVisibilityFilter(row.game, visibility),
+    );
+    list = list.filter((row) =>
+      matchesOwnedProjectDevPhaseFilter(row.game, devPhase),
+    );
+    list = list.filter((row) =>
+      matchesOwnedProjectOfficialFilter(row.game, onlyOfficial),
+    );
     if (query.trim()) {
       const q = query.trim().toLowerCase();
       list = list.filter((row) => row.game.title.toLowerCase().includes(q));
@@ -364,7 +393,7 @@ export function StudioOwnedProjectsDirectoryPanel({
       list.sort((a, b) => b.game.lastUpdated.localeCompare(a.game.lastUpdated));
     }
     return list;
-  }, [ownedRows, phase, query, sortId]);
+  }, [ownedRows, visibility, devPhase, onlyOfficial, query, sortId]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / STUDIO_PROJECTS_PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -435,16 +464,41 @@ export function StudioOwnedProjectsDirectoryPanel({
           </div>
         </div>
 
-        <div>
-          <p className="mb-2 text-xs font-medium text-zinc-500">公開状態</p>
-          <StudioFilterPills
-            options={[...studioPhaseFilterOptions]}
-            active={phase}
-            onChange={(id) => {
-              setPhase(id);
-              setPage(1);
-            }}
-          />
+        <div className="space-y-4">
+          <div>
+            <p className="mb-2 text-xs font-medium text-zinc-500">公開状態</p>
+            <StudioFilterPills
+              options={[...STUDIO_VISIBILITY_FILTER_OPTIONS]}
+              active={visibility}
+              onChange={(id) => {
+                setVisibility(id);
+                setPage(1);
+              }}
+            />
+          </div>
+          <div>
+            <p className="mb-2 text-xs font-medium text-zinc-500">開発フェーズ</p>
+            <StudioFilterPills
+              options={[...STUDIO_DEV_PHASE_FILTER_OPTIONS]}
+              active={devPhase}
+              onChange={(id) => {
+                setDevPhase(id);
+                setPage(1);
+              }}
+            />
+          </div>
+          <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-zinc-300">
+            <input
+              type="checkbox"
+              checked={onlyOfficial}
+              onChange={(event) => {
+                setOnlyOfficial(event.target.checked);
+                setPage(1);
+              }}
+              className="size-4 rounded border-zinc-600 bg-zinc-900 text-violet-600 focus:ring-violet-500/40"
+            />
+            正式版公開済みのみ
+          </label>
         </div>
       </div>
 

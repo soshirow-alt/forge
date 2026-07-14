@@ -322,7 +322,7 @@ function ConnectionChartCard({
   footer,
 }: {
   title: string;
-  description: string;
+  description?: string;
   accent: CardAccent;
   icon: LucideIcon;
   fetching?: boolean;
@@ -349,7 +349,11 @@ function ConnectionChartCard({
           </span>
           <div className="min-w-0">
             <h3 className="truncate text-base font-semibold leading-tight text-zinc-50">{title}</h3>
-            <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-zinc-500">{description}</p>
+            {description ? (
+              <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-zinc-500">
+                {description}
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
@@ -464,8 +468,7 @@ function ConnectionMetricsSection({
             accent="violet"
             icon={Gamepad2}
             fetching={fetching}
-            title="プレイの深さ"
-            description="何回遊んでくれたかの内訳"
+            title="期間内のプレイ人数"
             chart={
               <StudioHomeStackedBarChart
                 periods={metrics.months}
@@ -539,8 +542,7 @@ function ConnectionMetricsSection({
             accent="sky"
             icon={MessageSquare}
             fetching={fetching}
-            title="フィードバックの深さ"
-            description="遊んだ人のうち、どこまで反応してくれたか"
+            title="プレイ→フィードバックの人数"
             chart={
               <StudioHomeMultiLineChart
                 periods={metrics.months}
@@ -614,8 +616,7 @@ function ConnectionMetricsSection({
             accent="violet"
             icon={Heart}
             fetching={fetching}
-            title="見届けの広がり"
-            description="プレイ後も作品を追いかけてくれた人の推移"
+            title="見届けている人数"
             chart={
               <StudioHomeMultiLineChart
                 periods={metrics.months}
