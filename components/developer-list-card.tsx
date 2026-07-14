@@ -38,7 +38,7 @@ export function DeveloperListCard({
   return (
     <Link
       href={profileHref}
-      className="block rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 transition-colors hover:border-zinc-700 sm:p-5"
+      className="block max-w-3xl rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 transition-colors hover:border-zinc-700 sm:p-5"
     >
       <div className="flex gap-3 sm:gap-4">
         <ProfileAvatar
