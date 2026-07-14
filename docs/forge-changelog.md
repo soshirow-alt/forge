@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-07-15 — ホーム発見カードにも「プレイヤー N人」（Preview）
+
+- **原因** — `/home` の discovery feed は FB／フォローだけ取り込み、`play_player_count` をマージしていなかった（検索・詳細は表示済み）
+- **対応** — feed 取得後に `get_public_project_stats` で play を付与。0 は「プレイヤー 0人」、未取得は非表示のまま
+- **対象外** — Production 未反映。home feed SQL 自体への列追加はなし（クライアント側マージ）
+
 ## 2026-07-15 — マイページ「FB履歴」実装（Preview）
 
 - **FB履歴タブ** — Coming Soon をやめ、ログインユーザー本人が送信した既存 FB を新しい順に表示（1送信≒1件）
