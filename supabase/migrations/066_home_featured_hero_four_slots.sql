@@ -1,19 +1,23 @@
 -- 066: Home featured hero — 4 independent slots (Staging-first)
 --
--- NOTE: The first plpgsql/temp-table draft hit runtime
--- "DROP TABLE is not allowed in a non-volatile function" on Staging.
--- Body replaced by the pure-SQL STABLE definition (same as 067). Fresh applies
--- of 066 are fine; environments that already installed the broken draft need 067.
+-- Canonical body = pure SQL STABLE CTE (identical to 067). Do not reintroduce
+-- LANGUAGE plpgsql or temp tables / DROP TABLE inside STABLE.
+-- Environments that already applied a broken 066 draft: repair via 067
+-- (DROP + recreate), not by re-running CREATE OR REPLACE alone.
 --
--- New RPC get_home_featured_hero():
---   reaction / rising_plays / newest / updated
+-- Slots: reaction / rising_plays / newest / updated
 -- Soft owner diversity; unique project_id; shelves unchanged (065).
 --
 -- Apply: Staging (vuqpwvjvgyxffmvpfrxo) only until owner GO for Production.
+-- Idempotent for greenfield / re-apply: DROP known signatures then CREATE.
 
 BEGIN;
 
-CREATE OR REPLACE FUNCTION public.get_home_featured_hero()
+DROP FUNCTION IF EXISTS public.get_home_featured_hero();
+DROP FUNCTION IF EXISTS public.get_home_featured_hero(integer);
+DROP FUNCTION IF EXISTS public.get_home_featured_hero(integer, integer);
+
+CREATE FUNCTION public.get_home_featured_hero()
 RETURNS TABLE (
   featured_type text,
   slot_rank integer,
@@ -39,38 +43,18 @@ RETURNS TABLE (
   feedback_participant_count bigint,
   watch_count bigint
 )
-LANGUAGE plpgsql
+LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-DECLARE
-  v_feed_limit integer := 12;
-  v_window_start timestamptz := now() - interval '7 days';
-  v_prev_window_start timestamptz := now() - interval '14 days';
-  v_selected_ids uuid[] := ARRAY[]::uuid[];
-  v_selected_owners uuid[] := ARRAY[]::uuid[];
-  v_slot integer := 0;
-  v_type text;
-  v_axis_rank integer;
-  v_project_id uuid;
-  v_owner_id uuid;
-  v_feedback_users_7d bigint;
-  v_watchers_7d bigint;
-  v_players_7d bigint;
-  v_players_prev_7d bigint;
-  v_player_delta_7d bigint;
-  v_last_play_at timestamptz;
-  v_last_engagement_at timestamptz;
-  v_first_published_at timestamptz;
-  v_meaningful_update_at timestamptz;
-  v_update_kind text;
-BEGIN
-  DROP TABLE IF EXISTS tmp_featured_picked;
-  DROP TABLE IF EXISTS tmp_featured_axis;
-
-  CREATE TEMP TABLE tmp_featured_axis ON COMMIT DROP AS
   WITH
+  params AS (
+    SELECT
+      12::integer AS feed_limit,
+      (now() - interval '7 days') AS window_start,
+      (now() - interval '14 days') AS prev_window_start
+  ),
   public_projects AS (
     SELECT
       p.id AS project_id,
@@ -125,18 +109,20 @@ BEGIN
         vr.user_id AS user_id,
         vr.created_at AS created_at
       FROM public.project_voice_responses vr
+      CROSS JOIN params prm
       WHERE vr.moderation_status = 'visible'
         AND vr.user_id IS NOT NULL
-        AND vr.created_at >= v_window_start
+        AND vr.created_at >= prm.window_start
       UNION ALL
       SELECT
         fb.project_id AS project_id_text,
         fb.user_id AS user_id,
         fb.created_at AS created_at
       FROM public.project_feedback fb
+      CROSS JOIN params prm
       WHERE fb.moderation_status = 'visible'
         AND fb.user_id IS NOT NULL
-        AND fb.created_at >= v_window_start
+        AND fb.created_at >= prm.window_start
     ) combined
     GROUP BY combined.project_id_text
   ),
@@ -146,7 +132,8 @@ BEGIN
       COUNT(*)::bigint AS watchers_7d,
       MAX(w.created_at) AS last_watch_at
     FROM public.project_watches w
-    WHERE w.created_at >= v_window_start
+    CROSS JOIN params prm
+    WHERE w.created_at >= prm.window_start
     GROUP BY w.project_id
   ),
   play_7d AS (
@@ -155,7 +142,8 @@ BEGIN
       COUNT(DISTINCT s.user_id)::bigint AS players_7d,
       MAX(s.played_at) AS last_play_at
     FROM public.project_play_sessions s
-    WHERE s.played_at >= v_window_start
+    CROSS JOIN params prm
+    WHERE s.played_at >= prm.window_start
       AND s.user_id IS NOT NULL
     GROUP BY s.project_id
   ),
@@ -164,8 +152,9 @@ BEGIN
       s.project_id AS project_id_text,
       COUNT(DISTINCT s.user_id)::bigint AS players_prev_7d
     FROM public.project_play_sessions s
-    WHERE s.played_at >= v_prev_window_start
-      AND s.played_at < v_window_start
+    CROSS JOIN params prm
+    WHERE s.played_at >= prm.prev_window_start
+      AND s.played_at < prm.window_start
       AND s.user_id IS NOT NULL
     GROUP BY s.project_id
   ),
@@ -250,13 +239,22 @@ BEGIN
     SELECT
       pp.project_id,
       pp.owner_id,
-      0::bigint AS feedback_users_7d,
-      0::bigint AS watchers_7d,
-      0::bigint AS players_7d,
-      0::bigint AS players_prev_7d,
-      0::bigint AS player_delta_7d,
-      NULL::timestamptz AS last_play_at,
-      NULL::timestamptz AS last_engagement_at,
+      COALESCE(f.feedback_users_7d, 0)::bigint AS feedback_users_7d,
+      COALESCE(w.watchers_7d, 0)::bigint AS watchers_7d,
+      COALESCE(pl.players_7d, 0)::bigint AS players_7d,
+      COALESCE(pp7.players_prev_7d, 0)::bigint AS players_prev_7d,
+      (
+        COALESCE(pl.players_7d, 0) - COALESCE(pp7.players_prev_7d, 0)
+      )::bigint AS player_delta_7d,
+      pl.last_play_at AS last_play_at,
+      NULLIF(
+        GREATEST(
+          COALESCE(f.last_fb_at, '-infinity'::timestamptz),
+          COALESCE(w.last_watch_at, '-infinity'::timestamptz),
+          COALESCE(pl.last_play_at, '-infinity'::timestamptz)
+        ),
+        '-infinity'::timestamptz
+      ) AS last_engagement_at,
       pp.first_published_at,
       NULL::timestamptz AS meaningful_update_at,
       NULL::text AS update_kind,
@@ -264,18 +262,32 @@ BEGIN
         ORDER BY pp.first_published_at DESC, pp.project_id ASC
       )::integer AS axis_rank
     FROM public_projects pp
+    LEFT JOIN fb_7d f ON f.project_id_text = pp.project_id::text
+    LEFT JOIN watch_7d w ON w.project_id_text = pp.project_id::text
+    LEFT JOIN play_7d pl ON pl.project_id_text = pp.project_id::text
+    LEFT JOIN play_prev_7d pp7 ON pp7.project_id_text = pp.project_id::text
   ),
   updated_ranked AS (
     SELECT
       pp.project_id,
       pp.owner_id,
-      0::bigint AS feedback_users_7d,
-      0::bigint AS watchers_7d,
-      0::bigint AS players_7d,
-      0::bigint AS players_prev_7d,
-      0::bigint AS player_delta_7d,
-      NULL::timestamptz AS last_play_at,
-      NULL::timestamptz AS last_engagement_at,
+      COALESCE(f.feedback_users_7d, 0)::bigint AS feedback_users_7d,
+      COALESCE(w.watchers_7d, 0)::bigint AS watchers_7d,
+      COALESCE(pl.players_7d, 0)::bigint AS players_7d,
+      COALESCE(pp7.players_prev_7d, 0)::bigint AS players_prev_7d,
+      (
+        COALESCE(pl.players_7d, 0) - COALESCE(pp7.players_prev_7d, 0)
+      )::bigint AS player_delta_7d,
+      pl.last_play_at AS last_play_at,
+      NULLIF(
+        GREATEST(
+          COALESCE(f.last_fb_at, '-infinity'::timestamptz),
+          COALESCE(w.last_watch_at, '-infinity'::timestamptz),
+          COALESCE(pl.last_play_at, '-infinity'::timestamptz),
+          COALESCE(ua.meaningful_update_at, '-infinity'::timestamptz)
+        ),
+        '-infinity'::timestamptz
+      ) AS last_engagement_at,
       pp.first_published_at,
       ua.meaningful_update_at,
       ua.update_kind,
@@ -284,195 +296,188 @@ BEGIN
       )::integer AS axis_rank
     FROM public_projects pp
     INNER JOIN updated_agg ua ON ua.project_id = pp.project_id
+    LEFT JOIN fb_7d f ON f.project_id_text = pp.project_id::text
+    LEFT JOIN watch_7d w ON w.project_id_text = pp.project_id::text
+    LEFT JOIN play_7d pl ON pl.project_id_text = pp.project_id::text
+    LEFT JOIN play_prev_7d pp7 ON pp7.project_id_text = pp.project_id::text
   ),
-  axis_union AS (
+  reaction_pick AS (
+    SELECT *
+    FROM reaction_ranked
+    CROSS JOIN params prm
+    WHERE reaction_ranked.axis_rank <= prm.feed_limit
+    ORDER BY reaction_ranked.axis_rank ASC
+    LIMIT 1
+  ),
+  rising_pick AS (
+    SELECT ri.*
+    FROM rising_ranked ri
+    CROSS JOIN params prm
+    WHERE ri.axis_rank <= prm.feed_limit
+      AND NOT EXISTS (
+        SELECT 1 FROM reaction_pick rp WHERE rp.project_id = ri.project_id
+      )
+    ORDER BY
+      CASE
+        WHEN EXISTS (
+          SELECT 1
+          FROM reaction_pick rp
+          WHERE rp.owner_id IS NOT NULL
+            AND ri.owner_id IS NOT NULL
+            AND rp.owner_id = ri.owner_id
+        ) THEN 1
+        ELSE 0
+      END ASC,
+      ri.axis_rank ASC
+    LIMIT 1
+  ),
+  newest_pick AS (
+    SELECT nr.*
+    FROM newest_ranked nr
+    CROSS JOIN params prm
+    WHERE nr.axis_rank <= prm.feed_limit
+      AND NOT EXISTS (
+        SELECT 1 FROM reaction_pick rp WHERE rp.project_id = nr.project_id
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM rising_pick ri WHERE ri.project_id = nr.project_id
+      )
+    ORDER BY
+      CASE
+        WHEN EXISTS (
+          SELECT 1
+          FROM (
+            SELECT owner_id FROM reaction_pick
+            UNION ALL
+            SELECT owner_id FROM rising_pick
+          ) owners
+          WHERE owners.owner_id IS NOT NULL
+            AND nr.owner_id IS NOT NULL
+            AND owners.owner_id = nr.owner_id
+        ) THEN 1
+        ELSE 0
+      END ASC,
+      nr.axis_rank ASC
+    LIMIT 1
+  ),
+  updated_pick AS (
+    SELECT ur.*
+    FROM updated_ranked ur
+    CROSS JOIN params prm
+    WHERE ur.axis_rank <= prm.feed_limit
+      AND NOT EXISTS (
+        SELECT 1 FROM reaction_pick rp WHERE rp.project_id = ur.project_id
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM rising_pick ri WHERE ri.project_id = ur.project_id
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM newest_pick np WHERE np.project_id = ur.project_id
+      )
+    ORDER BY
+      CASE
+        WHEN EXISTS (
+          SELECT 1
+          FROM (
+            SELECT owner_id FROM reaction_pick
+            UNION ALL
+            SELECT owner_id FROM rising_pick
+            UNION ALL
+            SELECT owner_id FROM newest_pick
+          ) owners
+          WHERE owners.owner_id IS NOT NULL
+            AND ur.owner_id IS NOT NULL
+            AND owners.owner_id = ur.owner_id
+        ) THEN 1
+        ELSE 0
+      END ASC,
+      ur.axis_rank ASC
+    LIMIT 1
+  ),
+  picked AS (
     SELECT
       'reaction'::text AS featured_type,
-      rr.*
-    FROM reaction_ranked rr
-    WHERE rr.axis_rank <= v_feed_limit
+      1::integer AS desired_order,
+      rp.*
+    FROM reaction_pick rp
     UNION ALL
     SELECT
       'rising_plays'::text AS featured_type,
+      2::integer AS desired_order,
       ri.*
-    FROM rising_ranked ri
-    WHERE ri.axis_rank <= v_feed_limit
+    FROM rising_pick ri
     UNION ALL
     SELECT
       'newest'::text AS featured_type,
-      nr.*
-    FROM newest_ranked nr
-    WHERE nr.axis_rank <= v_feed_limit
+      3::integer AS desired_order,
+      np.*
+    FROM newest_pick np
     UNION ALL
     SELECT
       'updated'::text AS featured_type,
-      ur.*
-    FROM updated_ranked ur
-    WHERE ur.axis_rank <= v_feed_limit
-  )
-  SELECT * FROM axis_union;
-
-  CREATE TEMP TABLE tmp_featured_picked (
-    featured_type text NOT NULL,
-    slot_rank integer NOT NULL,
-    axis_rank integer NOT NULL,
-    project_id uuid NOT NULL,
-    owner_id uuid,
-    feedback_users_7d bigint,
-    watchers_7d bigint,
-    players_7d bigint,
-    players_prev_7d bigint,
-    player_delta_7d bigint,
-    last_play_at timestamptz,
-    last_engagement_at timestamptz,
-    first_published_at timestamptz,
-    meaningful_update_at timestamptz,
-    update_kind text
-  ) ON COMMIT DROP;
-
-  FOREACH v_type IN ARRAY ARRAY[
-    'reaction',
-    'rising_plays',
-    'newest',
-    'updated'
-  ]::text[]
-  LOOP
+      4::integer AS desired_order,
+      up.*
+    FROM updated_pick up
+  ),
+  picked_ranked AS (
     SELECT
-      a.axis_rank,
-      a.project_id,
-      a.owner_id,
-      a.feedback_users_7d,
-      a.watchers_7d,
-      a.players_7d,
-      a.players_prev_7d,
-      a.player_delta_7d,
-      a.last_play_at,
-      a.last_engagement_at,
-      a.first_published_at,
-      a.meaningful_update_at,
-      a.update_kind
-    INTO
-      v_axis_rank,
-      v_project_id,
-      v_owner_id,
-      v_feedback_users_7d,
-      v_watchers_7d,
-      v_players_7d,
-      v_players_prev_7d,
-      v_player_delta_7d,
-      v_last_play_at,
-      v_last_engagement_at,
-      v_first_published_at,
-      v_meaningful_update_at,
-      v_update_kind
-    FROM tmp_featured_axis a
-    WHERE a.featured_type = v_type
-      AND NOT (a.project_id = ANY (v_selected_ids))
-    ORDER BY
-      CASE
-        WHEN a.owner_id IS NOT NULL AND a.owner_id = ANY (v_selected_owners) THEN 1
-        ELSE 0
-      END ASC,
-      a.axis_rank ASC
-    LIMIT 1;
-
-    IF FOUND THEN
-      v_slot := v_slot + 1;
-      INSERT INTO tmp_featured_picked (
-        featured_type,
-        slot_rank,
-        axis_rank,
-        project_id,
-        owner_id,
-        feedback_users_7d,
-        watchers_7d,
-        players_7d,
-        players_prev_7d,
-        player_delta_7d,
-        last_play_at,
-        last_engagement_at,
-        first_published_at,
-        meaningful_update_at,
-        update_kind
-      )
-      VALUES (
-        v_type,
-        v_slot,
-        v_axis_rank,
-        v_project_id,
-        v_owner_id,
-        v_feedback_users_7d,
-        v_watchers_7d,
-        v_players_7d,
-        v_players_prev_7d,
-        v_player_delta_7d,
-        v_last_play_at,
-        v_last_engagement_at,
-        v_first_published_at,
-        v_meaningful_update_at,
-        v_update_kind
-      );
-      v_selected_ids := array_append(v_selected_ids, v_project_id);
-      IF v_owner_id IS NOT NULL THEN
-        v_selected_owners := array_append(v_selected_owners, v_owner_id);
-      END IF;
-    END IF;
-  END LOOP;
-
-  RETURN QUERY
-  WITH stats AS (
+      p.*,
+      ROW_NUMBER() OVER (ORDER BY p.desired_order ASC)::integer AS slot_rank
+    FROM picked p
+  ),
+  stats AS (
     SELECT
       s.project_id AS project_id,
       s.feedback_participant_count AS feedback_participant_count,
       s.watch_count AS watch_count
     FROM public.get_public_project_stats(
       COALESCE(
-        (SELECT array_agg(p.project_id) FROM tmp_featured_picked p),
+        (SELECT array_agg(pr.project_id) FROM picked_ranked pr),
         ARRAY[]::uuid[]
       )
     ) s
   )
   SELECT
-    pick.featured_type,
-    pick.slot_rank,
-    pick.axis_rank,
-    pp.id AS project_id,
-    pp.owner_id AS owner_id,
-    pp.title AS title,
-    pp.description AS description,
-    COALESCE(pp.playable_version, '0.1') AS playable_version,
-    CASE WHEN pp.thumbnail_url ~* '^https?://' THEN pp.thumbnail_url ELSE NULL END AS thumbnail_url,
-    pp.genre AS genre,
-    pp.first_published_at AS first_published_at,
-    pick.meaningful_update_at,
-    pick.update_kind,
-    pick.feedback_users_7d,
-    pick.watchers_7d,
-    pick.players_7d,
-    pick.players_prev_7d,
-    pick.player_delta_7d,
-    pick.last_play_at,
-    pick.last_engagement_at,
-    CASE pick.featured_type
+    pr.featured_type,
+    pr.slot_rank,
+    pr.axis_rank,
+    pp.project_id,
+    pp.owner_id,
+    pp.title,
+    pp.description,
+    pp.playable_version,
+    pp.thumbnail_url,
+    pp.genre,
+    pp.first_published_at,
+    pr.meaningful_update_at,
+    pr.update_kind,
+    pr.feedback_users_7d,
+    pr.watchers_7d,
+    pr.players_7d,
+    pr.players_prev_7d,
+    pr.player_delta_7d,
+    pr.last_play_at,
+    pr.last_engagement_at,
+    CASE pr.featured_type
       WHEN 'newest' THEN pp.first_published_at
-      WHEN 'updated' THEN pick.meaningful_update_at
-      WHEN 'rising_plays' THEN COALESCE(pick.last_play_at, pick.last_engagement_at)
-      ELSE COALESCE(pick.last_engagement_at, pp.first_published_at)
+      WHEN 'updated' THEN pr.meaningful_update_at
+      WHEN 'rising_plays' THEN COALESCE(pr.last_play_at, pr.last_engagement_at)
+      ELSE COALESCE(pr.last_engagement_at, pp.first_published_at)
     END AS card_time_at,
     COALESCE(st.feedback_participant_count, 0)::bigint AS feedback_participant_count,
     COALESCE(st.watch_count, 0)::bigint AS watch_count
-  FROM tmp_featured_picked pick
-  INNER JOIN public.projects pp ON pp.id = pick.project_id
-  LEFT JOIN stats st ON st.project_id = pick.project_id
-  ORDER BY pick.slot_rank ASC;
-END;
+  FROM picked_ranked pr
+  INNER JOIN public_projects pp ON pp.project_id = pr.project_id
+  LEFT JOIN stats st ON st.project_id = pr.project_id
+  ORDER BY pr.slot_rank ASC;
 $$;
 
 COMMENT ON FUNCTION public.get_home_featured_hero() IS
-  'Home featured hero (066): up to 4 slots — reaction / rising_plays / newest / updated. Unique projects; soft owner diversity. Shelves unchanged (use get_home_discovery_feed).';
+  'Home featured hero (066): pure SQL STABLE — reaction / rising_plays / newest / updated. Unique projects; soft owner diversity. Shelves unchanged.';
 
 REVOKE ALL ON FUNCTION public.get_home_featured_hero() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_home_featured_hero() TO anon;
 GRANT EXECUTE ON FUNCTION public.get_home_featured_hero() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_home_featured_hero() TO service_role;
 
 COMMIT;

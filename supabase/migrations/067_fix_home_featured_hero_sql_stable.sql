@@ -1,14 +1,31 @@
--- 067: Fix get_home_featured_hero — no temp tables in STABLE function
+-- 067: Staging repair — replace broken get_home_featured_hero with pure SQL STABLE
 --
--- 066 failed at runtime: "DROP TABLE is not allowed in a non-volatile function".
--- Rewrite as pure SQL (STABLE) with successive slot CTEs + soft owner diversity.
+-- Why repair (not CREATE OR REPLACE alone):
+--   Staging still has the 066 plpgsql body that uses DROP TABLE / temp tables.
+--   Runtime: "DROP TABLE is not allowed in a non-volatile function" (0A000).
+--   PostgreSQL cannot change LANGUAGE plpgsql → sql via CREATE OR REPLACE;
+--   an explicit DROP of the known signature(s) is required, then recreate once.
+--
+-- Canonical signature (066/067, no overloads shipped):
+--   public.get_home_featured_hero()  -- zero-arg
+--
+-- Body: pure SQL / CTE only (no temp tables). Soft owner diversity.
 -- Shelf RPC get_home_discovery_feed unchanged (065).
 --
--- Apply: Staging (vuqpwvjvgyxffmvpfrxo) first. Do not apply to Production until owner GO.
+-- Apply: Staging Dashboard SQL Editor (vuqpwvjvgyxffmvpfrxo) only until owner GO.
+-- Idempotent: safe to re-run (BEGIN…COMMIT; DROP IF EXISTS + recreate + GRANT).
 
 BEGIN;
 
-CREATE OR REPLACE FUNCTION public.get_home_featured_hero()
+-- Exact broken 066 signature (and any same-name zero-arg remnant).
+DROP FUNCTION IF EXISTS public.get_home_featured_hero();
+
+-- Known historical / accidental overloads (none shipped, but drop if present).
+-- Add more DROP lines here only if a future bad apply introduces another arg list.
+DROP FUNCTION IF EXISTS public.get_home_featured_hero(integer);
+DROP FUNCTION IF EXISTS public.get_home_featured_hero(integer, integer);
+
+CREATE FUNCTION public.get_home_featured_hero()
 RETURNS TABLE (
   featured_type text,
   slot_rank integer,
