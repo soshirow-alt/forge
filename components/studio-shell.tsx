@@ -182,12 +182,6 @@ function StudioSidebarNavBody({ showFeedback = true }: { showFeedback?: boolean 
             {link.label}
           </Link>
         ))}
-        <Link
-          href="/search"
-          className={navLinkClass(pathname.startsWith("/search"))}
-        >
-          作品を探す
-        </Link>
       </div>
 
       <SidebarDivider />

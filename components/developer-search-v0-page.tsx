@@ -336,8 +336,8 @@ function DeveloperSearchContent() {
         onClose={() => setGachaOpen(false)}
       />
 
-      <div className="flex flex-col gap-8 xl:flex-row">
-        <div className="min-w-0 flex-1">
+      <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
+        <div className="min-w-0 flex-1 grow">
           <header>
             <h1 className="text-2xl font-bold text-white sm:text-3xl">開発者を探す</h1>
             <p className="mt-2 text-sm text-zinc-400">開発者名で検索できます</p>

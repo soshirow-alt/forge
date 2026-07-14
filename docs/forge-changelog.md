@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-07-15 — Phase 2 Production UI polish hotfix
+
+- **開発者一覧** (`/search/creators`) — カード `max-w-4xl` を外し一覧列を絞り込み直前まで伸ばす。一覧↔絞り込み gap を約24px。代表作品は件数に応じた横並び（1件で右半分が空かない）
+- **Studioホーム** — 3メトリクスカードのヘッダーを icon+title を同一行・`items-center` で揃える。カード2タイトルを「プレイヤーフィードバックの人数」に統一
+- **Studioサイドバー** — 「作品を探す」項目のみ削除（ヘッダー／モード切替・Player側は維持）
+- **Studioプロジェクト一覧** — 公開状態＋開発フェーズをデスクトップで横並び（検索・並び・表示切替は維持）
+- **LP** — プレイヤーカード内の重複「ゲストで作品を見る」を削除。ヘッダー右上のゲスト導線と「ゲームを探す」は維持
+- **Production FB掃除** — オーナーアカウントの欠落プロジェクト宛 orphan FB 削除はコード変更外。Production Sensitive env が CLI で空のため、適用 SQL は `scripts/production-only/orphan-owner-fb-delete.sql`（Dashboard）。正規公開作品 FB は対象外
+- **対象外** — schema / migration / 069 復活なし
+
 ## 2026-07-15 — Phase 2 本番反映（プロフィール／公開プレイヤー数／ゲスト導線）
 
 - **対象** — Preview 上の Phase 2（A–J）を Production コードへ反映。DB は **068 のみ**（オーナー適用済み）。**069 は UNUSED・非適用**

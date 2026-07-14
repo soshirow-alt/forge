@@ -39,7 +39,7 @@ export function DeveloperListCard({
   return (
     <Link
       href={profileHref}
-      className="block max-w-4xl rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 transition-colors hover:border-zinc-700 sm:p-5"
+      className="block w-full rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 transition-colors hover:border-zinc-700 sm:p-5"
     >
       <div className="flex flex-col gap-4 md:flex-row md:items-stretch md:gap-5">
         {/* Left: developer info */}
@@ -126,13 +126,22 @@ export function DeveloperListCard({
 
         {/* Right: representative works (desktop); stacked under on mobile */}
         {featured.length > 0 ? (
-          <ul className="grid w-full shrink-0 grid-cols-3 gap-2 md:w-[280px] md:self-center lg:w-[320px]">
+          <ul
+            className={`grid w-full min-w-0 gap-2 md:flex-1 md:self-center ${
+              featured.length === 1
+                ? "grid-cols-1 md:max-w-[11rem]"
+                : featured.length === 2
+                  ? "grid-cols-2"
+                  : "grid-cols-3"
+            }`}
+          >
             {featured.map((work) => (
               <li key={work.id} className="min-w-0">
                 <ProjectThumbnail
                   projectId={work.id}
                   title={work.title || "作品"}
                   variant="mini"
+                  className="!w-full !max-w-none"
                 />
                 {work.title ? (
                   <p className="mt-1 truncate text-[10px] leading-tight text-zinc-400">

@@ -214,9 +214,6 @@ export function LandingPage({
                   primaryLabel="ゲームを探す"
                   primaryHref={buildLoginUrlWithReturn("/home")}
                   primaryClass="bg-white text-zinc-950 shadow-white/20"
-                  secondary={
-                    <LandingGuestEntryButton className="relative mt-3 w-full rounded-xl border border-zinc-700 bg-zinc-950/40 py-3 text-sm font-semibold text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-900/80" />
-                  }
                 />
                 <CtaCard
                   accent="developer"

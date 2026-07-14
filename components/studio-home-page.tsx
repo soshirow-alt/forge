@@ -121,8 +121,8 @@ const QUICK_LINK_STYLES: Record<
 const DEV_HINT_ICONS = [HelpCircle, FileText, TrendingUp] as const;
 
 /** 3カード共通の固定行高（flex/mt-auto 不使用） */
-const CARD_GRID_CLASS = "grid grid-rows-[4.5rem_12.25rem_2.75rem_7.25rem] gap-0";
-const CARD_ROW_HEADER = "h-[4.5rem] overflow-hidden";
+const CARD_GRID_CLASS = "grid grid-rows-[3.25rem_12.25rem_2.75rem_7.25rem] gap-0";
+const CARD_ROW_HEADER = "h-[3.25rem] overflow-hidden";
 const CARD_ROW_CHART = "h-[12.25rem] overflow-hidden";
 const CARD_ROW_LEGEND = "h-[2.75rem] overflow-hidden";
 const CARD_ROW_FOOTER = "h-[7.25rem] overflow-hidden border-t border-white/[0.06] pt-2";
@@ -341,13 +341,13 @@ function ConnectionChartCard({
         aria-hidden="true"
       />
       <div className={`relative ${CARD_ROW_HEADER}`}>
-        <div className="flex h-full items-start gap-3">
+        <div className="flex h-full items-center gap-3">
           <span
             className={`flex size-10 shrink-0 items-center justify-center rounded-xl border ${styles.iconBg}`}
           >
             <Icon className={`size-5 ${styles.icon}`} aria-hidden="true" />
           </span>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h3 className="truncate text-base font-semibold leading-tight text-zinc-50">{title}</h3>
             {description ? (
               <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-zinc-500">
@@ -542,7 +542,7 @@ function ConnectionMetricsSection({
             accent="sky"
             icon={MessageSquare}
             fetching={fetching}
-            title="プレイ→フィードバックの人数"
+            title="プレイヤーフィードバックの人数"
             chart={
               <StudioHomeMultiLineChart
                 periods={metrics.months}

@@ -465,27 +465,29 @@ export function StudioOwnedProjectsDirectoryPanel({
         </div>
 
         <div className="space-y-4">
-          <div>
-            <p className="mb-2 text-xs font-medium text-zinc-500">公開状態</p>
-            <StudioFilterPills
-              options={[...STUDIO_VISIBILITY_FILTER_OPTIONS]}
-              active={visibility}
-              onChange={(id) => {
-                setVisibility(id);
-                setPage(1);
-              }}
-            />
-          </div>
-          <div>
-            <p className="mb-2 text-xs font-medium text-zinc-500">開発フェーズ</p>
-            <StudioFilterPills
-              options={[...STUDIO_DEV_PHASE_FILTER_OPTIONS]}
-              active={devPhase}
-              onChange={(id) => {
-                setDevPhase(id);
-                setPage(1);
-              }}
-            />
+          <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-start md:gap-6">
+            <div className="min-w-0">
+              <p className="mb-2 text-xs font-medium text-zinc-500">公開状態</p>
+              <StudioFilterPills
+                options={[...STUDIO_VISIBILITY_FILTER_OPTIONS]}
+                active={visibility}
+                onChange={(id) => {
+                  setVisibility(id);
+                  setPage(1);
+                }}
+              />
+            </div>
+            <div className="min-w-0">
+              <p className="mb-2 text-xs font-medium text-zinc-500">開発フェーズ</p>
+              <StudioFilterPills
+                options={[...STUDIO_DEV_PHASE_FILTER_OPTIONS]}
+                active={devPhase}
+                onChange={(id) => {
+                  setDevPhase(id);
+                  setPage(1);
+                }}
+              />
+            </div>
           </div>
           <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-zinc-300">
             <input
