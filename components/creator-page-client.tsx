@@ -30,7 +30,7 @@ function CreatorGameCard({
         projectId={id}
         title={title}
         genre={genre}
-        variant="card"
+        variant="profile"
         className="rounded-none"
       />
       <div className="p-4">
@@ -100,9 +100,11 @@ export function CreatorPageClient({ id }: { id: string }) {
           {games.length === 0 ? (
             <p className="mt-4 text-zinc-500">まだ作品がありません。</p>
           ) : (
-            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-6 grid justify-items-stretch gap-5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),380px))]">
               {games.map((game) => (
-                <CreatorGameCard key={game.id} {...game} />
+                <div key={game.id} className="w-full max-w-[380px]">
+                  <CreatorGameCard {...game} />
+                </div>
               ))}
             </div>
           )}

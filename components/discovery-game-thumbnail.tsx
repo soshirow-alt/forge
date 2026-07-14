@@ -4,13 +4,73 @@ import Image from "next/image";
 import { useState } from "react";
 import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
 
+function ThumbnailImage({
+  id,
+  title,
+  genre,
+  version,
+  image,
+  className,
+  sizes,
+}: {
+  id: string;
+  title: string;
+  genre?: string;
+  version?: string;
+  image: string;
+  className: string;
+  sizes: string;
+}) {
+  const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  if (failed) {
+    return (
+      <div className={`relative overflow-hidden bg-zinc-800 ${className}`}>
+        <GeneratedThumbnailPoster
+          projectId={id}
+          title={title}
+          genre={genre ?? ""}
+          phase={version ?? ""}
+          compact
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`relative overflow-hidden bg-zinc-800 ${className}`}>
+      <Image
+        src={image}
+        alt=""
+        fill
+        className={`object-cover transition-opacity duration-200 ${
+          loaded ? "opacity-100" : "opacity-0"
+        }`}
+        sizes={sizes}
+        loading="lazy"
+        onLoad={() => setLoaded(true)}
+        onError={() => setFailed(true)}
+      />
+      {!loaded ? (
+        <div className="absolute inset-0 animate-pulse bg-zinc-800" aria-hidden />
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Shared thumbnail image shell used by ProjectThumbnail.
+ * No CSS blur / blurDataURL — soft look was from undersized srcset stretch.
+ * Remount via `key={image}` resets load/error when the URL changes.
+ */
 export function DiscoveryGameThumbnail({
   id,
   title,
   genre,
   version,
   image,
-  className = "w-full aspect-[4/3]",
+  className = "w-full aspect-video",
   sizes = "(max-width: 640px) 50vw, (max-width: 1280px) 25vw, 360px",
 }: {
   id: string;
@@ -21,34 +81,32 @@ export function DiscoveryGameThumbnail({
   className?: string;
   sizes?: string;
 }) {
-  const resolvedImage = image?.trim();
-  const [failedImage, setFailedImage] = useState<string | null>(null);
+  const resolvedImage = image?.trim() || "";
 
-  if (resolvedImage && failedImage !== resolvedImage) {
+  if (!resolvedImage) {
     return (
-      <div className={`relative overflow-hidden rounded-xl bg-zinc-800 ${className}`}>
-        <Image
-          src={resolvedImage}
-          alt=""
-          fill
-          className="object-cover"
-          sizes={sizes}
-          loading="lazy"
-          onError={() => setFailedImage(resolvedImage)}
+      <div className={`relative overflow-hidden bg-zinc-800 ${className}`}>
+        <GeneratedThumbnailPoster
+          projectId={id}
+          title={title}
+          genre={genre ?? ""}
+          phase={version ?? ""}
+          compact
         />
       </div>
     );
   }
 
   return (
-    <div className={`relative overflow-hidden rounded-xl bg-zinc-800 ${className}`}>
-      <GeneratedThumbnailPoster
-        projectId={id}
-        title={title}
-        genre={genre ?? ""}
-        phase={version ?? ""}
-        compact
-      />
-    </div>
+    <ThumbnailImage
+      key={resolvedImage}
+      id={id}
+      title={title}
+      genre={genre}
+      version={version}
+      image={resolvedImage}
+      className={className}
+      sizes={sizes}
+    />
   );
 }

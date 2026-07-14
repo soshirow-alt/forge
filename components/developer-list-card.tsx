@@ -44,14 +44,14 @@ export function DeveloperListCard({
         <ProfileAvatar
           src={dev.avatar}
           userId={dev.userId}
-          className="size-14 shrink-0 sm:size-16"
-          size={64}
+          className="size-12 shrink-0 sm:size-14"
+          size={56}
         />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="truncate text-base font-semibold text-white sm:text-lg">
+                <h2 className="truncate text-base font-semibold text-white">
                   {dev.name}
                 </h2>
                 {dev.isNew ? (
@@ -60,17 +60,12 @@ export function DeveloperListCard({
                     新規
                   </span>
                 ) : null}
-              </div>
-              <p className="mt-0.5 text-xs text-zinc-500">
-                @{dev.handle}
                 {dev.xAccount ? (
-                  <>
-                    <span className="mx-1.5 text-zinc-700" aria-hidden="true">
-                      ·
-                    </span>
-                    <PublicXLink accountOrUrl={dev.xAccount} />
-                  </>
+                  <PublicXLink accountOrUrl={dev.xAccount} />
                 ) : null}
+              </div>
+              <p className="mt-0.5 truncate text-xs text-zinc-500">
+                @{dev.handle}
               </p>
             </div>
             {showFollowButton && onFollow ? (
@@ -123,17 +118,16 @@ export function DeveloperListCard({
           </p>
 
           {featured.length > 0 ? (
-            <ul className="mt-3 grid grid-cols-3 gap-2">
-              {featured.slice(0, 3).map((work) => (
+            <ul className="mt-3 flex flex-wrap gap-2.5">
+              {featured.map((work) => (
                 <li key={work.id} className="min-w-0">
                   <ProjectThumbnail
                     projectId={work.id}
-                    title={work.title || dev.name}
-                    variant="chip"
-                    className="!size-auto !aspect-[4/3] w-full"
+                    title={work.title || "作品"}
+                    variant="mini"
                   />
                   {work.title ? (
-                    <p className="mt-1 truncate text-[10px] text-zinc-500">
+                    <p className="mt-1 max-w-[140px] truncate text-[10px] leading-tight text-zinc-500">
                       {work.title}
                     </p>
                   ) : null}

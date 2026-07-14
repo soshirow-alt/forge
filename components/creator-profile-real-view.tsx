@@ -10,7 +10,6 @@ import { DiscoveryCardStatPills } from "@/components/discovery-card-stat-pills";
 import { PlayerShell } from "@/components/player-shell";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { ProjectThumbnail } from "@/components/project-thumbnail";
-import { PublicStatText } from "@/components/public-stat-text";
 import { PublicXLink } from "@/components/public-x-link";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
@@ -147,39 +146,27 @@ export function CreatorProfileRealView({
 
   return (
     <PlayerShell activeNav="creator-search">
-      <div className="space-y-6">
+      <div className="space-y-4">
         <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 sm:p-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
             <ProfileAvatar
               src={profile.avatar}
               userId={profile.userId}
-              className="mx-auto size-20 shrink-0 sm:mx-0 sm:size-24"
-              size={96}
+              className="mx-auto size-16 shrink-0 sm:mx-0 sm:size-20"
+              size={80}
             />
             <div className="min-w-0 flex-1 text-center sm:text-left">
-              <div className="flex flex-wrap items-start justify-center gap-3 sm:justify-between">
+              <div className="flex flex-wrap items-start justify-center gap-2 sm:justify-between">
                 <div className="min-w-0">
-                  <h1 className="text-xl font-bold text-white sm:text-2xl">
-                    {profile.name}
-                  </h1>
-                  <p className="mt-1 text-sm text-zinc-500">
-                    @{profile.handle}
-                    <span className="mx-2 text-zinc-700" aria-hidden="true">
-                      ·
-                    </span>
-                    <PublicStatText
-                      loaded={followersLoaded}
-                      value={followerCount}
-                      label="フォロワー"
-                      className="text-sm text-zinc-500"
-                    />
-                  </p>
+                  <h1 className="text-xl font-bold text-white">{profile.name}</h1>
+                  <p className="mt-0.5 text-sm text-zinc-500">@{profile.handle}</p>
                 </div>
                 {!isSelf ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     <CreatorFollowButton
                       creatorRouteKey={profile.routeId}
                       developerUserId={profile.userId}
+                      showFollowerCount={false}
                     />
                     <ProfileMoreMenu
                       developerUserId={profile.userId}
@@ -191,28 +178,33 @@ export function CreatorProfileRealView({
               </div>
 
               {profile.bio ? (
-                <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-400">
+                <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-400">
                   {profile.bio}
                 </p>
               ) : null}
 
-              <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-500 sm:justify-start">
-                <PublicXLink accountOrUrl={profile.xAccount} />
-                {profile.website ? (
-                  <CreatorSocialLink
-                    href={websiteHref(profile.website)}
-                    label="Webサイト"
-                  />
-                ) : null}
-                {profile.discordUrl ? (
-                  <CreatorSocialLink href={profile.discordUrl} label="Discord" />
-                ) : null}
-                {profile.youtubeUrl ? (
-                  <CreatorSocialLink href={profile.youtubeUrl} label="YouTube" />
-                ) : null}
-              </div>
+              {(profile.xAccount ||
+                profile.website ||
+                profile.discordUrl ||
+                profile.youtubeUrl) ? (
+                <div className="mt-2 flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-500 sm:justify-start">
+                  <PublicXLink accountOrUrl={profile.xAccount} />
+                  {profile.website ? (
+                    <CreatorSocialLink
+                      href={websiteHref(profile.website)}
+                      label="Webサイト"
+                    />
+                  ) : null}
+                  {profile.discordUrl ? (
+                    <CreatorSocialLink href={profile.discordUrl} label="Discord" />
+                  ) : null}
+                  {profile.youtubeUrl ? (
+                    <CreatorSocialLink href={profile.youtubeUrl} label="YouTube" />
+                  ) : null}
+                </div>
+              ) : null}
 
-              <dl className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm sm:justify-start">
+              <dl className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm sm:justify-start">
                 <div className="flex items-baseline gap-1.5">
                   <dt className="text-zinc-500">作品</dt>
                   <dd className="font-semibold text-white">
@@ -223,6 +215,16 @@ export function CreatorProfileRealView({
                   <dt className="text-zinc-500">開発ログ</dt>
                   <dd className="font-semibold text-white">
                     {profile.stats.devlogCount}
+                  </dd>
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <dt className="text-zinc-500">フォロワー</dt>
+                  <dd className="font-semibold text-white">
+                    {followersLoaded ? (
+                      followerCount.toLocaleString()
+                    ) : (
+                      <span className="inline-block h-4 w-10 animate-pulse rounded bg-zinc-800/80 align-middle" />
+                    )}
                   </dd>
                 </div>
               </dl>
@@ -237,7 +239,7 @@ export function CreatorProfileRealView({
                 key={tab.id}
                 type="button"
                 onClick={() => setTab(tab.id)}
-                className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium ${
+                className={`shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium ${
                   activeTab === tab.id
                     ? "border-violet-500 text-violet-200"
                     : "border-transparent text-zinc-500 hover:text-zinc-300"
@@ -254,11 +256,11 @@ export function CreatorProfileRealView({
             {profile.games.length === 0 ? (
               <p className="text-sm text-zinc-500">まだ公開中の作品がありません。</p>
             ) : (
-              <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <ul className="grid justify-items-stretch gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),380px))]">
                 {profile.games.map((game) => {
                   const stats = getPublicProjectStats(game.id);
                   return (
-                    <li key={game.id}>
+                    <li key={game.id} className="w-full max-w-[380px]">
                       <Link href={gameDetailHref(game.id)} className="block">
                         <article>
                           <ProjectThumbnail
@@ -266,8 +268,7 @@ export function CreatorProfileRealView({
                             title={game.title}
                             genre={game.tags[0]}
                             version={game.phaseLabel}
-                            variant="card"
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            variant="profile"
                           />
                           <h3 className="mt-2 truncate text-sm font-semibold text-white">
                             {game.title}
@@ -279,7 +280,7 @@ export function CreatorProfileRealView({
                               : null}
                           </p>
                           {game.description ? (
-                            <p className="mt-1 line-clamp-1 text-xs text-zinc-400">
+                            <p className="mt-1 line-clamp-2 text-xs text-zinc-400">
                               {game.description}
                             </p>
                           ) : null}

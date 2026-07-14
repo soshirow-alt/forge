@@ -4,7 +4,15 @@
 
 ---
 
-## 2026-07-14 — ホーム注目ヒーロー: Staging 067 成功後に RPC 正本へ統一
+## 2026-07-14 — 開発者一覧／公開プロフィール: サムネ巨大化とぼけ退行を修正
+
+- **原因** — 一覧代表作で `ProjectThumbnail variant=chip`（`sizes=48px`）を全幅に引き伸ばし、低解像度最適化画像が大型領域に引き伸ばされ「ぼけたまま」に見えていた
+- **variant** — `mini` / `card` / `profile` / `hero` / `chip`（`compact` は card 互換エイリアス）でサイズ・`sizes` を固定。一覧 `mini` は約140px・16:9
+- **一覧** — 開発者情報主役のコンパクトカード。代表作は横並び mini（最大3・タイトル1行）。1件でも巨大化しない
+- **公開プロフィール** — ヘッダーを内容量で縮む構成に。フォロワー重複表示を解消。作品グリッドは `max 380px` 列で1件全幅化を防止
+- **ロード** — DiscoveryGameThumbnail は CSS blur なし。pulse skeleton → onLoad で本画像。失敗時は生成ポスターへ
+- **対象外** — Production 未反映 / ホームヒーロー選出ロジック未変更
+
 
 - **Staging** — `067_fix_home_featured_hero_sql_stable.sql` 適用後、anon `get_home_featured_hero` が成功（4枠・重複なし）
 - **正本** — ヒーロー選出は RPC のみ。compose fallback / service-role compose を削除（RPC失敗時はヒーロー空・別ロジックで選出しない）
