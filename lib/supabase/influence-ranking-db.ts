@@ -5,7 +5,7 @@ import type {
   InfluenceRankingMonth,
 } from "@/lib/influence-ranking-v0-mock-data";
 import { RANKING_MAX } from "@/lib/ranking-v0-shared";
-import { profileAvatarPresets } from "@/lib/profile-avatar-presets";
+import { defaultPublicAvatarSrc } from "@/lib/public-profile-display";
 
 type InfluenceRankingRow = {
   user_id: string;
@@ -75,7 +75,7 @@ function rowToEntry(row: InfluenceRankingRow, rank: number): InfluenceRankingEnt
     rank,
     name: row.display_name,
     handle: row.player_handle,
-    avatar: profileAvatarPresets[(rank - 1) % profileAvatarPresets.length]!.src,
+    avatar: defaultPublicAvatarSrc(row.user_id),
     score: row.influence_score,
     title: title.title,
     titleColor: title.titleColor,

@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { DiscoveryCardStatPills } from "@/components/discovery-card-stat-pills";
-import { DiscoveryGameThumbnail } from "@/components/discovery-game-thumbnail";
 import {
   FeaturedGameCarousel,
   type FeaturedThumbnailsState,
 } from "@/components/featured/featured-game-carousel";
 import { HorizontalCardPager } from "@/components/horizontal-card-pager";
+import { ProjectThumbnail } from "@/components/project-thumbnail";
 import {
   selectHeroItems,
 } from "@/lib/home-discovery-selection";
@@ -68,13 +68,13 @@ function HorizontalGameCard({
     <Link href={gameDetailHref(game.id)} className="block w-full">
       <article>
         <div className="relative">
-          <DiscoveryGameThumbnail
-            id={game.id}
+          <ProjectThumbnail
+            projectId={game.id}
             title={game.title}
             genre={game.genre}
             version={game.version}
-            image={game.image}
-            className="aspect-[4/3] w-full"
+            variant="card"
+            className="rounded-xl"
             sizes="(max-width: 640px) 50vw, (max-width: 1280px) 25vw, 360px"
           />
         </div>

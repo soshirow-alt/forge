@@ -6,14 +6,16 @@ import type { DevlogEntry } from "@/lib/devlogs";
 import { resolveDeveloperSocialLinksForDisplay } from "@/lib/developer-external-link-defaults";
 import { resolveOwnerUserIdFromRouteId } from "@/lib/developer-profiles";
 import { displayPhase } from "@/lib/development-phases";
-import { publicBioForDisplay } from "@/lib/public-profile";
 import type { Game } from "@/lib/mock-games";
 import { pickFeatureTagsFromGameTags } from "@/lib/forge-feature-tag-options";
 import { resolveProjectGenres } from "@/lib/project-genres";
 import { getPublicGameTags } from "@/lib/play-environment";
 import { isGamePublic } from "@/lib/project-visibility";
 import { publicProjectThumbnailPath } from "@/lib/public-project-thumbnail";
-import { profileAvatarPresets } from "@/lib/profile-avatar-presets";
+import {
+  publicBioOneLine,
+  resolvePublicProfileDisplay,
+} from "@/lib/public-profile-display";
 
 export type CreatorProfileGameCard = {
   id: string;
@@ -52,17 +54,8 @@ export type CreatorProfileResolved = {
   };
 };
 
-function defaultAvatarForUser(userId: string): string {
-  const index =
-    userId.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) %
-    profileAvatarPresets.length;
-  return profileAvatarPresets[index]!.src;
-}
-
 function oneLineDescription(text: string): string {
-  const compact = text.replace(/\s+/g, " ").trim();
-  if (compact.length <= 80) return compact;
-  return `${compact.slice(0, 80)}…`;
+  return publicBioOneLine(text, 80);
 }
 
 function gameToCreatorCard(game: Game): CreatorProfileGameCard {
@@ -153,15 +146,11 @@ export function useCreatorProfile(routeId: string) {
     }
 
     const socialLinks = resolveDeveloperSocialLinksForDisplay(stored, allOwnerGames);
-
-    const name =
-      stored?.publicName ??
-      ownerGames[0]?.ownerName ??
-      ownerGames[0]?.creator ??
-      "開発者";
-    const bio = publicBioForDisplay(stored?.profile);
-    const creatorId = stored?.creatorId ?? `dev-${userId}`;
-    const handle = creatorId.replace(/^dev-/, "").slice(0, 8);
+    const display = resolvePublicProfileDisplay(stored, {
+      userId,
+      fallbackName:
+        ownerGames[0]?.ownerName ?? ownerGames[0]?.creator ?? "開発者",
+    });
 
     const games = ownerGames.map((game) => gameToCreatorCard(game));
 
@@ -174,14 +163,15 @@ export function useCreatorProfile(routeId: string) {
 
     return {
       routeId,
-      creatorId,
+      creatorId: display.routeId,
       userId,
-      name,
-      handle,
-      bio,
-      avatar: stored?.avatarUrl?.trim() || defaultAvatarForUser(userId),
-      website: stored?.website || socialLinks.officialUrl || undefined,
-      xAccount: stored?.xAccount || socialLinks.xUrl || undefined,
+      name: display.displayName,
+      handle: display.handle,
+      bio: display.bio,
+      avatar: display.avatarSrc,
+      // Public surfaces: only explicitly published profile fields (not OAuth-only).
+      website: display.website,
+      xAccount: display.xAccount,
       discordUrl: socialLinks.discordUrl || undefined,
       youtubeUrl: socialLinks.youtubeUrl || undefined,
       games,

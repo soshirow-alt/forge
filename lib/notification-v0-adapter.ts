@@ -94,6 +94,7 @@ export function notificationToV0Item(notification: Notification): NotificationV0
     timeLabel: formatRelativeNotificationTime(notification.date),
     read: notification.read,
     href: notificationTargetHref(notification),
+    projectId: notification.projectId,
   };
 }
 

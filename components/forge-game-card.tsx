@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { CreatorLink } from "@/components/creator-link";
-import { GameThumbnail } from "@/components/game-thumbnail";
+import { ProjectThumbnail } from "@/components/project-thumbnail";
 import type { Game } from "@/lib/mock-games";
 
 export type ForgeGameCardBadge = {
@@ -95,17 +95,18 @@ export function ForgeGameCard({
     <div
       className={`rounded-lg border border-zinc-800/80 bg-zinc-950/40 ${isGrid ? "" : "flex items-start"} ${styles.shell} ${className}`}
     >
-      <div className={`${styles.thumb} shrink-0 overflow-hidden rounded-md`}>
-        <GameThumbnail
-          thumbnailUrl={game.thumbnailUrl}
-          status={game.status}
+      <div className={`relative ${styles.thumb} shrink-0 overflow-hidden rounded-md`}>
+        <ProjectThumbnail
           projectId={game.id}
           title={game.title}
           genre={game.genre}
-          phase={game.phase}
-          aspectClassName={styles.aspect}
-          showStatus={false}
-          overlayClassName={
+          version={game.phase}
+          variant="compact"
+          className={`${styles.aspect} rounded-md`}
+          sizes={isGrid ? "(max-width: 640px) 50vw, 25vw" : "96px"}
+        />
+        <div
+          className={
             isGrid
               ? "pointer-events-none absolute inset-0 bg-gradient-to-t from-zinc-950/70 via-transparent to-transparent opacity-80"
               : "pointer-events-none absolute inset-0 bg-gradient-to-t from-zinc-950/60 via-transparent to-transparent opacity-50"

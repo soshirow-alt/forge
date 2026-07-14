@@ -2,27 +2,36 @@ import type {
   CommunityJoinRequest,
   CommunityMember,
 } from "@/lib/community-join-v0-store";
+import type { DeveloperProfile } from "@/lib/developer-profiles";
+import { resolvePublicProfileDisplay } from "@/lib/public-profile-display";
 import type { CommunityMembershipRecord } from "@/lib/supabase/community-db";
 
-const DEFAULT_AVATAR = "/images/landing/game-4.png";
-
-export function memberDisplayFromUserId(userId: string): {
+export function memberDisplayFromUserId(
+  userId: string,
+  profiles: DeveloperProfile[] = [],
+): {
   name: string;
   handle: string;
   avatar: string;
 } {
+  const profile = profiles.find((item) => item.userId === userId);
+  const display = resolvePublicProfileDisplay(profile, {
+    userId,
+    fallbackName: "メンバー",
+  });
   return {
-    name: "メンバー",
-    handle: `player_${userId.slice(0, 8)}`,
-    avatar: DEFAULT_AVATAR,
+    name: display.displayName,
+    handle: display.handle,
+    avatar: display.avatarSrc,
   };
 }
 
 export function membershipToJoinRequest(
   record: CommunityMembershipRecord,
   communityName: string,
+  profiles: DeveloperProfile[] = [],
 ): CommunityJoinRequest {
-  const display = memberDisplayFromUserId(record.userId);
+  const display = memberDisplayFromUserId(record.userId, profiles);
   return {
     id: record.id,
     communityId: record.communityId,
@@ -36,8 +45,11 @@ export function membershipToJoinRequest(
   };
 }
 
-export function membershipToMember(record: CommunityMembershipRecord): CommunityMember {
-  const display = memberDisplayFromUserId(record.userId);
+export function membershipToMember(
+  record: CommunityMembershipRecord,
+  profiles: DeveloperProfile[] = [],
+): CommunityMember {
+  const display = memberDisplayFromUserId(record.userId, profiles);
   return {
     id: `${record.userId}-${record.communityId}`,
     communityId: record.communityId,

@@ -17,15 +17,9 @@ import {
   publicProfileFromDeveloperRow,
   toDeveloperProfileInput,
 } from "@/lib/public-profile";
+import { defaultPublicAvatarSrc } from "@/lib/public-profile-display";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { Pencil, Sparkles } from "lucide-react";
-
-function defaultAvatarForUser(userId: string): string {
-  const index =
-    userId.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) %
-    profileAvatarPresets.length;
-  return profileAvatarPresets[index]!.src;
-}
 
 export function ProfileSelfV0Page() {
   const hideV0Mock = shouldHideV0MockContent();
@@ -55,7 +49,7 @@ export function ProfileSelfV0Page() {
     return {
       ...profile,
       displayName: shared.displayName,
-      avatar: shared.avatarUrl || defaultAvatarForUser(user.id),
+      avatar: shared.avatarUrl || defaultPublicAvatarSrc(user.id),
       bio: shared.bio,
       website: shared.website ?? "",
       joinedAt: "",
@@ -344,13 +338,37 @@ export function ProfileSelfV0Page() {
             </div>
           </div>
 
-          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { label: "送ったFB", value: displayProfile.stats.feedbackCount },
-              { label: "共感された回数", value: displayProfile.stats.voicesReceived },
-              { label: "フォロー中開発者", value: displayProfile.stats.followingDevelopers },
-              { label: WATCH_STAT_LABEL, value: displayProfile.stats.witnessingGames },
-            ].map((stat) => (
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
+            {(hideV0Mock
+              ? [
+                  {
+                    label: "フォロー中開発者",
+                    value: displayProfile.stats.followingDevelopers,
+                  },
+                  {
+                    label: WATCH_STAT_LABEL,
+                    value: displayProfile.stats.witnessingGames,
+                  },
+                ]
+              : [
+                  {
+                    label: "送ったFB",
+                    value: displayProfile.stats.feedbackCount,
+                  },
+                  {
+                    label: "共感された回数",
+                    value: displayProfile.stats.voicesReceived,
+                  },
+                  {
+                    label: "フォロー中開発者",
+                    value: displayProfile.stats.followingDevelopers,
+                  },
+                  {
+                    label: WATCH_STAT_LABEL,
+                    value: displayProfile.stats.witnessingGames,
+                  },
+                ]
+            ).map((stat) => (
               <div
                 key={stat.label}
                 className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-3 text-center"

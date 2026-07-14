@@ -14,6 +14,7 @@ import {
   publicProfileFromDeveloperRow,
   toDeveloperProfileInput,
 } from "@/lib/public-profile";
+import { defaultPublicAvatarSrc } from "@/lib/public-profile-display";
 import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
 import { profileAvatarPresets } from "@/lib/profile-avatar-presets";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
@@ -23,13 +24,6 @@ import {
 } from "@/lib/studio-developer-profile-v0-mock-data";
 import { XAccountSettingsLinkSection } from "@/components/x-account-settings-link-section";
 import { Pencil, Sparkles } from "lucide-react";
-
-function defaultAvatarForUser(userId: string): string {
-  const index =
-    userId.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) %
-    profileAvatarPresets.length;
-  return profileAvatarPresets[index]!.src;
-}
 
 export function StudioProfileSelfPage() {
   const hideV0Mock = shouldHideV0MockContent();
@@ -65,7 +59,7 @@ export function StudioProfileSelfPage() {
       ...profile,
       displayName: shared.displayName,
       handle,
-      avatar: shared.avatarUrl || defaultAvatarForUser(user.id),
+      avatar: shared.avatarUrl || defaultPublicAvatarSrc(user.id),
       bio: shared.bio,
       website: shared.website ?? "",
       stats: {
@@ -402,13 +396,25 @@ export function StudioProfileSelfPage() {
             </div>
           </div>
 
-          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { label: "作品数", value: displayProfile.stats.projectCount },
-              { label: "届いたFB", value: displayProfile.stats.feedbackReceived },
-              { label: "見届け人累計", value: displayProfile.stats.witnessTotal },
-              { label: "開発ログ", value: displayProfile.stats.devlogCount },
-            ].map((stat) => (
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
+            {(hideV0Mock
+              ? [{ label: "作品数", value: displayProfile.stats.projectCount }]
+              : [
+                  { label: "作品数", value: displayProfile.stats.projectCount },
+                  {
+                    label: "届いたFB",
+                    value: displayProfile.stats.feedbackReceived,
+                  },
+                  {
+                    label: "見届け人累計",
+                    value: displayProfile.stats.witnessTotal,
+                  },
+                  {
+                    label: "開発ログ",
+                    value: displayProfile.stats.devlogCount,
+                  },
+                ]
+            ).map((stat) => (
               <div
                 key={stat.label}
                 className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-3 text-center"

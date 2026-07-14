@@ -1,7 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Clock, MessageSquare } from "lucide-react";
-import { DiscoveryGameThumbnail } from "@/components/discovery-game-thumbnail";
+import { ProjectThumbnail } from "@/components/project-thumbnail";
 import type { LandingFeaturedGame } from "@/lib/landing-featured-games";
 
 export function LandingFeaturedGamesSection({
@@ -41,24 +40,15 @@ export function LandingFeaturedGamesSection({
               className="group overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/70 transition-colors hover:border-violet-500/40"
             >
               <div className="relative aspect-[4/3] overflow-hidden">
-                {game.image ? (
-                  <Image
-                    src={game.image}
-                    alt={game.title}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    sizes="(max-width: 768px) 50vw, 20vw"
-                  />
-                ) : (
-                  <DiscoveryGameThumbnail
-                    id={game.id}
-                    title={game.title}
-                    genre={game.genre}
-                    version={game.version}
-                    className="h-full w-full rounded-none"
-                    sizes="(max-width: 768px) 50vw, 20vw"
-                  />
-                )}
+                <ProjectThumbnail
+                  projectId={game.id}
+                  title={game.title}
+                  genre={game.genre}
+                  version={game.version}
+                  variant="card"
+                  className="h-full w-full rounded-none transition-transform duration-500 group-hover:scale-105"
+                  sizes="(max-width: 768px) 50vw, 20vw"
+                />
               </div>
               <div className="p-4">
                 <h3 className="font-bold text-white">{game.title}</h3>

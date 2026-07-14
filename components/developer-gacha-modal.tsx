@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { ProfileAvatar } from "@/components/profile-avatar";
 import { developerProfileHref, type DeveloperSearchResult } from "@/lib/developer-search-v0-mock-data";
 import { BadgeCheck, Sparkles, X } from "lucide-react";
 
@@ -89,9 +89,12 @@ export function DeveloperGachaModal({
               当たり！
             </p>
             <div className="mt-5 flex flex-col items-center text-center">
-              <span className="relative size-24 overflow-hidden rounded-full border-2 border-violet-500/40 bg-zinc-800 ring-4 ring-violet-500/20">
-                <Image src={developer.avatar} alt="" fill className="object-cover" />
-              </span>
+              <ProfileAvatar
+                src={developer.avatar}
+                userId={developer.userId}
+                className="size-24 border-2 border-violet-500/40 ring-4 ring-violet-500/20"
+                size={96}
+              />
               <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                 <h2 className="text-xl font-bold text-white">{developer.name}</h2>
                 {developer.verified && (
@@ -112,8 +115,15 @@ export function DeveloperGachaModal({
                 </div>
               )}
               <p className="mt-3 text-xs text-zinc-500">
-                フォロワー {developer.followers.toLocaleString()} · 作品{" "}
-                {developer.inDevelopment + developer.completed}
+                {developer.followers == null
+                  ? "フォロワー …"
+                  : `フォロワー ${developer.followers.toLocaleString()}`}
+                {" · "}
+                公開作品{" "}
+                {(
+                  developer.publicGameCount ??
+                  developer.inDevelopment + developer.completed
+                ).toLocaleString()}
               </p>
               <Link
                 href={developerProfileHref(developer.id)}

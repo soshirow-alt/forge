@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { ProfileAvatar } from "@/components/profile-avatar";
 import { useGames } from "@/components/games-provider";
 import type { FollowedDeveloperSummary } from "@/lib/developer-follows";
 
@@ -12,9 +12,12 @@ function FollowingDeveloperCard({ developer }: { developer: FollowedDeveloperSum
         href={`/creators/${encodeURIComponent(developer.routeId)}`}
         className="flex items-center gap-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 transition-colors hover:border-zinc-700"
       >
-        <span className="relative size-14 shrink-0 overflow-hidden rounded-full bg-zinc-800">
-          <Image src={developer.avatar} alt="" fill className="object-cover" />
-        </span>
+        <ProfileAvatar
+          src={developer.avatar}
+          userId={developer.userId}
+          className="size-14 shrink-0"
+          size={56}
+        />
         <div className="min-w-0">
           <p className="truncate font-semibold text-white">{developer.name}</p>
           <p className="mt-1 text-sm text-zinc-500">

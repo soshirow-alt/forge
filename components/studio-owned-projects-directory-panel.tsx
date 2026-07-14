@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { GameThumbnail } from "@/components/game-thumbnail";
+import { ProjectThumbnail } from "@/components/project-thumbnail";
 import { useGames } from "@/components/games-provider";
 import { ProjectDeleteButton } from "@/components/project-list-card";
 import {
@@ -147,15 +147,13 @@ function OwnedProjectGridCard({
               新着 {notificationCount}
             </span>
           )}
-          <GameThumbnail
-            thumbnailUrl={game.thumbnailUrl}
-            status={game.status}
+          <ProjectThumbnail
             projectId={game.id}
             title={game.title}
             genre={game.genre}
-            phase={game.phase}
-            aspectClassName="aspect-[16/10] h-full w-full"
-            showStatus={false}
+            version={game.phase}
+            variant="hero"
+            className="aspect-[16/10] h-full w-full rounded-none"
           />
         </div>
         <div className="flex flex-1 flex-col p-4">
@@ -243,15 +241,14 @@ function OwnedProjectListRow({
         className="flex min-w-0 flex-1 gap-4 transition-opacity hover:opacity-95 sm:items-center"
       >
         <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border border-zinc-800/80">
-          <GameThumbnail
-            thumbnailUrl={game.thumbnailUrl}
-            status={game.status}
+          <ProjectThumbnail
             projectId={game.id}
             title={game.title}
             genre={game.genre}
-            phase={game.phase}
-            aspectClassName="aspect-[4/3] h-full w-full"
-            showStatus={false}
+            version={game.phase}
+            variant="compact"
+            className="h-full w-full rounded-lg"
+            sizes="96px"
           />
         </div>
         <div className="min-w-0 flex-1">

@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { useGames } from "@/components/games-provider";
 import { useStudioFollowers } from "@/hooks/use-studio-followers";
-
-const DEFAULT_AVATAR = "/images/landing/game-1.png";
+import { resolvePublicProfileDisplay } from "@/lib/public-profile-display";
 
 function formatFollowedAt(iso: string): string {
   const parsed = Date.parse(iso);
@@ -19,43 +19,46 @@ function formatFollowedAt(iso: string): string {
 }
 
 function StudioFollowerCard({
+  followerId,
   displayName,
   followedAt,
   creatorRouteId,
 }: {
+  followerId: string;
   displayName: string;
   followedAt: string;
   creatorRouteId: string | null;
 }) {
+  const { getDeveloperProfileByUserId } = useGames();
+  const profile = getDeveloperProfileByUserId(followerId);
+  const display = resolvePublicProfileDisplay(profile, {
+    userId: followerId,
+    fallbackName: displayName,
+  });
+
   const body = (
     <div className="flex items-center gap-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 transition-colors hover:border-zinc-700">
       <ProfileAvatar
-        src={DEFAULT_AVATAR}
-        alt=""
+        src={display.avatarSrc}
+        userId={followerId}
         className="size-14 shrink-0"
         size={56}
       />
       <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold text-white">{displayName}</p>
+        <p className="truncate font-semibold text-white">{display.displayName}</p>
         <p className="mt-1 text-sm text-zinc-500">
           {formatFollowedAt(followedAt)} にフォロー
         </p>
-        {creatorRouteId ? (
-          <p className="mt-1 text-xs text-violet-400">開発者プロフィールあり</p>
-        ) : null}
       </div>
     </div>
   );
 
-  if (creatorRouteId) {
-    return (
-      <li>
-        <Link href={`/creators/${encodeURIComponent(creatorRouteId)}`}>{body}</Link>
-      </li>
-    );
-  }
-
-  return <li>{body}</li>;
+  const href = creatorRouteId ?? display.routeId;
+  return (
+    <li>
+      <Link href={`/creators/${encodeURIComponent(href)}`}>{body}</Link>
+    </li>
+  );
 }
 
 export function StudioFollowersTabPanel() {
@@ -99,6 +102,7 @@ export function StudioFollowersTabPanel() {
           {followers.map((follower) => (
             <StudioFollowerCard
               key={follower.followerId}
+              followerId={follower.followerId}
               displayName={follower.displayName}
               followedAt={follower.followedAt}
               creatorRouteId={follower.creatorRouteId}

@@ -26,6 +26,8 @@ export type GameDetailV0 = {
     followers: number;
     bio: string;
     following: boolean;
+    /** Published X from developer_profiles only — never OAuth-only. */
+    xAccount?: string;
   };
   witnessCount: number;
   voiceCount: number;

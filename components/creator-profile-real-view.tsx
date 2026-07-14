@@ -7,13 +7,12 @@ import { CreatorFollowButton } from "@/components/creator-follow-button";
 import { CreatorCommunityJoinButton } from "@/components/creator-community-join-button";
 import { ContentReportButton } from "@/components/content-report-button";
 import { DiscoveryCardStatPills } from "@/components/discovery-card-stat-pills";
-import { DiscoveryGameThumbnail } from "@/components/discovery-game-thumbnail";
 import { PlayerShell } from "@/components/player-shell";
 import { ProfileAvatar } from "@/components/profile-avatar";
-import { XLinkedHandleBadge } from "@/components/x-linked-handle-badge";
+import { ProjectThumbnail } from "@/components/project-thumbnail";
+import { PublicXLink } from "@/components/public-x-link";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
-import { useCreatorPublicXUsername } from "@/hooks/use-resource-public-x-username";
 import type { CreatorProfileResolved } from "@/hooks/use-creator-profile";
 import {
   buildCreatorProfileTabHref,
@@ -30,13 +29,6 @@ const tabs: { id: CreatorTab; label: string }[] = [
   { id: "games", label: "作品" },
   { id: "devlog", label: "開発ログ" },
 ];
-
-function xProfileHref(account: string): string {
-  if (account.startsWith("http")) {
-    return account;
-  }
-  return `https://x.com/${account.replace(/^@/, "")}`;
-}
 
 function websiteHref(url: string): string {
   return url.startsWith("http") ? url : `https://${url}`;
@@ -120,10 +112,14 @@ export function CreatorProfileRealView({
   isSelf: boolean;
 }) {
   useRequireAuth();
-  const { xUsername: linkedXUsername } = useCreatorPublicXUsername(profile.routeId);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { getFollowerCount, refreshFollowerCount, getPublicProjectStats } = useGames();
+  const {
+    getFollowerCount,
+    refreshFollowerCount,
+    getPublicProjectStats,
+    publicCatalogReady,
+  } = useGames();
   const activeTab = parseCreatorProfileTab(searchParams.get("tab"));
   const followerCount = getFollowerCount(profile.routeId, 0);
 
@@ -145,6 +141,7 @@ export function CreatorProfileRealView({
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
             <ProfileAvatar
               src={profile.avatar}
+              userId={profile.userId}
               className="mx-auto size-20 shrink-0 sm:mx-0 sm:size-24"
               size={96}
             />
@@ -155,14 +152,6 @@ export function CreatorProfileRealView({
                     {profile.name}
                   </h1>
                   <p className="mt-1 text-sm text-zinc-500">
-                    {linkedXUsername ? (
-                      <>
-                        <XLinkedHandleBadge username={linkedXUsername} />
-                        <span className="mx-2 text-zinc-700" aria-hidden="true">
-                          ·
-                        </span>
-                      </>
-                    ) : null}
                     @{profile.handle}
                     <span className="mx-2 text-zinc-700" aria-hidden="true">
                       ·
@@ -192,12 +181,7 @@ export function CreatorProfileRealView({
               ) : null}
 
               <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-500 sm:justify-start">
-                {profile.xAccount ? (
-                  <CreatorSocialLink
-                    href={xProfileHref(profile.xAccount)}
-                    label="X"
-                  />
-                ) : null}
+                <PublicXLink accountOrUrl={profile.xAccount} />
                 {profile.website ? (
                   <CreatorSocialLink
                     href={websiteHref(profile.website)}
@@ -261,13 +245,12 @@ export function CreatorProfileRealView({
                     <li key={game.id}>
                       <Link href={gameDetailHref(game.id)} className="block">
                         <article>
-                          <DiscoveryGameThumbnail
-                            id={game.id}
+                          <ProjectThumbnail
+                            projectId={game.id}
                             title={game.title}
                             genre={game.tags[0]}
                             version={game.phaseLabel}
-                            image={game.image}
-                            className="aspect-[4/3] w-full"
+                            variant="card"
                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           />
                           <h3 className="mt-2 truncate text-sm font-semibold text-white">
@@ -285,11 +268,15 @@ export function CreatorProfileRealView({
                             </p>
                           ) : null}
                           <div className="mt-1.5">
-                            <DiscoveryCardStatPills
-                              feedbackCount={stats.feedbackParticipantCount}
-                              watchCount={stats.watchCount}
-                              compact
-                            />
+                            {publicCatalogReady ? (
+                              <DiscoveryCardStatPills
+                                feedbackCount={stats.feedbackParticipantCount}
+                                watchCount={stats.watchCount}
+                                compact
+                              />
+                            ) : (
+                              <div className="h-4 w-28 animate-pulse rounded bg-zinc-800/80" />
+                            )}
                           </div>
                         </article>
                       </Link>

@@ -5,7 +5,9 @@ import {
 } from "@/lib/discovery-public-games";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import { resolvePlayableVersion } from "@/lib/playable-version";
-import { fetchProjects } from "@/lib/supabase/projects";
+import { publicProjectThumbnailPath } from "@/lib/public-project-thumbnail";
+import { fetchProjectPublicStatsMap } from "@/lib/supabase/project-public-stats-db";
+import { fetchPublicProjects } from "@/lib/supabase/projects";
 import { createClient } from "@/lib/supabase/server";
 
 export type LandingFeaturedGame = {
@@ -85,18 +87,22 @@ export async function loadLandingFeaturedGames(): Promise<LandingFeaturedGame[]>
     return [];
   }
 
-  const games = await fetchProjects(supabase);
-  return sortGamesByUpdated(getPublicSubmittedGames(games))
-    .slice(0, 5)
-    .map((game) => ({
-      id: game.id,
-      title: game.title,
-      description: game.description,
-      image: game.thumbnailUrl?.trim() ?? "",
-      genre: game.genre,
-      version: resolvePlayableVersion(game.playableVersion),
-      feedback: 0,
-      updated: formatRelativeUpdateLabel(game.lastUpdated).replace(/更新$/, ""),
-      href: gameDetailHref(game.id),
-    }));
+  const games = await fetchPublicProjects(supabase);
+  const featured = sortGamesByUpdated(getPublicSubmittedGames(games)).slice(0, 5);
+  const stats = await fetchProjectPublicStatsMap(
+    supabase,
+    featured.map((game) => game.id),
+  ).catch(() => ({} as Awaited<ReturnType<typeof fetchProjectPublicStatsMap>>));
+
+  return featured.map((game) => ({
+    id: game.id,
+    title: game.title,
+    description: game.description,
+    image: publicProjectThumbnailPath(game.id),
+    genre: game.genre,
+    version: resolvePlayableVersion(game.playableVersion),
+    feedback: stats[game.id]?.feedbackParticipantCount ?? 0,
+    updated: formatRelativeUpdateLabel(game.lastUpdated).replace(/更新$/, ""),
+    href: gameDetailHref(game.id),
+  }));
 }

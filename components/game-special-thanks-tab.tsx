@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { XLinkedHandleBadge } from "@/components/x-linked-handle-badge";
+import { ProfileAvatar } from "@/components/profile-avatar";
+import { PublicXLink } from "@/components/public-x-link";
 import { useProjectSpecialThanks } from "@/hooks/use-project-special-thanks";
 import {
   isReleasedForPlayerDisplay,
@@ -28,38 +29,6 @@ function formatDateJa(iso: string): string {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}/${m}/${day}`;
-}
-
-function PlayerAvatar({
-  displayName,
-  avatarUrl,
-}: {
-  displayName: string;
-  avatarUrl: string | null;
-}) {
-  const src = avatarUrl?.trim();
-  if (src) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element -- external X/meta avatars; no next.config remotePatterns
-      <img
-        src={src}
-        alt=""
-        className="size-10 shrink-0 rounded-full bg-zinc-800 object-cover"
-        loading="lazy"
-        referrerPolicy="no-referrer"
-      />
-    );
-  }
-
-  const initial = displayName.slice(0, 1) || "?";
-  return (
-    <span
-      className="flex size-10 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-zinc-300"
-      aria-hidden
-    >
-      {initial}
-    </span>
-  );
 }
 
 function MetaChip({ children }: { children: ReactNode }) {
@@ -94,7 +63,7 @@ function PlayerCard({
   return (
     <li className="rounded-xl border border-zinc-800/80 bg-zinc-950/35 px-3.5 py-3">
       <div className="flex items-center gap-3">
-        <PlayerAvatar displayName={displayName} avatarUrl={avatarUrl} />
+        <ProfileAvatar src={avatarUrl} alt="" className="size-10 shrink-0" size={40} />
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             <div className="min-w-0">
@@ -102,7 +71,7 @@ function PlayerCard({
                 <span className="truncate text-[15px] font-semibold leading-snug text-zinc-50">
                   {displayName}
                 </span>
-                {handle ? <XLinkedHandleBadge username={handle} /> : null}
+                {handle ? <PublicXLink accountOrUrl={handle} /> : null}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">{chips}</div>

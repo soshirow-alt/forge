@@ -1,17 +1,34 @@
 import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
 
+export type DeveloperFeaturedWork = {
+  id: string;
+  title: string;
+  image: string;
+};
+
 export type DeveloperSearchResult = {
   id: string;
+  /** Auth user id when known (public catalog). */
+  userId?: string;
   name: string;
   handle: string;
   avatar: string;
   bio: string;
+  xAccount?: string;
+  website?: string;
   verified: boolean;
   isNew: boolean;
+  /** Prefer this over inDevelopment/completed mix. */
+  publicGameCount?: number;
+  /** @deprecated mixed-axis — UI should not show with「完成」alongside */
   inDevelopment: number;
+  /** @deprecated mixed-axis */
   completed: number;
-  followers: number;
+  /** null = still loading (do not flash as 0). */
+  followers: number | null;
   genres: string[];
+  featuredWorks?: DeveloperFeaturedWork[];
+  /** @deprecated use featuredWorks */
   gameThumbs: string[];
   following: boolean;
 };
@@ -156,13 +173,16 @@ export function sortDevelopers(
   const direction = order === "asc" ? 1 : -1;
 
   if (sort === "followers") {
-    return copy.sort((a, b) => (a.followers - b.followers) * direction);
+    return copy.sort(
+      (a, b) => ((a.followers ?? 0) - (b.followers ?? 0)) * direction,
+    );
   }
   if (sort === "works") {
-    return copy.sort(
-      (a, b) =>
-        (a.inDevelopment + a.completed - (b.inDevelopment + b.completed)) * direction,
-    );
+    return copy.sort((a, b) => {
+      const aw = a.publicGameCount ?? a.inDevelopment + a.completed;
+      const bw = b.publicGameCount ?? b.inDevelopment + b.completed;
+      return (aw - bw) * direction;
+    });
   }
   return copy;
 }

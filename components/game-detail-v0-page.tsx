@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { GameChangeCheckCard } from "@/components/game-change-check-card";
 import { GameChangeCheckSection } from "@/components/game-change-check-section";
@@ -15,8 +14,8 @@ import { GameDetailPhaseBadge } from "@/components/game-detail-phase-badge";
 import { YourInvolvementCard } from "@/components/your-involvement-card";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { PublicXLink } from "@/components/public-x-link";
 import { usePlayerProjectInvolvement } from "@/hooks/use-player-project-involvement";
-import { useProjectAuthorXUsername } from "@/hooks/use-resource-public-x-username";
 import {
   FeedbackFormV0Modal,
   FeedbackSuccessV0Modal,
@@ -32,9 +31,9 @@ import { GameVoicesV0Tab } from "@/components/game-voices-v0-tab";
 import { GameSpecialThanksTab } from "@/components/game-special-thanks-tab";
 import { GameDetailOwnerWorksCard } from "@/components/game-detail-owner-works-card";
 import { GameNotFoundPanel } from "@/components/game-not-found-panel";
-import { XLinkedHandleBadge } from "@/components/x-linked-handle-badge";
 import { ContentReportButton } from "@/components/content-report-button";
-import { GameThumbnail, PlayerShell } from "@/components/player-shell";
+import { PlayerShell } from "@/components/player-shell";
+import { ProjectThumbnail } from "@/components/project-thumbnail";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import {
@@ -51,6 +50,8 @@ import {
   gameToDetailV0,
   isSupabaseProjectId,
 } from "@/lib/submitted-game-v0-adapter";
+import { resolvePublicProfileDisplay } from "@/lib/public-profile-display";
+import { publicProjectThumbnailPaths } from "@/lib/public-project-thumbnail";
 import {
   appendSessionVoice,
   createPreviewVoiceEntry,
@@ -101,6 +102,7 @@ import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
 import { useInstantQueryTab } from "@/hooks/use-instant-query-tab";
 import { captureScrollPosition } from "@/lib/preserve-scroll";
 import { useGameDetailProject } from "@/hooks/use-game-detail-project";
+import { ProfileAvatar } from "@/components/profile-avatar";
 import {
   Bookmark,
   Check,
@@ -121,38 +123,17 @@ function TagPill({ children }: { children: React.ReactNode }) {
 }
 
 function GameDetailDeveloperAvatar({
-  name,
+  name: _name,
   imageSrc,
   sizeClass = "size-7",
-  textClassName = "text-xs",
 }: {
   name: string;
   imageSrc?: string;
   sizeClass?: string;
   textClassName?: string;
 }) {
-  const [failed, setFailed] = useState(false);
-  const src = imageSrc?.trim();
-  if (src && !failed) {
-    return (
-      <span className={`relative ${sizeClass} shrink-0 overflow-hidden rounded-full bg-zinc-800`}>
-        <Image
-          src={src}
-          alt=""
-          fill
-          className="object-cover"
-          onError={() => setFailed(true)}
-        />
-      </span>
-    );
-  }
-
   return (
-    <span
-      className={`flex ${sizeClass} shrink-0 items-center justify-center rounded-full bg-zinc-800 font-medium text-zinc-400 ${textClassName}`}
-    >
-      {name.slice(0, 1) || "?"}
-    </span>
+    <ProfileAvatar src={imageSrc} className={`${sizeClass} shrink-0`} size={28} />
   );
 }
 
@@ -240,6 +221,7 @@ function GameDetailV0PageBody({
     toggleFollowCreator,
     getFollowerCount,
     refreshFollowerCount,
+    getDeveloperProfileByUserId,
   } = useGames();
   const submittedGame = detailProject ?? undefined;
   const hideV0Mock = useHideV0MockContent();
@@ -254,14 +236,35 @@ function GameDetailV0PageBody({
   );
   const game = useMemo(() => {
     if (submittedGame && isSupabaseProjectId(submittedGame.id)) {
-      return gameToDetailV0(submittedGame);
+      const base = gameToDetailV0(submittedGame);
+      const ownerId = submittedGame.ownerId;
+      if (!ownerId) return base;
+      const profile = getDeveloperProfileByUserId(ownerId);
+      const display = resolvePublicProfileDisplay(profile, {
+        userId: ownerId,
+        fallbackName: base.developer.name,
+      });
+      return {
+        ...base,
+        developer: {
+          ...base.developer,
+          id: display.routeId,
+          name: display.displayName,
+          avatar: display.avatarSrc,
+          bio: display.bio,
+          xAccount: display.xAccount,
+        },
+      };
     }
     return getGameDetailV0(id);
-  }, [id, submittedGame]);
+  }, [id, submittedGame, getDeveloperProfileByUserId]);
   const thumbnailUrls = useMemo(
     () =>
       submittedGame && isRealProject
-        ? resolveProjectThumbnailUrls(submittedGame)
+        ? publicProjectThumbnailPaths(
+            submittedGame.id,
+            Math.max(1, resolveProjectThumbnailUrls(submittedGame).length || 1),
+          )
         : [],
     [submittedGame, isRealProject],
   );
@@ -278,15 +281,7 @@ function GameDetailV0PageBody({
       styleSeed: submittedGame.id,
     };
   }, [submittedGame, isRealProject]);
-  const developerAvatarSrc = useMemo(() => {
-    // Real projects: do not reuse project thumbnails as developer avatars
-    // (next/Image + wrong asset caused broken avatar chrome). Initials only
-    // until a dedicated http(s) avatar source exists.
-    if (isRealProject) {
-      return "";
-    }
-    return game.developer.avatar;
-  }, [isRealProject, game.developer.avatar]);
+  const developerAvatarSrc = game.developer.avatar;
   const {
     stats: publicStats,
     loaded: publicStatsLoaded,
@@ -400,9 +395,8 @@ function GameDetailV0PageBody({
   const [following, setFollowing] = useState(game.developer.following);
   const developerUserId =
     isRealProject && submittedGame?.ownerId ? submittedGame.ownerId : null;
-  const { xUsername: developerXUsername } = useProjectAuthorXUsername(
-    isRealProject ? resolvedId : null,
-  );
+  const developerPublicX =
+    "xAccount" in game.developer ? game.developer.xAccount : undefined;
   const creatorRouteKey = game.developer.id;
   const realFollowing = developerUserId ? isFollowing(creatorRouteKey) : following;
   const showDeveloperFollow =
@@ -885,8 +879,8 @@ function GameDetailV0PageBody({
                     imageSrc={developerAvatarSrc}
                   />
                   <span className="break-words">{game.developer.name}</span>
-                  {developerXUsername ? (
-                    <XLinkedHandleBadge username={developerXUsername} />
+                  {developerPublicX ? (
+                    <PublicXLink accountOrUrl={developerPublicX} />
                   ) : null}
                 </Link>
                 <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-zinc-500">
@@ -1066,8 +1060,8 @@ function GameDetailV0PageBody({
                 <p className="truncate font-semibold text-white transition-colors">
                   {game.developer.name}
                 </p>
-                {developerXUsername ? (
-                  <XLinkedHandleBadge username={developerXUsername} className="mt-1" />
+                {developerPublicX ? (
+                  <PublicXLink accountOrUrl={developerPublicX} className="mt-1" />
                 ) : null}
                 {developerUserId || (!isRealProject && game.developer.followers > 0) ? (
                   <p className="text-xs text-zinc-500">
@@ -1116,10 +1110,13 @@ function GameDetailV0PageBody({
                     href={`/games/${related.id}`}
                     className="flex gap-3 rounded-xl transition-colors hover:bg-zinc-800/40"
                   >
-                    <GameThumbnail
-                      src={related.image}
-                      alt={related.title}
+                    <ProjectThumbnail
+                      projectId={related.id}
+                      title={related.title}
+                      genre={related.genre}
+                      variant="chip"
                       className="size-14 shrink-0"
+                      sizes="56px"
                     />
                     <div className="min-w-0 py-0.5">
                       <p className="truncate text-sm font-medium text-white">{related.title}</p>

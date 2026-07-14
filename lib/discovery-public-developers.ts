@@ -1,6 +1,5 @@
 import type { DeveloperSearchResult } from "@/lib/developer-search-v0-mock-data";
 import type { DeveloperProfile } from "@/lib/developer-profiles";
-import { publicBioForDisplay } from "@/lib/public-profile";
 import { FORGE_GENRE_OPTIONS } from "@/lib/forge-genre-options";
 import { pickFeatureTagsFromGameTags } from "@/lib/forge-feature-tag-options";
 import { getGameCreatedTimestamp } from "@/lib/game-timestamp";
@@ -8,8 +7,12 @@ import type { Game } from "@/lib/mock-games";
 import { resolveProjectGenres } from "@/lib/project-genres";
 import { getPublicGameTags } from "@/lib/play-environment";
 import { isGamePublic } from "@/lib/project-visibility";
+import {
+  publicBioOneLine,
+  resolvePublicProfileDisplay,
+} from "@/lib/public-profile-display";
+import { publicProjectThumbnailPath } from "@/lib/public-project-thumbnail";
 
-const DEFAULT_AVATAR = "/images/landing/game-1.png";
 const NEW_DEVELOPER_MS = 30 * 24 * 60 * 60 * 1000;
 const GENRE_SET = new Set<string>(FORGE_GENRE_OPTIONS);
 
@@ -36,7 +39,9 @@ export function buildPublicDeveloperSearchResults(
   games: Game[],
   followerCounts: Record<string, number>,
   isFollowing: (routeId: string) => boolean,
+  options?: { followersLoaded?: boolean },
 ): DeveloperSearchResult[] {
+  const followersLoaded = options?.followersLoaded ?? true;
   const publicGames = games.filter(isGamePublic);
   const ownerIds = [
     ...new Set(
@@ -49,33 +54,42 @@ export function buildPublicDeveloperSearchResults(
   return ownerIds.map((ownerId) => {
     const ownerGames = publicGames.filter((game) => game.ownerId === ownerId);
     const profile = profiles.find((item) => item.userId === ownerId);
-    const routeId = profile?.creatorId ?? `dev-${ownerId}`;
-    const name =
-      profile?.publicName ??
-      ownerGames[0]?.ownerName ??
-      ownerGames[0]?.creator ??
-      "開発者";
-    const handle = routeId.replace(/^dev-/, "").slice(0, 12);
-    const gameThumbs = ownerGames
-      .slice(0, 3)
-      .map((game) => game.thumbnailUrl?.trim() || DEFAULT_AVATAR);
+    const display = resolvePublicProfileDisplay(profile, {
+      userId: ownerId,
+      fallbackName:
+        ownerGames[0]?.ownerName ?? ownerGames[0]?.creator ?? "開発者",
+    });
     const newestCreated = Math.max(...ownerGames.map(getGameCreatedTimestamp), 0);
+    const featuredWorks = ownerGames.slice(0, 3).map((game) => ({
+      id: game.id,
+      title: game.title,
+      image: publicProjectThumbnailPath(game.id),
+    }));
 
     return {
-      id: routeId,
-      name,
-      handle,
-      avatar: profile?.avatarUrl?.trim() || gameThumbs[0] || DEFAULT_AVATAR,
-      bio: publicBioForDisplay(profile?.profile),
+      id: display.routeId,
+      userId: ownerId,
+      name: display.displayName,
+      handle: display.handle,
+      avatar: display.avatarSrc,
+      bio: publicBioOneLine(display.bio, 100),
+      xAccount: display.xAccount,
+      website: display.website,
       verified: true,
       isNew: newestCreated > 0 && Date.now() - newestCreated < NEW_DEVELOPER_MS,
+      publicGameCount: ownerGames.length,
+      followers: followersLoaded ? (followerCounts[ownerId] ?? 0) : null,
+      genres: collectGenres(ownerGames),
+      featuredWorks,
+      /** @deprecated use featuredWorks */
+      gameThumbs: featuredWorks.map((work) => work.image),
+      /** @deprecated mixed-axis metric — prefer publicGameCount */
       inDevelopment: ownerGames.filter((game) => game.releaseStatus !== "released")
         .length,
-      completed: ownerGames.filter((game) => game.releaseStatus === "released").length,
-      followers: followerCounts[ownerId] ?? 0,
-      genres: collectGenres(ownerGames),
-      gameThumbs,
-      following: isFollowing(routeId),
+      /** @deprecated mixed-axis metric — prefer publicGameCount */
+      completed: ownerGames.filter((game) => game.releaseStatus === "released")
+        .length,
+      following: isFollowing(display.routeId),
     };
   });
 }

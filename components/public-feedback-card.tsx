@@ -2,7 +2,7 @@
 
 import { UserRound } from "lucide-react";
 import { ProfileAvatar } from "@/components/profile-avatar";
-import { XLinkedHandleBadge } from "@/components/x-linked-handle-badge";
+import { PublicXLink } from "@/components/public-x-link";
 import { formatPlayableVersionLabel } from "@/lib/playable-version";
 import type { PublicFeedbackCard } from "@/lib/public-feedback-cards";
 
@@ -62,20 +62,14 @@ function CardAuthor({ card }: { card: PublicFeedbackCard }) {
 
   return (
     <div className="flex min-w-0 items-center gap-2">
-      {card.authorAvatarUrl ? (
-        <ProfileAvatar src={card.authorAvatarUrl} alt="" className="size-9" size={36} />
-      ) : (
-        <span
-          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-medium text-zinc-400"
-          aria-hidden="true"
-        >
-          {displayName.slice(0, 1)}
-        </span>
-      )}
+      <ProfileAvatar src={card.authorAvatarUrl} alt="" className="size-9" size={36} />
       <div className="min-w-0">
         <span className="block truncate text-sm font-semibold text-zinc-100">{displayName}</span>
         {card.authorXUsername ? (
-          <XLinkedHandleBadge username={card.authorXUsername} className="mt-1" />
+          <PublicXLink
+            accountOrUrl={card.authorXUsername}
+            className="mt-1 inline-flex items-center gap-1 text-[11px] text-violet-300 transition-colors hover:text-violet-200"
+          />
         ) : null}
       </div>
     </div>

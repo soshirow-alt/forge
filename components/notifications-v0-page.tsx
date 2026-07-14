@@ -1,12 +1,14 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { DiscoveryGameThumbnail } from "@/components/discovery-game-thumbnail";
 import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { useGames } from "@/components/games-provider";
 import { PlayerShell } from "@/components/player-shell";
+import { ProfileAvatar } from "@/components/profile-avatar";
+import { ProjectThumbnail } from "@/components/project-thumbnail";
 import {
   getExtraPlayerNotifications,
   subscribeV0Notifications,
@@ -112,16 +114,33 @@ function NotificationRow({
         <p className="mt-1 text-sm leading-relaxed text-zinc-500">{item.body}</p>
         <p className="mt-2 text-xs text-zinc-600">{item.timeLabel}</p>
       </div>
-      {item.thumbnail && (
+      {item.projectId ? (
         <span className="relative hidden h-12 w-20 shrink-0 overflow-hidden rounded-lg bg-zinc-800 sm:block">
-          <Image src={item.thumbnail} alt="" fill className="object-cover" />
+          <ProjectThumbnail
+            projectId={item.projectId}
+            title={item.title}
+            variant="chip"
+            className="h-full w-full !size-auto rounded-lg"
+            sizes="80px"
+          />
         </span>
-      )}
-      {item.avatar && !item.thumbnail && (
-        <span className="relative hidden size-10 shrink-0 overflow-hidden rounded-full bg-zinc-800 sm:block">
-          <Image src={item.avatar} alt="" fill className="object-cover" />
+      ) : item.thumbnail ? (
+        <span className="relative hidden h-12 w-20 shrink-0 overflow-hidden rounded-lg bg-zinc-800 sm:block">
+          <DiscoveryGameThumbnail
+            id={item.id}
+            title={item.title}
+            image={item.thumbnail}
+            className="h-full w-full rounded-lg"
+            sizes="80px"
+          />
         </span>
-      )}
+      ) : item.avatar ? (
+        <ProfileAvatar
+          src={item.avatar}
+          className="hidden size-10 shrink-0 sm:block"
+          size={40}
+        />
+      ) : null}
     </>
   );
 

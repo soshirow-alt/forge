@@ -27,6 +27,7 @@ export type NotificationV0Item = {
   timeLabel: string;
   read: boolean;
   href?: string;
+  projectId?: string;
   thumbnail?: string;
   avatar?: string;
 };

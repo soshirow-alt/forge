@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { GameThumbnail } from "@/components/game-thumbnail";
+import { ProjectThumbnail } from "@/components/project-thumbnail";
 import { useNurtureVoiceRead } from "@/hooks/use-nurture-feedback-read";
 import {
   buildNurtureDisplayContext,
@@ -104,15 +104,14 @@ export function ProjectListCard({
                 compact ? "h-14 w-20" : "h-16 w-24"
               }`}
             >
-              <GameThumbnail
-                thumbnailUrl={game.thumbnailUrl}
-                status={game.status}
+              <ProjectThumbnail
                 projectId={game.id}
                 title={game.title}
                 genre={game.genre}
-                phase={game.phase}
-                aspectClassName="aspect-[4/3] h-full w-full"
-                showStatus={false}
+                version={game.phase}
+                variant="compact"
+                className="h-full w-full rounded-lg"
+                sizes="96px"
               />
             </div>
 
@@ -162,15 +161,14 @@ export function ProjectListCard({
             compact ? "h-14 w-20" : "h-16 w-24"
           }`}
         >
-          <GameThumbnail
-            thumbnailUrl={game.thumbnailUrl}
-            status={game.status}
+          <ProjectThumbnail
             projectId={game.id}
             title={game.title}
             genre={game.genre}
-            phase={game.phase}
-            aspectClassName="aspect-[4/3] h-full w-full"
-            showStatus={false}
+            version={game.phase}
+            variant="compact"
+            className="h-full w-full rounded-lg"
+            sizes="96px"
           />
         </div>
 

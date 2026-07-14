@@ -159,12 +159,12 @@ function buildProfileFromSearchResult(
     bio: fromSearch.bio,
     isNew: fromSearch.isNew,
     verified: fromSearch.verified,
-    followers: fromSearch.followers,
+    followers: fromSearch.followers ?? 0,
     following: fromSearch.following,
     stats: {
       inDevelopment: fromSearch.inDevelopment,
       completed: fromSearch.completed,
-      followers: fromSearch.followers,
+      followers: fromSearch.followers ?? 0,
       totalPlays: 4200,
     },
     inDevGames: fromSearch.gameThumbs.map((thumb, index) => {

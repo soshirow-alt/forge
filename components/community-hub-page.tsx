@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { ConfirmationCitationCard } from "@/components/confirmation-citation-card";
 import { ContentReportButton } from "@/components/content-report-button";
+import { ProfileAvatar } from "@/components/profile-avatar";
 import {
   EMPTY_COMMUNITY_POSTS,
   useCommunityBoard,
@@ -185,9 +186,11 @@ function CommunityPostCard({
   return (
     <article className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
       <div className="flex items-start gap-3">
-        <span className="relative size-10 shrink-0 overflow-hidden rounded-full bg-zinc-800">
-          <Image src={post.authorAvatar} alt="" fill className="object-cover" sizes="40px" />
-        </span>
+        <ProfileAvatar
+          src={post.authorAvatar}
+          className="size-10 shrink-0"
+          size={40}
+        />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-medium text-white">{post.authorName}</span>
@@ -221,9 +224,11 @@ function CommunityPostCard({
             <ul className="mt-4 space-y-3 border-t border-zinc-800/80 pt-4">
               {post.replies?.map((reply) => (
                 <li key={reply.id} className="flex gap-3">
-                  <span className="relative size-8 shrink-0 overflow-hidden rounded-full bg-zinc-800">
-                    <Image src={reply.authorAvatar} alt="" fill className="object-cover" sizes="32px" />
-                  </span>
+                  <ProfileAvatar
+                    src={reply.authorAvatar}
+                    className="size-8 shrink-0"
+                    size={32}
+                  />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2 text-xs">
                       <Link
@@ -310,9 +315,11 @@ function MemberRow({
         href={communityMemberProfileHref(member, { returnTo })}
         className="flex items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 transition-colors hover:border-zinc-700 hover:bg-zinc-900/60"
       >
-        <span className="relative size-10 shrink-0 overflow-hidden rounded-full bg-zinc-800">
-          <Image src={member.avatar} alt="" fill className="object-cover" sizes="40px" />
-        </span>
+        <ProfileAvatar
+          src={member.avatar}
+          className="size-10 shrink-0"
+          size={40}
+        />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-zinc-200">{member.name}</p>
           <p className="text-xs text-zinc-500">@{member.handle} · 参加：{member.joinedAt}</p>
@@ -338,9 +345,14 @@ function PendingRequestRow({
       <div className="flex items-start gap-3">
         <Link
           href={communityJoinRequestProfileHref(request, { returnTo })}
-          className="relative size-10 shrink-0 overflow-hidden rounded-full bg-zinc-800"
+          className="shrink-0"
         >
-          <Image src={request.playerAvatar} alt="" fill className="object-cover" sizes="40px" />
+          <ProfileAvatar
+            src={request.playerAvatar}
+            userId={request.playerId}
+            className="size-10"
+            size={40}
+          />
         </Link>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-zinc-200">
@@ -1058,6 +1070,7 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
     appendReply,
     persistPost,
     persistReply,
+    authorResolver,
   } = useCommunityBoard(
     selectedCommunityId,
     hideV0Mock ? EMPTY_COMMUNITY_POSTS : boardSeedPosts,
@@ -1135,11 +1148,18 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
   );
 
   function addReply(postId: string, body: string) {
+    const author = user
+      ? authorResolver(user.id)
+      : {
+          name: "あなた",
+          handle: "player_you",
+          avatar: "",
+        };
     const reply: CommunityReply = {
       id: `reply-${Date.now()}`,
-      authorName: user?.name ?? "あなた",
-      authorAvatar: "/images/landing/game-4.png",
-      authorHandle: "player_you",
+      authorName: author.name,
+      authorAvatar: author.avatar,
+      authorHandle: author.handle,
       body,
       postedAt: "たった今",
     };
@@ -1150,11 +1170,7 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
         postId,
         authorId: user.id,
         body,
-        author: {
-          name: user.name ?? "あなた",
-          handle: "player_you",
-          avatar: "/images/landing/game-4.png",
-        },
+        author,
       });
     }
   }

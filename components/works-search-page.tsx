@@ -4,9 +4,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
-  DiscoveryGameThumbnail,
-} from "@/components/discovery-game-thumbnail";
-import {
   filterSearchWorks,
   gameToSearchResult,
   mergeSearchResults,
@@ -25,6 +22,7 @@ import {
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import { useHideV0MockContent } from "@/lib/forge-deployment-context";
 import { DiscoveryCardStatPills } from "@/components/discovery-card-stat-pills";
+import { ProjectThumbnail } from "@/components/project-thumbnail";
 import {
   BadgeCheck,
   ChevronDown,
@@ -338,12 +336,12 @@ function WorksSearchContent() {
                   className="block rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 transition-colors hover:border-zinc-700/80 sm:p-5"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-                    <DiscoveryGameThumbnail
-                      id={work.id}
+                    <ProjectThumbnail
+                      projectId={work.id}
                       title={work.title}
                       genre={work.tags[0]}
-                      image={work.image}
-                      className="h-28 w-full shrink-0 sm:h-32 sm:w-48"
+                      variant="compact"
+                      className="h-28 w-full shrink-0 rounded-lg sm:h-32 sm:w-48"
                       sizes="192px"
                     />
                     <div className="min-w-0 flex-1">
@@ -406,11 +404,11 @@ function WorksSearchContent() {
                   href={gameDetailHref(work.id)}
                   className="flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/40 transition-colors hover:border-zinc-700/80"
                 >
-                  <DiscoveryGameThumbnail
-                    id={work.id}
+                  <ProjectThumbnail
+                    projectId={work.id}
                     title={work.title}
                     genre={work.tags[0]}
-                    image={work.image}
+                    variant="compact"
                     className="h-36 w-full rounded-none"
                     sizes="(max-width: 640px) 100vw, 33vw"
                   />

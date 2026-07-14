@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { useGames } from "@/components/games-provider";
 import type { CommunityPost, CommunityReply } from "@/lib/community-v0-mock-data";
+import { resolvePublicProfileDisplay } from "@/lib/public-profile-display";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 import {
@@ -11,41 +13,37 @@ import {
   insertCommunityReply,
 } from "@/lib/supabase/community-db";
 
-const DEFAULT_AVATAR = "/images/landing/game-4.png";
-
 /** Stable empty list — inline `[]` in deps causes infinite refetch loops. */
 export const EMPTY_COMMUNITY_POSTS: CommunityPost[] = [];
-
-function resolveAuthor(userId: string, currentUserId?: string, userName?: string) {
-  if (currentUserId && userId === currentUserId) {
-    return {
-      name: userName ?? "あなた",
-      handle: "you",
-      avatar: DEFAULT_AVATAR,
-    };
-  }
-
-  return {
-    name: "メンバー",
-    handle: `player_${userId.slice(0, 8)}`,
-    avatar: DEFAULT_AVATAR,
-  };
-}
 
 export function useCommunityBoard(
   communityId: string,
   mockPosts: CommunityPost[],
 ) {
   const { user } = useAuth();
+  const { getDeveloperProfileByUserId } = useGames();
   const normalizedMockPosts =
     mockPosts.length === 0 ? EMPTY_COMMUNITY_POSTS : mockPosts;
   const [posts, setPosts] = useState<CommunityPost[]>(normalizedMockPosts);
   const [loaded, setLoaded] = useState(false);
 
   const authorResolver = useCallback(
-    (authorId: string) =>
-      resolveAuthor(authorId, user?.id, user?.name ?? undefined),
-    [user?.id, user?.name],
+    (authorId: string) => {
+      const isSelf = Boolean(user?.id && authorId === user.id);
+      const display = resolvePublicProfileDisplay(
+        getDeveloperProfileByUserId(authorId),
+        {
+          userId: authorId,
+          fallbackName: isSelf ? (user?.name ?? "あなた") : "メンバー",
+        },
+      );
+      return {
+        name: display.displayName,
+        handle: isSelf ? "you" : display.handle,
+        avatar: display.avatarSrc,
+      };
+    },
+    [user?.id, user?.name, getDeveloperProfileByUserId],
   );
 
   useEffect(() => {

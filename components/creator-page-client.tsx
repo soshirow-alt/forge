@@ -4,16 +4,13 @@ import Link from "next/link";
 import { CreatorFollowButton } from "@/components/creator-follow-button";
 import { ForgeHeader } from "@/components/forge-header";
 import { GameTags } from "@/components/game-tags";
-import { GameThumbnail } from "@/components/game-thumbnail";
+import { ProjectThumbnail } from "@/components/project-thumbnail";
 import { useGames } from "@/components/games-provider";
 
 function CreatorGameCard({
   id,
   title,
   genre,
-  status,
-  phase,
-  thumbnailUrl,
   tags,
 }: {
   id: string;
@@ -29,13 +26,12 @@ function CreatorGameCard({
       href={`/games/${id}`}
       className="group block overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/80 transition-all hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/10"
     >
-      <GameThumbnail
-        thumbnailUrl={thumbnailUrl}
-        status={status}
+      <ProjectThumbnail
         projectId={id}
         title={title}
         genre={genre}
-        phase={phase}
+        variant="card"
+        className="rounded-none"
       />
       <div className="p-4">
         <h3 className="font-semibold text-zinc-100 transition-colors group-hover:text-orange-400">

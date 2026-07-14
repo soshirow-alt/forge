@@ -1,14 +1,18 @@
+/**
+ * Public X username for display — only developer_profiles.x_account
+ * (never user_x_profiles / OAuth-only linkage).
+ */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveOwnerUserIdFromRouteId } from "@/lib/developer-profiles";
-import { formatXUsername } from "@/lib/x-auth";
+import { normalizePublicXHandle } from "@/lib/public-x-link";
 
-async function fetchXUsernameForUserId(
+async function fetchPublishedXAccountForUserId(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<string | null> {
   const { data, error } = await supabase
-    .from("user_x_profiles")
-    .select("x_username")
+    .from("developer_profiles")
+    .select("x_account")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -16,7 +20,10 @@ async function fetchXUsernameForUserId(
     return null;
   }
 
-  return formatXUsername(String(data.x_username ?? ""));
+  const handle = normalizePublicXHandle(
+    typeof data.x_account === "string" ? data.x_account : null,
+  );
+  return handle ? `@${handle}` : null;
 }
 
 export async function resolveCreatorUserIdForXLookup(
@@ -55,7 +62,7 @@ export async function fetchProjectAuthorXUsername(
     return null;
   }
 
-  return fetchXUsernameForUserId(supabase, String(project.owner_id));
+  return fetchPublishedXAccountForUserId(supabase, String(project.owner_id));
 }
 
 export async function fetchCreatorRouteXUsername(
@@ -67,5 +74,5 @@ export async function fetchCreatorRouteXUsername(
     return null;
   }
 
-  return fetchXUsernameForUserId(supabase, userId);
+  return fetchPublishedXAccountForUserId(supabase, userId);
 }

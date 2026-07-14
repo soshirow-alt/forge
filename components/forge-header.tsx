@@ -4,12 +4,21 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { useGames } from "@/components/games-provider";
+import { ProfileAvatar } from "@/components/profile-avatar";
+import { resolvePublicProfileDisplay } from "@/lib/public-profile-display";
 
 export function ForgeHeader() {
   const router = useRouter();
   const { user, hydrated, logout } = useAuth();
-  const { getUnreadNotificationCount } = useGames();
+  const { getUnreadNotificationCount, getDeveloperProfileByUserId } = useGames();
   const unreadCount = getUnreadNotificationCount();
+  const profileDisplay =
+    user != null
+      ? resolvePublicProfileDisplay(getDeveloperProfileByUserId(user.id), {
+          userId: user.id,
+          fallbackName: user.name,
+        })
+      : null;
 
   function handleLogout() {
     void logout().then(() => {
@@ -33,16 +42,18 @@ export function ForgeHeader() {
           >
             デモ作成
           </Link>
-          {hydrated && user ? (
+          {hydrated && user && profileDisplay ? (
             <>
               <div className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/80 px-3 py-2">
-                <span
-                  aria-hidden="true"
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-amber-500 text-sm font-semibold text-zinc-950"
-                >
-                  {user.avatarInitial}
+                <ProfileAvatar
+                  src={profileDisplay.avatarSrc}
+                  userId={user.id}
+                  className="size-8"
+                  size={32}
+                />
+                <span className="text-sm font-medium text-zinc-200">
+                  {profileDisplay.displayName}
                 </span>
-                <span className="text-sm font-medium text-zinc-200">{user.name}</span>
               </div>
               <Link
                 href="/mypage"

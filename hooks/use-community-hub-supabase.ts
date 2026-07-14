@@ -32,8 +32,7 @@ import {
   type JoinedCommunitySummary,
 } from "@/lib/supabase/community-db";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
-
-const DEFAULT_AVATAR = "/images/landing/game-1.png";
+import { defaultPublicAvatarSrc } from "@/lib/public-profile-display";
 
 function toProfile(
   record: NonNullable<Awaited<ReturnType<typeof fetchDeveloperCommunityByOwner>>>,
@@ -42,7 +41,7 @@ function toProfile(
   return {
     id: record.id,
     name: record.name,
-    avatar: record.avatarUrl?.trim() || DEFAULT_AVATAR,
+    avatar: record.avatarUrl?.trim() || defaultPublicAvatarSrc(record.ownerId || record.id),
     handle: record.handle ?? record.id,
     description: record.description,
     memberCountLabel: memberCount,
@@ -86,8 +85,20 @@ export function useCommunityHubSupabase(isDeveloper: boolean) {
         fetchCommunityMemberships(supabase, communityId, "approved"),
       ]);
 
-      setPending(pendingRows.map((row) => membershipToJoinRequest(row, communityName)));
-      setMembers(approvedRows.map(membershipToMember));
+      const profileList = [
+        ...new Set(
+          [...pendingRows, ...approvedRows].map((row) => row.userId),
+        ),
+      ]
+        .map((id) => getDeveloperProfileByUserId(id))
+        .filter((p): p is NonNullable<typeof p> => Boolean(p));
+
+      setPending(
+        pendingRows.map((row) =>
+          membershipToJoinRequest(row, communityName, profileList),
+        ),
+      );
+      setMembers(approvedRows.map((row) => membershipToMember(row, profileList)));
 
       if (isDeveloper && developerProfile?.id === communityId) {
         const count = approvedRows.length;
@@ -96,7 +107,7 @@ export function useCommunityHubSupabase(isDeveloper: boolean) {
         );
       }
     },
-    [userId, isDeveloper, developerProfile?.id],
+    [userId, isDeveloper, developerProfile?.id, getDeveloperProfileByUserId],
   );
 
   useEffect(() => {
@@ -146,7 +157,7 @@ export function useCommunityHubSupabase(isDeveloper: boolean) {
               ownerId: userId,
               name: communityName,
               description: "フォロワーと交流し、一緒にゲームを育てましょう",
-              avatarUrl: DEFAULT_AVATAR,
+              avatarUrl: defaultPublicAvatarSrc(userId),
               handle: id,
             });
             record = await fetchDeveloperCommunityByOwner(supabase, userId);

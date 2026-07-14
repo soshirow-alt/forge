@@ -3,6 +3,7 @@ import {
   resolveOwnerUserIdFromRouteId,
   type DeveloperProfile,
 } from "@/lib/developer-profiles";
+import { resolvePublicProfileDisplay } from "@/lib/public-profile-display";
 
 export type FollowedDeveloperSummary = {
   userId: string;
@@ -28,23 +29,25 @@ export function resolveDeveloperUserIdForFollow(
 export function buildFollowedDeveloperSummaries(
   developerUserIds: string[],
   profiles: DeveloperProfile[],
-  getOwnerPublicGames: (ownerId: string) => { title: string; thumbnailUrl?: string; ownerName?: string }[],
+  getOwnerPublicGames: (ownerId: string) => {
+    title: string;
+    thumbnailUrl?: string;
+    ownerName?: string;
+  }[],
 ): FollowedDeveloperSummary[] {
   return developerUserIds.map((userId) => {
     const profile = profiles.find((item) => item.userId === userId);
     const games = getOwnerPublicGames(userId);
-    const name =
-      profile?.publicName ??
-      games[0]?.ownerName ??
-      "開発者";
-    const routeId = profile?.creatorId ?? `dev-${userId}`;
-    const avatar = games[0]?.thumbnailUrl?.trim() || "/images/landing/game-1.png";
+    const display = resolvePublicProfileDisplay(profile, {
+      userId,
+      fallbackName: games[0]?.ownerName ?? "開発者",
+    });
 
     return {
       userId,
-      routeId,
-      name,
-      avatar,
+      routeId: display.routeId,
+      name: display.displayName,
+      avatar: display.avatarSrc,
       publicGameCount: games.length,
     };
   });

@@ -3,9 +3,13 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { isDataOrBlobAvatar } from "@/lib/profile-avatar-presets";
+import { defaultPublicAvatarSrc } from "@/lib/public-profile-display";
 
 type ProfileAvatarProps = {
-  src: string;
+  /** Prefer developer_profiles.avatar_url; empty → preset/fallback. */
+  src?: string | null;
+  /** When src empty, seed a stable preset (not a game thumbnail). */
+  userId?: string;
   alt?: string;
   className?: string;
   size?: number;
@@ -26,11 +30,14 @@ function isRemoteHttpAvatar(src: string): boolean {
 
 export function ProfileAvatar({
   src,
+  userId,
   alt = "",
   className = "size-24",
   size = 96,
 }: ProfileAvatarProps) {
-  const resolved = src.trim();
+  const trimmed = (src ?? "").trim();
+  const resolved =
+    trimmed || (userId ? defaultPublicAvatarSrc(userId) : "");
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const failed = Boolean(resolved) && failedSrc === resolved;
 
