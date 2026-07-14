@@ -6,6 +6,11 @@
 --   PostgreSQL cannot change LANGUAGE plpgsql → sql via CREATE OR REPLACE;
 --   an explicit DROP of the known signature(s) is required, then recreate once.
 --
+-- Also fixed 42601 on an earlier sql draft:
+--   reaction_pick used SELECT * … CROSS JOIN params, so UNION ALL with
+--   rising/newest/updated (ri.* / nr.* / ur.*) had unequal column counts.
+--   All slot CTEs now use one canonical explicit column list.
+--
 -- Canonical signature (066/067, no overloads shipped):
 --   public.get_home_featured_hero()  -- zero-arg
 --
@@ -309,16 +314,48 @@ AS $$
     LEFT JOIN play_7d pl ON pl.project_id_text = pp.project_id::text
     LEFT JOIN play_prev_7d pp7 ON pp7.project_id_text = pp.project_id::text
   ),
+  -- Canonical slot columns (shared by *_ranked / *_pick / picked UNION):
+  --   project_id, owner_id,
+  --   feedback_users_7d, watchers_7d, players_7d, players_prev_7d, player_delta_7d,
+  --   last_play_at, last_engagement_at, first_published_at,
+  --   meaningful_update_at, update_kind, axis_rank
+  -- Do NOT SELECT * with CROSS JOIN params (adds extra columns and breaks UNION).
   reaction_pick AS (
-    SELECT *
-    FROM reaction_ranked
+    SELECT
+      rr.project_id,
+      rr.owner_id,
+      rr.feedback_users_7d,
+      rr.watchers_7d,
+      rr.players_7d,
+      rr.players_prev_7d,
+      rr.player_delta_7d,
+      rr.last_play_at,
+      rr.last_engagement_at,
+      rr.first_published_at,
+      rr.meaningful_update_at,
+      rr.update_kind,
+      rr.axis_rank
+    FROM reaction_ranked rr
     CROSS JOIN params prm
-    WHERE reaction_ranked.axis_rank <= prm.feed_limit
-    ORDER BY reaction_ranked.axis_rank ASC
+    WHERE rr.axis_rank <= prm.feed_limit
+    ORDER BY rr.axis_rank ASC
     LIMIT 1
   ),
   rising_pick AS (
-    SELECT ri.*
+    SELECT
+      ri.project_id,
+      ri.owner_id,
+      ri.feedback_users_7d,
+      ri.watchers_7d,
+      ri.players_7d,
+      ri.players_prev_7d,
+      ri.player_delta_7d,
+      ri.last_play_at,
+      ri.last_engagement_at,
+      ri.first_published_at,
+      ri.meaningful_update_at,
+      ri.update_kind,
+      ri.axis_rank
     FROM rising_ranked ri
     CROSS JOIN params prm
     WHERE ri.axis_rank <= prm.feed_limit
@@ -340,7 +377,20 @@ AS $$
     LIMIT 1
   ),
   newest_pick AS (
-    SELECT nr.*
+    SELECT
+      nr.project_id,
+      nr.owner_id,
+      nr.feedback_users_7d,
+      nr.watchers_7d,
+      nr.players_7d,
+      nr.players_prev_7d,
+      nr.player_delta_7d,
+      nr.last_play_at,
+      nr.last_engagement_at,
+      nr.first_published_at,
+      nr.meaningful_update_at,
+      nr.update_kind,
+      nr.axis_rank
     FROM newest_ranked nr
     CROSS JOIN params prm
     WHERE nr.axis_rank <= prm.feed_limit
@@ -369,7 +419,20 @@ AS $$
     LIMIT 1
   ),
   updated_pick AS (
-    SELECT ur.*
+    SELECT
+      ur.project_id,
+      ur.owner_id,
+      ur.feedback_users_7d,
+      ur.watchers_7d,
+      ur.players_7d,
+      ur.players_prev_7d,
+      ur.player_delta_7d,
+      ur.last_play_at,
+      ur.last_engagement_at,
+      ur.first_published_at,
+      ur.meaningful_update_at,
+      ur.update_kind,
+      ur.axis_rank
     FROM updated_ranked ur
     CROSS JOIN params prm
     WHERE ur.axis_rank <= prm.feed_limit
@@ -406,30 +469,92 @@ AS $$
     SELECT
       'reaction'::text AS featured_type,
       1::integer AS desired_order,
-      rp.*
+      rp.project_id AS project_id,
+      rp.owner_id AS owner_id,
+      rp.feedback_users_7d AS feedback_users_7d,
+      rp.watchers_7d AS watchers_7d,
+      rp.players_7d AS players_7d,
+      rp.players_prev_7d AS players_prev_7d,
+      rp.player_delta_7d AS player_delta_7d,
+      rp.last_play_at AS last_play_at,
+      rp.last_engagement_at AS last_engagement_at,
+      rp.first_published_at AS first_published_at,
+      rp.meaningful_update_at AS meaningful_update_at,
+      rp.update_kind AS update_kind,
+      rp.axis_rank AS axis_rank
     FROM reaction_pick rp
     UNION ALL
     SELECT
       'rising_plays'::text AS featured_type,
       2::integer AS desired_order,
-      ri.*
+      ri.project_id AS project_id,
+      ri.owner_id AS owner_id,
+      ri.feedback_users_7d AS feedback_users_7d,
+      ri.watchers_7d AS watchers_7d,
+      ri.players_7d AS players_7d,
+      ri.players_prev_7d AS players_prev_7d,
+      ri.player_delta_7d AS player_delta_7d,
+      ri.last_play_at AS last_play_at,
+      ri.last_engagement_at AS last_engagement_at,
+      ri.first_published_at AS first_published_at,
+      ri.meaningful_update_at AS meaningful_update_at,
+      ri.update_kind AS update_kind,
+      ri.axis_rank AS axis_rank
     FROM rising_pick ri
     UNION ALL
     SELECT
       'newest'::text AS featured_type,
       3::integer AS desired_order,
-      np.*
+      np.project_id AS project_id,
+      np.owner_id AS owner_id,
+      np.feedback_users_7d AS feedback_users_7d,
+      np.watchers_7d AS watchers_7d,
+      np.players_7d AS players_7d,
+      np.players_prev_7d AS players_prev_7d,
+      np.player_delta_7d AS player_delta_7d,
+      np.last_play_at AS last_play_at,
+      np.last_engagement_at AS last_engagement_at,
+      np.first_published_at AS first_published_at,
+      np.meaningful_update_at AS meaningful_update_at,
+      np.update_kind AS update_kind,
+      np.axis_rank AS axis_rank
     FROM newest_pick np
     UNION ALL
     SELECT
       'updated'::text AS featured_type,
       4::integer AS desired_order,
-      up.*
+      up.project_id AS project_id,
+      up.owner_id AS owner_id,
+      up.feedback_users_7d AS feedback_users_7d,
+      up.watchers_7d AS watchers_7d,
+      up.players_7d AS players_7d,
+      up.players_prev_7d AS players_prev_7d,
+      up.player_delta_7d AS player_delta_7d,
+      up.last_play_at AS last_play_at,
+      up.last_engagement_at AS last_engagement_at,
+      up.first_published_at AS first_published_at,
+      up.meaningful_update_at AS meaningful_update_at,
+      up.update_kind AS update_kind,
+      up.axis_rank AS axis_rank
     FROM updated_pick up
   ),
   picked_ranked AS (
     SELECT
-      p.*,
+      p.featured_type,
+      p.desired_order,
+      p.project_id,
+      p.owner_id,
+      p.feedback_users_7d,
+      p.watchers_7d,
+      p.players_7d,
+      p.players_prev_7d,
+      p.player_delta_7d,
+      p.last_play_at,
+      p.last_engagement_at,
+      p.first_published_at,
+      p.meaningful_update_at,
+      p.update_kind,
+      p.axis_rank,
       ROW_NUMBER() OVER (ORDER BY p.desired_order ASC)::integer AS slot_rank
     FROM picked p
   ),
