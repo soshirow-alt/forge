@@ -5,7 +5,6 @@ import { CircleHelp } from "lucide-react";
 import { Suspense, useState } from "react";
 import { AccountSettingsPanel } from "@/components/account-settings-panel";
 import { XAccountLinkSection } from "@/components/x-account-link-section";
-import { XAccountSettingsLinkSection } from "@/components/x-account-settings-link-section";
 import {
   FORGE_LEGAL_CONTACT_EMAIL,
   PRIVACY_PATH,
@@ -305,13 +304,9 @@ export function ForgeSettingsForm({ context }: { context: "player" | "studio" })
         <AccountSettingsPanel section="credentials" />
       </Suspense>
 
-      {context === "player" ? (
-        <Suspense fallback={<AccountSettingsFallback />}>
-          <XAccountLinkSection />
-        </Suspense>
-      ) : (
-        <XAccountSettingsLinkSection />
-      )}
+      <Suspense fallback={<AccountSettingsFallback />}>
+        <XAccountLinkSection />
+      </Suspense>
 
       <PreferenceSettingsPanel context={context} />
 

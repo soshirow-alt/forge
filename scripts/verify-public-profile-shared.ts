@@ -50,6 +50,19 @@ assert.equal(input.website, "https://new.example");
 assert.equal(input.xAccount, "oldx");
 assert.equal(input.discordUrl, "https://discord.gg/x");
 
+const cleared = toDeveloperProfileInput(
+  {
+    displayName: "新名",
+    bio: "bio",
+    avatarUrl: null,
+    xAccount: null,
+    website: null,
+  },
+  existing,
+);
+assert.equal(cleared.xAccount, undefined);
+assert.equal(cleared.website, undefined);
+
 const emptyUser = publicProfileFromDeveloperRow(undefined, "AuthName");
 assert.equal(emptyUser.displayName, "AuthName");
 assert.equal(emptyUser.bio, "");

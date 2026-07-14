@@ -12,8 +12,13 @@ export type PublicProfileFields = {
   displayName: string;
   bio: string;
   avatarUrl: string | null;
-  xAccount?: string;
-  website?: string;
+  /**
+   * Public X on developer_profiles only.
+   * `undefined` preserves existing; `null` / empty clears; string sets.
+   */
+  xAccount?: string | null;
+  /** `undefined` preserves; `null` / empty clears; string sets. */
+  website?: string | null;
 };
 
 /** Normalize bio for DB: empty string when unset (legacy placeholder → empty). */
@@ -51,12 +56,21 @@ export function toDeveloperProfileInput(
   fields: PublicProfileFields,
   existing?: DeveloperProfile,
 ): DeveloperProfileInput {
+  const nextX =
+    fields.xAccount === undefined
+      ? existing?.xAccount
+      : fields.xAccount?.trim() || undefined;
+  const nextWebsite =
+    fields.website === undefined
+      ? existing?.website
+      : fields.website?.trim() || undefined;
+
   return {
     publicName: fields.displayName.trim(),
     profile: normalizePublicBioForStorage(fields.bio),
     avatarUrl: fields.avatarUrl?.trim() || undefined,
-    xAccount: fields.xAccount?.trim() || existing?.xAccount,
-    website: fields.website?.trim() || existing?.website,
+    xAccount: nextX,
+    website: nextWebsite,
     discordUrl: existing?.discordUrl,
     youtubeUrl: existing?.youtubeUrl,
   };

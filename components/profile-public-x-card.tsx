@@ -12,6 +12,7 @@ import { reconcileOwnXProfileFromAuth } from "@/lib/sync-user-x-profile";
 import { fetchOwnXProfile } from "@/lib/supabase/user-x-profiles-db";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 import { formatXHandleLabel, hasLinkedXIdentity, isXAuthEnabled } from "@/lib/x-auth";
+import { normalizePublicXHandle } from "@/lib/public-x-link";
 import type { Provider } from "@supabase/supabase-js";
 
 function readXLinkStatusMessage(searchParams: URLSearchParams) {
@@ -19,7 +20,7 @@ function readXLinkStatusMessage(searchParams: URLSearchParams) {
   if (xParam === "linked") {
     return {
       tone: "success" as const,
-      text: "Xアカウントを連携しました。",
+      text: "Xアカウントを連携しました。公開表示は下の設定をONにしてください。",
     };
   }
 
@@ -37,14 +38,10 @@ function readXLinkStatusMessage(searchParams: URLSearchParams) {
     };
   }
 
-  if (reason === "sync_failed" || reason === "upsert_failed" || reason === "sync_failed_unknown") {
-    return {
-      tone: "error" as const,
-      text: "X連携情報の保存に失敗しました。時間をおいて再度お試しください。",
-    };
-  }
-
   if (
+    reason === "sync_failed" ||
+    reason === "upsert_failed" ||
+    reason === "sync_failed_unknown" ||
     reason === "callback_failed" ||
     reason === "exchange_failed" ||
     reason === "missing_code" ||
@@ -55,15 +52,10 @@ function readXLinkStatusMessage(searchParams: URLSearchParams) {
     reason === "missing_x_identity" ||
     reason === "missing_x_user_id" ||
     reason === "missing_x_username" ||
-    reason === "anonymous_not_allowed"
+    reason === "anonymous_not_allowed" ||
+    reason ||
+    errorCode
   ) {
-    return {
-      tone: "error" as const,
-      text: "X連携の完了処理に失敗しました。もう一度お試しください。",
-    };
-  }
-
-  if (reason || errorCode) {
     return {
       tone: "error" as const,
       text: "X連携の完了処理に失敗しました。もう一度お試しください。",
@@ -73,7 +65,21 @@ function readXLinkStatusMessage(searchParams: URLSearchParams) {
   return null;
 }
 
-export function XAccountLinkSection() {
+/**
+ * Account-common X link + public publish toggle.
+ * OAuth / user_x_profiles = linked; developer_profiles.x_account = public.
+ */
+export function ProfilePublicXCard({
+  publicXAccount,
+  onPublicPublishChange,
+  busy = false,
+  oauthReturnPath = "/mypage/profile",
+}: {
+  publicXAccount: string | null | undefined;
+  onPublicPublishChange: (publish: boolean, linkedHandle: string | null) => Promise<void>;
+  busy?: boolean;
+  oauthReturnPath?: string;
+}) {
   const searchParams = useSearchParams();
   const { user, hydrated, linkOAuthIdentity } = useAuth();
   const supabase = getOptionalSupabaseClient();
@@ -85,6 +91,7 @@ export function XAccountLinkSection() {
   const [authLinked, setAuthLinked] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [linking, setLinking] = useState(false);
+  const [toggling, setToggling] = useState(false);
   const [actionMessage, setActionMessage] = useState<{
     tone: "success" | "error";
     text: string;
@@ -136,7 +143,7 @@ export function XAccountLinkSection() {
     setActionMessage(null);
 
     try {
-      await linkOAuthIdentity("x" as Provider, "/settings");
+      await linkOAuthIdentity("x" as Provider, oauthReturnPath);
     } catch (caught) {
       const authError = caught as { message?: string; code?: string };
       setActionMessage({
@@ -151,6 +158,27 @@ export function XAccountLinkSection() {
     }
   }
 
+  async function handlePublishToggle(next: boolean) {
+    setToggling(true);
+    setActionMessage(null);
+    try {
+      await onPublicPublishChange(next, linkedHandle);
+      setActionMessage({
+        tone: "success",
+        text: next
+          ? "公開プロフィールにXを表示します。"
+          : "公開プロフィールからX表示を外しました。",
+      });
+    } catch {
+      setActionMessage({
+        tone: "error",
+        text: "公開設定の更新に失敗しました。時間をおいて再度お試しください。",
+      });
+    } finally {
+      setToggling(false);
+    }
+  }
+
   if (!hydrated || !user) {
     return null;
   }
@@ -160,18 +188,21 @@ export function XAccountLinkSection() {
   const message = actionMessage ?? statusMessage;
   const loading = Boolean(supabase) && !profileLoaded;
   const xAuthEnabled = isXAuthEnabled();
+  const publicHandle = normalizePublicXHandle(publicXAccount ?? undefined);
+  const linkedNormalized = normalizePublicXHandle(linkedHandle ?? undefined);
+  const isPublished = Boolean(
+    publicHandle && (!linkedNormalized || publicHandle === linkedNormalized),
+  );
 
-  if (!xAuthEnabled && !isLinked && !message) {
+  if (!xAuthEnabled && !isLinked && !publicHandle && !message) {
     return null;
   }
 
   return (
     <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
-      <h2 className="text-base font-semibold text-white">Xアカウント連携</h2>
+      <h2 className="text-base font-semibold text-white">Xアカウント</h2>
       <p className="mt-1 text-sm text-zinc-500">
-        Forge上にXの@handleを連携できます。公開プロフィールへの表示は連携とは別で、
-        プロフィール画面の「公開プロフィールに表示」で設定します。
-        ForgeからXへの投稿やDMは行いません。
+        連携はアカウント共通です。公開プロフィールへの表示は別設定です（連携だけでは自動公開しません）。
       </p>
 
       {message ? (
@@ -202,18 +233,51 @@ export function XAccountLinkSection() {
           </div>
           {!isLinked ? (
             xAuthEnabled ? (
-            <button
-              type="button"
-              disabled={linking}
-              onClick={() => void handleLinkX()}
-              className="shrink-0 rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-900 disabled:opacity-50"
-            >
-              {linking ? "移動中…" : "Xで連携"}
-            </button>
+              <button
+                type="button"
+                disabled={linking || busy}
+                onClick={() => void handleLinkX()}
+                className="shrink-0 rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-900 disabled:opacity-50"
+              >
+                {linking ? "移動中…" : "Xで連携"}
+              </button>
             ) : null
           ) : (
             <span className="shrink-0 text-xs text-zinc-600">連携済み</span>
           )}
+        </li>
+
+        <li className="flex items-center justify-between gap-4 py-4">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-zinc-200">公開プロフィールに表示</p>
+            <p className="mt-0.5 text-xs text-zinc-500">
+              {isPublished && publicHandle
+                ? `表示中: @${publicHandle}`
+                : "OFFのときは公開面にXを出しません"}
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isPublished}
+            disabled={
+              busy ||
+              toggling ||
+              loading ||
+              (!isLinked && !isPublished) ||
+              (Boolean(isLinked) && !linkedHandle && !isPublished)
+            }
+            onClick={() => void handlePublishToggle(!isPublished)}
+            className={`relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-50 ${
+              isPublished ? "bg-violet-600" : "bg-zinc-700"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 size-6 rounded-full bg-white transition-transform ${
+                isPublished ? "translate-x-5" : "translate-x-0.5"
+              }`}
+            />
+          </button>
         </li>
       </ul>
     </section>

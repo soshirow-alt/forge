@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07-14 — Player/Studio 共通プロフィール構造とX公開設定
+
+- **正本** — `/mypage/profile` と `/studio/profile` は同一 `SharedSelfProfile`。表示名・アバター・@handle・自己紹介・公開X・Webは `developer_profiles` のみ
+- **構成** — 上部は共通公開プロフィール＋編集。下部は「プレイヤーとして」「開発者として」の役割カラム（PC 2列 / モバイル縦）
+- **X** — 連携はアカウント共通（Player/Studio/設定）。公開表示は `developer_profiles.x_account` の明示ONのみ（連携だけでは自動公開しない）
+- **空状態** — 非開発者は軽いCTA、活動が少ないプレイヤーは巨大空カードにしない
+- **対象外** — Production / ホームヒーロー / 新たにプレイヤー活動を公開面へ露出する変更なし
+
 ## 2026-07-14 — 開発者一覧／公開プロフィール: サムネ巨大化とぼけ退行を修正
 
 - **原因** — 一覧代表作で `ProjectThumbnail variant=chip`（`sizes=48px`）を全幅に引き伸ばし、低解像度最適化画像が大型領域に引き伸ばされ「ぼけたまま」に見えていた
@@ -12,20 +20,6 @@
 - **公開プロフィール** — ヘッダーを内容量で縮む構成に。フォロワー重複表示を解消。作品グリッドは `max 380px` 列で1件全幅化を防止
 - **ロード** — DiscoveryGameThumbnail は CSS blur なし。pulse skeleton → onLoad で本画像。失敗時は生成ポスターへ
 - **対象外** — Production 未反映 / ホームヒーロー選出ロジック未変更
-
-
-- **Staging** — `067_fix_home_featured_hero_sql_stable.sql` 適用後、anon `get_home_featured_hero` が成功（4枠・重複なし）
-- **正本** — ヒーロー選出は RPC のみ。compose fallback / service-role compose を削除（RPC失敗時はヒーロー空・別ロジックで選出しない）
-- **棚** — `get_home_discovery_feed`（065）は変更なし
-- **対象外** — Production DB / Production deploy は未実施（Preview のみ）
-
-
-- **アバター** — 本番UIでゲーム画像をユーザー代用にしない（FBモーダル / community-db / Studio入場 / プリセットから `landing-*` 除去）
-- **影響度ランキング** — 表示名・アバターを `developer_profiles` 経由（`resolvePublicProfileDisplay`）
-- **統計** — 検索カード・LP注目・FeaturedGameCard・公開プロフィール/作品詳細のフォロワーは未ロード時に確定0を出さない
-- **サムネ** — ブックマークを `ProjectThumbnail` に。Studio公開プレビューは公開thumbnail API + `ProfileAvatar`
-- **開発者UI** — mockプロフィールを実公開と同じ骨格（三点メニューへコミュニティ、開発中/完成品分割とlocation・実績サイドバー撤去）
-- **対象外** — ヒーロー選出RPC / migration 066・067は未変更。commit / Production未反映
 
 ## 2026-07-14 — ホーム「注目の作品」4枠ヒーロー
 

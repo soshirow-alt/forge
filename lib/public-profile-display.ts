@@ -68,8 +68,8 @@ export function resolvePublicProfileDisplay(
     bio: fields.bio,
     avatarSrc: resolvePublicAvatarSrc(profile, userId),
     avatarUrl,
-    xAccount: fields.xAccount,
-    website: fields.website,
+    xAccount: fields.xAccount ?? undefined,
+    website: fields.website ?? undefined,
   };
 }
 
