@@ -52,6 +52,10 @@ import { normalizeDeveloperProfileText } from "@/lib/developer-profiles";
 import { mapProjectSubmitErrorMessage } from "@/lib/error-message";
 import { ForgeSdkNote } from "@/components/forge-sdk-note";
 import { ProjectThumbnailFields } from "@/components/project-thumbnail-fields";
+import {
+  isProjectPublishSubmitDisabled,
+  projectPublishSubmitLabel,
+} from "@/lib/project-publish-og-gate";
 import { ProjectSubmitSuccessPanel } from "@/components/project-submit-success-panel";
 import type { ProjectExternalLinksInput } from "@/lib/game-links";
 
@@ -120,6 +124,7 @@ export function ProjectSubmitForm({
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
   const [thumbnailUrls, setThumbnailUrls] = useState<string[]>([]);
+  const [thumbnailsBusy, setThumbnailsBusy] = useState(false);
   const [promptSaveError, setPromptSaveError] = useState<string | null>(null);
   const [showPromptValidation, setShowPromptValidation] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -198,6 +203,10 @@ export function ProjectSubmitForm({
 
     if (!user) {
       router.push("/login");
+      return;
+    }
+
+    if (thumbnailsBusy || submitting) {
       return;
     }
 
@@ -529,6 +538,7 @@ export function ProjectSubmitForm({
           inputId={`${formKey}-thumbnail`}
           thumbnails={thumbnailUrls}
           onChange={setThumbnailUrls}
+          onBusyChange={setThumbnailsBusy}
           posterFallback={
             title.trim()
               ? {
@@ -567,14 +577,21 @@ export function ProjectSubmitForm({
           ) : null}
           <button
             type="submit"
-            disabled={submitting}
+            disabled={isProjectPublishSubmitDisabled({
+              submitting,
+              thumbnailsBusy,
+            })}
             className={
               embedded
                 ? "rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-2.5 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 : "w-full rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-4 text-lg font-semibold text-zinc-950 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             }
           >
-            {submitting ? "投稿中..." : "投稿する"}
+            {projectPublishSubmitLabel({
+              submitting,
+              thumbnailsBusy,
+              hasThumbnails: thumbnailUrls.length > 0,
+            })}
           </button>
         </div>
       </form>

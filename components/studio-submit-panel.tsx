@@ -19,6 +19,10 @@ import {
   StudioStatusRow,
 } from "@/components/studio-action-row";
 import {
+  isProjectPublishSubmitDisabled,
+  projectPublishSubmitLabel,
+} from "@/lib/project-publish-og-gate";
+import {
   StudioSubmitBasicInfoEditPanel,
   StudioSubmitGenresTagsEditPanel,
   StudioSubmitImagesEditPanel,
@@ -81,6 +85,8 @@ export type StudioSubmitPanelProps = {
   onDraftChange: (patch: Partial<SubmitDraftState>) => void;
   onSubmit: () => void;
   submitting: boolean;
+  thumbnailsBusy?: boolean;
+  onThumbnailsBusyChange?: (busy: boolean) => void;
   submitError: string | null;
   showPromptValidation: boolean;
   focusEditMode?: SubmitValidationEditMode | null;
@@ -94,6 +100,8 @@ export function StudioSubmitPanel({
   onDraftChange,
   onSubmit,
   submitting,
+  thumbnailsBusy = false,
+  onThumbnailsBusyChange,
   submitError,
   showPromptValidation,
   focusEditMode = null,
@@ -204,6 +212,7 @@ export function StudioSubmitPanel({
             onApply={applyPatch}
             onCancel={closeEdit}
             highlightFieldId={editHighlight}
+            onThumbnailsBusyChange={onThumbnailsBusyChange}
           />
         </StudioPanelScrollShell>
       </aside>
@@ -355,10 +364,17 @@ export function StudioSubmitPanel({
           <button
             type="button"
             onClick={onSubmit}
-            disabled={submitting}
+            disabled={isProjectPublishSubmitDisabled({
+              submitting,
+              thumbnailsBusy,
+            })}
             className={primaryButtonClassName}
           >
-            {submitting ? "投稿中…" : "投稿する"}
+            {projectPublishSubmitLabel({
+              submitting,
+              thumbnailsBusy,
+              hasThumbnails: draft.thumbnailUrls.length > 0,
+            })}
           </button>
         </div>
       </div>

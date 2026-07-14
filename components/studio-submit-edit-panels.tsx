@@ -38,6 +38,7 @@ import { syncLegacyFieldsFromPublishLinks } from "@/lib/project-publish-links";
 
 type SubmitEditPanelProps = {
   draft: SubmitDraftState;
+  onThumbnailsBusyChange?: (busy: boolean) => void;
   onApply: (patch: Partial<SubmitDraftState>) => void;
   onCancel: () => void;
   highlightFieldId?: StudioFieldId | null;
@@ -228,6 +229,7 @@ export function StudioSubmitImagesEditPanel({
   onApply,
   onCancel,
   highlightFieldId = null,
+  onThumbnailsBusyChange,
 }: SubmitEditPanelProps) {
   const primaryGenre = sanitizeProjectGenresForSave(draft.genres)[0] ?? "その他";
 
@@ -247,6 +249,7 @@ export function StudioSubmitImagesEditPanel({
           inputId="submit-draft-thumbnails"
           thumbnails={draft.thumbnailUrls}
           onChange={(thumbnailUrls) => onApply({ thumbnailUrls })}
+          onBusyChange={onThumbnailsBusyChange}
           posterFallback={{
             projectId: SUBMIT_DRAFT_PREVIEW_ID,
             title: draft.title.trim() || "タイトル未入力",

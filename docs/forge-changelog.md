@@ -4,6 +4,16 @@
 
 ---
 
+<<<<<<< HEAD
+=======
+## 2026-07-15 — hotfix: 公開直後に OGP 画像が付かないレースを修正
+
+- **症状** — 新規公開作品（例: Time Battler）の X カードにタイトル/説明のみで画像が付かないことがある
+- **原因** — 投稿時に `visibility=public` で先に INSERT するため `first_published_at` が付き、サムネ Storage 保存・`og_image_url` 派生より前に作品ページがクロール可能になっていた。派生失敗も握りつぶしていた
+- **修正** — サムネありの公開投稿は先に private INSERT → HTTPS サムネ保存＋ OGP derive（1回リトライ）完了後に public へ昇格。ファイル読み込み中は投稿ボタン無効。「画像を読み込み中…／アップロード中…」。derive 後に `revalidatePath(/games/[id])`
+- **対象外** — Production DB / Storage 手動変更なし（コードのみ）
+
+>>>>>>> hotfix/ogp-publish-thumbnail-race
 ## 2026-07-15 — hotfix: LP / ログインのゲスト導線を復元
 
 - **症状** — Production LP にゲスト CTA がなく、`/login`（return なし）でも「ゲストで参加」が出ない。問い合わせ: 他人の作品を見られない／自分の作品も出せない
@@ -11,6 +21,7 @@
 - **修正** — return なしの `/login` でもゲスト CTA を表示（既定遷移 `/home`）。登録必須 intent / Studio 等の return では従来どおり非表示。LP に「ゲストで作品を見る」（entry mode → `/home`）
 - **維持** — ゲストは Auth なし entry mode。登録必須アクションの EntryGate / DB 書込権限は変更なし。未ログインの公開閲覧も維持
 
+<<<<<<< HEAD
 ## 2026-07-15 — サムネイル3枚以上の推奨表示（Preview）
 
 - **作品投稿・編集** — サムネイル欄の見出しを「3枚以上推奨」に。1枚目が一覧メイン、2〜3枚目で雰囲気が伝わりやすい旨を説明
@@ -50,6 +61,8 @@
 - **X説明** — 「ForgeからXへの投稿やDMは行いません」を削除。連携と公開表示が別である旨のみに整理
 - **対象外** — Production 未反映
 
+=======
+>>>>>>> hotfix/ogp-publish-thumbnail-race
 ## 2026-07-14 — hotfix: プロフィール画像の保存失敗を修正
 
 - **症状** — プロフィール編集で画像を選んで保存すると「保存に失敗しました」になる
