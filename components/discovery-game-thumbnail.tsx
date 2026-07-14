@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { GeneratedThumbnailPoster } from "@/components/generated-thumbnail-poster";
+import { isUsableThumbnailBitmap } from "@/lib/thumbnail-bitmap";
 
 function ThumbnailImage({
   id,
@@ -51,13 +52,7 @@ function ThumbnailImage({
         loading="lazy"
         onLoad={(event) => {
           const img = event.currentTarget;
-          const displayW = Math.max(img.clientWidth, 1);
-          // Reject empty/corrupt or severely undersized bitmaps before they look soft when stretched.
-          if (
-            img.naturalWidth < 1 ||
-            img.naturalHeight < 1 ||
-            img.naturalWidth * 2 < displayW
-          ) {
+          if (!isUsableThumbnailBitmap(img.naturalWidth, img.naturalHeight)) {
             setFailed(true);
             return;
           }
@@ -75,7 +70,7 @@ function ThumbnailImage({
 /**
  * Shared thumbnail image shell used by ProjectThumbnail.
  * No CSS blur / blurDataURL — soft look was from undersized srcset stretch.
- * Remount via `key={image}` resets load/error when the URL changes.
+ * Remount via `key={id:image}` resets load/error when the project or URL changes.
  */
 export function DiscoveryGameThumbnail({
   id,
@@ -112,7 +107,7 @@ export function DiscoveryGameThumbnail({
 
   return (
     <ThumbnailImage
-      key={resolvedImage}
+      key={`${id}:${resolvedImage}`}
       id={id}
       title={title}
       genre={genre}

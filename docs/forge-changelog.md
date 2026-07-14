@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-07-14 — 検索カードで REALIA 等のサムネが間欠的に欠ける件を修正
+
+- **症状** — `/search` で作品サムネ（特にソース幅が控えめな REALIA）が、リロードやリスト/グリッド切替のあと生成ポスターや欠落に見えることがあった
+- **原因** — DiscoveryGameThumbnail が「naturalWidth が display 幅の半分未満なら失敗」と誤判定し、一度失敗すると同一 URL のまま生成ポスターに固着
+- **修正** — 空ビットマップのみ失敗扱い。project/src 変更で loading/error をリセット。DB/Storage/作品アートは変更なし
+
 ## 2026-07-14 — Player/Studio 共通プロフィール構造とX公開設定
 
 - **正本** — `/mypage/profile` と `/studio/profile` は同一 `SharedSelfProfile`。表示名・アバター・@handle・自己紹介・公開X・Webは `developer_profiles` のみ
