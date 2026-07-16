@@ -1,7 +1,12 @@
 "use client";
 
-import { StudioProfileSelfPage } from "@/components/studio-profile-self-page";
+import { SharedSelfProfile } from "@/components/shared-self-profile";
+import { StudioShell } from "@/components/studio-shell";
 
 export function StudioProfilePage() {
-  return <StudioProfileSelfPage />;
+  return (
+    <StudioShell activeNav="profile">
+      <SharedSelfProfile shell="studio" />
+    </StudioShell>
+  );
 }

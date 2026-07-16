@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
+import { StudioProfilePage } from "@/components/studio-profile-page";
 
-/** Old Studio profile URL → canonical /mypage/profile */
 export default function StudioProfileRoute() {
-  redirect("/mypage/profile");
+  return <StudioProfilePage />;
 }

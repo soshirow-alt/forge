@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-07-16 — Production hotfix: 共感 toggle / Studioプロフィール Shell
+
+- **共感** — 公開FB cards API が service_role のみで RPC していたため `auth.uid()` が常に null → `viewerCanEmpathy=false` でログイン済みでも「共感 0」が disabled。viewer session で `get_public_feedback_cards` を呼び、自分のFBは 0件時非表示／未ログインは EntryGate
+- **Studioプロフィール** — サイドバー／ヘッダーを `/studio/profile` に戻し、middleware・entry gate・page の `/mypage/profile` 強制リダイレクトを撤去。Studio Shell 維持。「Player画面で見る」のみ Player 側へ
+
 ## 2026-07-16 — 072/073 prep (answer_value DB cap + notifications minimum privilege)
 
 - **072 Staging 適用済み** — verify `scripts/staging-only/verify-072-post-apply.mjs` PASS（行数1→1、既存行不変、1000 OK / 1001 CHECK拒否、choice/yes_no/scale_3、optional_comment 071 維持）

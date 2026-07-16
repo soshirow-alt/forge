@@ -214,10 +214,7 @@ export function sanitizeLoginReturnUrl(
         ? new URLSearchParams(decoded.slice(queryIndex + 1))
         : new URLSearchParams();
 
-    // Old Studio stubs → canonical (auth-gate / bookmarks must not keep Studio return paths)
-    if (pathname === "/studio/profile") {
-      return search.toString() ? null : "/mypage/profile";
-    }
+    // Old Studio settings stub → canonical settings (profile stays /studio/profile)
     if (pathname === "/studio/settings") {
       return search.toString() ? null : "/settings";
     }

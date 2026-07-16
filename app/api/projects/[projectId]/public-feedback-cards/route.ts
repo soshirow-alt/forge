@@ -8,6 +8,7 @@ import {
   fetchPublicFeedbackCardsEnriched,
   listPublicFeedbackVersionKeys,
 } from "@/lib/supabase/public-feedback-cards-server";
+import { createClient as createServerUserClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 export const runtime = "nodejs";
@@ -18,15 +19,16 @@ type RouteContext = {
 
 export async function GET(request: Request, context: RouteContext) {
   const { projectId } = await context.params;
-  const supabase = createServiceRoleClient();
-  if (!supabase) {
+  const service = createServiceRoleClient();
+  const viewer = await createServerUserClient();
+  if (!service || !viewer) {
     return NextResponse.json(
       { ok: false, message: "サービスが準備中です。" },
       { status: 503 },
     );
   }
 
-  const project = await loadPublicProjectContext(supabase, projectId);
+  const project = await loadPublicProjectContext(service, projectId);
   if (!project) {
     return NextResponse.json(
       { ok: false, message: "作品が見つかりません。" },
@@ -53,19 +55,29 @@ export async function GET(request: Request, context: RouteContext) {
         ? resolvePlayableVersion(versionParam)
         : playableVersion;
 
+  // Viewer session for RPC auth.uid() flags; service role for enrichment RPCs.
   const [cardsResult, availableVersions] = await Promise.all([
-    fetchPublicFeedbackCardsEnriched(supabase, project.projectId, {
+    fetchPublicFeedbackCardsEnriched(viewer, project.projectId, {
       versionKey,
       limit,
+      enrichSupabase: service,
     }),
-    listPublicFeedbackVersionKeys(supabase, project.projectId),
+    listPublicFeedbackVersionKeys(service, project.projectId),
   ]);
 
-  return NextResponse.json({
-    ok: true,
-    cards: cardsResult.cards,
-    participantCount: cardsResult.participantCount,
-    playableVersion,
-    availableVersions,
-  });
+  return NextResponse.json(
+    {
+      ok: true,
+      cards: cardsResult.cards,
+      participantCount: cardsResult.participantCount,
+      playableVersion,
+      availableVersions,
+    },
+    {
+      headers: {
+        // Viewer-specific empathy/reply flags — never cache across users.
+        "Cache-Control": "private, no-store, max-age=0",
+      },
+    },
+  );
 }

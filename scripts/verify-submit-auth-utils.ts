@@ -250,8 +250,8 @@ function testLoginReturnSanitize() {
   ok(sanitizeLoginReturnUrl("/mypage/profile") === "/mypage/profile", "allow mypage profile");
   ok(sanitizeLoginReturnUrl("/settings") === "/settings", "allow settings path");
   ok(
-    sanitizeLoginReturnUrl("/studio/profile") === "/mypage/profile",
-    "canonicalize studio profile return to mypage profile",
+    sanitizeLoginReturnUrl("/studio/profile") === "/studio/profile",
+    "allow studio profile return (Studio Shell canonical)",
   );
   ok(
     sanitizeLoginReturnUrl("/studio/settings") === "/settings",
@@ -259,8 +259,8 @@ function testLoginReturnSanitize() {
   );
   ok(
     buildLoginUrlWithReturn("/studio/profile") ===
-      "/login?return=%2Fmypage%2Fprofile",
-    "login URL from studio profile uses canonical return",
+      "/login?return=%2Fstudio%2Fprofile",
+    "login URL from studio profile keeps studio return",
   );
   ok(
     buildLoginUrlWithReturn("/studio/settings") ===
@@ -698,10 +698,10 @@ function testAuthRedirectLoopGuardContract() {
     "StudioDirectAccessGuard defers login redirect to middleware in production",
   );
   ok(
-    studioGuard.includes('"/studio/profile": "/mypage/profile"') &&
-      studioGuard.includes('"/studio/settings": "/settings"') &&
-      studioGuard.includes("STUDIO_CANONICAL_REDIRECTS"),
-    "StudioDirectAccessGuard remaps profile/settings stubs before auth gate",
+    studioGuard.includes('"/studio/settings": "/settings"') &&
+      studioGuard.includes("STUDIO_CANONICAL_REDIRECTS") &&
+      !studioGuard.includes('"/studio/profile": "/mypage/profile"'),
+    "StudioDirectAccessGuard remaps settings stub; profile stays under Studio Shell",
   );
 
   const middlewareSource = fs.readFileSync(
@@ -731,9 +731,9 @@ function testAuthRedirectLoopGuardContract() {
     "middleware resolves legacy redirects before auth session gate",
   );
   ok(
-    legacyRedirects.includes('"/studio/profile": "/mypage/profile"') &&
+    !legacyRedirects.includes('"/studio/profile": "/mypage/profile"') &&
       legacyRedirects.includes('"/studio/settings": "/settings"'),
-    "legacy redirects map studio profile/settings to canonical paths",
+    "legacy redirects map studio settings to canonical; profile stays /studio/profile",
   );
 }
 

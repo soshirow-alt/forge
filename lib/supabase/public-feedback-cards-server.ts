@@ -87,13 +87,14 @@ function rowToCard(row: PublicFeedbackCardRow, versionKey: string): PublicFeedba
 }
 
 async function fetchRpcCards(
-  supabase: SupabaseClient,
+  /** Must carry the viewer session so auth.uid() populates viewer_* flags. */
+  viewerSupabase: SupabaseClient,
   projectId: string,
   versionKey: string,
   limit: number,
 ): Promise<PublicFeedbackCardRow[]> {
   // Public 「みんなのFB」は登録ユーザーの永続データのみ。ゲスト行は表示・件数に含めない。
-  const { data, error } = await supabase.rpc("get_public_feedback_cards", {
+  const { data, error } = await viewerSupabase.rpc("get_public_feedback_cards", {
     p_project_id: projectId,
     p_version_key: resolvePlayableVersion(versionKey),
     p_include_guest: false,
@@ -293,19 +294,30 @@ export async function countPublicFeedbackParticipants(
 }
 
 export async function fetchPublicFeedbackCardsEnriched(
-  supabase: SupabaseClient,
+  /**
+   * Viewer-scoped client (cookie/session). Used for get_public_feedback_cards
+   * so viewer_can_empathy / viewer_has_empathy / viewer_can_reply reflect auth.uid().
+   * Do not pass service_role here — auth.uid() is null and empathy toggles stay disabled.
+   */
+  viewerSupabase: SupabaseClient,
   projectId: string,
   options?: {
     versionKey?: string | "all";
     limit?: number;
+    /**
+     * Privileged client for enrichment that needs resolve_feedback_card_id
+     * (EXECUTE is service_role-only after 071). Defaults to viewerSupabase.
+     */
+    enrichSupabase?: SupabaseClient;
   },
 ): Promise<{ cards: PublicFeedbackCard[]; participantCount: number }> {
   const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
   const versionParam = options?.versionKey ?? resolvePlayableVersion(undefined);
+  const enrichSupabase = options?.enrichSupabase ?? viewerSupabase;
 
   const versionKeys =
     versionParam === "all"
-      ? await listPublicFeedbackVersionKeys(supabase, projectId)
+      ? await listPublicFeedbackVersionKeys(enrichSupabase, projectId)
       : [resolvePlayableVersion(versionParam)];
 
   if (versionKeys.length === 0) {
@@ -315,7 +327,7 @@ export async function fetchPublicFeedbackCardsEnriched(
   const cards: PublicFeedbackCard[] = [];
 
   for (const versionKey of versionKeys) {
-    const rows = await fetchRpcCards(supabase, projectId, versionKey, limit);
+    const rows = await fetchRpcCards(viewerSupabase, projectId, versionKey, limit);
     for (const row of rows) {
       const card = rowToCard(row, versionKey);
       if (!card) {
@@ -325,7 +337,7 @@ export async function fetchPublicFeedbackCardsEnriched(
       if (card.authorKind === "guest") {
         continue;
       }
-      cards.push(await enrichCard(supabase, projectId, versionKey, card));
+      cards.push(await enrichCard(enrichSupabase, projectId, versionKey, card));
     }
   }
 
@@ -333,7 +345,7 @@ export async function fetchPublicFeedbackCardsEnriched(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
   const participantCount = await countPublicFeedbackParticipants(
-    supabase,
+    enrichSupabase,
     projectId,
     versionKeys,
   );

@@ -27,13 +27,31 @@ export function PublicFeedbackCardActions({
   card,
   onCardChange,
 }: PublicFeedbackCardActionsProps) {
-  const { user } = useAuth();
+  const { user, authResolved } = useAuth();
   const { requireAuth } = useRequireAuth();
   const [threadOpen, setThreadOpen] = useState(false);
   const [replies, setReplies] = useState<FeedbackCardReply[] | null>(null);
   const [replyDraft, setReplyDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Logged-in + viewerCanEmpathy=false ⇒ own card (RPC denies self-empathy).
+  // Logged-out ⇒ viewerCanEmpathy is also false; still show EntryGate CTA.
+  const isOwnCard = Boolean(user) && !card.viewerCanEmpathy;
+  const canToggleEmpathy = !user || card.viewerCanEmpathy;
+  const showEmpathyControl = (() => {
+    if (!authResolved) {
+      // Avoid flash of disabled「共感 0」before session/viewer flags settle.
+      return card.empathyCount > 0;
+    }
+    if (!user) {
+      return true;
+    }
+    if (isOwnCard) {
+      return card.empathyCount > 0;
+    }
+    return true;
+  })();
 
   useEffect(() => {
     if (!threadOpen || replies !== null) {
@@ -73,7 +91,7 @@ export function PublicFeedbackCardActions({
       requireAuth(run, `/games/${projectId}?tab=voices`);
       return;
     }
-    if (!card.viewerCanEmpathy) {
+    if (!canToggleEmpathy) {
       return;
     }
     await run();
@@ -166,18 +184,26 @@ export function PublicFeedbackCardActions({
   return (
     <div className="mt-3 space-y-3" data-feedback-card-actions>
       <div className="flex flex-wrap items-center gap-3 text-xs">
-        <button
-          type="button"
-          disabled={busy || (Boolean(user) && !card.viewerCanEmpathy)}
-          onClick={() => void handleEmpathy()}
-          className={`rounded-md px-2 py-1 transition-colors disabled:opacity-50 ${
-            card.viewerHasEmpathy
-              ? "bg-orange-500/15 text-orange-300 ring-1 ring-orange-500/30"
-              : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
-          }`}
-        >
-          共感 {card.empathyCount}
-        </button>
+        {showEmpathyControl ? (
+          canToggleEmpathy ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void handleEmpathy()}
+              className={`rounded-md px-2 py-1 transition-colors disabled:opacity-50 ${
+                card.viewerHasEmpathy
+                  ? "bg-orange-500/15 text-orange-300 ring-1 ring-orange-500/30"
+                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+              }`}
+            >
+              共感 {card.empathyCount}
+            </button>
+          ) : (
+            <span className="rounded-md px-2 py-1 text-zinc-500">
+              共感 {card.empathyCount}
+            </span>
+          )
+        ) : null}
         {canOpenThread && replyLabel ? (
           <button
             type="button"

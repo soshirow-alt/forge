@@ -185,7 +185,6 @@ export function useStudioEntryGate() {
 
 /** Pure redirect stubs under /studio — never auth-gate; middleware also remaps these first. */
 const STUDIO_CANONICAL_REDIRECTS: Readonly<Record<string, string>> = {
-  "/studio/profile": "/mypage/profile",
   "/studio/settings": "/settings",
 };
 

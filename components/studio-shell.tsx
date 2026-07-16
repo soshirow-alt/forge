@@ -102,7 +102,7 @@ function StudioMypageSidebarGroup() {
         マイページ
       </Link>
       <Link
-        href="/mypage/profile"
+        href="/studio/profile"
         className={`ml-4 block ${subNavLinkClass(isProfile)}`}
       >
         プロフィール
@@ -309,7 +309,7 @@ export function StudioShell({
             )}
           </Link>
           <Link
-            href="/mypage/profile"
+            href="/studio/profile"
             className="rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
             aria-label="プロフィール"
           >
