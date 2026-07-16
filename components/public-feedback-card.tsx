@@ -37,9 +37,14 @@ function ChoiceAnswerPill({ label }: { label: string }) {
 }
 
 function VersionBadge({ versionKey }: { versionKey: string }) {
+  const label = formatPlayableVersionLabel(versionKey);
   return (
-    <span className="inline-flex shrink-0 items-center rounded-md border border-zinc-700/80 bg-zinc-900/90 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-500">
-      {formatPlayableVersionLabel(versionKey)}
+    <span
+      className="inline-flex shrink-0 items-center rounded-md border border-zinc-700/80 bg-zinc-900/90 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-500"
+      aria-label={`回答したバージョン: ${label}`}
+      title={`回答したバージョン: ${label}`}
+    >
+      {label}
     </span>
   );
 }

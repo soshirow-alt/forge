@@ -31,9 +31,6 @@ type PublicFeedbackCardRow = {
   developer_marked_helpful?: boolean;
   viewer_is_project_owner?: boolean;
   viewer_can_reply?: boolean;
-};
-
-type ResolvedCardTarget = {
   target_source: string;
   target_id: string;
 };
@@ -53,7 +50,13 @@ function isPublicFeedbackAuthorKind(
   return value === "guest" || value === "registered";
 }
 
-function rowToCard(row: PublicFeedbackCardRow, versionKey: string): PublicFeedbackCard | null {
+type CardWithTarget = {
+  card: PublicFeedbackCard;
+  targetSource: string;
+  targetId: string;
+};
+
+function rowToCard(row: PublicFeedbackCardRow, versionKey: string): CardWithTarget | null {
   if (!isPublicFeedbackCardKind(row.card_kind)) {
     return null;
   }
@@ -62,27 +65,31 @@ function rowToCard(row: PublicFeedbackCardRow, versionKey: string): PublicFeedba
   }
 
   return {
-    cardId: row.card_id,
-    cardKind: row.card_kind,
-    versionKey,
-    createdAt: row.created_at,
-    authorKind: row.author_kind,
-    authorDisplayName: row.author_display_name,
-    authorAvatarUrl: row.author_avatar_url,
-    authorXUsername: row.author_x_username?.trim() || null,
-    promptText: row.prompt_text,
-    bodyText: row.body_text,
-    goodPoints: row.good_points,
-    concerns: row.concerns,
-    bugs: row.bugs,
-    otherNotes: row.other_notes,
-    empathyCount: Number(row.empathy_count) || 0,
-    replyCount: Number(row.reply_count) || 0,
-    viewerHasEmpathy: Boolean(row.viewer_has_empathy),
-    viewerCanEmpathy: row.viewer_can_empathy !== false,
-    developerMarkedHelpful: Boolean(row.developer_marked_helpful),
-    viewerIsProjectOwner: Boolean(row.viewer_is_project_owner),
-    viewerCanReply: Boolean(row.viewer_can_reply),
+    card: {
+      cardId: row.card_id,
+      cardKind: row.card_kind,
+      versionKey,
+      createdAt: row.created_at,
+      authorKind: row.author_kind,
+      authorDisplayName: row.author_display_name,
+      authorAvatarUrl: row.author_avatar_url,
+      authorXUsername: row.author_x_username?.trim() || null,
+      promptText: row.prompt_text,
+      bodyText: row.body_text,
+      goodPoints: row.good_points,
+      concerns: row.concerns,
+      bugs: row.bugs,
+      otherNotes: row.other_notes,
+      empathyCount: Number(row.empathy_count) || 0,
+      replyCount: Number(row.reply_count) || 0,
+      viewerHasEmpathy: Boolean(row.viewer_has_empathy),
+      viewerCanEmpathy: row.viewer_can_empathy !== false,
+      developerMarkedHelpful: Boolean(row.developer_marked_helpful),
+      viewerIsProjectOwner: Boolean(row.viewer_is_project_owner),
+      viewerCanReply: Boolean(row.viewer_can_reply),
+    },
+    targetSource: row.target_source,
+    targetId: row.target_id,
   };
 }
 
@@ -109,82 +116,59 @@ async function fetchRpcCards(
   return (data ?? []) as PublicFeedbackCardRow[];
 }
 
-async function resolveChoiceAnswerLabel(
+async function resolveChoiceAnswerLabels(
   supabase: SupabaseClient,
-  projectId: string,
-  versionKey: string,
-  cardId: string,
-): Promise<string | null> {
-  const { data: resolved, error } = await supabase.rpc("resolve_feedback_card_id", {
-    p_card_id: cardId,
-    p_project_id: projectId,
-    p_version_key: resolvePlayableVersion(versionKey),
-  });
-
-  if (error || !resolved?.length) {
-    return null;
+  targets: CardWithTarget[],
+): Promise<Map<string, string>> {
+  const targetIds = [
+    ...new Set(
+      targets
+        .filter(
+          (item) =>
+            item.card.cardKind === "voice_supplement" &&
+            item.targetSource === "registered_voice",
+        )
+        .map((item) => item.targetId),
+    ),
+  ];
+  if (targetIds.length === 0) {
+    return new Map();
   }
 
-  const target = resolved[0] as ResolvedCardTarget;
-  if (target.target_source !== "registered_voice" && target.target_source !== "guest_voice") {
-    return null;
+  const { data: voiceRows } = await supabase
+    .from("project_voice_responses")
+    .select("id, answer_label, answer_value, prompt_id")
+    .in("id", targetIds);
+  const promptIds = [
+    ...new Set((voiceRows ?? []).map((row) => String(row.prompt_id)).filter(Boolean)),
+  ];
+  const promptById = new Map<string, PromptMeta>();
+  if (promptIds.length > 0) {
+    const { data: promptRows } = await supabase
+      .from("project_version_prompts")
+      .select("id, response_kind, options")
+      .in("id", promptIds);
+    for (const row of promptRows ?? []) {
+      promptById.set(String(row.id), row as PromptMeta);
+    }
   }
 
-  const table =
-    target.target_source === "registered_voice"
-      ? "project_voice_responses"
-      : "project_guest_voice_responses";
-
-  const { data: voiceRow } = await supabase
-    .from(table)
-    .select("answer_label, answer_value, prompt_id")
-    .eq("id", target.target_id)
-    .maybeSingle();
-
-  if (!voiceRow) {
-    return null;
+  const labels = new Map<string, string>();
+  for (const row of voiceRows ?? []) {
+    const prompt = promptById.get(String(row.prompt_id));
+    const answerValue = String(row.answer_value ?? "");
+    const label = prompt?.response_kind
+      ? resolvePublicAggregateBucketLabel(
+          prompt.response_kind,
+          answerValue,
+          prompt.options ?? undefined,
+        )
+      : row.answer_label?.trim() || answerValue;
+    if (label) {
+      labels.set(String(row.id), label);
+    }
   }
-
-  const { data: promptRow } = await supabase
-    .from("project_version_prompts")
-    .select("response_kind, options")
-    .eq("id", voiceRow.prompt_id)
-    .maybeSingle();
-
-  const promptMeta = promptRow as PromptMeta | null;
-  if (promptMeta?.response_kind) {
-    return resolvePublicAggregateBucketLabel(
-      promptMeta.response_kind,
-      String(voiceRow.answer_value),
-      promptMeta.options ?? undefined,
-    );
-  }
-
-  const trimmedLabel = voiceRow.answer_label?.trim();
-  return trimmedLabel || String(voiceRow.answer_value);
-}
-
-async function enrichCard(
-  supabase: SupabaseClient,
-  projectId: string,
-  versionKey: string,
-  card: PublicFeedbackCard,
-): Promise<PublicFeedbackCard> {
-  if (card.cardKind !== "voice_supplement") {
-    return card;
-  }
-
-  const choiceAnswerLabel = await resolveChoiceAnswerLabel(
-    supabase,
-    projectId,
-    versionKey,
-    card.cardId,
-  );
-
-  return {
-    ...card,
-    choiceAnswerLabel,
-  };
+  return labels;
 }
 
 export async function listPublicFeedbackVersionKeys(
@@ -214,6 +198,46 @@ export async function listPublicFeedbackVersionKeys(
     }
   }
 
+  return [...versions].sort((a, b) => comparePlayableVersions(b, a));
+}
+
+export async function listProjectFeedbackVersionKeys(
+  supabase: SupabaseClient,
+  projectId: string,
+  currentVersion: string,
+): Promise<string[]> {
+  const sources = await Promise.all([
+    supabase
+      .from("project_version_prompts")
+      .select("version_key")
+      .eq("project_id", projectId),
+    supabase
+      .from("project_voice_responses")
+      .select("version_key")
+      .eq("project_id", projectId),
+    supabase
+      .from("project_feedback")
+      .select("version_key")
+      .eq("project_id", projectId),
+    supabase
+      .from("project_devlogs")
+      .select("published_version")
+      .eq("project_id", projectId),
+  ]);
+
+  const versions = new Set<string>([resolvePlayableVersion(currentVersion)]);
+  for (const result of sources.slice(0, 3)) {
+    for (const row of result.data ?? []) {
+      if ("version_key" in row && row.version_key) {
+        versions.add(resolvePlayableVersion(String(row.version_key)));
+      }
+    }
+  }
+  for (const row of sources[3].data ?? []) {
+    if ("published_version" in row && row.published_version) {
+      versions.add(resolvePlayableVersion(String(row.published_version)));
+    }
+  }
   return [...versions].sort((a, b) => comparePlayableVersions(b, a));
 }
 
@@ -293,6 +317,51 @@ export async function countPublicFeedbackParticipants(
   return participants.size;
 }
 
+export async function countPublicFeedbackParticipantsByVersion(
+  supabase: SupabaseClient,
+  projectId: string,
+  versionKeys: string[],
+): Promise<{ all: number; byVersion: Record<string, number> }> {
+  const [voiceResult, feedbackResult] = await Promise.all([
+    supabase
+      .from("project_voice_responses")
+      .select("user_id, version_key")
+      .eq("project_id", projectId)
+      .eq("moderation_status", "visible")
+      .in("version_key", versionKeys),
+    supabase
+      .from("project_feedback")
+      .select("user_id, version_key")
+      .eq("project_id", projectId)
+      .eq("moderation_status", "visible")
+      .in("version_key", versionKeys),
+  ]);
+
+  const allParticipants = new Set<string>();
+  const participantsByVersion = new Map(
+    versionKeys.map((versionKey) => [versionKey, new Set<string>()]),
+  );
+  for (const row of [...(voiceResult.data ?? []), ...(feedbackResult.data ?? [])]) {
+    if (!row.user_id || !row.version_key) {
+      continue;
+    }
+    const userId = String(row.user_id);
+    const versionKey = resolvePlayableVersion(String(row.version_key));
+    allParticipants.add(userId);
+    participantsByVersion.get(versionKey)?.add(userId);
+  }
+
+  return {
+    all: allParticipants.size,
+    byVersion: Object.fromEntries(
+      versionKeys.map((versionKey) => [
+        versionKey,
+        participantsByVersion.get(versionKey)?.size ?? 0,
+      ]),
+    ),
+  };
+}
+
 export async function fetchPublicFeedbackCardsEnriched(
   /**
    * Viewer-scoped client (cookie/session). Used for get_public_feedback_cards
@@ -324,22 +393,24 @@ export async function fetchPublicFeedbackCardsEnriched(
     return { cards: [], participantCount: 0 };
   }
 
-  const cards: PublicFeedbackCard[] = [];
-
-  for (const versionKey of versionKeys) {
-    const rows = await fetchRpcCards(viewerSupabase, projectId, versionKey, limit);
-    for (const row of rows) {
-      const card = rowToCard(row, versionKey);
-      if (!card) {
-        continue;
-      }
-      // Defense in depth: never surface guest cards on the public list.
-      if (card.authorKind === "guest") {
-        continue;
-      }
-      cards.push(await enrichCard(enrichSupabase, projectId, versionKey, card));
-    }
-  }
+  const rowsByVersion = await Promise.all(
+    versionKeys.map(async (versionKey) => ({
+      versionKey,
+      rows: await fetchRpcCards(viewerSupabase, projectId, versionKey, limit),
+    })),
+  );
+  const targets = rowsByVersion.flatMap(({ versionKey, rows }) =>
+    rows
+      .map((row) => rowToCard(row, versionKey))
+      .filter((item): item is CardWithTarget => item !== null)
+      .filter((item) => item.card.authorKind !== "guest"),
+  );
+  const choiceLabels = await resolveChoiceAnswerLabels(enrichSupabase, targets);
+  const cards = targets.map(({ card, targetSource, targetId }) =>
+    card.cardKind === "voice_supplement" && targetSource === "registered_voice"
+      ? { ...card, choiceAnswerLabel: choiceLabels.get(targetId) ?? null }
+      : card,
+  );
 
   const sorted = cards.sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),

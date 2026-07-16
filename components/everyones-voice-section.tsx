@@ -22,7 +22,7 @@ import { markProjectPublicFeedbackSeen } from "@/lib/supabase/project-feedback-o
 const INITIAL_CARD_COUNT = 3;
 const ALL_FILTER_AGGREGATE_PREVIEW = 3;
 
-type VersionFilter = "latest" | "all" | string;
+type VersionFilter = "all" | string;
 
 type VersionedVoicePromptAggregate = VoicePromptAggregate & {
   versionKey: string;
@@ -37,10 +37,7 @@ type EveryonesVoiceSectionProps = {
   onSendVoice?: () => void;
 };
 
-function versionFilterLabel(filter: VersionFilter, latestVersion: string): string {
-  if (filter === "latest") {
-    return `最新 ${formatPlayableVersionLabel(latestVersion)}`;
-  }
+function versionFilterLabel(filter: VersionFilter): string {
   if (filter === "all") {
     return "すべて";
   }
@@ -94,42 +91,45 @@ function PromptAggregateCard({
 }
 
 function VersionFilterBar({
-  latestVersion,
   availableVersions,
+  versionCounts,
+  allCount,
   value,
   onChange,
 }: {
-  latestVersion: string;
   availableVersions: string[];
+  versionCounts: Record<string, number>;
+  allCount: number;
   value: VersionFilter;
   onChange: (next: VersionFilter) => void;
 }) {
-  if (availableVersions.length <= 1) {
-    return null;
-  }
-
-  const options: VersionFilter[] = [
-    "latest",
-    "all",
-    ...availableVersions.filter((version) => version !== latestVersion),
-  ];
+  const options: VersionFilter[] = ["all", ...availableVersions];
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div
+      className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1"
+      role="group"
+      aria-label="フィードバックのバージョン絞り込み"
+    >
       {options.map((option) => {
         const selected = value === option;
+        const count = option === "all" ? allCount : (versionCounts[option] ?? 0);
         return (
           <button
             key={option}
             type="button"
             onClick={() => onChange(option)}
-            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+            aria-pressed={selected}
+            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
               selected
                 ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
-                : "border-zinc-700/80 bg-zinc-900/60 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
+                : count === 0
+                  ? "border-zinc-800/70 bg-zinc-950/40 text-zinc-600 hover:text-zinc-400"
+                  : "border-zinc-700/80 bg-zinc-900/60 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
             }`}
           >
-            {versionFilterLabel(option, latestVersion)}
+            <span>{versionFilterLabel(option)}</span>
+            <span className="tabular-nums text-[10px] opacity-75">{count}</span>
           </button>
         );
       })}
@@ -141,10 +141,16 @@ function PublicFeedbackCardsList({
   cards,
   totalCount,
   projectId,
+  selectedVersion,
+  selectedVersionHasFeedback,
+  onShowAll,
 }: {
   cards: PublicFeedbackCard[];
   totalCount: number;
   projectId: string;
+  selectedVersion: string | null;
+  selectedVersionHasFeedback: boolean;
+  onShowAll: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const visibleCards = expanded ? cards : cards.slice(0, INITIAL_CARD_COUNT);
@@ -153,10 +159,20 @@ function PublicFeedbackCardsList({
   if (cards.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-zinc-800 bg-zinc-950/20 px-4 py-8 text-center">
-        <p className="text-sm text-zinc-500">まだ公開されているフィードバックはありません</p>
-        <p className="mt-2 text-xs leading-relaxed text-zinc-600">
-          ひと言コメントや自由記述、詳しい感想が投稿されると、ここに表示されます。
+        <p className="text-sm text-zinc-500">
+          {selectedVersion && !selectedVersionHasFeedback
+            ? `${formatPlayableVersionLabel(selectedVersion)}にはまだフィードバックがありません`
+            : "個別表示できるフィードバックはありません"}
         </p>
+        {selectedVersion && !selectedVersionHasFeedback ? (
+          <button
+            type="button"
+            onClick={onShowAll}
+            className="mt-4 text-xs font-medium text-violet-400 transition-colors hover:text-violet-300"
+          >
+            すべてのフィードバックを見る
+          </button>
+        ) : null}
       </div>
     );
   }
@@ -199,11 +215,11 @@ export function EveryonesVoiceSection({
   onSendVoice,
 }: EveryonesVoiceSectionProps) {
   const { user } = useAuth();
-  const { getGameById, getPublicVoiceAggregates, getPublicFeedbackCards } = useGames();
+  const { getGameById, getPublicFeedbackCards } = useGames();
   const game = getGameById(gameId);
   const latestVersion = resolvePlayableVersion(playableVersion ?? game?.playableVersion);
   const [loaded, setLoaded] = useState(false);
-  const [versionFilter, setVersionFilter] = useState<VersionFilter>("latest");
+  const [versionFilter, setVersionFilter] = useState<VersionFilter>("all");
   const [aggregatesExpanded, setAggregatesExpanded] = useState(false);
   const markedSeenForFetchRef = useRef<string | null>(null);
 
@@ -218,91 +234,37 @@ export function EveryonesVoiceSection({
   const [aggregates, setAggregates] = useState<VersionedVoicePromptAggregate[]>([]);
   const [feedbackCards, setFeedbackCards] = useState<PublicFeedbackCard[]>([]);
   const [participantCount, setParticipantCount] = useState(0);
+  const [versionCounts, setVersionCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
-      const cardVersionParam =
-        versionFilter === "all"
-          ? "all"
-          : versionFilter === "latest"
-            ? latestVersion
-            : versionFilter;
-
-      const singleAggregateVersionKey =
-        versionFilter === "latest"
-          ? latestVersion
-          : versionFilter !== "all"
-            ? versionFilter
-            : null;
-
       try {
-        if (singleAggregateVersionKey) {
-          const [cardsResult, aggregateRows] = await Promise.all([
-            getPublicFeedbackCards(gameId, cardVersionParam),
-            getPublicVoiceAggregates(gameId, singleAggregateVersionKey),
-          ]);
-
-          if (cancelled) {
-            return;
-          }
-
-          setFeedbackCards(cardsResult.cards);
-          setParticipantCount(cardsResult.participantCount);
-          const versions =
-            cardsResult.availableVersions.length > 0
-              ? cardsResult.availableVersions
-              : [latestVersion];
-          setAvailableVersions(versions);
-          setAggregates(
-            buildVersionedAggregates(aggregateRows, singleAggregateVersionKey),
-          );
-
-          if (isTab && isOwner) {
-            const fetchKey = `${gameId}:${refreshKey}:${cardVersionParam}`;
-            if (markedSeenForFetchRef.current !== fetchKey) {
-              markedSeenForFetchRef.current = fetchKey;
-              const supabase = getOptionalSupabaseClient();
-              if (supabase) {
-                void markProjectPublicFeedbackSeen(supabase, gameId).catch(() => {
-                  markedSeenForFetchRef.current = null;
-                });
-              }
-            }
-          }
-          return;
-        }
-
-        const cardsResult = await getPublicFeedbackCards(gameId, cardVersionParam);
+        const cardsResult = await getPublicFeedbackCards(gameId, "all", { limit: 100 });
         if (cancelled) {
           return;
         }
 
         setFeedbackCards(cardsResult.cards);
         setParticipantCount(cardsResult.participantCount);
+        setVersionCounts(cardsResult.versionCounts);
         const versions =
           cardsResult.availableVersions.length > 0
             ? cardsResult.availableVersions
             : [latestVersion];
         setAvailableVersions(versions);
-
-        const aggregateGroups = await Promise.all(
-          versions.map((version) => getPublicVoiceAggregates(gameId, version)),
-        );
-
-        if (cancelled) {
-          return;
-        }
-
         setAggregates(
-          aggregateGroups.flatMap((rows, index) =>
-            buildVersionedAggregates(rows, versions[index] ?? latestVersion),
+          versions.flatMap((version) =>
+            buildVersionedAggregates(
+              cardsResult.aggregatesByVersion[version] ?? [],
+              version,
+            ),
           ),
         );
 
         if (isTab && isOwner) {
-          const fetchKey = `${gameId}:${refreshKey}:${cardVersionParam}`;
+          const fetchKey = `${gameId}:${refreshKey}:all`;
           if (markedSeenForFetchRef.current !== fetchKey) {
             markedSeenForFetchRef.current = fetchKey;
             const supabase = getOptionalSupabaseClient();
@@ -318,6 +280,7 @@ export function EveryonesVoiceSection({
           setAggregates([]);
           setFeedbackCards([]);
           setParticipantCount(0);
+          setVersionCounts({});
         }
       } finally {
         if (!cancelled) {
@@ -334,17 +297,31 @@ export function EveryonesVoiceSection({
   }, [
     gameId,
     latestVersion,
-    versionFilter,
     refreshKey,
-    getPublicVoiceAggregates,
     getPublicFeedbackCards,
     isTab,
     isOwner,
   ]);
 
+  const filteredCards = useMemo(
+    () =>
+      versionFilter === "all"
+        ? feedbackCards
+        : feedbackCards.filter((card) => card.versionKey === versionFilter),
+    [feedbackCards, versionFilter],
+  );
+
+  const filteredAggregates = useMemo(
+    () =>
+      versionFilter === "all"
+        ? aggregates
+        : aggregates.filter((aggregate) => aggregate.versionKey === versionFilter),
+    [aggregates, versionFilter],
+  );
+
   const promptsWithResponses = useMemo(
-    () => aggregates.filter((item) => item.totalResponses > 0),
-    [aggregates],
+    () => filteredAggregates.filter((item) => item.totalResponses > 0),
+    [filteredAggregates],
   );
 
   const visibleAggregates = useMemo(() => {
@@ -366,9 +343,7 @@ export function EveryonesVoiceSection({
   const publicFeedbackCount = participantCount;
 
   const activeVersionLabel =
-    versionFilter === "latest"
-      ? formatPlayableVersionLabel(latestVersion)
-      : versionFilter === "all"
+    versionFilter === "all"
         ? "すべてのバージョン"
         : formatPlayableVersionLabel(versionFilter);
 
@@ -397,16 +372,17 @@ export function EveryonesVoiceSection({
         みんなのフィードバック
       </h2>
       <p className={`${isTab ? "mt-2" : "mt-1"} text-xs leading-relaxed text-zinc-600`}>
-        {versionFilter === "latest"
-          ? `${activeVersionLabel} のフィードバックです。選択式回答は集計、文章は下の一覧に表示されます。`
-          : "バージョンを選ぶと、その版の集計と個別フィードバックを表示します。"}
+        {versionFilter === "all"
+          ? "全バージョンの回答を集計"
+          : `${activeVersionLabel}の回答を集計`}
       </p>
       <div className={`${isTab ? "mt-4" : "mt-3"}`}>
         <VersionFilterBar
-          latestVersion={latestVersion}
           availableVersions={
             availableVersions.length > 0 ? availableVersions : [latestVersion]
           }
+          versionCounts={versionCounts}
+          allCount={participantCount}
           value={versionFilter}
           onChange={handleVersionFilterChange}
         />
@@ -415,10 +391,10 @@ export function EveryonesVoiceSection({
   );
 
   const hasAggregateContent = promptsWithResponses.length > 0;
-  const hasPublicCards = feedbackCards.length > 0;
+  const hasPublicCards = filteredCards.length > 0;
   const hasAnyContent = hasAggregateContent || hasPublicCards;
 
-  if (!hasAnyContent) {
+  if (!hasAnyContent && versionFilter === "all") {
     return (
       <section className={sectionClassName}>
         {header}
@@ -455,10 +431,17 @@ export function EveryonesVoiceSection({
             表示中{" "}
             <span className="font-semibold text-zinc-300">{activeVersionLabel}</span>
           </span>
-          {publicFeedbackCount > 0 ? (
+          {(versionFilter === "all"
+            ? publicFeedbackCount
+            : (versionCounts[versionFilter] ?? 0)) > 0 ? (
             <span>
               公開FB{" "}
-              <span className="font-semibold text-zinc-300">{publicFeedbackCount}</span> 件
+              <span className="font-semibold text-zinc-300">
+                {versionFilter === "all"
+                  ? publicFeedbackCount
+                  : (versionCounts[versionFilter] ?? 0)}
+              </span>{" "}
+              件
             </span>
           ) : null}
         </div>
@@ -504,9 +487,14 @@ export function EveryonesVoiceSection({
         <div className="mt-4">
           <PublicFeedbackCardsList
             key={`${gameId}:${versionFilter}:${refreshKey}`}
-            cards={feedbackCards}
-            totalCount={feedbackCards.length}
+            cards={filteredCards}
+            totalCount={filteredCards.length}
             projectId={gameId}
+            selectedVersion={versionFilter === "all" ? null : versionFilter}
+            selectedVersionHasFeedback={
+              versionFilter !== "all" && (versionCounts[versionFilter] ?? 0) > 0
+            }
+            onShowAll={() => handleVersionFilterChange("all")}
           />
         </div>
       </div>

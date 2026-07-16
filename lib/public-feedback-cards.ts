@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolvePlayableVersion } from "@/lib/playable-version";
+import type { PublicVoiceAggregateRow } from "@/lib/voice-aggregates";
 
 export type PublicFeedbackCardKind = "voice_supplement" | "short_text" | "detailed";
 
@@ -37,6 +38,8 @@ export type PublicFeedbackCardsResult = {
   participantCount: number;
   playableVersion: string;
   availableVersions: string[];
+  versionCounts: Record<string, number>;
+  aggregatesByVersion: Record<string, PublicVoiceAggregateRow[]>;
 };
 
 type PublicFeedbackCardRow = {
@@ -160,6 +163,8 @@ export async function fetchPublicFeedbackCardsFromApi(
         participantCount?: number;
         playableVersion: string;
         availableVersions: string[];
+        versionCounts?: Record<string, number>;
+        aggregatesByVersion?: Record<string, PublicVoiceAggregateRow[]>;
       })
     | { ok: false; message?: string };
 
@@ -169,6 +174,8 @@ export async function fetchPublicFeedbackCardsFromApi(
       participantCount: 0,
       playableVersion: resolvePlayableVersion(undefined),
       availableVersions: [],
+      versionCounts: {},
+      aggregatesByVersion: {},
     };
   }
 
@@ -182,5 +189,7 @@ export async function fetchPublicFeedbackCardsFromApi(
         : registeredCards.length,
     playableVersion: body.playableVersion,
     availableVersions: body.availableVersions,
+    versionCounts: body.versionCounts ?? {},
+    aggregatesByVersion: body.aggregatesByVersion ?? {},
   };
 }

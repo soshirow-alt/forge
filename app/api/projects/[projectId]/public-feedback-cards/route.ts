@@ -5,9 +5,11 @@ import {
 } from "@/lib/guest-feedback/validation";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import {
+  countPublicFeedbackParticipantsByVersion,
   fetchPublicFeedbackCardsEnriched,
-  listPublicFeedbackVersionKeys,
+  listProjectFeedbackVersionKeys,
 } from "@/lib/supabase/public-feedback-cards-server";
+import { fetchPublicVoiceAggregates } from "@/lib/supabase/voice-engagement";
 import { createClient as createServerUserClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
@@ -53,25 +55,46 @@ export async function GET(request: Request, context: RouteContext) {
       ? "all"
       : versionParam
         ? resolvePlayableVersion(versionParam)
-        : playableVersion;
+        : "all";
 
-  // Viewer session for RPC auth.uid() flags; service role for enrichment RPCs.
-  const [cardsResult, availableVersions] = await Promise.all([
+  const availableVersions = await listProjectFeedbackVersionKeys(
+    service,
+    project.projectId,
+    playableVersion,
+  );
+  const requestedVersions =
+    versionKey === "all" ? availableVersions : [resolvePlayableVersion(versionKey)];
+
+  // One HTTP response supplies all filter states. RPCs stay viewer-scoped so
+  // empathy/reply flags remain correct, while privileged reads are server-only.
+  const [cardsResult, aggregateEntries, feedbackCounts] = await Promise.all([
     fetchPublicFeedbackCardsEnriched(viewer, project.projectId, {
       versionKey,
       limit,
       enrichSupabase: service,
     }),
-    listPublicFeedbackVersionKeys(service, project.projectId),
+    Promise.all(
+      requestedVersions.map(async (version) => [
+        version,
+        await fetchPublicVoiceAggregates(service, project.projectId, version),
+      ] as const),
+    ),
+    countPublicFeedbackParticipantsByVersion(
+      service,
+      project.projectId,
+      availableVersions,
+    ),
   ]);
 
   return NextResponse.json(
     {
       ok: true,
       cards: cardsResult.cards,
-      participantCount: cardsResult.participantCount,
+      participantCount: feedbackCounts.all,
       playableVersion,
       availableVersions,
+      versionCounts: feedbackCounts.byVersion,
+      aggregatesByVersion: Object.fromEntries(aggregateEntries),
     },
     {
       headers: {
