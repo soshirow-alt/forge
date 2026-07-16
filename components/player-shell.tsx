@@ -9,7 +9,6 @@ import {
   ChevronDown,
   Flame,
   Gamepad2,
-  User,
 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
@@ -256,13 +255,6 @@ function PlayerShellFrame({
                 {resolvedNotificationBadge > 9 ? "9+" : resolvedNotificationBadge}
               </span>
             )}
-          </RegisteredOnlyLink>
-          <RegisteredOnlyLink
-            href="/mypage/profile"
-            className="rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
-            aria-label="プロフィール"
-          >
-            <User className="size-5" />
           </RegisteredOnlyLink>
           {user ? (
             <button

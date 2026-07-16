@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { FORGE_SHELL_MODE_SWITCH_CLASS } from "@/lib/forge-shell-header";
 
 export function ForgeShellMobileMenuButton({ onClick }: { onClick: () => void }) {
   return (
@@ -114,12 +115,6 @@ type ForgeShellModeSwitchProps = {
   studioDirectHref?: string;
 };
 
-const playerSwitchClassName =
-  "inline-flex shrink-0 items-center justify-center rounded-xl border border-violet-500/40 bg-violet-600/15 px-2.5 py-2 text-xs font-medium text-violet-200 transition-colors hover:border-violet-500/60 hover:bg-violet-600/25 sm:px-4 sm:text-sm";
-
-const studioSwitchClassName =
-  "inline-flex shrink-0 items-center justify-center rounded-xl border border-zinc-600 px-2.5 py-2 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 sm:px-4 sm:text-sm";
-
 export function ForgeShellModeSwitch({
   mode,
   onNavigate,
@@ -130,12 +125,12 @@ export function ForgeShellModeSwitch({
   if (mode === "studio") {
     return (
       <Link
-        href="/search"
+        href="/home"
         onClick={onNavigate}
-        title="他の人の公開作品を探す"
-        className={playerSwitchClassName}
+        title="プレイヤー画面へ切り替え"
+        className={FORGE_SHELL_MODE_SWITCH_CLASS}
       >
-        作品を探す
+        Player切り替え
       </Link>
     );
   }
@@ -145,10 +140,10 @@ export function ForgeShellModeSwitch({
       <Link
         href={studioDirectHref ?? "/studio"}
         onClick={onNavigate}
-        title="開発者向け Studio（投稿した作品の管理）"
-        className={studioSwitchClassName}
+        title="Studio へ切り替え"
+        className={FORGE_SHELL_MODE_SWITCH_CLASS}
       >
-        Studio
+        Studio切り替え
       </Link>
     );
   }
@@ -160,10 +155,10 @@ export function ForgeShellModeSwitch({
         onNavigate?.();
         onStudioAttempt?.();
       }}
-      title="開発者向け Studio（ログインが必要です）"
-      className={studioSwitchClassName}
+      title="Studio へ切り替え（ログインが必要です）"
+      className={FORGE_SHELL_MODE_SWITCH_CLASS}
     >
-      Studio
+      Studio切り替え
     </button>
   );
 }

@@ -7,7 +7,6 @@ import {
   ChevronDown,
   Flame,
   Search,
-  User,
 } from "lucide-react";
 import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
@@ -18,6 +17,10 @@ import {
   ForgeShellModeSwitch,
 } from "@/components/forge-shell-mobile-nav";
 import { PlatformFeedbackSidebarBox } from "@/components/platform-feedback-sidebar-box";
+import {
+  FORGE_SHELL_HEADER_SEARCH_FORM_CLASS,
+  FORGE_SHELL_HEADER_SEARCH_INPUT_CLASS,
+} from "@/lib/forge-shell-header";
 import { studioProjectTabs } from "@/lib/studio-project-detail-v0-mock-data";
 
 const primaryLinks = [
@@ -51,7 +54,7 @@ function HeaderSearchForm({ defaultValue }: { defaultValue?: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="relative min-w-0 flex-1">
+    <form onSubmit={handleSubmit} className={FORGE_SHELL_HEADER_SEARCH_FORM_CLASS}>
       <Search
         className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500"
         aria-hidden="true"
@@ -61,7 +64,7 @@ function HeaderSearchForm({ defaultValue }: { defaultValue?: string }) {
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder="自分の作品を検索"
-        className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-500 focus:border-violet-500/40 focus:outline-none focus:ring-1 focus:ring-violet-500/30"
+        className={FORGE_SHELL_HEADER_SEARCH_INPUT_CLASS}
       />
     </form>
   );
@@ -307,13 +310,6 @@ export function StudioShell({
                 {resolvedNotificationBadge > 9 ? "9+" : resolvedNotificationBadge}
               </span>
             )}
-          </Link>
-          <Link
-            href="/studio/profile"
-            className="rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
-            aria-label="プロフィール"
-          >
-            <User className="size-5" />
           </Link>
           {user ? (
             <button
