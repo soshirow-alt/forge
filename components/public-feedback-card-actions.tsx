@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Heart } from "lucide-react";
+import { Heart, Reply } from "lucide-react";
 import { AutoGrowTextarea } from "@/components/auto-grow-textarea";
 import { useAuth } from "@/components/auth-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
@@ -191,58 +191,70 @@ export function PublicFeedbackCardActions({
         ? "返信する"
         : null;
 
+  const showReplyControl = canOpenThread && replyLabel !== null;
+
   return (
     <div className="mt-3 space-y-3" data-feedback-card-actions>
-      <div className="flex flex-wrap items-center gap-3 text-xs">
-        {showEmpathyControl ? (
-          <button
-            type="button"
-            disabled={busy || hasEmpathy}
-            onClick={() => void handleEmpathy()}
-            aria-pressed={hasEmpathy}
-            aria-label={
-              hasEmpathy
-                ? `共感済み ${card.empathyCount}`
-                : `共感 ${card.empathyCount}`
-            }
-            className={`inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 disabled:cursor-default ${
-              hasEmpathy
-                ? "border border-pink-400/40 bg-pink-500/20 text-pink-200 disabled:opacity-100"
-                : "border border-pink-500/45 bg-pink-500/15 text-pink-200 hover:border-pink-400/70 hover:bg-pink-500/25 hover:text-pink-100"
-            }`}
-          >
-            <Heart
-              className={`size-4 shrink-0 ${hasEmpathy ? "fill-pink-300 text-pink-300" : "text-pink-300"}`}
-              aria-hidden="true"
-            />
-            <span>{hasEmpathy ? "共感済み" : "共感"}</span>
-            <span className="tabular-nums opacity-90">{card.empathyCount}</span>
-          </button>
-        ) : null}
-        {canOpenThread && replyLabel ? (
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          {showEmpathyControl ? (
+            <button
+              type="button"
+              disabled={busy || hasEmpathy}
+              onClick={() => void handleEmpathy()}
+              aria-pressed={hasEmpathy}
+              aria-label={
+                hasEmpathy
+                  ? `共感済み ${card.empathyCount}`
+                  : `共感 ${card.empathyCount}`
+              }
+              className={`inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 disabled:cursor-default ${
+                hasEmpathy
+                  ? "border border-pink-400/40 bg-pink-500/20 text-pink-200 disabled:opacity-100"
+                  : "border border-pink-500/45 bg-pink-500/15 text-pink-200 hover:border-pink-400/70 hover:bg-pink-500/25 hover:text-pink-100"
+              }`}
+            >
+              <Heart
+                className={`size-4 shrink-0 ${hasEmpathy ? "fill-pink-300 text-pink-300" : "text-pink-300"}`}
+                aria-hidden="true"
+              />
+              <span>{hasEmpathy ? "共感済み" : "共感"}</span>
+              <span className="tabular-nums opacity-90">{card.empathyCount}</span>
+            </button>
+          ) : null}
+          {card.viewerIsProjectOwner ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void handleHelpful()}
+              aria-pressed={card.developerMarkedHelpful}
+              aria-label={
+                card.developerMarkedHelpful
+                  ? "開発の参考になった（選択中）"
+                  : "開発の参考になった"
+              }
+              className={`inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 disabled:cursor-wait disabled:opacity-60 ${
+                card.developerMarkedHelpful
+                  ? "border border-violet-400/50 bg-violet-500 text-white hover:bg-violet-400"
+                  : "border border-violet-500/50 bg-violet-500/15 text-violet-200 hover:border-violet-400/70 hover:bg-violet-500/25 hover:text-violet-100"
+              }`}
+            >
+              <span aria-hidden="true">
+                {card.developerMarkedHelpful ? "★" : "☆"}
+              </span>
+              <span>開発の参考になった</span>
+            </button>
+          ) : null}
+        </div>
+        {showReplyControl ? (
           <button
             type="button"
             onClick={() => setThreadOpen((open) => !open)}
-            className="rounded-md px-2 py-1 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200"
+            aria-expanded={threadOpen}
+            className="ml-auto inline-flex h-9 shrink-0 items-center gap-1.5 px-1.5 text-sm font-medium text-zinc-300 transition-colors hover:text-violet-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
           >
-            {replyLabel}
-          </button>
-        ) : null}
-        {card.viewerIsProjectOwner ? (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => void handleHelpful()}
-            aria-pressed={card.developerMarkedHelpful}
-            className={`rounded-md px-2 py-1 transition-colors disabled:opacity-50 ${
-              card.developerMarkedHelpful
-                ? "bg-violet-500/15 font-medium text-violet-300 ring-1 ring-violet-500/30"
-                : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
-            }`}
-          >
-            {card.developerMarkedHelpful
-              ? "★ 開発の参考になった"
-              : "☆ 開発の参考になった"}
+            <Reply className="size-4 shrink-0" aria-hidden="true" />
+            <span>{replyLabel}</span>
           </button>
         ) : null}
       </div>
