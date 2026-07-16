@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-07-16 — 072/073 prep (answer_value DB cap + notifications GRANT)
+
+- **072（未適用）** — `project_voice_responses.answer_value` に ≤1000 CHECK。超過行があれば abort。Staging 事前監査: maxLen=10 / over1000=0
+- **073（未適用）** — Staging で `user_notifications` の authenticated SELECT/UPDATE GRANT 欠落を修復（RLS は既存）。適用後に返信通知の認証経路 verify を再実行
+- **ゲスト公開スコープ外・071** — 変更なし
+
 ## 2026-07-16 — R18 / FB1000 / 共感・参考になった・返信 / Studioプロフィール（Preview follow-up）
 
 - **070 Staging 適用確認** — `age_rating` CHECK・公開カード enrichment・共感/返信 RPC・anon 書き込み拒否を検証
