@@ -16,7 +16,7 @@ import {
   PROJECT_STUDIO_FEEDBACK_SECTION_ID,
   projectStudioPath,
 } from "@/lib/project-nurture-links";
-import type { GameDetailTab } from "@/lib/game-detail-tabs";
+import { parseGameDetailTab, type GameDetailTab } from "@/lib/game-detail-tabs";
 import { useProjectTestPlay } from "@/hooks/use-project-test-play";
 import {
   buildProjectGrowthSnapshot,
@@ -85,7 +85,8 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   }, [ownerAccess, projectId, router]);
 
   const [openFeedbackPanel, setOpenFeedbackPanel] = useState(false);
-  const [activeSection, setActiveSection] = useState<GameDetailTab>("overview");
+  const initialTab = parseGameDetailTab(searchParams.get("tab"));
+  const [activeSection, setActiveSection] = useState<GameDetailTab>(initialTab);
   const [devlogModalOpen, setDevlogModalOpen] = useState(false);
   const [previewPatch, setPreviewPatch] = useState<StudioEditPreviewPatch | null>(null);
   const [panelFocus, setPanelFocus] = useState<StudioPanelFocusRequest | null>(null);
@@ -118,11 +119,16 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   useEffect(() => {
     const edit = searchParams.get("edit");
     const devlog = searchParams.get("devlog");
+    const tab = parseGameDetailTab(searchParams.get("tab"));
     if (edit === "prompts" || devlog === "1") {
       setDevlogModalOpen(true);
       if (searchParams.toString()) {
         router.replace(projectStudioPath(projectId));
       }
+      return;
+    }
+    if (tab !== "overview") {
+      setActiveSection(tab);
       return;
     }
     if (parseStudioOverviewEditMode(edit)) {

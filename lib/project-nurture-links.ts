@@ -28,6 +28,11 @@ export function projectStudioPath(projectId: string): string {
   return `/projects/${projectId}/studio`;
 }
 
+/** Studio owner preview → 「みんなのフィードバック」タブ */
+export function projectStudioVoicesHref(projectId: string): string {
+  return `${projectStudioPath(projectId)}?tab=voices`;
+}
+
 /** @deprecated 旧モーダル導線 — /studio/submit へリダイレクト用 */
 export const STUDIO_SUBMIT_SEARCH_PARAM = "submit";
 

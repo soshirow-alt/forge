@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-16 — Studio 未読公開FB / 「開発の参考になった」（Preview）
+
+- **クイックアクセス** — 「ガイド」を外し「フィードバックを確認」を追加（`/studio/mypage`）。全所有作品の未読公開FB合計が >0 のときだけ「新着 N件」
+- **作品カード** — 未読公開FBがある作品のみ紫ピル CTA（`新着FB N件 ›`）。カード本体は overview、バッジのみ `?tab=voices`（みんなのフィードバック）へ。`stopPropagation`
+- **未読 SoT** — `project_feedback_owner_reads(project_id, owner_id, last_seen_at)`。登録ユーザー公開カード（short_text / voice_supplement / detailed）のみ。返信・ゲストは除外。バッチ RPC `list_owned_public_feedback_unread_counts`
+- **既読** — オーナーが「みんなのフィードバック」タブを開き公開カード fetch 成功時に `mark_project_public_feedback_seen`。overview だけでは既読にしない
+- **開発の参考になった** — オーナーのみ ☆/★ トグル（既存 `developer_feedback_helpful_marks` + `toggle_feedback_card_helpful`）。共感ピンクUIは維持
+- **DB** — migration `075_project_feedback_owner_reads.sql`。Staging は `SUPABASE_ACCESS_TOKEN` / DB URL が無く未適用（Dashboard SQL または token 設定後に適用）。Production 未適用 / main 未マージ
+
 ## 2026-07-16 — Production hotfix: 共感ボタンの視認性（ワンウェイ）
 
 - **共感 UI** — 「共感 N」の薄いテキストから、ピンク系・高さ36px前後のハート付きボタンへ。未共感「共感 N」／成功後「共感済み N」で非活性（再押下で解除しない）。自分のFBは非表示、未ログインは EntryGate、auth 未解決時はフラッシュしない。RPC/RLS/件数ロジックは変更なし

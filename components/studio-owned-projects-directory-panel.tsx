@@ -17,6 +17,7 @@ import {
 import { ViewModeToggle, type ViewMode } from "@/components/view-mode-toggle";
 import { PageLoadingSkeleton } from "@/components/forge-loading-skeletons";
 import { useOwnedProjectVoiceSignals } from "@/hooks/use-owned-project-voice-signals";
+import { useOwnedPublicFeedbackUnread } from "@/hooks/use-owned-public-feedback-unread";
 import { useNurtureVoiceRead } from "@/hooks/use-nurture-feedback-read";
 import {
   matchesOwnedProjectDevPhaseFilter,
@@ -34,7 +35,11 @@ import {
   type ProjectGrowthSnapshot,
 } from "@/lib/project-growth-state";
 import { ProjectCardShareActions } from "@/components/project-card-share-actions";
-import { gamePlayHref, projectStudioPath, studioSubmitModalHref } from "@/lib/project-nurture-links";
+import {
+  projectStudioPath,
+  projectStudioVoicesHref,
+  studioSubmitModalHref,
+} from "@/lib/project-nurture-links";
 import { resolveVoiceSignalForGame } from "@/lib/project-voice-nurture";
 import { isStudioMypagePreviewMockProject } from "@/lib/studio-mypage-owned-projects";
 import type { Game } from "@/lib/mock-games";
@@ -65,10 +70,37 @@ const BADGE_TONE_CLASS: Record<
 type OwnedProjectRow = {
   game: Game;
   growth: ProjectGrowthSnapshot;
-  notificationCount: number;
+  unreadPublicFeedbackCount: number;
   showDelete: boolean;
   voiceLoaded: boolean;
 };
+
+function UnreadPublicFeedbackBadge({
+  projectId,
+  count,
+  className,
+}: {
+  projectId: string;
+  count: number;
+  className?: string;
+}) {
+  if (count <= 0) {
+    return null;
+  }
+
+  return (
+    <Link
+      href={projectStudioVoicesHref(projectId)}
+      onClick={(event) => event.stopPropagation()}
+      className={`inline-flex h-[28px] items-center gap-1 rounded-full bg-violet-600 px-2.5 text-[11px] font-semibold text-white shadow-sm shadow-violet-950/40 transition-colors hover:bg-violet-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 ${className ?? ""}`}
+      aria-label={`新着フィードバック ${count}件を確認`}
+    >
+      <MessageSquare className="size-3 shrink-0" aria-hidden="true" />
+      <span className="whitespace-nowrap">新着FB {count}件</span>
+      <ChevronRight className="size-3 shrink-0 opacity-90" aria-hidden="true" />
+    </Link>
+  );
+}
 
 function formatVoiceResponseCount(count: number, voiceLoaded: boolean): string {
   if (!voiceLoaded) {
@@ -128,10 +160,10 @@ function OwnedProjectGridCard({
   onDelete: (project: PendingProjectDelete) => void;
   showDelete: boolean;
 }) {
-  const { game, growth, notificationCount, voiceLoaded } = row;
+  const { game, growth, unreadPublicFeedbackCount, voiceLoaded } = row;
   const { isRead: voiceRead } = useNurtureVoiceRead(game.id, growth.playableVersion);
   const statusBadges = voiceLoaded ? getProjectStatusBadges(growth, voiceRead) : [];
-  const hasHighlight = notificationCount > 0 || statusBadges.length > 0;
+  const hasHighlight = unreadPublicFeedbackCount > 0 || statusBadges.length > 0;
   const responseCountLabel = formatVoiceResponseCount(
     growth.totalVoiceResponseCount,
     voiceLoaded,
@@ -139,22 +171,24 @@ function OwnedProjectGridCard({
 
   return (
     <article
-      className={`flex flex-col rounded-2xl border bg-zinc-900/40 ${
+      className={`relative flex flex-col rounded-2xl border bg-zinc-900/40 ${
         hasHighlight
           ? "border-orange-500/50 ring-1 ring-orange-500/25"
           : "border-zinc-800"
       }`}
     >
+      {unreadPublicFeedbackCount > 0 ? (
+        <UnreadPublicFeedbackBadge
+          projectId={game.id}
+          count={unreadPublicFeedbackCount}
+          className="absolute right-2 top-2 z-20"
+        />
+      ) : null}
       <Link
         href={projectStudioPath(game.id)}
         className="group flex flex-1 flex-col transition-colors hover:bg-zinc-900/70"
       >
         <div className="relative aspect-[16/10] overflow-hidden rounded-t-2xl bg-zinc-800">
-          {notificationCount > 0 && (
-            <span className="absolute right-2 top-2 z-10 rounded-md bg-orange-500/90 px-2 py-0.5 text-[10px] font-semibold text-zinc-950">
-              新着 {notificationCount}
-            </span>
-          )}
           <ProjectThumbnail
             projectId={game.id}
             title={game.title}
@@ -240,10 +274,10 @@ function OwnedProjectListRow({
   onDelete: (project: PendingProjectDelete) => void;
   showDelete: boolean;
 }) {
-  const { game, growth, notificationCount, voiceLoaded } = row;
+  const { game, growth, unreadPublicFeedbackCount, voiceLoaded } = row;
   const { isRead: voiceRead } = useNurtureVoiceRead(game.id, growth.playableVersion);
   const statusBadges = voiceLoaded ? getProjectStatusBadges(growth, voiceRead) : [];
-  const hasHighlight = notificationCount > 0 || statusBadges.length > 0;
+  const hasHighlight = unreadPublicFeedbackCount > 0 || statusBadges.length > 0;
   const responseCountLabel = formatVoiceResponseCount(
     growth.totalVoiceResponseCount,
     voiceLoaded,
@@ -283,11 +317,6 @@ function OwnedProjectListRow({
                 {badge.label}
               </span>
             ))}
-            {notificationCount > 0 && (
-              <span className="rounded-md bg-orange-500/90 px-2 py-0.5 text-[10px] font-semibold text-zinc-950">
-                新着 {notificationCount}
-              </span>
-            )}
           </div>
           <p className="mt-1 text-xs text-zinc-500">
             {game.genre} · ver {growth.playableVersion} · 回答{" "}
@@ -298,6 +327,13 @@ function OwnedProjectListRow({
           </p>
         </div>
       </Link>
+      {unreadPublicFeedbackCount > 0 ? (
+        <UnreadPublicFeedbackBadge
+          projectId={game.id}
+          count={unreadPublicFeedbackCount}
+          className="shrink-0 self-center"
+        />
+      ) : null}
       <div className="mt-2">
         <ProjectCardShareActions game={game} />
       </div>
@@ -326,6 +362,7 @@ export function StudioOwnedProjectsDirectoryPanel({
   } = useGames();
   const { signals: voiceSignals, loaded: voiceLoaded } =
     useOwnedProjectVoiceSignals(user?.id);
+  const { getUnreadCount } = useOwnedPublicFeedbackUnread();
   const { requestDelete, modal } = useStudioProjectDeleteModal(deleteSubmittedGame);
 
   const [query, setQuery] = useState(initialQuery);
@@ -357,7 +394,7 @@ export function StudioOwnedProjectsDirectoryPanel({
       return {
         game,
         growth,
-        notificationCount: voiceLoaded ? growth.pendingFeedbackCount : 0,
+        unreadPublicFeedbackCount: getUnreadCount(game.id),
         showDelete: !isStudioMypagePreviewMockProject(game),
         voiceLoaded,
       };
@@ -365,6 +402,7 @@ export function StudioOwnedProjectsDirectoryPanel({
   }, [
     getDevlogsByProject,
     getStudioMypageOwnedProjects,
+    getUnreadCount,
     user?.id,
     voiceLoaded,
     voiceSignals,

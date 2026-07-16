@@ -126,7 +126,7 @@ export function PublicFeedbackCardActions({
         developerMarkedHelpful: result.developerMarkedHelpful,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "参考になったの更新に失敗しました");
+      setError(err instanceof Error ? err.message : "開発の参考になったの更新に失敗しました");
     } finally {
       setBusy(false);
     }
@@ -233,13 +233,16 @@ export function PublicFeedbackCardActions({
             type="button"
             disabled={busy}
             onClick={() => void handleHelpful()}
+            aria-pressed={card.developerMarkedHelpful}
             className={`rounded-md px-2 py-1 transition-colors disabled:opacity-50 ${
               card.developerMarkedHelpful
-                ? "bg-violet-500/15 text-violet-300 ring-1 ring-violet-500/30"
+                ? "bg-violet-500/15 font-medium text-violet-300 ring-1 ring-violet-500/30"
                 : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
             }`}
           >
-            {card.developerMarkedHelpful ? "参考になった ✓" : "参考になった"}
+            {card.developerMarkedHelpful
+              ? "★ 開発の参考になった"
+              : "☆ 開発の参考になった"}
           </button>
         ) : null}
       </div>

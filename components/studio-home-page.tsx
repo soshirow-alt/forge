@@ -5,7 +5,6 @@
 import Link from "next/link";
 import {
   ArrowUpRight,
-  BookOpen,
   Calendar,
   ChevronDown,
   ChevronRight,
@@ -24,6 +23,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { StudioShell } from "@/components/studio-shell";
+import { useOwnedPublicFeedbackUnread } from "@/hooks/use-owned-public-feedback-unread";
 import {
   StudioHomeChartLegend,
   StudioHomeMultiLineChart,
@@ -111,10 +111,10 @@ const QUICK_LINK_STYLES: Record<
     iconBg: "bg-emerald-500/15 border-emerald-500/25",
     iconColor: "text-emerald-300",
   },
-  "/studio/guide": {
-    icon: BookOpen,
-    iconBg: "bg-indigo-500/15 border-indigo-500/25",
-    iconColor: "text-indigo-300",
+  "フィードバックを確認": {
+    icon: MessageSquare,
+    iconBg: "bg-violet-500/15 border-violet-500/25",
+    iconColor: "text-violet-300",
   },
 };
 
@@ -749,16 +749,25 @@ function HighlightsSection({
   );
 }
 
-function QuickAccessSection() {
+function QuickAccessSection({
+  totalUnreadPublicFeedback = 0,
+}: {
+  totalUnreadPublicFeedback?: number;
+}) {
   return (
     <section className="rounded-2xl border border-zinc-800/60 bg-gradient-to-br from-zinc-900/60 to-zinc-950/80 p-4 backdrop-blur-md">
       <h2 className="text-base font-semibold text-zinc-100">クイックアクセス</h2>
       <ul className="mt-3 grid grid-cols-2 gap-2">
         {STUDIO_HOME_QUICK_LINKS.map((link) => {
-          const style = QUICK_LINK_STYLES[link.href] ?? QUICK_LINK_STYLES["/studio/mypage"]!;
+          const style =
+            QUICK_LINK_STYLES[link.label] ??
+            QUICK_LINK_STYLES[link.href] ??
+            QUICK_LINK_STYLES["/studio/mypage"]!;
           const Icon = style.icon;
+          const showUnreadBadge =
+            link.label === "フィードバックを確認" && totalUnreadPublicFeedback > 0;
           return (
-            <li key={link.href}>
+            <li key={link.label}>
               <Link
                 href={link.href}
                 className="group relative flex items-center gap-2.5 rounded-xl border border-white/[0.06] bg-zinc-950/50 px-3 py-2.5 transition-all duration-300 hover:border-white/10 hover:bg-zinc-900/60"
@@ -772,8 +781,15 @@ function QuickAccessSection() {
                 >
                   <Icon className={`size-4 ${style.iconColor}`} aria-hidden="true" />
                 </span>
-                <span className="pr-4 text-sm font-medium text-zinc-300 group-hover:text-zinc-100">
-                  {link.label}
+                <span className="min-w-0 pr-4">
+                  <span className="block text-sm font-medium text-zinc-300 group-hover:text-zinc-100">
+                    {link.label}
+                  </span>
+                  {showUnreadBadge ? (
+                    <span className="mt-0.5 block text-[10px] font-medium text-violet-300">
+                      新着 {totalUnreadPublicFeedback}件
+                    </span>
+                  ) : null}
                 </span>
               </Link>
             </li>
@@ -834,6 +850,7 @@ export type StudioHomeViewProps = {
   rpcReady?: boolean;
   granularityFallback?: boolean;
   highlightsLoading?: boolean;
+  totalUnreadPublicFeedback?: number;
 };
 
 export function StudioHomeView({
@@ -846,6 +863,7 @@ export function StudioHomeView({
   rpcReady = true,
   granularityFallback = false,
   highlightsLoading = false,
+  totalUnreadPublicFeedback = 0,
 }: StudioHomeViewProps) {
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-6">
@@ -866,7 +884,7 @@ export function StudioHomeView({
       />
 
       <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
-        <QuickAccessSection />
+        <QuickAccessSection totalUnreadPublicFeedback={totalUnreadPublicFeedback} />
         <DevHintsSection />
       </div>
     </div>
@@ -878,6 +896,7 @@ export function StudioHomePage() {
   const { metrics, initialLoading, fetching, rpcReady, granularityFallback } =
     useStudioHomeMetrics(granularity);
   const { highlights, loading: highlightsLoading } = useStudioHomeHighlights();
+  const { totalUnread } = useOwnedPublicFeedbackUnread();
 
   return (
     <StudioShell activeNav="home">
@@ -891,6 +910,7 @@ export function StudioHomePage() {
         rpcReady={rpcReady}
         granularityFallback={granularityFallback}
         highlightsLoading={highlightsLoading}
+        totalUnreadPublicFeedback={totalUnread}
       />
     </StudioShell>
   );

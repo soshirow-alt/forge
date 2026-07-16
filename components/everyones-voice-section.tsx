@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PublicFeedbackCardView } from "@/components/public-feedback-card";
 import { VoiceAggregateBars } from "@/components/voice-aggregate-bars";
+import { useAuth } from "@/components/auth-provider";
 import { useGames } from "@/components/games-provider";
 import type { PublicFeedbackCard } from "@/lib/public-feedback-cards";
 import {
@@ -15,6 +16,8 @@ import {
   type VoicePromptAggregate,
 } from "@/lib/voice-aggregates";
 import { isFreeTextResponseKind } from "@/lib/version-prompt-types";
+import { getOptionalSupabaseClient } from "@/lib/supabase/client";
+import { markProjectPublicFeedbackSeen } from "@/lib/supabase/project-feedback-owner-reads-db";
 
 const INITIAL_CARD_COUNT = 3;
 const ALL_FILTER_AGGREGATE_PREVIEW = 3;
@@ -195,12 +198,17 @@ export function EveryonesVoiceSection({
   refreshKey = 0,
   onSendVoice,
 }: EveryonesVoiceSectionProps) {
+  const { user } = useAuth();
   const { getGameById, getPublicVoiceAggregates, getPublicFeedbackCards } = useGames();
   const game = getGameById(gameId);
   const latestVersion = resolvePlayableVersion(playableVersion ?? game?.playableVersion);
   const [loaded, setLoaded] = useState(false);
   const [versionFilter, setVersionFilter] = useState<VersionFilter>("latest");
   const [aggregatesExpanded, setAggregatesExpanded] = useState(false);
+  const markedSeenForFetchRef = useRef<string | null>(null);
+
+  const isOwner = Boolean(user && game?.ownerId && game.ownerId === user.id);
+  const isTab = variant === "tab";
 
   function handleVersionFilterChange(next: VersionFilter) {
     setVersionFilter(next);
@@ -210,7 +218,6 @@ export function EveryonesVoiceSection({
   const [aggregates, setAggregates] = useState<VersionedVoicePromptAggregate[]>([]);
   const [feedbackCards, setFeedbackCards] = useState<PublicFeedbackCard[]>([]);
   const [participantCount, setParticipantCount] = useState(0);
-  const isTab = variant === "tab";
 
   useEffect(() => {
     let cancelled = false;
@@ -251,6 +258,19 @@ export function EveryonesVoiceSection({
           setAggregates(
             buildVersionedAggregates(aggregateRows, singleAggregateVersionKey),
           );
+
+          if (isTab && isOwner) {
+            const fetchKey = `${gameId}:${refreshKey}:${cardVersionParam}`;
+            if (markedSeenForFetchRef.current !== fetchKey) {
+              markedSeenForFetchRef.current = fetchKey;
+              const supabase = getOptionalSupabaseClient();
+              if (supabase) {
+                void markProjectPublicFeedbackSeen(supabase, gameId).catch(() => {
+                  markedSeenForFetchRef.current = null;
+                });
+              }
+            }
+          }
           return;
         }
 
@@ -280,6 +300,19 @@ export function EveryonesVoiceSection({
             buildVersionedAggregates(rows, versions[index] ?? latestVersion),
           ),
         );
+
+        if (isTab && isOwner) {
+          const fetchKey = `${gameId}:${refreshKey}:${cardVersionParam}`;
+          if (markedSeenForFetchRef.current !== fetchKey) {
+            markedSeenForFetchRef.current = fetchKey;
+            const supabase = getOptionalSupabaseClient();
+            if (supabase) {
+              void markProjectPublicFeedbackSeen(supabase, gameId).catch(() => {
+                markedSeenForFetchRef.current = null;
+              });
+            }
+          }
+        }
       } catch {
         if (!cancelled) {
           setAggregates([]);
@@ -305,6 +338,8 @@ export function EveryonesVoiceSection({
     refreshKey,
     getPublicVoiceAggregates,
     getPublicFeedbackCards,
+    isTab,
+    isOwner,
   ]);
 
   const promptsWithResponses = useMemo(
