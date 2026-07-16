@@ -155,8 +155,13 @@ export function PublicFeedbackCardActions({
     }
   }
 
+  const canOpenThread = card.replyCount > 0 || card.viewerCanReply;
   const replyLabel =
-    card.replyCount > 0 ? `返信 ${card.replyCount}件` : "返信する";
+    card.replyCount > 0
+      ? `返信 ${card.replyCount}件`
+      : card.viewerCanReply
+        ? "返信する"
+        : null;
 
   return (
     <div className="mt-3 space-y-3" data-feedback-card-actions>
@@ -173,13 +178,15 @@ export function PublicFeedbackCardActions({
         >
           共感 {card.empathyCount}
         </button>
-        <button
-          type="button"
-          onClick={() => setThreadOpen((open) => !open)}
-          className="rounded-md px-2 py-1 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200"
-        >
-          {replyLabel}
-        </button>
+        {canOpenThread && replyLabel ? (
+          <button
+            type="button"
+            onClick={() => setThreadOpen((open) => !open)}
+            className="rounded-md px-2 py-1 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200"
+          >
+            {replyLabel}
+          </button>
+        ) : null}
         {card.viewerIsProjectOwner ? (
           <button
             type="button"
@@ -260,11 +267,7 @@ export function PublicFeedbackCardActions({
                 </button>
               </div>
             </div>
-          ) : (
-            <p className="text-[11px] text-zinc-600">
-              返信は元の投稿者または作品の開発者のみ可能です。
-            </p>
-          )}
+          ) : null}
         </div>
       ) : null}
     </div>

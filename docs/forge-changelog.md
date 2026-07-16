@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-16 — R18 / FB1000 / 共感・参考になった・返信 / Studioプロフィール（Preview follow-up）
+
+- **070 Staging 適用確認** — `age_rating` CHECK・公開カード enrichment・共感/返信 RPC・anon 書き込み拒否を検証
+- **071** — `feedback_card_empathies` の直接 INSERT policy を削除（書き込みは `toggle_feedback_card_empathy` のみ）。Staging 未適用なら Dashboard で適用
+- **返信 UI** — 返信不可の第三者／ゲスト投稿者に「返信する」を出さない（件数がある場合の閲覧展開、または `viewerCanReply` のみ）
+- **詳しい感想** — 現行 `/games/[id]`（`GameDetailV0Page`）の実導線は `showDeepFeedback={false}` のため到達不能。今回の1000字対象は short_text / ひと言コメントのみ
+
 ## 2026-07-16 — R18年齢区分 / FB1000字 / 共感・参考になった・返信 / StudioプロフィールShell（Preview）
 
 - **R18** — `projects.age_rating`（`general` \| `r18`）。ジャンル・タグとは別。Studio「ジャンル・タグ」パネルに年齢制限チェック＋確認モーダル。Player `/games/[id]` はブラウザ自己申告ゲート（localStorage `forge_age_verified_v1`）。Studioプレビューは非対象
