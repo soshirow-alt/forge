@@ -1,9 +1,9 @@
--- STAGING ONLY (vuqpwvjvgyxffmvpfrxo) — guest_voice engagement verify seed
--- Paste in Staging Dashboard SQL Editor. NOT a numbered migration / NOT 071.
--- Creates a dedicated public project + one guest_voice row for Cursor verify.
--- Idempotent on fixed UUIDs. Re-run safe.
+-- STAGING ONLY — UNUSED (2026-07-16 owner decision)
+-- Guest FB is out of public Player scope (guest_feedback_disabled + p_include_guest:false).
+-- Do NOT paste/apply this seed for the current engagement work.
+-- Kept only as historical draft; prefer delete in a later cleanup if unused.
 --
--- After verify-guest-voice-engagement.mjs finishes, run CLEANUP at bottom.
+-- --- original draft below (do not run) ---
 
 BEGIN;
 

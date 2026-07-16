@@ -7,9 +7,9 @@
 ## 2026-07-16 — R18 / FB1000 / 共感・参考になった・返信 / Studioプロフィール（Preview follow-up）
 
 - **070 Staging 適用確認** — `age_rating` CHECK・公開カード enrichment・共感/返信 RPC・anon 書き込み拒否を検証
-- **071（未適用）** — `071_feedback_empathy_rpc_only_dml.sql`。共感テーブルの直接 SELECT/INSERT/DELETE policy を全削除し、anon/authenticated の table GRANT を REVOKE。追加／解除は `toggle_feedback_card_empathy` のみ。optional_comment の DB 上限を 1000 に揃える。Staging Dashboard 適用待ち
-- **ゲストFB** — Player の guest-voice / guest-feedback API は 2026-07-13 以降 `guest_feedback_disabled`（403）。公開「みんなのFB」は `p_include_guest: false`。ゲスト行の DB 検証は Staging seed SQL + verify スクリプトで実施
-- **Preview alias** — `forge-git-preview-landing-01-*` を Vercel プロジェクト `forge` の最新 Ready に付け直し（誤って `forge-app` 側へ向くと cards API が 503）
+- **071（未適用）** — `071_public_feedback_engagement_harden.sql`。共感 RPC 専用化／optional_comment≤1000（超過行があれば適用 abort・暗黙更新なし）／公開カード RPC から guest 系を排除。Staging Dashboard 適用待ち
+- **ゲストFB** — 公開スコープ外を維持（API `guest_feedback_disabled`、一覧 `p_include_guest: false`、071 で resolve／engagement RPC も registered のみ）。Studio 内部の helpful テーブル経路は非変更
+- **Preview** — 正本 Vercel project は `forge`。誤連携していた `forge-app` の Git を disconnect（プロジェクト削除なし）。手順: `docs/vercel-preview-project.md`
 - **返信 UI** — 返信不可の第三者／ゲスト投稿者に「返信する」を出さない（件数がある場合の閲覧展開、または `viewerCanReply` のみ）
 - **詳しい感想** — 現行 `/games/[id]`（`GameDetailV0Page`）の実導線は `showDeepFeedback={false}` のため到達不能。今回の1000字対象は short_text / ひと言コメントのみ
 

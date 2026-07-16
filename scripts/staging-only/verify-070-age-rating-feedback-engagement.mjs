@@ -306,27 +306,53 @@ async function main() {
     }
   }
 
-  // Guest card reply capability: owner-only
-  const guestCard = probe.cards.find((c) => c.target_source === "guest_voice" || c.target_source === "guest_detailed");
-  if (guestCard) {
-    check("guest card present in sample", true, guestCard.target_source);
-    check(
-      "guest card viewer_can_reply false for anon/third listing",
-      guestCard.viewer_can_reply === false,
-      guestCard.viewer_can_reply,
-    );
-    const { error } = await third.client.rpc("create_feedback_card_reply", {
+  // Guest public engagement must stay rejected (071; app already excludes guests)
+  {
+    const fakeGuestCard = "fc1_guest_not_in_public_scope_000000000000";
+    const { error: empErr } = await third.client.rpc("toggle_feedback_card_empathy", {
       p_project_id: String(probe.project.id),
       p_version_key: probe.version,
-      p_card_id: guestCard.card_id,
-      p_body: "third on guest should fail",
+      p_card_id: fakeGuestCard,
     });
-    check("third cannot reply to guest FB", Boolean(error), error?.message);
-  } else {
     check(
-      "guest card present in sample (optional)",
+      "forged/guest-like card_id empathy rejected",
+      Boolean(empErr),
+      empErr?.message,
+    );
+  }
+
+  {
+    const guestInList = probe.cards.some(
+      (c) => c.target_source === "guest_voice" || c.target_source === "guest_detailed",
+    );
+    check(
+      "probe listing note (pre-071 may include guest when include_guest true)",
       true,
-      "skipped — no guest public cards in probed projects",
+      {
+        hasGuest: guestInList,
+        sources: [...new Set(probe.cards.map((c) => c.target_source))],
+      },
+    );
+  }
+
+  // Re-fetch with include_guest true — after 071 must still be registered-only
+  {
+    const { data: forced } = await anon.rpc("get_public_feedback_cards", {
+      p_project_id: String(probe.project.id),
+      p_version_key: probe.version,
+      p_include_guest: true,
+      p_limit: 50,
+      p_offset: 0,
+    });
+    const guestForced = (forced ?? []).some(
+      (c) => c.target_source === "guest_voice" || c.target_source === "guest_detailed",
+    );
+    check(
+      "even p_include_guest=true returns no guest after 071",
+      !guestForced,
+      guestForced
+        ? "GUEST STILL RETURNED — apply 071"
+        : (forced ?? []).map((c) => c.target_source),
     );
   }
 

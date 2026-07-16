@@ -176,6 +176,8 @@ handoff 更新トリガー: 大テーマ完了 / migration 完了 / ロードマ
 
 **正本**。オーナー方針: **Preview で試す → 本番 push** を繰り返す。**`preview/landing-01` と `main` のコード差分を常に避ける**。
 
+Vercel 正本 project は **`forge`**（`forge-app` ではない）。詳細: `docs/vercel-preview-project.md`。
+
 ### 8.1 通常フロー（UI・仕様変更）
 
 ```text
