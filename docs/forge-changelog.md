@@ -6,8 +6,8 @@
 
 ## 2026-07-16 — 072/073 prep (answer_value DB cap + notifications minimum privilege)
 
-- **072（オーナー Staging 適用待ち）** — `project_voice_responses.answer_value` ≤1000 CHECK。適用後 verify: `scripts/staging-only/verify-072-post-apply.mjs`（行数不変・1000 OK / 1001拒否・choice/yes_no/scale_3・optional_comment 071 退行なし）
-- **073（未適用・草案差し替え）** — `073_user_notifications_authenticated_read_access.sql`。authenticated は `SELECT` + `UPDATE(read_at)` のみ（列レベル）。`service_role` テーブル GRANT なし。監査: `scripts/staging-only/audit-user-notifications-staging.mjs`、適用後: `verify-user-notifications-security.mjs` / `verify-feedback-reply-notifications.mjs`
+- **072 Staging 適用済み** — verify `scripts/staging-only/verify-072-post-apply.mjs` PASS（行数1→1、既存行不変、1000 OK / 1001 CHECK拒否、choice/yes_no/scale_3、optional_comment 071 維持）
+- **073（未適用）** — INSERT policy を type 別に厳格化（watcher / confirmation RPC recipients / developer_follows）。`verify-user-notifications-insert-attacks.mjs` 追加
 - **ゲスト公開スコープ外・071** — 変更なし
 
 ## 2026-07-16 — R18 / FB1000 / 共感・参考になった・返信 / Studioプロフィール（Preview follow-up）

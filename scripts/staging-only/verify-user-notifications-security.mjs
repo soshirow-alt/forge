@@ -282,6 +282,12 @@ async function main() {
     insertFake.error?.message,
   );
 
+  check(
+    "INSERT policy note: owner broadcast INSERT is allowed when 073 RLS passes (see verify-user-notifications-insert-attacks.mjs)",
+    true,
+    "not tested in this script",
+  );
+
   const deleteOwn = await author.client.from("user_notifications").delete().eq("id", seeded.id);
   check("author cannot DELETE own notification", Boolean(deleteOwn.error), deleteOwn.error?.message);
 
