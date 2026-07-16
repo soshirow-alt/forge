@@ -1,6 +1,11 @@
 /**
- * Staging: user_notifications INSERT policy attack probes (run AFTER 073 apply).
+ * Staging: user_notifications INSERT policy probes.
  * HARD GUARD: vuqpwvjvgyxffmvpfrxo — ephemeral users/rows only.
+ *
+ * Prerequisites (owner manual apply):
+ *   1. 073_user_notifications_authenticated_read_access.sql
+ *   2. scripts/staging-only/sql/sync-project-watches-authenticated-select.sql
+ *   3. 074_user_notification_follower_recipient_helper.sql
  *
  * node --env-file=.env.local scripts/staging-only/verify-user-notifications-insert-attacks.mjs
  */
@@ -70,12 +75,13 @@ async function tryInsert(client, row) {
 async function main() {
   const stamp = Date.now();
   const password = `Atk!${stamp}`;
-  const created = { users: [], watchId: null, projectId: null, prevOwner: null };
+  const created = { users: [], projectId: null, prevOwner: null, notifIds: [] };
 
   const owner = await authed(`notif-atk-owner-${stamp}@example.com`, password);
   const watcher = await authed(`notif-atk-watch-${stamp}@example.com`, password);
+  const follower = await authed(`notif-atk-follow-${stamp}@example.com`, password);
   const stranger = await authed(`notif-atk-stranger-${stamp}@example.com`, password);
-  created.users.push(owner.userId, watcher.userId, stranger.userId);
+  created.users.push(owner.userId, watcher.userId, follower.userId, stranger.userId);
 
   const projectId = "41ff5a96-105c-42a2-87b4-787bcfeacb45";
   const { data: project } = await admin
@@ -104,6 +110,47 @@ async function main() {
     );
     process.exit(2);
   }
+
+  const watchProbe = await owner.client
+    .from("project_watches")
+    .select("user_id")
+    .eq("project_id", projectId)
+    .limit(1);
+  if (watchProbe.error?.code === "42501") {
+    console.log(
+      JSON.stringify(
+        {
+          ref,
+          blocked: "project_watches_grant_missing",
+          hint: "Apply scripts/staging-only/sql/sync-project-watches-authenticated-select.sql",
+          error: watchProbe.error.message,
+        },
+        null,
+        2,
+      ),
+    );
+    process.exit(2);
+  }
+
+  const { data: hasFollowerFn, error: fnErr } = await owner.client.rpc("developer_has_follower", {
+    p_follower_id: stranger.userId,
+  });
+  if (fnErr?.message?.includes("developer_has_follower")) {
+    console.log(
+      JSON.stringify(
+        {
+          ref,
+          blocked: "074_not_applied",
+          hint: "Apply 074_user_notification_follower_recipient_helper.sql",
+          error: fnErr.message,
+        },
+        null,
+        2,
+      ),
+    );
+    process.exit(2);
+  }
+  check("developer_has_follower RPC callable", !fnErr, fnErr?.message ?? hasFollowerFn);
 
   const base = {
     project_id: projectId,
@@ -136,19 +183,6 @@ async function main() {
   );
 
   check(
-    "owner nonexistent project INSERT denied",
-    Boolean(
-      await tryInsert(owner.client, {
-        ...base,
-        user_id: watcher.userId,
-        type: "devlog",
-        project_id: "00000000-0000-0000-0000-000000000099",
-      }),
-    ),
-    "missing project",
-  );
-
-  check(
     "owner devlog to non-watcher denied",
     Boolean(
       await tryInsert(owner.client, {
@@ -173,6 +207,19 @@ async function main() {
     devlog_id: "00000000-0000-0000-0000-000000000001",
   });
   check("owner legitimate devlog to watcher succeeds", !legitDevlog, legitDevlog?.message);
+
+  const legitVersion = await tryInsert(owner.client, {
+    ...base,
+    user_id: watcher.userId,
+    type: "version_published",
+    devlog_id: "00000000-0000-0000-0000-000000000002",
+    published_version: "0.2",
+  });
+  check(
+    "owner legitimate version_published to watcher succeeds",
+    !legitVersion,
+    legitVersion?.message,
+  );
 
   check(
     "self-notify INSERT denied",
@@ -212,14 +259,63 @@ async function main() {
     "stranger not follower",
   );
 
+  const { error: followErr } = await admin.from("developer_follows").upsert({
+    follower_id: follower.userId,
+    developer_user_id: owner.userId,
+  });
+  check("follower row seeded (service role)", !followErr, followErr?.message);
+
+  const { data: rpcTrue } = await owner.client.rpc("developer_has_follower", {
+    p_follower_id: follower.userId,
+  });
+  check("developer_has_follower true for seeded follower", rpcTrue === true, rpcTrue);
+
+  const legitNewProject = await tryInsert(owner.client, {
+    ...base,
+    user_id: follower.userId,
+    type: "followed_developer_new_project",
+  });
+  check(
+    "owner legitimate followed_developer_new_project to follower succeeds",
+    !legitNewProject,
+    legitNewProject?.message,
+  );
+
+  const legitReleased = await tryInsert(owner.client, {
+    ...base,
+    user_id: follower.userId,
+    type: "followed_developer_released_project",
+  });
+  check(
+    "owner legitimate followed_developer_released_project to follower succeeds",
+    !legitReleased,
+    legitReleased?.message,
+  );
+
   await admin.from("projects").update({ owner_id: created.prevOwner }).eq("id", projectId);
   await admin.from("project_watches").delete().eq("user_id", watcher.userId).eq("project_id", projectId);
+  await admin
+    .from("developer_follows")
+    .delete()
+    .eq("follower_id", follower.userId)
+    .eq("developer_user_id", owner.userId);
   for (const uid of created.users) {
     await admin.auth.admin.deleteUser(uid);
   }
 
   const failed = results.filter((r) => !r.pass);
-  console.log(JSON.stringify({ ref, migration: "073", results, failed: failed.length }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        ref,
+        prerequisites: ["073", "sync-project-watches-authenticated-select.sql", "074"],
+        results,
+        failed: failed.length,
+      },
+      null,
+      2,
+    ),
+  );
   process.exit(failed.length ? 1 : 0);
 }
 

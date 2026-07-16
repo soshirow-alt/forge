@@ -7,7 +7,9 @@
 ## 2026-07-16 — 072/073 prep (answer_value DB cap + notifications minimum privilege)
 
 - **072 Staging 適用済み** — verify `scripts/staging-only/verify-072-post-apply.mjs` PASS（行数1→1、既存行不変、1000 OK / 1001 CHECK拒否、choice/yes_no/scale_3、optional_comment 071 維持）
-- **073（未適用）** — INSERT policy を type 別に厳格化（watcher / confirmation RPC recipients / developer_follows）。`verify-user-notifications-insert-attacks.mjs` 追加
+- **073 Staging 適用済み** — SELECT + read_at UPDATE + type別 INSERT policy
+- **074（未適用）** — `developer_has_follower()` SECURITY DEFINER helper; followed_developer INSERT policy を RLS 安全化
+- **Staging 専用** — `sync-project-watches-authenticated-select.sql`（`project_watches` SELECT GRANT。Production migration には含めない）
 - **ゲスト公開スコープ外・071** — 変更なし
 
 ## 2026-07-16 — R18 / FB1000 / 共感・参考になった・返信 / Studioプロフィール（Preview follow-up）
