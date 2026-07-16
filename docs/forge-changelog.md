@@ -4,6 +4,10 @@
 
 ---
 
+## 2026-07-16 — Production hotfix: 共感ボタンの視認性（ワンウェイ）
+
+- **共感 UI** — 「共感 N」の薄いテキストから、ピンク系・高さ36px前後のハート付きボタンへ。未共感「共感 N」／成功後「共感済み N」で非活性（再押下で解除しない）。自分のFBは非表示、未ログインは EntryGate、auth 未解決時はフラッシュしない。RPC/RLS/件数ロジックは変更なし
+
 ## 2026-07-16 — Production hotfix: 共感 toggle / Studioプロフィール Shell
 
 - **共感** — 公開FB cards API が service_role のみで RPC していたため `auth.uid()` が常に null → `viewerCanEmpathy=false` でログイン済みでも「共感 0」が disabled。viewer session で `get_public_feedback_cards` を呼び、自分のFBは 0件時非表示／未ログインは EntryGate

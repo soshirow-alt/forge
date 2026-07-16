@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Heart } from "lucide-react";
 import { AutoGrowTextarea } from "@/components/auto-grow-textarea";
 import { useAuth } from "@/components/auth-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
@@ -36,22 +37,10 @@ export function PublicFeedbackCardActions({
   const [error, setError] = useState<string | null>(null);
 
   // Logged-in + viewerCanEmpathy=false ⇒ own card (RPC denies self-empathy).
-  // Logged-out ⇒ viewerCanEmpathy is also false; still show EntryGate CTA.
   const isOwnCard = Boolean(user) && !card.viewerCanEmpathy;
-  const canToggleEmpathy = !user || card.viewerCanEmpathy;
-  const showEmpathyControl = (() => {
-    if (!authResolved) {
-      // Avoid flash of disabled「共感 0」before session/viewer flags settle.
-      return card.empathyCount > 0;
-    }
-    if (!user) {
-      return true;
-    }
-    if (isOwnCard) {
-      return card.empathyCount > 0;
-    }
-    return true;
-  })();
+  const hasEmpathy = card.viewerHasEmpathy;
+  // Own cards: never show empathy control. Before auth settles: hide (no「共感 0」flash).
+  const showEmpathyControl = authResolved && !isOwnCard;
 
   useEffect(() => {
     if (!threadOpen || replies !== null) {
@@ -64,6 +53,10 @@ export function PublicFeedbackCardActions({
   }, [threadOpen, replies, projectId, card.versionKey, card.cardId]);
 
   async function handleEmpathy() {
+    if (hasEmpathy || busy) {
+      return;
+    }
+
     const run = async () => {
       setBusy(true);
       setError(null);
@@ -75,10 +68,27 @@ export function PublicFeedbackCardActions({
           card.versionKey,
           card.cardId,
         );
+        if (result.viewerHasEmpathy) {
+          onCardChange({
+            ...card,
+            empathyCount: result.empathyCount,
+            viewerHasEmpathy: true,
+            viewerCanEmpathy: true,
+          });
+          return;
+        }
+        // Race: existing toggle RPC flipped off — re-apply once (UI is one-way).
+        const again = await toggleFeedbackCardEmpathy(
+          supabase,
+          projectId,
+          card.versionKey,
+          card.cardId,
+        );
         onCardChange({
           ...card,
-          empathyCount: result.empathyCount,
-          viewerHasEmpathy: result.viewerHasEmpathy,
+          empathyCount: again.empathyCount,
+          viewerHasEmpathy: again.viewerHasEmpathy,
+          viewerCanEmpathy: true,
         });
       } catch (err) {
         setError(err instanceof Error ? err.message : "共感の更新に失敗しました");
@@ -91,7 +101,7 @@ export function PublicFeedbackCardActions({
       requireAuth(run, `/games/${projectId}?tab=voices`);
       return;
     }
-    if (!canToggleEmpathy) {
+    if (!card.viewerCanEmpathy) {
       return;
     }
     await run();
@@ -185,24 +195,29 @@ export function PublicFeedbackCardActions({
     <div className="mt-3 space-y-3" data-feedback-card-actions>
       <div className="flex flex-wrap items-center gap-3 text-xs">
         {showEmpathyControl ? (
-          canToggleEmpathy ? (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void handleEmpathy()}
-              className={`rounded-md px-2 py-1 transition-colors disabled:opacity-50 ${
-                card.viewerHasEmpathy
-                  ? "bg-orange-500/15 text-orange-300 ring-1 ring-orange-500/30"
-                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
-              }`}
-            >
-              共感 {card.empathyCount}
-            </button>
-          ) : (
-            <span className="rounded-md px-2 py-1 text-zinc-500">
-              共感 {card.empathyCount}
-            </span>
-          )
+          <button
+            type="button"
+            disabled={busy || hasEmpathy}
+            onClick={() => void handleEmpathy()}
+            aria-pressed={hasEmpathy}
+            aria-label={
+              hasEmpathy
+                ? `共感済み ${card.empathyCount}`
+                : `共感 ${card.empathyCount}`
+            }
+            className={`inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 disabled:cursor-default ${
+              hasEmpathy
+                ? "border border-pink-400/40 bg-pink-500/20 text-pink-200 disabled:opacity-100"
+                : "border border-pink-500/45 bg-pink-500/15 text-pink-200 hover:border-pink-400/70 hover:bg-pink-500/25 hover:text-pink-100"
+            }`}
+          >
+            <Heart
+              className={`size-4 shrink-0 ${hasEmpathy ? "fill-pink-300 text-pink-300" : "text-pink-300"}`}
+              aria-hidden="true"
+            />
+            <span>{hasEmpathy ? "共感済み" : "共感"}</span>
+            <span className="tabular-nums opacity-90">{card.empathyCount}</span>
+          </button>
         ) : null}
         {canOpenThread && replyLabel ? (
           <button
