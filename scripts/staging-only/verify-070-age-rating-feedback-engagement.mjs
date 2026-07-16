@@ -244,18 +244,43 @@ async function main() {
     check("reply body >200 rejected", Boolean(error), error?.message);
   }
 
-  // Direct orphan empathy insert (should fail after 071; may still pass before 071)
+  // Direct table DML (must stay denied; 071 hardens policies + REVOKEs)
   {
-    const { error } = await third.client.from("feedback_card_empathies").insert({
+    const fakeTarget = "00000000-0000-4000-8000-000000000099";
+    const ins = await third.client.from("feedback_card_empathies").insert({
       project_id: String(probe.project.id),
       target_source: "registered_voice",
-      target_id: "00000000-0000-4000-8000-000000000099",
+      target_id: fakeTarget,
       user_id: third.userId,
     });
     check(
-      "direct orphan empathy insert blocked (071)",
-      Boolean(error),
-      error?.message ?? "ALLOWED — apply 071",
+      "direct empathy INSERT blocked",
+      Boolean(ins.error),
+      ins.error?.message ?? "ALLOWED — apply 071",
+    );
+    const del = await third.client
+      .from("feedback_card_empathies")
+      .delete()
+      .eq("target_id", fakeTarget);
+    check(
+      "direct empathy DELETE blocked",
+      Boolean(del.error),
+      del.error?.message ?? "ALLOWED — apply 071",
+    );
+    const upd = await third.client
+      .from("feedback_card_empathies")
+      .update({ project_id: String(probe.project.id) })
+      .eq("target_id", fakeTarget);
+    check(
+      "direct empathy UPDATE blocked",
+      Boolean(upd.error),
+      upd.error?.message ?? "ALLOWED — apply 071",
+    );
+    const sel = await third.client.from("feedback_card_empathies").select("id").limit(1);
+    check(
+      "direct empathy SELECT blocked (counts via RPC)",
+      Boolean(sel.error),
+      sel.error?.message ?? "ALLOWED — apply 071",
     );
   }
 
