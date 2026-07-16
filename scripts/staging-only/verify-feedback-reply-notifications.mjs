@@ -109,15 +109,6 @@ async function cleanup() {
   if (created.feedbackId) {
     await admin.from("project_feedback").delete().eq("id", created.feedbackId);
   }
-  for (const uid of created.users) {
-    if (!uid || !created.projectId) continue;
-    await admin
-      .from("user_notifications")
-      .delete()
-      .eq("user_id", uid)
-      .eq("project_id", created.projectId)
-      .eq("type", "feedback_reply");
-  }
   if (created.projectId) {
     await admin.from("feedback_card_replies").delete().eq("project_id", created.projectId);
   }
@@ -127,6 +118,7 @@ async function cleanup() {
       .update({ owner_id: created.prevOwner })
       .eq("id", created.projectId);
   }
+  // Ephemeral auth users CASCADE-delete their user_notifications (no service_role table DELETE).
   for (const uid of created.users) {
     if (uid) await admin.auth.admin.deleteUser(uid);
   }
@@ -147,7 +139,7 @@ async function main() {
       check("authenticated can SELECT own user_notifications", false, {
         message: String(e?.message || e),
         code: e?.code ?? null,
-        requiresMigration: "073_user_notifications_authenticated_grants.sql",
+        requiresMigration: "073_user_notifications_authenticated_read_access.sql",
       });
       await cleanup();
       console.log(
@@ -275,6 +267,19 @@ async function main() {
       feedbackReplyHref(projectId) === `/games/${projectId}?tab=voices`,
       feedbackReplyHref(projectId),
     );
+    const beforeRead = newB[0].read_at;
+    await author.client
+      .from("user_notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("id", newB[0].id)
+      .eq("user_id", author.userId);
+    const afterReadRows = await fetchUserNotifications(author.client, author.userId);
+    const readRow = afterReadRows.find((r) => r.id === newB[0].id);
+    check(
+      "case1: recipient can mark notification read (authenticated UPDATE read_at)",
+      Boolean(readRow?.read_at) && readRow.read_at !== beforeRead,
+      { beforeRead, afterRead: readRow?.read_at },
+    );
   }
 
   const bCountBeforeDel = (
@@ -391,7 +396,7 @@ main().catch(async (e) => {
         hint: e?.hint ?? null,
         blockedByMissingGrant: grantMissing,
         nextStep: grantMissing
-          ? "Apply supabase/migrations/073_user_notifications_authenticated_grants.sql on Staging, then re-run this script."
+          ? "Apply supabase/migrations/073_user_notifications_authenticated_read_access.sql on Staging, then re-run this script."
           : null,
       },
       null,
