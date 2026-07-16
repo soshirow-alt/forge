@@ -45,4 +45,7 @@ next-env.d.ts
 
 # Local audit / P0 temp artifacts (may contain Production secrets)
 .tmp-ogp-p0/
+.tmp-*.json
+.tmp-*.out
+.tmp-ogp-diff-*/
 **/prod-service.env
