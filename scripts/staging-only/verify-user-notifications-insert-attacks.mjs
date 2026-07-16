@@ -160,11 +160,11 @@ async function main() {
     "stranger not watching",
   );
 
-  const { error: watchErr } = await watcher.client.from("project_watches").upsert({
+  const { error: watchErr } = await admin.from("project_watches").upsert({
     user_id: watcher.userId,
     project_id: projectId,
   });
-  check("watcher can watch project", !watchErr, watchErr?.message);
+  check("watcher row seeded (service role)", !watchErr, watchErr?.message);
 
   const legitDevlog = await tryInsert(owner.client, {
     ...base,

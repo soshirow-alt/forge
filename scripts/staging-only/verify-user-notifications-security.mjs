@@ -234,15 +234,24 @@ async function main() {
     check("author markUserNotificationAsRead sets read_at", false, String(e?.message || e));
   }
 
+  const readBeforeOtherMark = (
+    await fetchUserNotifications(author.client, author.userId)
+  ).find((r) => r.id === seeded.id)?.read_at;
+
   const otherMark = await other.client
     .from("user_notifications")
     .update({ read_at: new Date().toISOString() })
     .eq("id", seeded.id)
     .eq("user_id", author.userId);
+
+  const readAfterOtherMark = (
+    await fetchUserNotifications(author.client, author.userId)
+  ).find((r) => r.id === seeded.id)?.read_at;
+
   check(
     "other cannot mark author notification read",
-    Boolean(otherMark.error) || otherMark.count === 0,
-    otherMark.error?.message ?? { count: otherMark.count },
+    Boolean(otherMark.error) || readBeforeOtherMark === readAfterOtherMark,
+    otherMark.error?.message ?? { readBeforeOtherMark, readAfterOtherMark },
   );
 
   // --- tamper columns (recipient session) ---
