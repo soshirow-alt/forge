@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { AgeRatingR18ConfirmModal } from "@/components/age-rating-r18-confirm-modal";
 import { ProjectDeviceEnvironmentFields } from "@/components/project-device-environment-fields";
 import { ProjectEstimatedPlayTimeField } from "@/components/project-estimated-play-time-field";
 import { ProjectPhaseFormFields } from "@/components/project-phase-form-fields";
@@ -35,6 +37,7 @@ import { SUBMIT_DRAFT_PREVIEW_ID } from "@/lib/studio-submit-draft";
 import { STUDIO_FIELD_IDS } from "@/lib/studio-preview-edit-targets";
 import type { StudioFieldId } from "@/lib/studio-preview-edit-targets";
 import { syncLegacyFieldsFromPublishLinks } from "@/lib/project-publish-links";
+import { normalizeAgeRating, type AgeRating } from "@/lib/age-rating";
 
 type SubmitEditPanelProps = {
   draft: SubmitDraftState;
@@ -106,90 +109,148 @@ export function StudioSubmitBasicInfoEditPanel({
   );
 }
 
+/**
+ * Local panel buffer — genres / tags / ageRating apply to parent draft only on 「反映する」.
+ */
 export function StudioSubmitGenresTagsEditPanel({
   draft,
   onApply,
   onCancel,
   highlightFieldId = null,
 }: SubmitEditPanelProps) {
+  const [genres, setGenres] = useState<ForgeGenreOption[]>(() => [...draft.genres]);
+  const [featureTags, setFeatureTags] = useState<ForgeFeatureTagOption[]>(() => [
+    ...draft.featureTags,
+  ]);
+  const [ageRating, setAgeRating] = useState<AgeRating>(() =>
+    normalizeAgeRating(draft.ageRating),
+  );
+  const [confirmR18Open, setConfirmR18Open] = useState(false);
+
+  useEffect(() => {
+    setGenres([...draft.genres]);
+    setFeatureTags([...draft.featureTags]);
+    setAgeRating(normalizeAgeRating(draft.ageRating));
+  }, [draft.genres, draft.featureTags, draft.ageRating]);
+
+  function handleAgeCheckboxChange(checked: boolean) {
+    if (checked && ageRating !== "r18") {
+      setConfirmR18Open(true);
+      return;
+    }
+    setAgeRating(checked ? "r18" : "general");
+  }
+
   return (
-    <StudioPanelEditShell
-      title="ジャンル・タグ"
-      backLabel="← 投稿内容に戻る"
-      onCancel={onCancel}
-      onSave={onCancel}
-      saveLabel="反映する"
-    >
-      <StudioFieldAnchor
-        fieldId={STUDIO_FIELD_IDS.genres}
-        highlight={highlightFieldId === STUDIO_FIELD_IDS.genres}
+    <>
+      <StudioPanelEditShell
+        title="ジャンル・タグ"
+        backLabel="← 投稿内容に戻る"
+        onCancel={onCancel}
+        onSave={() => {
+          onApply({
+            genres: sanitizeProjectGenresForSave(genres),
+            featureTags,
+            ageRating,
+          });
+          onCancel();
+        }}
+        saveLabel="反映する"
       >
-        <CollapsibleFormSection
-          title="ジャンル"
-          summary={
-            draft.genres.length > 0
-              ? draft.genres.join("・")
-              : "未選択"
-          }
+        <StudioFieldAnchor
+          fieldId={STUDIO_FIELD_IDS.genres}
+          highlight={highlightFieldId === STUDIO_FIELD_IDS.genres}
         >
-          <p className="text-xs text-zinc-600">最大 {MAX_PROJECT_GENRES} つまで。</p>
-          <div className="mt-2 grid grid-cols-2 gap-1.5">
-            {FORGE_GENRE_OPTIONS.map((option) => (
+          <CollapsibleFormSection
+            title="ジャンル"
+            summary={genres.length > 0 ? genres.join("・") : "未選択"}
+          >
+            <p className="text-xs text-zinc-600">最大 {MAX_PROJECT_GENRES} つまで。</p>
+            <div className="mt-2 grid grid-cols-2 gap-1.5">
+              {FORGE_GENRE_OPTIONS.map((option) => (
+                <label
+                  key={option}
+                  className={`flex cursor-pointer items-center justify-center rounded-lg border px-2 py-2 text-xs transition-colors ${
+                    genres.includes(option)
+                      ? "border-violet-500/50 bg-violet-500/10 text-violet-300"
+                      : "border-zinc-800 bg-zinc-950/50 text-zinc-300 hover:border-zinc-700"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={genres.includes(option)}
+                    onChange={() =>
+                      setGenres(toggleForgeGenre(genres, option) as ForgeGenreOption[])
+                    }
+                    className="sr-only"
+                  />
+                  {option}
+                </label>
+              ))}
+            </div>
+          </CollapsibleFormSection>
+        </StudioFieldAnchor>
+
+        <CollapsibleFormSection
+          title="特徴タグ"
+          summary={featureTags.length > 0 ? featureTags.join("・") : "なし（任意）"}
+        >
+          <p className="text-xs text-zinc-600">任意・最大 {MAX_PROJECT_FEATURE_TAGS} つ。</p>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {FORGE_FEATURE_TAG_OPTIONS.map((tag) => (
               <label
-                key={option}
-                className={`flex cursor-pointer items-center justify-center rounded-lg border px-2 py-2 text-xs transition-colors ${
-                  draft.genres.includes(option)
-                    ? "border-violet-500/50 bg-violet-500/10 text-violet-300"
-                    : "border-zinc-800 bg-zinc-950/50 text-zinc-300 hover:border-zinc-700"
-                }`}
+                key={tag}
+                className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950/50 px-2 py-1.5"
               >
                 <input
                   type="checkbox"
-                  checked={draft.genres.includes(option)}
+                  checked={featureTags.includes(tag)}
                   onChange={() =>
-                    onApply({
-                      genres: toggleForgeGenre(draft.genres, option) as ForgeGenreOption[],
-                    })
+                    setFeatureTags(
+                      toggleForgeFeatureTag(featureTags, tag) as ForgeFeatureTagOption[],
+                    )
                   }
-                  className="sr-only"
+                  className="h-3.5 w-3.5 rounded border-zinc-600 bg-zinc-900 text-violet-500 focus:ring-violet-500/50"
                 />
-                {option}
+                <span className="text-xs text-zinc-300">{tag}</span>
               </label>
             ))}
           </div>
         </CollapsibleFormSection>
-      </StudioFieldAnchor>
 
-      <CollapsibleFormSection
-        title="特徴タグ"
-        summary={draft.featureTags.length > 0 ? draft.featureTags.join("・") : "なし（任意）"}
-      >
-        <p className="text-xs text-zinc-600">任意・最大 {MAX_PROJECT_FEATURE_TAGS} つ。</p>
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          {FORGE_FEATURE_TAG_OPTIONS.map((tag) => (
-            <label
-              key={tag}
-              className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950/50 px-2 py-1.5"
-            >
-              <input
-                type="checkbox"
-                checked={draft.featureTags.includes(tag)}
-                onChange={() =>
-                  onApply({
-                    featureTags: toggleForgeFeatureTag(
-                      draft.featureTags,
-                      tag,
-                    ) as ForgeFeatureTagOption[],
-                  })
-                }
-                className="h-3.5 w-3.5 rounded border-zinc-600 bg-zinc-900 text-violet-500 focus:ring-violet-500/50"
-              />
-              <span className="text-xs text-zinc-300">{tag}</span>
-            </label>
-          ))}
-        </div>
-      </CollapsibleFormSection>
-    </StudioPanelEditShell>
+        <CollapsibleFormSection
+          title="年齢制限"
+          summary={ageRating === "r18" ? "R18" : "なし"}
+        >
+          <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2.5">
+            <input
+              type="checkbox"
+              checked={ageRating === "r18"}
+              onChange={(event) => handleAgeCheckboxChange(event.target.checked)}
+              className="mt-0.5 h-3.5 w-3.5 rounded border-zinc-600 bg-zinc-900 text-violet-500 focus:ring-violet-500/50"
+            />
+            <span>
+              <span className="block text-xs font-medium text-zinc-200">
+                R18作品として設定する
+              </span>
+              <span className="mt-1 block text-[11px] leading-relaxed text-zinc-500">
+                18歳未満の方はプレイできない作品に設定します。
+              </span>
+            </span>
+          </label>
+        </CollapsibleFormSection>
+      </StudioPanelEditShell>
+
+      {confirmR18Open ? (
+        <AgeRatingR18ConfirmModal
+          onCancel={() => setConfirmR18Open(false)}
+          onConfirm={() => {
+            setAgeRating("r18");
+            setConfirmR18Open(false);
+          }}
+        />
+      ) : null}
+    </>
   );
 }
 

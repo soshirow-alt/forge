@@ -89,6 +89,8 @@ export function notificationTargetHref(notification: Notification): string {
     case "followed_developer_new_project":
     case "followed_developer_released_project":
       return gamePlayHref(notification.projectId);
+    case "feedback_reply":
+      return `${gamePlayHref(notification.projectId)}?tab=voices`;
     default:
       return gamePlayHref(notification.projectId);
   }

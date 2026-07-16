@@ -41,6 +41,7 @@ import {
   type DeveloperPromptDraft,
   type DeveloperPromptInput,
 } from "@/lib/version-prompt-form";
+import { DEFAULT_AGE_RATING, normalizeAgeRating, type AgeRating } from "@/lib/age-rating";
 
 export const SUBMIT_DRAFT_PREVIEW_ID = "submit-draft-preview";
 
@@ -101,6 +102,7 @@ export type SubmitDraftState = {
   promptDrafts: DeveloperPromptDraft[];
   playAccessType: SubmitPlayAccessType;
   declareAlreadyReleased: boolean;
+  ageRating: AgeRating;
 };
 
 export type SubmitDraftOwner = {
@@ -166,6 +168,7 @@ export function createEmptySubmitDraft(): SubmitDraftState {
     promptDrafts: [createEmptyPromptDraft()],
     playAccessType: "free",
     declareAlreadyReleased: false,
+    ageRating: DEFAULT_AGE_RATING,
   };
 }
 
@@ -217,6 +220,7 @@ export function buildDraftGame(
     releaseStatus: draft.declareAlreadyReleased ? "released" : "in_development",
     playAccessType: draft.playAccessType,
     overviewFeatures: null,
+    ageRating: normalizeAgeRating(draft.ageRating),
   };
 }
 
@@ -336,6 +340,7 @@ export function draftToSubmitFormData(
     visibility: draft.visibility,
     playAccessType: draft.playAccessType,
     declareAlreadyReleased: draft.declareAlreadyReleased,
+    ageRating: normalizeAgeRating(draft.ageRating),
   };
 }
 

@@ -431,7 +431,7 @@ export function SharedSelfProfile({
         <ProfilePublicXCard
           publicXAccount={display.xAccount}
           busy={saving}
-          oauthReturnPath="/mypage/profile"
+          oauthReturnPath={shell === "studio" ? "/studio/profile" : "/mypage/profile"}
           onPublicPublishChange={handlePublicXPublish}
         />
       </Suspense>
@@ -443,18 +443,28 @@ export function SharedSelfProfile({
               <RoleStatRow
                 label="フォロー中の開発者"
                 value={followedCount}
-                href="/mypage?tab=following"
+                href={shell === "studio" ? undefined : "/mypage?tab=following"}
               />
               <RoleStatRow
                 label={WATCH_STAT_LABEL}
                 value={watchedCount}
-                href="/mypage"
+                href={shell === "studio" ? undefined : "/mypage"}
               />
               <RoleStatRow
                 label="参加コミュニティ"
                 value={communityCount}
-                href="/mypage/community"
+                href={shell === "studio" ? "/studio/community" : "/mypage/community"}
               />
+              {shell === "studio" ? (
+                <div className="pt-3">
+                  <Link
+                    href="/mypage/profile"
+                    className="text-xs text-violet-400 transition-colors hover:text-violet-300"
+                  >
+                    Player画面で見る →
+                  </Link>
+                </div>
+              ) : null}
             </>
           ) : (
             <p className="py-2 text-sm text-zinc-600">まだプレイヤー活動はありません。</p>

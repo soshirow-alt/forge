@@ -1,4 +1,8 @@
-export type HelpfulMarkSourceType = "voice_response" | "project_feedback";
+export type HelpfulMarkSourceType =
+  | "voice_response"
+  | "project_feedback"
+  | "guest_voice_response"
+  | "guest_project_feedback";
 
 export function helpfulMarkKey(
   sourceType: HelpfulMarkSourceType,
@@ -19,12 +23,16 @@ export function parseHelpfulMarkKey(key: string): {
   const sourceType = key.slice(0, separator);
   const sourceId = key.slice(separator + 1);
 
-  if (
-    (sourceType !== "voice_response" && sourceType !== "project_feedback") ||
-    !sourceId
-  ) {
+  const allowed: HelpfulMarkSourceType[] = [
+    "voice_response",
+    "project_feedback",
+    "guest_voice_response",
+    "guest_project_feedback",
+  ];
+
+  if (!allowed.includes(sourceType as HelpfulMarkSourceType) || !sourceId) {
     return null;
   }
 
-  return { sourceType, sourceId };
+  return { sourceType: sourceType as HelpfulMarkSourceType, sourceId };
 }

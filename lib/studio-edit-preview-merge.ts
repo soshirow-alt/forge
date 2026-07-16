@@ -27,6 +27,7 @@ export type StudioEditPreviewPatch = Partial<
     | "relatedLinks"
     | "playAccessType"
     | "releaseStatus"
+    | "ageRating"
   >
 >;
 

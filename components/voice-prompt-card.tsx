@@ -3,6 +3,8 @@
 import type { VersionPrompt, VersionPromptOption } from "@/lib/version-prompt-types";
 import { YES_NO_OPTIONS } from "@/lib/version-prompt-types";
 import { supportsOptionalFreeTextComment } from "@/lib/version-prompt-form";
+import { FEEDBACK_FREE_TEXT_MAX } from "@/lib/feedback-free-text";
+import { AutoGrowTextarea } from "@/components/auto-grow-textarea";
 
 type VoicePromptCardProps = {
   prompt: VersionPrompt;
@@ -52,6 +54,9 @@ function OptionButtons({
   );
 }
 
+const textareaClassName =
+  "mt-2 w-full resize-none rounded-lg border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/40 focus:outline-none focus:ring-1 focus:ring-orange-500/30";
+
 export function VoicePromptCard({
   prompt,
   value,
@@ -68,6 +73,8 @@ export function VoicePromptCard({
     supportsOptionalFreeTextComment(prompt.responseKind) &&
     onOptionalCommentChange;
 
+  const freeText = value ?? "";
+
   return (
     <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3.5 py-3">
       <div className="flex items-start justify-between gap-2">
@@ -81,15 +88,19 @@ export function VoicePromptCard({
 
       {prompt.responseKind === "short_text" ? (
         <>
-          <textarea
-            rows={3}
-            value={value ?? ""}
-            maxLength={200}
-            placeholder="200文字以内で自由に入力"
+          <AutoGrowTextarea
+            rows={7}
+            value={freeText}
+            maxLength={FEEDBACK_FREE_TEXT_MAX}
+            minHeightPx={160}
+            maxHeightPx={360}
+            placeholder={`${FEEDBACK_FREE_TEXT_MAX}文字以内で自由に入力`}
             onChange={(event) => onChange(event.target.value, event.target.value)}
-            className="mt-2 w-full resize-y rounded-lg border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/40 focus:outline-none focus:ring-1 focus:ring-orange-500/30"
+            className={textareaClassName}
           />
-          <p className="mt-1 text-[11px] text-zinc-600">200文字以内</p>
+          <p className="mt-1 text-[11px] text-zinc-600">
+            {freeText.length} / {FEEDBACK_FREE_TEXT_MAX}
+          </p>
         </>
       ) : (
         <>
@@ -100,14 +111,19 @@ export function VoicePromptCard({
                 ひと言コメント{" "}
                 <span className="text-zinc-600">（任意）</span>
               </label>
-              <textarea
-                rows={2}
+              <AutoGrowTextarea
+                rows={3}
                 value={optionalComment}
-                maxLength={200}
+                maxLength={FEEDBACK_FREE_TEXT_MAX}
+                minHeightPx={96}
+                maxHeightPx={280}
                 placeholder="はい/いいえ以外の感想や理由があれば"
                 onChange={(event) => onOptionalCommentChange(event.target.value)}
-                className="mt-1.5 w-full resize-y rounded-lg border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/40 focus:outline-none focus:ring-1 focus:ring-orange-500/30"
+                className={`${textareaClassName} mt-1.5`}
               />
+              <p className="mt-1 text-[11px] text-zinc-600">
+                {optionalComment.length} / {FEEDBACK_FREE_TEXT_MAX}
+              </p>
             </div>
           )}
         </>

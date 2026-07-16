@@ -1,4 +1,5 @@
 import { getBuiltInThumbnailUrl, isBuiltInThumbnailId } from "@/lib/demo-thumbnails";
+import type { AgeRating } from "@/lib/age-rating";
 import type { ProjectOverviewFeature } from "@/lib/project-overview";
 import type {
   PublishDestination,
@@ -49,6 +50,7 @@ export type Game = {
     | "other";
   overviewIntroduction?: string | null;
   overviewFeatures?: ProjectOverviewFeature[] | null;
+  ageRating?: AgeRating;
 };
 
 export const games: Game[] = [

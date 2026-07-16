@@ -8,7 +8,8 @@ export type NotificationType =
   | "confirmation_request"
   | "project_watched"
   | "followed_developer_new_project"
-  | "followed_developer_released_project";
+  | "followed_developer_released_project"
+  | "feedback_reply";
 
 export type Notification = {
   id: string;
@@ -43,6 +44,8 @@ export function getNotificationTypeLabel(type: NotificationType): string {
       return "フォロー中の開発者の新作";
     case "followed_developer_released_project":
       return "フォロー中の開発者の正式版";
+    case "feedback_reply":
+      return "フィードバックへの返信";
   }
 }
 
@@ -71,6 +74,8 @@ export function createNotificationMessage(
       return `フォロー中の開発者が新作「${projectTitle}」を公開しました`;
     case "followed_developer_released_project":
       return `フォロー中の開発者の「${projectTitle}」が正式版になりました`;
+    case "feedback_reply":
+      return `「${projectTitle}」のフィードバックに返信がありました`;
   }
 }
 
@@ -96,6 +101,8 @@ export function getNotificationActionHint(type: NotificationType): string {
     case "followed_developer_new_project":
     case "followed_developer_released_project":
       return "作品詳細を見る →";
+    case "feedback_reply":
+      return "フィードバックを見る →";
   }
 }
 

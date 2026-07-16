@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-16 — R18年齢区分 / FB1000字 / 共感・参考になった・返信 / StudioプロフィールShell（Preview）
+
+- **R18** — `projects.age_rating`（`general` \| `r18`）。ジャンル・タグとは別。Studio「ジャンル・タグ」パネルに年齢制限チェック＋確認モーダル。Player `/games/[id]` はブラウザ自己申告ゲート（localStorage `forge_age_verified_v1`）。Studioプレビューは非対象
+- **FB本文** — 自由記述（`short_text` / ひと言コメント）を 200→1000 字。カウンター・自動拡張 textarea。開発者の質問文・詳しい感想フィールドは変更なし
+- **みんなのフィードバック** — 4系統カードに共感（toggle・件数・自分のFB不可）／開発者「参考になった」（既存 `developer_feedback_helpful_marks` 再利用・ゲスト源を拡張）／1階層返信（本人またはオーナー、200字、通知 `feedback_reply`）
+- **Studioプロフィール** — `/studio/profile` で Studio Shell 維持。Player 活動リンクは Shell を切り替えない。明示的に「Player画面で見る」
+- **DB** — migration `070_age_rating_feedback_engagement.sql`（Staging 適用前提）。Production 未適用
+- **対象外** — main merge / Production deploy / Production DB
+
 ## 2026-07-15 — X共有のOGP反映待ち注意（hotfix）
 
 - **対象** — 共通「外部に共有する」モーダル（投稿完了／作品詳細オーナー／Studio作品カード）の「Xで投稿画面を開く」直下

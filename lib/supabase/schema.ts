@@ -42,6 +42,7 @@ export type ProjectRow = {
   created_at: string;
   updated_at: string;
   first_published_at?: string | null;
+  age_rating?: string | null;
 };
 
 export type ProjectSupportRow = {

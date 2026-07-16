@@ -25,6 +25,12 @@ type PublicFeedbackCardRow = {
   bugs: string | null;
   other_notes: string | null;
   empathy_count: number | string;
+  reply_count?: number | string;
+  viewer_has_empathy?: boolean;
+  viewer_can_empathy?: boolean;
+  developer_marked_helpful?: boolean;
+  viewer_is_project_owner?: boolean;
+  viewer_can_reply?: boolean;
 };
 
 type ResolvedCardTarget = {
@@ -71,6 +77,12 @@ function rowToCard(row: PublicFeedbackCardRow, versionKey: string): PublicFeedba
     bugs: row.bugs,
     otherNotes: row.other_notes,
     empathyCount: Number(row.empathy_count) || 0,
+    replyCount: Number(row.reply_count) || 0,
+    viewerHasEmpathy: Boolean(row.viewer_has_empathy),
+    viewerCanEmpathy: row.viewer_can_empathy !== false,
+    developerMarkedHelpful: Boolean(row.developer_marked_helpful),
+    viewerIsProjectOwner: Boolean(row.viewer_is_project_owner),
+    viewerCanReply: Boolean(row.viewer_can_reply),
   };
 }
 

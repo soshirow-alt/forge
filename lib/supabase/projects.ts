@@ -12,6 +12,7 @@ import type { ProjectRow } from "@/lib/supabase/schema";
 import { writeProjectRowWithSchemaFallback } from "@/lib/supabase/project-write-compat";
 import { normalizePlayAccessType } from "@/lib/play-access-type";
 import type { ProjectEditFormData, SubmitFormData } from "@/lib/project-form";
+import { normalizeAgeRating } from "@/lib/age-rating";
 import {
   genresToLegacyGenreColumn,
   resolveGenresFromDbRow,
@@ -302,6 +303,7 @@ export function projectRowToGame(row: ProjectRow): Game {
     releaseStatus: row.release_status ?? "in_development",
     playAccessType: normalizePlayAccessType(row.play_access_type),
     estimatedPlayTime: row.estimated_play_time ?? undefined,
+    ageRating: normalizeAgeRating(row.age_rating),
   };
 }
 
@@ -353,6 +355,7 @@ function submitFormToInsertRow(
     ...(data.playAccessType
       ? { play_access_type: data.playAccessType }
       : {}),
+    age_rating: normalizeAgeRating(data.ageRating),
   };
 }
 
@@ -625,6 +628,7 @@ export async function updateProjectFromSubmitForm(
       ...(data.playAccessType
         ? { play_access_type: data.playAccessType }
         : {}),
+      age_rating: normalizeAgeRating(data.ageRating),
     };
   await applyMaterializedThumbnailFieldsForUpdate(
     supabase,
@@ -671,6 +675,9 @@ export async function updateProjectDetailsInDb(
       visibility: data.visibility,
       ...(data.playAccessType
         ? { play_access_type: data.playAccessType }
+        : {}),
+      ...(data.ageRating !== undefined
+        ? { age_rating: normalizeAgeRating(data.ageRating) }
         : {}),
     };
   await applyMaterializedThumbnailFieldsForUpdate(

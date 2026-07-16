@@ -137,9 +137,11 @@ function VersionFilterBar({
 function PublicFeedbackCardsList({
   cards,
   totalCount,
+  projectId,
 }: {
   cards: PublicFeedbackCard[];
   totalCount: number;
+  projectId: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const visibleCards = expanded ? cards : cards.slice(0, INITIAL_CARD_COUNT);
@@ -160,7 +162,7 @@ function PublicFeedbackCardsList({
     <div>
       <ul className="space-y-4">
         {visibleCards.map((card) => (
-          <PublicFeedbackCardView key={card.cardId} card={card} />
+          <PublicFeedbackCardView key={card.cardId} card={card} projectId={projectId} />
         ))}
       </ul>
       {hasMore && !expanded ? (
@@ -469,6 +471,7 @@ export function EveryonesVoiceSection({
             key={`${gameId}:${versionFilter}:${refreshKey}`}
             cards={feedbackCards}
             totalCount={feedbackCards.length}
+            projectId={gameId}
           />
         </div>
       </div>

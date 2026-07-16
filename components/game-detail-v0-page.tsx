@@ -33,7 +33,9 @@ import { GameDetailOwnerWorksCard } from "@/components/game-detail-owner-works-c
 import { GameNotFoundPanel } from "@/components/game-not-found-panel";
 import { ContentReportButton } from "@/components/content-report-button";
 import { PlayerShell } from "@/components/player-shell";
+import { AgeGateBarrier } from "@/components/age-gate-barrier";
 import { ProjectThumbnail } from "@/components/project-thumbnail";
+import { isR18AgeRating } from "@/lib/age-rating";
 import { useGames } from "@/components/games-provider";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import {
@@ -803,6 +805,14 @@ function GameDetailV0PageBody({
 
   return (
     <PlayerShell>
+      <AgeGateBarrier
+        ageRating={submittedGame?.ageRating ?? (game as { ageRating?: string }).ageRating}
+        bypass={
+          isOwnerPreview ||
+          resolvedId === "submit-draft-preview" ||
+          !isRealProject
+        }
+      >
       {playDestinationPickerOpen ? (
         <GamePlayDestinationModal
           destinations={playDestinations}
@@ -875,6 +885,11 @@ function GameDetailV0PageBody({
                   <h1 className={`${PROJECT_TITLE_HERO_CLASS} text-white`}>
                     {game.title}
                   </h1>
+                  {isR18AgeRating(submittedGame?.ageRating) ? (
+                    <span className="mt-2 inline-flex rounded-md border border-rose-500/35 bg-rose-500/10 px-2 py-0.5 text-[11px] font-semibold text-rose-200">
+                      R18
+                    </span>
+                  ) : null}
                   {playerMeta ? <GameDetailPhaseBadge meta={playerMeta} /> : null}
                 </div>
                 {showPhaseHintBelowTitle ? (
@@ -1175,6 +1190,7 @@ function GameDetailV0PageBody({
           ) : null}
         </aside>
       </div>
+      </AgeGateBarrier>
     </PlayerShell>
   );
 }

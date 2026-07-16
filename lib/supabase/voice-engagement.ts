@@ -21,6 +21,7 @@ import {
   promptContentChanged,
   type PromptAggregateSource,
 } from "@/lib/supabase/voice-prompt-immutable";
+import { FEEDBACK_FREE_TEXT_MAX } from "@/lib/feedback-free-text";
 
 type PromptRow = {
   id: string;
@@ -416,6 +417,16 @@ export async function upsertVoiceResponses(
   const results: VoiceResponse[] = [];
 
   for (const answer of answers) {
+    if (answer.answerValue.length > FEEDBACK_FREE_TEXT_MAX) {
+      throw new Error(`回答は${FEEDBACK_FREE_TEXT_MAX}文字以内にしてください`);
+    }
+    if (
+      answer.optionalComment &&
+      answer.optionalComment.length > FEEDBACK_FREE_TEXT_MAX
+    ) {
+      throw new Error(`コメントは${FEEDBACK_FREE_TEXT_MAX}文字以内にしてください`);
+    }
+
     let promptId = answer.promptId;
     if (promptId.startsWith("synthetic-default-")) {
       const ensured = await ensurePlatformDefaultPrompt(

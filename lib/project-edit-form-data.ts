@@ -18,6 +18,7 @@ import {
   resolveGamePublishLinks,
   syncLegacyFieldsFromPublishLinks,
 } from "@/lib/project-publish-links";
+import { normalizeAgeRating } from "@/lib/age-rating";
 
 export function buildProjectEditFormDataFromGame(game: Game): ProjectEditFormData {
   const featureTags = sanitizeFeatureTagsForSave(
@@ -55,6 +56,7 @@ export function buildProjectEditFormDataFromGame(game: Game): ProjectEditFormDat
     publishDestinations: links.publishDestinations,
     relatedLinks: links.relatedLinks,
     visibility: game.visibility ?? "public",
+    ageRating: normalizeAgeRating(game.ageRating),
     ...(isSpecifiedPlayAccessType(game.playAccessType)
       ? { playAccessType: game.playAccessType }
       : {}),

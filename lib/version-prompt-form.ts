@@ -66,7 +66,7 @@ export const DEVELOPER_RESPONSE_FORMAT_OPTIONS: {
   {
     value: "short_text",
     label: "自由記述",
-    hint: "200文字以内で自由に答えられます",
+    hint: "1000文字以内で自由に答えられます",
   },
 ];
 

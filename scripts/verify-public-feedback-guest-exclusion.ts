@@ -30,6 +30,12 @@ const sample: PublicFeedbackCard[] = [
     bugs: null,
     otherNotes: null,
     empathyCount: 0,
+    replyCount: 0,
+    viewerHasEmpathy: false,
+    viewerCanEmpathy: true,
+    developerMarkedHelpful: false,
+    viewerIsProjectOwner: false,
+    viewerCanReply: false,
   },
   {
     cardId: "fc1_reg_b",
@@ -47,6 +53,12 @@ const sample: PublicFeedbackCard[] = [
     bugs: null,
     otherNotes: null,
     empathyCount: 0,
+    replyCount: 0,
+    viewerHasEmpathy: false,
+    viewerCanEmpathy: true,
+    developerMarkedHelpful: false,
+    viewerIsProjectOwner: false,
+    viewerCanReply: false,
   },
   {
     cardId: "fc1_guest",
@@ -64,6 +76,12 @@ const sample: PublicFeedbackCard[] = [
     bugs: null,
     otherNotes: null,
     empathyCount: 0,
+    replyCount: 0,
+    viewerHasEmpathy: false,
+    viewerCanEmpathy: true,
+    developerMarkedHelpful: false,
+    viewerIsProjectOwner: false,
+    viewerCanReply: false,
   },
 ];
 

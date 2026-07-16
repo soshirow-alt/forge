@@ -2,6 +2,7 @@ import type {
   PublishDestination,
   RelatedLink,
 } from "@/lib/project-publish-links";
+import type { AgeRating } from "@/lib/age-rating";
 
 export type SubmitFormData = {
   title: string;
@@ -32,6 +33,7 @@ export type SubmitFormData = {
   playAccessType?: "free" | "demo_available" | "paid" | "other";
   /** Submit/edit only — triggers onboarding release after save when true and not yet released */
   declareAlreadyReleased?: boolean;
+  ageRating?: AgeRating;
 };
 
 export type ProjectEditFormData = {
@@ -61,4 +63,5 @@ export type ProjectEditFormData = {
   playAccessType?: "free" | "demo_available" | "paid" | "other";
   /** Edit only — triggers onboarding release after save when true and not yet released */
   declareAlreadyReleased?: boolean;
+  ageRating?: AgeRating;
 };

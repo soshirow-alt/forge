@@ -3,8 +3,8 @@ export const GUEST_SUBMITTER_COOKIE = "forge_guest_submitter";
 /** Abuse-prevention cookie lifetime — not an account identifier. */
 export const GUEST_SUBMITTER_COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 365;
 
-export const GUEST_VOICE_ANSWER_MAX = 500;
-export const GUEST_VOICE_OPTIONAL_COMMENT_MAX = 200;
+export const GUEST_VOICE_ANSWER_MAX = 1000;
+export const GUEST_VOICE_OPTIONAL_COMMENT_MAX = 1000;
 export const GUEST_DETAILED_FIELD_MAX = 2000;
 
 export const GUEST_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;

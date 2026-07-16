@@ -12,7 +12,8 @@ type NotificationRow = {
     | "confirmation_request"
     | "project_watched"
     | "followed_developer_new_project"
-    | "followed_developer_released_project";
+    | "followed_developer_released_project"
+    | "feedback_reply";
   project_id: string;
   devlog_id: string | null;
   published_version: string | null;

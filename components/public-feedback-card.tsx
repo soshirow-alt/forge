@@ -1,13 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { UserRound } from "lucide-react";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { PublicXLink } from "@/components/public-x-link";
+import { PublicFeedbackCardActions } from "@/components/public-feedback-card-actions";
 import { formatPlayableVersionLabel } from "@/lib/playable-version";
 import type { PublicFeedbackCard } from "@/lib/public-feedback-cards";
 
 type PublicFeedbackCardViewProps = {
   card: PublicFeedbackCard;
+  projectId: string;
 };
 
 const DETAILED_FIELDS = [
@@ -106,28 +109,41 @@ function CardBody({ card }: { card: PublicFeedbackCard }) {
   );
 }
 
-export function PublicFeedbackCardView({ card }: PublicFeedbackCardViewProps) {
+export function PublicFeedbackCardView({ card, projectId }: PublicFeedbackCardViewProps) {
+  const [localCard, setLocalCard] = useState(card);
   const showChoicePill =
-    card.cardKind === "voice_supplement" && Boolean(card.choiceAnswerLabel?.trim());
+    localCard.cardKind === "voice_supplement" && Boolean(localCard.choiceAnswerLabel?.trim());
 
   return (
-    <li className="rounded-xl border border-zinc-800/90 bg-zinc-950/50 px-4 py-4 shadow-sm shadow-black/10 sm:px-5 sm:py-5">
+    <li
+      id={`fb-${localCard.cardId}`}
+      className="rounded-xl border border-zinc-800/90 bg-zinc-950/50 px-4 py-4 shadow-sm shadow-black/10 sm:px-5 sm:py-5"
+    >
       <div className="flex items-start justify-between gap-3">
-        <CardAuthor card={card} />
+        <CardAuthor card={localCard} />
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-          {showChoicePill ? <ChoiceAnswerPill label={card.choiceAnswerLabel!.trim()} /> : null}
-          <VersionBadge versionKey={card.versionKey} />
+          {localCard.developerMarkedHelpful ? (
+            <span className="inline-flex items-center rounded-md border border-violet-500/30 bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-200">
+              開発者が参考になったFB
+            </span>
+          ) : null}
+          {showChoicePill ? (
+            <ChoiceAnswerPill label={localCard.choiceAnswerLabel!.trim()} />
+          ) : null}
+          <VersionBadge versionKey={localCard.versionKey} />
         </div>
       </div>
-      <CardBody card={card} />
-      <div className="mt-4 flex items-center justify-between gap-3 border-t border-zinc-800/70 pt-3">
-        <time className="text-[11px] text-zinc-600" dateTime={card.createdAt}>
-          {formatCardDate(card.createdAt)}
-        </time>
-        <div
-          className="flex min-h-6 items-center gap-2"
-          data-feedback-card-actions
-          aria-hidden="true"
+      <CardBody card={localCard} />
+      <div className="mt-4 border-t border-zinc-800/70 pt-3">
+        <div className="flex items-center justify-between gap-3">
+          <time className="text-[11px] text-zinc-600" dateTime={localCard.createdAt}>
+            {formatCardDate(localCard.createdAt)}
+          </time>
+        </div>
+        <PublicFeedbackCardActions
+          projectId={projectId}
+          card={localCard}
+          onCardChange={setLocalCard}
         />
       </div>
     </li>
