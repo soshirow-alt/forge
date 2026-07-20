@@ -16,11 +16,7 @@ function ProtoBanner() {
     <p className="rounded-xl border border-violet-500/25 bg-violet-500/10 px-3 py-2 text-xs text-violet-200">
       {DOMAIN_EXPANSION_PROTO_BANNER}
       <span className="mt-1 block text-zinc-400">
-        ゲーム面は{" "}
-        <Link href="/home?category=game" className="text-violet-300 underline-offset-2 hover:underline">
-          /home?category=game
-        </Link>
-        。詳細比較は{" "}
+        上部の Explore ナビでカテゴリ面へ移動できます。詳細比較は{" "}
         <Link href="/prototype" className="text-violet-300 underline-offset-2 hover:underline">
           /prototype
         </Link>
@@ -205,15 +201,27 @@ export function ExploreHomePage() {
         <p className="text-sm font-medium text-zinc-200">比較用リンク</p>
         <div className="mt-2 flex flex-wrap gap-2 text-sm">
           <Link href="/home?category=game" className="text-violet-300 hover:underline">
-            ゲームカテゴリ面
+            ゲーム面
+          </Link>
+          <span className="text-zinc-600">·</span>
+          <Link href="/home?category=audio" className="text-violet-300 hover:underline">
+            音楽・音声面
+          </Link>
+          <span className="text-zinc-600">·</span>
+          <Link href="/home?category=dev-tool" className="text-violet-300 hover:underline">
+            開発ツール面
+          </Link>
+          <span className="text-zinc-600">·</span>
+          <Link href="/home?category=service-app" className="text-violet-300 hover:underline">
+            サービス・アプリ面
           </Link>
           <span className="text-zinc-600">·</span>
           <Link href="/studio/submit?view=category-proto" className="text-violet-300 hover:underline">
-            投稿カテゴリ分岐
+            投稿分岐
           </Link>
           <span className="text-zinc-600">·</span>
           <Link href="/prototype" className="text-violet-300 hover:underline">
-            詳細上部比較
+            詳細上部
           </Link>
         </div>
       </section>

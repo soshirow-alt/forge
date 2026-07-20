@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07-20 — Preview: Explore第二階層ナビ（カテゴリ面）
+
+- **Explore内ナビ** — `/home` 系のメイン上部に横並び第二階層（ホーム / ゲーム / 音楽・音声 / 開発ツール / サービス・アプリ）。現在地を紫選択。スマホは横スクロールで5項目維持
+- **仮route** — `/home`、`?category=game|audio|dev-tool|service-app`（定義は `lib/prototype/domain-expansion.ts` に集約）
+- **カテゴリ面** — 新カテゴリは fixture 棚（注目の作品・新着）。ゲーム面は現行発見フィード維持
+- **入口カード** — Exploreホームの「カテゴリから探す」は残し、ナビと同じカテゴリ面へ遷移
+- **DB / API / RPC / Production** — 変更なし
+
 ## 2026-07-20 — Preview: 対象領域拡張の薄いUIプロトタイプ
 
 - **Exploreホーム** — `/home` を4カテゴリ横断の Explore プロトタイプに。注目の作品・カテゴリ入口・カテゴリ別抜粋。ナビ表記を Explore に仮変更

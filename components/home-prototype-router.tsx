@@ -1,48 +1,52 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { DiscoveryHomePage } from "@/components/discovery-home-page";
+import { ExploreCategorySurface } from "@/components/explore-category-surface";
 import { ExploreHomePage } from "@/components/explore-home-page";
+import { ExploreSubNav } from "@/components/explore-sub-nav";
+import {
+  parseExploreCategoryQuery,
+  type ExploreSubNavId,
+  type WorkCategoryId,
+} from "@/lib/prototype/domain-expansion";
 
-function GameCategoryChrome({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-zinc-800 bg-zinc-900/40 px-3 py-2">
-        <div>
-          <p className="text-xs font-medium text-violet-300">ゲームカテゴリ面（プロトタイプ）</p>
-          <p className="text-xs text-zinc-500">
-            現行の発見フィードをゲーム面として表示しています
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2 text-sm">
-          <Link href="/home" className="text-violet-300 hover:underline">
-            ← Exploreホーム
-          </Link>
-          <Link href="/prototype" className="text-zinc-400 hover:underline">
-            詳細比較
-          </Link>
-        </div>
-      </div>
-      {children}
-    </div>
-  );
+function activeSubNavId(category: WorkCategoryId | null): ExploreSubNavId {
+  return category ?? "home";
 }
 
 function HomePrototypeSwitch() {
   const searchParams = useSearchParams();
-  const category = searchParams.get("category");
+  const category = parseExploreCategoryQuery(searchParams.get("category"));
+  const active = activeSubNavId(category);
 
+  let body: React.ReactNode;
   if (category === "game") {
-    return (
-      <GameCategoryChrome>
+    body = (
+      <div className="space-y-3">
+        <p className="text-xs text-zinc-500">
+          ゲームカテゴリ面 — 現行の発見フィード（注目・反応・プレイ増加・新着・最近更新）
+        </p>
         <DiscoveryHomePage />
-      </GameCategoryChrome>
+      </div>
     );
+  } else if (
+    category === "music" ||
+    category === "dev_tool" ||
+    category === "web_service"
+  ) {
+    body = <ExploreCategorySurface categoryId={category} />;
+  } else {
+    body = <ExploreHomePage />;
   }
 
-  return <ExploreHomePage />;
+  return (
+    <div className="space-y-5">
+      <ExploreSubNav active={active} />
+      {body}
+    </div>
+  );
 }
 
 export function HomePrototypeRouter() {

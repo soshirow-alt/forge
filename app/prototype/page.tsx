@@ -29,12 +29,27 @@ export default function PrototypeIndexPage() {
           <ul className="space-y-2 text-sm">
             <li>
               <Link href="/home" className="text-violet-300 hover:underline">
-                Exploreホーム（/home）
+                ホーム（/home）
               </Link>
             </li>
             <li>
               <Link href="/home?category=game" className="text-violet-300 hover:underline">
-                ゲームカテゴリ面（/home?category=game）
+                ゲーム面（/home?category=game）
+              </Link>
+            </li>
+            <li>
+              <Link href="/home?category=audio" className="text-violet-300 hover:underline">
+                音楽・音声面（/home?category=audio）
+              </Link>
+            </li>
+            <li>
+              <Link href="/home?category=dev-tool" className="text-violet-300 hover:underline">
+                開発ツール面（/home?category=dev-tool）
+              </Link>
+            </li>
+            <li>
+              <Link href="/home?category=service-app" className="text-violet-300 hover:underline">
+                サービス・アプリ面（/home?category=service-app）
               </Link>
             </li>
           </ul>

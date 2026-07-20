@@ -12,40 +12,107 @@ export type WorkCategoryId =
   | "dev_tool"
   | "web_service";
 
+/** Query slug used in `/home?category=` — keep formal routes undecided. */
+export type ExploreCategoryQuerySlug =
+  | "game"
+  | "audio"
+  | "dev-tool"
+  | "service-app";
+
 export type WorkCategoryNav = {
   id: WorkCategoryId;
+  /** URL query value for `/home?category=` */
+  querySlug: ExploreCategoryQuerySlug;
   label: string;
   shortAction: string;
+  /** Short blurb on category surface header */
+  surfaceLead: string;
   href: string;
 };
 
 export const WORK_CATEGORY_NAV: WorkCategoryNav[] = [
   {
     id: "game",
+    querySlug: "game",
     label: "ゲーム",
     shortAction: "ゲームを遊ぶ",
+    surfaceLead: "遊んでフィードバックし、次のverを追う作品",
     href: "/home?category=game",
   },
   {
     id: "music",
+    querySlug: "audio",
     label: "音楽・音声",
     shortAction: "音楽・音声を聴く",
-    href: "/prototype/works?category=music",
+    surfaceLead: "聴いて感じたことを制作者へ届ける作品",
+    href: "/home?category=audio",
   },
   {
     id: "dev_tool",
+    querySlug: "dev-tool",
     label: "開発ツール",
     shortAction: "制作に役立つツールを探す",
-    href: "/prototype/works?category=dev_tool",
+    surfaceLead: "制作・開発の作業を試してフィードバックするツール",
+    href: "/home?category=dev-tool",
   },
   {
     id: "web_service",
+    querySlug: "service-app",
     label: "サービス・アプリ",
     shortAction: "新しいサービス・アプリを試す",
-    href: "/prototype/works?category=web_service",
+    surfaceLead: "使ってみて反応を届けるサービス・アプリ",
+    href: "/home?category=service-app",
   },
 ];
 
+/** Explore second-level nav: ホーム + 4 categories */
+export type ExploreSubNavId = "home" | WorkCategoryId;
+
+export const EXPLORE_SUB_NAV: {
+  id: ExploreSubNavId;
+  label: string;
+  href: string;
+}[] = [
+  { id: "home", label: "ホーム", href: "/home" },
+  ...WORK_CATEGORY_NAV.map((item) => ({
+    id: item.id as ExploreSubNavId,
+    label: item.label,
+    href: item.href,
+  })),
+];
+
+const QUERY_SLUG_TO_CATEGORY: Record<ExploreCategoryQuerySlug, WorkCategoryId> =
+  {
+    game: "game",
+    audio: "music",
+    "dev-tool": "dev_tool",
+    "service-app": "web_service",
+  };
+
+export function parseExploreCategoryQuery(
+  value: string | null | undefined,
+): WorkCategoryId | null {
+  if (!value) {
+    return null;
+  }
+  if (value in QUERY_SLUG_TO_CATEGORY) {
+    return QUERY_SLUG_TO_CATEGORY[value as ExploreCategoryQuerySlug];
+  }
+  // Backward-compatible aliases from earlier prototype links
+  if (value === "music") return "music";
+  if (value === "dev_tool") return "dev_tool";
+  if (value === "web_service") return "web_service";
+  return null;
+}
+
+export function exploreCategoryHref(id: WorkCategoryId): string {
+  const item = WORK_CATEGORY_NAV.find((entry) => entry.id === id);
+  return item?.href ?? "/home";
+}
+
+export function getWorkCategoryNav(id: WorkCategoryId): WorkCategoryNav | undefined {
+  return WORK_CATEGORY_NAV.find((entry) => entry.id === id);
+}
 export const WORK_CATEGORY_SUBMIT_OPTIONS: {
   id: WorkCategoryId;
   title: string;
@@ -193,6 +260,29 @@ export const CATEGORY_SHELF_WORKS: Record<WorkCategoryId, PrototypeWorkCard[]> =
       statusLabel: "素材候補",
       metaChips: ["効果音"],
     },
+    {
+      id: "proto-shelf-music-3",
+      slug: "music-no-art-generated",
+      category: "music",
+      categoryLabel: "音楽・音声",
+      title: "仮歌デモ — 港の灯",
+      creator: "Proto Audio Lab",
+      lead: "ボーカル入りデモ。歌詞の伝わり方を確認したい。",
+      statusLabel: "デモ",
+      metaChips: ["ボーカル"],
+    },
+    {
+      id: "proto-shelf-music-4",
+      slug: "music-with-art",
+      category: "music",
+      categoryLabel: "音楽・音声",
+      title: "戦闘ジングル案 B",
+      creator: "Proto Audio Lab",
+      lead: "短い勝ちジングルの比較用。",
+      imageUrl: "/images/og-default-v2.png",
+      statusLabel: "複数案",
+      metaChips: ["ジングル"],
+    },
   ],
   dev_tool: [
     {
@@ -205,6 +295,28 @@ export const CATEGORY_SHELF_WORKS: Record<WorkCategoryId, PrototypeWorkCard[]> =
       lead: "フォント組み合わせの試用ツール。",
       statusLabel: "β",
       metaChips: ["Unity"],
+    },
+    {
+      id: "proto-shelf-tool-2",
+      slug: "tool-sample",
+      category: "dev_tool",
+      categoryLabel: "開発ツール",
+      title: "Balance Sheet Draft",
+      creator: "Proto Tools",
+      lead: "数値バランスの仮置きを一覧する補助。",
+      statusLabel: "試作",
+      metaChips: ["スプレッドシート"],
+    },
+    {
+      id: "proto-shelf-tool-3",
+      slug: "tool-sample",
+      category: "dev_tool",
+      categoryLabel: "開発ツール",
+      title: "Build Notify Hook",
+      creator: "Proto Tools",
+      lead: "ビルド結果をDiscordへ送るCLI。",
+      statusLabel: "α",
+      metaChips: ["CLI"],
     },
   ],
   web_service: [
@@ -219,8 +331,67 @@ export const CATEGORY_SHELF_WORKS: Record<WorkCategoryId, PrototypeWorkCard[]> =
       statusLabel: "無料β",
       metaChips: ["Web"],
     },
+    {
+      id: "proto-shelf-service-2",
+      slug: "service-sample",
+      category: "web_service",
+      categoryLabel: "サービス・アプリ",
+      title: "Patch Notes Diary",
+      creator: "Proto Apps",
+      lead: "更新メモをプレイヤー向けに整える。",
+      statusLabel: "β",
+      metaChips: ["Web"],
+    },
+    {
+      id: "proto-shelf-service-3",
+      slug: "service-sample",
+      category: "web_service",
+      categoryLabel: "サービス・アプリ",
+      title: "Playtest Scheduler",
+      creator: "Proto Apps",
+      lead: "体験会の日程調整を短くする。",
+      statusLabel: "無料体験",
+      metaChips: ["登録任意"],
+    },
   ],
 };
+
+/** Category-surface shelf labels (prototype only — not final IA). */
+export type CategorySurfaceShelf = {
+  title: string;
+  works: PrototypeWorkCard[];
+};
+
+export function getCategorySurfaceShelves(
+  categoryId: WorkCategoryId,
+): CategorySurfaceShelf[] {
+  const works = CATEGORY_SHELF_WORKS[categoryId];
+  const featured = works.slice(0, Math.min(4, works.length));
+  const newest = [...works].reverse().slice(0, Math.min(4, works.length));
+
+  if (categoryId === "music") {
+    return [
+      { title: "注目の作品", works: featured },
+      { title: "新着", works: newest },
+    ];
+  }
+  if (categoryId === "dev_tool") {
+    return [
+      { title: "注目の作品", works: featured },
+      { title: "新着", works: newest },
+    ];
+  }
+  if (categoryId === "web_service") {
+    return [
+      { title: "注目の作品", works: featured },
+      { title: "新着", works: newest },
+    ];
+  }
+  return [
+    { title: "注目の作品", works: featured },
+    { title: "新着", works: newest },
+  ];
+}
 
 export type PrototypeDetailFixture = {
   slug: string;
