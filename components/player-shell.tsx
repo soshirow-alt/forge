@@ -27,7 +27,7 @@ import { useStudioLoginHrefBypass } from "@/lib/forge-deployment-context";
 import { WATCH_TAB_LABEL } from "@/lib/watch-ui-labels";
 
 const primaryLinks = [
-  { id: "home", href: "/home", label: "ホーム" },
+  { id: "home", href: "/home", label: "Explore" },
   { id: "search", href: "/search", label: "作品を探す" },
   { id: "creator-search", href: "/search/creators", label: "開発者を探す" },
   { id: "ranking", href: "/rankings/influence", label: "ランキング" },
@@ -64,7 +64,7 @@ function subNavLinkClass(active: boolean) {
 function isPrimaryLinkActive(linkId: (typeof primaryLinks)[number]["id"], pathname: string): boolean {
   switch (linkId) {
     case "home":
-      return pathname === "/home";
+      return pathname === "/home" || pathname.startsWith("/prototype");
     case "search":
       return pathname === "/search";
     case "creator-search":

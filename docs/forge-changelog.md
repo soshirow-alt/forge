@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-20 — Preview: 対象領域拡張の薄いUIプロトタイプ
+
+- **Exploreホーム** — `/home` を4カテゴリ横断の Explore プロトタイプに。注目の作品・カテゴリ入口・カテゴリ別抜粋。ナビ表記を Explore に仮変更
+- **ゲームカテゴリ面** — `/home?category=game` で現行発見フィードを維持（ゲーム面として比較用）
+- **Studio投稿** — `/studio/submit?view=category-proto` でカテゴリ選択＋共通／固有項目の分岐UI。新カテゴリは保存未接続。既存 `/studio/submit` の validation・保存は変更なし
+- **詳細上部比較** — `/prototype/works/[slug]` で4カテゴリ＋音楽アート有無2案。主CTAは `recordPlay` 非接続。下部タブは対象外
+- **比較ハブ** — `/prototype`
+- **DB / API / RPC / Production** — 変更なし（Preview専用 fixture）
+
 ## 2026-07-17 — Production hotfix: みんなのフィードバック全ver表示
 
 - **初期表示** — 作品詳細「みんなのフィードバック」を最新ver固定から「すべて」へ変更。タブ件数と同じ全バージョン対象で、旧verにだけFBがある作品でも初期表示が空にならない
