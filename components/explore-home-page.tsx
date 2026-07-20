@@ -217,7 +217,7 @@ export function ExploreHomePage() {
           </Link>
           <span className="text-zinc-600">·</span>
           <Link href="/studio/submit?view=category-proto" className="text-violet-300 hover:underline">
-            投稿分岐
+            投稿フロー比較
           </Link>
           <span className="text-zinc-600">·</span>
           <Link href="/prototype" className="text-violet-300 hover:underline">

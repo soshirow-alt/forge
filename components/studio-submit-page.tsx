@@ -223,16 +223,6 @@ export function StudioSubmitPage() {
           <header className="border-b border-zinc-800/80 pb-3">
             <StudioMypageBackLink />
             <p className="mt-2 text-sm text-zinc-400">作品を投稿する</p>
-            <p className="mt-2 text-xs text-zinc-500">
-              領域拡張のカテゴリ分岐プロトタイプは{" "}
-              <a
-                href="/studio/submit?view=category-proto"
-                className="text-violet-300 underline-offset-2 hover:underline"
-              >
-                こちら
-              </a>
-              （既存の保存処理は変更していません）
-            </p>
           </header>
 
           <div className="mt-5">

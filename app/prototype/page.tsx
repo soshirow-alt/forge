@@ -63,7 +63,7 @@ export default function PrototypeIndexPage() {
                 href="/studio/submit?view=category-proto"
                 className="text-violet-300 hover:underline"
               >
-                カテゴリ分岐プロトタイプ
+                投稿フロー比較（新プロトタイプ）
               </Link>
             </li>
             <li>

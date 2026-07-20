@@ -113,40 +113,6 @@ export function exploreCategoryHref(id: WorkCategoryId): string {
 export function getWorkCategoryNav(id: WorkCategoryId): WorkCategoryNav | undefined {
   return WORK_CATEGORY_NAV.find((entry) => entry.id === id);
 }
-export const WORK_CATEGORY_SUBMIT_OPTIONS: {
-  id: WorkCategoryId;
-  title: string;
-  hint: string;
-}[] = [
-  {
-    id: "game",
-    title: "ゲーム・インタラクティブ作品",
-    hint: "ブラウザ／ダウンロードで遊べる作品",
-  },
-  {
-    id: "music",
-    title: "音楽・音声",
-    hint: "楽曲・効果音・ボイスなど、聴いて反応をもらう作品",
-  },
-  {
-    id: "dev_tool",
-    title: "開発ツール",
-    hint: "制作・開発・運営の作業を支援するプロダクト",
-  },
-  {
-    id: "web_service",
-    title: "Webサービス・アプリ",
-    hint: "使うこと自体が価値になるサービスやアプリ",
-  },
-];
-
-export const FB_PURPOSE_OPTIONS = [
-  "現在の作品を改善したい",
-  "次の更新に活かしたい",
-  "別バージョンや追加内容に活かしたい",
-  "次回作や今後の制作に活かしたい",
-  "利用者の受け取り方を知りたい",
-] as const;
 
 export type PrototypeWorkCard = {
   id: string;

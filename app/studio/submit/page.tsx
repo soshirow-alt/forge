@@ -1,5 +1,5 @@
-import { StudioSubmitCategoryPrototype } from "@/components/studio-submit-category-prototype";
 import { StudioSubmitPage } from "@/components/studio-submit-page";
+import { StudioSubmitFlowPrototype } from "@/components/studio-submit-flow-prototype";
 import { Suspense } from "react";
 import { StudioShell } from "@/components/studio-shell";
 
@@ -9,7 +9,7 @@ function StudioSubmitRouteInner({
   searchParams: { view?: string };
 }) {
   if (searchParams.view === "category-proto") {
-    return <StudioSubmitCategoryPrototype />;
+    return <StudioSubmitFlowPrototype />;
   }
   return <StudioSubmitPage />;
 }
