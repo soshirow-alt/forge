@@ -4,12 +4,18 @@
 
 ---
 
+## 2026-07-21 — Preview: 投稿プロトを正式 `/studio/submit` 流用へ再修正
+
+- **削除** — 独自ウィザード（基本情報／作品情報／フィードバック画面・ステップナビ・独自左右レイアウト）を完全削除
+- **残す** — `/studio/submit?view=category-proto` のカテゴリ選択のみ
+- **作り直し** — 選択後は正式 `StudioSubmitPage` / `StudioSubmitPlayerPreview` / `StudioSubmitPanel` を直接利用。カテゴリは右パネル内のフィールド・文言のみ差し替え
+- **ゲーム** — 正式投稿へ遷移。validation・保存・公開変更なし
+- **新カテゴリ** — 同構成UI。保存ボタンは未接続メッセージのみ。DBへダミー変換しない
+
 ## 2026-07-21 — Preview: 投稿プロトタイプ作り直し（旧縦長フォーム削除）
 
 - **削除** — 不採用の縦長 `StudioSubmitCategoryPrototype` と専用定数を完全削除（コメントアウト残存なし）
-- **新プロト** — `/studio/submit?view=category-proto` をステップ型に再実装。カテゴリ選択 → 基本情報 → 作品情報 → フィードバック。Studioパネル／タイトル／一行説明／サムネイルUIを流用
-- **ゲーム** — 選択後は正式 `/studio/submit` へ遷移（validation・保存変更なし）
-- **新カテゴリ** — ローカルstateのみ。保存・公開未接続。FB活かし方は複数選択の仮案
+- **（後続で撤回）** — ステップ型プロトは正式画面流用方針により削除済み
 - **Explore／詳細プロト** — 維持
 
 ## 2026-07-20 — Preview: Explore第二階層ナビ（カテゴリ面）

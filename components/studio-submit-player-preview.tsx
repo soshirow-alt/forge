@@ -36,6 +36,11 @@ import {
 import { Clock } from "lucide-react";
 import { StudioPreviewEditTarget } from "@/components/studio-preview-edit-target";
 import type { StudioPreviewEditTarget as StudioPreviewEditTargetId } from "@/lib/studio-preview-edit-targets";
+import {
+  SUBMIT_PROTOTYPE_CATEGORY_LABEL,
+  type SubmitPrototypeCategory,
+  type SubmitPrototypeCategoryFields,
+} from "@/lib/prototype/studio-submit-flow";
 
 function TagPill({
   children,
@@ -63,6 +68,8 @@ export type StudioSubmitPlayerPreviewProps = {
   activeTab: GameDetailTab;
   onTabChange: (tab: GameDetailTab) => void;
   onEditTarget?: (target: StudioPreviewEditTargetId) => void;
+  prototypeCategory?: SubmitPrototypeCategory | null;
+  prototypeCategoryFields?: SubmitPrototypeCategoryFields;
 };
 
 /** /studio/submit 専用 — 既存 Studio 編集プレビューとは完全分離 */
@@ -72,6 +79,8 @@ export function StudioSubmitPlayerPreview({
   activeTab,
   onTabChange,
   onEditTarget,
+  prototypeCategory = null,
+  prototypeCategoryFields,
 }: StudioSubmitPlayerPreviewProps) {
   const displayGame = useMemo(
     () => buildSubmitDraftDetailV0(submitDraft, submitOwner),
@@ -143,15 +152,41 @@ export function StudioSubmitPlayerPreview({
 
           <div className="flex min-w-0 flex-col justify-center p-6 lg:p-8">
             <div className="flex flex-wrap gap-2">
-              <StudioPreviewEditTarget target="genres" onEditTarget={onEditTarget} inline>
-                <span className="inline-flex flex-wrap gap-2">
-                  {getUserFacingGameTags(displayGame.tags).map((tag) => (
-                    <TagPill key={tag} muted={genreIsPlaceholder && tag === displayGame.tags[0]}>
-                      {tag}
-                    </TagPill>
-                  ))}
-                </span>
-              </StudioPreviewEditTarget>
+              {prototypeCategory ? (
+                <StudioPreviewEditTarget target="genres" onEditTarget={onEditTarget} inline>
+                  <span className="inline-flex flex-wrap gap-2">
+                    <TagPill>{SUBMIT_PROTOTYPE_CATEGORY_LABEL[prototypeCategory]}</TagPill>
+                    {prototypeCategory === "music" &&
+                    prototypeCategoryFields?.musicKind ? (
+                      <TagPill>{prototypeCategoryFields.musicKind}</TagPill>
+                    ) : null}
+                    {prototypeCategory === "music" &&
+                    prototypeCategoryFields?.musicStatus ? (
+                      <TagPill>{prototypeCategoryFields.musicStatus}</TagPill>
+                    ) : null}
+                    {prototypeCategory === "dev_tool" &&
+                    prototypeCategoryFields?.toolEnv ? (
+                      <TagPill>{prototypeCategoryFields.toolEnv}</TagPill>
+                    ) : null}
+                    {prototypeCategory === "web_service" &&
+                    prototypeCategoryFields?.serviceDevices.length
+                      ? prototypeCategoryFields.serviceDevices.map((device) => (
+                          <TagPill key={device}>{device}</TagPill>
+                        ))
+                      : null}
+                  </span>
+                </StudioPreviewEditTarget>
+              ) : (
+                <StudioPreviewEditTarget target="genres" onEditTarget={onEditTarget} inline>
+                  <span className="inline-flex flex-wrap gap-2">
+                    {getUserFacingGameTags(displayGame.tags).map((tag) => (
+                      <TagPill key={tag} muted={genreIsPlaceholder && tag === displayGame.tags[0]}>
+                        {tag}
+                      </TagPill>
+                    ))}
+                  </span>
+                </StudioPreviewEditTarget>
+              )}
             </div>
             <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2">
               <StudioPreviewEditTarget target="title" onEditTarget={onEditTarget} inline>
@@ -165,11 +200,13 @@ export function StudioSubmitPlayerPreview({
                   {displayGame.title}
                 </p>
               </StudioPreviewEditTarget>
-              <GameDetailPhaseBadge
-                meta={playerMeta}
-                muted={phaseIsPlaceholder}
-                onEditTarget={onEditTarget}
-              />
+              {prototypeCategory ? null : (
+                <GameDetailPhaseBadge
+                  meta={playerMeta}
+                  muted={phaseIsPlaceholder}
+                  onEditTarget={onEditTarget}
+                />
+              )}
             </div>
             <StudioPreviewEditTarget target="catch-copy" onEditTarget={onEditTarget}>
               <p

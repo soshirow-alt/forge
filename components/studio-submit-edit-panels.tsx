@@ -38,6 +38,17 @@ import { STUDIO_FIELD_IDS } from "@/lib/studio-preview-edit-targets";
 import type { StudioFieldId } from "@/lib/studio-preview-edit-targets";
 import { syncLegacyFieldsFromPublishLinks } from "@/lib/project-publish-links";
 import { normalizeAgeRating, type AgeRating } from "@/lib/age-rating";
+import {
+  MUSIC_KIND_OPTIONS,
+  MUSIC_STATUS_OPTIONS,
+  SERVICE_DEVICE_OPTIONS,
+  SERVICE_FREE_OPTIONS,
+  SERVICE_SIGNUP_OPTIONS,
+  TOOL_ENV_OPTIONS,
+  TOOL_INSTALL_OPTIONS,
+  type SubmitPrototypeCategory,
+  type SubmitPrototypeCategoryFields,
+} from "@/lib/prototype/studio-submit-flow";
 
 type SubmitEditPanelProps = {
   draft: SubmitDraftState;
@@ -47,12 +58,20 @@ type SubmitEditPanelProps = {
   highlightFieldId?: StudioFieldId | null;
 };
 
+type SubmitBasicInfoEditPanelProps = SubmitEditPanelProps & {
+  /** Hide game-only phase / already-released (prototype categories). */
+  hideGamePhaseFields?: boolean;
+  titlePlaceholder?: string;
+};
+
 export function StudioSubmitBasicInfoEditPanel({
   draft,
   onApply,
   onCancel,
   highlightFieldId = null,
-}: SubmitEditPanelProps) {
+  hideGamePhaseFields = false,
+  titlePlaceholder = "ゲームのタイトル",
+}: SubmitBasicInfoEditPanelProps) {
   return (
     <StudioPanelEditShell
       title="基本情報"
@@ -70,7 +89,7 @@ export function StudioSubmitBasicInfoEditPanel({
           value={draft.title}
           onChange={(title) => onApply({ title })}
           inputClassName={studioPanelInputClassName}
-          placeholder="ゲームのタイトル"
+          placeholder={titlePlaceholder}
         />
       </StudioFieldAnchor>
       <StudioFieldAnchor
@@ -84,27 +103,31 @@ export function StudioSubmitBasicInfoEditPanel({
           inputClassName={studioPanelInputClassName}
         />
       </StudioFieldAnchor>
-      <StudioFieldAnchor
-        fieldId={STUDIO_FIELD_IDS.phase}
-        highlight={highlightFieldId === STUDIO_FIELD_IDS.phase}
-      >
-        <ProjectPhaseFormFields
-          value={draft.phase}
-          onChange={(phase) => onApply({ phase })}
-          radioName="submit-phase"
-          required={false}
-        />
-      </StudioFieldAnchor>
-      <StudioFieldAnchor
-        fieldId={STUDIO_FIELD_IDS.alreadyReleased}
-        highlight={highlightFieldId === STUDIO_FIELD_IDS.alreadyReleased}
-      >
-        <ProjectAlreadyReleasedFormFields
-          scheduled={draft.declareAlreadyReleased}
-          onSchedule={() => onApply({ declareAlreadyReleased: true })}
-          onCancelSchedule={() => onApply({ declareAlreadyReleased: false })}
-        />
-      </StudioFieldAnchor>
+      {hideGamePhaseFields ? null : (
+        <>
+          <StudioFieldAnchor
+            fieldId={STUDIO_FIELD_IDS.phase}
+            highlight={highlightFieldId === STUDIO_FIELD_IDS.phase}
+          >
+            <ProjectPhaseFormFields
+              value={draft.phase}
+              onChange={(phase) => onApply({ phase })}
+              radioName="submit-phase"
+              required={false}
+            />
+          </StudioFieldAnchor>
+          <StudioFieldAnchor
+            fieldId={STUDIO_FIELD_IDS.alreadyReleased}
+            highlight={highlightFieldId === STUDIO_FIELD_IDS.alreadyReleased}
+          >
+            <ProjectAlreadyReleasedFormFields
+              scheduled={draft.declareAlreadyReleased}
+              onSchedule={() => onApply({ declareAlreadyReleased: true })}
+              onCancelSchedule={() => onApply({ declareAlreadyReleased: false })}
+            />
+          </StudioFieldAnchor>
+        </>
+      )}
     </StudioPanelEditShell>
   );
 }
@@ -291,7 +314,14 @@ export function StudioSubmitImagesEditPanel({
   onCancel,
   highlightFieldId = null,
   onThumbnailsBusyChange,
-}: SubmitEditPanelProps) {
+  imageLabel,
+  imageHint,
+  imageCountHelper,
+}: SubmitEditPanelProps & {
+  imageLabel?: string;
+  imageHint?: string;
+  imageCountHelper?: (count: number) => string;
+}) {
   const primaryGenre = sanitizeProjectGenresForSave(draft.genres)[0] ?? "その他";
 
   return (
@@ -311,6 +341,9 @@ export function StudioSubmitImagesEditPanel({
           thumbnails={draft.thumbnailUrls}
           onChange={(thumbnailUrls) => onApply({ thumbnailUrls })}
           onBusyChange={onThumbnailsBusyChange}
+          label={imageLabel}
+          hint={imageHint}
+          countHelper={imageCountHelper}
           posterFallback={{
             projectId: SUBMIT_DRAFT_PREVIEW_ID,
             title: draft.title.trim() || "タイトル未入力",
@@ -474,5 +507,193 @@ export function StudioSubmitVisibilityEditPanel({
       onApply={onApply}
       onCancel={onCancel}
     />
+  );
+}
+
+function SubmitPrototypeChipGroup({
+  label,
+  options,
+  value,
+  onSelect,
+}: {
+  label: string;
+  options: readonly string[];
+  value: string;
+  onSelect: (next: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium text-zinc-400">{label}</p>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const active = value === option;
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => onSelect(option)}
+              className={`rounded-lg border px-2.5 py-1.5 text-xs transition-colors ${
+                active
+                  ? "border-violet-500/50 bg-violet-500/15 text-violet-100"
+                  : "border-zinc-800 bg-zinc-950/50 text-zinc-400 hover:border-zinc-700"
+              }`}
+            >
+              {option}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** Preview-only category fields — replaces genres / play-info in the same panel shell. */
+export function StudioSubmitCategoryInfoEditPanel({
+  category,
+  fields,
+  onChange,
+  onCancel,
+}: {
+  category: SubmitPrototypeCategory;
+  fields: SubmitPrototypeCategoryFields;
+  onChange: (patch: Partial<SubmitPrototypeCategoryFields>) => void;
+  onCancel: () => void;
+}) {
+  return (
+    <StudioPanelEditShell
+      title="作品情報"
+      backLabel="← 投稿内容に戻る"
+      onCancel={onCancel}
+      onSave={onCancel}
+      saveLabel="反映する"
+    >
+      {category === "music" ? (
+        <div className="space-y-4">
+          <SubmitPrototypeChipGroup
+            label="音楽・音声の種類"
+            options={MUSIC_KIND_OPTIONS}
+            value={fields.musicKind}
+            onSelect={(musicKind) => onChange({ musicKind })}
+          />
+          <SubmitPrototypeChipGroup
+            label="制作状況"
+            options={MUSIC_STATUS_OPTIONS}
+            value={fields.musicStatus}
+            onSelect={(musicStatus) => onChange({ musicStatus })}
+          />
+          <div className="space-y-2">
+            <label htmlFor="proto-music-duration" className="text-sm font-medium text-zinc-400">
+              再生時間
+            </label>
+            <input
+              id="proto-music-duration"
+              value={fields.musicDuration}
+              onChange={(event) => onChange({ musicDuration: event.target.value })}
+              placeholder="例: 3:24"
+              className={studioPanelInputClassName}
+            />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="proto-music-use" className="text-sm font-medium text-zinc-400">
+              想定用途
+            </label>
+            <input
+              id="proto-music-use"
+              value={fields.musicUse}
+              onChange={(event) => onChange({ musicUse: event.target.value })}
+              placeholder="例: ゲームBGM、ショート動画向け"
+              className={studioPanelInputClassName}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {category === "dev_tool" ? (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="proto-tool-helps" className="text-sm font-medium text-zinc-400">
+              どんな作業を助けるか
+            </label>
+            <textarea
+              id="proto-tool-helps"
+              value={fields.toolHelps}
+              onChange={(event) => onChange({ toolHelps: event.target.value })}
+              rows={3}
+              placeholder="例: アセット整理、ビルド前チェック"
+              className={studioPanelInputClassName}
+            />
+          </div>
+          <SubmitPrototypeChipGroup
+            label="対応環境"
+            options={TOOL_ENV_OPTIONS}
+            value={fields.toolEnv}
+            onSelect={(toolEnv) => onChange({ toolEnv })}
+          />
+          <SubmitPrototypeChipGroup
+            label="導入方法"
+            options={TOOL_INSTALL_OPTIONS}
+            value={fields.toolInstall}
+            onSelect={(toolInstall) => onChange({ toolInstall })}
+          />
+        </div>
+      ) : null}
+
+      {category === "web_service" ? (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="proto-service-problem" className="text-sm font-medium text-zinc-400">
+              どんな課題を解決するか
+            </label>
+            <textarea
+              id="proto-service-problem"
+              value={fields.serviceProblem}
+              onChange={(event) => onChange({ serviceProblem: event.target.value })}
+              rows={3}
+              placeholder="例: フィードバック収集の手間を減らす"
+              className={studioPanelInputClassName}
+            />
+          </div>
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-zinc-400">対応端末</p>
+            <div className="flex flex-wrap gap-2">
+              {SERVICE_DEVICE_OPTIONS.map((option) => {
+                const active = fields.serviceDevices.includes(option);
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => {
+                      const next = active
+                        ? fields.serviceDevices.filter((item) => item !== option)
+                        : [...fields.serviceDevices, option];
+                      onChange({ serviceDevices: next });
+                    }}
+                    className={`rounded-lg border px-2.5 py-1.5 text-xs transition-colors ${
+                      active
+                        ? "border-violet-500/50 bg-violet-500/15 text-violet-100"
+                        : "border-zinc-800 bg-zinc-950/50 text-zinc-400 hover:border-zinc-700"
+                    }`}
+                  >
+                    {option}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <SubmitPrototypeChipGroup
+            label="登録の要否"
+            options={SERVICE_SIGNUP_OPTIONS}
+            value={fields.serviceSignup}
+            onSelect={(serviceSignup) => onChange({ serviceSignup })}
+          />
+          <SubmitPrototypeChipGroup
+            label="無料で試せる範囲"
+            options={SERVICE_FREE_OPTIONS}
+            value={fields.serviceFree}
+            onSelect={(serviceFree) => onChange({ serviceFree })}
+          />
+        </div>
+      ) : null}
+    </StudioPanelEditShell>
   );
 }

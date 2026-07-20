@@ -1,15 +1,23 @@
 import { StudioSubmitPage } from "@/components/studio-submit-page";
-import { StudioSubmitFlowPrototype } from "@/components/studio-submit-flow-prototype";
+import { StudioSubmitCategoryPick } from "@/components/studio-submit-category-pick";
 import { Suspense } from "react";
 import { StudioShell } from "@/components/studio-shell";
+import { parseSubmitPrototypeCategory } from "@/lib/prototype/studio-submit-flow";
 
 function StudioSubmitRouteInner({
   searchParams,
 }: {
-  searchParams: { view?: string };
+  searchParams: { view?: string; category?: string };
 }) {
   if (searchParams.view === "category-proto") {
-    return <StudioSubmitFlowPrototype />;
+    if (searchParams.category === "game") {
+      return <StudioSubmitPage />;
+    }
+    const prototypeCategory = parseSubmitPrototypeCategory(searchParams.category);
+    if (prototypeCategory) {
+      return <StudioSubmitPage prototypeCategory={prototypeCategory} />;
+    }
+    return <StudioSubmitCategoryPick />;
   }
   return <StudioSubmitPage />;
 }
@@ -17,7 +25,7 @@ function StudioSubmitRouteInner({
 export default async function StudioSubmitRoute({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{ view?: string; category?: string }>;
 }) {
   const params = await searchParams;
   return (

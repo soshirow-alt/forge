@@ -29,6 +29,10 @@ type ProjectThumbnailFieldsProps = {
     phase?: string;
     styleSeed?: string;
   };
+  /** Optional copy overrides (prototype categories). Defaults keep formal game wording. */
+  label?: string;
+  hint?: string;
+  countHelper?: (count: number) => string;
 };
 
 export function ProjectThumbnailFields({
@@ -37,6 +41,9 @@ export function ProjectThumbnailFields({
   inputId,
   onBusyChange,
   posterFallback,
+  label = THUMBNAIL_LABEL,
+  hint = THUMBNAIL_HINT,
+  countHelper = getThumbnailCountHelper,
 }: ProjectThumbnailFieldsProps) {
   const [fileInputKey, setFileInputKey] = useState(0);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -102,9 +109,9 @@ export function ProjectThumbnailFields({
   return (
     <div>
       <label htmlFor={inputId} className="text-sm font-medium text-zinc-400">
-        {THUMBNAIL_LABEL}
+        {label}
       </label>
-      <p className="mt-1 text-sm text-zinc-500">{THUMBNAIL_HINT}</p>
+      <p className="mt-1 text-sm text-zinc-500">{hint}</p>
       <input
         id={inputId}
         key={fileInputKey}
@@ -118,7 +125,7 @@ export function ProjectThumbnailFields({
       <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500">
         <span>{formatThumbnailCountDisplay(thumbnails.length)}</span>
         <span className="w-full text-zinc-600 sm:w-auto">
-          {getThumbnailCountHelper(thumbnails.length)}
+          {countHelper(thumbnails.length)}
         </span>
         {remaining <= 0 ? (
           <span className="text-amber-400/90">上限に達しました</span>

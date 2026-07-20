@@ -11,7 +11,6 @@ import { ProjectSubmitSuccessPanel } from "@/components/project-submit-success-p
 import { useGames } from "@/components/games-provider";
 import {
   useStudioSubmit,
-  validateSubmitDraftSection,
   type SubmitDraftSuccessResult,
   type SubmitValidationEditMode,
 } from "@/hooks/use-studio-submit";
@@ -29,8 +28,20 @@ import {
   type StudioPanelFocusRequest,
   type StudioPreviewEditTarget,
 } from "@/lib/studio-preview-edit-targets";
+import {
+  createEmptySubmitPrototypeCategoryFields,
+  type SubmitPrototypeCategory,
+  type SubmitPrototypeCategoryFields,
+} from "@/lib/prototype/studio-submit-flow";
 
-export function StudioSubmitPage() {
+export type StudioSubmitPageProps = {
+  /** Preview-only: formal shell with category field variants (no save). */
+  prototypeCategory?: SubmitPrototypeCategory | null;
+};
+
+export function StudioSubmitPage({
+  prototypeCategory = null,
+}: StudioSubmitPageProps) {
   const router = useRouter();
   const { user, hydrated } = useAuth();
   const { getDeveloperProfileByUserId, getOwnedProjects } = useGames();
@@ -38,6 +49,10 @@ export function StudioSubmitPage() {
     useStudioSubmit();
 
   const [draft, setDraft] = useState<SubmitDraftState>(() => createEmptySubmitDraft());
+  const [prototypeFields, setPrototypeFields] =
+    useState<SubmitPrototypeCategoryFields>(() =>
+      createEmptySubmitPrototypeCategoryFields(),
+    );
   const [activeTab, setActiveTab] = useState<GameDetailTab>("overview");
   const [submitting, setSubmitting] = useState(false);
   const [thumbnailsBusy, setThumbnailsBusy] = useState(false);
@@ -49,7 +64,7 @@ export function StudioSubmitPage() {
     null,
   );
   const [panelFocus, setPanelFocus] = useState<StudioPanelFocusRequest | null>(null);
-  const [panelFocusRequestId, setPanelFocusRequestId] = useState(0);
+  const panelFocusRequestIdRef = useRef(0);
   const socialPrefillDoneRef = useRef(false);
 
   const developerProfile = user ? getDeveloperProfileByUserId(user.id) : undefined;
@@ -91,7 +106,7 @@ export function StudioSubmitPage() {
   }, [developerProfile, getOwnedProjects, user]);
 
   useEffect(() => {
-    if (!submitError) {
+    if (prototypeCategory || !submitError) {
       return;
     }
 
@@ -115,6 +130,7 @@ export function StudioSubmitPage() {
     draft,
     submitError,
     failedEditMode,
+    prototypeCategory,
     validateSubmitDraftForPost,
     validateSubmitDraftSection,
   ]);
@@ -123,24 +139,43 @@ export function StudioSubmitPage() {
     setDraft((current) => ({ ...current, ...patch }));
   }
 
+  function patchPrototypeFields(patch: Partial<SubmitPrototypeCategoryFields>) {
+    setPrototypeFields((current) => ({ ...current, ...patch }));
+  }
+
   function handlePreviewEditTarget(target: StudioPreviewEditTarget) {
     setActiveTab("overview");
-    setPanelFocusRequestId((current) => {
-      const next = current + 1;
-      const route = STUDIO_PREVIEW_EDIT_ROUTES[target];
-      setPanelFocus({
-        editMode: route.editMode,
-        fieldId: route.fieldId,
-        requestId: next,
-        scrollToField: route.scrollToField,
-      });
-      return next;
+    panelFocusRequestIdRef.current += 1;
+    const next = panelFocusRequestIdRef.current;
+    let route = STUDIO_PREVIEW_EDIT_ROUTES[target];
+    if (prototypeCategory) {
+      if (
+        target === "genres" ||
+        target === "phase" ||
+        target === "already-released" ||
+        target === "play-access" ||
+        target === "play-info" ||
+        target === "distribution"
+      ) {
+        route = {
+          editMode: "category-info",
+          fieldId: route.fieldId,
+          scrollToField: false,
+        };
+      }
+    }
+    setPanelFocus({
+      editMode: route.editMode,
+      fieldId: route.fieldId,
+      requestId: next,
+      scrollToField: route.scrollToField,
     });
   }
 
   function handleSubmitAnother() {
     setSuccessState(null);
     setDraft(createEmptySubmitDraft());
+    setPrototypeFields(createEmptySubmitPrototypeCategoryFields());
     setSubmitError(null);
     setShowPromptValidation(false);
     setFocusEditMode(null);
@@ -149,6 +184,13 @@ export function StudioSubmitPage() {
   }
 
   async function handleSubmit() {
+    if (prototypeCategory) {
+      setSubmitError(
+        "このカテゴリの投稿はプロトタイプです。保存・公開はまだ接続していません。",
+      );
+      return;
+    }
+
     if (!user) {
       router.push("/login");
       return;
@@ -200,7 +242,7 @@ export function StudioSubmitPage() {
     );
   }
 
-  if (successState) {
+  if (successState && !prototypeCategory) {
     return (
       <StudioShell activeNav="mypage">
         <div className="mx-auto max-w-lg">
@@ -223,6 +265,11 @@ export function StudioSubmitPage() {
           <header className="border-b border-zinc-800/80 pb-3">
             <StudioMypageBackLink />
             <p className="mt-2 text-sm text-zinc-400">作品を投稿する</p>
+            {prototypeCategory ? (
+              <p className="mt-1 text-[11px] text-zinc-500">
+                プロトタイプ（正式投稿画面の流用）
+              </p>
+            ) : null}
           </header>
 
           <div className="mt-5">
@@ -232,6 +279,10 @@ export function StudioSubmitPage() {
               activeTab={activeTab}
               onTabChange={setActiveTab}
               onEditTarget={handlePreviewEditTarget}
+              prototypeCategory={prototypeCategory}
+              prototypeCategoryFields={
+                prototypeCategory ? prototypeFields : undefined
+              }
             />
           </div>
         </div>
@@ -249,6 +300,13 @@ export function StudioSubmitPage() {
           onFocusEditModeHandled={() => setFocusEditMode(null)}
           panelFocus={panelFocus}
           onPanelFocusHandled={() => setPanelFocus(null)}
+          prototypeCategory={prototypeCategory}
+          prototypeCategoryFields={
+            prototypeCategory ? prototypeFields : undefined
+          }
+          onPrototypeCategoryFieldsChange={
+            prototypeCategory ? patchPrototypeFields : undefined
+          }
         />
       </div>
     </StudioShell>
