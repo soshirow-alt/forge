@@ -167,14 +167,7 @@ export function StudioSubmitPage({
   }
 
   function handleSubmitAnother() {
-    setSuccessState(null);
-    setDraft(createEmptySubmitDraft());
-    setPrototypeFields(createEmptySubmitPrototypeCategoryFields());
-    setSubmitError(null);
-    setShowPromptValidation(false);
-    setFocusEditMode(null);
-    setActiveTab("overview");
-    socialPrefillDoneRef.current = false;
+    router.push(SUBMIT_CATEGORY_PICK_HREF);
   }
 
   async function handleSubmit() {

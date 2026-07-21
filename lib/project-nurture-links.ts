@@ -33,15 +33,19 @@ export function projectStudioVoicesHref(projectId: string): string {
   return `${projectStudioPath(projectId)}?tab=voices`;
 }
 
-/** @deprecated 旧モーダル導線 — /studio/submit へリダイレクト用 */
+/** @deprecated 旧モーダル導線 — マイページ経由の互換用 */
 export const STUDIO_SUBMIT_SEARCH_PARAM = "submit";
 
-/** Studio 新規投稿ページ */
+/**
+ * Preview: 新規投稿開始はカテゴリ選択へ。
+ * `/studio/submit` 直リンクはゲーム選択後・回帰確認用として残す（この helper は使わない）。
+ */
 export function studioSubmitModalHref(options?: { query?: string }): string {
+  const base = "/studio/submit?view=category-proto";
   if (options?.query?.trim()) {
-    return `/studio/submit?q=${encodeURIComponent(options.query.trim())}`;
+    return `${base}&q=${encodeURIComponent(options.query.trim())}`;
   }
-  return "/studio/submit";
+  return base;
 }
 
 export function projectStudioDevlogHref(projectId: string): string {

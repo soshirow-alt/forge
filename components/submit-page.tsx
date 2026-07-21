@@ -14,7 +14,7 @@ export function SubmitPage() {
       router.replace(studioOverviewEditHref(editId, "basic-info"));
       return;
     }
-    router.replace("/studio/submit");
+    router.replace("/studio/submit?view=category-proto");
   }, [editId, router]);
 
   return null;

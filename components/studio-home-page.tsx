@@ -106,6 +106,11 @@ const QUICK_LINK_STYLES: Record<
     iconBg: "bg-sky-500/15 border-sky-500/25",
     iconColor: "text-sky-300",
   },
+  "/studio/submit?view=category-proto": {
+    icon: PenLine,
+    iconBg: "bg-sky-500/15 border-sky-500/25",
+    iconColor: "text-sky-300",
+  },
   "/studio/community": {
     icon: Users,
     iconBg: "bg-emerald-500/15 border-emerald-500/25",

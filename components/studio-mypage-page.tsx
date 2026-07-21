@@ -12,7 +12,7 @@ import { PageLoadingSkeleton } from "@/components/forge-loading-skeletons";
 import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
 import { useInstantQueryTab } from "@/hooks/use-instant-query-tab";
 import { useHideV0MockContent } from "@/lib/forge-deployment-context";
-import { STUDIO_SUBMIT_SEARCH_PARAM } from "@/lib/project-nurture-links";
+import { STUDIO_SUBMIT_SEARCH_PARAM, studioSubmitModalHref } from "@/lib/project-nurture-links";
 
 export type StudioMypageTab = "projects" | "achievements" | "followers";
 
@@ -62,7 +62,7 @@ function StudioMypagePageContent() {
 
   useEffect(() => {
     if (searchParams.get(STUDIO_SUBMIT_SEARCH_PARAM) === "1") {
-      router.replace("/studio/submit");
+      router.replace(studioSubmitModalHref());
     }
   }, [searchParams, router]);
 
@@ -88,7 +88,7 @@ function StudioMypagePageContent() {
         <ForgeTabPanel active={activeTab === "projects"}>
           <StudioOwnedProjectsDirectoryPanel
             initialQuery={initialQuery}
-            onOpenSubmit={() => router.push("/studio/submit")}
+            onOpenSubmit={() => router.push(studioSubmitModalHref())}
           />
         </ForgeTabPanel>
         {visitedTabs.has("achievements") ? (

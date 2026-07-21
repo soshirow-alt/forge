@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { studioOverviewEditHref } from "@/lib/studio-edit-url";
 
-/** 旧投稿URL — 外部ブックマーク互換。正本は /studio/submit */
+/** 旧投稿URL — 外部ブックマーク互換。新規投稿開始はカテゴリ選択へ */
 export default async function Submit({
   searchParams,
 }: {
@@ -12,5 +12,5 @@ export default async function Submit({
   if (editId) {
     redirect(studioOverviewEditHref(editId, "basic-info"));
   }
-  redirect("/studio/submit");
+  redirect("/studio/submit?view=category-proto");
 }
