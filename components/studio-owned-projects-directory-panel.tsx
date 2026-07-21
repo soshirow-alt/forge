@@ -111,30 +111,12 @@ function formatVoiceResponseCount(count: number, voiceLoaded: boolean): string {
 
 function NewProjectCard({
   compact = false,
-  onOpenSubmit,
 }: {
   compact?: boolean;
-  onOpenSubmit?: () => void;
 }) {
   const className = `flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/30 text-center transition-colors hover:border-violet-500/40 hover:bg-violet-500/5 ${
     compact ? "gap-2 px-4 py-8" : "min-h-[280px] gap-3 p-6"
   }`;
-
-  if (onOpenSubmit) {
-    return (
-      <button type="button" onClick={onOpenSubmit} className={className}>
-        <span className="flex size-12 items-center justify-center rounded-full bg-violet-600/20 text-violet-300">
-          <Plus className="size-6" aria-hidden="true" />
-        </span>
-        <p className="text-sm font-medium text-zinc-200">新しい作品を投稿</p>
-        {!compact && (
-          <p className="max-w-xs text-xs text-zinc-500">
-            まだ誰も見たことのないあなたの作品を投稿しよう。
-          </p>
-        )}
-      </button>
-    );
-  }
 
   return (
     <Link href={studioSubmitModalHref()} className={className}>
@@ -348,10 +330,8 @@ function OwnedProjectListRow({
 
 export function StudioOwnedProjectsDirectoryPanel({
   initialQuery = "",
-  onOpenSubmit,
 }: {
   initialQuery?: string;
-  onOpenSubmit?: () => void;
 }) {
   const { user, hydrated } = useAuth();
   const {
@@ -453,24 +433,13 @@ export function StudioOwnedProjectsDirectoryPanel({
             あなたの作品を管理し、届いたフィードバックをもとに改善を進められます。
           </p>
         </div>
-        {onOpenSubmit ? (
-          <button
-            type="button"
-            onClick={onOpenSubmit}
-            className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-violet-500"
-          >
-            <Plus className="size-4" aria-hidden="true" />
-            新しい作品を投稿
-          </button>
-        ) : (
-          <Link
-            href={studioSubmitModalHref()}
-            className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-violet-500"
-          >
-            <Plus className="size-4" aria-hidden="true" />
-            新しい作品を投稿
-          </Link>
-        )}
+        <Link
+          href={studioSubmitModalHref()}
+          className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-violet-500"
+        >
+          <Plus className="size-4" aria-hidden="true" />
+          新しい作品を投稿
+        </Link>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -550,7 +519,7 @@ export function StudioOwnedProjectsDirectoryPanel({
         <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
           <p className="text-sm text-zinc-500">該当する作品がありません</p>
           <div className="mt-6 flex justify-center">
-            <NewProjectCard compact onOpenSubmit={onOpenSubmit} />
+            <NewProjectCard compact />
           </div>
         </div>
       ) : viewMode === "grid" ? (
@@ -563,7 +532,7 @@ export function StudioOwnedProjectsDirectoryPanel({
               showDelete={row.showDelete}
             />
           ))}
-          {safePage === totalPages && <NewProjectCard onOpenSubmit={onOpenSubmit} />}
+          {safePage === totalPages && <NewProjectCard />}
         </div>
       ) : (
         <div className="space-y-3">
@@ -575,7 +544,7 @@ export function StudioOwnedProjectsDirectoryPanel({
               showDelete={row.showDelete}
             />
           ))}
-          {safePage === totalPages && <NewProjectCard compact onOpenSubmit={onOpenSubmit} />}
+          {safePage === totalPages && <NewProjectCard compact />}
         </div>
       )}
 

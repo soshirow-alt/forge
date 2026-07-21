@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-07-21 — Preview: 新規投稿導線の実クリック経路を修正＋alias再デプロイ
+
+- **原因** — Preview alias が入口修正commitを配信しておらず、実クリックは旧 `/studio/submit` helper のまま
+- **修正** — Studioマイページ／一覧の投稿CTAを `onOpenSubmit` button 経由から `Link href={studioSubmitModalHref()}` に一本化
+- **確認** — alias 配信バンドルに `category-proto` が含まれることまで検証対象
+
 ## 2026-07-21 — Preview: 新規投稿導線をカテゴリ選択へ統一
 
 - **入口** — Studioマイページ／ホーム／空状態／続けて投稿／旧 `/submit` など、新規投稿開始リンクを `/studio/submit?view=category-proto` へ

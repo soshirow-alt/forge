@@ -88,7 +88,6 @@ function StudioMypagePageContent() {
         <ForgeTabPanel active={activeTab === "projects"}>
           <StudioOwnedProjectsDirectoryPanel
             initialQuery={initialQuery}
-            onOpenSubmit={() => router.push(studioSubmitModalHref())}
           />
         </ForgeTabPanel>
         {visitedTabs.has("achievements") ? (

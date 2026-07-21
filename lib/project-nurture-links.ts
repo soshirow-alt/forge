@@ -1,6 +1,7 @@
 import type { Notification } from "@/lib/notifications";
 import { buildGameDetailTabHref } from "@/lib/game-detail-tabs";
 import { studioOverviewEditHref } from "@/lib/studio-edit-url";
+import { SUBMIT_CATEGORY_PICK_HREF } from "@/lib/prototype/studio-submit-flow";
 
 export const PROJECT_STUDIO_FEEDBACK_SECTION_ID = "feedback";
 
@@ -41,11 +42,10 @@ export const STUDIO_SUBMIT_SEARCH_PARAM = "submit";
  * `/studio/submit` 直リンクはゲーム選択後・回帰確認用として残す（この helper は使わない）。
  */
 export function studioSubmitModalHref(options?: { query?: string }): string {
-  const base = "/studio/submit?view=category-proto";
   if (options?.query?.trim()) {
-    return `${base}&q=${encodeURIComponent(options.query.trim())}`;
+    return `${SUBMIT_CATEGORY_PICK_HREF}&q=${encodeURIComponent(options.query.trim())}`;
   }
-  return base;
+  return SUBMIT_CATEGORY_PICK_HREF;
 }
 
 export function projectStudioDevlogHref(projectId: string): string {
