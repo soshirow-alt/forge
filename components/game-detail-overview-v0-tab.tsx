@@ -121,6 +121,11 @@ export const GameDetailOverviewV0Tab = forwardRef<
   showUnsetPlayPlaceholders?: boolean;
   /** 新規投稿プレビュー — 作品紹介プレースホルダーを薄く表示 */
   mutedIntroduction?: boolean;
+  prototypeInfoCard?: {
+    title: string;
+    rows: { label: string; value: string }[];
+  } | null;
+  primaryCtaLabel?: string;
   /** Studio 編集プレビュー — 未保存の作品紹介を左プレビューへ反映 */
   onIntroductionDraftChange?: (introduction: string) => void;
   onEditTarget?: (target: import("@/lib/studio-preview-edit-targets").StudioPreviewEditTarget) => void;
@@ -147,6 +152,8 @@ export const GameDetailOverviewV0Tab = forwardRef<
   onPlayDestinationOpen,
   showUnsetPlayPlaceholders = false,
   mutedIntroduction = false,
+  prototypeInfoCard,
+  primaryCtaLabel,
   onIntroductionDraftChange,
   onEditTarget,
 },
@@ -283,6 +290,8 @@ export const GameDetailOverviewV0Tab = forwardRef<
         onPlayDestinationOpen={onPlayDestinationOpen}
         showUnsetPlayPlaceholders={showUnsetPlayPlaceholders}
         mutedIntroduction={mutedIntroduction}
+        prototypeInfoCard={prototypeInfoCard}
+        primaryCtaLabel={primaryCtaLabel}
         onFeedback={onFeedback}
         feedbackCtaLabel={feedbackCtaLabel}
         onEditTarget={onEditTarget}

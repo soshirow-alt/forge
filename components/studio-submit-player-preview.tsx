@@ -10,6 +10,7 @@ import { GameDetailTabBar } from "@/components/game-detail-tabs-region";
 import { StudioHeroPreviewGallery } from "@/components/studio-hero-preview-gallery";
 import type { GameDetailTab } from "@/lib/game-detail-tabs";
 import { resolvePlayDestinations, resolvePublicationDisplay } from "@/lib/game-play-destinations";
+import type { PlayDestination } from "@/lib/game-play-destinations";
 import {
   resolveGamePublishLinks,
   toRelatedLinkDisplays,
@@ -38,9 +39,13 @@ import { StudioPreviewEditTarget } from "@/components/studio-preview-edit-target
 import type { StudioPreviewEditTarget as StudioPreviewEditTargetId } from "@/lib/studio-preview-edit-targets";
 import {
   SUBMIT_PROTOTYPE_CATEGORY_LABEL,
+  SUBMIT_PROTOTYPE_PRIMARY_CTA,
+  SUBMIT_PROTOTYPE_USAGE_PANEL_TITLE,
+  prototypePublishOpenLabel,
   type SubmitPrototypeCategory,
   type SubmitPrototypeCategoryFields,
 } from "@/lib/prototype/studio-submit-flow";
+import { normalizeExternalUrl } from "@/lib/game-play-destinations";
 
 function TagPill({
   children,
@@ -60,6 +65,56 @@ function TagPill({
       {children}
     </span>
   );
+}
+
+function buildPrototypeInfoCard(
+  category: SubmitPrototypeCategory,
+  fields: SubmitPrototypeCategoryFields,
+): { title: string; rows: { label: string; value: string }[] } {
+  const title = SUBMIT_PROTOTYPE_USAGE_PANEL_TITLE[category];
+  if (category === "music") {
+    return {
+      title,
+      rows: fields.musicDuration.trim()
+        ? [{ label: "再生時間", value: fields.musicDuration.trim() }]
+        : [],
+    };
+  }
+  if (category === "dev_tool") {
+    const rows: { label: string; value: string }[] = [];
+    if (fields.toolEnvironments.length > 0) {
+      rows.push({ label: "対応環境", value: fields.toolEnvironments.join("・") });
+    }
+    if (fields.toolUsageMethod.trim()) {
+      rows.push({ label: "利用方法", value: fields.toolUsageMethod.trim() });
+    }
+    return { title, rows };
+  }
+  return {
+    title,
+    rows:
+      fields.serviceEnvironments.length > 0
+        ? [
+            {
+              label: "対応環境",
+              value: fields.serviceEnvironments.join("・"),
+            },
+          ]
+        : [],
+  };
+}
+
+function buildPrototypePlayDestinations(
+  fields: SubmitPrototypeCategoryFields,
+): PlayDestination[] {
+  const withUrl = fields.publishDestinations.filter((item) => item.url.trim());
+  const primary = withUrl.filter((item) => item.isPrimary);
+  const secondary = withUrl.filter((item) => !item.isPrimary);
+  return [...primary, ...secondary].map((item) => ({
+    label: item.kind || "公開先",
+    url: normalizeExternalUrl(item.url) ?? item.url.trim(),
+    actionLabel: prototypePublishOpenLabel(item.kind || "その他"),
+  }));
 }
 
 export type StudioSubmitPlayerPreviewProps = {
@@ -96,10 +151,12 @@ export function StudioSubmitPlayerPreview({
     () => buildDraftGame(submitDraft, submitOwner),
     [submitDraft, submitOwner],
   );
-  const playDestinations = useMemo(
-    () => resolvePlayDestinations(draftGame),
-    [draftGame],
-  );
+  const playDestinations = useMemo(() => {
+    if (prototypeCategory && prototypeCategoryFields) {
+      return buildPrototypePlayDestinations(prototypeCategoryFields);
+    }
+    return resolvePlayDestinations(draftGame);
+  }, [draftGame, prototypeCategory, prototypeCategoryFields]);
   const relatedLinkDisplays = useMemo(() => {
     const { relatedLinks } = resolveGamePublishLinks(draftGame);
     return toRelatedLinkDisplays(relatedLinks);
@@ -108,8 +165,13 @@ export function StudioSubmitPlayerPreview({
     if (playDestinations.length === 0) {
       return { labels: ["公開先未設定"] };
     }
+    if (prototypeCategory) {
+      return {
+        labels: playDestinations.map((item) => item.label),
+      };
+    }
     return resolvePublicationDisplay(draftGame);
-  }, [draftGame, playDestinations.length]);
+  }, [draftGame, playDestinations, prototypeCategory]);
 
   const titleIsPlaceholder = !submitDraft.title.trim();
   const leadIsPlaceholder = !submitDraft.description.trim();
@@ -119,23 +181,40 @@ export function StudioSubmitPlayerPreview({
   const initialDevlogExcerpt = useMemo(() => {
     const content = buildInitialProjectDevlogContent(submitDraft.introduction);
     if (!content) {
-      return "作品紹介を入力すると、ここに初回開発ログの本文プレビューが表示されます。";
+      return prototypeCategory === "music"
+        ? "作品紹介を入力すると、ここに初回制作ログの本文プレビューが表示されます。"
+        : "作品紹介を入力すると、ここに初回開発ログの本文プレビューが表示されます。";
     }
     return content.length > 160 ? `${content.slice(0, 160)}…` : content;
-  }, [submitDraft.introduction]);
+  }, [submitDraft.introduction, prototypeCategory]);
   const hasGalleryImages = submitDraft.thumbnailUrls.length > 0;
   const primaryGenre = sanitizeProjectGenresForSave(submitDraft.genres)[0] ?? "その他";
+  const posterGenre = prototypeCategory
+    ? SUBMIT_PROTOTYPE_CATEGORY_LABEL[prototypeCategory]
+    : primaryGenre;
 
   const posterFallback = useMemo(
     () => ({
       projectId: SUBMIT_DRAFT_PREVIEW_ID,
       title: submitDraft.title.trim() || "タイトル未入力",
-      genre: primaryGenre,
+      genre: posterGenre,
       phase: submitDraft.phase,
       styleSeed: SUBMIT_DRAFT_PREVIEW_ID,
     }),
-    [submitDraft.title, submitDraft.phase, primaryGenre],
+    [submitDraft.title, submitDraft.phase, posterGenre],
   );
+
+  const prototypeInfoCard =
+    prototypeCategory && prototypeCategoryFields
+      ? buildPrototypeInfoCard(prototypeCategory, prototypeCategoryFields)
+      : undefined;
+  const primaryCtaLabel = prototypeCategory
+    ? SUBMIT_PROTOTYPE_PRIMARY_CTA[prototypeCategory]
+    : undefined;
+  const tabLabels =
+    prototypeCategory === "music" ? { devlog: "制作ログ" } : undefined;
+  const logTitle =
+    prototypeCategory === "music" ? "制作ログ" : "開発ログ";
 
   return (
     <div aria-label="公開ページの見え方" className="min-w-0 space-y-4">
@@ -152,35 +231,33 @@ export function StudioSubmitPlayerPreview({
 
           <div className="flex min-w-0 flex-col justify-center p-6 lg:p-8">
             <div className="flex flex-wrap gap-2">
-              {prototypeCategory ? (
+              {prototypeCategory && prototypeCategoryFields ? (
                 <StudioPreviewEditTarget target="genres" onEditTarget={onEditTarget} inline>
                   <span className="inline-flex flex-wrap gap-2">
-                    <TagPill>{SUBMIT_PROTOTYPE_CATEGORY_LABEL[prototypeCategory]}</TagPill>
-                    {prototypeCategory === "music" &&
-                    prototypeCategoryFields?.musicKind ? (
-                      <TagPill>{prototypeCategoryFields.musicKind}</TagPill>
+                    <TagPill>
+                      {SUBMIT_PROTOTYPE_CATEGORY_LABEL[prototypeCategory]}
+                    </TagPill>
+                    {prototypeCategoryFields.kind ? (
+                      <TagPill>{prototypeCategoryFields.kind}</TagPill>
                     ) : null}
-                    {prototypeCategory === "music" &&
-                    prototypeCategoryFields?.musicStatus ? (
-                      <TagPill>{prototypeCategoryFields.musicStatus}</TagPill>
-                    ) : null}
-                    {prototypeCategory === "dev_tool" &&
-                    prototypeCategoryFields?.toolEnv ? (
-                      <TagPill>{prototypeCategoryFields.toolEnv}</TagPill>
-                    ) : null}
-                    {prototypeCategory === "web_service" &&
-                    prototypeCategoryFields?.serviceDevices.length
-                      ? prototypeCategoryFields.serviceDevices.map((device) => (
-                          <TagPill key={device}>{device}</TagPill>
+                    {prototypeCategory === "music"
+                      ? prototypeCategoryFields.musicGenres.map((genre) => (
+                          <TagPill key={genre}>{genre}</TagPill>
                         ))
                       : null}
+                    {submitDraft.featureTags.map((tag) => (
+                      <TagPill key={tag}>{tag}</TagPill>
+                    ))}
                   </span>
                 </StudioPreviewEditTarget>
               ) : (
                 <StudioPreviewEditTarget target="genres" onEditTarget={onEditTarget} inline>
                   <span className="inline-flex flex-wrap gap-2">
                     {getUserFacingGameTags(displayGame.tags).map((tag) => (
-                      <TagPill key={tag} muted={genreIsPlaceholder && tag === displayGame.tags[0]}>
+                      <TagPill
+                        key={tag}
+                        muted={genreIsPlaceholder && tag === displayGame.tags[0]}
+                      >
                         {tag}
                       </TagPill>
                     ))}
@@ -200,13 +277,11 @@ export function StudioSubmitPlayerPreview({
                   {displayGame.title}
                 </p>
               </StudioPreviewEditTarget>
-              {prototypeCategory ? null : (
-                <GameDetailPhaseBadge
-                  meta={playerMeta}
-                  muted={phaseIsPlaceholder}
-                  onEditTarget={onEditTarget}
-                />
-              )}
+              <GameDetailPhaseBadge
+                meta={playerMeta}
+                muted={phaseIsPlaceholder}
+                onEditTarget={onEditTarget}
+              />
             </div>
             <StudioPreviewEditTarget target="catch-copy" onEditTarget={onEditTarget}>
               <p
@@ -244,7 +319,11 @@ export function StudioSubmitPlayerPreview({
         </div>
       </section>
 
-      <GameDetailTabBar activeTab={activeTab} onTabChange={onTabChange} />
+      <GameDetailTabBar
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        tabLabels={tabLabels}
+      />
 
       {activeTab === "overview" ? (
         <GameDetailOverviewV0Tab
@@ -261,9 +340,11 @@ export function StudioSubmitPlayerPreview({
           publication={overviewPublication}
           playDestinations={playDestinations}
           relatedLinks={relatedLinkDisplays}
-          showUnsetPlayPlaceholders
+          showUnsetPlayPlaceholders={!prototypeCategory}
           mutedIntroduction={introIsPlaceholder}
           onEditTarget={onEditTarget}
+          prototypeInfoCard={prototypeInfoCard}
+          primaryCtaLabel={primaryCtaLabel}
         />
       ) : null}
 
@@ -285,6 +366,9 @@ export function StudioSubmitPlayerPreview({
           >
             {initialDevlogExcerpt}
           </p>
+          {prototypeCategory === "music" ? (
+            <p className="mt-3 text-xs text-zinc-500">（表示名：{logTitle}）</p>
+          ) : null}
         </div>
       ) : null}
 

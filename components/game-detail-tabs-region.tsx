@@ -27,12 +27,15 @@ type GameDetailTabBarProps = {
   onTabChange: (tab: GameDetailTab) => void;
   /** 実データがあるタブのみ。未指定タブは件数を出さない */
   counts?: Partial<Record<GameDetailTab, number>>;
+  /** Optional label overrides (e.g. music → 制作ログ). */
+  tabLabels?: Partial<Record<GameDetailTab, string>>;
 };
 
 export const GameDetailTabBar = memo(function GameDetailTabBar({
   activeTab,
   onTabChange,
   counts,
+  tabLabels,
 }: GameDetailTabBarProps) {
   return (
     <div className="overflow-x-auto">
@@ -45,6 +48,7 @@ export const GameDetailTabBar = memo(function GameDetailTabBar({
           const selected = activeTab === tab.id;
           const Icon = tab.icon;
           const count = counts?.[tab.id];
+          const label = tabLabels?.[tab.id] ?? tab.label;
 
           return (
             <button
@@ -60,7 +64,7 @@ export const GameDetailTabBar = memo(function GameDetailTabBar({
               }`}
             >
               <Icon className="size-3.5 shrink-0" aria-hidden="true" />
-              <span className="truncate">{tab.label}</span>
+              <span className="truncate">{label}</span>
               {typeof count === "number" ? (
                 <span
                   className={`rounded-md px-1.5 py-0.5 text-xs tabular-nums ${

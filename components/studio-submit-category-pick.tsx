@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AppWindow, Gamepad2, Music2, Wrench } from "lucide-react";
@@ -44,18 +43,12 @@ export function StudioSubmitCategoryPick() {
         <header className="border-b border-zinc-800/80 pb-3">
           <StudioMypageBackLink />
           <p className="mt-2 text-sm text-zinc-400">作品を投稿する</p>
-          <p className="mt-1 text-[11px] text-zinc-500">
-            プロトタイプ（カテゴリ選択）
-          </p>
         </header>
 
         <div>
           <h1 className="text-xl font-bold text-white sm:text-2xl">
             投稿するカテゴリを選ぶ
           </h1>
-          <p className="mt-1 text-sm text-zinc-400">
-            選んだあと、正式な投稿画面と同じ構成で入力します
-          </p>
         </div>
 
         <div className="grid gap-2 sm:grid-cols-2">
@@ -102,13 +95,6 @@ export function StudioSubmitCategoryPick() {
         >
           このカテゴリで投稿を始める
         </button>
-
-        <p className="text-xs text-zinc-500">
-          ゲームは正式な投稿画面へ進みます。他カテゴリは同じ画面構成のプロトタイプです（保存未接続）。
-        </p>
-        <Link href="/studio/submit" className="text-sm text-zinc-400 hover:text-zinc-200">
-          正式なゲーム投稿へ直接行く
-        </Link>
       </div>
     </StudioShell>
   );

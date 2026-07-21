@@ -35,9 +35,7 @@ export type StudioPanelEditMode =
   | StudioOverviewEditMode
   | "images"
   | "visibility"
-  | "publication"
-  /** Preview-only: category-specific fields replacing genres / play-info */
-  | "category-info";
+  | "publication";
 
 export type StudioPreviewEditRoute = {
   editMode: StudioPanelEditMode;

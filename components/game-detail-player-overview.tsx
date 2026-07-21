@@ -212,11 +212,14 @@ function PublicationPanel({
   publication,
   destinations,
   onDestinationOpen,
+  primaryCtaLabel,
 }: {
   publication: PublicationDisplay;
   destinations: PlayDestination[];
   /** 外部タブは <a> が開く。ここではプレイ記録など副作用のみ。 */
   onDestinationOpen?: () => void;
+  /** When set, primary button uses this fixed label (category CTA). */
+  primaryCtaLabel?: string;
 }) {
   if (destinations.length > 0) {
     const [primary, ...secondary] = destinations;
@@ -229,7 +232,9 @@ function PublicationPanel({
           onClick={() => onDestinationOpen?.()}
           className="inline-flex w-full min-w-0 items-center justify-center rounded-lg border border-violet-500/40 bg-violet-500/15 px-3 py-2.5 text-center text-sm font-semibold text-violet-100 transition-colors hover:border-violet-400/60 hover:bg-violet-500/25 hover:text-white"
         >
-          <span className="truncate">{primary.actionLabel}</span>
+          <span className="truncate">
+            {primaryCtaLabel ?? primary.actionLabel}
+          </span>
         </a>
         {secondary.length > 0 ? (
           <ul className="flex min-w-0 flex-col gap-1.5">
@@ -248,6 +253,17 @@ function PublicationPanel({
             ))}
           </ul>
         ) : null}
+      </div>
+    );
+  }
+
+  if (primaryCtaLabel) {
+    return (
+      <div className="mt-3 flex min-w-0 flex-col gap-2">
+        <span className="inline-flex w-full min-w-0 items-center justify-center rounded-lg border border-zinc-700/60 bg-zinc-900/60 px-3 py-2.5 text-center text-sm font-semibold text-zinc-500">
+          {primaryCtaLabel}
+        </span>
+        <p className="text-xs text-zinc-600">公開先未設定</p>
       </div>
     );
   }
@@ -360,6 +376,13 @@ type GameDetailPlayerOverviewProps = {
   onFeedback?: () => void;
   feedbackCtaLabel?: string;
   onEditTarget?: (target: StudioPreviewEditTargetId) => void;
+  /** Category submit preview: replace play-info card. Empty rows = omit card. */
+  prototypeInfoCard?: {
+    title: string;
+    rows: { label: string; value: string }[];
+  } | null;
+  /** Fixed primary CTA label (e.g. 聴く / 利用する). */
+  primaryCtaLabel?: string;
 };
 
 export function GameDetailPlayerOverview({
@@ -376,6 +399,8 @@ export function GameDetailPlayerOverview({
   onFeedback,
   feedbackCtaLabel,
   onEditTarget,
+  prototypeInfoCard,
+  primaryCtaLabel,
 }: GameDetailPlayerOverviewProps) {
   const introText = resolveIntroText(game.introduction, heroLead);
   const displayFeatures = game.features.filter(
@@ -388,7 +413,14 @@ export function GameDetailPlayerOverview({
       playerMeta.playInfo.playMethodOptions.some((option) => option.active),
   );
 
-  const showPlayInfoSection = showPlayInfoCard || showUnsetPlayPlaceholders;
+  const usePrototypeInfo = prototypeInfoCard !== undefined;
+  const prototypeRows =
+    prototypeInfoCard?.rows.filter((row) => row.value.trim()) ?? [];
+  const showPrototypeInfoSection =
+    usePrototypeInfo && prototypeInfoCard !== null && prototypeRows.length > 0;
+  const showPlayInfoSection = usePrototypeInfo
+    ? showPrototypeInfoSection
+    : showPlayInfoCard || showUnsetPlayPlaceholders;
 
   return (
     <div className="grid gap-5 lg:grid-cols-3 lg:gap-6">
@@ -414,8 +446,23 @@ export function GameDetailPlayerOverview({
       <aside className="min-w-0 space-y-4">
         {showPlayInfoSection ? (
           <StudioPreviewEditTarget target="play-info" onEditTarget={onEditTarget}>
-            <SidebarCard title="プレイ情報">
-              {showPlayInfoCard ? (
+            <SidebarCard
+              title={
+                usePrototypeInfo && prototypeInfoCard
+                  ? prototypeInfoCard.title
+                  : "プレイ情報"
+              }
+            >
+              {usePrototypeInfo && showPrototypeInfoSection ? (
+                <div className="mt-3 space-y-3 text-sm text-zinc-300">
+                  {prototypeRows.map((row) => (
+                    <div key={row.label}>
+                      <p className="text-xs text-zinc-500">{row.label}</p>
+                      <p className="mt-1 break-words">{row.value}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : showPlayInfoCard ? (
                 <PlayInfoPanel playerMeta={playerMeta} />
               ) : showUnsetPlayPlaceholders ? (
                 <UnsetPlayInfoPanel />
@@ -431,6 +478,7 @@ export function GameDetailPlayerOverview({
                 publication={publication}
                 destinations={playDestinations}
                 onDestinationOpen={onPlayDestinationOpen}
+                primaryCtaLabel={primaryCtaLabel}
               />
             </SidebarCard>
           </StudioPreviewEditTarget>

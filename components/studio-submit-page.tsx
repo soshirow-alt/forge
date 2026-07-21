@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
@@ -29,6 +30,8 @@ import {
   type StudioPreviewEditTarget,
 } from "@/lib/studio-preview-edit-targets";
 import {
+  SUBMIT_CATEGORY_PICK_HREF,
+  SUBMIT_PROTOTYPE_CATEGORY_LABEL,
   createEmptySubmitPrototypeCategoryFields,
   type SubmitPrototypeCategory,
   type SubmitPrototypeCategoryFields,
@@ -66,6 +69,7 @@ export function StudioSubmitPage({
   const [panelFocus, setPanelFocus] = useState<StudioPanelFocusRequest | null>(null);
   const panelFocusRequestIdRef = useRef(0);
   const socialPrefillDoneRef = useRef(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const developerProfile = user ? getDeveloperProfileByUserId(user.id) : undefined;
 
@@ -135,6 +139,12 @@ export function StudioSubmitPage({
     validateSubmitDraftSection,
   ]);
 
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = window.setTimeout(() => setToastMessage(null), 3200);
+    return () => window.clearTimeout(timer);
+  }, [toastMessage]);
+
   function patchDraft(patch: Partial<SubmitDraftState>) {
     setDraft((current) => ({ ...current, ...patch }));
   }
@@ -147,23 +157,7 @@ export function StudioSubmitPage({
     setActiveTab("overview");
     panelFocusRequestIdRef.current += 1;
     const next = panelFocusRequestIdRef.current;
-    let route = STUDIO_PREVIEW_EDIT_ROUTES[target];
-    if (prototypeCategory) {
-      if (
-        target === "genres" ||
-        target === "phase" ||
-        target === "already-released" ||
-        target === "play-access" ||
-        target === "play-info" ||
-        target === "distribution"
-      ) {
-        route = {
-          editMode: "category-info",
-          fieldId: route.fieldId,
-          scrollToField: false,
-        };
-      }
-    }
+    const route = STUDIO_PREVIEW_EDIT_ROUTES[target];
     setPanelFocus({
       editMode: route.editMode,
       fieldId: route.fieldId,
@@ -185,9 +179,8 @@ export function StudioSubmitPage({
 
   async function handleSubmit() {
     if (prototypeCategory) {
-      setSubmitError(
-        "このカテゴリの投稿はプロトタイプです。保存・公開はまだ接続していません。",
-      );
+      setSubmitError(null);
+      setToastMessage("このPreviewでは保存されません");
       return;
     }
 
@@ -266,8 +259,16 @@ export function StudioSubmitPage({
             <StudioMypageBackLink />
             <p className="mt-2 text-sm text-zinc-400">作品を投稿する</p>
             {prototypeCategory ? (
-              <p className="mt-1 text-[11px] text-zinc-500">
-                プロトタイプ（正式投稿画面の流用）
+              <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
+                <span>
+                  カテゴリ：{SUBMIT_PROTOTYPE_CATEGORY_LABEL[prototypeCategory]}
+                </span>
+                <Link
+                  href={SUBMIT_CATEGORY_PICK_HREF}
+                  className="text-zinc-400 underline-offset-2 hover:text-zinc-200 hover:underline"
+                >
+                  カテゴリを選び直す
+                </Link>
               </p>
             ) : null}
           </header>
@@ -309,6 +310,15 @@ export function StudioSubmitPage({
           }
         />
       </div>
+
+      {toastMessage ? (
+        <div
+          role="status"
+          className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm text-zinc-200 shadow-lg"
+        >
+          {toastMessage}
+        </div>
+      ) : null}
     </StudioShell>
   );
 }

@@ -9,7 +9,6 @@ import {
   Gamepad2,
   Globe,
   MessageCircleQuestion,
-  Layers,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { scrollStudioPanelToTop } from "@/lib/studio-panel-scroll";
@@ -25,11 +24,13 @@ import {
 } from "@/lib/project-publish-og-gate";
 import {
   StudioSubmitBasicInfoEditPanel,
-  StudioSubmitCategoryInfoEditPanel,
   StudioSubmitGenresTagsEditPanel,
   StudioSubmitImagesEditPanel,
   StudioSubmitIntroductionEditPanel,
   StudioSubmitPlayInfoEditPanel,
+  StudioSubmitPrototypeClassificationEditPanel,
+  StudioSubmitPrototypePublicationEditPanel,
+  StudioSubmitPrototypeUsageEditPanel,
   StudioSubmitPublicationEditPanel,
 } from "@/components/studio-submit-edit-panels";
 import type { SubmitValidationEditMode } from "@/lib/studio-submit-draft";
@@ -55,12 +56,17 @@ import {
 } from "@/lib/studio-operation-panel-styles";
 import type { StudioFieldId, StudioPanelFocusRequest } from "@/lib/studio-preview-edit-targets";
 import {
-  SUBMIT_PROTOTYPE_FEEDBACK_USES,
+  SUBMIT_PROTOTYPE_CLASSIFICATION_ROW_LABEL,
+  SUBMIT_PROTOTYPE_FEEDBACK_ASK_LABEL,
   SUBMIT_PROTOTYPE_IMAGE_COPY,
-  summarizeSubmitPrototypeCategoryFields,
+  SUBMIT_PROTOTYPE_USAGE_ROW_LABEL,
+  summarizeSubmitPrototypeClassification,
+  summarizeSubmitPrototypePublication,
+  summarizeSubmitPrototypeUsage,
   type SubmitPrototypeCategory,
   type SubmitPrototypeCategoryFields,
 } from "@/lib/prototype/studio-submit-flow";
+import { PROJECT_VISIBILITY_FORM_OPTIONS } from "@/lib/project-visibility";
 
 const primaryButtonClassName = studioOperationPrimaryButtonClassName;
 
@@ -71,7 +77,6 @@ type SubmitEditMode =
   | "images"
   | "publication"
   | "visibility"
-  | "category-info"
   | null;
 
 function SubmitValidationAlert({ message }: { message: string }) {
@@ -108,7 +113,6 @@ export type StudioSubmitPanelProps = {
   onFocusEditModeHandled?: () => void;
   panelFocus?: StudioPanelFocusRequest | null;
   onPanelFocusHandled?: () => void;
-  /** Preview-only: reuse formal panel with category field variants */
   prototypeCategory?: SubmitPrototypeCategory | null;
   prototypeCategoryFields?: SubmitPrototypeCategoryFields;
   onPrototypeCategoryFieldsChange?: (
@@ -196,24 +200,28 @@ export function StudioSubmitPanel({
             onApply={applyPatch}
             onCancel={closeEdit}
             highlightFieldId={scrollOnHighlight ? editHighlight : null}
-            hideGamePhaseFields={isPrototype}
-            titlePlaceholder={
-              isPrototype ? "作品のタイトル" : "ゲームのタイトル"
-            }
+            titlePlaceholder={isPrototype ? "作品のタイトル" : "ゲームのタイトル"}
           />
         </StudioPanelScrollShell>
       </aside>
     );
   }
-  if (editMode === "category-info" && prototypeCategory && prototypeCategoryFields) {
+  if (
+    editMode === "genres-tags" &&
+    prototypeCategory &&
+    prototypeCategoryFields &&
+    onPrototypeCategoryFieldsChange
+  ) {
     return (
       <aside aria-label="Studioパネル" className={submitPanelAsideClassName}>
         <StudioPanelScrollShell>
           {submitError ? <SubmitValidationAlert message={submitError} /> : null}
-          <StudioSubmitCategoryInfoEditPanel
+          <StudioSubmitPrototypeClassificationEditPanel
             category={prototypeCategory}
             fields={prototypeCategoryFields}
-            onChange={(patch) => onPrototypeCategoryFieldsChange?.(patch)}
+            draft={draft}
+            onFieldsChange={onPrototypeCategoryFieldsChange}
+            onDraftChange={onDraftChange}
             onCancel={closeEdit}
           />
         </StudioPanelScrollShell>
@@ -273,6 +281,26 @@ export function StudioSubmitPanel({
       </aside>
     );
   }
+  if (
+    editMode === "play-info" &&
+    prototypeCategory &&
+    prototypeCategoryFields &&
+    onPrototypeCategoryFieldsChange
+  ) {
+    return (
+      <aside aria-label="Studioパネル" className={submitPanelAsideClassName}>
+        <StudioPanelScrollShell>
+          {submitError ? <SubmitValidationAlert message={submitError} /> : null}
+          <StudioSubmitPrototypeUsageEditPanel
+            category={prototypeCategory}
+            fields={prototypeCategoryFields}
+            onChange={onPrototypeCategoryFieldsChange}
+            onCancel={closeEdit}
+          />
+        </StudioPanelScrollShell>
+      </aside>
+    );
+  }
   if (editMode === "play-info") {
     return (
       <aside aria-label="Studioパネル" className={submitPanelAsideClassName}>
@@ -283,6 +311,28 @@ export function StudioSubmitPanel({
             onApply={applyPatch}
             onCancel={closeEdit}
             highlightFieldId={scrollOnHighlight ? editHighlight : null}
+          />
+        </StudioPanelScrollShell>
+      </aside>
+    );
+  }
+  if (
+    (editMode === "publication" || editMode === "visibility") &&
+    prototypeCategory &&
+    prototypeCategoryFields &&
+    onPrototypeCategoryFieldsChange
+  ) {
+    return (
+      <aside aria-label="Studioパネル" className={submitPanelAsideClassName}>
+        <StudioPanelScrollShell>
+          {submitError ? <SubmitValidationAlert message={submitError} /> : null}
+          <StudioSubmitPrototypePublicationEditPanel
+            category={prototypeCategory}
+            draft={draft}
+            fields={prototypeCategoryFields}
+            onDraftChange={onDraftChange}
+            onFieldsChange={onPrototypeCategoryFieldsChange}
+            onCancel={closeEdit}
           />
         </StudioPanelScrollShell>
       </aside>
@@ -304,12 +354,15 @@ export function StudioSubmitPanel({
     );
   }
 
-  const feedbackAskLabel = isPrototype
-    ? "利用者が確認してほしいこと"
+  const feedbackAskLabel = prototypeCategory
+    ? SUBMIT_PROTOTYPE_FEEDBACK_ASK_LABEL[prototypeCategory]
     : "プレイヤーに聞きたいこと";
   const feedbackVersionLabel = isPrototype
     ? "初回の公開ver"
     : "初回のプレイ可能ver";
+  const visibilityLabel =
+    PROJECT_VISIBILITY_FORM_OPTIONS.find((option) => option.value === draft.visibility)
+      ?.label ?? "公開設定";
 
   return (
     <aside aria-label="Studioパネル" className={submitPanelAsideClassName}>
@@ -329,9 +382,7 @@ export function StudioSubmitPanel({
               </div>
             </div>
 
-            <p className="text-xs font-medium text-zinc-500">
-              {isPrototype ? "作品を投稿する（プロトタイプ）" : "作品を投稿する"}
-            </p>
+            <p className="text-xs font-medium text-zinc-500">作品を投稿する</p>
 
           <div className="w-full min-w-0 max-w-full space-y-5">
             <StudioActionGroup label="ページの内容">
@@ -342,25 +393,25 @@ export function StudioSubmitPanel({
                 required
                 onClick={() => openEdit("basic-info")}
               />
-              {isPrototype && prototypeCategory && prototypeCategoryFields ? (
-                <StudioActionRow
-                  icon={Layers}
-                  label="作品情報を編集"
-                  summary={summarizeSubmitPrototypeCategoryFields(
-                    prototypeCategory,
-                    prototypeCategoryFields,
-                  )}
-                  onClick={() => openEdit("category-info")}
-                />
-              ) : (
-                <StudioActionRow
-                  icon={Tags}
-                  label="ジャンル・タグを編集"
-                  summary={summarizeSubmitDraftGenres(draft)}
-                  required
-                  onClick={() => openEdit("genres-tags")}
-                />
-              )}
+              <StudioActionRow
+                icon={Tags}
+                label={
+                  prototypeCategory
+                    ? SUBMIT_PROTOTYPE_CLASSIFICATION_ROW_LABEL[prototypeCategory]
+                    : "ジャンル・タグを編集"
+                }
+                summary={
+                  prototypeCategory && prototypeCategoryFields
+                    ? summarizeSubmitPrototypeClassification(
+                        prototypeCategory,
+                        prototypeCategoryFields,
+                        draft.featureTags.length,
+                      )
+                    : summarizeSubmitDraftGenres(draft)
+                }
+                required
+                onClick={() => openEdit("genres-tags")}
+              />
               <StudioActionRow
                 icon={Sparkles}
                 label="作品紹介を編集"
@@ -370,26 +421,42 @@ export function StudioSubmitPanel({
               />
               <StudioActionRow
                 icon={ImageIcon}
-                label={imageCopy ? `${imageCopy.label}を編集` : "画像を編集"}
+                label="画像を編集"
                 summary={summarizeSubmitDraftImages(draft)}
                 onClick={() => openEdit("images")}
               />
             </StudioActionGroup>
 
-            <StudioActionGroup label={isPrototype ? "公開" : "遊び方・公開"}>
-              {isPrototype ? null : (
-                <StudioActionRow
-                  icon={Gamepad2}
-                  label="プレイ情報を編集"
-                  summary={summarizeSubmitDraftPlayInfo(draft)}
-                  required
-                  onClick={() => openEdit("play-info")}
-                />
-              )}
+            <StudioActionGroup label="遊び方・公開">
+              <StudioActionRow
+                icon={Gamepad2}
+                label={
+                  prototypeCategory
+                    ? SUBMIT_PROTOTYPE_USAGE_ROW_LABEL[prototypeCategory]
+                    : "プレイ情報を編集"
+                }
+                summary={
+                  prototypeCategory && prototypeCategoryFields
+                    ? summarizeSubmitPrototypeUsage(
+                        prototypeCategory,
+                        prototypeCategoryFields,
+                      )
+                    : summarizeSubmitDraftPlayInfo(draft)
+                }
+                required
+                onClick={() => openEdit("play-info")}
+              />
               <StudioActionRow
                 icon={Globe}
                 label="公開先・公開設定を編集"
-                summary={summarizeSubmitDraftPublication(draft)}
+                summary={
+                  prototypeCategory && prototypeCategoryFields
+                    ? summarizeSubmitPrototypePublication(
+                        prototypeCategoryFields,
+                        visibilityLabel,
+                      )
+                    : summarizeSubmitDraftPublication(draft)
+                }
                 onClick={() => openEdit("publication")}
               />
             </StudioActionGroup>
@@ -417,55 +484,12 @@ export function StudioSubmitPanel({
                     />
                   </div>
                 </div>
-                {isPrototype && prototypeCategoryFields && onPrototypeCategoryFieldsChange ? (
-                  <div className="space-y-2 border-t border-zinc-800/60 px-1.5 pt-3">
-                    <p className="text-sm font-medium text-zinc-100">
-                      届いたフィードバックをどう活かしたいか
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {SUBMIT_PROTOTYPE_FEEDBACK_USES.map((option) => {
-                        const active =
-                          prototypeCategoryFields.feedbackUses.includes(option);
-                        return (
-                          <button
-                            key={option}
-                            type="button"
-                            onClick={() => {
-                              const next = active
-                                ? prototypeCategoryFields.feedbackUses.filter(
-                                    (item) => item !== option,
-                                  )
-                                : [
-                                    ...prototypeCategoryFields.feedbackUses,
-                                    option,
-                                  ];
-                              onPrototypeCategoryFieldsChange({
-                                feedbackUses: next,
-                              });
-                            }}
-                            className={`rounded-lg border px-2.5 py-1.5 text-xs transition-colors ${
-                              active
-                                ? "border-violet-500/50 bg-violet-500/15 text-violet-100"
-                                : "border-zinc-800 bg-zinc-950/50 text-zinc-400 hover:border-zinc-700"
-                            }`}
-                          >
-                            {option}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : null}
               </div>
             </StudioActionGroup>
 
             <div className="border-t border-zinc-800/80 pt-2">
               <StudioStatusRow label="保存状態">
-                <span className="text-zinc-400">
-                  {isPrototype
-                    ? "プロトタイプ（保存未接続）"
-                    : "下書き（投稿前）"}
-                </span>
+                <span className="text-zinc-400">下書き（投稿前）</span>
               </StudioStatusRow>
             </div>
           </div>
@@ -496,7 +520,11 @@ export function StudioSubmitPanel({
             className={primaryButtonClassName}
           >
             {isPrototype
-              ? "投稿する（プロトタイプ・未接続）"
+              ? projectPublishSubmitLabel({
+                  submitting: false,
+                  thumbnailsBusy: false,
+                  hasThumbnails: draft.thumbnailUrls.length > 0,
+                })
               : projectPublishSubmitLabel({
                   submitting,
                   thumbnailsBusy,
