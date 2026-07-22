@@ -15,25 +15,25 @@ export const SUBMIT_FLOW_CATEGORIES: SubmitFlowCategoryOption[] = [
   {
     id: "game",
     title: "ゲーム・インタラクティブ作品",
-    hint: "遊んでフィードバックをもらう作品",
+    hint: "ゲームや操作して楽しむ作品",
     querySlug: "game",
   },
   {
     id: "music",
     title: "音楽・音声",
-    hint: "聴いて反応をもらう楽曲・音声",
+    hint: "楽曲・BGM・効果音・ボイス",
     querySlug: "audio",
   },
   {
     id: "dev_tool",
     title: "開発ツール",
-    hint: "制作・開発の作業を助けるツール",
+    hint: "制作や開発を助けるツール",
     querySlug: "dev-tool",
   },
   {
     id: "web_service",
     title: "Webサービス・アプリ",
-    hint: "使ってみて反応をもらうサービス",
+    hint: "Webサービスや各種アプリ",
     querySlug: "service-app",
   },
 ];
@@ -352,4 +352,36 @@ export function kindOptionsForCategory(
   if (category === "music") return MUSIC_KIND_OPTIONS;
   if (category === "dev_tool") return TOOL_KIND_OPTIONS;
   return SERVICE_KIND_OPTIONS;
+}
+
+/** Parse stored music duration (`M:SS` or `H:MM:SS`) into minutes + seconds. */
+export function parseMusicDurationParts(
+  value: string,
+): { minutes: number; seconds: number } | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parts = trimmed.split(":");
+  if (parts.length < 2 || parts.length > 3) return null;
+  if (parts.some((part) => !/^\d+$/.test(part.trim()))) return null;
+  const nums = parts.map((part) => Number(part.trim()));
+  if (nums.some((num) => !Number.isFinite(num) || num < 0)) return null;
+  if (parts.length === 2) {
+    const [minutes, seconds] = nums;
+    if (seconds > 59) return null;
+    return { minutes, seconds };
+  }
+  const [hours, minutes, seconds] = nums;
+  if (minutes > 59 || seconds > 59) return null;
+  return { minutes: hours * 60 + minutes, seconds };
+}
+
+export function formatMusicDuration(minutes: number, seconds: number): string {
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+/** Reject empty / 0:00 / non-finite / seconds out of range. */
+export function isUsableMusicDuration(minutes: number, seconds: number): boolean {
+  if (!Number.isFinite(minutes) || !Number.isFinite(seconds)) return false;
+  if (minutes < 0 || seconds < 0 || seconds > 59) return false;
+  return minutes > 0 || seconds > 0;
 }

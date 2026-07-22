@@ -46,7 +46,10 @@ import {
   TOOL_ENVIRONMENT_OPTIONS,
   TOOL_USAGE_METHOD_OPTIONS,
   createEmptyPrototypePublishDestination,
+  formatMusicDuration,
+  isUsableMusicDuration,
   kindOptionsForCategory,
+  parseMusicDurationParts,
   prototypePublishOpenLabel,
   type PrototypePublishDestination,
   type SubmitPrototypeCategory,
@@ -597,7 +600,7 @@ function SubmitPrototypeMultiChipGroup({
   );
 }
 
-/** Preview: classification row (genres-tags slot). */
+/** Preview: classification row (genres-tags slot). Local buffer — apply on 反映する. */
 export function StudioSubmitPrototypeClassificationEditPanel({
   category,
   fields,
@@ -615,20 +618,43 @@ export function StudioSubmitPrototypeClassificationEditPanel({
 }) {
   const panelTitle =
     category === "music" ? "ジャンル・タグ" : "種類・タグ";
+  const [kind, setKind] = useState(fields.kind);
+  const [musicGenres, setMusicGenres] = useState<string[]>(() => [
+    ...fields.musicGenres,
+  ]);
+  const [featureTags, setFeatureTags] = useState<ForgeFeatureTagOption[]>(() => [
+    ...draft.featureTags,
+  ]);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   return (
     <StudioPanelEditShell
       title={panelTitle}
       backLabel="← 投稿内容に戻る"
       onCancel={onCancel}
-      onSave={onCancel}
+      onSave={() => {
+        if (!kind.trim()) {
+          setValidationError("種類を選択してください");
+          return;
+        }
+        onFieldsChange({
+          kind,
+          ...(category === "music" ? { musicGenres } : {}),
+        });
+        onDraftChange({ featureTags });
+        onCancel();
+      }}
       saveLabel="反映する"
+      validationError={validationError}
     >
       <SubmitPrototypeChipGroup
         label="種類"
         options={kindOptionsForCategory(category)}
-        value={fields.kind}
-        onSelect={(kind) => onFieldsChange({ kind })}
+        value={kind}
+        onSelect={(next) => {
+          setKind(next);
+          setValidationError(null);
+        }}
         required
       />
 
@@ -639,17 +665,17 @@ export function StudioSubmitPrototypeClassificationEditPanel({
           </p>
           <div className="flex flex-wrap gap-2">
             {MUSIC_GENRE_OPTIONS.map((option) => {
-              const active = fields.musicGenres.includes(option);
+              const active = musicGenres.includes(option);
               return (
                 <button
                   key={option}
                   type="button"
                   onClick={() => {
-                    onFieldsChange({
-                      musicGenres: active
-                        ? fields.musicGenres.filter((item) => item !== option)
-                        : [...fields.musicGenres, option],
-                    });
+                    setMusicGenres(
+                      active
+                        ? musicGenres.filter((item) => item !== option)
+                        : [...musicGenres, option],
+                    );
                   }}
                   className={`rounded-lg border px-2.5 py-1.5 text-xs transition-colors ${
                     active
@@ -668,9 +694,7 @@ export function StudioSubmitPrototypeClassificationEditPanel({
       <CollapsibleFormSection
         title="特徴タグ"
         summary={
-          draft.featureTags.length > 0
-            ? draft.featureTags.join("・")
-            : "なし（任意）"
+          featureTags.length > 0 ? featureTags.join("・") : "なし（任意）"
         }
       >
         <p className="text-xs text-zinc-600">任意・最大 {MAX_PROJECT_FEATURE_TAGS} つ。</p>
@@ -682,14 +706,14 @@ export function StudioSubmitPrototypeClassificationEditPanel({
             >
               <input
                 type="checkbox"
-                checked={draft.featureTags.includes(tag)}
+                checked={featureTags.includes(tag)}
                 onChange={() =>
-                  onDraftChange({
-                    featureTags: toggleForgeFeatureTag(
-                      draft.featureTags,
+                  setFeatureTags(
+                    toggleForgeFeatureTag(
+                      featureTags,
                       tag,
                     ) as ForgeFeatureTagOption[],
-                  })
+                  )
                 }
                 className="h-3.5 w-3.5 rounded border-zinc-600 bg-zinc-900 text-violet-500 focus:ring-violet-500/50"
               />
@@ -702,7 +726,19 @@ export function StudioSubmitPrototypeClassificationEditPanel({
   );
 }
 
-/** Preview: play-info row → 音源情報 / 利用情報. */
+function musicDurationFieldParts(value: string): {
+  minutes: string;
+  seconds: string;
+} {
+  const parsed = parseMusicDurationParts(value);
+  if (!parsed) return { minutes: "", seconds: "" };
+  return {
+    minutes: String(parsed.minutes),
+    seconds: String(parsed.seconds),
+  };
+}
+
+/** Preview: play-info row → 音源情報 / 利用情報. Local buffer — apply on 反映する. */
 export function StudioSubmitPrototypeUsageEditPanel({
   category,
   fields,
@@ -714,29 +750,101 @@ export function StudioSubmitPrototypeUsageEditPanel({
   onChange: (patch: Partial<SubmitPrototypeCategoryFields>) => void;
   onCancel: () => void;
 }) {
+  const initialDuration = musicDurationFieldParts(fields.musicDuration);
+  const [minutes, setMinutes] = useState(initialDuration.minutes);
+  const [seconds, setSeconds] = useState(initialDuration.seconds);
+  const [toolEnvironments, setToolEnvironments] = useState<string[]>(() => [
+    ...fields.toolEnvironments,
+  ]);
+  const [toolUsageMethod, setToolUsageMethod] = useState(fields.toolUsageMethod);
+  const [serviceEnvironments, setServiceEnvironments] = useState<string[]>(() => [
+    ...fields.serviceEnvironments,
+  ]);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
   return (
     <StudioPanelEditShell
       title={SUBMIT_PROTOTYPE_USAGE_PANEL_TITLE[category]}
       backLabel="← 投稿内容に戻る"
       onCancel={onCancel}
-      onSave={onCancel}
+      onSave={() => {
+        if (category === "music") {
+          const minutesEmpty = minutes.trim() === "";
+          const secondsEmpty = seconds.trim() === "";
+          if (minutesEmpty && secondsEmpty) {
+            onChange({ musicDuration: "" });
+            onCancel();
+            return;
+          }
+          const minutesValue = minutesEmpty ? 0 : Number(minutes);
+          const secondsValue = secondsEmpty ? 0 : Number(seconds);
+          if (
+            !Number.isInteger(minutesValue) ||
+            !Number.isInteger(secondsValue) ||
+            !isUsableMusicDuration(minutesValue, secondsValue)
+          ) {
+            setValidationError(
+              "再生時間は0秒より大きい分・秒で入力してください",
+            );
+            return;
+          }
+          onChange({
+            musicDuration: formatMusicDuration(minutesValue, secondsValue),
+          });
+          onCancel();
+          return;
+        }
+        if (category === "dev_tool") {
+          onChange({ toolEnvironments, toolUsageMethod });
+          onCancel();
+          return;
+        }
+        onChange({ serviceEnvironments });
+        onCancel();
+      }}
       saveLabel="反映する"
+      validationError={validationError}
     >
       {category === "music" ? (
         <div className="space-y-2">
-          <label htmlFor="proto-music-duration" className="text-sm font-medium text-zinc-400">
+          <p className="text-sm font-medium text-zinc-400">
             再生時間 <span className="font-normal text-zinc-600">（任意）</span>
-          </label>
-          <input
-            id="proto-music-duration"
-            value={fields.musicDuration}
-            onChange={(event) => onChange({ musicDuration: event.target.value })}
-            placeholder="例: 0:12 / 3:24 / 1:05:00"
-            className={studioPanelInputClassName}
-          />
-          <p className="text-xs text-zinc-600">
-            数秒の効果音から長時間の音声作品まで、分・秒で入力できます。
           </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              id="proto-music-duration-minutes"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              step={1}
+              value={minutes}
+              onChange={(event) => {
+                setMinutes(event.target.value);
+                setValidationError(null);
+              }}
+              placeholder="0"
+              className={`${studioPanelInputClassName} w-20`}
+              aria-label="分"
+            />
+            <span className="text-sm text-zinc-500">分</span>
+            <input
+              id="proto-music-duration-seconds"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={59}
+              step={1}
+              value={seconds}
+              onChange={(event) => {
+                setSeconds(event.target.value);
+                setValidationError(null);
+              }}
+              placeholder="0"
+              className={`${studioPanelInputClassName} w-20`}
+              aria-label="秒"
+            />
+            <span className="text-sm text-zinc-500">秒</span>
+          </div>
         </div>
       ) : null}
 
@@ -745,16 +853,14 @@ export function StudioSubmitPrototypeUsageEditPanel({
           <SubmitPrototypeMultiChipGroup
             label="対応環境"
             options={TOOL_ENVIRONMENT_OPTIONS}
-            values={fields.toolEnvironments}
-            onChange={(toolEnvironments) => onChange({ toolEnvironments })}
-            required
+            values={toolEnvironments}
+            onChange={setToolEnvironments}
           />
           <SubmitPrototypeChipGroup
             label="利用方法"
             options={TOOL_USAGE_METHOD_OPTIONS}
-            value={fields.toolUsageMethod}
-            onSelect={(toolUsageMethod) => onChange({ toolUsageMethod })}
-            required
+            value={toolUsageMethod}
+            onSelect={setToolUsageMethod}
           />
         </div>
       ) : null}
@@ -763,9 +869,8 @@ export function StudioSubmitPrototypeUsageEditPanel({
         <SubmitPrototypeMultiChipGroup
           label="対応環境"
           options={SERVICE_ENVIRONMENT_OPTIONS}
-          values={fields.serviceEnvironments}
-          onChange={(serviceEnvironments) => onChange({ serviceEnvironments })}
-          required
+          values={serviceEnvironments}
+          onChange={setServiceEnvironments}
         />
       ) : null}
     </StudioPanelEditShell>
@@ -800,13 +905,18 @@ export function StudioSubmitPrototypePublicationEditPanel({
   onCancel: () => void;
 }) {
   const kinds = SUBMIT_PROTOTYPE_PUBLISH_KINDS[category];
-  const items = normalizePrototypePublishDestinations(fields.publishDestinations);
+  const [items, setItems] = useState<PrototypePublishDestination[]>(() =>
+    normalizePrototypePublishDestinations(fields.publishDestinations),
+  );
+  const [relatedLinks, setRelatedLinks] = useState(() => [...draft.relatedLinks]);
+  const [visibility, setVisibility] = useState<ProjectVisibility>(draft.visibility);
 
   function updateAt(index: number, patch: Partial<PrototypePublishDestination>) {
-    const next = items.map((item, i) =>
-      i === index ? { ...item, ...patch } : item,
+    setItems((current) =>
+      normalizePrototypePublishDestinations(
+        current.map((item, i) => (i === index ? { ...item, ...patch } : item)),
+      ),
     );
-    onFieldsChange({ publishDestinations: normalizePrototypePublishDestinations(next) });
   }
 
   return (
@@ -814,7 +924,13 @@ export function StudioSubmitPrototypePublicationEditPanel({
       title="公開先・公開設定"
       backLabel="← 投稿内容に戻る"
       onCancel={onCancel}
-      onSave={onCancel}
+      onSave={() => {
+        onFieldsChange({
+          publishDestinations: normalizePrototypePublishDestinations(items),
+        });
+        onDraftChange({ relatedLinks, visibility });
+        onCancel();
+      }}
       saveLabel="反映する"
     >
       <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
@@ -831,12 +947,12 @@ export function StudioSubmitPrototypePublicationEditPanel({
                 <button
                   type="button"
                   onClick={() => {
-                    onFieldsChange({
-                      publishDestinations: items.map((row, i) => ({
+                    setItems(
+                      items.map((row, i) => ({
                         ...row,
                         isPrimary: i === index,
                       })),
-                    });
+                    );
                   }}
                   className={`text-xs ${
                     item.isPrimary ? "text-violet-300" : "text-zinc-500 hover:text-zinc-300"
@@ -872,11 +988,11 @@ export function StudioSubmitPrototypePublicationEditPanel({
                 <button
                   type="button"
                   onClick={() => {
-                    onFieldsChange({
-                      publishDestinations: normalizePrototypePublishDestinations(
+                    setItems(
+                      normalizePrototypePublishDestinations(
                         items.filter((_, i) => i !== index),
                       ),
-                    });
+                    );
                   }}
                   className="text-xs text-zinc-500 hover:text-red-300"
                 >
@@ -889,12 +1005,10 @@ export function StudioSubmitPrototypePublicationEditPanel({
         <button
           type="button"
           onClick={() => {
-            onFieldsChange({
-              publishDestinations: [
-                ...items,
-                createEmptyPrototypePublishDestination({ isPrimary: false }),
-              ],
-            });
+            setItems([
+              ...items,
+              createEmptyPrototypePublishDestination({ isPrimary: false }),
+            ]);
           }}
           className="text-xs text-violet-300 hover:text-violet-200"
         >
@@ -903,8 +1017,8 @@ export function StudioSubmitPrototypePublicationEditPanel({
       </div>
 
       <RelatedLinksFormFields
-        value={draft.relatedLinks}
-        onChange={(relatedLinks) => onDraftChange({ relatedLinks })}
+        value={relatedLinks}
+        onChange={setRelatedLinks}
         inputClassName={studioPanelInputClassName}
         formKey="submit-proto-related"
       />
@@ -916,7 +1030,7 @@ export function StudioSubmitPrototypePublicationEditPanel({
             <label
               key={option.value}
               className={`flex w-full min-w-0 max-w-full box-border cursor-pointer gap-3 rounded-lg border px-3 py-3 transition-colors ${
-                draft.visibility === option.value
+                visibility === option.value
                   ? "border-violet-500/40 bg-violet-500/5"
                   : "border-zinc-800 bg-zinc-950/50"
               }`}
@@ -924,9 +1038,9 @@ export function StudioSubmitPrototypePublicationEditPanel({
               <input
                 type="radio"
                 name="submit-proto-visibility"
-                checked={draft.visibility === option.value}
+                checked={visibility === option.value}
                 onChange={() =>
-                  onDraftChange({ visibility: option.value as ProjectVisibility })
+                  setVisibility(option.value as ProjectVisibility)
                 }
                 className="mt-0.5 h-4 w-4 shrink-0 border-zinc-600 bg-zinc-900 text-violet-500 focus:ring-violet-500/50"
               />

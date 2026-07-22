@@ -443,7 +443,7 @@ export function StudioSubmitPanel({
                       )
                     : summarizeSubmitDraftPlayInfo(draft)
                 }
-                required
+                required={!isPrototype}
                 onClick={() => openEdit("play-info")}
               />
               <StudioActionRow

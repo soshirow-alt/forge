@@ -75,32 +75,43 @@ function buildPrototypeInfoCard(
   if (category === "music") {
     return {
       title,
-      rows: fields.musicDuration.trim()
-        ? [{ label: "再生時間", value: fields.musicDuration.trim() }]
-        : [],
+      rows: [
+        {
+          label: "再生時間",
+          value: fields.musicDuration.trim() || "未設定",
+        },
+      ],
     };
   }
   if (category === "dev_tool") {
-    const rows: { label: string; value: string }[] = [];
-    if (fields.toolEnvironments.length > 0) {
-      rows.push({ label: "対応環境", value: fields.toolEnvironments.join("・") });
-    }
-    if (fields.toolUsageMethod.trim()) {
-      rows.push({ label: "利用方法", value: fields.toolUsageMethod.trim() });
-    }
-    return { title, rows };
+    return {
+      title,
+      rows: [
+        {
+          label: "対応環境",
+          value:
+            fields.toolEnvironments.length > 0
+              ? fields.toolEnvironments.join("・")
+              : "未設定",
+        },
+        {
+          label: "利用方法",
+          value: fields.toolUsageMethod.trim() || "未設定",
+        },
+      ],
+    };
   }
   return {
     title,
-    rows:
-      fields.serviceEnvironments.length > 0
-        ? [
-            {
-              label: "対応環境",
-              value: fields.serviceEnvironments.join("・"),
-            },
-          ]
-        : [],
+    rows: [
+      {
+        label: "対応環境",
+        value:
+          fields.serviceEnvironments.length > 0
+            ? fields.serviceEnvironments.join("・")
+            : "未設定",
+      },
+    ],
   };
 }
 

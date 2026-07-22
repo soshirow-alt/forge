@@ -376,7 +376,7 @@ type GameDetailPlayerOverviewProps = {
   onFeedback?: () => void;
   feedbackCtaLabel?: string;
   onEditTarget?: (target: StudioPreviewEditTargetId) => void;
-  /** Category submit preview: replace play-info card. Empty rows = omit card. */
+  /** Category submit preview: replace play-info card. Always show frame (empty → 未設定). */
   prototypeInfoCard?: {
     title: string;
     rows: { label: string; value: string }[];
@@ -414,10 +414,9 @@ export function GameDetailPlayerOverview({
   );
 
   const usePrototypeInfo = prototypeInfoCard !== undefined;
-  const prototypeRows =
-    prototypeInfoCard?.rows.filter((row) => row.value.trim()) ?? [];
+  const prototypeRows = prototypeInfoCard?.rows ?? [];
   const showPrototypeInfoSection =
-    usePrototypeInfo && prototypeInfoCard !== null && prototypeRows.length > 0;
+    usePrototypeInfo && prototypeInfoCard !== null;
   const showPlayInfoSection = usePrototypeInfo
     ? showPrototypeInfoSection
     : showPlayInfoCard || showUnsetPlayPlaceholders;
@@ -454,13 +453,25 @@ export function GameDetailPlayerOverview({
               }
             >
               {usePrototypeInfo && showPrototypeInfoSection ? (
-                <div className="mt-3 space-y-3 text-sm text-zinc-300">
-                  {prototypeRows.map((row) => (
-                    <div key={row.label}>
-                      <p className="text-xs text-zinc-500">{row.label}</p>
-                      <p className="mt-1 break-words">{row.value}</p>
-                    </div>
-                  ))}
+                <div className="mt-3 space-y-3 text-sm">
+                  {prototypeRows.map((row) => {
+                    const unset =
+                      !row.value.trim() || row.value.trim() === "未設定";
+                    return (
+                      <div key={row.label}>
+                        <p className="text-xs text-zinc-500">{row.label}</p>
+                        <p
+                          className={
+                            unset
+                              ? "mt-1 text-zinc-600"
+                              : "mt-1 break-words text-zinc-300"
+                          }
+                        >
+                          {unset ? "未設定" : row.value}
+                        </p>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : showPlayInfoCard ? (
                 <PlayInfoPanel playerMeta={playerMeta} />
