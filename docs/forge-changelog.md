@@ -9,6 +9,7 @@
 - **原因** — 自動 branch alias レコードが `94f9a47`（`dpl_6gLpwLx…`）に残り、以降の Git deploy は `aliasAssigned:true` でも alias 一覧へ載らず更新されなかった
 - **復旧** — sticky alias を削除したうえで `preview/landing-01` を再 deploy し、自動 `branchAlias` を最新 Ready へ付け直す
 - **恒久** — `npm run verify:preview-branch-alias` を Preview 完了条件に維持。自動 hostname への恒久 `alias set` 固定はしない
+- **確認** — sticky alias 削除後の Git deploy で `ALIASES_ON_DEPLOY` に branch alias が再登録されたことを API で確認
 
 ## 2026-07-22 — Preview: branch alias 追従を完了条件に固定
 
@@ -5647,3 +5648,4 @@ RPC `get_home_discovery_feed`（055/058 同一選定）＋クライアント `se
 ### 主な変更ファイル
 
 - 初期 app / components 一式
+
