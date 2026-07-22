@@ -18,6 +18,7 @@
     "verify:production-auth-guards": "npx --yes tsx scripts/verify-production-auth-guards.ts",
     "verify:production-mode-guards": "npx --yes tsx scripts/verify-production-mode-guards.ts",
     "verify:submit-auth-utils": "npx --yes tsx scripts/verify-submit-auth-utils.ts",
+    "verify:preview-branch-alias": "node scripts/verify-preview-branch-alias.mjs",
     "verify:minimal-readonly-ogp": "npx --yes tsx scripts/verify-minimal-readonly-ogp.ts",
     "verify:ogp-publish-thumbnail-race": "npx --yes tsx scripts/verify-ogp-publish-thumbnail-race.ts",
     "verify:mypage-watch-cards": "npx --yes tsx scripts/verify-mypage-watch-cards.ts",

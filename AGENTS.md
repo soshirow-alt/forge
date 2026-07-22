@@ -141,9 +141,10 @@ ChatGPT の役割は **コードレビューではなくプロダクトレビュ
 
 ## Preview / main デプロイ（Cursor）
 
-正本: **`docs/forge-triage-operations.md` §8**
+正本: **`docs/forge-triage-operations.md` §8** / alias 詳細: **`docs/vercel-preview-project.md`**
 
-- 通常修正: Preview まで自律（調査→編集→verify→commit→push→deploy→smoke）。Staging DB 自律
+- 通常修正: Preview まで自律（調査→編集→verify→commit→push→**Git Integration deploy**→smoke）。Staging DB 自律
+- Preview 完了は unique deploy URL だけでなく **branch alias**（`forge-git-preview-landing-01-…`）が最新 bundle を配信すること（`npm run verify:preview-branch-alias`）
 - 「本番反映して」「リリースして」等 → コードの main / Vercel Production / smoke / 同期を一括（工程再確認なし）。**Production DB はオーナー手動**（SQL 一式を提示）
 - 本番 push 後は `preview/landing-01` を `main` に fast-forward + push
 

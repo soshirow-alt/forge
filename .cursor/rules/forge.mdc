@@ -23,7 +23,7 @@ UI copy / density / Special Thanks purpose: **`docs/forge-ui-copy-rules.md`** (a
 - When a **design decision** is involved (DB, auth, notifications, permissions, storage, extensibility): briefly note recommendation, reason, and concern in the response — not a long `■` template every time.
 - On completed tasks: update `docs/forge-changelog.md` only (not handoff/summary unless milestone).
 - Before **§10.2 stop conditions only** (billing, new API contracts, prod public launch, PLAYER_VISIBLE=true, destructive DB, data migration,原典 change, roadmap priority change, irreversible ops): output **GPT判断用メモ** from `docs/gpt-run-decision-memo.md`. Task flow through design→impl→build→staging→main prep runs without per-step approval. **`docs/forge-triage-operations.md` §10**.
-- **通常作業（2026-07-14〜）**: 調査〜Preview smoke まで自律（investigate→edit→verify→commit→preview push→deploy→smoke）。Staging Supabase は常時自律。詳細 `docs/cursor-allow-vs-forge-go.md`
+- **通常作業（2026-07-14〜）**: 調査〜Preview smoke まで自律（investigate→edit→verify→commit→preview push→Git Integration deploy→**branch alias 検証**）。Staging Supabase は常時自律。詳細 `docs/cursor-allow-vs-forge-go.md` / alias 正本 `docs/vercel-preview-project.md`
 - **オーナー指示 = スコープ承認**: 指示範囲内で commit / push / Staging migration / smoke 等を再確認しない
 - **「本番反映して」「リリースして」** = コード本番の一括承認（main 反映+push・Production deploy・smoke・main↔preview 同期）。工程ごとの確認はしない
 - **Production Supabase**: migration / INSERT / UPDATE / DELETE / backfill / Storage 変更は **オーナー手動**。Cursor は SQL・実行順・影響・確認 SQL を提示。適用後の read-only 検証と smoke は自律

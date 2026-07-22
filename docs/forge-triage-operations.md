@@ -190,10 +190,18 @@ preview/landing-01 で実装
 
 | 段階 | Cursor がやること |
 |------|-------------------|
-| **1. Preview 反映** | commit + `git push origin preview/landing-01` + Preview smoke（通常依頼で自律） |
+| **1. Preview 反映** | commit + `git push origin preview/landing-01` + **Git Integration** Preview Ready + **branch alias smoke**（通常依頼で自律） |
 | **2. 本番指示** | 「本番反映して」「リリースして」等 = **コード本番の一括承認**（工程再確認なし） |
 | **3. 本番反映** | main merge/push・Vercel Production・smoke・changelog・main↔preview 同期。**Production DB migration/INSERT/UPDATE/DELETE/backfill/Storage はオーナー手動** — Cursor は SQL 一式を提示 |
 | **4. ブランチ同期** | `preview/landing-01` を `main` と同一 commit に揃える（§8.2） |
+
+**Preview 完了条件（必須）**
+
+1. `origin/preview/landing-01` HEAD が対象 commit
+2. Vercel Git Integration の Preview が Ready（creator `vercel[bot]` / project **forge**）
+3. **branch alias** `https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app` がその bundle を配信（`node scripts/verify-preview-branch-alias.mjs` PASS）
+
+単発の `vercel deploy` unique URL だけ Ready でも **未完了**。alias 未追従時の復旧は `docs/vercel-preview-project.md`。`vercel alias set` で自動 git hostname を固定しない。
 
 - Staging Supabase は常時自律
 - Production Supabase write はオーナー Dashboard 手動（適用後 read-only 検証は Cursor）
