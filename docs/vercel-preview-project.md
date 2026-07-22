@@ -30,18 +30,44 @@ git push origin preview/landing-01
 - **`vercel alias set <deployment> forge-git-preview-landing-01-…` をしない**。自動 git branch hostname を特定 deploy に固定し、以降 push しても alias が追従しなくなる。
 - Preview 反映は **Git push → Git Integration** を正とする。CLI 単発 `vercel deploy`（git metadata なし）を Preview 完了扱いにしない。
 
-## alias が最新に追従しないとき（Dashboard・一度きり）
+## alias が最新に追従しないとき（Dashboard / CLI）
 
-症状: unique deploy URL は新しいが、`forge-git-preview-landing-01-…` だけ古い commit のまま。
+### 確定しやすい症状（2026-07-22 実測）
 
-1. Vercel → **forge** → Deployments → branch `preview/landing-01` の最新 Ready を開く
-2. Git metadata が `preview/landing-01` であること（CLI detached でないこと）を確認
-3. **Settings → Domains** で `forge-git-preview-landing-01-soshirow-alts-projects.vercel.app` を探す
-4. 割当を **特定 Deployment 固定** ではなく **Git Branch = `preview/landing-01`** にする（または誤った手動 alias を外して自動 branch alias に戻す）
-5. 必要なら最新 Ready を Redeploy（Use existing Build Cache オフ可）
-6. `node scripts/verify-preview-branch-alias.mjs` で PASS を確認
+- unique deploy URL は新しいが、`forge-git-preview-landing-01-…` だけ古い commit のまま
+- `GET /v2/aliases/<hostname>` の `deploymentId` が旧 Ready のまま（`updatedAt` も止まる）
+- 新 Ready は `aliasAssigned: true` / `automaticAliases` に hostname があるのに、`GET /v2/deployments/<id>/aliases` が **空**
+- カスタム Domains 一覧は 0 件でも起きうる（これは Domain ではなく **deployment alias** の sticky）
 
-これで以後は push のたびに alias が自動更新され、毎回の手動付け替えは不要。
+### 復旧（自動追従を戻す・推奨）
+
+1. **本番 alias / Production deploy は触らない**
+2. `preview/landing-01` → `main` の **open PR があれば閉じる**（PR 紐付け中は branch alias 再付与が不安定になりうる）
+3. sticky になった自動 hostname を外す（恒久固定の `alias set` ではない）:
+
+```bash
+npx vercel alias rm forge-git-preview-landing-01-soshirow-alts-projects.vercel.app --scope soshirow-alts-projects --yes
+```
+
+4. `git push origin preview/landing-01`（空でも可）で Git Integration の新しい Ready を作る
+5. 確認:
+
+```bash
+npx vercel inspect forge-git-preview-landing-01-soshirow-alts-projects.vercel.app
+# Aliases に当該 hostname が出ること / id が最新 Ready であること
+npm run verify:preview-branch-alias
+```
+
+6. **追従の再確認**: もう一度 push し、alias の `deploymentId` がさらに新しい Ready へ移動すること
+
+### やってはいけないこと
+
+- 原因不明のまま `vercel alias set <最新> forge-git-preview-landing-01-…` だけして終わり（**手動固定が再発**しうる）
+- Production / `forge-flame-gamma` / main 向け alias を触る
+
+### Domains 画面を使う場合
+
+Settings → Domains に hostname が載っているときだけ、Git Branch=`preview/landing-01` へ付け替える。載っていなければ上記の alias rm → Git push が正。
 
 ## 確認コマンド
 

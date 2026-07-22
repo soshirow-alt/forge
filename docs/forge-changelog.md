@@ -6,10 +6,10 @@
 
 ## 2026-07-22 — Preview: branch alias 自動追従を復旧
 
-- **原因** — 自動 branch alias レコードが `94f9a47`（`dpl_6gLpwLx…`）に残り、以降の Git deploy は `aliasAssigned:true` でも alias 一覧へ載らず更新されなかった
-- **復旧** — sticky alias を削除したうえで `preview/landing-01` を再 deploy し、自動 `branchAlias` を最新 Ready へ付け直す
+- **原因** — 自動 branch alias が `94f9a47`（`dpl_6gLpwLx…`）に sticky。以降 Ready は `aliasAssigned:true` でも `/deployments/<id>/aliases` が空で hostname が動かなかった。open PR 紐付けも再付与を不安定化
+- **復旧** — 当該 hostname を `vercel alias rm` で外し、`preview/landing-01` を Git push。最新 Ready に automatic alias が再登録
+- **追従確認** — 続けて別 commit を push し、alias `deploymentId` が新しい Ready へ自動移動することを確認（手動 `alias set` なし）
 - **恒久** — `npm run verify:preview-branch-alias` を Preview 完了条件に維持。自動 hostname への恒久 `alias set` 固定はしない
-- **確認** — sticky alias 削除後の Git deploy で `ALIASES_ON_DEPLOY` に branch alias が再登録されたことを API で確認
 
 ## 2026-07-22 — Preview: branch alias 追従を完了条件に固定
 
