@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <rect width="640" height="360" fill="#eff6ff"/>
+  <rect x="120" y="50" width="400" height="260" rx="20" fill="#fff" stroke="#93c5fd" stroke-width="3" transform="rotate(-2 320 180)"/>
+  <rect x="140" y="70" width="360" height="220" rx="16" fill="#dbeafe"/>
+  <text x="320" y="160" text-anchor="middle" fill="#1e3a8a" font-size="20" font-family="sans-serif">光合成とは？</text>
+  <text x="320" y="200" text-anchor="middle" fill="#3b82f6" font-size="14" font-family="sans-serif">タップして答えを表示</text>
+  <rect x="200" y="240" width="100" height="32" rx="8" fill="#ef4444" opacity="0.85"/>
+  <rect x="340" y="240" width="100" height="32" rx="8" fill="#22c55e" opacity="0.85"/>
+</svg>

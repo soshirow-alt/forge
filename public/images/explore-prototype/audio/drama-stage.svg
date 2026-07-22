@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="stage" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4c0519"/><stop offset="100%" stop-color="#1c1917"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#stage)"/>
+  <path d="M80 40 Q320 100 560 40 L560 80 Q320 140 80 80Z" fill="#7f1d1d" opacity="0.8"/>
+  <rect x="100" y="160" width="440" height="120" rx="8" fill="#292524" stroke="#fbbf24" stroke-width="2"/>
+  <text x="320" y="210" text-anchor="middle" fill="#fde68a" font-size="20" font-family="serif">夜汽車の対話</text>
+  <text x="320" y="245" text-anchor="middle" fill="#a8a29e" font-size="13" font-family="sans-serif">音声ドラマ · 第1話</text>
+  <g fill="#fbbf24" opacity="0.4">
+    <circle cx="160" cy="100" r="8"/><circle cx="480" cy="100" r="8"/>
+  </g>
+</svg>

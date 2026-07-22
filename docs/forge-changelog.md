@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-22 — Preview: Exploreカテゴリ別ページ＋作品カード Prototype
+
+- **ルート（Preview専用）** — `/explore/prototype`（→ game redirect）/ `game` / `audio` / `dev-tool` / `service-app`
+- **体験** — カテゴリを選ぶ → 棚（注目／最近更新／新着）で一覧 → サムネとカード情報で内容を把握 → 「遊ぶ／聴く／利用する」判断。詳細はトーストのみ（正式詳細・DB・検索・本番は未着手）
+- **サムネ** — カテゴリ差・作品差が分かるローカルSVG（個別＋カテゴリ別fallback）。remote / data URI なし
+- **非対象** — `/home` 置換、正式カード改修、Supabase、main / Production
+
 ## 2026-07-22 — Preview: branch alias 自動追従を復旧
 
 - **原因** — 自動 branch alias が `94f9a47`（`dpl_6gLpwLx…`）に sticky。以降 Ready は `aliasAssigned:true` でも `/deployments/<id>/aliases` が空で hostname が動かなかった。open PR 紐付けも再付与を不安定化

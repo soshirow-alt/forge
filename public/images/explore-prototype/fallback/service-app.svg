@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <rect width="640" height="360" fill="#1e1b4b"/>
+  <rect x="200" y="50" width="240" height="220" rx="28" fill="#312e81" stroke="#c4b5fd" stroke-width="3"/>
+  <rect x="220" y="80" width="200" height="150" rx="8" fill="#1e1b4b"/>
+  <rect x="235" y="100" width="80" height="40" rx="6" fill="#7c3aed"/>
+  <rect x="325" y="100" width="80" height="40" rx="6" fill="#5b21b6"/>
+  <rect x="235" y="155" width="170" height="50" rx="6" fill="#4c1d95"/>
+  <text x="320" y="310" text-anchor="middle" fill="#ddd6fe" font-size="16" font-family="sans-serif">Webサービス・アプリ</text>
+</svg>

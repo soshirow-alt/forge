@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <rect width="640" height="360" fill="#0c0a12"/>
+  <g stroke="#6366f1" stroke-width="2">
+    <line x1="160" y1="120" x2="280" y2="180"/><line x1="160" y1="240" x2="280" y2="180"/>
+    <line x1="380" y1="180" x2="500" y2="120"/><line x1="380" y1="180" x2="500" y2="240"/>
+  </g>
+  <rect x="60" y="90" width="100" height="60" rx="10" fill="#312e81" stroke="#818cf8" stroke-width="2"/>
+  <text x="110" y="125" text-anchor="middle" fill="#e0e7ff" font-size="12" font-family="sans-serif">入力</text>
+  <rect x="60" y="210" width="100" height="60" rx="10" fill="#134e4a" stroke="#2dd4bf" stroke-width="2"/>
+  <text x="110" y="245" text-anchor="middle" fill="#ccfbf1" font-size="12" font-family="sans-serif">設定</text>
+  <rect x="280" y="150" width="100" height="60" rx="10" fill="#4c1d95" stroke="#c084fc" stroke-width="2"/>
+  <text x="330" y="185" text-anchor="middle" fill="#f3e8ff" font-size="12" font-family="sans-serif">変換</text>
+  <rect x="500" y="90" width="100" height="60" rx="10" fill="#1e3a8a" stroke="#60a5fa" stroke-width="2"/>
+  <text x="550" y="125" text-anchor="middle" fill="#dbeafe" font-size="12" font-family="sans-serif">出力</text>
+  <rect x="500" y="210" width="100" height="60" rx="10" fill="#7f1d1d" stroke="#f87171" stroke-width="2"/>
+  <text x="550" y="245" text-anchor="middle" fill="#fecaca" font-size="12" font-family="sans-serif">ログ</text>
+</svg>

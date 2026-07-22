@@ -64,7 +64,11 @@ function subNavLinkClass(active: boolean) {
 function isPrimaryLinkActive(linkId: (typeof primaryLinks)[number]["id"], pathname: string): boolean {
   switch (linkId) {
     case "home":
-      return pathname === "/home" || pathname.startsWith("/prototype");
+      return (
+        pathname === "/home" ||
+        pathname.startsWith("/prototype") ||
+        pathname.startsWith("/explore")
+      );
     case "search":
       return pathname === "/search";
     case "creator-search":
