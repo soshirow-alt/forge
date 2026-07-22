@@ -6,10 +6,10 @@
 
 ## 2026-07-22 — Preview: branch alias 追従を完了条件に固定
 
-- **原因** — `preview/landing-01` への Git push 後もオーナー確認用 branch alias が旧 Ready（`94f9a47`）のまま残り、unique deploy URL だけが新コードを配信していた
-- **恒久** — Preview 完了は alias 上の bundle 検査（`npm run verify:preview-branch-alias`）まで。自動 git hostname への `vercel alias set` 固定を禁止。復旧手順は `docs/vercel-preview-project.md`
+- **原因（根拠）** — `preview/landing-01` への Git Integration Preview は Ready になり続けていたが、オーナー確認用 hostname `forge-git-preview-landing-01-…` の配信 bundle が **`94f9a47` / `forge-7bw0ovb6b` / dashboard `6gLpwLxZoo8z9XRuycQVx8gMVyHi` と byte 一致のまま固定**。`9295fac`・`da82b70` の unique URL は新 helper を配信。追加 push でも alias は更新されず、自動 git branch alias ではなく **特定 Deployment 固定相当**の状態
+- **恒久** — Preview 完了は alias 上の bundle 検査（`npm run verify:preview-branch-alias`）まで。自動 git hostname への `vercel alias set` 固定を禁止。Domains で Git Branch=`preview/landing-01` に戻す復旧手順は `docs/vercel-preview-project.md`
 - **運用** — `docs/forge-triage-operations.md` §8.1 の Preview 完了条件を alias 追従必須に更新
-
+- **今回** — 最新コードは `da82b70`（Git deploy `forge-cin927fun` / `4dyeE3GJ5FkvQh7YMtMW4mUreQ5d`）。alias 更新は Dashboard の Domains 再割当（一度きり）が必要（この環境に Vercel 認証なし）
 ## 2026-07-21 — Preview: 新規投稿導線の実クリック経路を修正＋alias再デプロイ
 
 - **原因** — Preview alias が入口修正commitを配信しておらず、実クリックは旧 `/studio/submit` helper のまま
