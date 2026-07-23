@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { ExplorePrototypeHomePage } from "@/components/explore-prototype/explore-prototype-home-page";
 
 export default function ExplorePrototypeIndexPage() {
-  redirect("/explore/prototype/game");
+  return <ExplorePrototypeHomePage />;
 }

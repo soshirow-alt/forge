@@ -1560,10 +1560,22 @@ export function getExplorePrototypeShelves(
   const newest = [...works].sort(byPublishedDesc).slice(0, 4);
 
   return [
-    { id: "featured", title: "注目作品", works: featured },
+    { id: "featured", title: "注目の作品", works: featured },
     { id: "updated", title: "最近更新", works: updated },
     { id: "newest", title: "新着作品", works: newest },
   ];
+}
+
+/**
+ * Explore hub: one representative featured work per category (4 total).
+ */
+export function getExplorePrototypeHomeFeatured(): ExplorePrototypeWork[] {
+  return EXPLORE_PROTOTYPE_CATEGORY_SLUGS.map((slug) => {
+    const featured = getExplorePrototypeWorks(slug)
+      .filter((work) => work.featured)
+      .sort(byEngagementDesc);
+    return featured[0] ?? getExplorePrototypeWorks(slug)[0];
+  }).filter((work): work is ExplorePrototypeWork => Boolean(work));
 }
 
 export function getExplorePrototypeCtaLabel(

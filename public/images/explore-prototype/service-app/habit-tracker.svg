@@ -1,18 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
-  <rect width="640" height="360" fill="#ecfdf5"/>
-  <rect x="80" y="40" width="480" height="280" rx="24" fill="#fff" stroke="#a7f3d0" stroke-width="3"/>
-  <text x="320" y="90" text-anchor="middle" fill="#065f46" font-size="22" font-family="sans-serif">今日の習慣</text>
+  <rect width="640" height="360" fill="#a7f3d0"/>
+  <rect x="70" y="32" width="500" height="296" rx="24" fill="#ecfdf5" stroke="#059669" stroke-width="3"/>
+  <text x="320" y="88" text-anchor="middle" fill="#064e3b" font-size="26" font-family="sans-serif">今日の習慣</text>
   
-    <rect x="120" y="120" width="400" height="42" rx="10" fill="#f0fdf4" stroke="#6ee7b7"/>
-    <circle cx="150" cy="141" r="12" fill="#10b981" stroke="#059669" stroke-width="2"/>
-    <text x="180" y="147" fill="#064e3b" font-size="16" font-family="sans-serif">水分</text>
+    <rect x="110" y="120" width="420" height="46" rx="12" fill="#fff" stroke="#059669" stroke-width="2"/>
+    <circle cx="145" cy="143" r="14" fill="#059669" stroke="#047857" stroke-width="3"/>
+    <text x="180" y="150" fill="#064e3b" font-size="20" font-family="sans-serif">水分</text>
   
-    <rect x="120" y="175" width="400" height="42" rx="10" fill="#d1fae5" stroke="#6ee7b7"/>
-    <circle cx="150" cy="196" r="12" fill="#10b981" stroke="#059669" stroke-width="2"/>
-    <text x="180" y="202" fill="#064e3b" font-size="16" font-family="sans-serif">読書</text>
+    <rect x="110" y="178" width="420" height="46" rx="12" fill="#6ee7b7" stroke="#059669" stroke-width="2"/>
+    <circle cx="145" cy="201" r="14" fill="#059669" stroke="#047857" stroke-width="3"/>
+    <text x="180" y="208" fill="#064e3b" font-size="20" font-family="sans-serif">読書</text>
   
-    <rect x="120" y="230" width="400" height="42" rx="10" fill="#f0fdf4" stroke="#6ee7b7"/>
-    <circle cx="150" cy="251" r="12" fill="#fff" stroke="#059669" stroke-width="2"/>
-    <text x="180" y="257" fill="#064e3b" font-size="16" font-family="sans-serif">散歩</text>
+    <rect x="110" y="236" width="420" height="46" rx="12" fill="#fff" stroke="#059669" stroke-width="2"/>
+    <circle cx="145" cy="259" r="14" fill="#fff" stroke="#047857" stroke-width="3"/>
+    <text x="180" y="266" fill="#064e3b" font-size="20" font-family="sans-serif">散歩</text>
   
 </svg>

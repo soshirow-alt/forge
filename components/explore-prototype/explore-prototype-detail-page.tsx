@@ -6,6 +6,7 @@ import {
 } from "@/components/explore-prototype/explore-prototype-detail-cta";
 import { ExplorePrototypeNav } from "@/components/explore-prototype/explore-prototype-nav";
 import { ExplorePrototypeRelatedCard } from "@/components/explore-prototype/explore-prototype-related-card";
+import { ExplorePrototypeThumb } from "@/components/explore-prototype/explore-prototype-thumb";
 import type { ExplorePrototypeWork } from "@/lib/prototype/explore-prototype";
 import {
   getExplorePrototypeCategory,
@@ -166,14 +167,12 @@ export function ExplorePrototypeDetailPage({
 
       {/* Hero: image + action column */}
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.9fr)] lg:items-start">
-        <div className="relative aspect-video overflow-hidden rounded-2xl border border-zinc-800/90 bg-zinc-950 shadow-lg shadow-black/25">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={thumb.src}
-            alt={work.thumbnailAlt}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        </div>
+        <ExplorePrototypeThumb
+          src={thumb.src}
+          alt={work.thumbnailAlt}
+          fit="contain"
+          frameClassName="aspect-video rounded-2xl border border-zinc-700/80 shadow-lg shadow-black/25"
+        />
 
         <div className="space-y-4 rounded-2xl border border-zinc-800/90 bg-zinc-900/40 p-4 sm:p-5">
           <div className="space-y-2">

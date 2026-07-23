@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07-23 — Preview: Explore Prototype サムネ視認性修復
+
+- **原因** — ローカル SVG が黒寄りの面が多く、暗いカード枠（`bg-zinc-950`）に同化して作品差が判別しづらかった
+- **asset** — `public/images/explore-prototype/**` 全24件（個別20＋fallback4）を高コントラストに作り直し（Forge紫トーン維持・カテゴリ差が画像だけで分かる構図）
+- **表示** — 共通 `ExplorePrototypeThumb`（紫系フレーム背景）。一覧/関連は `object-cover`、詳細は `object-contain`
+- **ホーム** — `/explore/prototype` を redirect から横断ハブへ。注目の作品4件＝各カテゴリ代表1件
+- **非対象** — `/home`・正式ゲーム・Studio・DB・OGP・main / Production
+
 ## 2026-07-23 — Preview: Explore Prototype 作品詳細ページ
 
 - **ルート** — `/explore/prototype/[category]/[slug]`（24作品を静的生成）。不正 category / slug / カテゴリ不一致は `notFound()`

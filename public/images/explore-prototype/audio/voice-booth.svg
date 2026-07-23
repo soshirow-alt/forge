@@ -1,11 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
-  <rect width="640" height="360" fill="#18181b"/>
-  <rect x="180" y="50" width="280" height="260" rx="20" fill="#27272a" stroke="#a1a1aa" stroke-width="2"/>
-  <rect x="210" y="80" width="220" height="140" rx="8" fill="#0f172a"/>
-  <ellipse cx="320" cy="150" rx="50" ry="40" fill="none" stroke="#f472b6" stroke-width="4"/>
-  <rect x="300" y="188" width="40" height="50" rx="8" fill="#52525b"/>
-  <rect x="250" y="250" width="140" height="28" rx="6" fill="#3f3f46"/>
-  <circle cx="280" cy="264" r="6" fill="#ef4444"/><circle cx="320" cy="264" r="6" fill="#22c55e"/><circle cx="360" cy="264" r="6" fill="#3b82f6"/>
-  <path d="M120 200 Q160 120 200 180" fill="none" stroke="#c084fc" stroke-width="3" opacity="0.6"/>
-  <path d="M440 180 Q480 100 520 200" fill="none" stroke="#c084fc" stroke-width="3" opacity="0.6"/>
+  <rect width="640" height="360" fill="#a78bfa"/>
+  <rect x="160" y="36" width="320" height="288" rx="22" fill="#6b7280" stroke="#fafafa" stroke-width="3"/>
+  <rect x="190" y="70" width="260" height="150" rx="10" fill="#312e81" stroke="#f0abfc" stroke-width="4"/>
+  <ellipse cx="320" cy="140" rx="58" ry="46" fill="none" stroke="#fb7185" stroke-width="8"/>
+  <rect x="296" y="182" width="48" height="56" rx="10" fill="#e4e4e7"/>
+  <rect x="230" y="255" width="180" height="36" rx="8" fill="#3f3f46" stroke="#fafafa" stroke-width="2"/>
+  <circle cx="270" cy="273" r="10" fill="#f87171"/><circle cx="320" cy="273" r="10" fill="#4ade80"/><circle cx="370" cy="273" r="10" fill="#60a5fa"/>
+  <path d="M90 200 Q140 100 190 170" fill="none" stroke="#fdf4ff" stroke-width="6"/>
+  <path d="M450 170 Q500 90 550 200" fill="none" stroke="#fdf4ff" stroke-width="6"/>
+  <text x="320" y="330" text-anchor="middle" fill="#1e1b4b" font-size="16" font-family="sans-serif">VOICE BOOTH</text>
 </svg>

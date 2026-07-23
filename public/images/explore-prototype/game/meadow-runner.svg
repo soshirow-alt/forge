@@ -1,21 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#7dd3fc"/><stop offset="55%" stop-color="#86efac"/><stop offset="100%" stop-color="#166534"/>
+      <stop offset="0%" stop-color="#bae6fd"/><stop offset="45%" stop-color="#86efac"/><stop offset="100%" stop-color="#22c55e"/>
     </linearGradient>
   </defs>
   <rect width="640" height="360" fill="url(#sky)"/>
-  <ellipse cx="480" cy="70" rx="48" ry="28" fill="#fef9c3" opacity="0.9"/>
-  <path d="M0 220 Q160 180 320 220 T640 200 L640 360 L0 360Z" fill="#15803d"/>
-  <path d="M0 260 Q200 230 400 270 T640 250 L640 360 L0 360Z" fill="#14532d"/>
-  <circle cx="180" cy="210" r="28" fill="#fde68a" stroke="#92400e" stroke-width="3"/>
-  <circle cx="168" cy="204" r="4" fill="#451a03"/><circle cx="192" cy="204" r="4" fill="#451a03"/>
-  <path d="M170 218 Q180 226 190 218" fill="none" stroke="#92400e" stroke-width="2"/>
-  <rect x="168" y="236" width="24" height="30" rx="6" fill="#fbbf24"/>
-  <g fill="#22c55e" opacity="0.85">
-    <ellipse cx="90" cy="250" rx="18" ry="10"/><ellipse cx="120" cy="255" rx="14" ry="8"/>
-    <ellipse cx="420" cy="240" rx="22" ry="12"/><ellipse cx="520" cy="255" rx="16" ry="9"/>
+  <ellipse cx="500" cy="64" rx="56" ry="32" fill="#fef08a"/>
+  <path d="M0 200 Q160 150 320 200 T640 180 L640 360 L0 360Z" fill="#16a34a"/>
+  <path d="M0 250 Q200 210 400 260 T640 240 L640 360 L0 360Z" fill="#15803d"/>
+  <circle cx="170" cy="195" r="34" fill="#fde68a" stroke="#92400e" stroke-width="4"/>
+  <circle cx="156" cy="188" r="5" fill="#451a03"/><circle cx="186" cy="188" r="5" fill="#451a03"/>
+  <path d="M156 206 Q170 218 186 206" fill="none" stroke="#92400e" stroke-width="3"/>
+  <rect x="152" y="226" width="36" height="40" rx="8" fill="#fbbf24" stroke="#b45309" stroke-width="2"/>
+  <g fill="#4ade80">
+    <ellipse cx="80" cy="245" rx="22" ry="12"/><ellipse cx="120" cy="255" rx="18" ry="10"/>
+    <ellipse cx="430" cy="235" rx="26" ry="14"/><ellipse cx="540" cy="250" rx="20" ry="11"/>
   </g>
-  <rect x="300" y="160" width="16" height="70" fill="#78350f"/>
-  <circle cx="308" cy="150" r="28" fill="#166534"/>
+  <rect x="300" y="140" width="20" height="80" fill="#92400e"/>
+  <circle cx="310" cy="128" r="36" fill="#166534"/>
+  <rect x="40" y="300" width="180" height="36" rx="8" fill="#1e1b4b" opacity="0.85"/>
+  <text x="130" y="324" text-anchor="middle" fill="#f5f3ff" font-size="16" font-family="sans-serif">SCORE 1280</text>
 </svg>

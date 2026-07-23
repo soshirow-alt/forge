@@ -1,12 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
-  <rect width="640" height="360" fill="#0c4a6e"/>
-  <rect x="0" y="200" width="640" height="160" fill="#075985"/>
-  <path d="M0 220 L120 180 L240 210 L360 160 L480 200 L640 170 L640 360 L0 360Z" fill="#166534" opacity="0.7"/>
-  <rect x="80" y="140" width="70" height="70" fill="#92400e"/><polygon points="80,140 115,110 150,140" fill="#b91c1c"/>
-  <rect x="220" y="120" width="90" height="90" fill="#a16207"/><polygon points="220,120 265,85 310,120" fill="#ca8a04"/>
-  <rect x="400" y="150" width="60" height="55" fill="#7c2d12"/>
-  <rect x="500" y="110" width="80" height="100" fill="#1e3a8a"/><rect x="520" y="130" width="18" height="18" fill="#93c5fd"/>
-  <path d="M40 280 Q200 250 320 290 T600 270" fill="none" stroke="#fde68a" stroke-width="8" stroke-linecap="round"/>
-  <circle cx="200" cy="265" r="10" fill="#fbbf24" stroke="#fff" stroke-width="2"/>
-  <circle cx="420" cy="278" r="8" fill="#38bdf8" stroke="#fff" stroke-width="2"/>
+  <rect width="640" height="360" fill="#0284c7"/>
+  <rect x="0" y="190" width="640" height="170" fill="#0369a1"/>
+  <path d="M0 210 L120 165 L240 200 L360 145 L480 190 L640 155 L640 360 L0 360Z" fill="#22c55e"/>
+  <rect x="70" y="125" width="80" height="80" fill="#b45309"/><polygon points="70,125 110,90 150,125" fill="#ef4444"/>
+  <rect x="210" y="105" width="100" height="100" fill="#ca8a04"/><polygon points="210,105 260,65 310,105" fill="#eab308"/>
+  <rect x="390" y="135" width="70" height="65" fill="#9a3412"/>
+  <rect x="490" y="95" width="90" height="110" fill="#1d4ed8"/><rect x="512" y="120" width="22" height="22" fill="#bfdbfe"/>
+  <path d="M36 275 Q200 240 320 285 T600 260" fill="none" stroke="#fef08a" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="200" cy="258" r="14" fill="#fbbf24" stroke="#fff" stroke-width="3"/>
+  <circle cx="430" cy="272" r="12" fill="#38bdf8" stroke="#fff" stroke-width="3"/>
+  <rect x="20" y="20" width="160" height="36" rx="8" fill="#1e1b4b"/>
+  <text x="100" y="44" text-anchor="middle" fill="#f5f3ff" font-size="16" font-family="sans-serif">街マップ</text>
 </svg>

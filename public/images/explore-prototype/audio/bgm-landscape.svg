@@ -1,14 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
   <defs>
     <linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#1e3a8a"/><stop offset="40%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#0f172a"/>
+      <stop offset="0%" stop-color="#818cf8"/><stop offset="45%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#4c1d95"/>
     </linearGradient>
   </defs>
   <rect width="640" height="360" fill="url(#dusk)"/>
-  <circle cx="480" cy="90" rx="40" fill="#fde68a" opacity="0.85"/>
-  <path d="M0 220 L80 160 L160 200 L240 140 L320 190 L400 130 L480 180 L560 150 L640 200 L640 360 L0 360Z" fill="#1e1b4b"/>
-  <path d="M0 280 Q160 240 320 280 T640 260 L640 360 L0 360Z" fill="#0f172a"/>
-  <g stroke="#a78bfa" stroke-width="2" fill="none" opacity="0.7">
-    <path d="M60 300 Q100 260 140 300 T220 300"/><path d="M280 310 Q320 270 360 310 T440 310"/>
+  <circle cx="480" cy="80" r="48" fill="#fde68a"/>
+  <path d="M0 200 L80 140 L160 185 L240 120 L320 175 L400 110 L480 165 L560 130 L640 180 L640 360 L0 360Z" fill="#6366f1"/>
+  <path d="M0 260 Q160 220 320 265 T640 245 L640 360 L0 360Z" fill="#312e81"/>
+  <g stroke="#f5f3ff" stroke-width="4" fill="none">
+    <path d="M50 290 Q100 240 150 290 T250 290"/><path d="M280 300 Q330 250 380 300 T480 300"/><path d="M500 285 Q540 250 580 285"/>
   </g>
+  <rect x="24" y="24" width="140" height="36" rx="8" fill="#1e1b4b"/>
+  <text x="94" y="48" text-anchor="middle" fill="#e9d5ff" font-size="15" font-family="sans-serif">BGM · LOOP</text>
 </svg>

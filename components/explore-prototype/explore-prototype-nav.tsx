@@ -10,7 +10,8 @@ import {
 export function ExplorePrototypeNav({
   active,
 }: {
-  active: ExplorePrototypeCategorySlug;
+  /** null = hub `/explore/prototype` (no category selected) */
+  active: ExplorePrototypeCategorySlug | null;
 }) {
   return (
     <nav

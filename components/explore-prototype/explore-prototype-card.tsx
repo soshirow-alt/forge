@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MessageSquare, Users } from "lucide-react";
+import { ExplorePrototypeThumb } from "@/components/explore-prototype/explore-prototype-thumb";
 import type { ExplorePrototypeWork } from "@/lib/prototype/explore-prototype";
 import {
   getExplorePrototypeCtaLabel,
@@ -136,15 +137,12 @@ export function ExplorePrototypeCard({ work }: ExplorePrototypeCardProps) {
         className="flex w-full min-w-0 flex-1 flex-col text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
         aria-label={`${work.title}の詳細`}
       >
-        <div className="relative aspect-video overflow-hidden bg-zinc-950">
-          {/* Local SVG assets — img avoids next/image SVG optimizer constraints */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={thumb.src}
-            alt={work.thumbnailAlt}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        </div>
+        <ExplorePrototypeThumb
+          src={thumb.src}
+          alt={work.thumbnailAlt}
+          fit="cover"
+          frameClassName="aspect-video"
+        />
 
         <div className="flex flex-1 flex-col gap-2 p-3 sm:p-3.5">
           <div className="min-w-0 space-y-1">

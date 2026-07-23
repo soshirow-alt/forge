@@ -1,14 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
-  <rect width="640" height="360" fill="#0f172a"/>
-  <rect x="40" y="36" width="560" height="288" rx="12" fill="#1e293b" stroke="#64748b" stroke-width="2"/>
-  <rect x="40" y="36" width="560" height="36" rx="12" fill="#334155"/>
-  <circle cx="64" cy="54" r="6" fill="#f87171"/><circle cx="84" cy="54" r="6" fill="#fbbf24"/><circle cx="104" cy="54" r="6" fill="#4ade80"/>
-  <rect x="140" y="46" width="280" height="16" rx="4" fill="#0f172a"/>
-  <rect x="70" y="100" width="200" height="160" rx="8" fill="#0f172a" stroke="#38bdf8"/>
-  <text x="170" y="140" text-anchor="middle" fill="#94a3b8" font-size="14" font-family="sans-serif">JSON</text>
-  <rect x="90" y="160" width="160" height="10" rx="2" fill="#334155"/><rect x="90" y="180" width="120" height="10" rx="2" fill="#334155"/>
-  <polygon points="300,170 330,185 300,200" fill="#818cf8"/>
-  <rect x="360" y="100" width="200" height="160" rx="8" fill="#0f172a" stroke="#a78bfa"/>
-  <text x="460" y="140" text-anchor="middle" fill="#c4b5fd" font-size="14" font-family="sans-serif">CSV</text>
-  <rect x="380" y="160" width="160" height="10" rx="2" fill="#4c1d95"/><rect x="380" y="180" width="100" height="10" rx="2" fill="#4c1d95"/>
+  <rect width="640" height="360" fill="#334155"/>
+  <rect x="32" y="28" width="576" height="304" rx="14" fill="#475569" stroke="#e2e8f0" stroke-width="3"/>
+  <rect x="32" y="28" width="576" height="44" rx="14" fill="#64748b"/>
+  <circle cx="60" cy="50" r="8" fill="#f87171"/><circle cx="86" cy="50" r="8" fill="#fbbf24"/><circle cx="112" cy="50" r="8" fill="#4ade80"/>
+  <rect x="150" y="40" width="300" height="20" rx="6" fill="#1e293b"/>
+  <text x="160" y="55" fill="#94a3b8" font-size="12" font-family="sans-serif">convert.app</text>
+  <rect x="60" y="100" width="210" height="180" rx="10" fill="#0f172a" stroke="#38bdf8" stroke-width="3"/>
+  <text x="165" y="145" text-anchor="middle" fill="#7dd3fc" font-size="22" font-family="sans-serif">JSON</text>
+  <rect x="85" y="170" width="160" height="14" rx="3" fill="#38bdf8"/><rect x="85" y="198" width="120" height="14" rx="3" fill="#7dd3fc"/>
+  <polygon points="300,175 340,195 300,215" fill="#c4b5fd"/>
+  <rect x="370" y="100" width="210" height="180" rx="10" fill="#1e1b4b" stroke="#c084fc" stroke-width="3"/>
+  <text x="475" y="145" text-anchor="middle" fill="#e9d5ff" font-size="22" font-family="sans-serif">CSV</text>
+  <rect x="395" y="170" width="160" height="14" rx="3" fill="#a78bfa"/><rect x="395" y="198" width="110" height="14" rx="3" fill="#c4b5fd"/>
 </svg>

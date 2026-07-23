@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ExplorePrototypeThumb } from "@/components/explore-prototype/explore-prototype-thumb";
 import type { ExplorePrototypeWork } from "@/lib/prototype/explore-prototype";
 import {
   getExplorePrototypeCtaLabel,
@@ -31,14 +32,12 @@ export function ExplorePrototypeRelatedCard({
         href={href}
         className="flex min-w-0 flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-inset"
       >
-        <div className="relative aspect-[16/10] overflow-hidden bg-zinc-950">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={thumb.src}
-            alt={work.thumbnailAlt}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        </div>
+        <ExplorePrototypeThumb
+          src={thumb.src}
+          alt={work.thumbnailAlt}
+          fit="cover"
+          frameClassName="aspect-[16/10]"
+        />
         <div className="space-y-1.5 p-3">
           <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-zinc-50">
             {work.title}
