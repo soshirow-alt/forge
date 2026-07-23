@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-07-23 — Production: OGP派生アップロード再発防止を反映（Phase 3C）
+
+- **反映** — Phase 3A の Storage upload バイナリガード（exact-length ArrayBuffer・pre/post 検証・成功後のみ `og_image_url` 確定）を main / Production へ
+- **非変更** — 既存 Storage object・破損7件は未修復のまま。DB/Storage write・修復 execute なし
+- **目的** — 今後のサムネ更新／再派生で UTF-8 破損 JPEG が保存されることを防ぐ
+
 ## 2026-07-23 — Staging: OGP派生アップロード canary（Phase 3B）
 
 - **対象** — Staging（`vuqpwvjvgyxffmvpfrxo`）テスト作品 Comet Rush のみ（`dddddddd-dddd-4ddd-8ddd-000000000206`）
