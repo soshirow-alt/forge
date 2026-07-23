@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-07-23 — Production: OGP派生アップロード再発防止を反映（Phase 3C）
+
+## 2026-07-23 — Preview/Production準備: OGP派生アップロードの再発防止（Phase 3A）
+
+- **防御** — Storage upload 直前に exact-length `ArrayBuffer` のみ許可。upload 前 JPEG 検証（SOI・1200×630・sharp・UTF-8置換prefix拒否）。upload 後バイナリ再取得で SHA/長さ/バイト一致確認後のみ成功。`og_image_url` は検証成功後のみ更新
+- **検証** — `npm run verify:og-derive-upload-guards`（Production 破損再現 fixture 含む）
+
+- **反映** — Phase 3A の Storage upload バイナリガード（exact-length ArrayBuffer・pre/post 検証・成功後のみ `og_image_url` 確定）を main / Production へ
+- **非変更** — 既存 Storage object・破損7件は未修復のまま。DB/Storage write・修復 execute なし
+- **目的** — 今後のサムネ更新／再派生で UTF-8 破損 JPEG が保存されることを防ぐ
+
 ## 2026-07-17 — Production hotfix: みんなのフィードバック全ver表示
 
 - **初期表示** — 作品詳細「みんなのフィードバック」を最新ver固定から「すべて」へ変更。タブ件数と同じ全バージョン対象で、旧verにだけFBがある作品でも初期表示が空にならない

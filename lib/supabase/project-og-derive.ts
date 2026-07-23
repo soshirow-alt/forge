@@ -12,6 +12,14 @@ import {
   sha256Hex,
   sniffThumbnailImageMime,
 } from "@/lib/project-thumbnail-upload-rules";
+import {
+  assertExactArrayBufferUploadBody,
+  assertFetchedOgJpegMatches,
+  assertValidOgJpegBytes,
+  toExactArrayBuffer,
+  toUint8Array,
+  type BinaryOgImage,
+} from "@/lib/supabase/project-og-image-binary";
 import { publicObjectUrl } from "@/lib/supabase/project-thumbnail-storage";
 
 export { OG_IMAGE_HEIGHT, OG_IMAGE_MIME, OG_IMAGE_WIDTH } from "@/lib/og-image-constants";
@@ -39,6 +47,7 @@ export async function loadHttpsImageBytes(url: string): Promise<Uint8Array> {
   if (!response.ok) {
     throw new Error(`OGP source fetch failed: ${response.status}`);
   }
+  // Binary only — never response.text()
   const bytes = new Uint8Array(await response.arrayBuffer());
   if (
     bytes.byteLength === 0 ||
@@ -83,8 +92,48 @@ export async function renderOgCoverJpeg(
 }
 
 /**
+ * Re-fetch the just-uploaded object as binary and verify identity.
+ * Never uses text() / UTF-8 decode.
+ */
+async function downloadOgObjectBinary(
+  admin: SupabaseClient,
+  objectPath: string,
+): Promise<BinaryOgImage> {
+  const { data, error } = await admin.storage
+    .from(PROJECT_THUMBNAILS_BUCKET)
+    .download(objectPath);
+
+  if (error || !data) {
+    throw new Error(
+      `OG post-upload download failed: ${error?.message ?? "empty body"}`,
+    );
+  }
+
+  if (typeof data === "string") {
+    throw new Error("OG post-upload download returned string (forbidden)");
+  }
+
+  if (typeof Blob !== "undefined" && data instanceof Blob) {
+    const type = (data.type || "").split(";")[0]?.trim().toLowerCase() ?? "";
+    if (type && type !== OG_IMAGE_MIME && type !== "image/jpg") {
+      throw new Error(
+        `OG post-upload content-type ${data.type}, expected ${OG_IMAGE_MIME}`,
+      );
+    }
+    return toExactArrayBuffer(await data.arrayBuffer());
+  }
+
+  return toExactArrayBuffer(data as unknown as BinaryOgImage);
+}
+
+/**
  * Upload derived OG JPEG via service-role client and return public HTTPS URL.
- * Caller updates projects.og_image_url only after this succeeds.
+ *
+ * Order (must not update projects.og_image_url inside this function):
+ * 1) pre-upload JPEG validation
+ * 2) exact-length ArrayBuffer upload (never Node Buffer / string)
+ * 3) post-upload binary re-fetch + SHA/length/byte identity
+ * 4) return public URL — caller commits og_image_url only after this resolves
  */
 export async function uploadDerivedOgImage(
   admin: SupabaseClient,
@@ -93,10 +142,28 @@ export async function uploadDerivedOgImage(
   sourceHash16: string,
 ): Promise<DerivedOgImage> {
   assertServerRuntime();
+
+  // 1) Pre-upload validation — rejects UTF-8 corruption / wrong dims / string
+  const pre = await assertValidOgJpegBytes(jpeg);
+
+  // 2) Exact-length ArrayBuffer — do not pass Node Buffer (byteOffset / spare capacity)
+  const uploadBody = toExactArrayBuffer(jpeg);
+  assertExactArrayBufferUploadBody(uploadBody);
+
+  const expectedBytes = toUint8Array(uploadBody);
+  if (expectedBytes.byteLength !== pre.byteLength) {
+    throw new Error("OG upload body length diverged from pre-upload validation");
+  }
+  for (let i = 0; i < expectedBytes.byteLength; i += 1) {
+    if (expectedBytes[i] !== pre.bytes[i]) {
+      throw new Error("OG upload body bytes diverged from pre-upload validation");
+    }
+  }
+
   const objectPath = `${projectId}/og-${sourceHash16}-1200x630.jpg`;
   const { error } = await admin.storage
     .from(PROJECT_THUMBNAILS_BUCKET)
-    .upload(objectPath, jpeg, {
+    .upload(objectPath, uploadBody, {
       contentType: OG_IMAGE_MIME,
       upsert: true,
       cacheControl: "3600",
@@ -104,6 +171,15 @@ export async function uploadDerivedOgImage(
   if (error) {
     throw new Error(error.message || "OGP upload failed");
   }
+
+  // 3) Post-upload binary re-fetch + identity check (before any DB URL commit)
+  const fetched = await downloadOgObjectBinary(admin, objectPath);
+  await assertFetchedOgJpegMatches(fetched, {
+    expectedSha256Hex: pre.sha256Hex,
+    expectedByteLength: pre.byteLength,
+    expectedBytes: pre.bytes,
+  }, OG_IMAGE_MIME);
+
   const url = publicObjectUrl(admin, objectPath);
   if (!isHttpsThumbnailUrl(url)) {
     throw new Error("invalid OGP public url");

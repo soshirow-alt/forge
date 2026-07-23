@@ -20,6 +20,7 @@
     "verify:submit-auth-utils": "npx --yes tsx scripts/verify-submit-auth-utils.ts",
     "verify:minimal-readonly-ogp": "npx --yes tsx scripts/verify-minimal-readonly-ogp.ts",
     "verify:ogp-publish-thumbnail-race": "npx --yes tsx scripts/verify-ogp-publish-thumbnail-race.ts",
+    "verify:og-derive-upload-guards": "npx --yes tsx scripts/verify-og-derive-upload-guards.ts",
     "verify:mypage-watch-cards": "npx --yes tsx scripts/verify-mypage-watch-cards.ts",
     "verify:mypage-feedback-history": "npx --yes tsx scripts/verify-mypage-feedback-history.ts",
     "verify:witness:staging": "npx --yes tsx scripts/witness-staging-verify.ts",
