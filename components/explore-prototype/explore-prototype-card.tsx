@@ -1,9 +1,9 @@
-"use client";
-
+import Link from "next/link";
 import { MessageSquare, Users } from "lucide-react";
 import type { ExplorePrototypeWork } from "@/lib/prototype/explore-prototype";
 import {
   getExplorePrototypeCtaLabel,
+  getExplorePrototypeDetailHref,
   resolveExplorePrototypeThumbnail,
   takeChips,
 } from "@/lib/prototype/explore-prototype";
@@ -119,23 +119,22 @@ function KindGenreTags({ work }: { work: ExplorePrototypeWork }) {
 
 type ExplorePrototypeCardProps = {
   work: ExplorePrototypeWork;
-  onOpen: (work: ExplorePrototypeWork) => void;
 };
 
 /**
- * Prototype discovery card — mirrors public card density without touching formal game cards.
+ * Prototype discovery card — whole card + CTA link to detail (no nested interactive).
  */
-export function ExplorePrototypeCard({ work, onOpen }: ExplorePrototypeCardProps) {
+export function ExplorePrototypeCard({ work }: ExplorePrototypeCardProps) {
   const cta = getExplorePrototypeCtaLabel(work.category);
   const thumb = resolveExplorePrototypeThumbnail(work);
+  const href = getExplorePrototypeDetailHref(work);
 
   return (
     <article className="flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-zinc-800/90 bg-zinc-900/40 shadow-lg shadow-black/20">
-      <button
-        type="button"
-        onClick={() => onOpen(work)}
+      <Link
+        href={href}
         className="flex w-full min-w-0 flex-1 flex-col text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
-        aria-label={`${work.title}の詳細（プロトタイプ）`}
+        aria-label={`${work.title}の詳細`}
       >
         <div className="relative aspect-video overflow-hidden bg-zinc-950">
           {/* Local SVG assets — img avoids next/image SVG optimizer constraints */}
@@ -178,17 +177,16 @@ export function ExplorePrototypeCard({ work, onOpen }: ExplorePrototypeCardProps
             <span className="w-full truncate sm:w-auto">{work.updatedLabel}</span>
           </div>
         </div>
-      </button>
+      </Link>
 
       <div className="border-t border-zinc-800/80 px-3 py-2.5 sm:px-3.5">
-        <button
-          type="button"
-          onClick={() => onOpen(work)}
+        <Link
+          href={href}
           aria-label={`${work.title}を${cta}`}
           className="inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-3 py-1.5 text-xs font-semibold text-zinc-950 transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
         >
           {cta}
-        </button>
+        </Link>
       </div>
     </article>
   );

@@ -1,6 +1,3 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import { ExplorePrototypeCard } from "@/components/explore-prototype/explore-prototype-card";
 import { ExplorePrototypeNav } from "@/components/explore-prototype/explore-prototype-nav";
 import {
@@ -9,8 +6,6 @@ import {
   type ExplorePrototypeCategorySlug,
 } from "@/lib/prototype/explore-prototype";
 
-const DETAIL_TOAST = "作品詳細は次の工程で作成します";
-
 export function ExplorePrototypePage({
   category,
 }: {
@@ -18,17 +13,6 @@ export function ExplorePrototypePage({
 }) {
   const meta = getExplorePrototypeCategory(category);
   const shelves = getExplorePrototypeShelves(category);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!toastMessage) return;
-    const timer = window.setTimeout(() => setToastMessage(null), 3200);
-    return () => window.clearTimeout(timer);
-  }, [toastMessage]);
-
-  function handleOpen() {
-    setToastMessage(DETAIL_TOAST);
-  }
 
   if (!meta) {
     return null;
@@ -67,21 +51,12 @@ export function ExplorePrototypePage({
           <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {shelf.works.map((work) => (
               <li key={`${shelf.id}-${work.id}`} className="min-w-0">
-                <ExplorePrototypeCard work={work} onOpen={() => handleOpen()} />
+                <ExplorePrototypeCard work={work} />
               </li>
             ))}
           </ul>
         </section>
       ))}
-
-      {toastMessage ? (
-        <div
-          role="status"
-          className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm text-zinc-200 shadow-lg"
-        >
-          {toastMessage}
-        </div>
-      ) : null}
     </div>
   );
 }

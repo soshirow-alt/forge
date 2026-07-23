@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-23 — Preview: Explore Prototype 作品詳細ページ
+
+- **ルート** — `/explore/prototype/[category]/[slug]`（24作品を静的生成）。不正 category / slug / カテゴリ不一致は `notFound()`
+- **導線** — 一覧カード本体・タイトル・CTA から詳細へ遷移（toast廃止）。詳細の主CTAはカテゴリ別toast（外部接続は次工程）
+- **詳細** — 共通レイアウト＋カテゴリ固有の作品情報。フィードバックサンプル／最新更新／同カテゴリ関連最大3件
+- **非対象** — `/home`・正式 `/games/[id]`・Studio・DB・OGP・Production
+
 ## 2026-07-23 — Preview: Kick Counter OGP修復準備（Phase 3D・手動upload待ち）
 
 - **対象** — Production Kick Counter 1件のみ（UUID `3a2f5a74-…`）。ローカルで修復用 1200×630 JPEG を生成し `.tmp-ogp-repair/` に保持
