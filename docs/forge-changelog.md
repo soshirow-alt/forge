@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-23 — Preview: OGP派生アップロードの再発防止（Phase 3A）
+
+- **背景** — Production 破損7件は「sharp 正常 JPEG → Storage 保存前」で UTF-8 置換バイト化されたものと一致。ローカル sharp 出力は正常
+- **防御** — Storage upload 直前に exact-length `ArrayBuffer` のみ許可（string / Buffer 直渡し拒否）。upload 前 JPEG 検証（SOI・1200×630・sharp・UTF-8置換prefix拒否）。upload 後バイナリ再取得で SHA/長さ/バイト一致を確認してからのみ成功扱い。`og_image_url` 更新は検証成功後のみ（route 既存順を維持）
+- **検証** — `npm run verify:og-derive-upload-guards`（mock Storage・Production 破損再現 fixture）。修復スクリプトは dry-run/設計のみ（Production write 封印）
+- **非対象** — Production DB/Storage 修復、Staging canary、main / Production deploy、metadata / RPC / home / Explore / Studio UI
+
 ## 2026-07-22 — Preview: Exploreカテゴリ別ページ＋作品カード Prototype
 
 - **ルート（Preview専用）** — `/explore/prototype`（→ game redirect）/ `game` / `audio` / `dev-tool` / `service-app`
