@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-07-23 — Preview: Kick Counter OGP修復準備（Phase 3D・手動upload待ち）
+
+- **対象** — Production Kick Counter 1件のみ（UUID `3a2f5a74-…`）。ローカルで修復用 1200×630 JPEG を生成し `.tmp-ogp-repair/` に保持
+- **非実施** — Production Storage / DB write、derive API、main / Production deploy。オーナーが Dashboard で同名 object を手動上書きするまで停止
+- **ツール** — `scripts/production-only/repair-corrupted-og-images.ts` を dry-run 完成（UUID1件・破損一致・execute封印）
+
 ## 2026-07-23 — Production: OGP派生アップロード再発防止を反映（Phase 3C）
 
 - **反映** — Phase 3A の Storage upload バイナリガード（exact-length ArrayBuffer・pre/post 検証・成功後のみ `og_image_url` 確定）を main / Production へ

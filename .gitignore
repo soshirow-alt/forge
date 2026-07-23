@@ -49,3 +49,4 @@ next-env.d.ts
 .tmp-*.out
 .tmp-ogp-diff-*/
 **/prod-service.env
+.tmp-ogp-repair/
