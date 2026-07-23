@@ -13,8 +13,8 @@ export function ExplorePrototypeHomePage() {
   const featured = getExplorePrototypeHomeFeatured();
 
   return (
-    <div className="space-y-8">
-      <header className="space-y-4">
+    <div className="space-y-6">
+      <header className="space-y-3">
         <div className="space-y-1">
           <p className="text-xs font-medium uppercase tracking-wide text-violet-300">
             Explore
@@ -37,7 +37,7 @@ export function ExplorePrototypeHomePage() {
         >
           注目の作品
         </h2>
-        <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <ul className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {featured.map((work) => (
             <li key={work.id} className="min-w-0">
               <ExplorePrototypeCard work={work} />

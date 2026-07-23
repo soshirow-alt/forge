@@ -19,8 +19,8 @@ export function ExplorePrototypePage({
   }
 
   return (
-    <div className="space-y-8">
-      <header className="space-y-4">
+    <div className="space-y-6">
+      <header className="space-y-3">
         <div className="space-y-1">
           <p className="text-xs font-medium uppercase tracking-wide text-violet-300">
             Explore
@@ -32,7 +32,7 @@ export function ExplorePrototypePage({
 
         <ExplorePrototypeNav active={category} />
 
-        <div className="space-y-1 border-t border-zinc-800/80 pt-4">
+        <div className="space-y-1 border-t border-zinc-800/80 pt-3">
           <h2 className="text-xl font-semibold text-white sm:text-2xl">
             {meta.label}
           </h2>
@@ -48,7 +48,7 @@ export function ExplorePrototypePage({
           >
             {shelf.title}
           </h2>
-          <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <ul className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {shelf.works.map((work) => (
               <li key={`${shelf.id}-${work.id}`} className="min-w-0">
                 <ExplorePrototypeCard work={work} />

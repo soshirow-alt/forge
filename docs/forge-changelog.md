@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-07-23 — Preview: Explore Prototype 一覧カード縦コンパクト化
+
+- **対象** — `/explore/prototype` 横断ホーム＋各カテゴリ一覧カードのみ（横幅・列構成は維持）
+- **変更** — 一覧画像を固定高（`h-36` / `xl:h-40`）、本文 padding・gap 圧縮、`min-h-*` / `flex-1` / `mt-auto` による縦伸びを削除、CTA を `h-9`、情報の横並び強化
+- **非対象** — 詳細ページ・正式ゲームカード・OGP・main / Production
+
 ## 2026-07-23 — Preview: Explore Prototype サムネ視認性修復
 
 - **原因** — ローカル SVG が黒寄りの面が多く、暗いカード枠（`bg-zinc-950`）に同化して作品差が判別しづらかった

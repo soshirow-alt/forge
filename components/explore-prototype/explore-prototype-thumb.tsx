@@ -9,8 +9,10 @@ type ExplorePrototypeThumbProps = {
   /** Card / related use cover; detail prefers contain so scene chrome stays readable */
   fit?: "cover" | "contain";
   className?: string;
-  /** Aspect ratio utility classes, e.g. aspect-video */
+  /** Frame size: list cards use fixed height; detail keeps aspect-video */
   frameClassName?: string;
+  /** Tailwind object-position utility for cover crops */
+  objectPosition?: string;
 };
 
 export function ExplorePrototypeThumb({
@@ -19,6 +21,7 @@ export function ExplorePrototypeThumb({
   fit = "cover",
   className = "",
   frameClassName = "aspect-video",
+  objectPosition = "object-center",
 }: ExplorePrototypeThumbProps) {
   const fitClass = fit === "contain" ? "object-contain" : "object-cover";
 
@@ -33,7 +36,7 @@ export function ExplorePrototypeThumb({
         width={640}
         height={360}
         decoding="async"
-        className={`absolute inset-0 h-full w-full ${fitClass} object-center`}
+        className={`absolute inset-0 h-full w-full ${fitClass} ${objectPosition}`}
       />
     </div>
   );
