@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-23 — Staging: OGP派生アップロード canary（Phase 3B）
+
+- **対象** — Staging（`vuqpwvjvgyxffmvpfrxo`）テスト作品 Comet Rush のみ（`dddddddd-dddd-4ddd-8ddd-000000000206`）
+- **経路** — Preview の Phase 3A ガード付き derive API（exact ArrayBuffer upload・pre/post 検証後に `og_image_url` 更新）
+- **結果** — 1回目・2回目 upsert で A=B=C（SHA 一致・FF D8・1200×630・`image/jpeg`）。他 Staging 公開作品の `og_image_url` 非変更。Preview HTML / Twitterbot の `og:image` / `twitter:image` 一致
+- **非対象** — Production DB/Storage、破損7件修復、main / Production deploy
+
 ## 2026-07-23 — Preview: OGP派生アップロードの再発防止（Phase 3A）
 
 - **背景** — Production 破損7件は「sharp 正常 JPEG → Storage 保存前」で UTF-8 置換バイト化されたものと一致。ローカル sharp 出力は正常
