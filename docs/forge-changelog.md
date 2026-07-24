@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-24 — Preview: Explore Prototype カード視覚統一＋棚内高さ揃え
+
+- **視覚** — 枠・角丸・hover・typography を `/home` 注目カードに寄せ、オレンジCTAを廃止して白CTA（Featured同系）へ。詳細主CTA／関連カードも同ルール
+- **高さ** — 同一棚内で `h-full`＋タイトル／説明の2行スロット固定＋footer `mt-auto`。カード全体の巨大 `min-height` は使わない
+- **維持** — カード幅・列構成・一覧画像 `h-36`/`xl:h-40`
+- **非対象** — 正式 `/home` 構造・正式ゲームカード・OGP・main / Production
+
 ## 2026-07-23 — Preview: Explore Prototype 一覧カード縦コンパクト化
 
 - **対象** — `/explore/prototype` 横断ホーム＋各カテゴリ一覧カードのみ（横幅・列構成は維持）

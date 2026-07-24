@@ -39,7 +39,7 @@ export function ExplorePrototypeHomePage() {
         </h2>
         <ul className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {featured.map((work) => (
-            <li key={work.id} className="min-w-0">
+            <li key={work.id} className="min-w-0 h-full">
               <ExplorePrototypeCard work={work} />
             </li>
           ))}

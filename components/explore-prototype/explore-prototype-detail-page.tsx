@@ -332,7 +332,7 @@ export function ExplorePrototypeDetailPage({
             {related.map((item) => (
               <li
                 key={item.id}
-                className="w-[min(78vw,16rem)] shrink-0 sm:w-auto sm:min-w-0"
+                className="w-[min(78vw,16rem)] shrink-0 sm:h-full sm:w-auto sm:min-w-0"
               >
                 <ExplorePrototypeRelatedCard work={item} />
               </li>

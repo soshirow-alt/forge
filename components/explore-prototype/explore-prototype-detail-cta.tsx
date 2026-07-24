@@ -37,7 +37,7 @@ export function ExplorePrototypeDetailPrimaryCta({
         type="button"
         onClick={() => setToast(CTA_TOAST[category])}
         aria-label={`${title}を${label}`}
-        className="inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 text-sm font-semibold text-zinc-950 transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
+        className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-white px-4 text-sm font-medium text-zinc-950 transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
       >
         {label}
       </button>
