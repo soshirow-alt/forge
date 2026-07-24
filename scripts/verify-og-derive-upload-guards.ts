@@ -1,5 +1,5 @@
 /**
- * OGP derive upload guards (Phase 3A) — local / mock only.
+ * OGP derive upload guards + immutable path (Phase 3A / 3F) — local / mock only.
  * Does not touch Production or Staging Storage / DB.
  *
  * Usage: npx tsx scripts/verify-og-derive-upload-guards.ts
@@ -15,6 +15,7 @@ import {
 import {
   assertExactArrayBufferUploadBody,
   assertValidOgJpegBytes,
+  buildImmutableOgObjectPath,
   corruptJpegAsUtf8RoundTrip,
   hasJpegSoi,
   toExactArrayBuffer,
@@ -32,13 +33,13 @@ function sha256HexSync(bytes: Uint8Array): string {
   return createHash("sha256").update(Buffer.from(bytes)).digest("hex");
 }
 
-async function makeValidOgJpeg(): Promise<Buffer> {
+async function makeValidOgJpeg(seed = 32): Promise<Buffer> {
   return sharp({
     create: {
       width: 1600,
       height: 900,
       channels: 3,
-      background: { r: 32, g: 64, b: 128 },
+      background: { r: seed, g: 64, b: 128 },
     },
   })
     .jpeg({ quality: 85, mozjpeg: true })
@@ -62,12 +63,22 @@ type StoredObject = {
 function createMockAdmin(options?: {
   mutateAfterUpload?: (stored: StoredObject) => StoredObject | Promise<StoredObject>;
   forceDownloadContentType?: string;
+  /** Pre-seed store before upload (tests reuse / mismatch). */
+  seed?: Record<string, StoredObject>;
 }) {
   const store = new Map<string, StoredObject>();
+  if (options?.seed) {
+    for (const [k, v] of Object.entries(options.seed)) {
+      store.set(k, v);
+    }
+  }
   let uploadCalls = 0;
   let lastUploadBody: unknown = undefined;
   let lastUploadContentType: string | undefined;
+  let lastUpsert: boolean | undefined;
   let dbUpdateCalls = 0;
+  let removeCalls = 0;
+  const removedPaths: string[] = [];
 
   const fromStorage = (bucket: string) => ({
     upload: async (
@@ -79,6 +90,7 @@ function createMockAdmin(options?: {
       uploadCalls += 1;
       lastUploadBody = body;
       lastUploadContentType = opts?.contentType;
+      lastUpsert = opts?.upsert;
       if (typeof body === "string") {
         return { error: { message: "string body rejected by mock" } };
       }
@@ -86,6 +98,14 @@ function createMockAdmin(options?: {
         return {
           error: {
             message: `expected ArrayBuffer, got ${Object.prototype.toString.call(body)}`,
+          },
+        };
+      }
+      if (opts?.upsert === false && store.has(path)) {
+        return {
+          error: {
+            message: "The resource already exists",
+            statusCode: "409",
           },
         };
       }
@@ -111,6 +131,14 @@ function createMockAdmin(options?: {
         error: null,
       };
     },
+    remove: async (paths: string[]) => {
+      removeCalls += 1;
+      for (const p of paths) {
+        removedPaths.push(p);
+        store.delete(p);
+      }
+      return { data: paths, error: null };
+    },
     getPublicUrl: (path: string) => ({
       data: {
         publicUrl: `https://example.supabase.co/storage/v1/object/public/project-thumbnails/${path}`,
@@ -120,7 +148,6 @@ function createMockAdmin(options?: {
 
   const admin = {
     storage: { from: fromStorage },
-    // Surrogate for route-level DB update tracking in integration-style tests
     __trackDbUpdate() {
       dbUpdateCalls += 1;
     },
@@ -128,12 +155,61 @@ function createMockAdmin(options?: {
       uploadCalls,
       lastUploadBody,
       lastUploadContentType,
+      lastUpsert,
       dbUpdateCalls,
+      removeCalls,
+      removedPaths: [...removedPaths],
       storeSize: store.size,
+      storePaths: [...store.keys()],
     }),
+    __getStore: () => store,
   };
 
   return admin;
+}
+
+async function runImmutablePathHelpers() {
+  const projectId = "11111111-1111-4111-8111-111111111111";
+  const src = "abcd1234abcd1234";
+  const derA = "1111222233334444";
+  const derB = "1111222233334445";
+
+  const pathA = buildImmutableOgObjectPath(projectId, src, derA);
+  const pathA2 = buildImmutableOgObjectPath(projectId, src, derA);
+  assert.equal(pathA, pathA2);
+  pass("same input + same derived hash → same path");
+
+  const pathB = buildImmutableOgObjectPath(projectId, src, derB);
+  assert.notEqual(pathA, pathB);
+  pass("1-hex-digit derived difference → different path");
+
+  assert.match(
+    pathA,
+    new RegExp(
+      `^${projectId}/og-${src}-${derA}-1200x630\\.jpg$`,
+    ),
+  );
+  assert.ok(pathA.includes(derA));
+  pass("derived SHA16 is included in immutable path");
+
+  assert.throws(
+    () => buildImmutableOgObjectPath(projectId, "../evil", derA),
+    /sourceHash16|invalid/,
+  );
+  assert.throws(
+    () => buildImmutableOgObjectPath(projectId, src, "not-a-hash!!!!!"),
+    /derivedJpegHash16|invalid/,
+  );
+  assert.throws(
+    () =>
+      buildImmutableOgObjectPath(
+        "not-a-uuid",
+        src,
+        derA,
+      ),
+    /projectId/,
+  );
+  pass("path builder rejects traversal / non-hex / bad projectId");
 }
 
 async function runHappyPath() {
@@ -165,15 +241,25 @@ async function runHappyPath() {
   assert.equal(shaA, pre.sha256Hex);
   pass("SHA-256 matches across Buffer / ArrayBuffer / pre-validation");
 
+  const derived16 = pre.sha256Hex.slice(0, 16);
+  const sourceHash16 = "abcd1234abcd1234";
+  const projectId = "11111111-1111-4111-8111-111111111111";
+  const expectedPath = buildImmutableOgObjectPath(
+    projectId,
+    sourceHash16,
+    derived16,
+  );
+
   const admin = createMockAdmin();
   const derived = await uploadDerivedOgImage(
     admin as never,
-    "11111111-1111-4111-8111-111111111111",
+    projectId,
     jpeg,
-    "abcd1234abcd1234",
+    sourceHash16,
   );
   const stats = admin.__stats();
   assert.equal(stats.uploadCalls, 1);
+  assert.equal(stats.lastUpsert, false);
   assert.ok(stats.lastUploadBody instanceof ArrayBuffer);
   assert.equal(
     Object.prototype.toString.call(stats.lastUploadBody),
@@ -184,18 +270,119 @@ async function runHappyPath() {
     (stats.lastUploadBody as ArrayBuffer).byteLength,
     jpeg.byteLength,
   );
-  pass("Storage mock received ArrayBuffer body with image/jpeg");
+  pass("Storage mock received ArrayBuffer with upsert:false and image/jpeg");
 
   assert.equal(derived.width, OG_IMAGE_WIDTH);
   assert.equal(derived.height, OG_IMAGE_HEIGHT);
   assert.equal(derived.contentType, OG_IMAGE_MIME);
-  assert.match(derived.objectPath, /og-abcd1234abcd1234-1200x630\.jpg$/);
-  pass("post-upload identity check succeeds when stored bytes match");
+  assert.equal(derived.objectPath, expectedPath);
+  assert.equal(derived.derivedJpegHash16, derived16);
+  assert.equal(derived.reusedExistingObject, false);
+  assert.ok(derived.objectPath.includes(derived16));
+  pass("post-upload identity check succeeds; immutable path uses derived SHA");
 
   // Simulate route: DB update only after uploadDerivedOgImage resolves
   admin.__trackDbUpdate();
   assert.equal(admin.__stats().dbUpdateCalls, 1);
-  pass("DB update proceeds only after successful upload+verify");
+  assert.equal(admin.__stats().removeCalls, 0);
+  pass("DB update proceeds only after successful upload+verify; no remove");
+}
+
+async function runReuseAndMismatch() {
+  const jpeg = await makeValidOgJpeg(40);
+  const pre = await assertValidOgJpegBytes(jpeg);
+  const projectId = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";
+  const sourceHash16 = "0123456789abcdef";
+  const objectPath = buildImmutableOgObjectPath(
+    projectId,
+    sourceHash16,
+    pre.sha256Hex.slice(0, 16),
+  );
+
+  // Reuse when identical bytes already at path
+  {
+    const admin = createMockAdmin({
+      seed: {
+        [objectPath]: {
+          body: toExactArrayBuffer(jpeg),
+          contentType: OG_IMAGE_MIME,
+        },
+        // Prior OG object that must not be deleted
+        [`${projectId}/og-${sourceHash16}-1200x630.jpg`]: {
+          body: toExactArrayBuffer(jpeg),
+          contentType: OG_IMAGE_MIME,
+        },
+      },
+    });
+    const derived = await uploadDerivedOgImage(
+      admin as never,
+      projectId,
+      jpeg,
+      sourceHash16,
+    );
+    assert.equal(derived.reusedExistingObject, true);
+    assert.equal(derived.objectPath, objectPath);
+    assert.equal(admin.__stats().lastUpsert, false);
+    assert.equal(admin.__stats().removeCalls, 0);
+    assert.ok(
+      admin.__stats().storePaths.includes(
+        `${projectId}/og-${sourceHash16}-1200x630.jpg`,
+      ),
+    );
+    admin.__trackDbUpdate();
+    assert.equal(admin.__stats().dbUpdateCalls, 1);
+    pass("existing identical object: reuse (upsert:false); old object kept");
+  }
+
+  // Mismatch when different bytes already at path
+  {
+    const other = await makeValidOgJpeg(99);
+    const admin = createMockAdmin({
+      seed: {
+        [objectPath]: {
+          body: toExactArrayBuffer(other),
+          contentType: OG_IMAGE_MIME,
+        },
+      },
+    });
+    await assert.rejects(
+      () =>
+        uploadDerivedOgImage(
+          admin as never,
+          projectId,
+          jpeg,
+          sourceHash16,
+        ),
+      /post-upload|SHA-256|byte/i,
+    );
+    assert.equal(admin.__stats().dbUpdateCalls, 0);
+    assert.equal(admin.__stats().removeCalls, 0);
+    // Store still holds the foreign object (not overwritten)
+    const stored = admin.__getStore().get(objectPath);
+    assert.ok(stored);
+    assert.equal(
+      sha256HexSync(new Uint8Array(stored!.body)),
+      sha256HexSync(new Uint8Array(other)),
+    );
+    pass("existing mismatched object: abort; no overwrite; DB not updated");
+  }
+
+  // 1-byte derived difference → different path
+  {
+    const jpegB = Buffer.from(jpeg);
+    jpegB[jpegB.byteLength - 1] ^= 0x01;
+    // May no longer be valid JPEG — rebuild with different seed instead
+    const jpegAlt = await makeValidOgJpeg(77);
+    const preAlt = await assertValidOgJpegBytes(jpegAlt);
+    assert.notEqual(pre.sha256Hex, preAlt.sha256Hex);
+    const pathAlt = buildImmutableOgObjectPath(
+      projectId,
+      sourceHash16,
+      preAlt.sha256Hex.slice(0, 16),
+    );
+    assert.notEqual(objectPath, pathAlt);
+    pass("derived result difference → different immutable path");
+  }
 }
 
 async function runCorruptionFixture() {
@@ -212,20 +399,6 @@ async function runCorruptionFixture() {
   assert.match(pre.reason, /UTF-8 replacement|missing JPEG SOI|sharp cannot/i);
   pass(`pre-upload rejects corruption fixture (${pre.reason})`);
 
-  await assert.rejects(
-    () => sharp(corrupted).metadata(),
-    /Input buffer|unsupported|VipsJpeg|corrupt|invalid/i,
-  ).catch(async () => {
-    // sharp may throw or return empty/invalid — either is failure for our assertValid
-    try {
-      const meta = await sharp(corrupted).metadata();
-      assert.notEqual(meta.format, "jpeg");
-    } catch {
-      // expected
-    }
-  });
-  pass("sharp cannot treat corruption fixture as valid jpeg cover");
-
   const admin = createMockAdmin();
   await assert.rejects(
     () =>
@@ -239,7 +412,7 @@ async function runCorruptionFixture() {
   );
   assert.equal(admin.__stats().uploadCalls, 0);
   assert.equal(admin.__stats().dbUpdateCalls, 0);
-  pass("corruption fixture: Storage upload not called; DB update not called");
+  pass("UTF-8 corruption fixture: Storage upload not called; DB update not called");
 }
 
 async function runTypeAndShapeRejections() {
@@ -316,11 +489,12 @@ async function runPostUploadFailuresSuppressDb() {
           admin as never,
           "22222222-2222-4222-8222-222222222222",
           jpeg,
-          "sha-mismatch-test1",
+          "aaaaaaaaaaaaaaaa",
         ),
       /post-upload|SHA-256|byte/i,
     );
     assert.equal(admin.__stats().uploadCalls, 1);
+    assert.equal(admin.__stats().lastUpsert, false);
     assert.equal(admin.__stats().dbUpdateCalls, 0);
     pass("post-upload SHA mismatch: upload called, DB update suppressed");
   }
@@ -329,7 +503,10 @@ async function runPostUploadFailuresSuppressDb() {
   {
     const admin = createMockAdmin({
       mutateAfterUpload: (stored) => {
-        const truncated = stored.body.slice(0, Math.max(0, stored.body.byteLength - 50));
+        const truncated = stored.body.slice(
+          0,
+          Math.max(0, stored.body.byteLength - 50),
+        );
         return { body: truncated, contentType: stored.contentType };
       },
     });
@@ -339,7 +516,7 @@ async function runPostUploadFailuresSuppressDb() {
           admin as never,
           "33333333-3333-4333-8333-333333333333",
           jpeg,
-          "len-mismatch-test1",
+          "bbbbbbbbbbbbbbbb",
         ),
       /post-upload|byteLength|too small|SOI|sharp|SHA/i,
     );
@@ -358,7 +535,7 @@ async function runPostUploadFailuresSuppressDb() {
           admin as never,
           "44444444-4444-4444-8444-444444444444",
           jpeg,
-          "ctype-bad-test0001",
+          "cccccccccccccccc",
         ),
       /content-type/i,
     );
@@ -383,7 +560,7 @@ async function runPostUploadFailuresSuppressDb() {
           admin as never,
           "55555555-5555-4555-8555-555555555555",
           jpeg,
-          "utf8-corrupt-post01",
+          "dddddddddddddddd",
         ),
       /post-upload|UTF-8|SOI|sharp|pre-upload/i,
     );
@@ -406,8 +583,12 @@ async function runPostUploadFailuresSuppressDb() {
 }
 
 async function main() {
-  console.log("=== verify-og-derive-upload-guards (Phase 3A, local mock) ===");
+  console.log(
+    "=== verify-og-derive-upload-guards (Phase 3A+3F immutable path, local mock) ===",
+  );
+  await runImmutablePathHelpers();
   await runHappyPath();
+  await runReuseAndMismatch();
   await runCorruptionFixture();
   await runTypeAndShapeRejections();
   await runPostUploadFailuresSuppressDb();

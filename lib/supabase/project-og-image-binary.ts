@@ -305,3 +305,61 @@ export function corruptJpegAsUtf8RoundTrip(validJpeg: Uint8Array): Uint8Array {
   const asString = Buffer.from(validJpeg).toString("utf8");
   return new Uint8Array(Buffer.from(asString, "utf8"));
 }
+
+/** Hex hash prefix used in immutable OG object names (path-safe). */
+const OG_PATH_HASH16_RE = /^[a-f0-9]{16}$/;
+
+/**
+ * Build immutable OG object path inside the project UUID folder.
+ * Format: `{projectId}/og-{sourceHash16}-{derivedJpegHash16}-1200x630.jpg`
+ *
+ * - derivedJpegHash16 is always required (content-addressed)
+ * - external filenames are never used
+ * - rejects path traversal / non-hex hashes
+ */
+export function buildImmutableOgObjectPath(
+  projectId: string,
+  sourceHash16: string,
+  derivedJpegHash16: string,
+): string {
+  const id = projectId.trim();
+  const src = sourceHash16.trim().toLowerCase();
+  const derived = derivedJpegHash16.trim().toLowerCase();
+
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      id,
+    )
+  ) {
+    throw new Error("invalid projectId for OG object path");
+  }
+  if (!OG_PATH_HASH16_RE.test(src)) {
+    throw new Error("invalid sourceHash16 for OG object path");
+  }
+  if (!OG_PATH_HASH16_RE.test(derived)) {
+    throw new Error("invalid derivedJpegHash16 for OG object path");
+  }
+  if (
+    src.includes("..") ||
+    derived.includes("..") ||
+    src.includes("/") ||
+    derived.includes("/")
+  ) {
+    throw new Error("OG object path hash must not contain path segments");
+  }
+
+  return `${id}/og-${src}-${derived}-1200x630.jpg`;
+}
+
+/** True when Storage upload failed because the object already exists. */
+export function isStorageObjectAlreadyExistsError(
+  message: string | null | undefined,
+): boolean {
+  const m = (message || "").toLowerCase();
+  return (
+    m.includes("already exists") ||
+    m.includes("resource already exists") ||
+    m.includes("duplicate") ||
+    m.includes("409")
+  );
+}

@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-24 — Preview: OGP派生を不変pathへ（Phase 3F・同一URL上書き廃止）
+
+- **Production最終検証（read-only）** — 手動修復済み6作品＋Kick Counterの正式objectが repair manifest の SHA／byteLength と一致。公開14件の破損OGPは0。正常作品のSHA意図変更なし
+- **Preview実装** — 派生JPEGの SHA-16 を含む不変path（`og-<sourceHash16>-<derivedJpegHash16>-1200x630.jpg`）へ upload（`upsert:false`）。同一バイトなら再利用、不一致は停止して DB 非更新。旧 OG object は自動削除しない
+- **目的** — 同一URL上書きによる CDN／Dashboard の古い画像表示（黒プレビュー）を避ける
+- **非対象** — Production DB／Storage write、main／Production deploy、cleanup、title／description 変更
+
 ## 2026-07-24 — Preview: Explore Prototype カード視覚統一＋棚内高さ揃え
 
 - **視覚** — 枠・角丸・hover・typography を `/home` 注目カードに寄せ、オレンジCTAを廃止して白CTA（Featured同系）へ。詳細主CTA／関連カードも同ルール

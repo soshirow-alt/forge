@@ -13,6 +13,7 @@ const UUID_RE =
 /**
  * Owner-only: derive 1200×630 OGP JPEG from primary thumbnail_url and set og_image_url.
  * Never mutates thumbnail_url / thumbnail_urls. On failure, leaves og_image_url unchanged.
+ * Does not delete prior OG Storage objects (immutable path; cleanup is a separate process).
  */
 export async function POST(
   _request: Request,
@@ -81,6 +82,7 @@ export async function POST(
     );
   }
 
+  // DB update only after upload + binary verify succeeded. Prior og_* objects kept.
   const { error: updateError } = await admin
     .from("projects")
     .update({ og_image_url: derived.url })
@@ -100,5 +102,8 @@ export async function POST(
     height: derived.height,
     contentType: derived.contentType,
     objectPath: derived.objectPath,
+    sourceHash16: derived.sourceHash16,
+    derivedJpegHash16: derived.derivedJpegHash16,
+    reusedExistingObject: derived.reusedExistingObject,
   });
 }

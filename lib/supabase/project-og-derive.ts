@@ -16,6 +16,8 @@ import {
   assertExactArrayBufferUploadBody,
   assertFetchedOgJpegMatches,
   assertValidOgJpegBytes,
+  buildImmutableOgObjectPath,
+  isStorageObjectAlreadyExistsError,
   toExactArrayBuffer,
   toUint8Array,
   type BinaryOgImage,
@@ -23,6 +25,7 @@ import {
 import { publicObjectUrl } from "@/lib/supabase/project-thumbnail-storage";
 
 export { OG_IMAGE_HEIGHT, OG_IMAGE_MIME, OG_IMAGE_WIDTH } from "@/lib/og-image-constants";
+export { buildImmutableOgObjectPath } from "@/lib/supabase/project-og-image-binary";
 
 export type DerivedOgImage = {
   url: string;
@@ -31,6 +34,8 @@ export type DerivedOgImage = {
   width: number;
   height: number;
   sourceHash16: string;
+  derivedJpegHash16: string;
+  reusedExistingObject: boolean;
 };
 
 function assertServerRuntime(): void {
@@ -129,11 +134,18 @@ async function downloadOgObjectBinary(
 /**
  * Upload derived OG JPEG via service-role client and return public HTTPS URL.
  *
+ * Immutable path: `{projectId}/og-{sourceHash16}-{derivedJpegHash16}-1200x630.jpg`
+ * Never overwrites an existing object (upsert:false). Same JPEG bytes → same path
+ * → reuse after binary identity check. Different JPEG → new path (CDN-safe).
+ * Does not delete any prior og_* objects.
+ *
  * Order (must not update projects.og_image_url inside this function):
- * 1) pre-upload JPEG validation
- * 2) exact-length ArrayBuffer upload (never Node Buffer / string)
- * 3) post-upload binary re-fetch + SHA/length/byte identity
- * 4) return public URL — caller commits og_image_url only after this resolves
+ * 1) pre-upload JPEG validation + derived SHA
+ * 2) immutable path from hashes (no external filenames)
+ * 3) exact-length ArrayBuffer upload with upsert:false
+ * 4) if already exists: binary re-fetch; match → reuse; mismatch → abort
+ * 5) if new: post-upload binary re-fetch + SHA/length/byte identity
+ * 6) return public URL — caller commits og_image_url only after this resolves
  */
 export async function uploadDerivedOgImage(
   admin: SupabaseClient,
@@ -145,6 +157,7 @@ export async function uploadDerivedOgImage(
 
   // 1) Pre-upload validation — rejects UTF-8 corruption / wrong dims / string
   const pre = await assertValidOgJpegBytes(jpeg);
+  const derivedJpegHash16 = pre.sha256Hex.slice(0, 16);
 
   // 2) Exact-length ArrayBuffer — do not pass Node Buffer (byteOffset / spare capacity)
   const uploadBody = toExactArrayBuffer(jpeg);
@@ -160,25 +173,51 @@ export async function uploadDerivedOgImage(
     }
   }
 
-  const objectPath = `${projectId}/og-${sourceHash16}-1200x630.jpg`;
+  const objectPath = buildImmutableOgObjectPath(
+    projectId,
+    sourceHash16,
+    derivedJpegHash16,
+  );
+
+  // 3) upsert:false — never overwrite; content-addressed path replaces cache-busting
   const { error } = await admin.storage
     .from(PROJECT_THUMBNAILS_BUCKET)
     .upload(objectPath, uploadBody, {
       contentType: OG_IMAGE_MIME,
-      upsert: true,
+      upsert: false,
       cacheControl: "3600",
     });
-  if (error) {
-    throw new Error(error.message || "OGP upload failed");
-  }
 
-  // 3) Post-upload binary re-fetch + identity check (before any DB URL commit)
-  const fetched = await downloadOgObjectBinary(admin, objectPath);
-  await assertFetchedOgJpegMatches(fetched, {
-    expectedSha256Hex: pre.sha256Hex,
-    expectedByteLength: pre.byteLength,
-    expectedBytes: pre.bytes,
-  }, OG_IMAGE_MIME);
+  let reusedExistingObject = false;
+  if (error) {
+    if (!isStorageObjectAlreadyExistsError(error.message)) {
+      throw new Error(error.message || "OGP upload failed");
+    }
+    // Existing object at immutable path — reuse only if bytes are identical
+    reusedExistingObject = true;
+    const existing = await downloadOgObjectBinary(admin, objectPath);
+    await assertFetchedOgJpegMatches(
+      existing,
+      {
+        expectedSha256Hex: pre.sha256Hex,
+        expectedByteLength: pre.byteLength,
+        expectedBytes: pre.bytes,
+      },
+      OG_IMAGE_MIME,
+    );
+  } else {
+    // 4) Post-upload binary re-fetch + identity check (before any DB URL commit)
+    const fetched = await downloadOgObjectBinary(admin, objectPath);
+    await assertFetchedOgJpegMatches(
+      fetched,
+      {
+        expectedSha256Hex: pre.sha256Hex,
+        expectedByteLength: pre.byteLength,
+        expectedBytes: pre.bytes,
+      },
+      OG_IMAGE_MIME,
+    );
+  }
 
   const url = publicObjectUrl(admin, objectPath);
   if (!isHttpsThumbnailUrl(url)) {
@@ -191,6 +230,8 @@ export async function uploadDerivedOgImage(
     width: OG_IMAGE_WIDTH,
     height: OG_IMAGE_HEIGHT,
     sourceHash16,
+    derivedJpegHash16,
+    reusedExistingObject,
   };
 }
 
