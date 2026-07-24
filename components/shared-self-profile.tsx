@@ -17,7 +17,6 @@ import { PublicXLink } from "@/components/public-x-link";
 import { V0SimpleModal } from "@/components/v0-simple-modal";
 import { useCommunityHubSupabase } from "@/hooks/use-community-hub-supabase";
 import { creatorProfileHref } from "@/lib/mypage-navigation";
-import { studioSubmitModalHref } from "@/lib/project-nurture-links";
 import { isGamePublic } from "@/lib/project-visibility";
 import {
   cleanupUploadedProfileAvatar,
@@ -498,7 +497,7 @@ export function SharedSelfProfile({
             <p className="py-2 text-sm text-zinc-600">
               まだ公開作品はありません。{" "}
               <Link
-                href={studioSubmitModalHref()}
+                href="/studio"
                 className="text-violet-400 transition-colors hover:text-violet-300"
               >
                 作品を投稿する

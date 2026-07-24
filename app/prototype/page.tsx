@@ -28,28 +28,36 @@ export default function PrototypeIndexPage() {
           <h2 className="text-lg font-semibold text-white">A. Explore</h2>
           <ul className="space-y-2 text-sm">
             <li>
-              <Link href="/home" className="text-violet-300 hover:underline">
-                ホーム（/home）
+              <Link href="/home" className="text-zinc-400 hover:underline">
+                正式ホーム（/home・Production相当）
               </Link>
             </li>
             <li>
-              <Link href="/home?category=game" className="text-violet-300 hover:underline">
-                ゲーム面（/home?category=game）
+              <Link href="/explore/prototype" className="text-violet-300 hover:underline">
+                Explore Prototype 横断（/explore/prototype）
               </Link>
             </li>
             <li>
-              <Link href="/home?category=audio" className="text-violet-300 hover:underline">
-                音楽・音声面（/home?category=audio）
+              <Link href="/explore/prototype/game" className="text-violet-300 hover:underline">
+                ゲーム（/explore/prototype/game）
               </Link>
             </li>
             <li>
-              <Link href="/home?category=dev-tool" className="text-violet-300 hover:underline">
-                開発ツール面（/home?category=dev-tool）
+              <Link href="/explore/prototype/audio" className="text-violet-300 hover:underline">
+                音楽・音声（/explore/prototype/audio）
               </Link>
             </li>
             <li>
-              <Link href="/home?category=service-app" className="text-violet-300 hover:underline">
-                サービス・アプリ面（/home?category=service-app）
+              <Link href="/explore/prototype/dev-tool" className="text-violet-300 hover:underline">
+                開発ツール（/explore/prototype/dev-tool）
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/explore/prototype/service-app"
+                className="text-violet-300 hover:underline"
+              >
+                Webサービス・アプリ（/explore/prototype/service-app）
               </Link>
             </li>
           </ul>

@@ -127,10 +127,10 @@ export function ForgeShellModeSwitch({
       <Link
         href="/home"
         onClick={onNavigate}
-        title="Explore へ切り替え"
+        title="プレイヤー画面へ切り替え"
         className={FORGE_SHELL_MODE_SWITCH_CLASS}
       >
-        Explore切り替え
+        Player切り替え
       </Link>
     );
   }

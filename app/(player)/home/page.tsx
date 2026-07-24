@@ -1,6 +1,5 @@
-import { HomePrototypeRouter } from "@/components/home-prototype-router";
+import { DiscoveryHomePage } from "@/components/discovery-home-page";
 
-/** `/home` — Explore home (default) or game category face (`?category=game`). */
 export default function HomeDiscoverPage() {
-  return <HomePrototypeRouter />;
+  return <DiscoveryHomePage />;
 }

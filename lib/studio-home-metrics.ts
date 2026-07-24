@@ -1,5 +1,3 @@
-import { SUBMIT_CATEGORY_PICK_HREF } from "@/lib/prototype/studio-submit-flow";
-
 export type StudioHomePlayDepthPoint = {
   once: number;
   twice: number;
@@ -234,7 +232,7 @@ export const STUDIO_HOME_DEV_HINTS = [
 
 export const STUDIO_HOME_QUICK_LINKS = [
   { label: "作品一覧", href: "/studio/mypage" },
-  { label: "新規投稿", href: SUBMIT_CATEGORY_PICK_HREF },
+  { label: "新規投稿", href: "/studio/submit" },
   { label: "コミュニティ", href: "/studio/community" },
   { label: "フィードバックを確認", href: "/studio/mypage" },
 ] as const;

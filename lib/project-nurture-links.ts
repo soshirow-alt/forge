@@ -1,7 +1,6 @@
 import type { Notification } from "@/lib/notifications";
 import { buildGameDetailTabHref } from "@/lib/game-detail-tabs";
 import { studioOverviewEditHref } from "@/lib/studio-edit-url";
-import { SUBMIT_CATEGORY_PICK_HREF } from "@/lib/prototype/studio-submit-flow";
 
 export const PROJECT_STUDIO_FEEDBACK_SECTION_ID = "feedback";
 
@@ -34,18 +33,15 @@ export function projectStudioVoicesHref(projectId: string): string {
   return `${projectStudioPath(projectId)}?tab=voices`;
 }
 
-/** @deprecated 旧モーダル導線 — マイページ経由の互換用 */
+/** @deprecated 旧モーダル導線 — /studio/submit へリダイレクト用 */
 export const STUDIO_SUBMIT_SEARCH_PARAM = "submit";
 
-/**
- * Preview: 新規投稿開始はカテゴリ選択へ。
- * `/studio/submit` 直リンクはゲーム選択後・回帰確認用として残す（この helper は使わない）。
- */
+/** Studio 新規投稿ページ */
 export function studioSubmitModalHref(options?: { query?: string }): string {
   if (options?.query?.trim()) {
-    return `${SUBMIT_CATEGORY_PICK_HREF}&q=${encodeURIComponent(options.query.trim())}`;
+    return `/studio/submit?q=${encodeURIComponent(options.query.trim())}`;
   }
-  return SUBMIT_CATEGORY_PICK_HREF;
+  return "/studio/submit";
 }
 
 export function projectStudioDevlogHref(projectId: string): string {

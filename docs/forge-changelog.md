@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07-24 — Preview: 正式ルート導線をProductionへ復帰（Prototype隔離）
+
+- **正式/home** — queryなしでも `DiscoveryHomePage`（ヒーロー／棚／正式データ経路）。`HomePrototypeRouter` による分岐を廃止
+- **PlayerShell** — サイドバー「ホーム」、Studio→公開の「Player切り替え」をProduction文言へ
+- **新規投稿** — `studioSubmitModalHref` / Studioホーム「新規投稿」/ `/submit` を正式 `/studio/submit` へ。category-protoは専用URLのみ
+- **維持** — `/explore/prototype/**`、カテゴリ投稿Prototype、`/prototype`、OGP immutable path
+- **非対象** — main / Production deploy、Explore Phase 5 実装変更、DB / Storage
+
 ## 2026-07-24 — Preview: Explore Prototype 発見体験をProduction階層へ再構成（Phase 5）
 
 - **注目** — 静的カードgridを廃止し、中央1作品＋左右peek＋矢印＋ドット＋5秒autoplayのヒーローカルーセルへ（Prototype専用component）

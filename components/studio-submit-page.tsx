@@ -167,7 +167,7 @@ export function StudioSubmitPage({
   }
 
   function handleSubmitAnother() {
-    router.push(SUBMIT_CATEGORY_PICK_HREF);
+    router.push("/studio/submit");
   }
 
   async function handleSubmit() {
