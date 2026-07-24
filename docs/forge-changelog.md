@@ -9,6 +9,7 @@
 - **正式/home** — queryなしでも `DiscoveryHomePage`（ヒーロー／棚／正式データ経路）。`HomePrototypeRouter` による分岐を廃止
 - **PlayerShell** — サイドバー「ホーム」、Studio→公開の「Player切り替え」をProduction文言へ
 - **新規投稿** — `studioSubmitModalHref` / Studioホーム「新規投稿」/ `/submit` を正式 `/studio/submit` へ。category-protoは専用URLのみ
+- **verify** — `verify:preview-branch-alias` を正式導線＋専用Prototype到達の完了条件へ更新（category-proto既定CTA前提を廃止）
 - **維持** — `/explore/prototype/**`、カテゴリ投稿Prototype、`/prototype`、OGP immutable path
 - **非対象** — main / Production deploy、Explore Phase 5 実装変更、DB / Storage
 
