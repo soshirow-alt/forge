@@ -47,7 +47,7 @@ export function ExplorePrototypeDiscoveryCard({
     <Link
       href={href}
       title={work.title}
-      className="block w-full min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
+      className="group block w-full min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
       aria-label={`${work.title}の詳細`}
     >
       <article className="min-w-0">
@@ -60,7 +60,7 @@ export function ExplorePrototypeDiscoveryCard({
           className="transition-[filter] group-hover:brightness-110"
         />
         <h3
-          className="mt-2 truncate text-sm font-semibold text-white"
+          className="mt-2 truncate text-sm font-semibold text-white transition-colors group-hover:text-violet-200"
           title={work.title}
         >
           {work.title}

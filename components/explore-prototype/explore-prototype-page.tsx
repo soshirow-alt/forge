@@ -1,10 +1,6 @@
-import { ExplorePrototypeDiscoveryCard } from "@/components/explore-prototype/explore-prototype-discovery-card";
 import { ExplorePrototypeFeaturedCarousel } from "@/components/explore-prototype/explore-prototype-featured-carousel";
 import { ExplorePrototypeNav } from "@/components/explore-prototype/explore-prototype-nav";
-import {
-  ExplorePrototypeSectionHeader,
-  ExplorePrototypeShelfPager,
-} from "@/components/explore-prototype/explore-prototype-shelf-pager";
+import { ExplorePrototypeShelfSection } from "@/components/explore-prototype/explore-prototype-shelf-section";
 import {
   getExplorePrototypeCategory,
   getExplorePrototypeFeaturedWorks,
@@ -54,26 +50,13 @@ export function ExplorePrototypePage({
       />
 
       {shelves.map((shelf) => (
-        <section
+        <ExplorePrototypeShelfSection
           key={shelf.id}
-          aria-labelledby={`shelf-${shelf.id}`}
-          className="space-y-3"
-        >
-          <ExplorePrototypeSectionHeader
-            title={shelf.title}
-            headingId={`shelf-${shelf.id}`}
-          />
-          <div className="px-2">
-            <ExplorePrototypeShelfPager
-              items={shelf.works}
-              getKey={(work) => `${shelf.id}-${work.id}`}
-              pageSize={4}
-              renderItem={(work) => (
-                <ExplorePrototypeDiscoveryCard work={work} />
-              )}
-            />
-          </div>
-        </section>
+          title={shelf.title}
+          headingId={`shelf-${shelf.id}`}
+          works={shelf.works}
+          keyPrefix={`${category}-${shelf.id}`}
+        />
       ))}
     </div>
   );

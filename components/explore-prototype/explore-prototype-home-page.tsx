@@ -1,10 +1,6 @@
-import { ExplorePrototypeDiscoveryCard } from "@/components/explore-prototype/explore-prototype-discovery-card";
 import { ExplorePrototypeFeaturedCarousel } from "@/components/explore-prototype/explore-prototype-featured-carousel";
 import { ExplorePrototypeNav } from "@/components/explore-prototype/explore-prototype-nav";
-import {
-  ExplorePrototypeSectionHeader,
-  ExplorePrototypeShelfPager,
-} from "@/components/explore-prototype/explore-prototype-shelf-pager";
+import { ExplorePrototypeShelfSection } from "@/components/explore-prototype/explore-prototype-shelf-section";
 import {
   getExplorePrototypeHomeCategoryShelves,
   getExplorePrototypeHomeFeatured,
@@ -44,28 +40,15 @@ export function ExplorePrototypeHomePage() {
       {shelves.map((shelf) => {
         const headingId = `hub-shelf-${shelf.seeAllHref?.replace(/\//g, "-") ?? shelf.title}`;
         return (
-          <section
+          <ExplorePrototypeShelfSection
             key={shelf.seeAllHref ?? shelf.title}
-            aria-labelledby={headingId}
-            className="space-y-3"
-          >
-            <ExplorePrototypeSectionHeader
-              title={shelf.title}
-              headingId={headingId}
-              seeAllHref={shelf.seeAllHref}
-              seeAllLabel={shelf.seeAllLabel}
-            />
-            <div className="px-2">
-              <ExplorePrototypeShelfPager
-                items={shelf.works}
-                getKey={(work) => `hub-${work.id}`}
-                pageSize={4}
-                renderItem={(work) => (
-                  <ExplorePrototypeDiscoveryCard work={work} />
-                )}
-              />
-            </div>
-          </section>
+            title={shelf.title}
+            headingId={headingId}
+            works={shelf.works}
+            seeAllHref={shelf.seeAllHref}
+            seeAllLabel={shelf.seeAllLabel}
+            keyPrefix={`hub-${shelf.seeAllHref ?? shelf.title}`}
+          />
         );
       })}
     </div>
