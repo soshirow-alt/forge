@@ -1,7 +1,13 @@
-import { ExplorePrototypeCard } from "@/components/explore-prototype/explore-prototype-card";
+import { ExplorePrototypeDiscoveryCard } from "@/components/explore-prototype/explore-prototype-discovery-card";
+import { ExplorePrototypeFeaturedCarousel } from "@/components/explore-prototype/explore-prototype-featured-carousel";
 import { ExplorePrototypeNav } from "@/components/explore-prototype/explore-prototype-nav";
 import {
+  ExplorePrototypeSectionHeader,
+  ExplorePrototypeShelfPager,
+} from "@/components/explore-prototype/explore-prototype-shelf-pager";
+import {
   getExplorePrototypeCategory,
+  getExplorePrototypeFeaturedWorks,
   getExplorePrototypeShelves,
   type ExplorePrototypeCategorySlug,
 } from "@/lib/prototype/explore-prototype";
@@ -12,6 +18,7 @@ export function ExplorePrototypePage({
   category: ExplorePrototypeCategorySlug;
 }) {
   const meta = getExplorePrototypeCategory(category);
+  const featured = getExplorePrototypeFeaturedWorks(category);
   const shelves = getExplorePrototypeShelves(category);
 
   if (!meta) {
@@ -19,7 +26,7 @@ export function ExplorePrototypePage({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <header className="space-y-3">
         <div className="space-y-1">
           <p className="text-xs font-medium uppercase tracking-wide text-violet-300">
@@ -40,21 +47,32 @@ export function ExplorePrototypePage({
         </div>
       </header>
 
+      <ExplorePrototypeFeaturedCarousel
+        slides={featured}
+        heading="注目の作品"
+        headingLevel="h2"
+      />
+
       {shelves.map((shelf) => (
-        <section key={shelf.id} aria-labelledby={`shelf-${shelf.id}`}>
-          <h2
-            id={`shelf-${shelf.id}`}
-            className="text-lg font-semibold text-white sm:text-xl"
-          >
-            {shelf.title}
-          </h2>
-          <ul className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {shelf.works.map((work) => (
-              <li key={`${shelf.id}-${work.id}`} className="min-w-0 h-full">
-                <ExplorePrototypeCard work={work} />
-              </li>
-            ))}
-          </ul>
+        <section
+          key={shelf.id}
+          aria-labelledby={`shelf-${shelf.id}`}
+          className="space-y-3"
+        >
+          <ExplorePrototypeSectionHeader
+            title={shelf.title}
+            headingId={`shelf-${shelf.id}`}
+          />
+          <div className="px-2">
+            <ExplorePrototypeShelfPager
+              items={shelf.works}
+              getKey={(work) => `${shelf.id}-${work.id}`}
+              pageSize={4}
+              renderItem={(work) => (
+                <ExplorePrototypeDiscoveryCard work={work} />
+              )}
+            />
+          </div>
         </section>
       ))}
     </div>

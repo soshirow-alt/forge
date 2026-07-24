@@ -108,6 +108,8 @@ type ExplorePrototypeWorkBase = {
   thumbnailAlt: string;
   feedbackCount: number;
   followCount: number;
+  /** Primary usage (players / listeners / users) for discovery stats */
+  primaryUsageCount: number;
   /** ISO datetime — used for shelf sorting only */
   updatedAt: string;
   publishedAt: string;
@@ -215,6 +217,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "草原を走るキャラクターのゲーム画面",
     feedbackCount: 48,
     followCount: 120,
+    primaryUsageCount: 285,
     updatedAt: "2026-07-18T10:00:00.000Z",
     publishedAt: "2026-03-01T00:00:00.000Z",
     updatedLabel: "3日前に更新",
@@ -274,6 +277,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "炎と水のカードが向き合うデュエル画面",
     feedbackCount: 22,
     followCount: 55,
+    primaryUsageCount: 133,
     updatedAt: "2026-07-20T08:00:00.000Z",
     publishedAt: "2026-05-12T00:00:00.000Z",
     updatedLabel: "1日前に更新",
@@ -316,6 +320,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "カラフルなタイルが並ぶパズル盤面",
     feedbackCount: 0,
     followCount: 3,
+    primaryUsageCount: 12,
     updatedAt: "2026-07-10T12:00:00.000Z",
     publishedAt: "2026-07-08T00:00:00.000Z",
     updatedLabel: "11日前に更新",
@@ -371,6 +376,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "会話ウィンドウ付きのノベル画面",
     feedbackCount: 7,
     followCount: 0,
+    primaryUsageCount: 5,
     updatedAt: "2026-07-21T04:00:00.000Z",
     publishedAt: "2026-07-19T00:00:00.000Z",
     updatedLabel: "数時間前に更新",
@@ -429,6 +435,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "港町のマップと経路が表示された画面",
     feedbackCount: 15,
     followCount: 28,
+    primaryUsageCount: 70,
     updatedAt: "2026-07-15T09:00:00.000Z",
     publishedAt: "2026-06-01T00:00:00.000Z",
     updatedLabel: "6日前に更新",
@@ -481,6 +488,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "ゲーム・インタラクティブ作品のサムネイル未設定",
     feedbackCount: 3,
     followCount: 1,
+    primaryUsageCount: 7,
     updatedAt: "2026-07-05T00:00:00.000Z",
     publishedAt: "2026-07-04T00:00:00.000Z",
     updatedLabel: "16日前に更新",
@@ -544,6 +552,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "ピンクと紫の円盤風アルバムジャケット",
     feedbackCount: 36,
     followCount: 90,
+    primaryUsageCount: 215,
     updatedAt: "2026-07-17T10:00:00.000Z",
     publishedAt: "2026-02-10T00:00:00.000Z",
     updatedLabel: "4日前に更新",
@@ -602,6 +611,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "夕暮れの山並みを描いたBGMアートワーク",
     feedbackCount: 11,
     followCount: 24,
+    primaryUsageCount: 61,
     updatedAt: "2026-07-20T14:00:00.000Z",
     publishedAt: "2026-06-20T00:00:00.000Z",
     updatedLabel: "1日前に更新",
@@ -643,6 +653,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "波形が表示された効果音のビジュアル",
     feedbackCount: 0,
     followCount: 0,
+    primaryUsageCount: 5,
     updatedAt: "2026-07-12T00:00:00.000Z",
     publishedAt: "2026-07-11T00:00:00.000Z",
     updatedLabel: "9日前に更新",
@@ -697,6 +708,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "マイクと収録ブースを示す音声ビジュアル",
     feedbackCount: 5,
     followCount: 8,
+    primaryUsageCount: 23,
     updatedAt: "2026-07-19T06:00:00.000Z",
     publishedAt: "2026-07-01T00:00:00.000Z",
     updatedLabel: "2日前に更新",
@@ -760,6 +772,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "舞台幕とタイトルを配した音声ドラマのアート",
     feedbackCount: 19,
     followCount: 41,
+    primaryUsageCount: 100,
     updatedAt: "2026-07-21T01:00:00.000Z",
     publishedAt: "2026-07-18T00:00:00.000Z",
     updatedLabel: "今日更新",
@@ -809,6 +822,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "音楽・音声のサムネイル未設定",
     feedbackCount: 2,
     followCount: 6,
+    primaryUsageCount: 19,
     updatedAt: "2026-06-30T00:00:00.000Z",
     publishedAt: "2026-06-28T00:00:00.000Z",
     updatedLabel: "21日前に更新",
@@ -871,6 +885,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "JSONからCSVへ変換するブラウザツール画面",
     feedbackCount: 41,
     followCount: 77,
+    primaryUsageCount: 184,
     updatedAt: "2026-07-16T10:00:00.000Z",
     publishedAt: "2026-01-15T00:00:00.000Z",
     updatedLabel: "5日前に更新",
@@ -931,6 +946,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "エディタサイドバーと拡張パネルの画面",
     feedbackCount: 18,
     followCount: 33,
+    primaryUsageCount: 82,
     updatedAt: "2026-07-20T11:00:00.000Z",
     publishedAt: "2026-05-01T00:00:00.000Z",
     updatedLabel: "1日前に更新",
@@ -974,6 +990,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "入力・変換・出力がつながったノードワークフロー",
     feedbackCount: 0,
     followCount: 4,
+    primaryUsageCount: 14,
     updatedAt: "2026-07-09T00:00:00.000Z",
     publishedAt: "2026-07-07T00:00:00.000Z",
     updatedLabel: "12日前に更新",
@@ -1030,6 +1047,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "ターミナルで forge build を実行する画面",
     feedbackCount: 9,
     followCount: 0,
+    primaryUsageCount: 5,
     updatedAt: "2026-07-21T02:00:00.000Z",
     publishedAt: "2026-07-15T00:00:00.000Z",
     updatedLabel: "今日更新",
@@ -1095,6 +1113,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "GETリクエストとJSONレスポンスのAPIコンソール",
     feedbackCount: 27,
     followCount: 52,
+    primaryUsageCount: 126,
     updatedAt: "2026-07-18T16:00:00.000Z",
     publishedAt: "2026-04-20T00:00:00.000Z",
     updatedLabel: "3日前に更新",
@@ -1154,6 +1173,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "開発ツールのサムネイル未設定",
     feedbackCount: 4,
     followCount: 12,
+    primaryUsageCount: 33,
     updatedAt: "2026-07-02T00:00:00.000Z",
     publishedAt: "2026-06-25T00:00:00.000Z",
     updatedLabel: "19日前に更新",
@@ -1221,6 +1241,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "習慣チェックリストのアプリ画面",
     feedbackCount: 52,
     followCount: 110,
+    primaryUsageCount: 261,
     updatedAt: "2026-07-17T08:00:00.000Z",
     publishedAt: "2025-11-01T00:00:00.000Z",
     updatedLabel: "4日前に更新",
@@ -1280,6 +1301,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "学習用フラッシュカードの画面",
     feedbackCount: 21,
     followCount: 45,
+    primaryUsageCount: 110,
     updatedAt: "2026-07-20T09:00:00.000Z",
     publishedAt: "2026-05-20T00:00:00.000Z",
     updatedLabel: "1日前に更新",
@@ -1323,6 +1345,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "色付き付箋が並ぶ整理ボード",
     feedbackCount: 0,
     followCount: 2,
+    primaryUsageCount: 9,
     updatedAt: "2026-07-11T00:00:00.000Z",
     publishedAt: "2026-07-10T00:00:00.000Z",
     updatedLabel: "10日前に更新",
@@ -1382,6 +1405,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "家計の円グラフと棒グラフの画面",
     feedbackCount: 8,
     followCount: 0,
+    primaryUsageCount: 5,
     updatedAt: "2026-07-21T03:00:00.000Z",
     publishedAt: "2026-07-16T00:00:00.000Z",
     updatedLabel: "今日更新",
@@ -1447,6 +1471,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "投稿と共感ボタンのあるコミュニティ画面",
     feedbackCount: 30,
     followCount: 64,
+    primaryUsageCount: 154,
     updatedAt: "2026-07-19T12:00:00.000Z",
     publishedAt: "2026-03-30T00:00:00.000Z",
     updatedLabel: "2日前に更新",
@@ -1506,6 +1531,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     thumbnailAlt: "Webサービス・アプリのサムネイル未設定",
     feedbackCount: 6,
     followCount: 9,
+    primaryUsageCount: 26,
     updatedAt: "2026-07-03T00:00:00.000Z",
     publishedAt: "2026-07-01T00:00:00.000Z",
     updatedLabel: "18日前に更新",
@@ -1519,12 +1545,15 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
   },
 ];
 
-export type ExplorePrototypeShelfId = "featured" | "updated" | "newest";
+export type ExplorePrototypeShelfId = "updated" | "newest";
 
 export type ExplorePrototypeShelf = {
   id: ExplorePrototypeShelfId;
   title: string;
   works: ExplorePrototypeWork[];
+  /** Optional “すべて見る” — hub category shelves only */
+  seeAllHref?: string;
+  seeAllLabel?: string;
 };
 
 export function getExplorePrototypeWorks(
@@ -1542,25 +1571,31 @@ function byPublishedDesc(a: ExplorePrototypeWork, b: ExplorePrototypeWork) {
 }
 
 function byEngagementDesc(a: ExplorePrototypeWork, b: ExplorePrototypeWork) {
-  const scoreA = a.feedbackCount + a.followCount;
-  const scoreB = b.feedbackCount + b.followCount;
+  const scoreA = a.feedbackCount + a.followCount + a.primaryUsageCount;
+  const scoreB = b.feedbackCount + b.followCount + b.primaryUsageCount;
   if (scoreB !== scoreA) return scoreB - scoreA;
   return byUpdatedDesc(a, b);
 }
 
+/** Featured slides for category hero — max 4. */
+export function getExplorePrototypeFeaturedWorks(
+  category: ExplorePrototypeCategorySlug,
+): ExplorePrototypeWork[] {
+  return getExplorePrototypeWorks(category)
+    .filter((work) => work.featured)
+    .sort(byEngagementDesc)
+    .slice(0, 4);
+}
+
+/** Regular shelves only (注目 is the hero carousel). */
 export function getExplorePrototypeShelves(
   category: ExplorePrototypeCategorySlug,
 ): ExplorePrototypeShelf[] {
   const works = getExplorePrototypeWorks(category);
-  const featured = works
-    .filter((work) => work.featured)
-    .sort(byEngagementDesc)
-    .slice(0, 4);
-  const updated = [...works].sort(byUpdatedDesc).slice(0, 4);
-  const newest = [...works].sort(byPublishedDesc).slice(0, 4);
+  const updated = [...works].sort(byUpdatedDesc);
+  const newest = [...works].sort(byPublishedDesc);
 
   return [
-    { id: "featured", title: "注目の作品", works: featured },
     { id: "updated", title: "最近更新", works: updated },
     { id: "newest", title: "新着作品", works: newest },
   ];
@@ -1571,11 +1606,49 @@ export function getExplorePrototypeShelves(
  */
 export function getExplorePrototypeHomeFeatured(): ExplorePrototypeWork[] {
   return EXPLORE_PROTOTYPE_CATEGORY_SLUGS.map((slug) => {
-    const featured = getExplorePrototypeWorks(slug)
-      .filter((work) => work.featured)
-      .sort(byEngagementDesc);
+    const featured = getExplorePrototypeFeaturedWorks(slug);
     return featured[0] ?? getExplorePrototypeWorks(slug)[0];
   }).filter((work): work is ExplorePrototypeWork => Boolean(work));
+}
+
+/** Hub lower shelves — up to 4 works each + see-all link. */
+export function getExplorePrototypeHomeCategoryShelves(): ExplorePrototypeShelf[] {
+  const seeAllBySlug: Record<ExplorePrototypeCategorySlug, string> = {
+    game: "ゲームをすべて見る",
+    audio: "音楽・音声をすべて見る",
+    "dev-tool": "開発ツールをすべて見る",
+    "service-app": "Webサービス・アプリをすべて見る",
+  };
+
+  return EXPLORE_PROTOTYPE_CATEGORIES.map((meta) => {
+    const works = [...getExplorePrototypeWorks(meta.slug)]
+      .sort(byUpdatedDesc)
+      .slice(0, 4);
+    return {
+      id: "updated" as const,
+      title: meta.label,
+      works,
+      seeAllHref: meta.href,
+      seeAllLabel: seeAllBySlug[meta.slug],
+    };
+  });
+}
+
+/** Category-aware primary usage label for discovery stats. */
+export function getExplorePrototypePrimaryUsageLabel(
+  category: ExplorePrototypeCategorySlug,
+): string {
+  switch (category) {
+    case "game":
+      return "プレイヤー";
+    case "audio":
+      return "リスナー";
+    case "dev-tool":
+    case "service-app":
+      return "利用者";
+    default:
+      return "利用者";
+  }
 }
 
 export function getExplorePrototypeCtaLabel(

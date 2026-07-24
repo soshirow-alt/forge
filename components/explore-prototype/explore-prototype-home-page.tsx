@@ -1,19 +1,24 @@
-import Link from "next/link";
-import { ExplorePrototypeCard } from "@/components/explore-prototype/explore-prototype-card";
+import { ExplorePrototypeDiscoveryCard } from "@/components/explore-prototype/explore-prototype-discovery-card";
+import { ExplorePrototypeFeaturedCarousel } from "@/components/explore-prototype/explore-prototype-featured-carousel";
 import { ExplorePrototypeNav } from "@/components/explore-prototype/explore-prototype-nav";
 import {
-  EXPLORE_PROTOTYPE_CATEGORIES,
+  ExplorePrototypeSectionHeader,
+  ExplorePrototypeShelfPager,
+} from "@/components/explore-prototype/explore-prototype-shelf-pager";
+import {
+  getExplorePrototypeHomeCategoryShelves,
   getExplorePrototypeHomeFeatured,
 } from "@/lib/prototype/explore-prototype";
 
 /**
- * Explore Prototype hub — cross-category featured works + category entry.
+ * Explore Prototype hub — mixed-category featured carousel + lightweight category shelves.
  */
 export function ExplorePrototypeHomePage() {
   const featured = getExplorePrototypeHomeFeatured();
+  const shelves = getExplorePrototypeHomeCategoryShelves();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <header className="space-y-3">
         <div className="space-y-1">
           <p className="text-xs font-medium uppercase tracking-wide text-violet-300">
@@ -23,52 +28,46 @@ export function ExplorePrototypeHomePage() {
             作品を探す
           </h1>
           <p className="text-sm text-zinc-400">
-            カテゴリを選んで、プロトタイプ作品を横断して眺める
+            カテゴリを横断して、注目作品と最近の更新を眺める
           </p>
         </div>
 
         <ExplorePrototypeNav active={null} />
       </header>
 
-      <section aria-labelledby="home-featured">
-        <h2
-          id="home-featured"
-          className="text-lg font-semibold text-white sm:text-xl"
-        >
-          注目の作品
-        </h2>
-        <ul className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {featured.map((work) => (
-            <li key={work.id} className="min-w-0 h-full">
-              <ExplorePrototypeCard work={work} />
-            </li>
-          ))}
-        </ul>
-      </section>
+      <ExplorePrototypeFeaturedCarousel
+        slides={featured}
+        heading="注目の作品"
+        headingLevel="h2"
+      />
 
-      <section aria-labelledby="home-categories" className="space-y-3">
-        <h2
-          id="home-categories"
-          className="text-lg font-semibold text-white sm:text-xl"
-        >
-          カテゴリから探す
-        </h2>
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {EXPLORE_PROTOTYPE_CATEGORIES.map((category) => (
-            <li key={category.slug}>
-              <Link
-                href={category.href}
-                className="flex min-w-0 flex-col gap-1 rounded-xl border border-zinc-800/90 bg-zinc-900/40 px-4 py-3 transition-colors hover:border-violet-500/40 hover:bg-violet-950/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
-              >
-                <span className="text-sm font-semibold text-zinc-50">
-                  {category.label}
-                </span>
-                <span className="text-xs text-zinc-400">{category.description}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {shelves.map((shelf) => {
+        const headingId = `hub-shelf-${shelf.seeAllHref?.replace(/\//g, "-") ?? shelf.title}`;
+        return (
+          <section
+            key={shelf.seeAllHref ?? shelf.title}
+            aria-labelledby={headingId}
+            className="space-y-3"
+          >
+            <ExplorePrototypeSectionHeader
+              title={shelf.title}
+              headingId={headingId}
+              seeAllHref={shelf.seeAllHref}
+              seeAllLabel={shelf.seeAllLabel}
+            />
+            <div className="px-2">
+              <ExplorePrototypeShelfPager
+                items={shelf.works}
+                getKey={(work) => `hub-${work.id}`}
+                pageSize={4}
+                renderItem={(work) => (
+                  <ExplorePrototypeDiscoveryCard work={work} />
+                )}
+              />
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }

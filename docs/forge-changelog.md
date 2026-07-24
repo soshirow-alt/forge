@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07-24 — Preview: Explore Prototype 発見体験をProduction階層へ再構成（Phase 5）
+
+- **注目** — 静的カードgridを廃止し、中央1作品＋左右peek＋矢印＋ドット＋5秒autoplayのヒーローカルーセルへ（Prototype専用component）
+- **通常カード** — 枠・説明・制作者・タグ・カテゴリ固有行・下端CTAを廃止。画像＋タイトル＋フェーズ·更新日＋統計3件の軽量カードへ
+- **棚** — 最近更新／新着は pager（PC4列）。横断ホームは混在4件ヒーロー＋カテゴリ別軽量棚＋「すべて見る」
+- **関連** — 詳細下部も軽量カードへ寄せ（説明・タグ・CTAなし）
+- **非対象** — Production `/home`・正式ヒーロー／カード、OGP、DB、main
+
 ## 2026-07-24 — Preview: OGP派生を不変pathへ（Phase 3F・同一URL上書き廃止）
 
 - **Production最終検証（read-only）** — 手動修復済み6作品＋Kick Counterの正式objectが repair manifest の SHA／byteLength と一致。公開14件の破損OGPは0。正常作品のSHA意図変更なし

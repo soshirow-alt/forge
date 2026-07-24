@@ -31,22 +31,23 @@ function PrimaryUsageIcon({
 }
 
 /**
- * Compact related-work card — lightweight discovery hierarchy (no CTA / tags / lead).
+ * Lightweight discovery card — Production HorizontalGameCard hierarchy.
+ * No outer border/panel, no lead/author/tags/CTA.
  */
-export function ExplorePrototypeRelatedCard({
+export function ExplorePrototypeDiscoveryCard({
   work,
 }: {
   work: ExplorePrototypeWork;
 }) {
-  const href = getExplorePrototypeDetailHref(work);
   const thumb = resolveExplorePrototypeThumbnail(work);
+  const href = getExplorePrototypeDetailHref(work);
   const primaryLabel = getExplorePrototypePrimaryUsageLabel(work.category);
 
   return (
     <Link
       href={href}
       title={work.title}
-      className="block h-full min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
+      className="block w-full min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
       aria-label={`${work.title}の詳細`}
     >
       <article className="min-w-0">
@@ -55,7 +56,8 @@ export function ExplorePrototypeRelatedCard({
           alt={work.thumbnailAlt}
           fit="cover"
           objectPosition="object-[center_35%]"
-          frameClassName="aspect-video w-full rounded-xl"
+          frameClassName="aspect-video w-full max-w-[380px] rounded-xl"
+          className="transition-[filter] group-hover:brightness-110"
         />
         <h3
           className="mt-2 truncate text-sm font-semibold text-white"
@@ -69,7 +71,7 @@ export function ExplorePrototypeRelatedCard({
         <div className="mt-1.5 flex min-w-0 flex-nowrap items-center gap-x-2 overflow-hidden text-xs text-zinc-400">
           <span className="inline-flex shrink-0 items-center gap-1">
             <PrimaryUsageIcon category={work.category} />
-            <span>
+            <span className="truncate">
               <span className="sr-only">{primaryLabel} </span>
               {work.primaryUsageCount.toLocaleString()}
             </span>
