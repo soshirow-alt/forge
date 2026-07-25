@@ -5,8 +5,9 @@
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
-CREATE EXTENSION IF NOT EXISTS unaccent;
 
+-- Normalize for case / punctuation / whitespace. Japanese partial match uses
+-- substring + trigram; accent folding is not required for Forge catalog text.
 CREATE OR REPLACE FUNCTION public.forge_search_normalize(p_input text)
 RETURNS text
 LANGUAGE sql
@@ -14,7 +15,7 @@ IMMUTABLE
 AS $$
   SELECT lower(
     regexp_replace(
-      coalesce(public.unaccent(coalesce(p_input, '')), ''),
+      coalesce(p_input, ''),
       '[[:space:][:punct:]]+',
       ' ',
       'g'

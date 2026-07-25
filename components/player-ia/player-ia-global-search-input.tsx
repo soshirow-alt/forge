@@ -132,8 +132,8 @@ export function PlayerIaGlobalSearchInput() {
           onFocus={() => setOpen(true)}
           placeholder="作品・開発者・タグを検索"
           className={FORGE_SHELL_HEADER_SEARCH_INPUT_CLASS}
-          aria-expanded={open && suggestions.length > 0}
           aria-controls="player-ia-search-suggest"
+          aria-autocomplete="list"
           autoComplete="off"
         />
       </form>

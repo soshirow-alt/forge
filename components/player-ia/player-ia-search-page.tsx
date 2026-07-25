@@ -112,8 +112,12 @@ function PlayerIaSearchContent() {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(false);
+    void Promise.resolve().then(() => {
+      if (!cancelled) {
+        setLoading(true);
+        setError(false);
+      }
+    });
     void fetch(`/api/search/catalog?${catalogQuery}`, { cache: "no-store" })
       .then(async (response) => {
         if (!response.ok) {

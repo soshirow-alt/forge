@@ -11,24 +11,29 @@ import {
 } from "@/lib/project-categories";
 import type { GlobalSearchResult } from "@/lib/supabase/public-catalog-db";
 
+type LoadState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "error" }
+  | { status: "ready"; results: GlobalSearchResult[] };
+
 function GlobalSearchContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get("q")?.trim() ?? "";
-  const [results, setResults] = useState<GlobalSearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
+  const [state, setState] = useState<LoadState>({ status: "idle" });
 
   useEffect(() => {
     if (!query) {
-      setResults([]);
-      setError(false);
-      setLoading(false);
       return;
     }
 
     let cancelled = false;
-    setLoading(true);
-    setError(false);
+    void Promise.resolve().then(() => {
+      if (!cancelled) {
+        setState({ status: "loading" });
+      }
+    });
+
     void fetch(`/api/search/global?q=${encodeURIComponent(query)}`, {
       cache: "no-store",
     })
@@ -44,18 +49,12 @@ function GlobalSearchContent() {
           throw new Error("global search payload invalid");
         }
         if (!cancelled) {
-          setResults(payload.results ?? []);
+          setState({ status: "ready", results: payload.results ?? [] });
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setError(true);
-          setResults([]);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
+          setState({ status: "error" });
         }
       });
 
@@ -63,6 +62,10 @@ function GlobalSearchContent() {
       cancelled = true;
     };
   }, [query]);
+
+  const results = state.status === "ready" ? state.results : [];
+  const loading = Boolean(query) && state.status !== "ready" && state.status !== "error";
+  const error = state.status === "error";
 
   return (
     <div className="space-y-5">
@@ -82,9 +85,9 @@ function GlobalSearchContent() {
           ))}
         </div>
       ) : error ? (
-        <p className="text-sm text-zinc-500">検索に失敗しました。</p>
+        <p className="text-sm text-zinc-500">検索結果を取得できませんでした。</p>
       ) : results.length === 0 ? (
-        <p className="text-sm text-zinc-500">該当する結果がありません。</p>
+        <p className="text-sm text-zinc-500">条件に合う結果がありません。</p>
       ) : (
         <ul className="space-y-2">
           {results.map((item) => {
@@ -92,44 +95,56 @@ function GlobalSearchContent() {
               item.kind === "project"
                 ? gameDetailHref(item.id)
                 : item.kind === "developer"
-                  ? `/creators/${encodeURIComponent(item.id)}`
+                  ? `/developers/${item.id}`
                   : `/search/global?q=${encodeURIComponent(item.title)}`;
+            const kindLabel =
+              item.kind === "project"
+                ? "作品"
+                : item.kind === "developer"
+                  ? "開発者"
+                  : "タグ";
+            const categoryLabel =
+              item.category && item.category in PROJECT_CATEGORY_LABELS
+                ? PROJECT_CATEGORY_LABELS[item.category as ProjectCategoryId]
+                : null;
 
             return (
-              <li key={`${item.kind}-${item.id}`}>
+              <li key={`${item.kind}:${item.id}`}>
                 <Link
                   href={href}
-                  className="flex items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 transition-colors hover:border-violet-500/30 hover:bg-zinc-900/70"
+                  className="flex items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-3 py-2.5 transition-colors hover:border-zinc-700"
                 >
                   {item.kind === "project" ? (
                     <ProjectThumbnail
                       projectId={item.id}
                       title={item.title}
-                      variant="chip"
+                      variant="card"
+                      className="size-12 shrink-0 rounded-lg"
                     />
                   ) : (
-                    <span className="flex size-12 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xs text-zinc-500">
-                      {item.kind === "developer" ? "開発" : "タグ"}
+                    <span className="flex size-12 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-[11px] text-zinc-400">
+                      {kindLabel}
                     </span>
                   )}
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-zinc-100">
-                      {item.title}
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="truncate text-sm font-medium text-zinc-100">
+                        {item.title}
+                      </span>
+                      <span className="rounded-md bg-zinc-900 px-1.5 py-0.5 text-[10px] text-zinc-400">
+                        {kindLabel}
+                      </span>
+                      {categoryLabel ? (
+                        <span className="rounded-md bg-zinc-900 px-1.5 py-0.5 text-[10px] text-zinc-400">
+                          {categoryLabel}
+                        </span>
+                      ) : null}
                     </span>
                     {item.subtitle ? (
-                      <span className="block truncate text-xs text-zinc-500">
+                      <span className="mt-0.5 line-clamp-1 block text-xs text-zinc-500">
                         {item.subtitle}
                       </span>
                     ) : null}
-                  </span>
-                  <span className="shrink-0 text-[10px] text-zinc-500">
-                    {item.kind === "project"
-                      ? item.category
-                        ? PROJECT_CATEGORY_LABELS[item.category as ProjectCategoryId]
-                        : "作品"
-                      : item.kind === "developer"
-                        ? "開発者"
-                        : "タグ"}
                   </span>
                 </Link>
               </li>
@@ -145,14 +160,7 @@ export function PlayerIaGlobalSearchPage() {
   return (
     <Suspense
       fallback={
-        <div className="space-y-3">
-          {Array.from({ length: 5 }, (_, index) => (
-            <div
-              key={index}
-              className="h-16 animate-pulse rounded-xl border border-zinc-800/80 bg-zinc-900/40"
-            />
-          ))}
-        </div>
+        <div className="h-40 animate-pulse rounded-2xl border border-zinc-800/80 bg-zinc-900/40" />
       }
     >
       <GlobalSearchContent />

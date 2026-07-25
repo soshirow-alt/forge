@@ -223,7 +223,7 @@ VALUES (
   'bbbbbbbb-bbbb-4bbb-8bbb-000000000001',
   'eeeeeeee-eeee-4eee-8eee-000000000001',
   '0.3',
-  'ia-seed-guest-submitter-001',
+  'bbbbbbbb-bbbb-4bbb-8bbb-000000000099',
   '探索のテンポが良く、すぐ試せるのが嬉しいです。マップの霧演出も雰囲気があります。',
   '序盤のチュートリアルがもう少し短いと助かります。',
   NULL,
