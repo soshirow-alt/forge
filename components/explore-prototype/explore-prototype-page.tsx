@@ -1,4 +1,3 @@
-import { ExplorePrototypeEmptyState } from "@/components/explore-prototype/explore-prototype-empty-state";
 import { ExplorePrototypeFeaturedCarousel } from "@/components/explore-prototype/explore-prototype-featured-carousel";
 import { ExplorePrototypeShelfSection } from "@/components/explore-prototype/explore-prototype-shelf-section";
 import {
@@ -9,24 +8,14 @@ import {
 
 export function ExplorePrototypePage({
   category,
-  query = "",
 }: {
   category: ExplorePrototypeCategorySlug;
-  query?: string;
 }) {
   const meta = getExplorePrototypeCategory(category);
-  const browse = getExplorePrototypeCategoryBrowse(category, query);
+  const browse = getExplorePrototypeCategoryBrowse(category);
 
   if (!meta) {
     return null;
-  }
-
-  if (browse.matchCount === 0) {
-    return (
-      <div className="space-y-6">
-        <ExplorePrototypeEmptyState query={browse.query} />
-      </div>
-    );
   }
 
   return (

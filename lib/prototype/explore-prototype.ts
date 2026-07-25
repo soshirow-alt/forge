@@ -66,18 +66,11 @@ export const EXPLORE_PROTOTYPE_CATEGORIES: ExplorePrototypeCategoryMeta[] = [
 /** Canonical list URLs for the future discovery home (Preview /home). */
 export function buildFutureHomeHref(options?: {
   category?: ExplorePrototypeCategorySlug | null;
-  q?: string | null;
 }): string {
-  const params = new URLSearchParams();
   if (options?.category) {
-    params.set("category", options.category);
+    return `/home?category=${options.category}`;
   }
-  const q = options?.q?.trim();
-  if (q) {
-    params.set("q", q);
-  }
-  const qs = params.toString();
-  return qs ? `/home?${qs}` : "/home";
+  return "/home";
 }
 
 export function getExplorePrototypeCategory(
@@ -1736,90 +1729,9 @@ export function getAllExplorePrototypeStaticParams(): Array<{
   }));
 }
 
-/** Category-aware search placeholder for Explore Prototype header. */
-export function getExplorePrototypeSearchPlaceholder(
-  category: ExplorePrototypeCategorySlug | null,
-): string {
-  switch (category) {
-    case "game":
-      return "ゲームやジャンルを検索";
-    case "audio":
-      return "楽曲・BGM・音声を検索";
-    case "dev-tool":
-      return "開発ツールを検索";
-    case "service-app":
-      return "Webサービス・アプリを検索";
-    default:
-      return "作品を検索";
-  }
-}
-
-function categorySpecificSearchText(work: ExplorePrototypeWork): string[] {
-  if (work.category === "game") {
-    return [
-      work.genre,
-      ...work.tags,
-      work.estimatedPlayTime ?? "",
-      ...work.platforms,
-      work.controlsOrConditions ?? "",
-    ];
-  }
-  if (work.category === "audio") {
-    return [
-      work.kind,
-      work.genre ?? "",
-      ...work.tags,
-      work.durationLabel,
-      work.listeningContext ?? "",
-    ];
-  }
-  if (work.category === "dev-tool") {
-    return [
-      work.kind,
-      ...work.tags,
-      ...work.environments,
-      work.usageMethod,
-      work.targetUsers ?? "",
-      work.prerequisites ?? "",
-    ];
-  }
-  return [
-    work.kind,
-    ...work.tags,
-    ...work.environments,
-    work.intendedUsers ?? "",
-    work.problemSolved ?? "",
-    ...(work.usageScenes ?? []),
-  ];
-}
-
-/** Client/server fixture filter — title / shortDescription / tags / creator / category fields. */
-export function filterExplorePrototypeWorks(
-  works: ExplorePrototypeWork[],
-  query: string,
-): ExplorePrototypeWork[] {
-  const needle = query.trim().toLowerCase();
-  if (!needle) return works;
-
-  return works.filter((work) => {
-    const haystack = [
-      work.title,
-      work.shortDescription,
-      work.creatorName,
-      work.lead,
-      ...categorySpecificSearchText(work),
-    ]
-      .join("\n")
-      .toLowerCase();
-    return haystack.includes(needle);
-  });
-}
-
 export type ExplorePrototypeBrowseModel = {
   featured: ExplorePrototypeWork[];
   shelves: ExplorePrototypeShelf[];
-  matchCount: number;
-  query: string;
 };
 
 function shelvesFromWorks(works: ExplorePrototypeWork[]): ExplorePrototypeShelf[] {
@@ -1831,33 +1743,26 @@ function shelvesFromWorks(works: ExplorePrototypeWork[]): ExplorePrototypeShelf[
   ];
 }
 
-/** Category list browse model — featured + shelves recomputed from filtered fixture. */
+/** Category list browse model — featured + shelves from fixture. */
 export function getExplorePrototypeCategoryBrowse(
   category: ExplorePrototypeCategorySlug,
-  query = "",
 ): ExplorePrototypeBrowseModel {
-  const filtered = filterExplorePrototypeWorks(
-    getExplorePrototypeWorks(category),
-    query,
-  );
-  const featured = filtered
+  const works = getExplorePrototypeWorks(category);
+  const featured = works
     .filter((work) => work.featured)
     .sort(byEngagementDesc)
     .slice(0, 4);
 
   return {
     featured,
-    shelves: shelvesFromWorks(filtered),
-    matchCount: filtered.length,
-    query: query.trim(),
+    shelves: shelvesFromWorks(works),
   };
 }
 
-/** Hub browse model — mixed featured + per-category shelves from filtered fixture. */
-export function getExplorePrototypeHubBrowse(query = ""): ExplorePrototypeBrowseModel {
-  const filtered = filterExplorePrototypeWorks(EXPLORE_PROTOTYPE_WORKS, query);
+/** Hub browse model — mixed featured + per-category shelves from fixture. */
+export function getExplorePrototypeHubBrowse(): ExplorePrototypeBrowseModel {
   const featured = EXPLORE_PROTOTYPE_CATEGORY_SLUGS.map((slug) => {
-    const inCategory = filtered.filter((work) => work.category === slug);
+    const inCategory = getExplorePrototypeWorks(slug);
     const topFeatured = inCategory
       .filter((work) => work.featured)
       .sort(byEngagementDesc)[0];
@@ -1872,8 +1777,7 @@ export function getExplorePrototypeHubBrowse(query = ""): ExplorePrototypeBrowse
   };
 
   const shelves = EXPLORE_PROTOTYPE_CATEGORIES.map((meta) => {
-    const works = filtered
-      .filter((work) => work.category === meta.slug)
+    const works = [...getExplorePrototypeWorks(meta.slug)]
       .sort(byUpdatedDesc)
       .slice(0, 4);
     return {
@@ -1888,7 +1792,5 @@ export function getExplorePrototypeHubBrowse(query = ""): ExplorePrototypeBrowse
   return {
     featured,
     shelves,
-    matchCount: filtered.length,
-    query: query.trim(),
   };
 }

@@ -1,22 +1,13 @@
-import { ExplorePrototypeEmptyState } from "@/components/explore-prototype/explore-prototype-empty-state";
 import { ExplorePrototypeFeaturedCarousel } from "@/components/explore-prototype/explore-prototype-featured-carousel";
 import { ExplorePrototypeShelfSection } from "@/components/explore-prototype/explore-prototype-shelf-section";
 import { getExplorePrototypeHubBrowse } from "@/lib/prototype/explore-prototype";
 
 /**
  * Explore Prototype hub — mixed-category featured carousel + lightweight category shelves.
- * Page chrome (eyebrow / title / category tabs) lives in the header controls.
+ * Category chrome lives in the header tabs.
  */
-export function ExplorePrototypeHomePage({ query = "" }: { query?: string }) {
-  const browse = getExplorePrototypeHubBrowse(query);
-
-  if (browse.matchCount === 0) {
-    return (
-      <div className="space-y-6">
-        <ExplorePrototypeEmptyState query={browse.query} />
-      </div>
-    );
-  }
+export function ExplorePrototypeHomePage() {
+  const browse = getExplorePrototypeHubBrowse();
 
   return (
     <div className="space-y-6">

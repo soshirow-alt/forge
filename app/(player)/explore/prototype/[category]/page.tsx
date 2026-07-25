@@ -12,17 +12,14 @@ export function generateStaticParams() {
 /** Category lists moved to `/home?category=` — keep path for compatibility. */
 export default async function ExplorePrototypeCategoryPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ category: string }>;
-  searchParams: Promise<{ q?: string }>;
 }) {
   const { category } = await params;
-  const sp = await searchParams;
 
   if (!isExplorePrototypeCategorySlug(category)) {
-    redirect(buildFutureHomeHref({ q: sp.q }));
+    redirect(buildFutureHomeHref());
   }
 
-  redirect(buildFutureHomeHref({ category, q: sp.q }));
+  redirect(buildFutureHomeHref({ category }));
 }

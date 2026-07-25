@@ -4,11 +4,18 @@
 
 ---
 
+## 2026-07-25 — Preview: 将来ホームヘッダーをカテゴリタブへ（検索廃止）
+
+- **ヘッダー** — select＋検索入力を削除。常時表示の5タブ（すべて／ゲーム／音楽・音声／開発ツール／Webサービス・アプリ）
+- **検索** — `/home` の fixture `?q=` filter／placeholder／0件状態を廃止。`/home?q=` は q なしへ redirect
+- **本文** — トップバー直下から「注目の作品」。Phase 5 ヒーロー／軽量カード／棚は維持
+- **非対象** — Production HeaderSearchForm、`/search`、正式 Discovery、OGP、DB、main
+
 ## 2026-07-25 — Preview: ホームを将来ホーム一本に最終整理
 
-- **/home（Preview）** — 唯一の確認ホーム。Production型シェル／ヒーロー／軽量カード＋カテゴリselect・fixture検索・4カテゴリ棚（24 fixture）
+- **/home（Preview）** — 唯一の確認ホーム。Production型シェル／ヒーロー／軽量カード＋カテゴリナビ・4カテゴリ棚（24 fixture）
 - **廃止** — `/prototype/production-home` と Production相当バッジ／ハブリンク（正式 Discovery component 本体は非変更・非削除）
-- **互換** — `/explore/prototype` 一覧 → `/home`（＋category/q）。詳細24件は維持
+- **互換** — `/explore/prototype` 一覧 → `/home`（＋category）。詳細24件は維持
 - **安全** — `shouldServeFutureDiscoveryHome()` は `VERCEL_ENV=production` でのみ false。Production `/home` は `DiscoveryHomePage` のまま
 - **非対象** — Staging 旧9件の DB/Storage cleanup、main / Production deploy、OGP
 

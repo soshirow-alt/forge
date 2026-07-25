@@ -13,7 +13,8 @@ import {
  * Preview / local: category-expanded future discovery (Explore Prototype fixtures).
  * Production release mode: formal DiscoveryHomePage (unchanged).
  *
- * Invalid `category` query → fallback to 「すべて」(`/home`, q preserved).
+ * - Invalid `category` → 「すべて」(`/home`)
+ * - `q` is ignored (stripped via redirect) — future home has no search UI
  */
 export default async function HomeDiscoverPage({
   searchParams,
@@ -21,25 +22,27 @@ export default async function HomeDiscoverPage({
   searchParams: Promise<{ category?: string; q?: string }>;
 }) {
   const sp = await searchParams;
-  const query = sp.q ?? "";
 
   if (!shouldServeFutureDiscoveryHome()) {
     return <DiscoveryHomePage />;
   }
 
   const rawCategory = sp.category?.trim() ?? "";
-  if (rawCategory && !isExplorePrototypeCategorySlug(rawCategory)) {
-    redirect(buildFutureHomeHref({ q: query }));
+  const category =
+    rawCategory && isExplorePrototypeCategorySlug(rawCategory)
+      ? (rawCategory as ExplorePrototypeCategorySlug)
+      : null;
+
+  // Drop obsolete search query and invalid category from the URL.
+  const hasQ = typeof sp.q === "string" && sp.q.length > 0;
+  const hasInvalidCategory = Boolean(rawCategory) && !category;
+  if (hasQ || hasInvalidCategory) {
+    redirect(buildFutureHomeHref({ category }));
   }
 
-  if (rawCategory && isExplorePrototypeCategorySlug(rawCategory)) {
-    return (
-      <ExplorePrototypePage
-        category={rawCategory as ExplorePrototypeCategorySlug}
-        query={query}
-      />
-    );
+  if (category) {
+    return <ExplorePrototypePage category={category} />;
   }
 
-  return <ExplorePrototypeHomePage query={query} />;
+  return <ExplorePrototypeHomePage />;
 }

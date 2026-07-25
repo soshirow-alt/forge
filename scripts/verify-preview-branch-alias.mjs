@@ -125,13 +125,22 @@ async function main() {
   const homeHasExploreLabel = count(home.html, ">Explore<") > 0;
   const homeFuture =
     count(home.html, "草原ダッシュ") > 0 ||
-    count(home.html, "explore-prototype-category") > 0 ||
+    count(home.html, "作品カテゴリ") > 0 ||
     count(home.html, "注目の作品") > 0;
+  const homeHasCategoryTabs =
+    count(home.html, ">すべて<") > 0 &&
+    count(home.html, "ゲーム・インタラクティブ作品") > 0;
+  const homeHasSearchUi =
+    count(home.html, "explore-prototype-category") > 0 ||
+    count(home.html, "作品を検索") > 0 ||
+    count(home.html, "ゲームやジャンルを検索") > 0;
   const homeHasStagingTmp =
     count(home.html, "tmp-062") > 0 || count(home.html, "Neon Depths") > 0;
   console.log(`home ">ホーム<": ${homeHasLabel ? 1 : 0}`);
   console.log(`home ">Explore<": ${homeHasExploreLabel ? 1 : 0}`);
   console.log(`home future markers: ${homeFuture ? 1 : 0}`);
+  console.log(`home category tabs: ${homeHasCategoryTabs ? 1 : 0}`);
+  console.log(`home search/select ui: ${homeHasSearchUi ? 1 : 0}`);
   console.log(`home staging-tmp leak: ${homeHasStagingTmp ? 1 : 0}`);
   if (!homeHasLabel) failures.push('alias /home missing sidebar label "ホーム"');
   if (homeHasExploreLabel) {
@@ -139,6 +148,12 @@ async function main() {
   }
   if (!homeFuture) {
     failures.push("alias /home missing future discovery / fixture markers");
+  }
+  if (!homeHasCategoryTabs) {
+    failures.push("alias /home missing always-visible category tabs");
+  }
+  if (homeHasSearchUi) {
+    failures.push("alias /home still has search input or category select");
   }
   if (homeHasStagingTmp) {
     failures.push("alias /home still embeds Staging tmp/hero-seed titles in HTML");
@@ -156,24 +171,43 @@ async function main() {
     );
   }
 
-  // Compatibility redirects (list only; details stay).
+  // Compatibility redirects (list only; details stay). q is dropped.
   const redirectChecks = [
-    { path: "/explore/prototype", expect: null },
-    { path: "/explore/prototype?q=neon", expect: "q=neon" },
-    { path: "/explore/prototype/game", expect: "category=game" },
-    { path: "/explore/prototype/audio?q=pulse", expect: "category=audio" },
+    { path: "/explore/prototype", expect: null, forbid: "q=" },
+    { path: "/explore/prototype?q=neon", expect: null, forbid: "q=" },
+    { path: "/explore/prototype/game", expect: "category=game", forbid: "q=" },
+    {
+      path: "/explore/prototype/audio?q=pulse",
+      expect: "category=audio",
+      forbid: "q=",
+    },
   ];
   for (const check of redirectChecks) {
     const result = await fetchRedirect(`${origin}${check.path}`);
-    const ok =
-      (result.status === 307 || result.status === 308 || result.status === 302) &&
-      locationTargetsHome(result.location, check.expect);
+    const okStatus =
+      result.status === 307 || result.status === 308 || result.status === 302;
+    const okTarget = locationTargetsHome(result.location, check.expect);
+    const okNoQ = !result.location.includes(check.forbid);
+    const ok = okStatus && okTarget && okNoQ;
     console.log(
       `redirect ${check.path} → ${result.status} ${result.location || "(none)"} ok=${ok ? 1 : 0}`,
     );
     if (!ok) {
       failures.push(`compat redirect failed for ${check.path}`);
     }
+  }
+
+  // /home?q=… should strip q (no search on future home).
+  const qStrip = await fetchRedirect(`${origin}/home?q=test`);
+  const qStripOk =
+    (qStrip.status === 307 || qStrip.status === 308 || qStrip.status === 302) &&
+    locationTargetsHome(qStrip.location, null) &&
+    !qStrip.location.includes("q=");
+  console.log(
+    `q-strip /home?q=test → ${qStrip.status} ${qStrip.location || "(none)"} ok=${qStripOk ? 1 : 0}`,
+  );
+  if (!qStripOk) {
+    failures.push("alias /home?q=test did not redirect to q-less /home");
   }
 
   const detail = await fetch(`${origin}/explore/prototype/game/meadow-dash`, {
