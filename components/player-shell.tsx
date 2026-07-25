@@ -19,10 +19,6 @@ import {
 } from "@/components/forge-shell-mobile-nav";
 import { useGames } from "@/components/games-provider";
 import {
-  ExplorePrototypeCategoryTabsFallback,
-  ExplorePrototypeHeaderControls,
-} from "@/components/explore-prototype/explore-prototype-header-controls";
-import {
   PlayerIaGlobalSearchInput,
   PlayerIaGlobalSearchInputFallback,
 } from "@/components/player-ia/player-ia-global-search-input";
@@ -197,12 +193,7 @@ function PlayerShellFrame({
   const resolvedNotificationBadge =
     notificationBadge ?? (user ? getUnreadNotificationCount() : 0);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const serveFutureDiscoveryHome = useServeFutureDiscoveryHome();
-  const servePlayerIa = serveFutureDiscoveryHome;
-  const showLegacyFutureHomeChrome =
-    serveFutureDiscoveryHome &&
-    !servePlayerIa &&
-    (pathname === "/home" || pathname.startsWith("/explore/prototype"));
+  const servePlayerIa = useServeFutureDiscoveryHome();
   const showPlayerIaSearchChrome = servePlayerIa;
 
   useEffect(() => {
@@ -274,10 +265,6 @@ function PlayerShellFrame({
           {showPlayerIaSearchChrome ? (
             <Suspense fallback={<PlayerIaGlobalSearchInputFallback />}>
               <PlayerIaGlobalSearchInput />
-            </Suspense>
-          ) : showLegacyFutureHomeChrome ? (
-            <Suspense fallback={<ExplorePrototypeCategoryTabsFallback />}>
-              <ExplorePrototypeHeaderControls />
             </Suspense>
           ) : (
             (headerSearch ?? (
