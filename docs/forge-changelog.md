@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-07-25 — Preview: 将来ホームのカテゴリナビを segmented control へ
+
+- **見た目** — 5カテゴリを zinc border container 内にまとめる。inactive も薄い背景＋border で押せる面。active は violet＋ring
+- **ラベル** — PC で左に小さな「カテゴリ」。狭幅はラベル非表示・タブ列のみ横スクロール
+- **非対象** — routing／fixture／ヒーロー／棚、Production HeaderSearchForm、OGP、DB、main
+
 ## 2026-07-25 — Preview: 将来ホームヘッダーをカテゴリタブへ（検索廃止）
 
 - **ヘッダー** — select＋検索入力を削除。常時表示の5タブ（すべて／ゲーム／音楽・音声／開発ツール／Webサービス・アプリ）

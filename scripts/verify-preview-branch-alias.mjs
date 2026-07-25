@@ -129,7 +129,8 @@ async function main() {
     count(home.html, "注目の作品") > 0;
   const homeHasCategoryTabs =
     count(home.html, ">すべて<") > 0 &&
-    count(home.html, "ゲーム・インタラクティブ作品") > 0;
+    count(home.html, "ゲーム・インタラクティブ作品") > 0 &&
+    count(home.html, ">カテゴリ<") > 0;
   const homeHasSearchUi =
     count(home.html, "explore-prototype-category") > 0 ||
     count(home.html, "作品を検索") > 0 ||
