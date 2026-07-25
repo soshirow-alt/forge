@@ -11,8 +11,8 @@
  *   PREVIEW_ALIAS_URL=... EXPECT_COMMIT=… node scripts/verify-preview-branch-alias.mjs
  *   COMPARE_DEPLOY_URL=https://forge-….vercel.app node scripts/verify-preview-branch-alias.mjs
  *
- * 2026-07-25〜: Preview `/home` = 将来ホーム（fixture）。Production相当は
- * `/prototype/production-home`。`/explore/prototype` 一覧は `/home` へ redirect。
+ * 2026-07-25〜: Preview `/home` = カテゴリ拡張後の将来ホーム（24 fixture）。
+ * `/explore/prototype` 一覧は `/home` へ redirect。詳細は維持。
  */
 
 const ALIAS_URL =
@@ -113,14 +113,13 @@ async function main() {
   const failures = [];
   const origin = ALIAS_URL.replace(/\/$/, "");
 
-  // Fingerprint from `/` (same as historical collect) for alias↔unique compare.
   const aliasRoot = await collectBundleText(ALIAS_URL, "/");
   const aliasFp = chunkFingerprint(aliasRoot.chunkPaths);
   console.log(
     `alias distinctive chunks: ${aliasFp.split("|").slice(-6).join(", ")}`,
   );
 
-  // Preview /home — future discovery (fixture), not Production Staging feed as primary.
+  // Preview /home — single future discovery surface (fixtures).
   const home = await collectBundleText(ALIAS_URL, "/home");
   const homeHasLabel = count(home.html, ">ホーム<") > 0;
   const homeHasExploreLabel = count(home.html, ">Explore<") > 0;
@@ -145,14 +144,16 @@ async function main() {
     failures.push("alias /home still embeds Staging tmp/hero-seed titles in HTML");
   }
 
-  // Production-equivalent surface.
-  const prodHome = await collectBundleText(ALIAS_URL, "/prototype/production-home");
-  const prodBadge =
-    count(prodHome.html, "Production相当") > 0 ||
-    count(prodHome.html, "DiscoveryHome") > 0;
-  console.log(`production-home markers: ${prodBadge ? 1 : 0}`);
-  if (!prodBadge) {
-    failures.push("alias /prototype/production-home missing Production相当 markers");
+  // Removed dual Production-home route.
+  const retired = await fetch(`${origin}/prototype/production-home`, {
+    redirect: "manual",
+    headers: { "user-agent": "forge-verify-preview-branch-alias/1.0" },
+  });
+  console.log(`retired production-home HTTP ${retired.status}`);
+  if (retired.status !== 404) {
+    failures.push(
+      `alias /prototype/production-home expected 404, got ${retired.status}`,
+    );
   }
 
   // Compatibility redirects (list only; details stay).
@@ -191,10 +192,18 @@ async function main() {
   const categoryProtoLinked =
     count(protoHub.html, "view=category-proto") > 0 ||
     count(protoHub.text, "view=category-proto") > 0;
+  const homeLinked =
+    count(protoHub.html, 'href="/home"') > 0 ||
+    count(protoHub.html, "href=/home") > 0 ||
+    count(protoHub.text, '"/home"') > 0;
+  console.log(`prototype hub /home link: ${homeLinked ? 1 : 0}`);
   console.log(`prototype hub production-home link: ${productionHomeLinked ? 1 : 0}`);
   console.log(`prototype hub category-proto link: ${categoryProtoLinked ? 1 : 0}`);
-  if (!productionHomeLinked) {
-    failures.push("alias /prototype missing /prototype/production-home link");
+  if (!homeLinked) {
+    failures.push("alias /prototype missing /home link");
+  }
+  if (productionHomeLinked) {
+    failures.push("alias /prototype still links /prototype/production-home");
   }
   if (!categoryProtoLinked) {
     failures.push(
@@ -245,7 +254,7 @@ async function main() {
   }
 
   console.log(
-    "\nPASS — branch alias serves future /home + production-home + compat redirects",
+    "\nPASS — branch alias serves single future /home + compat redirects",
   );
 }
 

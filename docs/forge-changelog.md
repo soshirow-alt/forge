@@ -4,14 +4,13 @@
 
 ---
 
-## 2026-07-25 — Preview: /home を将来ホームへ再配置（Production相当は専用URL）
+## 2026-07-25 — Preview: ホームを将来ホーム一本に最終整理
 
-- **/home（Preview/local）** — カテゴリ拡張後の将来ホーム（24 fixture・Phase 5 ヒーロー／軽量カード・Phase 6 ヘッダーselect＋`?q=`）。`?category=` でカテゴリ面
-- **/prototype/production-home** — 正式 `DiscoveryHomePage`（Staging 公開作品・正式検索）の回帰確認用。小さな Preview バッジのみ
-- **互換** — `/explore/prototype` 一覧は `/home`（＋category/q）へ redirect。詳細 `/explore/prototype/[category]/[slug]` は維持
-- **サイドバー** — 「ホーム」=/home、「作品を探す」=/search（文言は Production と同じ）。詳細のみ Explore パスで「作品を探す」active可
-- **安全** — `shouldServeFutureDiscoveryHome()` は `VERCEL_ENV=production` でのみ false（`FORGE_PRODUCTION_MODE` 非依存）。Preview unique URL でも将来ホーム。正式 Discovery 回帰は `/prototype/production-home`
-- **非対象** — Staging 9件の削除/seed、main / Production deploy、OGP、正式 Discovery component 改修
+- **/home（Preview）** — 唯一の確認ホーム。Production型シェル／ヒーロー／軽量カード＋カテゴリselect・fixture検索・4カテゴリ棚（24 fixture）
+- **廃止** — `/prototype/production-home` と Production相当バッジ／ハブリンク（正式 Discovery component 本体は非変更・非削除）
+- **互換** — `/explore/prototype` 一覧 → `/home`（＋category/q）。詳細24件は維持
+- **安全** — `shouldServeFutureDiscoveryHome()` は `VERCEL_ENV=production` でのみ false。Production `/home` は `DiscoveryHomePage` のまま
+- **非対象** — Staging 旧9件の DB/Storage cleanup、main / Production deploy、OGP
 
 ## 2026-07-25 — Preview: Explore Prototype 上部の重複を整理（Phase 6）
 

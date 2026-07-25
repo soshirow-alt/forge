@@ -71,7 +71,7 @@ function subNavLinkClass(active: boolean) {
 function isPrimaryLinkActive(linkId: (typeof primaryLinks)[number]["id"], pathname: string): boolean {
   switch (linkId) {
     case "home":
-      // `/home` (+ ?category / ?q). Not /prototype/production-home.
+      // `/home` (+ ?category / ?q).
       return pathname === "/home";
     case "search":
       // Formal game search. Explore Prototype *detail* stays under /explore/prototype/**.

@@ -97,7 +97,7 @@ const CASES: Case[] = [
     },
   },
   {
-    name: "localhost + FORGE_PRODUCTION_MODE forces no bypass (future home stays)",
+    name: "localhost + FORGE_PRODUCTION_MODE forces no bypass (future /home stays)",
     host: "localhost",
     env: { NEXT_PUBLIC_FORGE_PRODUCTION_MODE: "true" },
     expect: {

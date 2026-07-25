@@ -172,9 +172,9 @@ export function shouldBypassStudioLoginGate(host?: string): boolean {
 /**
  * Preview routing for category-expanded `/home` (Explore Prototype fixtures).
  *
- * Independent of `FORGE_PRODUCTION_MODE` — formal Discovery regression lives at
- * `/prototype/production-home`. Hard-stops only on `VERCEL_ENV=production` so
- * merging this branch to main cannot flip Production `/home`.
+ * Independent of `FORGE_PRODUCTION_MODE`. Hard-stops only on
+ * `VERCEL_ENV=production` so merging this branch to main cannot flip
+ * Production `/home` (formal `DiscoveryHomePage` remains).
  */
 export function shouldServeFutureDiscoveryHome(host?: string): boolean {
   if (isVercelProductionDeployment()) {
@@ -198,8 +198,7 @@ export function shouldServeFutureDiscoveryHome(host?: string): boolean {
     return true;
   }
 
-  // Local always — Production deploy never uses localhost; formal home is
-  // still available at /prototype/production-home when needed.
+  // Local always — Production deploy never uses localhost.
   if (isLocalHost(resolved)) {
     return true;
   }

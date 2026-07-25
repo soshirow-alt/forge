@@ -29,43 +29,7 @@ export default function PrototypeIndexPage() {
           <ul className="space-y-2 text-sm">
             <li>
               <Link href="/home" className="text-violet-300 hover:underline">
-                将来ホーム（/home・カテゴリ拡張・24 fixture）
-              </Link>
-            </li>
-            <li>
-              <Link href="/home?category=game" className="text-violet-300 hover:underline">
-                ゲーム（/home?category=game）
-              </Link>
-            </li>
-            <li>
-              <Link href="/home?category=audio" className="text-violet-300 hover:underline">
-                音楽・音声（/home?category=audio）
-              </Link>
-            </li>
-            <li>
-              <Link href="/home?category=dev-tool" className="text-violet-300 hover:underline">
-                開発ツール（/home?category=dev-tool）
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/home?category=service-app"
-                className="text-violet-300 hover:underline"
-              >
-                Webサービス・アプリ（/home?category=service-app）
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/prototype/production-home"
-                className="text-zinc-400 hover:underline"
-              >
-                Production相当ホーム（/prototype/production-home）
-              </Link>
-            </li>
-            <li>
-              <Link href="/explore/prototype" className="text-zinc-500 hover:underline">
-                互換: /explore/prototype → /home へ redirect
+                /home（カテゴリ拡張後の将来ホーム・24 fixture）
               </Link>
             </li>
           </ul>
