@@ -9,6 +9,7 @@ import {
   fetchPublicFeedbackCardsEnriched,
   listProjectFeedbackVersionKeys,
 } from "@/lib/supabase/public-feedback-cards-server";
+import { shouldIncludeGuestInPublicFeedbackCards } from "@/lib/public-feedback-include-guest";
 import { fetchPublicVoiceAggregates } from "@/lib/supabase/voice-engagement";
 import { createClient as createServerUserClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
@@ -65,6 +66,8 @@ export async function GET(request: Request, context: RouteContext) {
   const requestedVersions =
     versionKey === "all" ? availableVersions : [resolvePlayableVersion(versionKey)];
 
+  const includeGuest = shouldIncludeGuestInPublicFeedbackCards();
+
   // One HTTP response supplies all filter states. RPCs stay viewer-scoped so
   // empathy/reply flags remain correct, while privileged reads are server-only.
   const [cardsResult, aggregateEntries, feedbackCounts] = await Promise.all([
@@ -76,7 +79,9 @@ export async function GET(request: Request, context: RouteContext) {
     Promise.all(
       requestedVersions.map(async (version) => [
         version,
-        await fetchPublicVoiceAggregates(service, project.projectId, version),
+        await fetchPublicVoiceAggregates(service, project.projectId, version, {
+          includeGuest,
+        }),
       ] as const),
     ),
     countPublicFeedbackParticipantsByVersion(

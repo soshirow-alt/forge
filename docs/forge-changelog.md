@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-07-25 — Preview: Player IA redesign（ホーム・検索・API）
+
+- **/home（Preview）** — DB バックの `PlayerIaHomePage`（フィードバックハイライト・探し方チップ・最近の更新・使用関係・お知らせ・新着）。`/home?category=` は `/search?category=` へ redirect。カテゴリ segmented control なし
+- **/search（Preview）** — `PlayerIaSearchPage`（6カテゴリタブ・`/api/search/catalog`・カテゴリ別フィルタ）。Production は従来 `WorksSearchPage`
+- **/search/global** — 作品・開発者・タグの横断検索（`/api/search/global`）。ヘッダーは suggest 付きグローバル検索
+- **/announcements** — プラットフォームお知らせ一覧・詳細（公開 RPC のみ）
+- **API** — `player-ia-home` / `search/catalog` / `search/global` / `search/suggest` / `announcements` / `usage-relations`
+- **ゲストFB（Preview のみ）** — guest-voice / guest-feedback API 復活（`VERCEL_ENV=production` では `guest_feedback_disabled`）。公開カードは IA 時 `p_include_guest: true`
+- **コミュニティ** — IA 時 `/mypage/community` → `/mypage`、`/studio/community` → `/studio`、サイドバー「参加コミュニティ」非表示
+- **安全** — `shouldServePlayerIaRedesign()` = `VERCEL_ENV=production` で false。Production `/home` は `DiscoveryHomePage` のまま
+
 ## 2026-07-25 — Player IA redesign Phase 1: 型・定数モジュール（lib のみ）
 
 - **新規** — `lib/project-categories.ts`（5カテゴリ・アセット種別・配信方針・活動タグ・`CategoryAttributes` パース）

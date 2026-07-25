@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { buildSearchCategoryHref, isProjectCategoryId } from "@/lib/project-categories";
+import { shouldServePlayerIaRedesign } from "@/lib/player-ia-mode";
 import {
   EXPLORE_PROTOTYPE_CATEGORY_SLUGS,
   buildFutureHomeHref,
@@ -9,7 +11,7 @@ export function generateStaticParams() {
   return EXPLORE_PROTOTYPE_CATEGORY_SLUGS.map((category) => ({ category }));
 }
 
-/** Category lists moved to `/home?category=` — keep path for compatibility. */
+/** Category lists: IA → `/search?category=`; legacy → `/home?category=` */
 export default async function ExplorePrototypeCategoryPage({
   params,
 }: {
@@ -18,7 +20,12 @@ export default async function ExplorePrototypeCategoryPage({
   const { category } = await params;
 
   if (!isExplorePrototypeCategorySlug(category)) {
-    redirect(buildFutureHomeHref());
+    redirect(shouldServePlayerIaRedesign() ? "/search" : buildFutureHomeHref());
+  }
+
+  if (shouldServePlayerIaRedesign()) {
+    const mapped = isProjectCategoryId(category) ? category : null;
+    redirect(buildSearchCategoryHref(mapped));
   }
 
   redirect(buildFutureHomeHref({ category }));

@@ -1,8 +1,11 @@
 import { redirect } from "next/navigation";
 import { DiscoveryHomePage } from "@/components/discovery-home-page";
+import { PlayerIaHomePage } from "@/components/player-ia/player-ia-home-page";
 import { ExplorePrototypeHomePage } from "@/components/explore-prototype/explore-prototype-home-page";
 import { ExplorePrototypePage } from "@/components/explore-prototype/explore-prototype-page";
+import { shouldServePlayerIaRedesign } from "@/lib/player-ia-mode";
 import { shouldServeFutureDiscoveryHome } from "@/lib/production-mode";
+import { buildSearchCategoryHref, isProjectCategoryId } from "@/lib/project-categories";
 import {
   buildFutureHomeHref,
   isExplorePrototypeCategorySlug,
@@ -10,11 +13,8 @@ import {
 } from "@/lib/prototype/explore-prototype";
 
 /**
- * Preview / local: category-expanded future discovery (Explore Prototype fixtures).
+ * Preview / local: Player IA home (DB-backed) or legacy Explore Prototype fixtures.
  * Production release mode: formal DiscoveryHomePage (unchanged).
- *
- * - Invalid `category` → 「すべて」(`/home`)
- * - `q` is ignored (stripped via redirect) — future home has no search UI
  */
 export default async function HomeDiscoverPage({
   searchParams,
@@ -27,13 +27,27 @@ export default async function HomeDiscoverPage({
     return <DiscoveryHomePage />;
   }
 
+  if (shouldServePlayerIaRedesign()) {
+    const rawCategory = sp.category?.trim() ?? "";
+    if (rawCategory) {
+      const category = isProjectCategoryId(rawCategory) ? rawCategory : null;
+      redirect(buildSearchCategoryHref(category));
+    }
+
+    const hasQ = typeof sp.q === "string" && sp.q.length > 0;
+    if (hasQ) {
+      redirect("/home");
+    }
+
+    return <PlayerIaHomePage />;
+  }
+
   const rawCategory = sp.category?.trim() ?? "";
   const category =
     rawCategory && isExplorePrototypeCategorySlug(rawCategory)
       ? (rawCategory as ExplorePrototypeCategorySlug)
       : null;
 
-  // Drop obsolete search query and invalid category from the URL.
   const hasQ = typeof sp.q === "string" && sp.q.length > 0;
   const hasInvalidCategory = Boolean(rawCategory) && !category;
   if (hasQ || hasInvalidCategory) {

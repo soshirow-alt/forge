@@ -22,6 +22,10 @@ import {
   ExplorePrototypeCategoryTabsFallback,
   ExplorePrototypeHeaderControls,
 } from "@/components/explore-prototype/explore-prototype-header-controls";
+import {
+  PlayerIaGlobalSearchInput,
+  PlayerIaGlobalSearchInputFallback,
+} from "@/components/player-ia/player-ia-global-search-input";
 import { HeaderSearchForm } from "@/components/player-header-search-form";
 import { useStudioEntryGate } from "@/components/studio-entry-gate-provider";
 import { PlatformFeedbackSidebarBox } from "@/components/platform-feedback-sidebar-box";
@@ -71,12 +75,11 @@ function subNavLinkClass(active: boolean) {
 function isPrimaryLinkActive(linkId: (typeof primaryLinks)[number]["id"], pathname: string): boolean {
   switch (linkId) {
     case "home":
-      // `/home` (+ ?category / ?q).
       return pathname === "/home";
     case "search":
-      // Formal game search. Explore Prototype *detail* stays under /explore/prototype/**.
       return (
         pathname === "/search" ||
+        pathname.startsWith("/search/global") ||
         (pathname.startsWith("/explore/prototype/") &&
           pathname.split("/").filter(Boolean).length >= 4)
       );
@@ -89,7 +92,7 @@ function isPrimaryLinkActive(linkId: (typeof primaryLinks)[number]["id"], pathna
   }
 }
 
-function MypageSidebarGroup() {
+function MypageSidebarGroup({ hideCommunity = false }: { hideCommunity?: boolean }) {
   const pathname = usePathname();
   const isMypageProfile = pathname === "/mypage/profile";
   const isMypageHub = pathname === "/mypage";
@@ -106,17 +109,25 @@ function MypageSidebarGroup() {
       >
         プロフィール
       </RegisteredOnlyLink>
-      <RegisteredOnlyLink
-        href="/mypage/community"
-        className={`ml-4 block ${subNavLinkClass(isCommunity)}`}
-      >
-        参加コミュニティ
-      </RegisteredOnlyLink>
+      {!hideCommunity ? (
+        <RegisteredOnlyLink
+          href="/mypage/community"
+          className={`ml-4 block ${subNavLinkClass(isCommunity)}`}
+        >
+          参加コミュニティ
+        </RegisteredOnlyLink>
+      ) : null}
     </div>
   );
 }
 
-function PlayerSidebarNavBody({ showFeedback = true }: { showFeedback?: boolean }) {
+function PlayerSidebarNavBody({
+  showFeedback = true,
+  hideCommunity = false,
+}: {
+  showFeedback?: boolean;
+  hideCommunity?: boolean;
+}) {
   const pathname = usePathname();
 
   return (
@@ -135,7 +146,7 @@ function PlayerSidebarNavBody({ showFeedback = true }: { showFeedback?: boolean 
 
       <SidebarDivider />
 
-      <MypageSidebarGroup />
+      <MypageSidebarGroup hideCommunity={hideCommunity} />
 
       <SidebarDivider />
 
@@ -187,9 +198,12 @@ function PlayerShellFrame({
     notificationBadge ?? (user ? getUnreadNotificationCount() : 0);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const serveFutureDiscoveryHome = useServeFutureDiscoveryHome();
-  const showFutureHomeChrome =
+  const servePlayerIa = serveFutureDiscoveryHome;
+  const showLegacyFutureHomeChrome =
     serveFutureDiscoveryHome &&
+    !servePlayerIa &&
     (pathname === "/home" || pathname.startsWith("/explore/prototype"));
+  const showPlayerIaSearchChrome = servePlayerIa;
 
   useEffect(() => {
     setMobileNavOpen(false);
@@ -215,7 +229,7 @@ function PlayerShellFrame({
         </div>
 
         <nav className="flex min-h-0 flex-1 flex-col px-3 py-4">
-          <PlayerSidebarNavBody />
+          <PlayerSidebarNavBody hideCommunity={servePlayerIa} />
         </nav>
       </aside>
 
@@ -251,13 +265,17 @@ function PlayerShellFrame({
             onStudioAttempt={() => attemptStudioEntry("/studio")}
           />
         </div>
-        <PlayerSidebarNavBody showFeedback={false} />
+        <PlayerSidebarNavBody showFeedback={false} hideCommunity={servePlayerIa} />
       </ForgeShellMobileDrawer>
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-zinc-800/80 bg-[#0a0a0a]/95 px-4 py-3 backdrop-blur-md sm:gap-3 sm:px-6">
           <ForgeShellMobileMenuButton onClick={() => setMobileNavOpen(true)} />
-          {showFutureHomeChrome ? (
+          {showPlayerIaSearchChrome ? (
+            <Suspense fallback={<PlayerIaGlobalSearchInputFallback />}>
+              <PlayerIaGlobalSearchInput />
+            </Suspense>
+          ) : showLegacyFutureHomeChrome ? (
             <Suspense fallback={<ExplorePrototypeCategoryTabsFallback />}>
               <ExplorePrototypeHeaderControls />
             </Suspense>

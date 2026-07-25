@@ -57,7 +57,7 @@ export const ASSET_KIND_LABELS: Record<AssetKindId, string> = {
   character_model: "キャラクターモデル",
   model_3d: "3Dモデル",
   background: "背景",
-  ui_element: "UI要素",
+  ui_element: "UI素材",
   icon: "アイコン",
   sprite: "スプライト",
   texture: "テクスチャ",
@@ -99,10 +99,10 @@ export type ActivityTagId = (typeof ACTIVITY_TAG_IDS)[number];
 
 export const ACTIVITY_TAG_LABELS: Record<ActivityTagId, string> = {
   player: "プレイヤー",
-  streamer_creator: "配信者・クリエイター",
-  game_creator: "ゲームクリエイター",
-  audio_creator: "音楽・音声クリエイター",
-  asset_creator: "アセットクリエイター",
+  streamer_creator: "配信者・動画制作者",
+  game_creator: "ゲーム制作者",
+  audio_creator: "音楽・音声制作者",
+  asset_creator: "アセット制作者",
   tool_developer: "ツール開発者",
   service_app_developer: "サービス・アプリ開発者",
 };

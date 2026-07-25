@@ -3,6 +3,7 @@ import {
   comparePlayableVersions,
   resolvePlayableVersion,
 } from "@/lib/playable-version";
+import { shouldIncludeGuestInPublicFeedbackCards } from "@/lib/public-feedback-include-guest";
 import type { PublicFeedbackCard } from "@/lib/public-feedback-cards";
 import {
   resolvePublicAggregateBucketLabel,
@@ -100,11 +101,12 @@ async function fetchRpcCards(
   versionKey: string,
   limit: number,
 ): Promise<PublicFeedbackCardRow[]> {
-  // Public 「みんなのFB」は登録ユーザーの永続データのみ。ゲスト行は表示・件数に含めない。
+  // Public 「みんなのFB」は登録ユーザーの永続データのみ。ゲスト行は IA Preview のみ。
+  const includeGuest = shouldIncludeGuestInPublicFeedbackCards();
   const { data, error } = await viewerSupabase.rpc("get_public_feedback_cards", {
     p_project_id: projectId,
     p_version_key: resolvePlayableVersion(versionKey),
-    p_include_guest: false,
+    p_include_guest: includeGuest,
     p_limit: limit,
     p_offset: 0,
   });
@@ -399,11 +401,12 @@ export async function fetchPublicFeedbackCardsEnriched(
       rows: await fetchRpcCards(viewerSupabase, projectId, versionKey, limit),
     })),
   );
+  const includeGuest = shouldIncludeGuestInPublicFeedbackCards();
   const targets = rowsByVersion.flatMap(({ versionKey, rows }) =>
     rows
       .map((row) => rowToCard(row, versionKey))
       .filter((item): item is CardWithTarget => item !== null)
-      .filter((item) => item.card.authorKind !== "guest"),
+      .filter((item) => includeGuest || item.card.authorKind !== "guest"),
   );
   const choiceLabels = await resolveChoiceAnswerLabels(enrichSupabase, targets);
   const cards = targets.map(({ card, targetSource, targetId }) =>
