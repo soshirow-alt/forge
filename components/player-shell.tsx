@@ -18,11 +18,11 @@ import {
   ForgeShellModeSwitch,
 } from "@/components/forge-shell-mobile-nav";
 import { useGames } from "@/components/games-provider";
-import { ExplorePrototypeHeaderControls } from "@/components/explore-prototype/explore-prototype-header-controls";
 import {
-  HeaderSearchForm,
-  HeaderSearchFormFallback,
-} from "@/components/player-header-search-form";
+  ExplorePrototypeCategoryTabsFallback,
+  ExplorePrototypeHeaderControls,
+} from "@/components/explore-prototype/explore-prototype-header-controls";
+import { HeaderSearchForm } from "@/components/player-header-search-form";
 import { useStudioEntryGate } from "@/components/studio-entry-gate-provider";
 import { PlatformFeedbackSidebarBox } from "@/components/platform-feedback-sidebar-box";
 import { RegisteredOnlyLink } from "@/components/registered-account-prompt-provider";
@@ -258,7 +258,7 @@ function PlayerShellFrame({
         <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-zinc-800/80 bg-[#0a0a0a]/95 px-4 py-3 backdrop-blur-md sm:gap-3 sm:px-6">
           <ForgeShellMobileMenuButton onClick={() => setMobileNavOpen(true)} />
           {showFutureHomeChrome ? (
-            <Suspense fallback={<HeaderSearchFormFallback />}>
+            <Suspense fallback={<ExplorePrototypeCategoryTabsFallback />}>
               <ExplorePrototypeHeaderControls />
             </Suspense>
           ) : (

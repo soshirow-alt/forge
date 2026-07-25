@@ -74,6 +74,22 @@ function ExplorePrototypeHeaderControlsInner() {
   );
 }
 
+/** Suspense fallback while useSearchParams hydrates — never show formal search UI. */
+export function ExplorePrototypeCategoryTabsFallback() {
+  return (
+    <div className="min-w-0 flex-1" aria-hidden="true">
+      <div className="flex w-max items-center gap-1 sm:gap-1.5">
+        {Array.from({ length: 5 }, (_, index) => (
+          <div
+            key={index}
+            className="h-9 w-[4.5rem] shrink-0 animate-pulse rounded-lg bg-zinc-800/70 sm:w-24"
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /**
  * Future discovery chrome: always-visible category tabs (no search).
  * Mounted from PlayerShell on Preview `/home` and `/explore/prototype/**`.
