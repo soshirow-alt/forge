@@ -197,7 +197,15 @@ function PlayerShellFrame({
   const showPlayerIaSearchChrome = servePlayerIa;
 
   useEffect(() => {
-    setMobileNavOpen(false);
+    let cancelled = false;
+    void Promise.resolve().then(() => {
+      if (!cancelled) {
+        setMobileNavOpen(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [pathname]);
 
   function handleLogout() {
