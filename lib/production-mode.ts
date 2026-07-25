@@ -170,12 +170,46 @@ export function shouldBypassStudioLoginGate(host?: string): boolean {
 }
 
 /**
- * Preview / local only — `/home` serves the category-expanded future discovery
- * (Explore Prototype fixture UI). Production release mode always keeps the
- * formal `DiscoveryHomePage` on `/home` (never flipped by git ref alone).
+ * Preview routing for category-expanded `/home` (Explore Prototype fixtures).
+ *
+ * Independent of `FORGE_PRODUCTION_MODE` — formal Discovery regression lives at
+ * `/prototype/production-home`. Hard-stops only on `VERCEL_ENV=production` so
+ * merging this branch to main cannot flip Production `/home`.
  */
 export function shouldServeFutureDiscoveryHome(host?: string): boolean {
-  return !isProductionReleaseMode(host);
+  if (isVercelProductionDeployment()) {
+    return false;
+  }
+
+  const resolved = resolveHost(host);
+  const vercelUrl =
+    typeof window === "undefined" ? process.env.VERCEL_URL : undefined;
+
+  if (
+    hostLooksLikePreviewV0(host) ||
+    hostLooksLikePreviewV0(resolved) ||
+    hostLooksLikePreviewV0(vercelUrl)
+  ) {
+    return true;
+  }
+
+  // Unique Preview deploy hostnames do not include preview-landing-01.
+  if (isVercelPreviewDeployment()) {
+    return true;
+  }
+
+  // Local always — Production deploy never uses localhost; formal home is
+  // still available at /prototype/production-home when needed.
+  if (isLocalHost(resolved)) {
+    return true;
+  }
+
+  // Server Components in `next dev` often have no Host / VERCEL_URL.
+  if (typeof window === "undefined" && process.env.NODE_ENV === "development") {
+    return true;
+  }
+
+  return false;
 }
 
 /** Middleware — routes that require Supabase session in production release mode. */

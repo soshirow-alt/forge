@@ -22,6 +22,7 @@ type Case = {
     mode: ForgeDeploymentMode;
     bypass: boolean;
     rootRedirect: boolean;
+    futureHome: boolean;
   };
 };
 
@@ -39,7 +40,12 @@ const CASES: Case[] = [
     name: "production hostname + preview git ref must NOT bypass",
     host: "forge.example.com",
     env: { VERCEL_GIT_COMMIT_REF: "preview/landing-01" },
-    expect: { mode: "production", bypass: false, rootRedirect: false },
+    expect: {
+      mode: "production",
+      bypass: false,
+      rootRedirect: false,
+      futureHome: false,
+    },
   },
   {
     name: "VERCEL_ENV=production forces production even on preview branch ref",
@@ -48,13 +54,23 @@ const CASES: Case[] = [
       VERCEL_ENV: "production",
       VERCEL_GIT_COMMIT_REF: "preview/landing-01",
     },
-    expect: { mode: "production", bypass: false, rootRedirect: false },
+    expect: {
+      mode: "production",
+      bypass: false,
+      rootRedirect: false,
+      futureHome: false,
+    },
   },
   {
     name: "preview-landing-01 hostname allows bypass",
     host: "forge-preview-landing-01.vercel.app",
     env: { VERCEL_GIT_COMMIT_REF: "preview/landing-01" },
-    expect: { mode: "preview", bypass: true, rootRedirect: false },
+    expect: {
+      mode: "preview",
+      bypass: true,
+      rootRedirect: false,
+      futureHome: true,
+    },
   },
   {
     name: "Vercel preview slot + preview branch allows bypass",
@@ -63,24 +79,59 @@ const CASES: Case[] = [
       VERCEL_ENV: "preview",
       VERCEL_GIT_COMMIT_REF: "preview/landing-01",
     },
-    expect: { mode: "preview", bypass: true, rootRedirect: false },
+    expect: {
+      mode: "preview",
+      bypass: true,
+      rootRedirect: false,
+      futureHome: true,
+    },
   },
   {
     name: "localhost default is local with bypass",
     host: "localhost",
-    expect: { mode: "local", bypass: true, rootRedirect: false },
+    expect: {
+      mode: "local",
+      bypass: true,
+      rootRedirect: false,
+      futureHome: true,
+    },
   },
   {
-    name: "localhost + FORGE_PRODUCTION_MODE forces no bypass",
+    name: "localhost + FORGE_PRODUCTION_MODE forces no bypass (future home stays)",
     host: "localhost",
     env: { NEXT_PUBLIC_FORGE_PRODUCTION_MODE: "true" },
-    expect: { mode: "production", bypass: false, rootRedirect: false },
+    expect: {
+      mode: "production",
+      bypass: false,
+      rootRedirect: false,
+      futureHome: true,
+    },
   },
   {
     name: "localhost + preview branch is preview with bypass",
     host: "localhost",
     env: { VERCEL_GIT_COMMIT_REF: "preview/landing-01" },
-    expect: { mode: "preview", bypass: true, rootRedirect: false },
+    expect: {
+      mode: "preview",
+      bypass: true,
+      rootRedirect: false,
+      futureHome: true,
+    },
+  },
+  {
+    name: "Preview env + FORGE_PRODUCTION_MODE still serves future /home",
+    host: "forge-unique.vercel.app",
+    env: {
+      VERCEL_ENV: "preview",
+      VERCEL_GIT_COMMIT_REF: "preview/landing-01",
+      NEXT_PUBLIC_FORGE_PRODUCTION_MODE: "true",
+    },
+    expect: {
+      mode: "production",
+      bypass: false,
+      rootRedirect: false,
+      futureHome: true,
+    },
   },
 ];
 
@@ -123,7 +174,7 @@ function main() {
         bypass === testCase.expect.bypass &&
         rootRedirect === testCase.expect.rootRedirect &&
         (testCase.expect.mode === "production") === production &&
-        futureHome === !production;
+        futureHome === testCase.expect.futureHome;
 
       if (ok) {
         console.log(`PASS  ${testCase.name}`);
@@ -131,7 +182,7 @@ function main() {
         failed += 1;
         console.log(`FAIL  ${testCase.name}`);
         console.log(
-          `      got mode=${mode} bypass=${bypass} rootRedirect=${rootRedirect} production=${production}`,
+          `      got mode=${mode} bypass=${bypass} rootRedirect=${rootRedirect} production=${production} futureHome=${futureHome}`,
         );
         console.log(`      expected`, testCase.expect);
       }

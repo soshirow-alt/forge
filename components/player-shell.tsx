@@ -28,7 +28,7 @@ import { PlatformFeedbackSidebarBox } from "@/components/platform-feedback-sideb
 import { RegisteredOnlyLink } from "@/components/registered-account-prompt-provider";
 import { shouldPromptDeveloperPage } from "@/lib/developer-onboarding-v0-store";
 import {
-  useForgeDeploymentMode,
+  useServeFutureDiscoveryHome,
   useStudioLoginHrefBypass,
 } from "@/lib/forge-deployment-context";
 import { WATCH_TAB_LABEL } from "@/lib/watch-ui-labels";
@@ -186,9 +186,9 @@ function PlayerShellFrame({
   const resolvedNotificationBadge =
     notificationBadge ?? (user ? getUnreadNotificationCount() : 0);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const deploymentMode = useForgeDeploymentMode();
+  const serveFutureDiscoveryHome = useServeFutureDiscoveryHome();
   const showFutureHomeChrome =
-    deploymentMode !== "production" &&
+    serveFutureDiscoveryHome &&
     (pathname === "/home" || pathname.startsWith("/explore/prototype"));
 
   useEffect(() => {

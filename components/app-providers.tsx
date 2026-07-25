@@ -4,8 +4,12 @@ import { GamesProvider } from "@/components/games-provider";
 import { mapSupabaseUser } from "@/lib/auth";
 import { isAnonymousSupabaseUser } from "@/lib/guest-auth";
 import { ForgeDeploymentProvider } from "@/lib/forge-deployment-context";
-import { getForgeDeploymentModeForServer } from "@/lib/production-mode";
+import {
+  getForgeDeploymentModeForServer,
+  shouldServeFutureDiscoveryHome,
+} from "@/lib/production-mode";
 import { createClient } from "@/lib/supabase/server";
+
 export async function AppProviders({
   children,
 }: {
@@ -25,8 +29,12 @@ export async function AppProviders({
   }
 
   const deploymentMode = getForgeDeploymentModeForServer();
+  const serveFutureDiscoveryHome = shouldServeFutureDiscoveryHome();
   return (
-    <ForgeDeploymentProvider mode={deploymentMode}>
+    <ForgeDeploymentProvider
+      mode={deploymentMode}
+      serveFutureDiscoveryHome={serveFutureDiscoveryHome}
+    >
       <AuthProvider initialUser={initialUser}>
         <GamesProvider>
           <AppGateProviders>{children}</AppGateProviders>
