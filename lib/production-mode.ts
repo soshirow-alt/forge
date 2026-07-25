@@ -169,6 +169,15 @@ export function shouldBypassStudioLoginGate(host?: string): boolean {
   return !isProductionReleaseMode(host);
 }
 
+/**
+ * Preview / local only — `/home` serves the category-expanded future discovery
+ * (Explore Prototype fixture UI). Production release mode always keeps the
+ * formal `DiscoveryHomePage` on `/home` (never flipped by git ref alone).
+ */
+export function shouldServeFutureDiscoveryHome(host?: string): boolean {
+  return !isProductionReleaseMode(host);
+}
+
 /** Middleware — routes that require Supabase session in production release mode. */
 export function getProductionAuthProtectedPrefixes(): readonly string[] {
   return ["/studio", "/mypage", "/notifications", "/settings"];

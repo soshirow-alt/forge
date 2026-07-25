@@ -12,7 +12,7 @@ export const metadata = {
 
 export default function PrototypeIndexPage() {
   return (
-    <PlayerShell activeNav="home">
+    <PlayerShell>
       <div className="mx-auto max-w-3xl space-y-8">
         <header className="space-y-2">
           <p className="text-xs font-medium uppercase tracking-wide text-violet-300">
@@ -25,39 +25,47 @@ export default function PrototypeIndexPage() {
         </header>
 
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-white">A. Explore</h2>
+          <h2 className="text-lg font-semibold text-white">A. 発見ホーム</h2>
           <ul className="space-y-2 text-sm">
             <li>
-              <Link href="/home" className="text-zinc-400 hover:underline">
-                正式ホーム（/home・Production相当）
+              <Link href="/home" className="text-violet-300 hover:underline">
+                将来ホーム（/home・カテゴリ拡張・24 fixture）
               </Link>
             </li>
             <li>
-              <Link href="/explore/prototype" className="text-violet-300 hover:underline">
-                Explore Prototype 横断（/explore/prototype）
+              <Link href="/home?category=game" className="text-violet-300 hover:underline">
+                ゲーム（/home?category=game）
               </Link>
             </li>
             <li>
-              <Link href="/explore/prototype/game" className="text-violet-300 hover:underline">
-                ゲーム（/explore/prototype/game）
+              <Link href="/home?category=audio" className="text-violet-300 hover:underline">
+                音楽・音声（/home?category=audio）
               </Link>
             </li>
             <li>
-              <Link href="/explore/prototype/audio" className="text-violet-300 hover:underline">
-                音楽・音声（/explore/prototype/audio）
-              </Link>
-            </li>
-            <li>
-              <Link href="/explore/prototype/dev-tool" className="text-violet-300 hover:underline">
-                開発ツール（/explore/prototype/dev-tool）
+              <Link href="/home?category=dev-tool" className="text-violet-300 hover:underline">
+                開発ツール（/home?category=dev-tool）
               </Link>
             </li>
             <li>
               <Link
-                href="/explore/prototype/service-app"
+                href="/home?category=service-app"
                 className="text-violet-300 hover:underline"
               >
-                Webサービス・アプリ（/explore/prototype/service-app）
+                Webサービス・アプリ（/home?category=service-app）
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/prototype/production-home"
+                className="text-zinc-400 hover:underline"
+              >
+                Production相当ホーム（/prototype/production-home）
+              </Link>
+            </li>
+            <li>
+              <Link href="/explore/prototype" className="text-zinc-500 hover:underline">
+                互換: /explore/prototype → /home へ redirect
               </Link>
             </li>
           </ul>

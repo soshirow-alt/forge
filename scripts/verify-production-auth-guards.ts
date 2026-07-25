@@ -9,6 +9,7 @@ import {
   isProductionReleaseMode,
   shouldBypassStudioLoginGate,
   shouldRedirectRootToDiscoveryHome,
+  shouldServeFutureDiscoveryHome,
 } from "../lib/production-mode";
 
 type EnvSnapshot = Record<string, string | undefined>;
@@ -115,12 +116,14 @@ function main() {
       const bypass = shouldBypassStudioLoginGate(testCase.host);
       const rootRedirect = shouldRedirectRootToDiscoveryHome(testCase.host);
       const production = isProductionReleaseMode(testCase.host);
+      const futureHome = shouldServeFutureDiscoveryHome(testCase.host);
 
       const ok =
         mode === testCase.expect.mode &&
         bypass === testCase.expect.bypass &&
         rootRedirect === testCase.expect.rootRedirect &&
-        (testCase.expect.mode === "production") === production;
+        (testCase.expect.mode === "production") === production &&
+        futureHome === !production;
 
       if (ok) {
         console.log(`PASS  ${testCase.name}`);

@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-25 — Preview: /home を将来ホームへ再配置（Production相当は専用URL）
+
+- **/home（Preview/local）** — カテゴリ拡張後の将来ホーム（24 fixture・Phase 5 ヒーロー／軽量カード・Phase 6 ヘッダーselect＋`?q=`）。`?category=` でカテゴリ面
+- **/prototype/production-home** — 正式 `DiscoveryHomePage`（Staging 公開作品・正式検索）の回帰確認用。小さな Preview バッジのみ
+- **互換** — `/explore/prototype` 一覧は `/home`（＋category/q）へ redirect。詳細 `/explore/prototype/[category]/[slug]` は維持
+- **サイドバー** — 「ホーム」=/home、「作品を探す」=/search（文言は Production と同じ）。詳細のみ Explore パスで「作品を探す」active可
+- **安全** — `shouldServeFutureDiscoveryHome()`（production-mode）。Production release では `/home` は従来の Discovery のまま。main へ載せても Production `/home` は切り替わらない
+- **非対象** — Staging 9件の削除/seed、main / Production deploy、OGP、正式 Discovery component 改修
+
 ## 2026-07-25 — Preview: Explore Prototype 上部の重複を整理（Phase 6）
 
 - **本文** — EXPLORE / 「作品を探す」/ カテゴリタブ / カテゴリ名再掲 / 説明文を削除。一覧はヘッダー直下から「注目の作品」

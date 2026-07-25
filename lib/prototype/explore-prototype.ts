@@ -34,7 +34,7 @@ export const EXPLORE_PROTOTYPE_CATEGORIES: ExplorePrototypeCategoryMeta[] = [
     label: "ゲーム・インタラクティブ作品",
     description: "ゲームや操作して楽しむ作品",
     ctaLabel: "遊ぶ",
-    href: "/explore/prototype/game",
+    href: "/home?category=game",
     fallbackSrc: "/images/explore-prototype/fallback/game.svg",
   },
   {
@@ -42,7 +42,7 @@ export const EXPLORE_PROTOTYPE_CATEGORIES: ExplorePrototypeCategoryMeta[] = [
     label: "音楽・音声",
     description: "楽曲・BGM・効果音・ボイス",
     ctaLabel: "聴く",
-    href: "/explore/prototype/audio",
+    href: "/home?category=audio",
     fallbackSrc: "/images/explore-prototype/fallback/audio.svg",
   },
   {
@@ -50,7 +50,7 @@ export const EXPLORE_PROTOTYPE_CATEGORIES: ExplorePrototypeCategoryMeta[] = [
     label: "開発ツール",
     description: "制作や開発を助けるツール",
     ctaLabel: "利用する",
-    href: "/explore/prototype/dev-tool",
+    href: "/home?category=dev-tool",
     fallbackSrc: "/images/explore-prototype/fallback/dev-tool.svg",
   },
   {
@@ -58,10 +58,27 @@ export const EXPLORE_PROTOTYPE_CATEGORIES: ExplorePrototypeCategoryMeta[] = [
     label: "Webサービス・アプリ",
     description: "Webサービスや各種アプリ",
     ctaLabel: "利用する",
-    href: "/explore/prototype/service-app",
+    href: "/home?category=service-app",
     fallbackSrc: "/images/explore-prototype/fallback/service-app.svg",
   },
 ];
+
+/** Canonical list URLs for the future discovery home (Preview /home). */
+export function buildFutureHomeHref(options?: {
+  category?: ExplorePrototypeCategorySlug | null;
+  q?: string | null;
+}): string {
+  const params = new URLSearchParams();
+  if (options?.category) {
+    params.set("category", options.category);
+  }
+  const q = options?.q?.trim();
+  if (q) {
+    params.set("q", q);
+  }
+  const qs = params.toString();
+  return qs ? `/home?${qs}` : "/home";
+}
 
 export function getExplorePrototypeCategory(
   slug: string,

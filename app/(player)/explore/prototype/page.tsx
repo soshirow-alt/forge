@@ -1,10 +1,12 @@
-import { ExplorePrototypeHomePage } from "@/components/explore-prototype/explore-prototype-home-page";
+import { redirect } from "next/navigation";
+import { buildFutureHomeHref } from "@/lib/prototype/explore-prototype";
 
+/** List hub moved to `/home` — keep path for compatibility. */
 export default async function ExplorePrototypeIndexPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
   const sp = await searchParams;
-  return <ExplorePrototypeHomePage query={sp.q ?? ""} />;
+  redirect(buildFutureHomeHref({ q: sp.q }));
 }

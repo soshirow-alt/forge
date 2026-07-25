@@ -8,11 +8,11 @@
  *
  * Usage:
  *   node scripts/verify-preview-branch-alias.mjs
- *   PREVIEW_ALIAS_URL=... EXPECT_COMMIT=db35bcb node scripts/verify-preview-branch-alias.mjs
+ *   PREVIEW_ALIAS_URL=... EXPECT_COMMIT=… node scripts/verify-preview-branch-alias.mjs
  *   COMPARE_DEPLOY_URL=https://forge-….vercel.app node scripts/verify-preview-branch-alias.mjs
  *
- * 2026-07-24〜: 正式ルートは Production 相当。Prototype は専用 URL のみ。
- * category-proto を既定 CTA にしない（旧検証の forbidden `studio/submit?q=` は廃止）。
+ * 2026-07-25〜: Preview `/home` = 将来ホーム（fixture）。Production相当は
+ * `/prototype/production-home`。`/explore/prototype` 一覧は `/home` へ redirect。
  */
 
 const ALIAS_URL =
@@ -31,6 +31,17 @@ async function fetchText(url) {
     throw new Error(`HTTP ${res.status} for ${url}`);
   }
   return res.text();
+}
+
+async function fetchRedirect(url) {
+  const res = await fetch(url, {
+    redirect: "manual",
+    headers: { "user-agent": "forge-verify-preview-branch-alias/1.0" },
+  });
+  return {
+    status: res.status,
+    location: res.headers.get("location") || "",
+  };
 }
 
 function extractChunkPaths(html) {
@@ -82,12 +93,25 @@ function chunkFingerprint(paths) {
     .join("|");
 }
 
+function locationTargetsHome(location, expectedQueryPrefix) {
+  if (!location) return false;
+  try {
+    const url = new URL(location, ALIAS_URL);
+    if (url.pathname !== "/home") return false;
+    if (!expectedQueryPrefix) return true;
+    return url.search.includes(expectedQueryPrefix);
+  } catch {
+    return location.includes("/home");
+  }
+}
+
 async function main() {
   console.log(`alias: ${ALIAS_URL}`);
   if (EXPECT_COMMIT) console.log(`expect commit: ${EXPECT_COMMIT}`);
   if (COMPARE_DEPLOY_URL) console.log(`compare deploy: ${COMPARE_DEPLOY_URL}`);
 
   const failures = [];
+  const origin = ALIAS_URL.replace(/\/$/, "");
 
   // Fingerprint from `/` (same as historical collect) for alias↔unique compare.
   const aliasRoot = await collectBundleText(ALIAS_URL, "/");
@@ -96,47 +120,90 @@ async function main() {
     `alias distinctive chunks: ${aliasFp.split("|").slice(-6).join(", ")}`,
   );
 
-  // Formal /home — Production discovery, not Explore Prototype hub.
+  // Preview /home — future discovery (fixture), not Production Staging feed as primary.
   const home = await collectBundleText(ALIAS_URL, "/home");
   const homeHasLabel = count(home.html, ">ホーム<") > 0;
   const homeHasExploreLabel = count(home.html, ">Explore<") > 0;
-  const homeIsExploreHub =
-    count(home.html, "カテゴリを横断して、注目作品と最近の更新を眺める") > 0;
+  const homeFuture =
+    count(home.html, "草原ダッシュ") > 0 ||
+    count(home.html, "explore-prototype-category") > 0 ||
+    count(home.html, "注目の作品") > 0;
+  const homeHasStagingTmp =
+    count(home.html, "tmp-062") > 0 || count(home.html, "Neon Depths") > 0;
   console.log(`home ">ホーム<": ${homeHasLabel ? 1 : 0}`);
   console.log(`home ">Explore<": ${homeHasExploreLabel ? 1 : 0}`);
-  console.log(`home explore-hub copy: ${homeIsExploreHub ? 1 : 0}`);
+  console.log(`home future markers: ${homeFuture ? 1 : 0}`);
+  console.log(`home staging-tmp leak: ${homeHasStagingTmp ? 1 : 0}`);
   if (!homeHasLabel) failures.push('alias /home missing sidebar label "ホーム"');
   if (homeHasExploreLabel) {
     failures.push('alias /home still labels primary nav as "Explore"');
   }
-  if (homeIsExploreHub) {
-    failures.push("alias /home still serves Explore Prototype hub as default");
+  if (!homeFuture) {
+    failures.push("alias /home missing future discovery / fixture markers");
+  }
+  if (homeHasStagingTmp) {
+    failures.push("alias /home still embeds Staging tmp/hero-seed titles in HTML");
   }
 
-  // Dedicated prototypes remain reachable (studio submit may redirect to login).
-  const explore = await collectBundleText(ALIAS_URL, "/explore/prototype");
-  const exploreOk =
-    count(explore.html, "注目の作品") > 0 ||
-    count(explore.html, "/explore/prototype/") > 0;
-  console.log(`explore/prototype markers: ${exploreOk ? 1 : 0}`);
-  if (!exploreOk) {
-    failures.push("alias /explore/prototype missing Explore Prototype markers");
+  // Production-equivalent surface.
+  const prodHome = await collectBundleText(ALIAS_URL, "/prototype/production-home");
+  const prodBadge =
+    count(prodHome.html, "Production相当") > 0 ||
+    count(prodHome.html, "DiscoveryHome") > 0;
+  console.log(`production-home markers: ${prodBadge ? 1 : 0}`);
+  if (!prodBadge) {
+    failures.push("alias /prototype/production-home missing Production相当 markers");
+  }
+
+  // Compatibility redirects (list only; details stay).
+  const redirectChecks = [
+    { path: "/explore/prototype", expect: null },
+    { path: "/explore/prototype?q=neon", expect: "q=neon" },
+    { path: "/explore/prototype/game", expect: "category=game" },
+    { path: "/explore/prototype/audio?q=pulse", expect: "category=audio" },
+  ];
+  for (const check of redirectChecks) {
+    const result = await fetchRedirect(`${origin}${check.path}`);
+    const ok =
+      (result.status === 307 || result.status === 308 || result.status === 302) &&
+      locationTargetsHome(result.location, check.expect);
+    console.log(
+      `redirect ${check.path} → ${result.status} ${result.location || "(none)"} ok=${ok ? 1 : 0}`,
+    );
+    if (!ok) {
+      failures.push(`compat redirect failed for ${check.path}`);
+    }
+  }
+
+  const detail = await fetch(`${origin}/explore/prototype/game/meadow-dash`, {
+    redirect: "manual",
+    headers: { "user-agent": "forge-verify-preview-branch-alias/1.0" },
+  });
+  console.log(`detail meadow-dash HTTP ${detail.status}`);
+  if (detail.status !== 200) {
+    failures.push(`detail /explore/prototype/game/meadow-dash HTTP ${detail.status}`);
   }
 
   const protoHub = await collectBundleText(ALIAS_URL, "/prototype");
+  const productionHomeLinked =
+    count(protoHub.html, "/prototype/production-home") > 0 ||
+    count(protoHub.text, "/prototype/production-home") > 0;
   const categoryProtoLinked =
     count(protoHub.html, "view=category-proto") > 0 ||
     count(protoHub.text, "view=category-proto") > 0;
+  console.log(`prototype hub production-home link: ${productionHomeLinked ? 1 : 0}`);
   console.log(`prototype hub category-proto link: ${categoryProtoLinked ? 1 : 0}`);
+  if (!productionHomeLinked) {
+    failures.push("alias /prototype missing /prototype/production-home link");
+  }
   if (!categoryProtoLinked) {
     failures.push(
       "alias /prototype missing dedicated category-proto submit link",
     );
   }
 
-  // Unauthenticated GET should not 404 — login redirect is OK for Studio.
   const categoryProtoRes = await fetch(
-    `${ALIAS_URL.replace(/\/$/, "")}/studio/submit?view=category-proto`,
+    `${origin}/studio/submit?view=category-proto`,
     {
       redirect: "manual",
       headers: { "user-agent": "forge-verify-preview-branch-alias/1.0" },
@@ -156,13 +223,6 @@ async function main() {
     );
   }
 
-  // Formal default submit helper should remain Production-shaped.
-  const formalSubmitHelper =
-    count(home.text, 'studio/submit?q=') +
-    count(home.text, '"/studio/submit"') +
-    count(home.text, "`/studio/submit`");
-  console.log(`formal /studio/submit helper signals: ${formalSubmitHelper}`);
-
   if (COMPARE_DEPLOY_URL) {
     const deploy = await collectBundleText(COMPARE_DEPLOY_URL, "/");
     const deployFp = chunkFingerprint(deploy.chunkPaths);
@@ -178,28 +238,18 @@ async function main() {
     }
   }
 
-  if (failures.length) {
-    console.error("\nFAIL — Preview branch alias is not serving the expected bundle:");
-    for (const f of failures) console.error(` - ${f}`);
-    console.error(`
-Recovery (no VERCEL_TOKEN required — Dashboard once):
- 1. Vercel → project forge → Deployments → latest Ready for branch preview/landing-01
- 2. Confirm Git branch metadata is preview/landing-01 (not detached / CLI-only)
- 3. Settings → Domains → forge-git-preview-landing-01-soshirow-alts-projects.vercel.app
-    → assign to Git Branch "preview/landing-01" (NOT a specific Deployment)
- 4. Do NOT run: vercel alias set <deployment> forge-git-preview-landing-01-...
-    (that pins the automatic git branch hostname to one deploy)
- 5. Re-run: node scripts/verify-preview-branch-alias.mjs
-`);
+  if (failures.length > 0) {
+    console.error("\nFAIL — preview branch alias checks:");
+    for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
 
   console.log(
-    "\nPASS — branch alias serves formal Production routes + dedicated prototypes",
+    "\nPASS — branch alias serves future /home + production-home + compat redirects",
   );
 }
 
-main().catch((err) => {
-  console.error(err);
+main().catch((error) => {
+  console.error(error);
   process.exit(1);
 });

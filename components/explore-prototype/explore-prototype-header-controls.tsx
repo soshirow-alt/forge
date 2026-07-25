@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import {
   EXPLORE_PROTOTYPE_CATEGORIES,
+  buildFutureHomeHref,
   getExplorePrototypeSearchPlaceholder,
   isExplorePrototypeCategorySlug,
   type ExplorePrototypeCategorySlug,
@@ -17,36 +18,35 @@ import {
 const SELECT_CLASS =
   "h-10 w-full min-w-0 shrink-0 rounded-xl border border-zinc-800 bg-zinc-900/80 px-3 text-sm text-zinc-200 focus:border-violet-500/40 focus:outline-none focus:ring-1 focus:ring-violet-500/30 focus-visible:ring-2 focus-visible:ring-violet-400 sm:w-auto sm:max-w-[16.5rem]";
 
-function parseExplorePrototypeLocation(pathname: string): {
+function parseFutureHomeChromeLocation(
+  pathname: string,
+  searchParams: URLSearchParams,
+): {
   category: ExplorePrototypeCategorySlug | null;
-  listPath: string;
 } {
-  const parts = pathname.split("/").filter(Boolean);
-  if (parts[0] !== "explore" || parts[1] !== "prototype") {
-    return { category: null, listPath: "/explore/prototype" };
-  }
-  const maybeCategory = parts[2];
-  if (maybeCategory && isExplorePrototypeCategorySlug(maybeCategory)) {
+  if (pathname === "/home") {
+    const raw = searchParams.get("category")?.trim() ?? "";
     return {
-      category: maybeCategory,
-      listPath: `/explore/prototype/${maybeCategory}`,
+      category: isExplorePrototypeCategorySlug(raw) ? raw : null,
     };
   }
-  return { category: null, listPath: "/explore/prototype" };
-}
 
-function hrefForCategory(value: string): string {
-  if (value && isExplorePrototypeCategorySlug(value)) {
-    return `/explore/prototype/${value}`;
+  const parts = pathname.split("/").filter(Boolean);
+  if (parts[0] === "explore" && parts[1] === "prototype") {
+    const maybeCategory = parts[2];
+    if (maybeCategory && isExplorePrototypeCategorySlug(maybeCategory)) {
+      return { category: maybeCategory };
+    }
   }
-  return "/explore/prototype";
+
+  return { category: null };
 }
 
 function ExplorePrototypeHeaderControlsInner() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { category, listPath } = parseExplorePrototypeLocation(pathname);
+  const { category } = parseFutureHomeChromeLocation(pathname, searchParams);
   const urlQuery = searchParams.get("q")?.trim() ?? "";
   const [query, setQuery] = useState(urlQuery);
   const [prevUrlQuery, setPrevUrlQuery] = useState(urlQuery);
@@ -56,21 +56,23 @@ function ExplorePrototypeHeaderControlsInner() {
     setQuery(urlQuery);
   }
 
-  function navigateWithQuery(nextPath: string, nextQuery: string) {
-    const trimmed = nextQuery.trim();
-    const href = trimmed
-      ? `${nextPath}?q=${encodeURIComponent(trimmed)}`
-      : nextPath;
-    router.push(href);
+  function navigate(nextCategory: ExplorePrototypeCategorySlug | null, nextQuery: string) {
+    router.push(
+      buildFutureHomeHref({
+        category: nextCategory,
+        q: nextQuery,
+      }),
+    );
   }
 
   function handleCategoryChange(value: string) {
-    navigateWithQuery(hrefForCategory(value), query);
+    const nextCategory = isExplorePrototypeCategorySlug(value) ? value : null;
+    navigate(nextCategory, query);
   }
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    navigateWithQuery(listPath, query);
+    navigate(category, query);
   }
 
   const placeholder = getExplorePrototypeSearchPlaceholder(category);
@@ -115,8 +117,8 @@ function ExplorePrototypeHeaderControlsInner() {
 }
 
 /**
- * Explore Prototype–only header: category select + search (fixture filter via ?q=).
- * Mounted from PlayerShell when pathname is under /explore/prototype.
+ * Future discovery chrome: category select + fixture search (?q=).
+ * Mounted from PlayerShell on Preview `/home` and `/explore/prototype/**` (details).
  */
 export function ExplorePrototypeHeaderControls() {
   return <ExplorePrototypeHeaderControlsInner />;

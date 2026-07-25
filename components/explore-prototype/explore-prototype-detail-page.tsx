@@ -129,7 +129,7 @@ export function ExplorePrototypeDetailPage({
   const meta = getExplorePrototypeCategory(work.category);
   const thumb = resolveExplorePrototypeThumbnail(work);
   const related = getExplorePrototypeRelatedWorks(work, 3);
-  const backHref = meta?.href ?? "/explore/prototype/game";
+  const backHref = meta?.href ?? "/home?category=game";
   const backShort =
     work.category === "game"
       ? "ゲームを探す"

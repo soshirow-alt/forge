@@ -1,15 +1,15 @@
-import { notFound } from "next/navigation";
-import { ExplorePrototypePage } from "@/components/explore-prototype/explore-prototype-page";
+import { redirect } from "next/navigation";
 import {
   EXPLORE_PROTOTYPE_CATEGORY_SLUGS,
+  buildFutureHomeHref,
   isExplorePrototypeCategorySlug,
-  type ExplorePrototypeCategorySlug,
 } from "@/lib/prototype/explore-prototype";
 
 export function generateStaticParams() {
   return EXPLORE_PROTOTYPE_CATEGORY_SLUGS.map((category) => ({ category }));
 }
 
+/** Category lists moved to `/home?category=` — keep path for compatibility. */
 export default async function ExplorePrototypeCategoryPage({
   params,
   searchParams,
@@ -19,14 +19,10 @@ export default async function ExplorePrototypeCategoryPage({
 }) {
   const { category } = await params;
   const sp = await searchParams;
+
   if (!isExplorePrototypeCategorySlug(category)) {
-    notFound();
+    redirect(buildFutureHomeHref({ q: sp.q }));
   }
 
-  return (
-    <ExplorePrototypePage
-      category={category as ExplorePrototypeCategorySlug}
-      query={sp.q ?? ""}
-    />
-  );
+  redirect(buildFutureHomeHref({ category, q: sp.q }));
 }

@@ -27,7 +27,10 @@ import { useStudioEntryGate } from "@/components/studio-entry-gate-provider";
 import { PlatformFeedbackSidebarBox } from "@/components/platform-feedback-sidebar-box";
 import { RegisteredOnlyLink } from "@/components/registered-account-prompt-provider";
 import { shouldPromptDeveloperPage } from "@/lib/developer-onboarding-v0-store";
-import { useStudioLoginHrefBypass } from "@/lib/forge-deployment-context";
+import {
+  useForgeDeploymentMode,
+  useStudioLoginHrefBypass,
+} from "@/lib/forge-deployment-context";
 import { WATCH_TAB_LABEL } from "@/lib/watch-ui-labels";
 
 const primaryLinks = [
@@ -68,10 +71,14 @@ function subNavLinkClass(active: boolean) {
 function isPrimaryLinkActive(linkId: (typeof primaryLinks)[number]["id"], pathname: string): boolean {
   switch (linkId) {
     case "home":
+      // `/home` (+ ?category / ?q). Not /prototype/production-home.
       return pathname === "/home";
     case "search":
+      // Formal game search. Explore Prototype *detail* stays under /explore/prototype/**.
       return (
-        pathname === "/search" || pathname.startsWith("/explore/prototype")
+        pathname === "/search" ||
+        (pathname.startsWith("/explore/prototype/") &&
+          pathname.split("/").filter(Boolean).length >= 4)
       );
     case "creator-search":
       return pathname.startsWith("/search/creators");
@@ -179,7 +186,10 @@ function PlayerShellFrame({
   const resolvedNotificationBadge =
     notificationBadge ?? (user ? getUnreadNotificationCount() : 0);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const isExplorePrototype = pathname.startsWith("/explore/prototype");
+  const deploymentMode = useForgeDeploymentMode();
+  const showFutureHomeChrome =
+    deploymentMode !== "production" &&
+    (pathname === "/home" || pathname.startsWith("/explore/prototype"));
 
   useEffect(() => {
     setMobileNavOpen(false);
@@ -247,7 +257,7 @@ function PlayerShellFrame({
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-zinc-800/80 bg-[#0a0a0a]/95 px-4 py-3 backdrop-blur-md sm:gap-3 sm:px-6">
           <ForgeShellMobileMenuButton onClick={() => setMobileNavOpen(true)} />
-          {isExplorePrototype ? (
+          {showFutureHomeChrome ? (
             <Suspense fallback={<HeaderSearchFormFallback />}>
               <ExplorePrototypeHeaderControls />
             </Suspense>
