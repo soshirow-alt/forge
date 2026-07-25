@@ -43,6 +43,13 @@ export type ProjectRow = {
   updated_at: string;
   first_published_at?: string | null;
   age_rating?: string | null;
+  category?: string | null;
+  category_attributes?: unknown;
+  quick_try?: boolean | null;
+  usable_for_creation?: boolean | null;
+  stream_policy?: string | null;
+  stream_policy_note?: string | null;
+  asset_kinds?: string[] | null;
 };
 
 export type ProjectSupportRow = {
@@ -168,6 +175,7 @@ export type DeveloperProfileRow = {
   website: string | null;
   discord_url: string | null;
   youtube_url: string | null;
+  activity_tags?: string[] | null;
   created_at: string;
   updated_at: string;
 };

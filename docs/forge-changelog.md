@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-25 — Player IA redesign Phase 1: 型・定数モジュール（lib のみ）
+
+- **新規** — `lib/project-categories.ts`（5カテゴリ・アセット種別・配信方針・活動タグ・`CategoryAttributes` パース）
+- **新規** — `lib/discord-related-links.ts`（invite URL 判定・`related_links` 優先の Discord 解決）
+- **新規** — `lib/player-ia-mode.ts`（`shouldServePlayerIaRedesign` = Preview/local のみ）
+- **型** — `ProjectRow` / `DeveloperProfileRow` に category・属性列の optional 追加（migration・UI は未着手）
+
 ## 2026-07-25 — Preview: 将来ホームのカテゴリナビを segmented control へ
 
 - **見た目** — 5カテゴリを zinc border container 内にまとめる。inactive も薄い背景＋border で押せる面。active は violet＋ring
