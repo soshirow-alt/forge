@@ -4,7 +4,6 @@ import {
   ExplorePrototypeDetailPrimaryCta,
   ExplorePrototypeFeedbackProtoButton,
 } from "@/components/explore-prototype/explore-prototype-detail-cta";
-import { ExplorePrototypeNav } from "@/components/explore-prototype/explore-prototype-nav";
 import { ExplorePrototypeRelatedCard } from "@/components/explore-prototype/explore-prototype-related-card";
 import { ExplorePrototypeThumb } from "@/components/explore-prototype/explore-prototype-thumb";
 import type { ExplorePrototypeWork } from "@/lib/prototype/explore-prototype";
@@ -131,8 +130,6 @@ export function ExplorePrototypeDetailPage({
   const thumb = resolveExplorePrototypeThumbnail(work);
   const related = getExplorePrototypeRelatedWorks(work, 3);
   const backHref = meta?.href ?? "/explore/prototype/game";
-  const backLabel = meta ? `${meta.label}を探す` : "作品を探す";
-  // Shorten back label for long category names on mobile — use "探す" prefix styles
   const backShort =
     work.category === "game"
       ? "ゲームを探す"
@@ -144,7 +141,7 @@ export function ExplorePrototypeDetailPage({
 
   return (
     <div className="space-y-8 pb-10">
-      <header className="space-y-4">
+      <header className="space-y-2">
         <Link
           href={backHref}
           className="inline-flex items-center gap-1.5 text-sm text-violet-300 transition-colors hover:text-violet-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
@@ -152,17 +149,7 @@ export function ExplorePrototypeDetailPage({
           <ArrowLeft className="size-4 shrink-0" aria-hidden="true" />
           <span>{backShort}</span>
         </Link>
-
-        <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-violet-300">
-            Explore
-          </p>
-          <h1 className="sr-only">{work.title}</h1>
-        </div>
-
-        <ExplorePrototypeNav active={work.category} />
-
-        <p className="text-sm font-medium text-zinc-400">{meta?.label}</p>
+        <h1 className="sr-only">{work.title}</h1>
       </header>
 
       {/* Hero: image + action column */}
@@ -197,6 +184,7 @@ export function ExplorePrototypeDetailPage({
           </div>
 
           <div className="flex flex-wrap gap-1.5">
+            {meta ? <MetaChip label={meta.label} /> : null}
             <MetaChip label={work.phase} />
             {tagChips(work).map((label) => (
               <MetaChip key={label} label={label} />
@@ -318,7 +306,7 @@ export function ExplorePrototypeDetailPage({
             <CategoryInfoRows work={work} />
           </div>
           <p className="text-[11px] text-zinc-600" aria-hidden="true">
-            {backLabel}
+            {backShort}
           </p>
         </aside>
       </div>

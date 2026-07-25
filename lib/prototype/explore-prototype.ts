@@ -1718,3 +1718,160 @@ export function getAllExplorePrototypeStaticParams(): Array<{
     slug: work.slug,
   }));
 }
+
+/** Category-aware search placeholder for Explore Prototype header. */
+export function getExplorePrototypeSearchPlaceholder(
+  category: ExplorePrototypeCategorySlug | null,
+): string {
+  switch (category) {
+    case "game":
+      return "ゲームやジャンルを検索";
+    case "audio":
+      return "楽曲・BGM・音声を検索";
+    case "dev-tool":
+      return "開発ツールを検索";
+    case "service-app":
+      return "Webサービス・アプリを検索";
+    default:
+      return "作品を検索";
+  }
+}
+
+function categorySpecificSearchText(work: ExplorePrototypeWork): string[] {
+  if (work.category === "game") {
+    return [
+      work.genre,
+      ...work.tags,
+      work.estimatedPlayTime ?? "",
+      ...work.platforms,
+      work.controlsOrConditions ?? "",
+    ];
+  }
+  if (work.category === "audio") {
+    return [
+      work.kind,
+      work.genre ?? "",
+      ...work.tags,
+      work.durationLabel,
+      work.listeningContext ?? "",
+    ];
+  }
+  if (work.category === "dev-tool") {
+    return [
+      work.kind,
+      ...work.tags,
+      ...work.environments,
+      work.usageMethod,
+      work.targetUsers ?? "",
+      work.prerequisites ?? "",
+    ];
+  }
+  return [
+    work.kind,
+    ...work.tags,
+    ...work.environments,
+    work.intendedUsers ?? "",
+    work.problemSolved ?? "",
+    ...(work.usageScenes ?? []),
+  ];
+}
+
+/** Client/server fixture filter — title / shortDescription / tags / creator / category fields. */
+export function filterExplorePrototypeWorks(
+  works: ExplorePrototypeWork[],
+  query: string,
+): ExplorePrototypeWork[] {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return works;
+
+  return works.filter((work) => {
+    const haystack = [
+      work.title,
+      work.shortDescription,
+      work.creatorName,
+      work.lead,
+      ...categorySpecificSearchText(work),
+    ]
+      .join("\n")
+      .toLowerCase();
+    return haystack.includes(needle);
+  });
+}
+
+export type ExplorePrototypeBrowseModel = {
+  featured: ExplorePrototypeWork[];
+  shelves: ExplorePrototypeShelf[];
+  matchCount: number;
+  query: string;
+};
+
+function shelvesFromWorks(works: ExplorePrototypeWork[]): ExplorePrototypeShelf[] {
+  const updated = [...works].sort(byUpdatedDesc);
+  const newest = [...works].sort(byPublishedDesc);
+  return [
+    { id: "updated", title: "最近更新", works: updated },
+    { id: "newest", title: "新着作品", works: newest },
+  ];
+}
+
+/** Category list browse model — featured + shelves recomputed from filtered fixture. */
+export function getExplorePrototypeCategoryBrowse(
+  category: ExplorePrototypeCategorySlug,
+  query = "",
+): ExplorePrototypeBrowseModel {
+  const filtered = filterExplorePrototypeWorks(
+    getExplorePrototypeWorks(category),
+    query,
+  );
+  const featured = filtered
+    .filter((work) => work.featured)
+    .sort(byEngagementDesc)
+    .slice(0, 4);
+
+  return {
+    featured,
+    shelves: shelvesFromWorks(filtered),
+    matchCount: filtered.length,
+    query: query.trim(),
+  };
+}
+
+/** Hub browse model — mixed featured + per-category shelves from filtered fixture. */
+export function getExplorePrototypeHubBrowse(query = ""): ExplorePrototypeBrowseModel {
+  const filtered = filterExplorePrototypeWorks(EXPLORE_PROTOTYPE_WORKS, query);
+  const featured = EXPLORE_PROTOTYPE_CATEGORY_SLUGS.map((slug) => {
+    const inCategory = filtered.filter((work) => work.category === slug);
+    const topFeatured = inCategory
+      .filter((work) => work.featured)
+      .sort(byEngagementDesc)[0];
+    return topFeatured ?? inCategory.sort(byEngagementDesc)[0];
+  }).filter((work): work is ExplorePrototypeWork => Boolean(work));
+
+  const seeAllBySlug: Record<ExplorePrototypeCategorySlug, string> = {
+    game: "ゲームをすべて見る",
+    audio: "音楽・音声をすべて見る",
+    "dev-tool": "開発ツールをすべて見る",
+    "service-app": "Webサービス・アプリをすべて見る",
+  };
+
+  const shelves = EXPLORE_PROTOTYPE_CATEGORIES.map((meta) => {
+    const works = filtered
+      .filter((work) => work.category === meta.slug)
+      .sort(byUpdatedDesc)
+      .slice(0, 4);
+    return {
+      id: "updated" as const,
+      title: meta.label,
+      works,
+      seeAllHref: meta.href,
+      seeAllLabel: seeAllBySlug[meta.slug],
+    };
+  }).filter((shelf) => shelf.works.length > 0);
+
+  return {
+    featured,
+    shelves,
+    matchCount: filtered.length,
+    query: query.trim(),
+  };
+}

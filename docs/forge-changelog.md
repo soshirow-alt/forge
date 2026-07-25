@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-25 — Preview: Explore Prototype 上部の重複を整理（Phase 6）
+
+- **本文** — EXPLORE / 「作品を探す」/ カテゴリタブ / カテゴリ名再掲 / 説明文を削除。一覧はヘッダー直下から「注目の作品」
+- **ヘッダー** — Explore配下のみカテゴリselect＋検索を検索エリアへ統合（正式/home・/searchは非変更）
+- **検索** — fixtureを `?q=` でクライアント／サーバー共通filter（タイトル・説明・タグ・制作者・カテゴリ固有）。0件は簡潔な空状態
+- **サイドバー** — `/explore/prototype/**` で「作品を探す」active、`/home` で「ホーム」active
+- **詳細** — 一覧用タブ／EXPLORE見出しを削除。戻る導線＋カテゴリバッジのみ
+- **非対象** — ヒーロー／通常カード／pager／OGP／正式UI／main
+
 ## 2026-07-24 — Preview: 正式ルート導線をProductionへ復帰（Prototype隔離）
 
 - **正式/home** — queryなしでも `DiscoveryHomePage`（ヒーロー／棚／正式データ経路）。`HomePrototypeRouter` による分岐を廃止

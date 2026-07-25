@@ -1,43 +1,32 @@
+import { ExplorePrototypeEmptyState } from "@/components/explore-prototype/explore-prototype-empty-state";
 import { ExplorePrototypeFeaturedCarousel } from "@/components/explore-prototype/explore-prototype-featured-carousel";
-import { ExplorePrototypeNav } from "@/components/explore-prototype/explore-prototype-nav";
 import { ExplorePrototypeShelfSection } from "@/components/explore-prototype/explore-prototype-shelf-section";
-import {
-  getExplorePrototypeHomeCategoryShelves,
-  getExplorePrototypeHomeFeatured,
-} from "@/lib/prototype/explore-prototype";
+import { getExplorePrototypeHubBrowse } from "@/lib/prototype/explore-prototype";
 
 /**
  * Explore Prototype hub — mixed-category featured carousel + lightweight category shelves.
+ * Page chrome (eyebrow / title / category tabs) lives in the header controls.
  */
-export function ExplorePrototypeHomePage() {
-  const featured = getExplorePrototypeHomeFeatured();
-  const shelves = getExplorePrototypeHomeCategoryShelves();
+export function ExplorePrototypeHomePage({ query = "" }: { query?: string }) {
+  const browse = getExplorePrototypeHubBrowse(query);
+
+  if (browse.matchCount === 0) {
+    return (
+      <div className="space-y-6">
+        <ExplorePrototypeEmptyState query={browse.query} />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8">
-      <header className="space-y-3">
-        <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-violet-300">
-            Explore
-          </p>
-          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-            作品を探す
-          </h1>
-          <p className="text-sm text-zinc-400">
-            カテゴリを横断して、注目作品と最近の更新を眺める
-          </p>
-        </div>
-
-        <ExplorePrototypeNav active={null} />
-      </header>
-
+    <div className="space-y-6">
       <ExplorePrototypeFeaturedCarousel
-        slides={featured}
+        slides={browse.featured}
         heading="注目の作品"
         headingLevel="h2"
       />
 
-      {shelves.map((shelf) => {
+      {browse.shelves.map((shelf) => {
         const headingId = `hub-shelf-${shelf.seeAllHref?.replace(/\//g, "-") ?? shelf.title}`;
         return (
           <ExplorePrototypeShelfSection

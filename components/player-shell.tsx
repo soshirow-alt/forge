@@ -10,7 +10,7 @@ import {
   Flame,
   Gamepad2,
 } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { Suspense, type ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import {
   ForgeShellMobileDrawer,
@@ -18,7 +18,11 @@ import {
   ForgeShellModeSwitch,
 } from "@/components/forge-shell-mobile-nav";
 import { useGames } from "@/components/games-provider";
-import { HeaderSearchForm } from "@/components/player-header-search-form";
+import { ExplorePrototypeHeaderControls } from "@/components/explore-prototype/explore-prototype-header-controls";
+import {
+  HeaderSearchForm,
+  HeaderSearchFormFallback,
+} from "@/components/player-header-search-form";
 import { useStudioEntryGate } from "@/components/studio-entry-gate-provider";
 import { PlatformFeedbackSidebarBox } from "@/components/platform-feedback-sidebar-box";
 import { RegisteredOnlyLink } from "@/components/registered-account-prompt-provider";
@@ -64,12 +68,11 @@ function subNavLinkClass(active: boolean) {
 function isPrimaryLinkActive(linkId: (typeof primaryLinks)[number]["id"], pathname: string): boolean {
   switch (linkId) {
     case "home":
-      return (
-        pathname === "/home" ||
-        pathname.startsWith("/explore/prototype")
-      );
+      return pathname === "/home";
     case "search":
-      return pathname === "/search";
+      return (
+        pathname === "/search" || pathname.startsWith("/explore/prototype")
+      );
     case "creator-search":
       return pathname.startsWith("/search/creators");
     case "ranking":
@@ -176,6 +179,7 @@ function PlayerShellFrame({
   const resolvedNotificationBadge =
     notificationBadge ?? (user ? getUnreadNotificationCount() : 0);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const isExplorePrototype = pathname.startsWith("/explore/prototype");
 
   useEffect(() => {
     setMobileNavOpen(false);
@@ -243,7 +247,15 @@ function PlayerShellFrame({
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-zinc-800/80 bg-[#0a0a0a]/95 px-4 py-3 backdrop-blur-md sm:gap-3 sm:px-6">
           <ForgeShellMobileMenuButton onClick={() => setMobileNavOpen(true)} />
-          {headerSearch ?? <HeaderSearchForm legacyDefault={headerSearchDefault} />}
+          {isExplorePrototype ? (
+            <Suspense fallback={<HeaderSearchFormFallback />}>
+              <ExplorePrototypeHeaderControls />
+            </Suspense>
+          ) : (
+            (headerSearch ?? (
+              <HeaderSearchForm legacyDefault={headerSearchDefault} />
+            ))
+          )}
           <RegisteredOnlyLink
             href="/notifications"
             onClick={() => {

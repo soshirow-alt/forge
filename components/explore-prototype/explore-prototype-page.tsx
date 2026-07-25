@@ -1,55 +1,43 @@
+import { ExplorePrototypeEmptyState } from "@/components/explore-prototype/explore-prototype-empty-state";
 import { ExplorePrototypeFeaturedCarousel } from "@/components/explore-prototype/explore-prototype-featured-carousel";
-import { ExplorePrototypeNav } from "@/components/explore-prototype/explore-prototype-nav";
 import { ExplorePrototypeShelfSection } from "@/components/explore-prototype/explore-prototype-shelf-section";
 import {
   getExplorePrototypeCategory,
-  getExplorePrototypeFeaturedWorks,
-  getExplorePrototypeShelves,
+  getExplorePrototypeCategoryBrowse,
   type ExplorePrototypeCategorySlug,
 } from "@/lib/prototype/explore-prototype";
 
 export function ExplorePrototypePage({
   category,
+  query = "",
 }: {
   category: ExplorePrototypeCategorySlug;
+  query?: string;
 }) {
   const meta = getExplorePrototypeCategory(category);
-  const featured = getExplorePrototypeFeaturedWorks(category);
-  const shelves = getExplorePrototypeShelves(category);
+  const browse = getExplorePrototypeCategoryBrowse(category, query);
 
   if (!meta) {
     return null;
   }
 
+  if (browse.matchCount === 0) {
+    return (
+      <div className="space-y-6">
+        <ExplorePrototypeEmptyState query={browse.query} />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
-      <header className="space-y-3">
-        <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-violet-300">
-            Explore
-          </p>
-          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-            作品を探す
-          </h1>
-        </div>
-
-        <ExplorePrototypeNav active={category} />
-
-        <div className="space-y-1 border-t border-zinc-800/80 pt-3">
-          <h2 className="text-xl font-semibold text-white sm:text-2xl">
-            {meta.label}
-          </h2>
-          <p className="text-sm text-zinc-400">{meta.description}</p>
-        </div>
-      </header>
-
+    <div className="space-y-6">
       <ExplorePrototypeFeaturedCarousel
-        slides={featured}
+        slides={browse.featured}
         heading="注目の作品"
         headingLevel="h2"
       />
 
-      {shelves.map((shelf) => (
+      {browse.shelves.map((shelf) => (
         <ExplorePrototypeShelfSection
           key={shelf.id}
           title={shelf.title}
