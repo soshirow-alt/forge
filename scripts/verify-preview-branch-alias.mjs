@@ -11,8 +11,9 @@
  *   PREVIEW_ALIAS_URL=... EXPECT_COMMIT=… node scripts/verify-preview-branch-alias.mjs
  *   COMPARE_DEPLOY_URL=https://forge-….vercel.app node scripts/verify-preview-branch-alias.mjs
  *
- * 2026-07-25〜: Preview `/home` = カテゴリ拡張後の将来ホーム（24 fixture）。
- * `/explore/prototype` 一覧は `/home` へ redirect。詳細は維持。
+ * 2026-07-25〜: Preview `/home` = Player IA DB-backed whole home.
+ * Category tabs live on `/search`. `/home?category=` → `/search?category=`.
+ * `/explore/prototype` lists redirect; details may remain for compat.
  */
 
 const ALIAS_URL =
@@ -93,15 +94,15 @@ function chunkFingerprint(paths) {
     .join("|");
 }
 
-function locationTargetsHome(location, expectedQueryPrefix) {
+function locationPathSearch(location, expectedPath, expectedQueryPrefix) {
   if (!location) return false;
   try {
     const url = new URL(location, ALIAS_URL);
-    if (url.pathname !== "/home") return false;
+    if (url.pathname !== expectedPath) return false;
     if (!expectedQueryPrefix) return true;
     return url.search.includes(expectedQueryPrefix);
   } catch {
-    return location.includes("/home");
+    return location.includes(expectedPath);
   }
 }
 
@@ -119,45 +120,71 @@ async function main() {
     `alias distinctive chunks: ${aliasFp.split("|").slice(-6).join(", ")}`,
   );
 
-  // Preview /home — single future discovery surface (fixtures).
+  // Preview /home — Player IA whole home (no category tabs, no explore fixtures).
   const home = await collectBundleText(ALIAS_URL, "/home");
   const homeHasLabel = count(home.html, ">ホーム<") > 0;
   const homeHasExploreLabel = count(home.html, ">Explore<") > 0;
-  const homeFuture =
-    count(home.html, "草原ダッシュ") > 0 ||
-    count(home.html, "作品カテゴリ") > 0 ||
-    count(home.html, "注目の作品") > 0;
+  const homeHasGlobalSearch =
+    count(home.html, "作品・開発者・タグを検索") > 0 ||
+    count(home.text, "作品・開発者・タグを検索") > 0;
+  const homeHasPlayerIaApi =
+    count(home.html, "/api/discovery/player-ia-home") > 0 ||
+    count(home.text, "/api/discovery/player-ia-home") > 0 ||
+    count(home.text, "player-ia-home") > 0;
+  const homeHasFixtureThumbs =
+    count(home.html, "/images/explore-prototype/") > 0 ||
+    count(home.text, "/images/explore-prototype/") > 0;
   const homeHasCategoryTabs =
-    count(home.html, ">すべて<") > 0 &&
-    count(home.html, "ゲーム・インタラクティブ作品") > 0 &&
-    count(home.html, ">カテゴリ<") > 0;
-  const homeHasSearchUi =
-    count(home.html, "explore-prototype-category") > 0 ||
+    count(home.html, "ゲーム・インタラクティブ作品") > 0 ||
+    (count(home.html, ">すべて<") > 0 &&
+      count(home.html, ">カテゴリ<") > 0 &&
+      count(home.html, "Webサービス・アプリ") > 0);
+  const homeHasCommunityNav = count(home.html, "参加コミュニティ") > 0;
+  const homeHasLegacyWorkSearch =
     count(home.html, "作品を検索") > 0 ||
     count(home.html, "ゲームやジャンルを検索") > 0;
-  const homeHasStagingTmp =
-    count(home.html, "tmp-062") > 0 || count(home.html, "Neon Depths") > 0;
+
   console.log(`home ">ホーム<": ${homeHasLabel ? 1 : 0}`);
   console.log(`home ">Explore<": ${homeHasExploreLabel ? 1 : 0}`);
-  console.log(`home future markers: ${homeFuture ? 1 : 0}`);
-  console.log(`home category tabs: ${homeHasCategoryTabs ? 1 : 0}`);
-  console.log(`home search/select ui: ${homeHasSearchUi ? 1 : 0}`);
-  console.log(`home staging-tmp leak: ${homeHasStagingTmp ? 1 : 0}`);
+  console.log(`home global search chrome: ${homeHasGlobalSearch ? 1 : 0}`);
+  console.log(`home player-ia fetch: ${homeHasPlayerIaApi ? 1 : 0}`);
+  console.log(`home fixture thumbs: ${homeHasFixtureThumbs ? 1 : 0}`);
+  console.log(`home legacy category tabs: ${homeHasCategoryTabs ? 1 : 0}`);
+  console.log(`home community nav: ${homeHasCommunityNav ? 1 : 0}`);
+
   if (!homeHasLabel) failures.push('alias /home missing sidebar label "ホーム"');
   if (homeHasExploreLabel) {
     failures.push('alias /home still labels primary nav as "Explore"');
   }
-  if (!homeFuture) {
-    failures.push("alias /home missing future discovery / fixture markers");
+  if (!homeHasGlobalSearch) {
+    failures.push("alias /home missing Player IA global search chrome");
   }
-  if (!homeHasCategoryTabs) {
-    failures.push("alias /home missing always-visible category tabs");
+  if (!homeHasPlayerIaApi) {
+    failures.push("alias /home bundle missing player-ia-home fetch");
   }
-  if (homeHasSearchUi) {
-    failures.push("alias /home still has search input or category select");
+  if (homeHasFixtureThumbs) {
+    failures.push("alias /home still embeds explore-prototype fixture thumbs");
   }
-  if (homeHasStagingTmp) {
-    failures.push("alias /home still embeds Staging tmp/hero-seed titles in HTML");
+  if (homeHasCategoryTabs) {
+    failures.push("alias /home still shows legacy category tabs (belong on /search)");
+  }
+  if (homeHasCommunityNav) {
+    failures.push('alias /home still shows "参加コミュニティ"');
+  }
+  if (homeHasLegacyWorkSearch) {
+    failures.push("alias /home still has legacy work-search placeholder");
+  }
+
+  // /search — category tabs live here.
+  const search = await collectBundleText(ALIAS_URL, "/search");
+  const searchHasCategoryTabs =
+    count(search.html, ">すべて<") > 0 &&
+    count(search.html, ">ゲーム<") > 0 &&
+    count(search.html, ">アセット<") > 0 &&
+    count(search.html, "サービス・アプリ") > 0;
+  console.log(`search category tabs: ${searchHasCategoryTabs ? 1 : 0}`);
+  if (!searchHasCategoryTabs) {
+    failures.push("alias /search missing formal 5-category tabs");
   }
 
   // Removed dual Production-home route.
@@ -172,14 +199,29 @@ async function main() {
     );
   }
 
-  // Compatibility redirects (list only; details stay). q is dropped.
+  // Compatibility redirects.
   const redirectChecks = [
-    { path: "/explore/prototype", expect: null, forbid: "q=" },
-    { path: "/explore/prototype?q=neon", expect: null, forbid: "q=" },
-    { path: "/explore/prototype/game", expect: "category=game", forbid: "q=" },
+    { path: "/explore/prototype", expectPath: "/home", expectQuery: null },
+    { path: "/explore/prototype?q=neon", expectPath: "/home", expectQuery: null },
+    {
+      path: "/explore/prototype/game",
+      expectPath: "/search",
+      expectQuery: "category=game",
+    },
     {
       path: "/explore/prototype/audio?q=pulse",
-      expect: "category=audio",
+      expectPath: "/search",
+      expectQuery: "category=audio",
+    },
+    {
+      path: "/home?category=asset",
+      expectPath: "/search",
+      expectQuery: "category=asset",
+    },
+    {
+      path: "/home?q=test",
+      expectPath: "/home",
+      expectQuery: null,
       forbid: "q=",
     },
   ];
@@ -187,28 +229,21 @@ async function main() {
     const result = await fetchRedirect(`${origin}${check.path}`);
     const okStatus =
       result.status === 307 || result.status === 308 || result.status === 302;
-    const okTarget = locationTargetsHome(result.location, check.expect);
-    const okNoQ = !result.location.includes(check.forbid);
-    const ok = okStatus && okTarget && okNoQ;
+    const okTarget = locationPathSearch(
+      result.location,
+      check.expectPath,
+      check.expectQuery,
+    );
+    const okNoForbidden = check.forbid
+      ? !result.location.includes(check.forbid)
+      : true;
+    const ok = okStatus && okTarget && okNoForbidden;
     console.log(
       `redirect ${check.path} → ${result.status} ${result.location || "(none)"} ok=${ok ? 1 : 0}`,
     );
     if (!ok) {
       failures.push(`compat redirect failed for ${check.path}`);
     }
-  }
-
-  // /home?q=… should strip q (no search on future home).
-  const qStrip = await fetchRedirect(`${origin}/home?q=test`);
-  const qStripOk =
-    (qStrip.status === 307 || qStrip.status === 308 || qStrip.status === 302) &&
-    locationTargetsHome(qStrip.location, null) &&
-    !qStrip.location.includes("q=");
-  console.log(
-    `q-strip /home?q=test → ${qStrip.status} ${qStrip.location || "(none)"} ok=${qStripOk ? 1 : 0}`,
-  );
-  if (!qStripOk) {
-    failures.push("alias /home?q=test did not redirect to q-less /home");
   }
 
   const detail = await fetch(`${origin}/explore/prototype/game/meadow-dash`, {
@@ -289,7 +324,7 @@ async function main() {
   }
 
   console.log(
-    "\nPASS — branch alias serves single future /home + compat redirects",
+    "\nPASS — branch alias serves Player IA /home + /search category tabs + compat redirects",
   );
 }
 

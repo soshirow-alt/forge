@@ -4,6 +4,10 @@
 
 ---
 
+## 2026-07-25 — Preview alias 検証を Player IA 仕様へ更新
+
+- `verify:preview-branch-alias` — `/home` は fixture/カテゴリタブではなくグローバル検索＋player-ia-home を確認。カテゴリタブは `/search`。`/explore/prototype/[category]` → `/search?category=`、`/home?category=` → `/search?category=`
+
 ## 2026-07-25 — Preview: Player IA redesign（ホーム・検索・API）
 
 - **/home（Preview）** — DB バックの `PlayerIaHomePage`（フィードバックハイライト・探し方チップ・最近の更新・使用関係・お知らせ・新着）。`/home?category=` は `/search?category=` へ redirect。カテゴリ segmented control なし
