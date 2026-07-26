@@ -178,6 +178,9 @@ export async function fetchPublicProjectsByCategory(
   return ((data ?? []) as CatalogProjectRow[]).map(mapCatalogProject);
 }
 
+/** Drop pure-trigram noise below this (DB default is 0.05; too low for zero-hit queries). */
+export const PUBLIC_CATALOG_SEARCH_MIN_RANK = 0.2;
+
 export async function searchPublicCatalog(
   supabase: SupabaseClient,
   query: string,
@@ -204,6 +207,10 @@ export async function searchPublicCatalog(
       if (!kind) {
         return null;
       }
+      const rank = Number(row.rank) || 0;
+      if (rank < PUBLIC_CATALOG_SEARCH_MIN_RANK) {
+        return null;
+      }
       const categoryRaw = row.category;
       return {
         kind,
@@ -220,7 +227,7 @@ export async function searchPublicCatalog(
             : kind === "developer"
               ? safeHttpThumbnailUrl(row.thumbnail_url)
               : null,
-        rank: Number(row.rank) || 0,
+        rank,
       } satisfies GlobalSearchResult;
     })
     .filter((item): item is GlobalSearchResult => item !== null);

@@ -17,22 +17,41 @@ export async function upsertGuestVoiceResponse(
   supabase: SupabaseClient,
   input: UpsertGuestVoiceInput,
 ) {
-  const { data, error } = await supabase
+  const payload = {
+    project_id: input.projectId,
+    version_key: input.versionKey,
+    prompt_id: input.promptId,
+    submitter_key: input.submitterKey,
+    answer_value: input.answerValue,
+    answer_label: input.answerLabel,
+    optional_comment: input.optionalComment,
+  };
+
+  const { data: existing, error: existingError } = await supabase
     .from("project_guest_voice_responses")
-    .upsert(
-      {
-        project_id: input.projectId,
-        version_key: input.versionKey,
-        prompt_id: input.promptId,
-        submitter_key: input.submitterKey,
-        answer_value: input.answerValue,
-        answer_label: input.answerLabel,
-        optional_comment: input.optionalComment,
-      },
-      { onConflict: "submitter_key,prompt_id" },
-    )
-    .select("id, prompt_id, created_at, updated_at")
-    .single();
+    .select("id")
+    .eq("submitter_key", input.submitterKey)
+    .eq("prompt_id", input.promptId)
+    .maybeSingle();
+
+  if (existingError) {
+    throw existingError;
+  }
+
+  const write = existing?.id
+    ? supabase
+        .from("project_guest_voice_responses")
+        .update(payload)
+        .eq("id", existing.id)
+        .select("id, prompt_id, created_at, updated_at")
+        .single()
+    : supabase
+        .from("project_guest_voice_responses")
+        .insert(payload)
+        .select("id, prompt_id, created_at, updated_at")
+        .single();
+
+  const { data, error } = await write;
 
   if (error) {
     throw error;
@@ -64,11 +83,35 @@ export async function upsertGuestDetailedFeedback(
     would_replay: input.wouldReplay ?? null,
   };
 
-  const { data, error } = await supabase
+  // Prefer explicit select→update/insert over PostgREST upsert.
+  // Staging may only have a UNIQUE INDEX (not a table CONSTRAINT), which
+  // makes `onConflict: "submitter_key,project_id,version_key"` fail.
+  const { data: existing, error: existingError } = await supabase
     .from("project_guest_feedback")
-    .upsert(payload, { onConflict: "submitter_key,project_id,version_key" })
-    .select("id, version_key, created_at, updated_at")
-    .single();
+    .select("id")
+    .eq("submitter_key", submitterKey)
+    .eq("project_id", projectId)
+    .eq("version_key", input.versionKey)
+    .maybeSingle();
+
+  if (existingError) {
+    throw existingError;
+  }
+
+  const write = existing?.id
+    ? supabase
+        .from("project_guest_feedback")
+        .update(payload)
+        .eq("id", existing.id)
+        .select("id, version_key, created_at, updated_at")
+        .single()
+    : supabase
+        .from("project_guest_feedback")
+        .insert(payload)
+        .select("id, version_key, created_at, updated_at")
+        .single();
+
+  const { data, error } = await write;
 
   if (error) {
     throw error;

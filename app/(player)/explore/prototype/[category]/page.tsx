@@ -19,13 +19,16 @@ export default async function ExplorePrototypeCategoryPage({
 }) {
   const { category } = await params;
 
-  if (!isExplorePrototypeCategorySlug(category)) {
-    redirect(shouldServePlayerIaRedesign() ? "/search" : buildFutureHomeHref());
+  if (shouldServePlayerIaRedesign()) {
+    // Formal IA categories (incl. `asset`) may be absent from legacy explore slugs.
+    if (isProjectCategoryId(category)) {
+      redirect(buildSearchCategoryHref(category));
+    }
+    redirect("/search");
   }
 
-  if (shouldServePlayerIaRedesign()) {
-    const mapped = isProjectCategoryId(category) ? category : null;
-    redirect(buildSearchCategoryHref(mapped));
+  if (!isExplorePrototypeCategorySlug(category)) {
+    redirect(buildFutureHomeHref());
   }
 
   redirect(buildFutureHomeHref({ category }));

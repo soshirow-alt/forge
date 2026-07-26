@@ -1,72 +1,8 @@
--- 079: Server-side global public search (trigram + normalized substring)
--- Schema migration (Staging first; Production later via owner Dashboard).
--- Prerequisite: 076, 032 (developer discord/youtube), 033 (genres)
--- Scope: public projects + developers who own ≥1 public project + public tags only.
--- Must not search email, private projects, Studio drafts, notifications, or chats.
-
-BEGIN;
-
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-
--- Normalize for case / punctuation / whitespace. Japanese partial match uses
--- substring + trigram; accent folding is not required for Forge catalog text.
-CREATE OR REPLACE FUNCTION public.forge_search_normalize(p_input text)
-RETURNS text
-LANGUAGE sql
-IMMUTABLE
-AS $$
-  SELECT lower(
-    regexp_replace(
-      coalesce(p_input, ''),
-      '[[:space:][:punct:]]+',
-      ' ',
-      'g'
-    )
-  );
-$$;
-
-CREATE OR REPLACE FUNCTION public.forge_project_search_document(p public.projects)
-RETURNS text
-LANGUAGE sql
-STABLE
-AS $$
-  SELECT public.forge_search_normalize(
-    concat_ws(
-      ' ',
-      p.title,
-      p.description,
-      p.creator,
-      p.owner_name,
-      p.category,
-      p.genre,
-      array_to_string(coalesce(p.genres, '{}'), ' '),
-      array_to_string(coalesce(p.tags, '{}'), ' '),
-      array_to_string(coalesce(p.purpose_tags, '{}'), ' '),
-      array_to_string(coalesce(p.asset_kinds, '{}'), ' '),
-      p.stream_policy,
-      coalesce(p.stream_policy_note, ''),
-      coalesce(p.category_attributes::text, '')
-    )
-  );
-$$;
-
-CREATE OR REPLACE FUNCTION public.forge_developer_search_document(d public.developer_profiles)
-RETURNS text
-LANGUAGE sql
-STABLE
-AS $$
-  SELECT public.forge_search_normalize(
-    concat_ws(
-      ' ',
-      d.public_name,
-      d.profile,
-      d.creator_id,
-      d.x_account,
-      coalesce(d.website, ''),
-      array_to_string(coalesce(d.activity_tags, '{}'), ' ')
-    )
-  );
-$$;
+-- STAGING ONLY — raise search_public_catalog min rank (0.05 → 0.2)
+-- Target: vuqpwvjvgyxffmvpfrxo only. Safe to re-run.
+-- Preview also filters rank < 0.2 in app code until this is applied.
+-- Confirm after: SELECT count(*) FROM public.search_public_catalog('zzz-ia-seed-nohit-999', 10);
+-- Expect: 0
 
 CREATE OR REPLACE FUNCTION public.search_public_catalog(
   p_query text,
@@ -204,7 +140,6 @@ BEGIN
     UNION ALL
     SELECT * FROM tag_hits
   ) hits
-  -- 0.05 let pure-trigram noise through on nonsense queries; require stronger hit.
   WHERE hits.rank > 0.2
   ORDER BY hits.rank DESC, hits.title ASC
   LIMIT v_limit;
@@ -214,29 +149,3 @@ $$;
 REVOKE ALL ON FUNCTION public.search_public_catalog(text, integer) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.search_public_catalog(text, integer)
   TO anon, authenticated, service_role;
-
-CREATE OR REPLACE FUNCTION public.search_public_catalog_suggest(
-  p_query text,
-  p_limit integer DEFAULT 8
-)
-RETURNS TABLE (
-  result_kind text,
-  result_id text,
-  title text,
-  subtitle text,
-  category text
-)
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT s.result_kind, s.result_id, s.title, s.subtitle, s.category
-  FROM public.search_public_catalog(p_query, least(coalesce(p_limit, 8), 12)) s;
-$$;
-
-REVOKE ALL ON FUNCTION public.search_public_catalog_suggest(text, integer) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.search_public_catalog_suggest(text, integer)
-  TO anon, authenticated, service_role;
-
-COMMIT;

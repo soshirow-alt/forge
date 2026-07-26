@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-26 — Player IA Preview: 検索ノイズ・互換 redirect・ゲストFB書き込み修正
+
+- **検索** — 無意味クエリで低 rank のノイズが返る問題を、Preview API 側で rank≥0.2 にフィルタ。079 本体と Staging 用 patch SQL も同閾値に更新（Staging への patch 適用は別途）
+- **互換** — `/explore/prototype/asset` が formal category なのに `/search`（query なし）へ落ちていたのを `/search?category=asset` へ
+- **ゲストFB** — PostgREST upsert（UNIQUE INDEX のみ環境で失敗し得る）を select→update/insert に変更
+- **非実施** — main / Production deploy / Production DB 変更なし。seed 再投入なし（Staging 実測で IA seed 0 件のため別確認が必要）
+
 ## 2026-07-26 — Player IA: migration 080 の uuid/text join 修正（Staging 再適用待ち）
 
 - **原因** — `get_home_meaningful_updates` 等が `projects.id`（uuid）と `project_devlogs.project_id`（text）を直接比較し Staging で `42883`
