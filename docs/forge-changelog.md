@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-26 — Player IA: Staging 適用前の migration 履歴方針を明文化（未適用）
+
+- **履歴** — SQL Editor 単独では `schema_migrations` に載らないこと、将来 `db push` で再適用対象になり得ることを runbook / 監査に記載
+- **採用方式** — Staging は Dashboard SQL Editor＋確認 SQL を成功正本（Forge 既存運用）。独自 INSERT 禁止。必須 `db push` / 必須 repair は採らない
+- **再実行安全性** — 076–081 の idempotency 表を監査へ追加。オーナー最終コピペ手順を runbook §10 に整理
+- **非実施** — Staging DB write・seed・deploy・main/Production 変更なし
+
 ## 2026-07-26 — Player IA: Staging seed の所有関係を auth 拡張と接続（未適用）
 
 - **孤立プロフィール解消** — 基本 seed の `owner_id` を `COALESCE(専用 a1a1…, hero dddd…)` に変更。auth 20 人が各 ≥1 作品を所有（079 developer 検索条件を満たす）
