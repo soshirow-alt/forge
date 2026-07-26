@@ -116,6 +116,22 @@ SELECT 'hit_tag_SE', (
   WHERE result_kind = 'tag' AND title = 'SE'
 )
 UNION ALL
+SELECT 'hit_project_SE_kit', (
+  SELECT count(*)::text FROM public.search_public_catalog('SE', 20)
+  WHERE result_kind = 'project' AND title LIKE '%SEキット%'
+)
+UNION ALL
+SELECT 'se_no_service_noise', (
+  SELECT count(*)::text FROM public.search_public_catalog('SE', 40)
+  WHERE result_kind = 'project'
+    AND title LIKE '%SEキット%' IS NOT TRUE
+    AND (
+      title ILIKE '%[IA Seed]%'
+      OR category = 'service-app'
+      OR coalesce(subtitle, '') ILIKE '%seed%'
+    )
+)
+UNION ALL
 SELECT 'hit_tag_dot_partial', (
   SELECT count(*)::text FROM public.search_public_catalog('ドット', 10)
   WHERE result_kind = 'tag' AND title = 'ドット絵'

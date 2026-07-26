@@ -329,7 +329,9 @@ scripts/staging-only/fix-079-search-public-catalog.sql
 ```
 
 正本は `supabase/migrations/079_global_public_search.sql`。patch 手編集禁止。再生成は `node scripts/staging-only/sync-079-search-patch.mjs`。  
-タグ枝は「タグが検索語を含む」のみ。内部タグ `forge-%` は tag 結果に出さない。
+タグ枝は通常「タグが検索語を含む」、短い ASCII（SE/AI/2D 等）はタグ完全一致のみ。  
+短い ASCII の project／developer は独立トークン／構造化属性一致のみ（seed/service 部分文字列は拾わない）。  
+内部タグ `forge-%` は tag 結果および検索 document から除外。
 
 ---
 

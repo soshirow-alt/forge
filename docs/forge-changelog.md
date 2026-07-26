@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-26 — Player IA 検索: 短い ASCII 語は独立トークン一致のみ（Staging 再適用待ち）
+
+- **現象** — `SE` が seed/service/`[IA Seed]`/profile の部分文字列で最大20件ノイズ
+- **ルール** — 正規化後が ASCII 英数字のみかつ ≤2 文字の単一語は、全文 substring／trigram を使わず title／tags／genres／purpose_tags／asset_kinds／activity_tags 等の独立トークン／構造化完全一致のみ
+- **document** — `forge-*` タグと developer `creator_id` を公開検索 document から除外
+- **非実施** — Staging DB への patch 適用なし（オーナー再実行）。main / Production 未変更
+
 ## 2026-07-26 — Player IA 検索: タグ逆方向包含の誤ヒットを除去（Staging 再適用待ち）
 
 - **残件** — `zzz-ia-seed-nohit-999` → tag `SE`（rank≈0.59）。`v_norm LIKE '%'||tag||'%'` が `seed` 内の `se` に反応
