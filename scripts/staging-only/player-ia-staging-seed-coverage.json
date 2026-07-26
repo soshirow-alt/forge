@@ -1,8 +1,254 @@
 {
-  "generatedAt": "2026-07-26T01:53:54.957Z",
+  "generatedAt": "2026-07-26T04:21:33.232Z",
   "stagingRef": "vuqpwvjvgyxffmvpfrxo",
   "productionRefForbidden": "bpnisgzxuwdxelhnduuf",
   "existingProfileMutation": false,
+  "ownership": {
+    "mode": "COALESCE(dedicated auth user a1a1… if present, else hero OWNER_A/B). Auth seed SHOULD run before basic seed.",
+    "fallbackOwners": {
+      "OWNER_A": "dddddddd-dddd-4ddd-8ddd-000000000001",
+      "OWNER_B": "dddddddd-dddd-4ddd-8ddd-000000000002"
+    },
+    "dedicatedSlots": 20,
+    "orphanProfilesIfUnlinked": false,
+    "multiCategorySlots": {
+      "ia-seed-dev-16": {
+        "slot": 16,
+        "categories": [
+          "game",
+          "audio",
+          "asset"
+        ],
+        "projectNs": [
+          1,
+          9,
+          17
+        ]
+      },
+      "ia-seed-dev-17": {
+        "slot": 17,
+        "categories": [
+          "game",
+          "dev-tool",
+          "service-app"
+        ],
+        "projectNs": [
+          2,
+          25,
+          33
+        ]
+      }
+    },
+    "byCreatorId": {
+      "ia-seed-dev-16": {
+        "slot": 16,
+        "categories": [
+          "game",
+          "audio",
+          "asset"
+        ],
+        "projectNs": [
+          1,
+          9,
+          17
+        ]
+      },
+      "ia-seed-dev-17": {
+        "slot": 17,
+        "categories": [
+          "game",
+          "dev-tool",
+          "service-app"
+        ],
+        "projectNs": [
+          2,
+          25,
+          33
+        ]
+      },
+      "ia-seed-dev-01": {
+        "slot": 1,
+        "categories": [
+          "game"
+        ],
+        "projectNs": [
+          3,
+          8
+        ]
+      },
+      "ia-seed-dev-02": {
+        "slot": 2,
+        "categories": [
+          "game"
+        ],
+        "projectNs": [
+          4
+        ]
+      },
+      "ia-seed-dev-18": {
+        "slot": 18,
+        "categories": [
+          "game"
+        ],
+        "projectNs": [
+          5
+        ]
+      },
+      "ia-seed-dev-07": {
+        "slot": 7,
+        "categories": [
+          "game"
+        ],
+        "projectNs": [
+          6
+        ]
+      },
+      "ia-seed-dev-20": {
+        "slot": 20,
+        "categories": [
+          "game"
+        ],
+        "projectNs": [
+          7
+        ]
+      },
+      "ia-seed-dev-10": {
+        "slot": 10,
+        "categories": [
+          "audio"
+        ],
+        "projectNs": [
+          10,
+          12,
+          15
+        ]
+      },
+      "ia-seed-dev-11": {
+        "slot": 11,
+        "categories": [
+          "audio",
+          "asset"
+        ],
+        "projectNs": [
+          11,
+          13,
+          23
+        ]
+      },
+      "ia-seed-dev-19": {
+        "slot": 19,
+        "categories": [
+          "audio",
+          "asset"
+        ],
+        "projectNs": [
+          14,
+          16,
+          24
+        ]
+      },
+      "ia-seed-dev-08": {
+        "slot": 8,
+        "categories": [
+          "asset"
+        ],
+        "projectNs": [
+          18,
+          20
+        ]
+      },
+      "ia-seed-dev-09": {
+        "slot": 9,
+        "categories": [
+          "asset"
+        ],
+        "projectNs": [
+          19,
+          21
+        ]
+      },
+      "ia-seed-dev-04": {
+        "slot": 4,
+        "categories": [
+          "asset",
+          "dev-tool"
+        ],
+        "projectNs": [
+          22,
+          29
+        ]
+      },
+      "ia-seed-dev-03": {
+        "slot": 3,
+        "categories": [
+          "dev-tool"
+        ],
+        "projectNs": [
+          26,
+          31
+        ]
+      },
+      "ia-seed-dev-05": {
+        "slot": 5,
+        "categories": [
+          "dev-tool"
+        ],
+        "projectNs": [
+          27,
+          32
+        ]
+      },
+      "ia-seed-dev-12": {
+        "slot": 12,
+        "categories": [
+          "dev-tool"
+        ],
+        "projectNs": [
+          28,
+          30
+        ]
+      },
+      "ia-seed-dev-13": {
+        "slot": 13,
+        "categories": [
+          "service-app"
+        ],
+        "projectNs": [
+          34,
+          37
+        ]
+      },
+      "ia-seed-dev-15": {
+        "slot": 15,
+        "categories": [
+          "service-app"
+        ],
+        "projectNs": [
+          35,
+          38
+        ]
+      },
+      "ia-seed-dev-14": {
+        "slot": 14,
+        "categories": [
+          "service-app"
+        ],
+        "projectNs": [
+          36,
+          39
+        ]
+      },
+      "ia-seed-dev-06": {
+        "slot": 6,
+        "categories": [
+          "service-app"
+        ],
+        "projectNs": [
+          40
+        ]
+      }
+    }
+  },
   "projects": {
     "total": 40,
     "byCategory": {
@@ -166,6 +412,9 @@
     "streamAllPresent": true,
     "searchTermsCovered": true,
     "existingProfileMutation": false,
+    "everyDedicatedSlotOwnsProject": true,
+    "multiACategoriesGte3": true,
+    "multiBCategoriesGte3": true,
     "pass": true
   }
 }

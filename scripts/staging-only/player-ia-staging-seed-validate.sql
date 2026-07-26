@@ -63,6 +63,34 @@ SELECT 'auth_seed_profiles', count(*)::text
 FROM public.developer_profiles
 WHERE creator_id LIKE 'ia-seed-dev-%'
 UNION ALL
+SELECT 'auth_profiles_owning_seed_projects', count(DISTINCT d.user_id)::text
+FROM public.developer_profiles d
+INNER JOIN public.projects p ON p.owner_id = d.user_id
+WHERE d.creator_id LIKE 'ia-seed-dev-%'
+  AND 'forge-ia-seed-v1' = ANY (coalesce(p.tags, '{}'))
+UNION ALL
+SELECT 'seed_projects_owned_by_dedicated', count(*)::text
+FROM public.projects p
+WHERE 'forge-ia-seed-v1' = ANY (coalesce(p.tags, '{}'))
+  AND p.owner_id::text LIKE 'a1a1a1a1-a1a1-41a1-81a1-%'
+UNION ALL
+SELECT 'seed_projects_owned_by_fallback_hero', count(*)::text
+FROM public.projects p
+WHERE 'forge-ia-seed-v1' = ANY (coalesce(p.tags, '{}'))
+  AND p.owner_id IN ('dddddddd-dddd-4ddd-8ddd-000000000001'::uuid, 'dddddddd-dddd-4ddd-8ddd-000000000002'::uuid)
+UNION ALL
+SELECT 'multi_a_categories', coalesce(string_agg(DISTINCT p.category, ',' ORDER BY p.category), '')
+FROM public.developer_profiles d
+INNER JOIN public.projects p ON p.owner_id = d.user_id
+WHERE d.creator_id = 'ia-seed-dev-16'
+  AND 'forge-ia-seed-v1' = ANY (coalesce(p.tags, '{}'))
+UNION ALL
+SELECT 'multi_b_categories', coalesce(string_agg(DISTINCT p.category, ',' ORDER BY p.category), '')
+FROM public.developer_profiles d
+INNER JOIN public.projects p ON p.owner_id = d.user_id
+WHERE d.creator_id = 'ia-seed-dev-17'
+  AND 'forge-ia-seed-v1' = ANY (coalesce(p.tags, '{}'))
+UNION ALL
 SELECT 'protected_smoke_a', CASE WHEN count(*) = 1 THEN 'ok' ELSE 'FAIL' END
 FROM public.projects
 WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid AND NOT ('forge-ia-seed-v1' = ANY (coalesce(tags, '{}')))

@@ -5,6 +5,7 @@
 -- Deletes ONLY seed-owned rows (fixed UUID namespaces / markers).
 -- Does NOT mutate existing developer_profiles or non-seed projects.
 -- After success, seed-derived row counts must be 0 (see validate SQL).
+-- Run THIS before player-ia-auth-seed-cleanup.ts (auth user delete CASCADE would wipe owned projects).
 
 BEGIN;
 

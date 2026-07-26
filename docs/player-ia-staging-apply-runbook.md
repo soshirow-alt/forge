@@ -13,11 +13,18 @@ Cursor はこの文書作成時点では Staging へ **未適用**（適用は�
 
 1. migrations **076 → 081**
 2. migration 確認 SQL
-3. **基本 seed**（SQL）— 既存 profile を変更しない
-4. 必要な場合のみ **auth/profile 拡張 seed**（service role）
+3. **auth/profile 拡張 seed**（service role・推奨。credentials が無ければ省略可）
+4. **基本 seed**（SQL）— 専用ユーザーがいれば所有を結び、無ければ hero owners にフォールバック。既存 profile は変更しない
 5. **validate SQL**
 6. Preview 確認
-7. **cleanup**（基本 SQL → 拡張 auth）
+7. **cleanup**（**基本 SQL 先** → 拡張 auth。逆順禁止: auth CASCADE）
+
+### seed 所有関係（要約）
+
+- 基本 seed 40 作品の `owner_id` = `COALESCE(専用 a1a1…, hero dddd…0001/0002)`
+- 専用 20 プロフィールは各 ≥1 作品を所有（孤立プロフィールにしない）
+- 複数カテゴリ: `ia-seed-dev-16` = game/audio/asset、`ia-seed-dev-17` = game/dev-tool/service-app
+- 詳細: `scripts/staging-only/player-ia-staging-seed-README.md`
 
 ---
 
@@ -158,7 +165,29 @@ ORDER BY 1;
 
 ---
 
-## 2. 基本 seed（SQL・既存 profile 非変更）
+## 2. Auth / profile 拡張 seed（推奨・service role）
+
+専用プロフィール・`activity_tags`・開発者検索を評価するなら **基本 seed より先**に実行。
+
+```bash
+npx --yes tsx scripts/staging-only/player-ia-auth-seed.ts           # dry-run
+npx --yes tsx scripts/staging-only/player-ia-auth-seed.ts --execute # Staging 書き込み
+```
+
+必要な環境変数（値は表示・共有しない）:
+
+- `NEXT_PUBLIC_SUPABASE_URL`（Staging `vuqpwvjvgyxffmvpfrxo`）
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+- Admin API で専用ユーザー 20 人 + `developer_profiles` を作成
+- **Production ref では必ず停止**
+- credentials が無い場合は **実行しない（SKIP）** → 基本 seed は hero owners で成立
+- 既存 hero / Smoke の profile は触らない
+- `auth.users` への生 SQL INSERT はしない
+
+---
+
+## 3. 基本 seed（SQL・既存 profile 非変更）
 
 ```text
 scripts/staging-only/player-ia-staging-seed.sql
@@ -169,10 +198,11 @@ Dashboard で全文 Run。
 **重要**
 
 - 既存 `developer_profiles` / 既存プロジェクト / 既存 FB を **UPDATE しない**
-- 既存 Staging ユーザーは owner / player の **FK 参照のみ**
+- owner は専用 auth がいればそちら、無ければ hero `…0001/0002`
+- FB 投稿者は既存 hero players（`…0101`–`…0110`）を FK 参照のみ
 - seed 作成行は固定 UUID / tag `forge-ia-seed-v1` / title `[IA Seed]` で識別
 - cleanup で seed 由来行を **完全削除**でき、seed 前の既存データ状態へ戻る
-- 再実行安全（`ON CONFLICT` upsert）
+- 再実行安全（`ON CONFLICT` upsert。auth 後の再実行で owner 付け替え可）
 
 詳細件数・coverage: `scripts/staging-only/player-ia-staging-seed-README.md`  
 静的結果: `scripts/staging-only/player-ia-staging-seed-coverage.json`
@@ -185,23 +215,7 @@ Dashboard で全文 Run。
 | usage relations（`used` のみ） | ≥10 |
 | announcements published / draft | ≥6 / ≥1 |
 | registered + guest FB | 数十件規模 |
-
----
-
-## 3. Auth / profile 拡張 seed（任意・service role）
-
-プロフィール検索・`activity_tags`・配信者評価が必要なときだけ。
-
-```bash
-npx --yes tsx scripts/staging-only/player-ia-auth-seed.ts           # dry-run
-npx --yes tsx scripts/staging-only/player-ia-auth-seed.ts --execute # Staging 書き込み
-```
-
-- Admin API で専用ユーザー 20 人 + `developer_profiles` を作成
-- **Production ref では必ず停止**
-- credentials が無い場合は **実行しない（SKIP）**
-- 既存 hero / Smoke の profile は触らない
-- `auth.users` への生 SQL INSERT はしない
+| auth 実行時: 専用 profile が seed 作品を所有 | 20 |
 
 ---
 
@@ -255,7 +269,9 @@ FROM public.search_public_catalog('zzz-ia-seed-nohit-999', 10);
 
 ## 6. Cleanup（完全復元）
 
-### 6.1 基本 seed 削除
+**必ず 6.1 → 6.2 の順。** auth ユーザーを先に消すと `ON DELETE CASCADE` で所有プロジェクトも消える。
+
+### 6.1 基本 seed 削除（先）
 
 ```text
 scripts/staging-only/player-ia-staging-seed-cleanup.sql
@@ -274,7 +290,7 @@ SELECT count(*) FROM public.project_guest_feedback WHERE id::text LIKE 'bbbbbbbb
 
 既存 profile / Smoke A / hero は変更していないため、追加の profile 復元は不要。
 
-### 6.2 Auth 拡張を使った場合
+### 6.2 Auth 拡張を使った場合（後）
 
 ```bash
 npx --yes tsx scripts/staging-only/player-ia-auth-seed-cleanup.ts --execute

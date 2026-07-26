@@ -14,12 +14,27 @@ const outDir = __dirname;
 
 const STAGING_REF = "vuqpwvjvgyxffmvpfrxo";
 const PROD_REF = "bpnisgzxuwdxelhnduuf";
-const OWNER_A = "dddddddd-dddd-4ddd-8ddd-000000000001"; // hero Dev B
-const OWNER_B = "dddddddd-dddd-4ddd-8ddd-000000000002"; // hero Dev C
+const OWNER_A = "dddddddd-dddd-4ddd-8ddd-000000000001"; // hero Dev B (fallback)
+const OWNER_B = "dddddddd-dddd-4ddd-8ddd-000000000002"; // hero Dev C (fallback)
 const PLAYERS = Array.from(
   { length: 10 },
   (_, i) => `dddddddd-dddd-4ddd-8ddd-0000000001${String(i + 1).padStart(2, "0")}`,
 );
+/** Dedicated auth-seed user UUID (player-ia-auth-seed.ts). Used when present. */
+const dedicatedId = (slot) =>
+  `a1a1a1a1-a1a1-41a1-81a1-${String(slot).padStart(12, "0")}`;
+/**
+ * Project n → dedicated profile slot (1–20).
+ * Every slot owns ≥1 project when auth seed ran first.
+ * Slot 16 (マルチA): game+audio+asset; slot 17 (マルチB): game+tool+service.
+ */
+const DEDICATED_SLOT_BY_N = {
+  1: 16, 2: 17, 3: 1, 4: 2, 5: 18, 6: 7, 7: 20, 8: 1,
+  9: 16, 10: 10, 11: 11, 12: 10, 13: 11, 14: 19, 15: 10, 16: 19,
+  17: 16, 18: 8, 19: 9, 20: 8, 21: 9, 22: 4, 23: 11, 24: 19,
+  25: 17, 26: 3, 27: 5, 28: 12, 29: 4, 30: 12, 31: 3, 32: 5,
+  33: 17, 34: 13, 35: 15, 36: 14, 37: 13, 38: 15, 39: 14, 40: 6,
+};
 const TAG = "forge-ia-seed-v1";
 const PREFIX = "[IA Seed]";
 const SMOKE_A = "41ff5a96-105c-42a2-87b4-787bcfeacb45";
@@ -79,7 +94,7 @@ function buildProjects() {
     push({
       category: "game",
       ...g,
-      owner: i % 2 === 0 ? OWNER_A : OWNER_B,
+      fallbackOwner: i % 2 === 0 ? OWNER_A : OWNER_B,
       quick_try: i % 3 !== 2,
       looking_for_testers: i % 4 === 0,
       usable_for_creation: false,
@@ -110,7 +125,7 @@ function buildProjects() {
       category: "audio",
       stream: ["ok", "conditional", "no", "unset"][i % 4],
       streamNote: i % 4 === 1 ? "クレジット必須" : null,
-      owner: i % 2 === 0 ? OWNER_B : OWNER_A,
+      fallbackOwner: i % 2 === 0 ? OWNER_B : OWNER_A,
       quick_try: i % 2 === 0,
       looking_for_testers: false,
       usable_for_creation: i !== 5,
@@ -133,7 +148,7 @@ function buildProjects() {
     push({
       category: "asset",
       stream: "unset",
-      owner: i % 2 === 0 ? OWNER_A : OWNER_B,
+      fallbackOwner: i % 2 === 0 ? OWNER_A : OWNER_B,
       quick_try: false,
       looking_for_testers: i === 1,
       usable_for_creation: true,
@@ -155,7 +170,7 @@ function buildProjects() {
     push({
       category: "dev-tool",
       stream: ["ok", "conditional", "no", "unset"][i % 4],
-      owner: i % 2 === 0 ? OWNER_B : OWNER_A,
+      fallbackOwner: i % 2 === 0 ? OWNER_B : OWNER_A,
       quick_try: i % 3 === 0,
       looking_for_testers: i % 2 === 0,
       usable_for_creation: true,
@@ -179,7 +194,7 @@ function buildProjects() {
       category: "service-app",
       stream: s.stream || ["ok", "conditional", "no", "unset"][i % 4],
       streamNote: (s.stream || ["ok", "conditional", "no", "unset"][i % 4]) === "conditional" ? "条件あり" : null,
-      owner: i % 2 === 0 ? OWNER_A : OWNER_B,
+      fallbackOwner: i % 2 === 0 ? OWNER_A : OWNER_B,
       quick_try: i % 2 === 1,
       looking_for_testers: i === 2 || i === 6,
       usable_for_creation: i === 0 || i === 6,
@@ -188,7 +203,53 @@ function buildProjects() {
   );
 
   if (specs.length !== 40) throw new Error(`expected 40 projects, got ${specs.length}`);
+
+  // Bind dedicated auth slots (optional at apply time) + hero fallbacks.
+  for (const p of specs) {
+    const slot = DEDICATED_SLOT_BY_N[p.n];
+    if (!slot) throw new Error(`missing dedicated slot for project n=${p.n}`);
+    p.dedicatedSlot = slot;
+    p.preferredOwnerId = dedicatedId(slot);
+    if (!p.fallbackOwner) p.fallbackOwner = p.n % 2 === 0 ? OWNER_B : OWNER_A;
+  }
+
+  const slotsUsed = new Set(specs.map((p) => p.dedicatedSlot));
+  for (let s = 1; s <= 20; s++) {
+    if (!slotsUsed.has(s)) {
+      throw new Error(`dedicated slot ${s} owns zero projects — would create orphan profile`);
+    }
+  }
+  const multiA = specs.filter((p) => p.dedicatedSlot === 16).map((p) => p.category);
+  const multiB = specs.filter((p) => p.dedicatedSlot === 17).map((p) => p.category);
+  if (new Set(multiA).size < 3 || new Set(multiB).size < 3) {
+    throw new Error(`multi-category owners incomplete: 16=${multiA} 17=${multiB}`);
+  }
+
   return specs;
+}
+
+/** SQL expr: dedicated auth user if present, else hero fallback. */
+function ownerSql(p) {
+  return `COALESCE(
+    (SELECT id FROM auth.users WHERE id = '${p.preferredOwnerId}'::uuid),
+    '${p.fallbackOwner}'::uuid
+  )`;
+}
+
+/** SQL expr: profile public_name when dedicated exists, else fallback label. */
+function creatorSql(p) {
+  if (p.longCreator) return q(LONG_CREATOR);
+  const fallback =
+    p.fallbackOwner === OWNER_A ? "IA Seed Owner A" : "IA Seed Owner B";
+  return `COALESCE(
+    (SELECT public_name FROM public.developer_profiles WHERE user_id = '${p.preferredOwnerId}'::uuid),
+    ${q(fallback)}
+  )`;
+}
+
+/** Prefer live project.owner_id after INSERT (works with auth or fallback). */
+function projectOwnerRef(projectId) {
+  return `(SELECT owner_id FROM public.projects WHERE id = '${projectId}'::uuid)`;
 }
 
 function buildUsage(projects) {
@@ -432,7 +493,6 @@ function generate() {
         projectId: fb.project.id,
         targetSource: "registered_detailed",
         targetId: fb.id,
-        authorId: fb.project.owner,
         body: "ありがとうございます。次の更新で確認します。",
       });
     }
@@ -457,7 +517,6 @@ function generate() {
         projectId: fb.project.id,
         targetSource: "guest_detailed",
         targetId: fb.id,
-        authorId: fb.project.owner,
         body: "ゲストFBも参考にします。",
       });
     }
@@ -528,11 +587,34 @@ function generate() {
     [p.title, ...(p.tags || []), ...(p.purpose || [])].join(" ").includes(ZERO_HIT),
   );
 
+  const ownershipBySlot = {};
+  for (const p of projects) {
+    const key = `ia-seed-dev-${String(p.dedicatedSlot).padStart(2, "0")}`;
+    if (!ownershipBySlot[key]) ownershipBySlot[key] = { slot: p.dedicatedSlot, categories: [], projectNs: [] };
+    ownershipBySlot[key].categories.push(p.category);
+    ownershipBySlot[key].projectNs.push(p.n);
+  }
+  for (const row of Object.values(ownershipBySlot)) {
+    row.categories = [...new Set(row.categories)];
+  }
+
   const coverage = {
     generatedAt: new Date().toISOString(),
     stagingRef: STAGING_REF,
     productionRefForbidden: PROD_REF,
     existingProfileMutation: false,
+    ownership: {
+      mode:
+        "COALESCE(dedicated auth user a1a1… if present, else hero OWNER_A/B). Auth seed SHOULD run before basic seed.",
+      fallbackOwners: { OWNER_A, OWNER_B },
+      dedicatedSlots: 20,
+      orphanProfilesIfUnlinked: false,
+      multiCategorySlots: {
+        "ia-seed-dev-16": ownershipBySlot["ia-seed-dev-16"],
+        "ia-seed-dev-17": ownershipBySlot["ia-seed-dev-17"],
+      },
+      byCreatorId: ownershipBySlot,
+    },
     projects: {
       total: projects.length,
       byCategory: catCounts,
@@ -584,6 +666,9 @@ function generate() {
       streamAllPresent: Object.values(streamDist).every((c) => c >= 1),
       searchTermsCovered: Object.values(searchCoverage).every((s) => s.projectHits >= 1),
       existingProfileMutation: false,
+      everyDedicatedSlotOwnsProject: Object.keys(ownershipBySlot).length === 20,
+      multiACategoriesGte3: (ownershipBySlot["ia-seed-dev-16"]?.categories.length || 0) >= 3,
+      multiBCategoriesGte3: (ownershipBySlot["ia-seed-dev-17"]?.categories.length || 0) >= 3,
       pass: false,
     },
   };
@@ -599,7 +684,10 @@ function generate() {
     coverage.validation.annPublishedGte6 &&
     coverage.validation.annDraftGte1 &&
     coverage.validation.streamAllPresent &&
-    coverage.validation.searchTermsCovered;
+    coverage.validation.searchTermsCovered &&
+    coverage.validation.everyDedicatedSlotOwnsProject &&
+    coverage.validation.multiACategoriesGte3 &&
+    coverage.validation.multiBCategoriesGte3;
 
   // ---------- SQL seed ----------
   const seed = [];
@@ -615,10 +703,12 @@ function generate() {
 --   title prefix: ${PREFIX}
 --   project UUIDs: eeeeeeee-eeee-4eee-8eee-*
 --
--- Does NOT UPDATE existing developer_profiles / projects / feedback / announcements.
--- Existing Staging auth users are FK owners/players only (public profile fields untouched).
+-- Does NOT UPDATE existing developer_profiles (hero / Smoke).
+-- Ownership: COALESCE(dedicated ia-seed auth user if present, else hero OWNER_A/B).
+-- Recommended order: optional auth seed FIRST, then this basic seed (links ownership).
+-- Without auth seed: falls back to hero owners — basic seed still succeeds.
 -- Re-run safe: upsert by fixed primary keys / unique natural keys.
--- Cleanup: player-ia-staging-seed-cleanup.sql (full delete of seed-owned rows).
+-- Cleanup: basic SQL cleanup FIRST, then auth cleanup (never reverse — CASCADE).
 -- Generated by generate-player-ia-staging-seed.mjs
 
 BEGIN;
@@ -685,7 +775,7 @@ SET LOCAL session_replication_role = 'replica';
         const thumb = p.noImage
           ? "NULL"
           : `(SELECT thumbnail_url FROM public.projects WHERE id = '${SMOKE_A}'::uuid)`;
-        const creator = p.longCreator ? LONG_CREATOR : p.owner === OWNER_A ? "IA Seed Owner A" : "IA Seed Owner B";
+        const creatorExpr = creatorSql(p);
         const desc = p.longDesc ? LONG_DESC : `${PREFIX} ${p.title} — Staging専用架空作品。`;
         const kinds = p.category === "asset" ? arr(p.kinds || []) : `ARRAY[]::text[]`;
         const discord = p.discord ? q(`https://discord.gg/ia-seed-${p.slug}`) : "NULL";
@@ -704,8 +794,8 @@ SET LOCAL session_replication_role = 'replica';
         );
         const days = (p.n % 28) + 1;
         return `(
-  '${p.id}'::uuid, '${p.owner}'::uuid,
-  ${q(creator)}, ${q(`${PREFIX} ${p.title}`)}, ${q(creator)},
+  '${p.id}'::uuid, ${ownerSql(p)},
+  ${creatorExpr}, ${q(`${PREFIX} ${p.title}`)}, ${creatorExpr},
   ${q(p.genres[0])}, ${arr(p.genres)}, ${q(desc)},
   ${q(`${PREFIX} ${p.title} の紹介`)},
   'playable', 'open', ${!!p.looking_for_testers}, ${p.looking_for_testers ? 6 : "NULL"},
@@ -725,6 +815,7 @@ SET LOCAL session_replication_role = 'replica';
   );
 
   seed.push(`ON CONFLICT (id) DO UPDATE SET
+  owner_id = EXCLUDED.owner_id,
   title = EXCLUDED.title,
   creator = EXCLUDED.creator,
   owner_name = EXCLUDED.owner_name,
@@ -774,7 +865,7 @@ END $$;
       .map(
         (u, i) => `(
   '${u.id}'::uuid, '${u.source.id}'::uuid, '${u.target.id}'::uuid,
-  'used', 'published', '${u.source.owner}'::uuid,
+  'used', 'published', ${projectOwnerRef(u.source.id)},
   now() - interval '${i + 1} days', now() - interval '${i + 1} days'
 )`,
       )
@@ -783,6 +874,7 @@ END $$;
   seed.push(`ON CONFLICT (id) DO UPDATE SET
   status = 'published',
   relation_type = 'used',
+  created_by = EXCLUDED.created_by,
   updated_at = now();
 `);
 
@@ -893,11 +985,11 @@ WHERE id::text LIKE '77777777-7777-4777-8777-%';`);
       replies
         .map(
           (r) =>
-            `('${r.id}'::uuid, ${q(r.projectId)}, ${q(r.targetSource)}, '${r.targetId}'::uuid, '${r.authorId}'::uuid, ${q(r.body)}, now() - interval '1 day')`,
+            `('${r.id}'::uuid, ${q(r.projectId)}, ${q(r.targetSource)}, '${r.targetId}'::uuid, ${projectOwnerRef(r.projectId)}, ${q(r.body)}, now() - interval '1 day')`,
         )
         .join(",\n"),
     );
-    seed.push(`ON CONFLICT (id) DO UPDATE SET body = EXCLUDED.body;`);
+    seed.push(`ON CONFLICT (id) DO UPDATE SET body = EXCLUDED.body, author_id = EXCLUDED.author_id;`);
   }
 
   seed.push(`INSERT INTO public.project_devlogs (
@@ -908,7 +1000,7 @@ WHERE id::text LIKE '77777777-7777-4777-8777-%';`);
     logs
       .map(
         (l) => `(
-  '${l.id}'::uuid, ${q(l.project.id)}, '${l.project.owner}'::uuid,
+  '${l.id}'::uuid, ${q(l.project.id)}, ${projectOwnerRef(l.project.id)},
   ${q(l.title)}, ${q(l.content)},
   ${l.published_version ? q(l.published_version) : "NULL"},
   ${!!l.initial},
@@ -919,6 +1011,7 @@ WHERE id::text LIKE '77777777-7777-4777-8777-%';`);
       .join(",\n"),
   );
   seed.push(`ON CONFLICT (id) DO UPDATE SET
+  author_id = EXCLUDED.author_id,
   title = EXCLUDED.title,
   content = EXCLUDED.content,
   published_version = EXCLUDED.published_version,
@@ -932,14 +1025,17 @@ WHERE id::text LIKE '77777777-7777-4777-8777-%';`);
     releases
       .map(
         (r) => `(
-  '${r.id}'::uuid, '${r.project.id}'::uuid, 'released', '${r.project.owner}'::uuid,
+  '${r.id}'::uuid, '${r.project.id}'::uuid, 'released', ${projectOwnerRef(r.project.id)},
   ${q(`${PREFIX} release event`)}, 'studio',
   now() - interval '${r.daysAgo} days'
 )`,
       )
       .join(",\n"),
   );
-  seed.push(`ON CONFLICT (id) DO UPDATE SET note = EXCLUDED.note;`);
+  seed.push(`ON CONFLICT (id) DO UPDATE SET
+  note = EXCLUDED.note,
+  actor_user_id = EXCLUDED.actor_user_id;
+`);
 
   seed.push(`
 SET LOCAL session_replication_role = 'origin';
@@ -958,6 +1054,7 @@ SELECT 'player-ia-staging-seed basic OK (no developer_profiles mutation)' AS sta
 -- Deletes ONLY seed-owned rows (fixed UUID namespaces / markers).
 -- Does NOT mutate existing developer_profiles or non-seed projects.
 -- After success, seed-derived row counts must be 0 (see validate SQL).
+-- Run THIS before player-ia-auth-seed-cleanup.ts (auth user delete CASCADE would wipe owned projects).
 
 BEGIN;
 
@@ -1091,6 +1188,34 @@ UNION ALL
 SELECT 'auth_seed_profiles', count(*)::text
 FROM public.developer_profiles
 WHERE creator_id LIKE 'ia-seed-dev-%'
+UNION ALL
+SELECT 'auth_profiles_owning_seed_projects', count(DISTINCT d.user_id)::text
+FROM public.developer_profiles d
+INNER JOIN public.projects p ON p.owner_id = d.user_id
+WHERE d.creator_id LIKE 'ia-seed-dev-%'
+  AND '${TAG}' = ANY (coalesce(p.tags, '{}'))
+UNION ALL
+SELECT 'seed_projects_owned_by_dedicated', count(*)::text
+FROM public.projects p
+WHERE '${TAG}' = ANY (coalesce(p.tags, '{}'))
+  AND p.owner_id::text LIKE 'a1a1a1a1-a1a1-41a1-81a1-%'
+UNION ALL
+SELECT 'seed_projects_owned_by_fallback_hero', count(*)::text
+FROM public.projects p
+WHERE '${TAG}' = ANY (coalesce(p.tags, '{}'))
+  AND p.owner_id IN ('${OWNER_A}'::uuid, '${OWNER_B}'::uuid)
+UNION ALL
+SELECT 'multi_a_categories', coalesce(string_agg(DISTINCT p.category, ',' ORDER BY p.category), '')
+FROM public.developer_profiles d
+INNER JOIN public.projects p ON p.owner_id = d.user_id
+WHERE d.creator_id = 'ia-seed-dev-16'
+  AND '${TAG}' = ANY (coalesce(p.tags, '{}'))
+UNION ALL
+SELECT 'multi_b_categories', coalesce(string_agg(DISTINCT p.category, ',' ORDER BY p.category), '')
+FROM public.developer_profiles d
+INNER JOIN public.projects p ON p.owner_id = d.user_id
+WHERE d.creator_id = 'ia-seed-dev-17'
+  AND '${TAG}' = ANY (coalesce(p.tags, '{}'))
 UNION ALL
 SELECT 'protected_smoke_a', CASE WHEN count(*) = 1 THEN 'ok' ELSE 'FAIL' END
 FROM public.projects

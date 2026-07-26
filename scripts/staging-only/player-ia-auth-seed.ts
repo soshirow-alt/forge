@@ -4,9 +4,15 @@
  * Requires service role. Uses Supabase Admin API (never raw INSERT into auth.users).
  * Does NOT mutate existing Staging profiles (hero / Smoke owners).
  *
+ * Order: run THIS before player-ia-staging-seed.sql so basic seed can COALESCE
+ * owner_id onto these users (a1a1…). Each dedicated profile is assigned ≥1 of the
+ * 40 seed projects by the basic seed (avoids orphan profiles invisible to 079 search).
+ *
  * Usage:
  *   npx --yes tsx scripts/staging-only/player-ia-auth-seed.ts           # dry-run
  *   npx --yes tsx scripts/staging-only/player-ia-auth-seed.ts --execute  # write
+ *
+ * Env: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  *
  * Guards:
  *   - aborts on Production ref bpnisgzxuwdxelhnduuf

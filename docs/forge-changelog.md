@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-26 — Player IA: Staging seed の所有関係を auth 拡張と接続（未適用）
+
+- **孤立プロフィール解消** — 基本 seed の `owner_id` を `COALESCE(専用 a1a1…, hero dddd…)` に変更。auth 20 人が各 ≥1 作品を所有（079 developer 検索条件を満たす）
+- **複数カテゴリ** — `ia-seed-dev-16` = game/audio/asset、`ia-seed-dev-17` = game/dev-tool/service-app
+- **実行順** — auth（推奨）→ 基本 seed。cleanup は基本 SQL → auth（CASCADE 逆順禁止）
+- **非実施** — Staging DB 適用・Preview deploy・main/Production 変更なし
+
 ## 2026-07-26 — Player IA: Staging 専用 seed パッケージ拡充（未適用）
 
 - **基本 seed** — Preview 評価用に作品 40（各カテゴリ 8）・使用関係 12・お知らせ published 6+draft・登録/ゲスト FB・更新・属性/配信条件分布。固定 UUID / `forge-ia-seed-v1` で識別

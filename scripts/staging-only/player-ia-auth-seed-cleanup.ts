@@ -4,9 +4,15 @@
  * Deletes dedicated developer_profiles (creator_id ia-seed-dev-%) then auth users
  * created/marked by forge-ia-auth-seed-v1 via Admin API.
  *
+ * IMPORTANT: run player-ia-staging-seed-cleanup.sql FIRST.
+ * projects.owner_id references auth.users ON DELETE CASCADE — deleting auth users
+ * while they still own seed projects will wipe those projects unexpectedly.
+ *
  * Usage:
  *   npx --yes tsx scripts/staging-only/player-ia-auth-seed-cleanup.ts           # dry-run
  *   npx --yes tsx scripts/staging-only/player-ia-auth-seed-cleanup.ts --execute
+ *
+ * Env: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
