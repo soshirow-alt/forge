@@ -2,6 +2,13 @@
 -- Schema / RPC migration (Staging first; Production later via owner Dashboard).
 -- Prerequisite: 052+ home discovery, 070/071 feedback cards, 076–078
 -- Author display uses auth.users metadata display fields only (never email).
+--
+-- Join typing (Staging / Production shared schema):
+--   projects.id              uuid
+--   project_release_events.project_id  uuid  → compare to p.id directly
+--   project_devlogs.project_id         text  → compare via p.id::text (never text→uuid cast)
+--   project_feedback / guest_* / voice *.project_id  text → p.id::text
+-- Invalid avoids 42883 uuid=text and cast errors on non-UUID legacy text values.
 
 BEGIN;
 
@@ -278,7 +285,7 @@ AS $$
       'devlog'::text,
       coalesce(d.published_at, d.created_at)
     FROM public.project_devlogs d
-    INNER JOIN public.projects p ON p.id = d.project_id
+    INNER JOIN public.projects p ON p.id::text = d.project_id
     WHERE p.visibility = 'public'
       AND coalesce(d.is_initial_publish, false) = false
       AND coalesce(d.published_at, d.created_at) IS NOT NULL
@@ -402,7 +409,7 @@ AS $$
         UNION ALL
         SELECT coalesce(d.published_at, d.created_at)
         FROM public.project_devlogs d
-        WHERE d.project_id = p.id
+        WHERE d.project_id = p.id::text
           AND coalesce(d.is_initial_publish, false) = false
       ) x
     ) AS meaningful_update_at
@@ -436,7 +443,8 @@ AS $$
           UNION ALL
           SELECT coalesce(d.published_at, d.created_at)
           FROM public.project_devlogs d
-          WHERE d.project_id = p.id AND coalesce(d.is_initial_publish, false) = false
+          WHERE d.project_id = p.id::text
+            AND coalesce(d.is_initial_publish, false) = false
         ) x
       )
       ELSE NULL

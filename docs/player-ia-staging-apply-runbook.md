@@ -183,14 +183,39 @@ ORDER BY 1;
 -- 期待: 3 行
 ```
 
-**080 後**
+**080 後（必須・型不一致修正版）**
 
 ```sql
+-- 関数 4 本が存在すること
+SELECT proname
+FROM pg_proc
+WHERE pronamespace = 'public'::regnamespace
+  AND proname IN (
+    'get_home_review_highlights',
+    'get_home_meaningful_updates',
+    'get_home_newest_projects',
+    'get_public_projects_by_category'
+  )
+ORDER BY 1;
+-- 期待: 4 行
+
+-- 呼び出しが 42883 (uuid=text) なく成功すること
 SELECT * FROM public.get_home_newest_projects(5, NULL);
 SELECT * FROM public.get_home_review_highlights(5);
 SELECT * FROM public.get_home_meaningful_updates(5);
 SELECT * FROM public.get_public_projects_by_category('game', 'newest', NULL, NULL, NULL, NULL, NULL, 5, 0);
+SELECT * FROM public.get_public_projects_by_category(NULL, 'updated', NULL, NULL, NULL, NULL, NULL, 5, 0);
+-- 期待: いずれもエラーなし（0 行でも可）
 ```
+
+**081 へ進んでよい条件**
+
+1. 上記 080 確認 SQL がすべて成功（特に `get_home_meaningful_updates` / `updated` sort）  
+2. `42883` / `uuid = text` が出ない  
+3. Staging ref が `vuqpwvjvgyxffmvpfrxo` のまま  
+4. まだ 081 を適用していない（未適用ならそのまま 081 本文へ）
+
+前回 080 が失敗して rollback 済みなら、修正済み `080_player_ia_home_feed.sql` を **全文再 Run** してよい（`CREATE OR REPLACE`・単一 transaction・再実行安全）。
 
 **081 後**
 
@@ -422,8 +447,8 @@ WHERE id IN (
 | 2 | `supabase/migrations/077_project_usage_relations.sql` | 停止 |
 | 3 | `supabase/migrations/078_platform_announcements.sql` | 停止 |
 | 4 | `supabase/migrations/079_global_public_search.sql` | 停止 |
-| 5 | `supabase/migrations/080_player_ia_home_feed.sql` | 停止 |
-| 6 | `supabase/migrations/081_guest_feedback_public_reenable.sql` | 停止 |
+| 5 | `supabase/migrations/080_player_ia_home_feed.sql`（devlog は `p.id::text` join） | 停止。**081 に進まない**。修正版を再 Run |
+| 6 | `supabase/migrations/081_guest_feedback_public_reenable.sql` | 080 成功確認後のみ |
 
 各成功後の確認 SQL は **§1.1**。最低限の一括成功確認:
 

@@ -109,7 +109,30 @@ Forge 正本運用は Dashboard SQL Editor（`docs/supabase-dashboard-migration-
 | **077** | テーブル `IF NOT EXISTS` | テーブル定義内（既存時スキップ） | `DROP POLICY IF EXISTS` → `CREATE` | `IF NOT EXISTS` | なし | `GRANT`/`REVOKE` 冪等 | データ INSERT なし | `CREATE OR REPLACE` | なし | **安全** |
 | **078** | 同上 | 同上 | 同上 | 同上 | なし | 同上 | なし | `CREATE OR REPLACE` | なし | **安全** |
 | **079** | なし（extension `IF NOT EXISTS`） | なし | なし | なし | なし | `REVOKE`/`GRANT` | なし | `CREATE OR REPLACE` | なし | **安全** |
-| **080** | なし | なし | なし | なし | なし | 同上 | なし | `CREATE OR REPLACE` | なし | **安全** |
+| **080** | なし | なし | なし | なし | なし | 同上 | なし | `CREATE OR REPLACE`（4 関数） | なし。全体 `BEGIN`/`COMMIT` のため失敗時は関数も残らない | **安全**（再 Run 可） |
+
+### 080 uuid/text join 修正（2026-07-26 Staging 適用失敗対応）
+
+Staging 適用時エラー: `42883 operator does not exist: uuid = text` at `p.id = d.project_id`.
+
+| 列 | 型（migration 正本 / Staging 実体） |
+|---|---|
+| `public.projects.id` | **uuid** |
+| `public.project_devlogs.project_id`（エイリアス `d`） | **text**（003 以来） |
+| `public.project_release_events.project_id`（エイリアス `e`） | **uuid**（013） |
+| feedback / guest / voice の `project_id` | **text**（080 内は既に `p.id::text = …`） |
+
+| 箇所（修正前） | 問題 | 修正 |
+|---|---|---|
+| `get_home_meaningful_updates` JOIN `p.id = d.project_id` | uuid = text | `p.id::text = d.project_id` |
+| `get_public_projects_by_category` 相関 `d.project_id = p.id`（2 箇所） | text = uuid | `d.project_id = p.id::text` |
+| release_events `p.id = e.project_id` / `e.project_id = p.id` | uuid = uuid | **変更なし** |
+
+**採用理由:** Forge 既存（015/038/068 等）と同じく **uuid 側を `::text` に揃える**。`d.project_id::uuid` は使わない（非 UUID の legacy text があると cast error）。不正 text は JOIN 不一致で落ちるだけで公開 RPC から除外される。visibility=`public` 条件は維持。
+
+静的ガード: `node scripts/staging-only/verify-080-project-id-joins.mjs`
+
+**ROLLBACK:** 080 は単一 transaction。Staging での失敗時、080 由来の関数は作成されない（部分適用なし）。076–079 は別 transaction 済みのため残存。
 | **081** | なし | なし | なし | なし | なし | 同上 | なし | `DROP FUNCTION IF EXISTS` → `CREATE OR REPLACE`（ゲスト公開再許可の意図的差し替え） | 行削除なし。公開カード定義がゲスト含む版へ戻る（081 の目的） | **安全**（意図どおり） |
 
 ### 注意点（再実行時）

@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-26 — Player IA: migration 080 の uuid/text join 修正（Staging 再適用待ち）
+
+- **原因** — `get_home_meaningful_updates` 等が `projects.id`（uuid）と `project_devlogs.project_id`（text）を直接比較し Staging で `42883`
+- **修正** — 080 内の devlog 結合をすべて `p.id::text = d.project_id` / `d.project_id = p.id::text` に統一（text→uuid cast は使わない）。release_events は uuid のまま
+- **rollback** — 080 は単一 transaction のため失敗時は関数未作成。076–079 は適用済みのまま
+- **非実施** — Staging 再適用・081・seed・deploy・main/Production 変更なし（オーナーが修正版 080 を再 Run）
+
 ## 2026-07-26 — Player IA: Staging 適用前の migration 履歴方針を明文化（未適用）
 
 - **履歴** — SQL Editor 単独では `schema_migrations` に載らないこと、将来 `db push` で再適用対象になり得ることを runbook / 監査に記載
