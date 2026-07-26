@@ -1,6 +1,8 @@
 -- 077: Public "使用した" relations between published projects
--- Staging only from Cursor. Production: owner manual later.
+-- Schema migration (Staging first; Production later via owner Dashboard — not auto-seed).
 -- Prerequisite: 076_player_ia_categories_attributes.sql
+-- Public read: published rows only when both projects are visibility=public.
+-- Client writes: revoked (registration UI is a later phase).
 
 BEGIN;
 
@@ -50,7 +52,8 @@ CREATE POLICY "Anyone can read published usage relations on public projects"
     )
   );
 
--- No client INSERT/UPDATE/DELETE in this phase (registration UI is next).
+-- Table privileges: SELECT for RLS; no client writes in this phase.
+GRANT SELECT ON TABLE public.project_usage_relations TO anon, authenticated;
 REVOKE INSERT, UPDATE, DELETE ON public.project_usage_relations FROM anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public.get_public_project_usage_relations(

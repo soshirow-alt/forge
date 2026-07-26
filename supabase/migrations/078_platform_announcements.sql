@@ -1,6 +1,8 @@
 -- 078: Platform announcements (積み上げ型お知らせ)
--- Staging only from Cursor. Production: owner manual later.
+-- Schema migration (Staging first; Production later via owner Dashboard).
 -- Prerequisite: 001+
+-- Public read: status=published only (RLS + SECURITY DEFINER RPCs).
+-- Draft rows must never appear in get_public_platform_announcement*.
 
 BEGIN;
 
@@ -37,6 +39,7 @@ CREATE POLICY "Anyone can read published announcements"
   TO anon, authenticated
   USING (status = 'published');
 
+GRANT SELECT ON TABLE public.platform_announcements TO anon, authenticated;
 REVOKE INSERT, UPDATE, DELETE ON public.platform_announcements FROM anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public.get_public_platform_announcements(

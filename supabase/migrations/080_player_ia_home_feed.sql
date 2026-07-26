@@ -1,6 +1,7 @@
 -- 080: Player IA whole-home feed sections (A–G minus E when empty)
--- Staging only from Cursor. Production: owner manual later.
+-- Schema / RPC migration (Staging first; Production later via owner Dashboard).
 -- Prerequisite: 052+ home discovery, 070/071 feedback cards, 076–078
+-- Author display uses auth.users metadata display fields only (never email).
 
 BEGIN;
 

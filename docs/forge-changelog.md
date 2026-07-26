@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07-26 — Player IA: Staging 適用前の migration / seed 整理
+
+- **seed 移動** — 旧 `supabase/migrations/082_player_ia_staging_seed.sql` を廃止し、`scripts/staging-only/player-ia-staging-seed.sql`（+ cleanup / README）へ。Production 自動適用経路から隔離
+- **schema** — 076–081 は migrations に残置（Staging→将来 Production）。079 の activity_tags 検索候補を公開開発者に限定、077/078 に `GRANT SELECT` 明示
+- **runbook** — `docs/player-ia-staging-apply-runbook.md`（Dashboard 手動適用・確認 SQL・cleanup・Production 禁止）
+- **監査メモ** — `docs/player-ia-migrations-076-081-audit.md`
+- **非実施** — Staging / Production DB への適用なし。Studio UI・追加機能なし
+
 ## 2026-07-25 — Preview alias 検証を Player IA 仕様へ更新
 
 - `verify:preview-branch-alias` — `/home` は fixture/カテゴリタブではなくグローバル検索＋player-ia-home を確認。カテゴリタブは `/search`。`/explore/prototype/[category]` → `/search?category=`、`/home?category=` → `/search?category=`

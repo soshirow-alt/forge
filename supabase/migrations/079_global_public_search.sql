@@ -1,6 +1,8 @@
--- 079: Server-side global public search (FTS + trigram)
--- Staging only from Cursor. Production: owner manual later.
+-- 079: Server-side global public search (trigram + normalized substring)
+-- Schema migration (Staging first; Production later via owner Dashboard).
 -- Prerequisite: 076, 032 (developer discord/youtube), 033 (genres)
+-- Scope: public projects + developers who own ≥1 public project + public tags only.
+-- Must not search email, private projects, Studio drafts, notifications, or chats.
 
 BEGIN;
 
@@ -183,6 +185,10 @@ BEGIN
       UNION ALL
       SELECT unnest(coalesce(d.activity_tags, '{}'))
       FROM public.developer_profiles d
+      WHERE EXISTS (
+        SELECT 1 FROM public.projects p
+        WHERE p.owner_id = d.user_id AND p.visibility = 'public'
+      )
     ) tags
     WHERE public.forge_search_normalize(tag_value) LIKE '%' || v_norm || '%'
        OR EXISTS (

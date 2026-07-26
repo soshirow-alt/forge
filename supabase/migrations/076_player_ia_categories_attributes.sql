@@ -1,8 +1,9 @@
 -- 076: Player IA — formal project categories, structured attributes, activity tags
--- Staging only from Cursor (vuqpwvjvgyxffmvpfrxo). Production: owner Dashboard manual later.
+-- Schema migration (Staging first; Production later via owner Dashboard).
 -- Prerequisite: 075_project_feedback_owner_reads.sql
 --
 -- Back-compat: existing projects default/backfill to category = 'game'.
+-- No seed data in this file. Staging demo rows live under scripts/staging-only/.
 
 BEGIN;
 

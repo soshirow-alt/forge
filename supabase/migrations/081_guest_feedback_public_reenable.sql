@@ -1,8 +1,11 @@
 -- 081: Re-enable public guest feedback listing + card resolution
--- Staging only from Cursor. Production: owner manual later.
+-- Schema / RPC migration (Staging first; Production later via owner Dashboard).
 -- Reverses the public-scope guest exclusion from 071 while keeping:
 --   - empathy/reply mutations registered-user only (existing RPC auth checks)
---   - rate limits / moderation / include_in_public_aggregate
+--   - moderation_status / include_in_public_aggregate filters
+-- Rate limits remain in app layer (hashed IP in guest_feedback_rate_events; no raw IP).
+-- App hard-stop: guest write APIs still return guest_feedback_disabled when
+-- VERCEL_ENV=production until a future Production code release.
 -- Prerequisite: 071
 
 BEGIN;
