@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07-26 — Player IA: Staging 専用 seed パッケージ拡充（未適用）
+
+- **基本 seed** — Preview 評価用に作品 40（各カテゴリ 8）・使用関係 12・お知らせ published 6+draft・登録/ゲスト FB・更新・属性/配信条件分布。固定 UUID / `forge-ia-seed-v1` で識別
+- **既存 profile 非変更** — 共有 `developer_profiles` の UPDATE を廃止。既存ユーザーは FK 参照のみ。cleanup で seed 行を完全削除し既存データへ戻る
+- **Auth 拡張（任意）** — service role + Admin API で専用プロフィール 20（`activity_tags`）。Production 停止 / credentials 無しは SKIP
+- **成果物** — seed / cleanup / validate SQL、coverage JSON、generator、auth seed scripts、README、runbook 更新
+- **非実施** — Staging DB 適用・Preview deploy・main/Production 変更なし
+
 ## 2026-07-26 — Player IA: Staging 適用前の migration / seed 整理
 
 - **seed 移動** — 旧 `supabase/migrations/082_player_ia_staging_seed.sql` を廃止し、`scripts/staging-only/player-ia-staging-seed.sql`（+ cleanup / README）へ。Production 自動適用経路から隔離

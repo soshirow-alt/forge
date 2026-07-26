@@ -1,10 +1,23 @@
 # Player IA Staging 手動適用 Runbook（076–081 + seed）
 
-**対象 DB:** Staging Supabase `vuqpwvjvgyxffmvpfrxo` のみ  
-**禁止:** Production `bpnisgzxuwdxelhnduuf` / 本番 Storage / main への自動適用
+> **⚠ Production (`bpnisgzxuwdxelhnduuf`) では実行しない**  
+> **対象 DB は Staging Supabase `vuqpwvjvgyxffmvpfrxo` のみ**  
+> Production Storage / main への自動適用も禁止
 
-この runbook は **オーナーが Supabase Dashboard → SQL Editor** で実行するための手順です。  
+この runbook は **オーナーが Supabase Dashboard → SQL Editor**（および必要な場合のみ service role スクリプト）で実行するための手順です。  
 Cursor はこの文書作成時点では Staging へ **未適用**（適用は別指示）。
+
+---
+
+## 実行順（全体）
+
+1. migrations **076 → 081**
+2. migration 確認 SQL
+3. **基本 seed**（SQL）— 既存 profile を変更しない
+4. 必要な場合のみ **auth/profile 拡張 seed**（service role）
+5. **validate SQL**
+6. Preview 確認
+7. **cleanup**（基本 SQL → 拡張 auth）
 
 ---
 
@@ -50,8 +63,8 @@ WHERE table_schema = 'public'
 | 5 | `supabase/migrations/080_player_ia_home_feed.sql` | home 用 RPC 群 |
 | 6 | `supabase/migrations/081_guest_feedback_public_reenable.sql` | 公開ゲスト FB カード再許可 |
 
-Seed（旧 082）は **migrations 列に置かない**。  
-場所: `scripts/staging-only/player-ia-staging-seed.sql`
+Seed は **migrations 列に置かない**。  
+場所: `scripts/staging-only/player-ia-staging-seed*.sql`
 
 ### 1.1 各実行後の確認 SQL
 
@@ -107,19 +120,12 @@ WHERE pronamespace = 'public'::regnamespace
   )
 ORDER BY 1;
 -- 期待: 2 関数
-
-SELECT
-  has_table_privilege('anon', 'public.platform_announcements', 'SELECT') AS anon_select,
-  has_table_privilege('anon', 'public.platform_announcements', 'INSERT') AS anon_insert;
--- 期待: select true / insert false
 ```
 
 **079 後**
 
 ```sql
 SELECT public.search_public_catalog('test', 5);
--- 期待: エラーなく実行（0 行でも可）
-
 SELECT proname FROM pg_proc
 WHERE pronamespace = 'public'::regnamespace
   AND proname IN ('search_public_catalog', 'search_public_catalog_suggest', 'forge_search_normalize')
@@ -134,13 +140,11 @@ SELECT * FROM public.get_home_newest_projects(5, NULL);
 SELECT * FROM public.get_home_review_highlights(5);
 SELECT * FROM public.get_home_meaningful_updates(5);
 SELECT * FROM public.get_public_projects_by_category('game', 'newest', NULL, NULL, NULL, NULL, NULL, 5, 0);
--- 期待: いずれもエラーなし（行数は Staging データ次第）
 ```
 
 **081 後**
 
 ```sql
--- シグネチャ確認（guest を再度解決できること）
 SELECT proname, pg_get_function_identity_arguments(oid)
 FROM pg_proc
 WHERE pronamespace = 'public'::regnamespace
@@ -150,15 +154,11 @@ WHERE pronamespace = 'public'::regnamespace
     'assert_public_feedback_card_source'
   )
 ORDER BY 1;
-
--- 公開カード RPC が呼べること（適当な public project / version）
--- ※ version_key は実データに合わせる
--- SELECT * FROM public.get_public_feedback_cards('<project_id_text>', '<version_key>', true, 10, 0);
 ```
 
 ---
 
-## 2. Staging 専用 seed（schema 後）
+## 2. 基本 seed（SQL・既存 profile 非変更）
 
 ```text
 scripts/staging-only/player-ia-staging-seed.sql
@@ -166,152 +166,154 @@ scripts/staging-only/player-ia-staging-seed.sql
 
 Dashboard で全文 Run。
 
-### 件数（期待）
+**重要**
+
+- 既存 `developer_profiles` / 既存プロジェクト / 既存 FB を **UPDATE しない**
+- 既存 Staging ユーザーは owner / player の **FK 参照のみ**
+- seed 作成行は固定 UUID / tag `forge-ia-seed-v1` / title `[IA Seed]` で識別
+- cleanup で seed 由来行を **完全削除**でき、seed 前の既存データ状態へ戻る
+- 再実行安全（`ON CONFLICT` upsert）
+
+詳細件数・coverage: `scripts/staging-only/player-ia-staging-seed-README.md`  
+静的結果: `scripts/staging-only/player-ia-staging-seed-coverage.json`
+
+### 期待（概数）
 
 | 対象 | 件数 |
 |---|---:|
-| `[IA Seed]` projects | 5 |
-| usage relations | 2 |
-| announcements（slug `ia-seed-%`） | 3（うち draft 1） |
-| guest feedback seed 行 | 1 |
+| projects（各カテゴリ 8） | ≥40 |
+| usage relations（`used` のみ） | ≥10 |
+| announcements published / draft | ≥6 / ≥1 |
+| registered + guest FB | 数十件規模 |
 
-### seed 後確認 SQL
+---
+
+## 3. Auth / profile 拡張 seed（任意・service role）
+
+プロフィール検索・`activity_tags`・配信者評価が必要なときだけ。
+
+```bash
+npx --yes tsx scripts/staging-only/player-ia-auth-seed.ts           # dry-run
+npx --yes tsx scripts/staging-only/player-ia-auth-seed.ts --execute # Staging 書き込み
+```
+
+- Admin API で専用ユーザー 20 人 + `developer_profiles` を作成
+- **Production ref では必ず停止**
+- credentials が無い場合は **実行しない（SKIP）**
+- 既存 hero / Smoke の profile は触らない
+- `auth.users` への生 SQL INSERT はしない
+
+---
+
+## 4. Validate SQL
+
+```text
+scripts/staging-only/player-ia-staging-seed-validate.sql
+```
+
+Dashboard で Run。seed 件数・stream 分布・属性・保護行（Smoke A / Hero）・検索 0 件語を確認。
+
+追加確認例:
 
 ```sql
-SELECT id, title, category, quick_try, usable_for_creation, looking_for_testers, stream_policy, asset_kinds
+SELECT category, count(*)
 FROM public.projects
 WHERE 'forge-ia-seed-v1' = ANY (tags)
-ORDER BY category;
--- 期待: 5 行（game/audio/asset/dev-tool/service-app）
+GROUP BY 1 ORDER BY 1;
+-- 期待: 各 8
 
-SELECT count(*) AS usage_n
-FROM public.project_usage_relations
-WHERE id IN (
-  'ffffffff-ffff-4fff-8fff-000000000001',
-  'ffffffff-ffff-4fff-8fff-000000000002'
-);
--- 期待: 2
+SELECT count(*) FROM public.project_usage_relations
+WHERE id::text LIKE 'ffffffff-ffff-4fff-8fff-%';
+-- 期待: ≥10
 
-SELECT slug, status, importance
-FROM public.platform_announcements
-WHERE slug LIKE 'ia-seed-%'
-ORDER BY slug;
--- 期待: 3 行（draft 1 / published 2）
+SELECT slug, status FROM public.platform_announcements
+WHERE slug LIKE 'ia-seed-%' ORDER BY 1;
 
-SELECT * FROM public.get_public_platform_announcements(10, 0);
--- 期待: draft が出ない（published のみ）
-
-SELECT * FROM public.get_public_project_usage_relations(NULL, 10);
--- 期待: ≥2
+SELECT * FROM public.get_public_platform_announcements(20, 0);
+-- draft が出ないこと
 
 SELECT result_kind, title, category
-FROM public.search_public_catalog('ローグライク', 10);
--- 期待: Forest Roguelike 等がヒット
+FROM public.search_public_catalog('ローグライク', 20);
 
 SELECT result_kind, title
-FROM public.search_public_catalog('Unity', 10);
--- 期待: 作品 or タグ
-
-SELECT category, count(*)
-FROM public.get_public_projects_by_category(NULL, 'newest', NULL, NULL, NULL, NULL, NULL, 50, 0) g
-GROUP BY 1
-ORDER BY 1;
+FROM public.search_public_catalog('zzz-ia-seed-nohit-999', 10);
+-- 期待: 0 行（作品ヒットなし）
 ```
-
-### ゲスト FB / rate limit（メモ）
-
-- SQL 081 は **公開一覧への guest 再許可**。書き込み rate limit はアプリ（`lib/guest-feedback/rate-limit.ts`）が `guest_feedback_rate_events` に **IP ハッシュのみ**保存。
-- Preview API は `VERCEL_ENV=production` 以外で guest write 可。Production Web はコード側で disabled 維持。
 
 ---
 
-## 3. 最終確認 SQL（一括）
-
-```sql
--- Schema present
-SELECT
-  (SELECT count(*) FROM information_schema.columns
-    WHERE table_schema='public' AND table_name='projects' AND column_name='category') AS has_category,
-  to_regclass('public.project_usage_relations') IS NOT NULL AS has_usage,
-  to_regclass('public.platform_announcements') IS NOT NULL AS has_ann,
-  EXISTS (
-    SELECT 1 FROM pg_proc
-    WHERE pronamespace='public'::regnamespace AND proname='search_public_catalog'
-  ) AS has_search;
-
--- Seed present
-SELECT
-  (SELECT count(*) FROM public.projects WHERE 'forge-ia-seed-v1' = ANY (tags)) AS seed_projects,
-  (SELECT count(*) FROM public.platform_announcements WHERE slug LIKE 'ia-seed-%') AS seed_ann,
-  (SELECT count(*) FROM public.project_usage_relations
-     WHERE id::text LIKE 'ffffffff-ffff-4fff-8fff-%') AS seed_usage;
-
--- Draft leak check
-SELECT count(*) AS draft_leaked
-FROM public.get_public_platform_announcements(50, 0) a
-JOIN public.platform_announcements p ON p.id = a.id
-WHERE p.status <> 'published';
--- 期待: 0
-
--- Existing Staging 9 件が消えていないこと（目安）
-SELECT count(*) FILTER (WHERE visibility = 'public') AS public_n
-FROM public.projects;
--- 期待: 既存 + 5（初回 seed 後はおおよそ 14 前後。環境依存）
-```
-
-Preview smoke（適用後・別作業）:
+## 5. Preview 確認（適用後・別作業）
 
 - `/api/discovery/player-ia-home` が空配列でなくセクションを返す
-- `/api/search/catalog?category=asset` が 200
-- `/api/search/global?q=ホラー` が 200
+- `/api/search/catalog?category=asset` が 200・複数件
+- `/api/search/global?q=ホラー` / `Unity` / `配信者` が 200
+- カテゴリタブ各 8 件以上の母集団があること
+
+（本パッケージ作業では deploy / ブラウザ自動操作は行わない）
 
 ---
 
-## 4. Cleanup / rollback
+## 6. Cleanup（完全復元）
 
-### 4.1 Seed のみ削除（推奨）
+### 6.1 基本 seed 削除
 
 ```text
 scripts/staging-only/player-ia-staging-seed-cleanup.sql
 ```
-
-Dashboard で全文 Run。
 
 確認:
 
 ```sql
 SELECT count(*) FROM public.projects WHERE 'forge-ia-seed-v1' = ANY (tags);
 SELECT count(*) FROM public.platform_announcements WHERE slug LIKE 'ia-seed-%';
--- 期待: 0 / 0
+SELECT count(*) FROM public.project_usage_relations WHERE id::text LIKE 'ffffffff-ffff-4fff-8fff-%';
+SELECT count(*) FROM public.project_feedback WHERE id::text LIKE '99999999-9999-4999-8999-%';
+SELECT count(*) FROM public.project_guest_feedback WHERE id::text LIKE 'bbbbbbbb-bbbb-4bbb-8bbb-%';
+-- 期待: すべて 0
 ```
 
-### 4.2 Schema rollback
+既存 profile / Smoke A / hero は変更していないため、追加の profile 復元は不要。
 
-**通常は行わない。** 076–081 は additive（列・テーブル・RPC 追加）。  
-Production 未適用なら Staging で残して問題ない。どうしても落とす場合はオーナー判断で個別 DROP（本 runbook では自動 DROP スクリプトを提供しない）。
+### 6.2 Auth 拡張を使った場合
+
+```bash
+npx --yes tsx scripts/staging-only/player-ia-auth-seed-cleanup.ts --execute
+```
+
+```sql
+SELECT count(*) FROM public.developer_profiles WHERE creator_id LIKE 'ia-seed-dev-%';
+-- 期待: 0
+```
+
+### 6.3 Schema rollback
+
+**通常は行わない。** 076–081 は additive。
 
 ---
 
-## 5. Production への注意
+## 7. Production への注意
 
 | やってよい | やってはいけない |
 |---|---|
-| 将来、オーナー判断で **076–081 のみ** Production Dashboard 適用 | **seed SQL を Production で実行** |
+| 将来、オーナー判断で **076–081 のみ** Production Dashboard 適用 | **seed SQL / auth seed を Production で実行** |
 | 適用前に Staging で検証済みであることを確認 | Cursor / CI から Production へ DDL/DML |
 | Production 適用後は seed 無しで read-only 確認 | `player-ia-staging-seed*.sql` を migrations に戻す |
 
-ゲスト FB を Production Web で有効化するのは **別のコードリリース判断**（現状 `VERCEL_ENV=production` で API disabled）。
+---
+
+## 8. Staging Storage について（今回は実行しない）
+
+画像は Smoke A の既存 URL 再利用または `NULL` fallback。  
+Staging Storage へ新規アップロードが必要になった場合は **別手順**として切り出す（本 runbook の seed 適用には含めない）。
 
 ---
 
-## 6. 静的監査サマリ（076–081）
+## 9. 静的監査サマリ（076–081）
 
-詳細は同梱の監査結果を完了報告に記載。要点:
+詳細: `docs/player-ia-migrations-076-081-audit.md`
 
 - 実行順固定: 076→081（seed は別）
 - 既存 projects → `category='game'` 互換
 - 新テーブル RLS: published/public のみ SELECT；client INSERT/UPDATE/DELETE revoke
-- SECURITY DEFINER RPC は `SET search_path = public`（080 の `auth.users` は修飾参照）
-- 検索は public 作品＋公開開発者のみ（activity_tags タグ候補も public owner 限定）
-- メール等の非公開列は検索ドキュメントに含めない
+- 検索は public 作品＋公開開発者のみ
 - ゲスト rate limit は SQL 外（app + hashed IP）

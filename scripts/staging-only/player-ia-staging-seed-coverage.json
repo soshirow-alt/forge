@@ -1,0 +1,171 @@
+{
+  "generatedAt": "2026-07-26T01:53:54.957Z",
+  "stagingRef": "vuqpwvjvgyxffmvpfrxo",
+  "productionRefForbidden": "bpnisgzxuwdxelhnduuf",
+  "existingProfileMutation": false,
+  "projects": {
+    "total": 40,
+    "byCategory": {
+      "game": 8,
+      "audio": 8,
+      "asset": 8,
+      "dev-tool": 8,
+      "service-app": 8
+    },
+    "streamPolicy": {
+      "ok": 9,
+      "conditional": 9,
+      "no": 7,
+      "unset": 15
+    },
+    "attributes": {
+      "quick_try": 17,
+      "looking_for_testers": 9,
+      "usable_for_creation": 25
+    },
+    "assetKinds": {
+      "2d_illustration": 1,
+      "sprite": 1,
+      "character_model": 1,
+      "model_3d": 1,
+      "background": 1,
+      "ui_element": 1,
+      "icon": 2,
+      "texture": 1,
+      "material": 1,
+      "motion": 1,
+      "animation": 1,
+      "vfx": 1,
+      "shader": 1,
+      "font": 1
+    },
+    "noImage": 2,
+    "noTagsExtra": 2,
+    "noFb": 2,
+    "noUpdate": 3,
+    "noLinks": 3,
+    "noUsage": 18,
+    "discord": 5,
+    "multiLinks": 6,
+    "longTitle": 1,
+    "longDesc": 2,
+    "longCreator": 1
+  },
+  "usageRelations": 12,
+  "feedback": {
+    "registered": 31,
+    "guest": 7,
+    "total": 38,
+    "withReply": 13,
+    "empathyRows": 72
+  },
+  "announcements": {
+    "published": 6,
+    "draft": 2
+  },
+  "devlogs": 45,
+  "releaseEvents": 8,
+  "searchCoverage": {
+    "ローグライク": {
+      "projectHits": 2,
+      "slugs": [
+        "ia-seed-01",
+        "ia-seed-08"
+      ]
+    },
+    "ホラー好き": {
+      "projectHits": 1,
+      "slugs": [
+        "ia-seed-02"
+      ]
+    },
+    "Unity": {
+      "projectHits": 2,
+      "slugs": [
+        "ia-seed-25",
+        "ia-seed-31"
+      ]
+    },
+    "Unreal Engine": {
+      "projectHits": 1,
+      "slugs": [
+        "ia-seed-26"
+      ]
+    },
+    "Godot": {
+      "projectHits": 2,
+      "slugs": [
+        "ia-seed-27",
+        "ia-seed-32"
+      ]
+    },
+    "配信者": {
+      "projectHits": 2,
+      "slugs": [
+        "ia-seed-35",
+        "ia-seed-40"
+      ]
+    },
+    "ドット絵": {
+      "projectHits": 1,
+      "slugs": [
+        "ia-seed-17"
+      ]
+    },
+    "3Dキャラクター": {
+      "projectHits": 1,
+      "slugs": [
+        "ia-seed-18"
+      ]
+    },
+    "BGM制作": {
+      "projectHits": 2,
+      "slugs": [
+        "ia-seed-09",
+        "ia-seed-15"
+      ]
+    },
+    "短編ゲーム": {
+      "projectHits": 4,
+      "slugs": [
+        "ia-seed-01",
+        "ia-seed-02",
+        "ia-seed-06",
+        "ia-seed-08"
+      ]
+    },
+    "制作に使える": {
+      "projectHits": 4,
+      "slugs": [
+        "ia-seed-09",
+        "ia-seed-16",
+        "ia-seed-24",
+        "ia-seed-39"
+      ]
+    },
+    "配信OK": {
+      "projectHits": 2,
+      "slugs": [
+        "ia-seed-01",
+        "ia-seed-40"
+      ]
+    }
+  },
+  "zeroHitQuery": "zzz-ia-seed-nohit-999",
+  "zeroHitLeak": false,
+  "validation": {
+    "uuidDuplicate": false,
+    "slugDuplicate": false,
+    "usageSelfRef": 0,
+    "usageMissingProject": 0,
+    "categoryMin8": true,
+    "projectsGte40": true,
+    "usageGte10": true,
+    "annPublishedGte6": true,
+    "annDraftGte1": true,
+    "streamAllPresent": true,
+    "searchTermsCovered": true,
+    "existingProfileMutation": false,
+    "pass": true
+  }
+}
