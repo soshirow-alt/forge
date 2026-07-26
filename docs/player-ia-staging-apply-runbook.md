@@ -9,10 +9,53 @@ Cursor はこの文書作成時点では Staging へ **未適用**（適用は�
 
 ---
 
+## Migration 履歴と採用方式（必読）
+
+### SQL Editor 単独実行では履歴に載らない
+
+Dashboard **SQL Editor で migration 本文を Run しただけ**では、`supabase_migrations.schema_migrations` には **記録されない**（公式ドキュメント: remote を SQL Editor で直接変更すると migration history を bypass する）。
+
+SQL Editor のクエリ履歴 UI に残ることと、`schema_migrations` は別物。
+
+| 後続操作 | SQL Editor のみで 076–081 を適用した場合 |
+|---|---|
+| `supabase db push` | 履歴に無ければ **再適用対象**になり得る |
+| Supabase CLI migration 適用 | 同上 |
+| CI/CD で `db push` | 同上 |
+
+Forge は従来 **Dashboard SQL Editor 正本**（`docs/supabase-dashboard-migration-guide.md`）。リポジトリに `supabase/config.toml` は無く、CI の `db push` も常用していない。
+
+### 今回 Staging で採る方式（決定）
+
+**A. Dashboard SQL Editor で 076→081 を本文適用し、確認 SQL で成功判定する（採用）**
+
+理由:
+
+1. Forge 既存運用と一致（可視性優先・オーナー手動）
+2. CLI `db push` を初導入すると、過去 001–075 の履歴未同期時に **古い migration まで再適用試行**する危険がある
+3. `schema_migrations` への **独自 INSERT は採用しない**（公式・既存運用で安全と確認できない）
+4. 076–081 は概ね再実行安全（詳細は `docs/player-ia-migrations-076-081-audit.md` §再実行安全性）なので、誤って同 SQL を再 Run しても破壊的副作用は小さい
+
+**採用しない**
+
+- 今回の必須手順としての `supabase db push`（履歴全体未検証のため）
+- `schema_migrations` への手書き INSERT
+- SQL 適用前に必須とする `migration repair`（CLI 運用へ移行する別判断時のみ検討）
+
+**将来 CLI を使う場合（今回の必須手順外）**
+
+1. 先に `supabase migration list` で Local/Remote 差分を読む  
+2. スキーマが既に正しいことを確認 SQL で担保したうえで、公式  
+   `supabase migration repair --status applied <version>`  
+   のみで履歴同期（SQL は再実行しない）  
+3. version はファイル名先頭（例: `076`）。**repair は履歴テーブルのみ更新**
+
+---
+
 ## 実行順（全体）
 
-1. migrations **076 → 081**
-2. migration 確認 SQL
+1. migrations **076 → 081**（Dashboard SQL Editor）
+2. migration 確認 SQL（成功の正本）
 3. **auth/profile 拡張 seed**（service role・推奨。credentials が無ければ省略可）
 4. **基本 seed**（SQL）— 専用ユーザーがいれば所有を結び、無ければ hero owners にフォールバック。既存 profile は変更しない
 5. **validate SQL**
@@ -333,3 +376,160 @@ Staging Storage へ新規アップロードが必要になった場合は **別�
 - 新テーブル RLS: published/public のみ SELECT；client INSERT/UPDATE/DELETE revoke
 - 検索は public 作品＋公開開発者のみ
 - ゲスト rate limit は SQL 外（app + hashed IP）
+- 再実行安全性・migration 履歴挙動も同監査ファイル参照
+
+---
+
+## 10. オーナー最終実行手順（コピペ用・1本）
+
+対象: Staging **`vuqpwvjvgyxffmvpfrxo` のみ**。Production **`bpnisgzxuwdxelhnduuf` では中止**。
+
+### 10.0 secrets（残さない）
+
+| 環境変数名 | 用途 |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Staging URL（ref が `vuqpwvjvgyxffmvpfrxo` であること） |
+| `SUPABASE_SERVICE_ROLE_KEY` | auth seed / cleanup のみ |
+
+- `.env.local` に置く（gitignored）。**commit / PR / チャット / ログに値を貼らない**
+- シェル履歴に残したくなければ `read -s` や一時 export 後に `unset`
+- Cursor / CI に service role を常設しない（今回の適用はオーナー環境で実行）
+
+### 10.1 Dashboard: ref 確認
+
+1. https://supabase.com/dashboard → Staging プロジェクト  
+2. Settings → General の Reference ID = `vuqpwvjvgyxffmvpfrxo`  
+3. 不一致なら **全停止**
+
+確認 SQL（SQL Editor）:
+
+```sql
+SELECT id, title FROM public.projects
+WHERE id IN (
+  '41ff5a96-105c-42a2-87b4-787bcfeacb45',
+  'dddddddd-dddd-4ddd-8ddd-000000000203'
+);
+-- 期待: 2 行
+```
+
+### 10.2 Dashboard: migrations 076→081（本文適用）
+
+各ファイルを **全文** コピー → SQL Editor → **Run**。失敗したら次へ進まない（その番号で停止）。
+
+| 順 | ファイル（リポジトリパス） | 失敗時 |
+|---:|---|---|
+| 1 | `supabase/migrations/076_player_ia_categories_attributes.sql` | 停止。seed に進まない |
+| 2 | `supabase/migrations/077_project_usage_relations.sql` | 停止 |
+| 3 | `supabase/migrations/078_platform_announcements.sql` | 停止 |
+| 4 | `supabase/migrations/079_global_public_search.sql` | 停止 |
+| 5 | `supabase/migrations/080_player_ia_home_feed.sql` | 停止 |
+| 6 | `supabase/migrations/081_guest_feedback_public_reenable.sql` | 停止 |
+
+各成功後の確認 SQL は **§1.1**。最低限の一括成功確認:
+
+```sql
+SELECT
+  (SELECT count(*) FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='projects' AND column_name='category') AS has_category,
+  to_regclass('public.project_usage_relations') IS NOT NULL AS has_usage,
+  to_regclass('public.platform_announcements') IS NOT NULL AS has_ann,
+  EXISTS (
+    SELECT 1 FROM pg_proc
+    WHERE pronamespace='public'::regnamespace AND proname='search_public_catalog'
+  ) AS has_search,
+  EXISTS (
+    SELECT 1 FROM pg_proc
+    WHERE pronamespace='public'::regnamespace AND proname='get_home_newest_projects'
+  ) AS has_home,
+  EXISTS (
+    SELECT 1 FROM pg_proc
+    WHERE pronamespace='public'::regnamespace AND proname='get_public_feedback_cards'
+  ) AS has_fb_cards;
+-- 期待: すべて true / 1
+```
+
+**成功の正本は上記スキーマ確認**（`schema_migrations` ではない）。
+
+任意（履歴観察のみ・今回必須ではない）:
+
+```sql
+SELECT version, name, inserted_at
+FROM supabase_migrations.schema_migrations
+ORDER BY version;
+-- SQL Editor のみ適用後: 076–081 が無くて正常（記録されないため）
+```
+
+### 10.3 ローカル / Cursor 環境: auth seed（推奨）
+
+```bash
+# リポジトリ root、branch preview/landing-01（HEAD に a81e902 以降の seed 所有修正を含むこと）
+export NEXT_PUBLIC_SUPABASE_URL='https://vuqpwvjvgyxffmvpfrxo.supabase.co'
+# SUPABASE_SERVICE_ROLE_KEY は .env.local から読むか、対話で export（値をログに出さない）
+npx --yes tsx scripts/staging-only/player-ia-auth-seed.ts           # dry-run
+npx --yes tsx scripts/staging-only/player-ia-auth-seed.ts --execute
+```
+
+- Production ref / キー無し → スクリプトが停止または SKIP。その場合は 10.4 へ（基本 seed は hero fallback）
+- 失敗時: 基本 seed 前に原因切り分け。専用プロフィール無しでも 10.4 は実行可
+
+### 10.4 Dashboard: 基本 seed
+
+1. `scripts/staging-only/player-ia-staging-seed.sql` 全文 → SQL Editor → Run  
+2. 失敗時: seed / validate / Preview に進まない。schema は残してよい
+
+### 10.5 Dashboard: validate
+
+1. `scripts/staging-only/player-ia-staging-seed-validate.sql` 全文 → Run  
+2. 期待の目安: projects_total=40、各カテゴリ8、usage=12、ann published/draft=6/2、FB 31/7、empathies=72、devlogs=45、release_events=8、protected_*=ok、zero_hit_search=0  
+3. auth 実行時: `auth_seed_profiles=20` かつ `auth_profiles_owning_seed_projects=20`
+
+### 10.6 Preview 検証（HTTP・オーナーまたは Cursor）
+
+Preview alias（既存）:
+
+`https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app`
+
+確認例（ブラウザ自動操作不要）:
+
+```bash
+BASE='https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app'
+curl -sS -o /dev/null -w '%{http_code}\n' "$BASE/api/discovery/player-ia-home"
+curl -sS -o /dev/null -w '%{http_code}\n' "$BASE/api/search/catalog?category=game"
+curl -sS -o /dev/null -w '%{http_code}\n' "$BASE/api/search/global?q=%E3%83%AD%E3%83%BC%E3%82%B0%E3%83%A9%E3%82%A4%E3%82%AF"
+curl -sS -o /dev/null -w '%{http_code}\n' "$BASE/search"
+curl -sS -o /dev/null -w '%{http_code}\n' "$BASE/home"
+```
+
+画面の最終目視はオーナー。
+
+### 10.7 Cleanup（必要なときだけ）
+
+```text
+# Dashboard 先:
+scripts/staging-only/player-ia-staging-seed-cleanup.sql
+
+# その後ローカル（auth を使った場合のみ）:
+npx --yes tsx scripts/staging-only/player-ia-auth-seed-cleanup.ts --execute
+```
+
+### 10.8 途中失敗時の停止位置
+
+| 失敗箇所 | 停止 | やってよい / いけない |
+|---|---|---|
+| ref 不一致 | 全停止 | 何も実行しない |
+| 076–081 の途中 | その番号で停止 | seed 禁止。失敗 migration を修正・再 Run（再実行安全は監査参照） |
+| auth seed | 記録して継続可 | 基本 seed は hero fallback で可 |
+| 基本 seed | validate/Preview 前に停止 | schema は残してよい |
+| validate 件数不一致 | Preview 前に停止 | cleanup して原因確認してから再 seed |
+
+### 10.9 migration 履歴の最終確認（任意）
+
+今回の成功判定は **§10.2 のスキーマ確認 SQL**。  
+履歴テーブルは SQL Editor 適用では更新されないため、076–081 が `schema_migrations` に無くても適用成功と矛盾しない。
+
+将来 CLI を使う前に必ず:
+
+```bash
+npx supabase@latest migration list
+# 差分が大きい場合は db push しない。公式 repair で履歴を揃える別作業にする
+```
