@@ -85,6 +85,23 @@ export async function POST(request: Request, context: RouteContext) {
       return guestFeedbackErrorResponse("supabase_not_configured");
     }
     console.error("guest detailed feedback upsert failed", error);
+    // Preview/Staging only: surface PostgREST code to diagnose without Vercel logs.
+    if (process.env.VERCEL_ENV !== "production") {
+      const err = error as { code?: string; message?: string; details?: string };
+      return Response.json(
+        {
+          ok: false,
+          code: "internal_error",
+          message: "送信に失敗しました。時間をおいて再度お試しください。",
+          debug: {
+            pgCode: err?.code ?? null,
+            pgMessage: err?.message ?? null,
+            pgDetails: err?.details ?? null,
+          },
+        },
+        { status: 500 },
+      );
+    }
     return guestFeedbackErrorResponse("internal_error");
   }
 }
