@@ -37,7 +37,7 @@ const header = `-- STAGING ONLY — re-apply search_public_catalog from 079 (can
 --   SELECT count(*) FROM public.search_public_catalog('seed nohit', 10);
 --   SELECT count(*) FROM public.search_public_catalog('zzz seed 999', 10);
 -- Spot-check hits: SE / ドット / Unity / Unreal / BGM / 配信OK
--- Tag branch: tag contains query only; excludes forge-ia-seed-* internal tags.
+-- Tag branch: tag contains query only; excludes forge-% internal tags.
 
 `;
 
