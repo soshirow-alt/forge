@@ -162,9 +162,10 @@ BEGIN
       )
   ),
   tag_hits AS (
-    -- Tag rank must reflect a real match. A former static 0.8 let incidental
-    -- token overlap (e.g. query "zzz-ia-seed-nohit-999" → terms ia/seed vs
-    -- marker tag "forge-ia-seed-v1") pass the global threshold with no phrase hit.
+    -- Tag match = tag contains the full normalized query only
+    -- (ドット→ドット絵, Unreal→Unreal Engine, SE→SE).
+    -- Do NOT reverse-contain (v_norm LIKE '%'||tag||'%'): that made
+    -- "zzz ia seed nohit 999" match tag "SE" via substring "se" inside "seed".
     SELECT
       scored.result_kind,
       scored.result_id,
@@ -182,13 +183,11 @@ BEGIN
         NULL::text AS category,
         NULL::text AS thumbnail_url,
         (
-          similarity(norm.tag_norm, v_norm)
-          + CASE
-              WHEN norm.tag_norm = v_norm THEN 0.55
-              WHEN norm.tag_norm LIKE '%' || v_norm || '%'
-                OR v_norm LIKE '%' || norm.tag_norm || '%' THEN 0.5
-              ELSE 0.35
-            END
+          CASE
+            WHEN norm.tag_norm = v_norm THEN 0.9
+            ELSE 0.55
+          END
+          + least(similarity(norm.tag_norm, v_norm), 0.2)
         )::real AS rank
       FROM (
         SELECT unnest(coalesce(p.tags, '{}')) AS tag_value
@@ -214,19 +213,11 @@ BEGIN
         SELECT public.forge_search_normalize(tags.tag_value) AS tag_norm
       ) norm
       WHERE
-        -- Phrase / containment either way
-        norm.tag_norm LIKE '%' || v_norm || '%'
-        OR (
-          char_length(norm.tag_norm) >= 2
-          AND v_norm LIKE '%' || norm.tag_norm || '%'
-        )
-        OR (
-          -- Single-term only: JP/EN partial (ドット→ドット絵, Unity→Unity).
-          -- Multi-term OR-of-tokens is intentionally omitted.
-          coalesce(array_length(v_terms, 1), 0) = 1
-          AND char_length(v_terms[1]) >= 2
-          AND norm.tag_norm LIKE '%' || v_terms[1] || '%'
-        )
+        char_length(btrim(v_norm)) >= 1
+        AND norm.tag_norm LIKE '%' || v_norm || '%'
+        -- Internal ops markers (seed bookkeeping) are not user-facing tag results.
+        AND tags.tag_value IS DISTINCT FROM 'forge-ia-seed-v1'
+        AND tags.tag_value NOT LIKE 'forge-ia-seed-%'
       ORDER BY tags.tag_value, rank DESC
     ) scored
   )

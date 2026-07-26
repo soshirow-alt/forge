@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-07-26 — Player IA 検索: タグ逆方向包含の誤ヒットを除去（Staging 再適用待ち）
+
+- **残件** — `zzz-ia-seed-nohit-999` → tag `SE`（rank≈0.59）。`v_norm LIKE '%'||tag||'%'` が `seed` 内の `se` に反応
+- **修正** — タグ一致を `tag_norm LIKE '%'||v_norm||'%'` のみに単純化（ドット→ドット絵等は維持）。逆方向包含と対応ボーナスを削除。内部タグ `forge-ia-seed-%` を tag 結果から除外
+- **非実施** — Staging DB への patch 適用なし（オーナー再実行）。main / Production 未変更
+
 ## 2026-07-26 — Player IA 検索: 無関係クエリのタグ誤ヒット修正（Staging 再適用待ち）
 
 - **残1件** — `zzz-ia-seed-nohit-999` → tag `forge-ia-seed-v1`（rank 静的 0.8）。正規化で `ia`/`seed` が部分一致し、一致品質と無関係な固定点数が閾値を超えていた

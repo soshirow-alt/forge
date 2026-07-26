@@ -101,4 +101,27 @@ WHERE id = 'dddddddd-dddd-4ddd-8ddd-000000000203'::uuid AND NOT ('forge-ia-seed-
 UNION ALL
 SELECT 'zero_hit_search', (
   SELECT count(*)::text FROM public.search_public_catalog('zzz-ia-seed-nohit-999', 10)
+)
+UNION ALL
+SELECT 'zero_hit_seed_nohit', (
+  SELECT count(*)::text FROM public.search_public_catalog('seed nohit', 10)
+)
+UNION ALL
+SELECT 'zero_hit_zzz_seed_999', (
+  SELECT count(*)::text FROM public.search_public_catalog('zzz seed 999', 10)
+)
+UNION ALL
+SELECT 'hit_tag_SE', (
+  SELECT count(*)::text FROM public.search_public_catalog('SE', 10)
+  WHERE result_kind = 'tag' AND title = 'SE'
+)
+UNION ALL
+SELECT 'hit_tag_dot_partial', (
+  SELECT count(*)::text FROM public.search_public_catalog('ドット', 10)
+  WHERE result_kind = 'tag' AND title = 'ドット絵'
+)
+UNION ALL
+SELECT 'no_internal_seed_tag', (
+  SELECT count(*)::text FROM public.search_public_catalog('forge-ia-seed-v1', 10)
+  WHERE result_kind = 'tag' AND title = 'forge-ia-seed-v1'
 );

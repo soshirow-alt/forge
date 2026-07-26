@@ -322,13 +322,14 @@ FROM public.search_public_catalog('zzz-ia-seed-nohit-999', 10);
 -- 期待: 0 行（作品ヒットなし）
 ```
 
-`zero_hit_search` が 1 のまま（tag `forge-ia-seed-v1`）のときは、079 再適用パッチを Staging に Run する（DB 適用はオーナー）:
+`zero_hit_search` が非 0（例: tag `SE` が `seed` に誤反応）のときは、079 再適用パッチを Staging に Run する（DB 適用はオーナー）:
 
 ```text
 scripts/staging-only/fix-079-search-public-catalog.sql
 ```
 
-正本は `supabase/migrations/079_global_public_search.sql`。patch 手編集禁止。再生成は `node scripts/staging-only/sync-079-search-patch.mjs`。
+正本は `supabase/migrations/079_global_public_search.sql`。patch 手編集禁止。再生成は `node scripts/staging-only/sync-079-search-patch.mjs`。  
+タグ枝は「タグが検索語を含む」のみ。内部タグ `forge-ia-seed-%` は tag 結果に出さない。
 
 ---
 
