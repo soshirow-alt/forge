@@ -75,6 +75,8 @@ export async function GET(request: Request, context: RouteContext) {
       versionKey,
       limit,
       enrichSupabase: service,
+      allVersionKeys: availableVersions,
+      playableVersion,
     }),
     Promise.all(
       requestedVersions.map(async (version) => [

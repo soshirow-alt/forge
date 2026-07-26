@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-07-26 — Player IA: ゲストのみの作品で公開FB一覧が空になる不具合を修正
+
+- **原因** — `public-feedback-cards` の `version=all`（デフォルト）が登録FB版だけを列挙し、ゲストFBのみの ver を落とす
+- **修正** — ルート側の `availableVersions`（playable＋prompt/devlog 等）を enrich に渡し、ゲスト行も一覧に載る
+- **非実施** — Staging seed 変更なし。smoke 削除 SQL は staging-only に別添
+
 ## 2026-07-26 — Player IA 検索: 短い ASCII 語は独立トークン一致のみ（Staging 再適用待ち）
 
 - **現象** — `SE` が seed/service/`[IA Seed]`/profile の部分文字列で最大20件ノイズ

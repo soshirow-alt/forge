@@ -380,16 +380,37 @@ export async function fetchPublicFeedbackCardsEnriched(
      * (EXECUTE is service_role-only after 071). Defaults to viewerSupabase.
      */
     enrichSupabase?: SupabaseClient;
+    /**
+     * When versionKey is "all", prefer this list (playable + prompt/devlog/FB
+     * versions). listPublicFeedbackVersionKeys alone omits guest-only versions
+     * and can return [] — empty "みんなのFB" despite visible guest rows.
+     */
+    allVersionKeys?: string[];
+    /** Fallback playable version when allVersionKeys is omitted. */
+    playableVersion?: string;
   },
 ): Promise<{ cards: PublicFeedbackCard[]; participantCount: number }> {
   const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
   const versionParam = options?.versionKey ?? resolvePlayableVersion(undefined);
   const enrichSupabase = options?.enrichSupabase ?? viewerSupabase;
+  const playableVersion = resolvePlayableVersion(options?.playableVersion);
 
-  const versionKeys =
-    versionParam === "all"
-      ? await listPublicFeedbackVersionKeys(enrichSupabase, projectId)
-      : [resolvePlayableVersion(versionParam)];
+  let versionKeys: string[];
+  if (versionParam === "all") {
+    if (options?.allVersionKeys && options.allVersionKeys.length > 0) {
+      versionKeys = options.allVersionKeys.map((key) =>
+        resolvePlayableVersion(key),
+      );
+    } else {
+      versionKeys = await listProjectFeedbackVersionKeys(
+        enrichSupabase,
+        projectId,
+        playableVersion,
+      );
+    }
+  } else {
+    versionKeys = [resolvePlayableVersion(versionParam)];
+  }
 
   if (versionKeys.length === 0) {
     return { cards: [], participantCount: 0 };
