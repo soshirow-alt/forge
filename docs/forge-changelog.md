@@ -8,7 +8,7 @@
 
 - **検索** — 無意味クエリで低 rank のノイズが返る問題を、Preview API 側で rank≥0.2 にフィルタ。079 本体と Staging 用 patch SQL も同閾値に更新（Staging への patch 適用は別途）
 - **互換** — `/explore/prototype/asset` が formal category なのに `/search`（query なし）へ落ちていたのを `/search?category=asset` へ
-- **ゲストFB** — PostgREST upsert（UNIQUE INDEX のみ環境で失敗し得る）を select→update/insert に変更
+- **ゲストFB** — PostgREST upsert を select→update/insert に変更。Preview で `42501 permission denied for table project_guest_feedback` を確認 → `082` / staging-only GRANT patch を追加（Staging 適用待ち）
 - **非実施** — main / Production deploy / Production DB 変更なし。seed 再投入なし（Staging 実測で IA seed 0 件のため別確認が必要）
 
 ## 2026-07-26 — Player IA: migration 080 の uuid/text join 修正（Staging 再適用待ち）
