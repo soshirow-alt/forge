@@ -215,9 +215,10 @@ BEGIN
       WHERE
         char_length(btrim(v_norm)) >= 1
         AND norm.tag_norm LIKE '%' || v_norm || '%'
-        -- Internal ops markers (seed bookkeeping) are not user-facing tag results.
-        AND tags.tag_value IS DISTINCT FROM 'forge-ia-seed-v1'
-        AND tags.tag_value NOT LIKE 'forge-ia-seed-%'
+        -- Internal ops markers (forge-ia-seed-*, forge-st-*, …) are not
+        -- user-facing tag results. Keeps short queries like SE from matching
+        -- substrings inside marker tags (e.g. "se" inside "carousel").
+        AND tags.tag_value NOT LIKE 'forge-%'
       ORDER BY tags.tag_value, rank DESC
     ) scored
   )
