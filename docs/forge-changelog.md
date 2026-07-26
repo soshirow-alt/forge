@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-07-26 — Player IA 検索: 無関係クエリのタグ誤ヒット修正（Staging 再適用待ち）
+
+- **残1件** — `zzz-ia-seed-nohit-999` → tag `forge-ia-seed-v1`（rank 静的 0.8）。正規化で `ia`/`seed` が部分一致し、一致品質と無関係な固定点数が閾値を超えていた
+- **修正** — タグ枝を「フレーズ包含 or 単一語の部分一致」に限定し、rank を similarity＋一致種別に変更（静的 0.8 廃止）。079 正本＋ staging-only patch を sync スクリプトで単一ソース化
+- **非実施** — Staging DB への patch 適用なし（オーナー再実行）。main / Production 未変更
+
 ## 2026-07-26 — Player IA Preview: 検索ノイズ・互換 redirect・ゲストFB書き込み修正
 
 - **検索** — 無意味クエリで低 rank のノイズが返る問題を、Preview API 側で rank≥0.2 にフィルタ。079 本体と Staging 用 patch SQL も同閾値に更新（Staging への patch 適用は別途）

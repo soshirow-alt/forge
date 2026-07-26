@@ -162,40 +162,73 @@ BEGIN
       )
   ),
   tag_hits AS (
-    SELECT DISTINCT ON (tag_value)
-      'tag'::text AS result_kind,
-      tag_value AS result_id,
-      tag_value AS title,
-      'タグ'::text AS subtitle,
-      NULL::text AS category,
-      NULL::text AS thumbnail_url,
-      0.8::real AS rank
+    -- Tag rank must reflect a real match. A former static 0.8 let incidental
+    -- token overlap (e.g. query "zzz-ia-seed-nohit-999" → terms ia/seed vs
+    -- marker tag "forge-ia-seed-v1") pass the global threshold with no phrase hit.
+    SELECT
+      scored.result_kind,
+      scored.result_id,
+      scored.title,
+      scored.subtitle,
+      scored.category,
+      scored.thumbnail_url,
+      scored.rank
     FROM (
-      SELECT unnest(coalesce(p.tags, '{}')) AS tag_value
-      FROM public.projects p
-      WHERE p.visibility = 'public'
-      UNION ALL
-      SELECT unnest(coalesce(p.purpose_tags, '{}'))
-      FROM public.projects p
-      WHERE p.visibility = 'public'
-      UNION ALL
-      SELECT unnest(coalesce(p.genres, '{}'))
-      FROM public.projects p
-      WHERE p.visibility = 'public'
-      UNION ALL
-      SELECT unnest(coalesce(d.activity_tags, '{}'))
-      FROM public.developer_profiles d
-      WHERE EXISTS (
-        SELECT 1 FROM public.projects p
-        WHERE p.owner_id = d.user_id AND p.visibility = 'public'
-      )
-    ) tags
-    WHERE public.forge_search_normalize(tag_value) LIKE '%' || v_norm || '%'
-       OR EXISTS (
-         SELECT 1 FROM unnest(v_terms) t(term)
-         WHERE char_length(t.term) >= 2
-           AND public.forge_search_normalize(tag_value) LIKE '%' || t.term || '%'
-       )
+      SELECT DISTINCT ON (tags.tag_value)
+        'tag'::text AS result_kind,
+        tags.tag_value AS result_id,
+        tags.tag_value AS title,
+        'タグ'::text AS subtitle,
+        NULL::text AS category,
+        NULL::text AS thumbnail_url,
+        (
+          similarity(norm.tag_norm, v_norm)
+          + CASE
+              WHEN norm.tag_norm = v_norm THEN 0.55
+              WHEN norm.tag_norm LIKE '%' || v_norm || '%'
+                OR v_norm LIKE '%' || norm.tag_norm || '%' THEN 0.5
+              ELSE 0.35
+            END
+        )::real AS rank
+      FROM (
+        SELECT unnest(coalesce(p.tags, '{}')) AS tag_value
+        FROM public.projects p
+        WHERE p.visibility = 'public'
+        UNION ALL
+        SELECT unnest(coalesce(p.purpose_tags, '{}'))
+        FROM public.projects p
+        WHERE p.visibility = 'public'
+        UNION ALL
+        SELECT unnest(coalesce(p.genres, '{}'))
+        FROM public.projects p
+        WHERE p.visibility = 'public'
+        UNION ALL
+        SELECT unnest(coalesce(d.activity_tags, '{}'))
+        FROM public.developer_profiles d
+        WHERE EXISTS (
+          SELECT 1 FROM public.projects p
+          WHERE p.owner_id = d.user_id AND p.visibility = 'public'
+        )
+      ) tags
+      CROSS JOIN LATERAL (
+        SELECT public.forge_search_normalize(tags.tag_value) AS tag_norm
+      ) norm
+      WHERE
+        -- Phrase / containment either way
+        norm.tag_norm LIKE '%' || v_norm || '%'
+        OR (
+          char_length(norm.tag_norm) >= 2
+          AND v_norm LIKE '%' || norm.tag_norm || '%'
+        )
+        OR (
+          -- Single-term only: JP/EN partial (ドット→ドット絵, Unity→Unity).
+          -- Multi-term OR-of-tokens is intentionally omitted.
+          coalesce(array_length(v_terms, 1), 0) = 1
+          AND char_length(v_terms[1]) >= 2
+          AND norm.tag_norm LIKE '%' || v_terms[1] || '%'
+        )
+      ORDER BY tags.tag_value, rank DESC
+    ) scored
   )
   SELECT * FROM (
     SELECT * FROM project_hits
@@ -204,7 +237,7 @@ BEGIN
     UNION ALL
     SELECT * FROM tag_hits
   ) hits
-  -- 0.05 let pure-trigram noise through on nonsense queries; require stronger hit.
+  -- Drop pure-trigram / weak noise; real substring/tag hits score ≥ ~0.35+.
   WHERE hits.rank > 0.2
   ORDER BY hits.rank DESC, hits.title ASC
   LIMIT v_limit;
