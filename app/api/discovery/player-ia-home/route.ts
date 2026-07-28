@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
+import { shouldServePlayerIaRedesign } from "@/lib/player-ia-mode";
 import { createAnonSupabaseClient } from "@/lib/supabase/anon-client";
 import { fetchPlayerIaHome } from "@/lib/supabase/player-ia-home-db";
 
 export const runtime = "nodejs";
 
 export async function GET() {
+  if (!shouldServePlayerIaRedesign()) {
+    return new NextResponse(null, { status: 404 });
+  }
+
   const supabase = createAnonSupabaseClient();
   if (!supabase) {
     return NextResponse.json(
