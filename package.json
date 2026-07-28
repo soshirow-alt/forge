@@ -36,7 +36,8 @@
     "patch:veteran-developer:staging": "npx --yes tsx scripts/future-demo-seed.ts --patch-veteran-developer",
     "verify:home-discovery-selection": "npx --yes tsx scripts/verify-home-discovery-selection.ts",
     "check:supabase-connection": "node scripts/check-supabase-connection-target.mjs",
-    "verify:supabase-write-guard": "npx --yes tsx scripts/verify-supabase-write-guard.ts"
+    "verify:supabase-write-guard": "npx --yes tsx scripts/verify-supabase-write-guard.ts",
+    "verify:supabase-sql-safety": "node scripts/verify-supabase-sql-safety.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

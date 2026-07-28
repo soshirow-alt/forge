@@ -1,0 +1,71 @@
+---
+description: Supabase SQL / migration safety — audit before write, no Production auto-apply
+alwaysApply: true
+---
+
+# Supabase SQL safety (Forge)
+
+Staging writes are allowed under Forge Staging autonomy. **Production Supabase write** (migration / INSERT / UPDATE / DELETE / backfill / Storage) remains **owner-manual only**. This rule prevents signature/trigger/immutable mistakes before SQL is handed to the owner or applied on Staging.
+
+## A. Required audit before authoring SQL
+
+Before creating or editing any migration / staging-only SQL that touches schema or data, read-only audit:
+
+1. Target **table columns** and types
+2. **Primary key / foreign keys**
+3. **CHECK / UNIQUE** constraints
+4. **Triggers** (especially immutable / append-only / publish locks)
+5. **RLS policies**
+6. **GRANTs** on tables and functions
+7. Immutable / published / append-only rules in docs + migrations
+8. Target **function overloads** (`pg_proc` / prior migrations)
+9. Function **argument types** (exact)
+10. **RETURNS / OUT / RETURNS TABLE** columns
+11. Dependent objects (views, other functions, triggers)
+12. Prior migrations that define the same object
+
+Do not invent columns, cast across uuid/text carelessly, or assume `CREATE OR REPLACE` is enough.
+
+## B. PostgreSQL function changes
+
+- If **argument types** or **return / OUT / RETURNS TABLE** shape changes, `CREATE OR REPLACE` alone is **invalid** (Postgres `42P13`).
+- Drop with the **exact** signature first:  
+  `DROP FUNCTION IF EXISTS public.<name>(<arg types>);`
+- Do **not** drop other overloads.
+- After recreate, restore **REVOKE / GRANT EXECUTE** (typically `anon`, `authenticated`, `service_role` as appropriate).
+- Audit dependents before DROP.
+- Design for both: clean DB migration order **and** apply onto already-migrated Staging/Production.
+
+## C. Data-changing SQL (seed / beautify / backfill)
+
+- Maintain an explicit **UPDATE allowlist** of tables/columns in the file header.
+- Scope rows with **fixed UUIDs** and/or dedicated tags (e.g. `forge-ia-seed-v1`). Never broad `WHERE true`.
+- Wrap in **BEGIN … COMMIT** (all-or-nothing).
+- Set sensible `lock_timeout` / `statement_timeout`.
+- **Assert row counts before and after**; on mismatch `RAISE EXCEPTION` (full rollback).
+- **Never** `DISABLE TRIGGER`, drop constraints for convenience, or use `session_replication_role` to bypass immutability.
+- **Never** UPDATE published / immutable bodies (e.g. published `project_devlogs.content` — trigger `project_devlogs_immutable_body` / `enforce_devlog_immutable_body` in `011_voice_adoptions.sql`). Prefer display-time use of project fields.
+- Do not mutate non-seed / Smoke / hero rows unless the owner explicitly scoped them.
+- Staging-only files must include a **Production hard-stop** (Staging fixture checks + explicit Production ref warning). Cursor must not apply Production writes.
+
+## D. Pre-apply verification
+
+- Keep `supabase/migrations/*` source and any staging-only re-run patch **in sync**.
+- Confirm re-run / idempotency.
+- Confirm apply on schema that already has prior migrations (not only greenfield).
+- Confirm failure leaves **no partial apply** (transaction or explicit abort).
+- Report target rows + expected counts before asking the owner to run SQL.
+- Prefer a **read-only preflight / audit SQL** alongside write SQL.
+
+## E. Production
+
+- Production Supabase write: **owner explicit approval + manual Dashboard (or equivalent)** only.
+- Never auto-apply Production from Preview/Staging work.
+- Having `service_role` does **not** authorize Production writes from the agent.
+- `DROP` / `TRUNCATE` / broad `DELETE` / broad `UPDATE`: separate explicit owner approval.
+- Never disable triggers / RLS / constraints on Production.
+
+## Related
+
+- Staging vs Production boundaries: `.cursor/rules/stall-detection-resume.mdc`, `docs/cursor-allow-vs-forge-go.md`
+- Static checks: `npm run verify:supabase-sql-safety`

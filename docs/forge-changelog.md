@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07-29 — Staging beautify: immutable devlog 更新を除去＋SQL安全ルール恒久化
+
+- **原因** — beautify が公開済み `project_devlogs.content` を UPDATE → `enforce_devlog_immutable_body`（011）で失敗。ファイルは BEGIN/COMMIT 付きのため、単一トランザクション実行なら先行 UPDATE は rollback。部分適用の有無は監査SQLで実状態確認
+- **修正** — beautify の更新 allowlist を `projects` / `platform_announcements` のみに。devlog / release_events 更新を削除。件数 assert・timeout・Staging guard 強化
+- **恒久** — `.cursor/rules/supabase-sql-safety.mdc`（alwaysApply）と `npm run verify:supabase-sql-safety`
+- **監査** — `scripts/staging-only/audit-player-ia-home-v0-state.sql`（read-only）
+- **非実施** — Staging/Production への再適用なし。main 未変更
+
 ## 2026-07-29 — migration 083: RETURNS TABLE 変更前に DROP FUNCTION を追加
 
 - **原因** — Postgres は OUT／RETURNS TABLE 列が変わると `CREATE OR REPLACE` 不可（42P13）
