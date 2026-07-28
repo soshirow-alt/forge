@@ -1,4 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  collectProjectIds,
+  softAdjustNewestChronology,
+  softSuppressByCategory,
+  softSuppressCrossShelfProject,
+  selectUsagePairs,
+} from "@/lib/player-ia/home-shelf-selection";
 import { publicProjectThumbnailPath } from "@/lib/public-project-thumbnail";
 import {
   isProjectCategoryId,
@@ -6,30 +13,31 @@ import {
 } from "@/lib/project-categories";
 import { safeHttpThumbnailUrl } from "@/lib/safe-http-thumbnail";
 
-export type HomeReviewHighlightRow = {
-  card_id: string;
+export type HomeFeedbackGatheringRow = {
   project_id: string;
-  project_title: string;
-  project_category: string;
-  project_thumbnail_url: string | null;
-  author_kind: string;
-  author_display_name: string;
-  body_text: string;
+  title: string;
+  category: string;
+  description: string | null;
+  thumbnail_url: string | null;
+  window_days: number | string;
+  distinct_author_count: number | string;
+  feedback_count: number | string;
+  has_creator_reply: boolean;
+  last_feedback_at: string;
   empathy_count: number | string;
-  created_at: string;
 };
 
-export type HomeReviewHighlight = {
-  cardId: string;
+export type HomeFeedbackGatheringProject = {
   projectId: string;
-  projectTitle: string;
-  projectCategory: ProjectCategoryId;
-  projectThumbnail: string;
-  authorKind: string;
-  authorDisplayName: string;
-  bodyText: string;
-  empathyCount: number;
-  createdAt: string;
+  title: string;
+  category: ProjectCategoryId;
+  description: string;
+  thumbnail: string;
+  windowDays: number;
+  distinctAuthorCount: number;
+  feedbackCount: number;
+  hasCreatorReply: boolean;
+  lastFeedbackAt: string;
 };
 
 export type HomeMeaningfulUpdateRow = {
@@ -38,6 +46,9 @@ export type HomeMeaningfulUpdateRow = {
   category: string;
   thumbnail_url: string | null;
   update_kind: string;
+  update_label: string;
+  update_summary: string;
+  published_version: string | null;
   meaningful_update_at: string;
 };
 
@@ -47,6 +58,9 @@ export type HomeMeaningfulUpdate = {
   category: ProjectCategoryId;
   thumbnail: string;
   updateKind: string;
+  updateLabel: string;
+  updateSummary: string;
+  publishedVersion: string | null;
   meaningfulUpdateAt: string;
 };
 
@@ -92,6 +106,7 @@ export type PlatformAnnouncement = {
   slug: string;
   title: string;
   body: string;
+  summary: string;
   importance: "normal" | "important";
   publishedAt: string;
 };
@@ -100,6 +115,7 @@ export type HomeNewestProjectRow = {
   project_id: string;
   title: string;
   category: string;
+  description: string | null;
   thumbnail_url: string | null;
   first_published_at: string;
   creator: string;
@@ -109,17 +125,21 @@ export type HomeNewestProject = {
   projectId: string;
   title: string;
   category: ProjectCategoryId;
+  description: string;
   thumbnail: string;
   firstPublishedAt: string;
   creator: string;
 };
 
 export type PlayerIaHomePayload = {
-  reviewHighlights: HomeReviewHighlight[];
+  feedbackGathering: HomeFeedbackGatheringProject[];
   meaningfulUpdates: HomeMeaningfulUpdate[];
   usageRelations: HomeUsageRelation[];
   announcements: PlatformAnnouncement[];
   newestProjects: HomeNewestProject[];
+  meta: {
+    feedbackWindowDays: 30 | 90 | null;
+  };
 };
 
 function asString(value: unknown): string {
@@ -129,6 +149,10 @@ function asString(value: unknown): string {
 function asNumber(value: unknown): number {
   const n = typeof value === "number" ? value : Number(value);
   return Number.isFinite(n) ? n : 0;
+}
+
+function asBoolean(value: unknown): boolean {
+  return value === true || value === "true" || value === 1 || value === "t";
 }
 
 function normalizeCategory(value: unknown): ProjectCategoryId {
@@ -147,30 +171,47 @@ function asNullableString(value: unknown): string | null {
   return s.length > 0 ? s : null;
 }
 
-function mapReviewHighlight(row: HomeReviewHighlightRow): HomeReviewHighlight {
+/** Safe short summary from announcement body — no dedicated DB column. */
+export function summarizeAnnouncementBody(body: string, maxLen = 72): string {
+  const collapsed = body
+    .replace(/\r\n/g, "\n")
+    .replace(/[#>*_`[\]]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (collapsed.length <= maxLen) return collapsed;
+  return `${collapsed.slice(0, Math.max(0, maxLen - 1)).trimEnd()}…`;
+}
+
+function mapFeedbackGathering(
+  row: HomeFeedbackGatheringRow,
+): HomeFeedbackGatheringProject {
   const projectId = asString(row.project_id);
   return {
-    cardId: asString(row.card_id),
     projectId,
-    projectTitle: asString(row.project_title),
-    projectCategory: normalizeCategory(row.project_category),
-    projectThumbnail: projectThumbnailPath(projectId, row.project_thumbnail_url),
-    authorKind: asString(row.author_kind),
-    authorDisplayName: asString(row.author_display_name),
-    bodyText: asString(row.body_text),
-    empathyCount: asNumber(row.empathy_count),
-    createdAt: asString(row.created_at),
+    title: asString(row.title),
+    category: normalizeCategory(row.category),
+    description: asString(row.description),
+    thumbnail: projectThumbnailPath(projectId, row.thumbnail_url),
+    windowDays: asNumber(row.window_days),
+    distinctAuthorCount: asNumber(row.distinct_author_count),
+    feedbackCount: asNumber(row.feedback_count),
+    hasCreatorReply: asBoolean(row.has_creator_reply),
+    lastFeedbackAt: asString(row.last_feedback_at),
   };
 }
 
 function mapMeaningfulUpdate(row: HomeMeaningfulUpdateRow): HomeMeaningfulUpdate {
   const projectId = asString(row.project_id);
+  const version = asNullableString(row.published_version);
   return {
     projectId,
     title: asString(row.title),
     category: normalizeCategory(row.category),
     thumbnail: projectThumbnailPath(projectId, row.thumbnail_url),
     updateKind: asString(row.update_kind),
+    updateLabel: asString(row.update_label) || "更新",
+    updateSummary: asString(row.update_summary),
+    publishedVersion: version,
     meaningfulUpdateAt: asString(row.meaningful_update_at),
   };
 }
@@ -201,11 +242,13 @@ function mapUsageRelation(row: HomeUsageRelationRow): HomeUsageRelation {
 
 function mapAnnouncement(row: PlatformAnnouncementRow): PlatformAnnouncement {
   const importance = row.importance === "important" ? "important" : "normal";
+  const body = asString(row.body);
   return {
     id: asString(row.id),
     slug: asString(row.slug),
     title: asString(row.title),
-    body: asString(row.body),
+    body,
+    summary: summarizeAnnouncementBody(body),
     importance,
     publishedAt: asString(row.published_at),
   };
@@ -217,29 +260,34 @@ function mapNewestProject(row: HomeNewestProjectRow): HomeNewestProject {
     projectId,
     title: asString(row.title),
     category: normalizeCategory(row.category),
+    description: asString(row.description),
     thumbnail: projectThumbnailPath(projectId, row.thumbnail_url),
     firstPublishedAt: asString(row.first_published_at),
     creator: asString(row.creator),
   };
 }
 
-export async function fetchHomeReviewHighlights(
+export async function fetchHomeFeedbackGatheringProjects(
   supabase: SupabaseClient,
-  limit = 8,
-): Promise<HomeReviewHighlight[]> {
-  const { data, error } = await supabase.rpc("get_home_review_highlights", {
-    p_limit: limit,
-  });
+  limit = 16,
+): Promise<HomeFeedbackGatheringProject[]> {
+  const { data, error } = await supabase.rpc(
+    "get_home_feedback_gathering_projects",
+    { p_limit: limit },
+  );
   if (error) {
-    console.error("[player-ia-home] get_home_review_highlights failed", error);
+    console.error(
+      "[player-ia-home] get_home_feedback_gathering_projects failed",
+      error,
+    );
     return [];
   }
-  return ((data ?? []) as HomeReviewHighlightRow[]).map(mapReviewHighlight);
+  return ((data ?? []) as HomeFeedbackGatheringRow[]).map(mapFeedbackGathering);
 }
 
 export async function fetchHomeMeaningfulUpdates(
   supabase: SupabaseClient,
-  limit = 8,
+  limit = 16,
 ): Promise<HomeMeaningfulUpdate[]> {
   const { data, error } = await supabase.rpc("get_home_meaningful_updates", {
     p_limit: limit,
@@ -259,7 +307,7 @@ export async function fetchPublicProjectUsageRelations(
     "get_public_project_usage_relations",
     {
       p_project_id: options?.projectId ?? null,
-      p_limit: options?.limit ?? 12,
+      p_limit: options?.limit ?? 24,
     },
   );
   if (error) {
@@ -274,7 +322,7 @@ export async function fetchPublicProjectUsageRelations(
 
 export async function fetchHomeUsageRelations(
   supabase: SupabaseClient,
-  limit = 12,
+  limit = 24,
 ): Promise<HomeUsageRelation[]> {
   return fetchPublicProjectUsageRelations(supabase, { projectId: null, limit });
 }
@@ -321,7 +369,7 @@ export async function fetchPublicPlatformAnnouncementBySlug(
 
 export async function fetchHomeNewestProjects(
   supabase: SupabaseClient,
-  limit = 12,
+  limit = 16,
 ): Promise<HomeNewestProject[]> {
   const { data, error } = await supabase.rpc("get_home_newest_projects", {
     p_limit: limit,
@@ -334,28 +382,79 @@ export async function fetchHomeNewestProjects(
   return ((data ?? []) as HomeNewestProjectRow[]).map(mapNewestProject);
 }
 
+function assemblePlayerIaHomeShelves(input: {
+  feedbackCandidates: HomeFeedbackGatheringProject[];
+  updateCandidates: HomeMeaningfulUpdate[];
+  usageCandidates: HomeUsageRelation[];
+  announcements: PlatformAnnouncement[];
+  newestCandidates: HomeNewestProject[];
+}): PlayerIaHomePayload {
+  const feedbackGathering = softSuppressByCategory(input.feedbackCandidates, 4);
+
+  const shownAfterFeedback = collectProjectIds(feedbackGathering);
+
+  const updatePool = softSuppressCrossShelfProject(
+    input.updateCandidates,
+    12,
+    shownAfterFeedback,
+  );
+  const meaningfulUpdates = softSuppressByCategory(updatePool, 4);
+
+  const shownAfterUpdates = new Set([
+    ...shownAfterFeedback,
+    ...collectProjectIds(meaningfulUpdates),
+  ]);
+
+  // Usage may reappear as either side of a pair.
+  const usageRelations = selectUsagePairs(input.usageCandidates, 4);
+
+  // Newest: chronology first; soft-skip projects already on FB/Updates; category adjust only if all 4 same.
+  const newestChronological = softSuppressCrossShelfProject(
+    input.newestCandidates,
+    16,
+    shownAfterUpdates,
+  );
+  const newestProjects = softAdjustNewestChronology(newestChronological, 4);
+
+  const windowDaysRaw = feedbackGathering[0]?.windowDays ?? null;
+  const feedbackWindowDays: 30 | 90 | null =
+    windowDaysRaw === 30 || windowDaysRaw === 90 ? windowDaysRaw : null;
+
+  return {
+    feedbackGathering,
+    meaningfulUpdates,
+    usageRelations,
+    announcements: input.announcements.slice(0, 5),
+    newestProjects,
+    meta: { feedbackWindowDays },
+  };
+}
+
 export async function fetchPlayerIaHome(
   supabase: SupabaseClient,
 ): Promise<PlayerIaHomePayload> {
   const [
-    reviewHighlights,
-    meaningfulUpdates,
-    usageRelations,
+    feedbackCandidates,
+    updateCandidates,
+    usageCandidates,
     announcements,
-    newestProjects,
+    newestCandidates,
   ] = await Promise.all([
-    fetchHomeReviewHighlights(supabase),
-    fetchHomeMeaningfulUpdates(supabase),
-    fetchHomeUsageRelations(supabase),
-    fetchPublicPlatformAnnouncements(supabase),
-    fetchHomeNewestProjects(supabase),
+    fetchHomeFeedbackGatheringProjects(supabase, 16),
+    fetchHomeMeaningfulUpdates(supabase, 16),
+    fetchHomeUsageRelations(supabase, 24),
+    fetchPublicPlatformAnnouncements(supabase, 5),
+    fetchHomeNewestProjects(supabase, 16),
   ]);
 
-  return {
-    reviewHighlights,
-    meaningfulUpdates,
-    usageRelations,
+  return assemblePlayerIaHomeShelves({
+    feedbackCandidates,
+    updateCandidates,
+    usageCandidates,
     announcements,
-    newestProjects,
-  };
+    newestCandidates,
+  });
 }
+
+/** Exported for unit-style verification without a live DB. */
+export { assemblePlayerIaHomeShelves };

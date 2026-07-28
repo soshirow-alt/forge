@@ -22,3 +22,21 @@ export function formatPlayerIaUpdateKind(kind: string): string {
   if (kind === "release") return "リリース";
   return "更新";
 }
+
+export function formatPlayerIaWindowLabel(days: number): string {
+  if (days === 30) return "直近30日";
+  if (days === 90) return "直近90日";
+  return `直近${days}日`;
+}
+
+export function formatPlayerIaVersionLabel(version: string | null | undefined): string | null {
+  const raw = (version ?? "").trim();
+  if (!raw) return null;
+  return raw.toLowerCase().startsWith("ver") ? raw : `ver ${raw}`;
+}
+
+export function truncatePlayerIaText(text: string, maxLen: number): string {
+  const collapsed = text.replace(/\s+/g, " ").trim();
+  if (collapsed.length <= maxLen) return collapsed;
+  return `${collapsed.slice(0, Math.max(0, maxLen - 1)).trimEnd()}…`;
+}

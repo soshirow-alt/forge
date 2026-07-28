@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { parseOgDataUrlImage } from "@/lib/og-data-url-image";
 import {
   MAX_PUBLIC_PROJECT_THUMBNAIL_BYTES,
@@ -5,6 +7,25 @@ import {
 } from "@/lib/public-project-thumbnail";
 import { isHttpOrHttpsUrl } from "@/lib/safe-http-thumbnail";
 import { createServiceRoleReadClient } from "@/lib/supabase/service-role";
+
+/** Staging/Preview seed-only local thumbnails under public/. Never used for Production real works. */
+const STAGING_ONLY_IMAGE_PREFIX = "/images/staging-only/";
+
+function stagingOnlyPublicImagePath(candidate: string): string | null {
+  const trimmed = candidate.trim();
+  if (!trimmed.startsWith(STAGING_ONLY_IMAGE_PREFIX)) return null;
+  if (trimmed.includes("..") || trimmed.includes("\\")) return null;
+  const relative = trimmed.replace(/^\//, "");
+  return path.join(process.cwd(), "public", relative);
+}
+
+function contentTypeForImagePath(filePath: string): string {
+  const ext = path.extname(filePath).toLowerCase();
+  if (ext === ".jpg" || ext === ".jpeg") return "image/jpeg";
+  if (ext === ".webp") return "image/webp";
+  if (ext === ".gif") return "image/gif";
+  return "image/png";
+}
 
 export type ResolvedPublicThumbnail =
   | { kind: "redirect"; url: string }
@@ -36,10 +57,39 @@ function validExternalImageUrl(candidate: string): string | null {
   }
 }
 
-function resolveCandidate(candidate: string): ResolvedPublicThumbnail {
+async function resolveStagingOnlyLocalImage(
+  candidate: string,
+): Promise<ResolvedPublicThumbnail | null> {
+  const absolute = stagingOnlyPublicImagePath(candidate);
+  if (!absolute) return null;
+  try {
+    const bytes = await readFile(absolute);
+    // Staging-only local assets may be slightly larger than upload-era HTTP caps.
+    const maxBytes = Math.max(MAX_PUBLIC_PROJECT_THUMBNAIL_BYTES, 3_000_000);
+    if (bytes.byteLength === 0 || bytes.byteLength > maxBytes) {
+      return { kind: "missing" };
+    }
+    return {
+      kind: "bytes",
+      contentType: contentTypeForImagePath(absolute),
+      bytes,
+    };
+  } catch {
+    return { kind: "missing" };
+  }
+}
+
+async function resolveCandidate(
+  candidate: string,
+): Promise<ResolvedPublicThumbnail> {
   const externalUrl = validExternalImageUrl(candidate);
   if (externalUrl) {
     return { kind: "redirect", url: externalUrl };
+  }
+
+  const stagingLocal = await resolveStagingOnlyLocalImage(candidate);
+  if (stagingLocal) {
+    return stagingLocal;
   }
 
   const parsed = parseOgDataUrlImage(
@@ -98,7 +148,7 @@ export async function resolvePublicProjectThumbnail(
     return { kind: "missing" };
   }
 
-  return resolveCandidate(candidate);
+  return await resolveCandidate(candidate);
 }
 
 export function publicThumbnailResponseHeaders(contentType: string): HeadersInit {

@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-07-29 — Preview Player IA ホームを v0 密度レイアウトへ刷新
+
+- **/home（Preview）** — フィードバックが集まっている作品（大1＋小3）／Forgeでできること（3CTA）／最近アップデート／Forgeでつながった作品（使用ペア）／お知らせ／新着の6段構成。カテゴリタブなし
+- **FB棚** — 作品単位の集計（投稿人数・件数・制作者返信・期間）。直近30日、不足時90日。レビュー本文・共感主役表示は廃止
+- **CTA** — 遊ぶ・試す→`/search`、掲載する→`/studio/submit`、制作に使う→`/search?usable_for_creation=1`。FBを見る→`/games/{id}?tab=voices`
+- **データ** — migration `083`（集計RPC＋更新要約／新着description）。棚内カテゴリ soft suppression・棚間重複抑制はアプリ層
+- **Staging表示** — `public/images/staging-only/player-ia/*` と `beautify-player-ia-seed-display.sql`（`[IA Seed]`表示除去・画像割当・noImage2件維持）
+- **維持** — PlayerShell／Production従来ホーム／Production IA API 404／main 未変更
+
 ## 2026-07-26 — Player IA: ゲストのみの作品で公開FB一覧が空になる不具合を修正
 
 - **原因** — `public-feedback-cards` の `version=all`（デフォルト）が登録FB版だけを列挙し、ゲストFBのみの ver を落とす

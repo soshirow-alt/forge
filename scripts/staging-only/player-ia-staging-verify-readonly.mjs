@@ -170,6 +170,7 @@ async function main() {
   // Home RPCs
   for (const [name, args] of [
     ["get_home_newest_projects", { p_limit: 20, p_category: null }],
+    ["get_home_feedback_gathering_projects", { p_limit: 16 }],
     ["get_home_review_highlights", { p_limit: 10 }],
     ["get_home_meaningful_updates", { p_limit: 10 }],
   ]) {
