@@ -4,9 +4,12 @@
 --
 -- Adds:
 --   get_home_feedback_gathering_projects — project-level FB aggregation (30d → 90d fallback)
---   get_home_meaningful_updates — REPLACE to include summary / version / label
---   get_home_newest_projects — REPLACE to include description
+--   get_home_meaningful_updates — DROP+CREATE to include summary / version / label
+--   get_home_newest_projects — DROP+CREATE to include description
 -- Keeps get_home_review_highlights (legacy) untouched.
+--
+-- 42P13 note: Postgres cannot CREATE OR REPLACE a function when OUT / RETURNS TABLE
+-- columns change. Existing 080 signatures must be DROPped first (exact arg types only).
 
 BEGIN;
 
@@ -238,7 +241,10 @@ GRANT EXECUTE ON FUNCTION public.get_home_feedback_gathering_projects(integer)
 
 -- ---------------------------------------------------------------------------
 -- B. Meaningful updates — add summary / version / label (same event rules)
+-- 080 OUT columns differ (no update_label / update_summary / published_version).
 -- ---------------------------------------------------------------------------
+DROP FUNCTION IF EXISTS public.get_home_meaningful_updates(integer);
+
 CREATE OR REPLACE FUNCTION public.get_home_meaningful_updates(
   p_limit integer DEFAULT 16
 )
@@ -324,7 +330,10 @@ GRANT EXECUTE ON FUNCTION public.get_home_meaningful_updates(integer)
 
 -- ---------------------------------------------------------------------------
 -- C. Newest — include description for short overview cards
+-- 080 OUT columns differ (no description).
 -- ---------------------------------------------------------------------------
+DROP FUNCTION IF EXISTS public.get_home_newest_projects(integer, text);
+
 CREATE OR REPLACE FUNCTION public.get_home_newest_projects(
   p_limit integer DEFAULT 16,
   p_category text DEFAULT NULL

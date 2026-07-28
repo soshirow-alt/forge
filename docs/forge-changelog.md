@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-07-29 — migration 083: RETURNS TABLE 変更前に DROP FUNCTION を追加
+
+- **原因** — Postgres は OUT／RETURNS TABLE 列が変わると `CREATE OR REPLACE` 不可（42P13）
+- **修正** — `get_home_meaningful_updates(integer)` と `get_home_newest_projects(integer, text)` を CREATE 前に DROP。新RPC `get_home_feedback_gathering_projects` は新規のため DROP 不要
+- **Staging** — 初回実行はトランザクション失敗で未適用。オーナーが修正済み 083 を再実行。Production / main 未変更
+
 ## 2026-07-29 — Preview Player IA ホームを v0 密度レイアウトへ刷新
 
 - **/home（Preview）** — フィードバックが集まっている作品（大1＋小3）／Forgeでできること（3CTA）／最近アップデート／Forgeでつながった作品（使用ペア）／お知らせ／新着の6段構成。カテゴリタブなし
