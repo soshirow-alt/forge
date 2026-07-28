@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-07-29 — SQL手渡しゲート: audit GROUP BY修正＋ローカル全文実行必須
+
+- **再発** — audit の `GROUP BY 1` が定数 `section` を指し `coalesce(category,'game')` と不一致（42803）。083/beautify に続く3連続の未検証SQL手渡し
+- **修正** — `GROUP BY coalesce(category, 'game')`。PGlite ローカルゲートで audit/083/beautify 全文を初回・再実行まで完走確認
+- **恒久** — `supabase-sql-safety` に「オーナー提出前の全文実DB実行必須／未検証は停止」を追加。`npm run verify:player-ia-home-sql-gate`
+- **非実施** — Staging/Production へはこのターン未適用。main 未変更
+
 ## 2026-07-29 — Staging beautify: immutable devlog 更新を除去＋SQL安全ルール恒久化
 
 - **原因** — beautify が公開済み `project_devlogs.content` を UPDATE → `enforce_devlog_immutable_body`（011）で失敗。ファイルは BEGIN/COMMIT 付きのため、単一トランザクション実行なら先行 UPDATE は rollback。部分適用の有無は監査SQLで実状態確認

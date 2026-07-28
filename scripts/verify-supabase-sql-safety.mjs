@@ -125,6 +125,47 @@ for (const file of stagingSql) {
   ) {
     failures.push(`${name}: UPDATE without WHERE`);
   }
+
+  // Audit / read-only SQL must stay read-only
+  if (/^audit-/i.test(base) || /READ-ONLY audit/i.test(raw)) {
+    if (
+      /\b(INSERT|UPDATE|DELETE|MERGE|TRUNCATE|ALTER\s+TABLE|DROP\s+TABLE|CREATE\s+TABLE)\b/i.test(
+        body,
+      )
+    ) {
+      failures.push(`${name}: audit/read-only SQL must not contain write/DDL`);
+    }
+  }
+
+  // High-confidence GROUP BY mistake in audit-style selects:
+  // SELECT '<section>', coalesce(category, ...) ... GROUP BY 1
+  // (positional 1 is the constant, not the coalesce expression)
+  if (
+    /select\s+'[^']+'\s+as\s+\w+\s*,\s*[\s\S]{0,120}?coalesce\s*\(\s*category\s*,/i.test(
+      body,
+    ) &&
+    /group\s+by\s+1\b/i.test(body)
+  ) {
+    failures.push(
+      `${name}: section-constant SELECT + coalesce(category) with GROUP BY 1 is invalid`,
+    );
+  }
+
+  // UNION ALL column-count mismatch (very rough: count top-level commas in first two SELECT lists)
+  const unionMatch = body.match(
+    /select\s+([\s\S]+?)\s+union\s+all\s+select\s+([\s\S]+?)(?:\s+union\s+all|\s+from|\s+where|\s+order|\s*;)/i,
+  );
+  if (unionMatch) {
+    const countCols = (list) =>
+      list.split(",").filter((part) => part.trim().length > 0).length;
+    const left = countCols(unionMatch[1]);
+    const right = countCols(unionMatch[2]);
+    if (left !== right && left > 0 && right > 0) {
+      warnings.push(
+        `${name}: possible UNION ALL column-count mismatch (${left} vs ${right}) — confirm manually`,
+      );
+    }
+  }
 }
 
 // 083 / home v0 OUT-change DROP + GRANT heuristic

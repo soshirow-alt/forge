@@ -37,7 +37,8 @@
     "verify:home-discovery-selection": "npx --yes tsx scripts/verify-home-discovery-selection.ts",
     "check:supabase-connection": "node scripts/check-supabase-connection-target.mjs",
     "verify:supabase-write-guard": "npx --yes tsx scripts/verify-supabase-write-guard.ts",
-    "verify:supabase-sql-safety": "node scripts/verify-supabase-sql-safety.mjs"
+    "verify:supabase-sql-safety": "node scripts/verify-supabase-sql-safety.mjs",
+    "verify:player-ia-home-sql-gate": "node scripts/staging-only/local-sql-gate-player-ia-home.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
@@ -50,6 +51,7 @@
     "sharp": "^0.35.3"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.4",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

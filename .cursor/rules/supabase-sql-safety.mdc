@@ -56,8 +56,23 @@ Do not invent columns, cast across uuid/text carelessly, or assume `CREATE OR RE
 - Confirm failure leaves **no partial apply** (transaction or explicit abort).
 - Report target rows + expected counts before asking the owner to run SQL.
 - Prefer a **read-only preflight / audit SQL** alongside write SQL.
+- Explicitly check **GROUP BY** vs SELECT expressions (including `coalesce(...)`), **UNION** column counts/types, and **function signatures**.
 
-## E. Production
+## E. Owner SQL handoff gate (mandatory)
+
+SQL that the owner will paste into Supabase SQL Editor (Staging or Production) is subject to this gate:
+
+1. **Full-file execution success on a real Postgres-equivalent DB is required before handoff.**
+2. Static verify alone is **not** enough to request owner execution.
+3. If no local/real DB harness is available, **stop** and report **未検証** — do **not** ask the owner to run the SQL.
+4. Run **every statement in the file as one batch** (not a cherry-picked subset marked PASS).
+5. **Read-only audit/preflight SQL has the same execution requirement** as write SQL.
+6. Never use the owner as a SQL debugger for Cursor-authored SQL.
+
+Local harness for the Player IA home trio:  
+`node scripts/staging-only/local-sql-gate-player-ia-home.mjs`
+
+## F. Production
 
 - Production Supabase write: **owner explicit approval + manual Dashboard (or equivalent)** only.
 - Never auto-apply Production from Preview/Staging work.
@@ -69,3 +84,4 @@ Do not invent columns, cast across uuid/text carelessly, or assume `CREATE OR RE
 
 - Staging vs Production boundaries: `.cursor/rules/stall-detection-resume.mdc`, `docs/cursor-allow-vs-forge-go.md`
 - Static checks: `npm run verify:supabase-sql-safety`
+- Local execution gate (Player IA home): `npm run verify:player-ia-home-sql-gate`

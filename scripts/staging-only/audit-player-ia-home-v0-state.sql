@@ -46,7 +46,7 @@ WHERE n.nspname = 'public'
     'get_home_newest_projects',
     'get_home_review_highlights'
   )
-ORDER BY p.proname, 2;
+ORDER BY p.proname, pg_get_function_identity_arguments(p.oid);
 
 -- ---------------------------------------------------------------------------
 -- 2. Seed project inventory (expect 40 / 8 per category)
@@ -83,8 +83,8 @@ SELECT
   count(*) AS n
 FROM public.projects
 WHERE id::text LIKE 'eeeeeeee-eeee-4eee-8eee-%'
-GROUP BY 1
-ORDER BY 1;
+GROUP BY coalesce(category, 'game')
+ORDER BY coalesce(category, 'game');
 
 -- ---------------------------------------------------------------------------
 -- 3. Sample seed titles + thumbnails (detect partial beautify)
