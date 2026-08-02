@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-08-03 — Player IA Staging beautify: thumbnail_urls NOT NULL 整合＋gate強化
+
+- **修正** — beautify の no-image を `thumbnail_url NULL` + `thumbnail_urls='{}'` に（実 schema 035 の NOT NULL とアプリ no-image 判定に合わせる。旧 `thumbnail_urls=NULL` は Staging で失敗する）
+- **強化** — announcement の Staging 専用表示文（published 6 / draft 2 維持）、thumb 整合 assert、audit の expected/actual + PASS/FAIL、PGlite fixture の inventory 件数と行動アサート
+- **非実施** — Staging/Production への beautify 適用なし。Home UI 変更なし。main 未変更
+
 ## 2026-08-03 — Codex 独立レビュー基盤: attempt marker / template redaction / PS5.1 CLI 契約
 
 - **運用** — Codex 起動で round を消費する attempt marker（`started` / `reviewed` / `blocked`）。失敗・invalid は formal review にせず task 終端。完成 prompt 全体を redaction。公式呼出は PS 5.1 の call operator + `-VerifyLog @(...)` と必須 40 文字 `-BaseSha`

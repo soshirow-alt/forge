@@ -33,6 +33,9 @@ DECLARE
   v_prefix_announcements integer;
   v_thumb_need integer;
   v_no_image_null integer;
+  v_ann_n integer;
+  v_ann_pub integer;
+  v_ann_draft integer;
 BEGIN
   -- Staging hard-stop: Smoke A is Staging fixture; Production must not match this path.
   SELECT EXISTS (
@@ -73,7 +76,7 @@ BEGIN
     FROM public.projects
     WHERE id::text LIKE 'eeeeeeee-eeee-4eee-8eee-%'
       AND 'forge-ia-seed-v1' = ANY (coalesce(tags, '{}'::text[]))
-    GROUP BY 1
+    GROUP BY coalesce(category, 'game')
   ) c
   WHERE c.n <> 8;
 
@@ -162,9 +165,32 @@ BEGIN
       v_thumb_need;
   END IF;
 
+  SELECT count(*)::integer INTO v_ann_n
+  FROM public.platform_announcements
+  WHERE id::text LIKE 'aaaaaaaa-aaaa-4aaa-8aaa-%';
+
+  IF v_ann_n <> 8 THEN
+    RAISE EXCEPTION
+      'ABORT beautify-player-ia-seed-display: expected 8 seed announcements, got %',
+      v_ann_n;
+  END IF;
+
+  SELECT
+    count(*) FILTER (WHERE status = 'published')::integer,
+    count(*) FILTER (WHERE status = 'draft')::integer
+  INTO v_ann_pub, v_ann_draft
+  FROM public.platform_announcements
+  WHERE id::text LIKE 'aaaaaaaa-aaaa-4aaa-8aaa-%';
+
+  IF v_ann_pub <> 6 OR v_ann_draft <> 2 THEN
+    RAISE EXCEPTION
+      'ABORT beautify-player-ia-seed-display: announcements must be published=6 draft=2 (got %/%)',
+      v_ann_pub, v_ann_draft;
+  END IF;
+
   RAISE NOTICE
-    'beautify preflight OK: seed=% prefix_projects=% prefix_announcements=%',
-    v_seed_n, v_prefix_projects, v_prefix_announcements;
+    'beautify preflight OK: seed=% prefix_projects=% prefix_announcements=% ann=%/%',
+    v_seed_n, v_prefix_projects, v_prefix_announcements, v_ann_pub, v_ann_draft;
 END $$;
 
 -- ---------------------------------------------------------------------------
@@ -192,21 +218,70 @@ WHERE p.id::text LIKE 'eeeeeeee-eeee-4eee-8eee-%'
   );
 
 -- ---------------------------------------------------------------------------
--- B. Strip "[IA Seed]" from seed announcement title/body
+-- B. Seed announcement display copy (status / published_at unchanged)
+--    Staging-only wording — not Production-facing ops copy.
 -- ---------------------------------------------------------------------------
+WITH ann_copy (announcement_id, title, body) AS (
+  VALUES
+    (
+      'aaaaaaaa-aaaa-4aaa-8aaa-000000000001'::uuid,
+      'Preview用: Playerホーム棚の確認メモ',
+      'Staging限定のお知らせです。フィードバックが集まっている作品・最近アップデート・使用ペア棚の見た目確認用。Production向けの告知ではありません。'
+    ),
+    (
+      'aaaaaaaa-aaaa-4aaa-8aaa-000000000002'::uuid,
+      'カテゴリ8件ずつの表示密度を見る',
+      'game / audio / asset / dev-tool / service-app が各8件ある前提で、カード密度と省略を確認してください。'
+    ),
+    (
+      'aaaaaaaa-aaaa-4aaa-8aaa-000000000003'::uuid,
+      'サムネなし2件のフォールバック確認',
+      '意図的にサムネなしのseedが2件あります。プレースホルダ表示が崩れていないかだけ見てください。'
+    ),
+    (
+      'aaaaaaaa-aaaa-4aaa-8aaa-000000000004'::uuid,
+      '使用関係ペアの並びに注意',
+      'Forgeでつながった作品棚はseedのusage関係を使います。実ユーザー作品への影響はありません。'
+    ),
+    (
+      'aaaaaaaa-aaaa-4aaa-8aaa-000000000005'::uuid,
+      '新着・更新棚の並び確認',
+      'first_published_at と更新要約の見え方をStagingで確認するためのメモです。'
+    ),
+    (
+      'aaaaaaaa-aaaa-4aaa-8aaa-000000000006'::uuid,
+      'お知らせ一覧の公開6件サンプル',
+      'published 6件のうちの1件です。draft 2件は公開一覧に出ない想定です。'
+    ),
+    (
+      'aaaaaaaa-aaaa-4aaa-8aaa-000000000007'::uuid,
+      '（draft）下書きお知らせA',
+      'Staging draft。公開一覧・ホームには出さない想定の確認用です。'
+    ),
+    (
+      'aaaaaaaa-aaaa-4aaa-8aaa-000000000008'::uuid,
+      '（draft）下書きお知らせB',
+      'Staging draft。published/draft件数（6/2）を崩さないための確認用です。'
+    )
+)
 UPDATE public.platform_announcements a
 SET
-  title = regexp_replace(a.title, '^\[IA Seed\]\s*', ''),
-  body = regexp_replace(a.body, '^\[IA Seed\]\s*', ''),
+  title = c.title,
+  body = c.body,
   updated_at = now()
-WHERE a.id::text LIKE 'aaaaaaaa-aaaa-4aaa-8aaa-%'
+FROM ann_copy c
+WHERE a.id = c.announcement_id
+  AND a.id::text LIKE 'aaaaaaaa-aaaa-4aaa-8aaa-%'
   AND (
-    a.title LIKE '[IA Seed]%'
-    OR a.body LIKE '[IA Seed]%'
+    a.title IS DISTINCT FROM c.title
+    OR a.body IS DISTINCT FROM c.body
   );
 
 -- ---------------------------------------------------------------------------
--- C. Assign Staging-only local thumbnails (38 projects; keep 2 noImage NULL)
+-- C. Assign Staging-only local thumbnails (38 projects; keep 2 noImage)
+--    Real schema (035): thumbnail_urls text[] NOT NULL DEFAULT '{}'.
+--    App no-image = thumbnail_url IS NULL AND empty thumbnail_urls (see lib/project-thumbnails.ts).
+--    Never set thumbnail_urls = NULL (violates NOT NULL on Staging/Production).
 -- ---------------------------------------------------------------------------
 WITH assignments (project_id, image_path) AS (
   VALUES
@@ -259,13 +334,13 @@ WHERE p.id = a.project_id
   AND 'forge-ia-seed-v1' = ANY (coalesce(p.tags, '{}'::text[]))
   AND (
     p.thumbnail_url IS DISTINCT FROM a.image_path
-    OR coalesce(p.thumbnail_urls, '{}'::text[]) IS DISTINCT FROM ARRAY[a.image_path]::text[]
+    OR p.thumbnail_urls IS DISTINCT FROM ARRAY[a.image_path]::text[]
   );
 
 UPDATE public.projects
 SET
   thumbnail_url = NULL,
-  thumbnail_urls = NULL,
+  thumbnail_urls = '{}'::text[],
   updated_at = now()
 WHERE id IN (
   'eeeeeeee-eeee-4eee-8eee-000000000004'::uuid,
@@ -274,7 +349,7 @@ WHERE id IN (
 AND 'forge-ia-seed-v1' = ANY (coalesce(tags, '{}'::text[]))
 AND (
   thumbnail_url IS NOT NULL
-  OR thumbnail_urls IS NOT NULL
+  OR thumbnail_urls IS DISTINCT FROM '{}'::text[]
 );
 
 -- ---------------------------------------------------------------------------
@@ -291,7 +366,11 @@ DECLARE
   v_owner_changed integer;
   v_ann_prefix_left integer;
   v_ann_n integer;
+  v_ann_pub integer;
+  v_ann_draft integer;
   v_devlog_touched integer;
+  v_thumb_mismatch integer;
+  v_non_seed_thumb integer;
 BEGIN
   SELECT count(*)::integer INTO v_seed_n
   FROM public.projects
@@ -309,7 +388,7 @@ BEGIN
     FROM public.projects
     WHERE id::text LIKE 'eeeeeeee-eeee-4eee-8eee-%'
       AND 'forge-ia-seed-v1' = ANY (coalesce(tags, '{}'::text[]))
-    GROUP BY 1
+    GROUP BY coalesce(category, 'game')
   ) c
   WHERE c.n <> 8;
 
@@ -336,11 +415,32 @@ BEGIN
   SELECT count(*)::integer INTO v_thumbs
   FROM public.projects
   WHERE id::text LIKE 'eeeeeeee-eeee-4eee-8eee-%'
-    AND thumbnail_url LIKE '/images/staging-only/player-ia/%';
+    AND thumbnail_url LIKE '/images/staging-only/player-ia/%'
+    AND thumbnail_urls = ARRAY[thumbnail_url]::text[];
 
   IF v_thumbs <> 38 THEN
     RAISE EXCEPTION
-      'ABORT beautify post: staging-only thumbs=% (expected 38)', v_thumbs;
+      'ABORT beautify post: staging-only thumbs aligned=% (expected 38)', v_thumbs;
+  END IF;
+
+  SELECT count(*)::integer INTO v_thumb_mismatch
+  FROM public.projects
+  WHERE id::text LIKE 'eeeeeeee-eeee-4eee-8eee-%'
+    AND 'forge-ia-seed-v1' = ANY (coalesce(tags, '{}'::text[]))
+    AND id NOT IN (
+      'eeeeeeee-eeee-4eee-8eee-000000000004'::uuid,
+      'eeeeeeee-eeee-4eee-8eee-000000000021'::uuid
+    )
+    AND (
+      thumbnail_url IS NULL
+      OR cardinality(thumbnail_urls) <> 1
+      OR thumbnail_urls[1] IS DISTINCT FROM thumbnail_url
+    );
+
+  IF v_thumb_mismatch <> 0 THEN
+    RAISE EXCEPTION
+      'ABORT beautify post: thumbnail_url/thumbnail_urls mismatch rows=%',
+      v_thumb_mismatch;
   END IF;
 
   SELECT count(*)::integer INTO v_no_image_ok
@@ -350,10 +450,11 @@ BEGIN
     'eeeeeeee-eeee-4eee-8eee-000000000021'::uuid
   )
   AND thumbnail_url IS NULL
-  AND thumbnail_urls IS NULL;
+  AND thumbnail_urls = '{}'::text[];
 
   IF v_no_image_ok <> 2 THEN
-    RAISE EXCEPTION 'ABORT beautify post: noImage edge cases not NULL';
+    RAISE EXCEPTION
+      'ABORT beautify post: noImage edges must be thumbnail_url NULL and thumbnail_urls={}';
   END IF;
 
   SELECT count(*)::integer INTO v_tag_ok
@@ -375,12 +476,37 @@ BEGIN
     RAISE EXCEPTION 'ABORT beautify post: seed owner_id became NULL';
   END IF;
 
+  -- Non-seed projects must not receive staging-only player-ia thumbs from this script
+  SELECT count(*)::integer INTO v_non_seed_thumb
+  FROM public.projects
+  WHERE id::text NOT LIKE 'eeeeeeee-eeee-4eee-8eee-%'
+    AND thumbnail_url LIKE '/images/staging-only/player-ia/%';
+
+  IF v_non_seed_thumb <> 0 THEN
+    RAISE EXCEPTION
+      'ABORT beautify post: non-seed projects unexpectedly have staging-only thumbs=%',
+      v_non_seed_thumb;
+  END IF;
+
   SELECT count(*)::integer INTO v_ann_n
   FROM public.platform_announcements
   WHERE id::text LIKE 'aaaaaaaa-aaaa-4aaa-8aaa-%';
 
   IF v_ann_n <> 8 THEN
     RAISE EXCEPTION 'ABORT beautify post: announcement seed count % (expected 8)', v_ann_n;
+  END IF;
+
+  SELECT
+    count(*) FILTER (WHERE status = 'published')::integer,
+    count(*) FILTER (WHERE status = 'draft')::integer
+  INTO v_ann_pub, v_ann_draft
+  FROM public.platform_announcements
+  WHERE id::text LIKE 'aaaaaaaa-aaaa-4aaa-8aaa-%';
+
+  IF v_ann_pub <> 6 OR v_ann_draft <> 2 THEN
+    RAISE EXCEPTION
+      'ABORT beautify post: announcements published/draft must stay 6/2 (got %/%)',
+      v_ann_pub, v_ann_draft;
   END IF;
 
   SELECT count(*)::integer INTO v_ann_prefix_left
@@ -438,6 +564,7 @@ SELECT
       'eeeeeeee-eeee-4eee-8eee-000000000021'::uuid
     )
     AND thumbnail_url IS NULL
+    AND thumbnail_urls = '{}'::text[]
   ) AS no_image_edge_count,
   (
     SELECT count(*) FROM public.platform_announcements

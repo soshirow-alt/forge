@@ -134,6 +134,34 @@ auth 省略でも確認できる:
 
 Smoke A の `thumbnail_url` 再利用、または `NULL`。Storage 書き込みなし（必要なら別手順）。
 
+Staging Home 目視用の表示整えは **別 SQL**（seed 本体ではない）:
+
+| ファイル | 役割 |
+|---|---|
+| `beautify-player-ia-seed-display.sql` | Staging 専用。seed の title / announcement 表示文 / thumbnail を整え。**Production 禁止**。Cursor/Codex は適用しない（オーナーが SQL Editor で手動） |
+| `audit-player-ia-home-v0-state.sql` | read-only 監査（件数・thumb 整合・immutable 未更新・RPC 存在） |
+| `local-sql-gate-player-ia-home.mjs` | PGlite ローカル全文ゲート（`npm run verify:player-ia-home-sql-gate`） |
+
+### thumbnail / no-image ルール（実 schema 035 + アプリ）
+
+- 画像あり: `thumbnail_url` と `thumbnail_urls[1]` を一致。path は `/images/staging-only/player-ia/*` のみ
+- no-image 2件（`…0004` / `…0021`）: `thumbnail_url IS NULL` かつ `thumbnail_urls = '{}'`（**NULL 配列は不可** — `thumbnail_urls text[] NOT NULL DEFAULT '{}'`）
+- published devlog / release note は更新しない（immutable）
+
+### PGlite gate の保証範囲
+
+- 保証する: 083 DROP+CREATE、beautify 初回/再実行、audit 全文、件数 inventory、thumb 整合、Production guard、不完全 seed の fail-closed、rollback、immutable 非更新
+- 保証しない: 実 Staging RLS / Storage / auth / ライブ schema 差分のない完全一致。**PGlite PASS ≠ Staging 適用成功の保証**
+
+### オーナー手動実行順（Staging SQL Editor）
+
+1. Dashboard ref が `vuqpwvjvgyxffmvpfrxo` であること
+2. `beautify-player-ia-seed-display.sql` 全文
+3. 成功したら `audit-player-ia-home-v0-state.sql` 全文
+4. audit の PASS / NOT_APPLIED / FAIL を確認。失敗したら次の SQL を実行しない
+5. cleanup SQL はこの段階では実行しない
+6. Production (`bpnisgzxuwdxelhnduuf`) では絶対に実行しない
+
 ---
 
 ## Runbook
