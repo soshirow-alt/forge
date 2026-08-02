@@ -3,9 +3,9 @@
   // Docs: https://cursor.com/docs/reference/sandbox.md
   //
   // type = workspace_readwrite only. Never insecure_none.
-  // Network reachability ≠ write permission:
-  // - Staging (vuqpwvjvgyxffmvpfrxo): writes allowed by Forge ops + autoRun
-  // - Production (bpnisgzxuwdxelhnduuf): read-only ops only; writes need owner confirmation
+  // Network reachability ≠ write permission (2026-07-30 policy):
+  // - Staging (vuqpwvjvgyxffmvpfrxo): read-only ops only; DB/Storage writes are owner-manual
+  // - Production (bpnisgzxuwdxelhnduuf): read-only ops only; DB/Storage writes are owner-manual
   // Private IPs (127.x) may be blocked by Cursor SSRF inside sandbox;
   // localhost smoke should use terminalAllowlist curl (often outside sandbox).
 

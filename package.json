@@ -38,7 +38,11 @@
     "check:supabase-connection": "node scripts/check-supabase-connection-target.mjs",
     "verify:supabase-write-guard": "npx --yes tsx scripts/verify-supabase-write-guard.ts",
     "verify:supabase-sql-safety": "node scripts/verify-supabase-sql-safety.mjs",
-    "verify:player-ia-home-sql-gate": "node scripts/staging-only/local-sql-gate-player-ia-home.mjs"
+    "verify:player-ia-home-sql-gate": "node scripts/staging-only/local-sql-gate-player-ia-home.mjs",
+    "verify:codex-available": "node scripts/agents/check-codex-available.mjs",
+    "verify:codex-review-json": "node scripts/agents/validate-codex-review.mjs",
+    "verify:codex-review-selftest": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/agents/selftest-review-loop.ps1",
+    "review:codex": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/agents/run-codex-review.ps1"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

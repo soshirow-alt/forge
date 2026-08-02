@@ -4,6 +4,24 @@
 
 ---
 
+## 2026-08-03 — Codex 独立レビュー基盤: attempt marker / template redaction / PS5.1 CLI 契約
+
+- **運用** — Codex 起動で round を消費する attempt marker（`started` / `reviewed` / `blocked`）。失敗・invalid は formal review にせず task 終端。完成 prompt 全体を redaction。公式呼出は PS 5.1 の call operator + `-VerifyLog @(...)` と必須 40 文字 `-BaseSha`
+- **非実施** — プロダクト機能変更なし。Staging / Production DB 未操作。main 未変更
+
+## 2026-08-02 — Codex 独立レビュー: 実用向けに簡素な gate へ置き換え
+
+- **運用** — Cursor 実装後に Codex CLI（read-only）で独立レビューし、PASS まで commit / push しない薄い基盤を導入（最大 3 round、例外承認なし）
+- **非実施** — プロダクト機能変更なし。Staging / Production DB 未操作。main 未変更
+
+## 2026-07-30 — Cursor 実装 → Codex 独立レビューの標準ループを導入
+
+- **恒久運用** — Cursor の実装は Codex CLI（別エージェント・read-only）のレビューで `PASS` を得るまで commit / push しない。`FAIL_FIXABLE` は Cursor が修正して再レビュー（最大 3 round）。`NEEDS_OWNER_DECISION` / `BLOCKED` は停止
+- **基盤** — `scripts/agents/`（レビュー契約・PowerShell runner・JSON schema・validator・CLI 事前確認）、`.agent/`（task / review / prompt のローカル証跡。中身は非 commit）、`.cursor/rules/codex-independent-review.mdc`（alwaysApply）、`docs/agent-context/cursor-codex-review-flow.md`
+- **npm scripts** — `verify:codex-available` / `review:codex` / `verify:codex-review-json` / `verify:codex-review-selftest`（Codex を呼ばない基盤受け入れテスト。件数は `npm run verify:codex-review-selftest` の出力 `cases:` を正とする）
+- **Supabase 境界の変更** — **Staging の DB / Storage write もオーナー手動**に統一（従来は Cursor 自律）。Cursor は SQL・実行順・影響範囲・確認 SQL の提示と、適用後の read-only 検証のみ。`AGENTS.md` / `forge.mdc` / `stall-detection-resume.mdc` / `supabase-sql-safety.mdc` / `permissions.json` を同一方針に揃えた
+- **非実施** — プロダクト機能の変更なし。Staging / Production DB 未接続・未変更。main 未変更
+
 ## 2026-07-29 — SQL手渡しゲート: audit GROUP BY修正＋ローカル全文実行必須
 
 - **再発** — audit の `GROUP BY 1` が定数 `section` を指し `coalesce(category,'game')` と不一致（42803）。083/beautify に続く3連続の未検証SQL手渡し

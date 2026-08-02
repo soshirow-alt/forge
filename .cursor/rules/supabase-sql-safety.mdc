@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Supabase SQL safety (Forge)
 
-Staging writes are allowed under Forge Staging autonomy. **Production Supabase write** (migration / INSERT / UPDATE / DELETE / backfill / Storage) remains **owner-manual only**. This rule prevents signature/trigger/immutable mistakes before SQL is handed to the owner or applied on Staging.
+**Supabase write is owner-manual on both Staging and Production** (2026-07-30 owner policy): migration / INSERT / UPDATE / DELETE / backfill / Storage are applied by the owner, not by the agent. This rule prevents signature/trigger/immutable mistakes before SQL is handed to the owner.
 
 ## A. Required audit before authoring SQL
 
@@ -46,7 +46,7 @@ Do not invent columns, cast across uuid/text carelessly, or assume `CREATE OR RE
 - **Never** `DISABLE TRIGGER`, drop constraints for convenience, or use `session_replication_role` to bypass immutability.
 - **Never** UPDATE published / immutable bodies (e.g. published `project_devlogs.content` — trigger `project_devlogs_immutable_body` / `enforce_devlog_immutable_body` in `011_voice_adoptions.sql`). Prefer display-time use of project fields.
 - Do not mutate non-seed / Smoke / hero rows unless the owner explicitly scoped them.
-- Staging-only files must include a **Production hard-stop** (Staging fixture checks + explicit Production ref warning). Cursor must not apply Production writes.
+- Staging-only files must include a **Production hard-stop** (Staging fixture checks + explicit Production ref warning). Cursor must not apply writes to Production **or Staging** — both are owner-applied.
 
 ## D. Pre-apply verification
 
@@ -72,11 +72,11 @@ SQL that the owner will paste into Supabase SQL Editor (Staging or Production) i
 Local harness for the Player IA home trio:  
 `node scripts/staging-only/local-sql-gate-player-ia-home.mjs`
 
-## F. Production
+## F. Production（および Staging の write）
 
-- Production Supabase write: **owner explicit approval + manual Dashboard (or equivalent)** only.
+- Supabase write（Production **と Staging** の双方）: **owner explicit approval + manual Dashboard (or equivalent)** only.
 - Never auto-apply Production from Preview/Staging work.
-- Having `service_role` does **not** authorize Production writes from the agent.
+- Having `service_role` does **not** authorize writes from the agent, on either project.
 - `DROP` / `TRUNCATE` / broad `DELETE` / broad `UPDATE`: separate explicit owner approval.
 - Never disable triggers / RLS / constraints on Production.
 

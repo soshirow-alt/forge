@@ -3,11 +3,13 @@
   // Docs: https://cursor.com/docs/reference/permissions.md
   //
   // Owner chat instruction = scoped approval for that whole task.
-  // Do NOT re-ask commit / Preview push / Staging migration / main / Production
-  // when the owner already instructed that scope.
+  // Do NOT re-ask commit / Preview push / main / Production when the owner already
+  // instructed that scope.
   //
   // Run Mode: owner prefers full-auto for Preview + instructed Production code
-  // release. Production Supabase writes remain owner-manual (see block_instructions).
+  // release. Supabase writes are owner-manual on BOTH Staging and Production
+  // (2026-07-30 policy), and implementations pass Codex independent review before
+  // commit (see block_instructions).
   // Do NOT add ultra-broad prefixes: "git", "npm", "npx", "curl", "rm".
 
   "terminalAllowlist": [
@@ -69,6 +71,7 @@
     "npm test",
     "npm run verify:",
     "npm run check:",
+    "npm run review:codex",
     "npm run dev",
     "npm run start",
     "npx tsc --noEmit",
@@ -81,6 +84,12 @@
     "npx tsx .tmp-",
     "node scripts/",
     "node .tmp-",
+
+    "codex --version",
+    "codex login status",
+    "codex exec --sandbox read-only",
+    "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/agents/run-codex-review.ps1",
+    "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/agents/selftest-review-loop.ps1",
 
     "Remove-Item .tmp-",
     "Remove-Item -Force .tmp-",
@@ -128,16 +137,17 @@
 
   "autoRun": {
     "allow_instructions": [
-      "Treat the owner's explicit chat instruction as approval for the stated scope. Do not re-ask commit, Preview push, Staging migration, code Production deploy, or smoke inside that scope.",
+      "Treat the owner's explicit chat instruction as approval for the stated scope. Do not re-ask commit, Preview push, code Production deploy, or smoke inside that scope.",
       "Phrases like 本番反映して / リリースして (and equivalents) are one-shot approval for: main reflect+push, Vercel Production deploy/promote, Production smoke, changelog, and main↔preview sync — no per-step confirmation.",
-      "Always allow Staging Supabase (vuqpwvjvgyxffmvpfrxo) migration, CRUD, seed, backfill, RPC, Storage, service-role verification, and smoke/cleanup without asking.",
+      "Allow Staging Supabase (vuqpwvjvgyxffmvpfrxo) read-only SELECT / counts / read-only RPC anytime. Staging DB and Storage WRITES are owner-manual since 2026-07-30 — see block_instructions.",
       "For ordinary fixes: investigation, edits, verify/build/test, commit, preview/landing-01 push, Preview deploy, Preview smoke without asking.",
       "Allow Production Supabase (bpnisgzxuwdxelhnduuf) read-only SELECT/REST GET/read-only RPC/counts anytime.",
       "Owner prefers full-auto Run Mode for Preview and instructed Production code release. Prefer execution paths that avoid extra ALLOW cards."
     ],
     "block_instructions": [
-      "Do NOT execute Production Supabase migration, INSERT, UPDATE, DELETE, backfill, or Storage writes yourself. Those are owner-manual even under full-auto Run Mode. Provide SQL, order, impact, and verification queries instead; after the owner applies, run read-only verify and smoke.",
-      "Stop and ask only for: unrelated uncommitted diffs mixing into Production release; inability to identify target env/rows or missing Staging apply credentials; unexpectedly large mass changes; unsolicited force push/history rewrite/broad delete; or displaying raw secrets/JWTs/service-role/.env contents. Also stop if data changes beyond scope are required or a newly discovered major risk appears.",
+      "Do NOT execute Supabase migration, INSERT, UPDATE, DELETE, backfill, or Storage writes yourself on EITHER Production (bpnisgzxuwdxelhnduuf) or Staging (vuqpwvjvgyxffmvpfrxo). Both are owner-manual (2026-07-30 policy) even under full-auto Run Mode. Provide SQL, order, impact, and verification queries instead; after the owner applies, run read-only verify and smoke.",
+      "Do NOT commit or push an implementation before Codex independent review returns PASS (npm run review:codex). Max 3 rounds; NEEDS_OWNER_DECISION and BLOCKED stop the task.",
+      "Stop and ask only for: unrelated uncommitted diffs mixing into Production release; inability to identify the target environment or rows; unexpectedly large mass changes; unsolicited force push/history rewrite/broad delete; or displaying raw secrets/JWTs/service-role/.env contents. Also stop if data changes beyond scope are required or a newly discovered major risk appears.",
       "Block force push, git reset --hard, and git clean unless the owner explicitly requested that irreversible action.",
       "Block printing or copying secret values into chat or terminal output.",
       "If Production code release was NOT instructed (no 本番反映して / リリースして / equivalent), do not start main push or vercel --prod after Preview."

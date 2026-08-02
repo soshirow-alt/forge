@@ -203,8 +203,7 @@ preview/landing-01 で実装
 
 単発の `vercel deploy` unique URL だけ Ready でも **未完了**。alias 未追従時の復旧は `docs/vercel-preview-project.md`。`vercel alias set` で自動 git hostname を固定しない。
 
-- Staging Supabase は常時自律
-- Production Supabase write はオーナー Dashboard 手動（適用後 read-only 検証は Cursor）
+- Supabase write は **Staging / Production ともオーナー Dashboard 手動**（2026-07-30 方針。適用後 read-only 検証は Cursor）
 - 本番未指示のまま main / `--prod` を始めない
 - Run Mode はオーナーの full-auto 寄り。Production DB 境界は維持
 - 正本: `docs/cursor-allow-vs-forge-go.md`
@@ -249,12 +248,13 @@ git push origin preview/landing-01
 **機能タスク単位**で、次まで **承認待ちなし** で進めてよい:
 
 ```text
-設計 → 実装 → build → Staging（常時自律）→ commit → Preview push/deploy/smoke
+設計 → 実装 → build → Codex 独立レビュー PASS → commit → Preview push/deploy/smoke
 ```
 
-- Staging DB write は常時自律。Production DB migration / INSERT / UPDATE / DELETE / backfill / Storage はオーナー手動（SQL 提示＋適用後 read-only 検証は Cursor）
+- Supabase DB / Storage write（migration / INSERT / UPDATE / DELETE / backfill）は **Staging / Production ともオーナー手動**（SQL 提示＋適用後 read-only 検証は Cursor）。2026-07-30 方針
+- 実装は **Codex 独立レビュー PASS** 前に commit / push しない（最大 3 round。`.cursor/rules/codex-independent-review.mdc`）
 - 「本番反映して」「リリースして」等 = Production **コード**一括（main/deploy/smoke/同期・工程再確認なし。§8.1）
-- Run Mode はオーナーの full-auto 寄り。Production DB write だけは手動境界
+- Run Mode はオーナーの full-auto 寄り。Supabase DB write（Staging / Production）だけは手動境界
 - 停止条件は `docs/cursor-allow-vs-forge-go.md` および §10.2
 - `■ 今すぐ私がやるべきこと`（サマリ）には **本当にオーナーしかできないことだけ** 書く。Cursor が実行できる内容は書かない
 

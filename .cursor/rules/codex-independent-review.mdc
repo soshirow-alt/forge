@@ -1,0 +1,79 @@
+---
+description: Codex CLI independent review gate — task file, review before commit, max 3 rounds
+alwaysApply: true
+---
+
+# Codex 独立レビュー（実装後の必須ゲート）
+
+Cursor が実装したコードは、**Codex CLI（別エージェント）の独立レビュー**を通してから commit / push する。
+Codex は実装者ではなく**レビュー専任**。read-only で動かし、コードを書かせない。
+
+正本フロー: `docs/agent-context/cursor-codex-review-flow.md`
+レビュー契約: `scripts/agents/codex-review-prompt.md`
+
+## 1. 実装開始時 — task file を保存
+
+実装に着手する前に、オーナー指示の全文を `.agent/tasks/<yyyy-MM-dd-HHmm>-<slug>.md` に保存する。
+
+含める: オーナーの目的 / 実装要件 / 禁止事項 / 対象 branch / Production・Staging 制約 / 完了条件 / Cursor が行った補足判断。
+
+`.agent/tasks/` `.agent/reviews/` `.agent/runtime/` の中身は **commit しない**（`.gitignore` 済み・ローカル証跡）。
+
+## 2. 実装後 — Codex レビューを実行
+
+typecheck / lint / build / 関連 verify を通してから、**Windows PowerShell 5.1** で公式呼出（call operator + 配列）:
+
+```powershell
+& .\scripts\agents\run-codex-review.ps1 `
+  -TaskFile .agent\tasks\<task>.md `
+  -BaseSha <40-char-sha> `
+  -VerifyNoteFile .agent\runtime\verify-note.txt `
+  -VerifyLog @('.agent\runtime\verify-tsc.log', '.agent\runtime\verify-build.log')
+```
+
+- Round 1 の `-BaseSha` は必須（40 hex）。symbolic / branch / short SHA は拒否
+- `-VerifyLog a,b` の comma-separated 単一文字列は使わない（分割されない）
+- Codex は `codex exec --sandbox read-only`。ファイル変更・DB 書き込みをさせない
+- Codex 起動前に `.agent/reviews/<task>-round-<n>.attempt.json` を `started` で記録
+- 出力は固定 JSON。formal 保存先は `.agent/reviews/<task>-round-<n>.json`（invalid raw は formal にしない）
+- exit code: `0` PASS / `10` FAIL_FIXABLE / `20` NEEDS_OWNER_DECISION / `30` BLOCKED / `40` dry run（attempt なし） / `2` usage
+- 正本フロー: `docs/agent-context/cursor-codex-review-flow.md`
+
+## 3. verdict の扱い
+
+| verdict | Cursor の行動 |
+|---|---|
+| `PASS` | commit / push へ進んでよい |
+| `FAIL_FIXABLE` | Cursor が修正 → 再検証 → 再レビュー（round+1） |
+| `NEEDS_OWNER_DECISION` | **勝手に解決しない**。停止してオーナーに判断材料を出す |
+| `BLOCKED` | 停止して報告。JSON 不正・timeout・Codex 実行不可も BLOCKED |
+
+- **最大 3 round**。3 round で PASS しなければ停止し、残課題をオーナーへ報告する
+- Round 4 以降は**常に BLOCKED**。owner 許可文・環境変数・hidden option で上限を増やせない
+- Codex 失敗 / invalid JSON / validator reject は attempt `blocked` で **その task を終端**（同じ task id でやり直さない。新 task を作る）
+- **PASS 前の commit / push は禁止**
+- **Codex を実行していない実装を「完了」と報告しない**
+- Codex CLI が無い / 認証切れ / 実行失敗 → **BLOCKED として停止**。レビュー無しで先に進まない
+- 本番 runner に InjectReviewJson / 人工 PASS 経路はない。Codex 未実行では formal PASS にならない
+
+## 4. Codex の指摘を鵜呑みにしない
+
+Codex は task 仕様の全文脈を持たない。指摘ごとに task file と実コードを照合する。
+
+- 妥当 → 修正する
+- 誤り / 仕様と矛盾 → **修正せず**、最終報告に「不採用の理由」を書く
+- 仕様変更が必要 → `NEEDS_OWNER_DECISION` 相当として停止する
+
+## 5. Supabase SQL
+
+- SQL を含む変更は**例外なく** Codex レビュー対象
+- Codex が PASS でも **SQL を自動適用しない**
+- Staging: `.cursor/rules/supabase-sql-safety.mdc` の gate（実 DB での全文実行）を満たしてから
+- Production: migration / INSERT / UPDATE / DELETE / backfill / Storage は**オーナー手動**。Cursor は SQL・実行順・影響範囲・確認 SQL を提示するだけ
+
+## 6. 最終報告に含める
+
+- 実行した round 数と各 round の verdict
+- 対応した findings / 不採用にした findings とその理由
+- 未解決の `owner_decisions`
+- review ログのパス（`.agent/reviews/...`）

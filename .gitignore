@@ -43,6 +43,14 @@ next-env.d.ts
 
 .vercel
 
+# Agent run logs (per-task evidence, local only — infra itself is committed)
+/.agent/tasks/*
+!/.agent/tasks/.gitkeep
+/.agent/reviews/*
+!/.agent/reviews/.gitkeep
+/.agent/runtime/*
+!/.agent/runtime/.gitkeep
+
 # Local audit / P0 temp artifacts (may contain Production secrets)
 .tmp-ogp-p0/
 .tmp-*.json

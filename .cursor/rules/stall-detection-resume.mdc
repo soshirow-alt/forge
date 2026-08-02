@@ -9,7 +9,7 @@ alwaysApply: true
 
 ## 0. オーナー指示 = 作業範囲の承認
 
-チャット上の明示指示を、その作業全体の承認として扱う。指示範囲内では commit / Preview push / Staging migration / smoke /（コードの）本番反映 の再確認をしない。
+チャット上の明示指示を、その作業全体の承認として扱う。指示範囲内では commit / Preview push / smoke /（コードの）本番反映 の再確認をしない。
 
 **「本番反映して」「リリースして」**（および同趣旨）= **一度の承認**で次を一括実行（工程再確認なし）:
 
@@ -23,9 +23,13 @@ alwaysApply: true
 
 ## 1. Supabase 境界
 
-### Staging（`vuqpwvjvgyxffmvpfrxo`）— 常時自律
+### Staging（`vuqpwvjvgyxffmvpfrxo`）— DB write はオーナー手動（2026-07-30 方針）
 
-migration / SELECT・INSERT・UPDATE・DELETE / seed・backfill / RPC / Storage / service role 検証 / テストデータ / smoke / 後片付け。再確認しない。
+**write（migration / INSERT / UPDATE / DELETE / seed / backfill / Storage）は Cursor が実行しない。** Production と同じく、SQL 一式・実行順・影響範囲・適用後の確認 SQL を提示し、オーナーが適用する。
+
+自律してよいのは **read-only**（SELECT / 件数 / 行特定 / RPC の read-only 呼び出し）と、オーナー適用後の read-only 検証・smoke。
+
+（2026-07-30 以前は「常時自律」だった。以後はこの節が優先する。）
 
 ### Production（`bpnisgzxuwdxelhnduuf`）— DB は原則オーナー手動
 
@@ -57,7 +61,7 @@ Production の read-only（SELECT / 件数 / 行特定）はいつでも可。
 ## 3. 停止条件（これだけ）
 
 1. 指示された変更以外の未commit差分が本番反映へ混ざる
-2. 対象環境や対象データを一意に特定できない（Staging 適用トークン／接続が無く進めない場合も含む）
+2. 対象環境や対象データを一意に特定できない
 3. 想定外の大量変更（UPDATE／DELETE／backfill 等）になる
 4. force push・履歴破壊・広範囲削除など、依頼されていない不可逆操作が必要
 5. secret の内容そのものを画面へ表示・共有する必要がある
@@ -70,4 +74,8 @@ Production の read-only（SELECT / 件数 / 行特定）はいつでも可。
 
 ## 5. Cursor ALLOW / Run Mode
 
-オーナーは **full-auto 寄り**の Run Mode を意図。Staging／Preview／チャットで指示済みのコード本番はカードを減らし自律実行。**Production DB write はオーナー手動のためエージェントから実行しない**。正本: `docs/cursor-allow-vs-forge-go.md`。
+オーナーは **full-auto 寄り**の Run Mode を意図。Preview／チャットで指示済みのコード本番はカードを減らし自律実行。**Production / Staging とも DB write はオーナー手動のためエージェントから実行しない**（2026-07-30 方針）。正本: `docs/cursor-allow-vs-forge-go.md`。
+
+## 6. Codex 独立レビュー
+
+実装後は Codex CLI の独立レビューで `PASS` を得てから commit / push する。詳細: `.cursor/rules/codex-independent-review.mdc`。
