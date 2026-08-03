@@ -105,9 +105,11 @@ export function GeneratedThumbnailPoster({
           >
             {genre || "Indie"}
           </span>
-          <span className="rounded-md border border-white/10 bg-black/30 px-2 py-1 text-[10px] font-medium text-white/70 backdrop-blur-sm">
-            {phase}
-          </span>
+          {phase.trim() ? (
+            <span className="rounded-md border border-white/10 bg-black/30 px-2 py-1 text-[10px] font-medium text-white/70 backdrop-blur-sm">
+              {phase.trim()}
+            </span>
+          ) : null}
         </div>
 
         <div>

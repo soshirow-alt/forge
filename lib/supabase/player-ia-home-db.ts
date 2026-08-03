@@ -7,6 +7,7 @@ import {
   selectUsagePairs,
 } from "@/lib/player-ia/home-shelf-selection";
 import { publicProjectThumbnailPath } from "@/lib/public-project-thumbnail";
+import { displayPlayerIaHomeSeedText } from "@/lib/player-ia/format";
 import {
   isProjectCategoryId,
   type ProjectCategoryId,
@@ -188,9 +189,12 @@ function mapFeedbackGathering(
   const projectId = asString(row.project_id);
   return {
     projectId,
-    title: asString(row.title),
+    title: displayPlayerIaHomeSeedText(projectId, asString(row.title)),
     category: normalizeCategory(row.category),
-    description: asString(row.description),
+    description: displayPlayerIaHomeSeedText(
+      projectId,
+      asString(row.description),
+    ),
     thumbnail: projectThumbnailPath(projectId, row.thumbnail_url),
     windowDays: asNumber(row.window_days),
     distinctAuthorCount: asNumber(row.distinct_author_count),
@@ -205,12 +209,15 @@ function mapMeaningfulUpdate(row: HomeMeaningfulUpdateRow): HomeMeaningfulUpdate
   const version = asNullableString(row.published_version);
   return {
     projectId,
-    title: asString(row.title),
+    title: displayPlayerIaHomeSeedText(projectId, asString(row.title)),
     category: normalizeCategory(row.category),
     thumbnail: projectThumbnailPath(projectId, row.thumbnail_url),
     updateKind: asString(row.update_kind),
     updateLabel: asString(row.update_label) || "更新",
-    updateSummary: asString(row.update_summary),
+    updateSummary: displayPlayerIaHomeSeedText(
+      projectId,
+      asString(row.update_summary),
+    ),
     publishedVersion: version,
     meaningfulUpdateAt: asString(row.meaningful_update_at),
   };
@@ -222,14 +229,20 @@ function mapUsageRelation(row: HomeUsageRelationRow): HomeUsageRelation {
   return {
     id: asString(row.id),
     sourceProjectId,
-    sourceTitle: asString(row.source_title),
+    sourceTitle: displayPlayerIaHomeSeedText(
+      sourceProjectId,
+      asString(row.source_title),
+    ),
     sourceCategory: normalizeCategory(row.source_category),
     sourceThumbnail: projectThumbnailPath(
       sourceProjectId,
       row.source_thumbnail_url,
     ),
     targetProjectId,
-    targetTitle: asString(row.target_title),
+    targetTitle: displayPlayerIaHomeSeedText(
+      targetProjectId,
+      asString(row.target_title),
+    ),
     targetCategory: normalizeCategory(row.target_category),
     targetThumbnail: projectThumbnailPath(
       targetProjectId,
@@ -258,9 +271,12 @@ function mapNewestProject(row: HomeNewestProjectRow): HomeNewestProject {
   const projectId = asString(row.project_id);
   return {
     projectId,
-    title: asString(row.title),
+    title: displayPlayerIaHomeSeedText(projectId, asString(row.title)),
     category: normalizeCategory(row.category),
-    description: asString(row.description),
+    description: displayPlayerIaHomeSeedText(
+      projectId,
+      asString(row.description),
+    ),
     thumbnail: projectThumbnailPath(projectId, row.thumbnail_url),
     firstPublishedAt: asString(row.first_published_at),
     creator: asString(row.creator),

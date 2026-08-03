@@ -51,9 +51,11 @@ const FEATURE_CARDS = [
 ] as const;
 
 function CategoryBadge({ category }: { category: ProjectCategoryId }) {
+  const label = PROJECT_CATEGORY_LABELS[category]?.trim();
+  if (!label) return null;
   return (
-    <span className="inline-flex items-center rounded-md bg-zinc-950/70 px-2 py-0.5 text-[11px] font-medium leading-none text-zinc-200 ring-1 ring-inset ring-zinc-700/80">
-      {PROJECT_CATEGORY_LABELS[category]}
+    <span className="inline-flex w-fit max-w-full shrink-0 items-center rounded-md bg-zinc-950/70 px-2 py-0.5 text-[11px] font-medium leading-none text-zinc-200 ring-1 ring-inset ring-zinc-700/80">
+      {label}
     </span>
   );
 }
@@ -166,7 +168,7 @@ function FeedbackGatheringSection({
                   sizes="160px"
                 />
               </Link>
-              <div className="flex min-w-0 flex-1 flex-col">
+              <div className="flex min-w-0 flex-1 flex-col items-start">
                 <CategoryBadge category={item.category} />
                 <Link
                   href={gameDetailHref(item.projectId)}

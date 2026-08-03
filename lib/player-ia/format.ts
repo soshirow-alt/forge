@@ -35,6 +35,38 @@ export function formatPlayerIaVersionLabel(version: string | null | undefined): 
   return raw.toLowerCase().startsWith("ver") ? raw : `ver ${raw}`;
 }
 
+/**
+ * Preview / Player IA Home display only.
+ * Strips a leading `[IA Seed]` marker (and following spaces).
+ * No-op when the trimmed text does not start with that marker (preserves
+ * non-seed whitespace and mid-string occurrences).
+ */
+export function stripPlayerIaSeedDisplayPrefix(text: string): string {
+  const trimmed = text.trim();
+  if (!/^\[IA Seed\]\s*/i.test(trimmed)) {
+    return text;
+  }
+  return trimmed.replace(/^\[IA Seed\]\s*/i, "").trim();
+}
+
+const PLAYER_IA_SEED_PROJECT_ID_RE =
+  /^eeeeeeee-eeee-4eee-8eee-[0-9a-f]{12}$/i;
+
+export function isPlayerIaSeedProjectId(projectId: string): boolean {
+  return PLAYER_IA_SEED_PROJECT_ID_RE.test(projectId.trim());
+}
+
+/** Apply seed display cleanup only for known forge-ia seed project UUIDs. */
+export function displayPlayerIaHomeSeedText(
+  projectId: string,
+  text: string,
+): string {
+  if (!isPlayerIaSeedProjectId(projectId)) {
+    return text;
+  }
+  return stripPlayerIaSeedDisplayPrefix(text);
+}
+
 export function truncatePlayerIaText(text: string, maxLen: number): string {
   const collapsed = text.replace(/\s+/g, " ").trim();
   if (collapsed.length <= maxLen) return collapsed;

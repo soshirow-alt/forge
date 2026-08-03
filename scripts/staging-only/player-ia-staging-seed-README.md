@@ -146,7 +146,11 @@ Staging Home 目視用の表示整えは **別 SQL**（seed 本体ではない�
 
 - 画像あり: `thumbnail_url` と `thumbnail_urls[1]` を一致。path は `/images/staging-only/player-ia/*` のみ
 - no-image 2件（`…0004` / `…0021`）: `thumbnail_url IS NULL` かつ `thumbnail_urls = '{}'`（**NULL 配列は不可** — `thumbnail_urls text[] NOT NULL DEFAULT '{}'`）
-- published devlog / release note は更新しない（immutable）
+- published devlog / release note は **DB 更新しない**（immutable）。Preview Home 表示では `stripPlayerIaSeedDisplayPrefix` が先頭 `[IA Seed]` のみ除去
+- seed project の description はカテゴリ別の自然文へ置換（`Staging専用` 残さない）
+- seed project の `creator` / `owner_name` を架空スタジオ名へ（hero HC profile は更新しない）
+- dedicated `ia-seed-dev-%` profile がある場合のみ `public_name` を同名へ更新
+
 
 ### PGlite gate の保証範囲
 

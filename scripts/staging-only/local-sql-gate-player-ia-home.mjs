@@ -94,9 +94,17 @@ function extractGateAssert(auditSql, name) {
   const marker = `-- GATE_ASSERT:${name}`;
   const start = auditSql.indexOf(marker);
   if (start < 0) throw new Error(`missing GATE_ASSERT marker: ${name}`);
-  const selectStart = auditSql.indexOf("SELECT", start);
-  if (selectStart < 0) throw new Error(`missing SELECT after GATE_ASSERT:${name}`);
-  const rest = auditSql.slice(selectStart);
+  const after = auditSql.slice(start);
+  const withStart = after.search(/\bWITH\b/);
+  const selectStart = after.search(/\bSELECT\b/);
+  let stmtStart = -1;
+  if (withStart >= 0 && (selectStart < 0 || withStart < selectStart)) {
+    stmtStart = start + withStart;
+  } else if (selectStart >= 0) {
+    stmtStart = start + selectStart;
+  }
+  if (stmtStart < 0) throw new Error(`missing WITH/SELECT after GATE_ASSERT:${name}`);
+  const rest = auditSql.slice(stmtStart);
   const endMatch = rest.search(/;\s*(?:\r?\n|$)/);
   if (endMatch < 0) throw new Error(`unterminated GATE_ASSERT:${name}`);
   return rest.slice(0, endMatch + 1);
@@ -153,6 +161,12 @@ CREATE TABLE public.projects (
   first_published_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.developer_profiles (
+  user_id uuid PRIMARY KEY REFERENCES auth.users(id),
+  creator_id text,
+  public_name text
 );
 
 CREATE TABLE public.platform_announcements (
@@ -413,6 +427,82 @@ INSERT INTO public.projects (
   '1.0', now()
 ) ON CONFLICT (id) DO NOTHING;
 
+INSERT INTO public.developer_profiles (user_id, creator_id, public_name) VALUES
+  ('${ownerA}'::uuid, 'hc-dev-b-forge-st-hero-carousel-v1', 'HC Dev B'),
+  ('${ownerB}'::uuid, 'hc-dev-c-forge-st-hero-carousel-v1', 'HC Dev C')
+ON CONFLICT (user_id) DO NOTHING;
+`);
+
+  // Exact pairs from player-ia-auth-seed.ts (n=1..20)
+  const dedicatedCanon = [
+    ["01", "ゲーム職人"],
+    ["02", "ホラー好きDev"],
+    ["03", "Unity屋"],
+    ["04", "UEクリエイター"],
+    ["05", "Godot民"],
+    ["06", "配信者A"],
+    ["07", "配信者B"],
+    ["08", "ドット絵師"],
+    ["09", "3Dキャラ職人"],
+    ["10", "BGM制作"],
+    ["11", "SE職人"],
+    ["12", "ツール屋"],
+    ["13", "サービス開発"],
+    ["14", "分析屋"],
+    ["15", "Bot作者"],
+    ["16", "マルチA"],
+    ["17", "マルチB"],
+    ["18", "テスト募集"],
+    ["19", "制作に使える派"],
+    ["20", "超長い制作者プロフィール名の折り返し検証用ABCDEFG"],
+  ];
+  for (const [nn] of dedicatedCanon) {
+    const uid = `a1a1a1a1-a1a1-41a1-81a1-${nn.padStart(12, "0")}`;
+    lines.push(
+      `INSERT INTO auth.users (id) VALUES ('${uid}'::uuid) ON CONFLICT (id) DO NOTHING;`,
+    );
+  }
+  // Negatives: prefix-only mismatch + user-only mismatch + unrelated
+  lines.push(`
+INSERT INTO auth.users (id) VALUES
+  ('cccccccc-cccc-4ccc-8ccc-000000000001'::uuid),
+  ('a1a1a1a1-a1a1-41a1-81a1-000000000099'::uuid),
+  ('bbbbbbbb-bbbb-4bbb-8bbb-000000009999'::uuid)
+ON CONFLICT (id) DO NOTHING;
+`);
+  for (const [nn, natural] of dedicatedCanon) {
+    const uid = `a1a1a1a1-a1a1-41a1-81a1-${nn.padStart(12, "0")}`;
+    const creatorId = `ia-seed-dev-${nn}`;
+    const seededName = `IA Seed ${natural}`.replace(/'/g, "''");
+    lines.push(`
+INSERT INTO public.developer_profiles (user_id, creator_id, public_name) VALUES
+  ('${uid}'::uuid, '${creatorId}', '${seededName}')
+ON CONFLICT (user_id) DO UPDATE SET
+  creator_id = EXCLUDED.creator_id,
+  public_name = EXCLUDED.public_name;
+`);
+  }
+  lines.push(`
+-- Negative: ia-seed-dev prefix but non-a1a1 user_id
+INSERT INTO public.developer_profiles (user_id, creator_id, public_name) VALUES
+  ('cccccccc-cccc-4ccc-8ccc-000000000001'::uuid, 'ia-seed-dev-99', 'IA Seed PrefixOnly Trap')
+ON CONFLICT (user_id) DO UPDATE SET
+  creator_id = EXCLUDED.creator_id,
+  public_name = EXCLUDED.public_name;
+
+-- Negative: a1a1-like user_id but creator_id not in allowlist
+INSERT INTO public.developer_profiles (user_id, creator_id, public_name) VALUES
+  ('a1a1a1a1-a1a1-41a1-81a1-000000000099'::uuid, 'not-ia-seed-dev', 'IA Seed UserOnly Trap')
+ON CONFLICT (user_id) DO UPDATE SET
+  creator_id = EXCLUDED.creator_id,
+  public_name = EXCLUDED.public_name;
+
+INSERT INTO public.developer_profiles (user_id, creator_id, public_name) VALUES
+  ('bbbbbbbb-bbbb-4bbb-8bbb-000000009999'::uuid, 'unrelated-dev', 'Unrelated Studio')
+ON CONFLICT (user_id) DO UPDATE SET
+  creator_id = EXCLUDED.creator_id,
+  public_name = EXCLUDED.public_name;
+
 INSERT INTO public.projects (
   id, owner_id, owner_name, title, creator, description, overview_introduction,
   visibility, category, tags, thumbnail_url, thumbnail_urls, playable_version, first_published_at
@@ -428,6 +518,14 @@ INSERT INTO public.projects (
     const id = `eeeeeeee-eeee-4eee-8eee-${String(n).padStart(12, "0")}`;
     const category = categories[Math.floor((n - 1) / 8)];
     const owner = n % 2 === 0 ? ownerB : ownerA;
+    const ownerLabel = n % 2 === 0 ? "IA Seed Owner B" : "IA Seed Owner A";
+    const longEdge = n === 8 || n === 39;
+    const longCreator = n === 8
+      ? "IA Seed 超長い制作者表示名の折り返し検証用サンプルネームABCDEFG"
+      : ownerLabel;
+    const description = longEdge
+      ? `'[IA Seed] 長い説明文エッジケースです。検索ヒット・カード展開・詳細ページでの折り返しを確認します。短編のテンポと導線の話を中心に書きつつ、本文は通常の作品紹介として読める長さにしています。ああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ'`
+      : `'[IA Seed] Seed Project ${n} — Staging専用架空作品。'`;
     const noImage = n === 4 || n === 21;
     const thumb = noImage
       ? "NULL"
@@ -440,9 +538,9 @@ INSERT INTO public.projects (
   id, owner_id, owner_name, title, creator, description, overview_introduction,
   visibility, category, tags, thumbnail_url, thumbnail_urls, playable_version, first_published_at
 ) VALUES (
-  '${id}'::uuid, '${owner}'::uuid, 'SeedOwner',
-  '[IA Seed] Seed Project ${n}', 'Seed Creator ${n}',
-  '[IA Seed] description ${n}', '[IA Seed] overview ${n}',
+  '${id}'::uuid, '${owner}'::uuid, '${longCreator.replace(/'/g, "''")}',
+  '[IA Seed] Seed Project ${n}', '${longCreator.replace(/'/g, "''")}',
+  ${description}, '[IA Seed] overview ${n}',
   'public', '${category}', ARRAY['forge-ia-seed-v1','seed']::text[],
   ${thumb}, ${thumbs},
   '0.${(n % 5) + 1}', now() - interval '${n} days'
@@ -454,7 +552,9 @@ INSERT INTO public.projects (
   category = EXCLUDED.category,
   thumbnail_url = EXCLUDED.thumbnail_url,
   thumbnail_urls = EXCLUDED.thumbnail_urls,
-  owner_id = EXCLUDED.owner_id;
+  owner_id = EXCLUDED.owner_id,
+  owner_name = EXCLUDED.owner_name,
+  creator = EXCLUDED.creator;
 `);
   }
 
@@ -777,6 +877,233 @@ async function main() {
     "non staging-only local image paths assigned",
   );
 
+  const copyClean = await query(
+    db,
+    `SELECT
+       count(*) FILTER (WHERE coalesce(description,'') LIKE '%Staging専用%') AS staging_senyo,
+       count(*) FILTER (
+         WHERE coalesce(creator,'') ~* 'IA Seed'
+            OR coalesce(owner_name,'') ~* 'IA Seed'
+       ) AS ia_owner,
+       count(*) FILTER (
+         WHERE id NOT IN (
+           'eeeeeeee-eeee-4eee-8eee-000000000008'::uuid,
+           'eeeeeeee-eeee-4eee-8eee-000000000039'::uuid
+         )
+         AND description IN (
+           '探索や戦略を実際に遊んで試せる開発中のゲームです。',
+           'ゲームや映像制作に利用できる音楽・音声素材です。',
+           'ゲームやアプリ制作に利用できる素材セットです。',
+           '制作や開発作業を支援する開発ツールです。',
+           'ブラウザから実際に試せるサービス・アプリです。'
+         )
+       ) AS natural_desc,
+       (
+         SELECT left(description, 8)
+         FROM public.projects
+         WHERE id = 'eeeeeeee-eeee-4eee-8eee-000000000008'::uuid
+       ) AS long_desc_prefix,
+       (
+         SELECT creator
+         FROM public.projects
+         WHERE id = 'eeeeeeee-eeee-4eee-8eee-000000000008'::uuid
+       ) AS long_creator
+     FROM public.projects
+     WHERE id::text LIKE 'eeeeeeee-eeee-4eee-8eee-%'`,
+  );
+  assert(Number(copyClean.rows[0].staging_senyo) === 0, "Staging専用 remains in description");
+  assert(Number(copyClean.rows[0].ia_owner) === 0, "IA Seed remains in creator/owner_name");
+  assert(Number(copyClean.rows[0].natural_desc) === 38, "natural category descriptions missing");
+  assert(
+    copyClean.rows[0].long_desc_prefix === "長い説明文エッジ",
+    "long description edge fixture lost",
+  );
+  assert(
+    String(copyClean.rows[0].long_creator).startsWith("超長い制作者表示名"),
+    "long creator edge fixture lost",
+  );
+
+  const heroProfiles = await query(
+    db,
+    `SELECT user_id::text AS user_id, public_name
+     FROM public.developer_profiles
+     WHERE user_id IN (
+       'dddddddd-dddd-4ddd-8ddd-000000000001'::uuid,
+       'dddddddd-dddd-4ddd-8ddd-000000000002'::uuid
+     )
+     ORDER BY user_id`,
+  );
+  assert(heroProfiles.rows.length === 2, "expected both hero profiles");
+  assert(heroProfiles.rows[0].public_name === "HC Dev B", "hero profile B changed");
+  assert(heroProfiles.rows[1].public_name === "HC Dev C", "hero profile C changed");
+
+  const dedicatedProfiles = await query(
+    db,
+    `SELECT count(*)::int AS n,
+            count(*) FILTER (WHERE coalesce(public_name,'') ~* 'IA Seed')::int AS ia_left,
+            count(*) FILTER (WHERE public_name = 'ゲーム職人')::int AS name_01,
+            count(*) FILTER (WHERE public_name = '超長い制作者プロフィール名の折り返し検証用ABCDEFG')::int AS name_20
+     FROM public.developer_profiles dp
+     WHERE EXISTS (
+       SELECT 1 FROM (VALUES
+         ('ia-seed-dev-01'::text, 'a1a1a1a1-a1a1-41a1-81a1-000000000001'::uuid),
+         ('ia-seed-dev-20'::text, 'a1a1a1a1-a1a1-41a1-81a1-000000000020'::uuid)
+       ) AS sample(creator_id, user_id)
+       WHERE dp.creator_id = sample.creator_id AND dp.user_id = sample.user_id
+     )
+        OR dp.user_id::text LIKE 'a1a1a1a1-a1a1-41a1-81a1-0000000000%'`,
+  );
+  const exactPairs = await query(
+    db,
+    `SELECT count(*)::int AS n,
+            count(*) FILTER (WHERE coalesce(public_name,'') ~* 'IA Seed')::int AS ia_left
+     FROM public.developer_profiles dp
+     WHERE dp.user_id::text LIKE 'a1a1a1a1-a1a1-41a1-81a1-%'
+       AND dp.creator_id ~ '^ia-seed-dev-[0-9]{2}$'
+       AND dp.user_id::text NOT LIKE '%000000000099'`,
+  );
+  assert(Number(exactPairs.rows[0].n) === 20, "expected 20 exact-pair profiles");
+  assert(Number(exactPairs.rows[0].ia_left) === 0, "exact-pair profiles still contain IA Seed");
+  assert(Number(dedicatedProfiles.rows[0].name_01) === 1, "profile 01 natural name missing");
+  assert(Number(dedicatedProfiles.rows[0].name_20) === 1, "profile 20 long name missing");
+
+  const prefixOnlyTrap = await query(
+    db,
+    `SELECT public_name FROM public.developer_profiles
+     WHERE user_id = 'cccccccc-cccc-4ccc-8ccc-000000000001'::uuid`,
+  );
+  assert(
+    prefixOnlyTrap.rows[0].public_name === "IA Seed PrefixOnly Trap",
+    "prefix-only mismatch profile was mutated",
+  );
+
+  const userOnlyTrap = await query(
+    db,
+    `SELECT public_name FROM public.developer_profiles
+     WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000099'::uuid`,
+  );
+  assert(
+    userOnlyTrap.rows[0].public_name === "IA Seed UserOnly Trap",
+    "user-only mismatch profile was mutated",
+  );
+
+  const unrelated = await query(
+    db,
+    `SELECT public_name FROM public.developer_profiles
+     WHERE user_id = 'bbbbbbbb-bbbb-4bbb-8bbb-000000009999'::uuid`,
+  );
+  assert(unrelated.rows[0].public_name === "Unrelated Studio", "unrelated profile changed");
+
+  // Fail-closed: 19 exact pairs must abort (partial package)
+  await db.exec(`
+    UPDATE public.projects
+    SET description = '[IA Seed] dirty-for-profile-abort'
+    WHERE id = 'eeeeeeee-eeee-4eee-8eee-000000000001'::uuid;
+  `);
+  await db.exec(`
+    DELETE FROM public.developer_profiles
+    WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000020'::uuid;
+  `);
+  await execExpectFail(
+    db,
+    "beautify dedicated profile count 19 abort",
+    sqlBeautify,
+    /exact-pair count|ABORT beautify/i,
+  );
+  const dirtyAfter19 = await query(
+    db,
+    `SELECT description FROM public.projects
+     WHERE id = 'eeeeeeee-eeee-4eee-8eee-000000000001'::uuid`,
+  );
+  assert(
+    dirtyAfter19.rows[0].description === "[IA Seed] dirty-for-profile-abort",
+    "19-pair abort did not roll back project description mutation",
+  );
+  const trapAfter19 = await query(
+    db,
+    `SELECT public_name FROM public.developer_profiles
+     WHERE user_id = 'cccccccc-cccc-4ccc-8ccc-000000000001'::uuid`,
+  );
+  assert(
+    trapAfter19.rows[0].public_name === "IA Seed PrefixOnly Trap",
+    "19-pair abort mutated prefix trap",
+  );
+  await db.exec(`
+INSERT INTO public.developer_profiles (user_id, creator_id, public_name) VALUES
+  ('a1a1a1a1-a1a1-41a1-81a1-000000000020'::uuid, 'ia-seed-dev-20',
+   'IA Seed 超長い制作者プロフィール名の折り返し検証用ABCDEFG')
+ON CONFLICT (user_id) DO UPDATE SET
+  creator_id = EXCLUDED.creator_id,
+  public_name = EXCLUDED.public_name;
+`);
+
+  // Fail-closed: unexpected a1a1 + ia-seed-dev pair outside allowlist
+  await db.exec(`
+INSERT INTO auth.users (id) VALUES ('a1a1a1a1-a1a1-41a1-81a1-000000000050'::uuid)
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.developer_profiles (user_id, creator_id, public_name) VALUES
+  ('a1a1a1a1-a1a1-41a1-81a1-000000000050'::uuid, 'ia-seed-dev-50', 'IA Seed Unexpected Pair')
+ON CONFLICT (user_id) DO UPDATE SET
+  creator_id = EXCLUDED.creator_id,
+  public_name = EXCLUDED.public_name;
+`);
+  await execExpectFail(
+    db,
+    "beautify unexpected a1a1/ia-seed-dev pair abort",
+    sqlBeautify,
+    /unexpected a1a1\/ia-seed-dev|ABORT beautify/i,
+  );
+  const unexpectedStill = await query(
+    db,
+    `SELECT public_name FROM public.developer_profiles
+     WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000050'::uuid`,
+  );
+  assert(
+    unexpectedStill.rows[0].public_name === "IA Seed Unexpected Pair",
+    "unexpected-pair abort mutated unexpected row",
+  );
+  const dirtyAfterUnexpected = await query(
+    db,
+    `SELECT description FROM public.projects
+     WHERE id = 'eeeeeeee-eeee-4eee-8eee-000000000001'::uuid`,
+  );
+  assert(
+    dirtyAfterUnexpected.rows[0].description === "[IA Seed] dirty-for-profile-abort",
+    "unexpected-pair abort did not preserve dirty description",
+  );
+  await db.exec(`
+    DELETE FROM public.developer_profiles
+    WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000050'::uuid;
+    DELETE FROM auth.users
+    WHERE id = 'a1a1a1a1-a1a1-41a1-81a1-000000000050'::uuid;
+  `);
+
+  await execSql(db, "beautify after profile fail-closed restore", sqlBeautify);
+  const restoredDesc = await query(
+    db,
+    `SELECT description FROM public.projects
+     WHERE id = 'eeeeeeee-eeee-4eee-8eee-000000000001'::uuid`,
+  );
+  assert(
+    restoredDesc.rows[0].description !== "[IA Seed] dirty-for-profile-abort",
+    "beautify did not clear dirty description after profile restore",
+  );
+  assert(
+    !/IA Seed/i.test(String(restoredDesc.rows[0].description)),
+    "restored description still has IA Seed",
+  );
+  const exactAfterRestore = await query(
+    db,
+    `SELECT count(*)::int AS n,
+            count(*) FILTER (WHERE coalesce(public_name,'') ~* 'IA Seed')::int AS ia_left
+     FROM public.developer_profiles dp
+     WHERE dp.user_id::text LIKE 'a1a1a1a1-a1a1-41a1-81a1-%'
+       AND dp.creator_id ~ '^ia-seed-dev-[0-9]{2}$'
+       AND dp.user_id::text NOT LIKE '%000000000099'`,
+  );
+  assert(Number(exactAfterRestore.rows[0].n) === 20, "exact pairs not restored to 20");
+  assert(Number(exactAfterRestore.rows[0].ia_left) === 0, "exact pairs still marked after restore");
+
   const ann = await query(
     db,
     `SELECT
@@ -966,8 +1293,23 @@ INSERT INTO public.projects (
     "PASS_title_and_content_untouched",
   );
   await assertGateVerdict(db, sqlAudit, "immutable_trigger", "PASS");
+  await assertGateVerdict(db, sqlAudit, "seed_developer_profiles", "PASS");
 
-  // Negative: audit RPC presence fails when review_highlights dropped
+  // Negative: dedicated profile marker remaining fails audit
+  await db.exec(`
+    UPDATE public.developer_profiles
+    SET public_name = 'IA Seed ゲーム作者'
+    WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000001'::uuid;
+  `);
+  await assertGateVerdict(
+    db,
+    sqlAudit,
+    "seed_developer_profiles",
+    "FAIL",
+    "dedicated profile IA Seed remaining",
+  );
+  await execSql(db, "restore dedicated profile names via beautify", sqlBeautify);
+  await assertGateVerdict(db, sqlAudit, "seed_developer_profiles", "PASS", "profiles restored");
   await db.exec(`DROP FUNCTION IF EXISTS public.get_home_review_highlights(integer);`);
   await assertGateVerdict(
     db,

@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-08-04 — Preview Home: 小カードcategory横伸び・空バッジ・Staging表示文言
+
+- **UI** — フィードバック棚右小カードの category badge を `w-fit` + `items-start` でコンパクト化。no-image フォールバックの空 `phase` 枠は `GeneratedThumbnailPoster` で条件付き非表示
+- **表示** — Player IA Home ViewModel で先頭 `[IA Seed]` のみ除去（immutable DB は非更新）。Staging beautify で description / creator・owner_name を自然化。dedicated profile は `player-ia-auth-seed.ts` の exact `(creator_id, user_id)` 20 組のみ改名（prefix 単独・hero HC・non-seed 非更新）
+- **非実施** — Staging/Production DB への自動適用なし。main 未変更
+
 ## 2026-08-03 — Player IA Staging beautify: thumbnail_urls NOT NULL 整合＋gate強化
 
 - **修正** — beautify の no-image を `thumbnail_url NULL` + `thumbnail_urls='{}'` に（実 schema 035 の NOT NULL とアプリ no-image 判定に合わせる。旧 `thumbnail_urls=NULL` は Staging で失敗する）

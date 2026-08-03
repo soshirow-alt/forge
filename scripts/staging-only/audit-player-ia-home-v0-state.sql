@@ -144,6 +144,13 @@ SELECT
   count(*) FILTER (WHERE coalesce(description, '') LIKE '[IA Seed]%') AS actual_description_prefixed,
   0 AS expected_overview_prefixed_after_beautify,
   count(*) FILTER (WHERE coalesce(overview_introduction, '') LIKE '[IA Seed]%') AS actual_overview_prefixed,
+  0 AS expected_staging_senyo_in_description,
+  count(*) FILTER (WHERE coalesce(description, '') LIKE '%Staging専用%') AS actual_staging_senyo_in_description,
+  0 AS expected_ia_seed_in_creator_or_owner_name,
+  count(*) FILTER (
+    WHERE coalesce(creator, '') ~* 'IA Seed'
+       OR coalesce(owner_name, '') ~* 'IA Seed'
+  ) AS actual_ia_seed_in_creator_or_owner_name,
   38 AS expected_staging_only_thumbs,
   count(*) FILTER (
     WHERE thumbnail_url LIKE '/images/staging-only/player-ia/%'
@@ -183,6 +190,11 @@ SELECT
      AND count(*) FILTER (WHERE title LIKE '[IA Seed]%') = 0
      AND count(*) FILTER (WHERE coalesce(description, '') LIKE '[IA Seed]%') = 0
      AND count(*) FILTER (WHERE coalesce(overview_introduction, '') LIKE '[IA Seed]%') = 0
+     AND count(*) FILTER (WHERE coalesce(description, '') LIKE '%Staging専用%') = 0
+     AND count(*) FILTER (
+       WHERE coalesce(creator, '') ~* 'IA Seed'
+          OR coalesce(owner_name, '') ~* 'IA Seed'
+     ) = 0
      AND count(*) FILTER (
        WHERE thumbnail_url LIKE '/images/staging-only/player-ia/%'
          AND thumbnail_urls = ARRAY[thumbnail_url]::text[]
@@ -217,7 +229,7 @@ SELECT
      AND count(*) FILTER (WHERE 'forge-ia-seed-v1' = ANY (coalesce(tags, '{}'::text[]))) = 40
      AND count(*) FILTER (WHERE title LIKE '[IA Seed]%') = 40
      AND count(*) FILTER (WHERE coalesce(description, '') LIKE '[IA Seed]%') = 40
-     AND count(*) FILTER (WHERE coalesce(overview_introduction, '') LIKE '[IA Seed]%') = 40
+     AND count(*) FILTER (WHERE coalesce(description, '') LIKE '%Staging専用%') = 40
      AND count(*) FILTER (
        WHERE thumbnail_url LIKE '/images/staging-only/player-ia/%'
      ) = 0
@@ -289,6 +301,11 @@ SELECT
   count(*) FILTER (WHERE title LIKE '[IA Seed]%') AS actual_title_prefixed,
   0 AS expected_body_prefixed_after_beautify,
   count(*) FILTER (WHERE body LIKE '[IA Seed]%') AS actual_body_prefixed,
+  0 AS expected_staging_senyo_markers,
+  count(*) FILTER (
+    WHERE title LIKE '%Staging専用%'
+       OR body LIKE '%Staging専用%'
+  ) AS actual_staging_senyo_markers,
   8 AS expected_exact_copy_matches,
   (
     SELECT count(*)
@@ -330,6 +347,10 @@ SELECT
      AND count(*) FILTER (WHERE status = 'draft') = 2
      AND count(*) FILTER (WHERE title LIKE '[IA Seed]%') = 0
      AND count(*) FILTER (WHERE body LIKE '[IA Seed]%') = 0
+     AND count(*) FILTER (
+       WHERE title LIKE '%Staging専用%'
+          OR body LIKE '%Staging専用%'
+     ) = 0
      AND (
        SELECT count(*)
        FROM public.platform_announcements a
@@ -538,6 +559,169 @@ SELECT
     THEN 'PASS'
     ELSE 'FAIL'
   END AS verdict;
+
+-- ---------------------------------------------------------------------------
+-- 7b. Dedicated IA developer_profiles (exact creator_id + user_id pairs)
+-- GATE_ASSERT:seed_developer_profiles
+-- ---------------------------------------------------------------------------
+WITH allowlist (creator_id, user_id, display_name) AS (
+  VALUES
+    ('ia-seed-dev-01', 'a1a1a1a1-a1a1-41a1-81a1-000000000001'::uuid, 'ゲーム職人'),
+    ('ia-seed-dev-02', 'a1a1a1a1-a1a1-41a1-81a1-000000000002'::uuid, 'ホラー好きDev'),
+    ('ia-seed-dev-03', 'a1a1a1a1-a1a1-41a1-81a1-000000000003'::uuid, 'Unity屋'),
+    ('ia-seed-dev-04', 'a1a1a1a1-a1a1-41a1-81a1-000000000004'::uuid, 'UEクリエイター'),
+    ('ia-seed-dev-05', 'a1a1a1a1-a1a1-41a1-81a1-000000000005'::uuid, 'Godot民'),
+    ('ia-seed-dev-06', 'a1a1a1a1-a1a1-41a1-81a1-000000000006'::uuid, '配信者A'),
+    ('ia-seed-dev-07', 'a1a1a1a1-a1a1-41a1-81a1-000000000007'::uuid, '配信者B'),
+    ('ia-seed-dev-08', 'a1a1a1a1-a1a1-41a1-81a1-000000000008'::uuid, 'ドット絵師'),
+    ('ia-seed-dev-09', 'a1a1a1a1-a1a1-41a1-81a1-000000000009'::uuid, '3Dキャラ職人'),
+    ('ia-seed-dev-10', 'a1a1a1a1-a1a1-41a1-81a1-000000000010'::uuid, 'BGM制作'),
+    ('ia-seed-dev-11', 'a1a1a1a1-a1a1-41a1-81a1-000000000011'::uuid, 'SE職人'),
+    ('ia-seed-dev-12', 'a1a1a1a1-a1a1-41a1-81a1-000000000012'::uuid, 'ツール屋'),
+    ('ia-seed-dev-13', 'a1a1a1a1-a1a1-41a1-81a1-000000000013'::uuid, 'サービス開発'),
+    ('ia-seed-dev-14', 'a1a1a1a1-a1a1-41a1-81a1-000000000014'::uuid, '分析屋'),
+    ('ia-seed-dev-15', 'a1a1a1a1-a1a1-41a1-81a1-000000000015'::uuid, 'Bot作者'),
+    ('ia-seed-dev-16', 'a1a1a1a1-a1a1-41a1-81a1-000000000016'::uuid, 'マルチA'),
+    ('ia-seed-dev-17', 'a1a1a1a1-a1a1-41a1-81a1-000000000017'::uuid, 'マルチB'),
+    ('ia-seed-dev-18', 'a1a1a1a1-a1a1-41a1-81a1-000000000018'::uuid, 'テスト募集'),
+    ('ia-seed-dev-19', 'a1a1a1a1-a1a1-41a1-81a1-000000000019'::uuid, '制作に使える派'),
+    ('ia-seed-dev-20', 'a1a1a1a1-a1a1-41a1-81a1-000000000020'::uuid, '超長い制作者プロフィール名の折り返し検証用ABCDEFG')
+),
+profile_metrics AS (
+  SELECT
+    CASE WHEN to_regclass('public.developer_profiles') IS NULL THEN 0
+         ELSE (
+           SELECT count(*)::integer
+           FROM public.developer_profiles dp
+           INNER JOIN allowlist a
+             ON dp.creator_id = a.creator_id
+            AND dp.user_id = a.user_id
+         )
+    END AS exact_pair_rows,
+    CASE WHEN to_regclass('public.developer_profiles') IS NULL THEN 0
+         ELSE (
+           SELECT count(*)::integer
+           FROM public.developer_profiles dp
+           INNER JOIN allowlist a
+             ON dp.creator_id = a.creator_id
+            AND dp.user_id = a.user_id
+           WHERE dp.public_name = a.display_name
+         )
+    END AS naturalized_exact_pairs,
+    CASE WHEN to_regclass('public.developer_profiles') IS NULL THEN 0
+         ELSE (
+           SELECT count(*)::integer
+           FROM public.developer_profiles dp
+           INNER JOIN allowlist a
+             ON dp.creator_id = a.creator_id
+            AND dp.user_id = a.user_id
+           WHERE coalesce(dp.public_name, '') ~* 'IA Seed'
+         )
+    END AS ia_seed_remaining_on_exact_pairs,
+    CASE WHEN to_regclass('public.developer_profiles') IS NULL THEN 0
+         ELSE (
+           SELECT count(*)::integer
+           FROM public.developer_profiles dp
+           WHERE coalesce(dp.creator_id, '') LIKE 'ia-seed-dev-%'
+             AND NOT EXISTS (
+               SELECT 1 FROM allowlist a
+               WHERE a.user_id = dp.user_id AND a.creator_id = dp.creator_id
+             )
+         )
+    END AS prefix_or_pair_mismatch_rows,
+    CASE WHEN to_regclass('public.developer_profiles') IS NULL THEN 0
+         ELSE (
+           SELECT count(*)::integer
+           FROM public.developer_profiles dp
+           WHERE coalesce(dp.creator_id, '') LIKE 'ia-seed-dev-%'
+             AND NOT EXISTS (
+               SELECT 1 FROM allowlist a
+               WHERE a.user_id = dp.user_id AND a.creator_id = dp.creator_id
+             )
+             AND EXISTS (
+               SELECT 1 FROM allowlist a WHERE a.display_name = dp.public_name
+             )
+         )
+    END AS mismatch_mutated_to_allowlist_name,
+    CASE WHEN to_regclass('public.developer_profiles') IS NULL THEN 0
+         ELSE (
+           SELECT count(*)::integer
+           FROM public.developer_profiles dp
+           WHERE NOT EXISTS (
+               SELECT 1 FROM allowlist a
+               WHERE a.user_id = dp.user_id AND a.creator_id = dp.creator_id
+             )
+             AND EXISTS (
+               SELECT 1 FROM allowlist a WHERE a.display_name = dp.public_name
+             )
+             AND coalesce(dp.creator_id, '') NOT LIKE 'ia-seed-dev-%'
+         )
+    END AS non_seed_mutated_to_allowlist_name,
+    CASE WHEN to_regclass('public.developer_profiles') IS NULL THEN true
+         ELSE NOT EXISTS (
+           SELECT 1 FROM public.developer_profiles dp
+           WHERE dp.user_id = 'cccccccc-cccc-4ccc-8ccc-000000000001'::uuid
+             AND dp.public_name IS DISTINCT FROM 'IA Seed PrefixOnly Trap'
+         )
+    END AS prefix_trap_immutable_ok,
+    CASE WHEN to_regclass('public.developer_profiles') IS NULL THEN true
+         ELSE NOT EXISTS (
+           SELECT 1 FROM public.developer_profiles dp
+           WHERE dp.user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000099'::uuid
+             AND dp.public_name IS DISTINCT FROM 'IA Seed UserOnly Trap'
+         )
+    END AS user_trap_immutable_ok,
+    CASE WHEN to_regclass('public.developer_profiles') IS NULL THEN true
+         ELSE NOT EXISTS (
+           SELECT 1 FROM public.developer_profiles dp
+           WHERE dp.user_id = 'bbbbbbbb-bbbb-4bbb-8bbb-000000009999'::uuid
+             AND dp.public_name IS DISTINCT FROM 'Unrelated Studio'
+         )
+    END AS non_seed_sentinel_immutable_ok,
+    CASE WHEN to_regclass('public.developer_profiles') IS NULL THEN true
+         ELSE NOT EXISTS (
+           SELECT 1 FROM public.developer_profiles dp
+           WHERE dp.creator_id IN (
+             'hc-dev-b-forge-st-hero-carousel-v1',
+             'hc-dev-c-forge-st-hero-carousel-v1'
+           )
+             AND dp.public_name IS DISTINCT FROM CASE dp.creator_id
+               WHEN 'hc-dev-b-forge-st-hero-carousel-v1' THEN 'HC Dev B'
+               WHEN 'hc-dev-c-forge-st-hero-carousel-v1' THEN 'HC Dev C'
+             END
+         )
+    END AS hero_profiles_immutable_ok
+)
+SELECT
+  'seed_developer_profiles' AS section,
+  20 AS expected_exact_pairs_when_auth_seeded,
+  m.exact_pair_rows AS actual_exact_pair_rows,
+  m.naturalized_exact_pairs AS actual_naturalized_exact_pairs,
+  m.ia_seed_remaining_on_exact_pairs AS actual_ia_seed_name_remaining_on_exact_pairs,
+  m.prefix_or_pair_mismatch_rows AS actual_prefix_or_pair_mismatch_rows,
+  m.mismatch_mutated_to_allowlist_name AS actual_mismatch_mutated_to_allowlist_name,
+  m.non_seed_mutated_to_allowlist_name AS actual_non_seed_mutated_to_allowlist_name,
+  0 AS expected_mismatch_or_non_seed_mutated,
+  m.prefix_trap_immutable_ok AS actual_prefix_trap_immutable_ok,
+  m.user_trap_immutable_ok AS actual_user_trap_immutable_ok,
+  m.non_seed_sentinel_immutable_ok AS actual_non_seed_sentinel_immutable_ok,
+  m.hero_profiles_immutable_ok AS actual_hero_profiles_immutable_ok,
+  CASE
+    WHEN to_regclass('public.developer_profiles') IS NULL THEN 'SKIP_NO_TABLE'
+    WHEN m.exact_pair_rows = 0 THEN 'SKIP_NO_DEDICATED_ROWS'
+    WHEN m.exact_pair_rows = 20
+     AND m.naturalized_exact_pairs = 20
+     AND m.ia_seed_remaining_on_exact_pairs = 0
+     AND m.mismatch_mutated_to_allowlist_name = 0
+     AND m.non_seed_mutated_to_allowlist_name = 0
+     AND m.prefix_trap_immutable_ok
+     AND m.user_trap_immutable_ok
+     AND m.non_seed_sentinel_immutable_ok
+     AND m.hero_profiles_immutable_ok
+    THEN 'PASS'
+    ELSE 'FAIL'
+  END AS verdict
+FROM profile_metrics m;
 
 -- ---------------------------------------------------------------------------
 -- 7. Non-seed sanity (smoke title must stay Smoke A)

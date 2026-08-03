@@ -3,13 +3,15 @@
 -- DO NOT run on Production (bpnisgzxuwdxelhnduuf).
 --
 -- UPDATE allowlist (only):
---   public.projects
---   public.platform_announcements
+--   public.projects (seed UUID + forge-ia-seed-v1 only)
+--   public.platform_announcements (seed UUID only)
+--   public.developer_profiles (exact ia-seed-dev-NN + a1a1… user_id pairs only)
 --
 -- Explicitly NOT updated (immutable / append-only / out of scope):
 --   public.project_devlogs  — published body immutable (011 enforce_devlog_immutable_body)
 --   public.project_release_events
---   developer_profiles / auth / usage / feedback tables
+--   auth.users / hero developer_profiles / usage / feedback tables
+--   non-seed projects
 --
 -- Markers:
 --   project UUIDs: eeeeeeee-eeee-4eee-8eee-*
@@ -194,15 +196,76 @@ BEGIN
 END $$;
 
 -- ---------------------------------------------------------------------------
--- A. Strip public "[IA Seed] " from seed project titles / copy only
+-- A. Seed project display: titles, natural descriptions, creator/owner_name
+--    Does NOT update project_devlogs / project_release_events (immutable).
+--    Does NOT update hero owner profiles (dddd…0001 / 0002).
+--    Long edge fixtures (…0008 / …0039 description; …0008 creator) keep body
+--    after marker strip only.
 -- ---------------------------------------------------------------------------
 UPDATE public.projects p
 SET
   title = regexp_replace(p.title, '^\[IA Seed\]\s*', ''),
-  description = regexp_replace(coalesce(p.description, ''), '^\[IA Seed\]\s*', ''),
+  description = CASE
+    WHEN p.id IN (
+      'eeeeeeee-eeee-4eee-8eee-000000000008'::uuid,
+      'eeeeeeee-eeee-4eee-8eee-000000000039'::uuid
+    ) THEN regexp_replace(
+      regexp_replace(coalesce(p.description, ''), '^\[IA Seed\]\s*', ''),
+      '\s*[—\-–]\s*Staging専用架空作品。?\s*',
+      '',
+      'g'
+    )
+    WHEN coalesce(p.category, 'game') = 'audio'
+      THEN 'ゲームや映像制作に利用できる音楽・音声素材です。'
+    WHEN coalesce(p.category, 'game') = 'asset'
+      THEN 'ゲームやアプリ制作に利用できる素材セットです。'
+    WHEN coalesce(p.category, 'game') = 'dev-tool'
+      THEN '制作や開発作業を支援する開発ツールです。'
+    WHEN coalesce(p.category, 'game') = 'service-app'
+      THEN 'ブラウザから実際に試せるサービス・アプリです。'
+    ELSE '探索や戦略を実際に遊んで試せる開発中のゲームです。'
+  END,
   overview_introduction = CASE
     WHEN p.overview_introduction IS NULL THEN NULL
-    ELSE regexp_replace(p.overview_introduction, '^\[IA Seed\]\s*', '')
+    ELSE regexp_replace(
+      regexp_replace(p.overview_introduction, '^\[IA Seed\]\s*', ''),
+      '\s*[—\-–]\s*Staging専用架空作品。?\s*$',
+      ''
+    )
+  END,
+  creator = CASE
+    WHEN p.id = 'eeeeeeee-eeee-4eee-8eee-000000000008'::uuid
+      THEN regexp_replace(coalesce(p.creator, ''), '^IA Seed\s+', '')
+    WHEN coalesce(p.creator, '') IN ('IA Seed Owner A')
+      THEN 'Lumen Works'
+    WHEN coalesce(p.creator, '') IN ('IA Seed Owner B')
+      THEN 'Northlight Studio'
+    WHEN coalesce(p.creator, '') ~ '^IA Seed\s+'
+      THEN regexp_replace(p.creator, '^IA Seed\s+', '')
+    WHEN p.owner_id = 'dddddddd-dddd-4ddd-8ddd-000000000001'::uuid
+     AND coalesce(p.creator, '') ~* 'IA Seed'
+      THEN 'Lumen Works'
+    WHEN p.owner_id = 'dddddddd-dddd-4ddd-8ddd-000000000002'::uuid
+     AND coalesce(p.creator, '') ~* 'IA Seed'
+      THEN 'Northlight Studio'
+    ELSE p.creator
+  END,
+  owner_name = CASE
+    WHEN p.id = 'eeeeeeee-eeee-4eee-8eee-000000000008'::uuid
+      THEN regexp_replace(coalesce(p.owner_name, ''), '^IA Seed\s+', '')
+    WHEN coalesce(p.owner_name, '') IN ('IA Seed Owner A')
+      THEN 'Lumen Works'
+    WHEN coalesce(p.owner_name, '') IN ('IA Seed Owner B')
+      THEN 'Northlight Studio'
+    WHEN coalesce(p.owner_name, '') ~ '^IA Seed\s+'
+      THEN regexp_replace(p.owner_name, '^IA Seed\s+', '')
+    WHEN p.owner_id = 'dddddddd-dddd-4ddd-8ddd-000000000001'::uuid
+     AND coalesce(p.owner_name, '') ~* 'IA Seed'
+      THEN 'Lumen Works'
+    WHEN p.owner_id = 'dddddddd-dddd-4ddd-8ddd-000000000002'::uuid
+     AND coalesce(p.owner_name, '') ~* 'IA Seed'
+      THEN 'Northlight Studio'
+    ELSE p.owner_name
   END,
   updated_at = now()
 WHERE p.id::text LIKE 'eeeeeeee-eeee-4eee-8eee-%'
@@ -214,8 +277,186 @@ WHERE p.id::text LIKE 'eeeeeeee-eeee-4eee-8eee-%'
   AND (
     p.title LIKE '[IA Seed]%'
     OR coalesce(p.description, '') LIKE '[IA Seed]%'
+    OR coalesce(p.description, '') LIKE '%Staging専用%'
     OR coalesce(p.overview_introduction, '') LIKE '[IA Seed]%'
+    OR coalesce(p.overview_introduction, '') LIKE '%Staging専用%'
+    OR coalesce(p.creator, '') ~* 'IA Seed'
+    OR coalesce(p.owner_name, '') ~* 'IA Seed'
+    OR (
+      p.id NOT IN (
+        'eeeeeeee-eeee-4eee-8eee-000000000008'::uuid,
+        'eeeeeeee-eeee-4eee-8eee-000000000039'::uuid
+      )
+      AND p.description IS DISTINCT FROM (
+        CASE coalesce(p.category, 'game')
+          WHEN 'audio' THEN 'ゲームや映像制作に利用できる音楽・音声素材です。'
+          WHEN 'asset' THEN 'ゲームやアプリ制作に利用できる素材セットです。'
+          WHEN 'dev-tool' THEN '制作や開発作業を支援する開発ツールです。'
+          WHEN 'service-app' THEN 'ブラウザから実際に試せるサービス・アプリです。'
+          ELSE '探索や戦略を実際に遊んで試せる開発中のゲームです。'
+        END
+      )
+    )
   );
+
+-- Dedicated IA auth profiles: exact (creator_id, user_id) allowlist from
+-- scripts/staging-only/player-ia-auth-seed.ts (n=1..20).
+-- Never update by creator_id prefix alone. Never hero HC profiles.
+DO $$
+DECLARE
+  v_match integer;
+  v_unexpected integer;
+  v_left integer;
+BEGIN
+  IF to_regclass('public.developer_profiles') IS NULL THEN
+    RAISE NOTICE 'beautify: developer_profiles absent — skip dedicated profile rename';
+    RETURN;
+  END IF;
+
+  SELECT count(*)::integer INTO v_match
+  FROM public.developer_profiles dp
+  INNER JOIN (
+    VALUES
+      ('ia-seed-dev-01', 'a1a1a1a1-a1a1-41a1-81a1-000000000001'::uuid),
+      ('ia-seed-dev-02', 'a1a1a1a1-a1a1-41a1-81a1-000000000002'::uuid),
+      ('ia-seed-dev-03', 'a1a1a1a1-a1a1-41a1-81a1-000000000003'::uuid),
+      ('ia-seed-dev-04', 'a1a1a1a1-a1a1-41a1-81a1-000000000004'::uuid),
+      ('ia-seed-dev-05', 'a1a1a1a1-a1a1-41a1-81a1-000000000005'::uuid),
+      ('ia-seed-dev-06', 'a1a1a1a1-a1a1-41a1-81a1-000000000006'::uuid),
+      ('ia-seed-dev-07', 'a1a1a1a1-a1a1-41a1-81a1-000000000007'::uuid),
+      ('ia-seed-dev-08', 'a1a1a1a1-a1a1-41a1-81a1-000000000008'::uuid),
+      ('ia-seed-dev-09', 'a1a1a1a1-a1a1-41a1-81a1-000000000009'::uuid),
+      ('ia-seed-dev-10', 'a1a1a1a1-a1a1-41a1-81a1-000000000010'::uuid),
+      ('ia-seed-dev-11', 'a1a1a1a1-a1a1-41a1-81a1-000000000011'::uuid),
+      ('ia-seed-dev-12', 'a1a1a1a1-a1a1-41a1-81a1-000000000012'::uuid),
+      ('ia-seed-dev-13', 'a1a1a1a1-a1a1-41a1-81a1-000000000013'::uuid),
+      ('ia-seed-dev-14', 'a1a1a1a1-a1a1-41a1-81a1-000000000014'::uuid),
+      ('ia-seed-dev-15', 'a1a1a1a1-a1a1-41a1-81a1-000000000015'::uuid),
+      ('ia-seed-dev-16', 'a1a1a1a1-a1a1-41a1-81a1-000000000016'::uuid),
+      ('ia-seed-dev-17', 'a1a1a1a1-a1a1-41a1-81a1-000000000017'::uuid),
+      ('ia-seed-dev-18', 'a1a1a1a1-a1a1-41a1-81a1-000000000018'::uuid),
+      ('ia-seed-dev-19', 'a1a1a1a1-a1a1-41a1-81a1-000000000019'::uuid),
+      ('ia-seed-dev-20', 'a1a1a1a1-a1a1-41a1-81a1-000000000020'::uuid)
+  ) AS allowed(creator_id, user_id)
+    ON dp.creator_id = allowed.creator_id
+   AND dp.user_id = allowed.user_id;
+
+  IF v_match NOT IN (0, 20) THEN
+    RAISE EXCEPTION
+      'ABORT beautify: dedicated profile exact-pair count % (expected 0 or 20)',
+      v_match;
+  END IF;
+
+  -- Fail closed: a1a1… + ia-seed-dev-% rows must be exact allowlist pairs only
+  SELECT count(*)::integer INTO v_unexpected
+  FROM public.developer_profiles dp
+  WHERE dp.user_id::text LIKE 'a1a1a1a1-a1a1-41a1-81a1-%'
+    AND coalesce(dp.creator_id, '') LIKE 'ia-seed-dev-%'
+    AND NOT EXISTS (
+      SELECT 1
+      FROM (
+        VALUES
+          ('ia-seed-dev-01', 'a1a1a1a1-a1a1-41a1-81a1-000000000001'::uuid),
+          ('ia-seed-dev-02', 'a1a1a1a1-a1a1-41a1-81a1-000000000002'::uuid),
+          ('ia-seed-dev-03', 'a1a1a1a1-a1a1-41a1-81a1-000000000003'::uuid),
+          ('ia-seed-dev-04', 'a1a1a1a1-a1a1-41a1-81a1-000000000004'::uuid),
+          ('ia-seed-dev-05', 'a1a1a1a1-a1a1-41a1-81a1-000000000005'::uuid),
+          ('ia-seed-dev-06', 'a1a1a1a1-a1a1-41a1-81a1-000000000006'::uuid),
+          ('ia-seed-dev-07', 'a1a1a1a1-a1a1-41a1-81a1-000000000007'::uuid),
+          ('ia-seed-dev-08', 'a1a1a1a1-a1a1-41a1-81a1-000000000008'::uuid),
+          ('ia-seed-dev-09', 'a1a1a1a1-a1a1-41a1-81a1-000000000009'::uuid),
+          ('ia-seed-dev-10', 'a1a1a1a1-a1a1-41a1-81a1-000000000010'::uuid),
+          ('ia-seed-dev-11', 'a1a1a1a1-a1a1-41a1-81a1-000000000011'::uuid),
+          ('ia-seed-dev-12', 'a1a1a1a1-a1a1-41a1-81a1-000000000012'::uuid),
+          ('ia-seed-dev-13', 'a1a1a1a1-a1a1-41a1-81a1-000000000013'::uuid),
+          ('ia-seed-dev-14', 'a1a1a1a1-a1a1-41a1-81a1-000000000014'::uuid),
+          ('ia-seed-dev-15', 'a1a1a1a1-a1a1-41a1-81a1-000000000015'::uuid),
+          ('ia-seed-dev-16', 'a1a1a1a1-a1a1-41a1-81a1-000000000016'::uuid),
+          ('ia-seed-dev-17', 'a1a1a1a1-a1a1-41a1-81a1-000000000017'::uuid),
+          ('ia-seed-dev-18', 'a1a1a1a1-a1a1-41a1-81a1-000000000018'::uuid),
+          ('ia-seed-dev-19', 'a1a1a1a1-a1a1-41a1-81a1-000000000019'::uuid),
+          ('ia-seed-dev-20', 'a1a1a1a1-a1a1-41a1-81a1-000000000020'::uuid)
+      ) AS allowed(creator_id, user_id)
+      WHERE dp.creator_id = allowed.creator_id
+        AND dp.user_id = allowed.user_id
+    );
+
+  IF v_unexpected <> 0 THEN
+    RAISE EXCEPTION
+      'ABORT beautify: unexpected a1a1/ia-seed-dev profile pairs=%',
+      v_unexpected;
+  END IF;
+
+  IF v_match = 0 THEN
+    RAISE NOTICE 'beautify: no dedicated exact-pair profiles present — skip rename';
+    RETURN;
+  END IF;
+
+  UPDATE public.developer_profiles AS target
+  SET
+    public_name = allowed.display_name
+  FROM (
+    VALUES
+      ('ia-seed-dev-01', 'a1a1a1a1-a1a1-41a1-81a1-000000000001'::uuid, 'ゲーム職人'),
+      ('ia-seed-dev-02', 'a1a1a1a1-a1a1-41a1-81a1-000000000002'::uuid, 'ホラー好きDev'),
+      ('ia-seed-dev-03', 'a1a1a1a1-a1a1-41a1-81a1-000000000003'::uuid, 'Unity屋'),
+      ('ia-seed-dev-04', 'a1a1a1a1-a1a1-41a1-81a1-000000000004'::uuid, 'UEクリエイター'),
+      ('ia-seed-dev-05', 'a1a1a1a1-a1a1-41a1-81a1-000000000005'::uuid, 'Godot民'),
+      ('ia-seed-dev-06', 'a1a1a1a1-a1a1-41a1-81a1-000000000006'::uuid, '配信者A'),
+      ('ia-seed-dev-07', 'a1a1a1a1-a1a1-41a1-81a1-000000000007'::uuid, '配信者B'),
+      ('ia-seed-dev-08', 'a1a1a1a1-a1a1-41a1-81a1-000000000008'::uuid, 'ドット絵師'),
+      ('ia-seed-dev-09', 'a1a1a1a1-a1a1-41a1-81a1-000000000009'::uuid, '3Dキャラ職人'),
+      ('ia-seed-dev-10', 'a1a1a1a1-a1a1-41a1-81a1-000000000010'::uuid, 'BGM制作'),
+      ('ia-seed-dev-11', 'a1a1a1a1-a1a1-41a1-81a1-000000000011'::uuid, 'SE職人'),
+      ('ia-seed-dev-12', 'a1a1a1a1-a1a1-41a1-81a1-000000000012'::uuid, 'ツール屋'),
+      ('ia-seed-dev-13', 'a1a1a1a1-a1a1-41a1-81a1-000000000013'::uuid, 'サービス開発'),
+      ('ia-seed-dev-14', 'a1a1a1a1-a1a1-41a1-81a1-000000000014'::uuid, '分析屋'),
+      ('ia-seed-dev-15', 'a1a1a1a1-a1a1-41a1-81a1-000000000015'::uuid, 'Bot作者'),
+      ('ia-seed-dev-16', 'a1a1a1a1-a1a1-41a1-81a1-000000000016'::uuid, 'マルチA'),
+      ('ia-seed-dev-17', 'a1a1a1a1-a1a1-41a1-81a1-000000000017'::uuid, 'マルチB'),
+      ('ia-seed-dev-18', 'a1a1a1a1-a1a1-41a1-81a1-000000000018'::uuid, 'テスト募集'),
+      ('ia-seed-dev-19', 'a1a1a1a1-a1a1-41a1-81a1-000000000019'::uuid, '制作に使える派'),
+      ('ia-seed-dev-20', 'a1a1a1a1-a1a1-41a1-81a1-000000000020'::uuid, '超長い制作者プロフィール名の折り返し検証用ABCDEFG')
+  ) AS allowed(creator_id, user_id, display_name)
+  WHERE target.creator_id = allowed.creator_id
+    AND target.user_id = allowed.user_id
+    AND target.public_name IS DISTINCT FROM allowed.display_name;
+
+  SELECT count(*)::integer INTO v_left
+  FROM public.developer_profiles dp
+  INNER JOIN (
+    VALUES
+      ('ia-seed-dev-01', 'a1a1a1a1-a1a1-41a1-81a1-000000000001'::uuid),
+      ('ia-seed-dev-02', 'a1a1a1a1-a1a1-41a1-81a1-000000000002'::uuid),
+      ('ia-seed-dev-03', 'a1a1a1a1-a1a1-41a1-81a1-000000000003'::uuid),
+      ('ia-seed-dev-04', 'a1a1a1a1-a1a1-41a1-81a1-000000000004'::uuid),
+      ('ia-seed-dev-05', 'a1a1a1a1-a1a1-41a1-81a1-000000000005'::uuid),
+      ('ia-seed-dev-06', 'a1a1a1a1-a1a1-41a1-81a1-000000000006'::uuid),
+      ('ia-seed-dev-07', 'a1a1a1a1-a1a1-41a1-81a1-000000000007'::uuid),
+      ('ia-seed-dev-08', 'a1a1a1a1-a1a1-41a1-81a1-000000000008'::uuid),
+      ('ia-seed-dev-09', 'a1a1a1a1-a1a1-41a1-81a1-000000000009'::uuid),
+      ('ia-seed-dev-10', 'a1a1a1a1-a1a1-41a1-81a1-000000000010'::uuid),
+      ('ia-seed-dev-11', 'a1a1a1a1-a1a1-41a1-81a1-000000000011'::uuid),
+      ('ia-seed-dev-12', 'a1a1a1a1-a1a1-41a1-81a1-000000000012'::uuid),
+      ('ia-seed-dev-13', 'a1a1a1a1-a1a1-41a1-81a1-000000000013'::uuid),
+      ('ia-seed-dev-14', 'a1a1a1a1-a1a1-41a1-81a1-000000000014'::uuid),
+      ('ia-seed-dev-15', 'a1a1a1a1-a1a1-41a1-81a1-000000000015'::uuid),
+      ('ia-seed-dev-16', 'a1a1a1a1-a1a1-41a1-81a1-000000000016'::uuid),
+      ('ia-seed-dev-17', 'a1a1a1a1-a1a1-41a1-81a1-000000000017'::uuid),
+      ('ia-seed-dev-18', 'a1a1a1a1-a1a1-41a1-81a1-000000000018'::uuid),
+      ('ia-seed-dev-19', 'a1a1a1a1-a1a1-41a1-81a1-000000000019'::uuid),
+      ('ia-seed-dev-20', 'a1a1a1a1-a1a1-41a1-81a1-000000000020'::uuid)
+  ) AS allowed(creator_id, user_id)
+    ON dp.creator_id = allowed.creator_id
+   AND dp.user_id = allowed.user_id
+  WHERE coalesce(dp.public_name, '') ~* 'IA Seed';
+
+  IF v_left <> 0 THEN
+    RAISE EXCEPTION
+      'ABORT beautify post: % exact-pair profiles still carry IA Seed name',
+      v_left;
+  END IF;
+END $$;
 
 -- ---------------------------------------------------------------------------
 -- B. Seed announcement display copy (status / published_at unchanged)
@@ -410,6 +651,53 @@ BEGIN
     RAISE EXCEPTION
       'ABORT beautify post: % projects still carry [IA Seed] prefix',
       v_prefix_left;
+  END IF;
+
+  SELECT count(*)::integer INTO v_prefix_left
+  FROM public.projects
+  WHERE id::text LIKE 'eeeeeeee-eeee-4eee-8eee-%'
+    AND 'forge-ia-seed-v1' = ANY (coalesce(tags, '{}'::text[]))
+    AND (
+      coalesce(description, '') LIKE '%Staging専用%'
+      OR coalesce(overview_introduction, '') LIKE '%Staging専用%'
+    );
+
+  IF v_prefix_left <> 0 THEN
+    RAISE EXCEPTION
+      'ABORT beautify post: % projects still carry Staging専用 marker',
+      v_prefix_left;
+  END IF;
+
+  SELECT count(*)::integer INTO v_prefix_left
+  FROM public.projects
+  WHERE id::text LIKE 'eeeeeeee-eeee-4eee-8eee-%'
+    AND 'forge-ia-seed-v1' = ANY (coalesce(tags, '{}'::text[]))
+    AND (
+      coalesce(creator, '') ~* 'IA Seed'
+      OR coalesce(owner_name, '') ~* 'IA Seed'
+    );
+
+  IF v_prefix_left <> 0 THEN
+    RAISE EXCEPTION
+      'ABORT beautify post: % projects still carry IA Seed creator/owner_name',
+      v_prefix_left;
+  END IF;
+
+  -- Hero HC profiles must remain untouched (shared with Smoke / hero carousel)
+  IF to_regclass('public.developer_profiles') IS NOT NULL
+     AND EXISTS (
+    SELECT 1
+    FROM public.developer_profiles dp
+    WHERE dp.user_id IN (
+      'dddddddd-dddd-4ddd-8ddd-000000000001'::uuid,
+      'dddddddd-dddd-4ddd-8ddd-000000000002'::uuid
+    )
+    AND coalesce(dp.creator_id, '') LIKE 'hc-%'
+    AND dp.public_name IN (
+      'Lumen Works', 'Northlight Studio'
+    )
+  ) THEN
+    RAISE EXCEPTION 'ABORT beautify post: hero developer_profiles were modified';
   END IF;
 
   SELECT count(*)::integer INTO v_thumbs
