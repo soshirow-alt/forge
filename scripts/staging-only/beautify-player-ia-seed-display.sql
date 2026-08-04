@@ -299,6 +299,16 @@ WHERE p.id::text LIKE 'eeeeeeee-eeee-4eee-8eee-%'
     )
   );
 
+-- Exact seed title repair for …0011 (Staging had U+FFFD replacing 「基」).
+-- Canon title from player-ia-staging-seed / generate-player-ia-staging-seed.mjs.
+UPDATE public.projects
+SET
+  title = 'SEキット基礎',
+  updated_at = now()
+WHERE id = 'eeeeeeee-eeee-4eee-8eee-000000000011'::uuid
+  AND 'forge-ia-seed-v1' = ANY (coalesce(tags, '{}'::text[]))
+  AND title IS DISTINCT FROM 'SEキット基礎';
+
 -- Dedicated IA auth profiles: exact (creator_id, user_id) allowlist from
 -- scripts/staging-only/player-ia-auth-seed.ts (n=1..20).
 -- Never update by creator_id prefix alone. Never hero HC profiles.
@@ -666,6 +676,27 @@ BEGIN
     RAISE EXCEPTION
       'ABORT beautify post: % projects still carry Staging専用 marker',
       v_prefix_left;
+  END IF;
+
+  -- Seed titles must not retain Unicode replacement char (U+FFFD)
+  SELECT count(*)::integer INTO v_prefix_left
+  FROM public.projects
+  WHERE id::text LIKE 'eeeeeeee-eeee-4eee-8eee-%'
+    AND 'forge-ia-seed-v1' = ANY (coalesce(tags, '{}'::text[]))
+    AND position(chr(65533) in coalesce(title, '')) > 0;
+
+  IF v_prefix_left <> 0 THEN
+    RAISE EXCEPTION
+      'ABORT beautify post: % seed project titles still contain U+FFFD',
+      v_prefix_left;
+  END IF;
+
+  IF (
+    SELECT title FROM public.projects
+    WHERE id = 'eeeeeeee-eeee-4eee-8eee-000000000011'::uuid
+  ) IS DISTINCT FROM 'SEキット基礎' THEN
+    RAISE EXCEPTION
+      'ABORT beautify post: seed …0011 title must be SEキット基礎';
   END IF;
 
   SELECT count(*)::integer INTO v_prefix_left

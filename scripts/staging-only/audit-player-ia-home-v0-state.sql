@@ -184,6 +184,15 @@ SELECT
     WHERE id::text NOT LIKE 'eeeeeeee-eeee-4eee-8eee-%'
       AND thumbnail_url LIKE '/images/staging-only/player-ia/%'
   ) AS actual_non_seed_staging_thumbs,
+  0 AS expected_seed_title_ufffd,
+  count(*) FILTER (
+    WHERE position(chr(65533) in coalesce(title, '')) > 0
+  ) AS actual_seed_title_ufffd,
+  1 AS expected_se_kit_title_exact,
+  count(*) FILTER (
+    WHERE id = 'eeeeeeee-eeee-4eee-8eee-000000000011'::uuid
+      AND title = 'SEキット基礎'
+  ) AS actual_se_kit_title_exact,
   CASE
     WHEN count(*) = 40
      AND count(*) FILTER (WHERE 'forge-ia-seed-v1' = ANY (coalesce(tags, '{}'::text[]))) = 40
@@ -224,6 +233,13 @@ SELECT
        WHERE id::text NOT LIKE 'eeeeeeee-eeee-4eee-8eee-%'
          AND thumbnail_url LIKE '/images/staging-only/player-ia/%'
      ) = 0
+     AND count(*) FILTER (
+       WHERE position(chr(65533) in coalesce(title, '')) > 0
+     ) = 0
+     AND count(*) FILTER (
+       WHERE id = 'eeeeeeee-eeee-4eee-8eee-000000000011'::uuid
+         AND title = 'SEキット基礎'
+     ) = 1
     THEN 'PASS'
     WHEN count(*) = 40
      AND count(*) FILTER (WHERE 'forge-ia-seed-v1' = ANY (coalesce(tags, '{}'::text[]))) = 40

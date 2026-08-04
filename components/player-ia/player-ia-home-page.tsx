@@ -342,12 +342,9 @@ function ConnectionsSection({
                 </h3>
               </div>
             </Link>
-            <span
-              className="flex size-9 shrink-0 flex-col items-center justify-center rounded-full bg-violet-500/15 text-[10px] font-semibold leading-tight text-violet-300"
-              aria-hidden="true"
-            >
-              <ArrowRight className="size-3.5" />
-              使用
+            <span className="flex w-[4.5rem] shrink-0 flex-col items-center justify-center gap-0.5 rounded-full bg-violet-500/15 px-1.5 py-2 text-center text-[10px] font-semibold leading-tight text-violet-300">
+              <ArrowRight className="size-3.5" aria-hidden="true" />
+              使用している
             </span>
             <Link
               href={gameDetailHref(item.targetProjectId)}

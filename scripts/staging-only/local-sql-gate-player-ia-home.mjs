@@ -830,6 +830,25 @@ async function main() {
      WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid`,
   );
 
+  // Staging-like corruption on exact seed …0011; non-seed keeps its own U+FFFD
+  await db.exec(`
+    UPDATE public.projects
+    SET title = 'SEキット' || chr(65533) || chr(65533) || chr(65533) || '礎'
+    WHERE id = 'eeeeeeee-eeee-4eee-8eee-000000000011'::uuid;
+    UPDATE public.projects
+    SET title = 'Smoke' || chr(65533) || 'A'
+    WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid;
+  `);
+  const corrupted = await query(
+    db,
+    `SELECT title FROM public.projects
+     WHERE id = 'eeeeeeee-eeee-4eee-8eee-000000000011'::uuid`,
+  );
+  assert(
+    String(corrupted.rows[0].title).includes(String.fromCharCode(0xfffd)),
+    "fixture did not plant U+FFFD on …0011",
+  );
+
   const annMetaBefore = await query(
     db,
     `SELECT id::text AS id, status, importance, published_at::text AS published_at, title, body
@@ -841,6 +860,33 @@ async function main() {
 
   await execSql(db, "beautify first apply", sqlBeautify);
   await execSql(db, "beautify re-run (idempotent)", sqlBeautify);
+
+  const seKitTitle = await query(
+    db,
+    `SELECT title FROM public.projects
+     WHERE id = 'eeeeeeee-eeee-4eee-8eee-000000000011'::uuid`,
+  );
+  assert(seKitTitle.rows[0].title === "SEキット基礎", "…0011 title not repaired");
+  assert(
+    !String(seKitTitle.rows[0].title).includes(String.fromCharCode(0xfffd)),
+    "…0011 still has U+FFFD",
+  );
+  const smokeTitleAfterRepair = await query(
+    db,
+    `SELECT title FROM public.projects
+     WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid`,
+  );
+  assert(
+    smokeTitleAfterRepair.rows[0].title === `Smoke${String.fromCharCode(0xfffd)}A`,
+    "non-seed U+FFFD title was mutated",
+  );
+  // Restore smoke title for later non-seed immutability checks that compare to smokeBefore
+  await db.exec(`
+    UPDATE public.projects
+    SET title = 'Smoke A'
+    WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid;
+  `);
+  smokeBefore.rows[0].title = "Smoke A";
 
   const afterBeautify = await query(
     db,
@@ -1409,6 +1455,37 @@ INSERT INTO public.projects (
 
   await assertGateVerdict(db, sqlAudit, "rpc_083_presence", "PASS");
   await assertGateVerdict(db, sqlAudit, "seed_project_inventory", "PASS");
+
+  // Legitimate non-seed may share title 「SEキット基礎」; beautify must not touch it,
+  // and audit must still PASS (exact seed ID only — no global title exclusivity).
+  await db.exec(`
+    UPDATE public.projects
+    SET title = 'SEキット基礎'
+    WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid;
+  `);
+  await execSql(db, "beautify with legitimate non-seed same title", sqlBeautify);
+  const sameTitleNonSeed = await query(
+    db,
+    `SELECT title FROM public.projects
+     WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid`,
+  );
+  assert(
+    sameTitleNonSeed.rows[0].title === "SEキット基礎",
+    "legitimate non-seed same title was mutated",
+  );
+  await assertGateVerdict(
+    db,
+    sqlAudit,
+    "seed_project_inventory",
+    "PASS",
+    "inventory PASS with legitimate non-seed same title",
+  );
+  await db.exec(`
+    UPDATE public.projects
+    SET title = 'Smoke A'
+    WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid;
+  `);
+
   await assertGateVerdict(db, sqlAudit, "seed_announcements", "PASS");
   await assertGateVerdict(db, sqlAudit, "seed_related_inventory", "PASS");
   await assertGateVerdict(

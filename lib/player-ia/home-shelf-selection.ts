@@ -98,20 +98,21 @@ export type UsagePairRef = {
   targetCategory: ProjectCategoryId;
 };
 
-const PREFERRED_PAIR_KEYS = [
-  "game>audio",
-  "game>asset",
-  "game>dev-tool",
-  "service-app>dev-tool",
-] as const;
-
 function pairKey(source: ProjectCategoryId, target: ProjectCategoryId): string {
   return `${source}>${target}`;
 }
 
 /**
- * Select usage pairs: used-only already filtered by RPC.
- * Soft: max 2 per identical category-pair key; prefer preferred mix patterns.
+ * Select usage pairs for Home connections shelf.
+ * Ranking order from RPC is preserved as the candidate pool order.
+ *
+ * Stage 1a: new pair-keys with unused source AND unused target (ranked order).
+ * Stage 1b: remaining new pair-keys with unused source.
+ * Stage 1c: remaining new pair-keys with unused target.
+ * Stage 1d: remaining first occurrences of other pair-keys.
+ * Stage 2:  fill with ranked leftovers; max 2 per category-pair key.
+ *
+ * No fixed category quotas; no hardcoded category names; no invented scores.
  */
 export function selectUsagePairs<T extends UsagePairRef>(
   ranked: T[],
@@ -119,38 +120,75 @@ export function selectUsagePairs<T extends UsagePairRef>(
 ): T[] {
   if (limit <= 0 || ranked.length === 0) return [];
 
-  const pairCounts = new Map<string, number>();
   const selected: T[] = [];
   const seenPairIds = new Set<string>();
+  const pairCounts = new Map<string, number>();
+  const sourceCatCounts = new Map<string, number>();
+  const targetCatCounts = new Map<string, number>();
 
-  const tryTake = (item: T): boolean => {
-    if (selected.length >= limit) return false;
+  const take = (item: T): void => {
+    const key = pairKey(item.sourceCategory, item.targetCategory);
+    selected.push(item);
+    seenPairIds.add(item.id);
+    pairCounts.set(key, (pairCounts.get(key) ?? 0) + 1);
+    sourceCatCounts.set(
+      item.sourceCategory,
+      (sourceCatCounts.get(item.sourceCategory) ?? 0) + 1,
+    );
+    targetCatCounts.set(
+      item.targetCategory,
+      (targetCatCounts.get(item.targetCategory) ?? 0) + 1,
+    );
+  };
+
+  const baseEligible = (item: T): boolean => {
     if (seenPairIds.has(item.id)) return false;
     if (item.sourceProjectId === item.targetProjectId) return false;
     const key = pairKey(item.sourceCategory, item.targetCategory);
-    const count = pairCounts.get(key) ?? 0;
-    if (count >= 2) return false;
-    selected.push(item);
-    seenPairIds.add(item.id);
-    pairCounts.set(key, count + 1);
+    if ((pairCounts.get(key) ?? 0) >= 2) return false;
     return true;
   };
 
-  // Pass 1: preferred category mixes
-  for (const preferred of PREFERRED_PAIR_KEYS) {
-    for (const item of ranked) {
-      if (selected.length >= limit) break;
-      if (pairKey(item.sourceCategory, item.targetCategory) !== preferred) {
-        continue;
-      }
-      tryTake(item);
-    }
-  }
+  const isNewPairKey = (item: T): boolean =>
+    (pairCounts.get(pairKey(item.sourceCategory, item.targetCategory)) ?? 0) < 1;
 
-  // Pass 2: fill remaining in native order with soft pair-key cap
+  // Stage 1a: new pair-keys with unused source AND unused target
   for (const item of ranked) {
     if (selected.length >= limit) break;
-    tryTake(item);
+    if (!baseEligible(item) || !isNewPairKey(item)) continue;
+    if ((sourceCatCounts.get(item.sourceCategory) ?? 0) >= 1) continue;
+    if ((targetCatCounts.get(item.targetCategory) ?? 0) >= 1) continue;
+    take(item);
+  }
+
+  // Stage 1b: remaining new pair-keys with unused source
+  for (const item of ranked) {
+    if (selected.length >= limit) break;
+    if (!baseEligible(item) || !isNewPairKey(item)) continue;
+    if ((sourceCatCounts.get(item.sourceCategory) ?? 0) >= 1) continue;
+    take(item);
+  }
+
+  // Stage 1c: remaining new pair-keys with unused target
+  for (const item of ranked) {
+    if (selected.length >= limit) break;
+    if (!baseEligible(item) || !isNewPairKey(item)) continue;
+    if ((targetCatCounts.get(item.targetCategory) ?? 0) >= 1) continue;
+    take(item);
+  }
+
+  // Stage 1d: remaining new pair-keys (still before repeating a key)
+  for (const item of ranked) {
+    if (selected.length >= limit) break;
+    if (!baseEligible(item) || !isNewPairKey(item)) continue;
+    take(item);
+  }
+
+  // Stage 2: fill remaining in ranked order (max 2 per pair key)
+  for (const item of ranked) {
+    if (selected.length >= limit) break;
+    if (!baseEligible(item)) continue;
+    take(item);
   }
 
   return selected;

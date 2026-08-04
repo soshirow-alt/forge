@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-08-04 — Homeつながった作品: pair多様性・「使用している」・SEタイトル修復
+
+- **selection** — `selectUsagePairs` を distinct category-pair 優先の soft suppression へ（固定quotaなし。同一pair-keyは最大2）
+- **UI** — 中央ラベルを「使用している」へ。矢印のみ aria-hidden、テキストは読み上げ対象
+- **Staging SQL** — seed `…0011` タイトルを exact ID で `SEキット基礎` へ修復（U+FFFD除去）。audit/PGlite 追従
+- **非実施** — Staging/Production DB 自動適用なし。main 未変更
+
 ## 2026-08-04 — Staging announcement 8件を自然なユーザー向け文言へ
 
 - **Staging beautify** — seed お知らせ exact 8 ID の title/body のみを自然な架空告知へ置換（published 6 / draft 2・重要度・公開日時は不変）。Preview/Staging/seed/確認用マーカーを残さない
