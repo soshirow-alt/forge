@@ -138,7 +138,7 @@ Staging Home 目視用の表示整えは **別 SQL**（seed 本体ではない�
 
 | ファイル | 役割 |
 |---|---|
-| `beautify-player-ia-seed-display.sql` | Staging 専用。seed の title / announcement 表示文 / thumbnail を整え。**Production 禁止**。Cursor/Codex は適用しない（オーナーが SQL Editor で手動） |
+| `beautify-player-ia-seed-display.sql` | Staging 専用。seed の title / announcement 自然表示文 / thumbnail を整え。**Production 禁止**。Cursor/Codex は適用しない（オーナーが SQL Editor で手動） |
 | `audit-player-ia-home-v0-state.sql` | read-only 監査（件数・thumb 整合・immutable 未更新・RPC 存在） |
 | `local-sql-gate-player-ia-home.mjs` | PGlite ローカル全文ゲート（`npm run verify:player-ia-home-sql-gate`） |
 

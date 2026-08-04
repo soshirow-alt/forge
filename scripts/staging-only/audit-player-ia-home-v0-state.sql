@@ -286,124 +286,167 @@ ORDER BY id
 LIMIT 40;
 
 -- ---------------------------------------------------------------------------
--- 4. Announcements (seed UUIDs)
+-- 4. Announcements (seed UUIDs) — natural user-facing copy after beautify
 -- GATE_ASSERT:seed_announcements
 -- ---------------------------------------------------------------------------
+WITH expected_copy (id, title, body, expected_status) AS (
+  VALUES
+    ('aaaaaaaa-aaaa-4aaa-8aaa-000000000001'::uuid,
+     '作品へのフィードバックを募集しています',
+     '気になった作品を試して、良かった点や改善してほしい点を開発者へ届けてみてください。',
+     'published'),
+    ('aaaaaaaa-aaaa-4aaa-8aaa-000000000002'::uuid,
+     '制作に使える素材・ツールを探せます',
+     '音楽・音声、アセット、開発ツールなど、制作に活用できる作品をまとめて探せます。',
+     'published'),
+    ('aaaaaaaa-aaaa-4aaa-8aaa-000000000003'::uuid,
+     'サムネイル未設定作品の表示を改善しました',
+     '画像がない作品でも内容を確認しやすいフォールバック表示に対応しました。',
+     'published'),
+    ('aaaaaaaa-aaaa-4aaa-8aaa-000000000004'::uuid,
+     '作品同士のつながりを確認できます',
+     '素材やツールが別の作品で使われた関係を、Homeから確認できます。',
+     'published'),
+    ('aaaaaaaa-aaaa-4aaa-8aaa-000000000005'::uuid,
+     '新着作品と更新作品を見つけやすくしました',
+     '公開されたばかりの作品や、最近更新された作品をHomeで確認できます。',
+     'published'),
+    ('aaaaaaaa-aaaa-4aaa-8aaa-000000000006'::uuid,
+     '5カテゴリの掲載に対応しました',
+     'ゲーム、音楽・音声、アセット、開発ツール、サービス・アプリを掲載・探索できます。',
+     'published'),
+    ('aaaaaaaa-aaaa-4aaa-8aaa-000000000007'::uuid,
+     '開発者プロフィールの表示改善',
+     '作品と制作者の活動がより分かりやすくなる表示改善を準備しています。',
+     'draft'),
+    ('aaaaaaaa-aaaa-4aaa-8aaa-000000000008'::uuid,
+     'フィードバック機能の改善',
+     '送ったフィードバックや開発者からの返信を追いやすくする改善を準備しています。',
+     'draft')
+),
+seed_rows AS (
+  SELECT a.*
+  FROM public.platform_announcements a
+  WHERE a.id::text LIKE 'aaaaaaaa-aaaa-4aaa-8aaa-%'
+),
+metrics AS (
+  SELECT
+    (SELECT count(*)::integer FROM seed_rows) AS actual_rows,
+    (SELECT count(*)::integer FROM seed_rows WHERE status = 'published') AS actual_published,
+    (SELECT count(*)::integer FROM seed_rows WHERE status = 'draft') AS actual_draft,
+    (
+      SELECT count(*)::integer
+      FROM seed_rows a
+      INNER JOIN expected_copy e ON a.id = e.id AND a.title = e.title AND a.body = e.body
+    ) AS actual_exact_copy_matches,
+    (
+      SELECT count(*)::integer
+      FROM seed_rows a
+      INNER JOIN expected_copy e ON a.id = e.id AND a.status = e.expected_status
+    ) AS actual_status_matches_fixture,
+    (
+      SELECT count(*)::integer
+      FROM seed_rows
+      WHERE lower(coalesce(title, '') || ' ' || coalesce(body, '')) LIKE '%preview%'
+    ) AS actual_preview_remaining,
+    (
+      SELECT count(*)::integer
+      FROM seed_rows
+      WHERE lower(coalesce(title, '') || ' ' || coalesce(body, '')) LIKE '%staging%'
+    ) AS actual_staging_remaining,
+    (
+      SELECT count(*)::integer
+      FROM seed_rows
+      WHERE lower(coalesce(title, '') || ' ' || coalesce(body, '')) LIKE '%seed%'
+    ) AS actual_seed_remaining,
+    (
+      SELECT count(*)::integer
+      FROM seed_rows
+      WHERE coalesce(title, '') LIKE '%[IA Seed]%'
+         OR coalesce(body, '') LIKE '%[IA Seed]%'
+         OR coalesce(title, '') || coalesce(body, '') ~* '\[IA Seed\]'
+    ) AS actual_ia_seed_remaining,
+    (
+      SELECT count(*)::integer
+      FROM seed_rows
+      WHERE coalesce(title, '') || coalesce(body, '') LIKE '%確認用%'
+         OR coalesce(title, '') || coalesce(body, '') LIKE '%確認メモ%'
+    ) AS actual_kakunin_markers,
+    (
+      SELECT count(*)::integer
+      FROM public.platform_announcements a
+      WHERE a.id::text NOT LIKE 'aaaaaaaa-aaaa-4aaa-8aaa-%'
+        AND EXISTS (
+          SELECT 1 FROM expected_copy e
+          WHERE e.title = a.title AND e.body = a.body
+        )
+    ) AS actual_non_seed_mutated_to_seed_copy,
+    (
+      SELECT count(*)::integer
+      FROM seed_rows
+      WHERE id = 'aaaaaaaa-aaaa-4aaa-8aaa-000000000001'::uuid
+        AND importance = 'important'
+        AND status = 'published'
+    ) AS actual_important_published_001
+)
 SELECT
   'seed_announcements' AS section,
   8 AS expected_rows,
-  count(*) AS actual_rows,
+  m.actual_rows,
   6 AS expected_published,
-  count(*) FILTER (WHERE status = 'published') AS actual_published,
+  m.actual_published,
   2 AS expected_draft,
-  count(*) FILTER (WHERE status = 'draft') AS actual_draft,
-  0 AS expected_title_prefixed_after_beautify,
-  count(*) FILTER (WHERE title LIKE '[IA Seed]%') AS actual_title_prefixed,
-  0 AS expected_body_prefixed_after_beautify,
-  count(*) FILTER (WHERE body LIKE '[IA Seed]%') AS actual_body_prefixed,
-  0 AS expected_staging_senyo_markers,
-  count(*) FILTER (
-    WHERE title LIKE '%Staging専用%'
-       OR body LIKE '%Staging専用%'
-  ) AS actual_staging_senyo_markers,
+  m.actual_draft,
   8 AS expected_exact_copy_matches,
-  (
-    SELECT count(*)
-    FROM public.platform_announcements a
-    JOIN (
-      VALUES
-        ('aaaaaaaa-aaaa-4aaa-8aaa-000000000001'::uuid,
-         'Preview用: Playerホーム棚の確認メモ',
-         'Staging限定のお知らせです。フィードバックが集まっている作品・最近アップデート・使用ペア棚の見た目確認用。Production向けの告知ではありません。'),
-        ('aaaaaaaa-aaaa-4aaa-8aaa-000000000002'::uuid,
-         'カテゴリ8件ずつの表示密度を見る',
-         'game / audio / asset / dev-tool / service-app が各8件ある前提で、カード密度と省略を確認してください。'),
-        ('aaaaaaaa-aaaa-4aaa-8aaa-000000000003'::uuid,
-         'サムネなし2件のフォールバック確認',
-         '意図的にサムネなしのseedが2件あります。プレースホルダ表示が崩れていないかだけ見てください。'),
-        ('aaaaaaaa-aaaa-4aaa-8aaa-000000000004'::uuid,
-         '使用関係ペアの並びに注意',
-         'Forgeでつながった作品棚はseedのusage関係を使います。実ユーザー作品への影響はありません。'),
-        ('aaaaaaaa-aaaa-4aaa-8aaa-000000000005'::uuid,
-         '新着・更新棚の並び確認',
-         'first_published_at と更新要約の見え方をStagingで確認するためのメモです。'),
-        ('aaaaaaaa-aaaa-4aaa-8aaa-000000000006'::uuid,
-         'お知らせ一覧の公開6件サンプル',
-         'published 6件のうちの1件です。draft 2件は公開一覧に出ない想定です。'),
-        ('aaaaaaaa-aaaa-4aaa-8aaa-000000000007'::uuid,
-         '（draft）下書きお知らせA',
-         'Staging draft。公開一覧・ホームには出さない想定の確認用です。'),
-        ('aaaaaaaa-aaaa-4aaa-8aaa-000000000008'::uuid,
-         '（draft）下書きお知らせB',
-         'Staging draft。published/draft件数（6/2）を崩さないための確認用です。')
-    ) AS expected(id, title, body)
-      ON a.id = expected.id
-     AND a.title = expected.title
-     AND a.body = expected.body
-  ) AS actual_exact_copy_matches,
+  m.actual_exact_copy_matches,
+  8 AS expected_status_matches_fixture,
+  m.actual_status_matches_fixture,
+  0 AS expected_preview_remaining,
+  m.actual_preview_remaining,
+  0 AS expected_staging_remaining,
+  m.actual_staging_remaining,
+  0 AS expected_seed_remaining,
+  m.actual_seed_remaining,
+  0 AS expected_ia_seed_remaining,
+  m.actual_ia_seed_remaining,
+  0 AS expected_kakunin_markers,
+  m.actual_kakunin_markers,
+  0 AS expected_non_seed_mutated_to_seed_copy,
+  m.actual_non_seed_mutated_to_seed_copy,
+  1 AS expected_important_published_001,
+  m.actual_important_published_001,
   CASE
-    WHEN count(*) = 8
-     AND count(*) FILTER (WHERE status = 'published') = 6
-     AND count(*) FILTER (WHERE status = 'draft') = 2
-     AND count(*) FILTER (WHERE title LIKE '[IA Seed]%') = 0
-     AND count(*) FILTER (WHERE body LIKE '[IA Seed]%') = 0
-     AND count(*) FILTER (
-       WHERE title LIKE '%Staging専用%'
-          OR body LIKE '%Staging専用%'
-     ) = 0
-     AND (
-       SELECT count(*)
-       FROM public.platform_announcements a
-       JOIN (
-         VALUES
-           ('aaaaaaaa-aaaa-4aaa-8aaa-000000000001'::uuid,
-            'Preview用: Playerホーム棚の確認メモ',
-            'Staging限定のお知らせです。フィードバックが集まっている作品・最近アップデート・使用ペア棚の見た目確認用。Production向けの告知ではありません。'),
-           ('aaaaaaaa-aaaa-4aaa-8aaa-000000000002'::uuid,
-            'カテゴリ8件ずつの表示密度を見る',
-            'game / audio / asset / dev-tool / service-app が各8件ある前提で、カード密度と省略を確認してください。'),
-           ('aaaaaaaa-aaaa-4aaa-8aaa-000000000003'::uuid,
-            'サムネなし2件のフォールバック確認',
-            '意図的にサムネなしのseedが2件あります。プレースホルダ表示が崩れていないかだけ見てください。'),
-           ('aaaaaaaa-aaaa-4aaa-8aaa-000000000004'::uuid,
-            '使用関係ペアの並びに注意',
-            'Forgeでつながった作品棚はseedのusage関係を使います。実ユーザー作品への影響はありません。'),
-           ('aaaaaaaa-aaaa-4aaa-8aaa-000000000005'::uuid,
-            '新着・更新棚の並び確認',
-            'first_published_at と更新要約の見え方をStagingで確認するためのメモです。'),
-           ('aaaaaaaa-aaaa-4aaa-8aaa-000000000006'::uuid,
-            'お知らせ一覧の公開6件サンプル',
-            'published 6件のうちの1件です。draft 2件は公開一覧に出ない想定です。'),
-           ('aaaaaaaa-aaaa-4aaa-8aaa-000000000007'::uuid,
-            '（draft）下書きお知らせA',
-            'Staging draft。公開一覧・ホームには出さない想定の確認用です。'),
-           ('aaaaaaaa-aaaa-4aaa-8aaa-000000000008'::uuid,
-            '（draft）下書きお知らせB',
-            'Staging draft。published/draft件数（6/2）を崩さないための確認用です。')
-       ) AS expected(id, title, body)
-         ON a.id = expected.id
-        AND a.title = expected.title
-        AND a.body = expected.body
-     ) = 8
+    WHEN m.actual_rows = 8
+     AND m.actual_published = 6
+     AND m.actual_draft = 2
+     AND m.actual_exact_copy_matches = 8
+     AND m.actual_status_matches_fixture = 8
+     AND m.actual_preview_remaining = 0
+     AND m.actual_staging_remaining = 0
+     AND m.actual_seed_remaining = 0
+     AND m.actual_ia_seed_remaining = 0
+     AND m.actual_kakunin_markers = 0
+     AND m.actual_non_seed_mutated_to_seed_copy = 0
+     AND m.actual_important_published_001 = 1
     THEN 'PASS'
-    WHEN count(*) = 8
-     AND count(*) FILTER (WHERE status = 'published') = 6
-     AND count(*) FILTER (WHERE status = 'draft') = 2
-     AND count(*) FILTER (WHERE title LIKE '[IA Seed]%') = 8
-     AND count(*) FILTER (WHERE body LIKE '[IA Seed]%') = 8
+    WHEN m.actual_rows = 8
+     AND m.actual_published = 6
+     AND m.actual_draft = 2
+     AND m.actual_ia_seed_remaining = 8
     THEN 'NOT_APPLIED'
     ELSE 'FAIL'
   END AS verdict
-FROM public.platform_announcements
-WHERE id::text LIKE 'aaaaaaaa-aaaa-4aaa-8aaa-%';
+FROM metrics m;
 
 SELECT
   'seed_announcement_rows' AS section,
   id,
   slug,
   status,
+  importance,
   title,
-  left(body, 100) AS body_prefix
+  left(body, 100) AS body_prefix,
+  published_at
 FROM public.platform_announcements
 WHERE id::text LIKE 'aaaaaaaa-aaaa-4aaa-8aaa-%'
 ORDER BY published_at DESC NULLS LAST, id;

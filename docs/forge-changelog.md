@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-08-04 — Staging announcement 8件を自然なユーザー向け文言へ
+
+- **Staging beautify** — seed お知らせ exact 8 ID の title/body のみを自然な架空告知へ置換（published 6 / draft 2・重要度・公開日時は不変）。Preview/Staging/seed/確認用マーカーを残さない
+- **検証** — audit の exact copy / 残存マーカー / status 契約、PGlite の 7・9件 abort と日時不変
+- **非実施** — Staging/Production DB への自動適用なし。Home UI 変更なし。main 未変更
+
 ## 2026-08-04 — Preview Home: 小カードcategory横伸び・空バッジ・Staging表示文言
 
 - **UI** — フィードバック棚右小カードの category badge を `w-fit` + `items-start` でコンパクト化。no-image フォールバックの空 `phase` 枠は `GeneratedThumbnailPoster` で条件付き非表示

@@ -459,50 +459,50 @@ BEGIN
 END $$;
 
 -- ---------------------------------------------------------------------------
--- B. Seed announcement display copy (status / published_at unchanged)
---    Staging-only wording — not Production-facing ops copy.
+-- B. Seed announcement display copy (status / published_at / importance unchanged)
+--    Natural user-facing copy for Staging seed IDs only — no Preview/Staging/seed markers.
 -- ---------------------------------------------------------------------------
 WITH ann_copy (announcement_id, title, body) AS (
   VALUES
     (
       'aaaaaaaa-aaaa-4aaa-8aaa-000000000001'::uuid,
-      'Preview用: Playerホーム棚の確認メモ',
-      'Staging限定のお知らせです。フィードバックが集まっている作品・最近アップデート・使用ペア棚の見た目確認用。Production向けの告知ではありません。'
+      '作品へのフィードバックを募集しています',
+      '気になった作品を試して、良かった点や改善してほしい点を開発者へ届けてみてください。'
     ),
     (
       'aaaaaaaa-aaaa-4aaa-8aaa-000000000002'::uuid,
-      'カテゴリ8件ずつの表示密度を見る',
-      'game / audio / asset / dev-tool / service-app が各8件ある前提で、カード密度と省略を確認してください。'
+      '制作に使える素材・ツールを探せます',
+      '音楽・音声、アセット、開発ツールなど、制作に活用できる作品をまとめて探せます。'
     ),
     (
       'aaaaaaaa-aaaa-4aaa-8aaa-000000000003'::uuid,
-      'サムネなし2件のフォールバック確認',
-      '意図的にサムネなしのseedが2件あります。プレースホルダ表示が崩れていないかだけ見てください。'
+      'サムネイル未設定作品の表示を改善しました',
+      '画像がない作品でも内容を確認しやすいフォールバック表示に対応しました。'
     ),
     (
       'aaaaaaaa-aaaa-4aaa-8aaa-000000000004'::uuid,
-      '使用関係ペアの並びに注意',
-      'Forgeでつながった作品棚はseedのusage関係を使います。実ユーザー作品への影響はありません。'
+      '作品同士のつながりを確認できます',
+      '素材やツールが別の作品で使われた関係を、Homeから確認できます。'
     ),
     (
       'aaaaaaaa-aaaa-4aaa-8aaa-000000000005'::uuid,
-      '新着・更新棚の並び確認',
-      'first_published_at と更新要約の見え方をStagingで確認するためのメモです。'
+      '新着作品と更新作品を見つけやすくしました',
+      '公開されたばかりの作品や、最近更新された作品をHomeで確認できます。'
     ),
     (
       'aaaaaaaa-aaaa-4aaa-8aaa-000000000006'::uuid,
-      'お知らせ一覧の公開6件サンプル',
-      'published 6件のうちの1件です。draft 2件は公開一覧に出ない想定です。'
+      '5カテゴリの掲載に対応しました',
+      'ゲーム、音楽・音声、アセット、開発ツール、サービス・アプリを掲載・探索できます。'
     ),
     (
       'aaaaaaaa-aaaa-4aaa-8aaa-000000000007'::uuid,
-      '（draft）下書きお知らせA',
-      'Staging draft。公開一覧・ホームには出さない想定の確認用です。'
+      '開発者プロフィールの表示改善',
+      '作品と制作者の活動がより分かりやすくなる表示改善を準備しています。'
     ),
     (
       'aaaaaaaa-aaaa-4aaa-8aaa-000000000008'::uuid,
-      '（draft）下書きお知らせB',
-      'Staging draft。published/draft件数（6/2）を崩さないための確認用です。'
+      'フィードバック機能の改善',
+      '送ったフィードバックや開発者からの返信を追いやすくする改善を準備しています。'
     )
 )
 UPDATE public.platform_announcements a
@@ -801,14 +801,66 @@ BEGIN
   FROM public.platform_announcements
   WHERE id::text LIKE 'aaaaaaaa-aaaa-4aaa-8aaa-%'
     AND (
-      title LIKE '[IA Seed]%'
-      OR body LIKE '[IA Seed]%'
+      lower(coalesce(title, '') || ' ' || coalesce(body, '')) ~ '(preview|staging|seed|確認用|確認メモ)'
+      OR coalesce(title, '') LIKE '%[IA Seed]%'
+      OR coalesce(body, '') LIKE '%[IA Seed]%'
+      OR coalesce(title, '') ~* '\[IA Seed\]'
+      OR coalesce(body, '') ~* '\[IA Seed\]'
     );
 
   IF v_ann_prefix_left <> 0 THEN
     RAISE EXCEPTION
-      'ABORT beautify post: % announcements still carry [IA Seed] prefix',
+      'ABORT beautify post: % announcements still carry Preview/Staging/seed/[IA Seed]/確認 markers',
       v_ann_prefix_left;
+  END IF;
+
+  -- Exact copy must match allowlist (fail closed if any of 8 drifted)
+  IF (
+    SELECT count(*)
+    FROM public.platform_announcements a
+    JOIN (
+      VALUES
+        ('aaaaaaaa-aaaa-4aaa-8aaa-000000000001'::uuid,
+         '作品へのフィードバックを募集しています',
+         '気になった作品を試して、良かった点や改善してほしい点を開発者へ届けてみてください。'),
+        ('aaaaaaaa-aaaa-4aaa-8aaa-000000000002'::uuid,
+         '制作に使える素材・ツールを探せます',
+         '音楽・音声、アセット、開発ツールなど、制作に活用できる作品をまとめて探せます。'),
+        ('aaaaaaaa-aaaa-4aaa-8aaa-000000000003'::uuid,
+         'サムネイル未設定作品の表示を改善しました',
+         '画像がない作品でも内容を確認しやすいフォールバック表示に対応しました。'),
+        ('aaaaaaaa-aaaa-4aaa-8aaa-000000000004'::uuid,
+         '作品同士のつながりを確認できます',
+         '素材やツールが別の作品で使われた関係を、Homeから確認できます。'),
+        ('aaaaaaaa-aaaa-4aaa-8aaa-000000000005'::uuid,
+         '新着作品と更新作品を見つけやすくしました',
+         '公開されたばかりの作品や、最近更新された作品をHomeで確認できます。'),
+        ('aaaaaaaa-aaaa-4aaa-8aaa-000000000006'::uuid,
+         '5カテゴリの掲載に対応しました',
+         'ゲーム、音楽・音声、アセット、開発ツール、サービス・アプリを掲載・探索できます。'),
+        ('aaaaaaaa-aaaa-4aaa-8aaa-000000000007'::uuid,
+         '開発者プロフィールの表示改善',
+         '作品と制作者の活動がより分かりやすくなる表示改善を準備しています。'),
+        ('aaaaaaaa-aaaa-4aaa-8aaa-000000000008'::uuid,
+         'フィードバック機能の改善',
+         '送ったフィードバックや開発者からの返信を追いやすくする改善を準備しています。')
+    ) AS expected(id, title, body)
+      ON a.id = expected.id
+     AND a.title = expected.title
+     AND a.body = expected.body
+  ) <> 8 THEN
+    RAISE EXCEPTION 'ABORT beautify post: announcement exact copy match count must be 8';
+  END IF;
+
+  -- Status unchanged: published 6 / draft 2. Importance on …0001 stays important.
+  IF (
+    SELECT count(*) FROM public.platform_announcements
+    WHERE id = 'aaaaaaaa-aaaa-4aaa-8aaa-000000000001'::uuid
+      AND status = 'published'
+      AND importance = 'important'
+  ) <> 1 THEN
+    RAISE EXCEPTION
+      'ABORT beautify post: important published announcement …0001 drifted';
   END IF;
 
   -- Safety: this script must never have updated project_devlogs. Prefix may remain.

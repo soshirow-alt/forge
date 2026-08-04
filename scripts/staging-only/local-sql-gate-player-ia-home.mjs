@@ -830,6 +830,15 @@ async function main() {
      WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid`,
   );
 
+  const annMetaBefore = await query(
+    db,
+    `SELECT id::text AS id, status, importance, published_at::text AS published_at, title, body
+     FROM public.platform_announcements
+     WHERE id::text LIKE 'aaaaaaaa-aaaa-4aaa-8aaa-%'
+     ORDER BY id`,
+  );
+  assert(annMetaBefore.rows.length === 8, "expected 8 seed announcements before beautify");
+
   await execSql(db, "beautify first apply", sqlBeautify);
   await execSql(db, "beautify re-run (idempotent)", sqlBeautify);
 
@@ -1104,18 +1113,134 @@ ON CONFLICT (user_id) DO UPDATE SET
   assert(Number(exactAfterRestore.rows[0].n) === 20, "exact pairs not restored to 20");
   assert(Number(exactAfterRestore.rows[0].ia_left) === 0, "exact pairs still marked after restore");
 
+  const expectedAnnCopy = [
+    ["aaaaaaaa-aaaa-4aaa-8aaa-000000000001", "作品へのフィードバックを募集しています", "気になった作品を試して、良かった点や改善してほしい点を開発者へ届けてみてください。", "published", "important"],
+    ["aaaaaaaa-aaaa-4aaa-8aaa-000000000002", "制作に使える素材・ツールを探せます", "音楽・音声、アセット、開発ツールなど、制作に活用できる作品をまとめて探せます。", "published", "normal"],
+    ["aaaaaaaa-aaaa-4aaa-8aaa-000000000003", "サムネイル未設定作品の表示を改善しました", "画像がない作品でも内容を確認しやすいフォールバック表示に対応しました。", "published", "normal"],
+    ["aaaaaaaa-aaaa-4aaa-8aaa-000000000004", "作品同士のつながりを確認できます", "素材やツールが別の作品で使われた関係を、Homeから確認できます。", "published", "normal"],
+    ["aaaaaaaa-aaaa-4aaa-8aaa-000000000005", "新着作品と更新作品を見つけやすくしました", "公開されたばかりの作品や、最近更新された作品をHomeで確認できます。", "published", "normal"],
+    ["aaaaaaaa-aaaa-4aaa-8aaa-000000000006", "5カテゴリの掲載に対応しました", "ゲーム、音楽・音声、アセット、開発ツール、サービス・アプリを掲載・探索できます。", "published", "normal"],
+    ["aaaaaaaa-aaaa-4aaa-8aaa-000000000007", "開発者プロフィールの表示改善", "作品と制作者の活動がより分かりやすくなる表示改善を準備しています。", "draft", "normal"],
+    ["aaaaaaaa-aaaa-4aaa-8aaa-000000000008", "フィードバック機能の改善", "送ったフィードバックや開発者からの返信を追いやすくする改善を準備しています。", "draft", "normal"],
+  ];
+
   const ann = await query(
     db,
-    `SELECT
-       count(*) FILTER (WHERE title LIKE '[IA Seed]%' OR body LIKE '[IA Seed]%') AS prefixed,
-       count(*) FILTER (WHERE status = 'published') AS published,
-       count(*) FILTER (WHERE status = 'draft') AS draft
+    `SELECT id::text AS id, status, importance, published_at::text AS published_at, title, body
      FROM public.platform_announcements
-     WHERE id::text LIKE 'aaaaaaaa-aaaa-4aaa-8aaa-%'`,
+     WHERE id::text LIKE 'aaaaaaaa-aaaa-4aaa-8aaa-%'
+     ORDER BY id`,
   );
-  assert(Number(ann.rows[0].prefixed) === 0, "announcements still prefixed");
-  assert(Number(ann.rows[0].published) === 6, "announcements published must stay 6");
-  assert(Number(ann.rows[0].draft) === 2, "announcements draft must stay 2");
+  assert(ann.rows.length === 8, "expected 8 seed announcements after beautify");
+  assert(
+    ann.rows.filter((r) => r.status === "published").length === 6,
+    "announcements published must stay 6",
+  );
+  assert(
+    ann.rows.filter((r) => r.status === "draft").length === 2,
+    "announcements draft must stay 2",
+  );
+  for (let i = 0; i < expectedAnnCopy.length; i += 1) {
+    const [id, title, body, status, importance] = expectedAnnCopy[i];
+    const row = ann.rows[i];
+    assert(row.id === id, `announcement id mismatch at ${i}`);
+    assert(row.title === title, `announcement title mismatch at ${id}`);
+    assert(row.body === body, `announcement body mismatch at ${id}`);
+    assert(row.status === status, `announcement status changed at ${id}`);
+    assert(row.importance === importance, `announcement importance changed at ${id}`);
+    assert(
+      row.published_at === annMetaBefore.rows[i].published_at,
+      `announcement published_at changed at ${id}`,
+    );
+    assert(
+      row.status === annMetaBefore.rows[i].status,
+      `announcement status drifted from fixture at ${id}`,
+    );
+    assert(
+      row.importance === annMetaBefore.rows[i].importance,
+      `announcement importance drifted from fixture at ${id}`,
+    );
+  }
+  assert(
+    ann.rows.every(
+      (r) =>
+        !/preview|staging|seed|確認用|確認メモ|\[IA Seed\]/i.test(
+          `${r.title} ${r.body}`,
+        ),
+    ),
+    "announcement copy still has internal markers",
+  );
+
+  // Fail-closed: 7 seed announcements abort + rollback
+  await db.exec(`
+    UPDATE public.projects
+    SET description = '[IA Seed] dirty-for-ann-abort'
+    WHERE id = 'eeeeeeee-eeee-4eee-8eee-000000000002'::uuid;
+    DELETE FROM public.platform_announcements
+    WHERE id = 'aaaaaaaa-aaaa-4aaa-8aaa-000000000008'::uuid;
+  `);
+  await execExpectFail(
+    db,
+    "beautify announcement count 7 abort",
+    sqlBeautify,
+    /expected 8 seed announcements|ABORT beautify/i,
+  );
+  const dirtyAnnAbort = await query(
+    db,
+    `SELECT description FROM public.projects
+     WHERE id = 'eeeeeeee-eeee-4eee-8eee-000000000002'::uuid`,
+  );
+  assert(
+    dirtyAnnAbort.rows[0].description === "[IA Seed] dirty-for-ann-abort",
+    "7-ann abort did not roll back project mutation",
+  );
+  await db.exec(`
+INSERT INTO public.platform_announcements (
+  id, slug, title, body, importance, status, published_at
+) VALUES (
+  'aaaaaaaa-aaaa-4aaa-8aaa-000000000008'::uuid, 'ia-seed-8',
+  'フィードバック機能の改善',
+  '送ったフィードバックや開発者からの返信を追いやすくする改善を準備しています。',
+  'normal', 'draft', NULL
+) ON CONFLICT (id) DO UPDATE SET
+  title = EXCLUDED.title,
+  body = EXCLUDED.body,
+  status = EXCLUDED.status,
+  importance = EXCLUDED.importance,
+  published_at = EXCLUDED.published_at;
+`);
+
+  // Extra seed-like UUID (9th) must abort — not silently update only 8
+  await db.exec(`
+INSERT INTO public.platform_announcements (
+  id, slug, title, body, importance, status, published_at
+) VALUES (
+  'aaaaaaaa-aaaa-4aaa-8aaa-000000000099'::uuid, 'ia-seed-extra-99',
+  'Preview用: 追加seed風',
+  'Staging確認用の余分なお知らせ',
+  'normal', 'published', now()
+) ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, body = EXCLUDED.body;
+`);
+  await execExpectFail(
+    db,
+    "beautify announcement count 9 abort",
+    sqlBeautify,
+    /expected 8 seed announcements|ABORT beautify/i,
+  );
+  const extraStill = await query(
+    db,
+    `SELECT title, body FROM public.platform_announcements
+     WHERE id = 'aaaaaaaa-aaaa-4aaa-8aaa-000000000099'::uuid`,
+  );
+  assert(
+    extraStill.rows[0].title === "Preview用: 追加seed風",
+    "extra seed-like announcement was mutated despite abort path",
+  );
+  await db.exec(`
+    DELETE FROM public.platform_announcements
+    WHERE id = 'aaaaaaaa-aaaa-4aaa-8aaa-000000000099'::uuid;
+  `);
+  await execSql(db, "beautify after announcement fail-closed restore", sqlBeautify);
 
   const smokeAfter = await query(
     db,
