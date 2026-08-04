@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-08-05 — Player IA Home v0 Production反映計画（文書のみ）
+
+- **docs** — `docs/player-ia-home-production-rollout-plan.md` を正本として追加（案3 path-checkout、DB-first、env flag 案、staging-only除外、rollback）
+- **readiness** — Owner用 read-only `scripts/production-readiness/audit-player-ia-home-prod-readiness.sql`
+- **非実施** — main merge / Production deploy / DB・Storage write なし。Preview Home 挙動変更なし
+
 ## 2026-08-04 — Homeつながった作品: pair多様性・「使用している」・SEタイトル修復
 
 - **selection** — `selectUsagePairs` を distinct category-pair 優先の soft suppression へ（固定quotaなし。同一pair-keyは最大2）
