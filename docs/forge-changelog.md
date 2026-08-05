@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-08-06 — Player Home カテゴリ導線・Search query保持・初期表示性能
+
+- **Home CTA** — 「Forgeでできること」を4導線へ変更: 遊ぶ→`/search?category=game`、聞く→`/search?category=audio`、サービスを探す→`/search?category=service-app`、掲載する→`/studio/submit`。旧「遊ぶ・試す」「制作に使う」を削除。`quick_try` / `usable_for_creation` は Home CTA に付けない
+- **Search filter** — 「すぐ試せる」chip を Player IA Search から一時非表示（定義・Studio入力未整備のため）。DB column / RPC / API・direct `quick_try=1` 互換は維持。「制作に使える」chip は残置
+- **Search navigation** — カテゴリタブ変更時に他の正式 query（用途・sort・stream_policy・asset_kind・quick_try 等）を保持。「すべて」は `category` のみ削除
+- **性能** — Preview Home/Search を Server Component で初期取得し、initial data 一致時は mount 直後の同一 API 再 fetch をしない。`/api/discovery/player-ia-home` と `/api/search/catalog` は共通 loader 経由で shape 維持。相対時刻は server の `nowMs` + `Asia/Tokyo` で hydration を決定的に。Search の共通 `loading.tsx` は Production 旧 Search への影響を避けるため置かない（Preview 内 skeleton / Suspense で対応）
+- **非実施** — Production / main / DB·Storage write なし。Searchカード・Studio識別・Production rollout は対象外
+
 ## 2026-08-05 — Player IA Home v0 Production反映計画（文書のみ）
 
 - **docs** — `docs/player-ia-home-production-rollout-plan.md` を正本として追加（案3 path-checkout、DB-first、env flag 案、staging-only除外、rollback）

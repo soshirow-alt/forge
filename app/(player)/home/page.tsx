@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { DiscoveryHomePage } from "@/components/discovery-home-page";
 import { PlayerIaHomePage } from "@/components/player-ia/player-ia-home-page";
 import { shouldServePlayerIaRedesign } from "@/lib/player-ia-mode";
+import { loadPlayerIaHome } from "@/lib/player-ia/load-player-ia-home";
+import { createRequestNowMs } from "@/lib/player-ia/request-now";
 import {
   buildSearchCategoryHref,
   isProjectCategoryId,
@@ -33,5 +35,7 @@ export default async function HomeDiscoverPage({
     redirect("/home");
   }
 
-  return <PlayerIaHomePage />;
+  const initialHome = await loadPlayerIaHome();
+  const nowMs = createRequestNowMs();
+  return <PlayerIaHomePage initialHome={initialHome} nowMs={nowMs} />;
 }

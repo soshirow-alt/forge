@@ -35,6 +35,7 @@
     "show:future-demo:staging": "npx --yes tsx scripts/future-demo-seed.ts --show",
     "patch:veteran-developer:staging": "npx --yes tsx scripts/future-demo-seed.ts --patch-veteran-developer",
     "verify:home-discovery-selection": "npx --yes tsx scripts/verify-home-discovery-selection.ts",
+    "verify:player-ia-home-search-nav": "npx --yes tsx scripts/verify-player-ia-home-search-nav.ts",
     "check:supabase-connection": "node scripts/check-supabase-connection-target.mjs",
     "verify:supabase-write-guard": "npx --yes tsx scripts/verify-supabase-write-guard.ts",
     "verify:supabase-sql-safety": "node scripts/verify-supabase-sql-safety.mjs",

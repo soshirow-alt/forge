@@ -6,6 +6,7 @@ import {
   PROJECT_CATEGORY_NAV,
   type ProjectCategoryNavId,
 } from "@/lib/project-categories";
+import { buildSearchHrefForCategory } from "@/lib/player-ia/search-href";
 
 const TAB_BASE =
   "inline-flex h-9 cursor-pointer items-center rounded-md px-2.5 text-[13px] font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 sm:px-3 sm:text-sm";
@@ -64,10 +65,11 @@ export function PlayerIaCategoryTabs() {
         <ul className="flex w-max items-center gap-1">
           {PROJECT_CATEGORY_NAV.map((item) => {
             const selected = item.id === activeCategory;
+            const href = buildSearchHrefForCategory(item.id, searchParams);
             return (
               <li key={item.id} className="shrink-0">
                 <Link
-                  href={item.href}
+                  href={href}
                   aria-current={selected ? "page" : undefined}
                   className={`${TAB_BASE} ${selected ? TAB_ACTIVE : TAB_INACTIVE}`}
                 >

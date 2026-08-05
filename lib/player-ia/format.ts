@@ -1,9 +1,23 @@
-export function formatPlayerIaRelativeTime(iso: string): string {
+export const PLAYER_IA_DISPLAY_TIME_ZONE = "Asia/Tokyo";
+
+export type FormatPlayerIaRelativeTimeOptions = {
+  /** Epoch ms used as "now". Required for SSR/client hydration parity. */
+  nowMs?: number;
+  /** IANA time zone for calendar fallback dates. */
+  timeZone?: string;
+};
+
+export function formatPlayerIaRelativeTime(
+  iso: string,
+  options?: FormatPlayerIaRelativeTimeOptions,
+): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) {
     return "";
   }
-  const diffMs = Date.now() - date.getTime();
+  const nowMs = options?.nowMs ?? Date.now();
+  const timeZone = options?.timeZone ?? PLAYER_IA_DISPLAY_TIME_ZONE;
+  const diffMs = nowMs - date.getTime();
   const diffMinutes = Math.floor(diffMs / 60_000);
   if (diffMinutes < 1) return "たった今";
   if (diffMinutes < 60) return `${diffMinutes}分前`;
@@ -14,6 +28,7 @@ export function formatPlayerIaRelativeTime(iso: string): string {
   return date.toLocaleDateString("ja-JP", {
     month: "short",
     day: "numeric",
+    timeZone,
   });
 }
 

@@ -5,10 +5,7 @@ import {
   ArrowRight,
   ChevronRight,
   MessageSquare,
-  Rocket,
   Search,
-  Upload,
-  Wrench,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ProjectThumbnail } from "@/components/project-thumbnail";
@@ -20,36 +17,17 @@ import {
   formatPlayerIaWindowLabel,
   truncatePlayerIaText,
 } from "@/lib/player-ia/format";
+import { PLAYER_IA_HOME_FEATURE_CARDS } from "@/lib/player-ia/home-feature-cards";
+import { createRequestNowMs } from "@/lib/player-ia/request-now";
 import {
   PROJECT_CATEGORY_LABELS,
   type ProjectCategoryId,
 } from "@/lib/project-categories";
 import type { PlayerIaHomePayload } from "@/lib/supabase/player-ia-home-db";
 
-const FEATURE_CARDS = [
-  {
-    id: "play",
-    title: "遊ぶ・試す",
-    description: "公開中の作品を見つけて体験",
-    href: "/search",
-    icon: Rocket,
-  },
-  {
-    id: "publish",
-    title: "掲載する",
-    description: "作品を掲載して届ける",
-    href: "/studio/submit",
-    icon: Upload,
-  },
-  {
-    id: "create",
-    title: "制作に使う",
-    description: "素材・音楽・ツールを探す",
-    href: "/search?usable_for_creation=1",
-    icon: Wrench,
-  },
-] as const;
-
+function createClientFallbackNowMs(): number {
+  return createRequestNowMs();
+}
 function CategoryBadge({ category }: { category: ProjectCategoryId }) {
   const label = PROJECT_CATEGORY_LABELS[category]?.trim();
   if (!label) return null;
@@ -92,8 +70,10 @@ function SectionHeading({
 
 function FeedbackGatheringSection({
   items,
+  nowMs,
 }: {
   items: PlayerIaHomePayload["feedbackGathering"];
+  nowMs: number;
 }) {
   if (items.length === 0) return null;
   const [featured, ...rest] = items;
@@ -138,7 +118,7 @@ function FeedbackGatheringSection({
               <span>投稿 {featured.distinctAuthorCount}人</span>
               <span>FB {featured.feedbackCount}件</span>
               {featured.hasCreatorReply ? <span>制作者返信あり</span> : null}
-              <span>{formatPlayerIaRelativeTime(featured.lastFeedbackAt)}</span>
+              <span>{formatPlayerIaRelativeTime(featured.lastFeedbackAt, { nowMs })}</span>
             </div>
             <Link
               href={buildGameDetailTabHref(featured.projectId, "voices")}
@@ -212,14 +192,14 @@ function FeaturesSection() {
           Forgeでできること
         </h2>
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {FEATURE_CARDS.map((card) => {
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {PLAYER_IA_HOME_FEATURE_CARDS.map((card) => {
           const Icon = card.icon;
           return (
             <Link
               key={card.id}
               href={card.href}
-              className="group relative flex items-center gap-4 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 transition-colors hover:border-violet-500/40 hover:bg-violet-500/5"
+              className="group relative flex h-full min-h-[5.5rem] items-center gap-4 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 transition-colors hover:border-violet-500/40 hover:bg-violet-500/5"
             >
               <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-violet-500/15 text-violet-300">
                 <Icon className="size-5" aria-hidden="true" />
@@ -227,9 +207,9 @@ function FeaturesSection() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <h3 className="text-base font-bold text-white">{card.title}</h3>
-                  <ChevronRight className="size-4 text-zinc-500 transition-transform group-hover:translate-x-0.5 group-hover:text-violet-300" />
+                  <ChevronRight className="size-4 shrink-0 text-zinc-500 transition-transform group-hover:translate-x-0.5 group-hover:text-violet-300" />
                 </div>
-                <p className="mt-0.5 truncate text-xs text-zinc-500">
+                <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-zinc-500">
                   {card.description}
                 </p>
               </div>
@@ -243,8 +223,10 @@ function FeaturesSection() {
 
 function UpdatesSection({
   items,
+  nowMs,
 }: {
   items: PlayerIaHomePayload["meaningfulUpdates"];
+  nowMs: number;
 }) {
   if (items.length === 0) return null;
   return (
@@ -291,7 +273,7 @@ function UpdatesSection({
                 </p>
                 <div className="mt-2.5 flex flex-wrap items-center gap-2 text-[11px] text-zinc-500">
                   {versionLabel ? <span>{versionLabel}</span> : null}
-                  <span>{formatPlayerIaRelativeTime(item.meaningfulUpdateAt)}</span>
+                  <span>{formatPlayerIaRelativeTime(item.meaningfulUpdateAt, { nowMs })}</span>
                 </div>
               </div>
             </Link>
@@ -377,8 +359,10 @@ function ConnectionsSection({
 
 function AnnouncementsSection({
   items,
+  nowMs,
 }: {
   items: PlayerIaHomePayload["announcements"];
+  nowMs: number;
 }) {
   if (items.length === 0) return null;
   return (
@@ -413,7 +397,7 @@ function AnnouncementsSection({
               <p className="mt-0.5 truncate text-xs text-zinc-500">{item.summary}</p>
             </div>
             <span className="hidden shrink-0 text-xs text-zinc-500 sm:block">
-              {formatPlayerIaRelativeTime(item.publishedAt)}
+              {formatPlayerIaRelativeTime(item.publishedAt, { nowMs })}
             </span>
             <ChevronRight className="size-4 shrink-0 text-zinc-500 transition-transform group-hover:translate-x-0.5 group-hover:text-violet-300" />
           </Link>
@@ -425,8 +409,10 @@ function AnnouncementsSection({
 
 function NewestSection({
   items,
+  nowMs,
 }: {
   items: PlayerIaHomePayload["newestProjects"];
+  nowMs: number;
 }) {
   if (items.length === 0) return null;
   return (
@@ -467,7 +453,7 @@ function NewestSection({
                   {item.creator}
                 </span>
                 <span className="shrink-0 text-[11px] text-zinc-500">
-                  {formatPlayerIaRelativeTime(item.firstPublishedAt)}
+                  {formatPlayerIaRelativeTime(item.firstPublishedAt, { nowMs })}
                 </span>
               </div>
             </div>
@@ -478,12 +464,26 @@ function NewestSection({
   );
 }
 
-export function PlayerIaHomePage() {
-  const [home, setHome] = useState<PlayerIaHomePayload | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+export function PlayerIaHomePage({
+  initialHome = null,
+  nowMs,
+}: {
+  /** Server-fetched payload; when present, skip mount-time API re-fetch. */
+  initialHome?: PlayerIaHomePayload | null;
+  /** Server clock for relative-time hydration parity. */
+  nowMs?: number;
+}) {
+  const [fallbackNowMs] = useState(createClientFallbackNowMs);
+  const displayNowMs = nowMs ?? fallbackNowMs;
+  const [clientHome, setClientHome] = useState<PlayerIaHomePayload | null>(null);
+  const [clientLoading, setClientLoading] = useState(initialHome == null);
+  const [clientError, setClientError] = useState(false);
 
   useEffect(() => {
+    if (initialHome) {
+      return;
+    }
+
     let cancelled = false;
     void fetch("/api/discovery/player-ia-home", { cache: "no-store" })
       .then(async (response) => {
@@ -498,23 +498,28 @@ export function PlayerIaHomePage() {
           throw new Error("home payload invalid");
         }
         if (!cancelled) {
-          setHome(payload.home);
+          setClientHome(payload.home);
+          setClientError(false);
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setError(true);
+          setClientError(true);
         }
       })
       .finally(() => {
         if (!cancelled) {
-          setLoading(false);
+          setClientLoading(false);
         }
       });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initialHome]);
+
+  const home = initialHome ?? clientHome;
+  const loading = initialHome ? false : clientLoading;
+  const error = initialHome ? false : clientError;
 
   if (loading) {
     return (
@@ -540,12 +545,12 @@ export function PlayerIaHomePage() {
 
   return (
     <div className="mx-auto flex max-w-[1200px] flex-col gap-10">
-      <FeedbackGatheringSection items={home.feedbackGathering} />
+      <FeedbackGatheringSection items={home.feedbackGathering} nowMs={displayNowMs} />
       <FeaturesSection />
-      <UpdatesSection items={home.meaningfulUpdates} />
+      <UpdatesSection items={home.meaningfulUpdates} nowMs={displayNowMs} />
       <ConnectionsSection items={home.usageRelations} />
-      <AnnouncementsSection items={home.announcements} />
-      <NewestSection items={home.newestProjects} />
+      <AnnouncementsSection items={home.announcements} nowMs={displayNowMs} />
+      <NewestSection items={home.newestProjects} nowMs={displayNowMs} />
     </div>
   );
 }

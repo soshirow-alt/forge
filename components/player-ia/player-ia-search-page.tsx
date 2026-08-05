@@ -13,44 +13,19 @@ import {
   STREAM_POLICY_LABELS,
 } from "@/lib/project-categories";
 import {
-  formatPlayerIaRelativeTime,
-} from "@/lib/player-ia/format";
+  buildCatalogQueryString,
+  PLAYER_IA_SEARCH_CATALOG_LIMIT,
+} from "@/lib/player-ia/catalog-search-params";
+import { formatPlayerIaRelativeTime } from "@/lib/player-ia/format";
+import { createRequestNowMs } from "@/lib/player-ia/request-now";
 import type { CatalogProject } from "@/lib/supabase/public-catalog-db";
 import { ChevronDown } from "lucide-react";
 
+function createClientFallbackNowMs(): number {
+  return createRequestNowMs();
+}
 function parseBooleanParam(value: string | null): boolean {
   return value === "1" || value === "true";
-}
-
-function buildCatalogQuery(searchParams: URLSearchParams): string {
-  const params = new URLSearchParams();
-  const category = searchParams.get("category")?.trim();
-  if (category && category !== "all" && isProjectCategoryId(category)) {
-    params.set("category", category);
-  }
-  const sort = searchParams.get("sort")?.trim();
-  if (sort) {
-    params.set("sort", sort);
-  }
-  if (parseBooleanParam(searchParams.get("quick_try"))) {
-    params.set("quick_try", "1");
-  }
-  if (parseBooleanParam(searchParams.get("feedback_wanted"))) {
-    params.set("feedback_wanted", "1");
-  }
-  if (parseBooleanParam(searchParams.get("usable_for_creation"))) {
-    params.set("usable_for_creation", "1");
-  }
-  const streamPolicy = searchParams.get("stream_policy")?.trim();
-  if (streamPolicy) {
-    params.set("stream_policy", streamPolicy);
-  }
-  const assetKind = searchParams.get("asset_kind")?.trim();
-  if (assetKind) {
-    params.set("asset_kind", assetKind);
-  }
-  params.set("limit", "48");
-  return params.toString();
 }
 
 function updateParam(
@@ -93,31 +68,40 @@ function FilterChip({
   );
 }
 
-function PlayerIaSearchContent() {
+function PlayerIaSearchContent({
+  initialProjects,
+  initialError,
+  initialCatalogQuery,
+  nowMs,
+}: {
+  initialProjects: CatalogProject[];
+  initialError: boolean;
+  initialCatalogQuery: string;
+  nowMs: number;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [projects, setProjects] = useState<CatalogProject[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-
-  const category = useMemo(() => {
-    const raw = searchParams.get("category")?.trim();
-    return raw && isProjectCategoryId(raw) ? raw : null;
-  }, [searchParams]);
-
   const catalogQuery = useMemo(
-    () => buildCatalogQuery(searchParams),
+    () =>
+      buildCatalogQueryString(searchParams, {
+        limit: PLAYER_IA_SEARCH_CATALOG_LIMIT,
+      }),
     [searchParams],
   );
 
+  const useServerData = catalogQuery === initialCatalogQuery;
+  const [clientState, setClientState] = useState<{
+    query: string;
+    projects: CatalogProject[];
+    error: boolean;
+  } | null>(null);
+
   useEffect(() => {
+    if (catalogQuery === initialCatalogQuery) {
+      return;
+    }
+
     let cancelled = false;
-    void Promise.resolve().then(() => {
-      if (!cancelled) {
-        setLoading(true);
-        setError(false);
-      }
-    });
     void fetch(`/api/search/catalog?${catalogQuery}`, { cache: "no-store" })
       .then(async (response) => {
         if (!response.ok) {
@@ -131,27 +115,44 @@ function PlayerIaSearchContent() {
           throw new Error("catalog payload invalid");
         }
         if (!cancelled) {
-          setProjects(payload.projects ?? []);
+          setClientState({
+            query: catalogQuery,
+            projects: payload.projects ?? [],
+            error: false,
+          });
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setError(true);
-          setProjects([]);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
+          setClientState({
+            query: catalogQuery,
+            projects: [],
+            error: true,
+          });
         }
       });
     return () => {
       cancelled = true;
     };
-  }, [catalogQuery]);
+  }, [catalogQuery, initialCatalogQuery]);
+
+  const projects = useServerData
+    ? initialProjects
+    : clientState?.query === catalogQuery
+      ? clientState.projects
+      : [];
+  const loading = !useServerData && clientState?.query !== catalogQuery;
+  const error = useServerData
+    ? initialError
+    : clientState?.query === catalogQuery
+      ? clientState.error
+      : false;
+  const category = useMemo(() => {
+    const raw = searchParams.get("category")?.trim();
+    return raw && isProjectCategoryId(raw) ? raw : null;
+  }, [searchParams]);
 
   const sort = searchParams.get("sort")?.trim() || "newest";
-  const quickTry = parseBooleanParam(searchParams.get("quick_try"));
   const feedbackWanted = parseBooleanParam(searchParams.get("feedback_wanted"));
   const usableForCreation = parseBooleanParam(
     searchParams.get("usable_for_creation"),
@@ -193,18 +194,7 @@ function PlayerIaSearchContent() {
       </div>
 
       <div className="mb-5 flex flex-wrap gap-2">
-        <FilterChip
-          active={quickTry}
-          label="すぐ試せる"
-          onClick={() =>
-            updateParam(
-              router,
-              searchParams,
-              "quick_try",
-              quickTry ? null : "1",
-            )
-          }
-        />
+        {/* 「すぐ試せる」(quick_try): 定義・Studio入力未整備のため一時非表示。API/direct URL互換は維持。 */}
         <FilterChip
           active={feedbackWanted}
           label="FB募集中"
@@ -299,8 +289,8 @@ function PlayerIaSearchContent() {
               creator={project.creator}
               meta={
                 sort === "updated" && project.meaningfulUpdateAt
-                  ? `更新 ${formatPlayerIaRelativeTime(project.meaningfulUpdateAt)}`
-                  : formatPlayerIaRelativeTime(project.firstPublishedAt)
+                  ? `更新 ${formatPlayerIaRelativeTime(project.meaningfulUpdateAt, { nowMs })}`
+                  : formatPlayerIaRelativeTime(project.firstPublishedAt, { nowMs })
               }
             />
           ))}
@@ -310,7 +300,19 @@ function PlayerIaSearchContent() {
   );
 }
 
-export function PlayerIaSearchPage() {
+export function PlayerIaSearchPage({
+  initialProjects = [],
+  initialError = false,
+  initialCatalogQuery = "",
+  nowMs,
+}: {
+  initialProjects?: CatalogProject[];
+  initialError?: boolean;
+  initialCatalogQuery?: string;
+  nowMs?: number;
+}) {
+  const [fallbackNowMs] = useState(createClientFallbackNowMs);
+  const displayNowMs = nowMs ?? fallbackNowMs;
   return (
     <Suspense
       fallback={
@@ -324,7 +326,12 @@ export function PlayerIaSearchPage() {
         </div>
       }
     >
-      <PlayerIaSearchContent />
+      <PlayerIaSearchContent
+        initialProjects={initialProjects}
+        initialError={initialError}
+        initialCatalogQuery={initialCatalogQuery}
+        nowMs={displayNowMs}
+      />
     </Suspense>
   );
 }
