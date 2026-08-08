@@ -10,18 +10,11 @@ import {
 } from "@/components/studio-panel-edit-shell";
 import type { StudioOverviewEditPanelCommonProps } from "@/components/studio-overview-edit-panel-types";
 import { useGames } from "@/components/games-provider";
-import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
-import { pickFeatureTagsFromGameTags, sanitizeFeatureTagsForSave } from "@/lib/forge-feature-tag-options";
-import {
-  getPublicGameTags,
-  mergePlayEnvironmentIntoTags,
-  parsePlayEnvironmentFromTags,
-} from "@/lib/play-environment";
+import { previewLegacyLinkFieldsFromPublish } from "@/lib/project-publish-write-adapter";
+import { buildGamePublicationEditPersistPayload } from "@/lib/studio-game-overview-edit-persist";
 import {
   createEmptyPublishDestination,
-  distributionTypeFromPrimary,
   resolveGamePublishLinks,
-  syncLegacyFieldsFromPublishLinks,
   validatePublishDestinations,
   type PublishDestination,
   type RelatedLink,
@@ -96,7 +89,7 @@ export function StudioOverviewPublicationEditPanel({
     nextDestinations: PublishDestination[],
     nextRelated: RelatedLink[],
   ) {
-    const legacy = syncLegacyFieldsFromPublishLinks(nextDestinations, nextRelated);
+    const legacy = previewLegacyLinkFieldsFromPublish(nextDestinations, nextRelated);
     onPreviewPatchChange?.({
       visibility: nextVisibility,
       publishDestinations: nextDestinations,
@@ -127,31 +120,14 @@ export function StudioOverviewPublicationEditPanel({
 
     setIsSaving(true);
     try {
-      const legacy = syncLegacyFieldsFromPublishLinks(publishDestinations, relatedLinks);
-      const base = buildProjectEditFormDataFromGame(game);
-      const featureTags = sanitizeFeatureTagsForSave(
-        pickFeatureTagsFromGameTags(getPublicGameTags(base.tags ?? [])),
-      );
-      const playEnvironment = parsePlayEnvironmentFromTags(base.tags ?? []);
-      const distribution = distributionTypeFromPrimary(publishDestinations);
-      await updateProjectDetails(projectId, {
-        ...base,
-        visibility,
-        publishDestinations,
-        relatedLinks,
-        playUrl: legacy.playUrl,
-        steamUrl: legacy.steamUrl,
-        itchUrl: legacy.itchUrl,
-        githubUrl: legacy.githubUrl,
-        discordUrl: legacy.discordUrl,
-        officialUrl: legacy.officialUrl,
-        xUrl: legacy.xUrl,
-        youtubeUrl: legacy.youtubeUrl,
-        tags: mergePlayEnvironmentIntoTags(featureTags, {
-          ...playEnvironment,
-          distribution: distribution || playEnvironment.distribution,
+      await updateProjectDetails(
+        projectId,
+        buildGamePublicationEditPersistPayload(game, {
+          visibility,
+          publishDestinations,
+          relatedLinks,
         }),
-      });
+      );
       onSaved?.();
     } catch (error) {
       setSaveError(

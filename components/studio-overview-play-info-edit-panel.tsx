@@ -12,7 +12,6 @@ import type { StudioOverviewEditPanelCommonProps } from "@/components/studio-ove
 import { useGames } from "@/components/games-provider";
 import { pickFeatureTagsFromGameTags, sanitizeFeatureTagsForSave } from "@/lib/forge-feature-tag-options";
 import { ProjectDeviceEnvironmentFields } from "@/components/project-device-environment-fields";
-import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
 import {
   isSpecifiedPlayAccessType,
   type SubmitPlayAccessType,
@@ -20,10 +19,11 @@ import {
 import {
   EMPTY_PLAY_ENVIRONMENT_FORM,
   getPublicGameTags,
-  mergePlayEnvironmentIntoTags,
   parsePlayEnvironmentFromTags,
   type PlayEnvironmentFormState,
 } from "@/lib/play-environment";
+import { composeProjectTagsForWrite } from "@/lib/project-tags";
+import { buildGamePlayInfoEditPersistPayload } from "@/lib/studio-game-overview-edit-persist";
 import {
   distributionTypeFromPrimary,
   resolveGamePublishLinks,
@@ -101,7 +101,11 @@ export function StudioOverviewPlayInfoEditPanel({
     };
     onPreviewPatchChange?.({
       estimatedPlayTime: nextEstimatedPlayTime || undefined,
-      tags: mergePlayEnvironmentIntoTags(featureTags, env),
+      tags: composeProjectTagsForWrite({
+        featureTags,
+        playEnvironment: env,
+        existingTags: game.tags,
+      }),
       ...(isSpecifiedPlayAccessType(nextPlayAccessType)
         ? { playAccessType: nextPlayAccessType }
         : {}),
@@ -126,7 +130,6 @@ export function StudioOverviewPlayInfoEditPanel({
       const featureTags = sanitizeFeatureTagsForSave(
         pickFeatureTagsFromGameTags(getPublicGameTags(game.tags ?? [])),
       );
-      const base = buildProjectEditFormDataFromGame(game);
       const links = resolveGamePublishLinks(game);
       const env = {
         ...playEnvironment,
@@ -134,23 +137,15 @@ export function StudioOverviewPlayInfoEditPanel({
           distributionTypeFromPrimary(links.publishDestinations) ||
           playEnvironment.distribution,
       };
-      await updateProjectDetails(projectId, {
-        ...base,
-        // Preserve publish destinations / related links / playUrl from existing game
-        playUrl: base.playUrl,
-        publishDestinations: base.publishDestinations,
-        relatedLinks: base.relatedLinks,
-        steamUrl: base.steamUrl,
-        itchUrl: base.itchUrl,
-        githubUrl: base.githubUrl,
-        discordUrl: base.discordUrl,
-        officialUrl: base.officialUrl,
-        xUrl: base.xUrl,
-        youtubeUrl: base.youtubeUrl,
-        estimatedPlayTime: estimatedPlayTime || undefined,
-        playAccessType,
-        tags: mergePlayEnvironmentIntoTags(featureTags, env),
-      });
+      await updateProjectDetails(
+        projectId,
+        buildGamePlayInfoEditPersistPayload(game, {
+          playAccessType,
+          estimatedPlayTime,
+          playEnvironment: env,
+          featureTags,
+        }),
+      );
       onSaved?.();
     } catch (error) {
       setSaveError(

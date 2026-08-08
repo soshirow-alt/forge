@@ -11,7 +11,9 @@ import {
   type ProjectCategoryId,
 } from "@/lib/project-categories";
 
-/** Legacy hidden Search params — keep in URL when present; do not surface in UI. */
+/** Legacy hidden Search params — keep in URL when present; do not surface in UI.
+ * Ownership registry: `lib/project-formal-filter-ownership.ts`
+ */
 export const PLAYER_IA_SEARCH_LEGACY_HIDDEN_PARAMS = [
   "quick_try",
   "usable_for_creation",

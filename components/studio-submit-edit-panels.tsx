@@ -36,8 +36,9 @@ import type { SubmitDraftState } from "@/lib/studio-submit-draft";
 import { SUBMIT_DRAFT_PREVIEW_ID } from "@/lib/studio-submit-draft";
 import { STUDIO_FIELD_IDS } from "@/lib/studio-preview-edit-targets";
 import type { StudioFieldId } from "@/lib/studio-preview-edit-targets";
-import { syncLegacyFieldsFromPublishLinks } from "@/lib/project-publish-links";
+import { previewLegacyLinkFieldsFromPublish } from "@/lib/project-publish-write-adapter";
 import { normalizeAgeRating, type AgeRating } from "@/lib/age-rating";
+import { attemptNonGameSectionSave } from "@/lib/studio-non-game-section-save";
 import {
   MUSIC_GENRE_OPTIONS,
   SERVICE_ENVIRONMENT_OPTIONS,
@@ -47,7 +48,6 @@ import {
   TOOL_USAGE_METHOD_OPTIONS,
   createEmptyPrototypePublishDestination,
   formatMusicDuration,
-  isUsableMusicDuration,
   kindOptionsForCategory,
   parseMusicDurationParts,
   prototypePublishOpenLabel,
@@ -423,7 +423,7 @@ export function StudioSubmitPublicationEditPanel({
     publishDestinations: SubmitDraftState["publishDestinations"],
     relatedLinks: SubmitDraftState["relatedLinks"],
   ) {
-    const legacy = syncLegacyFieldsFromPublishLinks(publishDestinations, relatedLinks);
+    const legacy = previewLegacyLinkFieldsFromPublish(publishDestinations, relatedLinks);
     onApply({
       publishDestinations,
       relatedLinks,
@@ -644,18 +644,30 @@ export function StudioSubmitPrototypeClassificationEditPanel({
       onCancel={onCancel}
       isSaving={isSaving}
       onSave={() => {
-        if (!kind.trim()) {
-          setValidationError("種類を選択してください");
-          return;
-        }
-        onFieldsChange({
+        const nextFields: SubmitPrototypeCategoryFields = {
+          ...fields,
           kind,
           ...(category === "music" ? { musicGenres } : {}),
+        };
+        void attemptNonGameSectionSave({
+          category,
+          section: "genres-tags",
+          fields: nextFields,
+          onApply: () => {
+            onFieldsChange({
+              kind,
+              ...(category === "music" ? { musicGenres } : {}),
+            });
+            onDraftChange({ featureTags });
+            if (!deferClose) {
+              onCancel();
+            }
+          },
+        }).then((result) => {
+          if (!result.applied) {
+            setValidationError(result.message);
+          }
         });
-        onDraftChange({ featureTags });
-        if (!deferClose) {
-          onCancel();
-        }
       }}
       saveLabel="反映する"
       validationError={validationError}
@@ -793,35 +805,41 @@ export function StudioSubmitPrototypeUsageEditPanel({
       onCancel={onCancel}
       isSaving={isSaving}
       onSave={() => {
+        let patch: Partial<SubmitPrototypeCategoryFields>;
         if (category === "music") {
           const minutesEmpty = minutes.trim() === "";
           const secondsEmpty = seconds.trim() === "";
           if (minutesEmpty && secondsEmpty) {
-            finishSave({ musicDuration: "" });
-            return;
+            patch = { musicDuration: "" };
+          } else {
+            const minutesValue = minutesEmpty ? 0 : Number(minutes);
+            const secondsValue = secondsEmpty ? 0 : Number(seconds);
+            // Normalize to a duration string; validity is decided only by the engine.
+            patch = {
+              musicDuration:
+                Number.isInteger(minutesValue) && Number.isInteger(secondsValue)
+                  ? formatMusicDuration(minutesValue, secondsValue)
+                  : `${minutes.trim()}:${seconds.trim()}`,
+            };
           }
-          const minutesValue = minutesEmpty ? 0 : Number(minutes);
-          const secondsValue = secondsEmpty ? 0 : Number(seconds);
-          if (
-            !Number.isInteger(minutesValue) ||
-            !Number.isInteger(secondsValue) ||
-            !isUsableMusicDuration(minutesValue, secondsValue)
-          ) {
-            setValidationError(
-              "再生時間は0秒より大きい分・秒で入力してください",
-            );
-            return;
+        } else if (category === "dev_tool") {
+          patch = { toolEnvironments, toolUsageMethod };
+        } else {
+          patch = { serviceEnvironments };
+        }
+        const nextFields = { ...fields, ...patch };
+        void attemptNonGameSectionSave({
+          category,
+          section: "play-info",
+          fields: nextFields,
+          onApply: () => {
+            finishSave(patch);
+          },
+        }).then((result) => {
+          if (!result.applied) {
+            setValidationError(result.message);
           }
-          finishSave({
-            musicDuration: formatMusicDuration(minutesValue, secondsValue),
-          });
-          return;
-        }
-        if (category === "dev_tool") {
-          finishSave({ toolEnvironments, toolUsageMethod });
-          return;
-        }
-        finishSave({ serviceEnvironments });
+        });
       }}
       saveLabel="反映する"
       validationError={validationError}
@@ -935,8 +953,10 @@ export function StudioSubmitPrototypePublicationEditPanel({
   );
   const [relatedLinks, setRelatedLinks] = useState(() => [...draft.relatedLinks]);
   const [visibility, setVisibility] = useState<ProjectVisibility>(draft.visibility);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   function updateAt(index: number, patch: Partial<PrototypePublishDestination>) {
+    setValidationError(null);
     setItems((current) =>
       normalizePrototypePublishDestinations(
         current.map((item, i) => (i === index ? { ...item, ...patch } : item)),
@@ -951,15 +971,27 @@ export function StudioSubmitPrototypePublicationEditPanel({
       onCancel={onCancel}
       isSaving={isSaving}
       onSave={() => {
-        onFieldsChange({
-          publishDestinations: normalizePrototypePublishDestinations(items),
+        const publishDestinations = normalizePrototypePublishDestinations(items);
+        const nextFields = { ...fields, publishDestinations };
+        void attemptNonGameSectionSave({
+          category,
+          section: "publication",
+          fields: nextFields,
+          onApply: () => {
+            onFieldsChange({ publishDestinations });
+            onDraftChange({ relatedLinks, visibility });
+            if (!deferClose) {
+              onCancel();
+            }
+          },
+        }).then((result) => {
+          if (!result.applied) {
+            setValidationError(result.message);
+          }
         });
-        onDraftChange({ relatedLinks, visibility });
-        if (!deferClose) {
-          onCancel();
-        }
       }}
       saveLabel="反映する"
+      validationError={validationError}
     >
       <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
         <p className="text-sm font-medium text-zinc-400">

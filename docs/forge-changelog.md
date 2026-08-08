@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-08-09 — Studio write-path P1: UI engine wire + game tag E2E
+
+- **Studio編集** — non-game 各 panel の save が中央 validation engine（section scope）経由のみ。UI 内の required/allowed 再判定を除去（エラー表示 UX は維持）
+- **verify** — game overview 実編集 path で trust / 未知 tag 保持を Supabase mock まで確認。panel section behavioral verify 追加
+- **非変更** — ユーザー向け仕様・asset・DB schema・Production / main / DB write なし
+
+## 2026-08-09 — Studio write-path P1 consolidate (validation / publish / tags / 076 ownership)
+
+- **構造** — non-game validation を単一エンジン+scope化。publish write を adapter に集約。tags を feature/play-env/system の compose 境界で保護。076 formal filter の ownership registry を追加（Studio非write・IA Search UI非表示を固定）
+- **非変更** — ユーザー向け仕様・asset UI・DB schema・Production Search / main / DB write なし
+
 ## 2026-08-09 — Changed-file baseline-aware lint evidence
 
 - **verify** — dirty ESLint 対象全件（`games-provider.tsx` 含む）を明示 lint。BaseSha との multiset 差分で newly introduced error/warning=0 を証明。`verify:changed-lint` / `--selftest`

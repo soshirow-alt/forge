@@ -6,22 +6,17 @@ import type { ProjectEditFormData } from "@/lib/project-form";
 import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
 import {
   encodePrototypeFieldsToCategoryAttributes,
-  mapPrototypePublishToFormal,
   mergeCategoryAttributesJson,
 } from "@/lib/studio-non-game-attributes";
-import {
-  sanitizeFeatureTagsForSave,
-} from "@/lib/forge-feature-tag-options";
-import {
-  mergePlayEnvironmentIntoTags,
-  type PlayEnvironmentFormState,
-} from "@/lib/play-environment";
+import { buildNonGamePublishWriteFields } from "@/lib/project-publish-write-adapter";
+import { composeProjectTagsForWrite } from "@/lib/project-tags";
+import type { PlayEnvironmentFormState } from "@/lib/play-environment";
 import type { SubmitDraftState } from "@/lib/studio-submit-draft";
 import type {
   SubmitPrototypeCategory,
   SubmitPrototypeCategoryFields,
 } from "@/lib/prototype/studio-submit-flow";
-import { validateNonGamePrototypeFieldsForEditMode } from "@/hooks/use-studio-submit";
+import { validateNonGamePrototypeFieldsForEditMode } from "@/lib/studio-non-game-validation";
 
 export type NonGameEditPersistMode =
   | "genres-tags"
@@ -53,25 +48,39 @@ export function buildNonGameEditPersistPayload(input: {
   const studioAttrs = encodePrototypeFieldsToCategoryAttributes(input.fields);
 
   // Publication panel owns publish destinations; other panels keep existing formal links.
-  const publishDestinations =
-    input.editMode === "publication"
-      ? mapPrototypePublishToFormal(input.fields.publishDestinations)
-      : base.publishDestinations ?? [];
+  let publishPatch: Partial<ProjectEditFormData> = {
+    publishDestinations: base.publishDestinations ?? [],
+  };
+  if (input.editMode === "publication") {
+    const write = buildNonGamePublishWriteFields(input.fields.publishDestinations);
+    publishPatch = {
+      publishDestinations: write.publishDestinations,
+      playUrl: write.playUrl,
+      steamUrl: write.steamUrl,
+      itchUrl: write.itchUrl,
+      githubUrl: write.githubUrl,
+      discordUrl: write.discordUrl,
+      officialUrl: write.officialUrl,
+      xUrl: write.xUrl,
+      youtubeUrl: write.youtubeUrl,
+    };
+  }
 
   return {
     ok: true,
     payload: {
       ...base,
+      ...publishPatch,
       category: input.game.category,
       categoryAttributes: mergeCategoryAttributesJson(
         input.game.categoryAttributes,
         studioAttrs,
       ),
-      tags: mergePlayEnvironmentIntoTags(
-        sanitizeFeatureTagsForSave(input.draft.featureTags),
-        input.playEnvironment,
-      ),
-      publishDestinations,
+      tags: composeProjectTagsForWrite({
+        featureTags: input.draft.featureTags,
+        playEnvironment: input.playEnvironment,
+        existingTags: input.game.tags,
+      }),
       visibility: input.draft.visibility,
       relatedLinks: input.draft.relatedLinks,
     },
@@ -87,10 +96,10 @@ export async function runNonGameEditPersist(input: {
   editMode: NonGameEditPersistMode;
   update: (payload: ProjectEditFormData) => Promise<void>;
 }): Promise<NonGameEditPersistResult> {
-  const planned = buildNonGameEditPersistPayload(input);
-  if (!planned.ok) {
-    return planned;
+  const built = buildNonGameEditPersistPayload(input);
+  if (!built.ok) {
+    return built;
   }
-  await input.update(planned.payload);
-  return planned;
+  await input.update(built.payload);
+  return built;
 }

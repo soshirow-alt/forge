@@ -13,13 +13,8 @@ import {
   getPlayAccessPlayerBadge,
 } from "@/lib/game-player-display";
 import { getPlayAccessBadgeLabel } from "@/lib/play-access-type";
-import { PLAY_TIME_OPTIONS } from "@/lib/play-time-options";
-import {
-  EMPTY_PLAY_ENVIRONMENT_FORM,
-  mergePlayEnvironmentIntoTags,
-  type PlayEnvironmentFormState,
-} from "@/lib/play-environment";
 import type { SubmitPlayAccessType } from "@/lib/play-access-type";
+import { PLAY_TIME_OPTIONS } from "@/lib/play-time-options";
 import {
   genresToLegacyGenreColumn,
   sanitizeProjectGenresForSave,
@@ -27,6 +22,7 @@ import {
 import { DEFAULT_PLAYABLE_VERSION } from "@/lib/playable-version";
 import type { SubmitFormData } from "@/lib/project-form";
 import { resolveLinkFieldsForWrite } from "@/lib/project-link-write";
+import { composeProjectTagsForWrite } from "@/lib/project-tags";
 import {
   countConfiguredPublishLinks,
   createEmptyPublishDestination,
@@ -42,6 +38,10 @@ import {
   type DeveloperPromptInput,
 } from "@/lib/version-prompt-form";
 import { DEFAULT_AGE_RATING, normalizeAgeRating, type AgeRating } from "@/lib/age-rating";
+import {
+  EMPTY_PLAY_ENVIRONMENT_FORM,
+  type PlayEnvironmentFormState,
+} from "@/lib/play-environment";
 
 export const SUBMIT_DRAFT_PREVIEW_ID = "submit-draft-preview";
 
@@ -182,7 +182,10 @@ export function buildDraftGame(
   const genres = sanitizeProjectGenresForSave(draft.genres);
   const featureTags = sanitizeFeatureTagsForSave(draft.featureTags);
   const playEnvironment = playEnvironmentWithSyncedDistribution(draft);
-  const tags = mergePlayEnvironmentIntoTags(featureTags, playEnvironment);
+  const tags = composeProjectTagsForWrite({
+    featureTags,
+    playEnvironment,
+  });
   const links = resolveDraftLinkFields(draft);
 
   return {
@@ -332,7 +335,10 @@ export function draftToSubmitFormData(
     phase: draft.phase.trim(),
     thumbnailUrls: draft.thumbnailUrls,
     lookingForTesters: false,
-    tags: mergePlayEnvironmentIntoTags(featureTags, playEnvironment),
+    tags: composeProjectTagsForWrite({
+      featureTags,
+      playEnvironment,
+    }),
     playUrl: links.playUrl,
     estimatedPlayTime: draft.estimatedPlayTime.trim() || undefined,
     steamUrl: links.steamUrl,

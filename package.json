@@ -40,6 +40,8 @@
     "verify:studio-category-write-path": "npx --yes tsx scripts/verify-studio-category-write-path.ts",
     "verify:studio-category-update-boundary": "npx --yes tsx scripts/verify-studio-category-update-boundary.ts",
     "verify:studio-category-e2e-save": "npx --yes tsx scripts/verify-studio-category-e2e-save.ts",
+    "verify:studio-panel-section-validation": "npx --yes tsx scripts/verify-studio-panel-section-validation.ts",
+    "verify:project-tags-compose": "npx --yes tsx scripts/verify-project-tags-compose.ts",
     "verify:changed-lint": "node scripts/verify-changed-lint.mjs",
     "verify:changed-lint-selftest": "node scripts/verify-changed-lint.mjs --selftest",
     "verify:search-card-studio-mode": "npx --yes tsx scripts/verify-search-card-studio-mode.ts",

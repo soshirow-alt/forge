@@ -15,10 +15,12 @@ import {
   emptySearchFilterDraft,
   parseFeatureTagFilterValues,
   parseGenreFilterValues,
+  PLAYER_IA_SEARCH_LEGACY_HIDDEN_PARAMS,
   readSearchFilterDraftFromParams,
   sanitizeSearchQuery,
 } from "../lib/player-ia/search-filter-state";
 import { buildSearchHrefForCategory } from "../lib/player-ia/search-href";
+import { PROJECT_FORMAL_FILTER_OWNERSHIP } from "../lib/project-formal-filter-ownership";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 
@@ -216,5 +218,13 @@ assert.doesNotMatch(
 // changelog reason for hidden filters
 const changelog = read("docs/forge-changelog.md");
 assert.match(changelog, /2026-08-08 — Player IA Search 右sidebar/);
+
+// 076 formal filter ownership — hidden params must not be active Studio/IA UI
+for (const id of PLAYER_IA_SEARCH_LEGACY_HIDDEN_PARAMS) {
+  const spec = PROJECT_FORMAL_FILTER_OWNERSHIP.find((row) => row.id === id);
+  assert.ok(spec, `missing ownership for ${id}`);
+  assert.notEqual(spec.playerIaSearchUi, "active", `${id} must not be active IA Search UI`);
+  assert.equal(spec.studioWrite, "no", `${id} must not be Studio-written`);
+}
 
 console.log("player-ia-search-sidebar-filters ok");

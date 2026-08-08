@@ -1,5 +1,4 @@
 import type { ProjectEditFormData } from "@/lib/project-form";
-import { pickFeatureTagsFromGameTags, sanitizeFeatureTagsForSave } from "@/lib/forge-feature-tag-options";
 import { isSpecifiedPlayAccessType } from "@/lib/play-access-type";
 import {
   pickForgeGenresFromList,
@@ -7,28 +6,24 @@ import {
   sanitizeProjectGenresForSave,
 } from "@/lib/project-genres";
 import type { Game } from "@/lib/mock-games";
-import {
-  getPublicGameTags,
-  mergePlayEnvironmentIntoTags,
-  parsePlayEnvironmentFromTags,
-} from "@/lib/play-environment";
+import { parsePlayEnvironmentFromTags } from "@/lib/play-environment";
 import { loadGameExtras } from "@/lib/game-extra-storage";
 import { resolveProjectThumbnailUrls } from "@/lib/project-thumbnails";
+import { resolveGamePublishLinks } from "@/lib/project-publish-links";
+import { previewLegacyLinkFieldsFromPublish } from "@/lib/project-publish-write-adapter";
 import {
-  resolveGamePublishLinks,
-  syncLegacyFieldsFromPublishLinks,
-} from "@/lib/project-publish-links";
+  composeProjectTagsForWrite,
+  extractFeatureTagsFromProjectTags,
+} from "@/lib/project-tags";
 import { normalizeAgeRating } from "@/lib/age-rating";
 
 export function buildProjectEditFormDataFromGame(game: Game): ProjectEditFormData {
-  const featureTags = sanitizeFeatureTagsForSave(
-    pickFeatureTagsFromGameTags(getPublicGameTags(game.tags ?? [])),
-  );
+  const featureTags = extractFeatureTagsFromProjectTags(game.tags);
   const playEnvironment = parsePlayEnvironmentFromTags(game.tags ?? []);
   const legacyExtra =
     typeof window !== "undefined" ? loadGameExtras()[game.id] : undefined;
   const links = resolveGamePublishLinks(game);
-  const legacy = syncLegacyFieldsFromPublishLinks(
+  const legacy = previewLegacyLinkFieldsFromPublish(
     links.publishDestinations,
     links.relatedLinks,
   );
@@ -44,7 +39,11 @@ export function buildProjectEditFormDataFromGame(game: Game): ProjectEditFormDat
     estimatedPlayTime: game.estimatedPlayTime ?? legacyExtra?.estimatedPlayTime,
     lookingForTesters: game.lookingForTesters,
     testerSlots: game.testerSlots,
-    tags: mergePlayEnvironmentIntoTags(featureTags, playEnvironment),
+    tags: composeProjectTagsForWrite({
+      featureTags,
+      playEnvironment,
+      existingTags: game.tags,
+    }),
     thumbnailUrls: resolveProjectThumbnailUrls(game),
     steamUrl: legacy.steamUrl ?? game.steamUrl,
     itchUrl: legacy.itchUrl ?? game.itchUrl,

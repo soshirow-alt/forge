@@ -25,17 +25,24 @@ import type { ProjectVisibility } from "@/lib/project-visibility";
 import type { ProjectCategoryId } from "@/lib/project-categories";
 import {
   encodePrototypeFieldsToCategoryAttributes,
-  mapPrototypePublishToFormal,
   mergeCategoryAttributesJson,
   prototypeCategoryToProjectCategory,
-  validatePrototypePublishDestinationsForCategory,
 } from "@/lib/studio-non-game-attributes";
 import {
-  isUsableMusicDuration,
-  parseMusicDurationParts,
-  type SubmitPrototypeCategory,
-  type SubmitPrototypeCategoryFields,
+  validateNonGamePrototypeFields,
+  validateNonGamePrototypeFieldsForSave,
+} from "@/lib/studio-non-game-validation";
+import { buildNonGamePublishWriteFields } from "@/lib/project-publish-write-adapter";
+import type {
+  SubmitPrototypeCategory,
+  SubmitPrototypeCategoryFields,
 } from "@/lib/prototype/studio-submit-flow";
+
+export {
+  validateNonGamePrototypeFields,
+  validateNonGamePrototypeFieldsForEditMode,
+  validateNonGamePrototypeFieldsForSave,
+} from "@/lib/studio-non-game-validation";
 
 export type { SubmitValidationEditMode } from "@/lib/studio-submit-draft";
 
@@ -70,93 +77,6 @@ function validationFailure(
     editMode,
     sectionLabel,
   };
-}
-
-/** Full submit validation for non-game fields (all sections). */
-export function validateNonGamePrototypeFieldsForSave(
-  prototypeCategory: SubmitPrototypeCategory,
-  prototypeFields: SubmitPrototypeCategoryFields,
-): SubmitDraftValidationResult {
-  if (!prototypeFields.kind.trim()) {
-    return validationFailure("genres-tags", "種類を選んでください。");
-  }
-  if (prototypeCategory === "music" && prototypeFields.musicDuration.trim()) {
-    const parts = parseMusicDurationParts(prototypeFields.musicDuration);
-    if (!parts || !isUsableMusicDuration(parts.minutes, parts.seconds)) {
-      return validationFailure("play-info", "再生時間を確認してください。");
-    }
-  }
-  if (prototypeCategory === "dev_tool" && !prototypeFields.toolUsageMethod.trim()) {
-    return validationFailure("play-info", "利用方法を選んでください。");
-  }
-  const publishKindError = validatePrototypePublishDestinationsForCategory(
-    prototypeCategory,
-    prototypeFields.publishDestinations,
-  );
-  if (publishKindError) {
-    return validationFailure("publication", publishKindError);
-  }
-  const formalPublish = mapPrototypePublishToFormal(
-    prototypeFields.publishDestinations,
-  );
-  const publishError = validatePublishAccess(formalPublish);
-  if (publishError) {
-    return validationFailure("publication", publishError);
-  }
-  return { ok: true };
-}
-
-/**
- * Overview edit — validate only the panel being saved so incomplete
- * legacy category_attributes can be filled panel-by-panel.
- */
-export function validateNonGamePrototypeFieldsForEditMode(
-  editMode: "genres-tags" | "play-info" | "publication",
-  prototypeCategory: SubmitPrototypeCategory,
-  prototypeFields: SubmitPrototypeCategoryFields,
-): SubmitDraftValidationResult {
-  switch (editMode) {
-    case "genres-tags": {
-      if (!prototypeFields.kind.trim()) {
-        return validationFailure("genres-tags", "種類を選んでください。");
-      }
-      return { ok: true };
-    }
-    case "play-info": {
-      if (prototypeCategory === "music" && prototypeFields.musicDuration.trim()) {
-        const parts = parseMusicDurationParts(prototypeFields.musicDuration);
-        if (!parts || !isUsableMusicDuration(parts.minutes, parts.seconds)) {
-          return validationFailure("play-info", "再生時間を確認してください。");
-        }
-      }
-      if (
-        prototypeCategory === "dev_tool" &&
-        !prototypeFields.toolUsageMethod.trim()
-      ) {
-        return validationFailure("play-info", "利用方法を選んでください。");
-      }
-      return { ok: true };
-    }
-    case "publication": {
-      const publishKindError = validatePrototypePublishDestinationsForCategory(
-        prototypeCategory,
-        prototypeFields.publishDestinations,
-      );
-      if (publishKindError) {
-        return validationFailure("publication", publishKindError);
-      }
-      const formalPublish = mapPrototypePublishToFormal(
-        prototypeFields.publishDestinations,
-      );
-      const publishError = validatePublishAccess(formalPublish);
-      if (publishError) {
-        return validationFailure("publication", publishError);
-      }
-      return { ok: true };
-    }
-    default:
-      return { ok: true };
-  }
 }
 
 export function validateSubmitDraftForPost(
@@ -258,10 +178,10 @@ export function validateSubmitDraftSection(
     }
     case "genres-tags": {
       if (prototypeCategory && prototypeFields) {
-        if (!prototypeFields.kind.trim()) {
-          return validationFailure("genres-tags", "種類を選んでください。");
-        }
-        return { ok: true };
+        return validateNonGamePrototypeFields(prototypeCategory, prototypeFields, {
+          mode: "section",
+          section: "genres-tags",
+        });
       }
       const genres = sanitizeProjectGenresForSave(draft.genres);
       if (genres.length === 0) {
@@ -277,22 +197,10 @@ export function validateSubmitDraftSection(
     }
     case "play-info": {
       if (prototypeCategory && prototypeFields) {
-        if (prototypeCategory === "music" && prototypeFields.musicDuration.trim()) {
-          const parts = parseMusicDurationParts(prototypeFields.musicDuration);
-          if (
-            !parts ||
-            !isUsableMusicDuration(parts.minutes, parts.seconds)
-          ) {
-            return validationFailure("play-info", "再生時間を確認してください。");
-          }
-        }
-        if (
-          prototypeCategory === "dev_tool" &&
-          !prototypeFields.toolUsageMethod.trim()
-        ) {
-          return validationFailure("play-info", "利用方法を選んでください。");
-        }
-        return { ok: true };
+        return validateNonGamePrototypeFields(prototypeCategory, prototypeFields, {
+          mode: "section",
+          section: "play-info",
+        });
       }
       if (!isSpecifiedPlayAccessType(draft.playAccessType)) {
         return validationFailure("play-info", "料金・公開形態を選んでください。");
@@ -301,21 +209,10 @@ export function validateSubmitDraftSection(
     }
     case "publication": {
       if (prototypeCategory && prototypeFields) {
-        const publishKindError = validatePrototypePublishDestinationsForCategory(
-          prototypeCategory,
-          prototypeFields.publishDestinations,
-        );
-        if (publishKindError) {
-          return validationFailure("publication", publishKindError);
-        }
-        const formalPublish = mapPrototypePublishToFormal(
-          prototypeFields.publishDestinations,
-        );
-        const publishError = validatePublishAccess(formalPublish);
-        if (publishError) {
-          return validationFailure("publication", publishError);
-        }
-        return { ok: true };
+        return validateNonGamePrototypeFields(prototypeCategory, prototypeFields, {
+          mode: "section",
+          section: "publication",
+        });
       }
       const publishError = validatePublishAccess(draft.publishDestinations);
       if (publishError) {
@@ -377,7 +274,10 @@ export function useStudioSubmit() {
         let category: ProjectCategoryId | undefined;
         let categoryAttributes: Record<string, unknown> | undefined;
         let publishOverride:
-          | ReturnType<typeof mapPrototypePublishToFormal>
+          | ReturnType<typeof buildNonGamePublishWriteFields>["publishDestinations"]
+          | undefined;
+        let publishLinkOverride:
+          | ReturnType<typeof buildNonGamePublishWriteFields>
           | undefined;
 
         if (prototypeCategory && prototypeFields) {
@@ -386,9 +286,10 @@ export function useStudioSubmit() {
             {},
             encodePrototypeFieldsToCategoryAttributes(prototypeFields),
           );
-          publishOverride = mapPrototypePublishToFormal(
+          publishLinkOverride = buildNonGamePublishWriteFields(
             prototypeFields.publishDestinations,
           );
+          publishOverride = publishLinkOverride.publishDestinations;
         }
 
         const data = draftToSubmitFormData(draft, owner, {
@@ -396,6 +297,16 @@ export function useStudioSubmit() {
           categoryAttributes,
           publishDestinationsOverride: publishOverride,
         });
+        if (publishLinkOverride) {
+          data.playUrl = publishLinkOverride.playUrl;
+          data.steamUrl = publishLinkOverride.steamUrl;
+          data.itchUrl = publishLinkOverride.itchUrl;
+          data.githubUrl = publishLinkOverride.githubUrl;
+          data.discordUrl = publishLinkOverride.discordUrl;
+          data.officialUrl = publishLinkOverride.officialUrl;
+          data.xUrl = publishLinkOverride.xUrl;
+          data.youtubeUrl = publishLinkOverride.youtubeUrl;
+        }
         if (
           prototypeCategory &&
           !isSpecifiedPlayAccessType(data.playAccessType)

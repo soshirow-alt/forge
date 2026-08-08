@@ -20,7 +20,7 @@ import {
   sanitizeProjectGenresForSave,
 } from "@/lib/project-genres";
 import { normalizeExternalUrlForDb } from "@/lib/game-links";
-import { resolveLinkFieldsForWrite } from "@/lib/project-link-write";
+import { buildProjectPublishWriteFieldsFromForm } from "@/lib/project-publish-write-adapter";
 import {
   sanitizePublishDestinations,
   sanitizeRelatedLinks,
@@ -126,7 +126,8 @@ function linkColumnsFromForm(data: {
   publishDestinations?: import("@/lib/project-publish-links").PublishDestination[];
   relatedLinks?: import("@/lib/project-publish-links").RelatedLink[];
 }) {
-  const links = resolveLinkFieldsForWrite(data);
+  // Single publish write adapter (legacy URL sync included).
+  const links = buildProjectPublishWriteFieldsFromForm(data);
   return {
     play_url: links.playUrl,
     steam_url: normalizeExternalUrlForDb(links.steamUrl),

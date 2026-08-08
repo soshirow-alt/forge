@@ -16,7 +16,12 @@ import {
 import { createNonGameEditSaveSession } from "../lib/studio-non-game-edit-save-session";
 import { updateProjectDetailsInDb } from "../lib/supabase/projects";
 import { buildProjectEditFormDataFromGame } from "../lib/project-edit-form-data";
-import { EMPTY_PLAY_ENVIRONMENT_FORM } from "../lib/play-environment";
+import { buildGameGenresTagsEditPersistPayload } from "../lib/studio-game-overview-edit-persist";
+import {
+  EMPTY_PLAY_ENVIRONMENT_FORM,
+  TRUST_VERIFIED_TAG,
+} from "../lib/play-environment";
+import { composeProjectTagsForWrite } from "../lib/project-tags";
 import type { Game } from "../lib/mock-games";
 import { mapPrototypePublishToFormal } from "../lib/studio-non-game-attributes";
 
@@ -411,6 +416,98 @@ async function main() {
       "toolUsageMethod",
     ],
   });
+
+  // Trust / legacy tag preservation through edit → Supabase mock payload
+  for (const caseRow of [
+    {
+      category: "audio" as const,
+      proto: "music" as const,
+      fields: audioFields,
+    },
+    {
+      category: "dev-tool" as const,
+      proto: "dev_tool" as const,
+      fields: toolFields,
+    },
+    {
+      category: "service-app" as const,
+      proto: "web_service" as const,
+      fields: serviceFields,
+    },
+  ]) {
+    const { supabase, state } = createProjectsSupabaseMock();
+    const game = baseGame({
+      category: caseRow.category,
+      categoryAttributes: { keepMe: true },
+      tags: ["癒し系", TRUST_VERIFIED_TAG, "古いレガシータグ"],
+    });
+    const session = createNonGameEditSaveSession({
+      game,
+      prototypeCategory: caseRow.proto,
+      playEnvironment: EMPTY_PLAY_ENVIRONMENT_FORM,
+      editMode: "publication",
+      update: async (payload) => {
+        await updateProjectDetailsInDb(supabase, game.id, payload);
+      },
+    });
+    const outcome = await session.requestSave(caseRow.fields, emptyDraft());
+    assert.equal(outcome.closed, true);
+    assert.equal(state.updateCalls, 1);
+    const tags = state.updatePayloads[0].tags as string[];
+    assert.ok(
+      tags.includes(TRUST_VERIFIED_TAG),
+      `${caseRow.category}: trust must remain on DB payload`,
+    );
+    assert.ok(
+      tags.includes("古いレガシータグ"),
+      `${caseRow.category}: legacy tag must remain`,
+    );
+  }
+
+  // Game edit path (genres-tags panel planner → updateProjectDetailsInDb):
+  // feature + play-env update must keep trust + unknown legacy tags.
+  {
+    const { supabase, state } = createProjectsSupabaseMock();
+    const game = baseGame({
+      category: "game",
+      genres: ["RPG"],
+      tags: [
+        "癒し系",
+        "PC対応",
+        "配布:外部リンク",
+        TRUST_VERIFIED_TAG,
+        "古いレガシータグ",
+      ],
+      lookingForTesters: false,
+    });
+    const form = buildGameGenresTagsEditPersistPayload(game, {
+      genres: ["アクション"],
+      featureTags: ["ピクセルアート"],
+      ageRating: "general",
+    });
+    await updateProjectDetailsInDb(supabase, game.id, form);
+    assert.equal(state.updateCalls, 1);
+    const payload = state.updatePayloads[0];
+    assert.deepEqual(payload.tags, [
+      "ピクセルアート",
+      "古いレガシータグ",
+      "PC対応",
+      "配布:外部リンク",
+      TRUST_VERIFIED_TAG,
+    ]);
+    assert.deepEqual(payload.genres, ["アクション"]);
+    assert.ok(!((payload.tags as string[]) ?? []).includes("癒し系"));
+  }
+
+  // Fresh compose (unit-style; full unit coverage lives in verify:project-tags-compose)
+  {
+    const tags = composeProjectTagsForWrite({
+      featureTags: ["癒し系"],
+      playEnvironment: EMPTY_PLAY_ENVIRONMENT_FORM,
+      existingTags: [],
+    });
+    assert.ok(!tags.includes(TRUST_VERIFIED_TAG));
+  }
 
   // publish destination negative cases — never reach DB
   {

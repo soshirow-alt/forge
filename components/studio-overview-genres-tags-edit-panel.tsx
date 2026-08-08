@@ -26,10 +26,10 @@ import {
 } from "@/lib/project-genres";
 import {
   getPublicGameTags,
-  mergePlayEnvironmentIntoTags,
   parsePlayEnvironmentFromTags,
 } from "@/lib/play-environment";
-import { buildProjectEditFormDataFromGame } from "@/lib/project-edit-form-data";
+import { composeProjectTagsForWrite } from "@/lib/project-tags";
+import { buildGameGenresTagsEditPersistPayload } from "@/lib/studio-game-overview-edit-persist";
 import { STUDIO_FIELD_IDS, type StudioFieldId } from "@/lib/studio-preview-edit-targets";
 import { normalizeAgeRating, type AgeRating } from "@/lib/age-rating";
 
@@ -84,10 +84,11 @@ export function StudioOverviewGenresTagsEditPanel({
   ) {
     const sanitizedGenres = sanitizeProjectGenresForSave(genres);
     const playEnvironment = parsePlayEnvironmentFromTags(game?.tags ?? []);
-    const mergedTags = mergePlayEnvironmentIntoTags(
-      sanitizeFeatureTagsForSave(tags),
+    const mergedTags = composeProjectTagsForWrite({
+      featureTags: sanitizeFeatureTagsForSave(tags),
       playEnvironment,
-    );
+      existingTags: game?.tags,
+    });
     onPreviewPatchChange?.({
       genres: sanitizedGenres,
       genre: genresToLegacyGenreColumn(sanitizedGenres) || "",
@@ -120,19 +121,16 @@ export function StudioOverviewGenresTagsEditPanel({
       return;
     }
 
-    const playEnvironment = parsePlayEnvironmentFromTags(game.tags ?? []);
-
     setIsSaving(true);
     try {
-      await updateProjectDetails(projectId, {
-        ...buildProjectEditFormDataFromGame(game),
-        genres,
-        tags: mergePlayEnvironmentIntoTags(
-          sanitizeFeatureTagsForSave(selectedTags),
-          playEnvironment,
-        ),
-        ageRating,
-      });
+      await updateProjectDetails(
+        projectId,
+        buildGameGenresTagsEditPersistPayload(game, {
+          genres,
+          featureTags: selectedTags,
+          ageRating,
+        }),
+      );
       onSaved?.();
     } catch (error) {
       setSaveError(
