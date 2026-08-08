@@ -2,10 +2,21 @@
 
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { FORGE_SHELL_MODE_SWITCH_CLASS } from "@/lib/forge-shell-header";
+import {
+  FORGE_MODE_SWITCH_TO_PLAYER_LABEL,
+  FORGE_MODE_SWITCH_TO_STUDIO_LABEL,
+  FORGE_SHELL_BRAND_LABEL,
+  type ForgeShellMode,
+} from "@/lib/forge-mode";
 
+const emptySubscribe = () => () => {};
+
+function useIsClient(): boolean {
+  return useSyncExternalStore(emptySubscribe, () => true, () => false);
+}
 export function ForgeShellMobileMenuButton({ onClick }: { onClick: () => void }) {
   return (
     <button
@@ -23,21 +34,23 @@ export function ForgeShellMobileDrawer({
   open,
   onClose,
   homeHref,
+  brandLabel = FORGE_SHELL_BRAND_LABEL.player,
+  mode = "player",
   children,
   footer,
 }: {
   open: boolean;
   onClose: () => void;
   homeHref: string;
+  /** Visible brand in drawer header — Player: Forge / Studio: Forge Studio */
+  brandLabel?: string;
+  /** Ensures portal root inherits shell accent tokens outside React tree. */
+  mode?: ForgeShellMode;
   children: ReactNode;
   /** スクロール外の下部固定（ご意見・ログアウトなど） */
   footer?: ReactNode;
 }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsClient();
 
   useEffect(() => {
     if (!open) {
@@ -56,7 +69,7 @@ export function ForgeShellMobileDrawer({
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-50 lg:hidden">
+    <div className="fixed inset-0 z-50 lg:hidden" data-forge-mode={mode}>
       <button
         type="button"
         className="absolute inset-0 bg-black/80 backdrop-blur-sm"
@@ -75,7 +88,7 @@ export function ForgeShellMobileDrawer({
             onClick={onClose}
             className="text-lg font-bold tracking-tight text-white"
           >
-            Forge
+            {brandLabel}
           </Link>
           <button
             type="button"
@@ -106,7 +119,7 @@ export function ForgeShellMobileDrawer({
 }
 
 type ForgeShellModeSwitchProps = {
-  mode: "player" | "studio";
+  mode: ForgeShellMode;
   onNavigate?: () => void;
   onStudioAttempt?: () => void;
   /** Preview/local — Studio へ Link 直遷移 */
@@ -127,10 +140,11 @@ export function ForgeShellModeSwitch({
       <Link
         href="/home"
         onClick={onNavigate}
-        title="プレイヤー画面へ切り替え"
+        title={FORGE_MODE_SWITCH_TO_PLAYER_LABEL}
+        aria-label={FORGE_MODE_SWITCH_TO_PLAYER_LABEL}
         className={FORGE_SHELL_MODE_SWITCH_CLASS}
       >
-        Player切り替え
+        {FORGE_MODE_SWITCH_TO_PLAYER_LABEL}
       </Link>
     );
   }
@@ -140,10 +154,11 @@ export function ForgeShellModeSwitch({
       <Link
         href={studioDirectHref ?? "/studio"}
         onClick={onNavigate}
-        title="Studio へ切り替え"
+        title={FORGE_MODE_SWITCH_TO_STUDIO_LABEL}
+        aria-label={FORGE_MODE_SWITCH_TO_STUDIO_LABEL}
         className={FORGE_SHELL_MODE_SWITCH_CLASS}
       >
-        Studio切り替え
+        {FORGE_MODE_SWITCH_TO_STUDIO_LABEL}
       </Link>
     );
   }
@@ -155,10 +170,11 @@ export function ForgeShellModeSwitch({
         onNavigate?.();
         onStudioAttempt?.();
       }}
-      title="Studio へ切り替え（ログインが必要です）"
+      title={`${FORGE_MODE_SWITCH_TO_STUDIO_LABEL}（ログインが必要です）`}
+      aria-label={FORGE_MODE_SWITCH_TO_STUDIO_LABEL}
       className={FORGE_SHELL_MODE_SWITCH_CLASS}
     >
-      Studio切り替え
+      {FORGE_MODE_SWITCH_TO_STUDIO_LABEL}
     </button>
   );
 }

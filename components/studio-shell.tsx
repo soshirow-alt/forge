@@ -21,6 +21,7 @@ import {
   FORGE_SHELL_HEADER_SEARCH_FORM_CLASS,
   FORGE_SHELL_HEADER_SEARCH_INPUT_CLASS,
 } from "@/lib/forge-shell-header";
+import { FORGE_SHELL_BRAND_LABEL } from "@/lib/forge-mode";
 import { studioProjectTabs } from "@/lib/studio-project-detail-v0-mock-data";
 
 const primaryLinks = [
@@ -73,7 +74,7 @@ function HeaderSearchForm({ defaultValue }: { defaultValue?: string }) {
 function subNavLinkClass(active: boolean) {
   return `block rounded-lg px-3 py-2 text-sm transition-colors ${
     active
-      ? "bg-violet-600/20 font-medium text-violet-200 ring-1 ring-violet-500/30"
+      ? "forge-nav-active"
       : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
   }`;
 }
@@ -165,7 +166,7 @@ export function StudioMyPageTabs({
 function navLinkClass(active: boolean) {
   return `block rounded-lg px-3 py-2 text-sm transition-colors ${
     active
-      ? "bg-violet-600/20 font-medium text-violet-200 ring-1 ring-violet-500/30"
+      ? "forge-nav-active"
       : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
   }`;
 }
@@ -232,7 +233,15 @@ export function StudioShell({
     notificationBadge ?? (user ? getUnreadNotificationCount() : 0);
 
   useEffect(() => {
-    setMobileNavOpen(false);
+    let cancelled = false;
+    void Promise.resolve().then(() => {
+      if (!cancelled) {
+        setMobileNavOpen(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [pathname]);
 
   function handleLogout() {
@@ -243,14 +252,19 @@ export function StudioShell({
   }
 
   return (
-    <div className="flex min-h-screen bg-[#0a0a0a] text-zinc-100">
+    <div
+      data-forge-mode="studio"
+      className="flex min-h-screen bg-[#0a0a0a] text-zinc-100"
+    >
       <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r border-zinc-800/80 bg-zinc-950 lg:flex xl:w-60">
         <div className="shrink-0 border-b border-zinc-800/80 px-5 py-5">
           <Link href="/studio" className="flex items-center gap-2.5">
             <span className="flex size-9 items-center justify-center rounded-xl bg-white/90 text-zinc-950">
               <Flame className="size-5" aria-hidden="true" />
             </span>
-            <span className="text-lg font-bold tracking-tight">Forge</span>
+            <span className="text-lg font-bold tracking-tight">
+              {FORGE_SHELL_BRAND_LABEL.studio}
+            </span>
           </Link>
         </div>
 
@@ -263,6 +277,8 @@ export function StudioShell({
         open={mobileNavOpen}
         onClose={() => setMobileNavOpen(false)}
         homeHref="/studio"
+        brandLabel={FORGE_SHELL_BRAND_LABEL.studio}
+        mode="studio"
         footer={
           <>
             <PlatformFeedbackSidebarBox viewerMode="studio" />
@@ -354,7 +370,7 @@ export function StudioSectionHeader({
         <h2 className="text-lg font-semibold text-white sm:text-xl">{title}</h2>
       </div>
       {href && (
-        <Link href={href} className="text-sm text-violet-400 transition-colors hover:text-violet-300">
+        <Link href={href} className="forge-accent-link text-sm transition-colors">
           すべて見る →
         </Link>
       )}
@@ -407,7 +423,7 @@ export function StudioProjectTabs({
             onClick={() => onTabChange(tab.id)}
             className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
               selected
-                ? "border-violet-400 text-violet-100"
+                ? "forge-tab-selected"
                 : "border-transparent text-zinc-500 hover:text-zinc-300"
             }`}
           >
@@ -437,7 +453,7 @@ export function StudioFilterPills({
           onClick={() => onChange(option.id)}
           className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
             active === option.id
-              ? "bg-violet-600/20 text-violet-200 ring-1 ring-violet-500/30"
+              ? "forge-filter-active"
               : "border border-zinc-800 text-zinc-400 hover:border-zinc-700"
           }`}
         >
@@ -492,7 +508,7 @@ export function StudioInlineSelect({
                   setOpen(false);
                 }}
                 className={`block w-full px-3 py-2 text-left text-sm transition-colors hover:bg-zinc-900 ${
-                  option.id === value ? "text-violet-200" : "text-zinc-300"
+                  option.id === value ? "forge-accent-link" : "text-zinc-300"
                 }`}
               >
                 {option.label}

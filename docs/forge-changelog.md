@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-08-08 — Searchカード視認性＋Studioモード識別
+
+- **Searchカード（Preview Player IA）** — surface / 1px border / hover / 画像上category pill / title→description→creator+date の階層。`description` 抜粋（2行 clamp、空なら非表示）。grid は `max-w-[1200px]` + 3列維持。Production `WorksSearchPage` は非変更
+- **Studio識別** — 左上・drawer を `Forge Studio`。`data-forge-mode="studio"` + CSS tokens（sky/cyan accent）で sidebar active / mode switch / search focus。Player は `data-forge-mode="player"`（violet）
+- **mode switch** — Player→`Studioへ`、Studio→`Playerへ戻る`。breadcrumb は復活させない
+- **非実施** — Production / main / DB write なし。Home CTA・Search filter・data fetch 方式は非変更
+
 ## 2026-08-06 — Player Home カテゴリ導線・Search query保持・初期表示性能
 
 - **Home CTA** — 「Forgeでできること」を4導線へ変更: 遊ぶ→`/search?category=game`、聞く→`/search?category=audio`、サービスを探す→`/search?category=service-app`、掲載する→`/studio/submit`。旧「遊ぶ・試す」「制作に使う」を削除。`quick_try` / `usable_for_creation` は Home CTA に付けない

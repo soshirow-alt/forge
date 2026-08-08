@@ -262,30 +262,31 @@ function PlayerIaSearchContent({
       ) : null}
 
       {loading ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mx-auto grid max-w-[1200px] gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }, (_, index) => (
             <div
               key={index}
-              className="h-48 animate-pulse rounded-2xl border border-zinc-800/80 bg-zinc-900/40"
+              className="h-56 animate-pulse rounded-2xl border border-zinc-800/80 bg-zinc-900/40"
             />
           ))}
         </div>
       ) : error ? (
-        <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 px-6 py-16 text-center text-sm text-zinc-500">
+        <div className="mx-auto max-w-[1200px] rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 px-6 py-16 text-center text-sm text-zinc-500">
           作品一覧を読み込めませんでした。
         </div>
       ) : projects.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 px-6 py-16 text-center text-sm text-zinc-500">
+        <div className="mx-auto max-w-[1200px] rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 px-6 py-16 text-center text-sm text-zinc-500">
           条件に合う作品がありません。
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mx-auto grid max-w-[1200px] gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {projects.map((project) => (
             <PlayerIaProjectCard
               key={project.projectId}
               projectId={project.projectId}
               title={project.title}
               category={project.category}
+              description={project.description}
               creator={project.creator}
               meta={
                 sort === "updated" && project.meaningfulUpdateAt
@@ -320,7 +321,7 @@ export function PlayerIaSearchPage({
           {Array.from({ length: 6 }, (_, index) => (
             <div
               key={index}
-              className="h-48 animate-pulse rounded-2xl border border-zinc-800/80 bg-zinc-900/40"
+              className="h-56 animate-pulse rounded-2xl border border-zinc-800/80 bg-zinc-900/40"
             />
           ))}
         </div>

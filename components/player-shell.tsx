@@ -55,7 +55,7 @@ function SidebarDivider() {
 function navLinkClass(active: boolean) {
   return `block rounded-lg px-3 py-2 text-sm transition-colors ${
     active
-      ? "bg-violet-600/20 font-medium text-violet-200 ring-1 ring-violet-500/30"
+      ? "forge-nav-active"
       : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
   }`;
 }
@@ -63,7 +63,7 @@ function navLinkClass(active: boolean) {
 function subNavLinkClass(active: boolean) {
   return `block rounded-lg px-3 py-2 text-sm transition-colors ${
     active
-      ? "bg-violet-600/20 font-medium text-violet-200 ring-1 ring-violet-500/30"
+      ? "forge-nav-active"
       : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
   }`;
 }
@@ -216,7 +216,10 @@ function PlayerShellFrame({
   }
 
   return (
-    <div className="flex min-h-screen bg-[#0a0a0a] text-zinc-100">
+    <div
+      data-forge-mode="player"
+      className="flex min-h-screen bg-[#0a0a0a] text-zinc-100"
+    >
       <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r border-zinc-800/80 bg-zinc-950 lg:flex xl:w-60">
         <div className="shrink-0 border-b border-zinc-800/80 px-5 py-5">
           <Link href="/home" className="flex items-center gap-2.5">
@@ -236,6 +239,8 @@ function PlayerShellFrame({
         open={mobileNavOpen}
         onClose={() => setMobileNavOpen(false)}
         homeHref="/home"
+        brandLabel="Forge"
+        mode="player"
         footer={
           <>
             <PlatformFeedbackSidebarBox viewerMode="player" />
