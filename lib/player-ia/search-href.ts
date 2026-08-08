@@ -2,6 +2,7 @@ import {
   isProjectCategoryId,
   type ProjectCategoryId,
 } from "@/lib/project-categories";
+import { PLAYER_IA_SEARCH_LEGACY_HIDDEN_PARAMS } from "@/lib/player-ia/search-filter-state";
 
 type SearchParamsLike =
   | URLSearchParams
@@ -23,7 +24,8 @@ function toURLSearchParams(current: SearchParamsLike): URLSearchParams {
 
 /**
  * Build `/search` href, replacing only `category` while preserving other params.
- * `all` / null removes `category`. Empty values are dropped. Keys are not duplicated.
+ * Leaving game (or selecting all) drops game-only `genre` / `tag`.
+ * Legacy hidden filter params are preserved when present.
  */
 export function buildSearchHrefForCategory(
   category: ProjectCategoryId | "all" | null,
@@ -38,6 +40,12 @@ export function buildSearchHrefForCategory(
     }
   }
 
+  const nextIsGame = category === "game";
+  if (!nextIsGame) {
+    next.delete("genre");
+    next.delete("tag");
+  }
+
   if (!category || category === "all") {
     next.delete("category");
   } else if (isProjectCategoryId(category)) {
@@ -45,6 +53,9 @@ export function buildSearchHrefForCategory(
   } else {
     next.delete("category");
   }
+
+  // Ensure we didn't accidentally drop legacy keys when cleaning empties
+  void PLAYER_IA_SEARCH_LEGACY_HIDDEN_PARAMS;
 
   const query = next.toString();
   return query ? `/search?${query}` : "/search";

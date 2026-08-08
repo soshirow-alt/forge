@@ -95,8 +95,9 @@ assert.doesNotMatch(cardSrc, /<Link[\s\S]*<Link/);
 
 const searchSrc = read("components/player-ia/player-ia-search-page.tsx");
 assert.match(searchSrc, /description=\{project\.description\}/);
-assert.match(searchSrc, /max-w-\[1200px\]/);
-assert.match(searchSrc, /xl:grid-cols-3/);
+assert.match(searchSrc, /max-w-\[1400px\]/);
+assert.match(searchSrc, /2xl:grid-cols-3/);
+assert.match(searchSrc, /PlayerIaSearchFilterPanel/);
 
 // WorksSearchPage must remain Production path (not deleted / not replaced wholesale)
 const works = read("components/works-search-page.tsx");

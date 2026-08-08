@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-08-08 — Player IA Search 右sidebar絞り込み（genre/tag/q）
+
+- **Search UX（Preview Player IA）** — 旧Productionの右サイドバー型「絞り込み」を統合。Desktop sticky sidebar（約288px）+ Mobile drawer。キーワードは全カテゴリ。game のみジャンル・特徴タグ（Studio 正本 checkbox）。draft +「この条件で検索」で URL 反映
+- **非表示にした surface filter** — `quick_try` / `usable_for_creation` / `feedback_wanted` / `stream_policy` / `asset_kind`。Studio 正規 write path 未成立のため UI から外す。RPC / direct URL 互換は維持。category 切替でも legacy hidden params は破棄しない
+- **server filter** — migration `084` で catalog RPC に `p_query` / `p_genres` / `p_tags` + tags GIN。全件 client filter へは戻さない。Production `WorksSearchPage` は非変更
+- **非実施** — Production / main / DB·Storage 自動適用なし。084 は Owner が Staging へ手動適用後に filter 実機確認
+
 ## 2026-08-08 — Searchカード視認性＋Studioモード識別
 
 - **Searchカード（Preview Player IA）** — surface / 1px border / hover / 画像上category pill / title→description→creator+date の階層。`description` 抜粋（2行 clamp、空なら非表示）。grid は `max-w-[1200px]` + 3列維持。Production `WorksSearchPage` は非変更

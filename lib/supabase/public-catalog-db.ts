@@ -49,6 +49,9 @@ export type CatalogProject = {
 export type CatalogSearchParams = {
   category?: string | null;
   sort?: string | null;
+  query?: string | null;
+  genres?: string[] | null;
+  tags?: string[] | null;
   quickTry?: boolean | null;
   feedbackWanted?: boolean | null;
   usableForCreation?: boolean | null;
@@ -158,7 +161,13 @@ export async function fetchPublicProjectsByCategory(
   const limit = Math.min(Math.max(params.limit ?? 24, 1), 60);
   const offset = Math.max(params.offset ?? 0, 0);
 
-  const { data, error } = await supabase.rpc("get_public_projects_by_category", {
+  const query = params.query?.trim() ? params.query.trim() : null;
+  const genres =
+    params.genres && params.genres.length > 0 ? params.genres : null;
+  const tags = params.tags && params.tags.length > 0 ? params.tags : null;
+  // Only send 084 args when used so pre-migration Staging still serves
+  // unfiltered catalog via the prior 9-arg signature.
+  const rpcArgs: Record<string, unknown> = {
     p_category: params.category ?? null,
     p_sort: params.sort ?? "newest",
     p_quick_try: params.quickTry ?? null,
@@ -168,7 +177,17 @@ export async function fetchPublicProjectsByCategory(
     p_asset_kind: params.assetKind ?? null,
     p_limit: limit,
     p_offset: offset,
-  });
+  };
+  if (query || genres || tags) {
+    rpcArgs.p_query = query;
+    rpcArgs.p_genres = genres;
+    rpcArgs.p_tags = tags;
+  }
+
+  const { data, error } = await supabase.rpc(
+    "get_public_projects_by_category",
+    rpcArgs,
+  );
 
   if (error) {
     console.error("[public-catalog] get_public_projects_by_category failed", error);

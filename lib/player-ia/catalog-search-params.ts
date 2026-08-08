@@ -5,6 +5,12 @@ import {
 } from "@/lib/project-categories";
 import { isAssetKindFilter } from "@/lib/supabase/public-catalog-db";
 import type { CatalogSearchParams } from "@/lib/supabase/public-catalog-db";
+import {
+  parseFeatureTagFilterValues,
+  parseGenreFilterValues,
+  readMultiSearchParam,
+  sanitizeSearchQuery,
+} from "@/lib/player-ia/search-filter-state";
 
 export const PLAYER_IA_SEARCH_CATALOG_LIMIT = 48;
 
@@ -12,6 +18,7 @@ export type CatalogSearchParamSource =
   | URLSearchParams
   | {
       get(name: string): string | null;
+      getAll?(name: string): string[];
     }
   | Record<string, string | string[] | undefined>;
 
@@ -19,7 +26,10 @@ function readParam(
   source: CatalogSearchParamSource,
   key: string,
 ): string | null {
-  if (source instanceof URLSearchParams || typeof (source as { get?: unknown }).get === "function") {
+  if (
+    source instanceof URLSearchParams ||
+    typeof (source as { get?: unknown }).get === "function"
+  ) {
     const value = (source as { get(name: string): string | null }).get(key);
     return value == null ? null : value;
   }
@@ -28,6 +38,37 @@ function readParam(
     return raw[0] ?? null;
   }
   return raw ?? null;
+}
+
+function readMulti(
+  source: CatalogSearchParamSource,
+  key: string,
+): string[] {
+  if (source instanceof URLSearchParams) {
+    return readMultiSearchParam(source, key);
+  }
+  if (typeof (source as { get?: unknown }).get === "function") {
+    return readMultiSearchParam(
+      source as {
+        getAll?(name: string): string[];
+        get(name: string): string | null;
+      },
+      key,
+    );
+  }
+  const raw = (source as Record<string, string | string[] | undefined>)[key];
+  if (Array.isArray(raw)) {
+    return raw
+      .flatMap((value) => value.split(",").map((part) => part.trim()))
+      .filter(Boolean);
+  }
+  if (typeof raw === "string") {
+    return raw
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean);
+  }
+  return [];
 }
 
 function parseBooleanParam(value: string | null): boolean | null {
@@ -56,9 +97,22 @@ export function parseCatalogSearchParams(
   const limitRaw = Number.parseInt(readParam(source, "limit") ?? "", 10);
   const offsetRaw = Number.parseInt(readParam(source, "offset") ?? "", 10);
 
+  const query = sanitizeSearchQuery(readParam(source, "q"));
+  const genres =
+    category === "game"
+      ? parseGenreFilterValues(readMulti(source, "genre"))
+      : [];
+  const tags =
+    category === "game"
+      ? parseFeatureTagFilterValues(readMulti(source, "tag"))
+      : [];
+
   return {
     category,
     sort,
+    query: query || null,
+    genres: genres.length > 0 ? genres : null,
+    tags: tags.length > 0 ? tags : null,
     quickTry: parseBooleanParam(readParam(source, "quick_try")),
     feedbackWanted: parseBooleanParam(readParam(source, "feedback_wanted")),
     usableForCreation: parseBooleanParam(
@@ -66,7 +120,6 @@ export function parseCatalogSearchParams(
     ),
     streamPolicy,
     assetKind,
-    // Omit when absent — callers choose Search (48) vs API default (24).
     limit: Number.isFinite(limitRaw) ? limitRaw : undefined,
     offset: Number.isFinite(offsetRaw) ? offsetRaw : 0,
   };
@@ -85,6 +138,15 @@ export function buildCatalogQueryString(
   }
   if (parsed.sort) {
     params.set("sort", parsed.sort);
+  }
+  if (parsed.query) {
+    params.set("q", parsed.query);
+  }
+  if (parsed.genres && parsed.genres.length > 0) {
+    params.set("genre", parsed.genres.join(","));
+  }
+  if (parsed.tags && parsed.tags.length > 0) {
+    params.set("tag", parsed.tags.join(","));
   }
   if (parsed.quickTry === true) {
     params.set("quick_try", "1");

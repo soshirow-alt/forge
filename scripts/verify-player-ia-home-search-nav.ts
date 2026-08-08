@@ -73,15 +73,16 @@ const homeRoute = read("app/(player)/home/page.tsx");
 assert.match(homeRoute, /loadPlayerIaHome/);
 assert.match(homeRoute, /initialHome=\{initialHome\}/);
 
-// --- B. quick_try chip hidden, API path retained ---
+// --- B. legacy filter chips hidden, API path retained ---
 const searchPage = read("components/player-ia/player-ia-search-page.tsx");
 assert.doesNotMatch(searchPage, /label=["']すぐ試せる["']/);
 assert.doesNotMatch(searchPage, />すぐ試せる</);
-assert.match(searchPage, /quick_try/); // comment / API compat mention ok
-assert.match(searchPage, /制作に使える/);
-assert.match(searchPage, /FB募集中/);
+assert.doesNotMatch(searchPage, /FB募集中/);
+assert.doesNotMatch(searchPage, /制作に使える/);
+assert.match(searchPage, /Legacy surface filters/);
 assert.match(searchPage, /catalogQuery === initialCatalogQuery/);
 assert.match(searchPage, /useServerData/);
+assert.match(searchPage, /PlayerIaSearchFilterPanel/);
 
 const catalogRoute = read("app/api/search/catalog/route.ts");
 assert.match(catalogRoute, /loadPublicCatalog/);

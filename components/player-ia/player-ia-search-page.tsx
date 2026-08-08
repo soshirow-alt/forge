@@ -5,13 +5,10 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { PlayerIaCategoryTabs } from "@/components/player-ia/player-ia-category-tabs";
 import { PlayerIaProjectCard } from "@/components/player-ia/player-ia-project-card";
 import {
-  ASSET_KIND_IDS,
-  ASSET_KIND_LABELS,
-  isProjectCategoryId,
-  PROJECT_CATEGORY_LABELS,
-  STREAM_POLICY_IDS,
-  STREAM_POLICY_LABELS,
-} from "@/lib/project-categories";
+  PlayerIaSearchFilterMobileTrigger,
+  PlayerIaSearchFilterPanel,
+} from "@/components/player-ia/player-ia-search-filter-panel";
+import { isProjectCategoryId, PROJECT_CATEGORY_LABELS } from "@/lib/project-categories";
 import {
   buildCatalogQueryString,
   PLAYER_IA_SEARCH_CATALOG_LIMIT,
@@ -23,9 +20,6 @@ import { ChevronDown } from "lucide-react";
 
 function createClientFallbackNowMs(): number {
   return createRequestNowMs();
-}
-function parseBooleanParam(value: string | null): boolean {
-  return value === "1" || value === "true";
 }
 
 function updateParam(
@@ -44,27 +38,33 @@ function updateParam(
   router.push(query ? `/search?${query}` : "/search");
 }
 
-function FilterChip({
-  active,
-  label,
-  onClick,
+function ResultsGrid({
+  projects,
+  sort,
+  nowMs,
 }: {
-  active: boolean;
-  label: string;
-  onClick: () => void;
+  projects: CatalogProject[];
+  sort: string;
+  nowMs: number;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`inline-flex h-8 items-center rounded-lg border px-2.5 text-xs font-medium transition-colors ${
-        active
-          ? "border-violet-500/50 bg-violet-600/20 text-violet-100"
-          : "border-zinc-700/80 bg-zinc-900/70 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
-      }`}
-    >
-      {label}
-    </button>
+    <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
+      {projects.map((project) => (
+        <PlayerIaProjectCard
+          key={project.projectId}
+          projectId={project.projectId}
+          title={project.title}
+          category={project.category}
+          description={project.description}
+          creator={project.creator}
+          meta={
+            sort === "updated" && project.meaningfulUpdateAt
+              ? `更新 ${formatPlayerIaRelativeTime(project.meaningfulUpdateAt, { nowMs })}`
+              : formatPlayerIaRelativeTime(project.firstPublishedAt, { nowMs })
+          }
+        />
+      ))}
+    </div>
   );
 }
 
@@ -153,150 +153,98 @@ function PlayerIaSearchContent({
   }, [searchParams]);
 
   const sort = searchParams.get("sort")?.trim() || "newest";
-  const feedbackWanted = parseBooleanParam(searchParams.get("feedback_wanted"));
-  const usableForCreation = parseBooleanParam(
-    searchParams.get("usable_for_creation"),
-  );
-  const streamPolicy = searchParams.get("stream_policy")?.trim() || "";
-  const assetKind = searchParams.get("asset_kind")?.trim() || "";
-
   const title = category
     ? PROJECT_CATEGORY_LABELS[category]
     : "すべての作品";
+  const resultLabel = loading
+    ? "読み込み中…"
+    : error
+      ? "読み込みエラー"
+      : `表示 ${projects.length}件`;
+
+  const navigate = (href: string) => {
+    router.push(href);
+  };
 
   return (
-    <div>
+    <div className="mx-auto max-w-[1400px]">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-white">{title}</h1>
+          <p className="mt-1 text-sm text-zinc-500">{resultLabel}</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <PlayerIaSearchFilterMobileTrigger
+            category={category}
+            sort={sort}
+            searchParams={searchParams}
+            onNavigate={navigate}
+          />
+          <label className="inline-flex items-center gap-2 text-sm text-zinc-400">
+            <span>並び順</span>
+            <span className="relative">
+              <select
+                value={sort}
+                onChange={(event) =>
+                  updateParam(router, searchParams, "sort", event.target.value)
+                }
+                className="h-9 appearance-none rounded-lg border border-zinc-800 bg-zinc-900/80 py-1.5 pl-3 pr-8 text-sm text-zinc-200 focus:border-violet-500/40 focus:outline-none focus:ring-1 focus:ring-violet-500/30"
+              >
+                <option value="newest">新しい順</option>
+                <option value="updated">更新順</option>
+              </select>
+              <ChevronDown
+                className="pointer-events-none absolute right-2 top-1/2 size-4 -translate-y-1/2 text-zinc-500"
+                aria-hidden="true"
+              />
+            </span>
+          </label>
+        </div>
+      </div>
+
       <Suspense fallback={null}>
         <PlayerIaCategoryTabs />
       </Suspense>
 
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold text-white">{title}</h1>
-        <label className="inline-flex items-center gap-2 text-sm text-zinc-400">
-          <span>並び順</span>
-          <span className="relative">
-            <select
-              value={sort}
-              onChange={(event) =>
-                updateParam(router, searchParams, "sort", event.target.value)
-              }
-              className="h-9 appearance-none rounded-lg border border-zinc-800 bg-zinc-900/80 py-1.5 pl-3 pr-8 text-sm text-zinc-200 focus:border-violet-500/40 focus:outline-none focus:ring-1 focus:ring-violet-500/30"
-            >
-              <option value="newest">新しい順</option>
-              <option value="updated">更新順</option>
-            </select>
-            <ChevronDown
-              className="pointer-events-none absolute right-2 top-1/2 size-4 -translate-y-1/2 text-zinc-500"
-              aria-hidden="true"
-            />
-          </span>
-        </label>
+      {/*
+        Legacy surface filters (quick_try / usable_for_creation / feedback_wanted /
+        stream_policy / asset_kind) are intentionally not shown — Studio write path
+        incomplete. RPC / direct URL params remain compatible.
+      */}
+
+      <div className="mt-5 flex flex-col gap-6 xl:flex-row xl:items-start">
+        <div className="min-w-0 flex-1">
+          {loading ? (
+            <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
+              {Array.from({ length: 6 }, (_, index) => (
+                <div
+                  key={index}
+                  className="h-56 animate-pulse rounded-2xl border border-zinc-800/80 bg-zinc-900/40"
+                />
+              ))}
+            </div>
+          ) : error ? (
+            <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 px-6 py-16 text-center text-sm text-zinc-500">
+              作品一覧を読み込めませんでした。
+            </div>
+          ) : projects.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 px-6 py-16 text-center text-sm text-zinc-500">
+              条件に合う作品がありません。
+            </div>
+          ) : (
+            <ResultsGrid projects={projects} sort={sort} nowMs={nowMs} />
+          )}
+        </div>
+
+        <div className="hidden xl:block">
+          <PlayerIaSearchFilterPanel
+            category={category}
+            sort={sort}
+            searchParams={searchParams}
+            onNavigate={navigate}
+          />
+        </div>
       </div>
-
-      <div className="mb-5 flex flex-wrap gap-2">
-        {/* 「すぐ試せる」(quick_try): 定義・Studio入力未整備のため一時非表示。API/direct URL互換は維持。 */}
-        <FilterChip
-          active={feedbackWanted}
-          label="FB募集中"
-          onClick={() =>
-            updateParam(
-              router,
-              searchParams,
-              "feedback_wanted",
-              feedbackWanted ? null : "1",
-            )
-          }
-        />
-        <FilterChip
-          active={usableForCreation}
-          label="制作に使える"
-          onClick={() =>
-            updateParam(
-              router,
-              searchParams,
-              "usable_for_creation",
-              usableForCreation ? null : "1",
-            )
-          }
-        />
-      </div>
-
-      {category === "game" ? (
-        <div className="mb-5 flex flex-wrap gap-2">
-          {STREAM_POLICY_IDS.filter((id) => id !== "unset").map((id) => (
-            <FilterChip
-              key={id}
-              active={streamPolicy === id}
-              label={STREAM_POLICY_LABELS[id]}
-              onClick={() =>
-                updateParam(
-                  router,
-                  searchParams,
-                  "stream_policy",
-                  streamPolicy === id ? null : id,
-                )
-              }
-            />
-          ))}
-        </div>
-      ) : null}
-
-      {category === "asset" ? (
-        <div className="mb-5 flex flex-wrap gap-2">
-          {ASSET_KIND_IDS.map((id) => (
-            <FilterChip
-              key={id}
-              active={assetKind === id}
-              label={ASSET_KIND_LABELS[id]}
-              onClick={() =>
-                updateParam(
-                  router,
-                  searchParams,
-                  "asset_kind",
-                  assetKind === id ? null : id,
-                )
-              }
-            />
-          ))}
-        </div>
-      ) : null}
-
-      {loading ? (
-        <div className="mx-auto grid max-w-[1200px] gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }, (_, index) => (
-            <div
-              key={index}
-              className="h-56 animate-pulse rounded-2xl border border-zinc-800/80 bg-zinc-900/40"
-            />
-          ))}
-        </div>
-      ) : error ? (
-        <div className="mx-auto max-w-[1200px] rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 px-6 py-16 text-center text-sm text-zinc-500">
-          作品一覧を読み込めませんでした。
-        </div>
-      ) : projects.length === 0 ? (
-        <div className="mx-auto max-w-[1200px] rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 px-6 py-16 text-center text-sm text-zinc-500">
-          条件に合う作品がありません。
-        </div>
-      ) : (
-        <div className="mx-auto grid max-w-[1200px] gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {projects.map((project) => (
-            <PlayerIaProjectCard
-              key={project.projectId}
-              projectId={project.projectId}
-              title={project.title}
-              category={project.category}
-              description={project.description}
-              creator={project.creator}
-              meta={
-                sort === "updated" && project.meaningfulUpdateAt
-                  ? `更新 ${formatPlayerIaRelativeTime(project.meaningfulUpdateAt, { nowMs })}`
-                  : formatPlayerIaRelativeTime(project.firstPublishedAt, { nowMs })
-              }
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -317,7 +265,7 @@ export function PlayerIaSearchPage({
   return (
     <Suspense
       fallback={
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mx-auto grid max-w-[1400px] gap-4 sm:grid-cols-2 2xl:grid-cols-3">
           {Array.from({ length: 6 }, (_, index) => (
             <div
               key={index}
