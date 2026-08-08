@@ -60,5 +60,16 @@ export function buildProjectEditFormDataFromGame(game: Game): ProjectEditFormDat
     ...(isSpecifiedPlayAccessType(game.playAccessType)
       ? { playAccessType: game.playAccessType }
       : {}),
+    ...(game.category ? { category: game.category } : {}),
+    ...(game.categoryAttributes !== undefined
+      ? {
+          categoryAttributes:
+            game.categoryAttributes &&
+            typeof game.categoryAttributes === "object" &&
+            !Array.isArray(game.categoryAttributes)
+              ? { ...(game.categoryAttributes as Record<string, unknown>) }
+              : {},
+        }
+      : {}),
   };
 }

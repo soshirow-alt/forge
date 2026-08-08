@@ -311,10 +311,17 @@ export function resolveSubmitDraftPreviewPlayerMeta(
 export function draftToSubmitFormData(
   draft: SubmitDraftState,
   owner: SubmitDraftOwner,
+  options?: {
+    category?: import("@/lib/project-categories").ProjectCategoryId;
+    categoryAttributes?: Record<string, unknown>;
+    publishDestinationsOverride?: import("@/lib/project-publish-links").PublishDestination[];
+  },
 ): SubmitFormData {
   const featureTags = sanitizeFeatureTagsForSave(draft.featureTags);
   const playEnvironment = playEnvironmentWithSyncedDistribution(draft);
   const links = resolveDraftLinkFields(draft);
+  const publishDestinations =
+    options?.publishDestinationsOverride ?? links.publishDestinations;
 
   return {
     title: draft.title.trim(),
@@ -335,12 +342,16 @@ export function draftToSubmitFormData(
     officialUrl: links.officialUrl,
     youtubeUrl: links.youtubeUrl,
     githubUrl: links.githubUrl,
-    publishDestinations: links.publishDestinations,
+    publishDestinations,
     relatedLinks: links.relatedLinks,
     visibility: draft.visibility,
     playAccessType: draft.playAccessType,
     declareAlreadyReleased: draft.declareAlreadyReleased,
     ageRating: normalizeAgeRating(draft.ageRating),
+    ...(options?.category ? { category: options.category } : {}),
+    ...(options?.categoryAttributes
+      ? { categoryAttributes: options.categoryAttributes }
+      : {}),
   };
 }
 

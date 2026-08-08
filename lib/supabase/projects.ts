@@ -13,6 +13,7 @@ import { writeProjectRowWithSchemaFallback } from "@/lib/supabase/project-write-
 import { normalizePlayAccessType } from "@/lib/play-access-type";
 import type { ProjectEditFormData, SubmitFormData } from "@/lib/project-form";
 import { normalizeAgeRating } from "@/lib/age-rating";
+import { normalizeProjectCategory } from "@/lib/project-categories";
 import {
   genresToLegacyGenreColumn,
   resolveGenresFromDbRow,
@@ -67,6 +68,7 @@ const PUBLIC_PROJECT_CATALOG_COLUMNS = [
   "release_status",
   "play_access_type",
   "estimated_play_time",
+  "category",
   "created_at",
   "updated_at",
   "first_published_at",
@@ -105,6 +107,8 @@ const PUBLIC_PROJECT_DETAIL_COLUMNS = [
   "release_status",
   "play_access_type",
   "estimated_play_time",
+  "category",
+  "category_attributes",
   "created_at",
   "updated_at",
   "first_published_at",
@@ -304,6 +308,8 @@ export function projectRowToGame(row: ProjectRow): Game {
     playAccessType: normalizePlayAccessType(row.play_access_type),
     estimatedPlayTime: row.estimated_play_time ?? undefined,
     ageRating: normalizeAgeRating(row.age_rating),
+    category: normalizeProjectCategory(row.category),
+    categoryAttributes: row.category_attributes ?? {},
   };
 }
 
@@ -315,7 +321,7 @@ function projectGenresForDb(genres: string[]) {
   };
 }
 
-function submitFormToInsertRow(
+export function submitFormToInsertRow(
   data: SubmitFormData,
   owner: { ownerId: string; ownerName: string },
   options?: {
@@ -356,6 +362,12 @@ function submitFormToInsertRow(
       ? { play_access_type: data.playAccessType }
       : {}),
     age_rating: normalizeAgeRating(data.ageRating),
+    ...(data.category
+      ? { category: normalizeProjectCategory(data.category) }
+      : {}),
+    ...(data.categoryAttributes
+      ? { category_attributes: data.categoryAttributes }
+      : {}),
   };
 }
 
@@ -629,6 +641,12 @@ export async function updateProjectFromSubmitForm(
         ? { play_access_type: data.playAccessType }
         : {}),
       age_rating: normalizeAgeRating(data.ageRating),
+      ...(data.category
+        ? { category: normalizeProjectCategory(data.category) }
+        : {}),
+      ...(data.categoryAttributes
+        ? { category_attributes: data.categoryAttributes }
+        : {}),
     };
   await applyMaterializedThumbnailFieldsForUpdate(
     supabase,
@@ -678,6 +696,12 @@ export async function updateProjectDetailsInDb(
         : {}),
       ...(data.ageRating !== undefined
         ? { age_rating: normalizeAgeRating(data.ageRating) }
+        : {}),
+      ...(data.category
+        ? { category: normalizeProjectCategory(data.category) }
+        : {}),
+      ...(data.categoryAttributes
+        ? { category_attributes: data.categoryAttributes }
         : {}),
     };
   await applyMaterializedThumbnailFieldsForUpdate(

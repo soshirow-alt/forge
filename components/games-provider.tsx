@@ -256,6 +256,10 @@ function applyProjectDetailsPayloadToGame(
     phase: data.phase,
     status: data.lookingForTesters ? "テスター募集中" : data.phase,
     ...(data.playAccessType ? { playAccessType: data.playAccessType } : {}),
+    ...(data.category ? { category: data.category } : {}),
+    ...(data.categoryAttributes
+      ? { categoryAttributes: data.categoryAttributes }
+      : {}),
   };
 }
 

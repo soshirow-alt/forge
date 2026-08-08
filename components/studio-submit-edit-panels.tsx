@@ -151,9 +151,14 @@ export function StudioSubmitGenresTagsEditPanel({
   const [confirmR18Open, setConfirmR18Open] = useState(false);
 
   useEffect(() => {
-    setGenres([...draft.genres]);
-    setFeatureTags([...draft.featureTags]);
-    setAgeRating(normalizeAgeRating(draft.ageRating));
+    const nextGenres = [...draft.genres];
+    const nextTags = [...draft.featureTags];
+    const nextAge = normalizeAgeRating(draft.ageRating);
+    queueMicrotask(() => {
+      setGenres(nextGenres);
+      setFeatureTags(nextTags);
+      setAgeRating(nextAge);
+    });
   }, [draft.genres, draft.featureTags, draft.ageRating]);
 
   function handleAgeCheckboxChange(checked: boolean) {
@@ -608,6 +613,8 @@ export function StudioSubmitPrototypeClassificationEditPanel({
   onFieldsChange,
   onDraftChange,
   onCancel,
+  deferClose = false,
+  isSaving = false,
 }: {
   category: SubmitPrototypeCategory;
   fields: SubmitPrototypeCategoryFields;
@@ -615,6 +622,9 @@ export function StudioSubmitPrototypeClassificationEditPanel({
   onFieldsChange: (patch: Partial<SubmitPrototypeCategoryFields>) => void;
   onDraftChange: (patch: Partial<SubmitDraftState>) => void;
   onCancel: () => void;
+  /** When true, parent owns close after async persist (do not call onCancel on save). */
+  deferClose?: boolean;
+  isSaving?: boolean;
 }) {
   const panelTitle =
     category === "music" ? "ジャンル・タグ" : "種類・タグ";
@@ -632,6 +642,7 @@ export function StudioSubmitPrototypeClassificationEditPanel({
       title={panelTitle}
       backLabel="← 投稿内容に戻る"
       onCancel={onCancel}
+      isSaving={isSaving}
       onSave={() => {
         if (!kind.trim()) {
           setValidationError("種類を選択してください");
@@ -642,7 +653,9 @@ export function StudioSubmitPrototypeClassificationEditPanel({
           ...(category === "music" ? { musicGenres } : {}),
         });
         onDraftChange({ featureTags });
-        onCancel();
+        if (!deferClose) {
+          onCancel();
+        }
       }}
       saveLabel="反映する"
       validationError={validationError}
@@ -744,11 +757,15 @@ export function StudioSubmitPrototypeUsageEditPanel({
   fields,
   onChange,
   onCancel,
+  deferClose = false,
+  isSaving = false,
 }: {
   category: SubmitPrototypeCategory;
   fields: SubmitPrototypeCategoryFields;
   onChange: (patch: Partial<SubmitPrototypeCategoryFields>) => void;
   onCancel: () => void;
+  deferClose?: boolean;
+  isSaving?: boolean;
 }) {
   const initialDuration = musicDurationFieldParts(fields.musicDuration);
   const [minutes, setMinutes] = useState(initialDuration.minutes);
@@ -762,18 +779,25 @@ export function StudioSubmitPrototypeUsageEditPanel({
   ]);
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  function finishSave(patch: Partial<SubmitPrototypeCategoryFields>) {
+    onChange(patch);
+    if (!deferClose) {
+      onCancel();
+    }
+  }
+
   return (
     <StudioPanelEditShell
       title={SUBMIT_PROTOTYPE_USAGE_PANEL_TITLE[category]}
       backLabel="← 投稿内容に戻る"
       onCancel={onCancel}
+      isSaving={isSaving}
       onSave={() => {
         if (category === "music") {
           const minutesEmpty = minutes.trim() === "";
           const secondsEmpty = seconds.trim() === "";
           if (minutesEmpty && secondsEmpty) {
-            onChange({ musicDuration: "" });
-            onCancel();
+            finishSave({ musicDuration: "" });
             return;
           }
           const minutesValue = minutesEmpty ? 0 : Number(minutes);
@@ -788,19 +812,16 @@ export function StudioSubmitPrototypeUsageEditPanel({
             );
             return;
           }
-          onChange({
+          finishSave({
             musicDuration: formatMusicDuration(minutesValue, secondsValue),
           });
-          onCancel();
           return;
         }
         if (category === "dev_tool") {
-          onChange({ toolEnvironments, toolUsageMethod });
-          onCancel();
+          finishSave({ toolEnvironments, toolUsageMethod });
           return;
         }
-        onChange({ serviceEnvironments });
-        onCancel();
+        finishSave({ serviceEnvironments });
       }}
       saveLabel="反映する"
       validationError={validationError}
@@ -896,6 +917,8 @@ export function StudioSubmitPrototypePublicationEditPanel({
   onDraftChange,
   onFieldsChange,
   onCancel,
+  deferClose = false,
+  isSaving = false,
 }: {
   category: SubmitPrototypeCategory;
   draft: SubmitDraftState;
@@ -903,6 +926,8 @@ export function StudioSubmitPrototypePublicationEditPanel({
   onDraftChange: (patch: Partial<SubmitDraftState>) => void;
   onFieldsChange: (patch: Partial<SubmitPrototypeCategoryFields>) => void;
   onCancel: () => void;
+  deferClose?: boolean;
+  isSaving?: boolean;
 }) {
   const kinds = SUBMIT_PROTOTYPE_PUBLISH_KINDS[category];
   const [items, setItems] = useState<PrototypePublishDestination[]>(() =>
@@ -924,12 +949,15 @@ export function StudioSubmitPrototypePublicationEditPanel({
       title="公開先・公開設定"
       backLabel="← 投稿内容に戻る"
       onCancel={onCancel}
+      isSaving={isSaving}
       onSave={() => {
         onFieldsChange({
           publishDestinations: normalizePrototypePublishDestinations(items),
         });
         onDraftChange({ relatedLinks, visibility });
-        onCancel();
+        if (!deferClose) {
+          onCancel();
+        }
       }}
       saveLabel="反映する"
     >

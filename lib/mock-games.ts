@@ -1,5 +1,6 @@
 import { getBuiltInThumbnailUrl, isBuiltInThumbnailId } from "@/lib/demo-thumbnails";
 import type { AgeRating } from "@/lib/age-rating";
+import type { ProjectCategoryId } from "@/lib/project-categories";
 import type { ProjectOverviewFeature } from "@/lib/project-overview";
 import type {
   PublishDestination,
@@ -51,6 +52,10 @@ export type Game = {
   overviewIntroduction?: string | null;
   overviewFeatures?: ProjectOverviewFeature[] | null;
   ageRating?: AgeRating;
+  /** Formal catalog category (projects.category). Defaults to game when absent. */
+  category?: ProjectCategoryId;
+  /** Raw projects.category_attributes jsonb (includes non-game Studio fields). */
+  categoryAttributes?: unknown;
 };
 
 export const games: Game[] = [

@@ -50,6 +50,7 @@ export type ProjectRow = {
   stream_policy?: string | null;
   stream_policy_note?: string | null;
   asset_kinds?: string[] | null;
+  purpose_tags?: string[] | null;
 };
 
 export type ProjectSupportRow = {

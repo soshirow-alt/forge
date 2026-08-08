@@ -3,6 +3,7 @@ import type {
   RelatedLink,
 } from "@/lib/project-publish-links";
 import type { AgeRating } from "@/lib/age-rating";
+import type { ProjectCategoryId } from "@/lib/project-categories";
 
 export type SubmitFormData = {
   title: string;
@@ -34,6 +35,10 @@ export type SubmitFormData = {
   /** Submit/edit only — triggers onboarding release after save when true and not yet released */
   declareAlreadyReleased?: boolean;
   ageRating?: AgeRating;
+  /** Formal projects.category. Omitted → DB default game (legacy callers). */
+  category?: ProjectCategoryId;
+  /** Full category_attributes jsonb payload to persist (merge done by caller). */
+  categoryAttributes?: Record<string, unknown>;
 };
 
 export type ProjectEditFormData = {
@@ -64,4 +69,8 @@ export type ProjectEditFormData = {
   /** Edit only — triggers onboarding release after save when true and not yet released */
   declareAlreadyReleased?: boolean;
   ageRating?: AgeRating;
+  /** When set, persists projects.category (do not clear by omitting). */
+  category?: ProjectCategoryId;
+  /** When set, replaces category_attributes jsonb. */
+  categoryAttributes?: Record<string, unknown>;
 };

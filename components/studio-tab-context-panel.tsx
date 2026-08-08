@@ -24,6 +24,7 @@ import { StudioOverviewImagesEditPanel } from "@/components/studio-overview-imag
 import { StudioOverviewIntroductionEditPanel } from "@/components/studio-overview-introduction-edit-panel";
 import { StudioOverviewPlayInfoEditPanel } from "@/components/studio-overview-play-info-edit-panel";
 import { StudioOverviewPublicationEditPanel } from "@/components/studio-overview-publication-edit-panel";
+import { StudioOverviewNonGameFieldsEditPanel } from "@/components/studio-overview-non-game-fields-edit-panel";
 import { StudioDevlogCurrentEditPanel } from "@/components/studio-devlog-current-edit-panel";
 import { StudioReleaseAboutBlock } from "@/components/studio-release-about-block";
 import { StudioPlayerFeedbackPanel } from "@/components/studio-improvement-loop";
@@ -45,6 +46,12 @@ import {
 import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import type { StudioEditPreviewPatch } from "@/lib/studio-edit-preview-merge";
+import { isNonGameStudioCategory } from "@/lib/studio-non-game-attributes";
+import {
+  SUBMIT_PROTOTYPE_CLASSIFICATION_ROW_LABEL,
+  SUBMIT_PROTOTYPE_USAGE_ROW_LABEL,
+} from "@/lib/prototype/studio-submit-flow";
+import { projectCategoryToPrototypeCategory } from "@/lib/studio-non-game-attributes";
 import {
   studioOperationPanelAsideClassName,
   studioOperationPanelBlockClassName,
@@ -159,6 +166,8 @@ export function StudioTabContextPanel({
 
   const versionKey = resolvePlayableVersion(growth.playableVersion);
   const versionLabel = `v${versionKey}`;
+  const nonGame = isNonGameStudioCategory(game.category);
+  const prototypeCategory = projectCategoryToPrototypeCategory(game.category);
   const { isRead: voiceRead, markRead } = useNurtureVoiceRead(game.id, versionKey);
 
   const registeredQuickFbCount = growth.totalVoiceResponseCount;
@@ -196,23 +205,29 @@ export function StudioTabContextPanel({
     if (!initialOverviewEditMode) {
       return;
     }
-    setOverviewEditMode(initialOverviewEditMode);
-    scrollStudioPanelToTop();
-    onInitialOverviewEditHandled?.();
+    const mode = initialOverviewEditMode;
+    queueMicrotask(() => {
+      setOverviewEditMode(mode);
+      scrollStudioPanelToTop();
+      onInitialOverviewEditHandled?.();
+    });
   }, [initialOverviewEditMode, onInitialOverviewEditHandled]);
 
   useEffect(() => {
     if (!panelFocus) {
       return;
     }
-    onSectionChange("overview");
     const nextMode = panelFocus.editMode as StudioOverviewEditMode;
     const shouldScrollToField = panelFocus.scrollToField !== false;
-    setOverviewEditMode(nextMode);
-    setScrollOnHighlight(shouldScrollToField);
-    setHighlightFieldId(shouldScrollToField ? panelFocus.fieldId : null);
-    scrollStudioPanelToTop();
-    onPanelFocusHandled?.();
+    const nextHighlight = shouldScrollToField ? panelFocus.fieldId : null;
+    queueMicrotask(() => {
+      onSectionChange("overview");
+      setOverviewEditMode(nextMode);
+      setScrollOnHighlight(shouldScrollToField);
+      setHighlightFieldId(nextHighlight);
+      scrollStudioPanelToTop();
+      onPanelFocusHandled?.();
+    });
     const timer = window.setTimeout(() => setHighlightFieldId(null), 2400);
     return () => window.clearTimeout(timer);
   }, [panelFocus, onPanelFocusHandled, onSectionChange]);
@@ -225,13 +240,20 @@ export function StudioTabContextPanel({
   }, [activeSection, hasFeedback, voiceRead, quickFbCount, markRead]);
 
   useEffect(() => {
-    if (activeSection !== "overview") {
-      setOverviewEditMode(null);
-      onPreviewPatchChange?.(null);
+    const leaveOverview = activeSection !== "overview";
+    const leaveDevlog = activeSection !== "devlog";
+    if (!leaveOverview && !leaveDevlog) {
+      return;
     }
-    if (activeSection !== "devlog") {
-      setDevlogEditMode(null);
-    }
+    queueMicrotask(() => {
+      if (leaveOverview) {
+        setOverviewEditMode(null);
+        onPreviewPatchChange?.(null);
+      }
+      if (leaveDevlog) {
+        setDevlogEditMode(null);
+      }
+    });
   }, [activeSection, onPreviewPatchChange]);
 
   useEffect(() => {
@@ -267,7 +289,15 @@ export function StudioTabContextPanel({
         />
       );
     } else if (overviewEditMode === "genres-tags") {
-      sectionContent = (
+      sectionContent = nonGame ? (
+        <StudioOverviewNonGameFieldsEditPanel
+          key={`${projectId}-non-game-classification`}
+          projectId={projectId}
+          mode="genres-tags"
+          onCancel={closeOverviewEdit}
+          onSaved={handleOverviewSaved}
+        />
+      ) : (
         <StudioOverviewGenresTagsEditPanel
           key={`${projectId}-genres-tags`}
           projectId={projectId}
@@ -288,7 +318,15 @@ export function StudioTabContextPanel({
         />
       );
     } else if (overviewEditMode === "publication" || overviewEditMode === "visibility") {
-      sectionContent = (
+      sectionContent = nonGame ? (
+        <StudioOverviewNonGameFieldsEditPanel
+          key={`${projectId}-non-game-publication`}
+          projectId={projectId}
+          mode="publication"
+          onCancel={closeOverviewEdit}
+          onSaved={handleOverviewSaved}
+        />
+      ) : (
         <StudioOverviewPublicationEditPanel
           key={`${projectId}-publication`}
           projectId={projectId}
@@ -309,7 +347,15 @@ export function StudioTabContextPanel({
         />
       );
     } else if (overviewEditMode === "play-info") {
-      sectionContent = (
+      sectionContent = nonGame ? (
+        <StudioOverviewNonGameFieldsEditPanel
+          key={`${projectId}-non-game-usage`}
+          projectId={projectId}
+          mode="play-info"
+          onCancel={closeOverviewEdit}
+          onSaved={handleOverviewSaved}
+        />
+      ) : (
         <StudioOverviewPlayInfoEditPanel
           key={`${projectId}-play-info`}
           projectId={projectId}
@@ -330,7 +376,11 @@ export function StudioTabContextPanel({
             />
             <StudioActionRow
               icon={Tags}
-              label="ジャンル・タグを編集"
+              label={
+                prototypeCategory
+                  ? SUBMIT_PROTOTYPE_CLASSIFICATION_ROW_LABEL[prototypeCategory]
+                  : "ジャンル・タグを編集"
+              }
               onClick={() => openOverviewEdit("genres-tags", setOverviewEditMode)}
             />
             <StudioActionRow
@@ -345,10 +395,14 @@ export function StudioTabContextPanel({
             />
           </StudioActionGroup>
 
-          <StudioActionGroup label="遊び方・公開">
+          <StudioActionGroup label={nonGame ? "利用・公開" : "遊び方・公開"}>
             <StudioActionRow
               icon={Gamepad2}
-              label="プレイ情報を編集"
+              label={
+                prototypeCategory
+                  ? SUBMIT_PROTOTYPE_USAGE_ROW_LABEL[prototypeCategory]
+                  : "プレイ情報を編集"
+              }
               onClick={() => openOverviewEdit("play-info", setOverviewEditMode)}
             />
             <StudioStatusRow label="公開状態">

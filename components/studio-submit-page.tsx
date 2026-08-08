@@ -18,6 +18,7 @@ import {
 import type { GameDetailTab } from "@/lib/game-detail-tabs";
 import { getDeveloperSocialLinkDefaults, mergeRelatedLinkSocialDefaults } from "@/lib/developer-external-link-defaults";
 import { resolveDeveloperPublicName } from "@/lib/developer-display-name";
+import { shouldAutoClearSubmitErrorOnDraftChange } from "@/lib/studio-submit-error-policy";
 import { useRedirectToLoginWhenLoggedOut } from "@/hooks/use-redirect-to-login-when-logged-out";
 import {
   createEmptySubmitDraft,
@@ -38,7 +39,7 @@ import {
 } from "@/lib/prototype/studio-submit-flow";
 
 export type StudioSubmitPageProps = {
-  /** Preview-only: formal shell with category field variants (no save). */
+  /** Non-game category shell (audio / dev-tool / service-app) using existing category panels. */
   prototypeCategory?: SubmitPrototypeCategory | null;
 };
 
@@ -60,6 +61,9 @@ export function StudioSubmitPage({
   const [submitting, setSubmitting] = useState(false);
   const [thumbnailsBusy, setThumbnailsBusy] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitErrorSource, setSubmitErrorSource] = useState<
+    "validation" | "save" | null
+  >(null);
   const [showPromptValidation, setShowPromptValidation] = useState(false);
   const [focusEditMode, setFocusEditMode] = useState<SubmitValidationEditMode | null>(null);
   const [failedEditMode, setFailedEditMode] = useState<SubmitValidationEditMode | null>(null);
@@ -98,43 +102,56 @@ export function StudioSubmitPage({
     }
 
     const defaults = getDeveloperSocialLinkDefaults(developerProfile, ownedProjects);
-    setDraft((current) => ({
-      ...current,
-      relatedLinks: mergeRelatedLinkSocialDefaults(current.relatedLinks, defaults),
-      discordUrl: current.discordUrl || defaults.discordUrl,
-      xUrl: current.xUrl || defaults.xUrl,
-      youtubeUrl: current.youtubeUrl || defaults.youtubeUrl,
-      officialUrl: current.officialUrl || defaults.officialUrl,
-    }));
+    queueMicrotask(() => {
+      setDraft((current) => ({
+        ...current,
+        relatedLinks: mergeRelatedLinkSocialDefaults(current.relatedLinks, defaults),
+        discordUrl: current.discordUrl || defaults.discordUrl,
+        xUrl: current.xUrl || defaults.xUrl,
+        youtubeUrl: current.youtubeUrl || defaults.youtubeUrl,
+        officialUrl: current.officialUrl || defaults.officialUrl,
+      }));
+    });
     socialPrefillDoneRef.current = true;
   }, [developerProfile, getOwnedProjects, user]);
 
   useEffect(() => {
-    if (prototypeCategory || !submitError) {
+    if (!submitError || !shouldAutoClearSubmitErrorOnDraftChange(submitErrorSource)) {
       return;
     }
 
-    const full = validateSubmitDraftForPost(draft);
+    const full = validateSubmitDraftForPost(draft, {
+      prototypeCategory,
+      prototypeFields,
+    });
     if (full.ok) {
-      setSubmitError(null);
-      setFailedEditMode(null);
-      setShowPromptValidation(false);
+      queueMicrotask(() => {
+        setSubmitError(null);
+        setSubmitErrorSource(null);
+        setFailedEditMode(null);
+      });
       return;
     }
-
     if (failedEditMode) {
-      const section = validateSubmitDraftSection(draft, failedEditMode);
+      const section = validateSubmitDraftSection(draft, failedEditMode, {
+        prototypeCategory,
+        prototypeFields,
+      });
       if (section.ok) {
-        setSubmitError(null);
-        setFailedEditMode(null);
-        setShowPromptValidation(false);
+        queueMicrotask(() => {
+          setSubmitError(null);
+          setSubmitErrorSource(null);
+          setFailedEditMode(null);
+        });
       }
     }
   }, [
     draft,
-    submitError,
     failedEditMode,
     prototypeCategory,
+    prototypeFields,
+    submitError,
+    submitErrorSource,
     validateSubmitDraftForPost,
     validateSubmitDraftSection,
   ]);
@@ -171,12 +188,6 @@ export function StudioSubmitPage({
   }
 
   async function handleSubmit() {
-    if (prototypeCategory) {
-      setSubmitError(null);
-      setToastMessage("このPreviewでは保存されません");
-      return;
-    }
-
     if (!user) {
       router.push("/login");
       return;
@@ -187,12 +198,18 @@ export function StudioSubmitPage({
     }
 
     setSubmitError(null);
+    setSubmitErrorSource(null);
     setShowPromptValidation(false);
     setFocusEditMode(null);
+    setToastMessage(null);
 
-    const validation = validateSubmitDraftForPost(draft);
+    const validation = validateSubmitDraftForPost(draft, {
+      prototypeCategory,
+      prototypeFields,
+    });
     if (!validation.ok) {
       setSubmitError(validation.message);
+      setSubmitErrorSource("validation");
       if (validation.editMode) {
         setFocusEditMode(validation.editMode);
         setFailedEditMode(validation.editMode);
@@ -202,9 +219,13 @@ export function StudioSubmitPage({
     }
 
     setSubmitting(true);
-    const result = await submitDraft(draft, user);
+    const result = await submitDraft(draft, user, {
+      prototypeCategory,
+      prototypeFields,
+    });
     if (!result.ok) {
       setSubmitError(result.message);
+      setSubmitErrorSource(result.editMode ? "validation" : "save");
       if (result.editMode) {
         setFocusEditMode(result.editMode);
         setFailedEditMode(result.editMode);
@@ -228,7 +249,7 @@ export function StudioSubmitPage({
     );
   }
 
-  if (successState && !prototypeCategory) {
+  if (successState) {
     return (
       <StudioShell activeNav="mypage">
         <div className="mx-auto max-w-lg">

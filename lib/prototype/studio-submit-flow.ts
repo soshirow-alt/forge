@@ -108,7 +108,7 @@ export const SUBMIT_PROTOTYPE_USAGE_PANEL_TITLE: Record<
   web_service: "利用情報",
 };
 
-/** Prototype-only publish destinations — never written to formal kinds / DB. */
+/** Category-specific publish destinations (persisted via category_attributes + formal publish_destinations). */
 export type PrototypePublishDestination = {
   id: string;
   kind: string;
@@ -116,7 +116,7 @@ export type PrototypePublishDestination = {
   isPrimary: boolean;
 };
 
-/** Local-only fields for prototype category panels — never written to DB. */
+/** Category-specific fields for audio / dev-tool / service-app Studio panels. */
 export type SubmitPrototypeCategoryFields = {
   kind: string;
   /** Music-only genre chips (not game FORGE_GENRE_OPTIONS). */

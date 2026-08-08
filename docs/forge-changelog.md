@@ -4,6 +4,31 @@
 
 ---
 
+## 2026-08-09 — Changed-file baseline-aware lint evidence
+
+- **verify** — dirty ESLint 対象全件（`games-provider.tsx` 含む）を明示 lint。BaseSha との multiset 差分で newly introduced error/warning=0 を証明。`verify:changed-lint` / `--selftest`
+- **非実施** — repo-wide lint FAIL を PASS 条件にしない。Production / main / DB write なし。Studio e2e save 仕様は非変更
+
+## 2026-08-09 — Studio non-game e2e save verify
+
+- **verify** — save session → `updateProjectDetailsInDb` → Supabase mock の一続き経路で audio / dev-tool / service-app の最終 update payload を literal deepEqual。publish 負例は DB 未到達を確認
+- **非実施** — Production / main / DB write / asset UI / 新入力項目なし
+
+## 2026-08-08 — Studio non-game write path: publish kind validation
+
+- **公開先** — URL ありで kind 未選択 / 未知 / 他カテゴリ kind は formal 変換前に reject。`other` への暗黙補完なし
+- **verify** — `updateProjectDetailsInDb` Supabase mock 境界 + edit save session（成功時のみ onSaved / close）
+- **asset** — 引き続き未実装（common-fields-only は DB 上 feasible、UI 正本なし）
+- **非実施** — Production / main / DB write / migration なし
+
+## 2026-08-08 — Studio non-game 正規 write path（既存UIのみ）
+
+- **Studio投稿** — audio / dev-tool / service-app の既存カテゴリ UI を正規保存可能に。`projects.category` を明示保存。カテゴリ固有値は既存 `category_attributes` jsonb（kind / musicGenres / musicDuration / environments / usage / 公開先ラベル）。feature tags→`tags`、公開URL→`publish_destinations`
+- **文言** — 「このPreviewでは保存されません」を正規化カテゴリから除去
+- **asset** — Studio 投稿 UI・asset_kinds 選択 UI が無いため未実装（Owner判断）。新入力項目は追加していない
+- **seed準備** — game 8件の genre / feature tag を正式 option で分散（Search filter 確認用）。Staging への適用は Owner 手動・このタスクでは未適用
+- **非実施** — Production / main / DB·Storage write / migration なし
+
 ## 2026-08-08 — Player IA Search 右sidebar絞り込み（genre/tag/q）
 
 - **Search UX（Preview Player IA）** — 旧Productionの右サイドバー型「絞り込み」を統合。Desktop sticky sidebar（約288px）+ Mobile drawer。キーワードは全カテゴリ。game のみジャンル・特徴タグ（Studio 正本 checkbox）。draft +「この条件で検索」で URL 反映

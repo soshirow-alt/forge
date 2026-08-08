@@ -81,14 +81,14 @@ function buildProjects() {
   };
 
   const games = [
-    { title: "ローグライク迷宮探索", genres: ["ローグライク"], tags: ["ローグライク", "短編ゲーム"], stream: "ok" },
-    { title: "廃校ホラー短編", genres: ["ホラー"], tags: ["ホラー", "短編ゲーム", "ホラー好き"], stream: "conditional", streamNote: "クレジット必須" },
-    { title: "アクション疾走デモ", genres: ["アクション"], tags: ["アクション"], stream: "no" },
-    { title: "カード構築デュエル", genres: ["カード"], tags: ["カード"], stream: "unset", noImage: true },
-    { title: "パズル回廊", genres: ["パズル"], tags: ["パズル"], stream: "ok", noUpdate: true },
-    { title: "分岐ノベル短編", genres: ["ノベル"], tags: ["ノベル", "短編ゲーム"], stream: "conditional", noFb: true, noLinks: true },
-    { title: "協力プレイ拠点防衛", genres: ["協力プレイ"], tags: ["協力プレイ"], stream: "unset", discord: true },
-    { title: LONG_TITLE, genres: ["ローグライク", "短時間"], tags: ["ローグライク", "短時間"], stream: "conditional", streamNote: LONG_STREAM, longTitle: true, longDesc: true, longCreator: true },
+    { title: "ローグライク迷宮探索", genres: ["ローグライク"], tags: ["ピクセルアート"], stream: "ok" },
+    { title: "廃校ホラー短編", genres: ["ホラー"], tags: ["高難度"], stream: "conditional", streamNote: "クレジット必須" },
+    { title: "アクション疾走デモ", genres: ["アクション", "RPG"], tags: ["協力プレイ"], stream: "no" },
+    { title: "カード構築デュエル", genres: ["カードゲーム"], tags: ["PvP"], stream: "unset", noImage: true },
+    { title: "パズル回廊", genres: ["パズル"], tags: ["癒し系", "ソロ向け"], stream: "ok", noUpdate: true },
+    { title: "分岐ノベル短編", genres: ["ノベル"], tags: ["ストーリー重視"], stream: "conditional", noFb: true, noLinks: true },
+    { title: "協力プレイ拠点防衛", genres: ["アクション"], tags: ["協力プレイ"], stream: "unset", discord: true },
+    { title: LONG_TITLE, genres: ["ローグライク", "パズル"], tags: ["ピクセルアート", "短時間プレイ"], stream: "conditional", streamNote: LONG_STREAM, longTitle: true, longDesc: true, longCreator: true },
   ];
   games.forEach((g, i) =>
     push({

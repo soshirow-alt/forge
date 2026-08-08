@@ -1,7 +1,10 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 import { resolveErrorMessage } from "@/lib/error-message";
 
-/** Newer project columns — stripped one-by-one when the DB schema lags behind the app. */
+/** Newer project columns — stripped one-by-one when the DB schema lags behind the app.
+ *  Do NOT include category / category_attributes: non-game write must fail closed
+ *  rather than silently defaulting to game / dropping attributes.
+ */
 const OPTIONAL_PROJECT_COLUMNS = [
   "thumbnail_urls",
   "genres",
@@ -17,7 +20,6 @@ const OPTIONAL_PROJECT_COLUMNS = [
   "related_links",
   "age_rating",
 ] as const;
-
 export function getMissingProjectColumn(error: unknown): string | null {
   const message = resolveErrorMessage(error, "").toLowerCase();
   const looksLikeMissingColumn =
