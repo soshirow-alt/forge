@@ -15,20 +15,19 @@ import {
   type HomeDiscoveryFeed,
   type HomeFeaturedHeroCard,
 } from "@/lib/supabase/home-discovery-db";
-import { publicProjectThumbnailPaths } from "@/lib/public-project-thumbnail";
+import {
+  buildFeaturedHeroThumbnailById,
+  capFeaturedHeroThumbnailIds,
+} from "@/lib/player-ia/featured-hero-thumbnails";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import { useForgePerfRoute } from "@/hooks/use-forge-perf-route";
-
-/** Hero UI uses cover + 2 extra slots; fetch counts for up to 4 featured slides. */
-const HERO_THUMBNAIL_PATH_LIMIT = 4;
 
 async function fetchHeroThumbnailPathsById(
   heroIds: string[],
 ): Promise<Record<string, string[]>> {
-  const ids = heroIds.filter(Boolean).slice(0, HERO_THUMBNAIL_PATH_LIMIT);
-  const byId: Record<string, string[]> = {};
+  const ids = capFeaturedHeroThumbnailIds(heroIds);
   if (ids.length === 0) {
-    return byId;
+    return {};
   }
 
   const response = await fetch(
@@ -46,14 +45,7 @@ async function fetchHeroThumbnailPathsById(
     throw new Error("hero thumbnail counts failed");
   }
 
-  for (const id of ids) {
-    const count = payload.counts[id] ?? 0;
-    byId[id] = publicProjectThumbnailPaths(
-      id,
-      Math.min(HERO_THUMBNAIL_PATH_LIMIT, count),
-    );
-  }
-  return byId;
+  return buildFeaturedHeroThumbnailById(ids, payload.counts);
 }
 
 function HorizontalGameCard({

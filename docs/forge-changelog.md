@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-08-09 — `/home/game` featured/compact 残件 + collab audit 正直化
+
+- **監査** — `docs/forge-collaboration-gap-audit.md` に先行 task の禁止 POST probe（401・row なし）を明示。usage write は PARTIAL のまま（IMPLEMENTED にしない）。以降 mutation probe 禁止
+- **サムネ** — featured hero 枠数を `FEATURED_HERO_SLOT_COUNT`（4）から derive。thumbnail-counts API / client の magic `3` 打ち切りを除去し、4枠目の永続 loading を解消
+- **compact** — `FeaturedGameCard` が `DiscoveryCardStatPills` に `compact` を伝播。統計を text overflow 領域の外へ置き意味のある指標が消えないように調整
+- **非変更** — `/home/game` 3段構成・carousel autoplay 契約・全体 `/home`・協業機能の新規実装なし
+
+## 2026-08-09 — `/home/game` を Production「注目」carousel 仕様へ復元
+
+- **構成** — ゲームカテゴリ Home を「注目のゲーム」（Production `FeaturedGameCarousel` + `get_home_featured_hero`）/「最近アップデートされたゲーム」/「新着ゲーム」の3段に修正。誤って置いていた「フィードバックが集まっているゲーム」棚を除去（全体 `/home` の FB 棚は維持）
+- **挙動** — autoplay 5s・hover / `:focus-visible` pause・残 focus 永久停止対策を Production コンポーネントから再利用。ranking は同 RPC。game Home では category=game の soft filter のみ（枠の再選定なし）
+- **見た目** — `density="player-ia"` でカード密度を Preview 側に寄せつつ、黒×紫 / sidebar 規約は維持
+- **遷移** — 「すべて見る」は `/search?category=game`（更新・新着は既存 sort 付き）
+- **非変更** — 全体 `/home` 6構成・「作品を見つける・試す」CTA
+
 ## 2026-08-09 — Staging 085+seed Owner適用後 verify PASS → Preview 反映
 
 - **Staging live** — Owner が `085` / seed / beautify / home audit / five-category audit を `vuqpwvjvgyxffmvpfrxo` へ手動適用済み。Cursor は read-only で schema・seed inventory・Home RPC `(integer,text)`・5カテゴリ catalog filter（件数＋行充足）を再検証 PASS（`scripts/staging-only/verify-085-post-apply-readonly.mjs`）

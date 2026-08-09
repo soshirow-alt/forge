@@ -13,6 +13,12 @@ import {
   type ProjectCategoryId,
 } from "@/lib/project-categories";
 import { safeHttpThumbnailUrl } from "@/lib/safe-http-thumbnail";
+import {
+  fetchHomeFeaturedHero,
+  mapFeaturedHeroRowToCard,
+  withPlayPlayerCountsOnCards,
+  type HomeFeaturedHeroCard,
+} from "@/lib/supabase/home-discovery-db";
 
 export type HomeFeedbackGatheringRow = {
   project_id: string;
@@ -403,35 +409,69 @@ export async function fetchHomeNewestProjects(
 }
 
 export type PlayerIaGameHomePayload = {
-  feedbackGathering: HomeFeedbackGatheringProject[];
+  /** Production `get_home_featured_hero` slots, soft-filtered to category=game. */
+  featuredHero: HomeFeaturedHeroCard[];
   meaningfulUpdates: HomeMeaningfulUpdate[];
   newestProjects: HomeNewestProject[];
-  meta: { feedbackWindowDays: 30 | 90 | null };
 };
 
 /**
- * Game category Home: reuse IA shelf RPCs, all scoped to category=game via
- * RPC `p_category` — ranking/limit happens inside the category, not by
- * client-filtering an already-limited whole-platform top-N (Codex round-2
- * finding 4: other categories dominating the platform top-24 must not empty
- * out the game shelf).
+ * Keep Production featured-hero ranking/slots; drop non-game slides for
+ * `/home/game` without re-picking replacements (empty slots stay empty).
+ */
+export async function filterFeaturedHeroCardsToGameCategory(
+  supabase: SupabaseClient,
+  cards: HomeFeaturedHeroCard[],
+): Promise<HomeFeaturedHeroCard[]> {
+  if (cards.length === 0) return [];
+  const ids = cards.map((card) => card.id);
+  const { data, error } = await supabase
+    .from("projects")
+    .select("id, category")
+    .in("id", ids);
+  if (error) {
+    console.error("[player-ia-game-home] category lookup failed", {
+      message: error.message,
+    });
+    return [];
+  }
+  const gameIds = new Set(
+    (data ?? [])
+      .filter((row) => row.category === "game")
+      .map((row) => String(row.id)),
+  );
+  return cards.filter((card) => gameIds.has(card.id));
+}
+
+/**
+ * Game category Home: Production featured-hero carousel (same RPC/ranking) +
+ * IA update/newest shelves scoped to category=game via RPC `p_category`.
  */
 export async function fetchPlayerIaGameHome(
   supabase: SupabaseClient,
 ): Promise<PlayerIaGameHomePayload> {
-  const [feedbackCandidates, updateCandidates, newestCandidates] =
-    await Promise.all([
-      fetchHomeFeedbackGatheringProjects(supabase, 24, "game"),
-      fetchHomeMeaningfulUpdates(supabase, 24, "game"),
-      fetchHomeNewestProjects(supabase, 16, "game"),
-    ]);
+  const [heroRows, updateCandidates, newestCandidates] = await Promise.all([
+    fetchHomeFeaturedHero(supabase),
+    fetchHomeMeaningfulUpdates(supabase, 24, "game"),
+    fetchHomeNewestProjects(supabase, 16, "game"),
+  ]);
 
-  // RPC already scopes to category=game — filter is defense-in-depth only.
-  const feedbackGathering = softSuppressByCategory(
-    feedbackCandidates.filter((item) => item.category === "game"),
-    4,
+  const featuredAll = heroRows
+    .map(mapFeaturedHeroRowToCard)
+    .filter((card): card is HomeFeaturedHeroCard => Boolean(card))
+    .sort((a, b) => a.slotRank - b.slotRank);
+  const featuredHeroFiltered = await filterFeaturedHeroCardsToGameCategory(
+    supabase,
+    featuredAll,
   );
-  const shown = collectProjectIds(feedbackGathering);
+  // Same public play stats merge as Production discovery feed; failures leave
+  // playPlayerCount null without failing the whole game Home payload.
+  const featuredHero = await withPlayPlayerCountsOnCards(
+    supabase,
+    featuredHeroFiltered,
+  );
+
+  const shown = new Set(featuredHero.map((card) => card.id));
   const meaningfulUpdates = softSuppressByCategory(
     softSuppressCrossShelfProject(
       updateCandidates.filter((item) => item.category === "game"),
@@ -449,15 +489,10 @@ export async function fetchPlayerIaGameHome(
     4,
   );
 
-  const windowDaysRaw = feedbackGathering[0]?.windowDays ?? null;
-  const feedbackWindowDays: 30 | 90 | null =
-    windowDaysRaw === 30 || windowDaysRaw === 90 ? windowDaysRaw : null;
-
   return {
-    feedbackGathering,
+    featuredHero,
     meaningfulUpdates,
     newestProjects,
-    meta: { feedbackWindowDays },
   };
 }
 

@@ -112,6 +112,42 @@ assert.match(
   "/home/game renders PlayerIaGameHomePage",
 );
 
+const gameHomePage = read("components/player-ia/player-ia-game-home-page.tsx");
+assert.match(
+  gameHomePage,
+  /FeaturedGameCarousel/,
+  "/home/game must use Production FeaturedGameCarousel for 注目のゲーム",
+);
+assert.match(gameHomePage, /注目のゲーム/);
+assert.match(gameHomePage, /最近アップデートされたゲーム/);
+assert.match(gameHomePage, /新着ゲーム/);
+assert.doesNotMatch(
+  gameHomePage,
+  /フィードバックが集まっているゲーム/,
+  "/home/game must not use feedback-gathering shelf as featured",
+);
+assert.match(gameHomePage, /density=["']player-ia["']/);
+assert.match(gameHomePage, /AUTOPLAY|featuredHero|FeaturedGameCarousel/);
+
+const featuredCarousel = read("components/featured/featured-game-carousel.tsx");
+assert.match(featuredCarousel, /AUTOPLAY_MS\s*=\s*5000/);
+assert.match(featuredCarousel, /:focus-visible/);
+assert.match(featuredCarousel, /blurMouseTarget/);
+assert.match(
+  featuredCarousel,
+  /from ["']next\/link["']/,
+  "featured carousel see-all must use next/link",
+);
+assert.match(featuredCarousel, /<Link[\s\S]*seeAllHref|seeAllHref[\s\S]*<Link/);
+
+const featuredCard = read("components/featured/featured-game-card.tsx");
+assert.match(
+  featuredCard,
+  /grid grid-cols-2/,
+  "compact featured card must use 2-col grid for extra screenshots",
+);
+assert.match(featuredCard, /minmax|min-w-0/);
+
 // --- B. legacy filter chips hidden, API path retained ---
 const searchPage = read("components/player-ia/player-ia-search-page.tsx");
 assert.doesNotMatch(searchPage, /label=["']すぐ試せる["']/);

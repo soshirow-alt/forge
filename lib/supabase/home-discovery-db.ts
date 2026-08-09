@@ -276,9 +276,25 @@ export async function fetchHomeFeaturedHero(
   }));
 }
 
+export async function withPlayPlayerCountsOnCards<T extends HomeDiscoveryCard>(
+  supabase: SupabaseClient,
+  cards: T[],
+): Promise<T[]> {
+  const ids = [...new Set(cards.map((card) => card.id))];
+  if (ids.length === 0) return cards;
+  const stats = await fetchProjectPublicStatsMap(supabase, ids).catch(
+    () => ({}) as Awaited<ReturnType<typeof fetchProjectPublicStatsMap>>,
+  );
+  return cards.map((card) => ({
+    ...card,
+    playPlayerCount: stats[card.id]?.playPlayerCount ?? null,
+  }));
+}
+
 /**
  * Home feed RPCs currently return FB/watch only. Merge play_player_count from
  * get_public_project_stats so shelf/hero cards match search/detail pills.
+ * Single batched RPC for the whole feed (Production /home path).
  */
 async function withPlayPlayerCounts(
   supabase: SupabaseClient,

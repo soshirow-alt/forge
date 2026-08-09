@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
+import { FEATURED_HERO_SLOT_COUNT } from "@/lib/home-featured-hero";
 import { isSupabaseProjectId } from "@/lib/submitted-game-v0-adapter";
 import { fetchPublicProjectThumbnailCount } from "@/lib/supabase/projects";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
-/** Featured home hero: at most 3 projects. */
-const MAX_HERO_IDS = 3;
+/**
+ * Featured home hero: up to FEATURED_HERO_SLOT_COUNT projects (066 four-slot RPC).
+ * Do not hard-code a smaller magic number — 3-ID truncation left the 4th slide
+ * stuck in loading on `/home/game` and Production Discovery Home.
+ */
+const MAX_HERO_IDS = FEATURED_HERO_SLOT_COUNT;
 
 /**
  * Lightweight counts for featured hero extras.

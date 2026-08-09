@@ -14,6 +14,9 @@ export const FEATURED_HERO_TYPE_ORDER: FeaturedHeroType[] = [
   "updated",
 ];
 
+/** Max independent featured-hero slots (066/067). Thumbnail-count API must accept this many IDs. */
+export const FEATURED_HERO_SLOT_COUNT = FEATURED_HERO_TYPE_ORDER.length;
+
 export function featuredHeroTypeLabel(type: FeaturedHeroType): string {
   switch (type) {
     case "reaction":

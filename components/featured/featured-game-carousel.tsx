@@ -9,6 +9,7 @@ import {
   type MouseEvent,
 } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { FeaturedGameCard } from "@/components/featured/featured-game-card";
 import type { FeaturedExtraSlot } from "@/components/featured/featured-game-card";
@@ -20,11 +21,15 @@ export type FeaturedThumbnailsState =
   | { status: "ready"; byId: Record<string, string[]> }
   | { status: "error" };
 
-/** Desktop card width — v0 FeaturedGameCard */
-const CARD_WIDTH_PX = 1000;
+/** Desktop card width — Production Discovery Home FeaturedGameCard */
+const CARD_WIDTH_PRODUCTION_PX = 1000;
+/** Tighter width for Player IA `/home/game` (same behavior, denser chrome). */
+const CARD_WIDTH_PLAYER_IA_PX = 760;
 /** gap-3 = 12px between center card and side peeks */
 const CARD_GAP_PX = 12;
 const AUTOPLAY_MS = 5000;
+
+export type FeaturedGameCarouselDensity = "production" | "player-ia";
 
 function resolveGalleryUrls(
   slide: HomeDiscoveryCard,
@@ -116,19 +121,29 @@ function NeighborPeek({
 export function FeaturedGameCarousel({
   slides,
   thumbnails,
+  title = "注目の作品",
+  density = "production",
+  seeAllHref,
 }: {
   slides: HomeDiscoveryCard[];
   thumbnails: FeaturedThumbnailsState;
+  /** Section heading — Production keeps「注目の作品」; game Home uses「注目のゲーム」. */
+  title?: string;
+  density?: FeaturedGameCarouselDensity;
+  seeAllHref?: string;
 }) {
   const games = slides;
   const count = games.length;
   const circular = count >= 3;
+  const cardWidthPx =
+    density === "player-ia" ? CARD_WIDTH_PLAYER_IA_PX : CARD_WIDTH_PRODUCTION_PX;
+  const compact = density === "player-ia";
 
   const [gameIndex, setGameIndex] = useState(0);
   const [selectedScreenshot, setSelectedScreenshot] = useState<number | null>(
     null,
   );
-  const [viewportWidth, setViewportWidth] = useState(CARD_WIDTH_PX);
+  const [viewportWidth, setViewportWidth] = useState(cardWidthPx);
   const [hovering, setHovering] = useState(false);
   const [keyboardFocusWithin, setKeyboardFocusWithin] = useState(false);
   const [tabHidden, setTabHidden] = useState(false);
@@ -145,13 +160,13 @@ export function FeaturedGameCarousel({
     const el = viewportRef.current;
     if (!el) return;
     const measure = () => {
-      setViewportWidth(el.clientWidth || CARD_WIDTH_PX);
+      setViewportWidth(el.clientWidth || cardWidthPx);
     };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [count, circular]);
+  }, [count, circular, cardWidthPx]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -283,13 +298,18 @@ export function FeaturedGameCarousel({
   const nextCover = slideGallery(nextGame, thumbnails).cover;
 
   const peekWidthPx = circular
-    ? Math.max(0, (viewportWidth - CARD_WIDTH_PX) / 2 - CARD_GAP_PX)
+    ? Math.max(0, (viewportWidth - cardWidthPx) / 2 - CARD_GAP_PX)
     : 0;
+  const viewportHeightClass = compact ? "md:h-[300px]" : "md:h-[350px]";
+  const cardMaxWidthClass = compact ? "md:max-w-[760px]" : "md:max-w-[1000px]";
+  const cardAbsoluteWidthClass = compact
+    ? "md:w-[760px]"
+    : "md:w-[1000px]";
 
   return (
     <section
       ref={sectionRef}
-      aria-label="注目の作品"
+      aria-label={title}
       className="w-full"
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
@@ -298,12 +318,29 @@ export function FeaturedGameCarousel({
         window.requestAnimationFrame(syncKeyboardFocusWithin);
       }}
     >
-      <h1 className="mb-4 text-xl font-bold text-white">注目の作品</h1>
+      <div className="mb-4 flex items-end justify-between gap-4">
+        {compact ? (
+          <h2 className="text-lg font-bold tracking-tight text-white text-balance">
+            {title}
+          </h2>
+        ) : (
+          <h1 className="text-xl font-bold text-white">{title}</h1>
+        )}
+        {seeAllHref ? (
+          <Link
+            href={seeAllHref}
+            className="group inline-flex shrink-0 items-center gap-0.5 text-xs font-medium text-violet-400 transition-colors hover:text-violet-300"
+          >
+            すべて見る
+            <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        ) : null}
+      </div>
 
       <div
         ref={viewportRef}
-        className={`relative w-full overflow-hidden md:h-[350px] ${
-          circular ? "" : "mx-auto md:max-w-[1000px]"
+        className={`relative w-full overflow-hidden ${viewportHeightClass} ${
+          circular ? "" : `mx-auto ${cardMaxWidthClass}`
         }`}
       >
         {circular ? (
@@ -329,8 +366,10 @@ export function FeaturedGameCarousel({
 
         <div
           className={`relative z-[15] h-full w-full max-w-[1000px] ${
+            compact ? "max-w-[760px]" : "max-w-[1000px]"
+          } ${
             circular
-              ? "mx-auto md:absolute md:left-1/2 md:top-0 md:w-[1000px] md:-translate-x-1/2"
+              ? `mx-auto md:absolute md:left-1/2 md:top-0 ${cardAbsoluteWidthClass} md:-translate-x-1/2`
               : "mx-auto"
           }`}
         >
@@ -341,6 +380,7 @@ export function FeaturedGameCarousel({
             selectedScreenshot={selectedScreenshot}
             onSelectScreenshot={setSelectedScreenshot}
             statsLoaded
+            compact={compact}
           />
         </div>
 
