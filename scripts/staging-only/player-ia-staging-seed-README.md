@@ -124,7 +124,19 @@ auth 省略でも確認できる:
 | devlogs / release events | **45 / 8** |
 
 配信: ok 9 / conditional 9 / no 7 / unset 15  
-属性: quick_try 17 / looking_for_testers 9 / usable_for_creation 25
+属性: quick_try 17 / looking_for_testers 9 / usable_for_creation 25（hidden filter 用の既存分布は維持。UI 確認用の追加 seed はしない）
+
+**5カテゴリ Preview E2E（2026-08-09）**
+
+| 領域 | 内容 |
+|---|---|
+| game genre/tag | 公式 option のみ。OR 複数ヒット / AND ヒット / AND 0 件（`ローグライク`∧`協力プレイ`）を coverage で固定 |
+| asset | `category_attributes={}` / `asset_kinds={}` / purpose 空（common-fields-only） |
+| audio / dev-tool / service-app | Studio `category_attributes`（kind / music* / tool* / service*） |
+| play info | game に `estimated_play_time` + `play_access_type`。asset は play-access=`free`・play-time なし |
+| publish | `publish_destinations` jsonb（self_site）を seed 固定 UUID 行へ |
+| audit | `audit-player-ia-five-category-search.sql`（read-only） |
+| 目視 | `player-ia-five-category-preview-e2e-checklist.md` |
 
 検索 0 件用: `zzz-ia-seed-nohit-999`
 
@@ -157,14 +169,20 @@ Staging Home 目視用の表示整えは **別 SQL**（seed 本体ではない�
 - 保証する: 083 DROP+CREATE、beautify 初回/再実行、audit 全文、件数 inventory、thumb 整合、Production guard、不完全 seed の fail-closed、rollback、immutable 非更新
 - 保証しない: 実 Staging RLS / Storage / auth / ライブ schema 差分のない完全一致。**PGlite PASS ≠ Staging 適用成功の保証**
 
-### オーナー手動実行順（Staging SQL Editor）
+### オーナー手動実行順（Staging SQL Editor）— 5カテゴリ seed 更新時
 
-1. Dashboard ref が `vuqpwvjvgyxffmvpfrxo` であること
-2. `beautify-player-ia-seed-display.sql` 全文
-3. 成功したら `audit-player-ia-home-v0-state.sql` 全文
-4. audit の PASS / NOT_APPLIED / FAIL を確認。失敗したら次の SQL を実行しない
-5. cleanup SQL はこの段階では実行しない
-6. Production (`bpnisgzxuwdxelhnduuf`) では絶対に実行しない
+UUID / 件数 inventory は不変のため **cleanup 不要**（再適用 = `ON CONFLICT` upsert）。auth を触らない。
+
+1. Dashboard ref が **`vuqpwvjvgyxffmvpfrxo`** であること（Production `bpnisgzxuwdxelhnduuf` では実行しない）
+2. （任意・未実施なら）auth seed — 専用 owner を結びたいときのみ
+3. **`player-ia-staging-seed.sql` 全文**（BEGIN〜COMMIT）
+4. **`beautify-player-ia-seed-display.sql` 全文** — seed 再適用で `[IA Seed]` / Smoke thumb に戻るため **必須**
+5. **`audit-player-ia-home-v0-state.sql` 全文** — inventory / thumb / immutable
+6. **`audit-player-ia-five-category-search.sql` 全文** — カテゴリ件数・genre/tag・asset common-only
+7. Preview で `player-ia-five-category-preview-e2e-checklist.md` を目視
+8. **cleanup は実行しない**（今回は upsert のみ）
+
+失敗したら次の SQL に進まない。Cursor / Codex は Staging へ write しない。
 
 ---
 

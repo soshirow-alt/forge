@@ -10,7 +10,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const outDir = __dirname;
+/** Override with FORGE_SEED_OUT_DIR for drift checks without dirtying tracked files. */
+const outDir = process.env.FORGE_SEED_OUT_DIR
+  ? path.resolve(process.env.FORGE_SEED_OUT_DIR)
+  : __dirname;
 
 const STAGING_REF = "vuqpwvjvgyxffmvpfrxo";
 const PROD_REF = "bpnisgzxuwdxelhnduuf";
@@ -80,15 +83,85 @@ function buildProjects() {
     n += 1;
   };
 
+  // Official Forge genre / feature-tag options only (lib/forge-*-options.ts).
+  // Search matrix (games): genre OR multi-hit, tag OR multi-hit, genre∧tag hits,
+  // genre∧tag zero (ローグライク∧協力プレイ), tag-less genre-only row.
   const games = [
-    { title: "ローグライク迷宮探索", genres: ["ローグライク"], tags: ["ピクセルアート"], stream: "ok" },
-    { title: "廃校ホラー短編", genres: ["ホラー"], tags: ["高難度"], stream: "conditional", streamNote: "クレジット必須" },
-    { title: "アクション疾走デモ", genres: ["アクション", "RPG"], tags: ["協力プレイ"], stream: "no" },
-    { title: "カード構築デュエル", genres: ["カードゲーム"], tags: ["PvP"], stream: "unset", noImage: true },
-    { title: "パズル回廊", genres: ["パズル"], tags: ["癒し系", "ソロ向け"], stream: "ok", noUpdate: true },
-    { title: "分岐ノベル短編", genres: ["ノベル"], tags: ["ストーリー重視"], stream: "conditional", noFb: true, noLinks: true },
-    { title: "協力プレイ拠点防衛", genres: ["アクション"], tags: ["協力プレイ"], stream: "unset", discord: true },
-    { title: LONG_TITLE, genres: ["ローグライク", "パズル"], tags: ["ピクセルアート", "短時間プレイ"], stream: "conditional", streamNote: LONG_STREAM, longTitle: true, longDesc: true, longCreator: true },
+    {
+      title: "ローグライク迷宮探索",
+      genres: ["ローグライク", "アドベンチャー"],
+      tags: ["ピクセルアート", "レトロ"],
+      stream: "ok",
+      playAccess: "free",
+      playTime: "30分〜1時間",
+    },
+    {
+      title: "廃校ホラー短編",
+      genres: ["ホラー"],
+      tags: ["高難度", "ストーリー"],
+      stream: "conditional",
+      streamNote: "クレジット必須",
+      playAccess: "demo_available",
+      playTime: "15〜30分",
+    },
+    {
+      title: "アクション疾走デモ",
+      genres: ["アクション", "RPG"],
+      tags: ["協力プレイ", "PvE"],
+      stream: "no",
+      playAccess: "free",
+      playTime: "5〜15分",
+    },
+    {
+      title: "カード構築デュエル",
+      genres: ["カードゲーム", "ストラテジー"],
+      tags: ["PvP"],
+      stream: "unset",
+      noImage: true,
+      playAccess: "free",
+      playTime: "30分〜1時間",
+    },
+    {
+      title: "パズル回廊",
+      genres: ["パズル", "カジュアル"],
+      tags: ["癒し系", "ソロ向け"],
+      stream: "ok",
+      noUpdate: true,
+      playAccess: "free",
+      playTime: "15〜30分",
+    },
+    {
+      title: "分岐ノベル短編",
+      genres: ["ノベル", "ファンタジー"],
+      tags: ["ストーリー重視"],
+      stream: "conditional",
+      noFb: true,
+      noLinks: true,
+      playAccess: "free",
+      playTime: "1時間以上",
+    },
+    {
+      title: "拠点防衛シューティング",
+      genres: ["アクション", "シューティング"],
+      tags: [],
+      noTagsExtra: true,
+      stream: "unset",
+      discord: true,
+      playAccess: "demo_available",
+      playTime: "5〜15分",
+    },
+    {
+      title: LONG_TITLE,
+      genres: ["ローグライク", "パズル"],
+      tags: ["ピクセルアート", "短時間プレイ"],
+      stream: "conditional",
+      streamNote: LONG_STREAM,
+      longTitle: true,
+      longDesc: true,
+      longCreator: true,
+      playAccess: "free",
+      playTime: "5分未満",
+    },
   ];
   games.forEach((g, i) =>
     push({
@@ -98,27 +171,129 @@ function buildProjects() {
       quick_try: i % 3 !== 2,
       looking_for_testers: i % 4 === 0,
       usable_for_creation: false,
-      purpose:
-        i === 0
-          ? ["テストプレイ", "配信OK"]
-          : i === 1
-            ? ["ホラー好き"]
-            : i === 5 || i === 7
-              ? ["短編ゲーム"]
-              : ["テストプレイ"],
+      purpose: [],
       multiLinks: i === 1 || i === 4,
     }),
   );
 
+  // Studio-writable prototype attrs (lib/studio-non-game-attributes.ts).
+  // Keyword Search still uses title / genres-like labels in tags (not game feature tags).
   const audios = [
-    { title: "ループBGMパック", genres: ["BGM"], tags: ["BGM", "BGM制作", "ループ音源"], purpose: ["BGM制作", "制作に使える"] },
-    { title: "オリジナル楽曲デモ", genres: ["楽曲"], tags: ["楽曲"], purpose: ["楽曲"] },
-    { title: "SEキット基礎", genres: ["SE"], tags: ["SE", "ゲーム向け音素材"], purpose: ["ゲーム向け音素材"], discord: true },
-    { title: "キャラボイス試作", genres: ["ボイス"], tags: ["ボイス"], purpose: ["ボイス"] },
-    { title: "雨と風の環境音", genres: ["環境音"], tags: ["環境音"], purpose: ["環境音"] },
-    { title: "朗読サンプル集", genres: ["朗読"], tags: [], purpose: ["朗読"], noTagsExtra: true },
-    { title: "戦闘ループ音源", genres: ["ループ音源"], tags: ["ループ音源", "BGM", "BGM制作"], purpose: ["BGM制作"], noUpdate: true },
-    { title: "ゲーム向け音素材一式", genres: ["ゲーム向け音素材"], tags: ["ゲーム向け音素材", "制作に使える"], purpose: ["制作に使える"] },
+    {
+      title: "ループBGMパック",
+      genres: ["BGM"],
+      tags: ["BGM", "ループ音源", "制作に使える"],
+      studioAttrs: {
+        kind: "BGM",
+        musicGenres: ["アンビエント", "チップチューン"],
+        musicDuration: "2:40",
+        nonGamePublishDestinations: [
+          {
+            id: "ia-audio-pub-09",
+            kind: "自サイト",
+            url: "https://example.com/ia-seed/play/ia-seed-09",
+            isPrimary: true,
+          },
+        ],
+      },
+    },
+    {
+      title: "オリジナル楽曲デモ",
+      genres: ["楽曲"],
+      tags: ["楽曲"],
+      studioAttrs: {
+        kind: "楽曲",
+        musicGenres: ["ポップ"],
+        musicDuration: "3:15",
+        nonGamePublishDestinations: [
+          {
+            id: "ia-audio-pub-10",
+            kind: "SoundCloud",
+            url: "https://example.com/ia-seed/play/ia-seed-10",
+            isPrimary: true,
+          },
+        ],
+      },
+    },
+    {
+      title: "SEキット基礎",
+      genres: ["効果音"],
+      tags: ["SE", "ゲーム向け音素材"],
+      discord: true,
+      studioAttrs: {
+        kind: "効果音・ジングル",
+        musicGenres: ["その他"],
+        musicDuration: "0:08",
+        nonGamePublishDestinations: [
+          {
+            id: "ia-audio-pub-11",
+            kind: "BOOTH",
+            url: "https://example.com/ia-seed/play/ia-seed-11",
+            isPrimary: true,
+          },
+        ],
+      },
+    },
+    {
+      title: "キャラボイス試作",
+      genres: ["ボイス"],
+      tags: ["ボイス"],
+      studioAttrs: {
+        kind: "ボイス",
+        musicGenres: ["その他"],
+        musicDuration: "1:05",
+      },
+    },
+    {
+      title: "雨と風の環境音",
+      genres: ["環境音"],
+      tags: ["環境音"],
+      studioAttrs: {
+        kind: "その他",
+        musicGenres: ["アンビエント"],
+        musicDuration: "10:00",
+      },
+    },
+    {
+      title: "朗読サンプル集",
+      genres: ["朗読"],
+      tags: [],
+      noTagsExtra: true,
+      studioAttrs: {
+        kind: "朗読・音声ドラマ",
+        musicGenres: ["劇伴・シネマティック"],
+        musicDuration: "4:20",
+      },
+    },
+    {
+      title: "戦闘ループ音源",
+      genres: ["ループ音源"],
+      tags: ["ループ音源", "BGM"],
+      noUpdate: true,
+      studioAttrs: {
+        kind: "BGM",
+        musicGenres: ["エレクトロニック"],
+        musicDuration: "1:30",
+      },
+    },
+    {
+      title: "ゲーム向け音素材一式",
+      genres: ["ゲーム向け音素材"],
+      tags: ["ゲーム向け音素材", "制作に使える"],
+      studioAttrs: {
+        kind: "その他",
+        musicGenres: ["その他"],
+        musicDuration: "0:30",
+        nonGamePublishDestinations: [
+          {
+            id: "ia-audio-pub-16",
+            kind: "自サイト",
+            url: "https://example.com/ia-seed/play/ia-seed-16",
+            isPrimary: true,
+          },
+        ],
+      },
+    },
   ];
   audios.forEach((a, i) =>
     push({
@@ -129,20 +304,45 @@ function buildProjects() {
       quick_try: i % 2 === 0,
       looking_for_testers: false,
       usable_for_creation: i !== 5,
+      purpose: [],
       multiLinks: i === 0,
       ...a,
     }),
   );
 
+  // Asset = Studio common-fields-only (category_attributes={}, asset_kinds={},
+  // no game genres). Titles/tags keep Search keywords only.
+  // Keep base quick_try / looking_for / usable_for_creation distributions
+  // (hidden Search filters — do not wipe for this task).
   const assets = [
-    { title: "ドット絵タイルセット", genres: ["2Dイラスト"], tags: ["ドット絵", "2Dイラスト", "スプライト"], kinds: ["2d_illustration", "sprite"], purpose: ["ドット絵"] },
-    { title: "3Dキャラクター素体", genres: ["3Dモデル"], tags: ["3Dキャラクター", "キャラクターモデル"], kinds: ["character_model", "model_3d"], purpose: ["3Dキャラクター"] },
-    { title: "背景レイヤーパック", genres: ["背景"], tags: ["背景"], kinds: ["background"], purpose: ["背景"], multiLinks: true },
-    { title: "UI素材キット", genres: ["UI素材"], tags: ["UI素材", "アイコン"], kinds: ["ui_element", "icon"], purpose: ["UI制作"] },
-    { title: "テクスチャ＆マテリアル", genres: ["テクスチャ"], tags: ["テクスチャ", "マテリアル"], kinds: ["texture", "material"], purpose: ["テクスチャ"], noImage: true },
-    { title: "モーション＆アニメ", genres: ["モーション"], tags: ["モーション", "アニメーション"], kinds: ["motion", "animation"], purpose: ["モーション"] },
-    { title: "VFX＆シェーダー", genres: ["VFX"], tags: ["VFX", "シェーダー"], kinds: ["vfx", "shader"], purpose: ["VFX"] },
-    { title: "フォント＆アイコン拡張", genres: ["フォント"], tags: ["フォント", "アイコン", "制作に使える"], kinds: ["font", "icon"], purpose: ["制作に使える"], noFb: true, noLinks: true },
+    { title: "ドット絵タイルセット", genres: [], tags: ["ドット絵"] },
+    {
+      title: "3Dキャラクター素体",
+      genres: [],
+      tags: ["3Dキャラクター"],
+    },
+    {
+      title: "背景レイヤーパック",
+      genres: [],
+      tags: ["背景"],
+      multiLinks: true,
+    },
+    { title: "UI素材キット", genres: [], tags: ["UI素材"] },
+    {
+      title: "テクスチャ＆マテリアル",
+      genres: [],
+      tags: ["テクスチャ"],
+      noImage: true,
+    },
+    { title: "モーション＆アニメ", genres: [], tags: ["モーション"] },
+    { title: "VFX＆シェーダー", genres: [], tags: ["VFX"] },
+    {
+      title: "フォント＆アイコン拡張",
+      genres: [],
+      tags: ["フォント"],
+      noFb: true,
+      noLinks: true,
+    },
   ];
   assets.forEach((a, i) =>
     push({
@@ -152,19 +352,105 @@ function buildProjects() {
       quick_try: false,
       looking_for_testers: i === 1,
       usable_for_creation: true,
+      kinds: [],
+      purpose: [],
+      playAccess: "free",
       ...a,
     }),
   );
 
   const tools = [
-    { title: "Unity向けデバッグ支援", genres: ["Unity"], tags: ["Unity", "デバッグ"], purpose: ["Unity"] },
-    { title: "Unreal Engineビルド補助", genres: ["Unreal Engine"], tags: ["Unreal Engine", "ビルド支援"], purpose: ["Unreal Engine"] },
-    { title: "Godotマップ生成", genres: ["Godot"], tags: ["Godot", "マップ生成"], purpose: ["Godot"] },
-    { title: "会話システムSDK", genres: ["SDK"], tags: ["会話システム", "SDK"], purpose: ["会話システム"], discord: true },
-    { title: "セーブシステムライブラリ", genres: ["コードライブラリ"], tags: ["セーブシステム", "コードライブラリ"], purpose: ["セーブシステム"] },
-    { title: "CLIビルドランナー", genres: ["CLI"], tags: [], purpose: ["CLI"], noTagsExtra: true, noUpdate: true },
-    { title: "Unity会話拡張", genres: ["Unity"], tags: ["Unity", "会話システム"], purpose: ["Unity"] },
-    { title: "GodotセーブCLI", genres: ["Godot"], tags: ["Godot", "CLI", "セーブシステム"], purpose: ["Godot"] },
+    {
+      title: "Unity向けデバッグ支援",
+      genres: ["Unity"],
+      tags: ["Unity", "デバッグ"],
+      studioAttrs: {
+        kind: "デバッグ・テスト支援",
+        toolEnvironments: ["Unity", "Windows"],
+        toolUsageMethod: "ダウンロードして利用",
+        nonGamePublishDestinations: [
+          {
+            id: "ia-tool-pub-25",
+            kind: "GitHubリポジトリ",
+            url: "https://example.com/ia-seed/play/ia-seed-25",
+            isPrimary: true,
+          },
+        ],
+      },
+    },
+    {
+      title: "Unreal Engineビルド補助",
+      genres: ["Unreal Engine"],
+      tags: ["Unreal Engine", "ビルド支援"],
+      studioAttrs: {
+        kind: "デスクトップツール",
+        toolEnvironments: ["Unreal Engine", "Windows"],
+        toolUsageMethod: "ダウンロードして利用",
+      },
+    },
+    {
+      title: "Godotマップ生成",
+      genres: ["Godot"],
+      tags: ["Godot", "マップ生成"],
+      studioAttrs: {
+        kind: "生成・変換ツール",
+        toolEnvironments: ["Godot"],
+        toolUsageMethod: "プラグイン・拡張機能として利用",
+      },
+    },
+    {
+      title: "会話システムSDK",
+      genres: ["SDK"],
+      tags: ["会話システム", "SDK"],
+      discord: true,
+      studioAttrs: {
+        kind: "ライブラリ・SDK",
+        toolEnvironments: ["その他"],
+        toolUsageMethod: "ライブラリ・SDKとして利用",
+      },
+    },
+    {
+      title: "セーブシステムライブラリ",
+      genres: ["コードライブラリ"],
+      tags: ["セーブシステム", "コードライブラリ"],
+      studioAttrs: {
+        kind: "ライブラリ・SDK",
+        toolEnvironments: ["その他"],
+        toolUsageMethod: "ライブラリ・SDKとして利用",
+      },
+    },
+    {
+      title: "CLIビルドランナー",
+      genres: ["CLI"],
+      tags: [],
+      noTagsExtra: true,
+      noUpdate: true,
+      studioAttrs: {
+        kind: "CLI",
+        toolEnvironments: ["Linux", "macOS", "Windows"],
+        toolUsageMethod: "CLIで利用",
+      },
+    },
+    {
+      title: "Unity会話拡張",
+      genres: ["Unity"],
+      tags: ["Unity", "会話システム"],
+      studioAttrs: {
+        kind: "プラグイン・拡張機能",
+        toolEnvironments: ["Unity"],
+        toolUsageMethod: "プラグイン・拡張機能として利用",
+      },
+    },
+    {
+      title: "GodotセーブCLI",
+      genres: ["Godot"],
+      tags: ["Godot", "CLI", "セーブシステム"],
+      studioAttrs: {
+        kind: "CLI",
+        toolEnvironments: ["Godot", "Linux"],
+        toolUsageMethod: "CLIで利用",
+      },
+    },
   ];
   tools.forEach((t, i) =>
     push({
@@ -174,30 +460,122 @@ function buildProjects() {
       quick_try: i % 3 === 0,
       looking_for_testers: i % 2 === 0,
       usable_for_creation: true,
+      purpose: [],
       multiLinks: i === 0,
       ...t,
     }),
   );
 
   const services = [
-    { title: "制作管理Webサービス", genres: ["Webサービス"], tags: ["Webサービス", "制作管理"], purpose: ["制作管理"] },
-    { title: "分析ダッシュボード", genres: ["分析"], tags: ["分析", "Webサービス"], purpose: ["分析"], multiLinks: true },
-    { title: "配信支援Bot", genres: ["Bot"], tags: ["Bot", "配信支援", "配信者"], purpose: ["配信者"], discord: true },
-    { title: "情報整理スマホアプリ", genres: ["スマホアプリ"], tags: ["スマホアプリ", "情報整理"], purpose: ["情報整理"] },
-    { title: "PC向け制作ランチャー", genres: ["PCアプリ"], tags: ["PCアプリ"], purpose: ["PCアプリ"], noLinks: true },
-    { title: "ブラウザ拡張メモ", genres: ["ブラウザ拡張"], tags: ["ブラウザ拡張"], purpose: ["ブラウザ拡張"] },
-    { title: "AIサービス試作", genres: ["AIサービス"], tags: ["AIサービス", "制作に使える"], purpose: ["制作に使える"], longDesc: true },
-    { title: "配信者向け支援ハブ", genres: ["配信支援"], tags: ["配信者", "配信支援", "配信OK"], purpose: ["配信OK", "配信者"], discord: true, stream: "ok" },
+    {
+      title: "制作管理Webサービス",
+      genres: ["Webサービス"],
+      tags: ["Webサービス", "制作管理"],
+      studioAttrs: {
+        kind: "Webサービス",
+        serviceEnvironments: ["Webブラウザ"],
+        nonGamePublishDestinations: [
+          {
+            id: "ia-svc-pub-33",
+            kind: "Webサービス",
+            url: "https://example.com/ia-seed/play/ia-seed-33",
+            isPrimary: true,
+          },
+        ],
+      },
+    },
+    {
+      title: "分析ダッシュボード",
+      genres: ["分析"],
+      tags: ["分析", "Webサービス"],
+      multiLinks: true,
+      studioAttrs: {
+        kind: "Webサービス",
+        serviceEnvironments: ["Webブラウザ", "Windows"],
+      },
+    },
+    {
+      title: "配信支援Bot",
+      genres: ["Bot"],
+      tags: ["Bot", "配信支援", "配信者"],
+      discord: true,
+      studioAttrs: {
+        kind: "Bot",
+        serviceEnvironments: ["その他"],
+        nonGamePublishDestinations: [
+          {
+            id: "ia-svc-pub-35",
+            kind: "Discord等の追加・招待先",
+            url: "https://example.com/ia-seed/play/ia-seed-35",
+            isPrimary: true,
+          },
+        ],
+      },
+    },
+    {
+      title: "情報整理スマホアプリ",
+      genres: ["スマホアプリ"],
+      tags: ["スマホアプリ", "情報整理"],
+      studioAttrs: {
+        kind: "スマートフォンアプリ",
+        serviceEnvironments: ["iOS", "Android"],
+      },
+    },
+    {
+      title: "PC向け制作ランチャー",
+      genres: ["PCアプリ"],
+      tags: ["PCアプリ"],
+      noLinks: true,
+      studioAttrs: {
+        kind: "デスクトップアプリ",
+        serviceEnvironments: ["Windows", "macOS"],
+      },
+    },
+    {
+      title: "ブラウザ拡張メモ",
+      genres: ["ブラウザ拡張"],
+      tags: ["ブラウザ拡張"],
+      studioAttrs: {
+        kind: "ブラウザ拡張",
+        serviceEnvironments: ["Webブラウザ"],
+      },
+    },
+    {
+      title: "AIサービス試作",
+      genres: ["AIサービス"],
+      tags: ["AIサービス", "制作に使える"],
+      longDesc: true,
+      studioAttrs: {
+        kind: "Webサービス",
+        serviceEnvironments: ["Webブラウザ"],
+      },
+    },
+    {
+      title: "配信者向け支援ハブ",
+      genres: ["配信支援"],
+      tags: ["配信者", "配信支援", "配信OK"],
+      discord: true,
+      stream: "ok",
+      studioAttrs: {
+        kind: "Webサービス",
+        serviceEnvironments: ["Webブラウザ"],
+      },
+    },
   ];
   services.forEach((s, i) =>
     push({
       category: "service-app",
       stream: s.stream || ["ok", "conditional", "no", "unset"][i % 4],
-      streamNote: (s.stream || ["ok", "conditional", "no", "unset"][i % 4]) === "conditional" ? "条件あり" : null,
+      streamNote:
+        (s.stream || ["ok", "conditional", "no", "unset"][i % 4]) ===
+        "conditional"
+          ? "条件あり"
+          : null,
       fallbackOwner: i % 2 === 0 ? OWNER_A : OWNER_B,
       quick_try: i % 2 === 1,
       looking_for_testers: i === 2 || i === 6,
       usable_for_creation: i === 0 || i === 6,
+      purpose: [],
       ...s,
     }),
   );
@@ -537,17 +915,58 @@ function generate() {
   for (const p of projects.filter((x) => x.category === "asset")) {
     for (const k of p.kinds || []) assetKinds[k] = (assetKinds[k] || 0) + 1;
   }
+  const gamesOnly = projects.filter((p) => p.category === "game");
+  const gameGenreDist = {};
+  const gameFeatureTagDist = {};
+  for (const p of gamesOnly) {
+    for (const g of p.genres || []) {
+      gameGenreDist[g] = (gameGenreDist[g] || 0) + 1;
+    }
+    for (const t of p.tags || []) {
+      gameFeatureTagDist[t] = (gameFeatureTagDist[t] || 0) + 1;
+    }
+  }
+  const genreTagIntersections = {
+    "ローグライク+ピクセルアート": gamesOnly.filter(
+      (p) =>
+        (p.genres || []).includes("ローグライク") &&
+        (p.tags || []).includes("ピクセルアート"),
+    ).length,
+    "アクション+協力プレイ": gamesOnly.filter(
+      (p) =>
+        (p.genres || []).includes("アクション") &&
+        (p.tags || []).includes("協力プレイ"),
+    ).length,
+    "ローグライク+協力プレイ": gamesOnly.filter(
+      (p) =>
+        (p.genres || []).includes("ローグライク") &&
+        (p.tags || []).includes("協力プレイ"),
+    ).length,
+    "パズル+癒し系": gamesOnly.filter(
+      (p) =>
+        (p.genres || []).includes("パズル") &&
+        (p.tags || []).includes("癒し系"),
+    ).length,
+  };
+  const assetCommonOnly = projects
+    .filter((p) => p.category === "asset")
+    .every(
+      (p) =>
+        (!p.kinds || p.kinds.length === 0) &&
+        (!p.purpose || p.purpose.length === 0) &&
+        !p.studioAttrs,
+    );
   const searchTerms = [
     "ローグライク",
-    "ホラー好き",
+    "ホラー",
+    "アクション",
     "Unity",
     "Unreal Engine",
     "Godot",
     "配信者",
     "ドット絵",
     "3Dキャラクター",
-    "BGM制作",
-    "短編ゲーム",
+    "BGM",
     "制作に使える",
     "配信OK",
   ];
@@ -621,6 +1040,10 @@ function generate() {
       streamPolicy: streamDist,
       attributes: attrDist,
       assetKinds,
+      assetCommonFieldsOnly: assetCommonOnly,
+      gameGenreDist,
+      gameFeatureTagDist,
+      genreTagIntersections,
       noImage: projects.filter((p) => p.noImage).length,
       noTagsExtra: projects.filter((p) => p.noTagsExtra).length,
       noFb: projects.filter((p) => p.noFb).length,
@@ -669,6 +1092,13 @@ function generate() {
       everyDedicatedSlotOwnsProject: Object.keys(ownershipBySlot).length === 20,
       multiACategoriesGte3: (ownershipBySlot["ia-seed-dev-16"]?.categories.length || 0) >= 3,
       multiBCategoriesGte3: (ownershipBySlot["ia-seed-dev-17"]?.categories.length || 0) >= 3,
+      assetCommonFieldsOnly: assetCommonOnly,
+      gameGenreMultiHit: (gameGenreDist["アクション"] || 0) >= 2 && (gameGenreDist["ローグライク"] || 0) >= 2,
+      gameTagMultiHit:
+        (gameFeatureTagDist["ピクセルアート"] || 0) >= 2 &&
+        (gameFeatureTagDist["協力プレイ"] || 0) >= 1,
+      genreTagAndHit: genreTagIntersections["ローグライク+ピクセルアート"] >= 1,
+      genreTagAndZero: genreTagIntersections["ローグライク+協力プレイ"] === 0,
       pass: false,
     },
   };
@@ -687,7 +1117,12 @@ function generate() {
     coverage.validation.searchTermsCovered &&
     coverage.validation.everyDedicatedSlotOwnsProject &&
     coverage.validation.multiACategoriesGte3 &&
-    coverage.validation.multiBCategoriesGte3;
+    coverage.validation.multiBCategoriesGte3 &&
+    coverage.validation.assetCommonFieldsOnly &&
+    coverage.validation.gameGenreMultiHit &&
+    coverage.validation.gameTagMultiHit &&
+    coverage.validation.genreTagAndHit &&
+    coverage.validation.genreTagAndZero;
 
   // ---------- SQL seed ----------
   const seed = [];
@@ -755,14 +1190,16 @@ BEGIN
   END IF;
 END $$;
 
--- Allow explicit first_published_at / created_at for shelf diversity (Staging seed only).
-SET LOCAL session_replication_role = 'replica';
+-- first_published_at is owned by trigger set_project_first_published_at (050);
+-- INSERT leaves it to the trigger (now() for public rows). No trigger bypass.
+-- created_at may still be set explicitly below for shelf ordering hints.
 `);
 
   seed.push(`INSERT INTO public.projects (
   id, owner_id, owner_name, title, creator, genre, genres, description,
   overview_introduction, phase, status, looking_for_testers, tester_slots, section, tags,
   play_url, thumbnail_url, official_url, github_url, discord_url, related_links,
+  publish_destinations, estimated_play_time, play_access_type,
   visibility, playable_version, release_status,
   category, quick_try, usable_for_creation, stream_policy, stream_policy_note,
   asset_kinds, purpose_tags, category_attributes, first_published_at, created_at, updated_at
@@ -777,32 +1214,51 @@ SET LOCAL session_replication_role = 'replica';
           : `(SELECT thumbnail_url FROM public.projects WHERE id = '${SMOKE_A}'::uuid)`;
         const creatorExpr = creatorSql(p);
         const desc = p.longDesc ? LONG_DESC : `${PREFIX} ${p.title} — Staging専用架空作品。`;
-        const kinds = p.category === "asset" ? arr(p.kinds || []) : `ARRAY[]::text[]`;
+        // Asset common-fields-only: empty asset_kinds. Other categories never write kinds.
+        const kinds = `ARRAY[]::text[]`;
         const discord = p.discord ? q(`https://discord.gg/ia-seed-${p.slug}`) : "NULL";
         const official = p.noLinks ? "NULL" : q(`https://example.com/ia-seed/${p.slug}`);
         const github = p.multiLinks ? q(`https://example.com/ia-seed/${p.slug}/repo`) : "NULL";
         const streamNote = p.streamNote ? q(p.streamNote) : "NULL";
-        const attrs = q(
-          JSON.stringify({
-            quickTry: !!p.quick_try,
-            usableForCreation: !!p.usable_for_creation,
-            streamPolicy: p.stream,
-            ...(p.streamNote ? { streamPolicyNote: p.streamNote } : {}),
-            ...(p.kinds ? { assetKinds: p.kinds } : {}),
-            purposeTags: p.purpose || [],
-          }),
-        );
+        /** Studio-writable category_attributes only (no Player-IA-only invent). */
+        let attrsObj = {};
+        if (p.category === "asset" || p.category === "game") {
+          attrsObj = {};
+        } else if (p.studioAttrs) {
+          attrsObj = p.studioAttrs;
+        }
+        const attrs = q(JSON.stringify(attrsObj));
+        const playAccess =
+          p.category === "game" || p.category === "asset"
+            ? p.playAccess || "free"
+            : "unspecified";
+        const playTime =
+          p.category === "game" && p.playTime ? q(p.playTime) : "NULL";
+        const publishDestinations = p.noLinks
+          ? `'[]'::jsonb`
+          : q(
+              JSON.stringify([
+                {
+                  id: `ia-pub-${p.slug}`,
+                  kind: "self_site",
+                  url: `https://example.com/ia-seed/play/${p.slug}`,
+                  usageMethod: "browser",
+                  isPrimary: true,
+                },
+              ]),
+            );
         const days = (p.n % 28) + 1;
         return `(
   '${p.id}'::uuid, ${ownerSql(p)},
   ${creatorExpr}, ${q(`${PREFIX} ${p.title}`)}, ${creatorExpr},
-  ${q(p.genres[0])}, ${arr(p.genres)}, ${q(desc)},
+  ${q((p.genres && p.genres[0]) || "")}, ${arr(p.genres || [])}, ${q(desc)},
   ${q(`${PREFIX} ${p.title} の紹介`)},
   'playable', 'open', ${!!p.looking_for_testers}, ${p.looking_for_testers ? 6 : "NULL"},
   ${p.looking_for_testers ? q("testers") : q("new")},
   ${arr(tags)},
   ${q(`https://example.com/ia-seed/play/${p.slug}`)},
   ${thumb}, ${official}, ${github}, ${discord}, ${relatedLinksSql(p)},
+  ${publishDestinations}::jsonb, ${playTime}, ${q(playAccess)},
   'public', ${q(p.version)}, 'in_development',
   ${q(p.category)}, ${!!p.quick_try}, ${!!p.usable_for_creation}, ${q(p.stream)}, ${streamNote},
   ${kinds}, ${arr(p.purpose || [])}, ${attrs}::jsonb,
@@ -833,6 +1289,9 @@ SET LOCAL session_replication_role = 'replica';
   asset_kinds = EXCLUDED.asset_kinds,
   purpose_tags = EXCLUDED.purpose_tags,
   category_attributes = EXCLUDED.category_attributes,
+  publish_destinations = EXCLUDED.publish_destinations,
+  estimated_play_time = EXCLUDED.estimated_play_time,
+  play_access_type = EXCLUDED.play_access_type,
   thumbnail_url = EXCLUDED.thumbnail_url,
   official_url = EXCLUDED.official_url,
   github_url = EXCLUDED.github_url,
@@ -840,7 +1299,6 @@ SET LOCAL session_replication_role = 'replica';
   related_links = EXCLUDED.related_links,
   playable_version = EXCLUDED.playable_version,
   visibility = 'public',
-  first_published_at = EXCLUDED.first_published_at,
   updated_at = now();
 `);
 
@@ -1010,13 +1468,8 @@ WHERE id::text LIKE '77777777-7777-4777-8777-%';`);
       )
       .join(",\n"),
   );
-  seed.push(`ON CONFLICT (id) DO UPDATE SET
-  author_id = EXCLUDED.author_id,
-  title = EXCLUDED.title,
-  content = EXCLUDED.content,
-  published_version = EXCLUDED.published_version,
-  is_initial_publish = EXCLUDED.is_initial_publish;
-`);
+  // Published/immutable bodies: never UPDATE on re-apply.
+  seed.push(`ON CONFLICT (id) DO NOTHING;`);
 
   seed.push(`INSERT INTO public.project_release_events (
   id, project_id, event_type, actor_user_id, note, source, created_at
@@ -1032,14 +1485,9 @@ WHERE id::text LIKE '77777777-7777-4777-8777-%';`);
       )
       .join(",\n"),
   );
-  seed.push(`ON CONFLICT (id) DO UPDATE SET
-  note = EXCLUDED.note,
-  actor_user_id = EXCLUDED.actor_user_id;
-`);
+  seed.push(`ON CONFLICT (id) DO NOTHING;`);
 
   seed.push(`
-SET LOCAL session_replication_role = 'origin';
-
 COMMIT;
 
 SELECT 'player-ia-staging-seed basic OK (no developer_profiles mutation)' AS status;

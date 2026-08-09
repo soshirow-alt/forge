@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-26T04:21:33.232Z",
+  "generatedAt": "2026-08-09T02:15:20.876Z",
   "stagingRef": "vuqpwvjvgyxffmvpfrxo",
   "productionRefForbidden": "bpnisgzxuwdxelhnduuf",
   "existingProfileMutation": false,
@@ -269,24 +269,43 @@
       "looking_for_testers": 9,
       "usable_for_creation": 25
     },
-    "assetKinds": {
-      "2d_illustration": 1,
-      "sprite": 1,
-      "character_model": 1,
-      "model_3d": 1,
-      "background": 1,
-      "ui_element": 1,
-      "icon": 2,
-      "texture": 1,
-      "material": 1,
-      "motion": 1,
-      "animation": 1,
-      "vfx": 1,
-      "shader": 1,
-      "font": 1
+    "assetKinds": {},
+    "assetCommonFieldsOnly": true,
+    "gameGenreDist": {
+      "ローグライク": 2,
+      "アドベンチャー": 1,
+      "ホラー": 1,
+      "アクション": 2,
+      "RPG": 1,
+      "カードゲーム": 1,
+      "ストラテジー": 1,
+      "パズル": 2,
+      "カジュアル": 1,
+      "ノベル": 1,
+      "ファンタジー": 1,
+      "シューティング": 1
+    },
+    "gameFeatureTagDist": {
+      "ピクセルアート": 2,
+      "レトロ": 1,
+      "高難度": 1,
+      "ストーリー": 1,
+      "協力プレイ": 1,
+      "PvE": 1,
+      "PvP": 1,
+      "癒し系": 1,
+      "ソロ向け": 1,
+      "ストーリー重視": 1,
+      "短時間プレイ": 1
+    },
+    "genreTagIntersections": {
+      "ローグライク+ピクセルアート": 2,
+      "アクション+協力プレイ": 1,
+      "ローグライク+協力プレイ": 0,
+      "パズル+癒し系": 1
     },
     "noImage": 2,
-    "noTagsExtra": 2,
+    "noTagsExtra": 3,
     "noFb": 2,
     "noUpdate": 3,
     "noLinks": 3,
@@ -319,10 +338,17 @@
         "ia-seed-08"
       ]
     },
-    "ホラー好き": {
+    "ホラー": {
       "projectHits": 1,
       "slugs": [
         "ia-seed-02"
+      ]
+    },
+    "アクション": {
+      "projectHits": 2,
+      "slugs": [
+        "ia-seed-03",
+        "ia-seed-07"
       ]
     },
     "Unity": {
@@ -364,35 +390,24 @@
         "ia-seed-18"
       ]
     },
-    "BGM制作": {
+    "BGM": {
       "projectHits": 2,
       "slugs": [
         "ia-seed-09",
         "ia-seed-15"
       ]
     },
-    "短編ゲーム": {
-      "projectHits": 4,
-      "slugs": [
-        "ia-seed-01",
-        "ia-seed-02",
-        "ia-seed-06",
-        "ia-seed-08"
-      ]
-    },
     "制作に使える": {
-      "projectHits": 4,
+      "projectHits": 3,
       "slugs": [
         "ia-seed-09",
         "ia-seed-16",
-        "ia-seed-24",
         "ia-seed-39"
       ]
     },
     "配信OK": {
-      "projectHits": 2,
+      "projectHits": 1,
       "slugs": [
-        "ia-seed-01",
         "ia-seed-40"
       ]
     }
@@ -415,6 +430,11 @@
     "everyDedicatedSlotOwnsProject": true,
     "multiACategoriesGte3": true,
     "multiBCategoriesGte3": true,
+    "assetCommonFieldsOnly": true,
+    "gameGenreMultiHit": true,
+    "gameTagMultiHit": true,
+    "genreTagAndHit": true,
+    "genreTagAndZero": true,
     "pass": true
   }
 }

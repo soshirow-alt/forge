@@ -62,13 +62,15 @@ BEGIN
   END IF;
 END $$;
 
--- Allow explicit first_published_at / created_at for shelf diversity (Staging seed only).
-SET LOCAL session_replication_role = 'replica';
+-- first_published_at is owned by trigger set_project_first_published_at (050);
+-- INSERT leaves it to the trigger (now() for public rows). No trigger bypass.
+-- created_at may still be set explicitly below for shelf ordering hints.
 
 INSERT INTO public.projects (
   id, owner_id, owner_name, title, creator, genre, genres, description,
   overview_introduction, phase, status, looking_for_testers, tester_slots, section, tags,
   play_url, thumbnail_url, official_url, github_url, discord_url, related_links,
+  publish_destinations, estimated_play_time, play_access_type,
   visibility, playable_version, release_status,
   category, quick_try, usable_for_creation, stream_policy, stream_policy_note,
   asset_kinds, purpose_tags, category_attributes, first_published_at, created_at, updated_at
@@ -85,16 +87,17 @@ INSERT INTO public.projects (
     (SELECT public_name FROM public.developer_profiles WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000016'::uuid),
     'IA Seed Owner A'
   ),
-  'ローグライク', ARRAY['ローグライク']::text[], '[IA Seed] ローグライク迷宮探索 — Staging専用架空作品。',
+  'ローグライク', ARRAY['ローグライク', 'アドベンチャー']::text[], '[IA Seed] ローグライク迷宮探索 — Staging専用架空作品。',
   '[IA Seed] ローグライク迷宮探索 の紹介',
   'playable', 'open', true, 6,
   'testers',
-  ARRAY['ピクセルアート', 'forge-ia-seed-v1']::text[],
+  ARRAY['ピクセルアート', 'レトロ', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-01',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-01', NULL, NULL, '[{"id":"ia-seed-01-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-01","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-01","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-01","usageMethod":"browser","isPrimary":true}]'::jsonb, '30分〜1時間', 'free',
   'public', '0.2', 'in_development',
   'game', true, false, 'ok', NULL,
-  ARRAY[]::text[], ARRAY['テストプレイ', '配信OK']::text[], '{"quickTry":true,"usableForCreation":false,"streamPolicy":"ok","purposeTags":["テストプレイ","配信OK"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
   now() - interval '2 days',
   now() - interval '2 days',
   now() - interval '1 hours'
@@ -115,12 +118,13 @@ INSERT INTO public.projects (
   '[IA Seed] 廃校ホラー短編 の紹介',
   'playable', 'open', false, NULL,
   'new',
-  ARRAY['ホラー', '高難度', 'forge-ia-seed-v1']::text[],
+  ARRAY['高難度', 'ストーリー', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-02',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-02', 'https://example.com/ia-seed/ia-seed-02/repo', NULL, '[{"id":"ia-seed-02-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-02","label":"公式"},{"id":"ia-seed-02-rel-2","kind":"note_blog","url":"https://example.com/ia-seed/ia-seed-02/note","label":"ノート"},{"id":"ia-seed-02-rel-3","kind":"other","url":"https://example.com/ia-seed/ia-seed-02/extra","label":"その他"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-02","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-02","usageMethod":"browser","isPrimary":true}]'::jsonb, '15〜30分', 'demo_available',
   'public', '0.3', 'in_development',
   'game', true, false, 'conditional', 'クレジット必須',
-  ARRAY[]::text[], ARRAY['ホラー好き']::text[], '{"quickTry":true,"usableForCreation":false,"streamPolicy":"conditional","streamPolicyNote":"クレジット必須","purposeTags":["ホラー好き"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
   now() - interval '3 days',
   now() - interval '3 days',
   now() - interval '2 hours'
@@ -141,12 +145,13 @@ INSERT INTO public.projects (
   '[IA Seed] アクション疾走デモ の紹介',
   'playable', 'open', false, NULL,
   'new',
-  ARRAY['協力プレイ', 'forge-ia-seed-v1']::text[],
+  ARRAY['協力プレイ', 'PvE', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-03',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-03', NULL, NULL, '[{"id":"ia-seed-03-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-03","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-03","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-03","usageMethod":"browser","isPrimary":true}]'::jsonb, '5〜15分', 'free',
   'public', '0.4', 'in_development',
   'game', false, false, 'no', NULL,
-  ARRAY[]::text[], ARRAY['テストプレイ']::text[], '{"quickTry":false,"usableForCreation":false,"streamPolicy":"no","purposeTags":["テストプレイ"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
   now() - interval '4 days',
   now() - interval '4 days',
   now() - interval '3 hours'
@@ -163,16 +168,17 @@ INSERT INTO public.projects (
     (SELECT public_name FROM public.developer_profiles WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000002'::uuid),
     'IA Seed Owner B'
   ),
-  'カードゲーム', ARRAY['カードゲーム']::text[], '[IA Seed] カード構築デュエル — Staging専用架空作品。',
+  'カードゲーム', ARRAY['カードゲーム', 'ストラテジー']::text[], '[IA Seed] カード構築デュエル — Staging専用架空作品。',
   '[IA Seed] カード構築デュエル の紹介',
   'playable', 'open', false, NULL,
   'new',
   ARRAY['PvP', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-04',
   NULL, 'https://example.com/ia-seed/ia-seed-04', NULL, NULL, '[{"id":"ia-seed-04-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-04","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-04","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-04","usageMethod":"browser","isPrimary":true}]'::jsonb, '30分〜1時間', 'free',
   'public', '0.5', 'in_development',
   'game', true, false, 'unset', NULL,
-  ARRAY[]::text[], ARRAY['テストプレイ']::text[], '{"quickTry":true,"usableForCreation":false,"streamPolicy":"unset","purposeTags":["テストプレイ"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
   now() - interval '5 days',
   now() - interval '5 days',
   now() - interval '4 hours'
@@ -189,16 +195,17 @@ INSERT INTO public.projects (
     (SELECT public_name FROM public.developer_profiles WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000018'::uuid),
     'IA Seed Owner A'
   ),
-  'パズル', ARRAY['パズル']::text[], '[IA Seed] パズル回廊 — Staging専用架空作品。',
+  'パズル', ARRAY['パズル', 'カジュアル']::text[], '[IA Seed] パズル回廊 — Staging専用架空作品。',
   '[IA Seed] パズル回廊 の紹介',
   'playable', 'open', true, 6,
   'testers',
   ARRAY['癒し系', 'ソロ向け', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-05',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-05', 'https://example.com/ia-seed/ia-seed-05/repo', NULL, '[{"id":"ia-seed-05-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-05","label":"公式"},{"id":"ia-seed-05-rel-2","kind":"note_blog","url":"https://example.com/ia-seed/ia-seed-05/note","label":"ノート"},{"id":"ia-seed-05-rel-3","kind":"other","url":"https://example.com/ia-seed/ia-seed-05/extra","label":"その他"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-05","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-05","usageMethod":"browser","isPrimary":true}]'::jsonb, '15〜30分', 'free',
   'public', '0.1', 'in_development',
   'game', true, false, 'ok', NULL,
-  ARRAY[]::text[], ARRAY['テストプレイ']::text[], '{"quickTry":true,"usableForCreation":false,"streamPolicy":"ok","purposeTags":["テストプレイ"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
   now() - interval '6 days',
   now() - interval '6 days',
   now() - interval '5 hours'
@@ -215,16 +222,17 @@ INSERT INTO public.projects (
     (SELECT public_name FROM public.developer_profiles WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000007'::uuid),
     'IA Seed Owner B'
   ),
-  'ノベル', ARRAY['ノベル']::text[], '[IA Seed] 分岐ノベル短編 — Staging専用架空作品。',
+  'ノベル', ARRAY['ノベル', 'ファンタジー']::text[], '[IA Seed] 分岐ノベル短編 — Staging専用架空作品。',
   '[IA Seed] 分岐ノベル短編 の紹介',
   'playable', 'open', false, NULL,
   'new',
   ARRAY['ストーリー重視', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-06',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), NULL, NULL, NULL, NULL,
+  '[]'::jsonb::jsonb, '1時間以上', 'free',
   'public', '0.2', 'in_development',
   'game', false, false, 'conditional', NULL,
-  ARRAY[]::text[], ARRAY['短編ゲーム']::text[], '{"quickTry":false,"usableForCreation":false,"streamPolicy":"conditional","purposeTags":["短編ゲーム"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
   now() - interval '7 days',
   now() - interval '7 days',
   now() - interval '6 hours'
@@ -237,20 +245,21 @@ INSERT INTO public.projects (
   COALESCE(
     (SELECT public_name FROM public.developer_profiles WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000020'::uuid),
     'IA Seed Owner A'
-  ), '[IA Seed] 協力プレイ拠点防衛', COALESCE(
+  ), '[IA Seed] 拠点防衛シューティング', COALESCE(
     (SELECT public_name FROM public.developer_profiles WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000020'::uuid),
     'IA Seed Owner A'
   ),
-  'アクション', ARRAY['アクション']::text[], '[IA Seed] 協力プレイ拠点防衛 — Staging専用架空作品。',
-  '[IA Seed] 協力プレイ拠点防衛 の紹介',
+  'アクション', ARRAY['アクション', 'シューティング']::text[], '[IA Seed] 拠点防衛シューティング — Staging専用架空作品。',
+  '[IA Seed] 拠点防衛シューティング の紹介',
   'playable', 'open', false, NULL,
   'new',
-  ARRAY['協力プレイ', 'forge-ia-seed-v1']::text[],
+  ARRAY['forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-07',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-07', NULL, 'https://discord.gg/ia-seed-ia-seed-07', '[{"id":"ia-seed-07-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-07","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-07","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-07","usageMethod":"browser","isPrimary":true}]'::jsonb, '5〜15分', 'demo_available',
   'public', '0.3', 'in_development',
   'game', true, false, 'unset', NULL,
-  ARRAY[]::text[], ARRAY['テストプレイ']::text[], '{"quickTry":true,"usableForCreation":false,"streamPolicy":"unset","purposeTags":["テストプレイ"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
   now() - interval '8 days',
   now() - interval '8 days',
   now() - interval '7 hours'
@@ -268,9 +277,10 @@ INSERT INTO public.projects (
   ARRAY['ピクセルアート', '短時間プレイ', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-08',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-08', NULL, NULL, '[{"id":"ia-seed-08-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-08","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-08","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-08","usageMethod":"browser","isPrimary":true}]'::jsonb, '5分未満', 'free',
   'public', '0.4', 'in_development',
   'game', true, false, 'conditional', '配信条件が長いエッジケース用メモ: クレジット必須・収益化は事前連絡・切り抜きはタイトルに作品名を含める・アーカイブは30日以内・Discord通知歓迎・その他個別相談。',
-  ARRAY[]::text[], ARRAY['短編ゲーム']::text[], '{"quickTry":true,"usableForCreation":false,"streamPolicy":"conditional","streamPolicyNote":"配信条件が長いエッジケース用メモ: クレジット必須・収益化は事前連絡・切り抜きはタイトルに作品名を含める・アーカイブは30日以内・Discord通知歓迎・その他個別相談。","purposeTags":["短編ゲーム"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
   now() - interval '9 days',
   now() - interval '9 days',
   now() - interval '8 hours'
@@ -291,12 +301,13 @@ INSERT INTO public.projects (
   '[IA Seed] ループBGMパック の紹介',
   'playable', 'open', false, NULL,
   'new',
-  ARRAY['BGM', 'BGM制作', 'ループ音源', 'forge-ia-seed-v1']::text[],
+  ARRAY['BGM', 'ループ音源', '制作に使える', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-09',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-09', 'https://example.com/ia-seed/ia-seed-09/repo', NULL, '[{"id":"ia-seed-09-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-09","label":"公式"},{"id":"ia-seed-09-rel-2","kind":"note_blog","url":"https://example.com/ia-seed/ia-seed-09/note","label":"ノート"},{"id":"ia-seed-09-rel-3","kind":"other","url":"https://example.com/ia-seed/ia-seed-09/extra","label":"その他"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-09","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-09","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.5', 'in_development',
   'audio', true, true, 'ok', NULL,
-  ARRAY[]::text[], ARRAY['BGM制作', '制作に使える']::text[], '{"quickTry":true,"usableForCreation":true,"streamPolicy":"ok","purposeTags":["BGM制作","制作に使える"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"BGM","musicGenres":["アンビエント","チップチューン"],"musicDuration":"2:40","nonGamePublishDestinations":[{"id":"ia-audio-pub-09","kind":"自サイト","url":"https://example.com/ia-seed/play/ia-seed-09","isPrimary":true}]}'::jsonb,
   now() - interval '10 days',
   now() - interval '10 days',
   now() - interval '9 hours'
@@ -320,9 +331,10 @@ INSERT INTO public.projects (
   ARRAY['楽曲', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-10',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-10', NULL, NULL, '[{"id":"ia-seed-10-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-10","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-10","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-10","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.1', 'in_development',
   'audio', false, true, 'conditional', 'クレジット必須',
-  ARRAY[]::text[], ARRAY['楽曲']::text[], '{"quickTry":false,"usableForCreation":true,"streamPolicy":"conditional","streamPolicyNote":"クレジット必須","purposeTags":["楽曲"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"楽曲","musicGenres":["ポップ"],"musicDuration":"3:15","nonGamePublishDestinations":[{"id":"ia-audio-pub-10","kind":"SoundCloud","url":"https://example.com/ia-seed/play/ia-seed-10","isPrimary":true}]}'::jsonb,
   now() - interval '11 days',
   now() - interval '11 days',
   now() - interval '0 hours'
@@ -339,16 +351,17 @@ INSERT INTO public.projects (
     (SELECT public_name FROM public.developer_profiles WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000011'::uuid),
     'IA Seed Owner B'
   ),
-  'SE', ARRAY['SE']::text[], '[IA Seed] SEキット基礎 — Staging専用架空作品。',
+  '効果音', ARRAY['効果音']::text[], '[IA Seed] SEキット基礎 — Staging専用架空作品。',
   '[IA Seed] SEキット基礎 の紹介',
   'playable', 'open', false, NULL,
   'new',
   ARRAY['SE', 'ゲーム向け音素材', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-11',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-11', NULL, 'https://discord.gg/ia-seed-ia-seed-11', '[{"id":"ia-seed-11-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-11","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-11","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-11","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.2', 'in_development',
   'audio', true, true, 'no', NULL,
-  ARRAY[]::text[], ARRAY['ゲーム向け音素材']::text[], '{"quickTry":true,"usableForCreation":true,"streamPolicy":"no","purposeTags":["ゲーム向け音素材"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"効果音・ジングル","musicGenres":["その他"],"musicDuration":"0:08","nonGamePublishDestinations":[{"id":"ia-audio-pub-11","kind":"BOOTH","url":"https://example.com/ia-seed/play/ia-seed-11","isPrimary":true}]}'::jsonb,
   now() - interval '12 days',
   now() - interval '12 days',
   now() - interval '1 hours'
@@ -372,9 +385,10 @@ INSERT INTO public.projects (
   ARRAY['ボイス', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-12',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-12', NULL, NULL, '[{"id":"ia-seed-12-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-12","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-12","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-12","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.3', 'in_development',
   'audio', false, true, 'unset', NULL,
-  ARRAY[]::text[], ARRAY['ボイス']::text[], '{"quickTry":false,"usableForCreation":true,"streamPolicy":"unset","purposeTags":["ボイス"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"ボイス","musicGenres":["その他"],"musicDuration":"1:05"}'::jsonb,
   now() - interval '13 days',
   now() - interval '13 days',
   now() - interval '2 hours'
@@ -398,9 +412,10 @@ INSERT INTO public.projects (
   ARRAY['環境音', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-13',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-13', NULL, NULL, '[{"id":"ia-seed-13-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-13","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-13","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-13","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.4', 'in_development',
   'audio', true, true, 'ok', NULL,
-  ARRAY[]::text[], ARRAY['環境音']::text[], '{"quickTry":true,"usableForCreation":true,"streamPolicy":"ok","purposeTags":["環境音"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"その他","musicGenres":["アンビエント"],"musicDuration":"10:00"}'::jsonb,
   now() - interval '14 days',
   now() - interval '14 days',
   now() - interval '3 hours'
@@ -424,9 +439,10 @@ INSERT INTO public.projects (
   ARRAY['forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-14',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-14', NULL, NULL, '[{"id":"ia-seed-14-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-14","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-14","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-14","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.5', 'in_development',
   'audio', false, false, 'conditional', 'クレジット必須',
-  ARRAY[]::text[], ARRAY['朗読']::text[], '{"quickTry":false,"usableForCreation":false,"streamPolicy":"conditional","streamPolicyNote":"クレジット必須","purposeTags":["朗読"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"朗読・音声ドラマ","musicGenres":["劇伴・シネマティック"],"musicDuration":"4:20"}'::jsonb,
   now() - interval '15 days',
   now() - interval '15 days',
   now() - interval '4 hours'
@@ -447,12 +463,13 @@ INSERT INTO public.projects (
   '[IA Seed] 戦闘ループ音源 の紹介',
   'playable', 'open', false, NULL,
   'new',
-  ARRAY['ループ音源', 'BGM', 'BGM制作', 'forge-ia-seed-v1']::text[],
+  ARRAY['ループ音源', 'BGM', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-15',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-15', NULL, NULL, '[{"id":"ia-seed-15-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-15","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-15","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-15","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.1', 'in_development',
   'audio', true, true, 'no', NULL,
-  ARRAY[]::text[], ARRAY['BGM制作']::text[], '{"quickTry":true,"usableForCreation":true,"streamPolicy":"no","purposeTags":["BGM制作"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"BGM","musicGenres":["エレクトロニック"],"musicDuration":"1:30"}'::jsonb,
   now() - interval '16 days',
   now() - interval '16 days',
   now() - interval '5 hours'
@@ -476,9 +493,10 @@ INSERT INTO public.projects (
   ARRAY['ゲーム向け音素材', '制作に使える', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-16',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-16', NULL, NULL, '[{"id":"ia-seed-16-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-16","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-16","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-16","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.2', 'in_development',
   'audio', false, true, 'unset', NULL,
-  ARRAY[]::text[], ARRAY['制作に使える']::text[], '{"quickTry":false,"usableForCreation":true,"streamPolicy":"unset","purposeTags":["制作に使える"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"その他","musicGenres":["その他"],"musicDuration":"0:30","nonGamePublishDestinations":[{"id":"ia-audio-pub-16","kind":"自サイト","url":"https://example.com/ia-seed/play/ia-seed-16","isPrimary":true}]}'::jsonb,
   now() - interval '17 days',
   now() - interval '17 days',
   now() - interval '6 hours'
@@ -495,16 +513,17 @@ INSERT INTO public.projects (
     (SELECT public_name FROM public.developer_profiles WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000016'::uuid),
     'IA Seed Owner A'
   ),
-  '2Dイラスト', ARRAY['2Dイラスト']::text[], '[IA Seed] ドット絵タイルセット — Staging専用架空作品。',
+  '', ARRAY[]::text[], '[IA Seed] ドット絵タイルセット — Staging専用架空作品。',
   '[IA Seed] ドット絵タイルセット の紹介',
   'playable', 'open', false, NULL,
   'new',
-  ARRAY['ドット絵', '2Dイラスト', 'スプライト', 'forge-ia-seed-v1']::text[],
+  ARRAY['ドット絵', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-17',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-17', NULL, NULL, '[{"id":"ia-seed-17-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-17","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-17","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-17","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'free',
   'public', '0.3', 'in_development',
   'asset', false, true, 'unset', NULL,
-  ARRAY['2d_illustration', 'sprite']::text[], ARRAY['ドット絵']::text[], '{"quickTry":false,"usableForCreation":true,"streamPolicy":"unset","assetKinds":["2d_illustration","sprite"],"purposeTags":["ドット絵"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
   now() - interval '18 days',
   now() - interval '18 days',
   now() - interval '7 hours'
@@ -521,16 +540,17 @@ INSERT INTO public.projects (
     (SELECT public_name FROM public.developer_profiles WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000008'::uuid),
     'IA Seed Owner B'
   ),
-  '3Dモデル', ARRAY['3Dモデル']::text[], '[IA Seed] 3Dキャラクター素体 — Staging専用架空作品。',
+  '', ARRAY[]::text[], '[IA Seed] 3Dキャラクター素体 — Staging専用架空作品。',
   '[IA Seed] 3Dキャラクター素体 の紹介',
   'playable', 'open', true, 6,
   'testers',
-  ARRAY['3Dキャラクター', 'キャラクターモデル', 'forge-ia-seed-v1']::text[],
+  ARRAY['3Dキャラクター', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-18',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-18', NULL, NULL, '[{"id":"ia-seed-18-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-18","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-18","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-18","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'free',
   'public', '0.4', 'in_development',
   'asset', false, true, 'unset', NULL,
-  ARRAY['character_model', 'model_3d']::text[], ARRAY['3Dキャラクター']::text[], '{"quickTry":false,"usableForCreation":true,"streamPolicy":"unset","assetKinds":["character_model","model_3d"],"purposeTags":["3Dキャラクター"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
   now() - interval '19 days',
   now() - interval '19 days',
   now() - interval '8 hours'
@@ -547,16 +567,17 @@ INSERT INTO public.projects (
     (SELECT public_name FROM public.developer_profiles WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000009'::uuid),
     'IA Seed Owner A'
   ),
-  '背景', ARRAY['背景']::text[], '[IA Seed] 背景レイヤーパック — Staging専用架空作品。',
+  '', ARRAY[]::text[], '[IA Seed] 背景レイヤーパック — Staging専用架空作品。',
   '[IA Seed] 背景レイヤーパック の紹介',
   'playable', 'open', false, NULL,
   'new',
   ARRAY['背景', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-19',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-19', 'https://example.com/ia-seed/ia-seed-19/repo', NULL, '[{"id":"ia-seed-19-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-19","label":"公式"},{"id":"ia-seed-19-rel-2","kind":"note_blog","url":"https://example.com/ia-seed/ia-seed-19/note","label":"ノート"},{"id":"ia-seed-19-rel-3","kind":"other","url":"https://example.com/ia-seed/ia-seed-19/extra","label":"その他"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-19","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-19","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'free',
   'public', '0.5', 'in_development',
   'asset', false, true, 'unset', NULL,
-  ARRAY['background']::text[], ARRAY['背景']::text[], '{"quickTry":false,"usableForCreation":true,"streamPolicy":"unset","assetKinds":["background"],"purposeTags":["背景"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
   now() - interval '20 days',
   now() - interval '20 days',
   now() - interval '9 hours'
@@ -573,16 +594,17 @@ INSERT INTO public.projects (
     (SELECT public_name FROM public.developer_profiles WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000008'::uuid),
     'IA Seed Owner B'
   ),
-  'UI素材', ARRAY['UI素材']::text[], '[IA Seed] UI素材キット — Staging専用架空作品。',
+  '', ARRAY[]::text[], '[IA Seed] UI素材キット — Staging専用架空作品。',
   '[IA Seed] UI素材キット の紹介',
   'playable', 'open', false, NULL,
   'new',
-  ARRAY['UI素材', 'アイコン', 'forge-ia-seed-v1']::text[],
+  ARRAY['UI素材', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-20',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-20', NULL, NULL, '[{"id":"ia-seed-20-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-20","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-20","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-20","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'free',
   'public', '0.1', 'in_development',
   'asset', false, true, 'unset', NULL,
-  ARRAY['ui_element', 'icon']::text[], ARRAY['UI制作']::text[], '{"quickTry":false,"usableForCreation":true,"streamPolicy":"unset","assetKinds":["ui_element","icon"],"purposeTags":["UI制作"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
   now() - interval '21 days',
   now() - interval '21 days',
   now() - interval '0 hours'
@@ -599,16 +621,17 @@ INSERT INTO public.projects (
     (SELECT public_name FROM public.developer_profiles WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000009'::uuid),
     'IA Seed Owner A'
   ),
-  'テクスチャ', ARRAY['テクスチャ']::text[], '[IA Seed] テクスチャ＆マテリアル — Staging専用架空作品。',
+  '', ARRAY[]::text[], '[IA Seed] テクスチャ＆マテリアル — Staging専用架空作品。',
   '[IA Seed] テクスチャ＆マテリアル の紹介',
   'playable', 'open', false, NULL,
   'new',
-  ARRAY['テクスチャ', 'マテリアル', 'forge-ia-seed-v1']::text[],
+  ARRAY['テクスチャ', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-21',
   NULL, 'https://example.com/ia-seed/ia-seed-21', NULL, NULL, '[{"id":"ia-seed-21-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-21","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-21","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-21","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'free',
   'public', '0.2', 'in_development',
   'asset', false, true, 'unset', NULL,
-  ARRAY['texture', 'material']::text[], ARRAY['テクスチャ']::text[], '{"quickTry":false,"usableForCreation":true,"streamPolicy":"unset","assetKinds":["texture","material"],"purposeTags":["テクスチャ"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
   now() - interval '22 days',
   now() - interval '22 days',
   now() - interval '1 hours'
@@ -625,16 +648,17 @@ INSERT INTO public.projects (
     (SELECT public_name FROM public.developer_profiles WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000004'::uuid),
     'IA Seed Owner B'
   ),
-  'モーション', ARRAY['モーション']::text[], '[IA Seed] モーション＆アニメ — Staging専用架空作品。',
+  '', ARRAY[]::text[], '[IA Seed] モーション＆アニメ — Staging専用架空作品。',
   '[IA Seed] モーション＆アニメ の紹介',
   'playable', 'open', false, NULL,
   'new',
-  ARRAY['モーション', 'アニメーション', 'forge-ia-seed-v1']::text[],
+  ARRAY['モーション', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-22',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-22', NULL, NULL, '[{"id":"ia-seed-22-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-22","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-22","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-22","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'free',
   'public', '0.3', 'in_development',
   'asset', false, true, 'unset', NULL,
-  ARRAY['motion', 'animation']::text[], ARRAY['モーション']::text[], '{"quickTry":false,"usableForCreation":true,"streamPolicy":"unset","assetKinds":["motion","animation"],"purposeTags":["モーション"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
   now() - interval '23 days',
   now() - interval '23 days',
   now() - interval '2 hours'
@@ -651,16 +675,17 @@ INSERT INTO public.projects (
     (SELECT public_name FROM public.developer_profiles WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000011'::uuid),
     'IA Seed Owner A'
   ),
-  'VFX', ARRAY['VFX']::text[], '[IA Seed] VFX＆シェーダー — Staging専用架空作品。',
+  '', ARRAY[]::text[], '[IA Seed] VFX＆シェーダー — Staging専用架空作品。',
   '[IA Seed] VFX＆シェーダー の紹介',
   'playable', 'open', false, NULL,
   'new',
-  ARRAY['VFX', 'シェーダー', 'forge-ia-seed-v1']::text[],
+  ARRAY['VFX', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-23',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-23', NULL, NULL, '[{"id":"ia-seed-23-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-23","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-23","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-23","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'free',
   'public', '0.4', 'in_development',
   'asset', false, true, 'unset', NULL,
-  ARRAY['vfx', 'shader']::text[], ARRAY['VFX']::text[], '{"quickTry":false,"usableForCreation":true,"streamPolicy":"unset","assetKinds":["vfx","shader"],"purposeTags":["VFX"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
   now() - interval '24 days',
   now() - interval '24 days',
   now() - interval '3 hours'
@@ -677,16 +702,17 @@ INSERT INTO public.projects (
     (SELECT public_name FROM public.developer_profiles WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000019'::uuid),
     'IA Seed Owner B'
   ),
-  'フォント', ARRAY['フォント']::text[], '[IA Seed] フォント＆アイコン拡張 — Staging専用架空作品。',
+  '', ARRAY[]::text[], '[IA Seed] フォント＆アイコン拡張 — Staging専用架空作品。',
   '[IA Seed] フォント＆アイコン拡張 の紹介',
   'playable', 'open', false, NULL,
   'new',
-  ARRAY['フォント', 'アイコン', '制作に使える', 'forge-ia-seed-v1']::text[],
+  ARRAY['フォント', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-24',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), NULL, NULL, NULL, NULL,
+  '[]'::jsonb::jsonb, NULL, 'free',
   'public', '0.5', 'in_development',
   'asset', false, true, 'unset', NULL,
-  ARRAY['font', 'icon']::text[], ARRAY['制作に使える']::text[], '{"quickTry":false,"usableForCreation":true,"streamPolicy":"unset","assetKinds":["font","icon"],"purposeTags":["制作に使える"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
   now() - interval '25 days',
   now() - interval '25 days',
   now() - interval '4 hours'
@@ -710,9 +736,10 @@ INSERT INTO public.projects (
   ARRAY['Unity', 'デバッグ', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-25',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-25', 'https://example.com/ia-seed/ia-seed-25/repo', NULL, '[{"id":"ia-seed-25-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-25","label":"公式"},{"id":"ia-seed-25-rel-2","kind":"note_blog","url":"https://example.com/ia-seed/ia-seed-25/note","label":"ノート"},{"id":"ia-seed-25-rel-3","kind":"other","url":"https://example.com/ia-seed/ia-seed-25/extra","label":"その他"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-25","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-25","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.1', 'in_development',
   'dev-tool', true, true, 'ok', NULL,
-  ARRAY[]::text[], ARRAY['Unity']::text[], '{"quickTry":true,"usableForCreation":true,"streamPolicy":"ok","purposeTags":["Unity"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"デバッグ・テスト支援","toolEnvironments":["Unity","Windows"],"toolUsageMethod":"ダウンロードして利用","nonGamePublishDestinations":[{"id":"ia-tool-pub-25","kind":"GitHubリポジトリ","url":"https://example.com/ia-seed/play/ia-seed-25","isPrimary":true}]}'::jsonb,
   now() - interval '26 days',
   now() - interval '26 days',
   now() - interval '5 hours'
@@ -736,9 +763,10 @@ INSERT INTO public.projects (
   ARRAY['Unreal Engine', 'ビルド支援', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-26',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-26', NULL, NULL, '[{"id":"ia-seed-26-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-26","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-26","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-26","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.2', 'in_development',
   'dev-tool', false, true, 'conditional', NULL,
-  ARRAY[]::text[], ARRAY['Unreal Engine']::text[], '{"quickTry":false,"usableForCreation":true,"streamPolicy":"conditional","purposeTags":["Unreal Engine"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"デスクトップツール","toolEnvironments":["Unreal Engine","Windows"],"toolUsageMethod":"ダウンロードして利用"}'::jsonb,
   now() - interval '27 days',
   now() - interval '27 days',
   now() - interval '6 hours'
@@ -762,9 +790,10 @@ INSERT INTO public.projects (
   ARRAY['Godot', 'マップ生成', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-27',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-27', NULL, NULL, '[{"id":"ia-seed-27-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-27","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-27","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-27","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.3', 'in_development',
   'dev-tool', false, true, 'no', NULL,
-  ARRAY[]::text[], ARRAY['Godot']::text[], '{"quickTry":false,"usableForCreation":true,"streamPolicy":"no","purposeTags":["Godot"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"生成・変換ツール","toolEnvironments":["Godot"],"toolUsageMethod":"プラグイン・拡張機能として利用"}'::jsonb,
   now() - interval '28 days',
   now() - interval '28 days',
   now() - interval '7 hours'
@@ -788,9 +817,10 @@ INSERT INTO public.projects (
   ARRAY['会話システム', 'SDK', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-28',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-28', NULL, 'https://discord.gg/ia-seed-ia-seed-28', '[{"id":"ia-seed-28-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-28","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-28","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-28","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.4', 'in_development',
   'dev-tool', true, true, 'unset', NULL,
-  ARRAY[]::text[], ARRAY['会話システム']::text[], '{"quickTry":true,"usableForCreation":true,"streamPolicy":"unset","purposeTags":["会話システム"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"ライブラリ・SDK","toolEnvironments":["その他"],"toolUsageMethod":"ライブラリ・SDKとして利用"}'::jsonb,
   now() - interval '1 days',
   now() - interval '1 days',
   now() - interval '8 hours'
@@ -814,9 +844,10 @@ INSERT INTO public.projects (
   ARRAY['セーブシステム', 'コードライブラリ', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-29',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-29', NULL, NULL, '[{"id":"ia-seed-29-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-29","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-29","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-29","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.5', 'in_development',
   'dev-tool', false, true, 'ok', NULL,
-  ARRAY[]::text[], ARRAY['セーブシステム']::text[], '{"quickTry":false,"usableForCreation":true,"streamPolicy":"ok","purposeTags":["セーブシステム"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"ライブラリ・SDK","toolEnvironments":["その他"],"toolUsageMethod":"ライブラリ・SDKとして利用"}'::jsonb,
   now() - interval '2 days',
   now() - interval '2 days',
   now() - interval '9 hours'
@@ -840,9 +871,10 @@ INSERT INTO public.projects (
   ARRAY['forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-30',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-30', NULL, NULL, '[{"id":"ia-seed-30-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-30","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-30","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-30","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.1', 'in_development',
   'dev-tool', false, true, 'conditional', NULL,
-  ARRAY[]::text[], ARRAY['CLI']::text[], '{"quickTry":false,"usableForCreation":true,"streamPolicy":"conditional","purposeTags":["CLI"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"CLI","toolEnvironments":["Linux","macOS","Windows"],"toolUsageMethod":"CLIで利用"}'::jsonb,
   now() - interval '3 days',
   now() - interval '3 days',
   now() - interval '0 hours'
@@ -866,9 +898,10 @@ INSERT INTO public.projects (
   ARRAY['Unity', '会話システム', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-31',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-31', NULL, NULL, '[{"id":"ia-seed-31-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-31","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-31","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-31","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.2', 'in_development',
   'dev-tool', true, true, 'no', NULL,
-  ARRAY[]::text[], ARRAY['Unity']::text[], '{"quickTry":true,"usableForCreation":true,"streamPolicy":"no","purposeTags":["Unity"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"プラグイン・拡張機能","toolEnvironments":["Unity"],"toolUsageMethod":"プラグイン・拡張機能として利用"}'::jsonb,
   now() - interval '4 days',
   now() - interval '4 days',
   now() - interval '1 hours'
@@ -892,9 +925,10 @@ INSERT INTO public.projects (
   ARRAY['Godot', 'CLI', 'セーブシステム', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-32',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-32', NULL, NULL, '[{"id":"ia-seed-32-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-32","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-32","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-32","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.3', 'in_development',
   'dev-tool', false, true, 'unset', NULL,
-  ARRAY[]::text[], ARRAY['Godot']::text[], '{"quickTry":false,"usableForCreation":true,"streamPolicy":"unset","purposeTags":["Godot"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"CLI","toolEnvironments":["Godot","Linux"],"toolUsageMethod":"CLIで利用"}'::jsonb,
   now() - interval '5 days',
   now() - interval '5 days',
   now() - interval '2 hours'
@@ -918,9 +952,10 @@ INSERT INTO public.projects (
   ARRAY['Webサービス', '制作管理', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-33',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-33', NULL, NULL, '[{"id":"ia-seed-33-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-33","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-33","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-33","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.4', 'in_development',
   'service-app', false, true, 'ok', NULL,
-  ARRAY[]::text[], ARRAY['制作管理']::text[], '{"quickTry":false,"usableForCreation":true,"streamPolicy":"ok","purposeTags":["制作管理"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"Webサービス","serviceEnvironments":["Webブラウザ"],"nonGamePublishDestinations":[{"id":"ia-svc-pub-33","kind":"Webサービス","url":"https://example.com/ia-seed/play/ia-seed-33","isPrimary":true}]}'::jsonb,
   now() - interval '6 days',
   now() - interval '6 days',
   now() - interval '3 hours'
@@ -944,9 +979,10 @@ INSERT INTO public.projects (
   ARRAY['分析', 'Webサービス', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-34',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-34', 'https://example.com/ia-seed/ia-seed-34/repo', NULL, '[{"id":"ia-seed-34-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-34","label":"公式"},{"id":"ia-seed-34-rel-2","kind":"note_blog","url":"https://example.com/ia-seed/ia-seed-34/note","label":"ノート"},{"id":"ia-seed-34-rel-3","kind":"other","url":"https://example.com/ia-seed/ia-seed-34/extra","label":"その他"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-34","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-34","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.5', 'in_development',
   'service-app', true, false, 'conditional', '条件あり',
-  ARRAY[]::text[], ARRAY['分析']::text[], '{"quickTry":true,"usableForCreation":false,"streamPolicy":"conditional","streamPolicyNote":"条件あり","purposeTags":["分析"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"Webサービス","serviceEnvironments":["Webブラウザ","Windows"]}'::jsonb,
   now() - interval '7 days',
   now() - interval '7 days',
   now() - interval '4 hours'
@@ -970,9 +1006,10 @@ INSERT INTO public.projects (
   ARRAY['Bot', '配信支援', '配信者', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-35',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-35', NULL, 'https://discord.gg/ia-seed-ia-seed-35', '[{"id":"ia-seed-35-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-35","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-35","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-35","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.1', 'in_development',
   'service-app', false, false, 'no', NULL,
-  ARRAY[]::text[], ARRAY['配信者']::text[], '{"quickTry":false,"usableForCreation":false,"streamPolicy":"no","purposeTags":["配信者"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"Bot","serviceEnvironments":["その他"],"nonGamePublishDestinations":[{"id":"ia-svc-pub-35","kind":"Discord等の追加・招待先","url":"https://example.com/ia-seed/play/ia-seed-35","isPrimary":true}]}'::jsonb,
   now() - interval '8 days',
   now() - interval '8 days',
   now() - interval '5 hours'
@@ -996,9 +1033,10 @@ INSERT INTO public.projects (
   ARRAY['スマホアプリ', '情報整理', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-36',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-36', NULL, NULL, '[{"id":"ia-seed-36-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-36","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-36","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-36","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.2', 'in_development',
   'service-app', true, false, 'unset', NULL,
-  ARRAY[]::text[], ARRAY['情報整理']::text[], '{"quickTry":true,"usableForCreation":false,"streamPolicy":"unset","purposeTags":["情報整理"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"スマートフォンアプリ","serviceEnvironments":["iOS","Android"]}'::jsonb,
   now() - interval '9 days',
   now() - interval '9 days',
   now() - interval '6 hours'
@@ -1022,9 +1060,10 @@ INSERT INTO public.projects (
   ARRAY['PCアプリ', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-37',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), NULL, NULL, NULL, NULL,
+  '[]'::jsonb::jsonb, NULL, 'unspecified',
   'public', '0.3', 'in_development',
   'service-app', false, false, 'ok', NULL,
-  ARRAY[]::text[], ARRAY['PCアプリ']::text[], '{"quickTry":false,"usableForCreation":false,"streamPolicy":"ok","purposeTags":["PCアプリ"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"デスクトップアプリ","serviceEnvironments":["Windows","macOS"]}'::jsonb,
   now() - interval '10 days',
   now() - interval '10 days',
   now() - interval '7 hours'
@@ -1048,9 +1087,10 @@ INSERT INTO public.projects (
   ARRAY['ブラウザ拡張', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-38',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-38', NULL, NULL, '[{"id":"ia-seed-38-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-38","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-38","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-38","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.4', 'in_development',
   'service-app', true, false, 'conditional', '条件あり',
-  ARRAY[]::text[], ARRAY['ブラウザ拡張']::text[], '{"quickTry":true,"usableForCreation":false,"streamPolicy":"conditional","streamPolicyNote":"条件あり","purposeTags":["ブラウザ拡張"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"ブラウザ拡張","serviceEnvironments":["Webブラウザ"]}'::jsonb,
   now() - interval '11 days',
   now() - interval '11 days',
   now() - interval '8 hours'
@@ -1074,9 +1114,10 @@ INSERT INTO public.projects (
   ARRAY['AIサービス', '制作に使える', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-39',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-39', NULL, NULL, '[{"id":"ia-seed-39-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-39","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-39","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-39","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.5', 'in_development',
   'service-app', false, true, 'no', NULL,
-  ARRAY[]::text[], ARRAY['制作に使える']::text[], '{"quickTry":false,"usableForCreation":true,"streamPolicy":"no","purposeTags":["制作に使える"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"Webサービス","serviceEnvironments":["Webブラウザ"]}'::jsonb,
   now() - interval '12 days',
   now() - interval '12 days',
   now() - interval '9 hours'
@@ -1100,9 +1141,10 @@ INSERT INTO public.projects (
   ARRAY['配信者', '配信支援', '配信OK', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-40',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-40', NULL, 'https://discord.gg/ia-seed-ia-seed-40', '[{"id":"ia-seed-40-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-40","label":"公式"}]'::jsonb,
+  '[{"id":"ia-pub-ia-seed-40","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-40","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.1', 'in_development',
   'service-app', true, false, 'ok', NULL,
-  ARRAY[]::text[], ARRAY['配信OK', '配信者']::text[], '{"quickTry":true,"usableForCreation":false,"streamPolicy":"ok","purposeTags":["配信OK","配信者"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"Webサービス","serviceEnvironments":["Webブラウザ"]}'::jsonb,
   now() - interval '13 days',
   now() - interval '13 days',
   now() - interval '0 hours'
@@ -1126,6 +1168,9 @@ ON CONFLICT (id) DO UPDATE SET
   asset_kinds = EXCLUDED.asset_kinds,
   purpose_tags = EXCLUDED.purpose_tags,
   category_attributes = EXCLUDED.category_attributes,
+  publish_destinations = EXCLUDED.publish_destinations,
+  estimated_play_time = EXCLUDED.estimated_play_time,
+  play_access_type = EXCLUDED.play_access_type,
   thumbnail_url = EXCLUDED.thumbnail_url,
   official_url = EXCLUDED.official_url,
   github_url = EXCLUDED.github_url,
@@ -1133,7 +1178,6 @@ ON CONFLICT (id) DO UPDATE SET
   related_links = EXCLUDED.related_links,
   playable_version = EXCLUDED.playable_version,
   visibility = 'public',
-  first_published_at = EXCLUDED.first_published_at,
   updated_at = now();
 
 
@@ -1214,6 +1258,7 @@ INSERT INTO public.project_usage_relations (
 ON CONFLICT (id) DO UPDATE SET
   status = 'published',
   relation_type = 'used',
+  created_by = EXCLUDED.created_by,
   updated_at = now();
 
 INSERT INTO public.platform_announcements (
@@ -2021,13 +2066,7 @@ INSERT INTO public.project_devlogs (
   now() - interval '8 days',
   now() - interval '8 days'
 )
-ON CONFLICT (id) DO UPDATE SET
-  author_id = EXCLUDED.author_id,
-  title = EXCLUDED.title,
-  content = EXCLUDED.content,
-  published_version = EXCLUDED.published_version,
-  is_initial_publish = EXCLUDED.is_initial_publish;
-
+ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.project_release_events (
   id, project_id, event_type, actor_user_id, note, source, created_at
 ) VALUES
@@ -2071,12 +2110,7 @@ INSERT INTO public.project_release_events (
   '[IA Seed] release event', 'studio',
   now() - interval '10 days'
 )
-ON CONFLICT (id) DO UPDATE SET
-  note = EXCLUDED.note,
-  actor_user_id = EXCLUDED.actor_user_id;
-
-
-SET LOCAL session_replication_role = 'origin';
+ON CONFLICT (id) DO NOTHING;
 
 COMMIT;
 

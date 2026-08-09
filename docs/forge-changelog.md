@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-08-09 — Staging 5カテゴリ seed 充実（Preview E2E 準備）
+
+- **Staging seed** — game の公式 genre/feature-tag 分布を Search 確認向けに再配置。asset を common-fields-only（attrs/kinds 空）へ。audio/dev-tool/service-app に Studio 正規 `category_attributes` を付与。publish_destinations / play info を seed 行へ
+- **監査** — `audit-player-ia-five-category-search.sql` + Preview 目視チェックリスト
+- **非実施** — Staging/Production DB 適用なし。Production / main / UI 変更なし
+
 ## 2026-08-09 — Studio asset Preview で game プレイ情報 UI を非表示
 
 - **Studio編集 Preview** — asset は play-info card / プレイ時間 / play-access badge / 環境表示を category chrome で非表示（値が残っていても section 自体を出さない）

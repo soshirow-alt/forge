@@ -83,11 +83,11 @@ for (const file of stagingSql) {
   }
 
   if (
-    /\bsession_replication_role\b/i.test(body) &&
-    /beautify/i.test(base)
+    /\bSET\s+(LOCAL\s+)?session_replication_role\b/i.test(body) &&
+    (/beautify/i.test(base) || /player-ia-staging-seed\.sql/i.test(base))
   ) {
     failures.push(
-      `${name}: session_replication_role bypass forbidden in beautify SQL`,
+      `${name}: session_replication_role bypass forbidden in Player IA seed/beautify SQL`,
     );
   }
 
