@@ -525,10 +525,14 @@ async function main() {
   assert.match(insertSrc, /category: normalizeProjectCategory/);
   assert.match(insertSrc, /category_attributes/);
 
-  // asset still has no picker option
+  // asset is in formal Studio picker (project-categories order), not prototype flow ids
   const flow = read("lib/prototype/studio-submit-flow.ts");
   assert.doesNotMatch(flow, /querySlug: "asset"/);
   assert.doesNotMatch(flow, /id: "asset"/);
+  const studioOptions = read("lib/studio-submit-category-options.ts");
+  assert.match(studioOptions, /PROJECT_CATEGORY_IDS/);
+  assert.match(studioOptions, /asset:/);
+  assert.match(submitPage, /projectCategory/);
 
   // seed genre/tag distribution notes
   const seed = read("scripts/staging-only/player-ia-staging-seed.sql");

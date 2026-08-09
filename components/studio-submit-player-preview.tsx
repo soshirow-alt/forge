@@ -46,6 +46,10 @@ import {
   type SubmitPrototypeCategoryFields,
 } from "@/lib/prototype/studio-submit-flow";
 import { normalizeExternalUrl } from "@/lib/game-play-destinations";
+import {
+  resolveStudioPreviewCategoryChrome,
+  studioPreviewPlayInfoCardProp,
+} from "@/lib/studio-preview-category-chrome";
 
 function TagPill({
   children,
@@ -136,6 +140,9 @@ export type StudioSubmitPlayerPreviewProps = {
   onEditTarget?: (target: StudioPreviewEditTargetId) => void;
   prototypeCategory?: SubmitPrototypeCategory | null;
   prototypeCategoryFields?: SubmitPrototypeCategoryFields;
+  /** Asset: common fields only — no genre/play-info game chrome. */
+  commonFieldsOnly?: boolean;
+  categoryLabel?: string | null;
 };
 
 /** /studio/submit 専用 — 既存 Studio 編集プレビューとは完全分離 */
@@ -147,7 +154,13 @@ export function StudioSubmitPlayerPreview({
   onEditTarget,
   prototypeCategory = null,
   prototypeCategoryFields,
+  commonFieldsOnly = false,
+  categoryLabel = null,
 }: StudioSubmitPlayerPreviewProps) {
+  const chrome = resolveStudioPreviewCategoryChrome({
+    commonFieldsOnly,
+    category: commonFieldsOnly ? "asset" : null,
+  });
   const displayGame = useMemo(
     () => buildSubmitDraftDetailV0(submitDraft, submitOwner),
     [submitDraft, submitOwner],
@@ -200,9 +213,11 @@ export function StudioSubmitPlayerPreview({
   }, [submitDraft.introduction, prototypeCategory]);
   const hasGalleryImages = submitDraft.thumbnailUrls.length > 0;
   const primaryGenre = sanitizeProjectGenresForSave(submitDraft.genres)[0] ?? "その他";
-  const posterGenre = prototypeCategory
-    ? SUBMIT_PROTOTYPE_CATEGORY_LABEL[prototypeCategory]
-    : primaryGenre;
+  const posterGenre = commonFieldsOnly
+    ? categoryLabel ?? "アセット"
+    : prototypeCategory
+      ? SUBMIT_PROTOTYPE_CATEGORY_LABEL[prototypeCategory]
+      : primaryGenre;
 
   const posterFallback = useMemo(
     () => ({
@@ -242,7 +257,13 @@ export function StudioSubmitPlayerPreview({
 
           <div className="flex min-w-0 flex-col justify-center p-6 lg:p-8">
             <div className="flex flex-wrap gap-2">
-              {prototypeCategory && prototypeCategoryFields ? (
+              {chrome.commonFieldsOnly ? (
+                <span className="inline-flex flex-wrap gap-2">
+                  <TagPill>
+                    {categoryLabel ?? chrome.categoryPillLabel ?? "アセット"}
+                  </TagPill>
+                </span>
+              ) : prototypeCategory && prototypeCategoryFields ? (
                 <StudioPreviewEditTarget target="genres" onEditTarget={onEditTarget} inline>
                   <span className="inline-flex flex-wrap gap-2">
                     <TagPill>
@@ -292,6 +313,7 @@ export function StudioSubmitPlayerPreview({
                 meta={playerMeta}
                 muted={phaseIsPlaceholder}
                 onEditTarget={onEditTarget}
+                showPlayAccessBadge={chrome.showPlayAccessEditTarget}
               />
             </div>
             <StudioPreviewEditTarget target="catch-copy" onEditTarget={onEditTarget}>
@@ -351,11 +373,16 @@ export function StudioSubmitPlayerPreview({
           publication={overviewPublication}
           playDestinations={playDestinations}
           relatedLinks={relatedLinkDisplays}
-          showUnsetPlayPlaceholders={!prototypeCategory}
+          showUnsetPlayPlaceholders={
+            !prototypeCategory && chrome.showUnsetPlayPlaceholders
+          }
           mutedIntroduction={introIsPlaceholder}
           onEditTarget={onEditTarget}
-          prototypeInfoCard={prototypeInfoCard}
-          primaryCtaLabel={primaryCtaLabel}
+          prototypeInfoCard={studioPreviewPlayInfoCardProp(
+            chrome,
+            prototypeInfoCard,
+          )}
+          primaryCtaLabel={chrome.commonFieldsOnly ? "見る" : primaryCtaLabel}
         />
       ) : null}
 

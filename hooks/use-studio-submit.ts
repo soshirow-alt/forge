@@ -9,7 +9,6 @@ import { normalizeDeveloperProfileText } from "@/lib/developer-profiles";
 import { resolveDeveloperPublicName } from "@/lib/developer-display-name";
 import { isSpecifiedPlayAccessType } from "@/lib/play-access-type";
 import {
-  draftToSubmitFormData,
   getSubmitPromptsToSave,
   SUBMIT_VALIDATION_PANEL_LABELS,
   type SubmitDraftOwner,
@@ -24,15 +23,11 @@ import type { User } from "@/lib/auth";
 import type { ProjectVisibility } from "@/lib/project-visibility";
 import type { ProjectCategoryId } from "@/lib/project-categories";
 import {
-  encodePrototypeFieldsToCategoryAttributes,
-  mergeCategoryAttributesJson,
-  prototypeCategoryToProjectCategory,
-} from "@/lib/studio-non-game-attributes";
-import {
   validateNonGamePrototypeFields,
   validateNonGamePrototypeFieldsForSave,
 } from "@/lib/studio-non-game-validation";
-import { buildNonGamePublishWriteFields } from "@/lib/project-publish-write-adapter";
+import { isStudioCommonFieldsOnlyCategory } from "@/lib/studio-category-mode";
+import { planStudioSubmitWrite } from "@/lib/studio-submit-write-plan";
 import type {
   SubmitPrototypeCategory,
   SubmitPrototypeCategoryFields,
@@ -84,10 +79,14 @@ export function validateSubmitDraftForPost(
   options?: {
     prototypeCategory?: SubmitPrototypeCategory | null;
     prototypeFields?: SubmitPrototypeCategoryFields | null;
+    projectCategory?: ProjectCategoryId | null;
   },
 ): SubmitDraftValidationResult {
   const prototypeCategory = options?.prototypeCategory ?? null;
   const prototypeFields = options?.prototypeFields ?? null;
+  const commonFieldsOnly = isStudioCommonFieldsOnlyCategory(
+    options?.projectCategory,
+  );
 
   if (!draft.title.trim()) {
     return validationFailure("basic-info", "タイトルを入力してください。");
@@ -111,7 +110,12 @@ export function validateSubmitDraftForPost(
     return validationFailure("basic-info", "開発フェーズを選んでください。");
   }
 
-  if (prototypeCategory && prototypeFields) {
+  if (commonFieldsOnly) {
+    const publishError = validatePublishAccess(draft.publishDestinations);
+    if (publishError) {
+      return validationFailure("publication", publishError);
+    }
+  } else if (prototypeCategory && prototypeFields) {
     const nonGame = validateNonGamePrototypeFieldsForSave(
       prototypeCategory,
       prototypeFields,
@@ -153,10 +157,14 @@ export function validateSubmitDraftSection(
   options?: {
     prototypeCategory?: SubmitPrototypeCategory | null;
     prototypeFields?: SubmitPrototypeCategoryFields | null;
+    projectCategory?: ProjectCategoryId | null;
   },
 ): SubmitDraftValidationResult {
   const prototypeCategory = options?.prototypeCategory ?? null;
   const prototypeFields = options?.prototypeFields ?? null;
+  const commonFieldsOnly = isStudioCommonFieldsOnlyCategory(
+    options?.projectCategory,
+  );
 
   switch (editMode) {
     case "basic-info": {
@@ -177,6 +185,9 @@ export function validateSubmitDraftSection(
       return { ok: true };
     }
     case "genres-tags": {
+      if (commonFieldsOnly) {
+        return { ok: true };
+      }
       if (prototypeCategory && prototypeFields) {
         return validateNonGamePrototypeFields(prototypeCategory, prototypeFields, {
           mode: "section",
@@ -196,6 +207,9 @@ export function validateSubmitDraftSection(
       return { ok: true };
     }
     case "play-info": {
+      if (commonFieldsOnly) {
+        return { ok: true };
+      }
       if (prototypeCategory && prototypeFields) {
         return validateNonGamePrototypeFields(prototypeCategory, prototypeFields, {
           mode: "section",
@@ -208,7 +222,7 @@ export function validateSubmitDraftSection(
       return { ok: true };
     }
     case "publication": {
-      if (prototypeCategory && prototypeFields) {
+      if (prototypeCategory && prototypeFields && !commonFieldsOnly) {
         return validateNonGamePrototypeFields(prototypeCategory, prototypeFields, {
           mode: "section",
           section: "publication",
@@ -241,13 +255,16 @@ export function useStudioSubmit() {
       options?: {
         prototypeCategory?: SubmitPrototypeCategory | null;
         prototypeFields?: SubmitPrototypeCategoryFields | null;
+        projectCategory?: ProjectCategoryId | null;
       },
     ): Promise<SubmitDraftResult> => {
       const prototypeCategory = options?.prototypeCategory ?? null;
       const prototypeFields = options?.prototypeFields ?? null;
+      const projectCategoryOption = options?.projectCategory ?? null;
       const validation = validateSubmitDraftForPost(draft, {
         prototypeCategory,
         prototypeFields,
+        projectCategory: projectCategoryOption,
       });
       if (!validation.ok) {
         return validation;
@@ -271,48 +288,13 @@ export function useStudioSubmit() {
           });
         }
 
-        let category: ProjectCategoryId | undefined;
-        let categoryAttributes: Record<string, unknown> | undefined;
-        let publishOverride:
-          | ReturnType<typeof buildNonGamePublishWriteFields>["publishDestinations"]
-          | undefined;
-        let publishLinkOverride:
-          | ReturnType<typeof buildNonGamePublishWriteFields>
-          | undefined;
-
-        if (prototypeCategory && prototypeFields) {
-          category = prototypeCategoryToProjectCategory(prototypeCategory);
-          categoryAttributes = mergeCategoryAttributesJson(
-            {},
-            encodePrototypeFieldsToCategoryAttributes(prototypeFields),
-          );
-          publishLinkOverride = buildNonGamePublishWriteFields(
-            prototypeFields.publishDestinations,
-          );
-          publishOverride = publishLinkOverride.publishDestinations;
-        }
-
-        const data = draftToSubmitFormData(draft, owner, {
-          category,
-          categoryAttributes,
-          publishDestinationsOverride: publishOverride,
+        const data = planStudioSubmitWrite({
+          draft,
+          owner,
+          prototypeCategory,
+          prototypeFields,
+          projectCategory: projectCategoryOption,
         });
-        if (publishLinkOverride) {
-          data.playUrl = publishLinkOverride.playUrl;
-          data.steamUrl = publishLinkOverride.steamUrl;
-          data.itchUrl = publishLinkOverride.itchUrl;
-          data.githubUrl = publishLinkOverride.githubUrl;
-          data.discordUrl = publishLinkOverride.discordUrl;
-          data.officialUrl = publishLinkOverride.officialUrl;
-          data.xUrl = publishLinkOverride.xUrl;
-          data.youtubeUrl = publishLinkOverride.youtubeUrl;
-        }
-        if (
-          prototypeCategory &&
-          !isSpecifiedPlayAccessType(data.playAccessType)
-        ) {
-          data.playAccessType = "free";
-        }
 
         const game = await addSubmittedGame(data, {
           ownerId: user.id,

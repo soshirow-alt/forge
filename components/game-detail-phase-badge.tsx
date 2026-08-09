@@ -36,10 +36,13 @@ export function GameDetailPhaseBadge({
   meta,
   muted = false,
   onEditTarget,
+  showPlayAccessBadge = true,
 }: {
   meta: GameDetailPlayerMeta;
   muted?: boolean;
   onEditTarget?: (target: StudioPreviewEditTargetId) => void;
+  /** Asset common-fields: hide free/paid play-access badge + its edit target. */
+  showPlayAccessBadge?: boolean;
 }) {
   const releaseBadge =
     meta.releaseBadgeLabel ? (
@@ -52,7 +55,8 @@ export function GameDetailPhaseBadge({
       </StudioPreviewEditTarget>
     ) : null;
 
-  const playAccessBadge = meta.playAccessBadgeLabel ? (
+  const playAccessBadge =
+    showPlayAccessBadge && meta.playAccessBadgeLabel ? (
     <StudioPreviewEditTarget target="play-access" onEditTarget={onEditTarget} inline>
       <MetaBadge label={meta.playAccessBadgeLabel} tone="play-access" />
     </StudioPreviewEditTarget>

@@ -37,20 +37,40 @@ import {
   type SubmitPrototypeCategory,
   type SubmitPrototypeCategoryFields,
 } from "@/lib/prototype/studio-submit-flow";
+import {
+  PROJECT_CATEGORY_LABELS,
+  type ProjectCategoryId,
+} from "@/lib/project-categories";
+import { isStudioCommonFieldsOnlyCategory } from "@/lib/studio-category-mode";
+import { resolveStudioPreviewCategoryChrome } from "@/lib/studio-preview-category-chrome";
 
 export type StudioSubmitPageProps = {
   /** Non-game category shell (audio / dev-tool / service-app) using existing category panels. */
   prototypeCategory?: SubmitPrototypeCategory | null;
+  /** Formal project category for common-fields-only shells (asset). */
+  projectCategory?: ProjectCategoryId | null;
 };
 
 export function StudioSubmitPage({
   prototypeCategory = null,
+  projectCategory = null,
 }: StudioSubmitPageProps) {
   const router = useRouter();
   const { user, hydrated } = useAuth();
   const { getDeveloperProfileByUserId, getOwnedProjects } = useGames();
   const { submitDraft, validateSubmitDraftForPost, validateSubmitDraftSection } =
     useStudioSubmit();
+
+  const commonFieldsOnly = isStudioCommonFieldsOnlyCategory(projectCategory);
+  const previewChrome = resolveStudioPreviewCategoryChrome({
+    commonFieldsOnly,
+    category: projectCategory,
+  });
+  const categoryBannerLabel = prototypeCategory
+    ? SUBMIT_PROTOTYPE_CATEGORY_LABEL[prototypeCategory]
+    : commonFieldsOnly && projectCategory
+      ? PROJECT_CATEGORY_LABELS[projectCategory]
+      : null;
 
   const [draft, setDraft] = useState<SubmitDraftState>(() => createEmptySubmitDraft());
   const [prototypeFields, setPrototypeFields] =
@@ -123,6 +143,7 @@ export function StudioSubmitPage({
     const full = validateSubmitDraftForPost(draft, {
       prototypeCategory,
       prototypeFields,
+      projectCategory,
     });
     if (full.ok) {
       queueMicrotask(() => {
@@ -136,6 +157,7 @@ export function StudioSubmitPage({
       const section = validateSubmitDraftSection(draft, failedEditMode, {
         prototypeCategory,
         prototypeFields,
+        projectCategory,
       });
       if (section.ok) {
         queueMicrotask(() => {
@@ -150,6 +172,7 @@ export function StudioSubmitPage({
     failedEditMode,
     prototypeCategory,
     prototypeFields,
+    projectCategory,
     submitError,
     submitErrorSource,
     validateSubmitDraftForPost,
@@ -171,6 +194,9 @@ export function StudioSubmitPage({
   }
 
   function handlePreviewEditTarget(target: StudioPreviewEditTarget) {
+    if (previewChrome.blockedEditTargets.includes(target)) {
+      return;
+    }
     setActiveTab("overview");
     panelFocusRequestIdRef.current += 1;
     const next = panelFocusRequestIdRef.current;
@@ -206,6 +232,7 @@ export function StudioSubmitPage({
     const validation = validateSubmitDraftForPost(draft, {
       prototypeCategory,
       prototypeFields,
+      projectCategory,
     });
     if (!validation.ok) {
       setSubmitError(validation.message);
@@ -222,6 +249,7 @@ export function StudioSubmitPage({
     const result = await submitDraft(draft, user, {
       prototypeCategory,
       prototypeFields,
+      projectCategory,
     });
     if (!result.ok) {
       setSubmitError(result.message);
@@ -272,11 +300,9 @@ export function StudioSubmitPage({
           <header className="border-b border-zinc-800/80 pb-3">
             <StudioMypageBackLink />
             <p className="mt-2 text-sm text-zinc-400">作品を投稿する</p>
-            {prototypeCategory ? (
+            {categoryBannerLabel ? (
               <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
-                <span>
-                  カテゴリ：{SUBMIT_PROTOTYPE_CATEGORY_LABEL[prototypeCategory]}
-                </span>
+                <span>カテゴリ：{categoryBannerLabel}</span>
                 <Link
                   href={SUBMIT_CATEGORY_PICK_HREF}
                   className="text-zinc-400 underline-offset-2 hover:text-zinc-200 hover:underline"
@@ -298,6 +324,8 @@ export function StudioSubmitPage({
               prototypeCategoryFields={
                 prototypeCategory ? prototypeFields : undefined
               }
+              commonFieldsOnly={commonFieldsOnly}
+              categoryLabel={categoryBannerLabel}
             />
           </div>
         </div>
@@ -322,6 +350,7 @@ export function StudioSubmitPage({
           onPrototypeCategoryFieldsChange={
             prototypeCategory ? patchPrototypeFields : undefined
           }
+          commonFieldsOnly={commonFieldsOnly}
         />
       </div>
 

@@ -2,23 +2,26 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { AppWindow, Gamepad2, Music2, Wrench } from "lucide-react";
+import { AppWindow, Gamepad2, Music2, Package, Wrench } from "lucide-react";
 import { StudioMypageBackLink } from "@/components/studio-mypage-back-link";
 import { StudioShell } from "@/components/studio-shell";
 import { studioOperationPrimaryButtonClassName } from "@/lib/studio-operation-panel-styles";
-import type { WorkCategoryId } from "@/lib/prototype/domain-expansion";
+import type { ProjectCategoryId } from "@/lib/project-categories";
 import {
-  SUBMIT_FLOW_CATEGORIES,
-  submitPrototypeHref,
-  type SubmitPrototypeCategory,
-} from "@/lib/prototype/studio-submit-flow";
+  STUDIO_SUBMIT_CATEGORY_OPTIONS,
+  studioSubmitHrefForCategory,
+} from "@/lib/studio-submit-category-options";
 
-const ICONS = {
+const ICONS: Record<
+  ProjectCategoryId,
+  typeof Gamepad2
+> = {
   game: Gamepad2,
-  music: Music2,
-  dev_tool: Wrench,
-  web_service: AppWindow,
-} as const;
+  audio: Music2,
+  asset: Package,
+  "dev-tool": Wrench,
+  "service-app": AppWindow,
+};
 
 /**
  * Category pick only — after choose, hand off to formal submit shell
@@ -26,15 +29,11 @@ const ICONS = {
  */
 export function StudioSubmitCategoryPick() {
   const router = useRouter();
-  const [picked, setPicked] = useState<WorkCategoryId | null>(null);
+  const [picked, setPicked] = useState<ProjectCategoryId | null>(null);
 
   function start() {
     if (!picked) return;
-    if (picked === "game") {
-      router.push("/studio/submit");
-      return;
-    }
-    router.push(submitPrototypeHref(picked as SubmitPrototypeCategory));
+    router.push(studioSubmitHrefForCategory(picked));
   }
 
   return (
@@ -52,7 +51,7 @@ export function StudioSubmitCategoryPick() {
         </div>
 
         <div className="grid gap-2 sm:grid-cols-2">
-          {SUBMIT_FLOW_CATEGORIES.map((option) => {
+          {STUDIO_SUBMIT_CATEGORY_OPTIONS.map((option) => {
             const Icon = ICONS[option.id];
             const active = picked === option.id;
             return (

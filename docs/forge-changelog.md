@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-08-09 — Studio asset Preview で game プレイ情報 UI を非表示
+
+- **Studio編集 Preview** — asset は play-info card / プレイ時間 / play-access badge / 環境表示を category chrome で非表示（値が残っていても section 自体を出さない）
+- **検証** — renderToStaticMarkup で asset（値あり）非表示 + game regression + audio/dev-tool/service-app prototype smoke
+- **非実施** — asset 専用入力項目追加なし。Production / main / DB write なし
+
+## 2026-08-09 — Studio asset 共通項目のみで正規投稿/編集
+
+- **Studio投稿** — カテゴリ picker にアセットを追加（Player と同じ5カテゴリ順）。asset は共通 Studio 項目のみ（種類 / asset_kinds UI なし）
+- **Studio編集** — asset が game ジャンル/プレイ情報 panel へ fallback しない。公開先は共通 publication path
+- **非実施** — asset 専用入力項目追加なし。Production / main / DB write なし
+
 ## 2026-08-09 — Studio write-path P1: UI engine wire + game tag E2E
 
 - **Studio編集** — non-game 各 panel の save が中央 validation engine（section scope）経由のみ。UI 内の required/allowed 再判定を除去（エラー表示 UX は維持）

@@ -47,6 +47,7 @@ import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import type { StudioEditPreviewPatch } from "@/lib/studio-edit-preview-merge";
 import { isNonGameStudioCategory } from "@/lib/studio-non-game-attributes";
+import { isStudioCommonFieldsOnlyCategory } from "@/lib/studio-category-mode";
 import {
   SUBMIT_PROTOTYPE_CLASSIFICATION_ROW_LABEL,
   SUBMIT_PROTOTYPE_USAGE_ROW_LABEL,
@@ -167,6 +168,7 @@ export function StudioTabContextPanel({
   const versionKey = resolvePlayableVersion(growth.playableVersion);
   const versionLabel = `v${versionKey}`;
   const nonGame = isNonGameStudioCategory(game.category);
+  const commonFieldsOnly = isStudioCommonFieldsOnlyCategory(game.category);
   const prototypeCategory = projectCategoryToPrototypeCategory(game.category);
   const { isRead: voiceRead, markRead } = useNurtureVoiceRead(game.id, versionKey);
 
@@ -289,24 +291,39 @@ export function StudioTabContextPanel({
         />
       );
     } else if (overviewEditMode === "genres-tags") {
-      sectionContent = nonGame ? (
-        <StudioOverviewNonGameFieldsEditPanel
-          key={`${projectId}-non-game-classification`}
-          projectId={projectId}
-          mode="genres-tags"
-          onCancel={closeOverviewEdit}
-          onSaved={handleOverviewSaved}
-        />
-      ) : (
-        <StudioOverviewGenresTagsEditPanel
-          key={`${projectId}-genres-tags`}
-          projectId={projectId}
-          onCancel={closeOverviewEdit}
-          onSaved={handleOverviewSaved}
-          onPreviewPatchChange={onPreviewPatchChange}
-          highlightFieldId={scrollOnHighlight ? highlightFieldId : null}
-        />
-      );
+      if (commonFieldsOnly) {
+        sectionContent = (
+          <p className="px-1 text-sm text-zinc-500">
+            このカテゴリではジャンル編集はありません。
+            <button
+              type="button"
+              className="ml-2 text-zinc-400 underline-offset-2 hover:underline"
+              onClick={closeOverviewEdit}
+            >
+              戻る
+            </button>
+          </p>
+        );
+      } else {
+        sectionContent = nonGame ? (
+          <StudioOverviewNonGameFieldsEditPanel
+            key={`${projectId}-non-game-classification`}
+            projectId={projectId}
+            mode="genres-tags"
+            onCancel={closeOverviewEdit}
+            onSaved={handleOverviewSaved}
+          />
+        ) : (
+          <StudioOverviewGenresTagsEditPanel
+            key={`${projectId}-genres-tags`}
+            projectId={projectId}
+            onCancel={closeOverviewEdit}
+            onSaved={handleOverviewSaved}
+            onPreviewPatchChange={onPreviewPatchChange}
+            highlightFieldId={scrollOnHighlight ? highlightFieldId : null}
+          />
+        );
+      }
     } else if (overviewEditMode === "images") {
       sectionContent = (
         <StudioOverviewImagesEditPanel
@@ -318,7 +335,7 @@ export function StudioTabContextPanel({
         />
       );
     } else if (overviewEditMode === "publication" || overviewEditMode === "visibility") {
-      sectionContent = nonGame ? (
+      sectionContent = nonGame && !commonFieldsOnly ? (
         <StudioOverviewNonGameFieldsEditPanel
           key={`${projectId}-non-game-publication`}
           projectId={projectId}
@@ -347,24 +364,39 @@ export function StudioTabContextPanel({
         />
       );
     } else if (overviewEditMode === "play-info") {
-      sectionContent = nonGame ? (
-        <StudioOverviewNonGameFieldsEditPanel
-          key={`${projectId}-non-game-usage`}
-          projectId={projectId}
-          mode="play-info"
-          onCancel={closeOverviewEdit}
-          onSaved={handleOverviewSaved}
-        />
-      ) : (
-        <StudioOverviewPlayInfoEditPanel
-          key={`${projectId}-play-info`}
-          projectId={projectId}
-          onCancel={closeOverviewEdit}
-          onSaved={handleOverviewSaved}
-          onPreviewPatchChange={onPreviewPatchChange}
-          highlightFieldId={scrollOnHighlight ? highlightFieldId : null}
-        />
-      );
+      if (commonFieldsOnly) {
+        sectionContent = (
+          <p className="px-1 text-sm text-zinc-500">
+            このカテゴリではプレイ情報の編集はありません。
+            <button
+              type="button"
+              className="ml-2 text-zinc-400 underline-offset-2 hover:underline"
+              onClick={closeOverviewEdit}
+            >
+              戻る
+            </button>
+          </p>
+        );
+      } else {
+        sectionContent = nonGame ? (
+          <StudioOverviewNonGameFieldsEditPanel
+            key={`${projectId}-non-game-usage`}
+            projectId={projectId}
+            mode="play-info"
+            onCancel={closeOverviewEdit}
+            onSaved={handleOverviewSaved}
+          />
+        ) : (
+          <StudioOverviewPlayInfoEditPanel
+            key={`${projectId}-play-info`}
+            projectId={projectId}
+            onCancel={closeOverviewEdit}
+            onSaved={handleOverviewSaved}
+            onPreviewPatchChange={onPreviewPatchChange}
+            highlightFieldId={scrollOnHighlight ? highlightFieldId : null}
+          />
+        );
+      }
     } else {
       sectionContent = (
         <div className="space-y-5">
@@ -374,15 +406,17 @@ export function StudioTabContextPanel({
               label="基本情報を編集"
               onClick={() => openOverviewEdit("basic-info", setOverviewEditMode)}
             />
-            <StudioActionRow
-              icon={Tags}
-              label={
-                prototypeCategory
-                  ? SUBMIT_PROTOTYPE_CLASSIFICATION_ROW_LABEL[prototypeCategory]
-                  : "ジャンル・タグを編集"
-              }
-              onClick={() => openOverviewEdit("genres-tags", setOverviewEditMode)}
-            />
+            {!commonFieldsOnly ? (
+              <StudioActionRow
+                icon={Tags}
+                label={
+                  prototypeCategory
+                    ? SUBMIT_PROTOTYPE_CLASSIFICATION_ROW_LABEL[prototypeCategory]
+                    : "ジャンル・タグを編集"
+                }
+                onClick={() => openOverviewEdit("genres-tags", setOverviewEditMode)}
+              />
+            ) : null}
             <StudioActionRow
               icon={Sparkles}
               label="作品紹介を編集"
@@ -395,16 +429,22 @@ export function StudioTabContextPanel({
             />
           </StudioActionGroup>
 
-          <StudioActionGroup label={nonGame ? "利用・公開" : "遊び方・公開"}>
-            <StudioActionRow
-              icon={Gamepad2}
-              label={
-                prototypeCategory
-                  ? SUBMIT_PROTOTYPE_USAGE_ROW_LABEL[prototypeCategory]
-                  : "プレイ情報を編集"
-              }
-              onClick={() => openOverviewEdit("play-info", setOverviewEditMode)}
-            />
+          <StudioActionGroup
+            label={
+              commonFieldsOnly ? "公開" : nonGame ? "利用・公開" : "遊び方・公開"
+            }
+          >
+            {!commonFieldsOnly ? (
+              <StudioActionRow
+                icon={Gamepad2}
+                label={
+                  prototypeCategory
+                    ? SUBMIT_PROTOTYPE_USAGE_ROW_LABEL[prototypeCategory]
+                    : "プレイ情報を編集"
+                }
+                onClick={() => openOverviewEdit("play-info", setOverviewEditMode)}
+              />
+            ) : null}
             <StudioStatusRow label="公開状態">
               <span className="font-medium text-zinc-200">{visibilityLabel}</span>
             </StudioStatusRow>

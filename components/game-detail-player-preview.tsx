@@ -27,12 +27,18 @@ import { PROJECT_ONE_LINE_DESCRIPTION_HERO_CLASS } from "@/lib/project-one-line-
 import { PROJECT_TITLE_HERO_CLASS } from "@/lib/project-title";
 import {
   resolvePublicProfileDisplay,
+  type ResolvedPublicProfileDisplay,
 } from "@/lib/public-profile-display";
 import { getUserFacingGameTags } from "@/lib/user-labels";
 import { gameToDetailV0 } from "@/lib/submitted-game-v0-adapter";
 import { Clock } from "lucide-react";
 import { StudioPreviewEditTarget } from "@/components/studio-preview-edit-target";
 import type { StudioPreviewEditTarget as StudioPreviewEditTargetId } from "@/lib/studio-preview-edit-targets";
+import {
+  resolveStudioPreviewCategoryChrome,
+  studioPreviewPlayInfoCardProp,
+} from "@/lib/studio-preview-category-chrome";
+import type { ProjectPublicStats } from "@/lib/supabase/project-public-stats-db";
 
 function TagPill({ children }: { children: React.ReactNode }) {
   return (
@@ -42,68 +48,70 @@ function TagPill({ children }: { children: React.ReactNode }) {
   );
 }
 
-export type GameDetailPlayerPreviewProps = {
-  projectId: string;
+const EMPTY_PUBLIC_STATS: ProjectPublicStats = {
+  feedbackParticipantCount: 0,
+  watchCount: 0,
+  witnessGrantCount: 0,
+  latestDevlogAt: null,
+  playPlayerCount: null,
+};
+
+export type GameDetailPlayerPreviewViewProps = {
+  /** Edit Studio preview source (category chrome reads game.category). */
+  sourceGame: Game;
   activeTab: GameDetailTab;
   onTabChange: (tab: GameDetailTab) => void;
   onTestPlay?: () => void;
-  /** Studio 編集画面: 親の最新 game を渡すと保存後の左プレビュー更新を確実にする */
-  sourceGame?: Game;
   onEditTarget?: (target: StudioPreviewEditTargetId) => void;
+  /** Optional owner profile enrich (live edit path). */
+  ownerProfileDisplay?: ResolvedPublicProfileDisplay | null;
+  publicStats?: ProjectPublicStats;
+  publicStatsLoaded?: boolean;
+  publicStatsError?: boolean;
 };
 
 /**
- * Studio: プレイヤー詳細ページと同型の読み取り専用プレビュー。
- * /games/[id] の正本 UI は変更せず、Studio 内確認用に最小構成で再利用する。
+ * Studio edit preview body — no GamesProvider / network hooks.
+ * Production wrapper: {@link GameDetailPlayerPreview}.
+ * Behavioral verifies render this tree (same chrome wiring as production).
  */
-export function GameDetailPlayerPreview({
-  projectId,
+export function GameDetailPlayerPreviewView({
+  sourceGame,
   activeTab,
   onTabChange,
   onTestPlay,
-  sourceGame,
   onEditTarget,
-}: GameDetailPlayerPreviewProps) {
-  const { getSubmittedGameById, getDeveloperProfileByUserId } = useGames();
-  const submittedGame = sourceGame ?? getSubmittedGameById(projectId);
+  ownerProfileDisplay = null,
+  publicStats = EMPTY_PUBLIC_STATS,
+  publicStatsLoaded = false,
+  publicStatsError = true,
+}: GameDetailPlayerPreviewViewProps) {
+  const chrome = resolveStudioPreviewCategoryChrome({
+    category: sourceGame.category,
+  });
 
   const displayGame = useMemo(() => {
-    if (!submittedGame) {
-      return null;
-    }
-    const base = gameToDetailV0(submittedGame);
-    const ownerId = submittedGame.ownerId;
-    if (!ownerId) {
+    const base = gameToDetailV0(sourceGame);
+    if (!ownerProfileDisplay) {
       return base;
     }
-    const profile = getDeveloperProfileByUserId(ownerId);
-    const display = resolvePublicProfileDisplay(profile, {
-      userId: ownerId,
-      fallbackName: base.developer.name,
-    });
     return {
       ...base,
       developer: {
         ...base.developer,
-        id: display.routeId,
-        name: display.displayName,
-        avatar: display.avatarSrc,
-        bio: display.bio,
-        xAccount: display.xAccount,
+        id: ownerProfileDisplay.routeId,
+        name: ownerProfileDisplay.displayName,
+        avatar: ownerProfileDisplay.avatarSrc,
+        bio: ownerProfileDisplay.bio,
+        xAccount: ownerProfileDisplay.xAccount,
       },
     };
-  }, [submittedGame, getDeveloperProfileByUserId]);
+  }, [sourceGame, ownerProfileDisplay]);
 
   const playerMeta = useMemo(
-    () => resolveGameDetailPlayerMeta(submittedGame),
-    [submittedGame],
+    () => resolveGameDetailPlayerMeta(sourceGame),
+    [sourceGame],
   );
-
-  const {
-    stats: publicStats,
-    loaded: publicStatsLoaded,
-    error: publicStatsError,
-  } = useProjectPublicStats(projectId);
 
   const tabCounts = useMemo(() => {
     if (!publicStatsLoaded || publicStatsError) {
@@ -117,20 +125,17 @@ export function GameDetailPlayerPreview({
   ]);
 
   const overviewPublication = useMemo(
-    () => resolvePublicationDisplay(submittedGame),
-    [submittedGame],
+    () => resolvePublicationDisplay(sourceGame),
+    [sourceGame],
   );
   const playDestinations = useMemo(
-    () => resolvePlayDestinations(submittedGame),
-    [submittedGame],
+    () => resolvePlayDestinations(sourceGame),
+    [sourceGame],
   );
   const relatedLinkDisplays = useMemo(() => {
-    if (!submittedGame) {
-      return [];
-    }
-    const { relatedLinks } = resolveGamePublishLinks(submittedGame);
+    const { relatedLinks } = resolveGamePublishLinks(sourceGame);
     return toRelatedLinkDisplays(relatedLinks);
-  }, [submittedGame]);
+  }, [sourceGame]);
 
   const hasDevlogForOverview = Boolean(publicStats.latestDevlogAt);
   const devlogOverviewLabel = publicStats.latestDevlogAt
@@ -138,32 +143,23 @@ export function GameDetailPlayerPreview({
     : "";
 
   const thumbnailUrls = useMemo(() => {
-    if (!submittedGame) {
-      return [];
-    }
-    const count = Math.max(1, resolveProjectThumbnailUrls(submittedGame).length || 1);
-    return publicProjectThumbnailPaths(submittedGame.id, count);
-  }, [submittedGame]);
+    const count = Math.max(1, resolveProjectThumbnailUrls(sourceGame).length || 1);
+    return publicProjectThumbnailPaths(sourceGame.id, count);
+  }, [sourceGame]);
 
   const posterFallback = useMemo(() => {
-    if (!submittedGame) {
-      return null;
-    }
-    const genres = resolveProjectGenres(submittedGame);
+    const genres = resolveProjectGenres(sourceGame);
     return {
-      projectId: submittedGame.id,
-      title: submittedGame.title,
+      projectId: sourceGame.id,
+      title: sourceGame.title,
       genre: genres[0] ?? "その他",
-      phase: submittedGame.phase,
-      styleSeed: submittedGame.id,
+      phase: sourceGame.phase,
+      styleSeed: sourceGame.id,
     };
-  }, [submittedGame]);
+  }, [sourceGame]);
 
-  if (!submittedGame || !displayGame || !posterFallback) {
-    return null;
-  }
-
-  const developerUserId = submittedGame.ownerId ?? displayGame.developer.id;
+  const developerUserId = sourceGame.ownerId ?? displayGame.developer.id;
+  const projectId = sourceGame.id;
 
   return (
     <div aria-label="公開ページの見え方" className="min-w-0 space-y-4">
@@ -180,13 +176,19 @@ export function GameDetailPlayerPreview({
 
           <div className="flex min-w-0 flex-col justify-center p-6 lg:p-8">
             <div className="flex flex-wrap gap-2">
-              <StudioPreviewEditTarget target="genres" onEditTarget={onEditTarget} inline>
+              {chrome.categoryPillLabel ? (
                 <span className="inline-flex flex-wrap gap-2">
-                  {getUserFacingGameTags(displayGame.tags).map((tag) => (
-                    <TagPill key={tag}>{tag}</TagPill>
-                  ))}
+                  <TagPill>{chrome.categoryPillLabel}</TagPill>
                 </span>
-              </StudioPreviewEditTarget>
+              ) : (
+                <StudioPreviewEditTarget target="genres" onEditTarget={onEditTarget} inline>
+                  <span className="inline-flex flex-wrap gap-2">
+                    {getUserFacingGameTags(displayGame.tags).map((tag) => (
+                      <TagPill key={tag}>{tag}</TagPill>
+                    ))}
+                  </span>
+                </StudioPreviewEditTarget>
+              )}
             </div>
             <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2">
               <StudioPreviewEditTarget target="title" onEditTarget={onEditTarget} inline>
@@ -195,7 +197,11 @@ export function GameDetailPlayerPreview({
                 </p>
               </StudioPreviewEditTarget>
               {playerMeta ? (
-                <GameDetailPhaseBadge meta={playerMeta} onEditTarget={onEditTarget} />
+                <GameDetailPhaseBadge
+                  meta={playerMeta}
+                  onEditTarget={onEditTarget}
+                  showPlayAccessBadge={chrome.showPlayAccessEditTarget}
+                />
               ) : null}
             </div>
             <StudioPreviewEditTarget target="catch-copy" onEditTarget={onEditTarget}>
@@ -241,7 +247,16 @@ export function GameDetailPlayerPreview({
           publication={overviewPublication}
           playDestinations={playDestinations}
           relatedLinks={relatedLinkDisplays}
-          onEditTarget={onEditTarget}
+          showUnsetPlayPlaceholders={chrome.showUnsetPlayPlaceholders}
+          prototypeInfoCard={studioPreviewPlayInfoCardProp(chrome)}
+          onEditTarget={
+            chrome.commonFieldsOnly
+              ? (target) => {
+                  if (chrome.blockedEditTargets.includes(target)) return;
+                  onEditTarget?.(target);
+                }
+              : onEditTarget
+          }
         />
       ) : null}
 
@@ -256,7 +271,7 @@ export function GameDetailPlayerPreview({
       {activeTab === "voices" ? (
         <EveryonesVoiceSection
           gameId={projectId}
-          playableVersion={submittedGame?.playableVersion}
+          playableVersion={sourceGame.playableVersion}
           variant="tab"
         />
       ) : null}
@@ -265,5 +280,67 @@ export function GameDetailPlayerPreview({
         <GameSpecialThanksTab projectId={projectId} />
       ) : null}
     </div>
+  );
+}
+
+export type GameDetailPlayerPreviewProps = {
+  projectId: string;
+  activeTab: GameDetailTab;
+  onTabChange: (tab: GameDetailTab) => void;
+  onTestPlay?: () => void;
+  /** Studio 編集画面: 親の最新 game を渡すと保存後の左プレビュー更新を確実にする */
+  sourceGame?: Game;
+  onEditTarget?: (target: StudioPreviewEditTargetId) => void;
+};
+
+/**
+ * Studio: プレイヤー詳細ページと同型の読み取り専用プレビュー。
+ * /games/[id] の正本 UI は変更せず、Studio 内確認用に最小構成で再利用する。
+ */
+export function GameDetailPlayerPreview({
+  projectId,
+  activeTab,
+  onTabChange,
+  onTestPlay,
+  sourceGame,
+  onEditTarget,
+}: GameDetailPlayerPreviewProps) {
+  const { getSubmittedGameById, getDeveloperProfileByUserId } = useGames();
+  const submittedGame = sourceGame ?? getSubmittedGameById(projectId);
+
+  const ownerProfileDisplay = useMemo(() => {
+    if (!submittedGame?.ownerId) {
+      return null;
+    }
+    const profile = getDeveloperProfileByUserId(submittedGame.ownerId);
+    const base = gameToDetailV0(submittedGame);
+    return resolvePublicProfileDisplay(profile, {
+      userId: submittedGame.ownerId,
+      fallbackName: base.developer.name,
+    });
+  }, [submittedGame, getDeveloperProfileByUserId]);
+
+  const {
+    stats: publicStats,
+    loaded: publicStatsLoaded,
+    error: publicStatsError,
+  } = useProjectPublicStats(projectId);
+
+  if (!submittedGame) {
+    return null;
+  }
+
+  return (
+    <GameDetailPlayerPreviewView
+      sourceGame={submittedGame}
+      activeTab={activeTab}
+      onTabChange={onTabChange}
+      onTestPlay={onTestPlay}
+      onEditTarget={onEditTarget}
+      ownerProfileDisplay={ownerProfileDisplay}
+      publicStats={publicStats}
+      publicStatsLoaded={publicStatsLoaded}
+      publicStatsError={publicStatsError}
+    />
   );
 }

@@ -13,6 +13,9 @@ function StudioSubmitRouteInner({
     if (searchParams.category === "game") {
       return <StudioSubmitPage />;
     }
+    if (searchParams.category === "asset") {
+      return <StudioSubmitPage projectCategory="asset" />;
+    }
     const prototypeCategory = parseSubmitPrototypeCategory(searchParams.category);
     if (prototypeCategory) {
       return <StudioSubmitPage prototypeCategory={prototypeCategory} />;

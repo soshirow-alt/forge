@@ -118,6 +118,8 @@ export type StudioSubmitPanelProps = {
   onPrototypeCategoryFieldsChange?: (
     patch: Partial<SubmitPrototypeCategoryFields>,
   ) => void;
+  /** Asset and similar: shared fields only (no genres / play-info rows). */
+  commonFieldsOnly?: boolean;
 };
 
 export function StudioSubmitPanel({
@@ -136,12 +138,14 @@ export function StudioSubmitPanel({
   prototypeCategory = null,
   prototypeCategoryFields,
   onPrototypeCategoryFieldsChange,
+  commonFieldsOnly = false,
 }: StudioSubmitPanelProps) {
   const [editMode, setEditMode] = useState<SubmitEditMode>(null);
   const [highlightFieldId, setHighlightFieldId] = useState<StudioFieldId | null>(null);
   const [scrollOnHighlight, setScrollOnHighlight] = useState(true);
   const promptSummary = summarizeVersionPromptSettings(draft.promptMode, draft.promptDrafts);
   const isPrototype = Boolean(prototypeCategory);
+  const useCommonShell = commonFieldsOnly || isPrototype;
   const imageCopy = prototypeCategory
     ? SUBMIT_PROTOTYPE_IMAGE_COPY[prototypeCategory]
     : null;
@@ -200,7 +204,7 @@ export function StudioSubmitPanel({
             onApply={applyPatch}
             onCancel={closeEdit}
             highlightFieldId={scrollOnHighlight ? editHighlight : null}
-            titlePlaceholder={isPrototype ? "作品のタイトル" : "ゲームのタイトル"}
+            titlePlaceholder={useCommonShell ? "作品のタイトル" : "ゲームのタイトル"}
           />
         </StudioPanelScrollShell>
       </aside>
@@ -208,6 +212,7 @@ export function StudioSubmitPanel({
   }
   if (
     editMode === "genres-tags" &&
+    !commonFieldsOnly &&
     prototypeCategory &&
     prototypeCategoryFields &&
     onPrototypeCategoryFieldsChange
@@ -228,7 +233,7 @@ export function StudioSubmitPanel({
       </aside>
     );
   }
-  if (editMode === "genres-tags") {
+  if (editMode === "genres-tags" && !commonFieldsOnly) {
     return (
       <aside aria-label="Studioパネル" className={submitPanelAsideClassName}>
         <StudioPanelScrollShell>
@@ -283,6 +288,7 @@ export function StudioSubmitPanel({
   }
   if (
     editMode === "play-info" &&
+    !commonFieldsOnly &&
     prototypeCategory &&
     prototypeCategoryFields &&
     onPrototypeCategoryFieldsChange
@@ -301,7 +307,7 @@ export function StudioSubmitPanel({
       </aside>
     );
   }
-  if (editMode === "play-info") {
+  if (editMode === "play-info" && !commonFieldsOnly) {
     return (
       <aside aria-label="Studioパネル" className={submitPanelAsideClassName}>
         <StudioPanelScrollShell>
@@ -318,6 +324,7 @@ export function StudioSubmitPanel({
   }
   if (
     (editMode === "publication" || editMode === "visibility") &&
+    !commonFieldsOnly &&
     prototypeCategory &&
     prototypeCategoryFields &&
     onPrototypeCategoryFieldsChange
@@ -357,7 +364,7 @@ export function StudioSubmitPanel({
   const feedbackAskLabel = prototypeCategory
     ? SUBMIT_PROTOTYPE_FEEDBACK_ASK_LABEL[prototypeCategory]
     : "プレイヤーに聞きたいこと";
-  const feedbackVersionLabel = isPrototype
+  const feedbackVersionLabel = useCommonShell
     ? "初回の公開ver"
     : "初回のプレイ可能ver";
   const visibilityLabel =
@@ -393,25 +400,27 @@ export function StudioSubmitPanel({
                 required
                 onClick={() => openEdit("basic-info")}
               />
-              <StudioActionRow
-                icon={Tags}
-                label={
-                  prototypeCategory
-                    ? SUBMIT_PROTOTYPE_CLASSIFICATION_ROW_LABEL[prototypeCategory]
-                    : "ジャンル・タグを編集"
-                }
-                summary={
-                  prototypeCategory && prototypeCategoryFields
-                    ? summarizeSubmitPrototypeClassification(
-                        prototypeCategory,
-                        prototypeCategoryFields,
-                        draft.featureTags.length,
-                      )
-                    : summarizeSubmitDraftGenres(draft)
-                }
-                required
-                onClick={() => openEdit("genres-tags")}
-              />
+              {!commonFieldsOnly ? (
+                <StudioActionRow
+                  icon={Tags}
+                  label={
+                    prototypeCategory
+                      ? SUBMIT_PROTOTYPE_CLASSIFICATION_ROW_LABEL[prototypeCategory]
+                      : "ジャンル・タグを編集"
+                  }
+                  summary={
+                    prototypeCategory && prototypeCategoryFields
+                      ? summarizeSubmitPrototypeClassification(
+                          prototypeCategory,
+                          prototypeCategoryFields,
+                          draft.featureTags.length,
+                        )
+                      : summarizeSubmitDraftGenres(draft)
+                  }
+                  required
+                  onClick={() => openEdit("genres-tags")}
+                />
+              ) : null}
               <StudioActionRow
                 icon={Sparkles}
                 label="作品紹介を編集"
@@ -427,25 +436,27 @@ export function StudioSubmitPanel({
               />
             </StudioActionGroup>
 
-            <StudioActionGroup label="遊び方・公開">
-              <StudioActionRow
-                icon={Gamepad2}
-                label={
-                  prototypeCategory
-                    ? SUBMIT_PROTOTYPE_USAGE_ROW_LABEL[prototypeCategory]
-                    : "プレイ情報を編集"
-                }
-                summary={
-                  prototypeCategory && prototypeCategoryFields
-                    ? summarizeSubmitPrototypeUsage(
-                        prototypeCategory,
-                        prototypeCategoryFields,
-                      )
-                    : summarizeSubmitDraftPlayInfo(draft)
-                }
-                required={!isPrototype}
-                onClick={() => openEdit("play-info")}
-              />
+            <StudioActionGroup label={commonFieldsOnly ? "公開" : isPrototype ? "利用・公開" : "遊び方・公開"}>
+              {!commonFieldsOnly ? (
+                <StudioActionRow
+                  icon={Gamepad2}
+                  label={
+                    prototypeCategory
+                      ? SUBMIT_PROTOTYPE_USAGE_ROW_LABEL[prototypeCategory]
+                      : "プレイ情報を編集"
+                  }
+                  summary={
+                    prototypeCategory && prototypeCategoryFields
+                      ? summarizeSubmitPrototypeUsage(
+                          prototypeCategory,
+                          prototypeCategoryFields,
+                        )
+                      : summarizeSubmitDraftPlayInfo(draft)
+                  }
+                  required={!isPrototype}
+                  onClick={() => openEdit("play-info")}
+                />
+              ) : null}
               <StudioActionRow
                 icon={Globe}
                 label="公開先・公開設定を編集"
@@ -510,7 +521,7 @@ export function StudioSubmitPanel({
             type="button"
             onClick={onSubmit}
             disabled={
-              isPrototype
+              useCommonShell
                 ? false
                 : isProjectPublishSubmitDisabled({
                     submitting,
@@ -519,7 +530,7 @@ export function StudioSubmitPanel({
             }
             className={primaryButtonClassName}
           >
-            {isPrototype
+            {useCommonShell
               ? projectPublishSubmitLabel({
                   submitting: false,
                   thumbnailsBusy: false,
