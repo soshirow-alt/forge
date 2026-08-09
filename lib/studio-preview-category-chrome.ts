@@ -70,7 +70,8 @@ export function resolveStudioPreviewCategoryChrome(input: {
 
 /**
  * Prop for GameDetailPlayerOverview / OverviewV0Tab.
- * - asset: `null` hides play-info section even when playerMeta has active chips
+ * - asset (commonFieldsOnly): pass asset structured card object, or `null` to hide
+ *   (never fall back to game play-info chips)
  * - game: `undefined` uses normal game play-info
  * - non-game prototype: pass the prototype card object
  */
@@ -78,8 +79,8 @@ export function studioPreviewPlayInfoCardProp(
   chrome: StudioPreviewCategoryChrome,
   prototypeInfoCard?: StudioPreviewPrototypeInfoCard | null,
 ): StudioPreviewPrototypeInfoCard | null | undefined {
-  if (!chrome.showGamePlayInfoCard) {
-    return null;
+  if (chrome.commonFieldsOnly) {
+    return prototypeInfoCard ?? null;
   }
   return prototypeInfoCard;
 }

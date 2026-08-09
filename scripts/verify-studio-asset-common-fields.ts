@@ -31,6 +31,10 @@ import type { Game } from "../lib/mock-games";
 import type { ProjectRow } from "../lib/supabase/schema";
 import { createEmptyPublishDestination } from "../lib/project-publish-links";
 import { parseCategoryAttributes } from "../lib/project-categories";
+import {
+  createEmptySubmitAssetCategoryFields,
+  type SubmitAssetCategoryFields,
+} from "../lib/studio-non-game-attributes";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const PROJECT_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -124,24 +128,49 @@ const owner = {
   creator: "Tester",
 };
 
-// validation: common only — no genre / playAccess / non-game kind rules
+const assetFields: SubmitAssetCategoryFields = {
+  kinds: ["キャラクター"],
+  formats: ["2D"],
+  tastes: ["アニメ・トゥーン"],
+  tools: [],
+};
+
+// validation: no game genre / playAccess / non-game kind rules — but asset kind IS required
 {
   const draft = assetDraft();
-  const ok = validateSubmitDraftForPost(draft, { projectCategory: "asset" });
-  assert.equal(ok.ok, true, "asset common draft should validate");
+  const ok = validateSubmitDraftForPost(draft, {
+    projectCategory: "asset",
+    assetFields,
+  });
+  assert.equal(ok.ok, true, "asset draft with kinds should validate");
+
+  // asset kind required — analogous to genre required for game
+  const noKinds = validateSubmitDraftForPost(draft, {
+    projectCategory: "asset",
+    assetFields: createEmptySubmitAssetCategoryFields(),
+  });
+  assert.equal(noKinds.ok, false, "asset without kinds must fail closed");
+  const noAssetFieldsAtAll = validateSubmitDraftForPost(draft, {
+    projectCategory: "asset",
+  });
+  assert.equal(noAssetFieldsAtAll.ok, false);
 
   const missingTitle = assetDraft();
   missingTitle.title = "";
   const failTitle = validateSubmitDraftForPost(missingTitle, {
     projectCategory: "asset",
+    assetFields,
   });
   assert.equal(failTitle.ok, false);
 
-  // game rules must NOT apply
+  // game genre rule must NOT apply (draft.genres stays empty for asset)
   const noGenre = assetDraft();
   noGenre.genres = [];
   assert.equal(
-    validateSubmitDraftForPost(noGenre, { projectCategory: "asset" }).ok,
+    validateSubmitDraftForPost(noGenre, {
+      projectCategory: "asset",
+      assetFields,
+    }).ok,
     true,
   );
 }
@@ -153,14 +182,34 @@ const owner = {
     draft,
     owner,
     projectCategory: "asset",
+    assetFields,
+  });
+  const row = submitFormToInsertRow(form, owner, { deferThumbnails: true });
+  assert.equal(row.category, "asset");
+  assert.deepEqual(row.category_attributes, {
+    formats: ["2D"],
+    tastes: ["アニメ・トゥーン"],
+  });
+  assert.deepEqual(row.asset_kinds, ["キャラクター"]);
+  assert.equal(row.play_url, "https://example.com/asset");
+  const parsed = parseCategoryAttributes(row.category_attributes);
+  // legacy 076 CategoryAttributes.assetKinds (numeric IDs) is a separate shape —
+  // canonical labels are not valid AssetKindId values, so this stays undefined.
+  assert.equal(parsed.assetKinds, undefined);
+}
+
+// planner without assetFields still keeps game-specific fields absent (no game fallback)
+{
+  const draft = assetDraft();
+  const form = planStudioSubmitWrite({
+    draft,
+    owner,
+    projectCategory: "asset",
   });
   const row = submitFormToInsertRow(form, owner, { deferThumbnails: true });
   assert.equal(row.category, "asset");
   assert.deepEqual(row.category_attributes, {});
   assert.ok(!("asset_kinds" in row));
-  assert.equal(row.play_url, "https://example.com/asset");
-  const parsed = parseCategoryAttributes(row.category_attributes);
-  assert.equal(parsed.assetKinds, undefined);
 }
 
 type MockState = { updatePayloads: Record<string, unknown>[]; updateCalls: number };

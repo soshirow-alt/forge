@@ -19,6 +19,7 @@ import {
   genresToLegacyGenreColumn,
   sanitizeProjectGenresForSave,
 } from "@/lib/project-genres";
+import { normalizeFormalMultiForSave, PLAYER_COUNT_OPTIONS } from "@/lib/project-formal-filter-registry";
 import { DEFAULT_PLAYABLE_VERSION } from "@/lib/playable-version";
 import type { SubmitFormData } from "@/lib/project-form";
 import { resolveLinkFieldsForWrite } from "@/lib/project-link-write";
@@ -88,6 +89,8 @@ export type SubmitDraftState = {
   /** @deprecated synced from publishDestinations — kept for callers / preview */
   playUrl: string;
   estimatedPlayTime: string;
+  /** Game only — registry `player_count` (projects.player_counts text[]). */
+  playerCounts: string[];
   steamUrl: string;
   itchUrl: string;
   discordUrl: string;
@@ -148,6 +151,7 @@ export function createEmptySubmitDraft(): SubmitDraftState {
     playEnvironment: EMPTY_PLAY_ENVIRONMENT_FORM,
     playUrl: "",
     estimatedPlayTime: "",
+    playerCounts: [],
     steamUrl: "",
     itchUrl: "",
     discordUrl: "",
@@ -209,6 +213,7 @@ export function buildDraftGame(
     tags,
     playUrl: links.playUrl,
     estimatedPlayTime: draft.estimatedPlayTime.trim() || undefined,
+    playerCounts: draft.playerCounts,
     steamUrl: links.steamUrl,
     itchUrl: links.itchUrl,
     discordUrl: links.discordUrl,
@@ -281,6 +286,9 @@ export function resolveSubmitDraftPreviewPlayerMeta(
   const distribution = distributionTypeFromPrimary(draft.publishDestinations);
   const releaseBadge = draft.declareAlreadyReleased ? getCompletedProductBadge() : null;
   const playAccessBadge = getPlayAccessPlayerBadge(draft.playAccessType);
+  const selectedCounts = new Set(
+    (draft.playerCounts ?? []).map((value) => value.trim()).filter(Boolean),
+  );
 
   return {
     phaseLabel: phase ? displayPhase(phase) : SUBMIT_DRAFT_PHASE_PLACEHOLDER,
@@ -306,9 +314,32 @@ export function resolveSubmitDraftPreviewPlayerMeta(
         label: option.label,
         active: Boolean(distribution && distribution === option.id),
       })),
+      playerCountOptions: PLAYER_COUNT_OPTIONS.map((label) => ({
+        label,
+        active: selectedCounts.has(label),
+      })),
     },
     focusNotes: null,
   };
+}
+
+/**
+ * Save-boundary normalize for create (no baseline — nothing persisted yet):
+ * an unknown/obsolete value REJECTS, it is never silently dropped like
+ * `parseAllowlistedMulti` would. Callers must run `validateSubmitDraftForPost`
+ * / `validateSubmitDraftSection` (which perform this same check) before
+ * reaching this planner — throwing here means that guard was skipped, not a
+ * legitimate reject.
+ */
+function normalizePlayerCountsForCreate(playerCounts: string[]): string[] {
+  const result = normalizeFormalMultiForSave({
+    next: playerCounts,
+    fieldId: "player_count",
+  });
+  if (!result.ok) {
+    throw new Error(result.message);
+  }
+  return result.values;
 }
 
 export function draftToSubmitFormData(
@@ -318,6 +349,7 @@ export function draftToSubmitFormData(
     category?: import("@/lib/project-categories").ProjectCategoryId;
     categoryAttributes?: Record<string, unknown>;
     publishDestinationsOverride?: import("@/lib/project-publish-links").PublishDestination[];
+    assetKinds?: string[];
   },
 ): SubmitFormData {
   const featureTags = sanitizeFeatureTagsForSave(draft.featureTags);
@@ -341,6 +373,10 @@ export function draftToSubmitFormData(
     }),
     playUrl: links.playUrl,
     estimatedPlayTime: draft.estimatedPlayTime.trim() || undefined,
+    playerCounts:
+      draft.playerCounts.length > 0
+        ? normalizePlayerCountsForCreate(draft.playerCounts)
+        : undefined,
     steamUrl: links.steamUrl,
     itchUrl: links.itchUrl,
     discordUrl: links.discordUrl,
@@ -358,6 +394,7 @@ export function draftToSubmitFormData(
     ...(options?.categoryAttributes
       ? { categoryAttributes: options.categoryAttributes }
       : {}),
+    ...(options?.assetKinds ? { assetKinds: options.assetKinds } : {}),
   };
 }
 

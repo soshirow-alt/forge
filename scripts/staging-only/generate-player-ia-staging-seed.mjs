@@ -86,6 +86,9 @@ function buildProjects() {
   // Official Forge genre / feature-tag options only (lib/forge-*-options.ts).
   // Search matrix (games): genre OR multi-hit, tag OR multi-hit, genre∧tag hits,
   // genre∧tag zero (ローグライク∧協力プレイ), tag-less genre-only row.
+  // playEnvTags: stored in projects.tags (PC対応/スマホ対応/ブラウザ対応 — p_play_envs).
+  // playerCounts: dedicated projects.player_counts column (085) — populated on
+  // 5/8 rows only (not all) to exercise the "not set" branch too.
   const games = [
     {
       title: "ローグライク迷宮探索",
@@ -94,6 +97,8 @@ function buildProjects() {
       stream: "ok",
       playAccess: "free",
       playTime: "30分〜1時間",
+      playEnvTags: ["PC対応"],
+      playerCounts: ["1人"],
     },
     {
       title: "廃校ホラー短編",
@@ -103,6 +108,7 @@ function buildProjects() {
       streamNote: "クレジット必須",
       playAccess: "demo_available",
       playTime: "15〜30分",
+      playEnvTags: ["PC対応", "スマホ対応"],
     },
     {
       title: "アクション疾走デモ",
@@ -111,6 +117,8 @@ function buildProjects() {
       stream: "no",
       playAccess: "free",
       playTime: "5〜15分",
+      playEnvTags: ["PC対応"],
+      playerCounts: ["2人", "3〜4人"],
     },
     {
       title: "カード構築デュエル",
@@ -120,6 +128,8 @@ function buildProjects() {
       noImage: true,
       playAccess: "free",
       playTime: "30分〜1時間",
+      playEnvTags: ["ブラウザ対応"],
+      playerCounts: ["2人"],
     },
     {
       title: "パズル回廊",
@@ -129,6 +139,8 @@ function buildProjects() {
       noUpdate: true,
       playAccess: "free",
       playTime: "15〜30分",
+      playEnvTags: ["スマホ対応", "ブラウザ対応"],
+      playerCounts: ["1人"],
     },
     {
       title: "分岐ノベル短編",
@@ -139,6 +151,7 @@ function buildProjects() {
       noLinks: true,
       playAccess: "free",
       playTime: "1時間以上",
+      playEnvTags: ["PC対応"],
     },
     {
       title: "拠点防衛シューティング",
@@ -149,6 +162,8 @@ function buildProjects() {
       discord: true,
       playAccess: "demo_available",
       playTime: "5〜15分",
+      // Deliberately no playEnvTags/playerCounts — keeps the "truly empty
+      // extra tags" edge case intact (noTagsExtra) for card/UI robustness.
     },
     {
       title: LONG_TITLE,
@@ -161,6 +176,8 @@ function buildProjects() {
       longCreator: true,
       playAccess: "free",
       playTime: "5分未満",
+      playEnvTags: ["PC対応"],
+      playerCounts: ["1人", "5人以上"],
     },
   ];
   games.forEach((g, i) =>
@@ -178,15 +195,24 @@ function buildProjects() {
 
   // Studio-writable prototype attrs (lib/studio-non-game-attributes.ts).
   // Keyword Search still uses title / genres-like labels in tags (not game feature tags).
+  // kinds[] is canonical (new writes); row 3 (SEキット基礎) is kept as legacy
+  // singular `kind` ONLY (no kinds[]) to exercise the read-fallback path —
+  // including the 効果音・ジングル legacy value splitting into 効果音・SE /
+  // ジングル on Search filter match. musicDuration spans all 5 duration
+  // buckets (<10s / 10-30s / 30-60s / 1-3min / 3min+). Row 7 (BGM + バトル +
+  // 激しい) is the cross-axis AND case; kinds=[ボイス] AND purposes=[バトル]
+  // (row 4 vs row 7) is the zero-hit AND combo.
   const audios = [
     {
       title: "ループBGMパック",
       genres: ["BGM"],
       tags: ["BGM", "ループ音源", "制作に使える"],
       studioAttrs: {
-        kind: "BGM",
+        kinds: ["BGM"],
         musicGenres: ["アンビエント", "チップチューン"],
         musicDuration: "2:40",
+        moods: ["穏やか"],
+        purposes: ["フィールド・探索"],
         nonGamePublishDestinations: [
           {
             id: "ia-audio-pub-09",
@@ -202,9 +228,11 @@ function buildProjects() {
       genres: ["楽曲"],
       tags: ["楽曲"],
       studioAttrs: {
-        kind: "楽曲",
+        kinds: ["楽曲"],
         musicGenres: ["ポップ"],
         musicDuration: "3:15",
+        moods: ["明るい", "壮大"],
+        purposes: ["映像・PV"],
         nonGamePublishDestinations: [
           {
             id: "ia-audio-pub-10",
@@ -221,9 +249,12 @@ function buildProjects() {
       tags: ["SE", "ゲーム向け音素材"],
       discord: true,
       studioAttrs: {
+        // Legacy singular kind only (no kinds[]) — read-fallback coverage.
         kind: "効果音・ジングル",
         musicGenres: ["その他"],
         musicDuration: "0:08",
+        moods: ["緊張感"],
+        purposes: ["UI・通知"],
         nonGamePublishDestinations: [
           {
             id: "ia-audio-pub-11",
@@ -239,9 +270,11 @@ function buildProjects() {
       genres: ["ボイス"],
       tags: ["ボイス"],
       studioAttrs: {
-        kind: "ボイス",
+        kinds: ["ボイス"],
         musicGenres: ["その他"],
-        musicDuration: "1:05",
+        musicDuration: "0:45",
+        moods: ["楽しい・コミカル"],
+        purposes: ["日常・会話"],
       },
     },
     {
@@ -249,9 +282,11 @@ function buildProjects() {
       genres: ["環境音"],
       tags: ["環境音"],
       studioAttrs: {
-        kind: "その他",
+        kinds: ["その他"],
         musicGenres: ["アンビエント"],
         musicDuration: "10:00",
+        moods: ["幻想的"],
+        purposes: ["フィールド・探索"],
       },
     },
     {
@@ -260,9 +295,11 @@ function buildProjects() {
       tags: [],
       noTagsExtra: true,
       studioAttrs: {
-        kind: "朗読・音声ドラマ",
+        kinds: ["朗読・音声ドラマ"],
         musicGenres: ["劇伴・シネマティック"],
         musicDuration: "4:20",
+        moods: ["切ない"],
+        purposes: ["イベント・ストーリー"],
       },
     },
     {
@@ -271,9 +308,11 @@ function buildProjects() {
       tags: ["ループ音源", "BGM"],
       noUpdate: true,
       studioAttrs: {
-        kind: "BGM",
+        kinds: ["BGM"],
         musicGenres: ["エレクトロニック"],
         musicDuration: "1:30",
+        moods: ["激しい"],
+        purposes: ["バトル"],
       },
     },
     {
@@ -281,9 +320,10 @@ function buildProjects() {
       genres: ["ゲーム向け音素材"],
       tags: ["ゲーム向け音素材", "制作に使える"],
       studioAttrs: {
-        kind: "その他",
+        kinds: ["その他"],
         musicGenres: ["その他"],
-        musicDuration: "0:30",
+        musicDuration: "0:15",
+        purposes: ["汎用"],
         nonGamePublishDestinations: [
           {
             id: "ia-audio-pub-16",
@@ -310,38 +350,71 @@ function buildProjects() {
     }),
   );
 
-  // Asset = Studio common-fields-only (category_attributes={}, asset_kinds={},
-  // no game genres). Titles/tags keep Search keywords only.
-  // Keep base quick_try / looking_for / usable_for_creation distributions
-  // (hidden Search filters — do not wipe for this task).
+  // Asset = Studio structured panel (kinds -> dedicated projects.asset_kinds
+  // column; formats/tastes/tools -> category_attributes, same jsonb shape as
+  // other non-game categories). Canonical labels only (ASSET_KIND_CANONICAL_LABELS).
+  // Row 1 (2D character) + row 2 (3D character) exercise the same asset kind
+  // (キャラクター) split across both 表現形式 values.
   const assets = [
-    { title: "ドット絵タイルセット", genres: [], tags: ["ドット絵"] },
+    {
+      title: "2Dキャラクターセット",
+      genres: [],
+      tags: ["ドット絵", "2Dキャラクター"],
+      kinds: ["キャラクター"],
+      studioAttrs: { formats: ["2D"], tastes: ["ピクセルアート"], tools: ["Aseprite"] },
+    },
     {
       title: "3Dキャラクター素体",
       genres: [],
       tags: ["3Dキャラクター"],
+      kinds: ["キャラクター"],
+      studioAttrs: { formats: ["3D"], tastes: ["ローポリ"], tools: ["Blender", "Maya"] },
     },
     {
       title: "背景レイヤーパック",
       genres: [],
       tags: ["背景"],
       multiLinks: true,
+      kinds: ["背景・風景"],
+      studioAttrs: { formats: ["2D"], tastes: ["手描き"], tools: ["Photoshop"] },
     },
-    { title: "UI素材キット", genres: [], tags: ["UI素材"] },
+    {
+      title: "UI素材キット",
+      genres: [],
+      tags: ["UI素材"],
+      kinds: ["UI・アイコン"],
+      studioAttrs: { formats: ["2D"], tastes: ["ミニマル"], tools: ["Photoshop"] },
+    },
     {
       title: "テクスチャ＆マテリアル",
       genres: [],
       tags: ["テクスチャ"],
       noImage: true,
+      kinds: ["テクスチャ・マテリアル"],
+      studioAttrs: { formats: ["3D"], tastes: ["リアル"], tools: ["Blender"] },
     },
-    { title: "モーション＆アニメ", genres: [], tags: ["モーション"] },
-    { title: "VFX＆シェーダー", genres: [], tags: ["VFX"] },
+    {
+      title: "モーション＆アニメ",
+      genres: [],
+      tags: ["モーション"],
+      kinds: ["アニメーション"],
+      studioAttrs: { formats: ["2D"], tastes: ["アニメ・トゥーン"], tools: ["Spine"] },
+    },
+    {
+      title: "VFX＆シェーダー",
+      genres: [],
+      tags: ["VFX"],
+      kinds: ["エフェクト・VFX", "シェーダー"],
+      studioAttrs: { formats: ["3D"], tastes: ["SF・近未来"], tools: ["Unity", "Unreal Engine"] },
+    },
     {
       title: "フォント＆アイコン拡張",
       genres: [],
       tags: ["フォント"],
       noFb: true,
       noLinks: true,
+      kinds: ["フォント・文字"],
+      studioAttrs: { formats: ["2D"], tastes: [], tools: [] },
     },
   ];
   assets.forEach((a, i) =>
@@ -359,15 +432,18 @@ function buildProjects() {
     }),
   );
 
+  // kinds[] canonical (multi where useful, e.g. row 1). features live only in
+  // category_attributes.features — never written to projects.tags.
   const tools = [
     {
       title: "Unity向けデバッグ支援",
       genres: ["Unity"],
       tags: ["Unity", "デバッグ"],
       studioAttrs: {
-        kind: "デバッグ・テスト支援",
-        toolEnvironments: ["Unity", "Windows"],
+        kinds: ["デバッグ・テスト支援", "生成・変換ツール"],
+        toolEnvironments: ["Unity", "Windows", "Webブラウザ"],
         toolUsageMethod: "ダウンロードして利用",
+        features: ["自動化", "AI対応"],
         nonGamePublishDestinations: [
           {
             id: "ia-tool-pub-25",
@@ -383,9 +459,10 @@ function buildProjects() {
       genres: ["Unreal Engine"],
       tags: ["Unreal Engine", "ビルド支援"],
       studioAttrs: {
-        kind: "デスクトップツール",
+        kinds: ["デスクトップツール"],
         toolEnvironments: ["Unreal Engine", "Windows"],
         toolUsageMethod: "ダウンロードして利用",
+        features: ["個人開発向け"],
       },
     },
     {
@@ -393,9 +470,10 @@ function buildProjects() {
       genres: ["Godot"],
       tags: ["Godot", "マップ生成"],
       studioAttrs: {
-        kind: "生成・変換ツール",
+        kinds: ["生成・変換ツール"],
         toolEnvironments: ["Godot"],
         toolUsageMethod: "プラグイン・拡張機能として利用",
+        features: ["ノーコード・ローコード"],
       },
     },
     {
@@ -404,9 +482,10 @@ function buildProjects() {
       tags: ["会話システム", "SDK"],
       discord: true,
       studioAttrs: {
-        kind: "ライブラリ・SDK",
+        kinds: ["ライブラリ・SDK"],
         toolEnvironments: ["その他"],
         toolUsageMethod: "ライブラリ・SDKとして利用",
+        features: ["チーム開発向け"],
       },
     },
     {
@@ -414,9 +493,10 @@ function buildProjects() {
       genres: ["コードライブラリ"],
       tags: ["セーブシステム", "コードライブラリ"],
       studioAttrs: {
-        kind: "ライブラリ・SDK",
+        kinds: ["ライブラリ・SDK"],
         toolEnvironments: ["その他"],
         toolUsageMethod: "ライブラリ・SDKとして利用",
+        features: ["ローカル実行"],
       },
     },
     {
@@ -426,9 +506,10 @@ function buildProjects() {
       noTagsExtra: true,
       noUpdate: true,
       studioAttrs: {
-        kind: "CLI",
+        kinds: ["CLI"],
         toolEnvironments: ["Linux", "macOS", "Windows"],
         toolUsageMethod: "CLIで利用",
+        features: ["軽量", "リアルタイム"],
       },
     },
     {
@@ -436,9 +517,10 @@ function buildProjects() {
       genres: ["Unity"],
       tags: ["Unity", "会話システム"],
       studioAttrs: {
-        kind: "プラグイン・拡張機能",
+        kinds: ["プラグイン・拡張機能"],
         toolEnvironments: ["Unity"],
         toolUsageMethod: "プラグイン・拡張機能として利用",
+        features: ["オープンソース"],
       },
     },
     {
@@ -446,9 +528,10 @@ function buildProjects() {
       genres: ["Godot"],
       tags: ["Godot", "CLI", "セーブシステム"],
       studioAttrs: {
-        kind: "CLI",
+        kinds: ["CLI"],
         toolEnvironments: ["Godot", "Linux"],
         toolUsageMethod: "CLIで利用",
+        // Deliberately no features — coverage of the "not set" branch.
       },
     },
   ];
@@ -466,14 +549,20 @@ function buildProjects() {
     }),
   );
 
+  // kinds[] canonical; row 4 (情報整理スマホアプリ) is kept as legacy singular
+  // `kind` ONLY (スマートフォンアプリ) for read-fallback coverage. serviceEnvironments
+  // include canonical "Web" (rows 1, 7) alongside legacy "Webブラウザ" (rows 2, 6, 8)
+  // to exercise both the direct match and the legacy Webブラウザ<->Web mapping.
   const services = [
     {
       title: "制作管理Webサービス",
       genres: ["Webサービス"],
       tags: ["Webサービス", "制作管理"],
       studioAttrs: {
-        kind: "Webサービス",
-        serviceEnvironments: ["Webブラウザ"],
+        kinds: ["Webサービス"],
+        serviceEnvironments: ["Web"],
+        purposes: ["制作支援"],
+        features: ["チーム向け"],
         nonGamePublishDestinations: [
           {
             id: "ia-svc-pub-33",
@@ -490,8 +579,10 @@ function buildProjects() {
       tags: ["分析", "Webサービス"],
       multiLinks: true,
       studioAttrs: {
-        kind: "Webサービス",
+        kinds: ["Webサービス"],
         serviceEnvironments: ["Webブラウザ", "Windows"],
+        purposes: ["分析・可視化"],
+        features: ["データ分析"],
       },
     },
     {
@@ -500,8 +591,10 @@ function buildProjects() {
       tags: ["Bot", "配信支援", "配信者"],
       discord: true,
       studioAttrs: {
-        kind: "Bot",
+        kinds: ["Bot"],
         serviceEnvironments: ["その他"],
+        purposes: ["配信・コンテンツ制作"],
+        features: ["リアルタイム", "外部サービス連携"],
         nonGamePublishDestinations: [
           {
             id: "ia-svc-pub-35",
@@ -517,8 +610,11 @@ function buildProjects() {
       genres: ["スマホアプリ"],
       tags: ["スマホアプリ", "情報整理"],
       studioAttrs: {
+        // Legacy singular kind only (no kinds[]) — read-fallback coverage.
         kind: "スマートフォンアプリ",
         serviceEnvironments: ["iOS", "Android"],
+        purposes: ["情報整理・ナレッジ"],
+        features: ["個人向け"],
       },
     },
     {
@@ -527,8 +623,10 @@ function buildProjects() {
       tags: ["PCアプリ"],
       noLinks: true,
       studioAttrs: {
-        kind: "デスクトップアプリ",
+        kinds: ["デスクトップアプリ"],
         serviceEnvironments: ["Windows", "macOS"],
+        purposes: ["制作支援"],
+        // Deliberately no features — coverage of the "not set" branch.
       },
     },
     {
@@ -536,8 +634,10 @@ function buildProjects() {
       genres: ["ブラウザ拡張"],
       tags: ["ブラウザ拡張"],
       studioAttrs: {
-        kind: "ブラウザ拡張",
+        kinds: ["ブラウザ拡張"],
         serviceEnvironments: ["Webブラウザ"],
+        // Deliberately no purposes — coverage of the "not set" branch.
+        features: ["カスタマイズ可能"],
       },
     },
     {
@@ -546,8 +646,10 @@ function buildProjects() {
       tags: ["AIサービス", "制作に使える"],
       longDesc: true,
       studioAttrs: {
-        kind: "Webサービス",
-        serviceEnvironments: ["Webブラウザ"],
+        kinds: ["Webサービス"],
+        serviceEnvironments: ["Web"],
+        purposes: ["自動化・連携"],
+        features: ["AI対応"],
       },
     },
     {
@@ -557,8 +659,10 @@ function buildProjects() {
       discord: true,
       stream: "ok",
       studioAttrs: {
-        kind: "Webサービス",
+        kinds: ["Webサービス"],
         serviceEnvironments: ["Webブラウザ"],
+        purposes: ["配信・コンテンツ制作", "コミュニティ"],
+        features: ["コラボレーション"],
       },
     },
   ];
@@ -948,14 +1052,30 @@ function generate() {
         (p.tags || []).includes("癒し系"),
     ).length,
   };
-  const assetCommonOnly = projects
-    .filter((p) => p.category === "asset")
-    .every(
+  const assetsOnly = projects.filter((p) => p.category === "asset");
+  const assetAllHaveKinds = assetsOnly.every((p) => (p.kinds || []).length >= 1);
+  const assetCharacterFormatSplit =
+    assetsOnly.some(
       (p) =>
-        (!p.kinds || p.kinds.length === 0) &&
-        (!p.purpose || p.purpose.length === 0) &&
-        !p.studioAttrs,
+        (p.kinds || []).includes("キャラクター") &&
+        (p.studioAttrs?.formats || []).includes("2D"),
+    ) &&
+    assetsOnly.some(
+      (p) =>
+        (p.kinds || []).includes("キャラクター") &&
+        (p.studioAttrs?.formats || []).includes("3D"),
     );
+  const playerCountsDist = {};
+  const playEnvDist = {};
+  for (const p of gamesOnly) {
+    for (const c of p.playerCounts || []) playerCountsDist[c] = (playerCountsDist[c] || 0) + 1;
+    for (const e of p.playEnvTags || []) playEnvDist[e] = (playEnvDist[e] || 0) + 1;
+  }
+  const gamePlayerCountsPopulated = gamesOnly.filter((p) => (p.playerCounts || []).length > 0).length;
+  const audiosOnly = projects.filter((p) => p.category === "audio");
+  const audioLegacyKindOnly = audiosOnly.filter((p) => !p.studioAttrs?.kinds && p.studioAttrs?.kind).length;
+  const servicesOnly = projects.filter((p) => p.category === "service-app");
+  const serviceLegacyKindOnly = servicesOnly.filter((p) => !p.studioAttrs?.kinds && p.studioAttrs?.kind).length;
   const searchTerms = [
     "ローグライク",
     "ホラー",
@@ -1040,7 +1160,13 @@ function generate() {
       streamPolicy: streamDist,
       attributes: attrDist,
       assetKinds,
-      assetCommonFieldsOnly: assetCommonOnly,
+      assetAllHaveKinds,
+      assetCharacterFormatSplit,
+      playerCountsDist,
+      gamePlayerCountsPopulated,
+      playEnvDist,
+      audioLegacyKindOnly,
+      serviceLegacyKindOnly,
       gameGenreDist,
       gameFeatureTagDist,
       genreTagIntersections,
@@ -1092,7 +1218,12 @@ function generate() {
       everyDedicatedSlotOwnsProject: Object.keys(ownershipBySlot).length === 20,
       multiACategoriesGte3: (ownershipBySlot["ia-seed-dev-16"]?.categories.length || 0) >= 3,
       multiBCategoriesGte3: (ownershipBySlot["ia-seed-dev-17"]?.categories.length || 0) >= 3,
-      assetCommonFieldsOnly: assetCommonOnly,
+      assetAllHaveKinds,
+      assetCharacterFormatSplit,
+      gamePlayerCountsPartial:
+        gamePlayerCountsPopulated > 0 && gamePlayerCountsPopulated < gamesOnly.length,
+      audioLegacyKindOnlyGte1: audioLegacyKindOnly >= 1,
+      serviceLegacyKindOnlyGte1: serviceLegacyKindOnly >= 1,
       gameGenreMultiHit: (gameGenreDist["アクション"] || 0) >= 2 && (gameGenreDist["ローグライク"] || 0) >= 2,
       gameTagMultiHit:
         (gameFeatureTagDist["ピクセルアート"] || 0) >= 2 &&
@@ -1118,7 +1249,11 @@ function generate() {
     coverage.validation.everyDedicatedSlotOwnsProject &&
     coverage.validation.multiACategoriesGte3 &&
     coverage.validation.multiBCategoriesGte3 &&
-    coverage.validation.assetCommonFieldsOnly &&
+    coverage.validation.assetAllHaveKinds &&
+    coverage.validation.assetCharacterFormatSplit &&
+    coverage.validation.gamePlayerCountsPartial &&
+    coverage.validation.audioLegacyKindOnlyGte1 &&
+    coverage.validation.serviceLegacyKindOnlyGte1 &&
     coverage.validation.gameGenreMultiHit &&
     coverage.validation.gameTagMultiHit &&
     coverage.validation.genreTagAndHit &&
@@ -1178,6 +1313,13 @@ BEGIN
     RAISE EXCEPTION 'ABORT player-ia-staging-seed: projects.category missing — apply 076 first';
   END IF;
 
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'projects' AND column_name = 'player_counts'
+  ) THEN
+    RAISE EXCEPTION 'ABORT player-ia-staging-seed: projects.player_counts missing — apply 085 first';
+  END IF;
+
   IF NOT EXISTS (SELECT 1 FROM auth.users WHERE id = '${OWNER_A}'::uuid) THEN
     RAISE EXCEPTION 'ABORT: missing Staging owner A ${OWNER_A}';
   END IF;
@@ -1202,27 +1344,33 @@ END $$;
   publish_destinations, estimated_play_time, play_access_type,
   visibility, playable_version, release_status,
   category, quick_try, usable_for_creation, stream_policy, stream_policy_note,
-  asset_kinds, purpose_tags, category_attributes, first_published_at, created_at, updated_at
+  asset_kinds, purpose_tags, category_attributes, player_counts, first_published_at, created_at, updated_at
 ) VALUES`);
 
   seed.push(
     projects
       .map((p) => {
-        const tags = p.noTagsExtra ? [TAG] : [...(p.tags || []), TAG];
+        // playEnvTags (game only — PC対応/スマホ対応/ブラウザ対応) ride along in
+        // projects.tags so p_play_envs (tags && p_play_envs) can match them.
+        const baseTags = [...(p.tags || []), ...(p.playEnvTags || [])];
+        const tags = p.noTagsExtra ? [TAG] : [...baseTags, TAG];
         const thumb = p.noImage
           ? "NULL"
           : `(SELECT thumbnail_url FROM public.projects WHERE id = '${SMOKE_A}'::uuid)`;
         const creatorExpr = creatorSql(p);
         const desc = p.longDesc ? LONG_DESC : `${PREFIX} ${p.title} — Staging専用架空作品。`;
-        // Asset common-fields-only: empty asset_kinds. Other categories never write kinds.
-        const kinds = `ARRAY[]::text[]`;
+        // asset_kinds column: canonical Studio "kinds" writes only for category=asset
+        // (dedicated column). Other categories never write asset_kinds.
+        const kinds =
+          p.category === "asset" ? arr(p.kinds || []) : `ARRAY[]::text[]`;
+        const playerCounts = arr(p.playerCounts || []);
         const discord = p.discord ? q(`https://discord.gg/ia-seed-${p.slug}`) : "NULL";
         const official = p.noLinks ? "NULL" : q(`https://example.com/ia-seed/${p.slug}`);
         const github = p.multiLinks ? q(`https://example.com/ia-seed/${p.slug}/repo`) : "NULL";
         const streamNote = p.streamNote ? q(p.streamNote) : "NULL";
         /** Studio-writable category_attributes only (no Player-IA-only invent). */
         let attrsObj = {};
-        if (p.category === "asset" || p.category === "game") {
+        if (p.category === "game") {
           attrsObj = {};
         } else if (p.studioAttrs) {
           attrsObj = p.studioAttrs;
@@ -1261,7 +1409,7 @@ END $$;
   ${publishDestinations}::jsonb, ${playTime}, ${q(playAccess)},
   'public', ${q(p.version)}, 'in_development',
   ${q(p.category)}, ${!!p.quick_try}, ${!!p.usable_for_creation}, ${q(p.stream)}, ${streamNote},
-  ${kinds}, ${arr(p.purpose || [])}, ${attrs}::jsonb,
+  ${kinds}, ${arr(p.purpose || [])}, ${attrs}::jsonb, ${playerCounts},
   now() - interval '${days} days',
   now() - interval '${days} days',
   now() - interval '${p.n % 10} hours'
@@ -1289,6 +1437,7 @@ END $$;
   asset_kinds = EXCLUDED.asset_kinds,
   purpose_tags = EXCLUDED.purpose_tags,
   category_attributes = EXCLUDED.category_attributes,
+  player_counts = EXCLUDED.player_counts,
   publish_destinations = EXCLUDED.publish_destinations,
   estimated_play_time = EXCLUDED.estimated_play_time,
   play_access_type = EXCLUDED.play_access_type,

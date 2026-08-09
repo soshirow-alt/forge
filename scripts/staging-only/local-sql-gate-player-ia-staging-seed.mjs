@@ -127,6 +127,7 @@ CREATE TABLE public.projects (
   asset_kinds text[] DEFAULT '{}',
   purpose_tags text[] DEFAULT '{}',
   category_attributes jsonb DEFAULT '{}'::jsonb,
+  player_counts text[] NOT NULL DEFAULT '{}',
   first_published_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
@@ -368,10 +369,35 @@ async function main() {
     FROM public.projects
     WHERE category = 'asset'
       AND 'forge-ia-seed-v1' = ANY (coalesce(tags, '{}'))
-      AND coalesce(cardinality(asset_kinds), 0) = 0
-      AND (category_attributes = '{}'::jsonb OR category_attributes IS NULL)
+      AND coalesce(cardinality(asset_kinds), 0) >= 1
   `);
-  assert(asset.rows[0].n === 8, "asset common-fields-only");
+  assert(asset.rows[0].n === 8, "asset rows must all carry asset_kinds (085)");
+
+  const assetFormatSplit = await db.query(`
+    SELECT
+      count(*) FILTER (WHERE category_attributes->'formats' ? '2D')::int AS n2d,
+      count(*) FILTER (WHERE category_attributes->'formats' ? '3D')::int AS n3d
+    FROM public.projects
+    WHERE category = 'asset'
+      AND 'forge-ia-seed-v1' = ANY (coalesce(tags, '{}'))
+      AND 'キャラクター' = ANY (asset_kinds)
+  `);
+  assert(
+    assetFormatSplit.rows[0].n2d >= 1 && assetFormatSplit.rows[0].n3d >= 1,
+    "asset キャラクター kind must cover both 2D and 3D formats",
+  );
+
+  const playerCounts = await db.query(`
+    SELECT
+      count(*) FILTER (WHERE cardinality(player_counts) > 0)::int AS populated,
+      count(*) FILTER (WHERE cardinality(player_counts) = 0)::int AS empty
+    FROM public.projects
+    WHERE category = 'game' AND 'forge-ia-seed-v1' = ANY (coalesce(tags, '{}'))
+  `);
+  assert(
+    playerCounts.rows[0].populated > 0 && playerCounts.rows[0].empty > 0,
+    "game player_counts must be populated on some but not all rows",
+  );
 
   const andHit = await db.query(`
     SELECT count(*)::int AS n FROM public.projects
@@ -425,7 +451,8 @@ async function main() {
         seedRerun: "OK",
         seedRollbackAbort: "OK",
         inventory40: "OK",
-        assetCommonOnly: "OK",
+        assetKindsAndFormats: "OK",
+        playerCountsPartial: "OK",
         genreTagMatrix: "OK",
         usableForCreation25: "OK",
         immutableDevlog: "blocked",

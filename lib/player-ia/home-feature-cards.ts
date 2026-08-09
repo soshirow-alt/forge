@@ -1,47 +1,136 @@
 import {
   AppWindow,
+  Box,
   Gamepad2,
   Headphones,
-  Upload,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
+import type { ProjectCategoryId } from "@/lib/project-categories";
+
+export type PlayerIaHomeCategoryCta =
+  | {
+      id: "spotlight";
+      label: "注目作品を見る";
+      kind: "link";
+      href: string;
+    }
+  | {
+      id: "spotlight";
+      label: "注目作品を見る";
+      kind: "coming_soon";
+    }
+  | {
+      id: "search";
+      label: "条件で探す";
+      kind: "link";
+      href: string;
+    };
 
 export type PlayerIaHomeFeatureCard = {
-  id: "play" | "listen" | "service" | "publish";
+  id: ProjectCategoryId;
   title: string;
   description: string;
-  href: string;
   icon: LucideIcon;
+  ctas: readonly PlayerIaHomeCategoryCta[];
 };
 
-/** Home「Forgeでできること」— カテゴリ直接導線（用途 filter なし）。 */
+/** Home「作品を見つける・試す」— 5カテゴリ × 2導線（カード全体は非リンク）。 */
 export const PLAYER_IA_HOME_FEATURE_CARDS: readonly PlayerIaHomeFeatureCard[] = [
   {
-    id: "play",
-    title: "遊ぶ",
-    description: "ゲームを探して遊ぶ",
-    href: "/search?category=game",
+    id: "game",
+    title: "ゲーム",
+    description: "完成前のゲームを遊んでみる",
     icon: Gamepad2,
+    ctas: [
+      {
+        id: "spotlight",
+        label: "注目作品を見る",
+        kind: "link",
+        href: "/home/game",
+      },
+      {
+        id: "search",
+        label: "条件で探す",
+        kind: "link",
+        href: "/search?category=game",
+      },
+    ],
   },
   {
-    id: "listen",
-    title: "聞く",
-    description: "音楽・音声作品を探して聞く",
-    href: "/search?category=audio",
+    id: "audio",
+    title: "音楽・音声",
+    description: "音楽・音声作品を探して試す",
     icon: Headphones,
+    ctas: [
+      {
+        id: "spotlight",
+        label: "注目作品を見る",
+        kind: "coming_soon",
+      },
+      {
+        id: "search",
+        label: "条件で探す",
+        kind: "link",
+        href: "/search?category=audio",
+      },
+    ],
   },
   {
-    id: "service",
-    title: "サービスを探す",
+    id: "asset",
+    title: "アセット",
+    description: "アセット作品を探して試す",
+    icon: Box,
+    ctas: [
+      {
+        id: "spotlight",
+        label: "注目作品を見る",
+        kind: "coming_soon",
+      },
+      {
+        id: "search",
+        label: "条件で探す",
+        kind: "link",
+        href: "/search?category=asset",
+      },
+    ],
+  },
+  {
+    id: "dev-tool",
+    title: "開発ツール",
+    description: "開発ツールを探して試す",
+    icon: Wrench,
+    ctas: [
+      {
+        id: "spotlight",
+        label: "注目作品を見る",
+        kind: "coming_soon",
+      },
+      {
+        id: "search",
+        label: "条件で探す",
+        kind: "link",
+        href: "/search?category=dev-tool",
+      },
+    ],
+  },
+  {
+    id: "service-app",
+    title: "サービス・アプリ",
     description: "サービスやアプリを探して試す",
-    href: "/search?category=service-app",
     icon: AppWindow,
-  },
-  {
-    id: "publish",
-    title: "掲載する",
-    description: "作品を掲載して届ける",
-    href: "/studio/submit",
-    icon: Upload,
+    ctas: [
+      {
+        id: "spotlight",
+        label: "注目作品を見る",
+        kind: "coming_soon",
+      },
+      {
+        id: "search",
+        label: "条件で探す",
+        kind: "link",
+        href: "/search?category=service-app",
+      },
+    ],
   },
 ] as const;

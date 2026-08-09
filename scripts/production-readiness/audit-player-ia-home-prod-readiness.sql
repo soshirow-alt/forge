@@ -225,8 +225,8 @@ SELECT
   'object_presence' AS section,
   to_regclass('public.project_usage_relations') IS NOT NULL AS has_usage_table,
   to_regclass('public.platform_announcements') IS NOT NULL AS has_announcements_table,
-  to_regprocedure('public.get_home_feedback_gathering_projects(integer)') IS NOT NULL AS has_fb_gathering_rpc,
-  to_regprocedure('public.get_home_meaningful_updates(integer)') IS NOT NULL AS has_meaningful_updates_rpc,
+  to_regprocedure('public.get_home_feedback_gathering_projects(integer, text)') IS NOT NULL AS has_fb_gathering_rpc,
+  to_regprocedure('public.get_home_meaningful_updates(integer, text)') IS NOT NULL AS has_meaningful_updates_rpc,
   to_regprocedure('public.get_home_newest_projects(integer,text)') IS NOT NULL AS has_newest_rpc,
   to_regprocedure('public.get_public_project_usage_relations(uuid,integer)') IS NOT NULL AS has_usage_rpc,
   to_regprocedure('public.get_public_platform_announcements(integer,integer)') IS NOT NULL AS has_announcements_rpc;

@@ -70,5 +70,7 @@ export function buildProjectEditFormDataFromGame(game: Game): ProjectEditFormDat
               : {},
         }
       : {}),
+    ...(game.playerCounts ? { playerCounts: [...game.playerCounts] } : {}),
+    ...(game.assetKinds ? { assetKinds: [...game.assetKinds] } : {}),
   };
 }

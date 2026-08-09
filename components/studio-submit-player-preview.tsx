@@ -45,6 +45,8 @@ import {
   type SubmitPrototypeCategory,
   type SubmitPrototypeCategoryFields,
 } from "@/lib/prototype/studio-submit-flow";
+import { audioKindsShowMusicGenres } from "@/lib/project-formal-filter-registry";
+import type { SubmitAssetCategoryFields } from "@/lib/studio-non-game-attributes";
 import { normalizeExternalUrl } from "@/lib/game-play-destinations";
 import {
   resolveStudioPreviewCategoryChrome,
@@ -71,52 +73,63 @@ function TagPill({
   );
 }
 
+function joinOrEmpty(values: readonly string[]): string | null {
+  const cleaned = values.map((value) => value.trim()).filter(Boolean);
+  return cleaned.length > 0 ? cleaned.join("・") : null;
+}
+
+function filterFalsyKind(kind: string): string[] {
+  const trimmed = kind.trim();
+  return trimmed ? [trimmed] : [];
+}
+
 function buildPrototypeInfoCard(
   category: SubmitPrototypeCategory,
   fields: SubmitPrototypeCategoryFields,
 ): { title: string; rows: { label: string; value: string }[] } {
   const title = SUBMIT_PROTOTYPE_USAGE_PANEL_TITLE[category];
+  const rows: { label: string; value: string }[] = [];
+
   if (category === "music") {
-    return {
-      title,
-      rows: [
-        {
-          label: "再生時間",
-          value: fields.musicDuration.trim() || "未設定",
-        },
-      ],
-    };
+    const duration = fields.musicDuration.trim();
+    if (duration) rows.push({ label: "再生時間", value: duration });
+    const moods = joinOrEmpty(fields.moods);
+    if (moods) rows.push({ label: "雰囲気", value: moods });
+    const purposes = joinOrEmpty(fields.purposes);
+    if (purposes) rows.push({ label: "用途", value: purposes });
+  } else if (category === "dev_tool") {
+    const envs = joinOrEmpty(fields.toolEnvironments);
+    if (envs) rows.push({ label: "対応環境", value: envs });
+    const usage = fields.toolUsageMethod.trim();
+    if (usage) rows.push({ label: "利用方法", value: usage });
+    const features = joinOrEmpty(fields.features);
+    if (features) rows.push({ label: "特徴", value: features });
+  } else {
+    const purposes = joinOrEmpty(fields.purposes);
+    if (purposes) rows.push({ label: "用途", value: purposes });
+    const envs = joinOrEmpty(fields.serviceEnvironments);
+    if (envs) rows.push({ label: "対応環境", value: envs });
+    const features = joinOrEmpty(fields.features);
+    if (features) rows.push({ label: "特徴", value: features });
   }
-  if (category === "dev_tool") {
-    return {
-      title,
-      rows: [
-        {
-          label: "対応環境",
-          value:
-            fields.toolEnvironments.length > 0
-              ? fields.toolEnvironments.join("・")
-              : "未設定",
-        },
-        {
-          label: "利用方法",
-          value: fields.toolUsageMethod.trim() || "未設定",
-        },
-      ],
-    };
-  }
-  return {
-    title,
-    rows: [
-      {
-        label: "対応環境",
-        value:
-          fields.serviceEnvironments.length > 0
-            ? fields.serviceEnvironments.join("・")
-            : "未設定",
-      },
-    ],
-  };
+
+  return { title, rows };
+}
+
+function buildAssetInfoCard(
+  fields: SubmitAssetCategoryFields,
+): { title: string; rows: { label: string; value: string }[] } | undefined {
+  const rows: { label: string; value: string }[] = [];
+  const kinds = joinOrEmpty(fields.kinds);
+  if (kinds) rows.push({ label: "アセット種別", value: kinds });
+  const formats = joinOrEmpty(fields.formats);
+  if (formats) rows.push({ label: "表現形式", value: formats });
+  const tastes = joinOrEmpty(fields.tastes);
+  if (tastes) rows.push({ label: "テイスト", value: tastes });
+  const tools = joinOrEmpty(fields.tools);
+  if (tools) rows.push({ label: "対応ツール", value: tools });
+  if (rows.length === 0) return undefined;
+  return { title: "アセット情報", rows };
 }
 
 function buildPrototypePlayDestinations(
@@ -143,6 +156,8 @@ export type StudioSubmitPlayerPreviewProps = {
   /** Asset: common fields only — no genre/play-info game chrome. */
   commonFieldsOnly?: boolean;
   categoryLabel?: string | null;
+  /** Asset structured fields (kinds/formats/tastes/tools) for Preview. */
+  assetFields?: SubmitAssetCategoryFields | null;
 };
 
 /** /studio/submit 専用 — 既存 Studio 編集プレビューとは完全分離 */
@@ -156,6 +171,7 @@ export function StudioSubmitPlayerPreview({
   prototypeCategoryFields,
   commonFieldsOnly = false,
   categoryLabel = null,
+  assetFields = null,
 }: StudioSubmitPlayerPreviewProps) {
   const chrome = resolveStudioPreviewCategoryChrome({
     commonFieldsOnly,
@@ -233,7 +249,9 @@ export function StudioSubmitPlayerPreview({
   const prototypeInfoCard =
     prototypeCategory && prototypeCategoryFields
       ? buildPrototypeInfoCard(prototypeCategory, prototypeCategoryFields)
-      : undefined;
+      : commonFieldsOnly && assetFields
+        ? buildAssetInfoCard(assetFields)
+        : undefined;
   const primaryCtaLabel = prototypeCategory
     ? SUBMIT_PROTOTYPE_PRIMARY_CTA[prototypeCategory]
     : undefined;
@@ -262,6 +280,12 @@ export function StudioSubmitPlayerPreview({
                   <TagPill>
                     {categoryLabel ?? chrome.categoryPillLabel ?? "アセット"}
                   </TagPill>
+                  {(assetFields?.kinds ?? []).map((kind) => (
+                    <TagPill key={kind}>{kind}</TagPill>
+                  ))}
+                  {(assetFields?.formats ?? []).map((format) => (
+                    <TagPill key={format}>{format}</TagPill>
+                  ))}
                 </span>
               ) : prototypeCategory && prototypeCategoryFields ? (
                 <StudioPreviewEditTarget target="genres" onEditTarget={onEditTarget} inline>
@@ -269,10 +293,20 @@ export function StudioSubmitPlayerPreview({
                     <TagPill>
                       {SUBMIT_PROTOTYPE_CATEGORY_LABEL[prototypeCategory]}
                     </TagPill>
-                    {prototypeCategoryFields.kind ? (
-                      <TagPill>{prototypeCategoryFields.kind}</TagPill>
-                    ) : null}
-                    {prototypeCategory === "music"
+                    {(prototypeCategoryFields.kinds.length > 0
+                      ? prototypeCategoryFields.kinds
+                      : prototypeCategoryFields.kind
+                        ? [prototypeCategoryFields.kind]
+                        : []
+                    ).map((kind) => (
+                      <TagPill key={kind}>{kind}</TagPill>
+                    ))}
+                    {prototypeCategory === "music" &&
+                    audioKindsShowMusicGenres(
+                      prototypeCategoryFields.kinds.length > 0
+                        ? prototypeCategoryFields.kinds
+                        : filterFalsyKind(prototypeCategoryFields.kind),
+                    )
                       ? prototypeCategoryFields.musicGenres.map((genre) => (
                           <TagPill key={genre}>{genre}</TagPill>
                         ))

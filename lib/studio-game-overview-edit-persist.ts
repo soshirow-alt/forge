@@ -11,6 +11,7 @@ import {
 } from "@/lib/forge-feature-tag-options";
 import { sanitizeProjectGenresForSave } from "@/lib/project-genres";
 import type { ForgeGenreOption } from "@/lib/forge-genre-options";
+import { normalizeFormalMultiForSave } from "@/lib/project-formal-filter-registry";
 import {
   parsePlayEnvironmentFromTags,
   type PlayEnvironmentFormState,
@@ -50,6 +51,10 @@ export function buildGameGenresTagsEditPersistPayload(
   };
 }
 
+export type GamePlayInfoEditPersistResult =
+  | { ok: true; payload: ProjectEditFormData }
+  | { ok: false; message: string };
+
 export function buildGamePlayInfoEditPersistPayload(
   game: Game,
   input: {
@@ -57,28 +62,45 @@ export function buildGamePlayInfoEditPersistPayload(
     estimatedPlayTime: string;
     playEnvironment: PlayEnvironmentFormState;
     featureTags: ForgeFeatureTagOption[];
+    /** Game プレイ人数 (registry `player_count`). Always passed — [] clears. */
+    playerCounts: string[];
   },
-): ProjectEditFormData {
+): GamePlayInfoEditPersistResult {
   const base = buildProjectEditFormDataFromGame(game);
+  // Save-boundary normalize — baseline = game.playerCounts (pre-edit hydrated
+  // state) so a legacy/obsolete existing value is preserved rather than
+  // silently dropped, while a genuinely new/tampered unknown value rejects.
+  const playerCountsResult = normalizeFormalMultiForSave({
+    next: input.playerCounts,
+    baseline: game.playerCounts,
+    fieldId: "player_count",
+  });
+  if (!playerCountsResult.ok) {
+    return { ok: false, message: playerCountsResult.message };
+  }
   return {
-    ...base,
-    playUrl: base.playUrl,
-    publishDestinations: base.publishDestinations,
-    relatedLinks: base.relatedLinks,
-    steamUrl: base.steamUrl,
-    itchUrl: base.itchUrl,
-    githubUrl: base.githubUrl,
-    discordUrl: base.discordUrl,
-    officialUrl: base.officialUrl,
-    xUrl: base.xUrl,
-    youtubeUrl: base.youtubeUrl,
-    estimatedPlayTime: input.estimatedPlayTime || undefined,
-    playAccessType: input.playAccessType,
-    tags: composeProjectTagsForWrite({
-      featureTags: sanitizeFeatureTagsForSave(input.featureTags),
-      playEnvironment: input.playEnvironment,
-      existingTags: game.tags,
-    }),
+    ok: true,
+    payload: {
+      ...base,
+      playUrl: base.playUrl,
+      publishDestinations: base.publishDestinations,
+      relatedLinks: base.relatedLinks,
+      steamUrl: base.steamUrl,
+      itchUrl: base.itchUrl,
+      githubUrl: base.githubUrl,
+      discordUrl: base.discordUrl,
+      officialUrl: base.officialUrl,
+      xUrl: base.xUrl,
+      youtubeUrl: base.youtubeUrl,
+      estimatedPlayTime: input.estimatedPlayTime || undefined,
+      playAccessType: input.playAccessType,
+      playerCounts: playerCountsResult.values,
+      tags: composeProjectTagsForWrite({
+        featureTags: sanitizeFeatureTagsForSave(input.featureTags),
+        playEnvironment: input.playEnvironment,
+        existingTags: game.tags,
+      }),
+    },
   };
 }
 

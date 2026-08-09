@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-09T02:15:20.876Z",
+  "generatedAt": "2026-08-09T05:51:25.082Z",
   "stagingRef": "vuqpwvjvgyxffmvpfrxo",
   "productionRefForbidden": "bpnisgzxuwdxelhnduuf",
   "existingProfileMutation": false,
@@ -269,8 +269,32 @@
       "looking_for_testers": 9,
       "usable_for_creation": 25
     },
-    "assetKinds": {},
-    "assetCommonFieldsOnly": true,
+    "assetKinds": {
+      "キャラクター": 2,
+      "背景・風景": 1,
+      "UI・アイコン": 1,
+      "テクスチャ・マテリアル": 1,
+      "アニメーション": 1,
+      "エフェクト・VFX": 1,
+      "シェーダー": 1,
+      "フォント・文字": 1
+    },
+    "assetAllHaveKinds": true,
+    "assetCharacterFormatSplit": true,
+    "playerCountsDist": {
+      "1人": 3,
+      "2人": 2,
+      "3〜4人": 1,
+      "5人以上": 1
+    },
+    "gamePlayerCountsPopulated": 5,
+    "playEnvDist": {
+      "PC対応": 5,
+      "スマホ対応": 2,
+      "ブラウザ対応": 2
+    },
+    "audioLegacyKindOnly": 1,
+    "serviceLegacyKindOnly": 1,
     "gameGenreDist": {
       "ローグライク": 2,
       "アドベンチャー": 1,
@@ -430,7 +454,11 @@
     "everyDedicatedSlotOwnsProject": true,
     "multiACategoriesGte3": true,
     "multiBCategoriesGte3": true,
-    "assetCommonFieldsOnly": true,
+    "assetAllHaveKinds": true,
+    "assetCharacterFormatSplit": true,
+    "gamePlayerCountsPartial": true,
+    "audioLegacyKindOnlyGte1": true,
+    "serviceLegacyKindOnlyGte1": true,
     "gameGenreMultiHit": true,
     "gameTagMultiHit": true,
     "genreTagAndHit": true,

@@ -63,9 +63,9 @@ ORDER BY p.proname, pg_get_function_identity_arguments(p.oid);
 -- ---------------------------------------------------------------------------
 SELECT
   'rpc_083_presence' AS section,
-  to_regprocedure('public.get_home_feedback_gathering_projects(integer)') IS NOT NULL
+  to_regprocedure('public.get_home_feedback_gathering_projects(integer, text)') IS NOT NULL
     AS feedback_gathering,
-  to_regprocedure('public.get_home_meaningful_updates(integer)') IS NOT NULL
+  to_regprocedure('public.get_home_meaningful_updates(integer, text)') IS NOT NULL
     AS meaningful_updates,
   to_regprocedure('public.get_home_newest_projects(integer, text)') IS NOT NULL
     AS newest_projects,
@@ -93,8 +93,8 @@ SELECT
     LIMIT 1
   ) AS newest_projects_result,
   CASE
-    WHEN to_regprocedure('public.get_home_feedback_gathering_projects(integer)') IS NOT NULL
-     AND to_regprocedure('public.get_home_meaningful_updates(integer)') IS NOT NULL
+    WHEN to_regprocedure('public.get_home_feedback_gathering_projects(integer, text)') IS NOT NULL
+     AND to_regprocedure('public.get_home_meaningful_updates(integer, text)') IS NOT NULL
      AND to_regprocedure('public.get_home_newest_projects(integer, text)') IS NOT NULL
      AND to_regprocedure('public.get_home_review_highlights(integer)') IS NOT NULL
      AND EXISTS (
@@ -818,7 +818,7 @@ SELECT
   (SELECT count(*) FROM public.project_release_events
      WHERE id::text LIKE '55555555-5555-4555-8555-%'
        AND coalesce(note, '') LIKE '[IA Seed]%') AS release_notes_prefixed,
-  to_regprocedure('public.get_home_feedback_gathering_projects(integer)') IS NOT NULL
+  to_regprocedure('public.get_home_feedback_gathering_projects(integer, text)') IS NOT NULL
     AS rpc_feedback_gathering_exists,
-  to_regprocedure('public.get_home_meaningful_updates(integer)') IS NOT NULL
+  to_regprocedure('public.get_home_meaningful_updates(integer, text)') IS NOT NULL
     AS rpc_meaningful_updates_exists;

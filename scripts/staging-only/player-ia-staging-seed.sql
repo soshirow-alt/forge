@@ -50,6 +50,13 @@ BEGIN
     RAISE EXCEPTION 'ABORT player-ia-staging-seed: projects.category missing — apply 076 first';
   END IF;
 
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'projects' AND column_name = 'player_counts'
+  ) THEN
+    RAISE EXCEPTION 'ABORT player-ia-staging-seed: projects.player_counts missing — apply 085 first';
+  END IF;
+
   IF NOT EXISTS (SELECT 1 FROM auth.users WHERE id = 'dddddddd-dddd-4ddd-8ddd-000000000001'::uuid) THEN
     RAISE EXCEPTION 'ABORT: missing Staging owner A dddddddd-dddd-4ddd-8ddd-000000000001';
   END IF;
@@ -73,7 +80,7 @@ INSERT INTO public.projects (
   publish_destinations, estimated_play_time, play_access_type,
   visibility, playable_version, release_status,
   category, quick_try, usable_for_creation, stream_policy, stream_policy_note,
-  asset_kinds, purpose_tags, category_attributes, first_published_at, created_at, updated_at
+  asset_kinds, purpose_tags, category_attributes, player_counts, first_published_at, created_at, updated_at
 ) VALUES
 (
   'eeeeeeee-eeee-4eee-8eee-000000000001'::uuid, COALESCE(
@@ -91,13 +98,13 @@ INSERT INTO public.projects (
   '[IA Seed] ローグライク迷宮探索 の紹介',
   'playable', 'open', true, 6,
   'testers',
-  ARRAY['ピクセルアート', 'レトロ', 'forge-ia-seed-v1']::text[],
+  ARRAY['ピクセルアート', 'レトロ', 'PC対応', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-01',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-01', NULL, NULL, '[{"id":"ia-seed-01-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-01","label":"公式"}]'::jsonb,
   '[{"id":"ia-pub-ia-seed-01","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-01","usageMethod":"browser","isPrimary":true}]'::jsonb, '30分〜1時間', 'free',
   'public', '0.2', 'in_development',
   'game', true, false, 'ok', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb, ARRAY['1人']::text[],
   now() - interval '2 days',
   now() - interval '2 days',
   now() - interval '1 hours'
@@ -118,13 +125,13 @@ INSERT INTO public.projects (
   '[IA Seed] 廃校ホラー短編 の紹介',
   'playable', 'open', false, NULL,
   'new',
-  ARRAY['高難度', 'ストーリー', 'forge-ia-seed-v1']::text[],
+  ARRAY['高難度', 'ストーリー', 'PC対応', 'スマホ対応', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-02',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-02', 'https://example.com/ia-seed/ia-seed-02/repo', NULL, '[{"id":"ia-seed-02-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-02","label":"公式"},{"id":"ia-seed-02-rel-2","kind":"note_blog","url":"https://example.com/ia-seed/ia-seed-02/note","label":"ノート"},{"id":"ia-seed-02-rel-3","kind":"other","url":"https://example.com/ia-seed/ia-seed-02/extra","label":"その他"}]'::jsonb,
   '[{"id":"ia-pub-ia-seed-02","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-02","usageMethod":"browser","isPrimary":true}]'::jsonb, '15〜30分', 'demo_available',
   'public', '0.3', 'in_development',
   'game', true, false, 'conditional', 'クレジット必須',
-  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb, ARRAY[]::text[],
   now() - interval '3 days',
   now() - interval '3 days',
   now() - interval '2 hours'
@@ -145,13 +152,13 @@ INSERT INTO public.projects (
   '[IA Seed] アクション疾走デモ の紹介',
   'playable', 'open', false, NULL,
   'new',
-  ARRAY['協力プレイ', 'PvE', 'forge-ia-seed-v1']::text[],
+  ARRAY['協力プレイ', 'PvE', 'PC対応', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-03',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-03', NULL, NULL, '[{"id":"ia-seed-03-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-03","label":"公式"}]'::jsonb,
   '[{"id":"ia-pub-ia-seed-03","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-03","usageMethod":"browser","isPrimary":true}]'::jsonb, '5〜15分', 'free',
   'public', '0.4', 'in_development',
   'game', false, false, 'no', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb, ARRAY['2人', '3〜4人']::text[],
   now() - interval '4 days',
   now() - interval '4 days',
   now() - interval '3 hours'
@@ -172,13 +179,13 @@ INSERT INTO public.projects (
   '[IA Seed] カード構築デュエル の紹介',
   'playable', 'open', false, NULL,
   'new',
-  ARRAY['PvP', 'forge-ia-seed-v1']::text[],
+  ARRAY['PvP', 'ブラウザ対応', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-04',
   NULL, 'https://example.com/ia-seed/ia-seed-04', NULL, NULL, '[{"id":"ia-seed-04-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-04","label":"公式"}]'::jsonb,
   '[{"id":"ia-pub-ia-seed-04","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-04","usageMethod":"browser","isPrimary":true}]'::jsonb, '30分〜1時間', 'free',
   'public', '0.5', 'in_development',
   'game', true, false, 'unset', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb, ARRAY['2人']::text[],
   now() - interval '5 days',
   now() - interval '5 days',
   now() - interval '4 hours'
@@ -199,13 +206,13 @@ INSERT INTO public.projects (
   '[IA Seed] パズル回廊 の紹介',
   'playable', 'open', true, 6,
   'testers',
-  ARRAY['癒し系', 'ソロ向け', 'forge-ia-seed-v1']::text[],
+  ARRAY['癒し系', 'ソロ向け', 'スマホ対応', 'ブラウザ対応', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-05',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-05', 'https://example.com/ia-seed/ia-seed-05/repo', NULL, '[{"id":"ia-seed-05-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-05","label":"公式"},{"id":"ia-seed-05-rel-2","kind":"note_blog","url":"https://example.com/ia-seed/ia-seed-05/note","label":"ノート"},{"id":"ia-seed-05-rel-3","kind":"other","url":"https://example.com/ia-seed/ia-seed-05/extra","label":"その他"}]'::jsonb,
   '[{"id":"ia-pub-ia-seed-05","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-05","usageMethod":"browser","isPrimary":true}]'::jsonb, '15〜30分', 'free',
   'public', '0.1', 'in_development',
   'game', true, false, 'ok', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb, ARRAY['1人']::text[],
   now() - interval '6 days',
   now() - interval '6 days',
   now() - interval '5 hours'
@@ -226,13 +233,13 @@ INSERT INTO public.projects (
   '[IA Seed] 分岐ノベル短編 の紹介',
   'playable', 'open', false, NULL,
   'new',
-  ARRAY['ストーリー重視', 'forge-ia-seed-v1']::text[],
+  ARRAY['ストーリー重視', 'PC対応', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-06',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), NULL, NULL, NULL, NULL,
   '[]'::jsonb::jsonb, '1時間以上', 'free',
   'public', '0.2', 'in_development',
   'game', false, false, 'conditional', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb, ARRAY[]::text[],
   now() - interval '7 days',
   now() - interval '7 days',
   now() - interval '6 hours'
@@ -259,7 +266,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-07","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-07","usageMethod":"browser","isPrimary":true}]'::jsonb, '5〜15分', 'demo_available',
   'public', '0.3', 'in_development',
   'game', true, false, 'unset', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb, ARRAY[]::text[],
   now() - interval '8 days',
   now() - interval '8 days',
   now() - interval '7 hours'
@@ -274,13 +281,13 @@ INSERT INTO public.projects (
   '[IA Seed] 超長タイトルの検証用サンプル——検索一覧とカード折り返しと省略表示を確認するための非常に長い作品名でローグライク要素もタイトルに埋め込む の紹介',
   'playable', 'open', false, NULL,
   'new',
-  ARRAY['ピクセルアート', '短時間プレイ', 'forge-ia-seed-v1']::text[],
+  ARRAY['ピクセルアート', '短時間プレイ', 'PC対応', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-08',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-08', NULL, NULL, '[{"id":"ia-seed-08-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-08","label":"公式"}]'::jsonb,
   '[{"id":"ia-pub-ia-seed-08","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-08","usageMethod":"browser","isPrimary":true}]'::jsonb, '5分未満', 'free',
   'public', '0.4', 'in_development',
   'game', true, false, 'conditional', '配信条件が長いエッジケース用メモ: クレジット必須・収益化は事前連絡・切り抜きはタイトルに作品名を含める・アーカイブは30日以内・Discord通知歓迎・その他個別相談。',
-  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb, ARRAY['1人', '5人以上']::text[],
   now() - interval '9 days',
   now() - interval '9 days',
   now() - interval '8 hours'
@@ -307,7 +314,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-09","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-09","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.5', 'in_development',
   'audio', true, true, 'ok', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"BGM","musicGenres":["アンビエント","チップチューン"],"musicDuration":"2:40","nonGamePublishDestinations":[{"id":"ia-audio-pub-09","kind":"自サイト","url":"https://example.com/ia-seed/play/ia-seed-09","isPrimary":true}]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["BGM"],"musicGenres":["アンビエント","チップチューン"],"musicDuration":"2:40","moods":["穏やか"],"purposes":["フィールド・探索"],"nonGamePublishDestinations":[{"id":"ia-audio-pub-09","kind":"自サイト","url":"https://example.com/ia-seed/play/ia-seed-09","isPrimary":true}]}'::jsonb, ARRAY[]::text[],
   now() - interval '10 days',
   now() - interval '10 days',
   now() - interval '9 hours'
@@ -334,7 +341,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-10","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-10","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.1', 'in_development',
   'audio', false, true, 'conditional', 'クレジット必須',
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"楽曲","musicGenres":["ポップ"],"musicDuration":"3:15","nonGamePublishDestinations":[{"id":"ia-audio-pub-10","kind":"SoundCloud","url":"https://example.com/ia-seed/play/ia-seed-10","isPrimary":true}]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["楽曲"],"musicGenres":["ポップ"],"musicDuration":"3:15","moods":["明るい","壮大"],"purposes":["映像・PV"],"nonGamePublishDestinations":[{"id":"ia-audio-pub-10","kind":"SoundCloud","url":"https://example.com/ia-seed/play/ia-seed-10","isPrimary":true}]}'::jsonb, ARRAY[]::text[],
   now() - interval '11 days',
   now() - interval '11 days',
   now() - interval '0 hours'
@@ -361,7 +368,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-11","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-11","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.2', 'in_development',
   'audio', true, true, 'no', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"効果音・ジングル","musicGenres":["その他"],"musicDuration":"0:08","nonGamePublishDestinations":[{"id":"ia-audio-pub-11","kind":"BOOTH","url":"https://example.com/ia-seed/play/ia-seed-11","isPrimary":true}]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"効果音・ジングル","musicGenres":["その他"],"musicDuration":"0:08","moods":["緊張感"],"purposes":["UI・通知"],"nonGamePublishDestinations":[{"id":"ia-audio-pub-11","kind":"BOOTH","url":"https://example.com/ia-seed/play/ia-seed-11","isPrimary":true}]}'::jsonb, ARRAY[]::text[],
   now() - interval '12 days',
   now() - interval '12 days',
   now() - interval '1 hours'
@@ -388,7 +395,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-12","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-12","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.3', 'in_development',
   'audio', false, true, 'unset', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"ボイス","musicGenres":["その他"],"musicDuration":"1:05"}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["ボイス"],"musicGenres":["その他"],"musicDuration":"0:45","moods":["楽しい・コミカル"],"purposes":["日常・会話"]}'::jsonb, ARRAY[]::text[],
   now() - interval '13 days',
   now() - interval '13 days',
   now() - interval '2 hours'
@@ -415,7 +422,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-13","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-13","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.4', 'in_development',
   'audio', true, true, 'ok', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"その他","musicGenres":["アンビエント"],"musicDuration":"10:00"}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["その他"],"musicGenres":["アンビエント"],"musicDuration":"10:00","moods":["幻想的"],"purposes":["フィールド・探索"]}'::jsonb, ARRAY[]::text[],
   now() - interval '14 days',
   now() - interval '14 days',
   now() - interval '3 hours'
@@ -442,7 +449,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-14","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-14","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.5', 'in_development',
   'audio', false, false, 'conditional', 'クレジット必須',
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"朗読・音声ドラマ","musicGenres":["劇伴・シネマティック"],"musicDuration":"4:20"}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["朗読・音声ドラマ"],"musicGenres":["劇伴・シネマティック"],"musicDuration":"4:20","moods":["切ない"],"purposes":["イベント・ストーリー"]}'::jsonb, ARRAY[]::text[],
   now() - interval '15 days',
   now() - interval '15 days',
   now() - interval '4 hours'
@@ -469,7 +476,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-15","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-15","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.1', 'in_development',
   'audio', true, true, 'no', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"BGM","musicGenres":["エレクトロニック"],"musicDuration":"1:30"}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["BGM"],"musicGenres":["エレクトロニック"],"musicDuration":"1:30","moods":["激しい"],"purposes":["バトル"]}'::jsonb, ARRAY[]::text[],
   now() - interval '16 days',
   now() - interval '16 days',
   now() - interval '5 hours'
@@ -496,7 +503,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-16","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-16","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.2', 'in_development',
   'audio', false, true, 'unset', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"その他","musicGenres":["その他"],"musicDuration":"0:30","nonGamePublishDestinations":[{"id":"ia-audio-pub-16","kind":"自サイト","url":"https://example.com/ia-seed/play/ia-seed-16","isPrimary":true}]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["その他"],"musicGenres":["その他"],"musicDuration":"0:15","purposes":["汎用"],"nonGamePublishDestinations":[{"id":"ia-audio-pub-16","kind":"自サイト","url":"https://example.com/ia-seed/play/ia-seed-16","isPrimary":true}]}'::jsonb, ARRAY[]::text[],
   now() - interval '17 days',
   now() - interval '17 days',
   now() - interval '6 hours'
@@ -509,21 +516,21 @@ INSERT INTO public.projects (
   COALESCE(
     (SELECT public_name FROM public.developer_profiles WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000016'::uuid),
     'IA Seed Owner A'
-  ), '[IA Seed] ドット絵タイルセット', COALESCE(
+  ), '[IA Seed] 2Dキャラクターセット', COALESCE(
     (SELECT public_name FROM public.developer_profiles WHERE user_id = 'a1a1a1a1-a1a1-41a1-81a1-000000000016'::uuid),
     'IA Seed Owner A'
   ),
-  '', ARRAY[]::text[], '[IA Seed] ドット絵タイルセット — Staging専用架空作品。',
-  '[IA Seed] ドット絵タイルセット の紹介',
+  '', ARRAY[]::text[], '[IA Seed] 2Dキャラクターセット — Staging専用架空作品。',
+  '[IA Seed] 2Dキャラクターセット の紹介',
   'playable', 'open', false, NULL,
   'new',
-  ARRAY['ドット絵', 'forge-ia-seed-v1']::text[],
+  ARRAY['ドット絵', '2Dキャラクター', 'forge-ia-seed-v1']::text[],
   'https://example.com/ia-seed/play/ia-seed-17',
   (SELECT thumbnail_url FROM public.projects WHERE id = '41ff5a96-105c-42a2-87b4-787bcfeacb45'::uuid), 'https://example.com/ia-seed/ia-seed-17', NULL, NULL, '[{"id":"ia-seed-17-rel-1","kind":"official_site","url":"https://example.com/ia-seed/ia-seed-17","label":"公式"}]'::jsonb,
   '[{"id":"ia-pub-ia-seed-17","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-17","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'free',
   'public', '0.3', 'in_development',
   'asset', false, true, 'unset', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
+  ARRAY['キャラクター']::text[], ARRAY[]::text[], '{"formats":["2D"],"tastes":["ピクセルアート"],"tools":["Aseprite"]}'::jsonb, ARRAY[]::text[],
   now() - interval '18 days',
   now() - interval '18 days',
   now() - interval '7 hours'
@@ -550,7 +557,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-18","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-18","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'free',
   'public', '0.4', 'in_development',
   'asset', false, true, 'unset', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
+  ARRAY['キャラクター']::text[], ARRAY[]::text[], '{"formats":["3D"],"tastes":["ローポリ"],"tools":["Blender","Maya"]}'::jsonb, ARRAY[]::text[],
   now() - interval '19 days',
   now() - interval '19 days',
   now() - interval '8 hours'
@@ -577,7 +584,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-19","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-19","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'free',
   'public', '0.5', 'in_development',
   'asset', false, true, 'unset', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
+  ARRAY['背景・風景']::text[], ARRAY[]::text[], '{"formats":["2D"],"tastes":["手描き"],"tools":["Photoshop"]}'::jsonb, ARRAY[]::text[],
   now() - interval '20 days',
   now() - interval '20 days',
   now() - interval '9 hours'
@@ -604,7 +611,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-20","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-20","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'free',
   'public', '0.1', 'in_development',
   'asset', false, true, 'unset', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
+  ARRAY['UI・アイコン']::text[], ARRAY[]::text[], '{"formats":["2D"],"tastes":["ミニマル"],"tools":["Photoshop"]}'::jsonb, ARRAY[]::text[],
   now() - interval '21 days',
   now() - interval '21 days',
   now() - interval '0 hours'
@@ -631,7 +638,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-21","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-21","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'free',
   'public', '0.2', 'in_development',
   'asset', false, true, 'unset', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
+  ARRAY['テクスチャ・マテリアル']::text[], ARRAY[]::text[], '{"formats":["3D"],"tastes":["リアル"],"tools":["Blender"]}'::jsonb, ARRAY[]::text[],
   now() - interval '22 days',
   now() - interval '22 days',
   now() - interval '1 hours'
@@ -658,7 +665,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-22","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-22","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'free',
   'public', '0.3', 'in_development',
   'asset', false, true, 'unset', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
+  ARRAY['アニメーション']::text[], ARRAY[]::text[], '{"formats":["2D"],"tastes":["アニメ・トゥーン"],"tools":["Spine"]}'::jsonb, ARRAY[]::text[],
   now() - interval '23 days',
   now() - interval '23 days',
   now() - interval '2 hours'
@@ -685,7 +692,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-23","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-23","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'free',
   'public', '0.4', 'in_development',
   'asset', false, true, 'unset', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
+  ARRAY['エフェクト・VFX', 'シェーダー']::text[], ARRAY[]::text[], '{"formats":["3D"],"tastes":["SF・近未来"],"tools":["Unity","Unreal Engine"]}'::jsonb, ARRAY[]::text[],
   now() - interval '24 days',
   now() - interval '24 days',
   now() - interval '3 hours'
@@ -712,7 +719,7 @@ INSERT INTO public.projects (
   '[]'::jsonb::jsonb, NULL, 'free',
   'public', '0.5', 'in_development',
   'asset', false, true, 'unset', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{}'::jsonb,
+  ARRAY['フォント・文字']::text[], ARRAY[]::text[], '{"formats":["2D"],"tastes":[],"tools":[]}'::jsonb, ARRAY[]::text[],
   now() - interval '25 days',
   now() - interval '25 days',
   now() - interval '4 hours'
@@ -739,7 +746,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-25","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-25","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.1', 'in_development',
   'dev-tool', true, true, 'ok', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"デバッグ・テスト支援","toolEnvironments":["Unity","Windows"],"toolUsageMethod":"ダウンロードして利用","nonGamePublishDestinations":[{"id":"ia-tool-pub-25","kind":"GitHubリポジトリ","url":"https://example.com/ia-seed/play/ia-seed-25","isPrimary":true}]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["デバッグ・テスト支援","生成・変換ツール"],"toolEnvironments":["Unity","Windows","Webブラウザ"],"toolUsageMethod":"ダウンロードして利用","features":["自動化","AI対応"],"nonGamePublishDestinations":[{"id":"ia-tool-pub-25","kind":"GitHubリポジトリ","url":"https://example.com/ia-seed/play/ia-seed-25","isPrimary":true}]}'::jsonb, ARRAY[]::text[],
   now() - interval '26 days',
   now() - interval '26 days',
   now() - interval '5 hours'
@@ -766,7 +773,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-26","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-26","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.2', 'in_development',
   'dev-tool', false, true, 'conditional', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"デスクトップツール","toolEnvironments":["Unreal Engine","Windows"],"toolUsageMethod":"ダウンロードして利用"}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["デスクトップツール"],"toolEnvironments":["Unreal Engine","Windows"],"toolUsageMethod":"ダウンロードして利用","features":["個人開発向け"]}'::jsonb, ARRAY[]::text[],
   now() - interval '27 days',
   now() - interval '27 days',
   now() - interval '6 hours'
@@ -793,7 +800,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-27","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-27","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.3', 'in_development',
   'dev-tool', false, true, 'no', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"生成・変換ツール","toolEnvironments":["Godot"],"toolUsageMethod":"プラグイン・拡張機能として利用"}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["生成・変換ツール"],"toolEnvironments":["Godot"],"toolUsageMethod":"プラグイン・拡張機能として利用","features":["ノーコード・ローコード"]}'::jsonb, ARRAY[]::text[],
   now() - interval '28 days',
   now() - interval '28 days',
   now() - interval '7 hours'
@@ -820,7 +827,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-28","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-28","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.4', 'in_development',
   'dev-tool', true, true, 'unset', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"ライブラリ・SDK","toolEnvironments":["その他"],"toolUsageMethod":"ライブラリ・SDKとして利用"}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["ライブラリ・SDK"],"toolEnvironments":["その他"],"toolUsageMethod":"ライブラリ・SDKとして利用","features":["チーム開発向け"]}'::jsonb, ARRAY[]::text[],
   now() - interval '1 days',
   now() - interval '1 days',
   now() - interval '8 hours'
@@ -847,7 +854,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-29","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-29","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.5', 'in_development',
   'dev-tool', false, true, 'ok', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"ライブラリ・SDK","toolEnvironments":["その他"],"toolUsageMethod":"ライブラリ・SDKとして利用"}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["ライブラリ・SDK"],"toolEnvironments":["その他"],"toolUsageMethod":"ライブラリ・SDKとして利用","features":["ローカル実行"]}'::jsonb, ARRAY[]::text[],
   now() - interval '2 days',
   now() - interval '2 days',
   now() - interval '9 hours'
@@ -874,7 +881,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-30","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-30","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.1', 'in_development',
   'dev-tool', false, true, 'conditional', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"CLI","toolEnvironments":["Linux","macOS","Windows"],"toolUsageMethod":"CLIで利用"}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["CLI"],"toolEnvironments":["Linux","macOS","Windows"],"toolUsageMethod":"CLIで利用","features":["軽量","リアルタイム"]}'::jsonb, ARRAY[]::text[],
   now() - interval '3 days',
   now() - interval '3 days',
   now() - interval '0 hours'
@@ -901,7 +908,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-31","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-31","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.2', 'in_development',
   'dev-tool', true, true, 'no', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"プラグイン・拡張機能","toolEnvironments":["Unity"],"toolUsageMethod":"プラグイン・拡張機能として利用"}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["プラグイン・拡張機能"],"toolEnvironments":["Unity"],"toolUsageMethod":"プラグイン・拡張機能として利用","features":["オープンソース"]}'::jsonb, ARRAY[]::text[],
   now() - interval '4 days',
   now() - interval '4 days',
   now() - interval '1 hours'
@@ -928,7 +935,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-32","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-32","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.3', 'in_development',
   'dev-tool', false, true, 'unset', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"CLI","toolEnvironments":["Godot","Linux"],"toolUsageMethod":"CLIで利用"}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["CLI"],"toolEnvironments":["Godot","Linux"],"toolUsageMethod":"CLIで利用"}'::jsonb, ARRAY[]::text[],
   now() - interval '5 days',
   now() - interval '5 days',
   now() - interval '2 hours'
@@ -955,7 +962,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-33","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-33","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.4', 'in_development',
   'service-app', false, true, 'ok', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"Webサービス","serviceEnvironments":["Webブラウザ"],"nonGamePublishDestinations":[{"id":"ia-svc-pub-33","kind":"Webサービス","url":"https://example.com/ia-seed/play/ia-seed-33","isPrimary":true}]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["Webサービス"],"serviceEnvironments":["Web"],"purposes":["制作支援"],"features":["チーム向け"],"nonGamePublishDestinations":[{"id":"ia-svc-pub-33","kind":"Webサービス","url":"https://example.com/ia-seed/play/ia-seed-33","isPrimary":true}]}'::jsonb, ARRAY[]::text[],
   now() - interval '6 days',
   now() - interval '6 days',
   now() - interval '3 hours'
@@ -982,7 +989,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-34","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-34","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.5', 'in_development',
   'service-app', true, false, 'conditional', '条件あり',
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"Webサービス","serviceEnvironments":["Webブラウザ","Windows"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["Webサービス"],"serviceEnvironments":["Webブラウザ","Windows"],"purposes":["分析・可視化"],"features":["データ分析"]}'::jsonb, ARRAY[]::text[],
   now() - interval '7 days',
   now() - interval '7 days',
   now() - interval '4 hours'
@@ -1009,7 +1016,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-35","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-35","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.1', 'in_development',
   'service-app', false, false, 'no', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"Bot","serviceEnvironments":["その他"],"nonGamePublishDestinations":[{"id":"ia-svc-pub-35","kind":"Discord等の追加・招待先","url":"https://example.com/ia-seed/play/ia-seed-35","isPrimary":true}]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["Bot"],"serviceEnvironments":["その他"],"purposes":["配信・コンテンツ制作"],"features":["リアルタイム","外部サービス連携"],"nonGamePublishDestinations":[{"id":"ia-svc-pub-35","kind":"Discord等の追加・招待先","url":"https://example.com/ia-seed/play/ia-seed-35","isPrimary":true}]}'::jsonb, ARRAY[]::text[],
   now() - interval '8 days',
   now() - interval '8 days',
   now() - interval '5 hours'
@@ -1036,7 +1043,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-36","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-36","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.2', 'in_development',
   'service-app', true, false, 'unset', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"スマートフォンアプリ","serviceEnvironments":["iOS","Android"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"スマートフォンアプリ","serviceEnvironments":["iOS","Android"],"purposes":["情報整理・ナレッジ"],"features":["個人向け"]}'::jsonb, ARRAY[]::text[],
   now() - interval '9 days',
   now() - interval '9 days',
   now() - interval '6 hours'
@@ -1063,7 +1070,7 @@ INSERT INTO public.projects (
   '[]'::jsonb::jsonb, NULL, 'unspecified',
   'public', '0.3', 'in_development',
   'service-app', false, false, 'ok', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"デスクトップアプリ","serviceEnvironments":["Windows","macOS"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["デスクトップアプリ"],"serviceEnvironments":["Windows","macOS"],"purposes":["制作支援"]}'::jsonb, ARRAY[]::text[],
   now() - interval '10 days',
   now() - interval '10 days',
   now() - interval '7 hours'
@@ -1090,7 +1097,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-38","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-38","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.4', 'in_development',
   'service-app', true, false, 'conditional', '条件あり',
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"ブラウザ拡張","serviceEnvironments":["Webブラウザ"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["ブラウザ拡張"],"serviceEnvironments":["Webブラウザ"],"features":["カスタマイズ可能"]}'::jsonb, ARRAY[]::text[],
   now() - interval '11 days',
   now() - interval '11 days',
   now() - interval '8 hours'
@@ -1117,7 +1124,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-39","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-39","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.5', 'in_development',
   'service-app', false, true, 'no', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"Webサービス","serviceEnvironments":["Webブラウザ"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["Webサービス"],"serviceEnvironments":["Web"],"purposes":["自動化・連携"],"features":["AI対応"]}'::jsonb, ARRAY[]::text[],
   now() - interval '12 days',
   now() - interval '12 days',
   now() - interval '9 hours'
@@ -1144,7 +1151,7 @@ INSERT INTO public.projects (
   '[{"id":"ia-pub-ia-seed-40","kind":"self_site","url":"https://example.com/ia-seed/play/ia-seed-40","usageMethod":"browser","isPrimary":true}]'::jsonb, NULL, 'unspecified',
   'public', '0.1', 'in_development',
   'service-app', true, false, 'ok', NULL,
-  ARRAY[]::text[], ARRAY[]::text[], '{"kind":"Webサービス","serviceEnvironments":["Webブラウザ"]}'::jsonb,
+  ARRAY[]::text[], ARRAY[]::text[], '{"kinds":["Webサービス"],"serviceEnvironments":["Webブラウザ"],"purposes":["配信・コンテンツ制作","コミュニティ"],"features":["コラボレーション"]}'::jsonb, ARRAY[]::text[],
   now() - interval '13 days',
   now() - interval '13 days',
   now() - interval '0 hours'
@@ -1168,6 +1175,7 @@ ON CONFLICT (id) DO UPDATE SET
   asset_kinds = EXCLUDED.asset_kinds,
   purpose_tags = EXCLUDED.purpose_tags,
   category_attributes = EXCLUDED.category_attributes,
+  player_counts = EXCLUDED.player_counts,
   publish_destinations = EXCLUDED.publish_destinations,
   estimated_play_time = EXCLUDED.estimated_play_time,
   play_access_type = EXCLUDED.play_access_type,

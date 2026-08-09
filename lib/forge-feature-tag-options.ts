@@ -14,6 +14,9 @@ export const FORGE_FEATURE_TAG_OPTIONS = [
   "高難度",
   "PvP",
   "PvE",
+  "コメディ",
+  "ホラー・不穏",
+  "周回・リプレイ性",
 ] as const;
 
 export type ForgeFeatureTagOption = (typeof FORGE_FEATURE_TAG_OPTIONS)[number];

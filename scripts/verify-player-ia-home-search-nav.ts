@@ -19,50 +19,67 @@ function read(rel: string): string {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
-// --- A. Home CTAs ---
-assert.equal(PLAYER_IA_HOME_FEATURE_CARDS.length, 4);
+// --- A. Home CTAs (2026-08 five-category redesign) ---
+assert.equal(PLAYER_IA_HOME_FEATURE_CARDS.length, 5);
 assert.deepEqual(
   PLAYER_IA_HOME_FEATURE_CARDS.map((c) => c.id),
-  ["play", "listen", "service", "publish"],
+  ["game", "audio", "asset", "dev-tool", "service-app"],
 );
-assert.equal(PLAYER_IA_HOME_FEATURE_CARDS[0].title, "遊ぶ");
-assert.equal(PLAYER_IA_HOME_FEATURE_CARDS[0].href, "/search?category=game");
-assert.equal(PLAYER_IA_HOME_FEATURE_CARDS[0].description, "ゲームを探して遊ぶ");
-assert.equal(PLAYER_IA_HOME_FEATURE_CARDS[1].title, "聞く");
-assert.equal(PLAYER_IA_HOME_FEATURE_CARDS[1].href, "/search?category=audio");
-assert.equal(
-  PLAYER_IA_HOME_FEATURE_CARDS[1].description,
-  "音楽・音声作品を探して聞く",
-);
-assert.equal(PLAYER_IA_HOME_FEATURE_CARDS[2].title, "サービスを探す");
-assert.equal(
-  PLAYER_IA_HOME_FEATURE_CARDS[2].href,
-  "/search?category=service-app",
-);
-assert.equal(
-  PLAYER_IA_HOME_FEATURE_CARDS[2].description,
-  "サービスやアプリを探して試す",
-);
-assert.equal(PLAYER_IA_HOME_FEATURE_CARDS[3].title, "掲載する");
-assert.equal(PLAYER_IA_HOME_FEATURE_CARDS[3].href, "/studio/submit");
-assert.equal(PLAYER_IA_HOME_FEATURE_CARDS[3].description, "作品を掲載して届ける");
 
+// Every card: a spotlight CTA (link or coming_soon) + an always-link search CTA
+// to its own category. No "publish" card / CTA on this feature grid (Studio
+// submit lives elsewhere — home.tsx top-level CTA, not this card grid).
 for (const card of PLAYER_IA_HOME_FEATURE_CARDS) {
+  assert.ok(card.title.trim().length > 0, `${card.id} needs a title`);
+  assert.ok(card.description.trim().length > 0, `${card.id} needs a description`);
+  assert.equal(card.ctas.length, 2, `${card.id} must have exactly 2 CTAs`);
+
+  const spotlight = card.ctas.find((cta) => cta.id === "spotlight");
+  assert.ok(spotlight, `${card.id} missing spotlight CTA`);
+  assert.equal(spotlight!.label, "注目作品を見る");
+
+  const search = card.ctas.find((cta) => cta.id === "search");
+  assert.ok(search, `${card.id} missing search CTA`);
+  assert.equal(search!.kind, "link", `${card.id} search CTA must always link`);
   assert.equal(
-    card.href.includes("quick_try"),
-    false,
-    `${card.id} must not use quick_try`,
+    (search as { href: string }).href,
+    `/search?category=${card.id}`,
   );
-  assert.equal(
-    card.href.includes("usable_for_creation"),
-    false,
-    `${card.id} must not use usable_for_creation`,
-  );
+
+  // PlayerIaHomeCategoryCta's id union is only "spotlight" | "search" — no
+  // "publish" CTA variant exists on this card grid (Studio submit lives
+  // elsewhere), so the 2-CTA-exactly check above already proves this.
+  for (const cta of card.ctas) {
+    if (cta.kind !== "link") continue;
+    const href = (cta as { href: string }).href;
+    assert.equal(href.includes("quick_try"), false, `${card.id} must not use quick_try`);
+    assert.equal(
+      href.includes("usable_for_creation"),
+      false,
+      `${card.id} must not use usable_for_creation`,
+    );
+    assert.equal(href.includes("/studio/submit"), false, `${card.id} must not link to Studio submit`);
+  }
+}
+
+// Only "game" has a live spotlight destination today; the other four
+// categories are coming-soon (no seeded per-category spotlight feed yet).
+const gameCard = PLAYER_IA_HOME_FEATURE_CARDS.find((c) => c.id === "game")!;
+const gameSpotlight = gameCard.ctas.find((cta) => cta.id === "spotlight")!;
+assert.equal(gameSpotlight.kind, "link");
+assert.equal((gameSpotlight as { href: string }).href, "/home/game");
+
+for (const id of ["audio", "asset", "dev-tool", "service-app"] as const) {
+  const card = PLAYER_IA_HOME_FEATURE_CARDS.find((c) => c.id === id)!;
+  const spotlight = card.ctas.find((cta) => cta.id === "spotlight")!;
+  assert.equal(spotlight.kind, "coming_soon", `${id} spotlight should be coming_soon`);
 }
 
 const homePage = read("components/player-ia/player-ia-home-page.tsx");
 assert.match(homePage, /PLAYER_IA_HOME_FEATURE_CARDS/);
-assert.match(homePage, /sm:grid-cols-2 xl:grid-cols-4/);
+assert.match(homePage, /作品を見つける・試す/);
+assert.match(homePage, /sm:grid-cols-2 xl:grid-cols-3/);
+assert.match(homePage, /Coming Soon/);
 assert.doesNotMatch(homePage, /遊ぶ・試す/);
 assert.doesNotMatch(homePage, /制作に使う/);
 assert.match(homePage, /initialHome/);
@@ -72,6 +89,28 @@ assert.match(homePage, /fetch\("\/api\/discovery\/player-ia-home"/);
 const homeRoute = read("app/(player)/home/page.tsx");
 assert.match(homeRoute, /loadPlayerIaHome/);
 assert.match(homeRoute, /initialHome=\{initialHome\}/);
+
+// "game" card spotlight CTA target must not be a dead link
+assert.ok(
+  fs.existsSync(path.join(ROOT, "app/(player)/home/game/page.tsx")),
+  "/home/game route must exist (game card spotlight CTA target)",
+);
+const homeGameRoute = read("app/(player)/home/game/page.tsx");
+assert.match(
+  homeGameRoute,
+  /PlayerIaGameHomePage|loadPlayerIaGameHome/,
+  "/home/game must serve game category Home (not Search redirect-only)",
+);
+assert.doesNotMatch(
+  homeGameRoute,
+  /redirect\(buildSearchCategoryHref\("game"\)\)/,
+  "/home/game must not solely redirect to Search for Player IA",
+);
+assert.match(
+  homeGameRoute,
+  /PlayerIaGameHomePage/,
+  "/home/game renders PlayerIaGameHomePage",
+);
 
 // --- B. legacy filter chips hidden, API path retained ---
 const searchPage = read("components/player-ia/player-ia-search-page.tsx");

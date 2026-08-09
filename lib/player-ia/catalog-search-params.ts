@@ -3,9 +3,19 @@ import {
   type AssetKindId,
   type ProjectCategoryId,
 } from "@/lib/project-categories";
-import { isAssetKindFilter } from "@/lib/supabase/public-catalog-db";
+import {
+  mapPlayEnvironmentStorageTagToUi,
+  mapPlayEnvironmentUiToStorageTag,
+  parseAllowlistedMulti,
+} from "@/lib/project-formal-filter-registry";
+import {
+  CATALOG_ATTR_FIELD_TO_PARAM_KEY,
+  isAssetKindFilter,
+  type CatalogAttrParamKey,
+} from "@/lib/supabase/public-catalog-db";
 import type { CatalogSearchParams } from "@/lib/supabase/public-catalog-db";
 import {
+  getSearchAttrFilterSpecs,
   parseFeatureTagFilterValues,
   parseGenreFilterValues,
   readMultiSearchParam,
@@ -77,6 +87,65 @@ function parseBooleanParam(value: string | null): boolean | null {
   return null;
 }
 
+/**
+ * Category-specific formal filters (registry `urlKey`s) → RPC arg axes.
+ * `getSearchAttrFilterSpecs` already excludes genre/feature_tag (handled
+ * separately above) so this never double-parses `genre` / `tag`.
+ */
+function parseAttrFiltersForCategory(
+  source: CatalogSearchParamSource,
+  category: ProjectCategoryId | null,
+): Partial<Record<CatalogAttrParamKey, string[]>> {
+  const result: Partial<Record<CatalogAttrParamKey, string[]>> = {};
+  if (!category) return result;
+
+  for (const spec of getSearchAttrFilterSpecs(category)) {
+    const paramKey = CATALOG_ATTR_FIELD_TO_PARAM_KEY[spec.fieldId];
+    if (!paramKey) continue;
+
+    const raw = readMulti(source, spec.urlKey);
+    let values = parseAllowlistedMulti(
+      raw,
+      spec.options.map((option) => option.value),
+      spec.maxSelection,
+    );
+    if (spec.fieldId === "play_environment") {
+      values = values
+        .map((value) => mapPlayEnvironmentUiToStorageTag(value))
+        .filter((value): value is string => Boolean(value));
+    }
+    if (values.length > 0) {
+      result[paramKey] = values;
+    }
+  }
+  return result;
+}
+
+/** Reverse of `parseAttrFiltersForCategory` for query-string reconstruction. */
+function writeAttrFiltersToQuery(
+  params: URLSearchParams,
+  category: ProjectCategoryId | null,
+  parsed: CatalogSearchParams,
+): void {
+  if (!category) return;
+  for (const spec of getSearchAttrFilterSpecs(category)) {
+    const paramKey = CATALOG_ATTR_FIELD_TO_PARAM_KEY[spec.fieldId];
+    if (!paramKey) continue;
+
+    const values = parsed[paramKey];
+    if (!values || values.length === 0) continue;
+    const uiValues =
+      spec.fieldId === "play_environment"
+        ? values
+            .map((value) => mapPlayEnvironmentStorageTagToUi(value))
+            .filter((value): value is NonNullable<typeof value> => Boolean(value))
+        : values;
+    if (uiValues.length > 0) {
+      params.set(spec.urlKey, uiValues.join(","));
+    }
+  }
+}
+
 /** Normalize Search / catalog API query params (shared by page + route). */
 export function parseCatalogSearchParams(
   source: CatalogSearchParamSource,
@@ -107,6 +176,8 @@ export function parseCatalogSearchParams(
       ? parseFeatureTagFilterValues(readMulti(source, "tag"))
       : [];
 
+  const attrFilters = parseAttrFiltersForCategory(source, category);
+
   return {
     category,
     sort,
@@ -120,6 +191,7 @@ export function parseCatalogSearchParams(
     ),
     streamPolicy,
     assetKind,
+    ...attrFilters,
     limit: Number.isFinite(limitRaw) ? limitRaw : undefined,
     offset: Number.isFinite(offsetRaw) ? offsetRaw : 0,
   };
@@ -163,6 +235,13 @@ export function buildCatalogQueryString(
   if (parsed.assetKind) {
     params.set("asset_kind", parsed.assetKind);
   }
+  writeAttrFiltersToQuery(
+    params,
+    parsed.category && isProjectCategoryId(parsed.category)
+      ? parsed.category
+      : null,
+    parsed,
+  );
   params.set(
     "limit",
     String(options?.limit ?? parsed.limit ?? PLAYER_IA_SEARCH_CATALOG_LIMIT),

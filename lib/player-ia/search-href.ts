@@ -2,7 +2,8 @@ import {
   isProjectCategoryId,
   type ProjectCategoryId,
 } from "@/lib/project-categories";
-import { PLAYER_IA_SEARCH_LEGACY_HIDDEN_PARAMS } from "@/lib/player-ia/search-filter-state";
+import { PROJECT_FORMAL_FILTER_REGISTRY } from "@/lib/project-formal-filter-registry";
+import { getSearchAttrFilterSpecs } from "@/lib/player-ia/search-filter-state";
 
 type SearchParamsLike =
   | URLSearchParams
@@ -46,6 +47,21 @@ export function buildSearchHrefForCategory(
     next.delete("tag");
   }
 
+  // Category-specific formal filters (registry `urlKey`s) don't carry over
+  // across categories — e.g. leaving "asset" drops `format`/`taste`/`tool`.
+  // Legacy hidden params (quick_try / stream_policy / ...) aren't in the
+  // registry, so they're untouched and preserved regardless of category.
+  const allowedAttrUrlKeys = new Set(
+    getSearchAttrFilterSpecs(category).map((spec) => spec.urlKey),
+  );
+  for (const spec of PROJECT_FORMAL_FILTER_REGISTRY) {
+    if (spec.fieldId === "genre" || spec.fieldId === "feature_tag") continue;
+    if (!spec.searchApplicable) continue;
+    if (!allowedAttrUrlKeys.has(spec.urlKey)) {
+      next.delete(spec.urlKey);
+    }
+  }
+
   if (!category || category === "all") {
     next.delete("category");
   } else if (isProjectCategoryId(category)) {
@@ -53,9 +69,6 @@ export function buildSearchHrefForCategory(
   } else {
     next.delete("category");
   }
-
-  // Ensure we didn't accidentally drop legacy keys when cleaning empties
-  void PLAYER_IA_SEARCH_LEGACY_HIDDEN_PARAMS;
 
   const query = next.toString();
   return query ? `/search?${query}` : "/search";

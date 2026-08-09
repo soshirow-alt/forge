@@ -67,18 +67,21 @@ export const PROJECT_FORMAL_FILTER_OWNERSHIP: FormalFilterFieldSpec[] = [
   },
   {
     id: "asset_kinds",
-    ownership: "future-studio-candidate",
-    studioWrite: "no",
-    playerIaSearchUi: "hidden",
+    ownership: "studio-owned",
+    studioWrite: "yes",
+    playerIaSearchUi: "active",
     notes:
-      "Formal column for future asset Studio UI. Inactive now — do not add write path in this task.",
+      "2026-08 five-category Studio: asset submit/edit writes projects.asset_kinds " +
+      "from ASSET_KIND_CANONICAL_LABELS (registry field asset_kind). Multi-select, no game fallback.",
   },
   {
     id: "asset_kind",
-    ownership: "future-studio-candidate",
+    ownership: "studio-owned",
     studioWrite: "no",
-    playerIaSearchUi: "hidden",
-    notes: "Search URL singular param for asset_kinds. Hidden until asset Studio.",
+    playerIaSearchUi: "active",
+    notes:
+      "Search URL param for asset_kinds. Now active multi (comma-separated) via registry " +
+      "urlKey asset_kind; legacy single-value links still parse as a 1-item list.",
   },
   {
     id: "purpose_tags",
@@ -87,6 +90,15 @@ export const PROJECT_FORMAL_FILTER_OWNERSHIP: FormalFilterFieldSpec[] = [
     playerIaSearchUi: "n/a",
     notes:
       "076 column; seed/SQL primarily. Not mapped by projectRowToGame / Studio write.",
+  },
+  {
+    id: "player_counts",
+    ownership: "studio-owned",
+    studioWrite: "yes",
+    playerIaSearchUi: "active",
+    notes:
+      "2026-08 five-category Studio: game submit/edit writes projects.player_counts " +
+      "text[] (registry field player_count). Distinct from legacy free-text notes.",
   },
 ];
 

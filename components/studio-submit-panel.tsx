@@ -23,6 +23,7 @@ import {
   projectPublishSubmitLabel,
 } from "@/lib/project-publish-og-gate";
 import {
+  StudioSubmitAssetAttributesEditPanel,
   StudioSubmitBasicInfoEditPanel,
   StudioSubmitGenresTagsEditPanel,
   StudioSubmitImagesEditPanel,
@@ -33,6 +34,7 @@ import {
   StudioSubmitPrototypeUsageEditPanel,
   StudioSubmitPublicationEditPanel,
 } from "@/components/studio-submit-edit-panels";
+import type { SubmitAssetCategoryFields } from "@/lib/studio-non-game-attributes";
 import type { SubmitValidationEditMode } from "@/lib/studio-submit-draft";
 import {
   summarizeSubmitDraftBasic,
@@ -120,6 +122,9 @@ export type StudioSubmitPanelProps = {
   ) => void;
   /** Asset and similar: shared fields only (no genres / play-info rows). */
   commonFieldsOnly?: boolean;
+  /** Asset only — structured kinds/formats/tastes/tools (reuses genres-tags slot). */
+  assetFields?: SubmitAssetCategoryFields;
+  onAssetFieldsChange?: (next: SubmitAssetCategoryFields) => void;
 };
 
 export function StudioSubmitPanel({
@@ -139,6 +144,8 @@ export function StudioSubmitPanel({
   prototypeCategoryFields,
   onPrototypeCategoryFieldsChange,
   commonFieldsOnly = false,
+  assetFields,
+  onAssetFieldsChange,
 }: StudioSubmitPanelProps) {
   const [editMode, setEditMode] = useState<SubmitEditMode>(null);
   const [highlightFieldId, setHighlightFieldId] = useState<StudioFieldId | null>(null);
@@ -227,6 +234,25 @@ export function StudioSubmitPanel({
             draft={draft}
             onFieldsChange={onPrototypeCategoryFieldsChange}
             onDraftChange={onDraftChange}
+            onCancel={closeEdit}
+          />
+        </StudioPanelScrollShell>
+      </aside>
+    );
+  }
+  if (
+    editMode === "genres-tags" &&
+    commonFieldsOnly &&
+    assetFields &&
+    onAssetFieldsChange
+  ) {
+    return (
+      <aside aria-label="Studioパネル" className={submitPanelAsideClassName}>
+        <StudioPanelScrollShell>
+          {submitError ? <SubmitValidationAlert message={submitError} /> : null}
+          <StudioSubmitAssetAttributesEditPanel
+            fields={assetFields}
+            onFieldsChange={onAssetFieldsChange}
             onCancel={closeEdit}
           />
         </StudioPanelScrollShell>
@@ -416,6 +442,18 @@ export function StudioSubmitPanel({
                           draft.featureTags.length,
                         )
                       : summarizeSubmitDraftGenres(draft)
+                  }
+                  required
+                  onClick={() => openEdit("genres-tags")}
+                />
+              ) : assetFields ? (
+                <StudioActionRow
+                  icon={Tags}
+                  label="種類・特徴を編集"
+                  summary={
+                    assetFields.kinds.length > 0
+                      ? assetFields.kinds.join("・")
+                      : "未設定"
                   }
                   required
                   onClick={() => openEdit("genres-tags")}

@@ -5,9 +5,14 @@ import { isSpecifiedPlayAccessType } from "@/lib/play-access-type";
 import type { ProjectCategoryId } from "@/lib/project-categories";
 import { buildNonGamePublishWriteFields } from "@/lib/project-publish-write-adapter";
 import {
+  ASSET_ATTRIBUTE_KEYS,
+  encodeAssetFieldsToCategoryAttributes,
   encodePrototypeFieldsToCategoryAttributes,
   mergeCategoryAttributesJson,
   prototypeCategoryToProjectCategory,
+  sanitizeAssetFieldsForSave,
+  sanitizeNonGamePrototypeFieldsForSave,
+  type SubmitAssetCategoryFields,
 } from "@/lib/studio-non-game-attributes";
 import { isStudioCommonFieldsOnlyCategory } from "@/lib/studio-category-mode";
 import {
@@ -27,6 +32,8 @@ export function planStudioSubmitWrite(input: {
   prototypeCategory?: SubmitPrototypeCategory | null;
   prototypeFields?: SubmitPrototypeCategoryFields | null;
   projectCategory?: ProjectCategoryId | null;
+  /** Asset only — structured kinds/formats/tastes/tools (no game genre/play-info). */
+  assetFields?: SubmitAssetCategoryFields | null;
 }): SubmitFormData {
   const prototypeCategory = input.prototypeCategory ?? null;
   const prototypeFields = input.prototypeFields ?? null;
@@ -36,6 +43,7 @@ export function planStudioSubmitWrite(input: {
 
   let category: ProjectCategoryId | undefined;
   let categoryAttributes: Record<string, unknown> | undefined;
+  let assetKinds: string[] | undefined;
   let publishOverride:
     | ReturnType<typeof buildNonGamePublishWriteFields>["publishDestinations"]
     | undefined;
@@ -43,15 +51,42 @@ export function planStudioSubmitWrite(input: {
 
   if (commonFieldsOnly) {
     category = "asset";
-    categoryAttributes = {};
+    // Create path — no baseline (nothing persisted yet). Callers must run
+    // validateSubmitDraftForPost (which performs the same sanitize) first;
+    // a throw here means that guard was skipped, not a legitimate reject.
+    const sanitizedAssetResult = input.assetFields
+      ? sanitizeAssetFieldsForSave(input.assetFields)
+      : null;
+    if (sanitizedAssetResult && !sanitizedAssetResult.ok) {
+      throw new Error(sanitizedAssetResult.message);
+    }
+    const assetFields = sanitizedAssetResult?.ok
+      ? sanitizedAssetResult.fields
+      : null;
+    categoryAttributes = assetFields
+      ? mergeCategoryAttributesJson(
+          {},
+          encodeAssetFieldsToCategoryAttributes(assetFields),
+          ASSET_ATTRIBUTE_KEYS,
+        )
+      : {};
+    assetKinds = assetFields && assetFields.kinds.length > 0 ? assetFields.kinds : undefined;
   } else if (prototypeCategory && prototypeFields) {
     category = prototypeCategoryToProjectCategory(prototypeCategory);
+    const sanitizedResult = sanitizeNonGamePrototypeFieldsForSave(
+      prototypeCategory,
+      prototypeFields,
+    );
+    if (!sanitizedResult.ok) {
+      throw new Error(sanitizedResult.message);
+    }
+    const sanitizedPrototypeFields = sanitizedResult.fields;
     categoryAttributes = mergeCategoryAttributesJson(
       {},
-      encodePrototypeFieldsToCategoryAttributes(prototypeFields),
+      encodePrototypeFieldsToCategoryAttributes(sanitizedPrototypeFields),
     );
     publishLinkOverride = buildNonGamePublishWriteFields(
-      prototypeFields.publishDestinations,
+      sanitizedPrototypeFields.publishDestinations,
     );
     publishOverride = publishLinkOverride.publishDestinations;
   }
@@ -60,6 +95,7 @@ export function planStudioSubmitWrite(input: {
     category,
     categoryAttributes,
     publishDestinationsOverride: publishOverride,
+    assetKinds,
   });
 
   if (publishLinkOverride) {

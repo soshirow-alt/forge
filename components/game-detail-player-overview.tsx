@@ -170,7 +170,9 @@ function PlayInfoPanel({ playerMeta }: { playerMeta: GameDetailPlayerMeta }) {
   const hasPlayTime = playInfo.playTimeOptions.some((option) => option.active);
   const hasDevice = playInfo.deviceOptions.some((option) => option.active);
   const hasPlayMethod = playInfo.playMethodOptions.some((option) => option.active);
-  const hasContent = hasPlayTime || hasDevice || hasPlayMethod;
+  const playerCountOptions = playInfo.playerCountOptions ?? [];
+  const hasPlayerCount = playerCountOptions.some((option) => option.active);
+  const hasContent = hasPlayTime || hasDevice || hasPlayMethod || hasPlayerCount;
 
   if (!hasContent) {
     return null;
@@ -204,6 +206,19 @@ function PlayInfoPanel({ playerMeta }: { playerMeta: GameDetailPlayerMeta }) {
           ))}
         </div>
       </div>
+
+      {hasPlayerCount ? (
+        <div className="mt-3">
+          <p className="text-xs text-zinc-500">プレイ人数</p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {playerCountOptions
+              .filter((option) => option.active)
+              .map((option) => (
+                <OptionChip key={option.label} option={option} />
+              ))}
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }
@@ -410,7 +425,8 @@ export function GameDetailPlayerOverview({
   const showPlayInfoCard = Boolean(
     playerMeta.playInfo.playTimeOptions.some((option) => option.active) ||
       playerMeta.playInfo.deviceOptions.some((option) => option.active) ||
-      playerMeta.playInfo.playMethodOptions.some((option) => option.active),
+      playerMeta.playInfo.playMethodOptions.some((option) => option.active) ||
+      (playerMeta.playInfo.playerCountOptions ?? []).some((option) => option.active),
   );
 
   const usePrototypeInfo = prototypeInfoCard !== undefined;

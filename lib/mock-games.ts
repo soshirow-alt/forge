@@ -56,6 +56,10 @@ export type Game = {
   category?: ProjectCategoryId;
   /** Raw projects.category_attributes jsonb (includes non-game Studio fields). */
   categoryAttributes?: unknown;
+  /** Game only — projects.player_counts text[] (registry `player_count`). */
+  playerCounts?: string[];
+  /** Asset only — projects.asset_kinds text[] (canonical labels, registry `asset_kind`). */
+  assetKinds?: string[];
 };
 
 export const games: Game[] = [

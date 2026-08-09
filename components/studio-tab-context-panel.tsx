@@ -25,6 +25,7 @@ import { StudioOverviewIntroductionEditPanel } from "@/components/studio-overvie
 import { StudioOverviewPlayInfoEditPanel } from "@/components/studio-overview-play-info-edit-panel";
 import { StudioOverviewPublicationEditPanel } from "@/components/studio-overview-publication-edit-panel";
 import { StudioOverviewNonGameFieldsEditPanel } from "@/components/studio-overview-non-game-fields-edit-panel";
+import { StudioOverviewAssetFieldsEditPanel } from "@/components/studio-overview-asset-fields-edit-panel";
 import { StudioDevlogCurrentEditPanel } from "@/components/studio-devlog-current-edit-panel";
 import { StudioReleaseAboutBlock } from "@/components/studio-release-about-block";
 import { StudioPlayerFeedbackPanel } from "@/components/studio-improvement-loop";
@@ -47,7 +48,10 @@ import type { ProjectFeedbackEntry } from "@/lib/supabase/user-engagement";
 import { resolvePlayableVersion } from "@/lib/playable-version";
 import type { StudioEditPreviewPatch } from "@/lib/studio-edit-preview-merge";
 import { isNonGameStudioCategory } from "@/lib/studio-non-game-attributes";
-import { isStudioCommonFieldsOnlyCategory } from "@/lib/studio-category-mode";
+import {
+  isStudioAssetCategory,
+  isStudioCommonFieldsOnlyCategory,
+} from "@/lib/studio-category-mode";
 import {
   SUBMIT_PROTOTYPE_CLASSIFICATION_ROW_LABEL,
   SUBMIT_PROTOTYPE_USAGE_ROW_LABEL,
@@ -291,7 +295,16 @@ export function StudioTabContextPanel({
         />
       );
     } else if (overviewEditMode === "genres-tags") {
-      if (commonFieldsOnly) {
+      if (isStudioAssetCategory(game.category)) {
+        sectionContent = (
+          <StudioOverviewAssetFieldsEditPanel
+            key={`${projectId}-asset-fields`}
+            projectId={projectId}
+            onCancel={closeOverviewEdit}
+            onSaved={handleOverviewSaved}
+          />
+        );
+      } else if (commonFieldsOnly) {
         sectionContent = (
           <p className="px-1 text-sm text-zinc-500">
             このカテゴリではジャンル編集はありません。
@@ -406,17 +419,17 @@ export function StudioTabContextPanel({
               label="基本情報を編集"
               onClick={() => openOverviewEdit("basic-info", setOverviewEditMode)}
             />
-            {!commonFieldsOnly ? (
-              <StudioActionRow
-                icon={Tags}
-                label={
-                  prototypeCategory
+            <StudioActionRow
+              icon={Tags}
+              label={
+                isStudioAssetCategory(game.category)
+                  ? "種類・特徴を編集"
+                  : prototypeCategory
                     ? SUBMIT_PROTOTYPE_CLASSIFICATION_ROW_LABEL[prototypeCategory]
                     : "ジャンル・タグを編集"
-                }
-                onClick={() => openOverviewEdit("genres-tags", setOverviewEditMode)}
-              />
-            ) : null}
+              }
+              onClick={() => openOverviewEdit("genres-tags", setOverviewEditMode)}
+            />
             <StudioActionRow
               icon={Sparkles}
               label="作品紹介を編集"

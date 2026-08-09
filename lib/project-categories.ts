@@ -69,6 +69,26 @@ export const ASSET_KIND_LABELS: Record<AssetKindId, string> = {
   font: "フォント",
 };
 
+/**
+ * Canonical Studio write labels for `projects.asset_kinds[]`.
+ * Legacy `ASSET_KIND_IDS` / `ASSET_KIND_LABELS` remain for read compatibility.
+ */
+export const ASSET_KIND_CANONICAL_LABELS = [
+  "キャラクター",
+  "背景・風景",
+  "マップ・タイル",
+  "アイテム・小物",
+  "UI・アイコン",
+  "エフェクト・VFX",
+  "アニメーション",
+  "テクスチャ・マテリアル",
+  "フォント・文字",
+  "シェーダー",
+] as const;
+
+export type AssetKindCanonicalLabel =
+  (typeof ASSET_KIND_CANONICAL_LABELS)[number];
+
 export const STREAM_POLICY_IDS = [
   "ok",
   "conditional",

@@ -12,6 +12,7 @@ import {
 } from "../lib/prototype/studio-submit-flow";
 import {
   prototypeCategoryToProjectCategory,
+  type SubmitAssetCategoryFields,
 } from "../lib/studio-non-game-attributes";
 import { submitFormToInsertRow, projectRowToGame } from "../lib/supabase/projects";
 import { buildProjectEditFormDataFromGame } from "../lib/project-edit-form-data";
@@ -21,6 +22,7 @@ import type { ProjectRow } from "../lib/supabase/schema";
 import {
   createEmptySubmitDraft,
 } from "../lib/studio-submit-draft";
+import { PLAYER_COUNT_OPTIONS } from "../lib/project-formal-filter-registry";
 
 const owner = {
   ownerId: "11111111-1111-4111-8111-111111111111",
@@ -58,9 +60,11 @@ function protoFields(
   if (category === "music") {
     return {
       ...base,
-      kind: "楽曲",
+      kinds: ["楽曲"],
       musicGenres: ["ポップ"],
       musicDuration: "2:10",
+      moods: ["明るい"],
+      purposes: ["フィールド・探索"],
       publishDestinations: [
         {
           id: "a1",
@@ -74,9 +78,10 @@ function protoFields(
   if (category === "dev_tool") {
     return {
       ...base,
-      kind: "デスクトップツール",
+      kinds: ["デスクトップツール"],
       toolUsageMethod: "ダウンロードして利用",
       toolEnvironments: ["Windows"],
+      features: ["軽量"],
       publishDestinations: [
         {
           id: "t1",
@@ -89,8 +94,10 @@ function protoFields(
   }
   return {
     ...base,
-    kind: "Webサービス",
+    kinds: ["Webサービス"],
     serviceEnvironments: ["Webブラウザ"],
+    purposes: ["制作支援"],
+    features: ["AI対応"],
     publishDestinations: [
       {
         id: "s1",
@@ -149,9 +156,6 @@ function assertRoundTrip(category: ProjectCategoryId, insertRow: Record<string, 
   assert.equal(game.category, category);
   const form = buildProjectEditFormDataFromGame(game);
   assert.equal(form.category, category);
-  if (category === "asset") {
-    assert.deepEqual(form.categoryAttributes ?? {}, {});
-  }
 }
 
 // game
@@ -171,22 +175,87 @@ function assertRoundTrip(category: ProjectCategoryId, insertRow: Record<string, 
   assertRoundTrip("game", row as Record<string, unknown>);
 }
 
-// asset common via real submit planner
+// game playerCounts on create — canonical success, unknown reject, over-max
+// reject. Save boundary is `normalizeFormalMultiForSave` (no baseline on
+// create), not the silent-drop `parseAllowlistedMulti`.
+{
+  const draft = commonDraft();
+  draft.genres = ["RPG"];
+  draft.playAccessType = "free";
+  draft.playerCounts = [PLAYER_COUNT_OPTIONS[0], PLAYER_COUNT_OPTIONS[1]];
+  const validation = validateSubmitDraftForPost(draft);
+  assert.equal(validation.ok, true, "canonical playerCounts on create must pass");
+  const form = planStudioSubmitWrite({ draft, owner });
+  assert.deepEqual(form.playerCounts, [PLAYER_COUNT_OPTIONS[0], PLAYER_COUNT_OPTIONS[1]]);
+}
+{
+  const draft = commonDraft();
+  draft.genres = ["RPG"];
+  draft.playAccessType = "free";
+  draft.playerCounts = [PLAYER_COUNT_OPTIONS[0], "存在しない人数区分"];
+  const validation = validateSubmitDraftForPost(draft);
+  assert.equal(
+    validation.ok,
+    false,
+    "unknown playerCounts value on create must reject, not silently drop",
+  );
+}
+{
+  // player_count maxSelection equals PLAYER_COUNT_OPTIONS.length (every
+  // canonical option can be selected at once), so a genuine over-max
+  // create-time payload requires an unknown value beyond the allowlist —
+  // exercised generically for `normalizeFormalMultiForSave` against a field
+  // with headroom (audio_moods) in verify-studio-formal-sanitize-preserve.ts.
+  // Here: selecting every canonical option at once (== max, not over) must
+  // still pass, and duplicates must dedupe rather than push it over max.
+  const draft = commonDraft();
+  draft.genres = ["RPG"];
+  draft.playAccessType = "free";
+  draft.playerCounts = [...PLAYER_COUNT_OPTIONS, PLAYER_COUNT_OPTIONS[0]];
+  const validation = validateSubmitDraftForPost(draft);
+  assert.equal(validation.ok, true, "selecting every canonical option (deduped) must pass");
+  const form = planStudioSubmitWrite({ draft, owner });
+  assert.deepEqual(form.playerCounts, [...PLAYER_COUNT_OPTIONS]);
+}
+
+// asset common via real submit planner — no assetFields → validation fails closed
 {
   const draft = commonDraft();
   draft.genres = [];
   const validation = validateSubmitDraftForPost(draft, {
     projectCategory: "asset",
   });
+  assert.equal(validation.ok, false, "asset submit without kinds must fail closed");
+}
+
+// asset with structured kinds/formats/tastes/tools
+{
+  const draft = commonDraft();
+  draft.genres = [];
+  const assetFields: SubmitAssetCategoryFields = {
+    kinds: ["キャラクター", "背景・風景"],
+    formats: ["2D"],
+    tastes: ["アニメ・トゥーン"],
+    tools: ["Unity"],
+  };
+  const validation = validateSubmitDraftForPost(draft, {
+    projectCategory: "asset",
+    assetFields,
+  });
   assert.equal(validation.ok, true);
   const form = planStudioSubmitWrite({
     draft,
     owner,
     projectCategory: "asset",
+    assetFields,
   });
   const row = submitFormToInsertRow(form, owner);
-  assert.deepEqual(row.category_attributes, {});
-  assert.ok(!("asset_kinds" in row));
+  assert.deepEqual(row.category_attributes, {
+    formats: ["2D"],
+    tastes: ["アニメ・トゥーン"],
+    tools: ["Unity"],
+  });
+  assert.deepEqual(row.asset_kinds, ["キャラクター", "背景・風景"]);
   assertRoundTrip("asset", row as Record<string, unknown>);
 }
 

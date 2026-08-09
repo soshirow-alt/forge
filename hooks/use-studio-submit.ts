@@ -32,6 +32,12 @@ import type {
   SubmitPrototypeCategory,
   SubmitPrototypeCategoryFields,
 } from "@/lib/prototype/studio-submit-flow";
+import {
+  sanitizeAssetFieldsForSave,
+  sanitizeNonGamePrototypeFieldsForSave,
+  type SubmitAssetCategoryFields,
+} from "@/lib/studio-non-game-attributes";
+import { normalizeFormalMultiForSave } from "@/lib/project-formal-filter-registry";
 
 export {
   validateNonGamePrototypeFields,
@@ -80,10 +86,12 @@ export function validateSubmitDraftForPost(
     prototypeCategory?: SubmitPrototypeCategory | null;
     prototypeFields?: SubmitPrototypeCategoryFields | null;
     projectCategory?: ProjectCategoryId | null;
+    assetFields?: SubmitAssetCategoryFields | null;
   },
 ): SubmitDraftValidationResult {
   const prototypeCategory = options?.prototypeCategory ?? null;
   const prototypeFields = options?.prototypeFields ?? null;
+  const assetFields = options?.assetFields ?? null;
   const commonFieldsOnly = isStudioCommonFieldsOnlyCategory(
     options?.projectCategory,
   );
@@ -111,14 +119,33 @@ export function validateSubmitDraftForPost(
   }
 
   if (commonFieldsOnly) {
+    const sanitizedAssetResult = assetFields
+      ? sanitizeAssetFieldsForSave(assetFields)
+      : null;
+    if (sanitizedAssetResult && !sanitizedAssetResult.ok) {
+      return validationFailure("genres-tags", sanitizedAssetResult.message);
+    }
+    const sanitizedAssetFields = sanitizedAssetResult?.ok
+      ? sanitizedAssetResult.fields
+      : null;
+    if (!sanitizedAssetFields || sanitizedAssetFields.kinds.length === 0) {
+      return validationFailure("genres-tags", "アセット種別を1つ以上選んでください。");
+    }
     const publishError = validatePublishAccess(draft.publishDestinations);
     if (publishError) {
       return validationFailure("publication", publishError);
     }
   } else if (prototypeCategory && prototypeFields) {
-    const nonGame = validateNonGamePrototypeFieldsForSave(
+    const sanitizedResult = sanitizeNonGamePrototypeFieldsForSave(
       prototypeCategory,
       prototypeFields,
+    );
+    if (!sanitizedResult.ok) {
+      return validationFailure("genres-tags", sanitizedResult.message);
+    }
+    const nonGame = validateNonGamePrototypeFieldsForSave(
+      prototypeCategory,
+      sanitizedResult.fields,
     );
     if (!nonGame.ok) {
       return nonGame;
@@ -131,6 +158,17 @@ export function validateSubmitDraftForPost(
 
     if (!isSpecifiedPlayAccessType(draft.playAccessType)) {
       return validationFailure("play-info", "料金・公開形態を選んでください。");
+    }
+
+    // Create path (no baseline) — an unknown/obsolete value must reject,
+    // never silently drop (see `parseAllowlistedMulti` vs
+    // `normalizeFormalMultiForSave` note in lib/project-formal-filter-registry.ts).
+    const playerCountsResult = normalizeFormalMultiForSave({
+      next: draft.playerCounts,
+      fieldId: "player_count",
+    });
+    if (!playerCountsResult.ok) {
+      return validationFailure("play-info", playerCountsResult.message);
     }
 
     const publishError = validatePublishAccess(draft.publishDestinations);
@@ -158,10 +196,12 @@ export function validateSubmitDraftSection(
     prototypeCategory?: SubmitPrototypeCategory | null;
     prototypeFields?: SubmitPrototypeCategoryFields | null;
     projectCategory?: ProjectCategoryId | null;
+    assetFields?: SubmitAssetCategoryFields | null;
   },
 ): SubmitDraftValidationResult {
   const prototypeCategory = options?.prototypeCategory ?? null;
   const prototypeFields = options?.prototypeFields ?? null;
+  const assetFields = options?.assetFields ?? null;
   const commonFieldsOnly = isStudioCommonFieldsOnlyCategory(
     options?.projectCategory,
   );
@@ -186,13 +226,36 @@ export function validateSubmitDraftSection(
     }
     case "genres-tags": {
       if (commonFieldsOnly) {
+        const sanitizedAssetResult = assetFields
+          ? sanitizeAssetFieldsForSave(assetFields)
+          : null;
+        if (sanitizedAssetResult && !sanitizedAssetResult.ok) {
+          return validationFailure("genres-tags", sanitizedAssetResult.message);
+        }
+        const sanitizedAssetFields = sanitizedAssetResult?.ok
+          ? sanitizedAssetResult.fields
+          : null;
+        if (!sanitizedAssetFields || sanitizedAssetFields.kinds.length === 0) {
+          return validationFailure(
+            "genres-tags",
+            "アセット種別を1つ以上選んでください。",
+          );
+        }
         return { ok: true };
       }
       if (prototypeCategory && prototypeFields) {
-        return validateNonGamePrototypeFields(prototypeCategory, prototypeFields, {
-          mode: "section",
-          section: "genres-tags",
-        });
+        const sanitizedResult = sanitizeNonGamePrototypeFieldsForSave(
+          prototypeCategory,
+          prototypeFields,
+        );
+        if (!sanitizedResult.ok) {
+          return validationFailure("genres-tags", sanitizedResult.message);
+        }
+        return validateNonGamePrototypeFields(
+          prototypeCategory,
+          sanitizedResult.fields,
+          { mode: "section", section: "genres-tags" },
+        );
       }
       const genres = sanitizeProjectGenresForSave(draft.genres);
       if (genres.length === 0) {
@@ -211,22 +274,45 @@ export function validateSubmitDraftSection(
         return { ok: true };
       }
       if (prototypeCategory && prototypeFields) {
-        return validateNonGamePrototypeFields(prototypeCategory, prototypeFields, {
-          mode: "section",
-          section: "play-info",
-        });
+        const sanitizedResult = sanitizeNonGamePrototypeFieldsForSave(
+          prototypeCategory,
+          prototypeFields,
+        );
+        if (!sanitizedResult.ok) {
+          return validationFailure("play-info", sanitizedResult.message);
+        }
+        return validateNonGamePrototypeFields(
+          prototypeCategory,
+          sanitizedResult.fields,
+          { mode: "section", section: "play-info" },
+        );
       }
       if (!isSpecifiedPlayAccessType(draft.playAccessType)) {
         return validationFailure("play-info", "料金・公開形態を選んでください。");
+      }
+      const playerCountsResult = normalizeFormalMultiForSave({
+        next: draft.playerCounts,
+        fieldId: "player_count",
+      });
+      if (!playerCountsResult.ok) {
+        return validationFailure("play-info", playerCountsResult.message);
       }
       return { ok: true };
     }
     case "publication": {
       if (prototypeCategory && prototypeFields && !commonFieldsOnly) {
-        return validateNonGamePrototypeFields(prototypeCategory, prototypeFields, {
-          mode: "section",
-          section: "publication",
-        });
+        const sanitizedResult = sanitizeNonGamePrototypeFieldsForSave(
+          prototypeCategory,
+          prototypeFields,
+        );
+        if (!sanitizedResult.ok) {
+          return validationFailure("publication", sanitizedResult.message);
+        }
+        return validateNonGamePrototypeFields(
+          prototypeCategory,
+          sanitizedResult.fields,
+          { mode: "section", section: "publication" },
+        );
       }
       const publishError = validatePublishAccess(draft.publishDestinations);
       if (publishError) {
@@ -256,15 +342,18 @@ export function useStudioSubmit() {
         prototypeCategory?: SubmitPrototypeCategory | null;
         prototypeFields?: SubmitPrototypeCategoryFields | null;
         projectCategory?: ProjectCategoryId | null;
+        assetFields?: SubmitAssetCategoryFields | null;
       },
     ): Promise<SubmitDraftResult> => {
       const prototypeCategory = options?.prototypeCategory ?? null;
       const prototypeFields = options?.prototypeFields ?? null;
       const projectCategoryOption = options?.projectCategory ?? null;
+      const assetFields = options?.assetFields ?? null;
       const validation = validateSubmitDraftForPost(draft, {
         prototypeCategory,
         prototypeFields,
         projectCategory: projectCategoryOption,
+        assetFields,
       });
       if (!validation.ok) {
         return validation;
@@ -294,6 +383,7 @@ export function useStudioSubmit() {
           prototypeCategory,
           prototypeFields,
           projectCategory: projectCategoryOption,
+          assetFields,
         });
 
         const game = await addSubmittedGame(data, {

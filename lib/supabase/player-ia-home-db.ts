@@ -286,10 +286,11 @@ function mapNewestProject(row: HomeNewestProjectRow): HomeNewestProject {
 export async function fetchHomeFeedbackGatheringProjects(
   supabase: SupabaseClient,
   limit = 16,
+  category: ProjectCategoryId | null = null,
 ): Promise<HomeFeedbackGatheringProject[]> {
   const { data, error } = await supabase.rpc(
     "get_home_feedback_gathering_projects",
-    { p_limit: limit },
+    { p_limit: limit, p_category: category },
   );
   if (error) {
     console.error(
@@ -304,9 +305,11 @@ export async function fetchHomeFeedbackGatheringProjects(
 export async function fetchHomeMeaningfulUpdates(
   supabase: SupabaseClient,
   limit = 16,
+  category: ProjectCategoryId | null = null,
 ): Promise<HomeMeaningfulUpdate[]> {
   const { data, error } = await supabase.rpc("get_home_meaningful_updates", {
     p_limit: limit,
+    p_category: category,
   });
   if (error) {
     console.error("[player-ia-home] get_home_meaningful_updates failed", error);
@@ -386,16 +389,76 @@ export async function fetchPublicPlatformAnnouncementBySlug(
 export async function fetchHomeNewestProjects(
   supabase: SupabaseClient,
   limit = 16,
+  category: ProjectCategoryId | null = null,
 ): Promise<HomeNewestProject[]> {
   const { data, error } = await supabase.rpc("get_home_newest_projects", {
     p_limit: limit,
-    p_category: null,
+    p_category: category,
   });
   if (error) {
     console.error("[player-ia-home] get_home_newest_projects failed", error);
     return [];
   }
   return ((data ?? []) as HomeNewestProjectRow[]).map(mapNewestProject);
+}
+
+export type PlayerIaGameHomePayload = {
+  feedbackGathering: HomeFeedbackGatheringProject[];
+  meaningfulUpdates: HomeMeaningfulUpdate[];
+  newestProjects: HomeNewestProject[];
+  meta: { feedbackWindowDays: 30 | 90 | null };
+};
+
+/**
+ * Game category Home: reuse IA shelf RPCs, all scoped to category=game via
+ * RPC `p_category` — ranking/limit happens inside the category, not by
+ * client-filtering an already-limited whole-platform top-N (Codex round-2
+ * finding 4: other categories dominating the platform top-24 must not empty
+ * out the game shelf).
+ */
+export async function fetchPlayerIaGameHome(
+  supabase: SupabaseClient,
+): Promise<PlayerIaGameHomePayload> {
+  const [feedbackCandidates, updateCandidates, newestCandidates] =
+    await Promise.all([
+      fetchHomeFeedbackGatheringProjects(supabase, 24, "game"),
+      fetchHomeMeaningfulUpdates(supabase, 24, "game"),
+      fetchHomeNewestProjects(supabase, 16, "game"),
+    ]);
+
+  // RPC already scopes to category=game — filter is defense-in-depth only.
+  const feedbackGathering = softSuppressByCategory(
+    feedbackCandidates.filter((item) => item.category === "game"),
+    4,
+  );
+  const shown = collectProjectIds(feedbackGathering);
+  const meaningfulUpdates = softSuppressByCategory(
+    softSuppressCrossShelfProject(
+      updateCandidates.filter((item) => item.category === "game"),
+      12,
+      shown,
+    ),
+    4,
+  );
+  const shownAfterUpdates = new Set([
+    ...shown,
+    ...collectProjectIds(meaningfulUpdates),
+  ]);
+  const newestProjects = softAdjustNewestChronology(
+    softSuppressCrossShelfProject(newestCandidates, 16, shownAfterUpdates),
+    4,
+  );
+
+  const windowDaysRaw = feedbackGathering[0]?.windowDays ?? null;
+  const feedbackWindowDays: 30 | 90 | null =
+    windowDaysRaw === 30 || windowDaysRaw === 90 ? windowDaysRaw : null;
+
+  return {
+    feedbackGathering,
+    meaningfulUpdates,
+    newestProjects,
+    meta: { feedbackWindowDays },
+  };
 }
 
 function assemblePlayerIaHomeShelves(input: {

@@ -252,11 +252,10 @@ const EXPECTED_AUDIO_UPDATE: Record<string, unknown> = {
   play_access_type: "free",
   age_rating: "general",
   category: "audio",
+  // Publication ownership is destinations-only — classification/usage attrs
+  // must not be rewritten from the full draft on a publication-panel save.
   category_attributes: {
     keepMe: true,
-    kind: "楽曲",
-    musicGenres: ["ポップ"],
-    musicDuration: "2:10",
     nonGamePublishDestinations: [
       {
         id: "a1",
@@ -286,9 +285,6 @@ const EXPECTED_TOOL_UPDATE: Record<string, unknown> = {
   category: "dev-tool",
   category_attributes: {
     keepMe: true,
-    kind: "デスクトップツール",
-    toolEnvironments: ["Windows"],
-    toolUsageMethod: "ダウンロードして利用",
     nonGamePublishDestinations: [
       {
         id: "t1",
@@ -315,8 +311,6 @@ const EXPECTED_SERVICE_UPDATE: Record<string, unknown> = {
   category: "service-app",
   category_attributes: {
     keepMe: true,
-    kind: "Webサービス",
-    serviceEnvironments: ["Webブラウザ"],
     nonGamePublishDestinations: [
       {
         id: "s1",

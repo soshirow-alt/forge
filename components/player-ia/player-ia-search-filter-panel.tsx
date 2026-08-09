@@ -8,6 +8,7 @@ import {
   buildSearchHrefFromFilters,
   categorySupportsGameFilters,
   emptySearchFilterDraft,
+  getSearchAttrFilterSpecs,
   readSearchFilterDraftFromParams,
   type PlayerIaSearchFilterDraft,
 } from "@/lib/player-ia/search-filter-state";
@@ -174,6 +175,55 @@ function FilterPanelBody({
         </>
       ) : null}
 
+      {getSearchAttrFilterSpecs(category).map((spec) => {
+        const selected = draft.attrFilters[spec.fieldId] ?? [];
+        return (
+          <fieldset key={spec.fieldId} className="mt-5">
+            <legend className="text-xs font-medium text-zinc-500">
+              {spec.label}
+            </legend>
+            <div className="mt-2 max-h-40 space-y-2 overflow-y-auto pr-1">
+              {spec.options.map((option) => {
+                const checked = selected.includes(option.value);
+                return (
+                  <label
+                    key={option.value}
+                    className={`flex cursor-pointer items-center gap-2 text-sm ${
+                      checked ? "text-zinc-100" : "text-zinc-400"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        const nextValues =
+                          spec.cardinality === "single"
+                            ? checked
+                              ? []
+                              : [option.value]
+                            : toggleValue(selected, option.value).slice(
+                                0,
+                                spec.maxSelection,
+                              );
+                        setDraft({
+                          ...draft,
+                          attrFilters: {
+                            ...draft.attrFilters,
+                            [spec.fieldId]: nextValues,
+                          },
+                        });
+                      }}
+                      className="size-4 rounded border-zinc-600 bg-zinc-900 text-violet-500 focus:ring-violet-500/40"
+                    />
+                    {option.label}
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+        );
+      })}
+
       <button
         type="button"
         onClick={apply}
@@ -195,9 +245,10 @@ export function PlayerIaSearchFilterPanel({
   className = "",
 }: PlayerIaSearchFilterPanelProps) {
   const keywordId = useId();
-  const urlKey = searchParams.toString();
+  const urlKey = `${category ?? "all"}::${searchParams.toString()}`;
   const urlDraft = readSearchFilterDraftFromParams(
-    new URLSearchParams(urlKey),
+    new URLSearchParams(searchParams.toString()),
+    category,
   );
   const [draft, setDraft] = useState(urlDraft);
   const [syncedUrlKey, setSyncedUrlKey] = useState(urlKey);

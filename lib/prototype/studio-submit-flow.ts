@@ -1,4 +1,12 @@
 import type { WorkCategoryId } from "@/lib/prototype/domain-expansion";
+import {
+  AUDIO_KIND_OPTIONS,
+  DEV_TOOL_ENVIRONMENT_OPTIONS,
+  DEV_TOOL_KIND_OPTIONS,
+  MUSIC_GENRE_OPTIONS as REGISTRY_MUSIC_GENRE_OPTIONS,
+  SERVICE_ENVIRONMENT_OPTIONS as REGISTRY_SERVICE_ENVIRONMENT_OPTIONS,
+  SERVICE_KIND_OPTIONS as REGISTRY_SERVICE_KIND_OPTIONS,
+} from "@/lib/project-formal-filter-registry";
 
 /** Non-game categories that reuse the formal submit shell in Preview. */
 export type SubmitPrototypeCategory = Exclude<WorkCategoryId, "game">;
@@ -118,13 +126,22 @@ export type PrototypePublishDestination = {
 
 /** Category-specific fields for audio / dev-tool / service-app Studio panels. */
 export type SubmitPrototypeCategoryFields = {
+  /** @deprecated derived from kinds[0] for legacy required-check / summaries. */
   kind: string;
+  /** Canonical multi-select — registry `audio_kinds` / `dev_tool_kinds` / `service_kinds`. */
+  kinds: string[];
   /** Music-only genre chips (not game FORGE_GENRE_OPTIONS). */
   musicGenres: string[];
   musicDuration: string;
+  /** Audio: 雰囲気（registry `audio_moods`） */
+  moods: string[];
+  /** Audio + service-app: 用途（registry `audio_purposes` / `service_purposes`） */
+  purposes: string[];
   toolEnvironments: string[];
   toolUsageMethod: string;
   serviceEnvironments: string[];
+  /** dev-tool + service-app: 特徴 — never written to projects.tags */
+  features: string[];
   publishDestinations: PrototypePublishDestination[];
 };
 
@@ -146,15 +163,25 @@ export function createEmptyPrototypePublishDestination(
 export function createEmptySubmitPrototypeCategoryFields(): SubmitPrototypeCategoryFields {
   return {
     kind: "",
+    kinds: [],
     musicGenres: [],
     musicDuration: "",
+    moods: [],
+    purposes: [],
     toolEnvironments: [],
     toolUsageMethod: "",
     serviceEnvironments: [],
+    features: [],
     publishDestinations: [
       createEmptyPrototypePublishDestination({ isPrimary: true }),
     ],
   };
+}
+
+function filterFalsyLocal(values: (string | undefined)[]): string[] {
+  return values
+    .map((v) => (typeof v === "string" ? v.trim() : ""))
+    .filter(Boolean);
 }
 
 export function summarizeSubmitPrototypeClassification(
@@ -163,7 +190,8 @@ export function summarizeSubmitPrototypeClassification(
   featureTagCount: number,
 ): string {
   const parts: string[] = [];
-  if (fields.kind) parts.push(fields.kind);
+  const kinds = fields.kinds.length > 0 ? fields.kinds : filterFalsyLocal([fields.kind]);
+  if (kinds.length > 0) parts.push(kinds.join("・"));
   if (category === "music" && fields.musicGenres.length > 0) {
     parts.push(fields.musicGenres.join("・"));
   }
@@ -203,62 +231,18 @@ export function summarizeSubmitPrototypePublication(
   return `${primary.kind || "公開先"} · ${visibilityLabel}`;
 }
 
-export const MUSIC_KIND_OPTIONS = [
-  "楽曲",
-  "BGM",
-  "効果音・ジングル",
-  "ボイス",
-  "朗読・音声ドラマ",
-  "その他",
-] as const;
+/** Audio kinds — registry is source of truth (Owner taxonomy). */
+export const MUSIC_KIND_OPTIONS = AUDIO_KIND_OPTIONS;
 
-export const MUSIC_GENRE_OPTIONS = [
-  "ポップ",
-  "ロック",
-  "エレクトロニック",
-  "ヒップホップ",
-  "ジャズ",
-  "クラシック",
-  "アンビエント",
-  "劇伴・シネマティック",
-  "チップチューン",
-  "和風",
-  "その他",
-] as const;
+export const MUSIC_GENRE_OPTIONS = REGISTRY_MUSIC_GENRE_OPTIONS;
 
-export const TOOL_KIND_OPTIONS = [
-  "ブラウザツール",
-  "デスクトップツール",
-  "プラグイン・拡張機能",
-  "CLI",
-  "ライブラリ・SDK",
-  "API",
-  "デバッグ・テスト支援",
-  "生成・変換ツール",
-  "その他",
-] as const;
+export const TOOL_KIND_OPTIONS = DEV_TOOL_KIND_OPTIONS;
 
-export const SERVICE_KIND_OPTIONS = [
-  "Webサービス",
-  "スマートフォンアプリ",
-  "デスクトップアプリ",
-  "ブラウザ拡張",
-  "Bot",
-  "その他",
-] as const;
+export const SERVICE_KIND_OPTIONS = REGISTRY_SERVICE_KIND_OPTIONS;
 
-export const TOOL_ENVIRONMENT_OPTIONS = [
-  "Webブラウザ",
-  "Windows",
-  "macOS",
-  "Linux",
-  "Unity",
-  "Unreal Engine",
-  "Godot",
-  "Visual Studio Code",
-  "その他",
-] as const;
+export const TOOL_ENVIRONMENT_OPTIONS = DEV_TOOL_ENVIRONMENT_OPTIONS;
 
+/** Studio-only; not a Search filter axis. */
 export const TOOL_USAGE_METHOD_OPTIONS = [
   "ブラウザで利用",
   "ダウンロードして利用",
@@ -269,14 +253,7 @@ export const TOOL_USAGE_METHOD_OPTIONS = [
   "その他",
 ] as const;
 
-export const SERVICE_ENVIRONMENT_OPTIONS = [
-  "Webブラウザ",
-  "iOS",
-  "Android",
-  "Windows",
-  "macOS",
-  "その他",
-] as const;
+export const SERVICE_ENVIRONMENT_OPTIONS = REGISTRY_SERVICE_ENVIRONMENT_OPTIONS;
 
 export const SUBMIT_PROTOTYPE_IMAGE_COPY: Record<
   SubmitPrototypeCategory,

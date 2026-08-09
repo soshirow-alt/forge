@@ -28,6 +28,10 @@ const paths = {
     root,
     "supabase/migrations/083_player_ia_home_v0_shelves.sql",
   ),
+  migration085: resolve(
+    root,
+    "supabase/migrations/085_catalog_five_category_filters.sql",
+  ),
   beautify: resolve(
     root,
     "scripts/staging-only/beautify-player-ia-seed-display.sql",
@@ -772,6 +776,27 @@ async function main() {
   const sql083 = readSql(paths.migration083);
   await execSql(db, "083 first apply", sql083);
   await execSql(db, "083 re-run", sql083);
+
+  // 085 Home RPC signature (integer, text) — required for audit-player-ia-home-v0-state.
+  // Apply only section D (Home shelves), not the catalog/player_counts parts.
+  const sql085 = readSql(paths.migration085);
+  const homeMarker = "-- D. Home shelves";
+  const homeStart = sql085.indexOf(homeMarker);
+  assert(homeStart >= 0, "085 missing Home shelves section marker");
+  let homeSql = sql085.slice(homeStart);
+  homeSql = homeSql.replace(/\nCOMMIT;\s*$/i, "\n");
+  await execSql(db, "085 Home RPC signature apply", homeSql);
+
+  const homeSigFb = await query(
+    db,
+    `SELECT to_regprocedure('public.get_home_feedback_gathering_projects(integer, text)') IS NOT NULL AS ok`,
+  );
+  assert(homeSigFb.rows[0]?.ok === true, "085 home FB RPC (integer, text) missing");
+  const homeSigUp = await query(
+    db,
+    `SELECT to_regprocedure('public.get_home_meaningful_updates(integer, text)') IS NOT NULL AS ok`,
+  );
+  assert(homeSigUp.rows[0]?.ok === true, "085 home updates RPC (integer, text) missing");
 
   const outMeaningful = await query(
     db,

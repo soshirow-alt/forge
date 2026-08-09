@@ -7,8 +7,25 @@ import {
   type ProjectCategoryId,
 } from "@/lib/project-categories";
 
-/** Asset: common Studio fields only (no genre/play-info/prototype panels). */
+/**
+ * Asset: no game genre/play-info panels, and not routed through the
+ * SubmitPrototypeCategory (music/dev-tool/service-app) flow. This does NOT
+ * mean "no category-specific fields" — asset gets its own structured
+ * kinds/formats/tastes/tools panel (see `isStudioAssetCategory`).
+ */
 export function isStudioCommonFieldsOnlyCategory(
+  category: string | null | undefined,
+): boolean {
+  return category === "asset";
+}
+
+/**
+ * Asset structured attribute panel (kinds / formats / tastes / tools).
+ * Same predicate as `isStudioCommonFieldsOnlyCategory` today (asset is the
+ * only "common fields only" category) but named for its own call sites so
+ * the two concerns can diverge later without a confusing rename.
+ */
+export function isStudioAssetCategory(
   category: string | null | undefined,
 ): boolean {
   return category === "asset";

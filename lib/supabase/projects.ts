@@ -69,10 +69,20 @@ const PUBLIC_PROJECT_CATALOG_COLUMNS = [
   "play_access_type",
   "estimated_play_time",
   "category",
+  "asset_kinds",
   "created_at",
   "updated_at",
   "first_published_at",
 ].join(", ");
+
+/**
+ * `player_counts` is intentionally NOT in these hardcoded column allowlists:
+ * migration 085 (parent task) has not necessarily landed on every environment
+ * yet, and an explicit `.select("col1, col2, …")` has no schema-fallback (unlike
+ * writes via `writeProjectRowWithSchemaFallback`). `select("*")` paths
+ * (fetchProjects / fetchOwnedProjectById) already round-trip it safely once the
+ * column exists — projectRowToGame reads `row.player_counts ?? []`.
+ */
 
 /** Public /games/[id] — all detail fields except raw thumbnail blobs. */
 const PUBLIC_PROJECT_DETAIL_COLUMNS = [
@@ -109,6 +119,7 @@ const PUBLIC_PROJECT_DETAIL_COLUMNS = [
   "estimated_play_time",
   "category",
   "category_attributes",
+  "asset_kinds",
   "created_at",
   "updated_at",
   "first_published_at",
@@ -311,6 +322,8 @@ export function projectRowToGame(row: ProjectRow): Game {
     ageRating: normalizeAgeRating(row.age_rating),
     category: normalizeProjectCategory(row.category),
     categoryAttributes: row.category_attributes ?? {},
+    playerCounts: row.player_counts ?? [],
+    assetKinds: row.asset_kinds ?? [],
   };
 }
 
@@ -369,6 +382,8 @@ export function submitFormToInsertRow(
     ...(data.categoryAttributes
       ? { category_attributes: data.categoryAttributes }
       : {}),
+    ...(data.playerCounts ? { player_counts: data.playerCounts } : {}),
+    ...(data.assetKinds ? { asset_kinds: data.assetKinds } : {}),
   };
 }
 
@@ -648,6 +663,8 @@ export async function updateProjectFromSubmitForm(
       ...(data.categoryAttributes
         ? { category_attributes: data.categoryAttributes }
         : {}),
+      ...(data.playerCounts ? { player_counts: data.playerCounts } : {}),
+      ...(data.assetKinds ? { asset_kinds: data.assetKinds } : {}),
     };
   await applyMaterializedThumbnailFieldsForUpdate(
     supabase,
@@ -704,6 +721,8 @@ export async function updateProjectDetailsInDb(
       ...(data.categoryAttributes
         ? { category_attributes: data.categoryAttributes }
         : {}),
+      ...(data.playerCounts ? { player_counts: data.playerCounts } : {}),
+      ...(data.assetKinds ? { asset_kinds: data.assetKinds } : {}),
     };
   await applyMaterializedThumbnailFieldsForUpdate(
     supabase,

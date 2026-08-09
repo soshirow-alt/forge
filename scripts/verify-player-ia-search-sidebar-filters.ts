@@ -13,6 +13,7 @@ import {
 import {
   buildSearchHrefFromFilters,
   emptySearchFilterDraft,
+  getSearchAttrFilterSpecs,
   parseFeatureTagFilterValues,
   parseGenreFilterValues,
   PLAYER_IA_SEARCH_LEGACY_HIDDEN_PARAMS,
@@ -21,6 +22,7 @@ import {
 } from "../lib/player-ia/search-filter-state";
 import { buildSearchHrefForCategory } from "../lib/player-ia/search-href";
 import { PROJECT_FORMAL_FILTER_OWNERSHIP } from "../lib/project-formal-filter-ownership";
+import { PROJECT_FORMAL_FILTER_REGISTRY } from "../lib/project-formal-filter-registry";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 
@@ -108,7 +110,12 @@ assert.equal(
   buildSearchHrefFromFilters({
     category: "game",
     sort: "updated",
-    draft: { q: "  RPG  demo ", genres: ["RPG", "アクション"], tags: ["ピクセルアート"] },
+    draft: {
+      q: "  RPG  demo ",
+      genres: ["RPG", "アクション"],
+      tags: ["ピクセルアート"],
+      attrFilters: {},
+    },
     current: new URLSearchParams("quick_try=1&feedback_wanted=1"),
   }),
   "/search?quick_try=1&feedback_wanted=1&category=game&sort=updated&q=RPG+demo&genre=RPG%2C%E3%82%A2%E3%82%AF%E3%82%B7%E3%83%A7%E3%83%B3&tag=%E3%83%94%E3%82%AF%E3%82%BB%E3%83%AB%E3%82%A2%E3%83%BC%E3%83%88",
@@ -118,7 +125,7 @@ assert.equal(
   buildSearchHrefFromFilters({
     category: "audio",
     sort: "newest",
-    draft: { q: "bgm", genres: ["RPG"], tags: ["ピクセルアート"] },
+    draft: { q: "bgm", genres: ["RPG"], tags: ["ピクセルアート"], attrFilters: {} },
     current: new URLSearchParams("stream_policy=ok"),
   }),
   "/search?stream_policy=ok&category=audio&q=bgm",
@@ -226,5 +233,154 @@ for (const id of PLAYER_IA_SEARCH_LEGACY_HIDDEN_PARAMS) {
   assert.notEqual(spec.playerIaSearchUi, "active", `${id} must not be active IA Search UI`);
   assert.equal(spec.studioWrite, "no", `${id} must not be Studio-written`);
 }
+assert.ok(
+  !(PLAYER_IA_SEARCH_LEGACY_HIDDEN_PARAMS as readonly string[]).includes("asset_kind"),
+  "asset_kind must no longer be a legacy-hidden param",
+);
+{
+  const assetKindOwnership = PROJECT_FORMAL_FILTER_OWNERSHIP.find(
+    (row) => row.id === "asset_kind",
+  );
+  assert.ok(assetKindOwnership, "missing ownership for asset_kind");
+  assert.equal(assetKindOwnership!.playerIaSearchUi, "active");
+}
+
+// --- 2026-08 five-category formal filters: generic registry-driven Search UI ---
+
+// asset category renders asset_kind / format / taste / tool (excludes genre/tag)
+{
+  const specs = getSearchAttrFilterSpecs("asset");
+  assert.deepEqual(
+    specs.map((s) => s.fieldId).sort(),
+    ["asset_formats", "asset_kind", "asset_tastes", "asset_tools"].sort(),
+  );
+  assert.ok(!specs.some((s) => s.fieldId === "genre" || s.fieldId === "feature_tag"));
+}
+
+// game category renders play_time / play_environment / player_count in
+// addition to the dedicated genre/tag panels (not duplicated here)
+{
+  const specs = getSearchAttrFilterSpecs("game");
+  assert.deepEqual(
+    specs.map((s) => s.fieldId).sort(),
+    ["play_environment", "play_time", "player_count"].sort(),
+  );
+}
+
+// unknown / "all" category → no category-specific attr filters
+assert.deepEqual(getSearchAttrFilterSpecs("all"), []);
+assert.deepEqual(getSearchAttrFilterSpecs(null), []);
+
+// draft round-trip: asset_kind (registry urlKey) parses as multi even from a
+// single legacy-style value, and category switch clears cross-category attrs
+{
+  const assetDraft = readSearchFilterDraftFromParams(
+    new URLSearchParams("category=asset&asset_kind=キャラクター&format=2D&taste=アニメ・トゥーン"),
+    "asset",
+  );
+  assert.deepEqual(assetDraft.attrFilters.asset_kind, ["キャラクター"]);
+  assert.deepEqual(assetDraft.attrFilters.asset_formats, ["2D"]);
+  assert.deepEqual(assetDraft.attrFilters.asset_tastes, ["アニメ・トゥーン"]);
+
+  const href = buildSearchHrefFromFilters({
+    category: "asset",
+    sort: "newest",
+    draft: assetDraft,
+    current: null,
+  });
+  assert.match(href, /category=asset/);
+  assert.match(href, /asset_kind=/);
+  assert.match(href, /format=2D/);
+
+  // switching category away from asset clears asset-only params
+  const switched = buildSearchHrefForCategory(
+    "audio",
+    new URLSearchParams(href.replace(/^\/search\?/, "")),
+  );
+  assert.doesNotMatch(switched, /asset_kind/);
+  assert.doesNotMatch(switched, /format=/);
+  assert.match(switched, /category=audio/);
+}
+
+// audio: kinds / moods / purposes / duration bucket all registry-driven
+{
+  const audioDraft = readSearchFilterDraftFromParams(
+    new URLSearchParams("category=audio&audio_kind=楽曲&mood=明るい&duration=1〜3分"),
+    "audio",
+  );
+  assert.deepEqual(audioDraft.attrFilters.audio_kinds, ["楽曲"]);
+  assert.deepEqual(audioDraft.attrFilters.audio_moods, ["明るい"]);
+  assert.deepEqual(audioDraft.attrFilters.audio_duration_bucket, ["1〜3分"]);
+}
+
+// catalog RPC args: category-specific filters map onto the migration-085 axes
+{
+  const parsedAsset = parseCatalogSearchParams(
+    new URLSearchParams(
+      "category=asset&asset_kind=キャラクター,背景・風景&format=2D&taste=アニメ・トゥーン",
+    ),
+  );
+  assert.deepEqual(parsedAsset.assetKinds, ["キャラクター", "背景・風景"]);
+  assert.deepEqual(parsedAsset.attrFormats, ["2D"]);
+  assert.deepEqual(parsedAsset.attrTastes, ["アニメ・トゥーン"]);
+
+  // legacy single-value link (old AssetKindId, e.g. "font") still parses via
+  // the unvalidated singular `assetKind` (`p_asset_kind`) for backward compat;
+  // it's not a canonical multi-select label so it doesn't join `assetKinds`.
+  const parsedAssetLegacy = parseCatalogSearchParams(
+    new URLSearchParams("category=asset&asset_kind=font"),
+  );
+  assert.equal(parsedAssetLegacy.assetKind, "font");
+  assert.equal(parsedAssetLegacy.assetKinds, undefined);
+
+  // new canonical single-value link parses as both singular and 1-item multi
+  const parsedAssetCanonicalSingle = parseCatalogSearchParams(
+    new URLSearchParams("category=asset&asset_kind=キャラクター"),
+  );
+  assert.equal(parsedAssetCanonicalSingle.assetKind, "キャラクター");
+  assert.deepEqual(parsedAssetCanonicalSingle.assetKinds, ["キャラクター"]);
+
+  const parsedGameAttrs = parseCatalogSearchParams(
+    new URLSearchParams("category=game&play_time=5分未満&env=PC,スマホ&players=1人"),
+  );
+  assert.deepEqual(parsedGameAttrs.playTimes, ["5分未満"]);
+  assert.deepEqual(parsedGameAttrs.playEnvs, ["PC対応", "スマホ対応"]);
+  assert.deepEqual(parsedGameAttrs.playerCounts, ["1人"]);
+
+  // wrong-category attr params (asset-only `format`) must not leak into audio
+  const parsedAudioNoLeak = parseCatalogSearchParams(
+    new URLSearchParams("category=audio&format=2D"),
+  );
+  assert.equal(parsedAudioNoLeak.attrFormats, undefined);
+}
+
+// RPC wiring: 085 args conditional (never sent when empty)
+assert.match(catalogDb, /p_attr_kinds/);
+assert.match(catalogDb, /p_attr_music_genres/);
+assert.match(catalogDb, /p_attr_moods/);
+assert.match(catalogDb, /p_attr_purposes/);
+assert.match(catalogDb, /p_duration_buckets/);
+assert.match(catalogDb, /p_attr_formats/);
+assert.match(catalogDb, /p_attr_tastes/);
+assert.match(catalogDb, /p_attr_tools/);
+assert.match(catalogDb, /p_attr_environments/);
+assert.match(catalogDb, /p_attr_features/);
+assert.match(catalogDb, /p_asset_kinds/);
+assert.match(catalogDb, /p_play_times/);
+assert.match(catalogDb, /p_play_envs/);
+assert.match(catalogDb, /p_player_counts/);
+assert.match(catalogDb, /Only send 085 args when used/);
+
+// registry sanity — every searchApplicable field has a non-empty urlKey/options
+for (const spec of PROJECT_FORMAL_FILTER_REGISTRY) {
+  if (!spec.searchApplicable) continue;
+  assert.ok(spec.urlKey.trim().length > 0, `${spec.fieldId} missing urlKey`);
+  assert.ok(spec.options.length > 0, `${spec.fieldId} has no options`);
+}
+
+// filter panel renders registry-driven sections generically (not hardcoded
+// per-category blocks for the new five-category fields)
+assert.match(filterPanel, /getSearchAttrFilterSpecs/);
+assert.doesNotMatch(filterPanel, /AUDIO_KIND_OPTIONS|ASSET_TASTE_OPTIONS|DEV_TOOL_KIND_OPTIONS/);
 
 console.log("player-ia-search-sidebar-filters ok");

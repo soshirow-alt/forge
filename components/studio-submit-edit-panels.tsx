@@ -55,6 +55,23 @@ import {
   type SubmitPrototypeCategory,
   type SubmitPrototypeCategoryFields,
 } from "@/lib/prototype/studio-submit-flow";
+import {
+  ASSET_FORMAT_OPTIONS,
+  ASSET_KIND_CANONICAL_LABELS,
+  ASSET_TASTE_OPTIONS,
+  ASSET_TOOL_OPTIONS,
+  AUDIO_MOOD_OPTIONS,
+  AUDIO_PURPOSE_OPTIONS,
+  DEV_TOOL_FEATURE_OPTIONS,
+  PLAYER_COUNT_OPTIONS,
+  SERVICE_PURPOSE_OPTIONS,
+  SERVICE_FEATURE_OPTIONS,
+  audioKindsShowMusicGenres,
+  getFormalFilterByFieldId,
+  toggleAllowlistedSelection,
+} from "@/lib/project-formal-filter-registry";
+import type { SubmitAssetCategoryFields } from "@/lib/studio-non-game-attributes";
+import { validateAssetFields } from "@/lib/studio-asset-validation";
 
 type SubmitEditPanelProps = {
   draft: SubmitDraftState;
@@ -400,6 +417,13 @@ export function StudioSubmitPlayInfoEditPanel({
         />
       </StudioFieldAnchor>
 
+      <SubmitPrototypeMultiChipGroup
+        label="プレイ人数（任意）"
+        options={PLAYER_COUNT_OPTIONS}
+        values={draft.playerCounts}
+        onChange={(playerCounts) => onApply({ playerCounts })}
+      />
+
       <StudioFieldAnchor
         fieldId={STUDIO_FIELD_IDS.distribution}
         highlight={highlightFieldId === STUDIO_FIELD_IDS.distribution}
@@ -515,6 +539,12 @@ export function StudioSubmitVisibilityEditPanel({
   );
 }
 
+function filterFalsy(values: (string | undefined)[]): string[] {
+  return values
+    .map((v) => (typeof v === "string" ? v.trim() : ""))
+    .filter(Boolean);
+}
+
 function SubmitPrototypeChipGroup({
   label,
   options,
@@ -557,19 +587,28 @@ function SubmitPrototypeChipGroup({
   );
 }
 
-function SubmitPrototypeMultiChipGroup({
+/**
+ * Formal multi-select chip group — registry maxSelection enforcement lives
+ * here (shared toggleAllowlistedSelection) so every caller (audio/asset/
+ * dev-tool/service-app/game player count) gets the same chip-disable +
+ * cannot-exceed-max behavior instead of ad hoc per-panel slicing.
+ */
+export function SubmitPrototypeMultiChipGroup({
   label,
   options,
   values,
   onChange,
   required = false,
+  max,
 }: {
   label: string;
   options: readonly string[];
   values: string[];
   onChange: (next: string[]) => void;
   required?: boolean;
+  max?: number;
 }) {
+  const atMax = typeof max === "number" && max > 0 && values.length >= max;
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium text-zinc-400">
@@ -579,21 +618,21 @@ function SubmitPrototypeMultiChipGroup({
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
           const active = values.includes(option);
+          const disabled = !active && atMax;
           return (
             <button
               key={option}
               type="button"
+              disabled={disabled}
               onClick={() => {
-                onChange(
-                  active
-                    ? values.filter((item) => item !== option)
-                    : [...values, option],
-                );
+                onChange(toggleAllowlistedSelection(values, option, max));
               }}
               className={`rounded-lg border px-2.5 py-1.5 text-xs transition-colors ${
                 active
                   ? "border-violet-500/50 bg-violet-500/15 text-violet-100"
-                  : "border-zinc-800 bg-zinc-950/50 text-zinc-400 hover:border-zinc-700"
+                  : disabled
+                    ? "cursor-not-allowed border-zinc-800/60 bg-zinc-950/30 text-zinc-600"
+                    : "border-zinc-800 bg-zinc-950/50 text-zinc-400 hover:border-zinc-700"
               }`}
             >
               {option}
@@ -628,14 +667,35 @@ export function StudioSubmitPrototypeClassificationEditPanel({
 }) {
   const panelTitle =
     category === "music" ? "ジャンル・タグ" : "種類・タグ";
-  const [kind, setKind] = useState(fields.kind);
+  const kindMax = getFormalFilterByFieldId(
+    category === "music"
+      ? "audio_kinds"
+      : category === "dev_tool"
+        ? "dev_tool_kinds"
+        : "service_kinds",
+  )?.maxSelection ?? 2;
+  const musicGenreMax = getFormalFilterByFieldId("music_genres")?.maxSelection;
+  const moodMax = getFormalFilterByFieldId("audio_moods")?.maxSelection;
+  const purposeMax = getFormalFilterByFieldId(
+    category === "web_service" ? "service_purposes" : "audio_purposes",
+  )?.maxSelection;
+  const featureMax = getFormalFilterByFieldId(
+    category === "web_service" ? "service_features" : "dev_tool_features",
+  )?.maxSelection;
+  const [kinds, setKinds] = useState<string[]>(() =>
+    fields.kinds.length > 0 ? [...fields.kinds] : filterFalsy([fields.kind]),
+  );
   const [musicGenres, setMusicGenres] = useState<string[]>(() => [
     ...fields.musicGenres,
   ]);
+  const [moods, setMoods] = useState<string[]>(() => [...fields.moods]);
+  const [purposes, setPurposes] = useState<string[]>(() => [...fields.purposes]);
+  const [features, setFeatures] = useState<string[]>(() => [...fields.features]);
   const [featureTags, setFeatureTags] = useState<ForgeFeatureTagOption[]>(() => [
     ...draft.featureTags,
   ]);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const showMusicGenres = category === "music" && audioKindsShowMusicGenres(kinds);
 
   return (
     <StudioPanelEditShell
@@ -644,20 +704,33 @@ export function StudioSubmitPrototypeClassificationEditPanel({
       onCancel={onCancel}
       isSaving={isSaving}
       onSave={() => {
+        // Pass raw chip-state values through — the save boundary
+        // (`normalizeFormalMultiForSave` via `sanitizeNonGamePrototypeFieldsForSave`)
+        // owns maxSelection enforcement with preserve/reject semantics.
+        // Truncating here first would silently drop a legacy over-max
+        // baseline value instead of letting the save boundary preserve it.
         const nextFields: SubmitPrototypeCategoryFields = {
           ...fields,
-          kind,
-          ...(category === "music" ? { musicGenres } : {}),
+          kind: kinds[0] ?? "",
+          kinds,
+          ...(category === "music"
+            ? {
+                musicGenres: showMusicGenres ? musicGenres : [],
+                moods,
+                purposes,
+              }
+            : {}),
+          ...(category === "web_service" ? { purposes } : {}),
+          ...(category === "dev_tool" || category === "web_service"
+            ? { features }
+            : {}),
         };
         void attemptNonGameSectionSave({
           category,
           section: "genres-tags",
           fields: nextFields,
           onApply: () => {
-            onFieldsChange({
-              kind,
-              ...(category === "music" ? { musicGenres } : {}),
-            });
+            onFieldsChange(nextFields);
             onDraftChange({ featureTags });
             if (!deferClose) {
               onCancel();
@@ -672,48 +745,76 @@ export function StudioSubmitPrototypeClassificationEditPanel({
       saveLabel="反映する"
       validationError={validationError}
     >
-      <SubmitPrototypeChipGroup
-        label="種類"
+      <SubmitPrototypeMultiChipGroup
+        label={`種類（最大${kindMax}つ）`}
         options={kindOptionsForCategory(category)}
-        value={kind}
-        onSelect={(next) => {
-          setKind(next);
+        values={kinds}
+        max={kindMax}
+        onChange={(next) => {
+          setKinds(next);
           setValidationError(null);
         }}
         required
       />
 
+      {showMusicGenres ? (
+        <SubmitPrototypeMultiChipGroup
+          label="ジャンル（任意）"
+          options={MUSIC_GENRE_OPTIONS}
+          values={musicGenres}
+          max={musicGenreMax}
+          onChange={setMusicGenres}
+        />
+      ) : null}
+
       {category === "music" ? (
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-zinc-400">
-            ジャンル <span className="font-normal text-zinc-600">（任意）</span>
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {MUSIC_GENRE_OPTIONS.map((option) => {
-              const active = musicGenres.includes(option);
-              return (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => {
-                    setMusicGenres(
-                      active
-                        ? musicGenres.filter((item) => item !== option)
-                        : [...musicGenres, option],
-                    );
-                  }}
-                  className={`rounded-lg border px-2.5 py-1.5 text-xs transition-colors ${
-                    active
-                      ? "border-violet-500/50 bg-violet-500/15 text-violet-100"
-                      : "border-zinc-800 bg-zinc-950/50 text-zinc-400 hover:border-zinc-700"
-                  }`}
-                >
-                  {option}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <SubmitPrototypeMultiChipGroup
+          label="雰囲気（任意）"
+          options={AUDIO_MOOD_OPTIONS}
+          values={moods}
+          max={moodMax}
+          onChange={setMoods}
+        />
+      ) : null}
+
+      {category === "music" ? (
+        <SubmitPrototypeMultiChipGroup
+          label="用途（任意）"
+          options={AUDIO_PURPOSE_OPTIONS}
+          values={purposes}
+          max={purposeMax}
+          onChange={setPurposes}
+        />
+      ) : null}
+
+      {category === "web_service" ? (
+        <SubmitPrototypeMultiChipGroup
+          label="用途（任意）"
+          options={SERVICE_PURPOSE_OPTIONS}
+          values={purposes}
+          max={purposeMax}
+          onChange={setPurposes}
+        />
+      ) : null}
+
+      {category === "dev_tool" ? (
+        <SubmitPrototypeMultiChipGroup
+          label="特徴（任意）"
+          options={DEV_TOOL_FEATURE_OPTIONS}
+          values={features}
+          max={featureMax}
+          onChange={setFeatures}
+        />
+      ) : null}
+
+      {category === "web_service" ? (
+        <SubmitPrototypeMultiChipGroup
+          label="特徴（任意）"
+          options={SERVICE_FEATURE_OPTIONS}
+          values={features}
+          max={featureMax}
+          onChange={setFeatures}
+        />
       ) : null}
 
       <CollapsibleFormSection
@@ -747,6 +848,95 @@ export function StudioSubmitPrototypeClassificationEditPanel({
           ))}
         </div>
       </CollapsibleFormSection>
+    </StudioPanelEditShell>
+  );
+}
+
+/** Preview: asset structured attributes (kinds/formats/tastes/tools). Reuses genres-tags slot. */
+export function StudioSubmitAssetAttributesEditPanel({
+  fields,
+  onFieldsChange,
+  onCancel,
+  deferClose = false,
+  isSaving = false,
+}: {
+  fields: SubmitAssetCategoryFields;
+  onFieldsChange: (next: SubmitAssetCategoryFields) => void;
+  onCancel: () => void;
+  deferClose?: boolean;
+  isSaving?: boolean;
+}) {
+  const [kinds, setKinds] = useState<string[]>(() => [...fields.kinds]);
+  const [formats, setFormats] = useState<string[]>(() => [...fields.formats]);
+  const [tastes, setTastes] = useState<string[]>(() => [...fields.tastes]);
+  const [tools, setTools] = useState<string[]>(() => [...fields.tools]);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const kindMax = getFormalFilterByFieldId("asset_kind")?.maxSelection;
+  const formatMax = getFormalFilterByFieldId("asset_formats")?.maxSelection;
+  const tasteMax = getFormalFilterByFieldId("asset_tastes")?.maxSelection;
+  const toolMax = getFormalFilterByFieldId("asset_tools")?.maxSelection;
+
+  return (
+    <StudioPanelEditShell
+      title="種類・特徴"
+      backLabel="← 投稿内容に戻る"
+      onCancel={onCancel}
+      isSaving={isSaving}
+      onSave={() => {
+        // Raw chip-state values — see comment on the classification panel's
+        // onSave above; maxSelection preserve/reject lives at the save
+        // boundary (`sanitizeAssetFieldsForSave`), not here.
+        const next: SubmitAssetCategoryFields = { kinds, formats, tastes, tools };
+        const error = validateAssetFields(next);
+        if (error) {
+          setValidationError(error);
+          return;
+        }
+        onFieldsChange(next);
+        if (!deferClose) {
+          onCancel();
+        }
+      }}
+      saveLabel="反映する"
+      validationError={validationError}
+    >
+      <SubmitPrototypeMultiChipGroup
+        label={`アセット種別（最大${kindMax}つ）`}
+        options={ASSET_KIND_CANONICAL_LABELS}
+        values={kinds}
+        max={kindMax}
+        onChange={(next) => {
+          setKinds(next);
+          setValidationError(null);
+        }}
+        required
+      />
+      <SubmitPrototypeMultiChipGroup
+        label={`表現形式（任意・最大${formatMax}つ）`}
+        options={ASSET_FORMAT_OPTIONS}
+        values={formats}
+        max={formatMax}
+        onChange={setFormats}
+      />
+      <SubmitPrototypeMultiChipGroup
+        label={`テイスト（任意・最大${tasteMax}つ）`}
+        options={ASSET_TASTE_OPTIONS}
+        values={tastes}
+        max={tasteMax}
+        onChange={setTastes}
+      />
+      <div className="space-y-2">
+        <SubmitPrototypeMultiChipGroup
+          label={`対応ツール（任意・最大${toolMax}つ）`}
+          options={ASSET_TOOL_OPTIONS}
+          values={tools}
+          max={toolMax}
+          onChange={setTools}
+        />
+        <p className="text-xs text-zinc-600">
+          未選択のままでも投稿できます（汎用・指定なしとして扱われます）。
+        </p>
+      </div>
     </StudioPanelEditShell>
   );
 }
@@ -790,6 +980,8 @@ export function StudioSubmitPrototypeUsageEditPanel({
     ...fields.serviceEnvironments,
   ]);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const toolEnvironmentMax = getFormalFilterByFieldId("dev_tool_environments")?.maxSelection;
+  const serviceEnvironmentMax = getFormalFilterByFieldId("service_environments")?.maxSelection;
 
   function finishSave(patch: Partial<SubmitPrototypeCategoryFields>) {
     onChange(patch);
@@ -823,6 +1015,7 @@ export function StudioSubmitPrototypeUsageEditPanel({
             };
           }
         } else if (category === "dev_tool") {
+          // Raw chip-state values — save-boundary normalize owns maxSelection.
           patch = { toolEnvironments, toolUsageMethod };
         } else {
           patch = { serviceEnvironments };
@@ -893,6 +1086,7 @@ export function StudioSubmitPrototypeUsageEditPanel({
             label="対応環境"
             options={TOOL_ENVIRONMENT_OPTIONS}
             values={toolEnvironments}
+            max={toolEnvironmentMax}
             onChange={setToolEnvironments}
           />
           <SubmitPrototypeChipGroup
@@ -909,6 +1103,7 @@ export function StudioSubmitPrototypeUsageEditPanel({
           label="対応環境"
           options={SERVICE_ENVIRONMENT_OPTIONS}
           values={serviceEnvironments}
+          max={serviceEnvironmentMax}
           onChange={setServiceEnvironments}
         />
       ) : null}

@@ -51,11 +51,11 @@ function failure(
   };
 }
 
-/** Rule: classification kind required. */
+/** Rule: classification kind(s) required — canonical `kinds[]` or legacy `kind`. */
 function ruleKindRequired(
   fields: SubmitPrototypeCategoryFields,
 ): NonGameValidationFailure | null {
-  if (!fields.kind.trim()) {
+  if (fields.kinds.length === 0 && !fields.kind.trim()) {
     return failure("genres-tags", "種類を選んでください。");
   }
   return null;

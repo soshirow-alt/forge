@@ -29,6 +29,8 @@ import {
   resolveGamePublishLinks,
 } from "@/lib/project-publish-links";
 import { STUDIO_FIELD_IDS, type StudioFieldId } from "@/lib/studio-preview-edit-targets";
+import { PLAYER_COUNT_OPTIONS } from "@/lib/project-formal-filter-registry";
+import { SubmitPrototypeMultiChipGroup } from "@/components/studio-submit-edit-panels";
 
 export type StudioOverviewPlayInfoEditPanelProps = StudioOverviewEditPanelCommonProps & {
   highlightFieldId?: StudioFieldId | null;
@@ -49,6 +51,7 @@ export function StudioOverviewPlayInfoEditPanel({
   );
   const [estimatedPlayTime, setEstimatedPlayTime] = useState("");
   const [playAccessType, setPlayAccessType] = useState<SubmitPlayAccessType | "">("free");
+  const [playerCounts, setPlayerCounts] = useState<string[]>([]);
   const [formLoaded, setFormLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -64,6 +67,7 @@ export function StudioOverviewPlayInfoEditPanel({
     setPlayAccessType(
       isSpecifiedPlayAccessType(game.playAccessType) ? game.playAccessType : "",
     );
+    setPlayerCounts(game.playerCounts ?? []);
     setFormLoaded(true);
   }, [game, formLoaded]);
 
@@ -125,27 +129,31 @@ export function StudioOverviewPlayInfoEditPanel({
       return;
     }
 
+    const featureTags = sanitizeFeatureTagsForSave(
+      pickFeatureTagsFromGameTags(getPublicGameTags(game.tags ?? [])),
+    );
+    const links = resolveGamePublishLinks(game);
+    const env = {
+      ...playEnvironment,
+      distribution:
+        distributionTypeFromPrimary(links.publishDestinations) ||
+        playEnvironment.distribution,
+    };
+    const built = buildGamePlayInfoEditPersistPayload(game, {
+      playAccessType,
+      estimatedPlayTime,
+      playEnvironment: env,
+      featureTags,
+      playerCounts,
+    });
+    if (!built.ok) {
+      setValidationError(built.message);
+      return;
+    }
+
     setIsSaving(true);
     try {
-      const featureTags = sanitizeFeatureTagsForSave(
-        pickFeatureTagsFromGameTags(getPublicGameTags(game.tags ?? [])),
-      );
-      const links = resolveGamePublishLinks(game);
-      const env = {
-        ...playEnvironment,
-        distribution:
-          distributionTypeFromPrimary(links.publishDestinations) ||
-          playEnvironment.distribution,
-      };
-      await updateProjectDetails(
-        projectId,
-        buildGamePlayInfoEditPersistPayload(game, {
-          playAccessType,
-          estimatedPlayTime,
-          playEnvironment: env,
-          featureTags,
-        }),
-      );
+      await updateProjectDetails(projectId, built.payload);
       onSaved?.();
     } catch (error) {
       setSaveError(
@@ -201,6 +209,13 @@ export function StudioOverviewPlayInfoEditPanel({
           inputId={`studio-play-time-${projectId}`}
         />
       </StudioFieldAnchor>
+
+      <SubmitPrototypeMultiChipGroup
+        label="プレイ人数（任意）"
+        options={PLAYER_COUNT_OPTIONS}
+        values={playerCounts}
+        onChange={setPlayerCounts}
+      />
 
       <StudioFieldAnchor
         fieldId={STUDIO_FIELD_IDS.distribution}

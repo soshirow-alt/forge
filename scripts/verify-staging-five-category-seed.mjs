@@ -128,8 +128,16 @@ assert.deepEqual(coverage.projects.byCategory, {
   "dev-tool": 8,
   "service-app": 8,
 });
-assert.equal(coverage.projects.assetCommonFieldsOnly, true);
-assert.deepEqual(coverage.projects.assetKinds, {});
+assert.equal(coverage.projects.assetAllHaveKinds, true);
+assert.equal(coverage.projects.assetCharacterFormatSplit, true);
+assert.ok(Object.keys(coverage.projects.assetKinds).length >= 5, "asset kinds should be populated (085)");
+assert.ok(
+  coverage.projects.gamePlayerCountsPopulated > 0 &&
+    coverage.projects.gamePlayerCountsPopulated < coverage.projects.byCategory.game,
+  "player_counts should be populated on some but not all game rows",
+);
+assert.ok(coverage.projects.audioLegacyKindOnly >= 1, "audio legacy singular kind row missing");
+assert.ok(coverage.projects.serviceLegacyKindOnly >= 1, "service legacy singular kind row missing");
 assert.equal(coverage.projects.attributes.usable_for_creation, 25);
 assert.equal(coverage.projects.attributes.looking_for_testers, 9);
 assert.equal(coverage.projects.genreTagIntersections["ローグライク+ピクセルアート"], 2);

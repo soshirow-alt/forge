@@ -14,6 +14,7 @@ import {
   isReleasedForPlayerDisplay,
 } from "@/lib/game-player-display";
 import { PLAY_TIME_OPTIONS } from "@/lib/play-time-options";
+import { PLAYER_COUNT_OPTIONS } from "@/lib/project-formal-filter-registry";
 import type { Game } from "@/lib/mock-games";
 
 export type PlayerOptionChip = {
@@ -34,6 +35,8 @@ export type PlayerPlayInfoDisplay = {
   playTimeOptions: PlayerOptionChip[];
   deviceOptions: PlayerOptionChip[];
   playMethodOptions: PlayerOptionChip[];
+  /** Selected player-count chips; empty/omitted = hide プレイ人数 row. */
+  playerCountOptions?: PlayerOptionChip[];
 };
 
 export type GameDetailPlayerMeta = {
@@ -69,6 +72,9 @@ export type GameDetailOverviewActivity = {
 export function resolvePlayerPlayInfoDisplay(game: Game): PlayerPlayInfoDisplay {
   const distribution = getDistributionType(game);
   const selectedPlayTime = game.estimatedPlayTime?.trim() || null;
+  const selectedCounts = new Set(
+    (game.playerCounts ?? []).map((value) => value.trim()).filter(Boolean),
+  );
 
   return {
     playTimeOptions: PLAY_TIME_OPTIONS.map((label) => ({
@@ -82,6 +88,10 @@ export function resolvePlayerPlayInfoDisplay(game: Game): PlayerPlayInfoDisplay 
     playMethodOptions: PLAYER_PLAY_METHOD_OPTIONS.map((option) => ({
       label: option.label,
       active: distribution === option.id,
+    })),
+    playerCountOptions: PLAYER_COUNT_OPTIONS.map((label) => ({
+      label,
+      active: selectedCounts.has(label),
     })),
   };
 }

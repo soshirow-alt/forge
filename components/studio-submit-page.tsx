@@ -42,6 +42,10 @@ import {
   type ProjectCategoryId,
 } from "@/lib/project-categories";
 import { isStudioCommonFieldsOnlyCategory } from "@/lib/studio-category-mode";
+import {
+  createEmptySubmitAssetCategoryFields,
+  type SubmitAssetCategoryFields,
+} from "@/lib/studio-non-game-attributes";
 import { resolveStudioPreviewCategoryChrome } from "@/lib/studio-preview-category-chrome";
 
 export type StudioSubmitPageProps = {
@@ -77,6 +81,9 @@ export function StudioSubmitPage({
     useState<SubmitPrototypeCategoryFields>(() =>
       createEmptySubmitPrototypeCategoryFields(),
     );
+  const [assetFields, setAssetFields] = useState<SubmitAssetCategoryFields>(() =>
+    createEmptySubmitAssetCategoryFields(),
+  );
   const [activeTab, setActiveTab] = useState<GameDetailTab>("overview");
   const [submitting, setSubmitting] = useState(false);
   const [thumbnailsBusy, setThumbnailsBusy] = useState(false);
@@ -144,6 +151,7 @@ export function StudioSubmitPage({
       prototypeCategory,
       prototypeFields,
       projectCategory,
+      assetFields,
     });
     if (full.ok) {
       queueMicrotask(() => {
@@ -158,6 +166,7 @@ export function StudioSubmitPage({
         prototypeCategory,
         prototypeFields,
         projectCategory,
+        assetFields,
       });
       if (section.ok) {
         queueMicrotask(() => {
@@ -168,6 +177,7 @@ export function StudioSubmitPage({
       }
     }
   }, [
+    assetFields,
     draft,
     failedEditMode,
     prototypeCategory,
@@ -191,6 +201,10 @@ export function StudioSubmitPage({
 
   function patchPrototypeFields(patch: Partial<SubmitPrototypeCategoryFields>) {
     setPrototypeFields((current) => ({ ...current, ...patch }));
+  }
+
+  function handleAssetFieldsChange(next: SubmitAssetCategoryFields) {
+    setAssetFields(next);
   }
 
   function handlePreviewEditTarget(target: StudioPreviewEditTarget) {
@@ -233,6 +247,7 @@ export function StudioSubmitPage({
       prototypeCategory,
       prototypeFields,
       projectCategory,
+      assetFields,
     });
     if (!validation.ok) {
       setSubmitError(validation.message);
@@ -250,6 +265,7 @@ export function StudioSubmitPage({
       prototypeCategory,
       prototypeFields,
       projectCategory,
+      assetFields,
     });
     if (!result.ok) {
       setSubmitError(result.message);
@@ -326,6 +342,7 @@ export function StudioSubmitPage({
               }
               commonFieldsOnly={commonFieldsOnly}
               categoryLabel={categoryBannerLabel}
+              assetFields={commonFieldsOnly ? assetFields : undefined}
             />
           </div>
         </div>
@@ -351,6 +368,10 @@ export function StudioSubmitPage({
             prototypeCategory ? patchPrototypeFields : undefined
           }
           commonFieldsOnly={commonFieldsOnly}
+          assetFields={commonFieldsOnly ? assetFields : undefined}
+          onAssetFieldsChange={
+            commonFieldsOnly ? handleAssetFieldsChange : undefined
+          }
         />
       </div>
 

@@ -208,8 +208,12 @@ function PlayerIaSearchContent({
 
       {/*
         Legacy surface filters (quick_try / usable_for_creation / feedback_wanted /
-        stream_policy / asset_kind) are intentionally not shown — Studio write path
-        incomplete. RPC / direct URL params remain compatible.
+        stream_policy) are intentionally not shown — no Studio write path for
+        these 076 fields. RPC / direct URL params remain compatible.
+        Five-category formal filters (asset_kind, audio kinds/moods/purposes,
+        dev-tool/service-app kinds/environments/features, play_time/env/players,
+        ...) ARE active and rendered generically in PlayerIaSearchFilterPanel
+        via `getSearchAttrFilterSpecs` (project-formal-filter-registry.ts).
       */}
 
       <div className="mt-5 flex flex-col gap-6 xl:flex-row xl:items-start">

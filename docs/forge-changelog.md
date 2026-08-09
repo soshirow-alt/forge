@@ -4,6 +4,63 @@
 
 ---
 
+## 2026-08-09 — Staging 085+seed Owner適用後 verify PASS → Preview 反映
+
+- **Staging live** — Owner が `085` / seed / beautify / home audit / five-category audit を `vuqpwvjvgyxffmvpfrxo` へ手動適用済み。Cursor は read-only で schema・seed inventory・Home RPC `(integer,text)`・5カテゴリ catalog filter（件数＋行充足）を再検証 PASS（`scripts/staging-only/verify-085-post-apply-readonly.mjs`）
+- **静的** — tsc / build / sql-safety / home+catalog SQL gate / Studio・Search・Home・sanitize verify / changed-lint / codex selftest PASS
+- **反映** — commit → `origin/preview/landing-01` push → Vercel Preview（Production / main 非対象）
+
+## 2026-08-09 — Codex task 1733 Round2 PASS（Preview formal / sanitize / Home audit）— Owner Staging 適用待ち
+
+- **Codex** — task `2026-08-09-1733-codex-r3-three-findings-fix` Round1 FAIL_FIXABLE → Round2 **PASS**（Round4 なし）。commit / push / deploy は Owner Staging SQL 適用まで停止
+- **Finding 1** — Studio Preview に formal 属性配線（game プレイ人数、audio moods/purposes、asset kinds/formats/tastes/tools、dev-tool/service features 等）。反映後 draft を表示
+- **Finding 2** — `normalizeFormalMultiForSave` + section ownership（分類=moods/purposes/features）。legacy preserve / new invalid reject / 明示削除可。保存前 silent `capSelectionToMax` 廃止
+- **Finding 3** — `audit-player-ia-home-v0-state.sql`（および prod readiness）が Home RPC `(integer, text)` を監査。085 本体は触らず
+- **非実施** — Staging/Production DB write・commit・push なし
+
+## 2026-08-09 — Codex Round 1 FAIL_FIXABLE 修正: 属性所有 key 誤り + 保存前 silent truncate 廃止 + game プレイ人数 create 経路検証
+
+- **HIGH: 属性 key の所有パネル誤り** — `lib/studio-non-game-attributes.ts` の `NON_GAME_CLASSIFICATION_ATTRIBUTE_KEYS` / `NON_GAME_USAGE_ATTRIBUTE_KEYS` が実際の Studio UI と不一致だった。雰囲気/用途/特徴（moods/purposes/features）は分類パネル（`StudioSubmitPrototypeClassificationEditPanel`＝ジャンル・タグ編集）が描画・編集しているのに、所有 key は play-info（利用情報）側に入っていたため、**ジャンル・タグ編集からの保存では moods/purposes/features が一切 `category_attributes` に書き込まれない**バグがあった。所有 key を分類パネル側へ移動し修正。回帰テストを `scripts/verify-studio-formal-sanitize-preserve.ts` に追加（audio/dev-tool/service-app の genres-tags 保存が moods/purposes/features を書き込むこと、play-info 保存はそれらを書き込まないこと）
+- **MEDIUM: 保存直前の `capSelectionToMax` による silent truncate** — `components/studio-submit-edit-panels.tsx` の分類/利用情報/asset 各 panel の保存処理が、save-boundary の `normalizeFormalMultiForSave`（既存 legacy 値の保存・新規不正値の拒否）に生の値を渡す前に `capSelectionToMax` で無言に上限カットしていた。既存の legacy 超過選択（maxSelection 変更前に保存された行）を無関係な項目の編集で保存し直すと、確認なしに末尾が削られて消えるバグ。該当箇所の `capSelectionToMax` 呼び出しを削除し、生のチップ選択値を保存境界へ渡すよう修正。`normalizeFormalMultiForSave` の上限超過ルールを「保持していた値が全て baseline 由来なら超過のまま保持、新規追加が超過の原因なら拒否」に変更（`lib/project-formal-filter-registry.ts`）。asset の `validateAssetFields` からも重複していた上限チェックを削除（必須チェックのみ残し、上限は保存境界の一本化）
+- **MEDIUM: game プレイ人数の新規投稿 create 経路** — `hooks/use-studio-submit.ts`（`validateSubmitDraftForPost` / `validateSubmitDraftSection`）が create 経路でプレイ人数の allowlist/上限チェックをしておらず、`lib/studio-submit-draft.ts` の `draftToSubmitFormData` は無言で不正値を削除する `parseAllowlistedMulti` を使っていた（既存の非ゲーム/asset の save-boundary 方針と不一致）。create 経路にも `normalizeFormalMultiForSave` による明示チェックを追加し、`draftToSubmitFormData` は事前検証済み前提で正規化・失敗時は throw（silent drop なし）に変更
+- **検証** — `npx tsc --noEmit` clean。`verify:studio-formal-sanitize-preserve` / `verify:studio-five-category-submit-edit` / `verify:studio-asset-overview-edit` / `verify:studio-game-player-counts-edit` / `verify:studio-category-write-path` / `verify:studio-category-update-boundary` / `verify:studio-category-e2e-save` / `verify:studio-panel-section-validation` / `verify:studio-preview-formal-attrs` を実行し PASS
+- **非実施** — reset/clean/stash/commit/push/Supabase write なし（オーナー指示範囲外）
+
+## 2026-08-09 — Finding 2 修正: sanitize の silent-drop 廃止（既存 legacy 値保存 / 新規不正値は明示エラー）
+
+- **問題** — 従来の `sanitizeFormalMulti` 系は registry 未掲載の値（legacy 互換切れ・改廃済み値など）を保存時に無言で削除していた。ユーザーが無関係なセクションを保存しただけで、既存の正当な legacy 値が消える／新規の不正値も気づかれずに保存される、という 2 つの問題があった
+- **新方式** — `lib/project-formal-filter-registry.ts` に `normalizeFormalMultiForSave` を追加。保存直前の値を「保存前の既存値（baseline）」と突き合わせ、（1）registry 掲載値、または（2）baseline に既にあった値、のいずれかのみ許可。それ以外の新規値は保存を拒否し `{ ok:false, message }` を返す。上限（maxSelection）超過も同様に拒否
+  - **既存の legacy 未掲載値** → 編集で触れていなければ保持（削除されない）
+  - **新規の不正値**（改ざん・不整合な入力）→ 保存を明示的にエラーで拒否（無言で成功しない）
+  - **ユーザーが明示的に外した場合** → 削除は正常に成立
+- **適用範囲** — `sanitizeNonGamePrototypeFieldsForSave` / `sanitizeAssetFieldsForSave`（`lib/studio-non-game-attributes.ts`）、非ゲーム編集 (`lib/studio-non-game-edit-persist.ts`)、asset 編集 (`lib/studio-asset-edit-persist.ts`)、game プレイ人数編集 (`lib/studio-game-overview-edit-persist.ts` → `playerCounts`)、新規投稿の submit 検証・書込み計画 (`hooks/use-studio-submit.ts` / `lib/studio-submit-write-plan.ts`。新規投稿には baseline がないため registry 外の値は常に拒否)
+- **検証** — 新規 `scripts/verify-studio-formal-sanitize-preserve.ts`（`npm run verify:studio-formal-sanitize-preserve`）で 既存 legacy 保持 / 無関係セクション保存での非破壊 / 新規正当値の許可 / 改ざん新規値の拒否 / 明示的削除 / 安全タグ保持 を確認。`verify:studio-asset-overview-edit` / `verify:studio-game-player-counts-edit` を新仕様に合わせて更新し PASS。`npx tsc --noEmit` clean、変更ファイルの eslint 実行済み（既存の未関連 lint 指摘 2 件は本修正の対象外・変更なし）
+- **非実施** — commit / push / Supabase write なし（Staging/Production とも）
+
+## 2026-08-09 — Codex FAIL_FIXABLE 4件修正（asset編集/人数/legacy互換/maxSelection）
+
+- **Studio既存作品編集（asset）** — 既存 asset 作品の「種類・特徴を編集」から `asset_kinds` + 表現形式/テイスト/対応ツールを編集可能に（従来は編集不可メッセージのみ）。新規 panel `studio-overview-asset-fields-edit-panel.tsx` が `game.categoryAttributes`/`assetKinds` から hydrate し、無関係な `category_attributes` キーは保持。種類 0 件は保存不可（必須のまま）。game のジャンル/プレイ情報 fallback はしない（既存仕様維持）
+- **game プレイ人数の編集** — 「プレイ情報を編集」panel に人数チップを追加。既存値の hydrate・空配列での解除に対応（`projects.player_counts` 書込みは既存経路で対応済みと確認）
+- **legacy 値互換（DB backfill なし）** — service-app 種類 `スマートフォンアプリ`↔`スマホアプリ`、dev-tool 対応環境 `Visual Studio Code`↔`VS Code` を registry の `LEGACY_VALUE_ALIASES` に集約。Studio 編集の hydrate は legacy 行を正規ラベルへ変換して表示、migration 085 の RPC フィルターは正規ラベルで検索した際に legacy 行もヒットするよう条件追加。SQL gate に legacy fixture 2件 + assertion を追加
+- **maxSelection 上限の一貫適用** — チップ選択 UI（`SubmitPrototypeMultiChipGroup`）が registry の `maxSelection` に達すると選択不可になるよう共通化（`toggleAllowlistedSelection`）。保存時も `capSelectionToMax` で防御的に上限カット。audio の雰囲気/用途/ジャンル、asset の表現形式/テイスト/対応ツール、dev-tool/service-app の対応環境・特徴まで対象を拡大
+- **検証** — `verify:studio-asset-overview-edit`（新規）/ `verify:studio-game-player-counts-edit`（新規）/ 既存 studio verify 一式 / `verify:catalog-search-filters-sql-gate` 全 PASS。`npx tsc --noEmit` clean
+- **非実施** — commit / push / Supabase write なし（Staging/Production とも）
+
+## 2026-08-09 — 5カテゴリ Search 正規フィルター migration 085 + Staging seed 拡充（未適用）
+
+- **migration** — `supabase/migrations/085_catalog_five_category_filters.sql` を新規作成。`projects.player_counts text[]`（人数、専用列）+ GIN index、`projects_category_attributes_gin_idx`、`forge_parse_music_duration_seconds` helper（`M:SS`/`H:MM:SS` → 秒）を追加。`get_public_projects_by_category` を 084 シグネチャから DROP+CREATE し、`p_play_times` / `p_play_envs` / `p_player_counts` / `p_attr_kinds` / `p_attr_music_genres` / `p_attr_moods` / `p_attr_purposes` / `p_duration_buckets` / `p_attr_formats` / `p_attr_tastes` / `p_attr_tools` / `p_attr_environments` / `p_attr_features` / `p_asset_kinds` を追加（同一軸 OR・軸間 AND、084 の全フィルタは維持、`RETURNS TABLE` は 084 と同一で client 互換）。legacy 単数 `kind`（`効果音・ジングル`分割含む）・legacy `Webブラウザ`↔`Web` 読み込み互換を実装
+- **Staging seed** — asset を common-fields-only から構造化 panel（`asset_kinds` 正規ラベル・`category_attributes.formats/tastes/tools`）へ。audio/dev-tool/service-app に `kinds[]`（一部 legacy 単数 `kind` のみの行を保持）・moods/purposes/features を付与。game に `player_counts`（一部行のみ）・play-env tags を付与。5 種類の再生時間バケットを audio でカバー
+- **local gate** — `local-sql-gate-catalog-search-filters.mjs`（085 全フィルタ + rollback）/ `local-sql-gate-player-ia-staging-seed.mjs`（player_counts 列 + asset kinds/format split）/ `verify-staging-five-category-seed.mjs` を更新し全 PASS
+- **非実施** — Staging/Production への SQL 適用なし。commit / push なし。Owner 適用順は `player-ia-staging-seed-README.md` に記載（085 → 任意 auth seed → 基本 seed → beautify → audit）
+
+## 2026-08-09 — Studio 5カテゴリ正規属性 + Player IA Search 正規フィルター配線
+
+- **Studio投稿/編集** — audio/dev-tool/service-app の種類を単数 `kind` から複数 `kinds`（読取は旧単数を fallback）へ。audio に雰囲気/用途、dev-tool/service-app に特徴（`category_attributes.features` のみ・`projects.tags` へは非書込）を追加。asset に種類（`projects.asset_kinds` 正規ラベル）/表現形式/テイスト/対応ツールの構造化 panel を新設（common-fields-only から昇格）。game に人数（`projects.player_counts`）を追加
+- **Player IA Search** — 右サイドバーの絞り込みを `project-formal-filter-registry.ts` から動的生成。カテゴリごとに種類/雰囲気/用途/表現形式/テイスト/対応ツール/対応環境/特徴/人数/再生時間バケットなどを表示。カテゴリ切替で他カテゴリ専用の絞り込みを自動クリア。`asset_kind` を非表示パラメータから復帰し能動フィルターへ
+- **RPC 配線** — `get_public_projects_by_category` へ `p_play_times` / `p_play_envs` / `p_player_counts` / `p_attr_kinds` / `p_attr_music_genres` / `p_attr_moods` / `p_attr_purposes` / `p_duration_buckets` / `p_attr_formats` / `p_attr_tastes` / `p_attr_tools` / `p_attr_environments` / `p_attr_features` / `p_asset_kinds` を条件付きで送信（未使用時は送らず旧シグネチャ互換を維持）。migration 085 は別作業で適用予定
+- **Home** — 「Forgeでできること」を「作品を見つける・試す」へ再定義（5カテゴリ×「注目作品を見る」「条件で探す」、掲載CTA削除）。ゲームのみ `/home/game` カテゴリHome（FB/更新/新着の game 限定棚）。他4カテゴリの「注目作品を見る」は Coming Soon（非遷移）
+- **非実施** — migration ファイル追加なし（親作業が 085 を担当）。Supabase write なし。commit / push なし
+
 ## 2026-08-09 — Staging 5カテゴリ seed 充実（Preview E2E 準備）
 
 - **Staging seed** — game の公式 genre/feature-tag 分布を Search 確認向けに再配置。asset を common-fields-only（attrs/kinds 空）へ。audio/dev-tool/service-app に Studio 正規 `category_attributes` を付与。publish_destinations / play info を seed 行へ

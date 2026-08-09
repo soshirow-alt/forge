@@ -95,12 +95,14 @@ const audioFields: SubmitPrototypeCategoryFields = {
 };
 const encoded = encodePrototypeFieldsToCategoryAttributes(audioFields);
 const merged = mergeCategoryAttributesJson({ quickTry: true }, encoded);
-assert.equal(merged.kind, "楽曲");
+assert.deepEqual(merged.kinds, ["楽曲"]);
+assert.ok(!("kind" in merged), "new writes never dual-write legacy singular kind");
 assert.deepEqual(merged.musicGenres, ["ポップ", "ロック"]);
 assert.equal(merged.musicDuration, "3:20");
 assert.equal(merged.quickTry, true);
 const decoded = decodeCategoryAttributesToPrototypeFields(merged);
 assert.equal(decoded.kind, "楽曲");
+assert.deepEqual(decoded.kinds, ["楽曲"]);
 assert.deepEqual(decoded.musicGenres, ["ポップ", "ロック"]);
 assert.equal(decoded.musicDuration, "3:20");
 assert.equal(decoded.publishDestinations[0]?.kind, "YouTube");
@@ -174,7 +176,7 @@ const audioPayload = draftToSubmitFormData(draft, owner, {
   publishDestinationsOverride: formal,
 });
 assert.equal(audioPayload.category, "audio");
-assert.equal(audioPayload.categoryAttributes?.kind, "楽曲");
+assert.deepEqual(audioPayload.categoryAttributes?.kinds, ["楽曲"]);
 assert.ok(audioPayload.publishDestinations?.length);
 
 const audioValidation = validateSubmitDraftForPost(draft, {
@@ -357,13 +359,13 @@ async function main() {
   } as ProjectRow;
   const game = projectRowToGame(row);
   assert.equal(game.category, "audio");
-  assert.equal(
-    (game.categoryAttributes as { kind?: string } | undefined)?.kind,
-    "楽曲",
+  assert.deepEqual(
+    (game.categoryAttributes as { kinds?: string[] } | undefined)?.kinds,
+    ["楽曲"],
   );
   const editForm = buildProjectEditFormDataFromGame(game);
   assert.equal(editForm.category, "audio");
-  assert.equal(editForm.categoryAttributes?.kind, "楽曲");
+  assert.deepEqual(editForm.categoryAttributes?.kinds, ["楽曲"]);
 
   // catalog-shaped row (category only) must not fall back to game
   const catalogGame = projectRowToGame({
@@ -375,9 +377,9 @@ async function main() {
   // detail-shaped hydrate keeps attributes
   const detailGame = projectRowToGame(row);
   assert.equal(detailGame.category, "audio");
-  assert.equal(
-    (detailGame.categoryAttributes as { kind?: string }).kind,
-    "楽曲",
+  assert.deepEqual(
+    (detailGame.categoryAttributes as { kinds?: string[] }).kinds,
+    ["楽曲"],
   );
 
   // write-function boundary: insert row payload for 3 categories + game regression
@@ -407,9 +409,10 @@ async function main() {
       deferThumbnails: true,
     });
     assert.equal(insertRow.category, projectCategory);
-    assert.equal(
-      (insertRow.category_attributes as { kind?: string } | undefined)?.kind,
-      fields.kind,
+    assert.deepEqual(
+      (insertRow.category_attributes as { kinds?: string[] } | undefined)
+        ?.kinds,
+      [fields.kind],
     );
     const hydrated = projectRowToGame({
       ...row,
@@ -427,7 +430,7 @@ async function main() {
     assert.equal(hydrated.category, projectCategory);
     const updateForm = buildProjectEditFormDataFromGame(hydrated);
     assert.equal(updateForm.category, projectCategory);
-    assert.equal(updateForm.categoryAttributes?.kind, fields.kind);
+    assert.deepEqual(updateForm.categoryAttributes?.kinds, [fields.kind]);
   }
 
   const gameForm = draftToSubmitFormData(baseDraft(), owner);
@@ -534,14 +537,15 @@ async function main() {
   assert.match(studioOptions, /asset:/);
   assert.match(submitPage, /projectCategory/);
 
-  // seed genre/tag distribution notes
+  // seed genre/tag distribution notes (085-era Player IA seed)
   const seed = read("scripts/staging-only/player-ia-staging-seed.sql");
-  assert.match(seed, /ARRAY\['アクション', 'RPG'\]/);
-  assert.match(
-    seed,
-    /ARRAY\['ピクセルアート', '短時間プレイ', 'forge-ia-seed-v1'\]/,
-  );
-  assert.match(seed, /ARRAY\['カードゲーム'\]/);
+  assert.match(seed, /ARRAY\['アクション'/);
+  assert.match(seed, /ピクセルアート/);
+  assert.match(seed, /短時間プレイ/);
+  assert.match(seed, /forge-ia-seed-v1/);
+  assert.match(seed, /ARRAY\['カードゲーム'/);
+  assert.match(seed, /player_counts/);
+  assert.match(seed, /"kinds":\["BGM"\]/);
   assert.doesNotMatch(seed, /ARRAY\['カード'\]::text\[\]/);
 
   // silence unused Game type import check path

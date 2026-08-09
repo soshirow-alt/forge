@@ -20,6 +20,8 @@ export type SubmitFormData = {
   tags: string[];
   playUrl: string;
   estimatedPlayTime?: string;
+  /** Game only — projects.player_counts text[] (registry `player_count`). */
+  playerCounts?: string[];
   focusNotes?: string;
   steamUrl?: string;
   itchUrl?: string;
@@ -39,6 +41,8 @@ export type SubmitFormData = {
   category?: ProjectCategoryId;
   /** Full category_attributes jsonb payload to persist (merge done by caller). */
   categoryAttributes?: Record<string, unknown>;
+  /** Asset only — projects.asset_kinds text[] (canonical labels, registry `asset_kind`). */
+  assetKinds?: string[];
 };
 
 export type ProjectEditFormData = {
@@ -49,6 +53,8 @@ export type ProjectEditFormData = {
   phase: string;
   playUrl: string;
   estimatedPlayTime?: string;
+  /** Game only — projects.player_counts text[] (registry `player_count`). */
+  playerCounts?: string[];
   tags: string[];
   lookingForTesters: boolean;
   testerSlots?: number;
@@ -73,4 +79,6 @@ export type ProjectEditFormData = {
   category?: ProjectCategoryId;
   /** When set, replaces category_attributes jsonb. */
   categoryAttributes?: Record<string, unknown>;
+  /** Asset only — projects.asset_kinds text[] (canonical labels, registry `asset_kind`). */
+  assetKinds?: string[];
 };

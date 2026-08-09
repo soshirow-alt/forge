@@ -189,31 +189,58 @@ function FeaturesSection() {
           id="player-ia-features"
           className="text-lg font-bold tracking-tight text-white"
         >
-          Forgeでできること
+          作品を見つける・試す
         </h2>
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {PLAYER_IA_HOME_FEATURE_CARDS.map((card) => {
           const Icon = card.icon;
           return (
-            <Link
+            <div
               key={card.id}
-              href={card.href}
-              className="group relative flex h-full min-h-[5.5rem] items-center gap-4 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 transition-colors hover:border-violet-500/40 hover:bg-violet-500/5"
+              className="flex h-full flex-col overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 p-5"
             >
-              <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-violet-500/15 text-violet-300">
-                <Icon className="size-5" aria-hidden="true" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
+              <div className="flex items-start gap-4">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-violet-500/15 text-violet-300">
+                  <Icon className="size-5" aria-hidden="true" />
+                </span>
+                <div className="min-w-0 flex-1">
                   <h3 className="text-base font-bold text-white">{card.title}</h3>
-                  <ChevronRight className="size-4 shrink-0 text-zinc-500 transition-transform group-hover:translate-x-0.5 group-hover:text-violet-300" />
+                  <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-zinc-500">
+                    {card.description}
+                  </p>
                 </div>
-                <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-zinc-500">
-                  {card.description}
-                </p>
               </div>
-            </Link>
+              <div className="mt-4 border-t border-zinc-800 pt-3">
+                <ul className="flex flex-col gap-1.5">
+                  {card.ctas.map((cta) => {
+                    if (cta.kind === "coming_soon") {
+                      return (
+                        <li key={`${card.id}-${cta.id}`}>
+                          <div className="flex items-center justify-between gap-2 rounded-md px-1 py-1.5 text-sm text-zinc-500">
+                            <span>{cta.label}</span>
+                            <span className="shrink-0 text-[11px] font-medium tracking-wide text-zinc-600">
+                              Coming Soon
+                            </span>
+                          </div>
+                        </li>
+                      );
+                    }
+                    return (
+                      <li key={`${card.id}-${cta.id}`}>
+                        <Link
+                          href={cta.href}
+                          className="group flex items-center justify-between gap-2 rounded-md px-1 py-1.5 text-sm font-medium text-violet-300 transition-colors hover:bg-violet-500/10 hover:text-violet-200"
+                        >
+                          <span>{cta.label}</span>
+                          <ChevronRight className="size-4 shrink-0 text-zinc-500 transition-transform group-hover:translate-x-0.5 group-hover:text-violet-300" />
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </div>
           );
         })}
       </div>

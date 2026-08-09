@@ -6,7 +6,76 @@ import {
   type ProjectCategoryId,
   type StreamPolicyId,
 } from "@/lib/project-categories";
+import type { FormalFilterFieldId } from "@/lib/project-formal-filter-registry";
 import { safeHttpThumbnailUrl } from "@/lib/safe-http-thumbnail";
+
+/**
+ * 2026-08 five-category formal filters (migration 085 RPC args).
+ * Several category-specific `FormalFilterFieldId`s share one storage axis
+ * (e.g. audio_kinds / dev_tool_kinds / service_kinds all read/write
+ * `category_attributes.kinds` via `p_attr_kinds`) — never more than one
+ * applies per request since each belongs to a single category.
+ */
+export type CatalogAttrParamKey =
+  | "playTimes"
+  | "playEnvs"
+  | "playerCounts"
+  | "attrKinds"
+  | "attrMusicGenres"
+  | "attrMoods"
+  | "attrPurposes"
+  | "durationBuckets"
+  | "attrFormats"
+  | "attrTastes"
+  | "attrTools"
+  | "attrEnvironments"
+  | "attrFeatures"
+  | "assetKinds";
+
+export const CATALOG_ATTR_FIELD_TO_PARAM_KEY: Partial<
+  Record<FormalFilterFieldId, CatalogAttrParamKey>
+> = {
+  play_time: "playTimes",
+  play_environment: "playEnvs",
+  player_count: "playerCounts",
+  audio_kinds: "attrKinds",
+  dev_tool_kinds: "attrKinds",
+  service_kinds: "attrKinds",
+  music_genres: "attrMusicGenres",
+  audio_moods: "attrMoods",
+  audio_purposes: "attrPurposes",
+  service_purposes: "attrPurposes",
+  audio_duration_bucket: "durationBuckets",
+  asset_kind: "assetKinds",
+  asset_formats: "attrFormats",
+  asset_tastes: "attrTastes",
+  asset_tools: "attrTools",
+  dev_tool_environments: "attrEnvironments",
+  service_environments: "attrEnvironments",
+  dev_tool_features: "attrFeatures",
+  service_features: "attrFeatures",
+};
+
+const CATALOG_ATTR_PARAM_TO_RPC_ARG: Record<CatalogAttrParamKey, string> = {
+  playTimes: "p_play_times",
+  playEnvs: "p_play_envs",
+  playerCounts: "p_player_counts",
+  attrKinds: "p_attr_kinds",
+  attrMusicGenres: "p_attr_music_genres",
+  attrMoods: "p_attr_moods",
+  attrPurposes: "p_attr_purposes",
+  durationBuckets: "p_duration_buckets",
+  attrFormats: "p_attr_formats",
+  attrTastes: "p_attr_tastes",
+  attrTools: "p_attr_tools",
+  attrEnvironments: "p_attr_environments",
+  attrFeatures: "p_attr_features",
+  assetKinds: "p_asset_kinds",
+};
+
+const CATALOG_ATTR_PARAM_KEYS = Object.keys(
+  CATALOG_ATTR_PARAM_TO_RPC_ARG,
+) as CatalogAttrParamKey[];
 
 export type CatalogProjectRow = {
   project_id: string;
@@ -57,6 +126,22 @@ export type CatalogSearchParams = {
   usableForCreation?: boolean | null;
   streamPolicy?: string | null;
   assetKind?: string | null;
+  /** 2026-08 five-category formal filters (migration 085 RPC args). */
+  playTimes?: string[] | null;
+  playEnvs?: string[] | null;
+  playerCounts?: string[] | null;
+  attrKinds?: string[] | null;
+  attrMusicGenres?: string[] | null;
+  attrMoods?: string[] | null;
+  attrPurposes?: string[] | null;
+  durationBuckets?: string[] | null;
+  attrFormats?: string[] | null;
+  attrTastes?: string[] | null;
+  attrTools?: string[] | null;
+  attrEnvironments?: string[] | null;
+  attrFeatures?: string[] | null;
+  /** Multi asset kinds — sent as `p_asset_kinds`, OR'd with legacy `p_asset_kind`. */
+  assetKinds?: string[] | null;
   limit?: number;
   offset?: number;
 };
@@ -182,6 +267,15 @@ export async function fetchPublicProjectsByCategory(
     rpcArgs.p_query = query;
     rpcArgs.p_genres = genres;
     rpcArgs.p_tags = tags;
+  }
+
+  // Only send 085 args when used so pre-migration Staging/Production still
+  // serve the catalog via the prior signature (no five-category filters).
+  for (const key of CATALOG_ATTR_PARAM_KEYS) {
+    const values = params[key];
+    if (values && values.length > 0) {
+      rpcArgs[CATALOG_ATTR_PARAM_TO_RPC_ARG[key]] = values;
+    }
   }
 
   const { data, error } = await supabase.rpc(

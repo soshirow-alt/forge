@@ -23,6 +23,7 @@ export const FORGE_GENRE_OPTIONS = [
   "経営",
   "カジュアル",
   "メトロイドヴァニア",
+  "スポーツ・レース",
 ] as const;
 
 export type ForgeGenreOption = (typeof FORGE_GENRE_OPTIONS)[number];

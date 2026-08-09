@@ -10,7 +10,7 @@
 | Coverage (static) | `player-ia-staging-seed-coverage.json` |
 | Generator | `generate-player-ia-staging-seed.mjs` |
 | Auth extension | `player-ia-auth-seed.ts` / `player-ia-auth-seed-cleanup.ts` |
-| Schema prereq | `supabase/migrations/076`–`081` |
+| Schema prereq | `supabase/migrations/076`–`081`, `085`（five-category Search filters — player_counts / attr フィルタ） |
 | Tag | `forge-ia-seed-v1` |
 | Title prefix | `[IA Seed]` |
 
@@ -131,14 +131,31 @@ auth 省略でも確認できる:
 | 領域 | 内容 |
 |---|---|
 | game genre/tag | 公式 option のみ。OR 複数ヒット / AND ヒット / AND 0 件（`ローグライク`∧`協力プレイ`）を coverage で固定 |
-| asset | `category_attributes={}` / `asset_kinds={}` / purpose 空（common-fields-only） |
-| audio / dev-tool / service-app | Studio `category_attributes`（kind / music* / tool* / service*） |
-| play info | game に `estimated_play_time` + `play_access_type`。asset は play-access=`free`・play-time なし |
+| asset | Studio 構造化欄: `asset_kinds`（canonical label, dedicated column）+ `category_attributes.formats/tastes/tools`。キャラクター kind は 2D/3D 両方を coverage |
+| audio / dev-tool / service-app | Studio `category_attributes`（kinds[] canonical + 一部 legacy 単数 `kind` 読み込み互換 / music* / moods / purposes / tool* / features / service*） |
+| play info | game に `estimated_play_time` + `play_access_type` + `tags` の play-env（PC対応等）+ `player_counts`（085 専用列、一部行のみ populate）。asset は play-access=`free`・play-time なし |
 | publish | `publish_destinations` jsonb（self_site）を seed 固定 UUID 行へ |
 | audit | `audit-player-ia-five-category-search.sql`（read-only） |
 | 目視 | `player-ia-five-category-preview-e2e-checklist.md` |
 
 検索 0 件用: `zzz-ia-seed-nohit-999`
+
+**085 five-category Search filters（2026-08-09 追加）**
+
+seed は `085_catalog_five_category_filters.sql` の全フィルタを exercise する:
+
+| フィルタ | seed 上の coverage |
+|---|---|
+| `p_play_times` | game `estimated_play_time` 全 8 行に値あり |
+| `p_play_envs` | game `tags` に PC対応/スマホ対応/ブラウザ対応 を分散 |
+| `p_player_counts` | game `player_counts`（085 専用列）を 5/8 行のみ populate（残り 3 行は空で「未設定」分岐を確認） |
+| `p_attr_kinds` | audio/dev-tool/service-app `kinds[]` canonical。audio 1 行・service-app 1 行は legacy 単数 `kind` のみ（read-fallback）。`効果音・ジングル` legacy 値は SEキット基礎 行で固定 |
+| `p_attr_music_genres` / `p_attr_moods` / `p_attr_purposes` | audio 全 8 行に moods/purposes を分散。BGM+バトル+激しい（戦闘ループ音源）が cross-axis AND ケース |
+| `p_duration_buckets` | audio `musicDuration` が 5 バケット全て（`0:08`〜`10:00`）をカバー |
+| `p_attr_formats` / `p_attr_tastes` / `p_attr_tools` | asset 全 8 行。キャラクター kind が 2D（Aseprite）と 3D（Blender/Maya）に分散 |
+| `p_attr_environments` | dev-tool `toolEnvironments`（Webブラウザ含む）、service-app `serviceEnvironments`（canonical `Web` と legacy `Webブラウザ` を両方 seed） |
+| `p_attr_features` | dev-tool / service-app の一部行のみ populate（未設定分岐あり） |
+| `p_asset_kind` / `p_asset_kinds` | asset `asset_kinds` 列（dedicated column）。8 種類の canonical label に分散 |
 
 ---
 
@@ -174,13 +191,14 @@ Staging Home 目視用の表示整えは **別 SQL**（seed 本体ではない�
 UUID / 件数 inventory は不変のため **cleanup 不要**（再適用 = `ON CONFLICT` upsert）。auth を触らない。
 
 1. Dashboard ref が **`vuqpwvjvgyxffmvpfrxo`** であること（Production `bpnisgzxuwdxelhnduuf` では実行しない）
-2. （任意・未実施なら）auth seed — 専用 owner を結びたいときのみ
-3. **`player-ia-staging-seed.sql` 全文**（BEGIN〜COMMIT）
-4. **`beautify-player-ia-seed-display.sql` 全文** — seed 再適用で `[IA Seed]` / Smoke thumb に戻るため **必須**
-5. **`audit-player-ia-home-v0-state.sql` 全文** — inventory / thumb / immutable
-6. **`audit-player-ia-five-category-search.sql` 全文** — カテゴリ件数・genre/tag・asset common-only
-7. Preview で `player-ia-five-category-preview-e2e-checklist.md` を目視
-8. **cleanup は実行しない**（今回は upsert のみ）
+2. **`supabase/migrations/085_catalog_five_category_filters.sql` 全文**（BEGIN〜COMMIT）— seed 側が `player_counts` 列の存在を前提に abort guard を持つため、seed より先に必須
+3. （任意・未実施なら）auth seed — 専用 owner を結びたいときのみ
+4. **`player-ia-staging-seed.sql` 全文**（BEGIN〜COMMIT）
+5. **`beautify-player-ia-seed-display.sql` 全文** — seed 再適用で `[IA Seed]` / Smoke thumb に戻るため **必須**
+6. **`audit-player-ia-home-v0-state.sql` 全文** — inventory / thumb / immutable
+7. **`audit-player-ia-five-category-search.sql` 全文** — カテゴリ件数・genre/tag・asset kinds/formats・085 フィルタ coverage
+8. Preview で `player-ia-five-category-preview-e2e-checklist.md` を目視
+9. **cleanup は実行しない**（今回は upsert のみ）
 
 失敗したら次の SQL に進まない。Cursor / Codex は Staging へ write しない。
 

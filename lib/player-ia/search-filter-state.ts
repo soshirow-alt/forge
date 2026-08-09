@@ -10,17 +10,40 @@ import {
   isProjectCategoryId,
   type ProjectCategoryId,
 } from "@/lib/project-categories";
+import {
+  getFormalFiltersForCategory,
+  parseAllowlistedMulti,
+  type FormalFilterFieldId,
+  type FormalFilterFieldSpec,
+} from "@/lib/project-formal-filter-registry";
 
 /** Legacy hidden Search params — keep in URL when present; do not surface in UI.
  * Ownership registry: `lib/project-formal-filter-ownership.ts`
+ * `asset_kind` moved out (2026-08 five-category) — now an active registry-driven
+ * filter, rendered generically via `getSearchAttrFilterSpecs`.
  */
 export const PLAYER_IA_SEARCH_LEGACY_HIDDEN_PARAMS = [
   "quick_try",
   "usable_for_creation",
   "feedback_wanted",
   "stream_policy",
-  "asset_kind",
 ] as const;
+
+/** Rendered/read from `draft.genres` / `draft.tags` directly, not `attrFilters`. */
+const ATTR_PANEL_EXCLUDED_FIELD_IDS = new Set<FormalFilterFieldId>([
+  "genre",
+  "feature_tag",
+]);
+
+/** Registry specs to render/parse generically for a category's Search filters. */
+export function getSearchAttrFilterSpecs(
+  category: ProjectCategoryId | "all" | null,
+): FormalFilterFieldSpec[] {
+  return getFormalFiltersForCategory(category).filter(
+    (spec) =>
+      spec.searchApplicable && !ATTR_PANEL_EXCLUDED_FIELD_IDS.has(spec.fieldId),
+  );
+}
 
 export const PLAYER_IA_SEARCH_MAX_QUERY_LENGTH = 80;
 
@@ -31,6 +54,9 @@ export type PlayerIaSearchFilterDraft = {
   q: string;
   genres: string[];
   tags: string[];
+  /** Category-specific formal filters, keyed by `FormalFilterFieldId`.
+   *  Only fields applicable to the current category are populated. */
+  attrFilters: Record<string, string[]>;
 };
 
 function splitCommaList(raw: string | null | undefined): string[] {
@@ -88,13 +114,37 @@ export function sanitizeSearchQuery(raw: string | null | undefined): string {
   return trimmed.slice(0, PLAYER_IA_SEARCH_MAX_QUERY_LENGTH);
 }
 
+/** Category-specific formal filters from URL params (UI-facing values, e.g.
+ *  play_environment stays PC/スマホ/ブラウザ — storage-tag mapping happens
+ *  only at the RPC layer in `catalog-search-params.ts`). */
+export function readAttrFiltersFromParams(
+  searchParams: URLSearchParams,
+  category: ProjectCategoryId | "all" | null,
+): Record<string, string[]> {
+  const result: Record<string, string[]> = {};
+  for (const spec of getSearchAttrFilterSpecs(category)) {
+    const raw = readMultiSearchParam(searchParams, spec.urlKey);
+    const values = parseAllowlistedMulti(
+      raw,
+      spec.options.map((option) => option.value),
+      spec.maxSelection,
+    );
+    if (values.length > 0) {
+      result[spec.fieldId] = values;
+    }
+  }
+  return result;
+}
+
 export function readSearchFilterDraftFromParams(
   searchParams: URLSearchParams,
+  category?: ProjectCategoryId | "all" | null,
 ): PlayerIaSearchFilterDraft {
   return {
     q: sanitizeSearchQuery(searchParams.get("q")),
     genres: parseGenreFilterValues(readMultiSearchParam(searchParams, "genre")),
     tags: parseFeatureTagFilterValues(readMultiSearchParam(searchParams, "tag")),
+    attrFilters: readAttrFiltersFromParams(searchParams, category ?? null),
   };
 }
 
@@ -155,10 +205,24 @@ export function buildSearchHrefFromFilters(options: {
     }
   }
 
+  const attrFilters = options.draft.attrFilters ?? {};
+  for (const spec of getSearchAttrFilterSpecs(category)) {
+    const raw = attrFilters[spec.fieldId];
+    if (!raw || raw.length === 0) continue;
+    const values = parseAllowlistedMulti(
+      raw,
+      spec.options.map((option) => option.value),
+      spec.maxSelection,
+    );
+    if (values.length > 0) {
+      next.set(spec.urlKey, values.join(","));
+    }
+  }
+
   const query = next.toString();
   return query ? `/search?${query}` : "/search";
 }
 
 export function emptySearchFilterDraft(): PlayerIaSearchFilterDraft {
-  return { q: "", genres: [], tags: [] };
+  return { q: "", genres: [], tags: [], attrFilters: {} };
 }

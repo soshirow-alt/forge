@@ -51,6 +51,7 @@ export type ProjectRow = {
   stream_policy_note?: string | null;
   asset_kinds?: string[] | null;
   purpose_tags?: string[] | null;
+  player_counts?: string[] | null;
 };
 
 export type ProjectSupportRow = {

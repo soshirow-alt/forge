@@ -19,6 +19,7 @@ const OPTIONAL_PROJECT_COLUMNS = [
   "publish_destinations",
   "related_links",
   "age_rating",
+  "player_counts",
 ] as const;
 export function getMissingProjectColumn(error: unknown): string | null {
   const message = resolveErrorMessage(error, "").toLowerCase();
