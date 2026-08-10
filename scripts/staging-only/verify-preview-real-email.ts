@@ -34,7 +34,6 @@ import {
 import { buildPreviewAuthCookieHeader } from "./lib/preview-api-session";
 import {
   ensureOperationMessengerFixture,
-  pruneEphemeralOperationThreads,
 } from "./lib/operation-messenger-fixture";
 import { processSingleOutboxRow } from "./lib/process-single-outbox-row";
 import {
@@ -155,20 +154,6 @@ async function main() {
       detail: actor.created ? "created" : "reused",
     });
 
-    // Keep a permanent QA thread for operation user; prune prior actor↔operation noise.
-    await ensureOperationMessengerFixture({
-      admin,
-      operationUserId: operation.userId,
-      actorUserId: actor.userId,
-    });
-    const pruned = await pruneEphemeralOperationThreads({
-      admin,
-      operationUserId: operation.userId,
-      actorUserId: actor.userId,
-    });
-    log("messenger_fixture", `pruned=${pruned}`);
-    steps.push({ name: "messenger_fixture", ok: true, detail: `pruned=${pruned}` });
-
     const opSession = await signInPassword({
       env,
       email: operationEmail,
@@ -181,6 +166,20 @@ async function main() {
     });
     log("login", "operation+actor ok");
     steps.push({ name: "login", ok: true });
+
+    const actorDbEarly = authedClient(env, actorSession.accessToken);
+    const operationDbEarly = authedClient(env, opSession.accessToken);
+    const fixture = await ensureOperationMessengerFixture({
+      actorDb: actorDbEarly,
+      operationDb: operationDbEarly,
+      operationUserId: operation.userId,
+    });
+    log("messenger_fixture", fixture.reused ? "reused" : "created");
+    steps.push({
+      name: "messenger_fixture",
+      ok: true,
+      detail: fixture.reused ? "reused" : "created",
+    });
 
     // Ensure email prefs allow messages_collab (own-row RLS; not service_role).
     {
