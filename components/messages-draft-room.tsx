@@ -10,15 +10,6 @@ function shortUserId(userId: string): string {
   return userId.length > 8 ? `${userId.slice(0, 8)}…` : userId;
 }
 
-function projectIdsEqual(
-  a: string | null | undefined,
-  b: string | null | undefined,
-): boolean {
-  const left = a?.trim() || null;
-  const right = b?.trim() || null;
-  return left === right;
-}
-
 export function MessagesDraftRoom({
   counterpartId,
   counterpartProjectId = null,
@@ -50,11 +41,9 @@ export function MessagesDraftRoom({
           consultations: CollabConsultationSummary[];
         };
         if (cancelled) return;
+        // Pair identity: one open thread per counterpart (ignore project match).
         const match = result.consultations.find(
-          (item) =>
-            item.status === "open" &&
-            item.counterpartId === counterpartId &&
-            projectIdsEqual(item.counterpartProjectId, counterpartProjectId),
+          (item) => item.status === "open" && item.counterpartId === counterpartId,
         );
         if (match) {
           router.replace(`/messages/${match.consultationId}`);
@@ -68,7 +57,7 @@ export function MessagesDraftRoom({
     return () => {
       cancelled = true;
     };
-  }, [counterpartId, counterpartProjectId, router]);
+  }, [counterpartId, router]);
 
   async function send() {
     const text = body.trim();
@@ -110,7 +99,11 @@ export function MessagesDraftRoom({
       </Link>
       <h1 className="mt-4 text-2xl font-bold text-white">{displayName}</h1>
       {projectTitle ? (
-        <p className="mt-1 text-sm text-zinc-500">作品: {projectTitle}</p>
+        <div className="mt-2">
+          <span className="rounded-md border border-zinc-800 bg-zinc-900/80 px-2 py-0.5 text-[11px] text-zinc-400">
+            {projectTitle}
+          </span>
+        </div>
       ) : null}
       {resolving ? (
         <p className="mt-6 text-sm text-zinc-500">既存の会話を確認しています…</p>

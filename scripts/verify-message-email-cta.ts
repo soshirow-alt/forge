@@ -43,7 +43,7 @@ const realEmail = readFileSync(
 assert.match(realEmail, /cta_target_alive/);
 assert.doesNotMatch(
   realEmail,
-  /finally \{[\s\S]*collab_consultations\"\)\.delete\(\)/,
+  /from\(\"collab_consultations\"\)\.delete\(\)/,
 );
 assert.match(realEmail, /ensureOperationMessengerFixture/);
 

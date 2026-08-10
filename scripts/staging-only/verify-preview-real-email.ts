@@ -89,6 +89,7 @@ async function main() {
 
   let consultationId: string | null = null;
   let outboxId: string | null = null;
+  let privateBody = "";
   const admin = serviceClient(env);
 
   try {
@@ -221,7 +222,7 @@ async function main() {
     }
     steps.push({ name: "preview_routes", ok: true });
 
-    const privateBody = `E2E private body ${runId} must-not-appear-in-email`;
+    privateBody = `E2E private body ${runId} must-not-appear-in-email`;
     const cookieHeader = await buildPreviewAuthCookieHeader({
       env,
       accessToken: actorSession.accessToken,
@@ -453,8 +454,15 @@ async function main() {
       ),
     );
   } finally {
-    // Keep consultation + messages for Owner CTA eyeball.
-    // Only remove outbox row (sent evidence is already asserted).
+    // Pair identity reuses the fixture thread — never delete the consultation.
+    // Remove only this run's message body (and outbox row).
+    if (consultationId && privateBody) {
+      await admin
+        .from("collab_consultation_messages")
+        .delete()
+        .eq("consultation_id", consultationId)
+        .ilike("body", `%${runId}%`);
+    }
     if (outboxId) {
       await admin.from("transactional_email_outbox").delete().eq("id", outboxId);
     }

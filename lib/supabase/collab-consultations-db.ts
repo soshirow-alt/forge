@@ -6,6 +6,35 @@ import type {
   CollabConsultationSummary,
 } from "@/lib/collab/consultation-types";
 
+function mapConsultation(row: Record<string, unknown>): CollabConsultation {
+  return {
+    id: String(row.id),
+    initiatorId: String(row.initiator_id),
+    counterpartId: String(row.counterpart_id),
+    purpose: row.purpose as CollabConsultationPurpose,
+    initiatorProjectId: row.initiator_project_id
+      ? String(row.initiator_project_id)
+      : null,
+    counterpartProjectId: row.counterpart_project_id
+      ? String(row.counterpart_project_id)
+      : null,
+    status: row.status as CollabConsultation["status"],
+    lastMessageAt: row.last_message_at ? String(row.last_message_at) : null,
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+  };
+}
+
+function mapMessage(message: Record<string, unknown>): CollabConsultationMessage {
+  return {
+    id: String(message.id),
+    consultationId: String(message.consultation_id),
+    senderId: String(message.sender_id),
+    body: String(message.body),
+    createdAt: String(message.created_at),
+  };
+}
+
 export async function createCollabConsultation(
   supabase: SupabaseClient,
   input: {
@@ -66,54 +95,57 @@ export async function listMyCollabConsultations(
   }));
 }
 
+/** All consultation ids for the unordered participant pair of the seed row. */
+export async function listPairConsultationIds(
+  supabase: SupabaseClient,
+  consultation: CollabConsultation,
+): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("collab_consultations")
+    .select("id")
+    .or(
+      `and(initiator_id.eq.${consultation.initiatorId},counterpart_id.eq.${consultation.counterpartId}),and(initiator_id.eq.${consultation.counterpartId},counterpart_id.eq.${consultation.initiatorId})`,
+    );
+  if (error) throw error;
+  return (data ?? []).map((row) => String(row.id));
+}
+
 export async function fetchCollabConsultationDetail(
   supabase: SupabaseClient,
   consultationId: string,
 ): Promise<{
   consultation: CollabConsultation;
   messages: CollabConsultationMessage[];
+  pairConsultationIds: string[];
 } | null> {
-  const [consultationResult, messagesResult] = await Promise.all([
-    supabase
-      .from("collab_consultations")
-      .select("*")
-      .eq("id", consultationId)
-      .maybeSingle(),
-    supabase
-      .from("collab_consultation_messages")
-      .select("*")
-      .eq("consultation_id", consultationId)
-      .order("created_at", { ascending: true })
-      .order("id", { ascending: true }),
-  ]);
+  const consultationResult = await supabase
+    .from("collab_consultations")
+    .select("*")
+    .eq("id", consultationId)
+    .maybeSingle();
   if (consultationResult.error) throw consultationResult.error;
-  if (messagesResult.error) throw messagesResult.error;
   if (!consultationResult.data) return null;
-  const row = consultationResult.data as Record<string, unknown>;
+
+  const consultation = mapConsultation(
+    consultationResult.data as Record<string, unknown>,
+  );
+  const pairConsultationIds = await listPairConsultationIds(supabase, consultation);
+  const ids = pairConsultationIds.length ? pairConsultationIds : [consultation.id];
+
+  const messagesResult = await supabase
+    .from("collab_consultation_messages")
+    .select("*")
+    .in("consultation_id", ids)
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true });
+  if (messagesResult.error) throw messagesResult.error;
+
   return {
-    consultation: {
-      id: String(row.id),
-      initiatorId: String(row.initiator_id),
-      counterpartId: String(row.counterpart_id),
-      purpose: row.purpose as CollabConsultationPurpose,
-      initiatorProjectId: row.initiator_project_id
-        ? String(row.initiator_project_id)
-        : null,
-      counterpartProjectId: row.counterpart_project_id
-        ? String(row.counterpart_project_id)
-        : null,
-      status: row.status as CollabConsultation["status"],
-      lastMessageAt: row.last_message_at ? String(row.last_message_at) : null,
-      createdAt: String(row.created_at),
-      updatedAt: String(row.updated_at),
-    },
-    messages: (messagesResult.data ?? []).map((message) => ({
-      id: String(message.id),
-      consultationId: String(message.consultation_id),
-      senderId: String(message.sender_id),
-      body: String(message.body),
-      createdAt: String(message.created_at),
-    })),
+    consultation,
+    pairConsultationIds: ids,
+    messages: (messagesResult.data ?? []).map((message) =>
+      mapMessage(message as Record<string, unknown>),
+    ),
   };
 }
 

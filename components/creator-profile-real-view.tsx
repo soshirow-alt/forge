@@ -167,7 +167,10 @@ export function CreatorProfileRealView({
                       developerUserId={profile.userId}
                       showFollowerCount={false}
                     />
-                    <StartConsultationButton counterpartId={profile.userId} />
+                    <StartConsultationButton
+                      counterpartId={profile.userId}
+                      label="メッセージを送る"
+                    />
                     <ProfileMoreMenu
                       developerUserId={profile.userId}
                       name={profile.name}

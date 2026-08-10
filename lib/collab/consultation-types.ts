@@ -3,7 +3,7 @@ export const COLLAB_CONSULTATION_PURPOSES = [
   { value: "offer_my_work", label: "自分の作品を利用してほしい" },
   { value: "commission", label: "制作を依頼したい" },
   { value: "collaborate", label: "共同制作を相談したい" },
-  { value: "other", label: "その他のコラボ相談" },
+  { value: "other", label: "その他" },
 ] as const;
 
 export type CollabConsultationPurpose =

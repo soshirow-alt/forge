@@ -79,18 +79,27 @@ async function findOutbox(
   admin: ReturnType<typeof serviceClient>,
   userId: string,
   consultationId: string,
+  createdAfterIso?: string,
 ) {
   const { data, error } = await admin
     .from("transactional_email_outbox")
-    .select("id,status,template_key,to_email,payload,last_error")
+    .select("id,status,template_key,to_email,payload,last_error,created_at")
     .eq("user_id", userId)
-    .eq("template_key", "collab_consultation_new")
+    .in("template_key", [
+      "collab_consultation_new",
+      "collab_consultation_message",
+    ])
     .order("created_at", { ascending: false })
-    .limit(20);
+    .limit(40);
   if (error) throw new Error(error.message);
+  const afterMs = createdAfterIso
+    ? Date.parse(createdAfterIso)
+    : Number.NEGATIVE_INFINITY;
   return (data || []).find((row) => {
     const payload = row.payload as { consultation_id?: string } | null;
-    return payload?.consultation_id === consultationId;
+    if (payload?.consultation_id !== consultationId) return false;
+    if (!Number.isFinite(afterMs)) return true;
+    return Date.parse(String(row.created_at)) >= afterMs;
   });
 }
 
@@ -98,18 +107,36 @@ async function cleanupConsultation(
   admin: ReturnType<typeof serviceClient>,
   consultationId: string,
   outboxId?: string,
+  messageNeedle?: string,
 ) {
-  await admin
-    .from("collab_consultation_messages")
-    .delete()
-    .eq("consultation_id", consultationId);
-  await admin
-    .from("collab_consultation_reads")
-    .delete()
-    .eq("consultation_id", consultationId);
-  await admin.from("collab_consultations").delete().eq("id", consultationId);
+  // Pair identity reuses one consultation — never delete the thread itself.
+  if (messageNeedle) {
+    await admin
+      .from("collab_consultation_messages")
+      .delete()
+      .eq("consultation_id", consultationId)
+      .ilike("body", `%${messageNeedle}%`);
+  }
   if (outboxId) {
     await admin.from("transactional_email_outbox").delete().eq("id", outboxId);
+  }
+  // Wipe leftover outbox rows for this consultation (pair reuse shares ids).
+  const { data: allOutbox } = await admin
+    .from("transactional_email_outbox")
+    .select("id,payload")
+    .in("template_key", [
+      "collab_consultation_new",
+      "collab_consultation_message",
+    ])
+    .limit(80);
+  const ids = (allOutbox || [])
+    .filter((row) => {
+      const payload = row.payload as { consultation_id?: string } | null;
+      return payload?.consultation_id === consultationId;
+    })
+    .map((row) => String(row.id));
+  if (ids.length > 0) {
+    await admin.from("transactional_email_outbox").delete().in("id", ids);
   }
 }
 
@@ -174,23 +201,26 @@ async function main() {
     usage_relation: true,
     feedback_reciprocity: true,
   });
+  const aBefore = new Date(Date.now() - 2500).toISOString();
   const aId = await createConsultation({
     env,
     actorToken: actorSession.accessToken,
     counterpartId: operation.userId,
     body: `${runId}-A private`,
   });
-  const aOutbox = await findOutbox(admin, operation.userId, aId);
+  const aOutbox = await findOutbox(admin, operation.userId, aId, aBefore);
   if (!aOutbox) throw new Error("A: expected outbox");
   const { data: aNotif } = await opDb
     .from("user_notifications")
-    .select("id")
+    .select("id,type")
     .eq("consultation_id", aId)
-    .eq("type", "consultation_new")
+    .in("type", ["consultation_new", "consultation_message"])
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
   if (!aNotif) throw new Error("A: expected in-app notification");
   results.push({ name: "A_on_enqueue", ok: true, detail: String(aOutbox.id) });
-  await cleanupConsultation(admin, aId, String(aOutbox.id));
+  await cleanupConsultation(admin, aId, String(aOutbox.id), `${runId}-A`);
 
   // B: master OFF → in-app yes, outbox no
   await setNotifyEmail(opDb, operation.userId, {
@@ -199,23 +229,26 @@ async function main() {
     usage_relation: true,
     feedback_reciprocity: true,
   });
+  const bBefore = new Date(Date.now() - 2500).toISOString();
   const bId = await createConsultation({
     env,
     actorToken: actorSession.accessToken,
     counterpartId: operation.userId,
     body: `${runId}-B private`,
   });
-  const bOutbox = await findOutbox(admin, operation.userId, bId);
+  const bOutbox = await findOutbox(admin, operation.userId, bId, bBefore);
   const { data: bNotif } = await opDb
     .from("user_notifications")
     .select("id")
     .eq("consultation_id", bId)
-    .eq("type", "consultation_new")
+    .in("type", ["consultation_new", "consultation_message"])
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
   if (!bNotif) throw new Error("B: expected in-app notification");
   if (bOutbox) throw new Error("B: outbox must not enqueue when master OFF");
   results.push({ name: "B_master_off", ok: true });
-  await cleanupConsultation(admin, bId);
+  await cleanupConsultation(admin, bId, undefined, `${runId}-B`);
 
   // C: messages category OFF
   await setNotifyEmail(opDb, operation.userId, {
@@ -224,16 +257,17 @@ async function main() {
     usage_relation: true,
     feedback_reciprocity: true,
   });
+  const cBefore = new Date(Date.now() - 2500).toISOString();
   const cId = await createConsultation({
     env,
     actorToken: actorSession.accessToken,
     counterpartId: operation.userId,
     body: `${runId}-C private`,
   });
-  const cOutbox = await findOutbox(admin, operation.userId, cId);
+  const cOutbox = await findOutbox(admin, operation.userId, cId, cBefore);
   if (cOutbox) throw new Error("C: messages category OFF must not enqueue");
   results.push({ name: "C_category_off", ok: true });
-  await cleanupConsultation(admin, cId);
+  await cleanupConsultation(admin, cId, undefined, `${runId}-C`);
 
   // D: enqueue ON then OFF before send → suppressed
   await setNotifyEmail(opDb, operation.userId, {
@@ -242,13 +276,14 @@ async function main() {
     usage_relation: true,
     feedback_reciprocity: true,
   });
+  const dBefore = new Date(Date.now() - 2500).toISOString();
   const dId = await createConsultation({
     env,
     actorToken: actorSession.accessToken,
     counterpartId: operation.userId,
     body: `${runId}-D private`,
   });
-  const dOutbox = await findOutbox(admin, operation.userId, dId);
+  const dOutbox = await findOutbox(admin, operation.userId, dId, dBefore);
   if (!dOutbox) throw new Error("D: expected pending outbox");
   await setNotifyEmail(opDb, operation.userId, {
     master: false,
@@ -291,20 +326,21 @@ async function main() {
   if (dStill?.status !== "suppressed") {
     throw new Error(`E: D row must remain suppressed, got ${dStill?.status}`);
   }
+  const eBefore = new Date(Date.now() - 2500).toISOString();
   const eId = await createConsultation({
     env,
     actorToken: actorSession.accessToken,
     counterpartId: operation.userId,
     body: `${runId}-E private`,
   });
-  const eOutbox = await findOutbox(admin, operation.userId, eId);
+  const eOutbox = await findOutbox(admin, operation.userId, eId, eBefore);
   if (!eOutbox) throw new Error("E: expected outbox after re-ON");
   if (String(eOutbox.id) === dSuppressedId) {
     throw new Error("E: must not reuse suppressed outbox id");
   }
   results.push({ name: "E_reon_new_event", ok: true, detail: String(eOutbox.id) });
-  await cleanupConsultation(admin, dId, dSuppressedId);
-  await cleanupConsultation(admin, eId, String(eOutbox.id));
+  await cleanupConsultation(admin, dId, dSuppressedId, `${runId}-D`);
+  await cleanupConsultation(admin, eId, String(eOutbox.id), `${runId}-E`);
 
   // Restore defaults ON for operation user
   await setNotifyEmail(opDb, operation.userId, {

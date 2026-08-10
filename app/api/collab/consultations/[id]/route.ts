@@ -18,7 +18,11 @@ export async function GET(
       (await context.params).id,
     );
     if (!detail) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json(detail);
+    return NextResponse.json({
+      consultation: detail.consultation,
+      messages: detail.messages,
+      pairConsultationIds: detail.pairConsultationIds,
+    });
   } catch (error) {
     console.error("[collab-consultations] detail failed", error);
     return NextResponse.json({ error: "相談を読み込めませんでした。" }, { status: 500 });

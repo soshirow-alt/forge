@@ -10,7 +10,7 @@ import { useRequireAuth } from "@/hooks/use-require-auth";
 export function StartConsultationButton({
   counterpartId,
   counterpartProjectId,
-  label = "利用・コラボについて相談",
+  label = "メッセージを送る",
   className,
   fullWidth = false,
 }: {

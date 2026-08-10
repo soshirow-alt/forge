@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-08-11 — メッセージ：1相手=1スレッド + UI最終整理
+
+- **conversation identity** — 同一 participant pair = 1 thread（LINE/Messenger 同様）。目的・関連作品は context。099 で open pair UNIQUE、create 再利用、list は pair 集約、既読は pair 横断
+- **履歴** — 破壊的 merge なし。detail が pair 内 messages を時系列統合表示
+- **一覧** — タイトル「メッセージ」のみ。1 counterpart = 1 row（preview / unread 集約）。実スレッド 0 件時のみ UI サンプル（「サンプル」バッジ）。≥1 で非表示。DB 非永続
+- **スレッド UI** — 相手中心ヘッダー。作品・目的はチップ。吹き出し（相手左／自分右、max-width〜60%）。sample は送信不可
+- **CTA** — 「メッセージを送る」（作品詳細・プロフィール）。既存 pair があれば必ず再利用
+- **Staging** — operation↔actor の E2E ゴミを整理し fixture 最小維持。wrong-account soft-fallback / sender guard は維持。Production sender domain は未着手
+
 ## 2026-08-11 — メールCTA dead-link修正 + Production sender readiness
 
 - **根本原因** — real-email E2E が送信後に consultation を削除し、着弾メールの `/messages/{id}` が死ぬ設計だった。加えて Lumen fixture は seed ユーザー専用で operation から見えない

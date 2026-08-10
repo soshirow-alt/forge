@@ -3,9 +3,14 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ConsultationThread } from "@/components/consultation-thread";
+import { MessagesSampleThreadPane } from "@/components/messages-sample-thread-pane";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { useGames } from "@/components/games-provider";
 import type { CollabConsultationSummary } from "@/lib/collab/consultation-types";
+import {
+  isMessagesSampleThreadId,
+  MESSAGES_SAMPLE_THREAD,
+} from "@/lib/messages-sample-thread";
 
 function shortUserId(userId: string): string {
   return userId.length > 8 ? `${userId.slice(0, 8)}…` : userId;
@@ -87,6 +92,39 @@ function ConversationListItem({
   );
 }
 
+function SampleListItem({ selected }: { selected: boolean }) {
+  const sample = MESSAGES_SAMPLE_THREAD;
+  return (
+    <Link
+      href={`/messages/${sample.id}`}
+      className={`flex gap-3 rounded-xl border px-3 py-3 transition-colors ${
+        selected
+          ? "border-violet-500/50 bg-violet-500/10"
+          : "border-zinc-800 bg-zinc-900/40 hover:border-zinc-700"
+      }`}
+    >
+      <span
+        className="flex size-10 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-zinc-300"
+        aria-hidden="true"
+      >
+        {sample.counterpartInitial}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <p className="truncate font-medium text-white">{sample.counterpartName}</p>
+            <span className="shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400">
+              {sample.listBadge}
+            </span>
+          </div>
+          <span className="shrink-0 text-[11px] text-zinc-500">{sample.listTimeLabel}</span>
+        </div>
+        <p className="mt-0.5 line-clamp-2 text-sm text-zinc-500">{sample.listPreview}</p>
+      </div>
+    </Link>
+  );
+}
+
 export function MessagesInboxPage({
   selectedId = null,
   notice = null,
@@ -129,12 +167,18 @@ export function MessagesInboxPage({
   }, [selectedId]);
 
   const showUnavailableNotice = notice === "unavailable";
+  const showSample =
+    !loading && !listFailed && consultations.length === 0;
+  const sampleSelected =
+    showSample &&
+    (isMessagesSampleThreadId(selectedId) || !selectedId);
+  const realSelectedId =
+    selectedId && !isMessagesSampleThreadId(selectedId) ? selectedId : null;
 
   const listPane = (
     <div className="flex h-full min-h-0 flex-col">
       <div className="shrink-0 border-b border-zinc-800/80 px-3 pt-4 pb-3">
         <h1 className="text-lg font-semibold text-white">メッセージ</h1>
-        <p className="mt-1 text-xs text-zinc-500">利用・コラボについてのやり取り</p>
       </div>
       {showUnavailableNotice ? (
         <p className="mx-1 mt-3 rounded-lg border border-zinc-700 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-300">
@@ -159,13 +203,11 @@ export function MessagesInboxPage({
               />
             );
           })
+        ) : showSample ? (
+          <SampleListItem selected={sampleSelected} />
         ) : listFailed ? null : (
           <p className="px-1 py-6 text-center text-sm leading-relaxed text-zinc-500">
             メッセージはまだありません。
-            <br />
-            <span className="text-xs text-zinc-600">
-              作品詳細の「利用・コラボについて相談」から開始できます
-            </span>
           </p>
         )}
         {error ? <p className="px-1 text-sm text-red-300">{error}</p> : null}
@@ -184,13 +226,19 @@ export function MessagesInboxPage({
       </aside>
       <section
         className={`min-h-0 overflow-y-auto rounded-xl border border-zinc-800 bg-zinc-950/40 p-4 ${
-          selectedId ? "" : "hidden lg:flex lg:items-center lg:justify-center lg:border-dashed"
+          selectedId
+            ? ""
+            : sampleSelected
+              ? "hidden lg:block"
+              : "hidden lg:flex lg:items-center lg:justify-center lg:border-dashed"
         }`}
       >
-        {selectedId ? (
+        {sampleSelected ? (
+          <MessagesSampleThreadPane embedded />
+        ) : realSelectedId ? (
           <ConsultationThread
-            key={selectedId}
-            consultationId={selectedId}
+            key={realSelectedId}
+            consultationId={realSelectedId}
             embedded
           />
         ) : (
