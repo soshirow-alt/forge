@@ -1,5 +1,5 @@
 /**
- * Messaging pair identity + sample thread + CTA reuse guards.
+ * Messaging pair identity + context cards + sample thread guards.
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -13,7 +13,11 @@ import {
 assert.equal(isMessagesSampleThreadId(MESSAGES_SAMPLE_THREAD_ID), true);
 assert.equal(isMessagesSampleThreadId("real-uuid"), false);
 assert.ok(MESSAGES_SAMPLE_THREAD.messages.length >= 3);
+assert.equal(MESSAGES_SAMPLE_THREAD.messages[0]?.sender, "self");
 assert.match(MESSAGES_SAMPLE_THREAD.listBadge, /サンプル/);
+assert.match(MESSAGES_SAMPLE_THREAD.counterpartAvatarSrc, /messages-sample/);
+assert.match(MESSAGES_SAMPLE_THREAD.selfAvatarSrc, /messages-sample/);
+assert.ok(MESSAGES_SAMPLE_THREAD.context.projectTitle);
 
 const migration099 = readFileSync(
   join(process.cwd(), "supabase/migrations/099_messaging_pair_identity.sql"),
@@ -21,14 +25,21 @@ const migration099 = readFileSync(
 );
 assert.match(migration099, /collab_consultations_one_open_pair_uidx/);
 assert.match(migration099, /DISTINCT ON \(m\.pair_a, m\.pair_b\)/);
-assert.match(migration099, /v_consultation_id IS NOT NULL/);
+
+const migration100 = readFileSync(
+  join(process.cwd(), "supabase/migrations/100_messaging_context_segments.sql"),
+  "utf8",
+);
+assert.match(migration100, /v_pair_existed/);
+assert.match(migration100, /status = 'closed'/);
+assert.doesNotMatch(migration100, /SET purpose = p_purpose/);
 
 const db = readFileSync(
   join(process.cwd(), "lib/supabase/collab-consultations-db.ts"),
   "utf8",
 );
 assert.match(db, /listPairConsultationIds/);
-assert.match(db, /pairConsultationIds/);
+assert.match(db, /pairContexts/);
 
 const inbox = readFileSync(
   join(process.cwd(), "components/messages-inbox-page.tsx"),
@@ -36,6 +47,7 @@ const inbox = readFileSync(
 );
 assert.match(inbox, /MESSAGES_SAMPLE_THREAD/);
 assert.doesNotMatch(inbox, /利用・コラボについてのやり取り/);
+assert.doesNotMatch(inbox, /listTimeLabel/);
 
 const thread = readFileSync(
   join(process.cwd(), "components/consultation-thread.tsx"),
@@ -43,20 +55,32 @@ const thread = readFileSync(
 );
 assert.match(thread, /max-w-\[/);
 assert.match(thread, /プロフィールを見る/);
-assert.match(thread, /pairConsultationIds/);
+assert.match(thread, /ConsultationContextCard/);
+assert.match(thread, /ConsultationStartForm/);
+assert.match(thread, /pairContexts/);
+assert.doesNotMatch(thread, /consultationPurposeLabel/);
 
 const draft = readFileSync(
   join(process.cwd(), "components/messages-draft-room.tsx"),
   "utf8",
 );
 assert.match(draft, /counterpartId === counterpartId/);
-assert.doesNotMatch(draft, /projectIdsEqual\(item\.counterpartProjectId/);
+assert.match(draft, /start:\s*"1"/);
+assert.match(draft, /ConsultationStartForm/);
 
 const samplePane = readFileSync(
   join(process.cwd(), "components/messages-sample-thread-pane.tsx"),
   "utf8",
 );
 assert.match(samplePane, /composerNote/);
-assert.match(samplePane, /headerBadge|メッセージ例|サンプル機能/);
+assert.match(samplePane, /ConsultationContextCard/);
+assert.match(samplePane, /counterpartAvatarSrc/);
+
+const types = readFileSync(
+  join(process.cwd(), "lib/collab/consultation-types.ts"),
+  "utf8",
+);
+assert.match(types, /COLLAB_CONSULTATION_START_PURPOSES/);
+assert.match(types, /consultationPurposeStartLabel/);
 
 console.log("verify-messaging-pair-identity: PASS");

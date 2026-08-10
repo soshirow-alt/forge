@@ -22,6 +22,7 @@ export async function GET(
       consultation: detail.consultation,
       messages: detail.messages,
       pairConsultationIds: detail.pairConsultationIds,
+      pairContexts: detail.pairContexts,
     });
   } catch (error) {
     console.error("[collab-consultations] detail failed", error);

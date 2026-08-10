@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { ConsultationContextCard } from "@/components/consultation-context-card";
+import { ConsultationStartForm } from "@/components/consultation-start-form";
 import { ContentReportButton } from "@/components/content-report-button";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { useGames } from "@/components/games-provider";
@@ -13,11 +15,12 @@ import {
   createConsultationAckState,
   type ConsultationAckState,
 } from "@/lib/collab/consultation-ack-lifecycle";
-import {
-  consultationPurposeLabel,
-  type CollabConsultation,
-  type CollabConsultationMessage,
+import type {
+  CollabConsultation,
+  CollabConsultationContext,
+  CollabConsultationMessage,
 } from "@/lib/collab/consultation-types";
+import { resolveProjectThumbnailUrls } from "@/lib/project-thumbnails";
 
 function shortUserId(userId: string): string {
   return userId.length > 8 ? `${userId.slice(0, 8)}…` : userId;
@@ -97,6 +100,7 @@ type ConsultationDetailResponse = {
   consultation: CollabConsultation;
   messages: CollabConsultationMessage[];
   pairConsultationIds?: string[];
+  pairContexts?: CollabConsultationContext[];
 };
 
 export function ConsultationThread({
@@ -108,9 +112,17 @@ export function ConsultationThread({
   embedded?: boolean;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const startRequested = searchParams.get("start") === "1";
+  const startProjectId = searchParams.get("project")?.trim() || null;
+  /** "inherit" follows URL; cancel forces off until remount/navigation. */
+  const [composeOverride, setComposeOverride] = useState<"inherit" | "off">("inherit");
+  const composingStart = composeOverride === "inherit" && startRequested;
+
   const { user } = useAuth();
   const { getDeveloperProfileByUserId, getGameById } = useGames();
   const [consultation, setConsultation] = useState<CollabConsultation | null>(null);
+  const [pairContexts, setPairContexts] = useState<CollabConsultationContext[]>([]);
   const [messages, setMessages] = useState<CollabConsultationMessage[]>([]);
   const [body, setBody] = useState("");
   const [error, setError] = useState("");
@@ -130,17 +142,12 @@ export function ConsultationThread({
     }
   }, [consultationId]);
 
-  /** Authoritative detail GET succeeded → record detailOk, then bump ackToken for post-commit ack. */
   const recordDetailOkAndScheduleAck = useCallback(() => {
     const afterDetail = applyConsultationAckEvent(ackLifecycleRef.current, "detailOk");
     ackLifecycleRef.current = afterDetail.state;
     setAckToken((token) => token + 1);
   }, []);
 
-  /**
-   * Realtime / poll must never invent detailOk.
-   * Only reopen an ack cycle when authoritative detail was already loaded successfully.
-   */
   const scheduleAckOnlyIfDetailAlreadyOk = useCallback(() => {
     if (!ackLifecycleRef.current.detailOk) return;
     const afterRt = applyConsultationAckEvent(ackLifecycleRef.current, "realtimeMessages");
@@ -182,8 +189,6 @@ export function ConsultationThread({
     let pollTimer: ReturnType<typeof setInterval> | undefined;
     let teardownRealtime: (() => void) | undefined;
     const supabase = getOptionalSupabaseClient();
-    // Parent remounts this component with key=consultationId when the thread changes,
-    // so we do not reset React state synchronously here (cascading render lint).
     ackLifecycleRef.current = createConsultationAckState();
 
     const refresh = () => {
@@ -196,9 +201,8 @@ export function ConsultationThread({
           const result = (await response.json()) as ConsultationDetailResponse;
           if (!active) return;
           setConsultation(result.consultation);
+          setPairContexts(result.pairContexts ?? []);
           setMessages((current) => mergeMessages(current, result.messages));
-          // First successful authoritative load after failure → become ack-eligible.
-          // Already detailOk: UI refresh only (no ack spam / no Realtime-style reopen).
           if (!ackLifecycleRef.current.detailOk) {
             recordDetailOkAndScheduleAck();
           }
@@ -217,8 +221,6 @@ export function ConsultationThread({
           cache: "no-store",
         });
         if (response.status === 404) {
-          // Stale email / removed thread / non-participant (RLS → 404).
-          // Soft-fallback to inbox — never open another user's thread.
           if (active) {
             setUnavailable(true);
             router.replace("/messages?notice=unavailable");
@@ -233,6 +235,7 @@ export function ConsultationThread({
         setUnavailable(false);
         setError("");
         setConsultation(result.consultation);
+        setPairContexts(result.pairContexts ?? []);
         setMessages(result.messages);
         const ids =
           result.pairConsultationIds?.length ?
@@ -274,7 +277,6 @@ export function ConsultationThread({
                   },
                 ]),
               );
-              // Realtime must not promote detailOk after a failed authoritative GET.
               scheduleAckOnlyIfDetailAlreadyOk();
             },
           )
@@ -330,23 +332,11 @@ export function ConsultationThread({
     ? getDeveloperProfileByUserId(user.id)?.avatarUrl
     : undefined;
 
-  const projectChips = useMemo(() => {
-    if (!consultation) return [] as string[];
-    const titles = new Set<string>();
-    for (const projectId of [
-      consultation.counterpartProjectId,
-      consultation.initiatorProjectId,
-    ]) {
-      if (!projectId) continue;
-      const title = getGameById(projectId)?.title?.trim();
-      if (title) titles.add(title);
-    }
-    return [...titles];
-  }, [consultation, getGameById]);
-
-  const purposeLabel = consultation
-    ? consultationPurposeLabel(consultation.purpose)
-    : null;
+  const contextById = useMemo(() => {
+    const map = new Map<string, CollabConsultationContext>();
+    for (const ctx of pairContexts) map.set(ctx.consultationId, ctx);
+    return map;
+  }, [pairContexts]);
 
   if (unavailable) {
     return (
@@ -358,10 +348,11 @@ export function ConsultationThread({
 
   async function send() {
     const text = body.trim();
-    if (!text) return;
+    if (!text || !consultation) return;
     setError("");
+    // Always post to the open segment (detail resolves open row).
     const response = await fetch(
-      `/api/collab/consultations/${consultationId}/messages`,
+      `/api/collab/consultations/${consultation.id}/messages`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -408,21 +399,6 @@ export function ConsultationThread({
               プロフィールを見る
             </Link>
           ) : null}
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {projectChips.map((title) => (
-              <span
-                key={title}
-                className="rounded-md border border-zinc-800 bg-zinc-900/80 px-2 py-0.5 text-[11px] text-zinc-400"
-              >
-                {title}
-              </span>
-            ))}
-            {purposeLabel ? (
-              <span className="rounded-md border border-zinc-800 bg-zinc-900/80 px-2 py-0.5 text-[11px] text-zinc-400">
-                {purposeLabel}
-              </span>
-            ) : null}
-          </div>
         </div>
       </header>
 
@@ -432,8 +408,11 @@ export function ConsultationThread({
         } mt-6 space-y-2.5 pr-1`}
       >
         {messages.map((message, index) => {
-          const mine = message.senderId === user?.id;
           const prev = messages[index - 1];
+          const showContext =
+            !prev || prev.consultationId !== message.consultationId;
+          const ctx = contextById.get(message.consultationId);
+          const mine = message.senderId === user?.id;
           const showAvatar = !prev || prev.senderId !== message.senderId;
           const avatarUserId = mine ? (user?.id ?? message.senderId) : message.senderId;
           const avatarName = mine ? selfName : counterpartName;
@@ -441,76 +420,120 @@ export function ConsultationThread({
             ? selfAvatarUrl
             : counterpartProfile?.avatarUrl;
 
+          const targetProject = ctx?.counterpartProjectId
+            ? getGameById(ctx.counterpartProjectId)
+            : null;
+          const ownProject = ctx?.initiatorProjectId
+            ? getGameById(ctx.initiatorProjectId)
+            : null;
+
           return (
-            <div
-              key={message.id}
-              className={`flex items-end gap-2 ${mine ? "justify-end" : "justify-start"}`}
-            >
-              {!mine ? (
-                showAvatar ? (
-                  <ThreadAvatar
-                    userId={avatarUserId}
-                    name={avatarName}
-                    avatarUrl={avatarUrl}
-                  />
-                ) : (
-                  <span className="size-8 shrink-0" aria-hidden="true" />
-                )
+            <div key={message.id} className="space-y-2.5">
+              {showContext && ctx ? (
+                <ConsultationContextCard
+                  projectTitle={targetProject?.title ?? null}
+                  projectThumbnailUrl={
+                    targetProject
+                      ? resolveProjectThumbnailUrls(targetProject)[0] ?? null
+                      : null
+                  }
+                  creatorName={
+                    targetProject
+                      ? counterpartName
+                      : null
+                  }
+                  purpose={ctx.purpose}
+                  ownProjectTitle={ownProject?.title ?? null}
+                />
               ) : null}
               <div
-                className={`flex max-w-[65%] flex-col ${mine ? "items-end" : "items-start"}`}
+                className={`flex items-end gap-2 ${mine ? "justify-end" : "justify-start"}`}
               >
-                <div
-                  className={`rounded-2xl px-3.5 py-2.5 ${
-                    mine
-                      ? "rounded-br-md bg-violet-600/80 text-white"
-                      : "rounded-bl-md border border-zinc-800 bg-zinc-900 text-zinc-100"
-                  }`}
-                >
-                  <MessageBody body={message.body} />
-                </div>
-                <div
-                  className={`mt-1 flex items-center gap-2 px-1 text-[11px] text-zinc-500 ${
-                    mine ? "flex-row-reverse" : ""
-                  }`}
-                >
-                  <time dateTime={message.createdAt}>
-                    {new Date(message.createdAt).toLocaleString("ja-JP", {
-                      month: "numeric",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </time>
-                  {!mine ? (
-                    <ContentReportButton
-                      target={{
-                        targetType: "consultation_message",
-                        targetId: message.id,
-                        contextLabel: "メッセージ",
-                      }}
-                      returnPath={`/messages/${consultationId}`}
+                {!mine ? (
+                  showAvatar ? (
+                    <ThreadAvatar
+                      userId={avatarUserId}
+                      name={avatarName}
+                      avatarUrl={avatarUrl}
                     />
-                  ) : null}
+                  ) : (
+                    <span className="size-8 shrink-0" aria-hidden="true" />
+                  )
+                ) : null}
+                <div
+                  className={`flex max-w-[65%] flex-col ${mine ? "items-end" : "items-start"}`}
+                >
+                  <div
+                    className={`rounded-2xl px-3.5 py-2.5 ${
+                      mine
+                        ? "rounded-br-md bg-violet-600/80 text-white"
+                        : "rounded-bl-md border border-zinc-800 bg-zinc-900 text-zinc-100"
+                    }`}
+                  >
+                    <MessageBody body={message.body} />
+                  </div>
+                  <div
+                    className={`mt-1 flex items-center gap-2 px-1 text-[11px] text-zinc-500 ${
+                      mine ? "flex-row-reverse" : ""
+                    }`}
+                  >
+                    <time dateTime={message.createdAt}>
+                      {new Date(message.createdAt).toLocaleString("ja-JP", {
+                        month: "numeric",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </time>
+                    {!mine ? (
+                      <ContentReportButton
+                        target={{
+                          targetType: "consultation_message",
+                          targetId: message.id,
+                          contextLabel: "メッセージ",
+                        }}
+                        returnPath={`/messages/${consultationId}`}
+                      />
+                    ) : null}
+                  </div>
                 </div>
+                {mine ? (
+                  showAvatar ? (
+                    <ThreadAvatar
+                      userId={avatarUserId}
+                      name={avatarName}
+                      avatarUrl={avatarUrl}
+                      mine
+                    />
+                  ) : (
+                    <span className="size-8 shrink-0" aria-hidden="true" />
+                  )
+                ) : null}
               </div>
-              {mine ? (
-                showAvatar ? (
-                  <ThreadAvatar
-                    userId={avatarUserId}
-                    name={avatarName}
-                    avatarUrl={avatarUrl}
-                    mine
-                  />
-                ) : (
-                  <span className="size-8 shrink-0" aria-hidden="true" />
-                )
-              ) : null}
             </div>
           );
         })}
       </div>
-      {consultation?.status === "open" ? (
+
+      {composingStart && counterpartId ? (
+        <div className="sticky bottom-3 mt-6">
+          <ConsultationStartForm
+            counterpartId={counterpartId}
+            counterpartName={counterpartName}
+            counterpartProjectId={startProjectId}
+            compact
+            onCancel={() => {
+              setComposeOverride("off");
+              router.replace(`/messages/${consultation?.id ?? consultationId}`);
+            }}
+            onSuccess={(nextId) => {
+              setComposeOverride("off");
+              router.replace(`/messages/${nextId}`);
+              setReloadToken((token) => token + 1);
+            }}
+          />
+        </div>
+      ) : consultation?.status === "open" ? (
         <div className="sticky bottom-3 mt-6 rounded-xl border border-zinc-700 bg-zinc-950 p-3">
           <textarea
             value={body}

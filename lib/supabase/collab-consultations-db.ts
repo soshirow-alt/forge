@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   CollabConsultation,
+  CollabConsultationContext,
   CollabConsultationMessage,
   CollabConsultationPurpose,
   CollabConsultationSummary,
@@ -22,6 +23,20 @@ function mapConsultation(row: Record<string, unknown>): CollabConsultation {
     lastMessageAt: row.last_message_at ? String(row.last_message_at) : null,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
+  };
+}
+
+function mapContext(row: Record<string, unknown>): CollabConsultationContext {
+  return {
+    consultationId: String(row.id),
+    purpose: row.purpose as CollabConsultationPurpose,
+    initiatorProjectId: row.initiator_project_id
+      ? String(row.initiator_project_id)
+      : null,
+    counterpartProjectId: row.counterpart_project_id
+      ? String(row.counterpart_project_id)
+      : null,
+    createdAt: String(row.created_at),
   };
 }
 
@@ -117,6 +132,7 @@ export async function fetchCollabConsultationDetail(
   consultation: CollabConsultation;
   messages: CollabConsultationMessage[];
   pairConsultationIds: string[];
+  pairContexts: CollabConsultationContext[];
 } | null> {
   const consultationResult = await supabase
     .from("collab_consultations")
@@ -126,11 +142,26 @@ export async function fetchCollabConsultationDetail(
   if (consultationResult.error) throw consultationResult.error;
   if (!consultationResult.data) return null;
 
-  const consultation = mapConsultation(
+  const seed = mapConsultation(
     consultationResult.data as Record<string, unknown>,
   );
-  const pairConsultationIds = await listPairConsultationIds(supabase, consultation);
-  const ids = pairConsultationIds.length ? pairConsultationIds : [consultation.id];
+  const pairConsultationIds = await listPairConsultationIds(supabase, seed);
+  const ids = pairConsultationIds.length ? pairConsultationIds : [seed.id];
+
+  const pairRowsResult = await supabase
+    .from("collab_consultations")
+    .select(
+      "id, purpose, initiator_project_id, counterpart_project_id, created_at, status, initiator_id, counterpart_id, last_message_at, updated_at",
+    )
+    .in("id", ids)
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true });
+  if (pairRowsResult.error) throw pairRowsResult.error;
+
+  const pairRows = (pairRowsResult.data ?? []) as Record<string, unknown>[];
+  const pairContexts = pairRows.map(mapContext);
+  const openRow = pairRows.find((row) => row.status === "open");
+  const consultation = openRow ? mapConsultation(openRow) : seed;
 
   const messagesResult = await supabase
     .from("collab_consultation_messages")
@@ -143,6 +174,7 @@ export async function fetchCollabConsultationDetail(
   return {
     consultation,
     pairConsultationIds: ids,
+    pairContexts,
     messages: (messagesResult.data ?? []).map((message) =>
       mapMessage(message as Record<string, unknown>),
     ),

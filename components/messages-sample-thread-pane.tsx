@@ -1,10 +1,30 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
+import { ConsultationContextCard } from "@/components/consultation-context-card";
 import {
   MESSAGES_SAMPLE_THREAD,
   type MessagesSampleMessage,
 } from "@/lib/messages-sample-thread";
+
+function SampleAvatar({
+  src,
+  mine,
+}: {
+  src: string;
+  mine?: boolean;
+}) {
+  return (
+    <span
+      className={`relative size-8 shrink-0 overflow-hidden rounded-full border ${
+        mine ? "border-violet-500/40" : "border-zinc-700"
+      }`}
+    >
+      <Image src={src} alt="" fill className="object-cover" sizes="32px" unoptimized />
+    </span>
+  );
+}
 
 function SampleBubble({
   message,
@@ -14,18 +34,15 @@ function SampleBubble({
   showAvatar: boolean;
 }) {
   const mine = message.sender === "self";
-  const initial = mine ? "あ" : MESSAGES_SAMPLE_THREAD.counterpartInitial;
+  const avatarSrc = mine
+    ? MESSAGES_SAMPLE_THREAD.selfAvatarSrc
+    : MESSAGES_SAMPLE_THREAD.counterpartAvatarSrc;
 
   return (
     <div className={`flex items-end gap-2 ${mine ? "justify-end" : "justify-start"}`}>
       {!mine ? (
         showAvatar ? (
-          <span
-            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold text-zinc-300"
-            aria-hidden="true"
-          >
-            {initial}
-          </span>
+          <SampleAvatar src={avatarSrc} />
         ) : (
           <span className="size-8 shrink-0" aria-hidden="true" />
         )
@@ -44,12 +61,7 @@ function SampleBubble({
       </div>
       {mine ? (
         showAvatar ? (
-          <span
-            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-violet-500/30 text-xs font-semibold text-violet-200"
-            aria-hidden="true"
-          >
-            {initial}
-          </span>
+          <SampleAvatar src={avatarSrc} mine />
         ) : (
           <span className="size-8 shrink-0" aria-hidden="true" />
         )
@@ -74,11 +86,15 @@ export function MessagesSampleThreadPane({ embedded = false }: { embedded?: bool
       )}
 
       <header className={`flex items-start gap-3 ${embedded ? "mt-2 lg:mt-0" : "mt-4"}`}>
-        <span
-          className="flex size-11 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-base font-semibold text-zinc-200"
-          aria-hidden="true"
-        >
-          {sample.counterpartInitial}
+        <span className="relative size-11 shrink-0 overflow-hidden rounded-full border border-zinc-700">
+          <Image
+            src={sample.counterpartAvatarSrc}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="44px"
+            unoptimized
+          />
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -89,14 +105,7 @@ export function MessagesSampleThreadPane({ embedded = false }: { embedded?: bool
               {sample.headerBadge}
             </span>
           </div>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <span className="rounded-md border border-zinc-800 bg-zinc-900/80 px-2 py-0.5 text-[11px] text-zinc-400">
-              {sample.projectTitle}
-            </span>
-            <span className="rounded-md border border-zinc-800 bg-zinc-900/80 px-2 py-0.5 text-[11px] text-zinc-400">
-              {sample.contextLabel}
-            </span>
-          </div>
+          <p className="mt-0.5 text-xs text-zinc-500">プロフィールを見る</p>
         </div>
       </header>
 
@@ -105,6 +114,14 @@ export function MessagesSampleThreadPane({ embedded = false }: { embedded?: bool
           embedded ? "min-h-0 flex-1 overflow-y-auto" : ""
         } mt-6 space-y-3 pr-1`}
       >
+        <ConsultationContextCard
+          title={sample.context.heading}
+          projectTitle={sample.context.projectTitle}
+          projectThumbnailUrl={sample.context.projectThumbnailSrc}
+          creatorName={sample.context.creatorName}
+          purpose={sample.context.purpose}
+          ownProjectTitle={sample.context.ownProjectTitle}
+        />
         {sample.messages.map((message, index) => {
           const prev = sample.messages[index - 1];
           const showAvatar = !prev || prev.sender !== message.sender;

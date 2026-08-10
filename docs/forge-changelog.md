@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-08-11 — メッセージ：context card + 相談開始フォーム
+
+- **header** — 相手（avatar / 名前 / プロフィール）のみ。関連作品・purpose の固定表示を廃止
+- **timeline** — 各 consultation 開始位置に context card（作品・相談内容・自分の関連作品）。bubble ではない
+- **create (100)** — pair 内で open を soft-close し新 segment を INSERT。履歴上書きしない。list は引き続き 1 counterpart = 1 row
+- **開始フォーム** — 作品詳細 CTA → 既存 thread なら `?start=1` で composer に compact form。対象作品自動、相談内容必須、自作品任意、本文必須
+- **sample** — context card + 自然な初回メッセージ順 + 固定 sample avatar/thumb。list の「サンプル」は badge のみ
+
 ## 2026-08-11 — メッセージ：1相手=1スレッド + UI最終整理
 
 - **conversation identity** — 同一 participant pair = 1 thread（LINE/Messenger 同様）。目的・関連作品は context。099 で open pair UNIQUE、create 再利用、list は pair 集約、既読は pair 横断

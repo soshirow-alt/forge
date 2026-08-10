@@ -1183,7 +1183,7 @@ function GameDetailV0PageBody({
                 <StartConsultationButton
                   counterpartId={developerUserId}
                   counterpartProjectId={resolvedId}
-                  label="メッセージを送る"
+                  label="利用・コラボについてメッセージ"
                   fullWidth
                 />
                 {isRealProject && !isOwnerPreview ? (

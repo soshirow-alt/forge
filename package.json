@@ -47,6 +47,7 @@
     "verify:message-email-cta": "npx --yes tsx scripts/verify-message-email-cta.ts",
     "verify:messaging-pair-identity": "npx --yes tsx scripts/verify-messaging-pair-identity.ts",
     "ops:bootstrap-gmail-e2e-oauth": "npx --yes tsx scripts/staging-only/bootstrap-gmail-e2e-oauth.ts",
+    "ops:bootstrap-messages-empty-viewer": "npx --yes tsx scripts/staging-only/bootstrap-messages-empty-viewer.ts",
     "verify:featured-hero-thumbnails": "npx --yes tsx scripts/verify-featured-hero-thumbnails.ts",
     "verify:collab-consultations-contract": "npx --yes tsx scripts/verify-collab-consultations-contract.ts",
     "verify:consultation-ack-lifecycle": "npx --yes tsx scripts/verify-consultation-ack-lifecycle.ts",

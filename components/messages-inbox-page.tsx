@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { ConsultationThread } from "@/components/consultation-thread";
 import { MessagesSampleThreadPane } from "@/components/messages-sample-thread-pane";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -103,21 +103,20 @@ function SampleListItem({ selected }: { selected: boolean }) {
           : "border-zinc-800 bg-zinc-900/40 hover:border-zinc-700"
       }`}
     >
-      <span
-        className="flex size-10 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-zinc-300"
-        aria-hidden="true"
-      >
-        {sample.counterpartInitial}
+      <span className="relative size-10 shrink-0 overflow-hidden rounded-full border border-zinc-700">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={sample.counterpartAvatarSrc}
+          alt=""
+          className="size-10 object-cover"
+        />
       </span>
       <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
-            <p className="truncate font-medium text-white">{sample.counterpartName}</p>
-            <span className="shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400">
-              {sample.listBadge}
-            </span>
-          </div>
-          <span className="shrink-0 text-[11px] text-zinc-500">{sample.listTimeLabel}</span>
+        <div className="flex min-w-0 items-center gap-2">
+          <p className="truncate font-medium text-white">{sample.counterpartName}</p>
+          <span className="shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400">
+            {sample.listBadge}
+          </span>
         </div>
         <p className="mt-0.5 line-clamp-2 text-sm text-zinc-500">{sample.listPreview}</p>
       </div>
@@ -236,11 +235,15 @@ export function MessagesInboxPage({
         {sampleSelected ? (
           <MessagesSampleThreadPane embedded />
         ) : realSelectedId ? (
-          <ConsultationThread
-            key={realSelectedId}
-            consultationId={realSelectedId}
-            embedded
-          />
+          <Suspense
+            fallback={<p className="text-sm text-zinc-500">読み込み中…</p>}
+          >
+            <ConsultationThread
+              key={realSelectedId}
+              consultationId={realSelectedId}
+              embedded
+            />
+          </Suspense>
         ) : (
           <p className="text-sm text-zinc-500">会話を選ぶとここに表示されます</p>
         )}

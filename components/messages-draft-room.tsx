@@ -1,10 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { ConsultationStartForm } from "@/components/consultation-start-form";
 import { useGames } from "@/components/games-provider";
 import type { CollabConsultationSummary } from "@/lib/collab/consultation-types";
+import { resolveProjectThumbnailUrls } from "@/lib/project-thumbnails";
 
 function shortUserId(userId: string): string {
   return userId.length > 8 ? `${userId.slice(0, 8)}…` : userId;
@@ -19,17 +22,14 @@ export function MessagesDraftRoom({
 }) {
   const router = useRouter();
   const { getDeveloperProfileByUserId, getGameById } = useGames();
-  const [body, setBody] = useState("");
-  const [error, setError] = useState("");
-  const [sending, setSending] = useState(false);
   const [resolving, setResolving] = useState(true);
 
   const profile = getDeveloperProfileByUserId(counterpartId);
   const displayName = profile?.publicName?.trim() || shortUserId(counterpartId);
-  const projectTitle = useMemo(() => {
-    if (!counterpartProjectId) return null;
-    return getGameById(counterpartProjectId)?.title ?? null;
-  }, [counterpartProjectId, getGameById]);
+  const project = counterpartProjectId ? getGameById(counterpartProjectId) : null;
+  const projectThumb = project
+    ? resolveProjectThumbnailUrls(project)[0] ?? null
+    : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -41,12 +41,14 @@ export function MessagesDraftRoom({
           consultations: CollabConsultationSummary[];
         };
         if (cancelled) return;
-        // Pair identity: one open thread per counterpart (ignore project match).
+        // Pair identity: enter existing counterpart thread with start form.
         const match = result.consultations.find(
-          (item) => item.status === "open" && item.counterpartId === counterpartId,
+          (item) => item.counterpartId === counterpartId,
         );
         if (match) {
-          router.replace(`/messages/${match.consultationId}`);
+          const params = new URLSearchParams({ start: "1" });
+          if (counterpartProjectId) params.set("project", counterpartProjectId);
+          router.replace(`/messages/${match.consultationId}?${params.toString()}`);
           return;
         }
       })
@@ -57,80 +59,66 @@ export function MessagesDraftRoom({
     return () => {
       cancelled = true;
     };
-  }, [counterpartId, router]);
+  }, [counterpartId, counterpartProjectId, router]);
 
-  async function send() {
-    const text = body.trim();
-    if (!text || sending) return;
-    setSending(true);
-    setError("");
-    try {
-      const response = await fetch("/api/collab/consultations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          counterpartId,
-          purpose: "other",
-          firstMessage: text,
-          counterpartProjectId: counterpartProjectId || null,
-          initiatorProjectId: null,
-        }),
-      });
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as
-          | { error?: string }
-          | null;
-        throw new Error(payload?.error || "メッセージを送信できませんでした。");
-      }
-      const result = (await response.json()) as { consultationId: string };
-      router.replace(`/messages/${result.consultationId}`);
-    } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : "メッセージを送信できませんでした。",
-      );
-      setSending(false);
-    }
-  }
+  const targetPreview = useMemo(() => {
+    if (!project) return null;
+    return (
+      <div className="mt-4 flex items-center gap-2.5 rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-2">
+        {projectThumb ? (
+          <span className="relative size-10 shrink-0 overflow-hidden rounded-md border border-zinc-800">
+            <Image
+              src={projectThumb}
+              alt=""
+              fill
+              className="object-cover"
+              sizes="40px"
+              unoptimized
+            />
+          </span>
+        ) : null}
+        <div className="min-w-0">
+          <p className="text-[11px] text-zinc-500">相談対象作品</p>
+          <p className="truncate text-sm text-zinc-200">{project.title}</p>
+        </div>
+      </div>
+    );
+  }, [project, projectThumb]);
 
   return (
     <div className="mx-auto max-w-3xl">
       <Link href="/messages" className="text-sm text-violet-300">
         ← メッセージ
       </Link>
-      <h1 className="mt-4 text-2xl font-bold text-white">{displayName}</h1>
-      {projectTitle ? (
-        <div className="mt-2">
-          <span className="rounded-md border border-zinc-800 bg-zinc-900/80 px-2 py-0.5 text-[11px] text-zinc-400">
-            {projectTitle}
-          </span>
+      <header className="mt-4 flex items-start gap-3">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-zinc-300">
+          {displayName.slice(0, 1)}
+        </span>
+        <div className="min-w-0">
+          <h1 className="truncate text-2xl font-bold text-white">{displayName}</h1>
+          <Link
+            href={`/creators/${counterpartId}`}
+            className="mt-0.5 inline-block text-xs text-violet-300 hover:text-violet-200"
+          >
+            プロフィールを見る
+          </Link>
         </div>
-      ) : null}
+      </header>
+      {targetPreview}
       {resolving ? (
         <p className="mt-6 text-sm text-zinc-500">既存の会話を確認しています…</p>
       ) : (
-        <div className="sticky bottom-3 mt-6 rounded-xl border border-zinc-700 bg-zinc-950 p-3">
-          <textarea
-            value={body}
-            onChange={(event) => setBody(event.target.value)}
-            maxLength={4000}
-            rows={4}
-            aria-label="メッセージ"
-            placeholder="メッセージを入力…"
-            className="w-full resize-y rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-white"
+        <div className="mt-6">
+          <ConsultationStartForm
+            counterpartId={counterpartId}
+            counterpartName={displayName}
+            counterpartProjectId={counterpartProjectId}
+            onSuccess={(consultationId) => {
+              router.replace(`/messages/${consultationId}`);
+            }}
           />
-          <div className="mt-2 flex justify-end">
-            <button
-              type="button"
-              disabled={!body.trim() || sending}
-              onClick={() => void send()}
-              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-            >
-              {sending ? "送信中…" : "送信"}
-            </button>
-          </div>
         </div>
       )}
-      {error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}
     </div>
   );
 }

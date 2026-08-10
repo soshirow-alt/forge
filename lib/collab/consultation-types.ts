@@ -6,6 +6,17 @@ export const COLLAB_CONSULTATION_PURPOSES = [
   { value: "other", label: "その他" },
 ] as const;
 
+/** Compact labels for first-message form / timeline context cards. */
+export const COLLAB_CONSULTATION_START_PURPOSES = [
+  { value: "use_their_work", label: "この作品を利用したい" },
+  { value: "commission", label: "制作を依頼したい" },
+  { value: "collaborate", label: "コラボしたい" },
+  { value: "other", label: "その他" },
+] as const satisfies ReadonlyArray<{
+  value: (typeof COLLAB_CONSULTATION_PURPOSES)[number]["value"];
+  label: string;
+}>;
+
 export type CollabConsultationPurpose =
   (typeof COLLAB_CONSULTATION_PURPOSES)[number]["value"];
 export type CollabConsultationStatus =
@@ -41,6 +52,15 @@ export type CollabConsultation = {
   updatedAt: string;
 };
 
+/** One consultation segment inside a pair thread (for timeline context cards). */
+export type CollabConsultationContext = {
+  consultationId: string;
+  purpose: CollabConsultationPurpose;
+  initiatorProjectId: string | null;
+  counterpartProjectId: string | null;
+  createdAt: string;
+};
+
 export type CollabConsultationMessage = {
   id: string;
   consultationId: string;
@@ -54,8 +74,18 @@ export function consultationPurposeLabel(
 ): string {
   return (
     COLLAB_CONSULTATION_PURPOSES.find((item) => item.value === purpose)?.label ??
-    "コラボ相談"
+    "メッセージ"
   );
+}
+
+export function consultationPurposeStartLabel(
+  purpose: CollabConsultationPurpose,
+): string {
+  const start = COLLAB_CONSULTATION_START_PURPOSES.find(
+    (item) => item.value === purpose,
+  );
+  if (start) return start.label;
+  return consultationPurposeLabel(purpose);
 }
 
 export function isCollabConsultationPurpose(
