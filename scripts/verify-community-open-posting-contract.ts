@@ -1,0 +1,21 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+const read = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
+const migration = read("supabase/migrations/086_developer_community_open_posting.sql");
+const tabs = read("lib/creator-profile-tabs.ts");
+const profile = read("components/creator-profile-real-view.tsx");
+const board = read("components/profile-community-board.tsx");
+assert.match(migration, /Community posts are publicly readable/);
+assert.match(migration, /Registered users insert community posts/);
+assert.match(migration, /Authors or community owners delete posts/);
+assert.match(migration, /Registered users insert community replies/);
+assert.match(tabs, /"community"/);
+assert.match(profile, /ProfileCommunityBoard/);
+assert.match(board, /ensureDeveloperCommunity/);
+assert.match(board, /requireRegisteredWrite/);
+assert.match(board, /goToLogin\(\)/);
+assert.doesNotMatch(board, /\{user && communityId \?/);
+assert.doesNotMatch(profile, /CreatorCommunityJoinButton/);
+console.log("PASS verify-community-open-posting-contract");

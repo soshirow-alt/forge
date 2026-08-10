@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { CreatorFollowButton } from "@/components/creator-follow-button";
-import { CreatorCommunityJoinButton } from "@/components/creator-community-join-button";
 import { ContentReportButton } from "@/components/content-report-button";
+import { ProfileCommunityBoard } from "@/components/profile-community-board";
+import { StartConsultationButton } from "@/components/start-consultation-button";
 import { DiscoveryCardStatPills } from "@/components/discovery-card-stat-pills";
 import { PlayerShell } from "@/components/player-shell";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -28,6 +29,7 @@ type CreatorTab = CreatorProfileTab;
 const tabs: { id: CreatorTab; label: string }[] = [
   { id: "games", label: "作品" },
   { id: "devlog", label: "開発ログ" },
+  { id: "community", label: "コミュニティ" },
 ];
 
 function websiteHref(url: string): string {
@@ -165,10 +167,7 @@ export function CreatorProfileRealView({
                       developerUserId={profile.userId}
                       showFollowerCount={false}
                     />
-                    <CreatorCommunityJoinButton
-                      developerUserId={profile.userId}
-                      variant="secondary"
-                    />
+                    <StartConsultationButton counterpartId={profile.userId} />
                     <ProfileMoreMenu
                       developerUserId={profile.userId}
                       name={profile.name}
@@ -331,6 +330,15 @@ export function CreatorProfileRealView({
               ))}
             </ul>
           )
+        ) : null}
+
+        {activeTab === "community" ? (
+          <ProfileCommunityBoard
+            ownerId={profile.userId}
+            ownerName={profile.name}
+            ownerHandle={profile.handle}
+            isSelf={isSelf}
+          />
         ) : null}
       </div>
     </PlayerShell>

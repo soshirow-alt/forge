@@ -39,10 +39,12 @@ $OutputDir = Join-Path $RepoRoot '.agent\reviews'
 $RuntimeDir = Join-Path $RepoRoot '.agent\runtime'
 $Utf8 = [System.Text.UTF8Encoding]::new($false)
 $DiffExcludes = @('--', '.', ':(exclude).env', ':(exclude).env.*', ':(exclude)**/.env', ':(exclude)**/.env.*')
-$KnownPlaceholders = @('TASK_BODY', 'ROUND', 'DIFF_CONTEXT', 'VERIFY_SECTION', 'PREVIOUS_REVIEW')
+$KnownPlaceholders = @('TASK_BODY', 'ROUND', 'DIFF_CONTEXT', 'VERIFY_SECTION', 'PREVIOUS_REVIEW', 'REVIEW_KIND', 'PARENT_REVIEW_HISTORY')
 $script:AttemptMarkerPath = $null
 $script:AttemptStatus = ''
 $script:AttemptMeta = $null
+$script:TaskReviewMeta = $null
+. (Join-Path $PSScriptRoot 'codex-remediation-contract.ps1')
 
 function Write-Utf8File([string]$Path, [string]$Content) {
   $dir = Split-Path -Parent $Path
@@ -136,7 +138,7 @@ function Remove-SecretLikeText([string]$Text) {
       '(?im)\b(sb_secret_|sb_publishable_)[A-Za-z0-9_\-]+',
       '(?im)\bAKIA[0-9A-Z]{16}\b',
       '(?im)eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+',
-      '(?im)[A-Za-z0-9_]*(?:api[_-]?key|access[_-]?key|private[_-]?key|secret(?:_key)?|password|token|authorization|service[_-]?role(?:_key)?)\s*[=:]\s*\S+',
+      '(?im)[A-Za-z0-9_]*(?:api[_-]?key|access[_-]?key|private[_-]?key|secret(?:_key)?|password|token|authorization|service[_-]?role(?:_key)?)\s*(?:(?<!=)=(?!=)|:)\s*\S+',
       '(?im)-----BEGIN[^-]+PRIVATE KEY-----[\s\S]*?-----END[^-]+PRIVATE KEY-----'
     )) {
     $out = [regex]::Replace($out, $p, '[REDACTED]')
@@ -225,7 +227,7 @@ function Assert-TaskRoundAllowed([string]$TaskStem, [int]$RoundNumber) {
     $att = Get-AttemptPath $TaskStem $i
     $st = Read-AttemptStatus $att
     if ($st -eq 'blocked' -or $st -eq 'started') {
-      Fail-Blocked "Task '$TaskStem' is terminal: round $i attempt status='$st'. Start a new task id to continue."
+      Fail-Blocked "Task '$TaskStem' is terminal: round $i attempt status='$st'. Do not reset via a new task id. If Round 3 ended FAIL_FIXABLE and findings were fixed, open one remediation re-review task (review_kind: remediation)."
     }
     $rev = Get-ReviewPath $TaskStem $i
     if (Test-Path -LiteralPath $rev) {
@@ -234,7 +236,13 @@ function Assert-TaskRoundAllowed([string]$TaskStem, [int]$RoundNumber) {
       }
       $verdict = [string]((Get-Content -LiteralPath $rev -Raw -Encoding UTF8 | ConvertFrom-Json).verdict)
       if ($verdict -in @('PASS', 'NEEDS_OWNER_DECISION', 'BLOCKED')) {
-        Fail-Blocked "Task '$TaskStem' is terminal: round $i verdict='$verdict'. Start a new task id to continue."
+        Fail-Blocked "Task '$TaskStem' is terminal: round $i verdict='$verdict'. Do not reset via a new task id."
+      }
+      if ($i -eq 3 -and $verdict -eq 'FAIL_FIXABLE') {
+        # Round 3 FAIL_FIXABLE ends this normal/remediation task; continuation is remediation (once) or Owner STOP.
+        if ($RoundNumber -gt 3) {
+          Fail-Blocked "Round 3 FAIL_FIXABLE is terminal for task '$TaskStem'. Round 4 is forbidden. Use one remediation re-review task after fixes, or STOP."
+        }
       }
     }
   }
@@ -323,7 +331,8 @@ function Get-ReviewContext([string]$FixedBaseSha, [string]$HeadSha) {
 function Build-ReviewPrompt {
   param(
     [string]$TaskPath, [int]$RoundNumber, [string]$ContextText,
-    [string]$VerifyNotePath, [string[]]$VerifyLogPaths, [string]$PreviousReviewPath
+    [string]$VerifyNotePath, [string[]]$VerifyLogPaths, [string]$PreviousReviewPath,
+    [string]$ReviewKind = 'normal', [string]$ParentHistory = '(not a remediation task)'
   )
   $taskBody = Read-Utf8File $TaskPath
   $verifyBits = New-Object System.Collections.Generic.List[string]
@@ -341,11 +350,13 @@ function Build-ReviewPrompt {
     $prev = Read-Utf8File $PreviousReviewPath
   }
   return Expand-PromptTemplate @{
-    TASK_BODY        = $taskBody
-    ROUND            = [string]$RoundNumber
-    DIFF_CONTEXT     = $ContextText
-    VERIFY_SECTION   = $verifySection
-    PREVIOUS_REVIEW  = $prev
+    TASK_BODY             = $taskBody
+    ROUND                 = [string]$RoundNumber
+    DIFF_CONTEXT          = $ContextText
+    VERIFY_SECTION        = $verifySection
+    PREVIOUS_REVIEW       = $prev
+    REVIEW_KIND           = $ReviewKind
+    PARENT_REVIEW_HISTORY = $ParentHistory
   }
 }
 
@@ -580,6 +591,8 @@ New-Item -ItemType Directory -Path $RuntimeDir -Force | Out-Null
 
 $VerifyLog = @(Normalize-VerifyLogArgs $VerifyLog)
 $taskStem = [System.IO.Path]::GetFileNameWithoutExtension($TaskFile)
+$script:TaskReviewMeta = Parse-TaskReviewMeta $TaskFile
+Assert-NoDisguisedRoundReset -TaskStem $taskStem -Meta $script:TaskReviewMeta
 
 if ($Round -gt 0) {
   $script:ResolvedRound = $Round
@@ -596,22 +609,57 @@ if ($script:ResolvedRound -ge 4) {
   Fail-Blocked "Round $($script:ResolvedRound) is not allowed. Maximum is 3. No exception grant path exists."
 }
 
+if ($script:TaskReviewMeta.review_kind -eq 'terminal_closure') {
+  if ($script:ResolvedRound -ne 1) {
+    Fail-Blocked "terminal_closure allows exactly one Codex run. Round $($script:ResolvedRound) refused."
+  }
+}
+
 Assert-TaskRoundAllowed -TaskStem $taskStem -RoundNumber $script:ResolvedRound
+Assert-RemediationContract -TaskStem $taskStem -Meta $script:TaskReviewMeta -RoundNumber $script:ResolvedRound
+
+$parentHistory = '(not a remediation/closure task)'
+if ($script:TaskReviewMeta.review_kind -eq 'remediation') {
+  $parentHistory = Build-ParentReviewHistory -ParentStem $script:TaskReviewMeta.parent_task_id -RelatedBlockedTaskIds $script:TaskReviewMeta.related_blocked_task_ids
+} elseif ($script:TaskReviewMeta.review_kind -eq 'terminal_closure') {
+  $parentHistory = Build-TerminalClosureHistory `
+    -NormalParent $script:TaskReviewMeta.parent_task_id `
+    -RemediationParent $script:TaskReviewMeta.remediation_parent_task_id `
+    -RelatedBlockedTaskIds $script:TaskReviewMeta.related_blocked_task_ids `
+    -ReplacesTaskId $script:TaskReviewMeta.replaces_task_id
+}
 
 $runId = '{0}-r{1}-p{2}-{3}' -f $taskStem, $script:ResolvedRound, $PID, ([guid]::NewGuid().ToString('N').Substring(0, 8))
 $reviewPath = Get-ReviewPath $taskStem $script:ResolvedRound
 
 $VerifyNotePath = if ($VerifyNoteFile) { Assert-SafeInputPath $VerifyNoteFile 'VerifyNoteFile' '.agent\runtime' } else { '' }
-$PreviousReviewPath = Resolve-PreviousReviewForRound -TaskStem $taskStem -RoundNumber $script:ResolvedRound -ExplicitPrevious $PreviousReview
+$PreviousReviewPath = if ($script:TaskReviewMeta.review_kind -eq 'terminal_closure') {
+  ''
+} else {
+  Resolve-PreviousReviewForRound -TaskStem $taskStem -RoundNumber $script:ResolvedRound -ExplicitPrevious $PreviousReview
+}
 $FixedBaseSha = Resolve-ImmutableBaseSha -TaskStem $taskStem -Requested $BaseSha
+if ($script:TaskReviewMeta.review_kind -eq 'remediation') {
+  Assert-RemediationParentBaseSha -ParentStem $script:TaskReviewMeta.parent_task_id -FixedBaseSha $FixedBaseSha
+} elseif ($script:TaskReviewMeta.review_kind -eq 'terminal_closure') {
+  # Same immutable base as the original normal parent (and its remediation child).
+  Assert-RemediationParentBaseSha -ParentStem $script:TaskReviewMeta.parent_task_id -FixedBaseSha $FixedBaseSha
+  Assert-RemediationParentBaseSha -ParentStem $script:TaskReviewMeta.remediation_parent_task_id -FixedBaseSha $FixedBaseSha
+}
 $HeadSha = (Invoke-Git -GitArgs @('rev-parse', 'HEAD')).Trim()
 
-Write-Host "Codex independent review — round $($script:ResolvedRound) (max 3) base=$FixedBaseSha run=$runId" -ForegroundColor Cyan
+$roundLabel = if ($script:TaskReviewMeta.review_kind -eq 'terminal_closure') {
+  'single-shot (no rounds)'
+} else {
+  "round $($script:ResolvedRound) (max 3)"
+}
+Write-Host "Codex independent review — kind=$($script:TaskReviewMeta.review_kind) $roundLabel base=$FixedBaseSha run=$runId" -ForegroundColor Cyan
 
 $fpBefore = Get-TreeFingerprint
 $context = Get-ReviewContext $FixedBaseSha $HeadSha
 $prompt = Build-ReviewPrompt -TaskPath $TaskFile -RoundNumber $script:ResolvedRound -ContextText $context `
-  -VerifyNotePath $VerifyNotePath -VerifyLogPaths $VerifyLog -PreviousReviewPath $PreviousReviewPath
+  -VerifyNotePath $VerifyNotePath -VerifyLogPaths $VerifyLog -PreviousReviewPath $PreviousReviewPath `
+  -ReviewKind $script:TaskReviewMeta.review_kind -ParentHistory $parentHistory
 
 $promptOut = Join-Path $RuntimeDir ($runId + '-prompt.md')
 $lastMsg = Join-Path $RuntimeDir ($runId + '-last-message.txt')
@@ -626,10 +674,22 @@ if ($DryRun) {
   Write-Host "Would write review to: $reviewPath"
   Write-Host "Prompt size: $($prompt.Length) chars"
   Write-Host ("VerifyLog count: " + @($VerifyLog).Count)
+  Write-Host ("Review kind: " + $script:TaskReviewMeta.review_kind)
   exit 40
 }
 
 # Codex is about to run — consume this round via attempt marker (started).
+if ($script:TaskReviewMeta.review_kind -eq 'remediation' -and $script:ResolvedRound -eq 1) {
+  Claim-RemediationSlot -ParentStem $script:TaskReviewMeta.parent_task_id -ChildStem $taskStem
+}
+if ($script:TaskReviewMeta.review_kind -eq 'terminal_closure') {
+  Claim-TerminalClosureSlot `
+    -RemediationStem $script:TaskReviewMeta.remediation_parent_task_id `
+    -ChildStem $taskStem `
+    -ReplacesTaskId $script:TaskReviewMeta.replaces_task_id
+}
+Write-ReviewKindMeta -TaskStem $taskStem -Meta $script:TaskReviewMeta -ParentStem $script:TaskReviewMeta.parent_task_id
+
 $script:AttemptMarkerPath = Get-AttemptPath $taskStem $script:ResolvedRound
 $script:AttemptMeta = @{
   task       = $taskStem
@@ -647,9 +707,16 @@ if ($fpBefore -ne $fpAfter) {
   Write-Host "NOTE: non-.agent working tree fingerprint changed during review (informational)." -ForegroundColor Yellow
   Write-Utf8File (Join-Path $RuntimeDir ($runId + '-tree-fingerprint-changed.txt')) "BEFORE:`n$fpBefore`n`nAFTER:`n$fpAfter`n"
 }
+if ($script:TaskReviewMeta.review_kind -eq 'terminal_closure') {
+  Assert-ClosureScopeBaselineHeld -TaskStem $taskStem -AllowPaths $script:TaskReviewMeta.closure_changed_paths
+}
 
 $rawStaging = Join-Path $RuntimeDir ($runId + '-review-raw.json')
 $verdict = Save-And-ValidateReview $raw $reviewPath $rawStaging
+if ($script:ResolvedRound -eq 3 -and $verdict -eq 'FAIL_FIXABLE') {
+  Write-TerminalFingerprint $taskStem
+  Write-Host "Round 3 FAIL_FIXABLE terminal fingerprint written for remediation gate."
+}
 Write-AttemptMarker -Status 'reviewed' -Reason ("verdict=" + $verdict)
 Write-Host "Review saved: $reviewPath"
 Write-Host "VERDICT=$verdict"

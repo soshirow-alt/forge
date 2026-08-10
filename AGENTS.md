@@ -132,7 +132,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 **§10.2 の 9 条件のみ**停止。`docs/forge-triage-operations.md` §10、`docs/gpt-run-decision-memo.md` 参照。
 
-一気通貫で進めてよい: 設計 → 実装 → typecheck/lint/test/build → **Codex 独立レビュー PASS** → commit → **Preview push / deploy / smoke**。Supabase の write は Staging / Production とも**オーナー手動**（2026-07-30 方針）。
+一気通貫で進めてよい: 設計 → 実装 → typecheck/lint/test/build →（§対象なら）**Codex 独立レビュー PASS** → commit → **Preview push / deploy / smoke**。Supabase の write は Staging / Production とも**オーナー手動**（2026-07-30 方針）。
 
 オーナーの明示指示はその作業範囲全体の承認。指示内では commit / push / smoke の再確認をしない（Supabase write は指示があっても Cursor が実行しない）。
 
@@ -144,13 +144,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 Cursor ALLOW / Run Mode（full-auto 寄り・Staging / Production とも DB write は手動）: `docs/cursor-allow-vs-forge-go.md` / `.cursor/rules/stall-detection-resume.mdc`。
 
-## Codex 独立レビュー（実装後の必須ゲート）
+## Codex 独立レビュー（重大見落とし検出）
 
-Cursor の実装は **Codex CLI（独立レビュー担当）** の PASS を得てから commit / push する。
+Codex PASS は全変更の絶対条件ではない。優先対象: auth / RLS / private data、security、重要 DB migration、notification / email 等の副作用、大規模横断変更。原則不要: Staging-only seed / fixture / smoke、軽微 UI / 文言、review harness の再帰的 review。
 
 正本: `.cursor/rules/codex-independent-review.mdc` / 手順: `docs/agent-context/cursor-codex-review-flow.md`
 
-- 実装開始時にオーナー指示全文を `.agent/tasks/<yyyy-MM-dd-HHmm>-<slug>.md` へ保存
+- 対象 task では実装開始時にオーナー指示全文を `.agent/tasks/<yyyy-MM-dd-HHmm>-<slug>.md` へ保存
 - 実装 → typecheck / lint / build / verify → **PS 5.1 call operator** でレビュー（`-BaseSha` 必須）:
 
 ```powershell
@@ -159,9 +159,9 @@ Cursor の実装は **Codex CLI（独立レビュー担当）** の PASS を得�
 
 - Codex は `codex exec --sandbox read-only`。**実装させない・ファイルを書かせない**
 - 出力は固定 JSON（`verdict` / `summary` / `findings` / `tests_required` / `owner_decisions`）
-- `PASS` のみ commit / push 可。`FAIL_FIXABLE` は Cursor が修正して再レビュー（**最大 3 round**）
-- Codex 失敗 / invalid JSON は attempt `blocked` で task 終端（同じ task id でやり直さない）
-- `NEEDS_OWNER_DECISION` / `BLOCKED` は停止して報告。Codex を実行していない実装を「完了」と報告しない
+- 対象 task は `PASS` のみ commit / push 可。`FAIL_FIXABLE` は修正して再レビュー（**最大 3 round**）。Round 3 後は deterministic verify のうえで Owner 判断終了可
+- remediation / terminal_closure chain を通常運用として増殖させない
+- `NEEDS_OWNER_DECISION` / `BLOCKED` は停止して報告
 - Codex の指摘は鵜呑みにせず task 仕様と実コードで照合する。不採用にしたら理由を最終報告に書く
 - レビュー基盤自体を触ったら `npm run verify:codex-review-selftest`（Codex を呼ばない受け入れテスト）
 - `.agent/tasks` `.agent/reviews` `.agent/runtime` の中身は commit しない（`.gitignore` 済み）

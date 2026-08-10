@@ -1,6 +1,6 @@
-export type CreatorProfileTab = "games" | "devlog";
+export type CreatorProfileTab = "games" | "devlog" | "community";
 
-const TAB_IDS: CreatorProfileTab[] = ["games", "devlog"];
+const TAB_IDS: CreatorProfileTab[] = ["games", "devlog", "community"];
 
 export function parseCreatorProfileTab(
   param: string | null,
@@ -8,6 +8,7 @@ export function parseCreatorProfileTab(
 ): CreatorProfileTab {
   // Legacy aliases from older public profile URLs
   if (param === "devlog") return "devlog";
+  if (param === "community") return "community";
   if (param === "overview" || param === "achievements" || param === "followers") {
     return "games";
   }

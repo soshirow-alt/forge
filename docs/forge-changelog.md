@@ -4,6 +4,28 @@
 
 ---
 
+## 2026-08-10 — Featured hero Staging seed: immutable `first_published_at` 対策
+
+- **原因確定** — `projects_set_first_published_at`（050）が既存 `first_published_at` の UPDATE を握りつぶすため、共有 game `…000003` への固定日時 bump は Staging 上 no-op。soft owner diversity 後の newest が `…000028`（dev-tool）になり `rows 4 / expected pairs 3` で失敗（ローカルに trigger が無いと偽 PASS）
+- **seed 設計** — newest を専用 game `…000091`（Smoke A owner・INSERT で trigger が `now()` を付与・再実行は DELETE+INSERT）へ切替。reaction/rising/updated は従来どおり `…000001/002/004`。exact 4 pair assert は維持。Production selection logic 非変更
+- **検証** — PGlite gate に 050 immutability を組み込み、1回目/2回目 exact pairs PASS。Codex は Staging-only seed のため未実行（方針: 重大見落とし検出に限定）
+
+## 2026-08-10 — コミュニティ・相談・使用関係の application layer
+
+- **開発者プロフィール** — 公開コミュニティタブを追加。登録ユーザーは投稿・返信、自分またはコミュニティオーナーは削除可能。参加申請ゲートを外し「利用・コラボを相談する」へ変更
+- **相談** — 目的と関連作品を指定して開始する非公開相談、一覧、スレッド、Realtime（失敗時8秒poll）を追加。URLは安全な `http(s)` のみリンク化
+- **使用関係** — 「使用関係を登録」から作品名と矢印で方向を確認し、相手側の承認・非承認を相談画面で処理
+- **通知・メール** — seen と重要通知の acknowledgement を分離。相談・使用関係は確認までbadgeを維持し、秘密ヘッダー必須のResend outbox workerを追加（私信本文はメール非掲載）
+- **認証導線** — 相談開始・使用関係登録・コミュニティ投稿/返信はCTAを隠さず、登録ユーザーだけ書込みへ進み、未登録/ゲストは現在地をreturn先にしたログインへ遷移
+- **使用関係の確認** — 申請者自身の送信済み依頼を承認一覧から除外。相手側の決定後は依頼通知をacknowledgeし、失敗時は画面にエラーを表示
+- **使用関係の結果表示** — 申請者向けに「最近の結果」（accepted/rejected）を相談画面 `#usage-relations` に表示し、表示後に `usage-relation:{id}` をacknowledge（通知一覧クリックではackしない）
+- **メール運用** — Vercel Cronが10分ごとにoutbox workerを起動。`ops:email-outbox`でも秘密付き手動起動可能（5回失敗でdead）
+- **メール idempotency** — outbox worker が Resend 送信に `forge-outbox-{rowId}` を付け、再送時の重複送信を抑止
+- **SQL gate** — PGlite隔離環境で086〜091を全文順次適用・安全な再実行・RLS/RPC grant・二者間使用関係と通知acknowledgement・rollbackを検証する `verify:collab-suite-sql-gate` を追加
+- **検証強化** — collab SQL gateにlegacy status変換、相談RPC/RLS、双方向block、関連作品所有権、通知とメール失敗分離、migration rollbackを追加。featured hero seedもPGliteで初回・再実行・失敗rollback・4枠のUUID/axis一致を全文実行検証
+- **通知・メール堅牢化** — 相談既読APIは通知acknowledgement失敗を500で返し、outbox workerは`EMAIL_OUTBOX_SECRET`と`CRON_SECRET`を独立して受理
+- **Staging seed** — featured hero seed / audit はオーナー適用待ち。Application layer実装ではSQL未適用
+
 ## 2026-08-09 — `/home/game` featured/compact 残件 + collab audit 正直化
 
 - **監査** — `docs/forge-collaboration-gap-audit.md` に先行 task の禁止 POST probe（401・row なし）を明示。usage write は PARTIAL のまま（IMPLEMENTED にしない）。以降 mutation probe 禁止

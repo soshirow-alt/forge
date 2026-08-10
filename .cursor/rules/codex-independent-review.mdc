@@ -3,10 +3,10 @@ description: Codex CLI independent review gate — task file, review before comm
 alwaysApply: true
 ---
 
-# Codex 独立レビュー（実装後の必須ゲート）
+# Codex 独立レビュー（重大見落とし検出）
 
-Cursor が実装したコードは、**Codex CLI（別エージェント）の独立レビュー**を通してから commit / push する。
-Codex は実装者ではなく**レビュー専任**。read-only で動かし、コードを書かせない。
+Cursor の実装のうち **§5 の対象**は、Codex CLI（別エージェント）の独立レビューを通してから commit / push する。
+Codex PASS は全変更の絶対条件ではない。Codex は実装者ではなく**レビュー専任**。read-only で動かし、コードを書かせない。
 
 正本フロー: `docs/agent-context/cursor-codex-review-flow.md`
 レビュー契約: `scripts/agents/codex-review-prompt.md`
@@ -49,11 +49,12 @@ typecheck / lint / build / 関連 verify を通してから、**Windows PowerShe
 | `BLOCKED` | 停止して報告。JSON 不正・timeout・Codex 実行不可も BLOCKED |
 
 - **最大 3 round**。3 round で PASS しなければ停止し、残課題をオーナーへ報告する
-- Round 4 以降は**常に BLOCKED**。owner 許可文・環境変数・hidden option で上限を増やせない
-- Codex 失敗 / invalid JSON / validator reject は attempt `blocked` で **その task を終端**（同じ task id でやり直さない。新 task を作る）
-- **PASS 前の commit / push は禁止**
-- **Codex を実行していない実装を「完了」と報告しない**
-- Codex CLI が無い / 認証切れ / 実行失敗 → **BLOCKED として停止**。レビュー無しで先に進まない
+- Round 4 以降は**常に BLOCKED**。owner 許可文・環境変数・hidden option で上限を増やせない（`OwnerApprovedRound4` は存在しない）
+- Round 3 後は必要な finding を直し、deterministic verification を行ったうえで **Owner 判断で終了可能**（Codex PASS 絶対条件ではない）
+- remediation / terminal_closure / replacement の review chain を通常運用として増殖させない（harness に残っていても新規 task の既定経路にしない）
+- Codex 失敗 / invalid JSON / validator reject は attempt `blocked` で **その task を終端**（同じ task id でやり直さない）。通常 task の id 付け替えによるカウンターリセットも禁止
+- **Codex 対象 task** では PASS 前の commit / push は禁止。対象外（§5 例外）は deterministic verify 後に進めてよい
+- Codex CLI が無い / 認証切れ / 実行失敗 → **対象 task は BLOCKED として停止**。レビュー無しで「Codex PASS」と報告しない
 - 本番 runner に InjectReviewJson / 人工 PASS 経路はない。Codex 未実行では formal PASS にならない
 
 ## 4. Codex の指摘を鵜呑みにしない
@@ -64,12 +65,29 @@ Codex は task 仕様の全文脈を持たない。指摘ごとに task file と
 - 誤り / 仕様と矛盾 → **修正せず**、最終報告に「不採用の理由」を書く
 - 仕様変更が必要 → `NEEDS_OWNER_DECISION` 相当として停止する
 
-## 5. Supabase SQL
+## 5. Codex の適用範囲（重大見落とし検出に限定）
 
-- SQL を含む変更は**例外なく** Codex レビュー対象
+Codex PASS を全変更の絶対条件にしない。優先して使うのは主に:
+
+- auth / RLS / private data
+- security
+- DB migration の重要 state transition
+- notification / email 等の副作用
+- 大規模・複数領域横断変更
+
+原則不要（Codex 省略可・最終報告に省略理由を書く）:
+
+- Staging-only seed / fixture / smoke data
+- 軽微 UI / 文言変更
+- review harness 自身の再帰的 review
+
+### Supabase SQL
+
+- **Production 向け migration / 重要 state transition** は Codex 対象
+- **Staging-only seed / fixture** は Codex 不要（ローカル SQL gate / deterministic assert を優先）
 - Codex が PASS でも **SQL を自動適用しない**
-- Staging: `.cursor/rules/supabase-sql-safety.mdc` の gate（実 DB での全文実行）を満たしてから
-- Production: migration / INSERT / UPDATE / DELETE / backfill / Storage は**オーナー手動**。Cursor は SQL・実行順・影響範囲・確認 SQL を提示するだけ
+- Staging write: `.cursor/rules/supabase-sql-safety.mdc` の gate（実 DB 相当での全文実行）を満たしてから Owner 手渡し
+- Production: migration / INSERT / UPDATE / DELETE / backfill / Storage は**オーナー手動**
 
 ## 6. 最終報告に含める
 

@@ -90,6 +90,11 @@ Hard rules:
 - Never recommend commit/push while verdict ≠ PASS.
 - SQL / Staging / Production DB writes remain **owner-manual** even on PASS.
 - Max review rounds is **3**. There is **no** Round-4 exception grant.
+- After **Round 3 FAIL_FIXABLE**, that task id is **terminal**. Do **not** invent PASS by opening a new normal task id on the same unfinished change.
+- If Round 3 findings were fixed and the working tree changed, Owner may authorize **one** `review_kind: remediation` task that cites `parent_task_id`. That remediation task also has max 3 rounds and cannot spawn a second remediation.
+- After remediation Round 3 FAIL_FIXABLE with a fixed residual finding set, Owner may authorize **one** `review_kind: terminal_closure` task (not Round 4, not a second remediation). Exactly **one** Codex run; FAIL/BLOCKED → complete STOP (no auto-fix, no re-review, no second closure).
+- If that single closure is invalidated solely because of a **review-harness defect** (not product findings), Owner may authorize **one** replacement closure with `replaces_task_id` + `replacement_reason: review_harness_scope_lock_defect`. Not a second remediation / Round 4. Replacement of a replacement is forbidden.
+- `OwnerApprovedRound4` and similar bypasses do **not** exist.
 
 ## Priority order
 
@@ -107,9 +112,26 @@ Hard rules:
 
 ---
 
+## Review kind
+
+{{REVIEW_KIND}}
+
+(`normal` = rounds 1–3. `remediation` = one re-review after parent Round 3 FAIL_FIXABLE + fixes (max 3 rounds; not Round 4). `terminal_closure` = one final Codex run after remediation Round 3 FAIL_FIXABLE + residual finding fixes; no rounds / no auto-fix / no re-review.)
+
+When `REVIEW_KIND` is `terminal_closure`, review **only**:
+1. Whether the fixed residual findings named in the task are correctly closed
+2. Whether those fixes introduced a new major regression
+3. For a **replacement** closure (`replaces_task_id`): whether the harness defect that invalidated the prior closure is closed, and whether out-of-scope drift was prevented
+
+Do **not** expand into unrelated redesign. Non-PASS means STOP (no further review loop).
+
 ## Task file (round {{ROUND}})
 
 {{TASK_BODY}}
+
+## Parent review history (remediation / terminal_closure)
+
+{{PARENT_REVIEW_HISTORY}}
 
 ## Diff / working tree context
 

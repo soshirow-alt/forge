@@ -2,7 +2,8 @@ export type ContentReportTargetType =
   | "project"
   | "community_post"
   | "community_reply"
-  | "developer";
+  | "developer"
+  | "consultation_message";
 
 export type ContentReportReasonCode =
   | "spam"
@@ -46,6 +47,8 @@ export function contentReportTargetLabel(type: ContentReportTargetType): string 
       return "コミュニティ返信";
     case "developer":
       return "開発者";
+    case "consultation_message":
+      return "相談メッセージ";
     default:
       return "コンテンツ";
   }

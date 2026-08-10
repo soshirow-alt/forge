@@ -23,9 +23,9 @@ UI copy / density / Special Thanks purpose: **`docs/forge-ui-copy-rules.md`** (a
 - When a **design decision** is involved (DB, auth, notifications, permissions, storage, extensibility): briefly note recommendation, reason, and concern in the response — not a long `■` template every time.
 - On completed tasks: update `docs/forge-changelog.md` only (not handoff/summary unless milestone).
 - Before **§10.2 stop conditions only** (billing, new API contracts, prod public launch, PLAYER_VISIBLE=true, destructive DB, data migration,原典 change, roadmap priority change, irreversible ops): output **GPT判断用メモ** from `docs/gpt-run-decision-memo.md`. Task flow through design→impl→build→staging→main prep runs without per-step approval. **`docs/forge-triage-operations.md` §10**.
-- **通常作業（2026-07-14〜）**: 調査〜Preview smoke まで自律（investigate→edit→verify→**Codex 独立レビュー PASS**→commit→preview push→Git Integration deploy→**branch alias 検証**）。**Supabase の write は Staging / Production ともオーナー手動**（2026-07-30 方針）。詳細 `docs/cursor-allow-vs-forge-go.md` / alias 正本 `docs/vercel-preview-project.md`
+- **通常作業（2026-07-14〜）**: 調査〜Preview smoke まで自律（investigate→edit→verify→（§対象なら）**Codex 独立レビュー PASS**→commit→preview push→Git Integration deploy→**branch alias 検証**）。**Supabase の write は Staging / Production ともオーナー手動**（2026-07-30 方針）。詳細 `docs/cursor-allow-vs-forge-go.md` / alias 正本 `docs/vercel-preview-project.md`
 - **オーナー指示 = スコープ承認**: 指示範囲内で commit / push / smoke 等を再確認しない（Supabase write は対象外）
-- **Codex 独立レビュー**: 実装後に PS 5.1 call operator（`-BaseSha` 必須）で PASS を得てから commit / push。最大 3 round。正本 `.cursor/rules/codex-independent-review.mdc` / `docs/agent-context/cursor-codex-review-flow.md`
+- **Codex 独立レビュー**: 重大見落とし検出に限定（auth/RLS/security/重要 migration/副作用/大規模横断）。Staging-only seed・fixture・軽微 UI・文言は原則不要。対象時は最大 3 round。正本 `.cursor/rules/codex-independent-review.mdc`
 - **「本番反映して」「リリースして」** = コード本番の一括承認（main 反映+push・Production deploy・smoke・main↔preview 同期）。工程ごとの確認はしない
 - **Supabase（Staging / Production とも）**: migration / INSERT / UPDATE / DELETE / backfill / Storage 変更は **オーナー手動**。Cursor は SQL・実行順・影響・確認 SQL を提示。適用後の read-only 検証と smoke は自律
 - **Run Mode**: オーナーは full-auto 寄り。DB write（Staging / Production）と Codex レビュー前 commit だけは手動境界を維持

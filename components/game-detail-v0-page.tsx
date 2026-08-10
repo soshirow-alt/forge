@@ -32,6 +32,8 @@ import { GameSpecialThanksTab } from "@/components/game-special-thanks-tab";
 import { GameDetailOwnerWorksCard } from "@/components/game-detail-owner-works-card";
 import { GameNotFoundPanel } from "@/components/game-not-found-panel";
 import { ContentReportButton } from "@/components/content-report-button";
+import { StartConsultationButton } from "@/components/start-consultation-button";
+import { UsageRelationButton } from "@/components/usage-relation-button";
 import { PlayerShell } from "@/components/player-shell";
 import { AgeGateBarrier } from "@/components/age-gate-barrier";
 import { ProjectThumbnail } from "@/components/project-thumbnail";
@@ -1023,6 +1025,24 @@ function GameDetailV0PageBody({
                   <Heart className="size-3.5 sm:size-4" aria-hidden="true" />
                   {realFollowing ? "開発者フォロー中" : "開発者をフォロー"}
                 </button>
+              ) : null}
+              {developerUserId && user?.id !== developerUserId ? (
+                <StartConsultationButton
+                  counterpartId={developerUserId}
+                  counterpartProjectId={resolvedId}
+                  initiatorProjects={getOwnedProjects(user?.id).map((project) => ({
+                    id: project.id,
+                    title: project.title,
+                  }))}
+                />
+              ) : null}
+              {isRealProject && !isOwnerPreview ? (
+                <UsageRelationButton
+                  focusProject={{ id: resolvedId, title: game.title }}
+                  candidateProjects={getOwnedProjects(user?.id)
+                    .filter((project) => project.id !== resolvedId)
+                    .map((project) => ({ id: project.id, title: project.title }))}
+                />
               ) : null}
             </div>
             {playUnavailableOnPublic || playUrlMissingVisible ? (

@@ -173,7 +173,7 @@ import {
   insertConfirmationRequestNotifications,
   insertVersionPublishedNotifications,
   isDatabaseNotificationId,
-  markAllUserNotificationsAsRead,
+  markNotificationsSeen,
   markUserNotificationAsRead,
   notificationRowToNotification,
 } from "@/lib/supabase/user-notifications-db";
@@ -704,7 +704,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
             submittedGamesForNotificationsRef.current.find(
               (game) => game.id === row.project_id,
             )?.title ??
-              getMockGameById(row.project_id)?.title ??
+              (row.project_id ? getMockGameById(row.project_id)?.title : undefined) ??
               "作品",
           ),
         ),
@@ -1193,6 +1193,13 @@ export function GamesProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        const target = dbNotifications.find((notification) => notification.id === id);
+        // Important notifications ack only after target detail is successfully shown
+        // (e.g. consultation thread). Clicking the list must not clear the badge early.
+        if (target?.requiresAcknowledgement) {
+          return;
+        }
+
         setDbNotifications((prev) =>
           prev.map((notification) =>
             notification.id === id ? { ...notification, read: true } : notification,
@@ -1208,7 +1215,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         ),
       );
     },
-    [user],
+    [user, dbNotifications],
   );
 
   const markAllNotificationsAsRead = useCallback(() => {
@@ -1226,9 +1233,13 @@ export function GamesProvider({ children }: { children: ReactNode }) {
     }
 
     setDbNotifications((prev) =>
-      prev.map((notification) => ({ ...notification, read: true })),
+      prev.map((notification) =>
+        notification.requiresAcknowledgement
+          ? notification
+          : { ...notification, read: true, seenAt: new Date().toISOString() },
+      ),
     );
-    void markAllUserNotificationsAsRead(supabase, user.id);
+    void markNotificationsSeen(supabase);
   }, [user]);
 
   const reloadNotifications = useCallback(async () => {
@@ -1248,7 +1259,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         notificationRowToNotification(
           row,
           submittedGames.find((game) => game.id === row.project_id)?.title ??
-            getMockGameById(row.project_id)?.title ??
+            (row.project_id ? getMockGameById(row.project_id)?.title : undefined) ??
             "作品",
         ),
       ),

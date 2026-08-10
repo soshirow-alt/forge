@@ -9,7 +9,12 @@ export type NotificationType =
   | "project_watched"
   | "followed_developer_new_project"
   | "followed_developer_released_project"
-  | "feedback_reply";
+  | "feedback_reply"
+  | "consultation_new"
+  | "consultation_message"
+  | "usage_relation_request"
+  | "usage_relation_accepted"
+  | "usage_relation_rejected";
 
 export type Notification = {
   id: string;
@@ -19,6 +24,12 @@ export type Notification = {
   projectId: string;
   projectTitle: string;
   read: boolean;
+  seenAt?: string;
+  acknowledgedAt?: string;
+  requiresAcknowledgement?: boolean;
+  coalesceKey?: string;
+  consultationId?: string;
+  usageRelationId?: string;
   publishedVersion?: string;
 };
 
@@ -46,6 +57,16 @@ export function getNotificationTypeLabel(type: NotificationType): string {
       return "フォロー中の開発者の正式版";
     case "feedback_reply":
       return "フィードバックへの返信";
+    case "consultation_new":
+      return "新しい相談";
+    case "consultation_message":
+      return "相談メッセージ";
+    case "usage_relation_request":
+      return "使用関係の確認";
+    case "usage_relation_accepted":
+      return "使用関係の承認";
+    case "usage_relation_rejected":
+      return "使用関係の結果";
   }
 }
 
@@ -76,6 +97,16 @@ export function createNotificationMessage(
       return `フォロー中の開発者の「${projectTitle}」が正式版になりました`;
     case "feedback_reply":
       return `「${projectTitle}」のフィードバックに返信がありました`;
+    case "consultation_new":
+      return "新しいコラボ相談が届きました";
+    case "consultation_message":
+      return "コラボ相談に新しいメッセージが届きました";
+    case "usage_relation_request":
+      return "作品の使用関係について確認依頼が届きました";
+    case "usage_relation_accepted":
+      return "作品の使用関係が承認されました";
+    case "usage_relation_rejected":
+      return "作品の使用関係は承認されませんでした";
   }
 }
 
@@ -103,6 +134,13 @@ export function getNotificationActionHint(type: NotificationType): string {
       return "作品詳細を見る →";
     case "feedback_reply":
       return "フィードバックを見る →";
+    case "consultation_new":
+    case "consultation_message":
+      return "相談を確認する →";
+    case "usage_relation_request":
+    case "usage_relation_accepted":
+    case "usage_relation_rejected":
+      return "使用関係を確認する →";
   }
 }
 

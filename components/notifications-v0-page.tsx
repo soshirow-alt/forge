@@ -15,6 +15,8 @@ import {
 } from "@/lib/community-join-v0-store";
 import { notificationToV0Item } from "@/lib/notification-v0-adapter";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
+import { getOptionalSupabaseClient } from "@/lib/supabase/client";
+import { markNotificationsSeen } from "@/lib/supabase/user-notifications-db";
 import {
   countUnread,
   filterNotifications,
@@ -210,7 +212,10 @@ export function NotificationsV0Page() {
     if (!hydrated || !user) {
       return;
     }
-    void reloadNotifications();
+    const supabase = getOptionalSupabaseClient();
+    void (supabase ? markNotificationsSeen(supabase) : Promise.resolve())
+      .catch(() => undefined)
+      .then(() => reloadNotifications());
   }, [hydrated, user, reloadNotifications]);
 
   useEffect(() => {

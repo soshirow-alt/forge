@@ -8,6 +8,7 @@ import { DevlogComposeModal } from "@/components/devlog-compose-modal";
 import { GameDetailPlayerPreview } from "@/components/game-detail-player-preview";
 import { StudioMypageBackLink } from "@/components/studio-mypage-back-link";
 import { StudioTabContextPanel } from "@/components/studio-tab-context-panel";
+import { UsageRelationButton } from "@/components/usage-relation-button";
 import { useGames } from "@/components/games-provider";
 import { useOwnedProjectFeedback } from "@/hooks/use-owned-project-feedback";
 import { useOwnedProjectVoiceSignals } from "@/hooks/use-owned-project-voice-signals";
@@ -39,7 +40,8 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, hydrated } = useAuth();
-  const { getOwnedProjectById, getDevlogsByProject, dataReady } = useGames();
+  const { getOwnedProjectById, getDevlogsByProject, dataReady, publicGames } =
+    useGames();
   const { handleTestPlay } = useProjectTestPlay(projectId);
 
   const { entries: feedbackEntries, loaded: feedbackLoaded } =
@@ -217,7 +219,15 @@ function ProjectStudioPageContent({ projectId }: { projectId: string }) {
         <div className="min-w-0 flex-1">
           <header className="border-b border-zinc-800/80 pb-3">
             <StudioMypageBackLink />
-            <p className="mt-2 text-sm text-zinc-400">Studio編集</p>
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-zinc-400">Studio編集</p>
+              <UsageRelationButton
+                focusProject={{ id: game.id, title: game.title }}
+                candidateProjects={publicGames
+                  .filter((project) => project.id !== game.id)
+                  .map((project) => ({ id: project.id, title: project.title }))}
+              />
+            </div>
             <p className="mt-0.5 text-xs text-zinc-500">
               {visibilityLabel} · v{growthSnapshot.playableVersion}
             </p>

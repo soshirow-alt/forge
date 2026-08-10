@@ -19,8 +19,9 @@ Per-run evidence for the independent review loop. **Directories are committed; c
 | Round attempt marker | `<task-id>-round-<n>.attempt.json` | Round consumption record (`started` / `reviewed` / `blocked`) |
 
 - Attempt markers are **not** formal reviews. Invalid / failed Codex output must not be saved as `<task-id>-round-<n>.json`.
-- `blocked` or unfinished `started` ends that **task id** (start a new task to continue).
+- `blocked` or unfinished `started` ends that **task id** (do not counter-reset with a new normal task id).
 - Only `reviewed` + valid `FAIL_FIXABLE` formal JSON may advance to the next round on the same task.
+- After Round 3 `FAIL_FIXABLE`, that task is terminal. One **remediation** child may be started later if findings were fixed (`review_kind: remediation`, `parent_task_id`, changed fingerprint/paths). Runtime markers: `<parent>.r3-terminal-fingerprint.txt`, `<parent>.remediation-child`, `<task>.review-kind.json`.
 - Distinct task ids never share attempt/review filenames; same task + round + concurrent runs use different `run_id` values in runtime (PID + nonce).
 
 ## runtime/ (ignored except `.gitkeep`)

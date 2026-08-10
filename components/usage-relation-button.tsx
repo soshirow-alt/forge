@@ -1,0 +1,153 @@
+"use client";
+
+import { useState } from "react";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import { getOptionalSupabaseClient } from "@/lib/supabase/client";
+import { requestProjectUsageRelation } from "@/lib/supabase/usage-relations-write-db";
+
+export function UsageRelationButton({
+  focusProject,
+  candidateProjects,
+}: {
+  focusProject: { id: string; title: string };
+  candidateProjects: { id: string; title: string }[];
+}) {
+  const { hydrated, isLoggedIn, goToLogin } = useRequireAuth();
+  const [open, setOpen] = useState(false);
+  const [candidateId, setCandidateId] = useState(candidateProjects[0]?.id ?? "");
+  const [direction, setDirection] = useState<"candidate_uses_focus" | "focus_uses_candidate">(
+    "candidate_uses_focus",
+  );
+  const [note, setNote] = useState("");
+  const [status, setStatus] = useState("");
+  const selectedCandidateId = candidateProjects.some(
+    (project) => project.id === candidateId,
+  )
+    ? candidateId
+    : (candidateProjects[0]?.id ?? "");
+  const candidate = candidateProjects.find(
+    (item) => item.id === selectedCandidateId,
+  );
+
+  function start() {
+    if (!hydrated) return;
+    if (!isLoggedIn) {
+      goToLogin();
+      return;
+    }
+    setOpen(true);
+  }
+
+  async function submit() {
+    if (!candidate) return;
+    const supabase = getOptionalSupabaseClient();
+    if (!supabase) return;
+    const sourceProjectId =
+      direction === "candidate_uses_focus" ? candidate.id : focusProject.id;
+    const targetProjectId =
+      direction === "candidate_uses_focus" ? focusProject.id : candidate.id;
+    try {
+      await requestProjectUsageRelation(supabase, {
+        sourceProjectId,
+        targetProjectId,
+        note,
+      });
+      setStatus("確認依頼を送りました。");
+    } catch {
+      setStatus("使用関係を登録できませんでした。");
+    }
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={start}
+        className="rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-300 hover:border-violet-500/50"
+      >
+        使用関係を登録
+      </button>
+      {open ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-zinc-700 bg-zinc-950 p-5">
+            <h2 className="text-lg font-semibold text-white">使用関係を登録</h2>
+            {candidateProjects.length ? (
+              <>
+                <label className="mt-4 block text-sm text-zinc-300">
+                  関係する作品
+                  <select
+                    value={selectedCandidateId}
+                    onChange={(event) => setCandidateId(event.target.value)}
+                    className="mt-1.5 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2"
+                  >
+                    {candidateProjects.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="mt-4 grid gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDirection("candidate_uses_focus")}
+                    className={`rounded-xl border p-3 text-left text-sm ${
+                      direction === "candidate_uses_focus"
+                        ? "border-violet-500 bg-violet-500/10 text-white"
+                        : "border-zinc-800 text-zinc-400"
+                    }`}
+                  >
+                    <strong>{candidate?.title}</strong> → 使用 →{" "}
+                    <strong>{focusProject.title}</strong>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDirection("focus_uses_candidate")}
+                    className={`rounded-xl border p-3 text-left text-sm ${
+                      direction === "focus_uses_candidate"
+                        ? "border-violet-500 bg-violet-500/10 text-white"
+                        : "border-zinc-800 text-zinc-400"
+                    }`}
+                  >
+                    <strong>{focusProject.title}</strong> → 使用 →{" "}
+                    <strong>{candidate?.title}</strong>
+                  </button>
+                </div>
+                <textarea
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  placeholder="補足（任意）"
+                  rows={3}
+                  className="mt-4 w-full rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-sm text-white"
+                />
+              </>
+            ) : (
+              <p className="mt-4 text-sm text-zinc-500">
+                登録には自分の作品が必要です。
+              </p>
+            )}
+            {status ? <p className="mt-3 text-sm text-zinc-300">{status}</p> : null}
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded-lg px-3 py-2 text-sm text-zinc-400"
+              >
+                閉じる
+              </button>
+              {candidate ? (
+                <button
+                  type="button"
+                  onClick={() => void submit()}
+                  className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white"
+                >
+                  確認を依頼
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}

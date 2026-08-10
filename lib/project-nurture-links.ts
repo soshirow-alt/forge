@@ -78,26 +78,48 @@ export function mypageUpdatesHref(projectId?: string): string {
 }
 
 export function notificationTargetHref(notification: Notification): string {
+  if (
+    (notification.type === "consultation_new" ||
+      notification.type === "consultation_message") &&
+    notification.consultationId
+  ) {
+    return `/consultations/${notification.consultationId}`;
+  }
+  if (notification.type === "usage_relation_request") {
+    return "/consultations#usage-relations";
+  }
+  if (
+    notification.type === "usage_relation_accepted" ||
+    notification.type === "usage_relation_rejected"
+  ) {
+    // Deep-link so >20 pending result badges can still focus + ack the exact relation.
+    if (notification.usageRelationId) {
+      return `/consultations#usage-relation-${notification.usageRelationId}`;
+    }
+    return "/consultations#usage-relations";
+  }
+  const projectId = notification.projectId;
+  if (!projectId) return "/notifications";
   switch (notification.type) {
     case "confirmation_request":
-      return gameChangeCheckHref(notification.projectId);
+      return gameChangeCheckHref(projectId);
     case "version_published":
-      return gameVersionBannerHref(notification.projectId);
+      return gameVersionBannerHref(projectId);
     case "devlog":
-      return gameHistoryHref(notification.projectId);
+      return gameHistoryHref(projectId);
     case "feedback":
-      return projectStudioFeedbackHref(notification.projectId);
+      return projectStudioFeedbackHref(projectId);
     case "voice_received":
-      return projectStudioFeedbackHref(notification.projectId);
+      return projectStudioFeedbackHref(projectId);
     case "project_watched":
-      return projectStudioPath(notification.projectId);
+      return projectStudioPath(projectId);
     case "followed_developer_new_project":
     case "followed_developer_released_project":
-      return gamePlayHref(notification.projectId);
+      return gamePlayHref(projectId);
     case "feedback_reply":
-      return `${gamePlayHref(notification.projectId)}?tab=voices`;
+      return `${gamePlayHref(projectId)}?tab=voices`;
     default:
-      return gamePlayHref(notification.projectId);
+      return gamePlayHref(projectId);
   }
 }
 
