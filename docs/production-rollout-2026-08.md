@@ -75,7 +75,7 @@ Approximate sizes: `01` ~107KB, `02` ~65KB, `03` ~47KB (all under ~500KB).
 | 091 | `collab_notification_email_hooks` | collab/usage → notification + email enqueue |
 | 092 | `consultation_message_email_read_to_unread` | message email on read→unread |
 
-### 03 — reciprocity / announcement window / email prefs / messaging (093–100)
+### 03 — reciprocity / announcement window / email prefs / messaging (093–101)
 
 | Ver | File | Role |
 |-----|------|------|
@@ -87,8 +87,9 @@ Approximate sizes: `01` ~107KB, `02` ~65KB, `03` ~47KB (all under ~500KB).
 | 098 | `remove_dead_notify_studio_voice` | strip dead `notify_studio.voice` key |
 | 099 | `messaging_pair_identity` | soft-close dup open pairs + unique open-pair index + list/create/read |
 | 100 | `messaging_context_segments` | create appends context segment within pair |
+| 101 | `messaging_pair_email_read_harden` | pair-scoped message email + mark_read `FOR UPDATE` |
 
-Bundles keep **full ordered content** of each migration (section headers `-- === NNN_... ===`). Later files that replace earlier functions are **both** included (e.g. 084 then 085; 087/091/092/099/100 create paths; 093 then 095).
+Bundles keep **full ordered content** of each migration (section headers `-- === NNN_... ===`). Later files that replace earlier functions are **both** included (e.g. 084 then 085; 087/091/092/099/100/101 create paths; 093 then 095).
 
 ---
 
@@ -100,7 +101,7 @@ Bundles keep **full ordered content** of each migration (section headers `-- ===
 |---------|--------|
 | `PASS` | Proceed to 01 |
 | `FAIL baseline incomplete` | Stop. Production is not at 075 expectations |
-| `FAIL objects already present` | Stop. Partial/full 076–100 apply — do **not** re-run 01 blindly. Diff objects vs postflight checklist; resume from the first missing apply boundary only after Owner review |
+| `FAIL objects already present` | Stop. Partial/full 076–101 apply — do **not** re-run 01 blindly. Diff objects vs postflight checklist; resume from the first missing apply boundary only after Owner review |
 
 ### 01 / 02 / 03 APPLY
 
@@ -118,7 +119,7 @@ Bundles keep **full ordered content** of each migration (section headers `-- ===
 
 | Outcome | Action |
 |---------|--------|
-| `PASS` | Schema go-live for 076–100 objects complete |
+| `PASS` | Schema go-live for 076–101 objects complete |
 | `FAIL` | Inspect failing `check_name` rows. Re-run the apply file that owns the missing object (01 vs 02 vs 03). Do not publish announcements |
 
 ### 05 Announcement stub
@@ -138,7 +139,7 @@ Dashboard SQL Editor **does not** record `supabase_migrations.schema_migrations`
 | Topic | Policy |
 |-------|--------|
 | Success criterion | **Object postflight**, not history rows |
-| After PASS | Optionally repair history so future CLI `db push` does not re-apply 076–100 |
+| After PASS | Optionally repair history so future CLI `db push` does not re-apply 076–101 |
 | Preferred repair | Official `supabase migration repair --status applied <version>` (or Dashboard equivalent) against Production |
 | Hand INSERT | Only as documented in `06_…NOTES.sql`, Owner GO, after confirming column shape |
 | Forward-only | Never edit/delete/squash `supabase/migrations/*`. Fixes = new migration files |
@@ -147,9 +148,9 @@ Dashboard SQL Editor **does not** record `supabase_migrations.schema_migrations`
 
 ## 6. Forward-only policy
 
-- Canonical migrations **076–100 remain as-is** in the repo.
+- Canonical migrations **076–101 remain as-is** in the repo.
 - This package **copies** their bodies into APPLY files; it does not replace the migration tree.
-- Production hotfixes after apply → **new** migration `101+` (or a dated ops SQL under `scripts/production-ops/`), never rewrite 076–100.
+- Production hotfixes after apply → **new** migration `102+` (or a dated ops SQL under `scripts/production-ops/`), never rewrite 076–101.
 - Do not squash, renumber, or delete applied versions.
 
 ---
@@ -171,7 +172,7 @@ Preview may still use `@resend.dev` for smoke; Production must not. Details: `do
 
 ## 8. Excluded / STAGING_ONLY (do not apply with this package)
 
-**No migration in 076–100 is classified STAGING_ONLY.** All are Production-canonical schema/RPC.
+**No migration in 076–101 is classified STAGING_ONLY.** All are Production-canonical schema/RPC.
 
 **Excluded from this package (do not paste on Production as part of this rollout):**
 
