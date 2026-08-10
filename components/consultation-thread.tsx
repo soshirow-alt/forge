@@ -149,6 +149,7 @@ export function ConsultationThread({
   }, []);
 
   const scheduleAckOnlyIfDetailAlreadyOk = useCallback(() => {
+    // Realtime must not promote detailOk after a failed authoritative GET.
     if (!ackLifecycleRef.current.detailOk) return;
     const afterRt = applyConsultationAckEvent(ackLifecycleRef.current, "realtimeMessages");
     ackLifecycleRef.current = afterRt.state;

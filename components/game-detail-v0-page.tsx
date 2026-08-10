@@ -993,7 +993,7 @@ function GameDetailV0PageBody({
                   <Play className="size-4" aria-hidden="true" />
                   {hydrated && (isLoggedIn || isGuestEntry)
                     ? primaryPlayCtaLabel
-                    : "ログインしてプレイ"}
+                    : `ログインして${primaryPlayCtaLabel}`}
                 </button>
               )}
               <button
@@ -1116,6 +1116,7 @@ function GameDetailV0PageBody({
               }
               onPlayLatest={handlePlay}
               playDisabled={!hydrated || playUnavailableOnPublic}
+              showPlaySemantics={categoryChrome.category === "game"}
             />
           )}
 

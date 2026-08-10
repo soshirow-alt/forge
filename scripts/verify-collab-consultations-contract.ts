@@ -43,7 +43,7 @@ assert.match(thread, /scheduleAckOnlyIfDetailAlreadyOk/);
 assert.doesNotMatch(thread, /scheduleAckAfterUiCommit/);
 assert.match(
   thread,
-  /setConsultation\(result\.consultation\);\s*\n\s*setMessages[\s\S]*?recordDetailOkAndScheduleAck\(\)/,
+  /setConsultation\(result\.consultation\);\s*\n\s*setPairContexts[\s\S]*?setMessages[\s\S]*?recordDetailOkAndScheduleAck\(\)/,
 );
 assert.match(
   thread,
@@ -66,6 +66,7 @@ assert.match(startButton, /isLoggedIn/);
 assert.match(startButton, /\/messages\/new/);
 assert.match(startButton, /params\.set\("to", counterpartId\)/);
 assert.match(readRoute, /acknowledgeNotificationsByCoalesceKey/);
+assert.match(readRoute, /pairConsultationIds/);
 assert.doesNotMatch(
   readRoute,
   /supabase\.rpc\("acknowledge_notifications_by_coalesce_key"/,

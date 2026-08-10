@@ -20,6 +20,8 @@ type YourInvolvementCardProps = {
   playableVersion?: string | null;
   onPlayLatest: () => void;
   playDisabled?: boolean;
+  /** When false, hide play-centric rows/CTAs (audio/asset/dev-tool/service). */
+  showPlaySemantics?: boolean;
 };
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -34,7 +36,7 @@ function Row({ label, value }: { label: string; value: string }) {
 function voiceFeedbackLabel(involvement: PlayerProjectInvolvement): string {
   const parts: string[] = [];
   if (involvement.voiceVersionCount > 0) {
-    parts.push(`初声 ${involvement.voiceVersionCount}版`);
+    parts.push(`初回FB ${involvement.voiceVersionCount}版`);
   }
   if (involvement.deepFeedbackCount > 0) {
     parts.push(`FB ${involvement.deepFeedbackCount}件`);
@@ -71,6 +73,7 @@ export function YourInvolvementCard({
   playableVersion,
   onPlayLatest,
   playDisabled = false,
+  showPlaySemantics = true,
 }: YourInvolvementCardProps) {
   if (!hydrated) {
     return (
@@ -89,7 +92,9 @@ export function YourInvolvementCard({
           ログインすると、この作品との関わりが残ります。
         </p>
         <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-          プレイ履歴や送ったフィードバックをあとから見られます。
+          {showPlaySemantics
+            ? "プレイ履歴や送ったフィードバックをあとから見られます。"
+            : "送ったフィードバックや更新の追跡をあとから見られます。"}
         </p>
         <Link
           href={loginHref.startsWith(LOGIN_PATH) ? loginHref : LOGIN_PATH}
@@ -111,7 +116,8 @@ export function YourInvolvementCard({
   }
 
   const hasInvolvement = Boolean(involvement?.hasAnyInvolvement);
-  const showPlayLatestCta = involvement?.hasPlayedLatestVersion === false;
+  const showPlayLatestCta =
+    showPlaySemantics && involvement?.hasPlayedLatestVersion === false;
 
   return (
     <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
@@ -119,28 +125,34 @@ export function YourInvolvementCard({
 
       {!hasInvolvement || !involvement ? (
         <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-          まだこの作品との関わりはありません。プレイやフィードバックを送ると、ここに残ります。
+          {showPlaySemantics
+            ? "まだこの作品との関わりはありません。プレイやフィードバックを送ると、ここに残ります。"
+            : "まだこの作品との関わりはありません。フィードバックを送ると、ここに残ります。"}
         </p>
       ) : (
         <dl className="mt-4 space-y-2.5">
-          <Row
-            label="初回プレイ"
-            value={
-              involvement.firstPlayedAt
-                ? formatInvolvementDate(involvement.firstPlayedAt)
-                : "—"
-            }
-          />
-          <Row
-            label="初めて遊んだ版"
-            value={
-              involvement.firstPlayedVersion
-                ? formatPlayableVersionLabel(involvement.firstPlayedVersion)
-                : "—"
-            }
-          />
-          <Row label="プレイ回数" value={`${involvement.playCount}回`} />
-          <Row label="再プレイ" value={`${involvement.replayCount}回`} />
+          {showPlaySemantics ? (
+            <>
+              <Row
+                label="初回プレイ"
+                value={
+                  involvement.firstPlayedAt
+                    ? formatInvolvementDate(involvement.firstPlayedAt)
+                    : "—"
+                }
+              />
+              <Row
+                label="初めて遊んだ版"
+                value={
+                  involvement.firstPlayedVersion
+                    ? formatPlayableVersionLabel(involvement.firstPlayedVersion)
+                    : "—"
+                }
+              />
+              <Row label="プレイ回数" value={`${involvement.playCount}回`} />
+              <Row label="再プレイ" value={`${involvement.replayCount}回`} />
+            </>
+          ) : null}
           <Row label="送ったフィードバック" value={voiceFeedbackLabel(involvement)} />
           {involvement.lastVoiceVersion ? (
             <Row
@@ -152,10 +164,12 @@ export function YourInvolvementCard({
             label="更新追跡"
             value={watching ? WATCH_BADGE_LABEL : "していない"}
           />
-          <Row
-            label="最新版"
-            value={latestPlayLabel(involvement, playableVersion)}
-          />
+          {showPlaySemantics ? (
+            <Row
+              label="最新版"
+              value={latestPlayLabel(involvement, playableVersion)}
+            />
+          ) : null}
         </dl>
       )}
 

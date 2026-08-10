@@ -328,7 +328,7 @@ export function GameVoicesV0Tab({
           <div className="flex gap-3">
             <Lightbulb className="size-5 shrink-0 text-violet-400" aria-hidden="true" />
             <p className="text-xs leading-relaxed text-zinc-500">
-              あなたのフィードバックも開発の参考になります。プレイ後に送ってみましょう。
+              あなたのフィードバックも開発の参考になります。作品に触れたあと、送ってみましょう。
             </p>
           </div>
           <button

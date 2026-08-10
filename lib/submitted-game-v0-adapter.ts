@@ -55,10 +55,10 @@ export function gameToDetailV0(game: Game): GameDetailV0 {
     features: sanitizeOverviewFeatures(game.overviewFeatures) ?? [],
     developerWorry:
       game.focusNotes?.trim() ||
-      "このverを遊んだ感想や、気になった点を教えてください。",
+      "このverについての感想や、気になった点を教えてください。",
     wantedVoices: [
-      "このverは全体の雰囲気はいかがでしたか？",
-      "もう一度遊びたいと思いましたか？",
+      "このverの全体の雰囲気はいかがでしたか？",
+      "次のverで特に見てほしい点はありますか？",
     ],
     relatedTags: tags,
     relatedGames: [],

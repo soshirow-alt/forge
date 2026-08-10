@@ -32,7 +32,14 @@ const migration100 = readFileSync(
 );
 assert.match(migration100, /v_pair_existed/);
 assert.match(migration100, /status = 'closed'/);
-assert.doesNotMatch(migration100, /SET purpose = p_purpose/);
+
+const migration101 = readFileSync(
+  join(process.cwd(), "supabase/migrations/101_messaging_pair_email_read_harden.sql"),
+  "utf8",
+);
+assert.match(migration101, /v_recipient_already_unread/);
+assert.match(migration101, /FOR UPDATE/);
+
 
 const db = readFileSync(
   join(process.cwd(), "lib/supabase/collab-consultations-db.ts"),

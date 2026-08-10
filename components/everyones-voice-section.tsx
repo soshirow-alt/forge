@@ -403,7 +403,7 @@ export function EveryonesVoiceSection({
         >
           <p className="text-sm text-zinc-400">まだフィードバックが集まりはじめたところです</p>
           <p className="mt-2 text-xs leading-relaxed text-zinc-600">
-            プレイ後、開発者の質問に答えると、ここに反応の傾向が表示されます。
+            作品に触れたあと、クリエイターの質問に答えると、ここに反応の傾向が表示されます。
           </p>
           {onSendVoice ? (
             <button

@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { markCollabConsultationRead } from "@/lib/supabase/collab-consultations-db";
+import {
+  fetchCollabConsultationDetail,
+  markCollabConsultationRead,
+} from "@/lib/supabase/collab-consultations-db";
 import { acknowledgeNotificationsByCoalesceKey } from "@/lib/supabase/user-notifications-db";
 
 export async function POST(
@@ -13,10 +16,23 @@ export async function POST(
   if (!data.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const id = (await context.params).id;
   try {
-    await Promise.all([
-      markCollabConsultationRead(supabase, id),
-      acknowledgeNotificationsByCoalesceKey(supabase, `consultation:${id}`),
-    ]);
+    const detail = await fetchCollabConsultationDetail(supabase, id);
+    if (!detail) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    const pairIds =
+      detail.pairConsultationIds.length > 0
+        ? detail.pairConsultationIds
+        : [detail.consultation.id];
+    await markCollabConsultationRead(supabase, id);
+    await Promise.all(
+      pairIds.map((consultationId) =>
+        acknowledgeNotificationsByCoalesceKey(
+          supabase,
+          `consultation:${consultationId}`,
+        ),
+      ),
+    );
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("[collab-consultations] mark read failed", error);

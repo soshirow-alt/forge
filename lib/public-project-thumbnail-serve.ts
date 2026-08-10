@@ -60,6 +60,10 @@ function validExternalImageUrl(candidate: string): string | null {
 async function resolveStagingOnlyLocalImage(
   candidate: string,
 ): Promise<ResolvedPublicThumbnail | null> {
+  // Never serve Staging-only local assets from Production runtime.
+  if (process.env.VERCEL_ENV === "production") {
+    return { kind: "missing" };
+  }
   const absolute = stagingOnlyPublicImagePath(candidate);
   if (!absolute) return null;
   try {

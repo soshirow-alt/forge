@@ -4,7 +4,22 @@
 
 ---
 
+## 2026-08-11 — Production rollout SQL package（076–100・適用は未実施）
+
+- **パッケージ** — `scripts/production-rollout/2026-08/` に preflight / APPLY×3（076–085, 086–092, 093–100）/ postflight / お知らせ stub / history notes
+- **runbook** — `docs/production-rollout-2026-08.md`（Owner 手順・再開・履歴 repair・forward-only・Production sender OWNER ACTION）
+- **範囲** — Staging seed/beautify 除外。`supabase/migrations/` は未改変。本作業では Production へ適用しない
+
+## 2026-08-11 — RC harden: messaging pair email/ack + category leakage + Production rollout package
+
+- **101** — pair-scoped unread email gate; mark_read FOR UPDATE across pair; create locks pair before soft-close+append
+- **read API** — acknowledge all pair `consultation:<id>` coalesce keys
+- **Detail** — guest CTA uses category chrome label; involvement play semantics game-only; FB empty copy / adapter defaults category-neutral; 「初声」→「初回FB」
+- **Production** — staging-only thumbnail serve blocked when `VERCEL_ENV=production`
+- **Rollout** — `scripts/production-rollout/2026-08/` APPLY 01–03 (076–101) + pre/postflight + runbook `docs/production-rollout-2026-08.md` (Owner apply only; not executed)
+
 ## 2026-08-11 — メッセージ：context card + 相談開始フォーム
+
 
 - **header** — 相手（avatar / 名前 / プロフィール）のみ。関連作品・purpose の固定表示を廃止
 - **timeline** — 各 consultation 開始位置に context card（作品・相談内容・自分の関連作品）。bubble ではない
