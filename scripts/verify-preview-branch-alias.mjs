@@ -175,16 +175,17 @@ async function main() {
     failures.push("alias /home still has legacy work-search placeholder");
   }
 
-  // /search — category tabs live here.
+  // /search — category tabs live here (selector label is 「サービス」, not DB 「サービス・アプリ」).
   const search = await collectBundleText(ALIAS_URL, "/search");
   const searchHasCategoryTabs =
     count(search.html, ">すべて<") > 0 &&
     count(search.html, ">ゲーム<") > 0 &&
     count(search.html, ">アセット<") > 0 &&
-    count(search.html, "サービス・アプリ") > 0;
+    (count(search.html, ">サービス<") > 0 ||
+      count(search.text, ">サービス<") > 0);
   console.log(`search category tabs: ${searchHasCategoryTabs ? 1 : 0}`);
   if (!searchHasCategoryTabs) {
-    failures.push("alias /search missing formal 5-category tabs");
+    failures.push("alias /search missing formal category selector tabs (サービス)");
   }
 
   // Removed dual Production-home route.
