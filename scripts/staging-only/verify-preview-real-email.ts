@@ -151,34 +151,6 @@ async function main() {
       detail: actor.created ? "created" : "reused",
     });
 
-    // Ensure email prefs allow messages_collab for operation recipient.
-    {
-      const { data: existingSettings } = await admin
-        .from("user_settings")
-        .select("user_id")
-        .eq("user_id", operation.userId)
-        .maybeSingle();
-      const notifyEmail = {
-        master: true,
-        messages_collab: true,
-        usage_relation: true,
-        feedback_reciprocity: true,
-      };
-      if (existingSettings) {
-        const { error: prefError } = await admin
-          .from("user_settings")
-          .update({ notify_email: notifyEmail })
-          .eq("user_id", operation.userId);
-        if (prefError) throw new Error(prefError.message);
-      } else {
-        const { error: prefError } = await admin.from("user_settings").insert({
-          user_id: operation.userId,
-          notify_email: notifyEmail,
-        });
-        if (prefError) throw new Error(prefError.message);
-      }
-    }
-
     const opSession = await signInPassword({
       env,
       email: operationEmail,
@@ -191,6 +163,35 @@ async function main() {
     });
     log("login", "operation+actor ok");
     steps.push({ name: "login", ok: true });
+
+    // Ensure email prefs allow messages_collab (own-row RLS; not service_role).
+    {
+      const operationDb = authedClient(env, opSession.accessToken);
+      const notifyEmail = {
+        master: true,
+        messages_collab: true,
+        usage_relation: true,
+        feedback_reciprocity: true,
+      };
+      const { data: existingSettings } = await operationDb
+        .from("user_settings")
+        .select("user_id")
+        .eq("user_id", operation.userId)
+        .maybeSingle();
+      if (existingSettings) {
+        const { error: prefError } = await operationDb
+          .from("user_settings")
+          .update({ notify_email: notifyEmail })
+          .eq("user_id", operation.userId);
+        if (prefError) throw new Error(prefError.message);
+      } else {
+        const { error: prefError } = await operationDb.from("user_settings").insert({
+          user_id: operation.userId,
+          notify_email: notifyEmail,
+        });
+        if (prefError) throw new Error(prefError.message);
+      }
+    }
 
     for (const path of ["/notifications", "/messages", "/mypage/profile"]) {
       const response = await fetch(`${PREVIEW_ALIAS}${path}`, {
