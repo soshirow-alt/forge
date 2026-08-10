@@ -4,11 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import {
   DEFAULT_USER_SETTINGS,
+  forgeEmailNotificationCategoryItems,
+  forgeEmailNotificationMasterItem,
   forgeNotificationPlayerItems,
   forgeNotificationStudioItems,
   mergeSettingsToggleItems,
   privacySettingsSection,
   studioPublicSettingsSection,
+  type EmailNotificationPrefKey,
   type SettingsToggleItem,
   type UserSettings,
 } from "@/lib/user-settings-definitions";
@@ -18,54 +21,64 @@ import {
 } from "@/lib/supabase/user-settings-db";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 
+type SettingsSnapshot = {
+  userId: string;
+  settings: UserSettings;
+  error: string | null;
+  migrationMissing: boolean;
+};
+
 export function useUserSettings() {
   const { user, hydrated } = useAuth();
   const supabase = useMemo(() => getOptionalSupabaseClient(), []);
-  const [settings, setSettings] = useState<UserSettings>(DEFAULT_USER_SETTINGS);
-  const [loaded, setLoaded] = useState(false);
+  const [snapshot, setSnapshot] = useState<SettingsSnapshot | null>(null);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [migrationMissing, setMigrationMissing] = useState(false);
 
   useEffect(() => {
     if (!hydrated || !user || !supabase) {
-      setLoaded(hydrated);
       return;
     }
 
     let active = true;
-    setLoaded(false);
-    setError(null);
-    setMigrationMissing(false);
+    const userId = user.id;
 
-    void fetchUserSettings(supabase, user.id)
+    void fetchUserSettings(supabase, userId)
       .then((next) => {
         if (!active) {
           return;
         }
-        setSettings(next);
+        setSnapshot({
+          userId,
+          settings: next,
+          error: null,
+          migrationMissing: false,
+        });
       })
       .catch((caught) => {
         if (!active) {
           return;
         }
-        const message = caught instanceof Error ? caught.message : "設定の読み込みに失敗しました。";
-        if (message.includes("user_settings")) {
-          setMigrationMissing(true);
-        } else {
-          setError(message);
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setLoaded(true);
-        }
+        const message =
+          caught instanceof Error ? caught.message : "設定の読み込みに失敗しました。";
+        setSnapshot({
+          userId,
+          settings: DEFAULT_USER_SETTINGS,
+          error: message.includes("user_settings") ? null : message,
+          migrationMissing: message.includes("user_settings"),
+        });
       });
 
     return () => {
       active = false;
     };
   }, [hydrated, user, supabase]);
+
+  const settingsForUser =
+    user && snapshot?.userId === user.id ? snapshot.settings : DEFAULT_USER_SETTINGS;
+  const loaded = hydrated && (!user || !supabase || snapshot?.userId === user.id);
+  const error = user && snapshot?.userId === user.id ? snapshot.error : null;
+  const migrationMissing =
+    user && snapshot?.userId === user.id ? snapshot.migrationMissing : false;
 
   const persist = useCallback(
     async (next: UserSettings) => {
@@ -74,89 +87,192 @@ export function useUserSettings() {
       }
 
       setSaving(true);
-      setError(null);
-
       try {
         const saved = await upsertUserSettings(supabase, user.id, next);
-        setSettings(saved);
+        setSnapshot({
+          userId: user.id,
+          settings: saved,
+          error: null,
+          migrationMissing: false,
+        });
       } catch (caught) {
         const message =
           caught instanceof Error ? caught.message : "設定の保存に失敗しました。";
-        setError(message);
+        setSnapshot((prev) =>
+          prev && prev.userId === user.id
+            ? { ...prev, error: message }
+            : {
+                userId: user.id,
+                settings: settingsForUser,
+                error: message,
+                migrationMissing: false,
+              },
+        );
         throw caught;
       } finally {
         setSaving(false);
       }
     },
-    [supabase, user],
+    [supabase, user, settingsForUser],
   );
 
   const updateNotifyPlayer = useCallback(
     async (id: string, enabled: boolean) => {
+      const previous = settingsForUser;
       const next: UserSettings = {
-        ...settings,
-        notifyPlayer: { ...settings.notifyPlayer, [id]: enabled },
+        ...settingsForUser,
+        notifyPlayer: { ...settingsForUser.notifyPlayer, [id]: enabled },
       };
-      setSettings(next);
-      await persist(next);
+      try {
+        await persist(next);
+      } catch (cause) {
+        setSnapshot((prev) =>
+          user && prev?.userId === user.id
+            ? { ...prev, settings: previous }
+            : prev,
+        );
+        throw cause;
+      }
     },
-    [persist, settings],
+    [persist, settingsForUser, user],
   );
 
   const updateNotifyStudio = useCallback(
     async (id: string, enabled: boolean) => {
+      const previous = settingsForUser;
       const next: UserSettings = {
-        ...settings,
-        notifyStudio: { ...settings.notifyStudio, [id]: enabled },
+        ...settingsForUser,
+        notifyStudio: { ...settingsForUser.notifyStudio, [id]: enabled },
       };
-      setSettings(next);
-      await persist(next);
+      try {
+        await persist(next);
+      } catch (cause) {
+        setSnapshot((prev) =>
+          user && prev?.userId === user.id
+            ? { ...prev, settings: previous }
+            : prev,
+        );
+        throw cause;
+      }
     },
-    [persist, settings],
+    [persist, settingsForUser, user],
+  );
+
+  const updateNotifyEmail = useCallback(
+    async (id: EmailNotificationPrefKey, enabled: boolean) => {
+      const previous = settingsForUser;
+      const next: UserSettings = {
+        ...settingsForUser,
+        notifyEmail: { ...settingsForUser.notifyEmail, [id]: enabled },
+      };
+      try {
+        await persist(next);
+      } catch (cause) {
+        setSnapshot((prev) =>
+          user && prev?.userId === user.id
+            ? { ...prev, settings: previous }
+            : prev,
+        );
+        throw cause;
+      }
+    },
+    [persist, settingsForUser, user],
   );
 
   const updatePrivacy = useCallback(
     async (id: string, enabled: boolean) => {
+      const previous = settingsForUser;
       const next: UserSettings = {
-        ...settings,
-        privacy: { ...settings.privacy, [id]: enabled },
+        ...settingsForUser,
+        privacy: { ...settingsForUser.privacy, [id]: enabled },
       };
-      setSettings(next);
-      await persist(next);
+      try {
+        await persist(next);
+      } catch (cause) {
+        setSnapshot((prev) =>
+          user && prev?.userId === user.id
+            ? { ...prev, settings: previous }
+            : prev,
+        );
+        throw cause;
+      }
     },
-    [persist, settings],
+    [persist, settingsForUser, user],
   );
 
   const updateStudioPublic = useCallback(
     async (id: string, enabled: boolean) => {
+      const previous = settingsForUser;
       const next: UserSettings = {
-        ...settings,
-        studioPublic: { ...settings.studioPublic, [id]: enabled },
+        ...settingsForUser,
+        studioPublic: { ...settingsForUser.studioPublic, [id]: enabled },
       };
-      setSettings(next);
-      await persist(next);
+      try {
+        await persist(next);
+      } catch (cause) {
+        setSnapshot((prev) =>
+          user && prev?.userId === user.id
+            ? { ...prev, settings: previous }
+            : prev,
+        );
+        throw cause;
+      }
     },
-    [persist, settings],
+    [persist, settingsForUser, user],
   );
 
   const playerNotifications = useMemo(
-    () => mergeSettingsToggleItems(forgeNotificationPlayerItems, settings.notifyPlayer),
-    [settings.notifyPlayer],
+    () =>
+      mergeSettingsToggleItems(
+        forgeNotificationPlayerItems,
+        settingsForUser.notifyPlayer,
+      ),
+    [settingsForUser.notifyPlayer],
   );
 
   const studioNotifications = useMemo(
-    () => mergeSettingsToggleItems(forgeNotificationStudioItems, settings.notifyStudio),
-    [settings.notifyStudio],
+    () =>
+      mergeSettingsToggleItems(
+        forgeNotificationStudioItems,
+        settingsForUser.notifyStudio,
+      ),
+    [settingsForUser.notifyStudio],
+  );
+
+  const emailMasterItem = useMemo(
+    () =>
+      mergeSettingsToggleItems(
+        [forgeEmailNotificationMasterItem],
+        settingsForUser.notifyEmail,
+      )[0],
+    [settingsForUser.notifyEmail],
+  );
+
+  const emailCategoryItems = useMemo(
+    () =>
+      mergeSettingsToggleItems(
+        forgeEmailNotificationCategoryItems,
+        settingsForUser.notifyEmail,
+      ),
+    [settingsForUser.notifyEmail],
   );
 
   const privacyItems = useMemo(
-    () => mergeSettingsToggleItems(privacySettingsSection.items, settings.privacy),
-    [settings.privacy],
+    () =>
+      mergeSettingsToggleItems(
+        privacySettingsSection.items,
+        settingsForUser.privacy,
+      ),
+    [settingsForUser.privacy],
   );
 
   const studioPublicItems = useMemo(
-    () => mergeSettingsToggleItems(studioPublicSettingsSection.items, settings.studioPublic),
-    [settings.studioPublic],
+    () =>
+      mergeSettingsToggleItems(
+        studioPublicSettingsSection.items,
+        settingsForUser.studioPublic,
+      ),
+    [settingsForUser.studioPublic],
   );
 
   return {
@@ -166,10 +282,13 @@ export function useUserSettings() {
     migrationMissing,
     playerNotifications,
     studioNotifications,
+    emailMasterItem,
+    emailCategoryItems,
     privacyItems,
     studioPublicItems,
     updateNotifyPlayer,
     updateNotifyStudio,
+    updateNotifyEmail,
     updatePrivacy,
     updateStudioPublic,
   };

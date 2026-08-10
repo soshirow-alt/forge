@@ -6,7 +6,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
   assertStagingOnly,
   requireEnv,
-} from "./preview-e2e-env.ts";
+} from "./preview-e2e-env";
 
 type Env = Record<string, string>;
 
@@ -148,7 +148,11 @@ export async function signInPassword(input: {
   env: Env;
   email: string;
   password: string;
-}): Promise<{ userId: string; accessToken: string }> {
+}): Promise<{
+  userId: string;
+  accessToken: string;
+  refreshToken: string;
+}> {
   assertStagingOnly(input.env);
   const url = requireEnv(input.env, "NEXT_PUBLIC_SUPABASE_URL");
   const anon = requireEnv(input.env, "NEXT_PUBLIC_SUPABASE_ANON_KEY");
@@ -159,10 +163,19 @@ export async function signInPassword(input: {
     email: input.email,
     password: input.password,
   });
-  if (error || !data.session?.access_token || !data.user?.id) {
+  if (
+    error ||
+    !data.session?.access_token ||
+    !data.session.refresh_token ||
+    !data.user?.id
+  ) {
     throw new Error(error?.message || "signInWithPassword failed");
   }
-  return { userId: data.user.id, accessToken: data.session.access_token };
+  return {
+    userId: data.user.id,
+    accessToken: data.session.access_token,
+    refreshToken: data.session.refresh_token,
+  };
 }
 
 export function authedClient(env: Env, accessToken: string): SupabaseClient {

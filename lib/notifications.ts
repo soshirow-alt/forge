@@ -54,9 +54,9 @@ export function getNotificationTypeLabel(type: NotificationType): string {
     case "project_watched":
       return "作品を追われた";
     case "followed_developer_new_project":
-      return "フォロー中の開発者の新作";
+      return "フォロー中のクリエイターの新作";
     case "followed_developer_released_project":
-      return "フォロー中の開発者の正式版";
+      return "フォロー中のクリエイターの正式版";
     case "feedback_reply":
       return "フィードバックへの返信";
     case "consultation_new":
@@ -96,9 +96,9 @@ export function createNotificationMessage(
     case "project_watched":
       return `誰かが「${projectTitle}」を追い始めました`;
     case "followed_developer_new_project":
-      return `フォロー中の開発者が新作「${projectTitle}」を公開しました`;
+      return `フォロー中のクリエイターが新作「${projectTitle}」を公開しました`;
     case "followed_developer_released_project":
-      return `フォロー中の開発者の「${projectTitle}」が正式版になりました`;
+      return `フォロー中のクリエイターの「${projectTitle}」が正式版になりました`;
     case "feedback_reply":
       return `「${projectTitle}」のフィードバックに返信がありました`;
     case "consultation_new":

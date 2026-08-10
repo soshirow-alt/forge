@@ -23,9 +23,17 @@ export type PrivacyPrefKey = "profile" | "activity" | "ranking";
 
 export type StudioPublicPrefKey = "dev-profile";
 
+/** Optional transactional email categories (important events only). */
+export type EmailNotificationPrefKey =
+  | "master"
+  | "messages_collab"
+  | "usage_relation"
+  | "feedback_reciprocity";
+
 export type UserSettings = {
   notifyPlayer: Record<PlayerNotificationPrefKey, boolean>;
   notifyStudio: Record<StudioNotificationPrefKey, boolean>;
+  notifyEmail: Record<EmailNotificationPrefKey, boolean>;
   privacy: Record<PrivacyPrefKey, boolean>;
   studioPublic: Record<StudioPublicPrefKey, boolean>;
 };
@@ -41,6 +49,12 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
     witness: true,
     "version-play": true,
     community: true,
+  },
+  notifyEmail: {
+    master: true,
+    messages_collab: true,
+    usage_relation: true,
+    feedback_reciprocity: true,
   },
   privacy: {
     profile: true,
@@ -60,7 +74,7 @@ export const forgeNotificationPlayerItems: SettingsToggleItem[] = [
   },
   {
     id: "developer-follow",
-    label: "フォロー中の開発者の新作・正式版公開",
+    label: "フォロー中のクリエイターの新作・正式版公開",
     enabled: true,
   },
   {
@@ -99,6 +113,34 @@ export const forgeNotificationStudioItems: SettingsToggleItem[] = [
   },
 ];
 
+export const forgeEmailNotificationMasterItem: SettingsToggleItem = {
+  id: "master",
+  label: "重要な通知をメールで受け取る",
+  enabled: true,
+  helpText: "重要なやり取りを登録メールアドレスに送ります",
+};
+
+export const forgeEmailNotificationCategoryItems: SettingsToggleItem[] = [
+  {
+    id: "messages_collab",
+    label: "メッセージ・コラボ",
+    enabled: true,
+    helpText: "新しいメッセージやコラボに関するやり取り",
+  },
+  {
+    id: "usage_relation",
+    label: "使用関係",
+    enabled: true,
+    helpText: "使用関係の確認依頼や結果",
+  },
+  {
+    id: "feedback_reciprocity",
+    label: "フィードバックのお返し案内",
+    enabled: true,
+    helpText: "フィードバックをくれたクリエイターの作品を案内",
+  },
+];
+
 export type ForgeSettingsSection = {
   id: string;
   title: string;
@@ -130,8 +172,6 @@ export const privacySettingsSection: ForgeSettingsSection = {
       label: "ランキングへの表示",
       enabled: true,
       comingSoon: true,
-      // DB/RPC: privacy.ranking is wired in get_monthly_player_influence_ranking,
-      // but the ranking product surface is inactive — keep Coming Soon in UI.
       helpText: "ランキングに自分を表示するかどうか",
     },
   ],
@@ -144,9 +184,9 @@ export const studioPublicSettingsSection: ForgeSettingsSection = {
   items: [
     {
       id: "dev-profile",
-      label: "開発者プロフィールを公開",
+      label: "クリエイタープロフィールを公開",
       enabled: true,
-      helpText: "開発者プロフィールページ（/creators/）を公開するかどうか",
+      helpText: "クリエイタープロフィールページ（/creators/）を公開するかどうか",
     },
   ],
 };
@@ -165,4 +205,32 @@ export function settingsItemsToRecord(
   items: SettingsToggleItem[],
 ): Record<string, boolean> {
   return Object.fromEntries(items.map((item) => [item.id, item.enabled]));
+}
+
+export function emailTemplateCategory(
+  templateKey: string,
+): Exclude<EmailNotificationPrefKey, "master"> | null {
+  switch (templateKey) {
+    case "collab_consultation_new":
+    case "collab_consultation_message":
+      return "messages_collab";
+    case "usage_relation_request":
+    case "usage_relation_accepted":
+    case "usage_relation_rejected":
+      return "usage_relation";
+    case "feedback_reciprocity":
+      return "feedback_reciprocity";
+    default:
+      return null;
+  }
+}
+
+export function isTransactionalEmailPrefEnabled(
+  prefs: Record<EmailNotificationPrefKey, boolean> | null | undefined,
+  templateKey: string,
+): boolean {
+  const category = emailTemplateCategory(templateKey);
+  if (!category) return false;
+  const effective = { ...DEFAULT_USER_SETTINGS.notifyEmail, ...(prefs ?? {}) };
+  return effective.master !== false && effective[category] !== false;
 }

@@ -14,7 +14,7 @@ import {
   assertStagingOnly,
   requireEnv,
   siteUrl,
-} from "./preview-e2e-env.ts";
+} from "./preview-e2e-env";
 
 export async function processSingleOutboxRow(input: {
   env: Record<string, string>;

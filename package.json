@@ -41,6 +41,8 @@
     "verify:preview-real-email-guards": "npx --yes tsx scripts/staging-only/verify-preview-real-email-guards.ts",
     "verify:preview-real-email": "npx --yes tsx scripts/staging-only/verify-preview-real-email.ts",
     "verify:preview-real-email-matrix": "npx --yes tsx scripts/staging-only/verify-preview-real-email-matrix.ts",
+    "verify:email-notification-prefs": "npx --yes tsx scripts/verify-email-notification-prefs.ts",
+    "verify:email-notification-prefs-e2e": "npx --yes tsx scripts/staging-only/verify-email-notification-prefs-e2e.ts",
     "ops:bootstrap-gmail-e2e-oauth": "npx --yes tsx scripts/staging-only/bootstrap-gmail-e2e-oauth.ts",
     "verify:featured-hero-thumbnails": "npx --yes tsx scripts/verify-featured-hero-thumbnails.ts",
     "verify:collab-consultations-contract": "npx --yes tsx scripts/verify-collab-consultations-contract.ts",

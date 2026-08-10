@@ -156,6 +156,13 @@ function AccountSettingsFallback() {
   );
 }
 
+function maskEmail(email: string | null | undefined): string | null {
+  if (!email || !email.includes("@")) return null;
+  const [local, domain] = email.split("@");
+  if (!local || !domain) return null;
+  return `${local.slice(0, 1)}***@${domain}`;
+}
+
 function PreferenceSettingsPanel() {
   const { user } = useAuth();
   const { getOwnedProjects } = useGames();
@@ -166,10 +173,13 @@ function PreferenceSettingsPanel() {
     migrationMissing,
     playerNotifications,
     studioNotifications,
+    emailMasterItem,
+    emailCategoryItems,
     privacyItems,
     studioPublicItems,
     updateNotifyPlayer,
     updateNotifyStudio,
+    updateNotifyEmail,
     updatePrivacy,
     updateStudioPublic,
   } = useUserSettings();
@@ -178,6 +188,7 @@ function PreferenceSettingsPanel() {
   const hasDeveloperProjects = Boolean(
     user && getOwnedProjects(user.id).length > 0,
   );
+  const maskedEmail = maskEmail(user?.email);
 
   async function handleToggle(action: () => Promise<void>) {
     setToggleError(null);
@@ -211,6 +222,7 @@ function PreferenceSettingsPanel() {
   const visibleStudioNotifications = studioNotifications.filter((item) => !item.comingSoon);
   const hasNotificationGroups =
     visiblePlayerNotifications.length > 0 || visibleStudioNotifications.length > 0;
+  const emailCategoriesDisabled = disabled || !emailMasterItem.enabled;
 
   return (
     <>
@@ -220,14 +232,56 @@ function PreferenceSettingsPanel() {
         </p>
       )}
 
+      <section
+        id="email-notifications"
+        className="scroll-mt-24 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6"
+      >
+        <h2 className="text-base font-semibold text-white">メール通知</h2>
+        <p className="mt-1 text-sm text-zinc-400">
+          重要なやり取りを登録メールアドレスに送ります
+        </p>
+        {maskedEmail ? (
+          <p className="mt-2 text-xs text-zinc-500">送信先: {maskedEmail}</p>
+        ) : null}
+
+        <div className="mt-5 space-y-4">
+          <SettingsToggleRow
+            item={emailMasterItem}
+            disabled={disabled}
+            onToggle={() =>
+              void handleToggle(() =>
+                updateNotifyEmail("master", !emailMasterItem.enabled),
+              )
+            }
+          />
+          <div className="border-t border-zinc-800/80 pt-4">
+            <SettingsItemList
+              items={emailCategoryItems}
+              disabled={emailCategoriesDisabled}
+              onToggle={(id, enabled) =>
+                void handleToggle(() =>
+                  updateNotifyEmail(
+                    id as
+                      | "messages_collab"
+                      | "usage_relation"
+                      | "feedback_reciprocity",
+                    enabled,
+                  ),
+                )
+              }
+            />
+          </div>
+        </div>
+      </section>
+
       {hasNotificationGroups ? (
         <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
-          <h2 className="text-base font-semibold text-white">通知</h2>
+          <h2 className="text-base font-semibold text-white">アプリ内通知</h2>
 
           <div className="mt-5 space-y-6">
             {visiblePlayerNotifications.length > 0 ? (
               <SettingsGroup
-                title="Player"
+                title="作品・フォロー"
                 items={visiblePlayerNotifications}
                 disabled={disabled}
                 onToggle={(id, enabled) =>
@@ -245,7 +299,7 @@ function PreferenceSettingsPanel() {
                 }
               >
                 <SettingsGroup
-                  title="Studio"
+                  title="クリエイター向け"
                   items={visibleStudioNotifications}
                   disabled={disabled}
                   onToggle={(id, enabled) =>
@@ -282,7 +336,7 @@ function PreferenceSettingsPanel() {
           </h2>
           {!hasDeveloperProjects ? (
             <p className="mt-2 text-xs text-zinc-500">
-              作品を投稿すると、開発者プロフィールの公開を切り替えられます。
+              作品を投稿すると、クリエイタープロフィールの公開を切り替えられます。
             </p>
           ) : null}
           <div className="mt-5">

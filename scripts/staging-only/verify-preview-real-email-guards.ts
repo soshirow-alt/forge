@@ -7,8 +7,8 @@ import {
   assertAllowedRecipient,
   assertStagingOnly,
   isPreviewHost,
-} from "./lib/preview-e2e-env.ts";
-import { assertTransactionalMailContent } from "./lib/gmail-e2e.ts";
+} from "./lib/preview-e2e-env";
+import { assertTransactionalMailContent } from "./lib/gmail-e2e";
 
 function throws(fn: () => void, needle: string) {
   assert.throws(fn, (err: unknown) => {

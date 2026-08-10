@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-08-10 — Notification / Email Settings 正式化（Preview）
+
+- **メール通知 Settings** — Master「重要な通知をメールで受け取る」+ 3カテゴリ（メッセージ・コラボ / 使用関係 / フィードバックのお返し案内）。送信先は Auth 登録メール（マスク表示）
+- **preference** — `user_settings.notify_email`（096）。未設定は重要メール ON。master∧category のみ送信
+- **enqueue + send-time** — OFF なら enqueue しない。既に queued でも send 直前に再確認し `suppressed`（sent 扱いしない）。OFF→ON で過去分のバックフィルなし。097 で malformed JSON fail-closed
+- **in-app 非破壊** — email OFF でも business event / アプリ内通知 / important / seen·ack は維持
+- **dead pref 整理** — `notify_studio.voice` は 031 以降 unused。098 で default/既存行から除去。`voice_received` 通知は always-on のまま維持
+- **copy** — アプリ内「相談」→「メッセージ」、Settings の開発者→クリエイター。email footer に「メール通知設定を変更」→ `/settings#email-notifications`
+- **CTA origin** — transactional email は `getSiteOrigin()`（Preview では branch alias / VERCEL_URL。Production host へ誤フォールバックしない）
+- **製品 UI 再設計なし**（通知 chain の整合のみ）
+
 ## 2026-08-10 — Preview/Staging real-email E2E 基盤（運用）
 
 - **恒久 operation account** — Staging Auth `forge.operation@gmail.com`（表示名 Forge Operation）。Owner の毎回 Preview 手登録を廃止

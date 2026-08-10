@@ -14,6 +14,7 @@ export type EmailOutboxKickResult = {
   sent?: number;
   failed?: number;
   skipped?: number;
+  suppressed?: number;
 };
 
 export type EmailOutboxKickDeps = {
@@ -25,6 +26,7 @@ export type EmailOutboxKickDeps = {
     sent: number;
     failed: number;
     skipped: number;
+    suppressed?: number;
   }>;
   logError: (message: string, detail?: string) => void;
 };
@@ -38,7 +40,7 @@ function createDefaultKickDeps(): EmailOutboxKickDeps {
       }
       const { data, error } = await supabase
         .from("transactional_email_outbox")
-        .select("id, to_email, template_key, payload, attempts")
+        .select("id, user_id, to_email, template_key, payload, attempts")
         .in("status", ["pending", "failed"])
         .lte("available_at", new Date().toISOString())
         .lt("attempts", EMAIL_OUTBOX_MAX_ATTEMPTS)

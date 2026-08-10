@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { getSiteOrigin } from "@/lib/site-url";
 
 export type TransactionalEmailTemplateKey =
   | "collab_consultation_new"
@@ -23,14 +24,20 @@ function safeId(payload: Record<string, unknown>, key: string): string | null {
   return typeof value === "string" && /^[0-9a-f-]{36}$/i.test(value) ? value : null;
 }
 
+function settingsFooter(siteUrl: string): { text: string; html: string } {
+  const href = `${siteUrl}/settings#email-notifications`;
+  return {
+    text: `\nメール通知設定を変更: ${href}`,
+    html: `<p style="color:#666;font-size:12px;margin-top:16px"><a href="${escapeHtml(href)}">メール通知設定を変更</a></p>`,
+  };
+}
+
 export function buildTransactionalEmail(
   templateKey: TransactionalEmailTemplateKey,
   payload: Record<string, unknown>,
 ): EmailContent {
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://forge-games.net").replace(
-    /\/$/,
-    "",
-  );
+  const siteUrl = getSiteOrigin();
+  const footer = settingsFooter(siteUrl);
   const consultationId = safeId(payload, "consultation_id");
   const consultationUrl = consultationId
     ? `${siteUrl}/messages/${consultationId}`
@@ -61,12 +68,14 @@ export function buildTransactionalEmail(
       `${actorName}さんの作品を見る: ${actorProfileUrl}`,
       "",
       "※ フィードバック本文はメールに掲載していません。",
+      footer.text.trimStart(),
     ].join("\n");
     const html = [
       `<p>${escapeHtml(actorName)}さんがあなたの「${escapeHtml(receivingTitle)}」にフィードバックしました。</p>`,
       `<p>お返しに、${escapeHtml(actorName)}さんの作品も見てみませんか？</p>`,
       `<p><a href="${escapeHtml(actorProfileUrl)}">${escapeHtml(actorName)}さんの作品を見る</a></p>`,
       `<p style="color:#666;font-size:12px">※ フィードバック本文はメールに掲載していません。</p>`,
+      footer.html,
     ].join("");
     return { subject: `[Forge] ${subject}`, text, html };
   }
@@ -104,8 +113,8 @@ export function buildTransactionalEmail(
   const [subject, message, url] = templates[templateKey];
   return {
     subject: `[Forge] ${subject}`,
-    text: `${message}\n\n${url}\n\n※ プライベートなメッセージ本文はメールに掲載していません。`,
-    html: `<p>${escapeHtml(message)}</p><p><a href="${escapeHtml(url)}">Forgeで確認する</a></p><p style="color:#666;font-size:12px">※ プライベートなメッセージ本文はメールに掲載していません。</p>`,
+    text: `${message}\n\n${url}\n\n※ プライベートなメッセージ本文はメールに掲載していません。${footer.text}`,
+    html: `<p>${escapeHtml(message)}</p><p><a href="${escapeHtml(url)}">Forgeで確認する</a></p><p style="color:#666;font-size:12px">※ プライベートなメッセージ本文はメールに掲載していません。</p>${footer.html}`,
   };
 }
 

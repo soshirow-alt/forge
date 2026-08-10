@@ -1,6 +1,7 @@
 /**
- * Absolute site origin for metadata (OGP / Twitter cards).
- * Prefer explicit public URL; fall back to Vercel deployment URL.
+ * Absolute site origin for metadata (OGP / Twitter cards) and transactional email CTAs.
+ * Prefer explicit public URL; on Vercel Preview prefer branch alias over ephemeral URL.
+ * Never fall back to Production host when running on Preview.
  */
 export function getSiteOrigin(): string {
   const explicit =
@@ -8,6 +9,19 @@ export function getSiteOrigin(): string {
     process.env.NEXT_PUBLIC_APP_URL?.trim();
   if (explicit) {
     return explicit.replace(/\/$/, "");
+  }
+
+  const vercelEnv = process.env.VERCEL_ENV?.trim();
+  if (vercelEnv === "preview") {
+    const branchUrl = process.env.VERCEL_BRANCH_URL?.trim();
+    if (branchUrl) {
+      const host = branchUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
+      return `https://${host}`;
+    }
+    const gitRef = process.env.VERCEL_GIT_COMMIT_REF?.trim();
+    if (gitRef === "preview/landing-01") {
+      return "https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app";
+    }
   }
 
   const vercel = process.env.VERCEL_URL?.trim();

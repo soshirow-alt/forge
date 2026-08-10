@@ -8,6 +8,7 @@ export const EMAIL_OUTBOX_MAX_ATTEMPTS = 5;
 
 export type EmailOutboxRow = {
   id: string;
+  user_id?: string;
   to_email: string;
   template_key: string;
   payload: unknown;
@@ -15,6 +16,10 @@ export type EmailOutboxRow = {
 };
 
 export type EmailOutboxDeps = {
+  /** Send-time preference + Auth email recheck. Marks suppressed when blocked. */
+  evaluateSend?: (
+    row: EmailOutboxRow,
+  ) => Promise<{ allowed: boolean; toEmail: string | null; reason?: string | null }>;
   claimRow: (
     row: EmailOutboxRow,
     nextAttempts: number,
@@ -36,51 +41,111 @@ export type EmailOutboxDeps = {
 export async function processEmailOutboxRows(
   rows: EmailOutboxRow[],
   deps: EmailOutboxDeps,
-): Promise<{ processed: number; sent: number; failed: number; skipped: number }> {
+): Promise<{
+  processed: number;
+  sent: number;
+  failed: number;
+  skipped: number;
+  suppressed: number;
+}> {
   let sent = 0;
   let failed = 0;
   let skipped = 0;
+  let suppressed = 0;
   for (const row of rows) {
-    const priorAttempts = Number(row.attempts ?? 0);
-    const attempts = priorAttempts + 1;
-    const claim = await deps.claimRow(row, attempts);
-    if (!claim.claimed) {
-      skipped += 1;
-      continue;
-    }
     try {
-      if (!isTransactionalEmailTemplateKey(String(row.template_key))) {
-        throw new Error("Unsupported template");
+      if (deps.evaluateSend) {
+        const evaluation = await deps.evaluateSend(row);
+        if (!evaluation.allowed) {
+          suppressed += 1;
+          continue;
+        }
+        if (evaluation.toEmail) {
+          row.to_email = evaluation.toEmail;
+        }
       }
-      await deps.send({
-        to: String(row.to_email),
-        templateKey: String(row.template_key),
-        payload:
-          row.payload && typeof row.payload === "object"
-            ? (row.payload as Record<string, unknown>)
-            : {},
-        idempotencyKey: `forge-outbox-${row.id}`,
-      });
-      await deps.markSent(row.id, attempts);
-      sent += 1;
+
+      const priorAttempts = Number(row.attempts ?? 0);
+      const attempts = priorAttempts + 1;
+      const claim = await deps.claimRow(row, attempts);
+      if (!claim.claimed) {
+        skipped += 1;
+        continue;
+      }
+      try {
+        if (!isTransactionalEmailTemplateKey(String(row.template_key))) {
+          throw new Error("Unsupported template");
+        }
+        await deps.send({
+          to: String(row.to_email),
+          templateKey: String(row.template_key),
+          payload:
+            row.payload && typeof row.payload === "object"
+              ? (row.payload as Record<string, unknown>)
+              : {},
+          idempotencyKey: `forge-outbox-${row.id}`,
+        });
+        await deps.markSent(row.id, attempts);
+        sent += 1;
+      } catch (cause) {
+        failed += 1;
+        const message =
+          cause instanceof Error ? cause.message.slice(0, 1000) : "Unknown error";
+        await deps.markFailed(row.id, {
+          attempts,
+          lastError: message,
+          dead: attempts >= EMAIL_OUTBOX_MAX_ATTEMPTS,
+        });
+      }
     } catch (cause) {
+      // Per-row fail-closed: evaluation/claim infra errors must not abort the batch.
       failed += 1;
       const message =
         cause instanceof Error ? cause.message.slice(0, 1000) : "Unknown error";
-      await deps.markFailed(row.id, {
-        attempts,
-        lastError: message,
-        dead: attempts >= EMAIL_OUTBOX_MAX_ATTEMPTS,
-      });
+      try {
+        await deps.markFailed(row.id, {
+          attempts: Number(row.attempts ?? 0) + 1,
+          lastError: message,
+          dead: Number(row.attempts ?? 0) + 1 >= EMAIL_OUTBOX_MAX_ATTEMPTS,
+        });
+      } catch {
+        // ignore secondary markFailed errors
+      }
     }
   }
-  return { processed: rows.length, sent, failed, skipped };
+  return { processed: rows.length, sent, failed, skipped, suppressed };
 }
 
 export function createSupabaseEmailOutboxDeps(
   supabase: SupabaseClient,
 ): EmailOutboxDeps {
   return {
+    async evaluateSend(row) {
+      const { data, error } = await supabase.rpc(
+        "evaluate_transactional_email_outbox_row",
+        { p_outbox_id: row.id },
+      );
+      if (error) {
+        // Fail closed: never send when send-time preference cannot be evaluated.
+        throw new Error(
+          error.message || "outbox evaluate failed (fail-closed)",
+        );
+      }
+      const first = Array.isArray(data) ? data[0] : data;
+      if (!first || typeof first !== "object") {
+        return { allowed: false, toEmail: null, reason: "empty_evaluate" };
+      }
+      const record = first as {
+        allowed?: boolean;
+        to_email?: string | null;
+        suppress_reason?: string | null;
+      };
+      return {
+        allowed: Boolean(record.allowed),
+        toEmail: record.to_email ?? null,
+        reason: record.suppress_reason ?? null,
+      };
+    },
     async claimRow(row, nextAttempts) {
       const claim = await supabase
         .from("transactional_email_outbox")
@@ -96,11 +161,9 @@ export function createSupabaseEmailOutboxDeps(
       if (claim.error) {
         throw new Error(claim.error.message || "outbox claim failed");
       }
-      // No error + no row => another worker claimed first (benign skip).
       return { claimed: Boolean(claim.data) };
     },
     async markSent(id, claimedAttempts) {
-      // Generation guard: only the worker that holds this attempts value may mark sent.
       const { data, error } = await supabase
         .from("transactional_email_outbox")
         .update({
@@ -121,8 +184,6 @@ export function createSupabaseEmailOutboxDeps(
       }
     },
     async markFailed(id, input) {
-      // Same generation guard: stale workers cannot revert a newer claim's sent/failed/dead.
-      // 0-row is intentional for races (another worker already advanced / finalized).
       const { error } = await supabase
         .from("transactional_email_outbox")
         .update({

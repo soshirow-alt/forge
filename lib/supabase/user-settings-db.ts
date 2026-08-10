@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   DEFAULT_USER_SETTINGS,
+  type EmailNotificationPrefKey,
   type PlayerNotificationPrefKey,
   type PrivacyPrefKey,
   type StudioNotificationPrefKey,
@@ -12,6 +13,7 @@ type UserSettingsRow = {
   user_id: string;
   notify_player: Record<string, boolean>;
   notify_studio: Record<string, boolean>;
+  notify_email?: Record<string, boolean> | null;
   privacy: Record<string, boolean>;
   studio_public: Record<string, boolean>;
 };
@@ -37,6 +39,10 @@ export function rowToUserSettings(row: UserSettingsRow | null): UserSettings {
       DEFAULT_USER_SETTINGS.notifyStudio,
       row.notify_studio,
     ),
+    notifyEmail: mergeJsonbRecord(
+      DEFAULT_USER_SETTINGS.notifyEmail,
+      row.notify_email ?? undefined,
+    ),
     privacy: mergeJsonbRecord(DEFAULT_USER_SETTINGS.privacy, row.privacy),
     studioPublic: mergeJsonbRecord(
       DEFAULT_USER_SETTINGS.studioPublic,
@@ -50,10 +56,14 @@ export function userSettingsToRow(userId: string, settings: UserSettings) {
     user_id: userId,
     notify_player: settings.notifyPlayer,
     notify_studio: settings.notifyStudio,
+    notify_email: settings.notifyEmail,
     privacy: settings.privacy,
     studio_public: settings.studioPublic,
   };
 }
+
+const SELECT_COLUMNS =
+  "user_id, notify_player, notify_studio, notify_email, privacy, studio_public";
 
 export async function fetchUserSettings(
   supabase: SupabaseClient,
@@ -61,11 +71,29 @@ export async function fetchUserSettings(
 ): Promise<UserSettings> {
   const { data, error } = await supabase
     .from("user_settings")
-    .select("user_id, notify_player, notify_studio, privacy, studio_public")
+    .select(SELECT_COLUMNS)
     .eq("user_id", userId)
     .maybeSingle();
 
   if (error) {
+    // Pre-096: notify_email column missing — retry without it.
+    if (/notify_email/i.test(error.message)) {
+      const legacy = await supabase
+        .from("user_settings")
+        .select("user_id, notify_player, notify_studio, privacy, studio_public")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (legacy.error) {
+        if (
+          legacy.error.message.includes("user_settings") ||
+          legacy.error.message.includes("does not exist")
+        ) {
+          return DEFAULT_USER_SETTINGS;
+        }
+        throw legacy.error;
+      }
+      return rowToUserSettings((legacy.data as UserSettingsRow | null) ?? null);
+    }
     if (
       error.message.includes("user_settings") ||
       error.message.includes("does not exist")
@@ -87,7 +115,7 @@ export async function upsertUserSettings(
   const { data, error } = await supabase
     .from("user_settings")
     .upsert(payload, { onConflict: "user_id" })
-    .select("user_id, notify_player, notify_studio, privacy, studio_public")
+    .select(SELECT_COLUMNS)
     .single();
 
   if (error) {
@@ -180,4 +208,8 @@ export function isStudioPublicEnabled(
   return settings[key] !== false;
 }
 
-export type { StudioNotificationPrefKey, PlayerNotificationPrefKey };
+export type {
+  StudioNotificationPrefKey,
+  PlayerNotificationPrefKey,
+  EmailNotificationPrefKey,
+};

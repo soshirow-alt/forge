@@ -1,15 +1,16 @@
 /**
  * Preview/Staging real transactional email smoke (1 mail).
  *
- * Business path: actor → create_collab_consultation → operation user
- * → notification + outbox → Resend → (optional) Gmail readonly poll.
- *
- * Secrets: .env.preview-e2e.local (gitignored). Never prints credentials.
+ * Default path (production-equivalent Preview runtime):
+ *   Preview API auth → create_collab_consultation → notification → outbox
+ *   → after()/worker on Preview → Resend (Preview env secrets)
  *
  * Flags:
- *   --through-outbox  Stop after business event + outbox + builder asserts
- *                     (no Resend / Gmail). Used when local Resend secrets are
- *                     unavailable; full command still requires real send.
+ *   --through-outbox   Stop after business event + outbox + builder asserts
+ *   --local-resend     Process one outbox row with local RESEND_* (not preferred)
+ *
+ * Secrets: .env.preview-e2e.local (gitignored). Never prints credentials.
+ * Do not copy Preview Resend secrets locally — default path uses Preview runtime.
  */
 
 import { randomUUID } from "node:crypto";
@@ -22,20 +23,21 @@ import {
   requireEnv,
   requireResend,
   siteUrl,
-} from "./lib/preview-e2e-env.ts";
+} from "./lib/preview-e2e-env";
 import {
   authedClient,
   ensureAuthUser,
   ensureDeveloperProfile,
   serviceClient,
   signInPassword,
-} from "./lib/ensure-preview-e2e-users.ts";
-import { processSingleOutboxRow } from "./lib/process-single-outbox-row.ts";
+} from "./lib/ensure-preview-e2e-users";
+import { buildPreviewAuthCookieHeader } from "./lib/preview-api-session";
+import { processSingleOutboxRow } from "./lib/process-single-outbox-row";
 import {
   assertTransactionalMailContent,
   refreshGmailAccessToken,
   waitForGmailMessage,
-} from "./lib/gmail-e2e.ts";
+} from "./lib/gmail-e2e";
 import { buildTransactionalEmail } from "@/lib/transactional-email";
 
 const MARKER = "preview-real-email-v1";
@@ -47,12 +49,40 @@ function log(step: string, detail?: string) {
   console.log(`[preview-real-email] ${step}${detail ? ` — ${detail}` : ""}`);
 }
 
+async function sleep(ms: number) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForOutboxStatus(input: {
+  admin: ReturnType<typeof serviceClient>;
+  outboxId: string;
+  timeoutMs: number;
+}): Promise<{ status: string; sent_at: string | null }> {
+  const deadline = Date.now() + input.timeoutMs;
+  let last = "pending";
+  while (Date.now() < deadline) {
+    const { data, error } = await input.admin
+      .from("transactional_email_outbox")
+      .select("status,sent_at")
+      .eq("id", input.outboxId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    last = String(data?.status || "missing");
+    if (last === "sent" || last === "failed" || last === "dead" || last === "suppressed") {
+      return { status: last, sent_at: data?.sent_at ?? null };
+    }
+    await sleep(1500);
+  }
+  throw new Error(`outbox status timeout (last=${last})`);
+}
+
 async function main() {
   const env = loadPreviewE2EEnv();
   const steps: StepResult[] = [];
   const startedAt = Date.now();
   const runId = `premail-${startedAt.toString(36)}-${randomUUID().slice(0, 8)}`;
   const throughOutboxOnly = process.argv.includes("--through-outbox");
+  const forceLocalResend = process.argv.includes("--local-resend");
 
   let consultationId: string | null = null;
   let outboxId: string | null = null;
@@ -121,6 +151,34 @@ async function main() {
       detail: actor.created ? "created" : "reused",
     });
 
+    // Ensure email prefs allow messages_collab for operation recipient.
+    {
+      const { data: existingSettings } = await admin
+        .from("user_settings")
+        .select("user_id")
+        .eq("user_id", operation.userId)
+        .maybeSingle();
+      const notifyEmail = {
+        master: true,
+        messages_collab: true,
+        usage_relation: true,
+        feedback_reciprocity: true,
+      };
+      if (existingSettings) {
+        const { error: prefError } = await admin
+          .from("user_settings")
+          .update({ notify_email: notifyEmail })
+          .eq("user_id", operation.userId);
+        if (prefError) throw new Error(prefError.message);
+      } else {
+        const { error: prefError } = await admin.from("user_settings").insert({
+          user_id: operation.userId,
+          notify_email: notifyEmail,
+        });
+        if (prefError) throw new Error(prefError.message);
+      }
+    }
+
     const opSession = await signInPassword({
       env,
       email: operationEmail,
@@ -146,23 +204,49 @@ async function main() {
     steps.push({ name: "preview_routes", ok: true });
 
     const privateBody = `E2E private body ${runId} must-not-appear-in-email`;
-    const actorDb = authedClient(env, actorSession.accessToken);
-    const { data: createdConsultationId, error: createError } = await actorDb.rpc(
-      "create_collab_consultation",
-      {
-        p_counterpart_id: operation.userId,
-        p_purpose: "other",
-        p_first_message: privateBody,
-        p_counterpart_project_id: null,
-        p_initiator_project_id: null,
+    const cookieHeader = await buildPreviewAuthCookieHeader({
+      env,
+      accessToken: actorSession.accessToken,
+      refreshToken: actorSession.refreshToken,
+    });
+
+    const createResponse = await fetch(`${PREVIEW_ALIAS}/api/collab/consultations`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: cookieHeader,
+        "user-agent": "forge-preview-real-email/1",
       },
-    );
-    if (createError || !createdConsultationId) {
-      throw new Error(createError?.message || "create_collab_consultation failed");
+      body: JSON.stringify({
+        counterpartId: operation.userId,
+        purpose: "other",
+        firstMessage: privateBody,
+        initiatorProjectId: null,
+        counterpartProjectId: null,
+      }),
+    });
+    const createText = await createResponse.text();
+    if (!createResponse.ok) {
+      throw new Error(
+        `Preview create consultation HTTP ${createResponse.status}: ${createText.slice(0, 240)}`,
+      );
     }
-    consultationId = String(createdConsultationId);
-    log("business_event", `consultation=${consultationId.slice(0, 8)}…`);
-    steps.push({ name: "business_event", ok: true });
+    let createJson: { consultationId?: string };
+    try {
+      createJson = JSON.parse(createText) as { consultationId?: string };
+    } catch {
+      throw new Error("Preview create consultation returned non-JSON");
+    }
+    if (!createJson.consultationId) {
+      throw new Error("Preview create consultation missing consultationId");
+    }
+    consultationId = String(createJson.consultationId);
+    log("business_event", `preview_api consultation=${consultationId.slice(0, 8)}…`);
+    steps.push({
+      name: "business_event",
+      ok: true,
+      detail: "preview_api_collab_consultation",
+    });
 
     const operationDb = authedClient(env, opSession.accessToken);
     const { data: notif, error: notifError } = await operationDb
@@ -206,6 +290,9 @@ async function main() {
     if (built.text.includes(privateBody) || built.html.includes(privateBody)) {
       throw new Error("builder leaked private consultation body");
     }
+    if (!built.text.includes("settings#email-notifications")) {
+      throw new Error("builder missing settings footer");
+    }
     steps.push({ name: "builder_privacy_cta", ok: true });
 
     if (throughOutboxOnly) {
@@ -221,16 +308,33 @@ async function main() {
       return;
     }
 
-    const resend = requireResend(env);
-    process.env.RESEND_API_KEY = resend.apiKey;
-    process.env.RESEND_FROM_EMAIL = resend.fromEmail;
     const sendStarted = Date.now();
-    const sent = await processSingleOutboxRow({
-      env,
-      outboxId,
-    });
-    log("resend", `template=${sent.templateKey}`);
-    steps.push({ name: "resend_sent", ok: true });
+    let sendPath: "preview_runtime_after" | "local_resend" = "preview_runtime_after";
+
+    if (forceLocalResend) {
+      sendPath = "local_resend";
+      const resend = requireResend(env);
+      process.env.RESEND_API_KEY = resend.apiKey;
+      process.env.RESEND_FROM_EMAIL = resend.fromEmail;
+      await processSingleOutboxRow({ env, outboxId });
+      log("resend", "local_resend path");
+    } else {
+      // Preview route already scheduled after(); wait for worker claim + provider send.
+      log("resend", "waiting for Preview after()/worker");
+      const final = await waitForOutboxStatus({
+        admin,
+        outboxId,
+        timeoutMs: 120_000,
+      });
+      if (final.status !== "sent") {
+        throw new Error(
+          `Preview runtime did not mark outbox sent (status=${final.status})`,
+        );
+      }
+      log("resend", "preview_runtime_after ok");
+    }
+
+    steps.push({ name: "resend_sent", ok: true, detail: sendPath });
 
     const { data: sentRow } = await admin
       .from("transactional_email_outbox")
@@ -280,12 +384,12 @@ async function main() {
     } else {
       log(
         "gmail",
-        "SKIPPED — OAuth not configured (Owner one-time bootstrap required)",
+        "NOT ASSERTED — OAuth not configured (Owner one-time bootstrap required)",
       );
       steps.push({
         name: "gmail_inbox",
         ok: true,
-        detail: "skipped_oauth_missing",
+        detail: "not_asserted_oauth_missing",
       });
     }
 
@@ -294,7 +398,12 @@ async function main() {
         {
           ok: true,
           runId,
-          gmailVerified: gmailReady,
+          sendPath,
+          providerSendVerified: true,
+          gmailInboxVerified: gmailReady,
+          recipient: operationEmail,
+          consultationId,
+          outboxId,
           steps,
         },
         null,

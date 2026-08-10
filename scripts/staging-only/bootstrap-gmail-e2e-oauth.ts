@@ -14,7 +14,7 @@
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
-import { loadPreviewE2EEnv, requireEnv } from "./lib/preview-e2e-env.ts";
+import { loadPreviewE2EEnv, requireEnv } from "./lib/preview-e2e-env";
 
 const SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
 const REDIRECT_URI = "http://127.0.0.1:53682/oauth2callback";

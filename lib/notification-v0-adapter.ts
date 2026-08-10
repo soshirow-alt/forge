@@ -46,9 +46,9 @@ function notificationTitle(notification: Notification): string {
     case "project_watched":
       return "作品を追われました";
     case "followed_developer_new_project":
-      return "フォロー中の開発者の新作";
+      return "フォロー中のクリエイターの新作";
     case "followed_developer_released_project":
-      return "フォロー中の開発者の正式版";
+      return "フォロー中のクリエイターの正式版";
     default:
       return getNotificationTypeLabel(notification.type);
   }

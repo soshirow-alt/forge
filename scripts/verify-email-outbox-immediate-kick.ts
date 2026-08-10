@@ -120,6 +120,7 @@ async function run() {
     sent: 1,
     failed: 0,
     skipped: 0,
+    suppressed: 0,
   });
 
   // --- load failure → mutation-safe (no throw) ---
@@ -226,7 +227,7 @@ async function run() {
       throw new Error("no");
     },
   });
-  assert.deepEqual(skipped, { processed: 1, sent: 0, failed: 0, skipped: 1 });
+  assert.deepEqual(skipped, { processed: 1, sent: 0, failed: 0, skipped: 1, suppressed: 0 });
 
   // --- daily recovery still processes pending ---
   const recovery = await processEmailOutboxRows(
@@ -282,6 +283,7 @@ async function run() {
     sent: 1,
     failed: 0,
     skipped: 0,
+    suppressed: 0,
   });
 
   // --- kick failure still resolves (mutation response already sent) ---

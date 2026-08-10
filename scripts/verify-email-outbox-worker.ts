@@ -38,7 +38,7 @@ async function run() {
     },
   };
   const ok = await processEmailOutboxRows([row({ id: "a" })], depsSuccess);
-  assert.deepEqual(ok, { processed: 1, sent: 1, failed: 0, skipped: 0 });
+  assert.deepEqual(ok, { processed: 1, sent: 1, failed: 0, skipped: 0, suppressed: 0 });
   assert.deepEqual(events, ["claim:a", "send-key:forge-outbox-a", "sent:a:1"]);
 
   events.length = 0;
@@ -95,20 +95,20 @@ async function run() {
     async send() {},
   };
   const skipped = await processEmailOutboxRows([row({ id: "c" })], depsSkip);
-  assert.deepEqual(skipped, { processed: 1, sent: 0, failed: 0, skipped: 1 });
+  assert.deepEqual(skipped, { processed: 1, sent: 0, failed: 0, skipped: 1, suppressed: 0 });
 
-  await assert.rejects(
-    () =>
-      processEmailOutboxRows([row({ id: "e" })], {
-        async claimRow() {
-          throw new Error("claim db down");
-        },
-        async markSent() {},
-        async markFailed() {},
-        async send() {},
-      }),
-    /claim db down/,
-  );
+  const claimDown = await processEmailOutboxRows([row({ id: "e" })], {
+    async claimRow() {
+      throw new Error("claim db down");
+    },
+    async markSent() {},
+    async markFailed(id, input) {
+      events.push(`failed:${id}:${input.lastError}`);
+    },
+    async send() {},
+  });
+  assert.equal(claimDown.failed, 1);
+  assert.match(events.join("\n"), /claim db down/);
 
   // --- Stale worker generation guard (in-memory row store) ---
   type StoreRow = {
@@ -178,6 +178,7 @@ async function run() {
     sent: 0,
     failed: 0,
     skipped: 1,
+    suppressed: 0,
   });
   assert.deepEqual(claimSkipEvents, ["miss"]);
 
@@ -258,13 +259,76 @@ async function run() {
       finalEvents.push("send");
     },
   });
-  assert.deepEqual(finalOk, { processed: 1, sent: 1, failed: 0, skipped: 0 });
-  assert.deepEqual(finalEvents, ["claim:5", "send", "sent:final-ok:5"]);
+  assert.deepEqual(finalOk, { processed: 1, sent: 1, failed: 0, skipped: 0, suppressed: 0 });
+
+  // Send-time preference OFF → suppressed (no provider call)
+  const suppressEvents: string[] = [];
+  const suppressedResult = await processEmailOutboxRows([row({ id: "pref-off" })], {
+    async evaluateSend() {
+      suppressEvents.push("evaluate");
+      return { allowed: false, toEmail: null, reason: "preference_off" };
+    },
+    async claimRow() {
+      suppressEvents.push("claim");
+      return { claimed: true };
+    },
+    async markSent() {
+      suppressEvents.push("sent");
+    },
+    async markFailed() {
+      suppressEvents.push("failed");
+    },
+    async send() {
+      suppressEvents.push("send");
+    },
+  });
+  assert.deepEqual(suppressedResult, {
+    processed: 1,
+    sent: 0,
+    failed: 0,
+    skipped: 0,
+    suppressed: 1,
+  });
+  assert.deepEqual(suppressEvents, ["evaluate"]);
+
+  // Evaluate RPC unavailable → fail closed for that row only; batch continues
+  const evalFailEvents: string[] = [];
+  const evalFailBatch = await processEmailOutboxRows(
+    [row({ id: "eval-down" }), row({ id: "eval-ok" })],
+    {
+      async evaluateSend(r) {
+        if (r.id === "eval-down") {
+          throw new Error("outbox evaluate failed (fail-closed)");
+        }
+        return { allowed: true, toEmail: r.to_email };
+      },
+      async claimRow(r) {
+        evalFailEvents.push(`claim:${r.id}`);
+        return { claimed: true };
+      },
+      async markSent(id) {
+        evalFailEvents.push(`sent:${id}`);
+      },
+      async markFailed(id) {
+        evalFailEvents.push(`failed:${id}`);
+      },
+      async send(input) {
+        evalFailEvents.push(`send:${input.idempotencyKey}`);
+      },
+    },
+  );
+  assert.equal(evalFailBatch.failed, 1);
+  assert.equal(evalFailBatch.sent, 1);
+  assert.ok(evalFailEvents.includes("failed:eval-down"));
+  assert.ok(evalFailEvents.includes("send:forge-outbox-eval-ok"));
+  assert.ok(!evalFailEvents.includes("send:forge-outbox-eval-down"));
 
   const transactional = readFileSync(
     join(process.cwd(), "lib/transactional-email.ts"),
     "utf8",
   );
+  assert.match(transactional, /メール通知設定を変更/);
+  assert.match(transactional, /settings#email-notifications/);
   assert.match(transactional, /idempotencyKey\?: string/);
   assert.match(transactional, /idempotencyKey: input\.idempotencyKey/);
 

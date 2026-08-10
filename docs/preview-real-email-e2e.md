@@ -62,6 +62,24 @@ After that, `verify:preview-real-email` polls Gmail automatically. Do not ask Ow
 - No mail send/delete/archive on Gmail (readonly)
 - Production / `main` are out of scope for this infrastructure
 
-## Resend note
+## Preference E2E
 
-If Cursor/agent environment redacts Vercel-pulled secrets to `[SENSITIVE]`, paste real Preview `RESEND_*` values into `.env.preview-e2e.local` once (Owner one-time). Do not change Production env for this task.
+```powershell
+npm run verify:email-notification-prefs
+npm run verify:email-notification-prefs-e2e
+```
+
+Covers master/category OFF, send-time `suppressed`, and re-ON without backfill.
+
+## Resend on Preview runtime
+
+Vercel Preview scope already has `RESEND_API_KEY` / `RESEND_FROM_EMAIL` (Hidden). Prefer smoke via Preview runtime + `after()` kick when possible. Local `[SENSITIVE]` redaction does not mean Preview lacks secrets.
+
+`npm run verify:preview-real-email` defaults to:
+
+1. Actor session cookie against Preview alias
+2. `POST /api/collab/consultations` (real business mutation)
+3. Wait for Preview `after()` worker to mark outbox `sent`
+
+Use `--local-resend` only when deliberately testing with local Resend secrets.
+Use `--through-outbox` to stop before provider send.
