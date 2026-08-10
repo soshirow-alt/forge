@@ -1,6 +1,7 @@
 /**
- * PGlite gate for reciprocity (093) + announcement window (094).
+ * PGlite gate for reciprocity (093/095) + announcement window (094).
  * No remote DB. Focused fixtures only.
+ * project_feedback / project_voice_responses.project_id are text (real schema).
  */
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -129,7 +130,7 @@ $$;
 CREATE TABLE public.project_feedback (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL,
-  project_id uuid NOT NULL,
+  project_id text NOT NULL,
   version_key text NOT NULL DEFAULT '0.1',
   good_points text,
   created_at timestamptz NOT NULL DEFAULT now()
@@ -137,7 +138,7 @@ CREATE TABLE public.project_feedback (
 CREATE TABLE public.project_voice_responses (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL,
-  project_id uuid NOT NULL,
+  project_id text NOT NULL,
   version_key text NOT NULL DEFAULT '0.1',
   created_at timestamptz NOT NULL DEFAULT now()
 );
@@ -164,6 +165,11 @@ async function main() {
   await execSql(db, "fixture", fixture);
   await execSql(db, "093", readSql("supabase/migrations/093_feedback_reciprocity_notifications.sql"));
   await execSql(db, "094", readSql("supabase/migrations/094_platform_announcement_publish_window.sql"));
+  await execSql(
+    db,
+    "095",
+    readSql("supabase/migrations/095_feedback_reciprocity_project_id_text_cast.sql"),
+  );
   await execSql(
     db,
     "grants after migrations",

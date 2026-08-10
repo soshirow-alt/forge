@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "supabase-staging": {
+      "url": "https://mcp.supabase.com/mcp?project_ref=vuqpwvjvgyxffmvpfrxo&features=database,debugging,development"
+    }
+  }
+}

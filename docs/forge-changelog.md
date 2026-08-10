@@ -8,6 +8,7 @@
 
 - **Email cadence** — important mutation 成功後に `after()` で outbox best-effort kick。日次 cron は recovery 専用。consultation message は 092 で read→unread のみ
 - **Feedback reciprocity** — 登録ユーザーが公開作品へ新規 FB したとき、相手へ重要通知＋transactional email（同一 open prompt は coalesce）。CTA は actor の `/creators/{id}`。profile 正常表示で ack。stale は dismiss RPC
+- **Reciprocity Staging fix (095)** — 実 schema の `project_id text` を trigger が `uuid` 引数へ渡せないため INSERT が無音失敗していた。095 で text→uuid cast。PGlite gate fixture も text に合わせて回帰防止
 - **Announcement** — 094 で publish window / CTA / archive RPC。正式 release announcement の Staging/Production ops SQL を追加（Production は適用しない）
 - **Legal** — Terms / Privacy をコミュニティ・相談・使用関係・service email（Resend）に合わせて更新。version/再同意基盤は作らない
 
