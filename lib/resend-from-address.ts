@@ -1,6 +1,7 @@
 /**
  * Resend From-address helpers.
- * Production must not ship with @resend.dev onboarding sender.
+ * True Vercel Production must not ship with @resend.dev onboarding sender.
+ * Preview may force FORGE_PRODUCTION_MODE for UI while still smoking with @resend.dev.
  */
 
 const RESEND_DEV_HOST = /@resend\.dev\b/i;
@@ -21,15 +22,20 @@ export function isResendDevSender(fromHeader: string): boolean {
 }
 
 /**
- * Production readiness / send-time guard.
- * Preview may use @resend.dev for smoke. Production must use a verified custom domain.
+ * Hard-block @resend.dev only on Vercel Production runtime.
+ * Preview / local remain allowed for smoke (even when UI production-mode override is on).
  * Throws only for the email send path — callers must not fail business mutations.
  */
 export function assertTransactionalFromAllowed(input: {
   fromHeader: string;
-  deploymentMode: "preview" | "local" | "production";
+  /**
+   * Optional explicit signal. Prefer VERCEL_ENV=production over Forge UI mode overrides.
+   */
+  vercelEnv?: string | null;
 }): void {
-  if (input.deploymentMode !== "production") return;
+  const vercelEnv = (input.vercelEnv ?? process.env.VERCEL_ENV ?? "").trim();
+  if (vercelEnv !== "production") return;
+
   if (isResendDevSender(input.fromHeader)) {
     throw new Error(
       "Production RESEND_FROM_EMAIL must not use @resend.dev — configure a verified custom-domain sender",

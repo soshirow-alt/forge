@@ -1,5 +1,4 @@
 import { Resend } from "resend";
-import { getForgeDeploymentModeForServer } from "@/lib/production-mode";
 import { assertTransactionalFromAllowed } from "@/lib/resend-from-address";
 import { getSiteOrigin } from "@/lib/site-url";
 
@@ -129,11 +128,8 @@ export async function sendTransactionalEmail(input: {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   if (!apiKey) throw new Error("RESEND_API_KEY is not configured");
   const from = process.env.RESEND_FROM_EMAIL?.trim() || "Forge <onboarding@resend.dev>";
-  // Fail closed on Production sender misconfig. Worker catches this; mutations stay ok.
-  assertTransactionalFromAllowed({
-    fromHeader: from,
-    deploymentMode: getForgeDeploymentModeForServer(),
-  });
+  // Fail closed on Vercel Production sender misconfig. Worker catches this; mutations stay ok.
+  assertTransactionalFromAllowed({ fromHeader: from });
   const content = buildTransactionalEmail(input.templateKey, input.payload);
   const { error } = await new Resend(apiKey).emails.send(
     {

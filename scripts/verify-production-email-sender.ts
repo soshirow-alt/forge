@@ -23,34 +23,34 @@ assert.equal(
 assert.doesNotThrow(() =>
   assertTransactionalFromAllowed({
     fromHeader: "Forge <onboarding@resend.dev>",
-    deploymentMode: "preview",
+    vercelEnv: "preview",
   }),
 );
 assert.throws(
   () =>
     assertTransactionalFromAllowed({
       fromHeader: "Forge <onboarding@resend.dev>",
-      deploymentMode: "production",
+      vercelEnv: "production",
     }),
   /@resend\.dev/,
 );
 assert.doesNotThrow(() =>
   assertTransactionalFromAllowed({
     fromHeader: "Forge <noreply@example.com>",
-    deploymentMode: "production",
+    vercelEnv: "production",
   }),
 );
 
 const tx = readFileSync(join(process.cwd(), "lib/transactional-email.ts"), "utf8");
 assert.match(tx, /assertTransactionalFromAllowed/);
-assert.match(tx, /getForgeDeploymentModeForServer/);
 assert.match(tx, /onboarding@resend\.dev/);
 
 const fromHelper = readFileSync(
   join(process.cwd(), "lib/resend-from-address.ts"),
   "utf8",
 );
-assert.match(fromHelper, /deploymentMode !== \"production\"/);
+assert.match(fromHelper, /vercelEnv !== \"production\"/);
+assert.match(fromHelper, /VERCEL_ENV/);
 
 console.log("verify-production-email-sender: PASS");
 console.log(
@@ -58,7 +58,7 @@ console.log(
     {
       ok: true,
       note:
-        "Production RESEND_FROM_EMAIL must be a verified custom-domain address (not @resend.dev). Domain provisioning is Owner one-time in Resend+DNS.",
+        "Vercel Production RESEND_FROM_EMAIL must be a verified custom-domain address (not @resend.dev). Preview may keep @resend.dev for smoke. Domain provisioning is Owner one-time in Resend+DNS.",
       knownSiteDomainHint: "forge-games.net (site host; mailbox not invented here)",
     },
     null,
