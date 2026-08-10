@@ -323,7 +323,11 @@ export function FeaturedGameCarousel({
         window.requestAnimationFrame(syncKeyboardFocusWithin);
       }}
     >
-      <div className="mb-4 flex items-end justify-between gap-4">
+      <div
+        className={`mb-4 flex items-end justify-between gap-4 ${
+          compact ? "px-4 sm:px-6 lg:px-8" : ""
+        }`}
+      >
         {compact ? (
           <h2 className="text-lg font-bold tracking-tight text-white text-balance">
             {title}
@@ -418,7 +422,11 @@ export function FeaturedGameCarousel({
         ) : null}
       </div>
 
-      <div className="mt-3 flex items-center justify-center gap-2">
+      <div
+        className={`mt-3 flex items-center justify-center gap-2 ${
+          compact ? "px-4 sm:px-6 lg:px-8" : ""
+        }`}
+      >
         {games.map((g, i) => (
           <button
             key={`${g.id}-dot-${g.heroSource ?? "hero"}`}

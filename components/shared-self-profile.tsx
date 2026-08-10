@@ -33,6 +33,11 @@ import {
 } from "@/lib/public-profile-display";
 import { normalizePublicXHandle } from "@/lib/public-x-link";
 import { WATCH_STAT_LABEL } from "@/lib/watch-ui-labels";
+import {
+  CREATOR_CAPABILITY_TAG_IDS,
+  creatorCapabilityTagLabel,
+} from "@/lib/creator-activity-categories";
+import type { ActivityTagId } from "@/lib/project-categories";
 import { Pencil } from "lucide-react";
 
 export type SharedSelfProfileShell = "player" | "studio";
@@ -43,6 +48,7 @@ type Draft = {
   avatar: string;
   website: string;
   publicX: string;
+  activityTags: ActivityTagId[];
 };
 
 function websiteHref(url: string): string {
@@ -126,6 +132,7 @@ export function SharedSelfProfile({
     avatar: "",
     website: "",
     publicX: "",
+    activityTags: [],
   });
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -160,12 +167,17 @@ export function SharedSelfProfile({
   function openEdit() {
     if (!display || !user) return;
     const shared = publicProfileFromDeveloperRow(developerProfile, user.name);
+    const tags = (developerProfile?.activityTags ?? []).filter(
+      (tag): tag is ActivityTagId =>
+        CREATOR_CAPABILITY_TAG_IDS.includes(tag as ActivityTagId),
+    );
     setDraft({
       displayName: shared.displayName,
       bio: publicBioForDisplay(shared.bio),
       avatar: display.avatarSrc,
       website: shared.website ?? "",
       publicX: normalizePublicXHandle(shared.xAccount) ?? "",
+      activityTags: tags,
     });
     setSaveError(null);
     setEditing(true);
@@ -177,6 +189,7 @@ export function SharedSelfProfile({
     avatarUrl: string | null;
     website: string | null;
     xAccount: string | null;
+    activityTags?: string[] | null;
   }) {
     if (!user) return;
     const previousName = publicProfileFromDeveloperRow(
@@ -193,6 +206,7 @@ export function SharedSelfProfile({
           avatarUrl: next.avatarUrl,
           website: next.website,
           xAccount: next.xAccount,
+          activityTags: next.activityTags,
         },
         developerProfile,
       ),
@@ -232,6 +246,7 @@ export function SharedSelfProfile({
         avatarUrl: resolvedAvatar.avatarUrl,
         website: draft.website.trim() || null,
         xAccount: xNormalized,
+        activityTags: draft.activityTags,
       });
       setEditing(false);
       setSaveMessage("プロフィールを更新しました。");
@@ -307,6 +322,38 @@ export function SharedSelfProfile({
                 className="mt-2 w-full rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-2.5 text-sm text-zinc-200 focus:border-violet-500/40 focus:outline-none"
               />
             </div>
+            <fieldset>
+              <legend className="text-xs font-medium text-zinc-500">制作領域</legend>
+              <p className="mt-1 text-[11px] text-zinc-600">
+                5カテゴリのクリエイターとして、得意な制作領域を選べます（任意）。
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {CREATOR_CAPABILITY_TAG_IDS.map((tagId) => {
+                  const selected = draft.activityTags.includes(tagId);
+                  return (
+                    <button
+                      key={tagId}
+                      type="button"
+                      onClick={() =>
+                        setDraft((current) => ({
+                          ...current,
+                          activityTags: selected
+                            ? current.activityTags.filter((id) => id !== tagId)
+                            : [...current.activityTags, tagId],
+                        }))
+                      }
+                      className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                        selected
+                          ? "border-violet-500/50 bg-violet-500/15 text-violet-200"
+                          : "border-zinc-700 text-zinc-400 hover:border-zinc-600"
+                      }`}
+                    >
+                      {creatorCapabilityTagLabel(tagId)}
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
             <div>
               <label className="block text-xs font-medium text-zinc-500" htmlFor="shared-profile-x">
                 公開X（@handle）
@@ -368,7 +415,7 @@ export function SharedSelfProfile({
         <div>
           <h1 className="text-2xl font-bold text-white sm:text-3xl">プロフィール</h1>
           <p className="mt-2 text-sm text-zinc-500">
-            プレイヤー・開発者で共通の公開プロフィールです。
+            プレイヤー・クリエイターで共通の公開プロフィールです。
           </p>
         </div>
         <button
@@ -441,7 +488,7 @@ export function SharedSelfProfile({
           {hasPlayerActivity ? (
             <>
               <RoleStatRow
-                label="フォロー中の開発者"
+                label="フォロー中のクリエイター"
                 value={followedCount}
                 href={shell === "studio" ? undefined : "/mypage?tab=following"}
               />
@@ -472,7 +519,7 @@ export function SharedSelfProfile({
         </RoleColumn>
 
         {isDeveloper ? (
-          <RoleColumn title="開発者として">
+          <RoleColumn title="クリエイターとして">
             <RoleStatRow
               label="公開作品"
               value={publicOwned.length}
@@ -493,7 +540,7 @@ export function SharedSelfProfile({
             </div>
           </RoleColumn>
         ) : (
-          <RoleColumn title="開発者として">
+          <RoleColumn title="クリエイターとして">
             <p className="py-2 text-sm text-zinc-600">
               まだ公開作品はありません。{" "}
               <Link

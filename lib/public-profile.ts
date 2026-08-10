@@ -19,6 +19,8 @@ export type PublicProfileFields = {
   xAccount?: string | null;
   /** `undefined` preserves; `null` / empty clears; string sets. */
   website?: string | null;
+  /** Formal activity_tags — undefined preserves existing. */
+  activityTags?: string[] | null;
 };
 
 /** Normalize bio for DB: empty string when unset (legacy placeholder → empty). */
@@ -64,6 +66,10 @@ export function toDeveloperProfileInput(
     fields.website === undefined
       ? existing?.website
       : fields.website?.trim() || undefined;
+  const nextActivityTags =
+    fields.activityTags === undefined
+      ? existing?.activityTags
+      : (fields.activityTags ?? []).filter(Boolean);
 
   return {
     publicName: fields.displayName.trim(),
@@ -73,6 +79,7 @@ export function toDeveloperProfileInput(
     website: nextWebsite,
     discordUrl: existing?.discordUrl,
     youtubeUrl: existing?.youtubeUrl,
+    activityTags: nextActivityTags,
   };
 }
 

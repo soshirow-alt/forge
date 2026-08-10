@@ -37,6 +37,7 @@
     "verify:home-discovery-selection": "npx --yes tsx scripts/verify-home-discovery-selection.ts",
     "verify:player-ia-home-search-nav": "npx --yes tsx scripts/verify-player-ia-home-search-nav.ts",
     "verify:player-ia-game-home-category-filter": "npx --yes tsx scripts/verify-player-ia-game-home-category-filter.ts",
+    "verify:category-neutrality-surface": "npx --yes tsx scripts/verify-category-neutrality-surface.ts",
     "verify:featured-hero-thumbnails": "npx --yes tsx scripts/verify-featured-hero-thumbnails.ts",
     "verify:collab-consultations-contract": "npx --yes tsx scripts/verify-collab-consultations-contract.ts",
     "verify:consultation-ack-lifecycle": "npx --yes tsx scripts/verify-consultation-ack-lifecycle.ts",

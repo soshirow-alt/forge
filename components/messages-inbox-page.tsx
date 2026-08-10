@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ConsultationThread } from "@/components/consultation-thread";
-import { PlayerShell } from "@/components/player-shell";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { useGames } from "@/components/games-provider";
 import type { CollabConsultationSummary } from "@/lib/collab/consultation-types";
@@ -126,9 +125,9 @@ export function MessagesInboxPage({
 
   const listPane = (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="shrink-0 border-b border-zinc-800/80 px-1 pb-4 lg:px-0">
-        <h1 className="text-2xl font-bold text-white">メッセージ</h1>
-        <p className="mt-1 text-sm text-zinc-500">利用・コラボについてのやり取り</p>
+      <div className="shrink-0 border-b border-zinc-800/80 px-3 pt-4 pb-3">
+        <h1 className="text-lg font-semibold text-white">メッセージ</h1>
+        <p className="mt-1 text-xs text-zinc-500">利用・コラボについてのやり取り</p>
       </div>
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto py-4">
         {loading ? (
@@ -149,8 +148,12 @@ export function MessagesInboxPage({
             );
           })
         ) : (
-          <p className="rounded-xl border border-dashed border-zinc-800 p-8 text-center text-sm text-zinc-500">
+          <p className="px-1 py-6 text-center text-sm leading-relaxed text-zinc-500">
             メッセージはまだありません。
+            <br />
+            <span className="text-xs text-zinc-600">
+              作品詳細の「利用・コラボについて相談」から開始できます
+            </span>
           </p>
         )}
         {error ? <p className="px-1 text-sm text-red-300">{error}</p> : null}
@@ -159,31 +162,29 @@ export function MessagesInboxPage({
   );
 
   return (
-    <PlayerShell activeNav="messages">
-      <div className="mx-auto grid max-w-6xl gap-4 lg:h-[calc(100vh-8rem)] lg:grid-cols-[minmax(280px,360px)_1fr]">
-        <aside
-          className={`min-h-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950/60 px-3 ${
-            selectedId ? "hidden lg:block" : ""
-          }`}
-        >
-          {listPane}
-        </aside>
-        <section
-          className={`min-h-0 overflow-y-auto rounded-xl border border-zinc-800 bg-zinc-950/40 p-4 ${
-            selectedId ? "" : "hidden lg:flex lg:items-center lg:justify-center lg:border-dashed"
-          }`}
-        >
-          {selectedId ? (
-            <ConsultationThread
-              key={selectedId}
-              consultationId={selectedId}
-              embedded
-            />
-          ) : (
-            <p className="text-sm text-zinc-500">会話を選ぶとここに表示されます</p>
-          )}
-        </section>
-      </div>
-    </PlayerShell>
+    <div className="grid w-full gap-4 lg:h-[calc(100vh-8rem)] lg:grid-cols-[minmax(260px,320px)_1fr]">
+      <aside
+        className={`min-h-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950/60 px-3 ${
+          selectedId ? "hidden lg:block" : ""
+        }`}
+      >
+        {listPane}
+      </aside>
+      <section
+        className={`min-h-0 overflow-y-auto rounded-xl border border-zinc-800 bg-zinc-950/40 p-4 ${
+          selectedId ? "" : "hidden lg:flex lg:items-center lg:justify-center lg:border-dashed"
+        }`}
+      >
+        {selectedId ? (
+          <ConsultationThread
+            key={selectedId}
+            consultationId={selectedId}
+            embedded
+          />
+        ) : (
+          <p className="text-sm text-zinc-500">会話を選ぶとここに表示されます</p>
+        )}
+      </section>
+    </div>
   );
 }

@@ -10,10 +10,10 @@ import type { DeveloperProfileRow } from "@/lib/supabase/schema";
 
 /** Explicit columns; avatar_url may be absent until migration 064. */
 const DEVELOPER_PROFILE_COLUMNS_WITH_AVATAR =
-  "user_id, creator_id, public_name, profile, avatar_url, x_account, website, discord_url, youtube_url, created_at, updated_at";
+  "user_id, creator_id, public_name, profile, avatar_url, x_account, website, discord_url, youtube_url, activity_tags, created_at, updated_at";
 
 const DEVELOPER_PROFILE_COLUMNS_WITHOUT_AVATAR =
-  "user_id, creator_id, public_name, profile, x_account, website, discord_url, youtube_url, created_at, updated_at";
+  "user_id, creator_id, public_name, profile, x_account, website, discord_url, youtube_url, activity_tags, created_at, updated_at";
 
 type DbErrorLike = {
   message?: string;
@@ -48,6 +48,9 @@ function profileRowToDeveloperProfile(row: DeveloperProfileRow): DeveloperProfil
     website: row.website ?? undefined,
     discordUrl: row.discord_url ?? undefined,
     youtubeUrl: row.youtube_url ?? undefined,
+    activityTags: Array.isArray(row.activity_tags)
+      ? row.activity_tags.filter((tag): tag is string => typeof tag === "string")
+      : undefined,
   };
 }
 
@@ -62,6 +65,7 @@ function profileToRow(profile: DeveloperProfile) {
     website: profile.website ?? null,
     discord_url: profile.discordUrl ?? null,
     youtube_url: profile.youtubeUrl ?? null,
+    activity_tags: profile.activityTags ?? [],
   };
 }
 

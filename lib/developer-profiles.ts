@@ -9,6 +9,8 @@ export type DeveloperProfile = {
   website?: string;
   discordUrl?: string;
   youtubeUrl?: string;
+  /** Formal activity_tags from developer_profiles (制作領域). */
+  activityTags?: string[];
 };
 
 export type DeveloperProfileInput = {
@@ -19,6 +21,7 @@ export type DeveloperProfileInput = {
   website?: string;
   discordUrl?: string;
   youtubeUrl?: string;
+  activityTags?: string[];
 };
 
 /** Legacy stored placeholder — treat as empty when reading. */
@@ -46,6 +49,7 @@ export function createDeveloperProfile(
     website: input.website?.trim() || undefined,
     discordUrl: input.discordUrl?.trim() || undefined,
     youtubeUrl: input.youtubeUrl?.trim() || undefined,
+    activityTags: input.activityTags?.filter(Boolean),
   };
 }
 

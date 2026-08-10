@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useGames } from "@/components/games-provider";
-import { PlayerShell } from "@/components/player-shell";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 import {
   fetchMyDecidedUsageRelations,
@@ -149,96 +148,94 @@ export function UsageRelationsPage() {
   }
 
   return (
-    <PlayerShell activeNav="messages">
-      <div className="mx-auto max-w-4xl">
-        <h1 className="text-2xl font-bold text-white">使用関係</h1>
-        <section id="usage-relations" className="mt-7 scroll-mt-24">
-          <h2 className="text-sm font-semibold text-zinc-400">使用関係の確認</h2>
-          {relations.length > 0 ? (
-            <ul className="mt-3 space-y-2">
-              {relations.map((relation) => {
-                const source =
-                  getGameById(relation.sourceProjectId)?.title ?? "利用する作品";
-                const target =
-                  getGameById(relation.targetProjectId)?.title ?? "利用される作品";
-                return (
-                  <li
-                    key={relation.id}
-                    id={`usage-relation-${relation.id}`}
-                    className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4"
-                  >
-                    <p className="font-medium text-white">
-                      {source} <span className="px-2 text-amber-300">→ 使用 →</span>{" "}
-                      {target}
+    <div className="mx-auto max-w-4xl">
+      <h1 className="text-2xl font-bold text-white">使用関係</h1>
+      <section id="usage-relations" className="mt-7 scroll-mt-24">
+        <h2 className="text-sm font-semibold text-zinc-400">使用関係の確認</h2>
+        {relations.length > 0 ? (
+          <ul className="mt-3 space-y-2">
+            {relations.map((relation) => {
+              const source =
+                getGameById(relation.sourceProjectId)?.title ?? "利用する作品";
+              const target =
+                getGameById(relation.targetProjectId)?.title ?? "利用される作品";
+              return (
+                <li
+                  key={relation.id}
+                  id={`usage-relation-${relation.id}`}
+                  className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4"
+                >
+                  <p className="font-medium text-white">
+                    {source} <span className="px-2 text-amber-300">→ 使用 →</span>{" "}
+                    {target}
+                  </p>
+                  {relation.requestNote ? (
+                    <p className="mt-2 text-sm text-zinc-400">{relation.requestNote}</p>
+                  ) : null}
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      type="button"
+                      disabled={decidingId === relation.id}
+                      onClick={() => void decide(relation.id, "accepted")}
+                      className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+                    >
+                      承認
+                    </button>
+                    <button
+                      type="button"
+                      disabled={decidingId === relation.id}
+                      onClick={() => void decide(relation.id, "rejected")}
+                      className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 disabled:opacity-50"
+                    >
+                      承認しない
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="mt-3 text-sm text-zinc-500">確認待ちの使用関係はありません。</p>
+        )}
+        <h3 className="mt-5 text-xs font-semibold text-zinc-500">最近の結果</h3>
+        {decidedRelations.length > 0 ? (
+          <ul className="mt-2 space-y-2">
+            {decidedRelations.map((relation) => {
+              const source =
+                getGameById(relation.sourceProjectId)?.title ?? "利用する作品";
+              const target =
+                getGameById(relation.targetProjectId)?.title ?? "利用される作品";
+              const label =
+                relation.status === "accepted" ? "承認された" : "承認されなかった";
+              return (
+                <li
+                  key={relation.id}
+                  id={`usage-relation-${relation.id}`}
+                  className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm text-zinc-200">
+                      {source} <span className="px-1 text-zinc-500">→</span> {target}
                     </p>
-                    {relation.requestNote ? (
-                      <p className="mt-2 text-sm text-zinc-400">{relation.requestNote}</p>
-                    ) : null}
-                    <div className="mt-3 flex gap-2">
-                      <button
-                        type="button"
-                        disabled={decidingId === relation.id}
-                        onClick={() => void decide(relation.id, "accepted")}
-                        className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
-                      >
-                        承認
-                      </button>
-                      <button
-                        type="button"
-                        disabled={decidingId === relation.id}
-                        onClick={() => void decide(relation.id, "rejected")}
-                        className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 disabled:opacity-50"
-                      >
-                        承認しない
-                      </button>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p className="mt-3 text-sm text-zinc-500">確認待ちの使用関係はありません。</p>
-          )}
-          <h3 className="mt-5 text-xs font-semibold text-zinc-500">最近の結果</h3>
-          {decidedRelations.length > 0 ? (
-            <ul className="mt-2 space-y-2">
-              {decidedRelations.map((relation) => {
-                const source =
-                  getGameById(relation.sourceProjectId)?.title ?? "利用する作品";
-                const target =
-                  getGameById(relation.targetProjectId)?.title ?? "利用される作品";
-                const label =
-                  relation.status === "accepted" ? "承認された" : "承認されなかった";
-                return (
-                  <li
-                    key={relation.id}
-                    id={`usage-relation-${relation.id}`}
-                    className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-sm text-zinc-200">
-                        {source} <span className="px-1 text-zinc-500">→</span> {target}
-                      </p>
-                      <span
-                        className={
-                          relation.status === "accepted"
-                            ? "rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-300"
-                            : "rounded-full bg-zinc-700/50 px-2 py-0.5 text-xs text-zinc-400"
-                        }
-                      >
-                        {label}
-                      </span>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p className="mt-2 text-sm text-zinc-600">最近の結果はまだありません。</p>
-          )}
-        </section>
-        {error ? <p className="mt-4 text-sm text-red-300">{error}</p> : null}
-      </div>
-    </PlayerShell>
+                    <span
+                      className={
+                        relation.status === "accepted"
+                          ? "rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-300"
+                          : "rounded-full bg-zinc-700/50 px-2 py-0.5 text-xs text-zinc-400"
+                      }
+                    >
+                      {label}
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="mt-2 text-sm text-zinc-600">最近の結果はまだありません。</p>
+        )}
+      </section>
+      {error ? <p className="mt-4 text-sm text-red-300">{error}</p> : null}
+    </div>
   );
 }

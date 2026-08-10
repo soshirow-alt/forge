@@ -36,7 +36,7 @@ import { WATCH_TAB_LABEL } from "@/lib/watch-ui-labels";
 const primaryLinks = [
   { id: "home", href: "/home", label: "ホーム" },
   { id: "search", href: "/search", label: "作品を探す" },
-  { id: "creator-search", href: "/search/creators", label: "開発者を探す" },
+  { id: "creator-search", href: "/search/creators", label: "クリエイターを探す" },
   { id: "ranking", href: "/rankings/influence", label: "ランキング" },
 ] as const;
 
@@ -356,7 +356,7 @@ export function MyPageTabs({
     { id: "play-history", label: "プレイ履歴" },
     { id: "feedback", label: "FB履歴" },
     { id: "achievements", label: "実績" },
-    { id: "following", label: "フォロー中開発者" },
+    { id: "following", label: "フォロー中クリエイター" },
   ] as const;
 
   return (

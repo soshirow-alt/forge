@@ -29,7 +29,7 @@ export function HeaderSearchFormFallback() {
       <input
         type="search"
         readOnly
-        placeholder="ゲームやジャンルを検索（例：RPG、ピクセルアート）"
+        placeholder="作品・クリエイター・タグを検索"
         className={FORGE_SHELL_HEADER_SEARCH_INPUT_CLASS}
       />
     </form>
@@ -66,7 +66,7 @@ export function HeaderSearchForm({ legacyDefault }: { legacyDefault?: string }) 
         type="search"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        placeholder="ゲームやジャンルを検索（例：RPG、ピクセルアート）"
+        placeholder="作品・クリエイター・タグを検索"
         className={FORGE_SHELL_HEADER_SEARCH_INPUT_CLASS}
       />
     </form>

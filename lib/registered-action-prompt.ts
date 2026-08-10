@@ -9,7 +9,7 @@ export type RegisteredActionPromptVariant =
   | "default";
 
 const VARIANT_BODIES: Record<RegisteredActionPromptVariant, string> = {
-  follow: "開発者をフォローすると、更新を追いやすくなります。",
+  follow: "クリエイターをフォローすると、更新を追いやすくなります。",
   bookmark: "ログインすると、あとで見る作品として保存できます。",
   watch: "ログインすると、この作品の更新を追えるようになります。",
   feedback: "ログインすると、開発者にフィードバックを届けられます。",

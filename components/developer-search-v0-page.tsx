@@ -8,10 +8,10 @@ import { DeveloperGachaModal } from "@/components/developer-gacha-modal";
 import { DeveloperListCard } from "@/components/developer-list-card";
 import { PlayerShell } from "@/components/player-shell";
 import { useRequireAuth } from "@/hooks/use-require-auth";
+import { CREATOR_ACTIVITY_CATEGORY_FILTERS } from "@/lib/creator-activity-categories";
 import { buildPublicDeveloperSearchResults } from "@/lib/discovery-public-developers";
 import {
   DEVELOPER_SEARCH_TOTAL,
-  developerGenreFilters,
   developerSearchResults,
   developerSearchSortOptions,
   filterDevelopers,
@@ -23,12 +23,16 @@ import {
   type DeveloperSearchSortOrder,
 } from "@/lib/developer-search-v0-mock-data";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
+import {
+  isProjectCategoryId,
+  type ProjectCategoryId,
+} from "@/lib/project-categories";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 import { countDeveloperFollowersBatchInDb } from "@/lib/supabase/developer-follows-db";
 import { isGamePublic } from "@/lib/project-visibility";
 import { Dices } from "lucide-react";
 
-function parseGenres(param: string | null): string[] {
+function parseCsvParam(param: string | null): string[] {
   if (!param?.trim()) {
     return [];
   }
@@ -38,19 +42,28 @@ function parseGenres(param: string | null): string[] {
     .filter(Boolean);
 }
 
+/** Legacy genre chips from `?genre=` (back-compat only). */
+function parseGenres(param: string | null): string[] {
+  return parseCsvParam(param);
+}
+
+function parseActivityCategories(param: string | null): ProjectCategoryId[] {
+  return parseCsvParam(param).filter(isProjectCategoryId);
+}
+
 function buildCreatorsSearchUrl(options: {
   query?: string;
   sort?: DeveloperSearchSortId;
   order?: DeveloperSearchSortOrder;
   newOnly?: boolean;
-  genres?: string[];
+  categories?: ProjectCategoryId[];
 }): string {
   const params = new URLSearchParams();
   const query = options.query?.trim() ?? "";
   const sort = options.sort ?? "recommended";
   const order = options.order ?? "desc";
   const newOnly = options.newOnly ?? false;
-  const genres = options.genres ?? [];
+  const categories = options.categories ?? [];
 
   if (query) {
     params.set("q", query);
@@ -64,8 +77,8 @@ function buildCreatorsSearchUrl(options: {
   if (newOnly) {
     params.set("new", "1");
   }
-  if (genres.length > 0) {
-    params.set("genre", genres.join(","));
+  if (categories.length > 0) {
+    params.set("category", categories.join(","));
   }
 
   const qs = params.toString();
@@ -90,11 +103,14 @@ function DeveloperSearchContent() {
   const sortFromUrl = parseDeveloperSort(searchParams.get("sort"));
   const orderFromUrl = parseDeveloperSortOrder(searchParams.get("order"));
   const newOnlyFromUrl = searchParams.get("new") === "1";
-  const genresFromUrl = parseGenres(searchParams.get("genre"));
+  const categoryParam = searchParams.get("category");
   const genreParam = searchParams.get("genre");
+  const categoriesFromUrl = parseActivityCategories(categoryParam);
+  const genresFromUrl = parseGenres(genreParam);
 
   const [query, setQuery] = useState(queryFromUrl);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>(genresFromUrl);
+  const [selectedCategories, setSelectedCategories] =
+    useState<ProjectCategoryId[]>(categoriesFromUrl);
   const [newOnly, setNewOnly] = useState(newOnlyFromUrl);
   const [gachaOpen, setGachaOpen] = useState(false);
   const [gachaPick, setGachaPick] = useState<DeveloperSearchResult | null>(null);
@@ -181,9 +197,9 @@ function DeveloperSearchContent() {
 
   useEffect(() => {
     setQuery(queryFromUrl);
-    setSelectedGenres(parseGenres(genreParam));
+    setSelectedCategories(parseActivityCategories(categoryParam));
     setNewOnly(newOnlyFromUrl);
-  }, [genreParam, newOnlyFromUrl, queryFromUrl]);
+  }, [categoryParam, newOnlyFromUrl, queryFromUrl]);
 
   const handleFollow = useCallback(
     (devId: string) => {
@@ -208,13 +224,13 @@ function DeveloperSearchContent() {
           sort: sortFromUrl,
           order: orderFromUrl,
           newOnly: newOnlyFromUrl,
-          genres: genresFromUrl,
+          categories: categoriesFromUrl,
         }),
         { variant: "follow" },
       );
     },
     [
-      genresFromUrl,
+      categoriesFromUrl,
       hideV0Mock,
       newOnlyFromUrl,
       orderFromUrl,
@@ -226,10 +242,23 @@ function DeveloperSearchContent() {
   );
 
   const results = useMemo(() => {
-    const filtered = filterDevelopers(queryFromUrl, genresFromUrl, catalog);
+    const filtered = filterDevelopers(
+      queryFromUrl,
+      categoriesFromUrl.length > 0 ? [] : genresFromUrl,
+      catalog,
+      categoriesFromUrl,
+    );
     const scoped = newOnlyFromUrl ? filtered.filter((dev) => dev.isNew) : filtered;
     return sortDevelopers(scoped, sortFromUrl, orderFromUrl);
-  }, [catalog, genresFromUrl, newOnlyFromUrl, orderFromUrl, queryFromUrl, sortFromUrl]);
+  }, [
+    catalog,
+    categoriesFromUrl,
+    genresFromUrl,
+    newOnlyFromUrl,
+    orderFromUrl,
+    queryFromUrl,
+    sortFromUrl,
+  ]);
 
   const totalLabel = hideV0Mock ? String(catalog.length) : String(DEVELOPER_SEARCH_TOTAL);
 
@@ -248,7 +277,7 @@ function DeveloperSearchContent() {
         sort: sortFromUrl,
         order: orderFromUrl,
         newOnly: newOnlyFromUrl,
-        genres: selectedGenres,
+        categories: selectedCategories,
       }),
     );
   };
@@ -261,36 +290,36 @@ function DeveloperSearchContent() {
         sort: sortFromUrl,
         order: orderFromUrl,
         newOnly: checked,
-        genres: genresFromUrl,
+        categories: categoriesFromUrl,
       }),
     );
   };
 
-  const toggleGenre = (genre: string) => {
-    const nextGenres = selectedGenres.includes(genre)
-      ? selectedGenres.filter((value) => value !== genre)
-      : [...selectedGenres, genre];
-    setSelectedGenres(nextGenres);
+  const toggleCategory = (category: ProjectCategoryId) => {
+    const nextCategories = selectedCategories.includes(category)
+      ? selectedCategories.filter((value) => value !== category)
+      : [...selectedCategories, category];
+    setSelectedCategories(nextCategories);
     router.push(
       buildCreatorsSearchUrl({
         query: queryFromUrl,
         sort: sortFromUrl,
         order: orderFromUrl,
         newOnly: newOnlyFromUrl,
-        genres: nextGenres,
+        categories: nextCategories,
       }),
     );
   };
 
-  const clearGenreFilters = () => {
-    setSelectedGenres([]);
+  const clearCategoryFilters = () => {
+    setSelectedCategories([]);
     router.push(
       buildCreatorsSearchUrl({
         query: queryFromUrl,
         sort: sortFromUrl,
         order: orderFromUrl,
         newOnly: newOnlyFromUrl,
-        genres: [],
+        categories: [],
       }),
     );
   };
@@ -303,7 +332,7 @@ function DeveloperSearchContent() {
         sort: sortFromUrl,
         order: nextOrder,
         newOnly: newOnlyFromUrl,
-        genres: genresFromUrl,
+        categories: categoriesFromUrl,
       }),
     );
   };
@@ -339,8 +368,8 @@ function DeveloperSearchContent() {
       <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
         <div className="min-w-0 flex-1 grow">
           <header>
-            <h1 className="text-2xl font-bold text-white sm:text-3xl">開発者を探す</h1>
-            <p className="mt-2 text-sm text-zinc-400">開発者名で検索できます</p>
+            <h1 className="text-2xl font-bold text-white sm:text-3xl">クリエイターを探す</h1>
+            <p className="mt-2 text-sm text-zinc-400">クリエイター名で検索できます</p>
           </header>
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -349,7 +378,7 @@ function DeveloperSearchContent() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && applySearch()}
-              placeholder="開発者名を入力して検索"
+              placeholder="クリエイター名を入力して検索"
               className="min-w-0 flex-1 rounded-xl border border-zinc-800 bg-zinc-900/80 px-4 py-2.5 text-sm text-zinc-200 focus:border-violet-500/40 focus:outline-none"
             />
             <button
@@ -383,7 +412,7 @@ function DeveloperSearchContent() {
                     sort: option.id,
                     order: orderFromUrl,
                     newOnly: newOnlyFromUrl,
-                    genres: genresFromUrl,
+                    categories: categoriesFromUrl,
                   })}
                   className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
                     sortFromUrl === option.id
@@ -419,7 +448,7 @@ function DeveloperSearchContent() {
             ))}
             {results.length === 0 && (
               <li className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center text-sm text-zinc-500">
-                条件に合う開発者がいません。絞り込みを変更してください。
+                条件に合うクリエイターがいません。絞り込みを変更してください。
               </li>
             )}
           </ul>
@@ -429,13 +458,13 @@ function DeveloperSearchContent() {
           <section className="sticky top-24 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-white">絞り込み</h2>
-              {selectedGenres.length > 0 && (
+              {selectedCategories.length > 0 && (
                 <button
                   type="button"
-                  onClick={clearGenreFilters}
+                  onClick={clearCategoryFilters}
                   className="text-xs text-violet-400 transition-colors hover:text-violet-300"
                 >
-                  ジャンルをクリア
+                  カテゴリをクリア
                 </button>
               )}
             </div>
@@ -447,31 +476,31 @@ function DeveloperSearchContent() {
                 onChange={(e) => toggleNewOnly(e.target.checked)}
                 className="size-4 rounded border-zinc-600 bg-zinc-900 text-violet-500"
               />
-              🌱 新規開発者のみ
+              🌱 新規クリエイターのみ
             </label>
 
             <fieldset className="mt-5">
-              <legend className="text-xs font-medium text-zinc-500">ジャンル</legend>
+              <legend className="text-xs font-medium text-zinc-500">活動カテゴリ</legend>
               <div className="mt-2 max-h-48 space-y-2 overflow-y-auto pr-1">
-                {developerGenreFilters.map((genre) => (
+                {CREATOR_ACTIVITY_CATEGORY_FILTERS.map((category) => (
                   <label
-                    key={genre}
+                    key={category.id}
                     className="flex cursor-pointer items-center gap-2 text-sm text-zinc-400"
                   >
                     <input
                       type="checkbox"
-                      checked={selectedGenres.includes(genre)}
-                      onChange={() => toggleGenre(genre)}
+                      checked={selectedCategories.includes(category.id)}
+                      onChange={() => toggleCategory(category.id)}
                       className="size-4 rounded border-zinc-600 bg-zinc-900 text-violet-500 focus:ring-violet-500/40"
                     />
-                    {genre}
+                    {category.label}
                   </label>
                 ))}
               </div>
             </fieldset>
 
             <p className="mt-4 text-xs leading-relaxed text-zinc-600">
-              開発者名で検索し、登録ジャンルで絞り込めます。ガチャは表示中の開発者から1人をランダム表示します。
+              クリエイター名で検索し、活動カテゴリで絞り込めます。
             </p>
           </section>
         </aside>

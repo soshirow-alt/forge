@@ -28,7 +28,17 @@ export type DeveloperSearchResult = {
   completed: number;
   /** null = still loading (do not flash as 0). */
   followers: number | null;
+  /**
+   * Display chips (capability / category). Prefer capabilityTags when present.
+   * @deprecated for filtering — use activityCategories
+   */
   genres: string[];
+  /** Formal project categories this creator publishes in. */
+  activityCategories?: import("@/lib/project-categories").ProjectCategoryId[];
+  /** Capability / skill-like chips for cards. */
+  capabilityTags?: string[];
+  /** Game genres only (secondary, when creator has games). */
+  gameGenres?: string[];
   featuredWorks?: DeveloperFeaturedWork[];
   /** @deprecated use featuredWorks */
   gameThumbs: string[];
@@ -136,11 +146,21 @@ export function filterDevelopers(
   query: string,
   genres: string[] = [],
   source: DeveloperSearchResult[] = developerSearchResults,
+  activityCategories: string[] = [],
 ): DeveloperSearchResult[] {
   let list = source;
 
-  if (genres.length > 0) {
-    list = list.filter((dev) => dev.genres.some((genre) => genres.includes(genre)));
+  if (activityCategories.length > 0) {
+    list = list.filter((dev) =>
+      (dev.activityCategories ?? []).some((id) =>
+        activityCategories.includes(id),
+      ),
+    );
+  } else if (genres.length > 0) {
+    // Legacy mock path: genre chips
+    list = list.filter((dev) =>
+      (dev.gameGenres ?? dev.genres).some((genre) => genres.includes(genre)),
+    );
   }
 
   const q = query.trim().toLowerCase();

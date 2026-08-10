@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-08-10 — Category-neutrality + UI 最終修正（Preview）
+
+- **横断** — game-only 前提を監査。nav/search/detail/creator/messages をカテゴリ中立化（artifact は `.agent/runtime/` のみ）
+- **クリエイター検索** — 「クリエイターを探す」+ 活動カテゴリ filter（game/audio/asset/dev-tool/service-app）。genre 単独軸を廃止
+- **プロフィール** — `activity_tags`（制作領域）の編集・保存。カードは活動カテゴリ / capability 優先
+- **作品詳細** — `project-detail-category-chrome` で non-game の CTA/情報/FB 文言を分岐（プレイ用語を出さない）
+- **Messages** — `(player)` 二重 PlayerShell 解消。pane header 密度調整。Staging fixture `forge-msg-fixture-v1`（Lumen Audio × BGM）
+- **Game Home** — featured carousel を main 端まで full-bleed（inner max-width clip 解消）
+
 ## 2026-08-10 — Preview UI/UX 最終修正（Production前）
 
 - **作品詳細** — main の player actions は「更新を追う / あとで遊ぶ / 開発者をフォロー」のみ。制作・利用 CTA は右サイド「制作・利用について」（開発者 card 直下）。「あなたとの関わり」は empty でも維持

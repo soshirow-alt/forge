@@ -204,7 +204,7 @@ export function PlayerIaGameHomePage({
   return (
     <div className="flex flex-col gap-10">
       {empty ? (
-        <div className="rounded-xl border border-dashed border-zinc-800 bg-zinc-900/30 px-6 py-12 text-center">
+        <div className="mx-auto w-full max-w-[1400px] rounded-xl border border-dashed border-zinc-800 bg-zinc-900/30 px-6 py-12 text-center">
           <p className="text-sm text-zinc-400">
             まだ表示できるゲームがありません。
           </p>
@@ -218,35 +218,87 @@ export function PlayerIaGameHomePage({
       ) : null}
 
       {home.featuredHero.length > 0 ? (
-        <FeaturedGameCarousel
-          slides={home.featuredHero}
-          thumbnails={carouselThumbnails}
-          title="注目のゲーム"
-          density="player-ia"
-          seeAllHref={GAME_SEARCH_HREF}
-        />
+        <div className="-mx-4 w-[calc(100%+2rem)] sm:-mx-6 sm:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
+          <FeaturedGameCarousel
+            slides={home.featuredHero}
+            thumbnails={carouselThumbnails}
+            title="注目のゲーム"
+            density="player-ia"
+            seeAllHref={GAME_SEARCH_HREF}
+          />
+        </div>
       ) : null}
 
-      {home.meaningfulUpdates.length > 0 ? (
-        <section aria-labelledby="game-home-updates">
-          <SectionHeading
-            title="最近アップデートされたゲーム"
-            headingId="game-home-updates"
-            seeAllHref="/search?category=game&sort=updated"
-          />
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {home.meaningfulUpdates.map((item) => {
-              const versionLabel = formatPlayerIaVersionLabel(
-                item.publishedVersion,
-              );
-              return (
+      <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-10">
+        {home.meaningfulUpdates.length > 0 ? (
+          <section aria-labelledby="game-home-updates">
+            <SectionHeading
+              title="最近アップデートされたゲーム"
+              headingId="game-home-updates"
+              seeAllHref="/search?category=game&sort=updated"
+            />
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              {home.meaningfulUpdates.map((item) => {
+                const versionLabel = formatPlayerIaVersionLabel(
+                  item.publishedVersion,
+                );
+                return (
+                  <Link
+                    key={item.projectId}
+                    href={
+                      item.updateKind === "devlog"
+                        ? buildGameDetailTabHref(item.projectId, "devlog")
+                        : gameDetailHref(item.projectId)
+                    }
+                    className="group overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 transition-colors hover:border-violet-500/40"
+                  >
+                    <div className="relative aspect-[16/10] overflow-hidden">
+                      <ProjectThumbnail
+                        projectId={item.projectId}
+                        title={item.title}
+                        variant="card"
+                        className="!max-w-none rounded-none"
+                        sizes="(min-width: 1024px) 22vw, 45vw"
+                      />
+                    </div>
+                    <div className="p-3.5">
+                      <span className="inline-flex rounded-md bg-violet-500/15 px-2 py-0.5 text-[11px] font-semibold text-violet-300">
+                        {item.updateLabel}
+                      </span>
+                      <h3 className="mt-2 truncate text-sm font-bold text-white group-hover:text-violet-200">
+                        {item.title}
+                      </h3>
+                      <p className="mt-1 line-clamp-2 text-xs text-zinc-500">
+                        {truncatePlayerIaText(item.updateSummary, 80)}
+                      </p>
+                      <div className="mt-2.5 flex flex-wrap gap-2 text-[11px] text-zinc-500">
+                        {versionLabel ? <span>{versionLabel}</span> : null}
+                        <span>
+                          {formatPlayerIaRelativeTime(item.meaningfulUpdateAt, {
+                            nowMs: displayNowMs,
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
+
+        {home.newestProjects.length > 0 ? (
+          <section aria-labelledby="game-home-newest">
+            <SectionHeading
+              title="新着ゲーム"
+              headingId="game-home-newest"
+              seeAllHref="/search?category=game&sort=newest"
+            />
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              {home.newestProjects.map((item) => (
                 <Link
                   key={item.projectId}
-                  href={
-                    item.updateKind === "devlog"
-                      ? buildGameDetailTabHref(item.projectId, "devlog")
-                      : gameDetailHref(item.projectId)
-                  }
+                  href={gameDetailHref(item.projectId)}
                   className="group overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 transition-colors hover:border-violet-500/40"
                 >
                   <div className="relative aspect-[16/10] overflow-hidden">
@@ -259,75 +311,27 @@ export function PlayerIaGameHomePage({
                     />
                   </div>
                   <div className="p-3.5">
-                    <span className="inline-flex rounded-md bg-violet-500/15 px-2 py-0.5 text-[11px] font-semibold text-violet-300">
-                      {item.updateLabel}
-                    </span>
-                    <h3 className="mt-2 truncate text-sm font-bold text-white group-hover:text-violet-200">
+                    <h3 className="truncate text-sm font-bold text-white group-hover:text-violet-200">
                       {item.title}
                     </h3>
                     <p className="mt-1 line-clamp-2 text-xs text-zinc-500">
-                      {truncatePlayerIaText(item.updateSummary, 80)}
+                      {truncatePlayerIaText(item.description, 80)}
                     </p>
-                    <div className="mt-2.5 flex flex-wrap gap-2 text-[11px] text-zinc-500">
-                      {versionLabel ? <span>{versionLabel}</span> : null}
-                      <span>
-                        {formatPlayerIaRelativeTime(item.meaningfulUpdateAt, {
+                    <div className="mt-3 flex items-center justify-between gap-2 text-[11px] text-zinc-500">
+                      <span className="truncate">{item.creator}</span>
+                      <span className="shrink-0">
+                        {formatPlayerIaRelativeTime(item.firstPublishedAt, {
                           nowMs: displayNowMs,
                         })}
                       </span>
                     </div>
                   </div>
                 </Link>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
-
-      {home.newestProjects.length > 0 ? (
-        <section aria-labelledby="game-home-newest">
-          <SectionHeading
-            title="新着ゲーム"
-            headingId="game-home-newest"
-            seeAllHref="/search?category=game&sort=newest"
-          />
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {home.newestProjects.map((item) => (
-              <Link
-                key={item.projectId}
-                href={gameDetailHref(item.projectId)}
-                className="group overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 transition-colors hover:border-violet-500/40"
-              >
-                <div className="relative aspect-[16/10] overflow-hidden">
-                  <ProjectThumbnail
-                    projectId={item.projectId}
-                    title={item.title}
-                    variant="card"
-                    className="!max-w-none rounded-none"
-                    sizes="(min-width: 1024px) 22vw, 45vw"
-                  />
-                </div>
-                <div className="p-3.5">
-                  <h3 className="truncate text-sm font-bold text-white group-hover:text-violet-200">
-                    {item.title}
-                  </h3>
-                  <p className="mt-1 line-clamp-2 text-xs text-zinc-500">
-                    {truncatePlayerIaText(item.description, 80)}
-                  </p>
-                  <div className="mt-3 flex items-center justify-between gap-2 text-[11px] text-zinc-500">
-                    <span className="truncate">{item.creator}</span>
-                    <span className="shrink-0">
-                      {formatPlayerIaRelativeTime(item.firstPublishedAt, {
-                        nowMs: displayNowMs,
-                      })}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      ) : null}
+              ))}
+            </div>
+          </section>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -6,7 +6,20 @@ import { developerProfileHref } from "@/lib/developer-search-v0-mock-data";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { ProjectThumbnail } from "@/components/project-thumbnail";
 import { PublicXLink } from "@/components/public-x-link";
+import { PROJECT_CATEGORY_SELECTOR_LABELS } from "@/lib/project-categories";
 import { Sprout, UserPlus } from "lucide-react";
+
+function primaryChipLabels(dev: DeveloperSearchResult): string[] {
+  if (dev.activityCategories && dev.activityCategories.length > 0) {
+    return dev.activityCategories.map(
+      (id) => PROJECT_CATEGORY_SELECTOR_LABELS[id],
+    );
+  }
+  if (dev.capabilityTags && dev.capabilityTags.length > 0) {
+    return dev.capabilityTags;
+  }
+  return dev.genres;
+}
 
 export function DeveloperListCard({
   dev,
@@ -35,6 +48,13 @@ export function DeveloperListCard({
     .slice(0, 3);
   const publicGameCount =
     typeof dev.publicGameCount === "number" ? dev.publicGameCount : null;
+  const primaryChips = primaryChipLabels(dev).slice(0, 4);
+  const showGameGenreChips =
+    Boolean(dev.gameGenres && dev.gameGenres.length > 0) &&
+    (dev.activityCategories ?? []).includes("game");
+  const secondaryGameGenres = showGameGenreChips
+    ? (dev.gameGenres ?? []).slice(0, 2)
+    : [];
 
   return (
     <Link
@@ -96,12 +116,20 @@ export function DeveloperListCard({
               </p>
             ) : null}
 
-            {dev.genres.length > 0 ? (
+            {primaryChips.length > 0 || secondaryGameGenres.length > 0 ? (
               <div className="mt-2 flex flex-wrap gap-1.5">
-                {dev.genres.slice(0, 4).map((genre) => (
+                {primaryChips.map((label) => (
                   <span
-                    key={genre}
+                    key={label}
                     className="rounded-full border border-zinc-700/80 bg-zinc-950/50 px-2 py-0.5 text-[10px] text-zinc-500"
+                  >
+                    {label}
+                  </span>
+                ))}
+                {secondaryGameGenres.map((genre) => (
+                  <span
+                    key={`genre-${genre}`}
+                    className="rounded-full border border-zinc-800/80 bg-transparent px-2 py-0.5 text-[9px] text-zinc-600"
                   >
                     {genre}
                   </span>
@@ -123,6 +151,7 @@ export function DeveloperListCard({
             </p>
           </div>
         </div>
+
 
         {/* Right: representative works (desktop); stacked under on mobile */}
         {featured.length > 0 ? (

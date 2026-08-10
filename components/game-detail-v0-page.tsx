@@ -77,6 +77,7 @@ import {
 import { useProjectOverviewV0 } from "@/hooks/use-project-overview-v0";
 import { formatDevlogPublishedAt } from "@/hooks/use-game-devlogs-v0";
 import { getPrimaryPlayCtaLabel } from "@/lib/game-player-display";
+import { resolveProjectDetailCategoryChrome } from "@/lib/project-detail-category-chrome";
 import { useProjectPublicStats } from "@/hooks/use-project-public-stats";
 import { resolveGameDetailPlayerMeta } from "@/lib/game-detail-player-meta";
 import { resolveProjectGenres } from "@/lib/project-genres";
@@ -331,6 +332,14 @@ function GameDetailV0PageBody({
     [externalLinkGame, submittedGame],
   );
   const playSourceGame = externalLinkGame ?? submittedGame;
+  const categoryChrome = useMemo(
+    () =>
+      resolveProjectDetailCategoryChrome({
+        category: playSourceGame?.category ?? submittedGame?.category,
+        game: playSourceGame ?? submittedGame ?? null,
+      }),
+    [playSourceGame, submittedGame],
+  );
   const playDestinations = useMemo(
     () => resolvePlayDestinations(playSourceGame),
     [playSourceGame],
@@ -346,10 +355,15 @@ function GameDetailV0PageBody({
     () => resolvePrimaryPlayUrl(playSourceGame),
     [playSourceGame],
   );
-  const primaryPlayCtaLabel = useMemo(
-    () => (playSourceGame ? getPrimaryPlayCtaLabel(playSourceGame) : "プレイする"),
-    [playSourceGame],
-  );
+  const primaryPlayCtaLabel = useMemo(() => {
+    if (!playSourceGame) {
+      return categoryChrome.primaryCtaLabel;
+    }
+    if (categoryChrome.category === "game") {
+      return getPrimaryPlayCtaLabel(playSourceGame);
+    }
+    return categoryChrome.primaryCtaLabel;
+  }, [playSourceGame, categoryChrome]);
   const hasPlayDestination = Boolean(primaryPlayUrl);
   const playUnavailableOnPublic =
     hideV0Mock && isRealProject && !hasPlayDestination;
@@ -718,8 +732,8 @@ function GameDetailV0PageBody({
 
   const feedbackCtaLabel =
     hydrated && !isLoggedIn
-      ? "ログインしてフィードバックする"
-      : "プレイ後にフィードバックする";
+      ? categoryChrome.feedbackCtaLabelGuest
+      : categoryChrome.feedbackCtaLabelLoggedIn;
 
   const heroLeadText = game.lead.trim();
   const phaseDescription = playerMeta?.phaseDescription?.trim() ?? "";
@@ -740,6 +754,16 @@ function GameDetailV0PageBody({
         onPlayDestinationOpen={onPlayDestinationOpen}
         onFeedback={handleFeedback}
         feedbackCtaLabel={feedbackCtaLabel}
+        prototypeInfoCard={
+          categoryChrome.showGamePlayInfo
+            ? undefined
+            : categoryChrome.infoCard
+        }
+        primaryCtaLabel={
+          categoryChrome.category === "game"
+            ? undefined
+            : categoryChrome.primaryCtaLabel
+        }
       />
     ),
     [
@@ -754,6 +778,7 @@ function GameDetailV0PageBody({
       onPlayDestinationOpen,
       handleFeedback,
       feedbackCtaLabel,
+      categoryChrome,
     ],
   );
 
@@ -1010,7 +1035,7 @@ function GameDetailV0PageBody({
                 }`}
               >
                 <Bookmark className="size-3.5 sm:size-4" aria-hidden="true" />
-                {saved ? "保存済み" : "あとで遊ぶ"}
+                {saved ? categoryChrome.saveButtonLabelOn : categoryChrome.saveButtonLabel}
               </button>
               {showDeveloperFollow ? (
                 <button
@@ -1023,7 +1048,9 @@ function GameDetailV0PageBody({
                   }`}
                 >
                   <Heart className="size-3.5 sm:size-4" aria-hidden="true" />
-                  {realFollowing ? "開発者フォロー中" : "開発者をフォロー"}
+                  {realFollowing
+                    ? categoryChrome.followCreatorLabelOn
+                    : categoryChrome.followCreatorLabel}
                 </button>
               ) : null}
             </div>
@@ -1142,7 +1169,9 @@ function GameDetailV0PageBody({
                     : "border-zinc-700 text-zinc-300 hover:border-zinc-600"
                 }`}
               >
-                {realFollowing ? "開発者フォロー中" : "開発者をフォローする"}
+                {realFollowing
+                  ? categoryChrome.followCreatorLabelOn
+                  : categoryChrome.followCreatorLabel}
               </button>
             ) : null}
           </section>

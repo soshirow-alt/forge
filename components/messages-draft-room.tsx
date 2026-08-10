@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { PlayerShell } from "@/components/player-shell";
 import { useGames } from "@/components/games-provider";
 import type { CollabConsultationSummary } from "@/lib/collab/consultation-types";
 
@@ -105,42 +104,40 @@ export function MessagesDraftRoom({
   }
 
   return (
-    <PlayerShell activeNav="messages">
-      <div className="mx-auto max-w-3xl">
-        <Link href="/messages" className="text-sm text-violet-300">
-          ← メッセージ
-        </Link>
-        <h1 className="mt-4 text-2xl font-bold text-white">{displayName}</h1>
-        {projectTitle ? (
-          <p className="mt-1 text-sm text-zinc-500">作品: {projectTitle}</p>
-        ) : null}
-        {resolving ? (
-          <p className="mt-6 text-sm text-zinc-500">既存の会話を確認しています…</p>
-        ) : (
-          <div className="sticky bottom-3 mt-6 rounded-xl border border-zinc-700 bg-zinc-950 p-3">
-            <textarea
-              value={body}
-              onChange={(event) => setBody(event.target.value)}
-              maxLength={4000}
-              rows={4}
-              aria-label="メッセージ"
-              placeholder="メッセージを入力…"
-              className="w-full resize-y rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-white"
-            />
-            <div className="mt-2 flex justify-end">
-              <button
-                type="button"
-                disabled={!body.trim() || sending}
-                onClick={() => void send()}
-                className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-              >
-                {sending ? "送信中…" : "送信"}
-              </button>
-            </div>
+    <div className="mx-auto max-w-3xl">
+      <Link href="/messages" className="text-sm text-violet-300">
+        ← メッセージ
+      </Link>
+      <h1 className="mt-4 text-2xl font-bold text-white">{displayName}</h1>
+      {projectTitle ? (
+        <p className="mt-1 text-sm text-zinc-500">作品: {projectTitle}</p>
+      ) : null}
+      {resolving ? (
+        <p className="mt-6 text-sm text-zinc-500">既存の会話を確認しています…</p>
+      ) : (
+        <div className="sticky bottom-3 mt-6 rounded-xl border border-zinc-700 bg-zinc-950 p-3">
+          <textarea
+            value={body}
+            onChange={(event) => setBody(event.target.value)}
+            maxLength={4000}
+            rows={4}
+            aria-label="メッセージ"
+            placeholder="メッセージを入力…"
+            className="w-full resize-y rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-white"
+          />
+          <div className="mt-2 flex justify-end">
+            <button
+              type="button"
+              disabled={!body.trim() || sending}
+              onClick={() => void send()}
+              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              {sending ? "送信中…" : "送信"}
+            </button>
           </div>
-        )}
-        {error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}
-      </div>
-    </PlayerShell>
+        </div>
+      )}
+      {error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}
+    </div>
   );
 }

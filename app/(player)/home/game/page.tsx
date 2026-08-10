@@ -16,9 +16,5 @@ export default async function HomeGameCategoryPage() {
   const initialHome = await loadPlayerIaGameHome();
   const nowMs = createRequestNowMs();
 
-  return (
-    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-8 px-0">
-      <PlayerIaGameHomePage initialHome={initialHome} nowMs={nowMs} />
-    </div>
-  );
+  return <PlayerIaGameHomePage initialHome={initialHome} nowMs={nowMs} />;
 }
