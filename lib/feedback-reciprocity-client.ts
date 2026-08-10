@@ -1,12 +1,12 @@
-/** Best-effort reciprocity side-effect after registered feedback succeeds. */
-export async function scheduleFeedbackReciprocity(projectId: string): Promise<void> {
+/** Best-effort outbox kick after registered feedback INSERT succeeds. */
+export async function scheduleFeedbackReciprocity(_projectId?: string): Promise<void> {
   try {
     await fetch("/api/feedback/reciprocity", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ projectId }),
+      body: "{}",
     });
   } catch {
-    // Feedback already saved; reciprocity/email must not surface as submit failure.
+    // Feedback already saved; email kick must not surface as submit failure.
   }
 }

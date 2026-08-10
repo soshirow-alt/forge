@@ -113,6 +113,8 @@ AS $$
   FROM public.platform_announcements a
   WHERE a.status = 'published'
     AND a.slug = p_slug
+    -- Detail may include expired, but never scheduled-future rows.
+    AND coalesce(a.starts_at, a.published_at, '-infinity'::timestamptz) <= now()
   LIMIT 1;
 $$;
 
@@ -157,6 +159,8 @@ AS $$
     ) AS is_active
   FROM public.platform_announcements a
   WHERE a.status = 'published'
+    -- Archive includes expired, excludes drafts and not-yet-started schedules.
+    AND coalesce(a.starts_at, a.published_at, '-infinity'::timestamptz) <= now()
   ORDER BY a.published_at DESC NULLS LAST
   LIMIT greatest(1, least(coalesce(p_limit, 50), 100))
   OFFSET greatest(0, coalesce(p_offset, 0));

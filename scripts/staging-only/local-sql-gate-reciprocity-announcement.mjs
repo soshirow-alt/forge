@@ -126,6 +126,21 @@ BEGIN
   RETURN v_id;
 END;
 $$;
+CREATE TABLE public.project_feedback (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  project_id uuid NOT NULL,
+  version_key text NOT NULL DEFAULT '0.1',
+  good_points text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE public.project_voice_responses (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  project_id uuid NOT NULL,
+  version_key text NOT NULL DEFAULT '0.1',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 CREATE TABLE public.platform_announcements (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   slug text NOT NULL UNIQUE,
@@ -141,10 +156,7 @@ CREATE TABLE public.platform_announcements (
   CONSTRAINT platform_announcements_published_at_check
     CHECK (status = 'draft' OR published_at IS NOT NULL)
 );
-GRANT SELECT, INSERT, UPDATE ON public.user_notifications TO authenticated, service_role;
-GRANT SELECT, INSERT, UPDATE ON public.transactional_email_outbox TO authenticated, service_role;
-GRANT SELECT ON public.projects, public.developer_profiles, public.user_blocks, auth.users TO authenticated, service_role;
-GRANT SELECT, INSERT, UPDATE ON public.platform_announcements TO authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO authenticated, service_role;
 `;
 
 async function main() {
@@ -155,10 +167,7 @@ async function main() {
   await execSql(
     db,
     "grants after migrations",
-    `
-GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO authenticated, service_role;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated, service_role;
-`,
+    `GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO authenticated, service_role;`,
   );
 
   const actor = "11111111-1111-4111-8111-111111111111";
@@ -178,15 +187,9 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated, service_
   `);
 
   await db.exec(`
-    SET request.jwt.claim.sub = '${actor}';
-    SET request.jwt.claims = '{"sub":"${actor}","is_anonymous":false}';
-    SET ROLE authenticated;
+    INSERT INTO public.project_feedback (user_id, project_id, good_points)
+    VALUES ('${actor}', '${projectB}', 'nice');
   `);
-  const first = await one(
-    db,
-    `SELECT public.consider_feedback_reciprocity('${projectB}')::text AS id`,
-  );
-  assert(Boolean(first.id), "first reciprocity missing");
   const counts1 = await one(
     db,
     `SELECT
@@ -195,52 +198,63 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated, service_
        (SELECT count(*)::int FROM public.transactional_email_outbox
         WHERE user_id = '${owner}' AND template_key = 'feedback_reciprocity') AS e`,
   );
-  assert(Number(counts1.n) === 1 && Number(counts1.e) === 1, "coalesce/email first");
+  assert(Number(counts1.n) === 1 && Number(counts1.e) === 1, "first insert fires once");
 
-  const second = await one(
-    db,
-    `SELECT public.consider_feedback_reciprocity('${projectB}')::text AS id`,
-  );
-  assert(second.id === first.id, "open prompt must coalesce");
+  await db.exec(`
+    INSERT INTO public.project_voice_responses (user_id, project_id)
+    VALUES ('${actor}', '${projectB}');
+  `);
   const counts2 = await one(
     db,
-    `SELECT count(*)::int AS e FROM public.transactional_email_outbox
-     WHERE user_id = '${owner}' AND template_key = 'feedback_reciprocity'`,
+    `SELECT
+       (SELECT count(*)::int FROM public.user_notifications
+        WHERE user_id = '${owner}' AND type = 'feedback_reciprocity') AS n,
+       (SELECT count(*)::int FROM public.transactional_email_outbox
+        WHERE user_id = '${owner}' AND template_key = 'feedback_reciprocity') AS e`,
   );
-  assert(Number(counts2.e) === 1, "no duplicate email while open");
+  assert(Number(counts2.n) === 1 && Number(counts2.e) === 1, "open prompt coalesces");
 
-  await db.exec(
-    `UPDATE public.user_notifications SET acknowledged_at = now() WHERE id = '${first.id}'`,
-  );
-  const third = await one(
+  await db.exec(`
+    UPDATE public.user_notifications
+    SET acknowledged_at = now()
+    WHERE user_id = '${owner}' AND type = 'feedback_reciprocity';
+  `);
+  await db.exec(`
+    INSERT INTO public.project_feedback (user_id, project_id, version_key, good_points)
+    VALUES ('${actor}', '${projectB}', '0.2', 'again');
+  `);
+  const counts3 = await one(
     db,
-    `SELECT public.consider_feedback_reciprocity('${projectB}')::text AS id`,
+    `SELECT
+       (SELECT count(*)::int FROM public.user_notifications
+        WHERE user_id = '${owner}' AND type = 'feedback_reciprocity') AS n,
+       (SELECT count(*)::int FROM public.transactional_email_outbox
+        WHERE user_id = '${owner}' AND template_key = 'feedback_reciprocity') AS e`,
   );
-  assert(third.id !== first.id, "after ack may create new notification");
-  const emailAfterAck = await one(
-    db,
-    `SELECT count(*)::int AS e FROM public.transactional_email_outbox
-     WHERE user_id = '${owner}' AND template_key = 'feedback_reciprocity'`,
-  );
-  assert(Number(emailAfterAck.e) === 2, "new email after ack");
+  assert(Number(counts3.n) === 2 && Number(counts3.e) === 2, "after ack creates new");
 
   await db.exec(`
     INSERT INTO public.platform_announcements (slug, title, body, importance, status, published_at, starts_at, ends_at)
     VALUES
       ('active', 'Active', 'body', 'important', 'published', now(), now() - interval '1 hour', now() + interval '1 day'),
       ('draft', 'Draft', 'body', 'normal', 'draft', NULL, NULL, NULL),
+      ('future', 'Future', 'body', 'normal', 'published', now() + interval '1 day', now() + interval '1 day', NULL),
       ('expired', 'Expired', 'body', 'normal', 'published', now() - interval '2 day', now() - interval '2 day', now() - interval '1 hour');
   `);
   const active = await one(
     db,
     `SELECT count(*)::int AS c FROM public.get_public_platform_announcements(20, 0)`,
   );
-  assert(Number(active.c) === 1, "home list must hide draft/expired");
+  assert(Number(active.c) === 1, "home list hides draft/future/expired");
   const archive = await one(
     db,
     `SELECT count(*)::int AS c FROM public.get_public_platform_announcement_archive(20, 0)`,
   );
-  assert(Number(archive.c) === 2, "archive includes expired published");
+  assert(Number(archive.c) === 2, "archive includes expired, excludes future");
+  const futureDetail = await db.query(
+    `SELECT count(*)::int AS c FROM public.get_public_platform_announcement_by_slug('future')`,
+  );
+  assert(Number(futureDetail.rows[0].c) === 0, "future slug detail hidden");
 
   console.log(JSON.stringify({ ok: true, reciprocity: true, announcements: true }, null, 2));
 }

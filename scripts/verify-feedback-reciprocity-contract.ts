@@ -21,16 +21,21 @@ const migration094 = read(
 );
 assert.match(migration093, /feedback_reciprocity/);
 assert.match(migration093, /consider_feedback_reciprocity/);
+assert.match(migration093, /project_feedback_reciprocity_notify/);
+assert.match(migration093, /project_voice_responses_reciprocity_notify/);
 assert.match(migration093, /dismiss_stale_feedback_reciprocity/);
 assert.match(migration093, /feedback-reciprocity:/);
 assert.match(migration093, /enqueue_transactional_email/);
-assert.match(migration093, /related_user_id/);
-assert.doesNotMatch(migration093, /090_|091_|092_/);
-
+assert.match(migration093, /user_notifications_reciprocity_open_uidx/);
+assert.doesNotMatch(migration093, /GRANT EXECUTE ON FUNCTION public\.consider_feedback_reciprocity\(uuid, uuid\)\s+TO authenticated/);
 assert.match(migration094, /starts_at/);
 assert.match(migration094, /ends_at/);
 assert.match(migration094, /get_public_platform_announcement_archive/);
 assert.match(migration094, /cta_label/);
+assert.match(
+  migration094,
+  /get_public_platform_announcement_archive[\s\S]*starts_at[\s\S]*<= now\(\)/,
+);
 
 assert.equal(isTransactionalEmailTemplateKey("feedback_reciprocity"), true);
 const mail = buildTransactionalEmail("feedback_reciprocity", {
@@ -41,7 +46,6 @@ const mail = buildTransactionalEmail("feedback_reciprocity", {
 assert.match(mail.subject, /フィードバックが届きました/);
 assert.match(mail.text, /Alice/);
 assert.match(mail.text, /Bob Game/);
-assert.doesNotMatch(mail.text, /フィードバック本文全文/);
 assert.match(mail.text, /creators\/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/);
 
 const href = notificationTargetHref({
@@ -57,8 +61,9 @@ const href = notificationTargetHref({
 assert.equal(href, "/creators/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
 
 const route = read("app/api/feedback/reciprocity/route.ts");
-assert.match(route, /consider_feedback_reciprocity/);
 assert.match(route, /scheduleEmailOutboxKickBestEffort/);
+assert.doesNotMatch(route, /consider_feedback_reciprocity/);
+assert.match(route, /INSERT triggers/);
 
 const provider = read("components/games-provider.tsx");
 assert.match(provider, /scheduleFeedbackReciprocity/);

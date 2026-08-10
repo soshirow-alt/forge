@@ -1,6 +1,6 @@
 -- 093: feedback reciprocity important notification + transactional email enqueue.
--- Does not edit 090–092. In-app notification remains authoritative.
--- Email enqueue failure never rolls back feedback or notification writes.
+-- Fired only from INSERT triggers on registered feedback tables (not a free-form client RPC).
+-- Does not edit 090–092. Email enqueue failure never rolls back feedback writes.
 
 BEGIN;
 
@@ -34,7 +34,7 @@ ALTER TABLE public.user_notifications
     )
   );
 
-CREATE INDEX IF NOT EXISTS user_notifications_reciprocity_open_idx
+CREATE UNIQUE INDEX IF NOT EXISTS user_notifications_reciprocity_open_uidx
   ON public.user_notifications (user_id, coalesce_key)
   WHERE type = 'feedback_reciprocity'
     AND requires_acknowledgement = true
@@ -101,9 +101,9 @@ REVOKE ALL ON FUNCTION public.dismiss_stale_feedback_reciprocity() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.dismiss_stale_feedback_reciprocity()
   TO authenticated;
 
--- Called after registered feedback on a public project (deep FB or voice).
--- Returns notification id when created/updated, NULL when skipped.
+-- Internal helper: actor must be supplied by trigger from the inserted feedback row.
 CREATE OR REPLACE FUNCTION public.consider_feedback_reciprocity(
+  p_actor_id uuid,
   p_target_project_id uuid
 )
 RETURNS uuid
@@ -112,7 +112,6 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_actor uuid := auth.uid();
   v_owner uuid;
   v_project_title text;
   v_project_visibility text;
@@ -122,12 +121,8 @@ DECLARE
   v_notification_id uuid;
   v_email text;
   v_message text;
-  v_was_new boolean := false;
 BEGIN
-  IF v_actor IS NULL OR NOT public.auth_is_registered_user() THEN
-    RETURN NULL;
-  END IF;
-  IF p_target_project_id IS NULL THEN
+  IF p_actor_id IS NULL OR p_target_project_id IS NULL THEN
     RETURN NULL;
   END IF;
 
@@ -141,17 +136,17 @@ BEGIN
   IF v_project_visibility IS DISTINCT FROM 'public' THEN
     RETURN NULL;
   END IF;
-  IF v_owner = v_actor THEN
+  IF v_owner = p_actor_id THEN
     RETURN NULL;
   END IF;
-  IF public.users_are_blocking(v_actor, v_owner) THEN
+  IF public.users_are_blocking(p_actor_id, v_owner) THEN
     RETURN NULL;
   END IF;
-  IF NOT public.actor_has_public_project(v_actor) THEN
+  IF NOT public.actor_has_public_project(p_actor_id) THEN
     RETURN NULL;
   END IF;
   IF NOT EXISTS (
-    SELECT 1 FROM public.developer_profiles dp WHERE dp.user_id = v_actor
+    SELECT 1 FROM public.developer_profiles dp WHERE dp.user_id = p_actor_id
   ) THEN
     RETURN NULL;
   END IF;
@@ -163,9 +158,11 @@ BEGIN
   )
   INTO v_actor_name
   FROM public.developer_profiles dp
-  WHERE dp.user_id = v_actor;
+  WHERE dp.user_id = p_actor_id;
 
-  v_coalesce := 'feedback-reciprocity:' || v_owner::text || ':' || v_actor::text;
+  v_coalesce := 'feedback-reciprocity:' || v_owner::text || ':' || p_actor_id::text;
+  PERFORM pg_advisory_xact_lock(hashtext(v_coalesce));
+
   v_message :=
     'お返しに「' || v_actor_name || '」さんにフィードバックしませんか？'
     || E'\n'
@@ -188,7 +185,7 @@ BEGIN
     SET
       message = v_message,
       project_id = p_target_project_id::text,
-      related_user_id = v_actor,
+      related_user_id = p_actor_id,
       created_at = now()
     WHERE id = v_existing_id;
     RETURN v_existing_id;
@@ -210,42 +207,99 @@ BEGIN
     v_message,
     true,
     v_coalesce,
-    v_actor
+    p_actor_id
   )
   RETURNING id INTO v_notification_id;
-  v_was_new := true;
 
-  IF v_was_new THEN
-    BEGIN
-      SELECT u.email INTO v_email
-      FROM auth.users u
-      WHERE u.id = v_owner;
-      IF nullif(trim(v_email), '') IS NOT NULL THEN
-        PERFORM public.enqueue_transactional_email(
-          v_owner,
-          v_email,
-          'feedback_reciprocity',
-          jsonb_build_object(
-            'notification_id', v_notification_id,
-            'actor_user_id', v_actor,
-            'actor_display_name', v_actor_name,
-            'receiving_project_id', p_target_project_id,
-            'receiving_project_title', v_project_title
-          ),
-          now()
-        );
-      END IF;
-    EXCEPTION WHEN OTHERS THEN
-      NULL;
-    END;
-  END IF;
+  BEGIN
+    SELECT u.email INTO v_email
+    FROM auth.users u
+    WHERE u.id = v_owner;
+    IF nullif(trim(v_email), '') IS NOT NULL THEN
+      PERFORM public.enqueue_transactional_email(
+        v_owner,
+        v_email,
+        'feedback_reciprocity',
+        jsonb_build_object(
+          'notification_id', v_notification_id,
+          'actor_user_id', p_actor_id,
+          'actor_display_name', v_actor_name,
+          'receiving_project_id', p_target_project_id,
+          'receiving_project_title', v_project_title
+        ),
+        now()
+      );
+    END IF;
+  EXCEPTION WHEN OTHERS THEN
+    NULL;
+  END;
 
   RETURN v_notification_id;
+EXCEPTION
+  WHEN unique_violation THEN
+    SELECT n.id INTO v_notification_id
+    FROM public.user_notifications n
+    WHERE n.user_id = v_owner
+      AND n.type = 'feedback_reciprocity'
+      AND n.coalesce_key = v_coalesce
+      AND n.requires_acknowledgement = true
+      AND n.acknowledged_at IS NULL
+    ORDER BY n.created_at DESC
+    LIMIT 1;
+    RETURN v_notification_id;
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.consider_feedback_reciprocity(uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.consider_feedback_reciprocity(uuid)
-  TO authenticated;
+REVOKE ALL ON FUNCTION public.consider_feedback_reciprocity(uuid, uuid)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.consider_feedback_reciprocity(uuid, uuid)
+  TO service_role;
+
+CREATE OR REPLACE FUNCTION public.trg_consider_feedback_reciprocity_from_feedback()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  PERFORM public.consider_feedback_reciprocity(NEW.user_id, NEW.project_id);
+  RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.trg_consider_feedback_reciprocity_from_voice()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  PERFORM public.consider_feedback_reciprocity(NEW.user_id, NEW.project_id);
+  RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS project_feedback_reciprocity_notify
+  ON public.project_feedback;
+CREATE TRIGGER project_feedback_reciprocity_notify
+  AFTER INSERT ON public.project_feedback
+  FOR EACH ROW
+  EXECUTE FUNCTION public.trg_consider_feedback_reciprocity_from_feedback();
+
+DROP TRIGGER IF EXISTS project_voice_responses_reciprocity_notify
+  ON public.project_voice_responses;
+CREATE TRIGGER project_voice_responses_reciprocity_notify
+  AFTER INSERT ON public.project_voice_responses
+  FOR EACH ROW
+  EXECUTE FUNCTION public.trg_consider_feedback_reciprocity_from_voice();
+
+REVOKE ALL ON FUNCTION public.trg_consider_feedback_reciprocity_from_feedback()
+  FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.trg_consider_feedback_reciprocity_from_voice()
+  FROM PUBLIC;
 
 COMMIT;
