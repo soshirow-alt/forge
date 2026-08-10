@@ -68,7 +68,7 @@ async function run() {
   );
 
   const button = read("components/usage-relation-button.tsx");
-  const list = read("components/consultations-list-page.tsx");
+  const list = read("components/usage-relations-page.tsx");
   assert.match(button, /\/api\/usage-relations\/request/);
   assert.doesNotMatch(button, /requestProjectUsageRelation/);
   assert.match(list, /\/api\/usage-relations\/decide/);

@@ -48,7 +48,7 @@ export function contentReportTargetLabel(type: ContentReportTargetType): string 
     case "developer":
       return "開発者";
     case "consultation_message":
-      return "相談メッセージ";
+      return "メッセージ";
     default:
       return "コンテンツ";
   }

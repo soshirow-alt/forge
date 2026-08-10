@@ -45,6 +45,7 @@ export type PlayerShellNavId =
   | "mypage"
   | "community"
   | "consultations"
+  | "messages"
   | "settings"
   | "notifications"
   | "guide";
@@ -94,7 +95,10 @@ function MypageSidebarGroup({ hideCommunity = false }: { hideCommunity?: boolean
   const isMypageProfile = pathname === "/mypage/profile";
   const isMypageHub = pathname === "/mypage";
   const isCommunity = pathname.startsWith("/mypage/community");
-  const isConsultations = pathname.startsWith("/consultations");
+  const isMessages =
+    pathname.startsWith("/messages") ||
+    pathname.startsWith("/consultations") ||
+    pathname.startsWith("/usage-relations");
 
   return (
     <div className="space-y-1">
@@ -116,10 +120,10 @@ function MypageSidebarGroup({ hideCommunity = false }: { hideCommunity?: boolean
         </RegisteredOnlyLink>
       ) : null}
       <RegisteredOnlyLink
-        href="/consultations"
-        className={`ml-4 block ${subNavLinkClass(isConsultations)}`}
+        href="/messages"
+        className={`ml-4 block ${subNavLinkClass(isMessages)}`}
       >
-        相談
+        メッセージ
       </RegisteredOnlyLink>
     </div>
   );

@@ -1,16 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 
 export function UsageRelationButton({
   focusProject,
   candidateProjects,
+  className,
+  fullWidth = false,
 }: {
   focusProject: { id: string; title: string };
   candidateProjects: { id: string; title: string }[];
+  className?: string;
+  fullWidth?: boolean;
 }) {
-  const { hydrated, isLoggedIn, goToLogin } = useRequireAuth();
+  const { hydrated, isLoggedIn } = useRequireAuth();
   const [open, setOpen] = useState(false);
   const [candidateId, setCandidateId] = useState(candidateProjects[0]?.id ?? "");
   const [direction, setDirection] = useState<"candidate_uses_focus" | "focus_uses_candidate">(
@@ -18,21 +22,28 @@ export function UsageRelationButton({
   );
   const [note, setNote] = useState("");
   const [status, setStatus] = useState("");
-  const selectedCandidateId = candidateProjects.some(
-    (project) => project.id === candidateId,
-  )
+
+  const eligible = isLoggedIn && candidateProjects.length > 0;
+  const disabledReason = useMemo(() => {
+    if (!hydrated) return "";
+    if (!isLoggedIn) return "ログインして作品を登録すると利用できます";
+    if (candidateProjects.length === 0) {
+      return "作品を登録しているユーザーが利用できます";
+    }
+    return "";
+  }, [hydrated, isLoggedIn, candidateProjects.length]);
+
+  const selectedCandidateId = candidateProjects.some((project) => project.id === candidateId)
     ? candidateId
     : (candidateProjects[0]?.id ?? "");
-  const candidate = candidateProjects.find(
-    (item) => item.id === selectedCandidateId,
-  );
+  const candidate = candidateProjects.find((item) => item.id === selectedCandidateId);
+
+  const baseClass =
+    className ??
+    "rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-300 hover:border-violet-500/50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-zinc-700";
 
   function start() {
-    if (!hydrated) return;
-    if (!isLoggedIn) {
-      goToLogin();
-      return;
-    }
+    if (!hydrated || !eligible) return;
     setOpen(true);
   }
 
@@ -62,7 +73,10 @@ export function UsageRelationButton({
       <button
         type="button"
         onClick={start}
-        className="rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-300 hover:border-violet-500/50"
+        disabled={!hydrated || !eligible}
+        title={disabledReason || undefined}
+        aria-disabled={!hydrated || !eligible}
+        className={`${baseClass} ${fullWidth ? "w-full" : ""}`}
       >
         使用関係を登録
       </button>
@@ -70,7 +84,7 @@ export function UsageRelationButton({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
           <div className="w-full max-w-lg rounded-2xl border border-zinc-700 bg-zinc-950 p-5">
             <h2 className="text-lg font-semibold text-white">使用関係を登録</h2>
-            {candidateProjects.length ? (
+            {candidate ? (
               <>
                 <label className="mt-4 block text-sm text-zinc-300">
                   関係する作品
@@ -96,7 +110,7 @@ export function UsageRelationButton({
                         : "border-zinc-800 text-zinc-400"
                     }`}
                   >
-                    <strong>{candidate?.title}</strong> → 使用 →{" "}
+                    <strong>{candidate.title}</strong> → 使用 →{" "}
                     <strong>{focusProject.title}</strong>
                   </button>
                   <button
@@ -109,7 +123,7 @@ export function UsageRelationButton({
                     }`}
                   >
                     <strong>{focusProject.title}</strong> → 使用 →{" "}
-                    <strong>{candidate?.title}</strong>
+                    <strong>{candidate.title}</strong>
                   </button>
                 </div>
                 <textarea
@@ -120,11 +134,7 @@ export function UsageRelationButton({
                   className="mt-4 w-full rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-sm text-white"
                 />
               </>
-            ) : (
-              <p className="mt-4 text-sm text-zinc-500">
-                登録には自分の作品が必要です。
-              </p>
-            )}
+            ) : null}
             {status ? <p className="mt-3 text-sm text-zinc-300">{status}</p> : null}
             <div className="mt-5 flex justify-end gap-2">
               <button

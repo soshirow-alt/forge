@@ -1026,24 +1026,6 @@ function GameDetailV0PageBody({
                   {realFollowing ? "開発者フォロー中" : "開発者をフォロー"}
                 </button>
               ) : null}
-              {developerUserId && user?.id !== developerUserId ? (
-                <StartConsultationButton
-                  counterpartId={developerUserId}
-                  counterpartProjectId={resolvedId}
-                  initiatorProjects={getOwnedProjects(user?.id).map((project) => ({
-                    id: project.id,
-                    title: project.title,
-                  }))}
-                />
-              ) : null}
-              {isRealProject && !isOwnerPreview ? (
-                <UsageRelationButton
-                  focusProject={{ id: resolvedId, title: game.title }}
-                  candidateProjects={getOwnedProjects(user?.id)
-                    .filter((project) => project.id !== resolvedId)
-                    .map((project) => ({ id: project.id, title: project.title }))}
-                />
-              ) : null}
             </div>
             {playUnavailableOnPublic || playUrlMissingVisible ? (
               <p className="text-xs text-zinc-500" role="status">
@@ -1164,6 +1146,33 @@ function GameDetailV0PageBody({
               </button>
             ) : null}
           </section>
+
+          {developerUserId && user?.id !== developerUserId ? (
+            <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
+              <h2 className="text-sm font-semibold text-white">制作・利用について</h2>
+              <p className="mt-1 text-xs text-zinc-500">
+                利用・コラボについてのやり取り
+              </p>
+              <div className="mt-4 space-y-2">
+                <StartConsultationButton
+                  counterpartId={developerUserId}
+                  counterpartProjectId={resolvedId}
+                  label="利用・コラボについて相談"
+                  fullWidth
+                />
+                {isRealProject && !isOwnerPreview ? (
+                  <UsageRelationButton
+                    focusProject={{ id: resolvedId, title: game.title }}
+                    candidateProjects={getOwnedProjects(user?.id)
+                      .filter((project) => project.id !== resolvedId)
+                      .map((project) => ({ id: project.id, title: project.title }))}
+                    fullWidth
+                    className="w-full rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-300 hover:border-zinc-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-zinc-700"
+                  />
+                ) : null}
+              </div>
+            </section>
+          ) : null}
 
           {/*
             Phase B+ 候補: 右サイドバーに「類似の作品」カードを置く余地。

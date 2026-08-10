@@ -16,6 +16,19 @@ export const PROJECT_CATEGORY_LABELS: Record<ProjectCategoryId, string> = {
   "service-app": "サービス・アプリ",
 };
 
+/** Search category selector display labels only (DB / formal labels unchanged). */
+export const PROJECT_CATEGORY_SELECTOR_LABELS: Record<
+  ProjectCategoryNavId,
+  string
+> = {
+  all: "すべて",
+  game: "ゲーム",
+  audio: "音楽・音声",
+  asset: "アセット",
+  "dev-tool": "開発ツール",
+  "service-app": "サービス",
+};
+
 export type ProjectCategoryNavId = ProjectCategoryId | "all";
 
 export type ProjectCategoryNavItem = {

@@ -1,6 +1,4 @@
-import { ConsultationThread } from "@/components/consultation-thread";
-import { PlayerShell } from "@/components/player-shell";
-import { RegisteredAccountGuard } from "@/components/registered-account-guard";
+import { redirect } from "next/navigation";
 
 export default async function ConsultationPage({
   params,
@@ -8,11 +6,5 @@ export default async function ConsultationPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return (
-    <RegisteredAccountGuard>
-      <PlayerShell activeNav="consultations">
-        <ConsultationThread consultationId={id} />
-      </PlayerShell>
-    </RegisteredAccountGuard>
-  );
+  redirect(`/messages/${id}`);
 }

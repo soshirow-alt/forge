@@ -83,10 +83,10 @@ export function notificationTargetHref(notification: Notification): string {
       notification.type === "consultation_message") &&
     notification.consultationId
   ) {
-    return `/consultations/${notification.consultationId}`;
+    return `/messages/${notification.consultationId}`;
   }
   if (notification.type === "usage_relation_request") {
-    return "/consultations#usage-relations";
+    return "/usage-relations#usage-relations";
   }
   if (
     notification.type === "usage_relation_accepted" ||
@@ -94,9 +94,9 @@ export function notificationTargetHref(notification: Notification): string {
   ) {
     // Deep-link so >20 pending result badges can still focus + ack the exact relation.
     if (notification.usageRelationId) {
-      return `/consultations#usage-relation-${notification.usageRelationId}`;
+      return `/usage-relations#usage-relation-${notification.usageRelationId}`;
     }
-    return "/consultations#usage-relations";
+    return "/usage-relations#usage-relations";
   }
   if (notification.type === "feedback_reciprocity" && notification.relatedUserId) {
     return `/creators/${notification.relatedUserId}`;

@@ -17,6 +17,8 @@
 
 Staging / Production とも read-only（SELECT / REST GET / read-only RPC / 件数・行特定）はいつでも可。**write は両環境ともオーナー手動**。
 
+Staging で MCP / Dashboard 適用が混在する場合、`list_migrations` だけでは不足し得る。**再適用判断は実 schema/object を正本に確認**する（`.cursor/rules/supabase-sql-safety.mdc` §G）。history 欠落だけを理由に 086–091 等を再適用しない。
+
 ## その他の自律範囲
 
 | 範囲 | 内容 |

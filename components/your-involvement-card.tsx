@@ -75,7 +75,7 @@ export function YourInvolvementCard({
   if (!hydrated) {
     return (
       <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-        <h2 className="text-sm font-semibold text-white">あなたの関わり</h2>
+        <h2 className="text-sm font-semibold text-white">あなたとの関わり</h2>
         <p className="mt-3 text-sm text-zinc-500">読み込み中...</p>
       </section>
     );
@@ -84,7 +84,7 @@ export function YourInvolvementCard({
   if (!isLoggedIn) {
     return (
       <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-        <h2 className="text-sm font-semibold text-white">あなたの関わり</h2>
+        <h2 className="text-sm font-semibold text-white">あなたとの関わり</h2>
         <p className="mt-3 text-sm leading-relaxed text-zinc-400">
           ログインすると、この作品との関わりが残ります。
         </p>
@@ -104,7 +104,7 @@ export function YourInvolvementCard({
   if (!loaded) {
     return (
       <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-        <h2 className="text-sm font-semibold text-white">あなたの関わり</h2>
+        <h2 className="text-sm font-semibold text-white">あなたとの関わり</h2>
         <p className="mt-3 text-sm text-zinc-500">読み込み中...</p>
       </section>
     );
@@ -115,7 +115,7 @@ export function YourInvolvementCard({
 
   return (
     <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-      <h2 className="text-sm font-semibold text-white">あなたの関わり</h2>
+      <h2 className="text-sm font-semibold text-white">あなたとの関わり</h2>
 
       {!hasInvolvement || !involvement ? (
         <p className="mt-3 text-sm leading-relaxed text-zinc-400">

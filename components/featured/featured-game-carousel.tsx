@@ -23,8 +23,8 @@ export type FeaturedThumbnailsState =
 
 /** Desktop card width — Production Discovery Home FeaturedGameCard */
 const CARD_WIDTH_PRODUCTION_PX = 1000;
-/** Tighter width for Player IA `/home/game` (same behavior, denser chrome). */
-const CARD_WIDTH_PLAYER_IA_PX = 760;
+/** Tighter nominal width for Player IA `/home/game`; actual width tracks viewport for wider peeks. */
+const CARD_WIDTH_PLAYER_IA_PX = 640;
 /** gap-3 = 12px between center card and side peeks */
 const CARD_GAP_PX = 12;
 const AUTOPLAY_MS = 5000;
@@ -135,7 +135,7 @@ export function FeaturedGameCarousel({
   const games = slides;
   const count = games.length;
   const circular = count >= 3;
-  const cardWidthPx =
+  const nominalCardWidthPx =
     density === "player-ia" ? CARD_WIDTH_PLAYER_IA_PX : CARD_WIDTH_PRODUCTION_PX;
   const compact = density === "player-ia";
 
@@ -143,7 +143,7 @@ export function FeaturedGameCarousel({
   const [selectedScreenshot, setSelectedScreenshot] = useState<number | null>(
     null,
   );
-  const [viewportWidth, setViewportWidth] = useState(cardWidthPx);
+  const [viewportWidth, setViewportWidth] = useState(nominalCardWidthPx);
   const [hovering, setHovering] = useState(false);
   const [keyboardFocusWithin, setKeyboardFocusWithin] = useState(false);
   const [tabHidden, setTabHidden] = useState(false);
@@ -160,13 +160,13 @@ export function FeaturedGameCarousel({
     const el = viewportRef.current;
     if (!el) return;
     const measure = () => {
-      setViewportWidth(el.clientWidth || cardWidthPx);
+      setViewportWidth(el.clientWidth || nominalCardWidthPx);
     };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [count, circular, cardWidthPx]);
+  }, [count, circular, nominalCardWidthPx]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -297,14 +297,19 @@ export function FeaturedGameCarousel({
   const prevCover = slideGallery(prevGame, thumbnails).cover;
   const nextCover = slideGallery(nextGame, thumbnails).cover;
 
+  const cardWidthPx = compact
+    ? Math.min(
+        Math.max(Math.round(viewportWidth * 0.52), 520),
+        Math.max(nominalCardWidthPx, Math.round(viewportWidth - 280)),
+      )
+    : nominalCardWidthPx;
+
   const peekWidthPx = circular
     ? Math.max(0, (viewportWidth - cardWidthPx) / 2 - CARD_GAP_PX)
     : 0;
-  const viewportHeightClass = compact ? "md:h-[300px]" : "md:h-[350px]";
-  const cardMaxWidthClass = compact ? "md:max-w-[760px]" : "md:max-w-[1000px]";
-  const cardAbsoluteWidthClass = compact
-    ? "md:w-[760px]"
-    : "md:w-[1000px]";
+  const viewportHeightClass = compact ? "md:h-[320px]" : "md:h-[350px]";
+  const cardMaxWidthClass = compact ? "md:max-w-none" : "md:max-w-[1000px]";
+  const cardAbsoluteWidthClass = compact ? "md:w-auto" : "md:w-[1000px]";
 
   return (
     <section
@@ -365,13 +370,18 @@ export function FeaturedGameCarousel({
         ) : null}
 
         <div
-          className={`relative z-[15] h-full w-full max-w-[1000px] ${
-            compact ? "max-w-[760px]" : "max-w-[1000px]"
-          } ${
+          className={`relative z-[15] h-full w-full ${
+            compact ? "" : "max-w-[1000px]"
+          } ${cardMaxWidthClass} ${
             circular
               ? `mx-auto md:absolute md:left-1/2 md:top-0 ${cardAbsoluteWidthClass} md:-translate-x-1/2`
               : "mx-auto"
           }`}
+          style={
+            circular && compact
+              ? { width: cardWidthPx, maxWidth: cardWidthPx }
+              : undefined
+          }
         >
           <FeaturedGameCard
             game={activeGame}

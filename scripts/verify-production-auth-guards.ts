@@ -44,7 +44,7 @@ const CASES: Case[] = [
       mode: "production",
       bypass: false,
       rootRedirect: false,
-      futureHome: false,
+      futureHome: true,
     },
   },
   {
@@ -58,7 +58,7 @@ const CASES: Case[] = [
       mode: "production",
       bypass: false,
       rootRedirect: false,
-      futureHome: false,
+      futureHome: true,
     },
   },
   {

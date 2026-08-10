@@ -12,7 +12,7 @@ const hooksMigration = read("supabase/migrations/091_collab_notification_email_h
 const db = read("lib/supabase/usage-relations-write-db.ts");
 const nurture = read("lib/project-nurture-links.ts");
 const ui = read("components/usage-relation-button.tsx");
-const list = read("components/consultations-list-page.tsx");
+const list = read("components/usage-relations-page.tsx");
 
 for (const rpc of [
   "request_project_usage_relation",
@@ -28,7 +28,8 @@ assert.match(migration, /WHERE r\.status = 'accepted'/);
 assert.match(ui, /→ 使用 →/);
 assert.match(ui, /使用関係を登録/);
 assert.match(ui, /selectedCandidateId/);
-assert.match(ui, /goToLogin\(\)/);
+assert.match(ui, /isLoggedIn/);
+assert.match(ui, /ログインして作品を登録すると利用できます/);
 assert.match(ui, /\/api\/usage-relations\/request/);
 assert.doesNotMatch(ui, /requestProjectUsageRelation/);
 assert.match(db, /\.neq\("requested_by", currentUserId\)/);

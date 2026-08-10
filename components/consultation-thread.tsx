@@ -48,7 +48,14 @@ function mergeMessages(
   return [...byId.values()].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
-export function ConsultationThread({ consultationId }: { consultationId: string }) {
+export function ConsultationThread({
+  consultationId,
+  embedded = false,
+}: {
+  consultationId: string;
+  /** When true (desktop 2-pane), hide outer back chrome. */
+  embedded?: boolean;
+}) {
   const { user } = useAuth();
   const [consultation, setConsultation] = useState<CollabConsultation | null>(null);
   const [messages, setMessages] = useState<CollabConsultationMessage[]>([]);
@@ -120,6 +127,8 @@ export function ConsultationThread({ consultationId }: { consultationId: string 
     let active = true;
     let pollTimer: ReturnType<typeof setInterval> | undefined;
     const supabase = getOptionalSupabaseClient();
+    // Parent remounts this component with key=consultationId when the thread changes,
+    // so we do not reset React state synchronously here (cascading render lint).
     ackLifecycleRef.current = createConsultationAckState();
 
     void Promise.resolve()
@@ -127,7 +136,7 @@ export function ConsultationThread({ consultationId }: { consultationId: string 
         const response = await fetch(`/api/collab/consultations/${consultationId}`, {
           cache: "no-store",
         });
-        if (!response.ok) throw new Error("相談を読み込めませんでした。");
+        if (!response.ok) throw new Error("メッセージを読み込めませんでした。");
         const result = (await response.json()) as {
           consultation: CollabConsultation;
           messages: CollabConsultationMessage[];
@@ -135,7 +144,7 @@ export function ConsultationThread({ consultationId }: { consultationId: string 
         if (!active) return;
         setError("");
         setConsultation(result.consultation);
-        setMessages((current) => mergeMessages(current, result.messages));
+        setMessages(result.messages);
         recordDetailOkAndScheduleAck();
       })
       .catch((cause) => {
@@ -232,7 +241,7 @@ export function ConsultationThread({ consultationId }: { consultationId: string 
   ]);
 
   const title = useMemo(
-    () => (consultation ? consultationPurposeLabel(consultation.purpose) : "相談"),
+    () => (consultation ? consultationPurposeLabel(consultation.purpose) : "メッセージ"),
     [consultation],
   );
 
@@ -257,12 +266,24 @@ export function ConsultationThread({ consultationId }: { consultationId: string 
   }
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <Link href="/consultations" className="text-sm text-violet-300">
-        ← 相談一覧
-      </Link>
-      <h1 className="mt-4 text-2xl font-bold text-white">{title}</h1>
-      <div className="mt-6 space-y-3">
+    <div className={embedded ? "flex h-full min-h-0 flex-col" : "mx-auto max-w-3xl"}>
+      {embedded ? (
+        <Link href="/messages" className="text-sm text-violet-300 lg:hidden">
+          ← メッセージ
+        </Link>
+      ) : (
+        <Link href="/messages" className="text-sm text-violet-300">
+          ← メッセージ
+        </Link>
+      )}
+      <h1
+        className={`${
+          embedded ? "mt-2 text-xl lg:mt-0" : "mt-4 text-2xl"
+        } font-bold text-white`}
+      >
+        {title}
+      </h1>
+      <div className={`${embedded ? "min-h-0 flex-1 overflow-y-auto" : ""} mt-6 space-y-3`}>
         {messages.map((message) => {
           const mine = message.senderId === user?.id;
           return (
@@ -284,9 +305,9 @@ export function ConsultationThread({ consultationId }: { consultationId: string 
                     target={{
                       targetType: "consultation_message",
                       targetId: message.id,
-                      contextLabel: "相談メッセージ",
+                      contextLabel: "メッセージ",
                     }}
-                    returnPath={`/consultations/${consultationId}`}
+                    returnPath={`/messages/${consultationId}`}
                   />
                 ) : null}
               </div>

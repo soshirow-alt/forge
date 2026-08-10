@@ -1,14 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useGames } from "@/components/games-provider";
 import { PlayerShell } from "@/components/player-shell";
-import {
-  consultationPurposeLabel,
-  type CollabConsultationSummary,
-} from "@/lib/collab/consultation-types";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 import {
   fetchMyDecidedUsageRelations,
@@ -28,10 +23,9 @@ function mergeDecidedRelations(
   return [focused, ...recent];
 }
 
-export function ConsultationsListPage() {
+export function UsageRelationsPage() {
   const { user } = useAuth();
   const { getOwnedProjects, getGameById } = useGames();
-  const [consultations, setConsultations] = useState<CollabConsultationSummary[]>([]);
   const [relations, setRelations] = useState<UsageRelationRequest[]>([]);
   const [decidedRelations, setDecidedRelations] = useState<UsageRelationRequest[]>([]);
   const [error, setError] = useState("");
@@ -80,13 +74,6 @@ export function ConsultationsListPage() {
     let cancelled = false;
     void Promise.resolve()
       .then(async () => {
-        const response = await fetch("/api/collab/consultations", { cache: "no-store" });
-        if (!response.ok) throw new Error("相談を読み込めませんでした。");
-        const result = (await response.json()) as {
-          consultations: CollabConsultationSummary[];
-        };
-        if (cancelled) return;
-        setConsultations(result.consultations);
         if (!user) {
           setRelations([]);
           setDecidedRelations([]);
@@ -162,9 +149,9 @@ export function ConsultationsListPage() {
   }
 
   return (
-    <PlayerShell activeNav="consultations">
+    <PlayerShell activeNav="messages">
       <div className="mx-auto max-w-4xl">
-        <h1 className="text-2xl font-bold text-white">相談</h1>
+        <h1 className="text-2xl font-bold text-white">使用関係</h1>
         <section id="usage-relations" className="mt-7 scroll-mt-24">
           <h2 className="text-sm font-semibold text-zinc-400">使用関係の確認</h2>
           {relations.length > 0 ? (
@@ -248,39 +235,6 @@ export function ConsultationsListPage() {
             </ul>
           ) : (
             <p className="mt-2 text-sm text-zinc-600">最近の結果はまだありません。</p>
-          )}
-        </section>
-        <section className="mt-8">
-          <h2 className="text-sm font-semibold text-zinc-400">コラボ相談</h2>
-          {consultations.length ? (
-            <ul className="mt-3 space-y-2">
-              {consultations.map((item) => (
-                <li key={item.consultationId}>
-                  <Link
-                    href={`/consultations/${item.consultationId}`}
-                    className="block rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 hover:border-violet-500/40"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-medium text-white">
-                        {consultationPurposeLabel(item.purpose)}
-                      </p>
-                      {item.unreadCount > 0 ? (
-                        <span className="rounded-full bg-violet-600 px-2 py-0.5 text-xs text-white">
-                          {item.unreadCount}
-                        </span>
-                      ) : null}
-                    </div>
-                    <p className="mt-1 line-clamp-2 text-sm text-zinc-500">
-                      {item.lastMessageBody ?? "メッセージはありません"}
-                    </p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-3 rounded-xl border border-dashed border-zinc-800 p-8 text-center text-sm text-zinc-500">
-              相談はまだありません。
-            </p>
           )}
         </section>
         {error ? <p className="mt-4 text-sm text-red-300">{error}</p> : null}

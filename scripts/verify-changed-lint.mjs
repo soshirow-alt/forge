@@ -78,7 +78,8 @@ function listDirtyEslintFiles() {
     .split(/\r?\n/)
     .filter(Boolean);
   const all = [...new Set([...tracked, ...untracked])].sort();
-  return all.filter(isEslintTarget);
+  // Deleted paths still appear in `git diff --name-only`; ESLint cannot lint them.
+  return all.filter((file) => isEslintTarget(file) && fs.existsSync(path.join(ROOT, file)));
 }
 
 /** @returns {object[]|null} */

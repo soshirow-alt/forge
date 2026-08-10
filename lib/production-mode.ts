@@ -170,45 +170,14 @@ export function shouldBypassStudioLoginGate(host?: string): boolean {
 }
 
 /**
- * Preview routing for category-expanded `/home` (Explore Prototype fixtures).
+ * Player IA Home / Search / Game Home routing gate.
  *
- * Independent of `FORGE_PRODUCTION_MODE`. Hard-stops only on
- * `VERCEL_ENV=production` so merging this branch to main cannot flip
- * Production `/home` (formal `DiscoveryHomePage` remains).
+ * Formal release: serve Player IA redesign in Production as well as Preview/local.
+ * (Previously hard-stopped on VERCEL_ENV=production — that temporary gate is removed.)
  */
-export function shouldServeFutureDiscoveryHome(host?: string): boolean {
-  if (isVercelProductionDeployment()) {
-    return false;
-  }
-
-  const resolved = resolveHost(host);
-  const vercelUrl =
-    typeof window === "undefined" ? process.env.VERCEL_URL : undefined;
-
-  if (
-    hostLooksLikePreviewV0(host) ||
-    hostLooksLikePreviewV0(resolved) ||
-    hostLooksLikePreviewV0(vercelUrl)
-  ) {
-    return true;
-  }
-
-  // Unique Preview deploy hostnames do not include preview-landing-01.
-  if (isVercelPreviewDeployment()) {
-    return true;
-  }
-
-  // Local always — Production deploy never uses localhost.
-  if (isLocalHost(resolved)) {
-    return true;
-  }
-
-  // Server Components in `next dev` often have no Host / VERCEL_URL.
-  if (typeof window === "undefined" && process.env.NODE_ENV === "development") {
-    return true;
-  }
-
-  return false;
+export function shouldServeFutureDiscoveryHome(_host?: string): boolean {
+  void _host;
+  return true;
 }
 
 /** Middleware — routes that require Supabase session in production release mode. */

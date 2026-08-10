@@ -63,7 +63,8 @@ assert.doesNotMatch(
 );
 
 assert.match(startButton, /isLoggedIn/);
-assert.match(startButton, /goToLogin\(\)/);
+assert.match(startButton, /\/messages\/new/);
+assert.match(startButton, /params\.set\("to", counterpartId\)/);
 assert.match(readRoute, /acknowledgeNotificationsByCoalesceKey/);
 assert.doesNotMatch(
   readRoute,

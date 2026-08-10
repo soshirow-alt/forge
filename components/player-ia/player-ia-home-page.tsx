@@ -4,17 +4,16 @@ import Link from "next/link";
 import {
   ArrowRight,
   ChevronRight,
-  MessageSquare,
   Search,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { FeedbackGatheringSection } from "@/components/player-ia/feedback-gathering-section";
 import { ProjectThumbnail } from "@/components/project-thumbnail";
 import { buildGameDetailTabHref } from "@/lib/game-detail-tabs";
 import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import {
   formatPlayerIaRelativeTime,
   formatPlayerIaVersionLabel,
-  formatPlayerIaWindowLabel,
   truncatePlayerIaText,
 } from "@/lib/player-ia/format";
 import { PLAYER_IA_HOME_FEATURE_CARDS } from "@/lib/player-ia/home-feature-cards";
@@ -65,119 +64,6 @@ function SectionHeading({
         </Link>
       ) : null}
     </div>
-  );
-}
-
-function FeedbackGatheringSection({
-  items,
-  nowMs,
-}: {
-  items: PlayerIaHomePayload["feedbackGathering"];
-  nowMs: number;
-}) {
-  if (items.length === 0) return null;
-  const [featured, ...rest] = items;
-
-  return (
-    <section aria-labelledby="player-ia-feedback-gathering">
-      <SectionHeading
-        title="フィードバックが集まっている作品"
-        headingId="player-ia-feedback-gathering"
-      />
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <article className="group relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 transition-colors hover:border-violet-500/40">
-          <Link
-            href={gameDetailHref(featured.projectId)}
-            className="block"
-          >
-            <div className="relative aspect-[16/10] overflow-hidden">
-              <ProjectThumbnail
-                projectId={featured.projectId}
-                title={featured.title}
-                variant="hero"
-                className="!rounded-none transition-transform duration-500 group-hover:scale-[1.03]"
-                sizes="(min-width: 1024px) 40vw, 100vw"
-              />
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent" />
-              <div className="absolute bottom-3 left-3">
-                <CategoryBadge category={featured.category} />
-              </div>
-            </div>
-          </Link>
-          <div className="p-4">
-            <Link href={gameDetailHref(featured.projectId)}>
-              <h3 className="text-lg font-bold text-white hover:text-violet-200">
-                {featured.title}
-              </h3>
-            </Link>
-            <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-zinc-400">
-              {truncatePlayerIaText(featured.description, 140)}
-            </p>
-            <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
-              <span>{formatPlayerIaWindowLabel(featured.windowDays)}</span>
-              <span>投稿 {featured.distinctAuthorCount}人</span>
-              <span>FB {featured.feedbackCount}件</span>
-              {featured.hasCreatorReply ? <span>制作者返信あり</span> : null}
-              <span>{formatPlayerIaRelativeTime(featured.lastFeedbackAt, { nowMs })}</span>
-            </div>
-            <Link
-              href={buildGameDetailTabHref(featured.projectId, "voices")}
-              className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-violet-400 hover:text-violet-300"
-            >
-              <MessageSquare className="size-3.5" aria-hidden="true" />
-              フィードバックを見る
-            </Link>
-          </div>
-        </article>
-
-        <div className="flex flex-col gap-4">
-          {rest.map((item) => (
-            <div
-              key={item.projectId}
-              className="group flex gap-3 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 p-3 transition-colors hover:border-violet-500/40"
-            >
-              <Link
-                href={gameDetailHref(item.projectId)}
-                className="relative aspect-[4/3] w-28 shrink-0 overflow-hidden rounded-lg sm:w-36"
-              >
-                <ProjectThumbnail
-                  projectId={item.projectId}
-                  title={item.title}
-                  variant="mini"
-                  className="!h-full !w-full !max-w-none rounded-lg transition-transform duration-500 group-hover:scale-[1.05]"
-                  sizes="160px"
-                />
-              </Link>
-              <div className="flex min-w-0 flex-1 flex-col items-start">
-                <CategoryBadge category={item.category} />
-                <Link
-                  href={gameDetailHref(item.projectId)}
-                  className="mt-1.5 truncate text-sm font-bold text-white hover:text-violet-200"
-                >
-                  {item.title}
-                </Link>
-                <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-zinc-500">
-                  {truncatePlayerIaText(item.description, 90)}
-                </p>
-                <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 pt-2 text-[11px] text-zinc-500">
-                  <span>{formatPlayerIaWindowLabel(item.windowDays)}</span>
-                  <span>{item.distinctAuthorCount}人</span>
-                  <span>FB {item.feedbackCount}</span>
-                  {item.hasCreatorReply ? <span>返信あり</span> : null}
-                </div>
-                <Link
-                  href={buildGameDetailTabHref(item.projectId, "voices")}
-                  className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-violet-400 hover:text-violet-300"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  フィードバックを見る
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
   );
 }
 

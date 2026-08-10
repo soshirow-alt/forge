@@ -33,9 +33,9 @@ export function buildTransactionalEmail(
   );
   const consultationId = safeId(payload, "consultation_id");
   const consultationUrl = consultationId
-    ? `${siteUrl}/consultations/${consultationId}`
-    : `${siteUrl}/consultations`;
-  const usageUrl = `${siteUrl}/consultations#usage-relations`;
+    ? `${siteUrl}/messages/${consultationId}`
+    : `${siteUrl}/messages`;
+  const usageUrl = `${siteUrl}/usage-relations#usage-relations`;
   const actorUserId = safeId(payload, "actor_user_id");
   const actorNameRaw = payload.actor_display_name;
   const actorName =
@@ -76,13 +76,13 @@ export function buildTransactionalEmail(
     [string, string, string]
   > = {
     collab_consultation_new: [
-      "新しいコラボ相談が届きました",
-      "Forge に新しいコラボ相談が届きました。",
+      "新しいメッセージが届きました",
+      "Forge に新しいメッセージが届きました。",
       consultationUrl,
     ],
     collab_consultation_message: [
-      "コラボ相談に新しいメッセージがあります",
-      "Forge のコラボ相談に新しいメッセージがあります。本文はForgeで確認してください。",
+      "新しいメッセージがあります",
+      "Forge に新しいメッセージがあります。本文はForgeで確認してください。",
       consultationUrl,
     ],
     usage_relation_request: [

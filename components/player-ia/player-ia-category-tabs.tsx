@@ -4,12 +4,13 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   PROJECT_CATEGORY_NAV,
+  PROJECT_CATEGORY_SELECTOR_LABELS,
   type ProjectCategoryNavId,
 } from "@/lib/project-categories";
 import { buildSearchHrefForCategory } from "@/lib/player-ia/search-href";
 
 const TAB_BASE =
-  "inline-flex h-9 cursor-pointer items-center rounded-md px-2.5 text-[13px] font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 sm:px-3 sm:text-sm";
+  "inline-flex h-9 w-full cursor-pointer items-center justify-center rounded-md px-1.5 text-center text-[12px] font-medium leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 sm:px-2 sm:text-[13px]";
 
 const TAB_ACTIVE =
   "bg-violet-600/30 text-white ring-1 ring-violet-500/55 hover:bg-violet-600/40 active:bg-violet-600/45";
@@ -32,11 +33,11 @@ export function PlayerIaCategoryTabsFallback() {
       className="min-w-0 flex-1 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950/80 p-1"
       aria-hidden="true"
     >
-      <div className="flex w-max items-center gap-1">
+      <div className="grid w-full grid-cols-6 gap-1">
         {Array.from({ length: 6 }, (_, index) => (
           <div
             key={index}
-            className="h-9 w-[4.5rem] shrink-0 animate-pulse rounded-md bg-zinc-800/80 sm:w-24"
+            className="h-9 animate-pulse rounded-md bg-zinc-800/80"
           />
         ))}
       </div>
@@ -62,18 +63,18 @@ export function PlayerIaCategoryTabs() {
         カテゴリ
       </span>
       <div className="min-w-0 flex-1 overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-950/80 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <ul className="flex w-max items-center gap-1">
+        <ul className="grid w-full min-w-[36rem] grid-cols-6 gap-1 sm:min-w-0">
           {PROJECT_CATEGORY_NAV.map((item) => {
             const selected = item.id === activeCategory;
             const href = buildSearchHrefForCategory(item.id, searchParams);
             return (
-              <li key={item.id} className="shrink-0">
+              <li key={item.id} className="min-w-0">
                 <Link
                   href={href}
                   aria-current={selected ? "page" : undefined}
                   className={`${TAB_BASE} ${selected ? TAB_ACTIVE : TAB_INACTIVE}`}
                 >
-                  {item.label}
+                  {PROJECT_CATEGORY_SELECTOR_LABELS[item.id]}
                 </Link>
               </li>
             );

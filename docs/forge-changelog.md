@@ -4,6 +4,24 @@
 
 ---
 
+## 2026-08-10 — Preview UI/UX 最終修正（Production前）
+
+- **作品詳細** — main の player actions は「更新を追う / あとで遊ぶ / 開発者をフォロー」のみ。制作・利用 CTA は右サイド「制作・利用について」（開発者 card 直下）。「あなたとの関わり」は empty でも維持
+- **メッセージ** — user-facing「相談」→「メッセージ」。`/messages` 2ペイン、`/messages/new` 下書き（初回送信で作成）、使用関係は `/usage-relations` へ分離。開始 modal 廃止
+- **Home FB shelf** — 左 hero + 右 next3 queue。6秒回転・promote・高さ整合・reduced-motion。ranking RPC 非変更
+- **Game Home** — intro 削除。featured hero の左右 peek を広げ意図的 preview に
+- **Search** — カテゴリ tab 同一幅。selector 表示のみ「サービス」（DB `service-app` 非変更）
+- **お知らせ詳細** — 中央寄せ article（~820px）。紫大ボタン廃止、text back link
+- **Production gate** — `shouldServeFutureDiscoveryHome()` を常時 true（正式 Player IA Home）。deploy はまだしない
+
+## 2026-08-10 — メッセージ UI（相談→メッセージ）
+
+- **ラベル** — ユーザー向けの「相談」を「メッセージ」に変更（内部 API / DB の consultation* は維持）
+- **ルート** — `/messages`（デスクトップ2ペイン一覧+スレッド、モバイルは一覧→スレッド）、`/messages/new?to=&project=` 下書きルーム（初回送信で consultation 作成・purpose 既定 `other`）。同一相手+作品の open スレは再利用
+- **使用関係** — 確認 UI を `/usage-relations` に分離（decide / ack / hash deep-link は維持）
+- **互換** — `/consultations`・`/consultations/[id]` はリダイレクト。通知・メールリンクは `/messages/...` と `/usage-relations#...`
+- **ナビ** — マイページ配下「メッセージ」→ `/messages`
+
 ## 2026-08-10 — Release package: immediate email + reciprocity + announcement + legal
 
 - **Email cadence** — important mutation 成功後に `after()` で outbox best-effort kick。日次 cron は recovery 専用。consultation message は 092 で read→unread のみ

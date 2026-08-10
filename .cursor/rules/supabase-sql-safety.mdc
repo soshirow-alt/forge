@@ -80,6 +80,17 @@ Local harness for the Player IA home trio:
 - `DROP` / `TRUNCATE` / broad `DELETE` / broad `UPDATE`: separate explicit owner approval.
 - Never disable triggers / RLS / constraints on Production.
 
+## G. Staging migration history vs real schema (MCP / Dashboard drift)
+
+Staging (`vuqpwvjvgyxffmvpfrxo`) may have been applied via Dashboard SQL Editor historically, so `list_migrations` / `supabase_migrations.schema_migrations` can be **empty or incomplete** even when objects already exist.
+
+Before MCP `apply_migration` or any re-apply decision:
+
+1. Confirm project ref is Staging (never Production).
+2. Prefer **real schema/object presence** (`to_regclass`, `pg_proc`, columns, triggers) over migration history alone.
+3. Do **not** re-apply 086–091 (or any already-effective migration) just because history is missing.
+4. Do **not** “repair” migration history by inventing rows unless Owner explicitly requests a history-only repair plan.
+
 ## Related
 
 - Staging vs Production boundaries: `.cursor/rules/stall-detection-resume.mdc`, `docs/cursor-allow-vs-forge-go.md`

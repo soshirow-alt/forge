@@ -101,7 +101,7 @@ export const DECIDED_USAGE_RELATIONS_LIMIT = 100;
 const USAGE_RELATION_FOCUS_HASH_RE =
   /^#?usage-relation-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
 
-/** Parse `/consultations#usage-relation-<uuid>` (with or without leading #). */
+/** Parse `/usage-relations#usage-relation-<uuid>` (with or without leading #). */
 export function parseUsageRelationFocusId(hashOrFragment: string): string | null {
   const raw = hashOrFragment.trim();
   if (!raw) return null;

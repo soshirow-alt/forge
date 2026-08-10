@@ -60,9 +60,9 @@ export function getNotificationTypeLabel(type: NotificationType): string {
     case "feedback_reply":
       return "フィードバックへの返信";
     case "consultation_new":
-      return "新しい相談";
+      return "新しいメッセージ";
     case "consultation_message":
-      return "相談メッセージ";
+      return "メッセージ";
     case "usage_relation_request":
       return "使用関係の確認";
     case "usage_relation_accepted":
@@ -102,9 +102,9 @@ export function createNotificationMessage(
     case "feedback_reply":
       return `「${projectTitle}」のフィードバックに返信がありました`;
     case "consultation_new":
-      return "新しいコラボ相談が届きました";
+      return "新しいメッセージが届きました";
     case "consultation_message":
-      return "コラボ相談に新しいメッセージが届きました";
+      return "新しいメッセージが届きました";
     case "usage_relation_request":
       return "作品の使用関係について確認依頼が届きました";
     case "usage_relation_accepted":
@@ -142,7 +142,7 @@ export function getNotificationActionHint(type: NotificationType): string {
       return "フィードバックを見る →";
     case "consultation_new":
     case "consultation_message":
-      return "相談を確認する →";
+      return "メッセージを確認する →";
     case "usage_relation_request":
     case "usage_relation_accepted":
     case "usage_relation_rejected":
