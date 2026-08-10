@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-08-10 — Preview/Staging real-email E2E 基盤（運用）
+
+- **恒久 operation account** — Staging Auth `forge.operation@gmail.com`（表示名 Forge Operation）。Owner の毎回 Preview 手登録を廃止
+- **command** — `npm run verify:preview-real-email`（1通 smoke）、`verify:preview-real-email-matrix`、`verify:preview-real-email-guards`、`ops:bootstrap-gmail-e2e-oauth`
+- **経路** — 本物の `create_collab_consultation` → notification → outbox → Resend（1 row）→ Gmail readonly poll（OAuth 後）
+- **安全** — 宛先 allowlist は operation inbox のみ。Production Supabase / 複数宛先は BLOCK。秘密は `.env.preview-e2e.local`（gitignored）
+- **製品 UI** — 変更なし（0ed889b の Preview 体験を維持）
+
 ## 2026-08-10 — Category-neutrality + UI 最終修正（Preview）
 
 - **横断** — game-only 前提を監査。nav/search/detail/creator/messages をカテゴリ中立化（artifact は `.agent/runtime/` のみ）

@@ -33,6 +33,12 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# Preview/Staging E2E local secrets (belt-and-suspenders; already matched by .env*)
+.env.preview-e2e.local
+**/gmail-e2e-token.json
+**/gmail-oauth-client.json
 
 # vercel
 .vercel
