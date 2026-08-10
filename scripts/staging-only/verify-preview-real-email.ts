@@ -32,6 +32,10 @@ import {
   signInPassword,
 } from "./lib/ensure-preview-e2e-users";
 import { buildPreviewAuthCookieHeader } from "./lib/preview-api-session";
+import {
+  ensureOperationMessengerFixture,
+  pruneEphemeralOperationThreads,
+} from "./lib/operation-messenger-fixture";
 import { processSingleOutboxRow } from "./lib/process-single-outbox-row";
 import {
   assertTransactionalMailContent,
@@ -150,6 +154,20 @@ async function main() {
       ok: true,
       detail: actor.created ? "created" : "reused",
     });
+
+    // Keep a permanent QA thread for operation user; prune prior actor↔operation noise.
+    await ensureOperationMessengerFixture({
+      admin,
+      operationUserId: operation.userId,
+      actorUserId: actor.userId,
+    });
+    const pruned = await pruneEphemeralOperationThreads({
+      admin,
+      operationUserId: operation.userId,
+      actorUserId: actor.userId,
+    });
+    log("messenger_fixture", `pruned=${pruned}`);
+    steps.push({ name: "messenger_fixture", ok: true, detail: `pruned=${pruned}` });
 
     const opSession = await signInPassword({
       env,
@@ -285,8 +303,8 @@ async function main() {
     const built = buildTransactionalEmail("collab_consultation_new", {
       consultation_id: consultationId,
     });
-    if (!built.text.includes(siteUrl(env)) && !built.html.includes("/messages/")) {
-      throw new Error("built email missing Preview CTA");
+    if (!built.text.includes(`${siteUrl(env)}/messages/${consultationId}`)) {
+      throw new Error("built email CTA missing thread deep-link");
     }
     if (built.text.includes(privateBody) || built.html.includes(privateBody)) {
       throw new Error("builder leaked private consultation body");
@@ -347,6 +365,28 @@ async function main() {
     }
     steps.push({ name: "outbox_sent_status", ok: true });
 
+    // CTA target must remain loadable for Owner eyeball (do not delete consultation).
+    const { data: stillThere, error: stillError } = await operationDb
+      .from("collab_consultations")
+      .select("id,status")
+      .eq("id", consultationId)
+      .maybeSingle();
+    if (stillError || !stillThere) {
+      throw new Error(stillError?.message || "CTA consultation missing after send");
+    }
+    const { data: stillMsgs, error: stillMsgError } = await operationDb
+      .from("collab_consultation_messages")
+      .select("id")
+      .eq("consultation_id", consultationId);
+    if (stillMsgError || !stillMsgs?.length) {
+      throw new Error(stillMsgError?.message || "CTA messages missing after send");
+    }
+    steps.push({
+      name: "cta_target_alive",
+      ok: true,
+      detail: `/messages/${consultationId}`,
+    });
+
     const gmailReady =
       Boolean(env.GMAIL_E2E_CLIENT_ID?.trim()) &&
       Boolean(env.GMAIL_E2E_CLIENT_SECRET?.trim()) &&
@@ -404,6 +444,8 @@ async function main() {
           gmailInboxVerified: gmailReady,
           recipient: operationEmail,
           consultationId,
+          ctaPath: `/messages/${consultationId}`,
+          ctaUrl: `${siteUrl(env)}/messages/${consultationId}`,
           outboxId,
           steps,
         },
@@ -412,17 +454,8 @@ async function main() {
       ),
     );
   } finally {
-    if (consultationId) {
-      await admin
-        .from("collab_consultation_messages")
-        .delete()
-        .eq("consultation_id", consultationId);
-      await admin
-        .from("collab_consultation_reads")
-        .delete()
-        .eq("consultation_id", consultationId);
-      await admin.from("collab_consultations").delete().eq("id", consultationId);
-    }
+    // Keep consultation + messages for Owner CTA eyeball.
+    // Only remove outbox row (sent evidence is already asserted).
     if (outboxId) {
       await admin.from("transactional_email_outbox").delete().eq("id", outboxId);
     }

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { ContentReportButton } from "@/components/content-report-button";
@@ -56,11 +57,13 @@ export function ConsultationThread({
   /** When true (desktop 2-pane), hide outer back chrome. */
   embedded?: boolean;
 }) {
+  const router = useRouter();
   const { user } = useAuth();
   const [consultation, setConsultation] = useState<CollabConsultation | null>(null);
   const [messages, setMessages] = useState<CollabConsultationMessage[]>([]);
   const [body, setBody] = useState("");
   const [error, setError] = useState("");
+  const [unavailable, setUnavailable] = useState(false);
   const [ackError, setAckError] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
   /** Bumped only after detail/message state is scheduled; ack runs in a later effect (post-commit). */
@@ -136,12 +139,24 @@ export function ConsultationThread({
         const response = await fetch(`/api/collab/consultations/${consultationId}`, {
           cache: "no-store",
         });
-        if (!response.ok) throw new Error("メッセージを読み込めませんでした。");
+        if (response.status === 404) {
+          // Stale email / removed thread / non-participant (RLS → 404).
+          // Soft-fallback to inbox — never open another user's thread.
+          if (active) {
+            setUnavailable(true);
+            router.replace("/messages?notice=unavailable");
+          }
+          return;
+        }
+        if (!response.ok) {
+          throw new Error("メッセージを読み込めませんでした。");
+        }
         const result = (await response.json()) as {
           consultation: CollabConsultation;
           messages: CollabConsultationMessage[];
         };
         if (!active) return;
+        setUnavailable(false);
         setError("");
         setConsultation(result.consultation);
         setMessages(result.messages);
@@ -238,12 +253,21 @@ export function ConsultationThread({
     reloadToken,
     recordDetailOkAndScheduleAck,
     scheduleAckOnlyIfDetailAlreadyOk,
+    router,
   ]);
 
   const title = useMemo(
     () => (consultation ? consultationPurposeLabel(consultation.purpose) : "メッセージ"),
     [consultation],
   );
+
+  if (unavailable) {
+    return (
+      <div className={embedded ? "flex h-full min-h-0 flex-col" : "mx-auto max-w-3xl"}>
+        <p className="text-sm text-zinc-400">メッセージ一覧へ移動しています…</p>
+      </div>
+    );
+  }
 
   async function send() {
     const text = body.trim();

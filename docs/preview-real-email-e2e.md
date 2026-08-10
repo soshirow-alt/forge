@@ -80,6 +80,13 @@ Vercel Preview scope already has `RESEND_API_KEY` / `RESEND_FROM_EMAIL` (Hidden)
 1. Actor session cookie against Preview alias
 2. `POST /api/collab/consultations` (real business mutation)
 3. Wait for Preview `after()` worker to mark outbox `sent`
+4. **Keep** the consultation for CTA eyeball (outbox row only is cleaned)
+5. Ensure operation messenger fixture (`forge-msg-fixture-operation-v1`)
 
 Use `--local-resend` only when deliberately testing with local Resend secrets.
 Use `--through-outbox` to stop before provider send.
+
+## Production sender
+
+Production must not use `@resend.dev`. Run `npm run verify:production-email-sender`.
+Owner one-time: add Forge sending domain in Resend + DNS, set `RESEND_FROM_EMAIL` to e.g. `Forge <notifications@your-domain>` (do not invent domain names in code).

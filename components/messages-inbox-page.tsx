@@ -89,13 +89,16 @@ function ConversationListItem({
 
 export function MessagesInboxPage({
   selectedId = null,
+  notice = null,
 }: {
   selectedId?: string | null;
+  notice?: string | null;
 }) {
   const { getDeveloperProfileByUserId } = useGames();
   const [consultations, setConsultations] = useState<CollabConsultationSummary[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [listFailed, setListFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -108,10 +111,12 @@ export function MessagesInboxPage({
         };
         if (cancelled) return;
         setConsultations(result.consultations);
+        setListFailed(false);
         setError("");
       })
       .catch((cause) => {
         if (!cancelled) {
+          setListFailed(true);
           setError(cause instanceof Error ? cause.message : "読み込めませんでした。");
         }
       })
@@ -123,12 +128,19 @@ export function MessagesInboxPage({
     };
   }, [selectedId]);
 
+  const showUnavailableNotice = notice === "unavailable";
+
   const listPane = (
     <div className="flex h-full min-h-0 flex-col">
       <div className="shrink-0 border-b border-zinc-800/80 px-3 pt-4 pb-3">
         <h1 className="text-lg font-semibold text-white">メッセージ</h1>
         <p className="mt-1 text-xs text-zinc-500">利用・コラボについてのやり取り</p>
       </div>
+      {showUnavailableNotice ? (
+        <p className="mx-1 mt-3 rounded-lg border border-zinc-700 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-300">
+          このメッセージは現在表示できません
+        </p>
+      ) : null}
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto py-4">
         {loading ? (
           <p className="px-1 text-sm text-zinc-500">読み込み中…</p>
@@ -147,7 +159,7 @@ export function MessagesInboxPage({
               />
             );
           })
-        ) : (
+        ) : listFailed ? null : (
           <p className="px-1 py-6 text-center text-sm leading-relaxed text-zinc-500">
             メッセージはまだありません。
             <br />

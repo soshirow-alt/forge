@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-08-11 — メールCTA dead-link修正 + Production sender readiness
+
+- **根本原因** — real-email E2E が送信後に consultation を削除し、着弾メールの `/messages/{id}` が死ぬ設計だった。加えて Lumen fixture は seed ユーザー専用で operation から見えない
+- **修正** — smoke 後も CTA target を残す（outbox のみ掃除）。operation↔actor の恒久サンプル thread を維持。404 は inbox へ soft-fallback（「このメッセージは現在表示できません」）
+- **sender** — Production で `@resend.dev` From を拒否する readiness/send guard。Preview smoke の暫定利用は許可。custom domain の Resend/DNS 設定は Owner 作業
+
 ## 2026-08-10 — Notification / Email Settings 正式化（Preview）
 
 - **メール通知 Settings** — Master「重要な通知をメールで受け取る」+ 3カテゴリ（メッセージ・コラボ / 使用関係 / フィードバックのお返し案内）。送信先は Auth 登録メール（マスク表示）
