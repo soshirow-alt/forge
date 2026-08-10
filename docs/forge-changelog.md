@@ -19,7 +19,7 @@
 - **認証導線** — 相談開始・使用関係登録・コミュニティ投稿/返信はCTAを隠さず、登録ユーザーだけ書込みへ進み、未登録/ゲストは現在地をreturn先にしたログインへ遷移
 - **使用関係の確認** — 申請者自身の送信済み依頼を承認一覧から除外。相手側の決定後は依頼通知をacknowledgeし、失敗時は画面にエラーを表示
 - **使用関係の結果表示** — 申請者向けに「最近の結果」（accepted/rejected）を相談画面 `#usage-relations` に表示し、表示後に `usage-relation:{id}` をacknowledge（通知一覧クリックではackしない）
-- **メール運用** — Vercel Cronが10分ごとにoutbox workerを起動。`ops:email-outbox`でも秘密付き手動起動可能（5回失敗でdead）
+- **メール運用** — Vercel Cron は Hobby 制限のため日次（`0 15 * * *` UTC）で outbox worker を起動。10分間隔は Pro が必要。`ops:email-outbox`でも秘密付き手動起動可能（5回失敗でdead）
 - **メール idempotency** — outbox worker が Resend 送信に `forge-outbox-{rowId}` を付け、再送時の重複送信を抑止
 - **SQL gate** — PGlite隔離環境で086〜091を全文順次適用・安全な再実行・RLS/RPC grant・二者間使用関係と通知acknowledgement・rollbackを検証する `verify:collab-suite-sql-gate` を追加
 - **検証強化** — collab SQL gateにlegacy status変換、相談RPC/RLS、双方向block、関連作品所有権、通知とメール失敗分離、migration rollbackを追加。featured hero seedもPGliteで初回・再実行・失敗rollback・4枠のUUID/axis一致を全文実行検証
