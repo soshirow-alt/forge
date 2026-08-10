@@ -167,6 +167,7 @@ import {
   validateReleaseReopenedDeclaration,
   type ProjectReleaseEvent,
 } from "@/lib/project-release-state";
+import { scheduleFeedbackReciprocity } from "@/lib/feedback-reciprocity-client";
 import {
   fetchUserNotifications,
   insertDevlogNotifications,
@@ -694,9 +695,14 @@ export function GamesProvider({ children }: { children: ReactNode }) {
       .then(setFollowedDeveloperUserIds)
       .catch(() => setFollowedDeveloperUserIds([]));
 
-    void forgePerfTimed("supabase.fetchUserNotifications", () =>
-      fetchUserNotifications(supabase, user.id),
-    )
+    void forgePerfTimed("supabase.fetchUserNotifications", async () => {
+      try {
+        await supabase.rpc("dismiss_stale_feedback_reciprocity");
+      } catch {
+        // Stale dismiss is best-effort; notification load continues.
+      }
+      return fetchUserNotifications(supabase, user.id);
+    })
       .then((rows) =>
         rows.map((row) =>
           notificationRowToNotification(
@@ -1470,6 +1476,9 @@ export function GamesProvider({ children }: { children: ReactNode }) {
             feedback,
           );
 
+      if (!existing) {
+        void scheduleFeedbackReciprocity(gameId);
+      }
       return item;
     },
     [user, getSubmittedGameById],
@@ -1741,6 +1750,7 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         answers,
       );
 
+      void scheduleFeedbackReciprocity(gameId);
       return saved;
     },
     [user],

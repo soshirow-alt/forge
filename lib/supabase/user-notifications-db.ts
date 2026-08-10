@@ -18,7 +18,8 @@ type NotificationRow = {
     | "consultation_message"
     | "usage_relation_request"
     | "usage_relation_accepted"
-    | "usage_relation_rejected";
+    | "usage_relation_rejected"
+    | "feedback_reciprocity";
   project_id: string | null;
   devlog_id: string | null;
   published_version: string | null;
@@ -32,6 +33,7 @@ type NotificationRow = {
   coalesce_key: string | null;
   consultation_id: string | null;
   usage_relation_id: string | null;
+  related_user_id: string | null;
   created_at: string;
 };
 
@@ -55,6 +57,7 @@ export function notificationRowToNotification(
     coalesceKey: row.coalesce_key ?? undefined,
     consultationId: row.consultation_id ?? undefined,
     usageRelationId: row.usage_relation_id ?? undefined,
+    relatedUserId: row.related_user_id ?? undefined,
     publishedVersion: row.published_version ?? undefined,
   };
 }

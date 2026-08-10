@@ -14,7 +14,8 @@ export type NotificationType =
   | "consultation_message"
   | "usage_relation_request"
   | "usage_relation_accepted"
-  | "usage_relation_rejected";
+  | "usage_relation_rejected"
+  | "feedback_reciprocity";
 
 export type Notification = {
   id: string;
@@ -30,6 +31,7 @@ export type Notification = {
   coalesceKey?: string;
   consultationId?: string;
   usageRelationId?: string;
+  relatedUserId?: string;
   publishedVersion?: string;
 };
 
@@ -67,6 +69,8 @@ export function getNotificationTypeLabel(type: NotificationType): string {
       return "使用関係の承認";
     case "usage_relation_rejected":
       return "使用関係の結果";
+    case "feedback_reciprocity":
+      return "お返しのフィードバック";
   }
 }
 
@@ -107,6 +111,8 @@ export function createNotificationMessage(
       return "作品の使用関係が承認されました";
     case "usage_relation_rejected":
       return "作品の使用関係は承認されませんでした";
+    case "feedback_reciprocity":
+      return "お返しにフィードバックしませんか？";
   }
 }
 
@@ -141,6 +147,8 @@ export function getNotificationActionHint(type: NotificationType): string {
     case "usage_relation_accepted":
     case "usage_relation_rejected":
       return "使用関係を確認する →";
+    case "feedback_reciprocity":
+      return "相手の作品を見る →";
   }
 }
 

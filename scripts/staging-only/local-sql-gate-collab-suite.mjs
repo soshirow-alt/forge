@@ -1,17 +1,18 @@
 /**
- * Isolated SQL handoff gate for Forge collaboration migrations 086–091.
+ * Isolated SQL handoff gate for Forge collaboration migrations 086–092.
  *
  * Uses in-memory PGlite only. It never reads environment credentials and never
  * connects to Staging or Production.
  *
  * Coverage:
  *  - creates focused prerequisites matching the columns/constraints referenced
- *    by 086–091
- *  - executes every migration file in full, in order, then re-runs all six
+ *    by 086–092
+ *  - executes every migration file in full, in order, then re-runs all seven
  *  - asserts tables, RLS, policies, functions, and RPC grants
  *  - exercises registered community posting and the two-owner usage request /
  *    decision flow, including decision notification acknowledgement
  *  - verifies unauthorized decisions and failed transactions leave state intact
+ *  - verifies consultation message email only on read→unread transition
  *
  * PGlite is Postgres-compatible but is not a complete Supabase clone. Passing
  * this gate does not apply or authorize either remote database migration.
@@ -21,7 +22,7 @@ import { resolve } from "node:path";
 import { PGlite } from "@electric-sql/pglite";
 
 const root = resolve(".");
-const migrationNumbers = ["086", "087", "088", "089", "090", "091"];
+const migrationNumbers = ["086", "087", "088", "089", "090", "091", "092"];
 const migrationPaths = migrationNumbers.map((number) => {
   const names = {
     "086": "086_developer_community_open_posting.sql",
@@ -30,6 +31,7 @@ const migrationPaths = migrationNumbers.map((number) => {
     "089": "089_notification_seen_ack.sql",
     "090": "090_transactional_email_outbox.sql",
     "091": "091_collab_notification_email_hooks.sql",
+    "092": "092_consultation_message_email_read_to_unread.sql",
   };
   return resolve(root, "supabase", "migrations", names[number]);
 });
@@ -505,6 +507,71 @@ async function main() {
   );
   assert(Boolean(sent.id), "counterpart message RPC returned no id");
   await resetRole(db);
+  const messageEmailFirst = await one(
+    db,
+    `SELECT count(*)::int AS count
+     FROM public.transactional_email_outbox
+     WHERE user_id = '${ownerA}'
+       AND template_key = 'collab_consultation_message'`,
+  );
+  assert(
+    Number(messageEmailFirst.count) === 1,
+    "read→unread transition must enqueue consultation_message email",
+  );
+
+  await setRegisteredRole(db, ownerB);
+  await one(
+    db,
+    `SELECT public.send_collab_consultation_message(
+       '${consultation.id}', 'Second unread reply'
+     )::text AS id`,
+  );
+  await resetRole(db);
+  const messageEmailWhileUnread = await one(
+    db,
+    `SELECT count(*)::int AS count
+     FROM public.transactional_email_outbox
+     WHERE user_id = '${ownerA}'
+       AND template_key = 'collab_consultation_message'`,
+  );
+  assert(
+    Number(messageEmailWhileUnread.count) === 1,
+    "additional message while already unread must not enqueue another email",
+  );
+
+  await setRegisteredRole(db, ownerA);
+  await execSql(
+    db,
+    "mark consultation read for catch-up",
+    `SELECT public.mark_collab_consultation_read('${consultation.id}');`,
+  );
+  await resetRole(db);
+  await setRegisteredRole(db, ownerB);
+  await one(
+    db,
+    `SELECT public.send_collab_consultation_message(
+       '${consultation.id}', 'Reply after catch-up'
+     )::text AS id`,
+  );
+  await resetRole(db);
+  const messageEmailAfterRead = await one(
+    db,
+    `SELECT count(*)::int AS count
+     FROM public.transactional_email_outbox
+     WHERE user_id = '${ownerA}'
+       AND template_key = 'collab_consultation_message'`,
+  );
+  assert(
+    Number(messageEmailAfterRead.count) === 2,
+    "message after read→unread catch-up must enqueue another email",
+  );
+
+  const lockDiscipline = readSql(migrationPaths[6]);
+  assert(
+    /send_collab_consultation_message[\s\S]*FOR UPDATE/.test(lockDiscipline) &&
+      /mark_collab_consultation_read[\s\S]*FOR UPDATE/.test(lockDiscipline),
+    "092 must serialize send and mark-read with consultation FOR UPDATE",
+  );
 
   await setRegisteredRole(db, ownerC);
   const thirdPartyRows = await one(
@@ -867,7 +934,7 @@ async function main() {
       {
         ok: true,
         environment: "in-memory PGlite (no remote connection)",
-        migrations: "086–091 full apply + full safe re-run",
+        migrations: "086–092 full apply + full safe re-run",
         assertions: {
           requiredObjects: true,
           rlsTables: 10,
@@ -880,6 +947,7 @@ async function main() {
           bidirectionalBlockEnforced: true,
           relatedProjectOwnershipEnforced: true,
           consultationNotificationCreated: true,
+          consultationMessageEmailReadToUnreadOnly: true,
           inAppSurvivesEmailEnqueueFailure: true,
           usageCounterpartDecision: true,
           usageRequestAcknowledged: true,

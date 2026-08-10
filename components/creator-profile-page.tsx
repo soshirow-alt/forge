@@ -1,7 +1,8 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { useGames } from "@/components/games-provider";
 import { CreatorNotFoundPanel } from "@/components/creator-not-found-panel";
 import { CreatorProfileRealView } from "@/components/creator-profile-real-view";
 import { DeveloperProfileV0Page } from "@/components/developer-profile-v0-page";
@@ -9,12 +10,40 @@ import { PlayerShell } from "@/components/player-shell";
 import { useCreatorProfile } from "@/hooks/use-creator-profile";
 import { useStudioPublicSettings } from "@/hooks/use-studio-public-settings";
 import { shouldHideV0MockContent } from "@/lib/production-mode";
+import { getOptionalSupabaseClient } from "@/lib/supabase/client";
+import { acknowledgeNotificationsByCoalesceKey } from "@/lib/supabase/user-notifications-db";
 
 function CreatorProfilePageContent({ id }: { id: string }) {
   const hideV0Mock = shouldHideV0MockContent();
   const { user } = useAuth();
+  const { reloadNotifications } = useGames();
   const { profile, loaded } = useCreatorProfile(id);
   const { isEnabled, loaded: publicLoaded } = useStudioPublicSettings(profile?.userId);
+
+  const isSelf = Boolean(user && profile && user.id === profile.userId);
+  const canRenderRealProfile = Boolean(
+    profile && (!hideV0Mock || isSelf || (publicLoaded && isEnabled("dev-profile"))),
+  );
+
+  useEffect(() => {
+    if (!user || !profile || !canRenderRealProfile || user.id === profile.userId) {
+      return;
+    }
+    const supabase = getOptionalSupabaseClient();
+    if (!supabase) return;
+    const coalesceKey = `feedback-reciprocity:${user.id}:${profile.userId}`;
+    let cancelled = false;
+    void acknowledgeNotificationsByCoalesceKey(supabase, coalesceKey)
+      .then(() => {
+        if (!cancelled) reloadNotifications();
+      })
+      .catch(() => {
+        // Profile already rendered; ack failure must not undo the view.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user, profile, canRenderRealProfile, reloadNotifications]);
 
   if (hideV0Mock) {
     if (!loaded || !publicLoaded) {
@@ -27,7 +56,6 @@ function CreatorProfilePageContent({ id }: { id: string }) {
     if (!profile) {
       return <CreatorNotFoundPanel />;
     }
-    const isSelf = user?.id === profile.userId;
     if (!isSelf && !isEnabled("dev-profile")) {
       return <CreatorNotFoundPanel />;
     }
@@ -35,7 +63,6 @@ function CreatorProfilePageContent({ id }: { id: string }) {
   }
 
   if (profile) {
-    const isSelf = user?.id === profile.userId;
     return <CreatorProfileRealView profile={profile} isSelf={isSelf} />;
   }
 

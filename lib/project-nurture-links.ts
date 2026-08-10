@@ -98,6 +98,9 @@ export function notificationTargetHref(notification: Notification): string {
     }
     return "/consultations#usage-relations";
   }
+  if (notification.type === "feedback_reciprocity" && notification.relatedUserId) {
+    return `/creators/${notification.relatedUserId}`;
+  }
   const projectId = notification.projectId;
   if (!projectId) return "/notifications";
   switch (notification.type) {

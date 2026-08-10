@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { useRequireAuth } from "@/hooks/use-require-auth";
-import { getOptionalSupabaseClient } from "@/lib/supabase/client";
-import { requestProjectUsageRelation } from "@/lib/supabase/usage-relations-write-db";
 
 export function UsageRelationButton({
   focusProject,
@@ -40,18 +38,19 @@ export function UsageRelationButton({
 
   async function submit() {
     if (!candidate) return;
-    const supabase = getOptionalSupabaseClient();
-    if (!supabase) return;
     const sourceProjectId =
       direction === "candidate_uses_focus" ? candidate.id : focusProject.id;
     const targetProjectId =
       direction === "candidate_uses_focus" ? focusProject.id : candidate.id;
     try {
-      await requestProjectUsageRelation(supabase, {
-        sourceProjectId,
-        targetProjectId,
-        note,
+      const response = await fetch("/api/usage-relations/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sourceProjectId, targetProjectId, note }),
       });
+      if (!response.ok) {
+        throw new Error("request failed");
+      }
       setStatus("確認依頼を送りました。");
     } catch {
       setStatus("使用関係を登録できませんでした。");

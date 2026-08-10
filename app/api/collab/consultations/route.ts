@@ -3,6 +3,7 @@ import {
   createCollabConsultation,
   listMyCollabConsultations,
 } from "@/lib/supabase/collab-consultations-db";
+import { scheduleEmailOutboxKickBestEffort } from "@/lib/email-outbox-kick";
 import { createClient } from "@/lib/supabase/server";
 import {
   isCollabConsultationPurpose,
@@ -63,6 +64,8 @@ export async function POST(request: Request) {
       initiatorProjectId: body.initiatorProjectId,
       counterpartProjectId: body.counterpartProjectId,
     });
+    // Mutation already committed; email failure must not change this response.
+    scheduleEmailOutboxKickBestEffort();
     return NextResponse.json({ consultationId }, { status: 201 });
   } catch (error) {
     console.error("[collab-consultations] create failed", error);

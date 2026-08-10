@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAnonSupabaseClient } from "@/lib/supabase/anon-client";
-import { fetchPublicPlatformAnnouncements } from "@/lib/supabase/player-ia-home-db";
+import { fetchPublicPlatformAnnouncementArchive } from "@/lib/supabase/player-ia-home-db";
 
 export const runtime = "nodejs";
 
@@ -20,13 +20,14 @@ export async function GET(request: Request) {
   const offset = Number.isFinite(offsetParam) ? offsetParam : 0;
 
   try {
-    const announcements = await fetchPublicPlatformAnnouncements(
+    const announcements = await fetchPublicPlatformAnnouncementArchive(
       supabase,
-      limit + offset,
+      Math.min(Math.max(limit, 1), 100),
+      Math.max(offset, 0),
     );
     return NextResponse.json({
       ok: true,
-      announcements: announcements.slice(offset, offset + limit),
+      announcements,
     });
   } catch (error: unknown) {
     console.error("[announcements] failed", error);

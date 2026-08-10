@@ -91,6 +91,16 @@ export function PlayerIaAnnouncementDetailPage({ slug }: { slug: string }) {
       <div className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-300">
         {announcement.body}
       </div>
+      {announcement.ctaLabel && announcement.ctaUrl ? (
+        <p>
+          <Link
+            href={announcement.ctaUrl}
+            className="inline-flex rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
+          >
+            {announcement.ctaLabel}
+          </Link>
+        </p>
+      ) : null}
     </article>
   );
 }

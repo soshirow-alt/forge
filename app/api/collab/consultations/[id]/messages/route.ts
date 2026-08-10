@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { scheduleEmailOutboxKickBestEffort } from "@/lib/email-outbox-kick";
 import { createClient } from "@/lib/supabase/server";
 import { sendCollabConsultationMessage } from "@/lib/supabase/collab-consultations-db";
 
@@ -28,6 +29,7 @@ export async function POST(
       (await context.params).id,
       message,
     );
+    scheduleEmailOutboxKickBestEffort();
     return NextResponse.json({ messageId }, { status: 201 });
   } catch (error) {
     console.error("[collab-consultations] send failed", error);

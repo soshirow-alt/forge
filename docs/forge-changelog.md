@@ -4,6 +4,20 @@
 
 ---
 
+## 2026-08-10 — Release package: immediate email + reciprocity + announcement + legal
+
+- **Email cadence** — important mutation 成功後に `after()` で outbox best-effort kick。日次 cron は recovery 専用。consultation message は 092 で read→unread のみ
+- **Feedback reciprocity** — 登録ユーザーが公開作品へ新規 FB したとき、相手へ重要通知＋transactional email（同一 open prompt は coalesce）。CTA は actor の `/creators/{id}`。profile 正常表示で ack。stale は dismiss RPC
+- **Announcement** — 094 で publish window / CTA / archive RPC。正式 release announcement の Staging/Production ops SQL を追加（Production は適用しない）
+- **Legal** — Terms / Privacy をコミュニティ・相談・使用関係・service email（Resend）に合わせて更新。version/再同意基盤は作らない
+
+## 2026-08-10 — Transactional email: immediate best-effort + daily recovery
+
+- **配信方針** — 重要通知メールは mutation 成功後に server から outbox worker を best-effort kick。Hobby 日次 cron は recovery / retry 専用（primary delivery にしない）。in-app 通知が authoritative。email 失敗で相談・使用関係 mutation を失敗させない
+- **対象** — 新規相談 / 相談メッセージ（read→unread 時のみ）/ 使用関係依頼・承認・非承認。本文全文はメール非掲載のまま
+- **DB** — 090/091 は編集せず、`092_consultation_message_email_read_to_unread` で message email を catch-up 遷移時のみ enqueue
+- **経路** — consultation create/message API と usage request/decide API から `kickEmailOutboxBestEffort` を直接呼ぶ（self-HTTP ではない）
+
 ## 2026-08-10 — Featured hero Staging seed: immutable `first_published_at` 対策
 
 - **原因確定** — `projects_set_first_published_at`（050）が既存 `first_published_at` の UPDATE を握りつぶすため、共有 game `…000003` への固定日時 bump は Staging 上 no-op。soft owner diversity 後の newest が `…000028`（dev-tool）になり `rows 4 / expected pairs 3` で失敗（ローカルに trigger が無いと偽 PASS）

@@ -106,6 +106,11 @@ export type PlatformAnnouncementRow = {
   body: string;
   importance: string;
   published_at: string;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  cta_label?: string | null;
+  cta_url?: string | null;
+  is_active?: boolean | null;
 };
 
 export type PlatformAnnouncement = {
@@ -116,6 +121,11 @@ export type PlatformAnnouncement = {
   summary: string;
   importance: "normal" | "important";
   publishedAt: string;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  ctaLabel?: string | null;
+  ctaUrl?: string | null;
+  isActive?: boolean;
 };
 
 export type HomeNewestProjectRow = {
@@ -270,6 +280,11 @@ function mapAnnouncement(row: PlatformAnnouncementRow): PlatformAnnouncement {
     summary: summarizeAnnouncementBody(body),
     importance,
     publishedAt: asString(row.published_at),
+    startsAt: row.starts_at ? asString(row.starts_at) : null,
+    endsAt: row.ends_at ? asString(row.ends_at) : null,
+    ctaLabel: row.cta_label ? asString(row.cta_label) : null,
+    ctaUrl: row.cta_url ? asString(row.cta_url) : null,
+    isActive: row.is_active == null ? undefined : asBoolean(row.is_active),
   };
 }
 
@@ -369,6 +384,29 @@ export async function fetchPublicPlatformAnnouncements(
       error,
     );
     return [];
+  }
+  return ((data ?? []) as PlatformAnnouncementRow[]).map(mapAnnouncement);
+}
+
+export async function fetchPublicPlatformAnnouncementArchive(
+  supabase: SupabaseClient,
+  limit = 50,
+  offset = 0,
+): Promise<PlatformAnnouncement[]> {
+  const { data, error } = await supabase.rpc(
+    "get_public_platform_announcement_archive",
+    {
+      p_limit: limit,
+      p_offset: offset,
+    },
+  );
+  if (error) {
+    console.error(
+      "[player-ia-home] get_public_platform_announcement_archive failed",
+      error,
+    );
+    // Fallback for environments that have not applied 094 yet.
+    return fetchPublicPlatformAnnouncements(supabase, limit);
   }
   return ((data ?? []) as PlatformAnnouncementRow[]).map(mapAnnouncement);
 }

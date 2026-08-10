@@ -79,6 +79,11 @@ export function PlayerIaAnnouncementsPage() {
                   重要
                 </span>
               ) : null}
+              {item.isActive === false ? (
+                <span className="shrink-0 rounded-md bg-zinc-800 px-2 py-0.5 text-[10px] font-semibold text-zinc-400 ring-1 ring-zinc-700">
+                  過去
+                </span>
+              ) : null}
               <span className="min-w-0 flex-1 truncate text-sm text-zinc-200">
                 {item.title}
               </span>
