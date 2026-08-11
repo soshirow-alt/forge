@@ -125,6 +125,8 @@ async function main() {
   const homeHasLabel = count(home.html, ">ホーム<") > 0;
   const homeHasExploreLabel = count(home.html, ">Explore<") > 0;
   const homeHasGlobalSearch =
+    count(home.html, "作品・クリエイター・タグを検索") > 0 ||
+    count(home.text, "作品・クリエイター・タグを検索") > 0 ||
     count(home.html, "作品・開発者・タグを検索") > 0 ||
     count(home.text, "作品・開発者・タグを検索") > 0;
   const homeHasPlayerIaApi =
