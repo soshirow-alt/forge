@@ -72,7 +72,8 @@ const longCard = renderToStaticMarkup(
   }),
 );
 assert.match(longCard, /line-clamp-2/);
-assert.match(longCard, /サービス・アプリ/);
+assert.match(longCard, /サービス/);
+assert.doesNotMatch(longCard, /サービス・アプリ/);
 assert.match(longCard, /truncate/);
 
 for (const category of PROJECT_CATEGORY_IDS) {

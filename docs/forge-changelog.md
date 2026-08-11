@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-08-12 — カテゴリ表示名: 「サービス」（「サービス・アプリ」廃止）
+
+- **表示名** — 5カテゴリのユーザー向け公式ラベルを ゲーム / 音楽・音声 / アセット / 開発ツール / **サービス** に統一。旧「サービス・アプリ」は出さない
+- **内部キー** — DB / query / TS の `service-app` は変更なし
+- **対象** — Studio投稿選択、Search tab、Homeカード、category Home、作品詳細、クリエイター活動カテゴリ、利用規約、未公開お知らせ原稿
+- **非実施** — 05 announcement 未実行。DB write なし
+
 ## 2026-08-11 — Preview hotfix: Home FB 3件レイアウト / 新着順 / Studio メッセージ / 5カテゴリ投稿
 
 - **Home FB** — 候補 4/3/2/1/0 で hero+right を正規化。Production live は 3 件（Skank Boost / 最弱すらいむ / ぬを探せ！）。ranking 条件は不変

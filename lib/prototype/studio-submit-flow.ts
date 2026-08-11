@@ -40,7 +40,7 @@ export const SUBMIT_FLOW_CATEGORIES: SubmitFlowCategoryOption[] = [
   },
   {
     id: "web_service",
-    title: "Webサービス・アプリ",
+    title: "サービス",
     hint: "Webサービスや各種アプリ",
     querySlug: "service-app",
   },
@@ -68,7 +68,7 @@ export const SUBMIT_PROTOTYPE_CATEGORY_LABEL: Record<
 > = {
   music: "音楽・音声",
   dev_tool: "開発ツール",
-  web_service: "Webサービス・アプリ",
+  web_service: "サービス",
 };
 
 export const SUBMIT_PROTOTYPE_PRIMARY_CTA: Record<
@@ -271,7 +271,7 @@ export const SUBMIT_PROTOTYPE_IMAGE_COPY: Record<
   },
   web_service: {
     label: "画像",
-    hint: "サービス・アプリの画面や主要機能が分かる画像があると伝わりやすくなります。",
+    hint: "サービスの画面や主要機能が分かる画像があると伝わりやすくなります。",
     helperEmpty: "まずは代表画像を1枚追加できます",
   },
 };

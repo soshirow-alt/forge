@@ -58,9 +58,9 @@ export const WORK_CATEGORY_NAV: WorkCategoryNav[] = [
   {
     id: "web_service",
     querySlug: "service-app",
-    label: "サービス・アプリ",
-    shortAction: "新しいサービス・アプリを試す",
-    surfaceLead: "使ってみて反応を届けるサービス・アプリ",
+    label: "サービス",
+    shortAction: "新しいサービスを試す",
+    surfaceLead: "使ってみて反応を届けるサービス",
     href: "/home?category=service-app",
   },
 ];
@@ -168,7 +168,7 @@ export const FEATURED_PROTOTYPE_WORKS: PrototypeWorkCard[] = [
     id: "proto-featured-service",
     slug: "service-sample",
     category: "web_service",
-    categoryLabel: "サービス・アプリ",
+    categoryLabel: "サービス",
     title: "Feedback Board Lite（プロトタイプ）",
     creator: "Proto Apps",
     lead: "小規模チーム向けのフィードバック整理ボード。",
@@ -290,7 +290,7 @@ export const CATEGORY_SHELF_WORKS: Record<WorkCategoryId, PrototypeWorkCard[]> =
       id: "proto-shelf-service-1",
       slug: "service-sample",
       category: "web_service",
-      categoryLabel: "サービス・アプリ",
+      categoryLabel: "サービス",
       title: "Feedback Board Lite",
       creator: "Proto Apps",
       lead: "FB整理用の軽いボード。",
@@ -301,7 +301,7 @@ export const CATEGORY_SHELF_WORKS: Record<WorkCategoryId, PrototypeWorkCard[]> =
       id: "proto-shelf-service-2",
       slug: "service-sample",
       category: "web_service",
-      categoryLabel: "サービス・アプリ",
+      categoryLabel: "サービス",
       title: "Patch Notes Diary",
       creator: "Proto Apps",
       lead: "更新メモをプレイヤー向けに整える。",
@@ -312,7 +312,7 @@ export const CATEGORY_SHELF_WORKS: Record<WorkCategoryId, PrototypeWorkCard[]> =
       id: "proto-shelf-service-3",
       slug: "service-sample",
       category: "web_service",
-      categoryLabel: "サービス・アプリ",
+      categoryLabel: "サービス",
       title: "Playtest Scheduler",
       creator: "Proto Apps",
       lead: "体験会の日程調整を短くする。",
@@ -481,7 +481,7 @@ export const PROTOTYPE_DETAIL_FIXTURES: Record<string, PrototypeDetailFixture> =
   "service-sample": {
     slug: "service-sample",
     category: "web_service",
-    categoryLabel: "サービス・アプリ",
+    categoryLabel: "サービス",
     title: "Feedback Board Lite",
     creator: "Proto Apps",
     creatorHref: "/search/creators",
@@ -516,7 +516,7 @@ export const PROTOTYPE_DETAIL_COMPARE_LINKS: {
     href: "/prototype/works/music-no-art-title",
   },
   { label: "開発ツール", href: "/prototype/works/tool-sample" },
-  { label: "サービス・アプリ", href: "/prototype/works/service-sample" },
+  { label: "サービス", href: "/prototype/works/service-sample" },
 ];
 
 export function categoryLabel(id: WorkCategoryId): string {

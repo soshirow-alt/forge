@@ -28,6 +28,10 @@ assert.deepEqual(
   PLAYER_IA_HOME_FEATURE_CARDS.map((c) => c.id),
   ["game", "audio", "asset", "dev-tool", "service-app"],
 );
+assert.deepEqual(
+  PLAYER_IA_HOME_FEATURE_CARDS.map((c) => c.title),
+  ["ゲーム", "音楽・音声", "アセット", "開発ツール", "サービス"],
+);
 
 // Every card: a spotlight CTA (link or coming_soon) + an always-link search CTA
 // to its own category. No "publish" card / CTA on this feature grid (Studio

@@ -153,7 +153,7 @@ export const PLAYER_IA_HOME_FEATURE_CARDS: readonly PlayerIaHomeFeatureCard[] = 
   },
   {
     id: "service-app",
-    title: "サービス・アプリ",
+    title: "サービス",
     description: "サービスやアプリを探して試す",
     icon: AppWindow,
     ctas: [

@@ -55,7 +55,7 @@ export const EXPLORE_PROTOTYPE_CATEGORIES: ExplorePrototypeCategoryMeta[] = [
   },
   {
     slug: "service-app",
-    label: "Webサービス・アプリ",
+    label: "サービス",
     description: "Webサービスや各種アプリ",
     ctaLabel: "利用する",
     href: "/home?category=service-app",
@@ -1538,7 +1538,7 @@ export const EXPLORE_PROTOTYPE_WORKS: ExplorePrototypeWork[] = [
     creatorInitials: "Bo",
     phase: "β版",
     thumbnailSrc: null,
-    thumbnailAlt: "Webサービス・アプリのサムネイル未設定",
+    thumbnailAlt: "サービスのサムネイル未設定",
     feedbackCount: 6,
     followCount: 9,
     primaryUsageCount: 26,
@@ -1627,7 +1627,7 @@ export function getExplorePrototypeHomeCategoryShelves(): ExplorePrototypeShelf[
     game: "ゲームをすべて見る",
     audio: "音楽・音声をすべて見る",
     "dev-tool": "開発ツールをすべて見る",
-    "service-app": "Webサービス・アプリをすべて見る",
+    "service-app": "サービスをすべて見る",
   };
 
   return EXPLORE_PROTOTYPE_CATEGORIES.map((meta) => {
@@ -1773,7 +1773,7 @@ export function getExplorePrototypeHubBrowse(): ExplorePrototypeBrowseModel {
     game: "ゲームをすべて見る",
     audio: "音楽・音声をすべて見る",
     "dev-tool": "開発ツールをすべて見る",
-    "service-app": "Webサービス・アプリをすべて見る",
+    "service-app": "サービスをすべて見る",
   };
 
   const shelves = EXPLORE_PROTOTYPE_CATEGORIES.map((meta) => {

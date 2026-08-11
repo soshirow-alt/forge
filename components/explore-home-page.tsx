@@ -195,7 +195,7 @@ export function ExploreHomePage() {
       <ShelfSection categoryId="game" title="ゲーム" />
       <ShelfSection categoryId="music" title="音楽・音声" />
       <ShelfSection categoryId="dev_tool" title="開発ツール" />
-      <ShelfSection categoryId="web_service" title="サービス・アプリ" />
+      <ShelfSection categoryId="web_service" title="サービス" />
 
       <section className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-4">
         <p className="text-sm font-medium text-zinc-200">比較用リンク</p>
@@ -213,7 +213,7 @@ export function ExploreHomePage() {
           </Link>
           <span className="text-zinc-600">·</span>
           <Link href="/home?category=service-app" className="text-violet-300 hover:underline">
-            サービス・アプリ面
+            サービス面
           </Link>
           <span className="text-zinc-600">·</span>
           <Link href="/studio/submit?view=category-proto" className="text-violet-300 hover:underline">

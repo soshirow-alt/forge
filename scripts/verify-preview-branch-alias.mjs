@@ -177,7 +177,7 @@ async function main() {
     failures.push("alias /home still has legacy work-search placeholder");
   }
 
-  // /search — category tabs live here (selector label is 「サービス」, not DB 「サービス・アプリ」).
+  // /search — category tabs live here (official user-facing label is 「サービス」; DB key stays service-app).
   const search = await collectBundleText(ALIAS_URL, "/search");
   const searchHasCategoryTabs =
     count(search.html, ">すべて<") > 0 &&

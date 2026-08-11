@@ -13,10 +13,10 @@ export const PROJECT_CATEGORY_LABELS: Record<ProjectCategoryId, string> = {
   audio: "音楽・音声",
   asset: "アセット",
   "dev-tool": "開発ツール",
-  "service-app": "サービス・アプリ",
+  "service-app": "サービス",
 };
 
-/** Search category selector display labels only (DB / formal labels unchanged). */
+/** Search category selector display labels. Official user-facing label for service-app is 「サービス」; DB key stays service-app. */
 export const PROJECT_CATEGORY_SELECTOR_LABELS: Record<
   ProjectCategoryNavId,
   string
@@ -137,7 +137,7 @@ export const ACTIVITY_TAG_LABELS: Record<ActivityTagId, string> = {
   audio_creator: "音楽・音声制作者",
   asset_creator: "アセット制作者",
   tool_developer: "ツール開発者",
-  service_app_developer: "サービス・アプリ開発者",
+  service_app_developer: "サービス開発者",
 };
 
 export type CategoryAttributes = {

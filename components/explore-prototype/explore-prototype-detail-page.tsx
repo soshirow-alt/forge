@@ -137,7 +137,7 @@ export function ExplorePrototypeDetailPage({
         ? "音楽・音声を探す"
         : work.category === "dev-tool"
           ? "開発ツールを探す"
-          : "Webサービス・アプリを探す";
+          : "サービスを探す";
 
   return (
     <div className="space-y-8 pb-10">

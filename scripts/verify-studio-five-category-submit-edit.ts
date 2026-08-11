@@ -34,6 +34,10 @@ assert.deepEqual(
   STUDIO_SUBMIT_CATEGORY_OPTIONS.map((o) => o.id),
   [...PROJECT_CATEGORY_IDS],
 );
+assert.deepEqual(
+  STUDIO_SUBMIT_CATEGORY_OPTIONS.map((o) => o.title),
+  ["ゲーム", "音楽・音声", "アセット", "開発ツール", "サービス"],
+);
 
 function commonDraft() {
   const draft = createEmptySubmitDraft();
