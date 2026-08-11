@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-08-11 — Production preflight: history table 不存在でも完走
+
+- **Preflight** — `00_preflight_READONLY.sql` は `supabase_migrations.schema_migrations` を直接参照しない。不存在時は `migration_history_status = TABLE_ABSENT`（FAIL にしない）
+- **判定正本** — 引き続き実 schema / object presence（baseline 075 / 076–101 未適用）
+- **非実施** — Production DB / main / deploy / APPLY 01–03 未実施
+
 ## 2026-08-11 — 正式ドメイン forgeplace.app（Preview 先行）
 
 - **Production canonical** — 新規生成 URL（canonical / OGP / email CTA / Auth origin）は `https://forgeplace.app`

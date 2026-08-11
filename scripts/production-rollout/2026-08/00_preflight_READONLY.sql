@@ -1,5 +1,5 @@
 -- =============================================================================
--- Production rollout PREFLIGHT (READ-ONLY) — 2026-08 package (076–100)
+-- Production rollout PREFLIGHT (READ-ONLY) — 2026-08 package (076–101)
 -- Target: Production Supabase bpnisgzxuwdxelhnduuf
 -- Run BEFORE any APPLY file. STOP if preflight_verdict = FAIL.
 -- No DDL / DML. Safe to re-run.
@@ -154,16 +154,20 @@ SELECT 'D user_settings', count(*)::bigint FROM public.user_settings
 ORDER BY label;
 
 -- -----------------------------------------------------------------------------
--- E. schema_migrations snapshot (informational — SQL Editor apply does not auto-write)
+-- E. migration history presence (informational — never FROM the history table)
+-- Production may have no supabase_migrations.schema_migrations (SQL Editor apply
+-- does not create/write it). TABLE_ABSENT is expected and is NOT a preflight FAIL.
+-- Verdict uses B/C/F object presence only.
 -- -----------------------------------------------------------------------------
-SELECT version, name, inserted_at
-FROM supabase_migrations.schema_migrations
-WHERE version ~ '^(07[0-9]|08[0-9]|09[0-9]|100)'
-ORDER BY version;
-
--- Expect: versions through 075 may or may not be listed depending on how Production
--- was historically applied. Absence of 076–100 here is NORMAL before this package.
--- Do NOT treat missing 076–100 rows as "need to apply" alone — use object checks above.
+SELECT
+  CASE
+    WHEN to_regclass('supabase_migrations.schema_migrations') IS NULL
+      THEN 'TABLE_ABSENT'
+    ELSE 'TABLE_PRESENT'
+  END AS migration_history_status,
+  (to_regnamespace('supabase_migrations') IS NOT NULL) AS history_schema_exists,
+  'informational only — do not FAIL preflight on TABLE_ABSENT — use B/C/F objects'
+    AS history_note;
 
 -- -----------------------------------------------------------------------------
 -- F. STOP verdict (any FAIL in C* or missing B* → do not apply)
@@ -197,8 +201,8 @@ already AS (
 SELECT
   CASE
     WHEN NOT (SELECT has_age_rating AND has_empathies AND has_follower AND has_notif_select FROM baseline)
-      THEN 'FAIL baseline 070–074/075 incomplete — do not apply 076–100'
+      THEN 'FAIL baseline 070–074/075 incomplete — do not apply 076–101'
     WHEN (SELECT has_category OR has_usage OR has_announcements OR has_collab OR has_outbox OR has_notify_email FROM already)
-      THEN 'FAIL 076–100 objects already partially/fully present — stop and review (do not re-run 01 blindly)'
+      THEN 'FAIL 076–101 objects already partially/fully present — stop and review (do not re-run 01 blindly)'
     ELSE 'PASS proceed to 01_core_schema_and_category.sql'
   END AS preflight_verdict;

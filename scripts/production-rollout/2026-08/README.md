@@ -5,4 +5,5 @@
 - History repair notes: `06_migration_history_repair_NOTES.sql` (076–101).
 - Rebuild APPLY from canonical: `node scripts/production-rollout/2026-08/rebuild-apply-bundles.mjs`
 - Equivalence gate: `npm run verify:production-rollout-bundle`
+- Preflight gate: `npm run verify:production-rollout-preflight`（history table 不存在でも完走・read-only）
 - Runbook: `docs/production-rollout-2026-08.md`

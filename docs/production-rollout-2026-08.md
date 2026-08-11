@@ -106,6 +106,7 @@ Bundles keep **full ordered content** of each migration (section headers `-- ===
 | `PASS` | Proceed to 01 |
 | `FAIL baseline incomplete` | Stop. Production is not at 075 expectations |
 | `FAIL objects already present` | Stop. Partial/full 076–101 apply — do **not** re-run 01 blindly. Diff objects vs postflight checklist; resume from the first missing apply boundary only after Owner review |
+| Section E `migration_history_status = TABLE_ABSENT` | **Not a FAIL.** Production may have no `supabase_migrations.schema_migrations`. Verdict is B/C/F object presence only. |
 
 ### 01 / 02 / 03 APPLY
 
@@ -151,7 +152,7 @@ Read-only probes list MISSING versions **076–101**. Prefer `supabase migration
 
 ## 5. Migration history handling
 
-Dashboard SQL Editor **does not** record `supabase_migrations.schema_migrations` when you paste APPLY bundles.
+Dashboard SQL Editor **does not** record `supabase_migrations.schema_migrations` when you paste APPLY bundles. Production may also **lack the table entirely**. `00_preflight_READONLY.sql` section E only checks `to_regclass` / `to_regnamespace` (never `FROM schema_migrations`) and reports `TABLE_ABSENT` or `TABLE_PRESENT`. Absence is informational, not a STOP.
 
 | Topic | Policy |
 |-------|--------|

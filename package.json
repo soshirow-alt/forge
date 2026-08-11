@@ -88,6 +88,7 @@
     "verify:reciprocity-announcement-sql-gate": "node scripts/staging-only/local-sql-gate-reciprocity-announcement.mjs",
     "verify:featured-hero-seed-sql-gate": "node scripts/staging-only/local-sql-gate-featured-hero-seed.mjs",
     "verify:production-rollout-bundle": "node scripts/verify-production-rollout-bundle.mjs",
+    "verify:production-rollout-preflight": "node scripts/verify-production-rollout-preflight.mjs",
     "verify:codex-available": "node scripts/agents/check-codex-available.mjs",
     "verify:codex-review-json": "node scripts/agents/validate-codex-review.mjs",
     "verify:codex-review-selftest": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/agents/selftest-review-loop.ps1",
