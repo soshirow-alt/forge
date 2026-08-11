@@ -182,6 +182,31 @@ async function main() {
       detail: fixture.reused ? "reused" : "created",
     });
 
+    // Pair email enqueue is read→unread. Clear operation unread first.
+    {
+      const opCookie = await buildPreviewAuthCookieHeader({
+        env,
+        accessToken: opSession.accessToken,
+        refreshToken: opSession.refreshToken,
+      });
+      const readResponse = await fetch(
+        `${PREVIEW_ALIAS}/api/collab/consultations/${fixture.consultationId}/read`,
+        {
+          method: "POST",
+          headers: {
+            cookie: opCookie,
+            "user-agent": "forge-preview-real-email/1",
+          },
+        },
+      );
+      if (!readResponse.ok) {
+        throw new Error(
+          `Preview mark-read HTTP ${readResponse.status}: ${(await readResponse.text()).slice(0, 200)}`,
+        );
+      }
+      steps.push({ name: "pair_marked_read", ok: true });
+    }
+
     // Ensure email prefs allow messages_collab (own-row RLS; not service_role).
     {
       const operationDb = authedClient(env, opSession.accessToken);
@@ -273,20 +298,23 @@ async function main() {
       .select("id,type,consultation_id")
       .eq("user_id", operation.userId)
       .eq("consultation_id", consultationId)
-      .eq("type", "consultation_new")
+      .in("type", ["consultation_new", "consultation_message"])
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
     if (notifError || !notif) {
       throw new Error(notifError?.message || "notification missing");
     }
-    steps.push({ name: "notification", ok: true });
+    steps.push({ name: "notification", ok: true, detail: String(notif.type) });
 
     const { data: outboxRows, error: outboxError } = await admin
       .from("transactional_email_outbox")
       .select("id,to_email,template_key,status,payload,created_at")
       .eq("user_id", operation.userId)
-      .eq("template_key", "collab_consultation_new")
+      .in("template_key", [
+        "collab_consultation_new",
+        "collab_consultation_message",
+      ])
       .order("created_at", { ascending: false })
       .limit(10);
     if (outboxError) throw new Error(outboxError.message);
@@ -300,7 +328,11 @@ async function main() {
     steps.push({ name: "outbox_enqueued", ok: true, detail: outboxId });
 
     process.env.NEXT_PUBLIC_SITE_URL = siteUrl(env);
-    const built = buildTransactionalEmail("collab_consultation_new", {
+    const built = buildTransactionalEmail(
+      outbox.template_key === "collab_consultation_message"
+        ? "collab_consultation_message"
+        : "collab_consultation_new",
+      {
       consultation_id: consultationId,
     });
     if (!built.text.includes(`${siteUrl(env)}/messages/${consultationId}`)) {
