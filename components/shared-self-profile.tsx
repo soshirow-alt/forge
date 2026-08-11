@@ -500,7 +500,7 @@ export function SharedSelfProfile({
               <RoleStatRow
                 label="参加コミュニティ"
                 value={communityCount}
-                href={shell === "studio" ? "/studio/community" : "/mypage/community"}
+                href={shell === "studio" ? undefined : "/mypage/community"}
               />
               {shell === "studio" ? (
                 <div className="pt-3">

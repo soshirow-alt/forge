@@ -33,7 +33,7 @@ export type StudioShellNavId =
   | (typeof primaryLinks)[number]["id"]
   | "mypage"
   | "profile"
-  | "community"
+  | "messages"
   | "notifications"
   | "settings"
   | "guide";
@@ -98,7 +98,7 @@ function StudioMypageSidebarGroup() {
     (pathname.startsWith("/projects/") && pathname.endsWith("/studio"));
   const isProfile =
     pathname === "/mypage/profile" || pathname === "/studio/profile";
-  const isCommunity = pathname.startsWith("/studio/community");
+  const isMessages = pathname.startsWith("/studio/messages");
 
   return (
     <div className="space-y-1">
@@ -112,10 +112,10 @@ function StudioMypageSidebarGroup() {
         プロフィール
       </Link>
       <Link
-        href="/studio/community"
-        className={`ml-4 block ${subNavLinkClass(isCommunity)}`}
+        href="/studio/messages"
+        className={`ml-4 block ${subNavLinkClass(isMessages)}`}
       >
-        マイコミュニティ
+        メッセージ
       </Link>
     </div>
   );

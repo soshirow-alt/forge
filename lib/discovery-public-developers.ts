@@ -169,6 +169,7 @@ export function buildPublicDeveloperSearchResults(
       completed: ownerGames.filter((game) => game.releaseStatus === "released")
         .length,
       following: isFollowing(display.routeId),
+      newestCreatedAt: newestCreated,
     };
   });
 }

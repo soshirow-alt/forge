@@ -989,14 +989,14 @@ function CommunityTabs({
   );
 }
 
-function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
+function CommunityHubContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, hydrated } = useAuth();
   const hideV0Mock = shouldHideV0MockContent();
   const { opened } = useDeveloperCommunitiesV0();
-  const supabaseHub = useCommunityHubSupabase(variant === "developer");
-  const isDeveloper = variant === "developer";
+  const supabaseHub = useCommunityHubSupabase(false);
+  const isDeveloper = false;
   const { pendingFor, membersFor, approveJoinRequest, rejectJoinRequest, getStatus } =
     useCommunityJoinV0();
 
@@ -1052,11 +1052,9 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
     ? developerCommunityId
     : (communityParam ?? joinedCommunities[0]?.id ?? "");
 
-  const memberProfileReturnTo = isDeveloper
-    ? "/studio/community?tab=members"
-    : selectedCommunityId
-      ? `/mypage/community?tab=members&community=${encodeURIComponent(selectedCommunityId)}`
-      : "/mypage/community?tab=members";
+  const memberProfileReturnTo = selectedCommunityId
+    ? `/mypage/community?tab=members&community=${encodeURIComponent(selectedCommunityId)}`
+    : "/mypage/community?tab=members";
 
   const mockPosts = isDeveloper ? studioCommunityPostsMock : playerCommunityFeedMock;
   const boardSeedPosts =
@@ -1226,7 +1224,7 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
     } else {
       params.set("tab", tab);
     }
-    const base = isDeveloper ? "/studio/community" : "/mypage/community";
+    const base = "/mypage/community";
     const qs = params.toString();
     router.push(qs ? `${base}?${qs}` : base);
   }
@@ -1238,7 +1236,7 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
     router.push(`/mypage/community?${qs}`);
   }
 
-  const title = isDeveloper ? "マイコミュニティ" : "参加コミュニティ";
+  const title = "参加コミュニティ";
   const description = isDeveloper
     ? (developerCommunityProfile?.description ??
       "フォロワーと交流し、一緒にゲームを育てましょう")
@@ -1492,11 +1490,9 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
                 canReply={!isDeveloper && canViewCommunity}
                 onReply={(body) => addReply(post.id, body)}
                 reportReturnPath={
-                  isDeveloper
-                    ? "/studio/community"
-                    : selectedCommunityId
-                      ? `/mypage/community?community=${encodeURIComponent(selectedCommunityId)}`
-                      : "/mypage/community"
+                  selectedCommunityId
+                    ? `/mypage/community?community=${encodeURIComponent(selectedCommunityId)}`
+                    : "/mypage/community"
                 }
               />
             ))}
@@ -1514,6 +1510,6 @@ function CommunityHubContent({ variant }: { variant: "developer" | "player" }) {
   );
 }
 
-export function CommunityHubPage({ variant }: { variant: "developer" | "player" }) {
-  return <CommunityHubContent variant={variant} />;
+export function CommunityHubPage() {
+  return <CommunityHubContent />;
 }

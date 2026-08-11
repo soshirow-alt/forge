@@ -9,20 +9,21 @@ function StudioSubmitRouteInner({
 }: {
   searchParams: { view?: string; category?: string };
 }) {
-  if (searchParams.view === "category-proto") {
-    if (searchParams.category === "game") {
-      return <StudioSubmitPage />;
-    }
-    if (searchParams.category === "asset") {
-      return <StudioSubmitPage projectCategory="asset" />;
-    }
-    const prototypeCategory = parseSubmitPrototypeCategory(searchParams.category);
-    if (prototypeCategory) {
-      return <StudioSubmitPage prototypeCategory={prototypeCategory} />;
-    }
+  const category = searchParams.category;
+  if (!category) {
     return <StudioSubmitCategoryPick />;
   }
-  return <StudioSubmitPage />;
+  if (category === "game") {
+    return <StudioSubmitPage projectCategory="game" />;
+  }
+  if (category === "asset") {
+    return <StudioSubmitPage projectCategory="asset" />;
+  }
+  const prototypeCategory = parseSubmitPrototypeCategory(category);
+  if (prototypeCategory) {
+    return <StudioSubmitPage prototypeCategory={prototypeCategory} />;
+  }
+  return <StudioSubmitCategoryPick />;
 }
 
 export default async function StudioSubmitRoute({

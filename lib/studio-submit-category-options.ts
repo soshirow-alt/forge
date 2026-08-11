@@ -7,7 +7,6 @@ import {
   PROJECT_CATEGORY_LABELS,
   type ProjectCategoryId,
 } from "@/lib/project-categories";
-import { SUBMIT_CATEGORY_PICK_HREF } from "@/lib/prototype/studio-submit-flow";
 
 export type StudioSubmitCategoryOption = {
   id: ProjectCategoryId;
@@ -32,8 +31,5 @@ export const STUDIO_SUBMIT_CATEGORY_OPTIONS: StudioSubmitCategoryOption[] =
   }));
 
 export function studioSubmitHrefForCategory(id: ProjectCategoryId): string {
-  if (id === "game") {
-    return "/studio/submit";
-  }
-  return `${SUBMIT_CATEGORY_PICK_HREF}&category=${id}`;
+  return `/studio/submit?category=${id}`;
 }

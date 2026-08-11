@@ -16,7 +16,10 @@ import {
   formatPlayerIaVersionLabel,
   truncatePlayerIaText,
 } from "@/lib/player-ia/format";
-import { PLAYER_IA_HOME_FEATURE_CARDS } from "@/lib/player-ia/home-feature-cards";
+import {
+  emptyPublicCategoryPresence,
+  resolvePlayerIaHomeFeatureCards,
+} from "@/lib/player-ia/home-feature-cards";
 import { createRequestNowMs } from "@/lib/player-ia/request-now";
 import {
   PROJECT_CATEGORY_LABELS,
@@ -67,7 +70,12 @@ function SectionHeading({
   );
 }
 
-function FeaturesSection() {
+function FeaturesSection({
+  presence,
+}: {
+  presence: PlayerIaHomePayload["categoryHasPublicWork"];
+}) {
+  const cards = resolvePlayerIaHomeFeatureCards(presence);
   return (
     <section aria-labelledby="player-ia-features">
       <div className="mb-4">
@@ -79,7 +87,7 @@ function FeaturesSection() {
         </h2>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {PLAYER_IA_HOME_FEATURE_CARDS.map((card) => {
+        {cards.map((card) => {
           const Icon = card.icon;
           return (
             <div
@@ -459,7 +467,9 @@ export function PlayerIaHomePage({
   return (
     <div className="mx-auto flex max-w-[1200px] flex-col gap-10">
       <FeedbackGatheringSection items={home.feedbackGathering} nowMs={displayNowMs} />
-      <FeaturesSection />
+      <FeaturesSection
+        presence={home.categoryHasPublicWork ?? emptyPublicCategoryPresence()}
+      />
       <UpdatesSection items={home.meaningfulUpdates} nowMs={displayNowMs} />
       <ConnectionsSection items={home.usageRelations} />
       <AnnouncementsSection items={home.announcements} nowMs={displayNowMs} />

@@ -18,6 +18,15 @@ assert.match(MESSAGES_SAMPLE_THREAD.listBadge, /サンプル/);
 assert.match(MESSAGES_SAMPLE_THREAD.counterpartAvatarSrc, /messages-sample/);
 assert.match(MESSAGES_SAMPLE_THREAD.selfAvatarSrc, /messages-sample/);
 assert.ok(MESSAGES_SAMPLE_THREAD.context.projectTitle);
+assert.equal(
+  "projectThumbnailSrc" in MESSAGES_SAMPLE_THREAD.context,
+  false,
+  "sample context must be text-only (no thumb)",
+);
+assert.match(
+  MESSAGES_SAMPLE_THREAD.composerNote,
+  /利用・コラボについてメッセージ/,
+);
 
 const migration099 = readFileSync(
   join(process.cwd(), "supabase/migrations/099_messaging_pair_identity.sql"),
@@ -65,7 +74,11 @@ assert.match(thread, /プロフィールを見る/);
 assert.match(thread, /ConsultationContextCard/);
 assert.match(thread, /ConsultationStartForm/);
 assert.match(thread, /pairContexts/);
+assert.match(thread, /returnPath=\{\`\$\{basePath\}\/\$\{consultationId\}\`\}/);
+assert.match(thread, /\$\{basePath\}\?notice=unavailable/);
+assert.match(thread, /\$\{basePath\}\/\$\{nextId\}/);
 assert.doesNotMatch(thread, /consultationPurposeLabel/);
+assert.doesNotMatch(thread, /returnPath=\{\`\/messages\//);
 
 const draft = readFileSync(
   join(process.cwd(), "components/messages-draft-room.tsx"),

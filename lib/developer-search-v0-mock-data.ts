@@ -43,6 +43,8 @@ export type DeveloperSearchResult = {
   /** @deprecated use featuredWorks */
   gameThumbs: string[];
   following: boolean;
+  /** Newest public work createdAt (ms). Used by 新着順. */
+  newestCreatedAt?: number;
 };
 
 export const DEVELOPER_SEARCH_TOTAL = 128;
@@ -64,6 +66,7 @@ export const developerSearchResults: DeveloperSearchResult[] = [
     genres: ["ファンタジー", "アドベンチャー", "ノベル"],
     gameThumbs: ["/images/landing/game-1.png", "/images/landing/game-4.png"],
     following: true,
+    newestCreatedAt: 1_720_000_000_000,
   },
   {
     id: "lunaworks",
@@ -79,6 +82,7 @@ export const developerSearchResults: DeveloperSearchResult[] = [
     genres: ["ホラー", "探索", "アドベンチャー"],
     gameThumbs: ["/images/landing/game-2.png"],
     following: false,
+    newestCreatedAt: 1_710_000_000_000,
   },
   {
     id: "sky-pirate",
@@ -94,6 +98,7 @@ export const developerSearchResults: DeveloperSearchResult[] = [
     genres: ["サバイバル", "クラフト", "アクション"],
     gameThumbs: ["/images/landing/game-3.png"],
     following: false,
+    newestCreatedAt: 1_718_000_000_000,
   },
   {
     id: "greensmith",
@@ -109,6 +114,7 @@ export const developerSearchResults: DeveloperSearchResult[] = [
     genres: ["シミュレーション", "カジュアル", "経営"],
     gameThumbs: ["/images/landing/game-5.png", "/images/landing/game-4.png"],
     following: false,
+    newestCreatedAt: 1_700_000_000_000,
   },
   {
     id: "pixel-knights",
@@ -124,6 +130,7 @@ export const developerSearchResults: DeveloperSearchResult[] = [
     genres: ["アクション", "探索", "ローグライク"],
     gameThumbs: ["/images/landing/game-4.png", "/images/landing/game-1.png", "/images/landing/game-2.png"],
     following: true,
+    newestCreatedAt: 1_705_000_000_000,
   },
   {
     id: "catnip-lab",
@@ -139,6 +146,7 @@ export const developerSearchResults: DeveloperSearchResult[] = [
     genres: ["シミュレーション", "カジュアル"],
     gameThumbs: ["/images/landing/game-2.png"],
     following: false,
+    newestCreatedAt: 1_722_000_000_000,
   },
 ];
 
@@ -174,17 +182,21 @@ export function filterDevelopers(
   );
 }
 
-export type DeveloperSearchSortId = "recommended" | "followers" | "works";
+export type DeveloperSearchSortId = "newest" | "followers" | "works";
 export type DeveloperSearchSortOrder = "asc" | "desc";
 
 export const developerSearchSortOptions: {
   id: DeveloperSearchSortId;
   label: string;
 }[] = [
-  { id: "recommended", label: "おすすめ順" },
+  { id: "newest", label: "新着順" },
   { id: "followers", label: "フォロワー数" },
   { id: "works", label: "作品数" },
 ];
+
+function compareDeveloperId(a: DeveloperSearchResult, b: DeveloperSearchResult): number {
+  return a.id.localeCompare(b.id);
+}
 
 export function sortDevelopers(
   results: DeveloperSearchResult[],
@@ -195,25 +207,33 @@ export function sortDevelopers(
   const direction = order === "asc" ? 1 : -1;
 
   if (sort === "followers") {
-    return copy.sort(
-      (a, b) => ((a.followers ?? 0) - (b.followers ?? 0)) * direction,
-    );
+    return copy.sort((a, b) => {
+      const diff = ((a.followers ?? 0) - (b.followers ?? 0)) * direction;
+      return diff !== 0 ? diff : compareDeveloperId(a, b);
+    });
   }
   if (sort === "works") {
     return copy.sort((a, b) => {
       const aw = a.publicGameCount ?? a.inDevelopment + a.completed;
       const bw = b.publicGameCount ?? b.inDevelopment + b.completed;
-      return (aw - bw) * direction;
+      const diff = (aw - bw) * direction;
+      return diff !== 0 ? diff : compareDeveloperId(a, b);
     });
   }
-  return copy;
+  return copy.sort((a, b) => {
+    const at = a.newestCreatedAt ?? 0;
+    const bt = b.newestCreatedAt ?? 0;
+    if (at !== bt) return (at - bt) * direction;
+    return compareDeveloperId(a, b);
+  });
 }
 
 export function parseDeveloperSort(param: string | null): DeveloperSearchSortId {
   if (param === "followers" || param === "works") {
     return param;
   }
-  return "recommended";
+  // Legacy ?sort=recommended had no recommend logic — treat as 新着順.
+  return "newest";
 }
 
 export function parseDeveloperSortOrder(param: string | null): DeveloperSearchSortOrder {

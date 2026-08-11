@@ -47,14 +47,7 @@ export function ConsultationContextCard({
                 unoptimized
               />
             </span>
-          ) : (
-            <span
-              className="flex size-10 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-zinc-950 text-[10px] text-zinc-600"
-              aria-hidden="true"
-            >
-              作品
-            </span>
-          )}
+          ) : null}
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-zinc-200">{projectTitle}</p>
             {creatorName ? (

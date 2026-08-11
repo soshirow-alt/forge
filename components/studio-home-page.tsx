@@ -111,8 +111,8 @@ const QUICK_LINK_STYLES: Record<
     iconBg: "bg-sky-500/15 border-sky-500/25",
     iconColor: "text-sky-300",
   },
-  "/studio/community": {
-    icon: Users,
+  "/studio/messages": {
+    icon: MessageSquare,
     iconBg: "bg-emerald-500/15 border-emerald-500/25",
     iconColor: "text-emerald-300",
   },
@@ -690,7 +690,9 @@ function HighlightsSection({
   loading: boolean;
 }) {
   const showUnread = !loading && unreadVoiceProjectCount > 0;
-  const showCommunity = !loading && hasRecentCommunityReply;
+  // Studio community nav is replaced by messages. Hide the leftover reaction card.
+  void hasRecentCommunityReply;
+  const showCommunity = false;
 
   if (!showUnread && !showCommunity) {
     return null;
@@ -728,7 +730,7 @@ function HighlightsSection({
         )}
         {showCommunity && (
           <Link
-            href="/studio/community"
+            href="/studio/messages"
             className="group relative overflow-hidden rounded-2xl border border-orange-500/20 bg-gradient-to-br from-orange-500/10 via-zinc-950/50 to-zinc-950/80 p-5 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-orange-500/35 hover:shadow-lg hover:shadow-orange-500/10"
           >
             <ArrowUpRight

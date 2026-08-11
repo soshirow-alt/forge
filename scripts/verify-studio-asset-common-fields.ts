@@ -54,7 +54,11 @@ assert.deepEqual(
 );
 assert.equal(
   studioSubmitHrefForCategory("asset"),
-  "/studio/submit?view=category-proto&category=asset",
+  "/studio/submit?category=asset",
+);
+assert.equal(
+  studioSubmitHrefForCategory("game"),
+  "/studio/submit?category=game",
 );
 
 const pickSrc = read("components/studio-submit-category-pick.tsx");

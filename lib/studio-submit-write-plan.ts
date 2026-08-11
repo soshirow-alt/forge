@@ -89,6 +89,8 @@ export function planStudioSubmitWrite(input: {
       sanitizedPrototypeFields.publishDestinations,
     );
     publishOverride = publishLinkOverride.publishDestinations;
+  } else if (input.projectCategory === "game") {
+    category = "game";
   }
 
   const data = draftToSubmitFormData(input.draft, input.owner, {

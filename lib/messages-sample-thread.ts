@@ -18,7 +18,6 @@ export const MESSAGES_SAMPLE_THREAD = {
   counterpartAvatarSrc: "/messages-sample/lumen-audio-avatar.svg",
   selfAvatarSrc: "/messages-sample/self-avatar.svg",
   projectTitle: "夜明けのBGMパック",
-  projectThumbnailSrc: "/messages-sample/dawn-bgm-pack-thumb.svg",
   purpose: "use_their_work" as const,
   purposeLabel: "この作品を利用したい",
   ownProjectTitle: "星巡りの冒険",
@@ -29,7 +28,6 @@ export const MESSAGES_SAMPLE_THREAD = {
     heading: "この作品について相談",
     purpose: "use_their_work" as const,
     projectTitle: "夜明けのBGMパック",
-    projectThumbnailSrc: "/messages-sample/dawn-bgm-pack-thumb.svg",
     creatorName: "Lumen Audio",
     ownProjectTitle: "星巡りの冒険",
   },
@@ -59,7 +57,8 @@ export const MESSAGES_SAMPLE_THREAD = {
       createdAtLabel: "昨日 21:18",
     },
   ] as MessagesSampleMessage[],
-  composerNote: "これはメッセージ機能のサンプルです",
+  composerNote:
+    "作品詳細の「利用・コラボについてメッセージ」から、作品についての相談を始められます。\nこれはメッセージ機能のサンプルです",
 } as const;
 
 export function isMessagesSampleThreadId(id: string | null | undefined): boolean {

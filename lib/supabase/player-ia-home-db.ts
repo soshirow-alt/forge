@@ -9,6 +9,7 @@ import {
 import { publicProjectThumbnailPath } from "@/lib/public-project-thumbnail";
 import { displayPlayerIaHomeSeedText } from "@/lib/player-ia/format";
 import {
+  PROJECT_CATEGORY_IDS,
   isProjectCategoryId,
   type ProjectCategoryId,
 } from "@/lib/project-categories";
@@ -154,9 +155,18 @@ export type PlayerIaHomePayload = {
   usageRelations: HomeUsageRelation[];
   announcements: PlatformAnnouncement[];
   newestProjects: HomeNewestProject[];
+  categoryHasPublicWork: Record<ProjectCategoryId, boolean>;
   meta: {
     feedbackWindowDays: 30 | 90 | null;
   };
+};
+
+export type PlayerIaCategoryHomePayload = {
+  category: ProjectCategoryId;
+  hasPublicWork: boolean;
+  spotlight: HomeNewestProject[];
+  meaningfulUpdates: HomeMeaningfulUpdate[];
+  newestProjects: HomeNewestProject[];
 };
 
 function asString(value: unknown): string {
@@ -534,12 +544,67 @@ export async function fetchPlayerIaGameHome(
   };
 }
 
+function emptyCategoryPresence(): Record<ProjectCategoryId, boolean> {
+  return {
+    game: false,
+    audio: false,
+    asset: false,
+    "dev-tool": false,
+    "service-app": false,
+  };
+}
+
+export async function fetchPublicCategoryPresence(
+  supabase: SupabaseClient,
+): Promise<Record<ProjectCategoryId, boolean>> {
+  const presence = emptyCategoryPresence();
+  const rows = await Promise.all(
+    PROJECT_CATEGORY_IDS.map(async (id) => {
+      const newest = await fetchHomeNewestProjects(supabase, 1, id);
+      return [id, newest.length > 0] as const;
+    }),
+  );
+  for (const [id, hasWork] of rows) {
+    presence[id] = hasWork;
+  }
+  return presence;
+}
+
+export async function fetchPlayerIaCategoryHome(
+  supabase: SupabaseClient,
+  category: ProjectCategoryId,
+): Promise<PlayerIaCategoryHomePayload> {
+  const [updateCandidates, newestCandidates] = await Promise.all([
+    fetchHomeMeaningfulUpdates(supabase, 24, category),
+    fetchHomeNewestProjects(supabase, 16, category),
+  ]);
+  const updates = updateCandidates.filter((item) => item.category === category);
+  const newest = newestCandidates.filter((item) => item.category === category);
+  const hasPublicWork = newest.length > 0 || updates.length > 0;
+  const spotlight = newest.slice(0, 4);
+  const spotlightIds = new Set(spotlight.map((item) => item.projectId));
+  const meaningfulUpdates = updates
+    .filter((item) => !spotlightIds.has(item.projectId))
+    .slice(0, 8);
+  const newestProjects = newest
+    .filter((item) => !spotlightIds.has(item.projectId))
+    .slice(0, 8);
+  return {
+    category,
+    hasPublicWork,
+    spotlight,
+    meaningfulUpdates,
+    newestProjects,
+  };
+}
+
 function assemblePlayerIaHomeShelves(input: {
   feedbackCandidates: HomeFeedbackGatheringProject[];
   updateCandidates: HomeMeaningfulUpdate[];
   usageCandidates: HomeUsageRelation[];
   announcements: PlatformAnnouncement[];
   newestCandidates: HomeNewestProject[];
+  categoryHasPublicWork?: Record<ProjectCategoryId, boolean>;
 }): PlayerIaHomePayload {
   const feedbackGathering = softSuppressByCategory(input.feedbackCandidates, 4);
 
@@ -578,6 +643,8 @@ function assemblePlayerIaHomeShelves(input: {
     usageRelations,
     announcements: input.announcements.slice(0, 5),
     newestProjects,
+    categoryHasPublicWork:
+      input.categoryHasPublicWork ?? emptyCategoryPresence(),
     meta: { feedbackWindowDays },
   };
 }
@@ -591,12 +658,14 @@ export async function fetchPlayerIaHome(
     usageCandidates,
     announcements,
     newestCandidates,
+    categoryHasPublicWork,
   ] = await Promise.all([
     fetchHomeFeedbackGatheringProjects(supabase, 16),
     fetchHomeMeaningfulUpdates(supabase, 16),
     fetchHomeUsageRelations(supabase, 24),
     fetchPublicPlatformAnnouncements(supabase, 5),
     fetchHomeNewestProjects(supabase, 16),
+    fetchPublicCategoryPresence(supabase),
   ]);
 
   return assemblePlayerIaHomeShelves({
@@ -605,6 +674,7 @@ export async function fetchPlayerIaHome(
     usageCandidates,
     announcements,
     newestCandidates,
+    categoryHasPublicWork,
   });
 }
 

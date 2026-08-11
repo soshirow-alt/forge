@@ -106,10 +106,12 @@ type ConsultationDetailResponse = {
 export function ConsultationThread({
   consultationId,
   embedded = false,
+  basePath = "/messages",
 }: {
   consultationId: string;
   /** When true (desktop 2-pane), hide outer back chrome. */
   embedded?: boolean;
+  basePath?: "/messages" | "/studio/messages";
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -224,7 +226,7 @@ export function ConsultationThread({
         if (response.status === 404) {
           if (active) {
             setUnavailable(true);
-            router.replace("/messages?notice=unavailable");
+            router.replace(`${basePath}?notice=unavailable`);
           }
           return;
         }
@@ -311,6 +313,7 @@ export function ConsultationThread({
     recordDetailOkAndScheduleAck,
     scheduleAckOnlyIfDetailAlreadyOk,
     router,
+    basePath,
   ]);
 
   const counterpartId = useMemo(() => {
@@ -371,11 +374,11 @@ export function ConsultationThread({
   return (
     <div className={embedded ? "flex h-full min-h-0 flex-col" : "mx-auto max-w-3xl"}>
       {embedded ? (
-        <Link href="/messages" className="text-sm text-violet-300 lg:hidden">
+        <Link href={basePath} className="text-sm text-violet-300 lg:hidden">
           ← メッセージ
         </Link>
       ) : (
-        <Link href="/messages" className="text-sm text-violet-300">
+        <Link href={basePath} className="text-sm text-violet-300">
           ← メッセージ
         </Link>
       )}
@@ -493,7 +496,7 @@ export function ConsultationThread({
                           targetId: message.id,
                           contextLabel: "メッセージ",
                         }}
-                        returnPath={`/messages/${consultationId}`}
+                        returnPath={`${basePath}/${consultationId}`}
                       />
                     ) : null}
                   </div>
@@ -525,11 +528,11 @@ export function ConsultationThread({
             compact
             onCancel={() => {
               setComposeOverride("off");
-              router.replace(`/messages/${consultation?.id ?? consultationId}`);
+              router.replace(`${basePath}/${consultation?.id ?? consultationId}`);
             }}
             onSuccess={(nextId) => {
               setComposeOverride("off");
-              router.replace(`/messages/${nextId}`);
+              router.replace(`${basePath}/${nextId}`);
               setReloadToken((token) => token + 1);
             }}
           />

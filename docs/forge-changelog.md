@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-08-11 — Preview hotfix: Home FB 3件レイアウト / 新着順 / Studio メッセージ / 5カテゴリ投稿
+
+- **Home FB** — 候補 4/3/2/1/0 で hero+right を正規化。Production live は 3 件（Skank Boost / 最弱すらいむ / ぬを探せ！）。ranking 条件は不変
+- **クリエイター検索** — default「おすすめ順」(no-op) を廃止し **新着順**（`created_at` desc + id tie-break）
+- **メッセージ sample** — 夜明けのBGMパック thumb 依存を廃止。context は text-only。案内文を作品詳細 CTA に合わせる
+- **Game Home hero** — 中央と neighbor を同高。左右は狭い dim peek
+- **category Home** — 公開作品 ≥1 で `/home/[category]` を有効化（Production の Unity Font Tool は public dev-tool なのに Coming Soon / `/home/dev-tool` 404 だった）
+- **新規投稿** — `/studio/submit` はまず 5 カテゴリ選択。`?category=` 付きだけが各 form
+- **Studio ナビ** — 「マイコミュニティ」廃止。「メッセージ」`/studio/messages` に置換（Player `/messages` と同じ pair threads）
+- **非実施** — Production / main / 05 announcement / db push なし
+
+
 ## 2026-08-11 — Production deploy前整理: Unity 1件 SQL 準備 / history は TABLE_ABSENT
 
 - **Unity Font Tool** — `2d4c8cba-1e63-4f5f-927f-57c469f92d7c` を game→dev-tool する Owner SQL を準備（未実行）: `scripts/production-ops/ops-reclassify-unity-font-tool-2026-08.sql`

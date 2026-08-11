@@ -63,7 +63,7 @@ export function countStudioUnread(items: StudioNotificationItem[]): number {
 
 export function studioNotificationHref(item: StudioNotificationItem): string {
   if (item.kind === "community_join_request") {
-    return "/studio/community?tab=members";
+    return "/studio/notifications";
   }
   const base = studioProjectHref(item.projectId);
   if (item.tab === "voices-raw") {

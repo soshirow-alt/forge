@@ -70,17 +70,23 @@ function SampleBubble({
   );
 }
 
-export function MessagesSampleThreadPane({ embedded = false }: { embedded?: boolean }) {
+export function MessagesSampleThreadPane({
+  embedded = false,
+  basePath = "/messages",
+}: {
+  embedded?: boolean;
+  basePath?: string;
+}) {
   const sample = MESSAGES_SAMPLE_THREAD;
 
   return (
     <div className={embedded ? "flex h-full min-h-0 flex-col" : "mx-auto max-w-3xl"}>
       {embedded ? (
-        <Link href="/messages" className="text-sm text-violet-300 lg:hidden">
+        <Link href={basePath} className="text-sm text-violet-300 lg:hidden">
           ← メッセージ
         </Link>
       ) : (
-        <Link href="/messages" className="text-sm text-violet-300">
+        <Link href={basePath} className="text-sm text-violet-300">
           ← メッセージ
         </Link>
       )}
@@ -117,7 +123,6 @@ export function MessagesSampleThreadPane({ embedded = false }: { embedded?: bool
         <ConsultationContextCard
           title={sample.context.heading}
           projectTitle={sample.context.projectTitle}
-          projectThumbnailUrl={sample.context.projectThumbnailSrc}
           creatorName={sample.context.creatorName}
           purpose={sample.context.purpose}
           ownProjectTitle={sample.context.ownProjectTitle}
@@ -132,7 +137,9 @@ export function MessagesSampleThreadPane({ embedded = false }: { embedded?: bool
       </div>
 
       <div className="sticky bottom-3 mt-6 rounded-xl border border-dashed border-zinc-700 bg-zinc-950/80 px-4 py-3">
-        <p className="text-center text-sm text-zinc-500">{sample.composerNote}</p>
+        <p className="whitespace-pre-wrap text-center text-sm text-zinc-500">
+          {sample.composerNote}
+        </p>
       </div>
     </div>
   );

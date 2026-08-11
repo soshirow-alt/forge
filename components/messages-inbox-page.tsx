@@ -35,16 +35,18 @@ function ConversationListItem({
   selected,
   displayName,
   avatarUrl,
+  basePath,
 }: {
   item: CollabConsultationSummary;
   selected: boolean;
   displayName: string;
   avatarUrl?: string | null;
+  basePath: string;
 }) {
   const initial = displayName.trim().slice(0, 1) || "?";
   return (
     <Link
-      href={`/messages/${item.consultationId}`}
+      href={`${basePath}/${item.consultationId}`}
       className={`flex gap-3 rounded-xl border px-3 py-3 transition-colors ${
         selected
           ? "border-violet-500/50 bg-violet-500/10"
@@ -92,11 +94,17 @@ function ConversationListItem({
   );
 }
 
-function SampleListItem({ selected }: { selected: boolean }) {
+function SampleListItem({
+  selected,
+  basePath,
+}: {
+  selected: boolean;
+  basePath: string;
+}) {
   const sample = MESSAGES_SAMPLE_THREAD;
   return (
     <Link
-      href={`/messages/${sample.id}`}
+      href={`${basePath}/${sample.id}`}
       className={`flex gap-3 rounded-xl border px-3 py-3 transition-colors ${
         selected
           ? "border-violet-500/50 bg-violet-500/10"
@@ -127,9 +135,12 @@ function SampleListItem({ selected }: { selected: boolean }) {
 export function MessagesInboxPage({
   selectedId = null,
   notice = null,
+  basePath = "/messages",
 }: {
   selectedId?: string | null;
   notice?: string | null;
+  /** Player `/messages` or Studio `/studio/messages` — same conversations. */
+  basePath?: "/messages" | "/studio/messages";
 }) {
   const { getDeveloperProfileByUserId } = useGames();
   const [consultations, setConsultations] = useState<CollabConsultationSummary[]>([]);
@@ -199,11 +210,12 @@ export function MessagesInboxPage({
                 selected={selectedId === item.consultationId}
                 displayName={displayName}
                 avatarUrl={profile?.avatarUrl}
+                basePath={basePath}
               />
             );
           })
         ) : showSample ? (
-          <SampleListItem selected={sampleSelected} />
+          <SampleListItem selected={sampleSelected} basePath={basePath} />
         ) : listFailed ? null : (
           <p className="px-1 py-6 text-center text-sm leading-relaxed text-zinc-500">
             メッセージはまだありません。
@@ -233,7 +245,7 @@ export function MessagesInboxPage({
         }`}
       >
         {sampleSelected ? (
-          <MessagesSampleThreadPane embedded />
+          <MessagesSampleThreadPane embedded basePath={basePath} />
         ) : realSelectedId ? (
           <Suspense
             fallback={<p className="text-sm text-zinc-500">読み込み中…</p>}
@@ -242,6 +254,7 @@ export function MessagesInboxPage({
               key={realSelectedId}
               consultationId={realSelectedId}
               embedded
+              basePath={basePath}
             />
           </Suspense>
         ) : (

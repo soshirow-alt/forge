@@ -60,7 +60,7 @@ function buildCreatorsSearchUrl(options: {
 }): string {
   const params = new URLSearchParams();
   const query = options.query?.trim() ?? "";
-  const sort = options.sort ?? "recommended";
+  const sort = options.sort ?? "newest";
   const order = options.order ?? "desc";
   const newOnly = options.newOnly ?? false;
   const categories = options.categories ?? [];
@@ -68,10 +68,10 @@ function buildCreatorsSearchUrl(options: {
   if (query) {
     params.set("q", query);
   }
-  if (sort !== "recommended") {
+  if (sort !== "newest") {
     params.set("sort", sort);
   }
-  if (sort !== "recommended" && order === "asc") {
+  if (sort !== "newest" && order === "asc") {
     params.set("order", "asc");
   }
   if (newOnly) {
@@ -423,7 +423,7 @@ function DeveloperSearchContent() {
                   {option.label}
                 </Link>
               ))}
-              {sortFromUrl !== "recommended" && (
+              {sortFromUrl !== "newest" && (
                 <button
                   type="button"
                   onClick={toggleSortOrder}

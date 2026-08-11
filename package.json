@@ -69,6 +69,8 @@
     "verify:studio-asset-overview-edit": "npx --yes tsx scripts/verify-studio-asset-overview-edit.ts",
     "verify:studio-asset-preview-render": "npx --yes tsx scripts/verify-studio-asset-preview-render.ts",
     "verify:studio-five-category-submit-edit": "npx --yes tsx scripts/verify-studio-five-category-submit-edit.ts",
+    "verify:prod-hotfix-surfaces": "npx --yes tsx scripts/verify-prod-hotfix-surfaces.ts",
+    "verify:staging-five-category-create-edit": "npx --yes tsx scripts/staging-only/verify-five-category-create-edit-e2e.ts",
     "verify:studio-game-player-counts-edit": "npx --yes tsx scripts/verify-studio-game-player-counts-edit.ts",
     "verify:studio-formal-sanitize-preserve": "npx --yes tsx scripts/verify-studio-formal-sanitize-preserve.ts",
     "verify:studio-preview-formal-attrs": "npx --yes tsx scripts/verify-studio-preview-formal-attrs.ts",

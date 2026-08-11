@@ -22,6 +22,7 @@ import {
   PROJECT_CATEGORY_LABELS,
   type ProjectCategoryId,
 } from "@/lib/project-categories";
+import { resolveFeedbackGatheringLayout } from "@/lib/player-ia/feedback-gathering-layout";
 import type { PlayerIaHomePayload } from "@/lib/supabase/player-ia-home-db";
 
 const ROTATE_MS = 6000;
@@ -160,6 +161,7 @@ export function FeedbackGatheringSection({
   nowMs: number;
 }) {
   const count = items.length;
+  const layout = resolveFeedbackGatheringLayout(count);
   const [heroIndex, setHeroIndex] = useState(0);
   const [hovering, setHovering] = useState(false);
   const [focusWithin, setFocusWithin] = useState(false);
@@ -179,7 +181,7 @@ export function FeedbackGatheringSection({
           return arr.findIndex((x) => x?.projectId === item.projectId) === index
             && item.projectId !== hero?.projectId;
         })
-        .slice(0, Math.min(3, count - 1))
+        .slice(0, layout.queueSlots)
     : [];
 
   const canRotate = count >= 4 && !reducedMotion;
@@ -227,7 +229,7 @@ export function FeedbackGatheringSection({
     return clearTimer;
   }, [canRotate, hovering, focusWithin, heroIndex, count, clearTimer]);
 
-  if (!hero) return null;
+  if (!layout.show || !hero) return null;
 
   const queueRowHeight =
     railHeight != null && queue.length > 0
@@ -258,7 +260,13 @@ export function FeedbackGatheringSection({
         title="フィードバックが集まっている作品"
         headingId="player-ia-feedback-gathering"
       />
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+      <div
+        className={
+          layout.gridCols === 2
+            ? "grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch"
+            : "grid grid-cols-1 gap-4"
+        }
+      >
         <div
           ref={heroRef}
           className={

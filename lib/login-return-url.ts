@@ -45,7 +45,12 @@ const WORKS_SEARCH_SORT = new Set([
   "feedback",
   "voices",
 ]);
-const CREATOR_SEARCH_SORT = new Set(["recommended", "followers", "works"]);
+const CREATOR_SEARCH_SORT = new Set([
+  "newest",
+  "recommended",
+  "followers",
+  "works",
+]);
 const CREATOR_SEARCH_ORDER = new Set(["asc", "desc"]);
 
 function isBoundedParam(value: string | null, maxLength: number): boolean {

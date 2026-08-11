@@ -83,7 +83,7 @@ function NeighborPeek({
       aria-label={`${game.title} を表示`}
       onClick={onSelect}
       onMouseUp={onMouseUp}
-      className={`absolute top-0 z-10 hidden h-full overflow-hidden rounded-xl opacity-[0.38] brightness-[0.82] transition-[opacity,filter] duration-200 hover:opacity-50 hover:brightness-95 md:block ${
+      className={`absolute top-0 z-10 hidden h-full overflow-hidden rounded-xl opacity-[0.28] brightness-[0.72] transition-[opacity,filter] duration-200 hover:opacity-40 hover:brightness-90 md:block ${
         side === "left" ? "left-0" : "right-0"
       }`}
       style={{ width: widthPx }}
@@ -299,15 +299,15 @@ export function FeaturedGameCarousel({
 
   const cardWidthPx = compact
     ? Math.min(
-        Math.max(Math.round(viewportWidth * 0.52), 520),
-        Math.max(nominalCardWidthPx, Math.round(viewportWidth - 280)),
+        Math.max(Math.round(viewportWidth * 0.72), 560),
+        Math.max(nominalCardWidthPx, Math.round(viewportWidth - 160)),
       )
     : nominalCardWidthPx;
 
   const peekWidthPx = circular
     ? Math.max(0, (viewportWidth - cardWidthPx) / 2 - CARD_GAP_PX)
     : 0;
-  const viewportHeightClass = compact ? "md:h-[320px]" : "md:h-[350px]";
+  const viewportHeightClass = compact ? "md:h-[300px]" : "md:h-[350px]";
   const cardMaxWidthClass = compact ? "md:max-w-none" : "md:max-w-[1000px]";
   const cardAbsoluteWidthClass = compact ? "md:w-auto" : "md:w-[1000px]";
 

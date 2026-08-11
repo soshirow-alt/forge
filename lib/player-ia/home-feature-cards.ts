@@ -35,6 +35,43 @@ export type PlayerIaHomeFeatureCard = {
   ctas: readonly PlayerIaHomeCategoryCta[];
 };
 
+export type PublicCategoryPresence = Record<ProjectCategoryId, boolean>;
+
+export function emptyPublicCategoryPresence(): PublicCategoryPresence {
+  return {
+    game: false,
+    audio: false,
+    asset: false,
+    "dev-tool": false,
+    "service-app": false,
+  };
+}
+
+/** Spotlight becomes a live /home/[category] link when that category has ≥1 public work. */
+export function resolvePlayerIaHomeFeatureCards(
+  presence: PublicCategoryPresence,
+): PlayerIaHomeFeatureCard[] {
+  return PLAYER_IA_HOME_FEATURE_CARDS.map((card) => ({
+    ...card,
+    ctas: card.ctas.map((cta) => {
+      if (cta.id !== "spotlight") return cta;
+      if (presence[card.id]) {
+        return {
+          id: "spotlight",
+          label: "注目作品を見る",
+          kind: "link",
+          href: `/home/${card.id}`,
+        };
+      }
+      return {
+        id: "spotlight",
+        label: "注目作品を見る",
+        kind: "coming_soon",
+      };
+    }),
+  }));
+}
+
 /** Home「作品を見つける・試す」— 5カテゴリ × 2導線（カード全体は非リンク）。 */
 export const PLAYER_IA_HOME_FEATURE_CARDS: readonly PlayerIaHomeFeatureCard[] = [
   {

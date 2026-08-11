@@ -5,7 +5,10 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { PLAYER_IA_HOME_FEATURE_CARDS } from "../lib/player-ia/home-feature-cards";
+import {
+  PLAYER_IA_HOME_FEATURE_CARDS,
+  resolvePlayerIaHomeFeatureCards,
+} from "../lib/player-ia/home-feature-cards";
 import {
   buildCatalogQueryString,
   parseCatalogSearchParams,
@@ -62,8 +65,8 @@ for (const card of PLAYER_IA_HOME_FEATURE_CARDS) {
   }
 }
 
-// Only "game" has a live spotlight destination today; the other four
-// categories are coming-soon (no seeded per-category spotlight feed yet).
+// Static catalog: game is always a live Home; others start as Coming Soon
+// until resolvePlayerIaHomeFeatureCards sees ≥1 public work.
 const gameCard = PLAYER_IA_HOME_FEATURE_CARDS.find((c) => c.id === "game")!;
 const gameSpotlight = gameCard.ctas.find((cta) => cta.id === "spotlight")!;
 assert.equal(gameSpotlight.kind, "link");
@@ -75,8 +78,25 @@ for (const id of ["audio", "asset", "dev-tool", "service-app"] as const) {
   assert.equal(spotlight.kind, "coming_soon", `${id} spotlight should be coming_soon`);
 }
 
+const withDevTool = resolvePlayerIaHomeFeatureCards({
+  game: true,
+  audio: false,
+  asset: false,
+  "dev-tool": true,
+  "service-app": false,
+});
+const resolvedDevTool = withDevTool.find((c) => c.id === "dev-tool")!.ctas.find(
+  (cta) => cta.id === "spotlight",
+)!;
+assert.equal(resolvedDevTool.kind, "link");
+assert.equal((resolvedDevTool as { href: string }).href, "/home/dev-tool");
+const resolvedAudio = withDevTool.find((c) => c.id === "audio")!.ctas.find(
+  (cta) => cta.id === "spotlight",
+)!;
+assert.equal(resolvedAudio.kind, "coming_soon");
+
 const homePage = read("components/player-ia/player-ia-home-page.tsx");
-assert.match(homePage, /PLAYER_IA_HOME_FEATURE_CARDS/);
+assert.match(homePage, /resolvePlayerIaHomeFeatureCards/);
 assert.match(homePage, /作品を見つける・試す/);
 assert.match(homePage, /sm:grid-cols-2 xl:grid-cols-3/);
 assert.match(homePage, /Coming Soon/);

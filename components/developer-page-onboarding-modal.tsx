@@ -33,8 +33,7 @@ export function DeveloperPageOnboardingModal({
           開発者ページを作成しますか？
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-          はいを選ぶと Studio が使えるようになり、フォロワー向けのマイコミュニティも自動で開設されます。
-          作品の投稿はあとからでも大丈夫です。
+          はいを選ぶと Studio が使えるようになります。作品の投稿はあとからでも大丈夫です。
         </p>
         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button

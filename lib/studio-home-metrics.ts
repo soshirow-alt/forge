@@ -233,6 +233,6 @@ export const STUDIO_HOME_DEV_HINTS = [
 export const STUDIO_HOME_QUICK_LINKS = [
   { label: "作品一覧", href: "/studio/mypage" },
   { label: "新規投稿", href: "/studio/submit" },
-  { label: "コミュニティ", href: "/studio/community" },
+  { label: "メッセージ", href: "/studio/messages" },
   { label: "フィードバックを確認", href: "/studio/mypage" },
 ] as const;
