@@ -44,7 +44,7 @@ export function PlayerIaGlobalSearchInputFallback() {
       <input
         type="search"
         readOnly
-        placeholder="作品・開発者・タグを検索"
+        placeholder="作品・クリエイター・タグを検索"
         className={FORGE_SHELL_HEADER_SEARCH_INPUT_CLASS}
       />
     </form>
@@ -130,7 +130,7 @@ export function PlayerIaGlobalSearchInput() {
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
-          placeholder="作品・開発者・タグを検索"
+          placeholder="作品・クリエイター・タグを検索"
           className={FORGE_SHELL_HEADER_SEARCH_INPUT_CLASS}
           aria-controls="player-ia-search-suggest"
           aria-autocomplete="list"
@@ -157,7 +157,7 @@ export function PlayerIaGlobalSearchInput() {
                   {item.kind === "project"
                     ? "作品"
                     : item.kind === "developer"
-                      ? "開発者"
+                      ? "クリエイター"
                       : "タグ"}
                 </span>
                 <span className="min-w-0 flex-1">

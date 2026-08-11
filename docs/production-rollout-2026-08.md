@@ -20,7 +20,7 @@ This package is **SQL Editor paste-safe** (pure SQL, no `\i` / `\set` / psql met
 5. Run `03_notifications_email_and_finalization.sql` → success.
 6. Run `04_postflight_READONLY.sql` → require `postflight_verdict = PASS`. Compare A counts to preflight.
 7. Optional: open `06_migration_history_repair_NOTES.sql` (read-only first). Repair history **only** after postflight PASS and Owner GO.
-8. **Do not** run a live publish from `05_publish_release_announcement_LAST.sql` (stub). Wait for separate Owner GO; real publish SQL is `scripts/production-ops/ops-publish-release-announcement-2026-08.sql`.
+8. **Do not** run `05_publish_release_announcement_LAST.sql` until after Production code deploy + smoke (+ email sender ready). Announcement is always LAST.
 9. **Production email sender (OWNER ACTION, parallel / before enabling sends):** Production must **not** use `@resend.dev`. Configure custom domain in Resend + DNS; set `RESEND_FROM_EMAIL` to a Forge domain From (see `docs/preview-real-email-e2e.md` §Production sender). Verify with `npm run verify:production-email-sender` when code is on Production.
 
 **This runbook does not authorize Production apply, main merge, or Vercel Production deploy.** Those require a separate Owner instruction (e.g. 「本番反映して」).
@@ -36,8 +36,8 @@ This package is **SQL Editor paste-safe** (pure SQL, no `\i` / `\set` / psql met
 | 2 | `02_collaboration_and_messaging.sql` | APPLY (1 txn) | **086–092** |
 | 3 | `03_notifications_email_and_finalization.sql` | APPLY (1 txn) | **093–101** |
 | 4 | `04_postflight_READONLY.sql` | Read-only | — |
-| 5 | `05_publish_release_announcement_LAST.sql` | Stub / no-op write | — |
-| 6 | `06_migration_history_repair_NOTES.sql` | Notes + commented repair | history only |
+| 5 | `05_publish_release_announcement_LAST.sql` | APPLY publish (LAST) | Owner GO after deploy/smoke |
+| 6 | `06_migration_history_repair_NOTES.sql` | Notes + commented repair | history 076–101 |
 
 **Apply SQL count:** **3** files (`01`–`03`).  
 Within budget (goal ~3, max 6). Split 086–100 into `02`+`03` for safer resume around email/messaging.
@@ -122,13 +122,26 @@ Bundles keep **full ordered content** of each migration (section headers `-- ===
 | `PASS` | Schema go-live for 076–101 objects complete |
 | `FAIL` | Inspect failing `check_name` rows. Re-run the apply file that owns the missing object (01 vs 02 vs 03). Do not publish announcements |
 
-### 05 Announcement stub
+### 05 Announcement (executable LAST)
 
-Always no-op write. Publishing requires separate Owner GO + `scripts/production-ops/ops-publish-release-announcement-2026-08.sql`.
+Executable publish SQL (same body as `scripts/production-ops/ops-publish-release-announcement-2026-08.sql`). Run **only** after DB apply + postflight + code Production deploy + smoke, and only with Owner GO. Includes a DO-block precondition for `platform_announcements.starts_at`.
 
 ### 06 History notes
 
-Read-only by default. Commented INSERT is **last resort** after postflight PASS.
+Read-only probes list MISSING versions **076–101**. Prefer `supabase migration repair --status applied <version>` per missing version. Hand INSERT in comments is last resort. **Do not re-run APPLY 01–03 to “fix” history** when objects already exist (objects-new / history-old is the expected post-APPLY state until repair).
+
+---
+
+## 4b. Bundle equivalence (deterministic)
+
+`npm run verify:production-rollout-bundle` rebuilds APPLY 01–03 from canonical `supabase/migrations/076`–`101` and asserts:
+
+- UTF-8 (no BOM)
+- no mojibake markers
+- every migration section present, ordered, non-truncated
+- normalized SQL body of each section == canonical file (BEGIN/COMMIT stripped)
+
+**Verdict: PROVEN** (statement-level identity ⇒ same schema outcome when executed on the same baseline). Full dual empty-DB apply is not required: 076+ depends on Production ≤075 objects; suite SQL gates cover semantic chunks separately.
 
 ---
 

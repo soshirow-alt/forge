@@ -1,5 +1,6 @@
 -- =============================================================================
--- Production rollout APPLY 03 - reciprocity / email prefs / messaging (093-101)
+-- Production rollout APPLY — reciprocity / email prefs / messaging (093-101)
+-- File: 03_notifications_email_and_finalization.sql
 -- Target: Production Supabase bpnisgzxuwdxelhnduuf
 -- Apply via: Supabase Dashboard -> SQL Editor (OWNER MANUAL ONLY)
 -- Pure SQL (no \i / \set / psql meta). One transaction for this file.

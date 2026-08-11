@@ -733,7 +733,7 @@ export function FollowingTabPanel() {
             className="flex items-center gap-2 text-sm text-zinc-400 transition-colors hover:text-violet-300"
           >
             <Users className="size-4 text-violet-400" aria-hidden="true" />
-            <span>開発者を探す</span>
+            <span>クリエイターを探す</span>
           </Link>
           <p className="mt-2 text-xs leading-relaxed text-zinc-600">
             気になる開発者をフォローして、新作や更新を逃さないようにしましょう。

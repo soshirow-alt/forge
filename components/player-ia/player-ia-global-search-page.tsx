@@ -101,7 +101,7 @@ function GlobalSearchContent() {
               item.kind === "project"
                 ? "作品"
                 : item.kind === "developer"
-                  ? "開発者"
+                  ? "クリエイター"
                   : "タグ";
             const categoryLabel =
               item.category && item.category in PROJECT_CATEGORY_LABELS

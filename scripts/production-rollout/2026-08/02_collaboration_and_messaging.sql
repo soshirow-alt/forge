@@ -1,5 +1,6 @@
 -- =============================================================================
--- Production rollout APPLY 02 - collaboration / usage requests / seen-ack / email outbox+hooks (086-092)
+-- Production rollout APPLY — collaboration / requests / seen-ack / email outbox (086-092)
+-- File: 02_collaboration_and_messaging.sql
 -- Target: Production Supabase bpnisgzxuwdxelhnduuf
 -- Apply via: Supabase Dashboard -> SQL Editor (OWNER MANUAL ONLY)
 -- Pure SQL (no \i / \set / psql meta). One transaction for this file.
@@ -10,10 +11,13 @@
 
 BEGIN;
 
+
 -- === 086_developer_community_open_posting.sql ===
 -- 086: developer-unit communities become public-readable open boards.
 -- Membership/join rows remain available for optional community features, but
 -- approved membership is no longer a gate for posting or replying.
+
+BEGIN;
 
 ALTER TABLE public.developer_communities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.community_posts ENABLE ROW LEVEL SECURITY;
@@ -157,6 +161,8 @@ GRANT INSERT, DELETE ON TABLE public.community_replies TO authenticated;
 -- === 087_collab_consultations.sql ===
 -- 087: private, purpose-bound collaboration consultations (not free-form DMs)
 -- plus the canonical minimal user block relation.
+
+BEGIN;
 
 CREATE TABLE IF NOT EXISTS public.collab_consultations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -719,6 +725,8 @@ $$;
 -- Existing public rows become accepted; historical draft rows become pending so
 -- the final status constraint is valid without deleting data.
 
+BEGIN;
+
 ALTER TABLE public.project_usage_relations
   ADD COLUMN IF NOT EXISTS requested_by uuid NULL
     REFERENCES auth.users (id) ON DELETE SET NULL,
@@ -1093,6 +1101,8 @@ GRANT EXECUTE ON FUNCTION public.get_public_project_usage_relations(uuid, intege
 --   (requires_acknowledgement AND acknowledged_at IS NULL)
 --   OR (NOT requires_acknowledgement AND seen_at IS NULL)
 
+BEGIN;
+
 ALTER TABLE public.user_notifications
   ADD COLUMN IF NOT EXISTS seen_at timestamptz NULL,
   ADD COLUMN IF NOT EXISTS acknowledged_at timestamptz NULL,
@@ -1241,6 +1251,8 @@ GRANT EXECUTE ON FUNCTION public.acknowledge_notifications_by_coalesce_key(text)
 -- 090: transactional email outbox for trusted workers and SECURITY DEFINER RPCs.
 -- Clients have no table or enqueue-function access.
 
+BEGIN;
+
 CREATE TABLE IF NOT EXISTS public.transactional_email_outbox (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
@@ -1355,6 +1367,8 @@ GRANT EXECUTE ON FUNCTION public.enqueue_transactional_email(
 -- to consultation and usage-relation RPCs after 089/090 exist.
 -- In-app writes are authoritative; email enqueue failures are caught so they
 -- never roll back the consultation/relation or its notification.
+
+BEGIN;
 
 ALTER TABLE public.user_notifications
   ALTER COLUMN project_id DROP NOT NULL,
@@ -1833,6 +1847,8 @@ GRANT EXECUTE ON FUNCTION public.decide_project_usage_relation(uuid, text)
 -- Email enqueue remains best-effort and never rolls back the message write.
 -- Send and mark-read take the same consultation row lock so concurrent
 -- send/send and mark-read/send cannot double-enqueue or miss the transition.
+
+BEGIN;
 
 CREATE OR REPLACE FUNCTION public.send_collab_consultation_message(
   p_consultation_id uuid,

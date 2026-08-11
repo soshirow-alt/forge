@@ -1,5 +1,6 @@
 -- =============================================================================
--- Production rollout APPLY 01 - core schema + category / catalog / home (076-085)
+-- Production rollout APPLY — core schema + category / catalog / home (076-085)
+-- File: 01_core_schema_and_category.sql
 -- Target: Production Supabase bpnisgzxuwdxelhnduuf
 -- Apply via: Supabase Dashboard -> SQL Editor (OWNER MANUAL ONLY)
 -- Pure SQL (no \i / \set / psql meta). One transaction for this file.
@@ -10,6 +11,7 @@
 
 BEGIN;
 
+
 -- === 076_player_ia_categories_attributes.sql ===
 -- 076: Player IA — formal project categories, structured attributes, activity tags
 -- Schema migration (Staging first; Production later via owner Dashboard).
@@ -17,6 +19,8 @@ BEGIN;
 --
 -- Back-compat: existing projects default/backfill to category = 'game'.
 -- No seed data in this file. Staging demo rows live under scripts/staging-only/.
+
+BEGIN;
 
 -- ---------------------------------------------------------------------------
 -- A. projects.category + structured attributes
@@ -124,6 +128,8 @@ CREATE INDEX IF NOT EXISTS developer_profiles_activity_tags_gin_idx
 -- Prerequisite: 076_player_ia_categories_attributes.sql
 -- Public read: published rows only when both projects are visibility=public.
 -- Client writes: revoked (registration UI is a later phase).
+
+BEGIN;
 
 CREATE TABLE IF NOT EXISTS public.project_usage_relations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -238,6 +244,8 @@ GRANT EXECUTE ON FUNCTION public.get_public_project_usage_relations(uuid, intege
 -- Public read: status=published only (RLS + SECURITY DEFINER RPCs).
 -- Draft rows must never appear in get_public_platform_announcement*.
 
+BEGIN;
+
 CREATE TABLE IF NOT EXISTS public.platform_announcements (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   slug text NOT NULL UNIQUE,
@@ -350,6 +358,8 @@ GRANT EXECUTE ON FUNCTION public.get_public_platform_announcement_by_slug(text)
 -- Prerequisite: 076, 032 (developer discord/youtube), 033 (genres)
 -- Scope: public projects + developers who own ≥1 public project + public tags only.
 -- Must not search email, private projects, Studio drafts, notifications, or chats.
+
+BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
@@ -836,6 +846,8 @@ GRANT EXECUTE ON FUNCTION public.search_public_catalog_suggest(text, integer)
 --   project_feedback / guest_* / voice *.project_id  text → p.id::text
 -- Invalid avoids 42883 uuid=text and cast errors on non-UUID legacy text values.
 
+BEGIN;
+
 -- A. みんなのレビューから見つける — public FB cards with project, diversified
 CREATE OR REPLACE FUNCTION public.get_home_review_highlights(
   p_limit integer DEFAULT 8
@@ -1298,6 +1310,8 @@ GRANT EXECUTE ON FUNCTION public.get_public_projects_by_category(
 -- VERCEL_ENV=production until a future Production code release.
 -- Prerequisite: 071
 
+BEGIN;
+
 -- Allow guest card sources for engagement RPCs (auth still required in toggles).
 CREATE OR REPLACE FUNCTION public.assert_public_feedback_card_source(p_source text)
 RETURNS void
@@ -1721,6 +1735,8 @@ GRANT EXECUTE ON FUNCTION public.get_public_feedback_cards(text, text, boolean, 
 -- RLS remains enabled; service_role bypasses RLS but still needs table GRANTs.
 -- Safe / idempotent.
 
+BEGIN;
+
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.project_guest_feedback
   TO service_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.project_guest_voice_responses
@@ -1743,6 +1759,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.guest_feedback_rate_events
 --
 -- 42P13 note: Postgres cannot CREATE OR REPLACE a function when OUT / RETURNS TABLE
 -- columns change. Existing 080 signatures must be DROPped first (exact arg types only).
+
+BEGIN;
 
 -- ---------------------------------------------------------------------------
 -- A. Feedback-gathering projects (works with activity, not review body quotes)
@@ -2124,6 +2142,8 @@ GRANT EXECUTE ON FUNCTION public.get_home_newest_projects(integer, text)
 -- 42P13 / signature: argument list changes → DROP exact prior signature, then CREATE.
 -- Grants restored for anon, authenticated, service_role.
 
+BEGIN;
+
 CREATE INDEX IF NOT EXISTS projects_tags_gin_idx
   ON public.projects
   USING gin (tags);
@@ -2351,6 +2371,8 @@ GRANT EXECUTE ON FUNCTION public.get_public_projects_by_category(
 -- category shelf ranks and limits within that category only instead of
 -- filtering an already-limited whole-platform result. RETURNS TABLE unchanged
 -- from 083 for both functions. Grants restored for anon, authenticated, service_role.
+
+BEGIN;
 
 -- ---------------------------------------------------------------------------
 -- A. projects.player_counts + indexes

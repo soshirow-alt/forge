@@ -367,7 +367,7 @@ function WorksSearchContent() {
                         {work.verified && (
                           <BadgeCheck
                             className="size-4 text-violet-400"
-                            aria-label="認証済み開発者"
+                            aria-label="認証済みクリエイター"
                           />
                         )}
                       </p>

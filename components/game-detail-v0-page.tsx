@@ -113,12 +113,39 @@ import {
   Bookmark,
   Check,
   Clock,
+  ExternalLink,
+  Eye,
+  Headphones,
   Heart,
   Play,
   Users,
+  Wrench,
 } from "lucide-react";
+import type { ProjectDetailPrimaryCtaIcon } from "@/lib/project-detail-category-chrome";
 
 const TAB_PARSE = parseGameDetailTab;
+
+function PrimaryCtaIcon({
+  name,
+  className,
+}: {
+  name: ProjectDetailPrimaryCtaIcon;
+  className?: string;
+}) {
+  switch (name) {
+    case "headphones":
+      return <Headphones className={className} aria-hidden="true" />;
+    case "eye":
+      return <Eye className={className} aria-hidden="true" />;
+    case "wrench":
+      return <Wrench className={className} aria-hidden="true" />;
+    case "external-link":
+      return <ExternalLink className={className} aria-hidden="true" />;
+    case "play":
+    default:
+      return <Play className={className} aria-hidden="true" />;
+  }
+}
 
 function TagPill({ children }: { children: React.ReactNode }) {
   return (
@@ -977,7 +1004,10 @@ function GameDetailV0PageBody({
                   onClick={handlePrimaryPlayAnchorClick}
                   className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
                 >
-                  <Play className="size-4" aria-hidden="true" />
+                  <PrimaryCtaIcon
+                    name={categoryChrome.primaryCtaIcon}
+                    className="size-4"
+                  />
                   {primaryPlayCtaLabel}
                 </a>
               ) : (
@@ -990,7 +1020,10 @@ function GameDetailV0PageBody({
                   }
                   className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <Play className="size-4" aria-hidden="true" />
+                  <PrimaryCtaIcon
+                    name={categoryChrome.primaryCtaIcon}
+                    className="size-4"
+                  />
                   {hydrated && (isLoggedIn || isGuestEntry)
                     ? primaryPlayCtaLabel
                     : `ログインして${primaryPlayCtaLabel}`}

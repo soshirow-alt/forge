@@ -29,10 +29,20 @@ export type ProjectDetailInfoCard = {
   rows: { label: string; value: string }[];
 };
 
+/** Lucide icon keys for primary CTA — keep set small; mapped in detail UI. */
+export type ProjectDetailPrimaryCtaIcon =
+  | "play"
+  | "headphones"
+  | "eye"
+  | "wrench"
+  | "external-link";
+
 export type ProjectDetailCategoryChrome = {
   category: ProjectCategoryId;
   /** Primary CTA label (play / listen / open tool / …). */
   primaryCtaLabel: string;
+  /** Icon hint for primary CTA (game keeps Play; non-game avoids play glyph). */
+  primaryCtaIcon: ProjectDetailPrimaryCtaIcon;
   feedbackCtaLabelLoggedIn: string;
   feedbackCtaLabelGuest: string;
   saveButtonLabel: string;
@@ -135,6 +145,16 @@ const NON_GAME_PRIMARY: Record<
   "service-app": "サービスを見る",
 };
 
+const NON_GAME_PRIMARY_ICON: Record<
+  Exclude<ProjectCategoryId, "game">,
+  ProjectDetailPrimaryCtaIcon
+> = {
+  audio: "headphones",
+  asset: "eye",
+  "dev-tool": "wrench",
+  "service-app": "external-link",
+};
+
 const NON_GAME_FEEDBACK: Record<
   Exclude<ProjectCategoryId, "game">,
   string
@@ -164,6 +184,7 @@ export function resolveProjectDetailCategoryChrome(input: {
     return {
       category,
       primaryCtaLabel: game ? getPrimaryPlayCtaLabel(game) : "プレイする",
+      primaryCtaIcon: "play",
       feedbackCtaLabelLoggedIn: "プレイ後にフィードバックする",
       feedbackCtaLabelGuest: "ログインしてフィードバックする",
       saveButtonLabel: "あとで遊ぶ",
@@ -200,6 +221,7 @@ export function resolveProjectDetailCategoryChrome(input: {
     category,
     primaryCtaLabel:
       primaryFromStudio ?? NON_GAME_PRIMARY[category] ?? "見る",
+    primaryCtaIcon: NON_GAME_PRIMARY_ICON[category] ?? "eye",
     feedbackCtaLabelLoggedIn:
       NON_GAME_FEEDBACK[category] ?? "試したあとにフィードバックする",
     feedbackCtaLabelGuest: "ログインしてフィードバックする",

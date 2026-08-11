@@ -4,9 +4,17 @@
 
 ---
 
-## 2026-08-11 — Production rollout SQL package（076–100・適用は未実施）
+## 2026-08-11 — RC residual: creator copy / CTA icons / Terms§2 / rollout equivalence
 
-- **パッケージ** — `scripts/production-rollout/2026-08/` に preflight / APPLY×3（076–085, 086–092, 093–100）/ postflight / お知らせ stub / history notes
+- **Search** — 全体検索 placeholder / suggest badge「開発者」→「クリエイター」（game固有文脈は維持）
+- **Detail CTA** — non-game primary icon を Headphones / Eye / Wrench / ExternalLink（game は Play）
+- **Terms §2** — 開発者・プレイヤー・作品・FB 定義を5カテゴリ整合（初声→初回フィードバック）。legal version/re-consent は未追加
+- **Rollout** — APPLY 01–03 rebuild+`verify:production-rollout-bundle`（statement-level PROVEN）。05 を実行可能 publish SQL に。06 history を 076–101 確定
+- **非実施** — Home FB 均等quotaなし（ranking 仕様 + Staging分布）。sample deep-link は仕様どおり NOT_AN_ISSUE。Production/main 未変更
+
+## 2026-08-11 — Production rollout SQL package（076–101・適用は未実施）
+
+- **パッケージ** — `scripts/production-rollout/2026-08/` に preflight / APPLY×3（076–085, 086–092, 093–101）/ postflight / お知らせ LAST / history notes
 - **runbook** — `docs/production-rollout-2026-08.md`（Owner 手順・再開・履歴 repair・forward-only・Production sender OWNER ACTION）
 - **範囲** — Staging seed/beautify 除外。`supabase/migrations/` は未改変。本作業では Production へ適用しない
 
