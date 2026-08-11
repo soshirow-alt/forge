@@ -153,15 +153,18 @@ Read-only probes list MISSING versions **076–101**. Prefer `supabase migration
 
 ## 5. Migration history handling
 
-Dashboard SQL Editor **does not** record `supabase_migrations.schema_migrations` when you paste APPLY bundles. Production may also **lack the table entirely**. `00_preflight_READONLY.sql` and `04_postflight_READONLY.sql` section E only check `to_regclass` / `to_regnamespace` (never `FROM schema_migrations`) and report `TABLE_ABSENT` or `TABLE_PRESENT`. Absence is informational, not a STOP. **Do not create or repair history from 00/04.** Repair is Owner-only after postflight PASS (`06_*.sql`).
+Dashboard SQL Editor **does not** record `supabase_migrations.schema_migrations` when you paste APPLY bundles. Production **lacks the table entirely** (00/04: `TABLE_ABSENT`). `00` / `04` section E only check `to_regclass` / `to_regnamespace` (never `FROM schema_migrations`). Absence is informational, not a postflight FAIL. **Do not create or repair history from 00/04.**
 
 | Topic | Policy |
 |-------|--------|
 | Success criterion | **Object postflight**, not history rows |
-| After PASS | Optionally repair history so future CLI `db push` does not re-apply 076–101 |
-| Preferred repair | Official `supabase migration repair --status applied <version>` (or Dashboard equivalent) against Production |
-| Hand INSERT | Only as documented in `06_…NOTES.sql`, Owner GO, after confirming column shape |
-| Forward-only | Never edit/delete/squash `supabase/migrations/*`. Fixes = new migration files |
+| Current Production | `TABLE_ABSENT` after SQL Editor APPLY of 01–03. objects-new / history-absent |
+| Official table init | Published docs: `supabase db push` creates the table **and applies pending local migrations**. **Do not run `db push` on Production** — 001–101 would be pending |
+| Official repair | `supabase migration repair --status applied <version>` updates the tracking table only. Docs assume the table **already exists**. Not confirmed as a safe initializer when the relation is missing |
+| Hand CREATE / INSERT | **Forbidden** |
+| 01–03 re-run | **Forbidden** (objects already present) |
+| Deploy gate | History repair is **not** required for Next.js Production deploy. Runtime does not read this table |
+| Later CLI program | Separate Owner GO. Must cover **001–075 and 076–101** (076–101-only repair leaves 001–075 pending). See `06_*.sql` |
 
 ---
 

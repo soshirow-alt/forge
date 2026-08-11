@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-08-11 — Production deploy前整理: Unity 1件 SQL 準備 / history は TABLE_ABSENT
+
+- **Unity Font Tool** — `2d4c8cba-1e63-4f5f-927f-57c469f92d7c` を game→dev-tool する Owner SQL を準備（未実行）: `scripts/production-ops/ops-reclassify-unity-font-tool-2026-08.sql`
+- **History** — Production は `schema_migrations` TABLE_ABSENT。公式 init は `db push`（再適用危険）で、repair は table 既存前提。独自 CREATE/INSERT 禁止のため history repair は BLOCKED
+- **非実施** — Production write / 01–03 再実行 / main / deploy / announcement なし
+
 ## 2026-08-11 — Production postflight: history table 不存在でも完走
 
 - **Postflight** — `04_postflight_READONLY.sql` は `supabase_migrations.schema_migrations` を直接参照しない。不存在時は `TABLE_ABSENT`（FAIL にしない）

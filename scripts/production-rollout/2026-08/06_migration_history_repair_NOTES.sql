@@ -14,6 +14,32 @@
 -- 2. Owner explicitly chooses to repair history (separate GO from APPLY).
 -- 3. Prefer official repair tooling first; hand INSERT is last resort.
 --
+-- PRODUCTION 2026-08 STATUS (confirmed by 00/04 section E)
+--   migration_history_status = TABLE_ABSENT
+--   supabase_migrations.schema_migrations does not exist.
+--   Objects for 076–101 are present (postflight PASS). 001–075 were also
+--   historically applied via SQL Editor — their history rows are likewise absent.
+--
+-- OFFICIAL INIT vs REPAIR (do not guess beyond published docs)
+--   Official troubleshooting: the table is created by `supabase db push`,
+--   which ALSO applies any migration files not in history.
+--   That is NOT safe here: local supabase/migrations has 001–101; none are
+--   recorded remotely; `db push` would attempt to re-apply them.
+--   Official `supabase migration repair --status applied <version>`:
+--     "updates the tracking table only — it does not apply or revert any SQL."
+--     Docs assume the tracking table already exists. They do NOT document
+--     repair as a safe initializer when the relation is missing.
+--   Therefore: TABLE_ABSENT + official repair/init = NOT confirmed safe.
+--   STOP / BLOCKED on history repair until Owner has a separate CLI program
+--   that (a) does not run `db push` against Production, (b) does not CREATE
+--   the table by hand, (c) does not hand-INSERT rows, and (d) accounts for
+--   001–075 as well as 076–101 (repairing only 076–101 would leave 001–075
+--   pending for any later `db push`).
+--
+-- History repair is NOT a prerequisite for Next.js Production deploy.
+-- Runtime does not read schema_migrations. Do not block code deploy on this
+-- file. Do not leave this as a reason to re-run APPLY 01–03.
+--
 -- WHAT TO RECORD
 -- Exactly versions 076 through 101 (inclusive), matching filenames under
 -- supabase/migrations/. Do not invent versions. Do not mark unapplied versions.
