@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-08-11 — 正式ドメイン forgeplace.app（Preview 先行）
+
+- **Production canonical** — 新規生成 URL（canonical / OGP / email CTA / Auth origin）は `https://forgeplace.app`
+- **Preview** — Preview origin のまま。`NEXT_PUBLIC_SITE_URL` が本番でも Preview CTA は飛ばない
+- **互換** — `https://forge-flame-gamma.vercel.app` は過去リンク用に維持（強制redirectなし）
+- **sender** — Production は `@resend.dev` 禁止 + `mail.forgeplace.app` を要求（`FORGE_PRODUCTION_SENDING_DOMAIN` で将来変更可）
+- **非実施** — Production env / main / Production deploy / announcement publish なし
+
 ## 2026-08-11 — RC residual: creator copy / CTA icons / Terms§2 / rollout equivalence
 
 - **Search** — 全体検索 placeholder / suggest badge「開発者」→「クリエイター」（game固有文脈は維持）

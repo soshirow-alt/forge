@@ -1,10 +1,19 @@
 /**
  * Resend From-address helpers.
  * True Vercel Production must not ship with @resend.dev onboarding sender.
- * Preview may force FORGE_PRODUCTION_MODE for UI while still smoking with @resend.dev.
+ * Production readiness also requires the current verified sending domain
+ * (default mail.forgeplace.app). Override via FORGE_PRODUCTION_SENDING_DOMAIN
+ * if the mailbox domain changes later — do not invent mailboxes in callers.
  */
 
 const RESEND_DEV_HOST = /@resend\.dev\b/i;
+
+export const DEFAULT_PRODUCTION_SENDING_DOMAIN = "mail.forgeplace.app";
+
+export function getExpectedProductionSendingDomain(): string {
+  const override = process.env.FORGE_PRODUCTION_SENDING_DOMAIN?.trim().toLowerCase();
+  return override || DEFAULT_PRODUCTION_SENDING_DOMAIN;
+}
 
 export function extractEmailAddress(fromHeader: string): string | null {
   const trimmed = fromHeader.trim();
@@ -15,14 +24,30 @@ export function extractEmailAddress(fromHeader: string): string | null {
   return candidate;
 }
 
+export function extractEmailDomain(fromHeader: string): string | null {
+  const address = extractEmailAddress(fromHeader);
+  if (!address) return null;
+  const at = address.lastIndexOf("@");
+  if (at < 0) return null;
+  const domain = address.slice(at + 1).trim().toLowerCase();
+  return domain || null;
+}
+
 export function isResendDevSender(fromHeader: string): boolean {
   const address = extractEmailAddress(fromHeader);
   if (!address) return RESEND_DEV_HOST.test(fromHeader);
   return RESEND_DEV_HOST.test(address);
 }
 
+export function isExpectedProductionSendingDomain(fromHeader: string): boolean {
+  const domain = extractEmailDomain(fromHeader);
+  return domain === getExpectedProductionSendingDomain();
+}
+
 /**
  * Hard-block @resend.dev only on Vercel Production runtime.
+ * Also require the expected verified sending domain (mail.forgeplace.app
+ * unless FORGE_PRODUCTION_SENDING_DOMAIN is set).
  * Preview / local remain allowed for smoke (even when UI production-mode override is on).
  * Throws only for the email send path — callers must not fail business mutations.
  */
@@ -44,5 +69,12 @@ export function assertTransactionalFromAllowed(input: {
   const address = extractEmailAddress(input.fromHeader);
   if (!address) {
     throw new Error("Production RESEND_FROM_EMAIL is missing or malformed");
+  }
+  const domain = extractEmailDomain(input.fromHeader);
+  const expected = getExpectedProductionSendingDomain();
+  if (domain !== expected) {
+    throw new Error(
+      `Production RESEND_FROM_EMAIL must use @${expected}`,
+    );
   }
 }

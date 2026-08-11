@@ -8,6 +8,8 @@ import type { PostgrestError } from "@supabase/supabase-js";
 import assert from "node:assert/strict";
 import {
   buildOAuthCallbackRedirectUrl,
+  FORGE_LEGACY_PRODUCTION_OAUTH_ORIGIN,
+  FORGE_PRODUCTION_OAUTH_ORIGIN,
   resolveOAuthCallbackDestination,
   resolveOAuthCallbackErrorPath,
 } from "../lib/auth-redirect";
@@ -401,6 +403,7 @@ function testDemoRouteBlocksProduction() {
     process.env.NEXT_PUBLIC_FORGE_PRODUCTION_MODE = "true";
     process.env.VERCEL_ENV = "production";
     expectNotFound("forge-flame-gamma.vercel.app", "demo routes 404 on production hostname");
+    expectNotFound("forgeplace.app", "demo routes 404 on forgeplace.app");
     delete process.env.VERCEL_ENV;
     process.env.VERCEL_ENV = "preview";
     expectAllowed(
@@ -814,7 +817,13 @@ function testOAuthRedirectOriginContract() {
 function testOAuthRedirectUrlValues() {
   const previewOrigin =
     "https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app";
-  const prodOrigin = "https://forge-flame-gamma.vercel.app";
+  const prodOrigin = FORGE_PRODUCTION_OAUTH_ORIGIN;
+  const legacyProdOrigin = FORGE_LEGACY_PRODUCTION_OAUTH_ORIGIN;
+  ok(prodOrigin === "https://forgeplace.app", "production OAuth origin is forgeplace.app");
+  ok(
+    legacyProdOrigin === "https://forge-flame-gamma.vercel.app",
+    "legacy production OAuth origin kept for allowlist",
+  );
 
   const previewRedirect = buildOAuthCallbackRedirectUrl(previewOrigin);
   const previewUrl = new URL(previewRedirect);
@@ -822,6 +831,10 @@ function testOAuthRedirectUrlValues() {
   ok(previewUrl.pathname === "/auth/callback", `preview redirect path: ${previewUrl.pathname}`);
   ok(previewUrl.search === "", "OAuth redirectTo must not include query params");
   ok(!previewRedirect.includes(prodOrigin), "preview redirect must not use production origin");
+  ok(
+    !previewRedirect.includes(legacyProdOrigin),
+    "preview redirect must not use legacy production origin",
+  );
 
   const prodRedirect = buildOAuthCallbackRedirectUrl(prodOrigin);
   ok(new URL(prodRedirect).origin === prodOrigin, "production redirect origin");

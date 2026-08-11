@@ -1,13 +1,22 @@
 import { sanitizeLoginReturnUrl } from "@/lib/login-return-url";
+import {
+  FORGE_LEGACY_PRODUCTION_SITE_ORIGIN,
+  FORGE_PREVIEW_BRANCH_ALIAS_ORIGIN,
+  FORGE_PRODUCTION_SITE_ORIGIN,
+  getSiteOrigin,
+} from "@/lib/site-url";
 
 const DEFAULT_WELCOME_PATH = "/auth/welcome";
 
 /** Supabase Redirect URLs allowlist と一致必須（末尾スラッシュなし）。 */
-export const FORGE_PREVIEW_OAUTH_ORIGIN =
-  "https://forge-git-preview-landing-01-soshirow-alts-projects.vercel.app";
+export const FORGE_PREVIEW_OAUTH_ORIGIN = FORGE_PREVIEW_BRANCH_ALIAS_ORIGIN;
 
-export const FORGE_PRODUCTION_OAUTH_ORIGIN =
-  "https://forge-flame-gamma.vercel.app";
+/** Newly generated Production auth URLs. */
+export const FORGE_PRODUCTION_OAUTH_ORIGIN = FORGE_PRODUCTION_SITE_ORIGIN;
+
+/** Legacy Production host — keep in Auth allowlist; do not generate new URLs. */
+export const FORGE_LEGACY_PRODUCTION_OAUTH_ORIGIN =
+  FORGE_LEGACY_PRODUCTION_SITE_ORIGIN;
 
 export type OAuthFlow = "x_login" | "x_link";
 
@@ -18,7 +27,7 @@ function normalizeOrigin(origin: string): string {
 function getAuthOrigin(): string {
   return typeof window !== "undefined"
     ? normalizeOrigin(window.location.origin)
-    : normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000");
+    : getSiteOrigin();
 }
 
 /** OAuth must start in the browser — always use the page origin, never NEXT_PUBLIC_SITE_URL. */

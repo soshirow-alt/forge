@@ -18,6 +18,8 @@ assert.match(
   built.text,
   new RegExp(`/messages/${consultationId}`),
 );
+assert.match(built.text, /preview-landing-01/);
+assert.doesNotMatch(built.text, /forgeplace\.app/);
 assert.doesNotMatch(built.text, /\/consultations\//);
 assert.match(built.html, /Forgeで確認する/);
 

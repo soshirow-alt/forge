@@ -417,7 +417,11 @@ async function main() {
         forbiddenBodySnippets: [privateBody, "must-not-appear-in-email"],
       });
       const body = `${message.bodyText}\n${message.bodyHtml}`;
-      if (body.includes("forge-games.net/messages")) {
+      if (
+        body.includes("forge-games.net/messages") ||
+        body.includes("forgeplace.app/messages") ||
+        body.includes("forge-flame-gamma.vercel.app/messages")
+      ) {
         throw new Error("Gmail body CTA points at Production");
       }
       log("gmail", `message_id=${message.id}`);

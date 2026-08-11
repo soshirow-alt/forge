@@ -21,7 +21,11 @@ This package is **SQL Editor paste-safe** (pure SQL, no `\i` / `\set` / psql met
 6. Run `04_postflight_READONLY.sql` → require `postflight_verdict = PASS`. Compare A counts to preflight.
 7. Optional: open `06_migration_history_repair_NOTES.sql` (read-only first). Repair history **only** after postflight PASS and Owner GO.
 8. **Do not** run `05_publish_release_announcement_LAST.sql` until after Production code deploy + smoke (+ email sender ready). Announcement is always LAST.
-9. **Production email sender (OWNER ACTION, parallel / before enabling sends):** Production must **not** use `@resend.dev`. Configure custom domain in Resend + DNS; set `RESEND_FROM_EMAIL` to a Forge domain From (see `docs/preview-real-email-e2e.md` §Production sender). Verify with `npm run verify:production-email-sender` when code is on Production.
+9. **Production public URL / email / Auth (OWNER ACTION — before or with code deploy, not this Preview-only task):**
+   - Vercel Production `NEXT_PUBLIC_SITE_URL` = `https://forgeplace.app` (Preview must stay on Preview origin; do **not** set this on Preview).
+   - Vercel Production `RESEND_FROM_EMAIL` = `Forge <notifications@mail.forgeplace.app>` (not `@resend.dev`, not `mail.forge-games.net`).
+   - Production Supabase Auth: Site URL = `https://forgeplace.app`. Redirect allowlist must include `https://forgeplace.app/**` (or exact `/auth/callback`) **and keep** `https://forge-flame-gamma.vercel.app/**` plus Preview alias for legacy / Preview login.
+   - Keep `https://forge-flame-gamma.vercel.app` connected (past-link compat). Do not delete or force-redirect it in this rollout.
 
 **This runbook does not authorize Production apply, main merge, or Vercel Production deploy.** Those require a separate Owner instruction (e.g. 「本番反映して」).
 
@@ -168,18 +172,24 @@ Dashboard SQL Editor **does not** record `supabase_migrations.schema_migrations`
 
 ---
 
-## 7. Production sender — OWNER ACTION (`@resend.dev`)
+## 7. Production public URL + sender — OWNER ACTION
 
-Transactional email (090–097, 091–093 hooks) will enqueue on Production once code + outbox worker run. **Sending with `@resend.dev` on Production is forbidden.**
+**Canonical public origin:** `https://forgeplace.app`  
+**Legacy Production host (keep live, no force-redirect yet):** `https://forge-flame-gamma.vercel.app`  
+**Sending domain:** `mail.forgeplace.app`  
+**Expected From:** `Forge <notifications@mail.forgeplace.app>`
 
-Owner one-time:
+Transactional email (090–097, 091–093 hooks) will enqueue on Production once code + outbox worker run. **Sending with `@resend.dev` on Production is forbidden.** Code also requires the expected sending domain (`mail.forgeplace.app`, overridable later via `FORGE_PRODUCTION_SENDING_DOMAIN`).
 
-1. Add Forge sending domain in Resend + DNS.
-2. Set Production `RESEND_FROM_EMAIL` to that domain (not `@resend.dev`).
-3. Keep `RESEND_API_KEY` on Production.
-4. Run `npm run verify:production-email-sender` after env is set.
+Owner one-time (Production Vercel + Production Supabase only — not Preview):
 
-Preview may still use `@resend.dev` for smoke; Production must not. Details: `docs/preview-real-email-e2e.md`.
+1. Resend domain `mail.forgeplace.app` already verified — set Production `RESEND_FROM_EMAIL` to `Forge <notifications@mail.forgeplace.app>`.
+2. Set Production `NEXT_PUBLIC_SITE_URL` = `https://forgeplace.app`. Do **not** copy this onto Preview.
+3. Production Supabase Auth Site URL + redirect allowlist: add `https://forgeplace.app` / `/auth/callback`. Keep flame-gamma and Preview alias.
+4. Keep `RESEND_API_KEY` on Production.
+5. After Production env is set: `npm run verify:production-email-sender` and `npm run verify:forgeplace-domain`.
+
+Preview uses Preview origin for CTAs and may use the same verified From. Details: `docs/preview-real-email-e2e.md`.
 
 ---
 

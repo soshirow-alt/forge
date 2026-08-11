@@ -181,7 +181,12 @@ export function assertTransactionalMailContent(input: {
       throw new Error("private/forbidden body snippet leaked into email");
     }
   }
-  if (haystack.toLowerCase().includes("forge-games.net/messages")) {
+  const lower = haystack.toLowerCase();
+  if (
+    lower.includes("forge-games.net/messages") ||
+    lower.includes("forgeplace.app/messages") ||
+    lower.includes("forge-flame-gamma.vercel.app/messages")
+  ) {
     // Production host CTA is a hard fail for Preview E2E.
     throw new Error("mail CTA appears to point at Production");
   }

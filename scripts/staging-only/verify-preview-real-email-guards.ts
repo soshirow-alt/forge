@@ -69,6 +69,11 @@ assert.equal(
   true,
 );
 assert.equal(isPreviewHost("https://forge-games.net/messages"), false);
+assert.equal(isPreviewHost("https://forgeplace.app/messages"), false);
+assert.equal(
+  isPreviewHost("https://forge-flame-gamma.vercel.app/messages"),
+  false,
+);
 
 // Content / privacy / CTA assertions
 assert.doesNotThrow(() =>
@@ -117,7 +122,7 @@ throws(
         subject: "[Forge] 新しいメッセージが届きました",
         from: "Forge <notify@example.com>",
         to: "forge.operation@gmail.com",
-        bodyText: "see https://forge-games.net/messages/x",
+        bodyText: "see https://forgeplace.app/messages/x",
         bodyHtml: "",
         snippet: "",
       },

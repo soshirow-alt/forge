@@ -88,5 +88,10 @@ Use `--through-outbox` to stop before provider send.
 
 ## Production sender
 
-Production must not use `@resend.dev`. Run `npm run verify:production-email-sender`.
-Owner one-time: add Forge sending domain in Resend + DNS, set `RESEND_FROM_EMAIL` to e.g. `Forge <notifications@your-domain>` (do not invent domain names in code).
+Production must not use `@resend.dev`. Expected verified sending domain is `mail.forgeplace.app` (`Forge <notifications@mail.forgeplace.app>`). Override later only via `FORGE_PRODUCTION_SENDING_DOMAIN`.
+
+Run `npm run verify:production-email-sender` and `npm run verify:forgeplace-domain`.
+
+Preview CTAs must stay on the Preview host — never `https://forgeplace.app`.
+Production newly generated URLs use `https://forgeplace.app`.
+Legacy `https://forge-flame-gamma.vercel.app` stays live for past links (no code force-redirect).

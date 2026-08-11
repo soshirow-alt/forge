@@ -44,6 +44,7 @@
     "verify:email-notification-prefs": "npx --yes tsx scripts/verify-email-notification-prefs.ts",
     "verify:email-notification-prefs-e2e": "npx --yes tsx scripts/staging-only/verify-email-notification-prefs-e2e.ts",
     "verify:production-email-sender": "npx --yes tsx scripts/verify-production-email-sender.ts",
+    "verify:forgeplace-domain": "npx --yes tsx scripts/verify-forgeplace-domain.ts",
     "verify:message-email-cta": "npx --yes tsx scripts/verify-message-email-cta.ts",
     "verify:messaging-pair-identity": "npx --yes tsx scripts/verify-messaging-pair-identity.ts",
     "ops:bootstrap-gmail-e2e-oauth": "npx --yes tsx scripts/staging-only/bootstrap-gmail-e2e-oauth.ts",

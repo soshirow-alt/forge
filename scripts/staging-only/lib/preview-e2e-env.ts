@@ -115,12 +115,21 @@ export function siteUrl(env: Record<string, string>): string {
   return (env.NEXT_PUBLIC_SITE_URL || PREVIEW_ALIAS).replace(/\/$/, "");
 }
 
+const PRODUCTION_CTA_HOSTS = new Set([
+  "forgeplace.app",
+  "www.forgeplace.app",
+  "forge-flame-gamma.vercel.app",
+  "forge-games.net",
+  "www.forge-games.net",
+]);
+
 export function isPreviewHost(url: string): boolean {
   try {
-    const host = new URL(url).hostname;
+    const host = new URL(url).hostname.toLowerCase();
+    if (PRODUCTION_CTA_HOSTS.has(host)) return false;
     return (
       host.includes("preview-landing-01") ||
-      host.includes("vercel.app") ||
+      host.endsWith(".vercel.app") ||
       host === "localhost" ||
       host === "127.0.0.1"
     );
@@ -130,16 +139,12 @@ export function isPreviewHost(url: string): boolean {
 }
 
 export function assertNoProductionCta(url: string): void {
-  const lower = url.toLowerCase();
-  if (lower.includes("forge-games.net") && !lower.includes("preview")) {
-    // Allow only if explicitly preview alias; block bare production host.
-    try {
-      const host = new URL(url).hostname;
-      if (host === "forge-games.net" || host === "www.forge-games.net") {
-        throw new Error("BLOCKED: CTA points at Production host");
-      }
-    } catch (cause) {
-      if (cause instanceof Error && cause.message.startsWith("BLOCKED")) throw cause;
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    if (PRODUCTION_CTA_HOSTS.has(host)) {
+      throw new Error("BLOCKED: CTA points at Production host");
     }
+  } catch (cause) {
+    if (cause instanceof Error && cause.message.startsWith("BLOCKED")) throw cause;
   }
 }

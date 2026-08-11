@@ -6,7 +6,8 @@
 | ローカル link | `.vercel/project.json` → `projectName: forge`（gitignored） |
 | Preview branch | `preview/landing-01` |
 | Preview alias（オーナー確認 URL） | `forge-git-preview-landing-01-soshirow-alts-projects.vercel.app` |
-| Production Web | `forge` の Production（`forge-flame-gamma.vercel.app`） |
+| Production Web | `https://forgeplace.app`（Vercel project `forge` Production） |
+| Legacy Production URL | `https://forge-flame-gamma.vercel.app`（過去リンク互換。削除・強制redirectしない） |
 
 ## 正しい Deploy / alias の流れ
 
@@ -63,7 +64,7 @@ npm run verify:preview-branch-alias
 ### やってはいけないこと
 
 - 原因不明のまま `vercel alias set <最新> forge-git-preview-landing-01-…` だけして終わり（**手動固定が再発**しうる）
-- Production / `forge-flame-gamma` / main 向け alias を触る
+- Production / `forgeplace.app` / `forge-flame-gamma` / main 向け alias を触る
 
 ### Domains 画面を使う場合
 

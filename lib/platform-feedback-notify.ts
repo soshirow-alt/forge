@@ -4,6 +4,7 @@ import {
   type PlatformFeedbackViewerMode,
 } from "@/lib/platform-feedback";
 import { FORGE_LEGAL_CONTACT_EMAIL } from "@/lib/legal-routes";
+import { assertTransactionalFromAllowed } from "@/lib/resend-from-address";
 import { Resend } from "resend";
 
 const DEFAULT_RESEND_FROM = "Forge <onboarding@resend.dev>";
@@ -95,6 +96,16 @@ export async function sendPlatformFeedbackEmail(
   const to =
     process.env.PLATFORM_FEEDBACK_NOTIFY_EMAIL?.trim() || FORGE_LEGAL_CONTACT_EMAIL;
   const from = process.env.RESEND_FROM_EMAIL?.trim() || DEFAULT_RESEND_FROM;
+  try {
+    assertTransactionalFromAllowed({ fromHeader: from });
+  } catch (error) {
+    console.error("platform feedback email blocked by sender guard", error);
+    return {
+      sent: false,
+      reason: "send_failed",
+      detail: error instanceof Error ? error.message : "sender_blocked",
+    };
+  }
   const categoryLabel = platformFeedbackCategoryLabel(input.category);
   const { text, html } = buildEmailBodies(input);
 
