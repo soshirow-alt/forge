@@ -1,16 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, Search } from "lucide-react";
-import { useEffect, useState } from "react";
-import { ProjectThumbnail } from "@/components/project-thumbnail";
-import { buildGameDetailTabHref } from "@/lib/game-detail-tabs";
-import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import {
-  formatPlayerIaRelativeTime,
-  formatPlayerIaVersionLabel,
-  truncatePlayerIaText,
-} from "@/lib/player-ia/format";
+  AppWindow,
+  Box,
+  ChevronRight,
+  Gamepad2,
+  Headphones,
+  Search,
+  Wrench,
+  type LucideIcon,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { CategoryHomeHero } from "@/components/player-ia/category-home-hero";
+import { CategoryHomePlaceholder } from "@/components/player-ia/category-home-placeholder";
+import {
+  CategoryHomeNewestShelf,
+  CategoryHomeUpdateShelf,
+} from "@/components/player-ia/category-home-shelves";
+import {
+  CategoryHomeHeroWorkCard,
+  CategoryHomeRailWorkCard,
+} from "@/components/player-ia/category-home-work-cards";
+import { CATEGORY_HOME_HERO_PLACEHOLDER_COPY } from "@/lib/player-ia/category-home-hero";
 import { createRequestNowMs } from "@/lib/player-ia/request-now";
 import {
   PROJECT_CATEGORY_LABELS,
@@ -18,38 +30,16 @@ import {
 } from "@/lib/project-categories";
 import type { PlayerIaCategoryHomePayload } from "@/lib/supabase/player-ia-home-db";
 
+const CATEGORY_HOME_ICONS: Record<ProjectCategoryId, LucideIcon> = {
+  game: Gamepad2,
+  audio: Headphones,
+  asset: Box,
+  "dev-tool": Wrench,
+  "service-app": AppWindow,
+};
+
 function createClientFallbackNowMs(): number {
   return createRequestNowMs();
-}
-
-function SectionHeading({
-  title,
-  headingId,
-  seeAllHref,
-}: {
-  title: string;
-  headingId: string;
-  seeAllHref?: string;
-}) {
-  return (
-    <div className="mb-4 flex items-end justify-between gap-4">
-      <h2
-        id={headingId}
-        className="text-lg font-bold tracking-tight text-white text-balance"
-      >
-        {title}
-      </h2>
-      {seeAllHref ? (
-        <Link
-          href={seeAllHref}
-          className="group inline-flex shrink-0 items-center gap-0.5 text-xs font-medium text-violet-400 transition-colors hover:text-violet-300"
-        >
-          すべて見る
-          <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-        </Link>
-      ) : null}
-    </div>
-  );
 }
 
 export function PlayerIaCategoryHomePage({
@@ -98,6 +88,7 @@ export function PlayerIaCategoryHomePage({
   const home = initialHome ?? clientHome;
   const loading = initialHome ? false : clientLoading;
   const error = initialHome ? false : clientError;
+  const Icon = CATEGORY_HOME_ICONS[category];
 
   if (loading) {
     return (
@@ -146,152 +137,64 @@ export function PlayerIaCategoryHomePage({
 
   return (
     <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-10">
-      {home.spotlight.length > 0 ? (
-        <section aria-labelledby="category-home-spotlight">
-          <SectionHeading
-            title={`注目の${label}`}
-            headingId="category-home-spotlight"
-            seeAllHref={searchHref}
-          />
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {home.spotlight.map((item) => (
-              <Link
-                key={item.projectId}
-                href={gameDetailHref(item.projectId)}
-                className="group overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 transition-colors hover:border-violet-500/40"
-              >
-                <div className="relative aspect-[16/10] overflow-hidden">
-                  <ProjectThumbnail
-                    projectId={item.projectId}
-                    title={item.title}
-                    variant="card"
-                    className="!max-w-none rounded-none"
-                    sizes="(min-width: 1024px) 22vw, 45vw"
-                  />
-                </div>
-                <div className="p-3.5">
-                  <h3 className="truncate text-sm font-bold text-white group-hover:text-violet-200">
-                    {item.title}
-                  </h3>
-                  <p className="mt-1 line-clamp-2 text-xs text-zinc-500">
-                    {truncatePlayerIaText(item.description, 80)}
-                  </p>
-                  <div className="mt-3 flex items-center justify-between gap-2 text-[11px] text-zinc-500">
-                    <span className="truncate">{item.creator}</span>
-                    <span className="shrink-0">
-                      {formatPlayerIaRelativeTime(item.firstPublishedAt, {
-                        nowMs: displayNowMs,
-                      })}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
+      {home.heroWorks.length > 0 ? (
+        <CategoryHomeHero
+          items={home.heroWorks}
+          headingId="category-home-spotlight"
+          title={
+            <h2
+              id="category-home-spotlight"
+              className="text-lg font-bold tracking-tight text-white text-balance"
+            >
+              注目の{label}
+            </h2>
+          }
+          seeAll={
+            <Link
+              href={searchHref}
+              className="group inline-flex shrink-0 items-center gap-0.5 text-xs font-medium text-violet-400 transition-colors hover:text-violet-300"
+            >
+              すべて見る
+              <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          }
+          placeholder={
+            <CategoryHomePlaceholder
+              icon={Icon}
+              copy={CATEGORY_HOME_HERO_PLACEHOLDER_COPY}
+            />
+          }
+          renderHero={(item) => (
+            <CategoryHomeHeroWorkCard
+              item={item}
+              nowMs={displayNowMs}
+              ctaLabel="詳細を見る"
+            />
+          )}
+          renderRail={(item, onPromote) => (
+            <CategoryHomeRailWorkCard
+              item={item}
+              nowMs={displayNowMs}
+              onPromote={onPromote}
+            />
+          )}
+        />
       ) : null}
 
-      {home.meaningfulUpdates.length > 0 ? (
-        <section aria-labelledby="category-home-updates">
-          <SectionHeading
-            title="最近アップデート"
-            headingId="category-home-updates"
-            seeAllHref={`/search?category=${category}&sort=updated`}
-          />
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {home.meaningfulUpdates.map((item) => {
-              const versionLabel = formatPlayerIaVersionLabel(
-                item.publishedVersion,
-              );
-              return (
-                <Link
-                  key={item.projectId}
-                  href={
-                    item.updateKind === "devlog"
-                      ? buildGameDetailTabHref(item.projectId, "devlog")
-                      : gameDetailHref(item.projectId)
-                  }
-                  className="group overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 transition-colors hover:border-violet-500/40"
-                >
-                  <div className="relative aspect-[16/10] overflow-hidden">
-                    <ProjectThumbnail
-                      projectId={item.projectId}
-                      title={item.title}
-                      variant="card"
-                      className="!max-w-none rounded-none"
-                      sizes="(min-width: 1024px) 22vw, 45vw"
-                    />
-                  </div>
-                  <div className="p-3.5">
-                    <span className="inline-flex rounded-md bg-violet-500/15 px-2 py-0.5 text-[11px] font-semibold text-violet-300">
-                      {item.updateLabel}
-                    </span>
-                    <h3 className="mt-2 truncate text-sm font-bold text-white group-hover:text-violet-200">
-                      {item.title}
-                    </h3>
-                    <p className="mt-1 line-clamp-2 text-xs text-zinc-500">
-                      {truncatePlayerIaText(item.updateSummary, 80)}
-                    </p>
-                    <div className="mt-2.5 flex flex-wrap gap-2 text-[11px] text-zinc-500">
-                      {versionLabel ? <span>{versionLabel}</span> : null}
-                      <span>
-                        {formatPlayerIaRelativeTime(item.meaningfulUpdateAt, {
-                          nowMs: displayNowMs,
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
-
-      {home.newestProjects.length > 0 ? (
-        <section aria-labelledby="category-home-newest">
-          <SectionHeading
-            title="新着"
-            headingId="category-home-newest"
-            seeAllHref={`/search?category=${category}&sort=newest`}
-          />
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {home.newestProjects.map((item) => (
-              <Link
-                key={item.projectId}
-                href={gameDetailHref(item.projectId)}
-                className="group overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 transition-colors hover:border-violet-500/40"
-              >
-                <div className="relative aspect-[16/10] overflow-hidden">
-                  <ProjectThumbnail
-                    projectId={item.projectId}
-                    title={item.title}
-                    variant="card"
-                    className="!max-w-none rounded-none"
-                    sizes="(min-width: 1024px) 22vw, 45vw"
-                  />
-                </div>
-                <div className="p-3.5">
-                  <h3 className="truncate text-sm font-bold text-white group-hover:text-violet-200">
-                    {item.title}
-                  </h3>
-                  <p className="mt-1 line-clamp-2 text-xs text-zinc-500">
-                    {truncatePlayerIaText(item.description, 80)}
-                  </p>
-                  <div className="mt-3 flex items-center justify-between gap-2 text-[11px] text-zinc-500">
-                    <span className="truncate">{item.creator}</span>
-                    <span className="shrink-0">
-                      {formatPlayerIaRelativeTime(item.firstPublishedAt, {
-                        nowMs: displayNowMs,
-                      })}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      ) : null}
+      <CategoryHomeUpdateShelf
+        items={home.meaningfulUpdates}
+        title="最近アップデート"
+        headingId="category-home-updates"
+        seeAllHref={`/search?category=${category}&sort=updated`}
+        nowMs={displayNowMs}
+      />
+      <CategoryHomeNewestShelf
+        items={home.newestProjects}
+        title="新着"
+        headingId="category-home-newest"
+        seeAllHref={`/search?category=${category}&sort=newest`}
+        nowMs={displayNowMs}
+      />
     </div>
   );
 }

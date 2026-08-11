@@ -1,5 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+  fillCategoryHomeHeroWorks,
+  type CategoryHomeHeroWork,
+} from "@/lib/player-ia/category-home-hero";
+import {
+  extraFromPublicFeedbackCards,
+  mergeFeedbackGatheringFill,
+} from "@/lib/player-ia/feedback-gathering-fill";
+import {
   collectProjectIds,
   softAdjustNewestChronology,
   softSuppressByCategory,
@@ -20,6 +28,8 @@ import {
   withPlayPlayerCountsOnCards,
   type HomeFeaturedHeroCard,
 } from "@/lib/supabase/home-discovery-db";
+import { fetchPublicProjectsByCategory } from "@/lib/supabase/public-catalog-db";
+import { fetchPublicFeedbackCardsEnriched } from "@/lib/supabase/public-feedback-cards-server";
 
 export type HomeFeedbackGatheringRow = {
   project_id: string;
@@ -165,6 +175,7 @@ export type PlayerIaCategoryHomePayload = {
   category: ProjectCategoryId;
   hasPublicWork: boolean;
   spotlight: HomeNewestProject[];
+  heroWorks: CategoryHomeHeroWork[];
   meaningfulUpdates: HomeMeaningfulUpdate[];
   newestProjects: HomeNewestProject[];
 };
@@ -296,6 +307,131 @@ function mapAnnouncement(row: PlatformAnnouncementRow): PlatformAnnouncement {
     ctaUrl: row.cta_url ? asString(row.cta_url) : null,
     isActive: row.is_active == null ? undefined : asBoolean(row.is_active),
   };
+}
+
+function newestToHeroWork(item: HomeNewestProject): CategoryHomeHeroWork {
+  return {
+    projectId: item.projectId,
+    title: item.title,
+    description: item.description,
+    category: item.category,
+    creator: item.creator,
+    publishedAt: item.firstPublishedAt,
+  };
+}
+
+function featuredCardToHeroWork(card: HomeFeaturedHeroCard): CategoryHomeHeroWork {
+  return {
+    projectId: card.id,
+    title: card.title,
+    description: card.description,
+    category: "game",
+    genre: card.genre ?? null,
+  };
+}
+
+function updateToHeroWork(item: HomeMeaningfulUpdate): CategoryHomeHeroWork {
+  return {
+    projectId: item.projectId,
+    title: item.title,
+    description: item.updateSummary,
+    category: item.category,
+  };
+}
+
+async function fetchAllPublicCatalog(
+  supabase: SupabaseClient,
+): Promise<Awaited<ReturnType<typeof fetchPublicProjectsByCategory>>> {
+  const pageSize = 60;
+  const all: Awaited<ReturnType<typeof fetchPublicProjectsByCategory>> = [];
+  let offset = 0;
+  while (true) {
+    const page = await fetchPublicProjectsByCategory(supabase, {
+      limit: pageSize,
+      offset,
+    });
+    all.push(...page);
+    if (page.length < pageSize) break;
+    offset += pageSize;
+  }
+  return all;
+}
+
+async function fetchGuestSubmitterKeys(
+  supabase: SupabaseClient,
+  projectId: string,
+): Promise<string[]> {
+  const [voice, detailed] = await Promise.all([
+    supabase
+      .from("project_guest_voice_responses")
+      .select("submitter_key")
+      .eq("project_id", projectId)
+      .eq("include_in_public_aggregate", true)
+      .eq("moderation_status", "visible"),
+    supabase
+      .from("project_guest_feedback")
+      .select("submitter_key")
+      .eq("project_id", projectId)
+      .eq("include_in_public_aggregate", true)
+      .eq("moderation_status", "visible"),
+  ]);
+  if (voice.error || detailed.error) {
+    return [];
+  }
+  return [
+    ...(voice.data ?? []).map((row) => String(row.submitter_key ?? "")),
+    ...(detailed.data ?? []).map((row) => String(row.submitter_key ?? "")),
+  ].filter(Boolean);
+}
+
+async function fillFeedbackGatheringFromPublicWorks(
+  supabase: SupabaseClient,
+  ranked: HomeFeedbackGatheringProject[],
+): Promise<HomeFeedbackGatheringProject[]> {
+  if (ranked.length >= 4) return ranked;
+  try {
+    const catalog = await fetchAllPublicCatalog(supabase);
+    if (catalog.length === 0) return ranked;
+
+    const seen = new Set(ranked.map((item) => item.projectId));
+    const targets = catalog.filter((project) => !seen.has(project.projectId));
+    const extras: HomeFeedbackGatheringProject[] = [];
+
+    for (const project of targets) {
+      const { cards, participantCount } =
+        await fetchPublicFeedbackCardsEnriched(supabase, project.projectId, {
+          versionKey: "all",
+          limit: 100,
+        });
+      if (cards.length < 1) continue;
+      const guestSubmitterKeys = await fetchGuestSubmitterKeys(
+        supabase,
+        project.projectId,
+      );
+      const extra = extraFromPublicFeedbackCards(
+        {
+          projectId: project.projectId,
+          title: displayPlayerIaHomeSeedText(project.projectId, project.title),
+          category: project.category,
+          description: displayPlayerIaHomeSeedText(
+            project.projectId,
+            project.description,
+          ),
+          thumbnail: project.thumbnail,
+          fallbackLastAt:
+            project.meaningfulUpdateAt ?? project.firstPublishedAt,
+        },
+        cards,
+        participantCount,
+        guestSubmitterKeys,
+      );
+      if (extra) extras.push(extra);
+    }
+    return mergeFeedbackGatheringFill(ranked, extras, 4);
+  } catch (error) {
+    console.error("[player-ia-home] feedback fill failed", error);
+    return ranked;
+  }
 }
 
 function mapNewestProject(row: HomeNewestProjectRow): HomeNewestProject {
@@ -459,6 +595,8 @@ export async function fetchHomeNewestProjects(
 export type PlayerIaGameHomePayload = {
   /** Production `get_home_featured_hero` slots, soft-filtered to category=game. */
   featuredHero: HomeFeaturedHeroCard[];
+  /** Shared 1+3 hero set: featured ranking first, then newest/update fill. */
+  heroWorks: CategoryHomeHeroWork[];
   meaningfulUpdates: HomeMeaningfulUpdate[];
   newestProjects: HomeNewestProject[];
 };
@@ -537,8 +675,21 @@ export async function fetchPlayerIaGameHome(
     4,
   );
 
+  const heroWorks = fillCategoryHomeHeroWorks(
+    featuredHero.map(featuredCardToHeroWork),
+    [
+      ...newestCandidates
+        .filter((item) => item.category === "game")
+        .map(newestToHeroWork),
+      ...updateCandidates
+        .filter((item) => item.category === "game")
+        .map(updateToHeroWork),
+    ],
+  );
+
   return {
     featuredHero,
+    heroWorks,
     meaningfulUpdates,
     newestProjects,
   };
@@ -582,7 +733,11 @@ export async function fetchPlayerIaCategoryHome(
   const newest = newestCandidates.filter((item) => item.category === category);
   const hasPublicWork = newest.length > 0 || updates.length > 0;
   const spotlight = newest.slice(0, 4);
-  const spotlightIds = new Set(spotlight.map((item) => item.projectId));
+  const heroWorks = fillCategoryHomeHeroWorks(
+    spotlight.map(newestToHeroWork),
+    updates.map(updateToHeroWork),
+  );
+  const spotlightIds = new Set(heroWorks.map((item) => item.projectId));
   const meaningfulUpdates = updates
     .filter((item) => !spotlightIds.has(item.projectId))
     .slice(0, 8);
@@ -593,6 +748,7 @@ export async function fetchPlayerIaCategoryHome(
     category,
     hasPublicWork,
     spotlight,
+    heroWorks,
     meaningfulUpdates,
     newestProjects,
   };
@@ -668,8 +824,13 @@ export async function fetchPlayerIaHome(
     fetchPublicCategoryPresence(supabase),
   ]);
 
-  return assemblePlayerIaHomeShelves({
+  const filledFeedback = await fillFeedbackGatheringFromPublicWorks(
+    supabase,
     feedbackCandidates,
+  );
+
+  return assemblePlayerIaHomeShelves({
+    feedbackCandidates: filledFeedback,
     updateCandidates,
     usageCandidates,
     announcements,

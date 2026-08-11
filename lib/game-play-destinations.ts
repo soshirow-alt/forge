@@ -1,9 +1,11 @@
 import type { Game } from "@/lib/mock-games";
+import { resolveOverviewDistributionLabelForGame } from "@/lib/overview-distribution-display";
 import {
   getPrimaryPublishDestination,
   normalizePublishLinkUrl,
   resolveGamePublishLinks,
   toPublishDestinationDisplays,
+  type PublishDestination,
   type PublishDestinationDisplay,
 } from "@/lib/project-publish-links";
 
@@ -11,6 +13,8 @@ export type PlayDestination = {
   label: string;
   url: string;
   actionLabel: string;
+  /** Overview 「公開・配布」用。動詞 CTA / ホスト名ではない。 */
+  infoLabel: string | null;
 };
 
 export type PublicationDisplay = {
@@ -28,11 +32,28 @@ export function normalizeExternalUrl(
   return normalizePublishLinkUrl(url);
 }
 
-function toPlayDestination(item: PublishDestinationDisplay): PlayDestination {
+function destinationLookupKey(url: string): string {
+  return url.trim().replace(/\/+$/, "").toLowerCase();
+}
+
+function toPlayDestination(
+  item: PublishDestinationDisplay,
+  game: Game,
+  originals: PublishDestination[],
+): PlayDestination {
+  const original = originals.find(
+    (entry) =>
+      destinationLookupKey(entry.url) === destinationLookupKey(item.url),
+  );
   return {
     label: item.kindLabel,
     url: item.url,
     actionLabel: item.actionLabel,
+    infoLabel: resolveOverviewDistributionLabelForGame(game, {
+      url: item.url,
+      formalKind: item.kind,
+      usageMethod: original?.usageMethod ?? null,
+    }),
   };
 }
 
@@ -51,7 +72,9 @@ export function resolvePlayDestinations(
   const displays = toPublishDestinationDisplays(publishDestinations);
   const primary = displays.filter((item) => item.isPrimary);
   const secondary = displays.filter((item) => !item.isPrimary);
-  return [...primary, ...secondary].map(toPlayDestination);
+  return [...primary, ...secondary].map((item) =>
+    toPlayDestination(item, game, publishDestinations),
+  );
 }
 
 /** Studio / projects.play_url に保存された主プレイ URL（CTA の第一候補）。 */
@@ -112,6 +135,8 @@ export function resolvePublicationDisplay(
   }
 
   return {
-    labels: destinations.map((destination) => destination.label),
+    labels: destinations
+      .map((destination) => destination.infoLabel)
+      .filter((label): label is string => Boolean(label)),
   };
 }

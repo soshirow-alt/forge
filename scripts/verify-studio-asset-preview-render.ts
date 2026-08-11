@@ -97,7 +97,7 @@ function assertCommonVisible(html: string) {
   assert.match(html, /プレビュー検証タイトル/);
   assert.match(html, /キャッチコピーです/);
   assert.match(html, /作品紹介の本文です/);
-  assert.match(html, /公開先/);
+  assert.match(html, /公開・配布/);
 }
 
 function assertGamePlayUiAbsent(html: string) {
@@ -116,7 +116,7 @@ function assertGamePlayUiPresent(html: string) {
   assert.match(html, /想定時間/);
   assert.match(html, /30分〜1時間/);
   assert.match(html, /対応端末/);
-  assert.match(html, /ブラウザで遊ぶ/);
+  assert.doesNotMatch(html, /遊び方/);
   assert.match(html, />無料</);
 }
 

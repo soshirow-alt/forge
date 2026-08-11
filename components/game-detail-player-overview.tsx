@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ExternalLink } from "lucide-react";
 import type { GameDetailFeature, GameDetailV0 } from "@/lib/game-detail-v0-mock-data";
 import type {
   GameDetailOverviewActivity,
@@ -13,6 +13,11 @@ import type {
   PublicationDisplay,
 } from "@/lib/game-play-destinations";
 import type { RelatedLinkDisplay } from "@/lib/project-publish-links";
+import {
+  GENERIC_EXTERNAL_PAGE,
+  OVERVIEW_PUBLICATION_TITLE,
+  overviewRelatedLinkIdentity,
+} from "@/lib/overview-distribution-display";
 import { DiscoveryCardStatPills } from "@/components/discovery-card-stat-pills";
 import { StudioPreviewEditTarget } from "@/components/studio-preview-edit-target";
 import type { StudioPreviewEditTarget as StudioPreviewEditTargetId } from "@/lib/studio-preview-edit-targets";
@@ -58,22 +63,34 @@ function OverviewCard({
 function SidebarCard({
   title,
   children,
+  className = "",
 }: {
   title: string;
   children: ReactNode;
+  className?: string;
 }) {
   return (
-    <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/30 p-4 sm:p-5">
+    <section
+      className={`rounded-2xl border border-zinc-800/80 bg-zinc-900/30 p-4 sm:p-5 ${className}`}
+    >
       <h2 className="text-sm font-semibold text-zinc-300">{title}</h2>
       {children}
     </section>
   );
 }
 
-function OptionChip({ option }: { option: PlayerOptionChip }) {
+function OptionChip({
+  option,
+  nowrap = false,
+}: {
+  option: PlayerOptionChip;
+  nowrap?: boolean;
+}) {
   return (
     <span
       className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs ${
+        nowrap ? "whitespace-nowrap" : ""
+      } ${
         option.active
           ? "border-zinc-600 bg-zinc-800/70 font-medium text-zinc-200"
           : "border-zinc-800/80 bg-zinc-950/40 text-zinc-600"
@@ -157,10 +174,6 @@ function UnsetPlayInfoPanel() {
         <p className="text-xs text-zinc-500">対応端末</p>
         <p className="mt-1">対応端末未設定</p>
       </div>
-      <div>
-        <p className="text-xs text-zinc-500">遊び方</p>
-        <p className="mt-1">遊び方未設定</p>
-      </div>
     </div>
   );
 }
@@ -169,10 +182,9 @@ function PlayInfoPanel({ playerMeta }: { playerMeta: GameDetailPlayerMeta }) {
   const { playInfo } = playerMeta;
   const hasPlayTime = playInfo.playTimeOptions.some((option) => option.active);
   const hasDevice = playInfo.deviceOptions.some((option) => option.active);
-  const hasPlayMethod = playInfo.playMethodOptions.some((option) => option.active);
   const playerCountOptions = playInfo.playerCountOptions ?? [];
   const hasPlayerCount = playerCountOptions.some((option) => option.active);
-  const hasContent = hasPlayTime || hasDevice || hasPlayMethod || hasPlayerCount;
+  const hasContent = hasPlayTime || hasDevice || hasPlayerCount;
 
   if (!hasContent) {
     return null;
@@ -182,10 +194,17 @@ function PlayInfoPanel({ playerMeta }: { playerMeta: GameDetailPlayerMeta }) {
     <>
       <div className="mt-3">
         <p className="text-xs text-zinc-500">想定時間</p>
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
-          {playInfo.playTimeOptions.map((option) => (
-            <OptionChip key={option.label} option={option} />
-          ))}
+        <div className="mt-1.5 space-y-1.5" data-play-time-chips="3-2">
+          <div className="flex flex-wrap gap-1.5 lg:flex-nowrap">
+            {playInfo.playTimeOptions.slice(0, 3).map((option) => (
+              <OptionChip key={option.label} option={option} nowrap />
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-1.5 lg:flex-nowrap">
+            {playInfo.playTimeOptions.slice(3).map((option) => (
+              <OptionChip key={option.label} option={option} nowrap />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -193,15 +212,6 @@ function PlayInfoPanel({ playerMeta }: { playerMeta: GameDetailPlayerMeta }) {
         <p className="text-xs text-zinc-500">対応端末</p>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {playInfo.deviceOptions.map((option) => (
-            <OptionChip key={option.label} option={option} />
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-3">
-        <p className="text-xs text-zinc-500">遊び方</p>
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
-          {playInfo.playMethodOptions.map((option) => (
             <OptionChip key={option.label} option={option} />
           ))}
         </div>
@@ -223,98 +233,107 @@ function PlayInfoPanel({ playerMeta }: { playerMeta: GameDetailPlayerMeta }) {
   );
 }
 
+function DistributionInfoLink({
+  href,
+  label,
+  onOpen,
+}: {
+  href: string;
+  label: string;
+  onOpen?: () => void;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={() => onOpen?.()}
+      className="inline-flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3 py-2 text-left text-sm text-zinc-200 transition-colors hover:border-zinc-700 hover:bg-zinc-900/50 hover:text-zinc-100"
+      data-overview-distribution="info"
+    >
+      <span className="min-w-0 truncate">{label}</span>
+      <ExternalLink className="size-3.5 shrink-0 text-zinc-500" aria-hidden="true" />
+    </a>
+  );
+}
+
 function PublicationPanel({
   publication,
   destinations,
   onDestinationOpen,
-  primaryCtaLabel,
 }: {
   publication: PublicationDisplay;
   destinations: PlayDestination[];
   /** 外部タブは <a> が開く。ここではプレイ記録など副作用のみ。 */
   onDestinationOpen?: () => void;
-  /** When set, primary button uses this fixed label (category CTA). */
-  primaryCtaLabel?: string;
 }) {
-  if (destinations.length > 0) {
-    const [primary, ...secondary] = destinations;
-    return (
-      <div className="mt-3 flex min-w-0 flex-col gap-2">
-        <a
-          href={primary.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => onDestinationOpen?.()}
-          className="inline-flex w-full min-w-0 items-center justify-center rounded-lg border border-violet-500/40 bg-violet-500/15 px-3 py-2.5 text-center text-sm font-semibold text-violet-100 transition-colors hover:border-violet-400/60 hover:bg-violet-500/25 hover:text-white"
-        >
-          <span className="truncate">
-            {primaryCtaLabel ?? primary.actionLabel}
-          </span>
-        </a>
-        {secondary.length > 0 ? (
-          <ul className="flex min-w-0 flex-col gap-1.5">
-            {secondary.map((destination) => (
-              <li key={destination.url} className="min-w-0">
-                <a
-                  href={destination.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => onDestinationOpen?.()}
-                  className="inline-flex w-full min-w-0 items-center rounded-md px-1 py-1.5 text-left text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-200"
-                >
-                  <span className="truncate">{destination.actionLabel}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
-    );
-  }
-
-  if (primaryCtaLabel) {
-    return (
-      <div className="mt-3 flex min-w-0 flex-col gap-2">
-        <span className="inline-flex w-full min-w-0 items-center justify-center rounded-lg border border-zinc-700/60 bg-zinc-900/60 px-3 py-2.5 text-center text-sm font-semibold text-zinc-500">
-          {primaryCtaLabel}
-        </span>
-        <p className="text-xs text-zinc-600">公開先未設定</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mt-3 flex min-w-0 flex-col gap-1.5 sm:flex-row sm:flex-wrap">
-      {publication.labels.map((label) => (
-        <span
-          key={label}
-          className="inline-flex max-w-full items-center break-all rounded-md border border-zinc-700/80 bg-zinc-800/50 px-2.5 py-1 text-xs text-zinc-400"
-        >
-          {label}
-        </span>
-      ))}
-    </div>
+  const linkedDestinations = destinations.filter((destination) =>
+    destination.url.trim(),
   );
+  if (linkedDestinations.length > 0) {
+    return (
+      <ul className="mt-3 flex min-w-0 flex-col gap-2">
+        {linkedDestinations.map((destination) => (
+          <li key={destination.url} className="min-w-0">
+            <DistributionInfoLink
+              href={destination.url}
+              label={
+                destination.infoLabel?.trim() || GENERIC_EXTERNAL_PAGE
+              }
+              onOpen={onDestinationOpen}
+            />
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  const safeLabels = publication.labels.filter(
+    (label) => label.trim() && label.trim() !== "その他",
+  );
+
+  if (destinations.length === 0 && safeLabels.length === 0) {
+    return <p className="mt-3 text-xs text-zinc-600">未設定</p>;
+  }
+
+  if (destinations.length === 0 && safeLabels.length > 0) {
+    return (
+      <div className="mt-3 flex min-w-0 flex-col gap-1.5 sm:flex-row sm:flex-wrap">
+        {safeLabels.map((label) => (
+          <span
+            key={label}
+            className="inline-flex max-w-full items-center break-all rounded-md border border-zinc-800/80 bg-zinc-950/40 px-2.5 py-1 text-xs text-zinc-400"
+          >
+            {label}
+          </span>
+        ))}
+      </div>
+    );
+  }
+
+  return null;
 }
 
 function RelatedLinksPanel({ links }: { links: RelatedLinkDisplay[] }) {
   return (
     <ul className="mt-3 flex min-w-0 flex-col gap-2">
-      {links.map((link) => (
-        <li key={link.id} className="min-w-0">
-          <a
-            href={link.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex min-w-0 flex-col gap-0.5 rounded-md px-1 py-1.5 transition-colors hover:bg-zinc-800/40"
-          >
-            <span className="truncate text-[11px] text-zinc-500">{link.kindLabel}</span>
-            <span className="truncate text-xs font-medium text-zinc-400 hover:text-zinc-200">
-              {link.displayLabel}
-            </span>
-          </a>
-        </li>
-      ))}
+      {links.map((link) => {
+        const identity = overviewRelatedLinkIdentity(link);
+        return (
+          <li key={link.id} className="min-w-0">
+            <a
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3 py-2 text-left text-sm text-zinc-200 transition-colors hover:border-zinc-700 hover:bg-zinc-900/50 hover:text-zinc-100"
+              data-overview-related-identity={identity}
+            >
+              <span className="min-w-0 truncate">{identity}</span>
+              <ExternalLink className="size-3.5 shrink-0 text-zinc-500" aria-hidden="true" />
+            </a>
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -415,7 +434,6 @@ export function GameDetailPlayerOverview({
   feedbackCtaLabel,
   onEditTarget,
   prototypeInfoCard,
-  primaryCtaLabel,
 }: GameDetailPlayerOverviewProps) {
   const introText = resolveIntroText(game.introduction, heroLead);
   const displayFeatures = game.features.filter(
@@ -425,7 +443,6 @@ export function GameDetailPlayerOverview({
   const showPlayInfoCard = Boolean(
     playerMeta.playInfo.playTimeOptions.some((option) => option.active) ||
       playerMeta.playInfo.deviceOptions.some((option) => option.active) ||
-      playerMeta.playInfo.playMethodOptions.some((option) => option.active) ||
       (playerMeta.playInfo.playerCountOptions ?? []).some((option) => option.active),
   );
 
@@ -437,37 +454,42 @@ export function GameDetailPlayerOverview({
     ? showPrototypeInfoSection
     : showPlayInfoCard || showUnsetPlayPlaceholders;
 
+  const infoCardTitle =
+    usePrototypeInfo && prototypeInfoCard
+      ? prototypeInfoCard.title
+      : "プレイ情報";
+  const showRow2Right =
+    Boolean(publication) || relatedLinks.length > 0 || displayFeatures.length > 0;
+
   return (
-    <div className="grid gap-5 lg:grid-cols-3 lg:gap-6">
-      <div className="min-w-0 space-y-5 lg:col-span-2">
-        {introText ? (
-          <StudioPreviewEditTarget target="introduction" onEditTarget={onEditTarget}>
-            <OverviewCard title="作品紹介">
+    <div
+      className="grid gap-5 lg:grid-cols-3 lg:items-stretch lg:gap-6"
+      data-overview-grid="rows"
+    >
+      {introText ? (
+        <div
+          className={`min-w-0 ${showPlayInfoSection ? "lg:col-span-2" : "lg:col-span-3"}`}
+        >
+          <StudioPreviewEditTarget
+            target="introduction"
+            onEditTarget={onEditTarget}
+            className="h-full"
+          >
+            <OverviewCard title="作品紹介" className="h-full">
               <IntroBody text={introText} muted={mutedIntroduction} />
             </OverviewCard>
           </StudioPreviewEditTarget>
-        ) : null}
+        </div>
+      ) : null}
 
-        <OverviewCard title="最近の動き">
-          <RecentActivityPanel
-            activity={activity}
-            focusNotes={playerMeta.focusNotes}
-            onFeedback={onFeedback}
-            feedbackCtaLabel={feedbackCtaLabel}
-          />
-        </OverviewCard>
-      </div>
-
-      <aside className="min-w-0 space-y-4">
-        {showPlayInfoSection ? (
-          <StudioPreviewEditTarget target="play-info" onEditTarget={onEditTarget}>
-            <SidebarCard
-              title={
-                usePrototypeInfo && prototypeInfoCard
-                  ? prototypeInfoCard.title
-                  : "プレイ情報"
-              }
-            >
+      {showPlayInfoSection ? (
+        <aside className="min-w-0 lg:h-full">
+          <StudioPreviewEditTarget
+            target="play-info"
+            onEditTarget={onEditTarget}
+            className="h-full"
+          >
+            <SidebarCard title={infoCardTitle} className="h-full">
               {usePrototypeInfo && showPrototypeInfoSection ? (
                 <div className="mt-3 space-y-3 text-sm">
                   {prototypeRows.map((row) => {
@@ -496,38 +518,53 @@ export function GameDetailPlayerOverview({
               ) : null}
             </SidebarCard>
           </StudioPreviewEditTarget>
-        ) : null}
+        </aside>
+      ) : null}
 
-        {publication ? (
-          <StudioPreviewEditTarget target="publication" onEditTarget={onEditTarget}>
-            <SidebarCard title="公開先">
-              <PublicationPanel
-                publication={publication}
-                destinations={playDestinations}
-                onDestinationOpen={onPlayDestinationOpen}
-                primaryCtaLabel={primaryCtaLabel}
-              />
+      <div
+        className={`min-w-0 ${showRow2Right ? "lg:col-span-2" : "lg:col-span-3"}`}
+      >
+        <OverviewCard title="最近の動き" className="h-full">
+          <RecentActivityPanel
+            activity={activity}
+            focusNotes={playerMeta.focusNotes}
+            onFeedback={onFeedback}
+            feedbackCtaLabel={feedbackCtaLabel}
+          />
+        </OverviewCard>
+      </div>
+
+      {showRow2Right ? (
+        <aside className="flex min-w-0 flex-col gap-4">
+          {publication ? (
+            <StudioPreviewEditTarget
+              target="publication"
+              onEditTarget={onEditTarget}
+              className="min-w-0"
+            >
+              <SidebarCard title={OVERVIEW_PUBLICATION_TITLE}>
+                <PublicationPanel
+                  publication={publication}
+                  destinations={playDestinations}
+                  onDestinationOpen={onPlayDestinationOpen}
+                />
+              </SidebarCard>
+            </StudioPreviewEditTarget>
+          ) : null}
+
+          {relatedLinks.length > 0 ? (
+            <SidebarCard title="関連リンク">
+              <RelatedLinksPanel links={relatedLinks} />
             </SidebarCard>
-          </StudioPreviewEditTarget>
-        ) : null}
+          ) : null}
 
-        {relatedLinks.length > 0 ? (
-          <SidebarCard title="関連リンク">
-            <RelatedLinksPanel links={relatedLinks} />
-          </SidebarCard>
-        ) : null}
-
-        {displayFeatures.length > 0 ? (
-          <SidebarCard title="作品の特徴">
-            <CompactFeatureList features={displayFeatures} />
-          </SidebarCard>
-        ) : null}
-
-        {/*
-          Phase B+ 候補: 右カラム下部に「類似の作品」カードを置く余地。
-          現時点では作品数が少ないため、空カードは出さない。
-        */}
-      </aside>
+          {displayFeatures.length > 0 ? (
+            <SidebarCard title="作品の特徴">
+              <CompactFeatureList features={displayFeatures} />
+            </SidebarCard>
+          ) : null}
+        </aside>
+      ) : null}
     </div>
   );
 }

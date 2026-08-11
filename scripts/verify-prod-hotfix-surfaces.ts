@@ -38,18 +38,17 @@ function read(rel: string): string {
   });
   assert.deepEqual(resolveFeedbackGatheringLayout(1), {
     show: true,
-    queueSlots: 0,
-    gridCols: 1,
+    queueSlots: 3,
+    gridCols: 2,
   });
   assert.deepEqual(resolveFeedbackGatheringLayout(2), {
     show: true,
-    queueSlots: 1,
+    queueSlots: 3,
     gridCols: 2,
   });
-  // Production 2026-08-11 GET /api/discovery/player-ia-home → 3 rows.
   assert.deepEqual(resolveFeedbackGatheringLayout(3), {
     show: true,
-    queueSlots: 2,
+    queueSlots: 3,
     gridCols: 2,
   });
   assert.deepEqual(resolveFeedbackGatheringLayout(4), {
@@ -65,8 +64,9 @@ function read(rel: string): string {
 
   const section = read("components/player-ia/feedback-gathering-section.tsx");
   assert.match(section, /resolveFeedbackGatheringLayout/);
-  assert.match(section, /layout\.gridCols === 2/);
-  assert.match(section, /layout\.queueSlots/);
+  assert.match(section, /CategoryHomeHero/);
+  const hero = read("components/player-ia/category-home-hero.tsx");
+  assert.match(hero, /lg:grid-cols-2/);
 
   const assemble = read("lib/supabase/player-ia-home-db.ts");
   assert.match(assemble, /softSuppressByCategory\(input\.feedbackCandidates, 4\)/);

@@ -225,6 +225,15 @@ async function main() {
   );
   assert.equal(gameHome.featuredHero[0]?.playPlayerCount, 42);
   assert.equal(gameHome.featuredHero[1]?.playPlayerCount, 7);
+  assert.equal(gameHome.heroWorks.length, 4);
+  assert.deepEqual(
+    gameHome.heroWorks.slice(0, 2).map((work) => work.projectId),
+    ["game-hero-1", "game-hero-2"],
+  );
+  assert.ok(
+    gameHome.heroWorks.every((work) => work.category === "game"),
+    "game home heroWorks must stay game-only",
+  );
   assert.ok(
     gameHome.meaningfulUpdates.length > 0,
     "game home meaningfulUpdates must fill via p_category=game",

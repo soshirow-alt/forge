@@ -21,7 +21,7 @@ export type StudioPreviewCategoryChrome = {
   showPlayAccessEditTarget: boolean;
   showUnsetPlayPlaceholders: boolean;
   /**
-   * Game play-info sidebar card (想定時間 / 対応端末 / 遊び方).
+   * Game play-info sidebar card (想定時間 / 対応端末 / プレイ人数).
    * false → hide section entirely (pass prototypeInfoCard={null}).
    */
   showGamePlayInfoCard: boolean;

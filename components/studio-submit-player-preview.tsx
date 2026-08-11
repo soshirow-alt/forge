@@ -12,6 +12,9 @@ import type { GameDetailTab } from "@/lib/game-detail-tabs";
 import { resolvePlayDestinations, resolvePublicationDisplay } from "@/lib/game-play-destinations";
 import type { PlayDestination } from "@/lib/game-play-destinations";
 import {
+  resolveOverviewDistributionLabel,
+} from "@/lib/overview-distribution-display";
+import {
   resolveGamePublishLinks,
   toRelatedLinkDisplays,
 } from "@/lib/project-publish-links";
@@ -138,11 +141,18 @@ function buildPrototypePlayDestinations(
   const withUrl = fields.publishDestinations.filter((item) => item.url.trim());
   const primary = withUrl.filter((item) => item.isPrimary);
   const secondary = withUrl.filter((item) => !item.isPrimary);
-  return [...primary, ...secondary].map((item) => ({
-    label: item.kind || "公開先",
-    url: normalizeExternalUrl(item.url) ?? item.url.trim(),
-    actionLabel: prototypePublishOpenLabel(item.kind || "その他"),
-  }));
+  return [...primary, ...secondary].map((item) => {
+    const url = normalizeExternalUrl(item.url) ?? item.url.trim();
+    return {
+      label: item.kind || "公開先",
+      url,
+      actionLabel: prototypePublishOpenLabel(item.kind || "その他"),
+      infoLabel: resolveOverviewDistributionLabel({
+        url,
+        prototypeKindLabel: item.kind,
+      }),
+    };
+  });
 }
 
 export type StudioSubmitPlayerPreviewProps = {
@@ -207,7 +217,9 @@ export function StudioSubmitPlayerPreview({
     }
     if (prototypeCategory) {
       return {
-        labels: playDestinations.map((item) => item.label),
+        labels: playDestinations
+          .map((item) => item.infoLabel)
+          .filter((label): label is string => Boolean(label)),
       };
     }
     return resolvePublicationDisplay(draftGame);

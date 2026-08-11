@@ -139,8 +139,13 @@ assert.match(
 const gameHomePage = read("components/player-ia/player-ia-game-home-page.tsx");
 assert.match(
   gameHomePage,
+  /CategoryHomeHero/,
+  "/home/game must use shared CategoryHomeHero (1+3), not neighbor-peek carousel",
+);
+assert.doesNotMatch(
+  gameHomePage,
   /FeaturedGameCarousel/,
-  "/home/game must use Production FeaturedGameCarousel for 注目のゲーム",
+  "/home/game must not keep the unique neighbor-peek carousel",
 );
 assert.match(gameHomePage, /注目のゲーム/);
 assert.match(gameHomePage, /最近アップデートされたゲーム/);
@@ -150,8 +155,8 @@ assert.doesNotMatch(
   /フィードバックが集まっているゲーム/,
   "/home/game must not use feedback-gathering shelf as featured",
 );
-assert.match(gameHomePage, /density=["']player-ia["']/);
-assert.match(gameHomePage, /AUTOPLAY|featuredHero|FeaturedGameCarousel/);
+assert.doesNotMatch(gameHomePage, /density=["']player-ia["']/);
+assert.match(gameHomePage, /heroWorks|CategoryHomeHero/);
 
 const featuredCarousel = read("components/featured/featured-game-carousel.tsx");
 assert.match(featuredCarousel, /AUTOPLAY_MS\s*=\s*5000/);
