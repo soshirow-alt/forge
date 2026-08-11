@@ -124,8 +124,9 @@ Bundles keep **full ordered content** of each migration (section headers `-- ===
 
 | Outcome | Action |
 |---------|--------|
-| `PASS` | Schema go-live for 076–101 objects complete |
-| `FAIL` | Inspect failing `check_name` rows. Re-run the apply file that owns the missing object (01 vs 02 vs 03). Do not publish announcements |
+| `PASS` | Schema go-live for 076–101 objects complete. History table may still be `TABLE_ABSENT` |
+| `FAIL` | Inspect failing `check_name` rows. Do **not** re-run 01–03 if they already succeeded — inspect missing object vs this file only. Do not publish announcements |
+| Section E `migration_history_status = TABLE_ABSENT` | **Not a FAIL.** Production often has no `supabase_migrations.schema_migrations`. Verdict is B/C/F object presence + pair invariant only. History repair is a **separate** step after PASS (`06_*.sql`), never part of 04 |
 
 ### 05 Announcement (executable LAST)
 
@@ -152,7 +153,7 @@ Read-only probes list MISSING versions **076–101**. Prefer `supabase migration
 
 ## 5. Migration history handling
 
-Dashboard SQL Editor **does not** record `supabase_migrations.schema_migrations` when you paste APPLY bundles. Production may also **lack the table entirely**. `00_preflight_READONLY.sql` section E only checks `to_regclass` / `to_regnamespace` (never `FROM schema_migrations`) and reports `TABLE_ABSENT` or `TABLE_PRESENT`. Absence is informational, not a STOP.
+Dashboard SQL Editor **does not** record `supabase_migrations.schema_migrations` when you paste APPLY bundles. Production may also **lack the table entirely**. `00_preflight_READONLY.sql` and `04_postflight_READONLY.sql` section E only check `to_regclass` / `to_regnamespace` (never `FROM schema_migrations`) and report `TABLE_ABSENT` or `TABLE_PRESENT`. Absence is informational, not a STOP. **Do not create or repair history from 00/04.** Repair is Owner-only after postflight PASS (`06_*.sql`).
 
 | Topic | Policy |
 |-------|--------|

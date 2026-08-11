@@ -1,5 +1,5 @@
 -- =============================================================================
--- Production rollout POSTFLIGHT (READ-ONLY) — 2026-08 package (076–100)
+-- Production rollout POSTFLIGHT (READ-ONLY) — 2026-08 package (076–101)
 -- Target: Production Supabase bpnisgzxuwdxelhnduuf
 -- Run AFTER 01 + 02 + 03 APPLY files all succeeded.
 -- Compare core row counts to 00_preflight baseline (must match for listed tables).
@@ -112,7 +112,7 @@ SELECT 'B10 get_public_feedback_cards (081 guest re-enable)' AS check_name,
        ) IS NOT NULL THEN 'OK' ELSE 'FAIL' END AS status;
 
 -- -----------------------------------------------------------------------------
--- C. Collaboration / messaging / email (086–100)
+-- C. Collaboration / messaging / email (086–101)
 -- -----------------------------------------------------------------------------
 SELECT 'C1 collab_consultations' AS check_name,
        CASE WHEN to_regclass('public.collab_consultations') IS NOT NULL
@@ -256,16 +256,21 @@ SELECT 'D3 search_public_catalog EXECUTE anon+authenticated' AS check_name,
        has_function_privilege('authenticated', 'public.search_public_catalog(text,integer)', 'EXECUTE') AS auth_exec;
 
 -- -----------------------------------------------------------------------------
--- E. schema_migrations after SQL Editor apply (informational)
+-- E. migration history presence (informational — never FROM the history table)
+-- Production may have no supabase_migrations.schema_migrations (SQL Editor apply
+-- does not create/write it). TABLE_ABSENT is expected and is NOT a postflight FAIL.
+-- Verdict uses B/C/F object presence + pair invariant only.
+-- History repair is a separate OWNER ACTION after postflight PASS — see 06_*.
 -- -----------------------------------------------------------------------------
-SELECT version, name
-FROM supabase_migrations.schema_migrations
-WHERE version ~ '^(07[6-9]|0[89][0-9]|100)'
-ORDER BY version;
-
--- Expect: still empty/missing for 076–100 after Dashboard paste unless repaired.
--- Repair is OWNER ACTION only — see 06_migration_history_repair_NOTES.sql
--- and docs/production-rollout-2026-08.md. Do NOT repair until postflight PASS.
+SELECT
+  CASE
+    WHEN to_regclass('supabase_migrations.schema_migrations') IS NULL
+      THEN 'TABLE_ABSENT'
+    ELSE 'TABLE_PRESENT'
+  END AS migration_history_status,
+  (to_regnamespace('supabase_migrations') IS NOT NULL) AS history_schema_exists,
+  'informational only — do not FAIL postflight on TABLE_ABSENT — use B/C/F objects'
+    AS history_note;
 
 -- -----------------------------------------------------------------------------
 -- F. Postflight verdict

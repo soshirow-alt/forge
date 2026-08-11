@@ -6,4 +6,5 @@
 - Rebuild APPLY from canonical: `node scripts/production-rollout/2026-08/rebuild-apply-bundles.mjs`
 - Equivalence gate: `npm run verify:production-rollout-bundle`
 - Preflight gate: `npm run verify:production-rollout-preflight`（history table 不存在でも完走・read-only）
+- Postflight gate: `npm run verify:production-rollout-postflight`（同上 + object 不足なら FAIL）
 - Runbook: `docs/production-rollout-2026-08.md`

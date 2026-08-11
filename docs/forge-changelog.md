@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-08-11 — Production postflight: history table 不存在でも完走
+
+- **Postflight** — `04_postflight_READONLY.sql` は `supabase_migrations.schema_migrations` を直接参照しない。不存在時は `TABLE_ABSENT`（FAIL にしない）
+- **判定正本** — 01–03 適用後の実 schema / object / pair invariant。history repair は PASS 後の別工程
+- **非実施** — Production DB 追加 write / 01–03 再実行 / main / deploy / announcement なし
+
 ## 2026-08-11 — Production preflight: history table 不存在でも完走
 
 - **Preflight** — `00_preflight_READONLY.sql` は `supabase_migrations.schema_migrations` を直接参照しない。不存在時は `migration_history_status = TABLE_ABSENT`（FAIL にしない）
