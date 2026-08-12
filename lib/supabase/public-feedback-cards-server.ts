@@ -447,3 +447,113 @@ export async function fetchPublicFeedbackCardsEnriched(
 
   return { cards: sorted, participantCount };
 }
+
+/**
+ * Home FB shelf fill only — same public card sources as enriched fetch, without
+ * choice-label resolution or empathy/viewer enrichment round-trips.
+ */
+export async function fetchPublicFeedbackCardsForHomeFill(
+  supabase: SupabaseClient,
+  projectId: string,
+  options?: {
+    limit?: number;
+    playableVersion?: string;
+  },
+): Promise<{ cards: PublicFeedbackCard[]; participantCount: number }> {
+  const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
+  const playableVersion = resolvePlayableVersion(options?.playableVersion);
+  const versionKeys = await listProjectFeedbackVersionKeys(
+    supabase,
+    projectId,
+    playableVersion,
+  );
+  if (versionKeys.length === 0) {
+    return { cards: [], participantCount: 0 };
+  }
+
+  const includeGuest = shouldIncludeGuestInPublicFeedbackCards();
+  const rowsByVersion = await Promise.all(
+    versionKeys.map(async (versionKey) => ({
+      versionKey,
+      rows: await fetchRpcCards(supabase, projectId, versionKey, limit),
+    })),
+  );
+  const cards = rowsByVersion
+    .flatMap(({ versionKey, rows }) =>
+      rows
+        .map((row) => rowToCard(row, versionKey)?.card ?? null)
+        .filter((card): card is PublicFeedbackCard => card !== null)
+        .filter((card) => includeGuest || card.authorKind !== "guest"),
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+
+  if (cards.length < 1) {
+    return { cards: [], participantCount: 0 };
+  }
+
+  const participantCount = await countPublicFeedbackParticipants(
+    supabase,
+    projectId,
+    versionKeys,
+  );
+  return { cards, participantCount };
+}
+
+/**
+ * Batch prefilter for Home FB fill — projects with any visible feedback signal.
+ * False positives are OK (caller still verifies via public cards); avoid missing
+ * real public FB rows.
+ */
+export async function listProjectIdsWithVisibleFeedbackSignals(
+  supabase: SupabaseClient,
+  projectIds: string[],
+): Promise<Set<string>> {
+  const out = new Set<string>();
+  if (projectIds.length === 0) {
+    return out;
+  }
+
+  const includeGuest = shouldIncludeGuestInPublicFeedbackCards();
+  const chunkSize = 80;
+  for (let offset = 0; offset < projectIds.length; offset += chunkSize) {
+    const chunk = projectIds.slice(offset, offset + chunkSize);
+    const registered = await Promise.all([
+      supabase
+        .from("project_feedback")
+        .select("project_id")
+        .in("project_id", chunk)
+        .eq("moderation_status", "visible"),
+      supabase
+        .from("project_voice_responses")
+        .select("project_id")
+        .in("project_id", chunk)
+        .eq("moderation_status", "visible"),
+    ]);
+    const guest = includeGuest
+      ? await Promise.all([
+          supabase
+            .from("project_guest_feedback")
+            .select("project_id")
+            .in("project_id", chunk)
+            .eq("moderation_status", "visible")
+            .eq("include_in_public_aggregate", true),
+          supabase
+            .from("project_guest_voice_responses")
+            .select("project_id")
+            .in("project_id", chunk)
+            .eq("moderation_status", "visible")
+            .eq("include_in_public_aggregate", true),
+        ])
+      : [];
+    for (const result of [...registered, ...guest]) {
+      for (const row of result.data ?? []) {
+        const id = row.project_id ? String(row.project_id) : "";
+        if (id) out.add(id);
+      }
+    }
+  }
+  return out;
+}

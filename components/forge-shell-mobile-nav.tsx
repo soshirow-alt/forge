@@ -2,7 +2,12 @@
 
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
-import { type ReactNode, useEffect, useSyncExternalStore } from "react";
+import {
+  type ReactNode,
+  useEffect,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { createPortal } from "react-dom";
 import { FORGE_SHELL_MODE_SWITCH_CLASS } from "@/lib/forge-shell-header";
 import {
@@ -135,16 +140,23 @@ export function ForgeShellModeSwitch({
   studioHrefBypass = false,
   studioDirectHref,
 }: ForgeShellModeSwitchProps) {
+  const [navPending, setNavPending] = useState(false);
+
   if (mode === "studio") {
     return (
       <Link
         href="/home"
-        onClick={onNavigate}
+        prefetch
+        onClick={() => {
+          setNavPending(true);
+          onNavigate?.();
+        }}
         title={FORGE_MODE_SWITCH_TO_PLAYER_LABEL}
         aria-label={FORGE_MODE_SWITCH_TO_PLAYER_LABEL}
-        className={FORGE_SHELL_MODE_SWITCH_CLASS}
+        aria-busy={navPending || undefined}
+        className={`${FORGE_SHELL_MODE_SWITCH_CLASS}${navPending ? " opacity-70" : ""}`}
       >
-        {FORGE_MODE_SWITCH_TO_PLAYER_LABEL}
+        {navPending ? "移動中…" : FORGE_MODE_SWITCH_TO_PLAYER_LABEL}
       </Link>
     );
   }
@@ -153,12 +165,17 @@ export function ForgeShellModeSwitch({
     return (
       <Link
         href={studioDirectHref ?? "/studio"}
-        onClick={onNavigate}
+        prefetch
+        onClick={() => {
+          setNavPending(true);
+          onNavigate?.();
+        }}
         title={FORGE_MODE_SWITCH_TO_STUDIO_LABEL}
         aria-label={FORGE_MODE_SWITCH_TO_STUDIO_LABEL}
-        className={FORGE_SHELL_MODE_SWITCH_CLASS}
+        aria-busy={navPending || undefined}
+        className={`${FORGE_SHELL_MODE_SWITCH_CLASS}${navPending ? " opacity-70" : ""}`}
       >
-        {FORGE_MODE_SWITCH_TO_STUDIO_LABEL}
+        {navPending ? "移動中…" : FORGE_MODE_SWITCH_TO_STUDIO_LABEL}
       </Link>
     );
   }

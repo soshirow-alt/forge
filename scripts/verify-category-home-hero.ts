@@ -325,9 +325,15 @@ function fb(
   assert.match(db, /return ranked/);
   assert.match(db, /extraFromPublicFeedbackCards/);
   assert.doesNotMatch(db, /FILL_CARD_FETCH_LIMIT|slice\(0, 16\)/);
-  assert.match(db, /if \(cards\.length < 1\) continue/);
+  assert.match(db, /if \(cards\.length < 1\) return null/);
   assert.match(db, /fetchAllPublicCatalog/);
   assert.match(db, /fetchGuestSubmitterKeys/);
+  assert.match(db, /listProjectIdsWithVisibleFeedbackSignals/);
+  assert.match(db, /fetchPublicFeedbackCardsForHomeFill/);
+  assert.doesNotMatch(
+    db,
+    /fillFeedbackGatheringFromPublicWorks[\s\S]*fetchPublicFeedbackCardsEnriched/,
+  );
   assert.match(db, /offset \+= pageSize/);
   console.log("OK  Home FB 3 strict + 4th fallback; 4+ stays 4 reals");
 }

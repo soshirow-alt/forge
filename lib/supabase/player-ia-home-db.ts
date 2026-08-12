@@ -29,7 +29,10 @@ import {
   type HomeFeaturedHeroCard,
 } from "@/lib/supabase/home-discovery-db";
 import { fetchPublicProjectsByCategory } from "@/lib/supabase/public-catalog-db";
-import { fetchPublicFeedbackCardsEnriched } from "@/lib/supabase/public-feedback-cards-server";
+import {
+  fetchPublicFeedbackCardsForHomeFill,
+  listProjectIdsWithVisibleFeedbackSignals,
+} from "@/lib/supabase/public-feedback-cards-server";
 
 export type HomeFeedbackGatheringRow = {
   project_id: string;
@@ -384,6 +387,31 @@ async function fetchGuestSubmitterKeys(
   ].filter(Boolean);
 }
 
+const HOME_FB_FILL_PROBE_CONCURRENCY = 6;
+
+async function mapPool<T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<R>,
+): Promise<R[]> {
+  if (items.length === 0) return [];
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+  const workers = Array.from(
+    { length: Math.min(Math.max(concurrency, 1), items.length) },
+    async () => {
+      while (true) {
+        const index = nextIndex;
+        nextIndex += 1;
+        if (index >= items.length) return;
+        results[index] = await mapper(items[index]!);
+      }
+    },
+  );
+  await Promise.all(workers);
+  return results;
+}
+
 async function fillFeedbackGatheringFromPublicWorks(
   supabase: SupabaseClient,
   ranked: HomeFeedbackGatheringProject[],
@@ -395,38 +423,49 @@ async function fillFeedbackGatheringFromPublicWorks(
 
     const seen = new Set(ranked.map((item) => item.projectId));
     const targets = catalog.filter((project) => !seen.has(project.projectId));
-    const extras: HomeFeedbackGatheringProject[] = [];
+    const signalIds = await listProjectIdsWithVisibleFeedbackSignals(
+      supabase,
+      targets.map((project) => project.projectId),
+    );
+    const candidates = targets.filter((project) =>
+      signalIds.has(project.projectId),
+    );
 
-    for (const project of targets) {
-      const { cards, participantCount } =
-        await fetchPublicFeedbackCardsEnriched(supabase, project.projectId, {
-          versionKey: "all",
-          limit: 100,
-        });
-      if (cards.length < 1) continue;
-      const guestSubmitterKeys = await fetchGuestSubmitterKeys(
-        supabase,
-        project.projectId,
-      );
-      const extra = extraFromPublicFeedbackCards(
-        {
-          projectId: project.projectId,
-          title: displayPlayerIaHomeSeedText(project.projectId, project.title),
-          category: project.category,
-          description: displayPlayerIaHomeSeedText(
-            project.projectId,
-            project.description,
-          ),
-          thumbnail: project.thumbnail,
-          fallbackLastAt:
-            project.meaningfulUpdateAt ?? project.firstPublishedAt,
-        },
-        cards,
-        participantCount,
-        guestSubmitterKeys,
-      );
-      if (extra) extras.push(extra);
-    }
+    const probed = await mapPool(
+      candidates,
+      HOME_FB_FILL_PROBE_CONCURRENCY,
+      async (project) => {
+        const { cards, participantCount } =
+          await fetchPublicFeedbackCardsForHomeFill(supabase, project.projectId, {
+            limit: 100,
+          });
+        if (cards.length < 1) return null;
+        const guestSubmitterKeys = await fetchGuestSubmitterKeys(
+          supabase,
+          project.projectId,
+        );
+        return extraFromPublicFeedbackCards(
+          {
+            projectId: project.projectId,
+            title: displayPlayerIaHomeSeedText(project.projectId, project.title),
+            category: project.category,
+            description: displayPlayerIaHomeSeedText(
+              project.projectId,
+              project.description,
+            ),
+            thumbnail: project.thumbnail,
+            fallbackLastAt:
+              project.meaningfulUpdateAt ?? project.firstPublishedAt,
+          },
+          cards,
+          participantCount,
+          guestSubmitterKeys,
+        );
+      },
+    );
+    const extras = probed.filter(
+      (item): item is HomeFeedbackGatheringProject => item !== null,
+    );
     return mergeFeedbackGatheringFill(ranked, extras, 4);
   } catch (error) {
     console.error("[player-ia-home] feedback fill failed", error);
