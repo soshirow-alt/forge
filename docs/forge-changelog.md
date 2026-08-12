@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-08-13 — Nav performance safe opts（Preview）
+
+- **Category / Game Home** — whole-home と同じ 20s public in-memory TTL（auth 非依存・selection ロジック変更なし）
+- **Studio home metrics** — client remount 用 20s soft cache（API は no-store のまま）
+- **loading.tsx** — `/home`・`/studio` に軽量 skeleton（体感待ち）
+- **非実施** — FB fill / shelf selection 変更なし / CDN cache / DB tuning なし
+
 ## 2026-08-13 — Landing Page 5カテゴリ legacy copy（Preview・最小）
 
 - **明確な旧copyのみ** — CTA「ゲームを探す」→「作品を探す」／注目見出し「開発中ゲーム」→「開発中作品」／value・カード本文のゲーム専用前提を作品・クリエイター表現へ
