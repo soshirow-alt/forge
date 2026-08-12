@@ -4,15 +4,6 @@
 
 ---
 
-## 2026-08-13 — Full-nav Performance Deep-Dive（Preview）
-
-- **体感** — shell / settings / messages / search→detail に PendingNavLink（opacity・aria-busy・同一URLでは pending しない）。messages/settings に loading.tsx
-- **Public soft cache** — Home / Category / Game Home / Search catalog を 20s TTL + single-flight（offset 含む）。Home selection/ranking 変更なし
-- **Studio metrics** — userId キー + logout clear + 描画時 snapshot ガード（並行 blocker と整合）
-- **Messages mark-read** — 全文スレッド再取得をやめ軽量 row + pair ids
-- **Game detail** — 公開取得と ownership を並列化
-- **非実施** — UI/Mobile redesign、FB fill 早期打ち切り、DB migration、Prod deploy、headless 計測
-
 ## 2026-08-13 — Landing Page 5カテゴリ意味更新（Preview・見た目維持）
 
 - **Hero** — 「作品を、育てる場所。」＋双方向け subcopy（クリエイター専用にしない）
