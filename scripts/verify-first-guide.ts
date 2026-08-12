@@ -1,5 +1,5 @@
 /**
- * First-time /guide: terminology, 5-category labels, real routes, Player/Studio messages.
+ * First-time /guide and /studio/guide: terminology, 5-category labels, real routes, Player/Studio messages.
  * Usage: npx tsx scripts/verify-first-guide.ts
  */
 import assert from "node:assert/strict";
@@ -13,6 +13,12 @@ import {
   playerGuideStudioEntry,
 } from "../lib/player-guide-v0-content";
 import { PROJECT_CATEGORY_LABELS } from "../lib/project-categories";
+import {
+  STUDIO_GUIDE_ROUTE_PATHS,
+  studioGuideIntro,
+  studioGuideSteps,
+} from "../lib/studio-guide-v0-content";
+import { STUDIO_HOME_DEV_HINTS } from "../lib/studio-home-metrics";
 
 const ROOT = process.cwd();
 
@@ -142,11 +148,106 @@ console.log("OK  routes + no dead-link fallback");
 assert.match(studioEntry, /playerGuideStudioEntry/);
 assert.doesNotMatch(studioEntry, /開発者/);
 assert.match(studioGuide, /href=["']\/guide["']/);
-assert.match(studioGuide, /正式版公開/);
+assert.match(studioGuide, /studioGuideSteps/);
 assert.doesNotMatch(studioGuide, /正式ver/);
 assert.doesNotMatch(studioGuide, /ゲームを短いサイクル/);
 assert.doesNotMatch(studioGuide, /マイコミュニティ/);
+assert.doesNotMatch(studioGuide, /育成サイクル/);
 console.log("OK  Studio guide alignment");
+
+const studioVisible = [
+  studioGuideIntro.title,
+  studioGuideIntro.lead,
+  studioGuideIntro.rolePlayer,
+  studioGuideIntro.roleStudio,
+  ...studioGuideSteps.flatMap((step) => [
+    step.title,
+    ...step.body,
+    ...(step.chips ?? []),
+    ...(step.bullets ?? []),
+    step.note ?? "",
+    ...(step.ctas ?? []).map((cta) => cta.label),
+  ]),
+  ...STUDIO_HOME_DEV_HINTS.flatMap((hint) => [
+    hint.title,
+    hint.lead,
+    ...hint.tips,
+    ...hint.paragraphs,
+  ]),
+].join("\n");
+
+assert.equal(studioGuideSteps.length, 4);
+assert.deepEqual(
+  studioGuideSteps.map((step) => step.id),
+  ["publish", "feedback", "update", "connect"],
+);
+assert.deepEqual(
+  studioGuideSteps.map((step) => step.title),
+  ["作品を掲載する", "フィードバックを受け取る", "作品を更新する", "作品からつながる"],
+);
+assert.ok(!studioGuideSteps.some((step) => step.title === "投稿" || step.title === "公開"));
+assert.ok(!studioGuideSteps.some((step) => step.title === "新ver公開" || step.title === "正式版公開"));
+assert.match(studioVisible, /ゲーム/);
+assert.match(studioVisible, /音楽・音声/);
+assert.match(studioVisible, /アセット/);
+assert.match(studioVisible, /開発ツール/);
+assert.match(studioVisible, /サービス/);
+assert.doesNotMatch(studioVisible, /サービス・アプリ/);
+assert.doesNotMatch(studioVisible, /service-app/);
+assert.match(studioVisible, /Studio → 新規投稿 → カテゴリ専用フォーム → 公開/);
+assert.match(studioVisible, /クリエイター/);
+assert.match(studioVisible, /フィードバック/);
+assert.match(studioVisible, /メッセージ/);
+assert.match(studioVisible, /利用・コラボ/);
+assert.match(studioVisible, /使用関係/);
+assert.match(studioVisible, /Studio からもメッセージの閲覧・返信ができます/);
+assert.match(studioVisible, /Player のメッセージと同じやり取りです/);
+assert.match(
+  studioVisible,
+  /使用関係の承認は、ライセンスや著作権の譲渡、報酬契約そのものではありません/,
+);
+assert.match(studioVisible, /正式版になったら公開状態も更新できます/);
+assert.match(studioVisible, /見つける \/ 試す \/ フィードバック \/ つながる/);
+assert.match(studioVisible, /掲載する \/ 受け取る \/ 更新する \/ つながる/);
+assert.doesNotMatch(studioVisible, /プレイ可能ver/);
+assert.doesNotMatch(studioVisible, /新ver公開/);
+assert.doesNotMatch(studioVisible, /正式版公開/);
+assert.doesNotMatch(studioVisible, /試作.+α.+β.+正式版|正式版へつなげ/);
+assert.doesNotMatch(studioVisible, /声を届ける|みんなの声|プレイヤーの声|届けた声|初声/);
+assert.doesNotMatch(studioVisible, /(?<!音)声(?!明)/);
+assert.doesNotMatch(studioVisible, /最新版|次版|この版|N版|版ごとの|今の版/);
+assert.doesNotMatch(studioVisible, /開発者/);
+assert.doesNotMatch(studioVisible, /マイコミュニティ/);
+assert.doesNotMatch(studioVisible, /プレイヤー/);
+assert.deepEqual(
+  STUDIO_HOME_DEV_HINTS.map((hint) => hint.id),
+  ["voice-prompts", "devlog-tips", "low-response-review"],
+);
+assert.ok(STUDIO_HOME_DEV_HINTS.every((hint) => hint.href.startsWith("/studio/guide#")));
+console.log("OK  Studio 4-step + terminology");
+
+const studioHrefs = [
+  ...studioGuideSteps.flatMap((step) => (step.ctas ?? []).map((cta) => cta.href.split("?")[0]!)),
+  studioGuideIntro.playerGuideHref,
+  "/studio/messages",
+  "/studio/mypage",
+];
+assert.ok(studioHrefs.includes("/studio/submit"));
+assert.ok(studioHrefs.includes("/studio/messages"));
+assert.ok(studioHrefs.includes("/studio/mypage"));
+assert.ok(studioHrefs.includes("/usage-relations"));
+assert.ok(studioHrefs.includes("/terms"));
+assert.ok(studioHrefs.includes("/guide"));
+assert.ok(!studioHrefs.includes("/studio/community"));
+assert.ok(!studioHrefs.includes("/mypage/community"));
+assert.ok(!studioHrefs.includes("/home"));
+for (const href of new Set([...studioHrefs, ...STUDIO_GUIDE_ROUTE_PATHS])) {
+  assert.ok(pageExists(href), `dead route in studio guide: ${href}`);
+}
+assert.match(studioGuide, /studioSubmitModalHref/);
+assert.doesNotMatch(studioGuide, /href=\{?["']\/home["']\s*\|\|/);
+assert.doesNotMatch(studioGuide, /fallback.*\/home|\/home.*fallback/);
+console.log("OK  Studio routes + no dead-link fallback");
 
 assert.match(read("app/guide/page.tsx"), /PlayerGuidePage/);
 assert.match(read("app/api/projects/[projectId]/guest-feedback/route.ts"), /VERCEL_ENV === "production"/);

@@ -3,46 +3,111 @@
 import Link from "next/link";
 import { StudioShell } from "@/components/studio-shell";
 import { studioSubmitModalHref } from "@/lib/project-nurture-links";
+import {
+  studioGuideIntro,
+  studioGuideSteps,
+  type StudioGuideCta,
+} from "@/lib/studio-guide-v0-content";
 import { STUDIO_HOME_DEV_HINTS } from "@/lib/studio-home-metrics";
 
-const steps = [
-  { label: "投稿", description: "最初の作品を登録する" },
-  { label: "公開", description: "プレイ可能verを届ける" },
-  { label: "フィードバックを見る", description: "届いたフィードバックを読み、材料にする" },
-  { label: "改善する", description: "次のverで何を直すか決める" },
-  { label: "新ver公開", description: "開発ログで変化を伝える" },
-  { label: "正式版公開", description: "育てた記録の区切りとして Released に" },
-] as const;
+function CtaLink({ cta }: { cta: StudioGuideCta }) {
+  const className =
+    cta.kind === "primary"
+      ? "rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-500"
+      : "rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-300 hover:border-zinc-600";
+  return (
+    <Link href={cta.href} className={className}>
+      {cta.label}
+    </Link>
+  );
+}
 
 export function StudioGuidePage() {
   return (
     <StudioShell activeNav="guide">
       <div className="mx-auto max-w-3xl">
-        <h1 className="text-2xl font-bold text-white">はじめてガイド</h1>
-        <p className="mt-2 text-sm leading-relaxed text-zinc-500">
-          Studio の育成サイクル — 作品を短いサイクルで育て、フィードバックを活かし、正式版へつなげます。はじめての人は Player の{" "}
+        <h1 className="text-2xl font-bold tracking-tight text-white">
+          {studioGuideIntro.title}
+        </h1>
+        <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+          {studioGuideIntro.lead} はじめての人は Player の{" "}
           <Link href="/guide" className="text-violet-400 hover:text-violet-300">
-            はじめてガイド
+            {studioGuideIntro.playerGuideLabel}
           </Link>
           もどうぞ。
         </p>
 
-        <ol className="mt-8 space-y-0">
-          {steps.map((step, index) => (
-            <li key={step.label} className="relative flex gap-4 pb-8 last:pb-0">
-              {index < steps.length - 1 && (
-                <span
-                  className="absolute left-4 top-10 h-[calc(100%-2rem)] w-px bg-zinc-800"
-                  aria-hidden="true"
-                />
-              )}
-              <span className="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full bg-violet-600/20 text-sm font-bold text-violet-200 ring-1 ring-violet-500/30">
-                {index + 1}
-              </span>
-              <div className="pt-0.5">
-                <p className="font-semibold text-zinc-200">{step.label}</p>
-                <p className="mt-1 text-sm text-zinc-500">{step.description}</p>
-              </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <span className="rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1 text-xs text-zinc-400">
+            {studioGuideIntro.rolePlayer}
+          </span>
+          <span className="rounded-full border border-violet-500/30 bg-violet-600/10 px-3 py-1 text-xs text-violet-200">
+            {studioGuideIntro.roleStudio}
+          </span>
+        </div>
+
+        <ol className="mt-8 space-y-5">
+          {studioGuideSteps.map((step, index) => (
+            <li key={step.id} id={step.id}>
+              <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-violet-600/20 text-sm font-bold text-violet-200 ring-1 ring-violet-500/30">
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-lg font-semibold text-white">
+                      {step.title}
+                    </h2>
+                    <div className="mt-3 space-y-2">
+                      {step.body.map((paragraph) => (
+                        <p
+                          key={paragraph}
+                          className="text-sm leading-relaxed text-zinc-400"
+                        >
+                          {paragraph}
+                        </p>
+                      ))}
+                    </div>
+                    {step.chips ? (
+                      <ul className="mt-3 flex flex-wrap gap-2">
+                        {step.chips.map((chip) => (
+                          <li
+                            key={chip}
+                            className="rounded-full border border-violet-500/30 bg-violet-600/15 px-2.5 py-1 text-xs font-medium text-violet-200"
+                          >
+                            {chip}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    {step.bullets ? (
+                      <ul className="mt-3 space-y-1.5">
+                        {step.bullets.map((item) => (
+                          <li
+                            key={item}
+                            className="text-sm leading-relaxed text-zinc-300"
+                          >
+                            <span className="mr-2 text-violet-400/80">·</span>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    {step.note ? (
+                      <p className="mt-3 text-xs leading-relaxed text-zinc-500">
+                        {step.note}
+                      </p>
+                    ) : null}
+                    {step.ctas && step.ctas.length > 0 ? (
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {step.ctas.map((cta) => (
+                          <CtaLink key={`${cta.href}:${cta.label}`} cta={cta} />
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </section>
             </li>
           ))}
         </ol>
@@ -85,13 +150,19 @@ export function StudioGuidePage() {
             href={studioSubmitModalHref()}
             className="rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500"
           >
-            最初の作品を投稿
+            新規投稿
+          </Link>
+          <Link
+            href="/studio/messages"
+            className="rounded-xl border border-zinc-700 px-5 py-2.5 text-sm font-medium text-zinc-300 hover:border-zinc-600"
+          >
+            メッセージ
           </Link>
           <Link
             href="/studio/mypage"
             className="rounded-xl border border-zinc-700 px-5 py-2.5 text-sm font-medium text-zinc-300 hover:border-zinc-600"
           >
-            プロジェクト一覧へ
+            作品一覧
           </Link>
         </div>
       </div>
