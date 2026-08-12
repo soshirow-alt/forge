@@ -4,6 +4,23 @@
 
 ---
 
+## 2026-08-13 — Full-nav Performance Deep-Dive（Preview）
+
+- **体感** — shell / settings / messages / search→detail に PendingNavLink（opacity・aria-busy・同一URLでは pending しない）。messages/settings に loading.tsx
+- **Public soft cache** — Home / Category / Game Home / Search catalog を 20s TTL + single-flight（offset 含む）。Home selection/ranking 変更なし
+- **Studio metrics** — userId キー + logout clear + 描画時 snapshot ガード（並行 blocker と整合）
+- **Messages mark-read** — 全文スレッド再取得をやめ軽量 row + pair ids
+- **Game detail** — 公開取得と ownership を並列化
+- **非実施** — UI/Mobile redesign、FB fill 早期打ち切り、DB migration、Prod deploy、headless 計測
+
+## 2026-08-13 — Landing Page 5カテゴリ意味更新（Preview・見た目維持）
+
+- **Hero** — 「作品を、育てる場所。」＋双方向け subcopy（クリエイター専用にしない）
+- **左3項目 / 右2カード** — 文言のみ更新（icon・配色・geometry 維持）。「開発者」→「クリエイター」
+- **5カテゴリ section** — Hero と注目作品の間に追加（既存 card / border / dark surface 再利用）
+- **metadata / OGP** — title・description を5カテゴリForgeへ
+- **非実施** — Hero/背景/カード再設計、注目作品の data/selection、LP以外、DB、Production
+
 ## 2026-08-13 — Production前blocker 3件（Preview）
 
 - **Studio metrics soft cache** — remount 用 20s cache を `userId:granularity` で分離。logout / アカウント切替でクリア（API は no-store のまま）。React state も現在 user 以外の metrics を返さない

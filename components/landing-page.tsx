@@ -15,25 +15,50 @@ import { LandingFeaturedGamesSection } from "@/components/landing-featured-games
 import { LandingGuestEntryButton } from "@/components/landing-guest-entry-button";
 import { buildLoginUrlWithReturn } from "@/lib/login-return-url";
 import type { LandingFeaturedGame } from "@/lib/landing-featured-games";
+import { PROJECT_CATEGORY_LABELS } from "@/lib/project-categories";
 
 const valueProps = [
   {
     icon: MessageSquare,
     iconClass: "bg-violet-500/20 text-violet-300",
-    title: "プレイして、フィードバックする",
-    body: "あなたのフィードバックが作品を進化させます。",
+    title: "見つけて、試す",
+    body: "まだ知られていない作品を見つけ、遊ぶ・聴く・使う。",
   },
   {
     icon: TrendingUp,
     iconClass: "bg-emerald-500/20 text-emerald-300",
-    title: "開発の過程から、見届ける",
-    body: "開発のストーリーを追いかけ、成長を見守れます。",
+    title: "感じたことを、届ける",
+    body: "試して感じたことを、フィードバックとしてクリエイターへ。",
   },
   {
     icon: Heart,
     iconClass: "bg-amber-500/20 text-amber-300",
-    title: "一緒に、最高の体験をつくる",
-    body: "クリエイターとプレイヤーがつながり、\nまだ見ぬ名作が生まれていきます。",
+    title: "作品から、つながる",
+    body: "更新を追い、利用やコラボ、新しい作品との出会いへ。",
+  },
+] as const;
+
+/** LP-only category blurb — labels from PROJECT_CATEGORY_LABELS. */
+const landingCategories = [
+  {
+    id: "game" as const,
+    blurb: "遊んで、感じたことを届ける",
+  },
+  {
+    id: "audio" as const,
+    blurb: "聴いて、作品や制作につなげる",
+  },
+  {
+    id: "asset" as const,
+    blurb: "見つけて、制作に活かす",
+  },
+  {
+    id: "dev-tool" as const,
+    blurb: "試して、制作をもっと良くする",
+  },
+  {
+    id: "service-app" as const,
+    blurb: "使って、反応を届ける",
   },
 ] as const;
 
@@ -169,14 +194,13 @@ export function LandingPage({
           <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,760px)] lg:gap-12">
             <div className="max-w-xl pt-4">
               <h1 className="text-4xl font-bold leading-[1.15] tracking-tight text-white sm:text-5xl">
-                ゲームを、
+                作品を、
                 <span className="text-violet-300">育てる</span>
                 <span className="whitespace-nowrap">場所。</span>
               </h1>
               <div className="mt-6 space-y-1 text-base leading-relaxed text-zinc-300 sm:mt-8 sm:text-lg">
-                <p>プレイヤーのフィードバックが、次の物語をつくる。</p>
-                <p>開発者とプレイヤーが一緒に、</p>
-                <p>最高のゲーム体験を育てていくプラットフォーム。</p>
+                <p>作品を見つけて、試して、感じたことを届ける。</p>
+                <p>そこから、作品の変化や新しいつながりが生まれる。</p>
               </div>
               <ul className="mt-10 space-y-6 sm:mt-12 sm:space-y-7">
                 {valueProps.map((item) => {
@@ -207,20 +231,20 @@ export function LandingPage({
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <CtaCard
                   accent="player"
-                  label="プレイヤーのあなたへ"
+                  label="作品を楽しむあなたへ"
                   icon={Gamepad2}
-                  title="プレイヤーとして参加"
-                  body={"作品を探して試し、\nクリエイターにフィードバックを届けましょう。"}
+                  title="作品を見つける"
+                  body={"気になる作品を見つけて試し、\n感じたことを届けましょう。"}
                   primaryLabel="作品を探す"
                   primaryHref={buildLoginUrlWithReturn("/home")}
                   primaryClass="bg-white text-zinc-950 shadow-white/20"
                 />
                 <CtaCard
                   accent="developer"
-                  label="開発者のあなたへ"
+                  label="クリエイターのあなたへ"
                   icon={Wrench}
-                  title="開発者としてはじめる"
-                  body={"あなたの作品を公開し、\nプレイヤーと一緒に育てていきましょう。"}
+                  title="作品を掲載する"
+                  body={"あなたの作品を公開し、\n試してくれる人と一緒に育てていきましょう。"}
                   primaryLabel="Studioに入る"
                   primaryHref={buildLoginUrlWithReturn("/studio")}
                   primaryClass="bg-emerald-500 text-zinc-950 shadow-emerald-500/30"
@@ -228,6 +252,25 @@ export function LandingPage({
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-[1320px] px-6 py-12 sm:px-8 sm:py-14">
+        <h2 className="text-xl font-bold text-white">いろんな作品が、Forgeに。</h2>
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-5">
+          {landingCategories.map((item) => (
+            <div
+              key={item.id}
+              className="rounded-2xl border border-zinc-800 bg-zinc-900/70 px-5 py-5"
+            >
+              <p className="font-semibold text-white">
+                {PROJECT_CATEGORY_LABELS[item.id]}
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-zinc-500">
+                {item.blurb}
+              </p>
+            </div>
+          ))}
         </div>
       </section>
 
