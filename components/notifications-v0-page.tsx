@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { DiscoveryGameThumbnail } from "@/components/discovery-game-thumbnail";
-import { FeatureComingSoonPanel } from "@/components/feature-coming-soon-panel";
 import { useGames } from "@/components/games-provider";
 import { PlayerShell } from "@/components/player-shell";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { ProjectThumbnail } from "@/components/project-thumbnail";
+import { StudioShell } from "@/components/studio-shell";
 import {
   getExtraPlayerNotifications,
   subscribeV0Notifications,
@@ -192,7 +192,13 @@ function NotificationSection({
   );
 }
 
-export function NotificationsV0Page() {
+export type NotificationsSurface = "player" | "studio";
+
+export function NotificationsV0Page({
+  surface = "player",
+}: {
+  surface?: NotificationsSurface;
+}) {
   const { user, hydrated } = useAuth();
   const hideV0Mock = shouldHideV0MockContent();
   const {
@@ -207,6 +213,7 @@ export function NotificationsV0Page() {
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const [communityExtras, setCommunityExtras] = useState<NotificationV0Item[]>([]);
   const sortMenuRef = useRef<HTMLDivElement>(null);
+  const isStudio = surface === "studio";
 
   useEffect(() => {
     if (!hydrated || !user) {
@@ -269,8 +276,7 @@ export function NotificationsV0Page() {
 
   const unreadCount = user ? getUnreadNotificationCount() : countUnread(items);
 
-  return (
-    <PlayerShell activeNav="notifications" notificationBadge={unreadCount}>
+  const body = (
       <div className="mx-auto max-w-3xl">
         <header>
           <div className="flex flex-wrap items-center gap-2">
@@ -278,8 +284,14 @@ export function NotificationsV0Page() {
               <Bell className="size-7 text-violet-400" aria-hidden="true" />
               通知
             </h1>
-            <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-xs font-medium text-violet-200">
-              Player
+            <span
+              className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+                isStudio
+                  ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-200"
+                  : "border-violet-500/30 bg-violet-500/10 text-violet-200"
+              }`}
+            >
+              {isStudio ? "Studio" : "Player"}
             </span>
           </div>
         </header>
@@ -371,6 +383,19 @@ export function NotificationsV0Page() {
 
         <p className="mt-10 text-center text-xs text-zinc-600">通知は 30 日間保存されます。</p>
       </div>
+  );
+
+  if (isStudio) {
+    return (
+      <StudioShell activeNav="notifications" notificationBadge={unreadCount}>
+        {body}
+      </StudioShell>
+    );
+  }
+
+  return (
+    <PlayerShell activeNav="notifications" notificationBadge={unreadCount}>
+      {body}
     </PlayerShell>
   );
 }

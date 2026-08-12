@@ -18,6 +18,7 @@ import { isAnonymousSupabaseUser } from "@/lib/guest-auth";
 import { createClient } from "@/lib/supabase/client";
 import type { AuthChangeEvent, Provider, User as SupabaseAuthUser } from "@supabase/supabase-js";
 import { forgePerfLog, forgePerfTimed } from "@/lib/forge-perf-log";
+import { clearStudioHomeMetricsSoftCache } from "@/lib/studio-home-metrics-soft-cache";
 import { isXAuthEnabled } from "@/lib/x-auth";
 
 type AuthContextValue = {
@@ -150,11 +151,15 @@ export function AuthProvider({
         if (session?.user && isAnonymousSupabaseUser(session.user)) {
           void supabase.auth.signOut();
           setUser(null);
+          clearStudioHomeMetricsSoftCache();
         } else if (session?.user) {
           clearEntryMode();
         }
 
-        if (session?.user || event === "SIGNED_OUT") {
+        if (event === "SIGNED_OUT") {
+          clearStudioHomeMetricsSoftCache();
+          hadServerUserRef.current = false;
+        } else if (session?.user) {
           hadServerUserRef.current = false;
         }
 
@@ -319,6 +324,7 @@ export function AuthProvider({
       await supabase.auth.signOut();
     }
 
+    clearStudioHomeMetricsSoftCache();
     clearEntryMode();
     hadServerUserRef.current = false;
     setUser(null);

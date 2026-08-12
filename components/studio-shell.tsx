@@ -227,6 +227,7 @@ export function StudioShell({
   /** Override header badge; default uses unread DB notifications when logged in. */
   notificationBadge?: number;
 }) {
+  void activeNav;
   const router = useRouter();
   const pathname = usePathname();
   const { user, hydrated, logout } = useAuth();
@@ -315,13 +316,13 @@ export function StudioShell({
           <ForgeShellMobileMenuButton onClick={() => setMobileNavOpen(true)} />
           <HeaderSearchForm defaultValue={headerSearchDefault} />
           <Link
-            href="/notifications"
+            href="/studio/notifications"
             onClick={() => {
               void reloadNotifications();
             }}
             className="relative rounded-xl border border-zinc-800 p-2.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
             aria-label="通知"
-            title="通知（プレイヤー画面）"
+            title="通知"
           >
             <Bell className="size-5" />
             {resolvedNotificationBadge > 0 && (

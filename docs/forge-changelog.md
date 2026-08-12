@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-08-13 — Production前blocker 3件（Preview）
+
+- **Studio metrics soft cache** — remount 用 20s cache を `userId:granularity` で分離。logout / アカウント切替でクリア（API は no-store のまま）。React state も現在 user 以外の metrics を返さない
+- **Messages / drawer safe-area** — `.forge-safe-pb` が既存 `p-*`/`py-*` を上書きしないよう、inset を `::after` で加算
+- **Studio 通知** — header から `/studio/notifications` へ。共有通知一覧を Studio shell で表示（項目クリック先は通知本来の href のまま）
+
 ## 2026-08-13 — Mobile / responsive safe fixes（Preview）
 
 - **Header mode switch** — `min-w` 撤廃・`text-xs` on narrow（crush 緩和）

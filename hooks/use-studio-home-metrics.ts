@@ -1,6 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "@/components/auth-provider";
+import {
+  clearStudioHomeMetricsSoftCache,
+  readStudioHomeMetricsSoftCache,
+  writeStudioHomeMetricsSoftCache,
+} from "@/lib/studio-home-metrics-soft-cache";
 import {
   EMPTY_STUDIO_HOME_CONNECTION_METRICS,
   type StudioHomeConnectionMetrics,
@@ -14,57 +20,83 @@ type MetricsResponse = {
   granularityFallback?: boolean;
 };
 
-type SoftCacheEntry = {
-  expiresAt: number;
+type MetricsSnapshot = {
+  userId: string | null;
   metrics: StudioHomeConnectionMetrics;
   rpcReady: boolean;
   granularityFallback: boolean;
+  initialLoading: boolean;
+  fetching: boolean;
+  error: boolean;
 };
 
-/** Soft client remount cache only — API stays no-store; never shared across users. */
-const CLIENT_METRICS_TTL_MS = 20_000;
-const softMetricsCache = new Map<StudioHomeGranularity, SoftCacheEntry>();
+const EMPTY_SNAPSHOT: MetricsSnapshot = {
+  userId: null,
+  metrics: EMPTY_STUDIO_HOME_CONNECTION_METRICS,
+  rpcReady: false,
+  granularityFallback: false,
+  initialLoading: true,
+  fetching: false,
+  error: false,
+};
 
-function readSoftCache(
-  granularity: StudioHomeGranularity,
-): SoftCacheEntry | null {
-  const entry = softMetricsCache.get(granularity);
-  if (!entry) {
-    return null;
-  }
-  if (entry.expiresAt <= Date.now()) {
-    softMetricsCache.delete(granularity);
-    return null;
-  }
-  return entry;
-}
+export { clearStudioHomeMetricsSoftCache } from "@/lib/studio-home-metrics-soft-cache";
 
 export function useStudioHomeMetrics(granularity: StudioHomeGranularity = "month") {
-  const [metrics, setMetrics] = useState<StudioHomeConnectionMetrics>(
-    EMPTY_STUDIO_HOME_CONNECTION_METRICS,
-  );
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [fetching, setFetching] = useState(false);
-  const [rpcReady, setRpcReady] = useState(false);
-  const [granularityFallback, setGranularityFallback] = useState(false);
-  const [error, setError] = useState(false);
+  const { user, authResolved } = useAuth();
+  const userId = user?.id ?? null;
+  const [snapshot, setSnapshot] = useState<MetricsSnapshot>(EMPTY_SNAPSHOT);
   const hasLoadedRef = useRef(false);
+
+  // Render-time guard: never paint another user's metrics on the first frame after switch.
+  const visible: MetricsSnapshot =
+    snapshot.userId === userId
+      ? snapshot
+      : {
+          ...EMPTY_SNAPSHOT,
+          userId,
+          initialLoading: Boolean(authResolved && userId),
+        };
 
   useEffect(() => {
     let active = true;
-    const soft = readSoftCache(granularity);
-    if (soft) {
+
+    if (!authResolved) {
+      return () => {
+        active = false;
+      };
+    }
+
+    if (!userId) {
+      clearStudioHomeMetricsSoftCache();
+      hasLoadedRef.current = false;
       queueMicrotask(() => {
-        if (!active) {
-          return;
-        }
-        setMetrics(soft.metrics);
-        setRpcReady(soft.rpcReady);
-        setGranularityFallback(soft.granularityFallback);
-        setInitialLoading(false);
-        setFetching(false);
-        setError(false);
-        hasLoadedRef.current = true;
+        if (!active) return;
+        setSnapshot({
+          ...EMPTY_SNAPSHOT,
+          userId: null,
+          initialLoading: false,
+        });
+      });
+      return () => {
+        active = false;
+      };
+    }
+
+    const soft = readStudioHomeMetricsSoftCache(userId, granularity);
+    if (soft) {
+      hasLoadedRef.current = true;
+      queueMicrotask(() => {
+        if (!active) return;
+        setSnapshot({
+          userId,
+          metrics: soft.metrics,
+          rpcReady: soft.rpcReady,
+          granularityFallback: soft.granularityFallback,
+          initialLoading: false,
+          fetching: false,
+          error: false,
+        });
       });
       return () => {
         active = false;
@@ -72,17 +104,21 @@ export function useStudioHomeMetrics(granularity: StudioHomeGranularity = "month
     }
 
     const isRefetch = hasLoadedRef.current;
-
     queueMicrotask(() => {
-      if (!active) {
-        return;
-      }
-      if (isRefetch) {
-        setFetching(true);
-      } else {
-        setInitialLoading(true);
-      }
-      setError(false);
+      if (!active) return;
+      setSnapshot((prev) => ({
+        userId,
+        metrics:
+          prev.userId === userId
+            ? prev.metrics
+            : EMPTY_STUDIO_HOME_CONNECTION_METRICS,
+        rpcReady: prev.userId === userId ? prev.rpcReady : false,
+        granularityFallback:
+          prev.userId === userId ? prev.granularityFallback : false,
+        initialLoading: isRefetch ? false : true,
+        fetching: isRefetch,
+        error: false,
+      }));
     });
 
     void fetch(`/api/studio/home-metrics?granularity=${granularity}`, {
@@ -95,49 +131,58 @@ export function useStudioHomeMetrics(granularity: StudioHomeGranularity = "month
         return (await response.json()) as MetricsResponse;
       })
       .then((payload) => {
-        if (!active) {
-          return;
-        }
+        if (!active) return;
         const nextMetrics = payload.metrics ?? EMPTY_STUDIO_HOME_CONNECTION_METRICS;
         const nextRpcReady = Boolean(payload.rpcReady);
         const nextFallback = Boolean(payload.granularityFallback);
-        setMetrics(nextMetrics);
-        setRpcReady(nextRpcReady);
-        setGranularityFallback(nextFallback);
-        softMetricsCache.set(granularity, {
+        writeStudioHomeMetricsSoftCache(userId, granularity, {
           metrics: nextMetrics,
           rpcReady: nextRpcReady,
           granularityFallback: nextFallback,
-          expiresAt: Date.now() + CLIENT_METRICS_TTL_MS,
+        });
+        setSnapshot({
+          userId,
+          metrics: nextMetrics,
+          rpcReady: nextRpcReady,
+          granularityFallback: nextFallback,
+          initialLoading: false,
+          fetching: false,
+          error: false,
         });
       })
       .catch(() => {
-        if (active) {
-          setError(true);
-          if (!hasLoadedRef.current) {
-            setMetrics(EMPTY_STUDIO_HOME_CONNECTION_METRICS);
-          }
-        }
+        if (!active) return;
+        setSnapshot((prev) => ({
+          userId,
+          metrics:
+            prev.userId === userId
+              ? prev.metrics
+              : EMPTY_STUDIO_HOME_CONNECTION_METRICS,
+          rpcReady: prev.userId === userId ? prev.rpcReady : false,
+          granularityFallback:
+            prev.userId === userId ? prev.granularityFallback : false,
+          initialLoading: false,
+          fetching: false,
+          error: true,
+        }));
       })
       .finally(() => {
         if (active) {
           hasLoadedRef.current = true;
-          setInitialLoading(false);
-          setFetching(false);
         }
       });
 
     return () => {
       active = false;
     };
-  }, [granularity]);
+  }, [authResolved, granularity, userId]);
 
   return {
-    metrics,
-    initialLoading,
-    fetching,
-    rpcReady,
-    granularityFallback,
-    error,
+    metrics: visible.metrics,
+    initialLoading: visible.initialLoading,
+    fetching: visible.fetching,
+    rpcReady: visible.rpcReady,
+    granularityFallback: visible.granularityFallback,
+    error: visible.error,
   };
 }
