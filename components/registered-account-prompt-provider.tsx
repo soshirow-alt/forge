@@ -1,16 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   createContext,
   useCallback,
   useContext,
   useMemo,
+  useState,
   type ComponentProps,
+  type MouseEvent,
   type ReactNode,
 } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { FORGE_NAV_PENDING_CLASS } from "@/lib/forge-nav-pending";
 import {
   buildLoginUrlWithReturn,
   LOGIN_INTENT_REGISTERED,
@@ -92,15 +95,27 @@ type RegisteredOnlyLinkProps = ComponentProps<typeof Link>;
 export function RegisteredOnlyLink({
   href,
   onClick,
+  className = "",
   ...props
 }: RegisteredOnlyLinkProps) {
+  const pathname = usePathname();
   const { isRegisteredUser, authResolved } = useAuth();
   const { promptRegisteredAccountAccess } = useRegisteredAccountPrompt();
   const returnPath = typeof href === "string" ? href : href.pathname ?? undefined;
+  const [pending, setPending] = useState(false);
+  const targetPath =
+    typeof href === "string"
+      ? href.split("?")[0]?.split("#")[0] ?? href
+      : href.pathname ?? null;
+  const sameDestination = Boolean(targetPath) && pathname === targetPath;
 
-  function handleClick(event: React.MouseEvent<HTMLAnchorElement>) {
+  function handleClick(event: MouseEvent<HTMLAnchorElement>) {
     onClick?.(event);
     if (event.defaultPrevented) {
+      return;
+    }
+    if (pending) {
+      event.preventDefault();
       return;
     }
     if (!authResolved) {
@@ -108,6 +123,17 @@ export function RegisteredOnlyLink({
       return;
     }
     if (isRegisteredUser) {
+      if (sameDestination) {
+        return;
+      }
+      if (
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.shiftKey &&
+        event.button === 0
+      ) {
+        setPending(true);
+      }
       return;
     }
 
@@ -115,5 +141,15 @@ export function RegisteredOnlyLink({
     promptRegisteredAccountAccess(returnPath, { variant: "default" });
   }
 
-  return <Link href={href} onClick={handleClick} {...props} />;
+  return (
+    <Link
+      href={href}
+      {...props}
+      onClick={handleClick}
+      aria-busy={pending || undefined}
+      aria-disabled={pending || undefined}
+      className={`${className}${pending ? FORGE_NAV_PENDING_CLASS : ""}`}
+      tabIndex={pending ? -1 : props.tabIndex}
+    />
+  );
 }

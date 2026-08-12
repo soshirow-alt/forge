@@ -16,6 +16,7 @@ import {
   ForgeShellMobileMenuButton,
   ForgeShellModeSwitch,
 } from "@/components/forge-shell-mobile-nav";
+import { PendingNavLink } from "@/components/pending-nav-link";
 import { PlatformFeedbackSidebarBox } from "@/components/platform-feedback-sidebar-box";
 import {
   FORGE_SHELL_HEADER_SEARCH_FORM_CLASS,
@@ -102,21 +103,21 @@ function StudioMypageSidebarGroup() {
 
   return (
     <div className="space-y-1">
-      <Link href="/studio/mypage" className={navLinkClass(isMypageHub)}>
+      <PendingNavLink href="/studio/mypage" className={navLinkClass(isMypageHub)}>
         マイページ
-      </Link>
-      <Link
+      </PendingNavLink>
+      <PendingNavLink
         href="/studio/profile"
         className={`ml-4 block ${subNavLinkClass(isProfile)}`}
       >
         プロフィール
-      </Link>
-      <Link
+      </PendingNavLink>
+      <PendingNavLink
         href="/studio/messages"
         className={`ml-4 block ${subNavLinkClass(isMessages)}`}
       >
         メッセージ
-      </Link>
+      </PendingNavLink>
     </div>
   );
 }
@@ -178,13 +179,13 @@ function StudioSidebarNavBody({ showFeedback = true }: { showFeedback?: boolean 
     <>
       <div className="space-y-1">
         {primaryLinks.map((link) => (
-          <Link
+          <PendingNavLink
             key={link.id}
             href={link.href}
             className={navLinkClass(isPrimaryLinkActive(link.id, pathname))}
           >
             {link.label}
-          </Link>
+          </PendingNavLink>
         ))}
       </div>
 
@@ -195,15 +196,15 @@ function StudioSidebarNavBody({ showFeedback = true }: { showFeedback?: boolean 
       <SidebarDivider />
 
       <div className="space-y-1">
-        <Link
+        <PendingNavLink
           href="/studio/settings"
           className={navLinkClass(pathname === "/studio/settings")}
         >
           設定
-        </Link>
-        <Link href="/studio/guide" className={navLinkClass(pathname === "/studio/guide")}>
+        </PendingNavLink>
+        <PendingNavLink href="/studio/guide" className={navLinkClass(pathname === "/studio/guide")}>
           はじめてガイド
-        </Link>
+        </PendingNavLink>
       </div>
 
       {showFeedback ? (

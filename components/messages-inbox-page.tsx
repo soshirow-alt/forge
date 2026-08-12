@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { PendingNavLink } from "@/components/pending-nav-link";
 import { Suspense, useEffect, useState } from "react";
 import { ConsultationThread } from "@/components/consultation-thread";
 import { MessagesSampleThreadPane } from "@/components/messages-sample-thread-pane";
@@ -45,7 +45,7 @@ function ConversationListItem({
 }) {
   const initial = displayName.trim().slice(0, 1) || "?";
   return (
-    <Link
+    <PendingNavLink
       href={`${basePath}/${item.consultationId}`}
       className={`flex gap-3 rounded-xl border px-3 py-3 transition-colors ${
         selected
@@ -90,7 +90,7 @@ function ConversationListItem({
           {item.lastMessageBody ?? "メッセージはありません"}
         </p>
       </div>
-    </Link>
+    </PendingNavLink>
   );
 }
 
@@ -103,7 +103,7 @@ function SampleListItem({
 }) {
   const sample = MESSAGES_SAMPLE_THREAD;
   return (
-    <Link
+    <PendingNavLink
       href={`${basePath}/${sample.id}`}
       className={`flex gap-3 rounded-xl border px-3 py-3 transition-colors ${
         selected
@@ -128,7 +128,7 @@ function SampleListItem({
         </div>
         <p className="mt-0.5 line-clamp-2 text-sm text-zinc-500">{sample.listPreview}</p>
       </div>
-    </Link>
+    </PendingNavLink>
   );
 }
 

@@ -25,6 +25,7 @@ import {
 import { HeaderSearchForm } from "@/components/player-header-search-form";
 import { useStudioEntryGate } from "@/components/studio-entry-gate-provider";
 import { PlatformFeedbackSidebarBox } from "@/components/platform-feedback-sidebar-box";
+import { PendingNavLink } from "@/components/pending-nav-link";
 import { RegisteredOnlyLink } from "@/components/registered-account-prompt-provider";
 import { shouldPromptDeveloperPage } from "@/lib/developer-onboarding-v0-store";
 import {
@@ -142,13 +143,13 @@ function PlayerSidebarNavBody({
     <>
       <div className="space-y-1">
         {primaryLinks.map((link) => (
-          <Link
+          <PendingNavLink
             key={link.id}
             href={link.href}
             className={navLinkClass(isPrimaryLinkActive(link.id, pathname))}
           >
             {link.label}
-          </Link>
+          </PendingNavLink>
         ))}
       </div>
 
@@ -162,9 +163,9 @@ function PlayerSidebarNavBody({
         <RegisteredOnlyLink href="/settings" className={navLinkClass(pathname === "/settings")}>
           設定
         </RegisteredOnlyLink>
-        <Link href="/guide" className={navLinkClass(pathname === "/guide")}>
+        <PendingNavLink href="/guide" className={navLinkClass(pathname === "/guide")}>
           はじめてガイド
-        </Link>
+        </PendingNavLink>
       </div>
 
       {showFeedback ? (
@@ -178,7 +179,6 @@ function PlayerSidebarNavBody({
 
 function PlayerShellFrame({
   children,
-  activeNav = "home",
   headerSearchDefault,
   headerSearch,
   notificationBadge,

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { PendingNavLink } from "@/components/pending-nav-link";
 import { ProjectThumbnail } from "@/components/project-thumbnail";
 import {
   PROJECT_CATEGORY_LABELS,
@@ -41,7 +41,7 @@ export function PlayerIaProjectCard({
     : "";
 
   return (
-    <Link
+    <PendingNavLink
       href={gameDetailHref(projectId)}
       title={title}
       className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/45 text-left transition-colors duration-150 hover:border-zinc-700/90 hover:bg-zinc-900/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
@@ -87,6 +87,6 @@ export function PlayerIaProjectCard({
           </div>
         </div>
       </article>
-    </Link>
+    </PendingNavLink>
   );
 }
