@@ -13,7 +13,7 @@ import { STUDIO_HOME_DEV_HINTS } from "@/lib/studio-home-metrics";
 function CtaLink({ cta }: { cta: StudioGuideCta }) {
   const className =
     cta.kind === "primary"
-      ? "rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-500"
+      ? "forge-btn-primary rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
       : "rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-300 hover:border-zinc-600";
   return (
     <Link href={cta.href} className={className}>
@@ -148,7 +148,7 @@ export function StudioGuidePage() {
         <div className="mt-10 flex flex-wrap gap-3">
           <Link
             href={studioSubmitModalHref()}
-            className="rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500"
+            className="forge-btn-primary rounded-xl px-5 py-2.5 text-sm font-medium transition-colors"
           >
             新規投稿
           </Link>

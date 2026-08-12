@@ -64,7 +64,7 @@ function ToggleSwitch({
       disabled={disabled}
       onClick={onToggle}
       className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-        enabled ? "bg-violet-600" : "bg-zinc-700"
+        enabled ? "forge-toggle-on" : "bg-zinc-700"
       }`}
     >
       <span

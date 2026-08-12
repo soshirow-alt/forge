@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-08-13 — Player/Studio mode color semantics（Preview）
+
+- **Mode switch CTA** — 遷移先mode色: Playerの「Studioへ」= cyan、Studioの「Playerへ戻る」= purple（`--forge-mode-switch`）
+- **Token** — `.forge-btn-primary` / `.forge-toggle-on` を mode accent に接続。Settings トグルと主要 Studio CTA（guide / projects）を token 経由に
+- **非実施** — 機械的な violet→cyan 全置換なし。status / category / decorative の個別色は維持。残る Studio 内 violet は Owner 目視候補
+
 ## 2026-08-13 — Studio Settings を Studio mode で維持（Preview）
 
 - **Studio「設定」** — sidebar / mobile drawer が `/studio/settings` を開き、Studio shell（sidebar・header・mode）を維持

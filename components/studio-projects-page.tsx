@@ -223,7 +223,7 @@ export function StudioProjectsTabPanel({
         </div>
         <Link
           href={studioSubmitModalHref()}
-          className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-violet-500"
+          className="forge-btn-primary inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
         >
           <Plus className="size-4" aria-hidden="true" />
           新しい作品を投稿

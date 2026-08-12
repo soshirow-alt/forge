@@ -132,15 +132,24 @@ assert.match(globals, /\[data-forge-mode="studio"\]/);
 assert.match(globals, /\[data-forge-mode="player"\]/);
 assert.match(globals, /\.forge-mode-switch/);
 assert.match(globals, /\.forge-nav-active/);
-assert.match(globals, /--forge-accent:/);
+assert.match(globals, /--forge-mode-switch:/);
+assert.match(globals, /\.forge-btn-primary/);
+assert.match(globals, /\.forge-toggle-on/);
 
 const header = read("lib/forge-shell-header.ts");
 assert.match(header, /forge-mode-switch/);
 assert.doesNotMatch(header, /bg-violet-600/);
 
-// Player accent must not be forced into studio token block as only violet
+// Studio shell accent stays cyan; Player purple appears only as destination switch token
 const studioBlock = globals.split('[data-forge-mode="studio"]')[1]?.split("[data-forge-mode")[0] ?? "";
 assert.match(studioBlock, /#0284c7|#0ea5e9/);
-assert.doesNotMatch(studioBlock, /#7c3aed/);
+assert.match(studioBlock, /--forge-accent:\s*#0284c7/);
+assert.doesNotMatch(studioBlock, /--forge-accent:\s*#7c3aed/);
+// Destination switch on Studio surface must be Player purple
+assert.match(studioBlock, /--forge-mode-switch:\s*#7c3aed/);
 
+const playerBlock =
+  globals.split('[data-forge-mode="player"]')[1]?.split("[data-forge-mode")[0] ?? "";
+assert.match(playerBlock, /--forge-accent:\s*#7c3aed/);
+assert.match(playerBlock, /--forge-mode-switch:\s*#0284c7/);
 console.log("search-card-studio-mode ok");

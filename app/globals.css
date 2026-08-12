@@ -164,6 +164,9 @@ button:disabled,
   --forge-accent-link-hover: #c4b5fd;
   --forge-accent-selected-border: #a78bfa;
   --forge-accent-selected-text: #ede9fe;
+  /* Mode switch CTA uses DESTINATION mode color (→ Studio = cyan) */
+  --forge-mode-switch: #0284c7;
+  --forge-mode-switch-hover: #0ea5e9;
 }
 
 [data-forge-mode="studio"] {
@@ -177,14 +180,30 @@ button:disabled,
   --forge-accent-link-hover: #7dd3fc;
   --forge-accent-selected-border: #38bdf8;
   --forge-accent-selected-text: #e0f2fe;
+  /* Mode switch CTA uses DESTINATION mode color (→ Player = purple) */
+  --forge-mode-switch: #7c3aed;
+  --forge-mode-switch-hover: #8b5cf6;
 }
 
 .forge-mode-switch {
-  background-color: var(--forge-accent);
+  background-color: var(--forge-mode-switch);
 }
 
 .forge-mode-switch:hover {
+  background-color: var(--forge-mode-switch-hover);
+}
+
+.forge-btn-primary {
+  background-color: var(--forge-accent);
+  color: #fff;
+}
+
+.forge-btn-primary:hover {
   background-color: var(--forge-accent-hover);
+}
+
+.forge-toggle-on {
+  background-color: var(--forge-accent);
 }
 
 .forge-nav-active {
