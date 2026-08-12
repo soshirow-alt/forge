@@ -451,6 +451,8 @@ export async function fetchPublicFeedbackCardsEnriched(
 /**
  * Home FB shelf fill only — same public card sources as enriched fetch, without
  * choice-label resolution or empathy/viewer enrichment round-trips.
+ * Uses visible feedback version keys (not prompts/devlogs) and a limit-1 probe
+ * so catalog projects without public cards exit cheaply.
  */
 export async function fetchPublicFeedbackCardsForHomeFill(
   supabase: SupabaseClient,
@@ -460,20 +462,32 @@ export async function fetchPublicFeedbackCardsForHomeFill(
     playableVersion?: string;
   },
 ): Promise<{ cards: PublicFeedbackCard[]; participantCount: number }> {
+  void options?.playableVersion;
   const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
-  const playableVersion = resolvePlayableVersion(options?.playableVersion);
-  const versionKeys = await listProjectFeedbackVersionKeys(
+  const includeGuest = shouldIncludeGuestInPublicFeedbackCards();
+  const versionKeys = await listHomeFillFeedbackVersionKeys(
     supabase,
     projectId,
-    playableVersion,
+    includeGuest,
   );
   if (versionKeys.length === 0) {
     return { cards: [], participantCount: 0 };
   }
 
-  const includeGuest = shouldIncludeGuestInPublicFeedbackCards();
+  const probeRows = await Promise.all(
+    versionKeys.map((versionKey) =>
+      fetchRpcCards(supabase, projectId, versionKey, 1),
+    ),
+  );
+  const versionsWithCards = versionKeys.filter(
+    (_, index) => (probeRows[index]?.length ?? 0) > 0,
+  );
+  if (versionsWithCards.length === 0) {
+    return { cards: [], participantCount: 0 };
+  }
+
   const rowsByVersion = await Promise.all(
-    versionKeys.map(async (versionKey) => ({
+    versionsWithCards.map(async (versionKey) => ({
       versionKey,
       rows: await fetchRpcCards(supabase, projectId, versionKey, limit),
     })),
@@ -497,9 +511,43 @@ export async function fetchPublicFeedbackCardsForHomeFill(
   const participantCount = await countPublicFeedbackParticipants(
     supabase,
     projectId,
-    versionKeys,
+    versionsWithCards,
   );
   return { cards, participantCount };
+}
+
+async function listHomeFillFeedbackVersionKeys(
+  supabase: SupabaseClient,
+  projectId: string,
+  includeGuest: boolean,
+): Promise<string[]> {
+  const versions = new Set<string>(
+    await listPublicFeedbackVersionKeys(supabase, projectId),
+  );
+  if (includeGuest) {
+    const guestVersionSets = await Promise.all([
+      supabase
+        .from("project_guest_voice_responses")
+        .select("version_key")
+        .eq("project_id", projectId)
+        .eq("moderation_status", "visible")
+        .eq("include_in_public_aggregate", true),
+      supabase
+        .from("project_guest_feedback")
+        .select("version_key")
+        .eq("project_id", projectId)
+        .eq("moderation_status", "visible")
+        .eq("include_in_public_aggregate", true),
+    ]);
+    for (const result of guestVersionSets) {
+      for (const row of result.data ?? []) {
+        if (row.version_key) {
+          versions.add(resolvePlayableVersion(String(row.version_key)));
+        }
+      }
+    }
+  }
+  return [...versions].sort((a, b) => comparePlayableVersions(b, a));
 }
 
 /**

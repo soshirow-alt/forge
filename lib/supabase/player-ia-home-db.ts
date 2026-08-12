@@ -387,7 +387,7 @@ async function fetchGuestSubmitterKeys(
   ].filter(Boolean);
 }
 
-const HOME_FB_FILL_PROBE_CONCURRENCY = 6;
+const HOME_FB_FILL_PROBE_CONCURRENCY = 8;
 
 async function mapPool<T, R>(
   items: T[],

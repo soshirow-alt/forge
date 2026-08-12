@@ -54,5 +54,7 @@ assert.match(
   cardsServer,
   /export async function listProjectIdsWithVisibleFeedbackSignals/,
 );
+assert.match(cardsServer, /listHomeFillFeedbackVersionKeys|listPublicFeedbackVersionKeys/);
+assert.match(cardsServer, /fetchRpcCards\(supabase, projectId, versionKey, 1\)/);
 
 console.log("studio-player-mode-switch-nav ok");
