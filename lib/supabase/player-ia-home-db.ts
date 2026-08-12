@@ -29,10 +29,7 @@ import {
   type HomeFeaturedHeroCard,
 } from "@/lib/supabase/home-discovery-db";
 import { fetchPublicProjectsByCategory } from "@/lib/supabase/public-catalog-db";
-import {
-  fetchPublicFeedbackCardsForHomeFill,
-  listProjectIdsWithVisibleFeedbackSignals,
-} from "@/lib/supabase/public-feedback-cards-server";
+import { fetchPublicFeedbackCardsForHomeFill } from "@/lib/supabase/public-feedback-cards-server";
 
 export type HomeFeedbackGatheringRow = {
   project_id: string;
@@ -423,16 +420,11 @@ async function fillFeedbackGatheringFromPublicWorks(
 
     const seen = new Set(ranked.map((item) => item.projectId));
     const targets = catalog.filter((project) => !seen.has(project.projectId));
-    const signalIds = await listProjectIdsWithVisibleFeedbackSignals(
-      supabase,
-      targets.map((project) => project.projectId),
-    );
-    const candidates = targets.filter((project) =>
-      signalIds.has(project.projectId),
-    );
 
+    // Do not prefilter via direct feedback table reads — anon RLS hides those
+    // rows. Probe each catalog target through get_public_feedback_cards instead.
     const probed = await mapPool(
-      candidates,
+      targets,
       HOME_FB_FILL_PROBE_CONCURRENCY,
       async (project) => {
         const { cards, participantCount } =

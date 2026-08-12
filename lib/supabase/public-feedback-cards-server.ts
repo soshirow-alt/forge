@@ -451,8 +451,11 @@ export async function fetchPublicFeedbackCardsEnriched(
 /**
  * Home FB shelf fill only — same public card sources as enriched fetch, without
  * choice-label resolution or empathy/viewer enrichment round-trips.
- * Uses visible feedback version keys (not prompts/devlogs) and a limit-1 probe
- * so catalog projects without public cards exit cheaply.
+ *
+ * Anon home load cannot read voice/feedback tables under RLS; version discovery
+ * uses public prompts/devlogs + playable seed, and card bodies come from
+ * get_public_feedback_cards (security definer). limit-1 probes avoid full
+ * fetches on projects with no public cards.
  */
 export async function fetchPublicFeedbackCardsForHomeFill(
   supabase: SupabaseClient,
@@ -462,13 +465,13 @@ export async function fetchPublicFeedbackCardsForHomeFill(
     playableVersion?: string;
   },
 ): Promise<{ cards: PublicFeedbackCard[]; participantCount: number }> {
-  void options?.playableVersion;
   const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
   const includeGuest = shouldIncludeGuestInPublicFeedbackCards();
+  const playableVersion = resolvePlayableVersion(options?.playableVersion);
   const versionKeys = await listHomeFillFeedbackVersionKeys(
     supabase,
     projectId,
-    includeGuest,
+    playableVersion,
   );
   if (versionKeys.length === 0) {
     return { cards: [], participantCount: 0 };
@@ -508,100 +511,37 @@ export async function fetchPublicFeedbackCardsForHomeFill(
     return { cards: [], participantCount: 0 };
   }
 
-  const participantCount = await countPublicFeedbackParticipants(
-    supabase,
-    projectId,
-    versionsWithCards,
-  );
-  return { cards, participantCount };
+  // Anon RLS blocks direct participant table reads; enriched path also yields 0
+  // here. Fill ranking still works from card counts / optional authorKey.
+  return { cards, participantCount: 0 };
 }
 
+/** Public-readable version hints only (prompts/devlogs) + playable seed. */
 async function listHomeFillFeedbackVersionKeys(
   supabase: SupabaseClient,
   projectId: string,
-  includeGuest: boolean,
+  playableVersion: string,
 ): Promise<string[]> {
-  const versions = new Set<string>(
-    await listPublicFeedbackVersionKeys(supabase, projectId),
-  );
-  if (includeGuest) {
-    const guestVersionSets = await Promise.all([
-      supabase
-        .from("project_guest_voice_responses")
-        .select("version_key")
-        .eq("project_id", projectId)
-        .eq("moderation_status", "visible")
-        .eq("include_in_public_aggregate", true),
-      supabase
-        .from("project_guest_feedback")
-        .select("version_key")
-        .eq("project_id", projectId)
-        .eq("moderation_status", "visible")
-        .eq("include_in_public_aggregate", true),
-    ]);
-    for (const result of guestVersionSets) {
-      for (const row of result.data ?? []) {
-        if (row.version_key) {
-          versions.add(resolvePlayableVersion(String(row.version_key)));
-        }
-      }
+  const [prompts, devlogs] = await Promise.all([
+    supabase
+      .from("project_version_prompts")
+      .select("version_key")
+      .eq("project_id", projectId),
+    supabase
+      .from("project_devlogs")
+      .select("published_version")
+      .eq("project_id", projectId),
+  ]);
+  const versions = new Set<string>([resolvePlayableVersion(playableVersion)]);
+  for (const row of prompts.data ?? []) {
+    if (row.version_key) {
+      versions.add(resolvePlayableVersion(String(row.version_key)));
+    }
+  }
+  for (const row of devlogs.data ?? []) {
+    if (row.published_version) {
+      versions.add(resolvePlayableVersion(String(row.published_version)));
     }
   }
   return [...versions].sort((a, b) => comparePlayableVersions(b, a));
-}
-
-/**
- * Batch prefilter for Home FB fill — projects with any visible feedback signal.
- * False positives are OK (caller still verifies via public cards); avoid missing
- * real public FB rows.
- */
-export async function listProjectIdsWithVisibleFeedbackSignals(
-  supabase: SupabaseClient,
-  projectIds: string[],
-): Promise<Set<string>> {
-  const out = new Set<string>();
-  if (projectIds.length === 0) {
-    return out;
-  }
-
-  const includeGuest = shouldIncludeGuestInPublicFeedbackCards();
-  const chunkSize = 80;
-  for (let offset = 0; offset < projectIds.length; offset += chunkSize) {
-    const chunk = projectIds.slice(offset, offset + chunkSize);
-    const registered = await Promise.all([
-      supabase
-        .from("project_feedback")
-        .select("project_id")
-        .in("project_id", chunk)
-        .eq("moderation_status", "visible"),
-      supabase
-        .from("project_voice_responses")
-        .select("project_id")
-        .in("project_id", chunk)
-        .eq("moderation_status", "visible"),
-    ]);
-    const guest = includeGuest
-      ? await Promise.all([
-          supabase
-            .from("project_guest_feedback")
-            .select("project_id")
-            .in("project_id", chunk)
-            .eq("moderation_status", "visible")
-            .eq("include_in_public_aggregate", true),
-          supabase
-            .from("project_guest_voice_responses")
-            .select("project_id")
-            .in("project_id", chunk)
-            .eq("moderation_status", "visible")
-            .eq("include_in_public_aggregate", true),
-        ])
-      : [];
-    for (const result of [...registered, ...guest]) {
-      for (const row of result.data ?? []) {
-        const id = row.project_id ? String(row.project_id) : "";
-        if (id) out.add(id);
-      }
-    }
-  }
-  return out;
 }

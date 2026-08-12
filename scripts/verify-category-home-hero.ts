@@ -328,8 +328,8 @@ function fb(
   assert.match(db, /if \(cards\.length < 1\) return null/);
   assert.match(db, /fetchAllPublicCatalog/);
   assert.match(db, /fetchGuestSubmitterKeys/);
-  assert.match(db, /listProjectIdsWithVisibleFeedbackSignals/);
   assert.match(db, /fetchPublicFeedbackCardsForHomeFill/);
+  assert.doesNotMatch(db, /listProjectIdsWithVisibleFeedbackSignals/);
   assert.doesNotMatch(
     db,
     /fillFeedbackGatheringFromPublicWorks[\s\S]*fetchPublicFeedbackCardsEnriched/,

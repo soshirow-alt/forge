@@ -8,7 +8,7 @@
 
 - **症状** — Studio ヘッダ「Playerへ戻る」は即 Link 開始なのに、`/home` の Server 待ちで UI が数〜十数秒固まる
 - **原因** — Home FB 4件補充（30d/90d 不足時）が公開カタログ全件へ enriched カード取得を直列実行していた（Production で `/api/discovery/player-ia-home` 約 18–24s）
-- **修正** — 可視 FB シグナルのバッチ絞り込み + 軽量カード取得を並列化。表示仕様（FB 4件・Game/dev-tool hero・Overview IA 等）は維持。切替 Link は即「移動中…」反馈
+- **修正** — `get_public_feedback_cards` の limit-1 probe + 軽量並列取得。anon が読めない feedback テーブル直読み prefilter は使わない（RLS）。表示仕様（FB 4件・Game/dev-tool hero・Overview IA 等）は維持。切替 Link は即「移動中…」反馈
 - **非実施** — DB write / announcement 05 / ランキング仕様変更なし
 
 ## 2026-08-12 — Studio はじめてガイドを4アクションへ再構成（Preview）

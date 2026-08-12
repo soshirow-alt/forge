@@ -40,9 +40,9 @@ assert.doesNotMatch(
 );
 
 const homeDb = read("lib/supabase/player-ia-home-db.ts");
-assert.match(homeDb, /listProjectIdsWithVisibleFeedbackSignals/);
 assert.match(homeDb, /fetchPublicFeedbackCardsForHomeFill/);
 assert.match(homeDb, /HOME_FB_FILL_PROBE_CONCURRENCY/);
+assert.doesNotMatch(homeDb, /listProjectIdsWithVisibleFeedbackSignals/);
 assert.doesNotMatch(
   homeDb,
   /for \(const project of targets\) \{[\s\S]*fetchPublicFeedbackCardsEnriched/,
@@ -50,11 +50,13 @@ assert.doesNotMatch(
 
 const cardsServer = read("lib/supabase/public-feedback-cards-server.ts");
 assert.match(cardsServer, /export async function fetchPublicFeedbackCardsForHomeFill/);
-assert.match(
+assert.match(cardsServer, /listHomeFillFeedbackVersionKeys/);
+assert.match(cardsServer, /fetchRpcCards\(supabase, projectId, versionKey, 1\)/);
+assert.match(cardsServer, /project_version_prompts/);
+assert.match(cardsServer, /project_devlogs/);
+assert.doesNotMatch(
   cardsServer,
   /export async function listProjectIdsWithVisibleFeedbackSignals/,
 );
-assert.match(cardsServer, /listHomeFillFeedbackVersionKeys|listPublicFeedbackVersionKeys/);
-assert.match(cardsServer, /fetchRpcCards\(supabase, projectId, versionKey, 1\)/);
 
 console.log("studio-player-mode-switch-nav ok");
