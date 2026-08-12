@@ -456,6 +456,9 @@ export async function fetchPublicFeedbackCardsEnriched(
  * uses public prompts/devlogs + playable seed, and card bodies come from
  * get_public_feedback_cards (security definer). limit-1 probes avoid full
  * fetches on projects with no public cards.
+ *
+ * Pass `versionKeys` from a request-local batch prefetch to avoid per-project
+ * prompts/devlogs round-trips during fill scans.
  */
 export async function fetchPublicFeedbackCardsForHomeFill(
   supabase: SupabaseClient,
@@ -463,16 +466,20 @@ export async function fetchPublicFeedbackCardsForHomeFill(
   options?: {
     limit?: number;
     playableVersion?: string;
+    versionKeys?: string[];
   },
 ): Promise<{ cards: PublicFeedbackCard[]; participantCount: number }> {
   const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
   const includeGuest = shouldIncludeGuestInPublicFeedbackCards();
   const playableVersion = resolvePlayableVersion(options?.playableVersion);
-  const versionKeys = await listHomeFillFeedbackVersionKeys(
-    supabase,
-    projectId,
-    playableVersion,
-  );
+  const versionKeys =
+    options?.versionKeys && options.versionKeys.length > 0
+      ? [...options.versionKeys]
+      : await listHomeFillFeedbackVersionKeys(
+          supabase,
+          projectId,
+          playableVersion,
+        );
   if (versionKeys.length === 0) {
     return { cards: [], participantCount: 0 };
   }
@@ -516,6 +523,85 @@ export async function fetchPublicFeedbackCardsForHomeFill(
   return { cards, participantCount: 0 };
 }
 
+const HOME_FILL_VERSION_IN_CHUNK = 80;
+
+function mergeHomeFillVersionKeys(
+  playableVersion: string,
+  promptKeys: Iterable<string>,
+  devlogVersions: Iterable<string>,
+): string[] {
+  const versions = new Set<string>([resolvePlayableVersion(playableVersion)]);
+  for (const key of promptKeys) {
+    if (key) versions.add(resolvePlayableVersion(key));
+  }
+  for (const key of devlogVersions) {
+    if (key) versions.add(resolvePlayableVersion(key));
+  }
+  return [...versions].sort((a, b) => comparePlayableVersions(b, a));
+}
+
+/** Request-local batch of public version hints for Home FB fill probes. */
+export async function prefetchHomeFillVersionKeysByProject(
+  supabase: SupabaseClient,
+  projectIds: string[],
+  playableVersion?: string,
+): Promise<Map<string, string[]>> {
+  const resolvedPlayable = resolvePlayableVersion(playableVersion);
+  const uniqueIds = [...new Set(projectIds.filter(Boolean))];
+  const map = new Map<string, string[]>();
+  for (const id of uniqueIds) {
+    map.set(id, mergeHomeFillVersionKeys(resolvedPlayable, [], []));
+  }
+  if (uniqueIds.length === 0) return map;
+
+  const promptByProject = new Map<string, string[]>();
+  const devlogByProject = new Map<string, string[]>();
+
+  for (let offset = 0; offset < uniqueIds.length; offset += HOME_FILL_VERSION_IN_CHUNK) {
+    const chunk = uniqueIds.slice(offset, offset + HOME_FILL_VERSION_IN_CHUNK);
+    const [prompts, devlogs] = await Promise.all([
+      supabase
+        .from("project_version_prompts")
+        .select("project_id, version_key")
+        .in("project_id", chunk),
+      supabase
+        .from("project_devlogs")
+        .select("project_id, published_version")
+        .in("project_id", chunk),
+    ]);
+    for (const row of prompts.data ?? []) {
+      const projectId = String(row.project_id ?? "");
+      const versionKey = row.version_key ? String(row.version_key) : "";
+      if (!projectId || !versionKey) continue;
+      const list = promptByProject.get(projectId) ?? [];
+      list.push(versionKey);
+      promptByProject.set(projectId, list);
+    }
+    for (const row of devlogs.data ?? []) {
+      const projectId = String(row.project_id ?? "");
+      const published = row.published_version
+        ? String(row.published_version)
+        : "";
+      if (!projectId || !published) continue;
+      const list = devlogByProject.get(projectId) ?? [];
+      list.push(published);
+      devlogByProject.set(projectId, list);
+    }
+  }
+
+  for (const id of uniqueIds) {
+    map.set(
+      id,
+      mergeHomeFillVersionKeys(
+        resolvedPlayable,
+        promptByProject.get(id) ?? [],
+        devlogByProject.get(id) ?? [],
+      ),
+    );
+  }
+  return map;
+}
+
 /** Public-readable version hints only (prompts/devlogs) + playable seed. */
 async function listHomeFillFeedbackVersionKeys(
   supabase: SupabaseClient,
@@ -532,16 +618,15 @@ async function listHomeFillFeedbackVersionKeys(
       .select("published_version")
       .eq("project_id", projectId),
   ]);
-  const versions = new Set<string>([resolvePlayableVersion(playableVersion)]);
-  for (const row of prompts.data ?? []) {
-    if (row.version_key) {
-      versions.add(resolvePlayableVersion(String(row.version_key)));
-    }
-  }
-  for (const row of devlogs.data ?? []) {
-    if (row.published_version) {
-      versions.add(resolvePlayableVersion(String(row.published_version)));
-    }
-  }
-  return [...versions].sort((a, b) => comparePlayableVersions(b, a));
+  return mergeHomeFillVersionKeys(
+    playableVersion,
+    (prompts.data ?? [])
+      .map((row) => (row.version_key ? String(row.version_key) : ""))
+      .filter(Boolean),
+    (devlogs.data ?? [])
+      .map((row) =>
+        row.published_version ? String(row.published_version) : "",
+      )
+      .filter(Boolean),
+  );
 }

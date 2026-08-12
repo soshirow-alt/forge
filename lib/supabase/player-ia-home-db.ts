@@ -29,7 +29,10 @@ import {
   type HomeFeaturedHeroCard,
 } from "@/lib/supabase/home-discovery-db";
 import { fetchPublicProjectsByCategory } from "@/lib/supabase/public-catalog-db";
-import { fetchPublicFeedbackCardsForHomeFill } from "@/lib/supabase/public-feedback-cards-server";
+import {
+  fetchPublicFeedbackCardsForHomeFill,
+  prefetchHomeFillVersionKeysByProject,
+} from "@/lib/supabase/public-feedback-cards-server";
 
 export type HomeFeedbackGatheringRow = {
   project_id: string;
@@ -357,34 +360,52 @@ async function fetchAllPublicCatalog(
   return all;
 }
 
-async function fetchGuestSubmitterKeys(
-  supabase: SupabaseClient,
-  projectId: string,
-): Promise<string[]> {
-  const [voice, detailed] = await Promise.all([
-    supabase
-      .from("project_guest_voice_responses")
-      .select("submitter_key")
-      .eq("project_id", projectId)
-      .eq("include_in_public_aggregate", true)
-      .eq("moderation_status", "visible"),
-    supabase
-      .from("project_guest_feedback")
-      .select("submitter_key")
-      .eq("project_id", projectId)
-      .eq("include_in_public_aggregate", true)
-      .eq("moderation_status", "visible"),
-  ]);
-  if (voice.error || detailed.error) {
-    return [];
-  }
-  return [
-    ...(voice.data ?? []).map((row) => String(row.submitter_key ?? "")),
-    ...(detailed.data ?? []).map((row) => String(row.submitter_key ?? "")),
-  ].filter(Boolean);
-}
-
 const HOME_FB_FILL_PROBE_CONCURRENCY = 8;
+const HOME_FB_FILL_GUEST_IN_CHUNK = 40;
+
+async function prefetchGuestSubmitterKeysByProject(
+  supabase: SupabaseClient,
+  projectIds: string[],
+): Promise<Map<string, string[]>> {
+  const map = new Map<string, string[]>();
+  const uniqueIds = [...new Set(projectIds.filter(Boolean))];
+  for (const id of uniqueIds) map.set(id, []);
+  if (uniqueIds.length === 0) return map;
+
+  for (
+    let offset = 0;
+    offset < uniqueIds.length;
+    offset += HOME_FB_FILL_GUEST_IN_CHUNK
+  ) {
+    const chunk = uniqueIds.slice(offset, offset + HOME_FB_FILL_GUEST_IN_CHUNK);
+    const [voice, detailed] = await Promise.all([
+      supabase
+        .from("project_guest_voice_responses")
+        .select("project_id, submitter_key")
+        .in("project_id", chunk)
+        .eq("include_in_public_aggregate", true)
+        .eq("moderation_status", "visible"),
+      supabase
+        .from("project_guest_feedback")
+        .select("project_id, submitter_key")
+        .in("project_id", chunk)
+        .eq("include_in_public_aggregate", true)
+        .eq("moderation_status", "visible"),
+    ]);
+    if (voice.error || detailed.error) {
+      continue;
+    }
+    for (const row of [...(voice.data ?? []), ...(detailed.data ?? [])]) {
+      const projectId = String(row.project_id ?? "");
+      const key = String(row.submitter_key ?? "").trim();
+      if (!projectId || !key) continue;
+      const list = map.get(projectId) ?? [];
+      list.push(key);
+      map.set(projectId, list);
+    }
+  }
+  return map;
+}
 
 async function mapPool<T, R>(
   items: T[],
@@ -412,31 +433,58 @@ async function mapPool<T, R>(
 async function fillFeedbackGatheringFromPublicWorks(
   supabase: SupabaseClient,
   ranked: HomeFeedbackGatheringProject[],
+  catalog?: Awaited<ReturnType<typeof fetchAllPublicCatalog>>,
 ): Promise<HomeFeedbackGatheringProject[]> {
   if (ranked.length >= 4) return ranked;
   try {
-    const catalog = await fetchAllPublicCatalog(supabase);
-    if (catalog.length === 0) return ranked;
+    const projects = catalog ?? (await fetchAllPublicCatalog(supabase));
+    if (projects.length === 0) return ranked;
 
     const seen = new Set(ranked.map((item) => item.projectId));
-    const targets = catalog.filter((project) => !seen.has(project.projectId));
+    const targets = projects.filter((project) => !seen.has(project.projectId));
+    if (targets.length === 0) return ranked;
+
+    // Request-local batch: version hints once for all fill targets (not N+1).
+    const versionKeysByProject = await prefetchHomeFillVersionKeysByProject(
+      supabase,
+      targets.map((project) => project.projectId),
+    );
 
     // Do not prefilter via direct feedback table reads — anon RLS hides those
     // rows. Probe each catalog target through get_public_feedback_cards instead.
+    // Phase 1: probe + full-fetch cards only (no per-hit guest round-trips).
+    type FillHit = {
+      project: (typeof targets)[number];
+      cards: Awaited<
+        ReturnType<typeof fetchPublicFeedbackCardsForHomeFill>
+      >["cards"];
+      participantCount: number;
+    };
     const probed = await mapPool(
       targets,
       HOME_FB_FILL_PROBE_CONCURRENCY,
-      async (project) => {
+      async (project): Promise<FillHit | null> => {
         const { cards, participantCount } =
           await fetchPublicFeedbackCardsForHomeFill(supabase, project.projectId, {
             limit: 100,
+            versionKeys: versionKeysByProject.get(project.projectId),
           });
         if (cards.length < 1) return null;
-        const guestSubmitterKeys = await fetchGuestSubmitterKeys(
-          supabase,
-          project.projectId,
-        );
-        return extraFromPublicFeedbackCards(
+        return { project, cards, participantCount };
+      },
+    );
+    const hits = probed.filter((item): item is FillHit => item !== null);
+    if (hits.length === 0) return ranked;
+
+    // Phase 2: one batched guest-key read for fill ranking author counts.
+    const guestKeysByProject = await prefetchGuestSubmitterKeysByProject(
+      supabase,
+      hits.map((hit) => hit.project.projectId),
+    );
+
+    const extras = hits
+      .map(({ project, cards, participantCount }) =>
+        extraFromPublicFeedbackCards(
           {
             projectId: project.projectId,
             title: displayPlayerIaHomeSeedText(project.projectId, project.title),
@@ -451,13 +499,10 @@ async function fillFeedbackGatheringFromPublicWorks(
           },
           cards,
           participantCount,
-          guestSubmitterKeys,
-        );
-      },
-    );
-    const extras = probed.filter(
-      (item): item is HomeFeedbackGatheringProject => item !== null,
-    );
+          guestKeysByProject.get(project.projectId) ?? [],
+        ),
+      )
+      .filter((item): item is HomeFeedbackGatheringProject => item !== null);
     return mergeFeedbackGatheringFill(ranked, extras, 4);
   } catch (error) {
     console.error("[player-ia-home] feedback fill failed", error);
@@ -738,18 +783,42 @@ function emptyCategoryPresence(): Record<ProjectCategoryId, boolean> {
 
 export async function fetchPublicCategoryPresence(
   supabase: SupabaseClient,
+  catalog?: Awaited<ReturnType<typeof fetchAllPublicCatalog>>,
 ): Promise<Record<ProjectCategoryId, boolean>> {
   const presence = emptyCategoryPresence();
-  const rows = await Promise.all(
-    PROJECT_CATEGORY_IDS.map(async (id) => {
-      const newest = await fetchHomeNewestProjects(supabase, 1, id);
-      return [id, newest.length > 0] as const;
-    }),
-  );
-  for (const [id, hasWork] of rows) {
-    presence[id] = hasWork;
+  try {
+    const projects =
+      catalog ??
+      (await fetchPublicProjectsByCategory(supabase, {
+        limit: 60,
+        offset: 0,
+      }));
+    for (const project of projects) {
+      if (isProjectCategoryId(project.category)) {
+        presence[project.category] = true;
+      }
+    }
+    // Full catalog already covers every public work; partial first-page only
+    // needs sparse-category probes when the page is saturated.
+    if (!catalog && projects.length >= 60) {
+      const missing = PROJECT_CATEGORY_IDS.filter((id) => !presence[id]);
+      if (missing.length > 0) {
+        const rows = await Promise.all(
+          missing.map(async (id) => {
+            const newest = await fetchHomeNewestProjects(supabase, 1, id);
+            return [id, newest.length > 0] as const;
+          }),
+        );
+        for (const [id, hasWork] of rows) {
+          presence[id] = hasWork;
+        }
+      }
+    }
+    return presence;
+  } catch (error) {
+    console.error("[player-ia-home] category presence failed", error);
+    return presence;
   }
-  return presence;
 }
 
 export async function fetchPlayerIaCategoryHome(
@@ -836,29 +905,84 @@ function assemblePlayerIaHomeShelves(input: {
   };
 }
 
+export type PlayerIaHomeTimingMarks = {
+  feedbackRpcMs: number;
+  otherShelvesMs: number;
+  fillMs: number;
+  totalMs: number;
+  feedbackRankedCount: number;
+  fillRan: boolean;
+};
+
 export async function fetchPlayerIaHome(
   supabase: SupabaseClient,
+  options?: { onTiming?: (marks: PlayerIaHomeTimingMarks) => void },
 ): Promise<PlayerIaHomePayload> {
-  const [
-    feedbackCandidates,
-    updateCandidates,
-    usageCandidates,
-    announcements,
-    newestCandidates,
-    categoryHasPublicWork,
-  ] = await Promise.all([
-    fetchHomeFeedbackGatheringProjects(supabase, 16),
+  const totalT0 = performance.now();
+
+  // Start independent shelves immediately; do not block fill on them.
+  const feedbackT0 = performance.now();
+  const feedbackPromise = fetchHomeFeedbackGatheringProjects(supabase, 16).then(
+    (rows) => ({
+      rows,
+      ms: Math.round(performance.now() - feedbackT0),
+    }),
+  );
+  const otherCoreT0 = performance.now();
+  const otherCorePromise = Promise.all([
     fetchHomeMeaningfulUpdates(supabase, 16),
     fetchHomeUsageRelations(supabase, 24),
     fetchPublicPlatformAnnouncements(supabase, 5),
     fetchHomeNewestProjects(supabase, 16),
-    fetchPublicCategoryPresence(supabase),
-  ]);
+  ]).then((result) => ({
+    result,
+    ms: Math.round(performance.now() - otherCoreT0),
+  }));
 
-  const filledFeedback = await fillFeedbackGatheringFromPublicWorks(
-    supabase,
-    feedbackCandidates,
+  const feedback = await feedbackPromise;
+  const needsFill = feedback.rows.length < 4;
+  const catalogPromise = needsFill
+    ? fetchAllPublicCatalog(supabase)
+    : Promise.resolve(
+        null as Awaited<ReturnType<typeof fetchAllPublicCatalog>> | null,
+      );
+
+  const fillT0 = performance.now();
+  const fillPromise = catalogPromise.then((catalog) =>
+    needsFill
+      ? fillFeedbackGatheringFromPublicWorks(
+          supabase,
+          feedback.rows,
+          catalog ?? undefined,
+        )
+      : Promise.resolve(feedback.rows),
   );
+  const presencePromise = catalogPromise.then((catalog) =>
+    fetchPublicCategoryPresence(supabase, catalog ?? undefined),
+  );
+
+  const [filledFeedback, categoryHasPublicWork, otherCore] = await Promise.all([
+    fillPromise,
+    presencePromise,
+    otherCorePromise,
+  ]);
+  const fillMs = Math.round(performance.now() - fillT0);
+
+  const [
+    updateCandidates,
+    usageCandidates,
+    announcements,
+    newestCandidates,
+  ] = otherCore.result;
+
+  options?.onTiming?.({
+    feedbackRpcMs: feedback.ms,
+    otherShelvesMs: otherCore.ms,
+    fillMs,
+    totalMs: Math.round(performance.now() - totalT0),
+    feedbackRankedCount: feedback.rows.length,
+    fillRan: needsFill,
+  });
 
   return assemblePlayerIaHomeShelves({
     feedbackCandidates: filledFeedback,

@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-08-12 — Home API / `/home` 読み込み高速化（code-only）
+
+- **対象** — Production Home（`/api/discovery/player-ia-home`・`/home` RSC）。表示仕様は不変（FB 4件・30d→90d→FB≥1 fill・ranking / shelf / announcement 維持）
+- **ボトルネック** — FB fill が公開カタログ各作品へ version 一覧 + probe を N+1。他 shelf / category presence 完了を fill 開始前に待っていた
+- **修正** — fill と他 shelf の並列化、version ヒント / guest key の request-local 一括取得、category presence のカタログ共有、公開 Home の短 TTL（20s）インメモリ cache（auth 非依存のみ）
+- **非実施** — DB write / migration / index / announcement 内容変更なし
+
 ## 2026-08-12 — Studio「Playerへ戻る」死クリック解消（Home FB fill 高速化）
 
 - **症状** — Studio ヘッダ「Playerへ戻る」は即 Link 開始なのに、`/home` の Server 待ちで UI が数〜十数秒固まる

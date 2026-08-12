@@ -327,8 +327,9 @@ function fb(
   assert.doesNotMatch(db, /FILL_CARD_FETCH_LIMIT|slice\(0, 16\)/);
   assert.match(db, /if \(cards\.length < 1\) return null/);
   assert.match(db, /fetchAllPublicCatalog/);
-  assert.match(db, /fetchGuestSubmitterKeys/);
-  assert.match(db, /fetchPublicFeedbackCardsForHomeFill/);
+assert.match(db, /prefetchGuestSubmitterKeysByProject/);
+assert.match(db, /prefetchHomeFillVersionKeysByProject/);
+assert.match(db, /fetchPublicFeedbackCardsForHomeFill/);
   assert.doesNotMatch(db, /listProjectIdsWithVisibleFeedbackSignals/);
   assert.doesNotMatch(
     db,

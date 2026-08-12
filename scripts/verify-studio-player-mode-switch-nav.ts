@@ -50,10 +50,12 @@ assert.doesNotMatch(
 
 const cardsServer = read("lib/supabase/public-feedback-cards-server.ts");
 assert.match(cardsServer, /export async function fetchPublicFeedbackCardsForHomeFill/);
+assert.match(cardsServer, /prefetchHomeFillVersionKeysByProject/);
 assert.match(cardsServer, /listHomeFillFeedbackVersionKeys/);
 assert.match(cardsServer, /fetchRpcCards\(supabase, projectId, versionKey, 1\)/);
 assert.match(cardsServer, /project_version_prompts/);
 assert.match(cardsServer, /project_devlogs/);
+assert.match(cardsServer, /versionKeys/);
 assert.doesNotMatch(
   cardsServer,
   /export async function listProjectIdsWithVisibleFeedbackSignals/,
