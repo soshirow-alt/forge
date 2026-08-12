@@ -10,11 +10,13 @@ import {
   buildOAuthCallbackRedirectUrl,
   FORGE_LEGACY_PRODUCTION_OAUTH_ORIGIN,
   FORGE_PRODUCTION_OAUTH_ORIGIN,
+  getEmailChangeRedirectUrl,
   resolveOAuthCallbackDestination,
   resolveOAuthCallbackErrorPath,
 } from "../lib/auth-redirect";
 import {
   normalizeOAuthFailureReason,
+  settingsXErrorPath,
 } from "../lib/oauth-callback-errors";
 import {
   OAUTH_FLOW_COOKIE,
@@ -256,8 +258,8 @@ function testLoginReturnSanitize() {
     "allow studio profile return (Studio Shell canonical)",
   );
   ok(
-    sanitizeLoginReturnUrl("/studio/settings") === "/settings",
-    "canonicalize studio settings return to settings",
+    sanitizeLoginReturnUrl("/studio/settings") === "/studio/settings",
+    "allow studio settings return (Studio Shell canonical)",
   );
   ok(
     buildLoginUrlWithReturn("/studio/profile") ===
@@ -266,8 +268,8 @@ function testLoginReturnSanitize() {
   );
   ok(
     buildLoginUrlWithReturn("/studio/settings") ===
-      "/login?return=%2Fsettings",
-    "login URL from studio settings uses canonical return",
+      "/login?return=%2Fstudio%2Fsettings",
+    "login URL from studio settings keeps studio return",
   );
   ok(
     isGuestEligibleReturnParam("/games/abc?tab=voices") === true,
@@ -701,10 +703,10 @@ function testAuthRedirectLoopGuardContract() {
     "StudioDirectAccessGuard defers login redirect to middleware in production",
   );
   ok(
-    studioGuard.includes('"/studio/settings": "/settings"') &&
-      studioGuard.includes("STUDIO_CANONICAL_REDIRECTS") &&
+    !studioGuard.includes('"/studio/settings": "/settings"') &&
+      !studioGuard.includes("STUDIO_CANONICAL_REDIRECTS") &&
       !studioGuard.includes('"/studio/profile": "/mypage/profile"'),
-    "StudioDirectAccessGuard remaps settings stub; profile stays under Studio Shell",
+    "StudioDirectAccessGuard keeps settings and profile under Studio Shell",
   );
 
   const middlewareSource = fs.readFileSync(
@@ -735,8 +737,8 @@ function testAuthRedirectLoopGuardContract() {
   );
   ok(
     !legacyRedirects.includes('"/studio/profile": "/mypage/profile"') &&
-      legacyRedirects.includes('"/studio/settings": "/settings"'),
-    "legacy redirects map studio settings to canonical; profile stays /studio/profile",
+      !legacyRedirects.includes('"/studio/settings": "/settings"'),
+    "legacy redirects leave studio settings and profile under Studio Shell",
   );
 }
 
@@ -775,8 +777,9 @@ function testOAuthRedirectOriginContract() {
   );
   ok(
     authRedirect.includes('flow === "x_link"') &&
-      authRedirect.includes("/settings?x=linked"),
-    "x_link callback resolves to /settings?x=linked",
+      authRedirect.includes("resolveSettingsSurfacePath") &&
+      authRedirect.includes("?x=linked"),
+    "x_link callback resolves via settings surface (?x=linked)",
   );
   ok(
     authProvider.includes('setOAuthFlowCookies("x_login"') &&
@@ -795,6 +798,37 @@ function testOAuthRedirectOriginContract() {
       callbackRoute.includes("settingsXErrorPath") &&
       !callbackRoute.includes("NEXT_PUBLIC_SITE_URL"),
     "callback route uses request cookies and granular x_link errors",
+  );
+  ok(
+    callbackRoute.includes("settingsXErrorPath(reason, next)") ||
+      callbackRoute.includes("settingsXErrorPath(reason, settingsPath)"),
+    "callback route passes settings next into settingsXErrorPath",
+  );
+  ok(
+    !/xLinkErrorRedirect\(\s*origin,\s*[^,]+,\s*cookieResponse\s*\)/.test(
+      callbackRoute,
+    ),
+    "no xLinkErrorRedirect call omits settings next (3-arg regression)",
+  );
+  ok(
+    (callbackRoute.match(/xLinkErrorRedirect\(/g) ?? []).length >= 7 &&
+      (callbackRoute.match(/,\s*next\s*\)/g) ?? []).length >= 7,
+    "xLinkErrorRedirect call sites and , next) closings are present",
+  );
+  ok(
+    settingsXErrorPath("oauth_provider_error", "/settings") ===
+      "/settings?x=error&reason=oauth_provider_error" &&
+      settingsXErrorPath("oauth_provider_error", "/studio/settings") ===
+        "/studio/settings?x=error&reason=oauth_provider_error" &&
+      settingsXErrorPath("missing_code", "/settings") ===
+        "/settings?x=error&reason=missing_code" &&
+      settingsXErrorPath("missing_code", "/studio/settings") ===
+        "/studio/settings?x=error&reason=missing_code" &&
+      settingsXErrorPath("callback_failed", "/studio/settings") ===
+        "/studio/settings?x=error&reason=callback_failed" &&
+      settingsXErrorPath("exchange_failed", "/studio/settings") ===
+        "/studio/settings?x=error&reason=exchange_failed",
+    "Player/Studio × provider/missing-code/callback/exchange error destinations",
   );
   ok(
     loginPage.includes("XOAuthLoginSection") &&
@@ -855,12 +889,63 @@ function testOAuthRedirectUrlValues() {
   ok(
     resolveOAuthCallbackDestination({ flow: "x_link", next: "/settings" }) ===
       "/settings?x=linked",
-    "x_link success destination",
+    "x_link success destination (Player settings)",
+  );
+  ok(
+    resolveOAuthCallbackDestination({
+      flow: "x_link",
+      next: "/studio/settings",
+    }) === "/studio/settings?x=linked",
+    "x_link success destination (Studio settings)",
+  );
+  ok(
+    resolveOAuthCallbackDestination({
+      flow: "x_link",
+      next: "/games/abc",
+    }) === "/settings?x=linked",
+    "x_link rejects non-settings next and falls back to Player settings",
   );
   ok(
     resolveOAuthCallbackErrorPath("x_link") ===
       "/settings?x=error&reason=callback_failed",
-    "x_link error destination",
+    "x_link error destination defaults to Player settings",
+  );
+  ok(
+    resolveOAuthCallbackErrorPath("x_link", "/studio/settings") ===
+      "/studio/settings?x=error&reason=callback_failed",
+    "x_link error destination keeps Studio settings",
+  );
+  ok(
+    settingsXErrorPath("oauth_provider_error", "/settings") ===
+      "/settings?x=error&reason=oauth_provider_error",
+    "settingsXErrorPath Player provider error (callback real path)",
+  );
+  ok(
+    settingsXErrorPath("oauth_provider_error", "/studio/settings") ===
+      "/studio/settings?x=error&reason=oauth_provider_error",
+    "settingsXErrorPath Studio provider error (callback real path)",
+  );
+  ok(
+    settingsXErrorPath("callback_failed", "/studio/settings") ===
+      "/studio/settings?x=error&reason=callback_failed",
+    "settingsXErrorPath Studio callback failure (callback real path)",
+  );
+  ok(
+    settingsXErrorPath("exchange_failed", "/games/abc") ===
+      "/settings?x=error&reason=exchange_failed",
+    "settingsXErrorPath rejects non-settings next (Player fallback)",
+  );
+  ok(
+    getEmailChangeRedirectUrl("/studio/settings").includes(
+      encodeURIComponent("/studio/settings?email=confirmed"),
+    ),
+    "email change redirect keeps Studio settings surface",
+  );
+  ok(
+    getEmailChangeRedirectUrl("/settings").includes(
+      encodeURIComponent("/settings?email=confirmed"),
+    ),
+    "email change redirect keeps Player settings surface",
   );
   ok(
     resolveOAuthCallbackDestination({ flow: "x_login", next: "/home" }) === "/home",

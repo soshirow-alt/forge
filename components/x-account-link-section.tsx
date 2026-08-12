@@ -13,6 +13,10 @@ import { fetchOwnXProfile } from "@/lib/supabase/user-x-profiles-db";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 import { formatXHandleLabel, hasLinkedXIdentity, isXAuthEnabled } from "@/lib/x-auth";
 import type { Provider } from "@supabase/supabase-js";
+import {
+  PLAYER_SETTINGS_PATH,
+  type SettingsSurfacePath,
+} from "@/lib/settings-surface";
 
 function readXLinkStatusMessage(searchParams: URLSearchParams) {
   const xParam = searchParams.get("x");
@@ -73,7 +77,11 @@ function readXLinkStatusMessage(searchParams: URLSearchParams) {
   return null;
 }
 
-export function XAccountLinkSection() {
+export function XAccountLinkSection({
+  settingsPath = PLAYER_SETTINGS_PATH,
+}: {
+  settingsPath?: SettingsSurfacePath;
+}) {
   const searchParams = useSearchParams();
   const { user, hydrated, linkOAuthIdentity } = useAuth();
   const supabase = getOptionalSupabaseClient();
@@ -136,7 +144,7 @@ export function XAccountLinkSection() {
     setActionMessage(null);
 
     try {
-      await linkOAuthIdentity("x" as Provider, "/settings");
+      await linkOAuthIdentity("x" as Provider, settingsPath);
     } catch (caught) {
       const authError = caught as { message?: string; code?: string };
       setActionMessage({

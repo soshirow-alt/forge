@@ -219,11 +219,6 @@ export function sanitizeLoginReturnUrl(
         ? new URLSearchParams(decoded.slice(queryIndex + 1))
         : new URLSearchParams();
 
-    // Old Studio settings stub → canonical settings (profile stays /studio/profile)
-    if (pathname === "/studio/settings") {
-      return search.toString() ? null : "/settings";
-    }
-
     if (
       pathname === "/home" ||
       pathname === "/guide" ||

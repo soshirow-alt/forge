@@ -1,6 +1,7 @@
 "use client";
 
 import { ForgeSettingsForm } from "@/components/forge-settings-form";
+import { PLAYER_SETTINGS_PATH } from "@/lib/settings-surface";
 
 export function PlayerSettingsV0Page() {
   return (
@@ -11,7 +12,7 @@ export function PlayerSettingsV0Page() {
           アカウント・通知・公開設定。Player / Studio で共通です。
         </p>
       </header>
-      <ForgeSettingsForm />
+      <ForgeSettingsForm settingsPath={PLAYER_SETTINGS_PATH} />
     </div>
   );
 }

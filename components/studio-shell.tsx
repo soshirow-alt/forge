@@ -195,7 +195,10 @@ function StudioSidebarNavBody({ showFeedback = true }: { showFeedback?: boolean 
       <SidebarDivider />
 
       <div className="space-y-1">
-        <Link href="/settings" className={navLinkClass(pathname === "/settings" || pathname === "/studio/settings")}>
+        <Link
+          href="/studio/settings"
+          className={navLinkClass(pathname === "/studio/settings")}
+        >
           設定
         </Link>
         <Link href="/studio/guide" className={navLinkClass(pathname === "/studio/guide")}>

@@ -12,6 +12,10 @@ import {
   PRIVACY_PATH,
   TERMS_PATH,
 } from "@/lib/legal-routes";
+import {
+  PLAYER_SETTINGS_PATH,
+  type SettingsSurfacePath,
+} from "@/lib/settings-surface";
 import { useUserSettings, type SettingsToggleItem } from "@/hooks/use-user-settings";
 import {
   privacySettingsSection,
@@ -379,21 +383,31 @@ function SettingsLegalLinks() {
 }
 
 /** Canonical settings form — same surface for Player and Studio entry points. */
-export function ForgeSettingsForm() {
+export function ForgeSettingsForm({
+  settingsPath = PLAYER_SETTINGS_PATH,
+}: {
+  settingsPath?: SettingsSurfacePath;
+}) {
   return (
     <div className="space-y-8">
       <Suspense fallback={<AccountSettingsFallback />}>
-        <AccountSettingsPanel section="credentials" />
+        <AccountSettingsPanel
+          section="credentials"
+          settingsPath={settingsPath}
+        />
       </Suspense>
 
       <Suspense fallback={<AccountSettingsFallback />}>
-        <XAccountLinkSection />
+        <XAccountLinkSection settingsPath={settingsPath} />
       </Suspense>
 
       <PreferenceSettingsPanel />
 
       <Suspense fallback={null}>
-        <AccountSettingsPanel section="deletion" />
+        <AccountSettingsPanel
+          section="deletion"
+          settingsPath={settingsPath}
+        />
       </Suspense>
 
       <SettingsLegalLinks />

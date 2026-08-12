@@ -1,5 +1,10 @@
 import { sanitizeLoginReturnUrl } from "@/lib/login-return-url";
 import {
+  PLAYER_SETTINGS_PATH,
+  resolveSettingsSurfacePath,
+  type SettingsSurfacePath,
+} from "@/lib/settings-surface";
+import {
   FORGE_LEGACY_PRODUCTION_SITE_ORIGIN,
   FORGE_PREVIEW_BRANCH_ALIAS_ORIGIN,
   FORGE_PRODUCTION_SITE_ORIGIN,
@@ -59,8 +64,11 @@ export function getPasswordResetRedirectUrl(): string {
   return `${getAuthOrigin()}/auth/callback?next=${next}`;
 }
 
-export function getEmailChangeRedirectUrl(): string {
-  const next = encodeURIComponent("/settings?email=confirmed");
+export function getEmailChangeRedirectUrl(
+  settingsPath?: string | null,
+): string {
+  const surface: SettingsSurfacePath = resolveSettingsSurfacePath(settingsPath);
+  const next = encodeURIComponent(`${surface}?email=confirmed`);
   return `${getAuthOrigin()}/auth/callback?next=${next}`;
 }
 
@@ -86,16 +94,23 @@ export function resolveOAuthCallbackDestination(options: {
   next: string;
 }): string {
   if (options.flow === "x_link") {
-    return "/settings?x=linked";
+    const surface = resolveSettingsSurfacePath(options.next);
+    return `${surface}?x=linked`;
   }
 
   return options.next;
 }
 
-export function resolveOAuthCallbackErrorPath(flow: string | null): string {
+export function resolveOAuthCallbackErrorPath(
+  flow: string | null,
+  next?: string | null,
+): string {
   if (flow === "x_link") {
-    return "/settings?x=error&reason=callback_failed";
+    const surface = resolveSettingsSurfacePath(next);
+    return `${surface}?x=error&reason=callback_failed`;
   }
 
   return "/login?error=auth_callback";
 }
+
+export { PLAYER_SETTINGS_PATH };

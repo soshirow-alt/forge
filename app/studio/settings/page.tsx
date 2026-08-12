@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
+import { StudioSettingsPage } from "@/components/studio-settings-page";
 
-/** Old Studio settings URL → canonical /settings */
 export default function StudioSettingsRoute() {
-  redirect("/settings");
+  return <StudioSettingsPage />;
 }

@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-08-13 — Studio Settings を Studio mode で維持（Preview）
+
+- **Studio「設定」** — sidebar / mobile drawer が `/studio/settings` を開き、Studio shell（sidebar・header・mode）を維持
+- **共有内容** — 設定フォームは従来どおり `ForgeSettingsForm`（Player `/settings` と同一内容・duplicate なし）
+- **Routing** — `/studio/settings` → `/settings` の legacy / guard リダイレクトを撤去。login return も Studio 側を保持
+- **Auth 復帰** — X連携・メール変更確認は起点 surface（`/settings` or `/studio/settings`）へ戻す（許可2ルートのみ）
+- **非実施** — Player `/settings` の仕様変更なし / DB・Production なし
+
 ## 2026-08-13 — Project Detail action row 1行化（視覚階層・Preview）
 
 - **上部アクション** — 2行（主CTA+FB / 更新を追う+あとで）を **1行** に戻す。左=主CTA+フィードバック、右=更新を追う+あとで遊ぶ/見る。狭い幅は横スクロール（折り返しなし）

@@ -1,3 +1,5 @@
+import { resolveSettingsSurfacePath } from "@/lib/settings-surface";
+
 export type OAuthCallbackFailReason =
   | "missing_oauth_flow_cookie"
   | "missing_code"
@@ -31,10 +33,14 @@ export function isXAccountAlreadyLinkedReason(
   );
 }
 
-export function settingsXErrorPath(reason: OAuthCallbackFailReason): string {
+export function settingsXErrorPath(
+  reason: OAuthCallbackFailReason,
+  settingsPath?: string | null,
+): string {
   const normalized =
     reason === "x_account_already_linked" ? "x_account_already_linked" : reason;
-  return `/settings?x=error&reason=${encodeURIComponent(normalized)}`;
+  const surface = resolveSettingsSurfacePath(settingsPath);
+  return `${surface}?x=error&reason=${encodeURIComponent(normalized)}`;
 }
 
 export function loginAuthErrorPath(reason: OAuthCallbackFailReason): string {

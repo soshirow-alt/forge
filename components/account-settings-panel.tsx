@@ -16,6 +16,10 @@ import {
 } from "@/lib/account-settings";
 import { changeEmailWithReauth, changePasswordWithReauth } from "@/lib/account-auth";
 import { getAuthErrorMessage } from "@/lib/auth";
+import {
+  PLAYER_SETTINGS_PATH,
+  type SettingsSurfacePath,
+} from "@/lib/settings-surface";
 import { getOptionalSupabaseClient } from "@/lib/supabase/client";
 
 type AccountEdit = "email" | "password" | "delete" | null;
@@ -24,8 +28,10 @@ type AccountSettingsSection = "credentials" | "deletion";
 
 export function AccountSettingsPanel({
   section = "credentials",
+  settingsPath = PLAYER_SETTINGS_PATH,
 }: {
   section?: AccountSettingsSection;
+  settingsPath?: SettingsSurfacePath;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -141,7 +147,13 @@ export function AccountSettingsPanel({
     setMessage(null);
 
     try {
-      await changeEmailWithReauth(supabase, user.email, currentPassword, emailDraft);
+      await changeEmailWithReauth(
+        supabase,
+        user.email,
+        currentPassword,
+        emailDraft,
+        settingsPath,
+      );
       setPendingEmail(emailDraft.trim());
       setAccountEdit(null);
       resetSensitiveFields();

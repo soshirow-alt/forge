@@ -12,6 +12,9 @@ import {
   type OAuthCallbackFailReason,
 } from "@/lib/oauth-callback-errors";
 import {
+  isSettingsSurfacePath,
+} from "@/lib/settings-surface";
+import {
   readOAuthFlowCookies,
   clearOAuthFlowCookies,
 } from "@/lib/oauth-flow-cookie";
@@ -34,8 +37,12 @@ function xLinkErrorRedirect(
   origin: string,
   reason: OAuthCallbackFailReason,
   cookieResponse: () => NextResponse,
+  settingsPath?: string | null,
 ) {
-  return finalizeRedirect(`${origin}${settingsXErrorPath(reason)}`, cookieResponse);
+  return finalizeRedirect(
+    `${origin}${settingsXErrorPath(reason, settingsPath)}`,
+    cookieResponse,
+  );
 }
 
 function xLoginErrorRedirect(
@@ -73,7 +80,7 @@ export async function GET(request: NextRequest) {
     const reason: OAuthCallbackFailReason = "callback_failed";
     const target =
       flow === "x_link"
-        ? `${origin}${settingsXErrorPath(reason)}`
+        ? `${origin}${settingsXErrorPath(reason, next)}`
         : `${origin}${loginAuthErrorPath(reason)}`;
     return NextResponse.redirect(target);
   }
@@ -102,7 +109,7 @@ export async function GET(request: NextRequest) {
       reason,
     });
     if (flow === "x_link") {
-      return xLinkErrorRedirect(origin, reason, cookieResponse);
+      return xLinkErrorRedirect(origin, reason, cookieResponse, next);
     }
     return xLoginErrorRedirect(origin, reason, cookieResponse);
   }
@@ -114,6 +121,7 @@ export async function GET(request: NextRequest) {
         origin,
         hasFlowCookie ? "missing_code" : "missing_oauth_flow_cookie",
         cookieResponse,
+        next,
       );
     }
     return xLoginErrorRedirect(origin, "missing_code", cookieResponse);
@@ -130,7 +138,7 @@ export async function GET(request: NextRequest) {
       exchangeError.code,
     );
     if (flow === "x_link") {
-      return xLinkErrorRedirect(origin, reason, cookieResponse);
+      return xLinkErrorRedirect(origin, reason, cookieResponse, next);
     }
     return xLoginErrorRedirect(origin, reason, cookieResponse);
   }
@@ -146,7 +154,7 @@ export async function GET(request: NextRequest) {
       detail: userError?.message?.slice(0, 200) ?? null,
     });
     if (flow === "x_link") {
-      return xLinkErrorRedirect(origin, "missing_user", cookieResponse);
+      return xLinkErrorRedirect(origin, "missing_user", cookieResponse, next);
     }
     return xLoginErrorRedirect(origin, "missing_user", cookieResponse);
   }
@@ -178,11 +186,11 @@ export async function GET(request: NextRequest) {
       code: syncResult.code,
       detail: syncResult.detail?.slice(0, 200) ?? null,
     });
-    if (flow === "x_link" || next.startsWith("/settings")) {
-      return xLinkErrorRedirect(origin, syncResult.code, cookieResponse);
+    if (flow === "x_link" || isSettingsSurfacePath(next)) {
+      return xLinkErrorRedirect(origin, syncResult.code, cookieResponse, next);
     }
     if (syncResult.code === "x_account_already_linked") {
-      return xLinkErrorRedirect(origin, syncResult.code, cookieResponse);
+      return xLinkErrorRedirect(origin, syncResult.code, cookieResponse, next);
     }
   }
 
@@ -191,7 +199,7 @@ export async function GET(request: NextRequest) {
       flow: flow ?? "none",
       identityProviders,
     });
-    return xLinkErrorRedirect(origin, "missing_x_identity", cookieResponse);
+    return xLinkErrorRedirect(origin, "missing_x_identity", cookieResponse, next);
   }
 
   const destination = resolveOAuthCallbackDestination({ flow, next });

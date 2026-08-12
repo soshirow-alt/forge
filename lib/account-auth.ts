@@ -45,6 +45,7 @@ export async function changeEmailWithReauth(
   email: string,
   currentPassword: string,
   newEmail: string,
+  settingsPath?: string | null,
 ): Promise<void> {
   const trimmed = newEmail.trim();
   if (!trimmed.includes("@")) {
@@ -55,7 +56,7 @@ export async function changeEmailWithReauth(
 
   const { error: updateError } = await supabase.auth.updateUser(
     { email: trimmed },
-    { emailRedirectTo: getEmailChangeRedirectUrl() },
+    { emailRedirectTo: getEmailChangeRedirectUrl(settingsPath) },
   );
 
   if (updateError) {
