@@ -112,7 +112,7 @@ export function ForgeShellMobileDrawer({
             {children}
           </nav>
           {footer ? (
-            <div className="shrink-0 space-y-4 border-t border-zinc-800/80 px-3 py-4">
+            <div className="forge-safe-pb shrink-0 space-y-4 border-t border-zinc-800/80 px-3 py-4">
               {footer}
             </div>
           ) : null}

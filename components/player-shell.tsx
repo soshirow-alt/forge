@@ -376,7 +376,7 @@ export function MyPageTabs({
             onClick={() => onTabChange(tab.id)}
             className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
               selected
-                ? "border-white text-white"
+                ? "forge-tab-selected"
                 : "border-transparent text-zinc-500 hover:text-zinc-300"
             }`}
           >

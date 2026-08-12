@@ -520,7 +520,7 @@ export function ConsultationThread({
       </div>
 
       {composingStart && counterpartId ? (
-        <div className="sticky bottom-3 mt-6">
+        <div className="forge-safe-pb sticky bottom-3 mt-6">
           <ConsultationStartForm
             counterpartId={counterpartId}
             counterpartName={counterpartName}
@@ -538,7 +538,7 @@ export function ConsultationThread({
           />
         </div>
       ) : consultation?.status === "open" ? (
-        <div className="sticky bottom-3 mt-6 rounded-xl border border-zinc-700 bg-zinc-950 p-3">
+        <div className="forge-safe-pb sticky bottom-3 mt-6 rounded-xl border border-zinc-700 bg-zinc-950 p-3">
           <textarea
             value={body}
             onChange={(event) => setBody(event.target.value)}

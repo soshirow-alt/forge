@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-08-13 — Mobile / responsive safe fixes（Preview）
+
+- **Header mode switch** — `min-w` 撤廃・`text-xs` on narrow（crush 緩和）
+- **Detail retention** — watch/save を `min-h-10` + 余白増（タップ領域）
+- **Search category tabs** — 320向け横スクロール chip（`min-w-[36rem]` 撤去）
+- **safe-area** — `.forge-safe-pb` を drawer footer / Messages composer に適用
+- **Tabs** — Studio MyPage selected を `forge-tab-selected` に
+- **Settings section title** — mode token（`forge-accent-link`）
+- **非実施** — bottom nav 新設 / Detail sticky dock / 機械的 violet 置換
+
 ## 2026-08-13 — Nav performance safe opts（Preview）
 
 - **Category / Game Home** — whole-home と同じ 20s public in-memory TTL（auth 非依存・selection ロジック変更なし）

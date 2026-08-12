@@ -1052,13 +1052,13 @@ function GameDetailV0PageBody({
                   <button
                     type="button"
                     onClick={handleWatchToggle}
-                    className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors ${
+                    className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-3 py-2.5 text-xs font-medium transition-colors ${
                       watching
                         ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400/90 hover:bg-emerald-500/10"
                         : "border-zinc-800/70 bg-transparent text-zinc-500 hover:border-zinc-700 hover:bg-zinc-900/40 hover:text-zinc-300"
                     }`}
                   >
-                    <Check className="size-3.5 shrink-0" aria-hidden="true" />
+                    <Check className="size-4 shrink-0" aria-hidden="true" />
                     {watching ? WATCH_BUTTON_ON : WATCH_BUTTON_OFF}
                   </button>
                   <button
@@ -1072,14 +1072,14 @@ function GameDetailV0PageBody({
                         setMockSaved((value) => !value);
                       })
                     }
-                    className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors ${
+                    className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-3 py-2.5 text-xs font-medium transition-colors ${
                       saved
                         ? "border-violet-500/30 bg-violet-500/5 text-violet-300/90 hover:bg-violet-500/10"
                         : "border-zinc-800/70 bg-transparent text-zinc-500 hover:border-zinc-700 hover:bg-zinc-900/40 hover:text-zinc-300"
                     }`}
                   >
                     <Bookmark
-                      className="size-3.5 shrink-0"
+                      className="size-4 shrink-0"
                       aria-hidden="true"
                     />
                     {saved

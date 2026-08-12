@@ -144,7 +144,7 @@ function SettingsGroup({
 
   return (
     <div>
-      <h3 className="text-sm font-medium text-violet-200">{title}</h3>
+      <h3 className="forge-accent-link text-sm font-medium">{title}</h3>
       <div className="mt-3">
         <SettingsItemList items={visibleItems} disabled={disabled} onToggle={onToggle} />
       </div>

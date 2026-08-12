@@ -63,12 +63,12 @@ export function PlayerIaCategoryTabs() {
         カテゴリ
       </span>
       <div className="min-w-0 flex-1 overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-950/80 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <ul className="grid w-full min-w-[36rem] grid-cols-6 gap-1 sm:min-w-0">
+        <ul className="flex w-max min-w-full gap-1 sm:grid sm:w-full sm:min-w-0 sm:grid-cols-6">
           {PROJECT_CATEGORY_NAV.map((item) => {
             const selected = item.id === activeCategory;
             const href = buildSearchHrefForCategory(item.id, searchParams);
             return (
-              <li key={item.id} className="min-w-0">
+              <li key={item.id} className="min-w-[4.75rem] shrink-0 sm:min-w-0">
                 <Link
                   href={href}
                   aria-current={selected ? "page" : undefined}
