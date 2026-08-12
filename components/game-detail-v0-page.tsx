@@ -990,85 +990,104 @@ function GameDetailV0PageBody({
           </section>
 
           <div className="flex flex-col gap-2.5">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              {hydrated &&
-              isLoggedIn &&
-              primaryPlayUrl &&
-              !playUnavailableOnPublic &&
-              (isRealProject ? Boolean(playSourceGame?.playUrl?.trim()) : true) ? (
-                <a
-                  href={primaryPlayUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={handlePrimaryPlayAnchorClick}
-                  className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
-                >
-                  <PrimaryCtaIcon
-                    name={categoryChrome.primaryCtaIcon}
-                    className="size-4"
-                  />
-                  {primaryPlayCtaLabel}
-                </a>
-              ) : (
+            {/*
+              Always one row: left = primary+FB, right = watch+save.
+              Narrow widths scroll horizontally (no wrap / no second action row).
+            */}
+            <div className="-mx-1 flex min-w-0 flex-nowrap items-center gap-x-2.5 overflow-x-auto px-1">
+              <div className="flex shrink-0 flex-nowrap items-center gap-1.5">
+                {hydrated &&
+                isLoggedIn &&
+                primaryPlayUrl &&
+                !playUnavailableOnPublic &&
+                (isRealProject ? Boolean(playSourceGame?.playUrl?.trim()) : true) ? (
+                  <a
+                    href={primaryPlayUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={handlePrimaryPlayAnchorClick}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-violet-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
+                  >
+                    <PrimaryCtaIcon
+                      name={categoryChrome.primaryCtaIcon}
+                      className="size-4"
+                    />
+                    {primaryPlayCtaLabel}
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handlePlay}
+                    disabled={!hydrated || playUnavailableOnPublic}
+                    title={
+                      playUnavailableOnPublic
+                        ? PLAY_URL_MISSING_MESSAGE
+                        : undefined
+                    }
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-violet-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <PrimaryCtaIcon
+                      name={categoryChrome.primaryCtaIcon}
+                      className="size-4"
+                    />
+                    {hydrated && (isLoggedIn || isGuestEntry)
+                      ? primaryPlayCtaLabel
+                      : `ログインして${primaryPlayCtaLabel}`}
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={handlePlay}
-                  disabled={!hydrated || playUnavailableOnPublic}
-                  title={
-                    playUnavailableOnPublic ? PLAY_URL_MISSING_MESSAGE : undefined
-                  }
-                  className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={handleFeedback}
+                  className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-zinc-700/80 bg-transparent px-2.5 py-2 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200"
                 >
-                  <PrimaryCtaIcon
-                    name={categoryChrome.primaryCtaIcon}
-                    className="size-4"
-                  />
-                  {hydrated && (isLoggedIn || isGuestEntry)
-                    ? primaryPlayCtaLabel
-                    : `ログインして${primaryPlayCtaLabel}`}
+                  {feedbackCtaLabel}
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={handleFeedback}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-700/80 bg-transparent px-4 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200"
-              >
-                {feedbackCtaLabel}
-              </button>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={handleWatchToggle}
-                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors sm:gap-2 sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-sm ${
-                  watching
-                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
-                    : "border-zinc-800 bg-zinc-950/40 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
-                }`}
-              >
-                <Check className="size-3.5 sm:size-4" aria-hidden="true" />
-                {watching ? WATCH_BUTTON_ON : WATCH_BUTTON_OFF}
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  handleProtectedAction(() => {
-                    if (isRealProject) {
-                      void toggleSaved();
-                      return;
+              </div>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <div
+                  className="h-5 w-px shrink-0 bg-zinc-800"
+                  aria-hidden="true"
+                />
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handleWatchToggle}
+                    className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors ${
+                      watching
+                        ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400/90 hover:bg-emerald-500/10"
+                        : "border-zinc-800/70 bg-transparent text-zinc-500 hover:border-zinc-700 hover:bg-zinc-900/40 hover:text-zinc-300"
+                    }`}
+                  >
+                    <Check className="size-3.5 shrink-0" aria-hidden="true" />
+                    {watching ? WATCH_BUTTON_ON : WATCH_BUTTON_OFF}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleProtectedAction(() => {
+                        if (isRealProject) {
+                          void toggleSaved();
+                          return;
+                        }
+                        setMockSaved((value) => !value);
+                      })
                     }
-                    setMockSaved((value) => !value);
-                  })
-                }
-                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors sm:gap-2 sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-sm ${
-                  saved
-                    ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
-                    : "border-zinc-800 bg-zinc-950/40 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
-                }`}
-              >
-                <Bookmark className="size-3.5 sm:size-4" aria-hidden="true" />
-                {saved ? categoryChrome.saveButtonLabelOn : categoryChrome.saveButtonLabel}
-              </button>
+                    className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors ${
+                      saved
+                        ? "border-violet-500/30 bg-violet-500/5 text-violet-300/90 hover:bg-violet-500/10"
+                        : "border-zinc-800/70 bg-transparent text-zinc-500 hover:border-zinc-700 hover:bg-zinc-900/40 hover:text-zinc-300"
+                    }`}
+                  >
+                    <Bookmark
+                      className="size-3.5 shrink-0"
+                      aria-hidden="true"
+                    />
+                    {saved
+                      ? categoryChrome.saveButtonLabelOn
+                      : categoryChrome.saveButtonLabel}
+                  </button>
+                </div>
+              </div>
             </div>
             {playUnavailableOnPublic || playUrlMissingVisible ? (
               <p className="text-xs text-zinc-500" role="status">

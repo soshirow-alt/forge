@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-08-13 — Project Detail action row 1行化（視覚階層・Preview）
+
+- **上部アクション** — 2行（主CTA+FB / 更新を追う+あとで）を **1行** に戻す。左=主CTA+フィードバック、右=更新を追う+あとで遊ぶ/見る。狭い幅は横スクロール（折り返しなし）
+- **対比** — 左右を gap + 細い縦 divider（全幅で表示）+ wrapper で分離。右は ghost/muted 寄りで静かに（クリック可は維持）
+- **非実施** — creator follow を上部へ戻さない / hero・sidebar・tabs 大改修なし / DB・Production なし
+
 ## 2026-08-13 — Project Detail action hierarchy（最小修正・Preview）
 
 - **Game FB CTA** — 「プレイ後にフィードバックする」→「フィードバックする」（プレイ完了ゲートではない）
