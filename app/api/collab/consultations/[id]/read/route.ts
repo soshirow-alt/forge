@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import {
-  fetchCollabConsultationDetail,
+  listPairConsultationIds,
   markCollabConsultationRead,
 } from "@/lib/supabase/collab-consultations-db";
 import { acknowledgeNotificationsByCoalesceKey } from "@/lib/supabase/user-notifications-db";
@@ -16,17 +16,29 @@ export async function POST(
   if (!data.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const id = (await context.params).id;
   try {
-    const detail = await fetchCollabConsultationDetail(supabase, id);
-    if (!detail) {
+    const { data: row, error } = await supabase
+      .from("collab_consultations")
+      .select("id, initiator_id, counterpart_id")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!row) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    const pairIds =
-      detail.pairConsultationIds.length > 0
-        ? detail.pairConsultationIds
-        : [detail.consultation.id];
-    await markCollabConsultationRead(supabase, id);
+
+    const seed = {
+      initiatorId: String(row.initiator_id),
+      counterpartId: String(row.counterpart_id),
+    };
+
+    const [pairIds] = await Promise.all([
+      listPairConsultationIds(supabase, seed),
+      markCollabConsultationRead(supabase, id),
+    ]);
+
+    const ids = pairIds.length > 0 ? pairIds : [id];
     await Promise.all(
-      pairIds.map((consultationId) =>
+      ids.map((consultationId) =>
         acknowledgeNotificationsByCoalesceKey(
           supabase,
           `consultation:${consultationId}`,

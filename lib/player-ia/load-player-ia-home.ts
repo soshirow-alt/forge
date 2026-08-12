@@ -1,3 +1,4 @@
+import { FORGE_PUBLIC_SOFT_CACHE_TTL_MS } from "@/lib/forge-public-soft-cache";
 import { createAnonSupabaseClient } from "@/lib/supabase/anon-client";
 import {
   fetchPlayerIaHome,
@@ -9,12 +10,12 @@ import {
  * Shared Home payload loader for page + API route.
  * Public anon data only (no auth/user fields) — safe for request-scoped server use.
  *
- * Short in-memory TTL (20s) for public shelves only: Home is auth-independent,
+ * Short in-memory TTL for public shelves only: Home is auth-independent,
  * so this never mixes users. Keeps Studio→Player / repeat warm hits from
  * re-running the FB fill probe waterfall on every navigation. Staleness is
  * intentional and short so new FB / updates appear within one refresh window.
+ * Concurrent cold misses share one in-flight Promise (single-flight).
  */
-const PUBLIC_HOME_CACHE_TTL_MS = 20_000;
 
 type HomeCacheEntry = {
   expiresAt: number;
@@ -22,6 +23,7 @@ type HomeCacheEntry = {
 };
 
 let publicHomeCache: HomeCacheEntry | null = null;
+let publicHomeInflight: Promise<LoadPlayerIaHomeResult> | null = null;
 
 export type LoadPlayerIaHomeResult = {
   home: PlayerIaHomePayload | null;
@@ -38,26 +40,39 @@ export async function loadPlayerIaHomeDetailed(): Promise<LoadPlayerIaHomeResult
     };
   }
 
-  const supabase = createAnonSupabaseClient();
-  if (!supabase) {
-    return { home: null };
+  if (publicHomeInflight) {
+    return publicHomeInflight;
   }
-  try {
-    let timing: PlayerIaHomeTimingMarks | undefined;
-    const home = await fetchPlayerIaHome(supabase, {
-      onTiming: (marks) => {
-        timing = marks;
-      },
-    });
-    publicHomeCache = {
-      payload: home,
-      expiresAt: Date.now() + PUBLIC_HOME_CACHE_TTL_MS,
-    };
-    return { home, timing, cacheHit: false };
-  } catch (error: unknown) {
-    console.error("[player-ia-home] load failed", error);
-    return { home: null };
-  }
+
+  const inflight = (async (): Promise<LoadPlayerIaHomeResult> => {
+    const supabase = createAnonSupabaseClient();
+    if (!supabase) {
+      return { home: null };
+    }
+    try {
+      let timing: PlayerIaHomeTimingMarks | undefined;
+      const home = await fetchPlayerIaHome(supabase, {
+        onTiming: (marks) => {
+          timing = marks;
+        },
+      });
+      publicHomeCache = {
+        payload: home,
+        expiresAt: Date.now() + FORGE_PUBLIC_SOFT_CACHE_TTL_MS,
+      };
+      return { home, timing, cacheHit: false };
+    } catch (error: unknown) {
+      console.error("[player-ia-home] load failed", error);
+      return { home: null };
+    }
+  })().finally(() => {
+    if (publicHomeInflight === inflight) {
+      publicHomeInflight = null;
+    }
+  });
+
+  publicHomeInflight = inflight;
+  return inflight;
 }
 
 export async function loadPlayerIaHome(): Promise<PlayerIaHomePayload | null> {

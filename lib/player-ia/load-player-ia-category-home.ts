@@ -1,3 +1,4 @@
+import { FORGE_PUBLIC_SOFT_CACHE_TTL_MS } from "@/lib/forge-public-soft-cache";
 import { createAnonSupabaseClient } from "@/lib/supabase/anon-client";
 import {
   fetchPlayerIaCategoryHome,
@@ -5,8 +6,7 @@ import {
 } from "@/lib/supabase/player-ia-home-db";
 import type { ProjectCategoryId } from "@/lib/project-categories";
 
-/** Same public TTL policy as whole-home (auth-independent shelves). */
-const PUBLIC_CATEGORY_HOME_CACHE_TTL_MS = 20_000;
+/** Same public TTL + single-flight policy as whole-home (auth-independent shelves). */
 
 type CategoryCacheEntry = {
   expiresAt: number;
@@ -14,6 +14,10 @@ type CategoryCacheEntry = {
 };
 
 const publicCategoryHomeCache = new Map<ProjectCategoryId, CategoryCacheEntry>();
+const publicCategoryHomeInflight = new Map<
+  ProjectCategoryId,
+  Promise<PlayerIaCategoryHomePayload | null>
+>();
 
 export async function loadPlayerIaCategoryHome(
   category: ProjectCategoryId,
@@ -24,19 +28,33 @@ export async function loadPlayerIaCategoryHome(
     return cached.payload;
   }
 
-  const supabase = createAnonSupabaseClient();
-  if (!supabase) {
-    return null;
+  const existing = publicCategoryHomeInflight.get(category);
+  if (existing) {
+    return existing;
   }
-  try {
-    const payload = await fetchPlayerIaCategoryHome(supabase, category);
-    publicCategoryHomeCache.set(category, {
-      payload,
-      expiresAt: Date.now() + PUBLIC_CATEGORY_HOME_CACHE_TTL_MS,
-    });
-    return payload;
-  } catch (error: unknown) {
-    console.error("[player-ia-category-home] load failed", error);
-    return null;
-  }
+
+  const inflight = (async (): Promise<PlayerIaCategoryHomePayload | null> => {
+    const supabase = createAnonSupabaseClient();
+    if (!supabase) {
+      return null;
+    }
+    try {
+      const payload = await fetchPlayerIaCategoryHome(supabase, category);
+      publicCategoryHomeCache.set(category, {
+        payload,
+        expiresAt: Date.now() + FORGE_PUBLIC_SOFT_CACHE_TTL_MS,
+      });
+      return payload;
+    } catch (error: unknown) {
+      console.error("[player-ia-category-home] load failed", error);
+      return null;
+    }
+  })().finally(() => {
+    if (publicCategoryHomeInflight.get(category) === inflight) {
+      publicCategoryHomeInflight.delete(category);
+    }
+  });
+
+  publicCategoryHomeInflight.set(category, inflight);
+  return inflight;
 }

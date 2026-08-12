@@ -36,6 +36,7 @@
     "patch:veteran-developer:staging": "npx --yes tsx scripts/future-demo-seed.ts --patch-veteran-developer",
     "verify:home-discovery-selection": "npx --yes tsx scripts/verify-home-discovery-selection.ts",
     "verify:studio-metrics-soft-cache": "npx --yes tsx scripts/verify-studio-metrics-soft-cache.ts",
+    "verify:public-catalog-soft-cache": "npx --yes tsx scripts/verify-public-catalog-soft-cache.ts",
     "verify:player-ia-home-search-nav": "npx --yes tsx scripts/verify-player-ia-home-search-nav.ts",
     "verify:player-ia-game-home-category-filter": "npx --yes tsx scripts/verify-player-ia-game-home-category-filter.ts",
     "verify:category-neutrality-surface": "npx --yes tsx scripts/verify-category-neutrality-surface.ts",

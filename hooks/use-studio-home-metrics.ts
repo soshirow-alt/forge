@@ -7,6 +7,7 @@ import {
   readStudioHomeMetricsSoftCache,
   writeStudioHomeMetricsSoftCache,
 } from "@/lib/studio-home-metrics-soft-cache";
+import { selectVisibleStudioMetricsSnapshot } from "@/lib/studio-home-metrics-visible";
 import {
   EMPTY_STUDIO_HOME_CONNECTION_METRICS,
   type StudioHomeConnectionMetrics,
@@ -49,14 +50,12 @@ export function useStudioHomeMetrics(granularity: StudioHomeGranularity = "month
   const hasLoadedRef = useRef(false);
 
   // Render-time guard: never paint another user's metrics on the first frame after switch.
-  const visible: MetricsSnapshot =
-    snapshot.userId === userId
-      ? snapshot
-      : {
-          ...EMPTY_SNAPSHOT,
-          userId,
-          initialLoading: Boolean(authResolved && userId),
-        };
+  const visible = selectVisibleStudioMetricsSnapshot(
+    snapshot,
+    userId,
+    EMPTY_STUDIO_HOME_CONNECTION_METRICS,
+    authResolved,
+  );
 
   useEffect(() => {
     let active = true;

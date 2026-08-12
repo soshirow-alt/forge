@@ -113,7 +113,7 @@ export async function listMyCollabConsultations(
 /** All consultation ids for the unordered participant pair of the seed row. */
 export async function listPairConsultationIds(
   supabase: SupabaseClient,
-  consultation: CollabConsultation,
+  consultation: Pick<CollabConsultation, "initiatorId" | "counterpartId">,
 ): Promise<string[]> {
   const { data, error } = await supabase
     .from("collab_consultations")

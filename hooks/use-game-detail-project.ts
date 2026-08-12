@@ -55,7 +55,9 @@ export function useGameDetailProject(id: string): GameDetailProjectResult {
 
   useEffect(() => {
     if (!isPublicProjectId) {
-      setState(MOCK_READY);
+      queueMicrotask(() => {
+        setState(MOCK_READY);
+      });
       return;
     }
 
@@ -67,39 +69,46 @@ export function useGameDetailProject(id: string): GameDetailProjectResult {
       const supabase = getOptionalSupabaseClient();
       if (!supabase) {
         if (!cancelled) {
-          setState({
-            game: null,
-            loaded: true,
-            notFound: hideV0Mock,
-            isOwner: false,
-            isRealProject: true,
+          queueMicrotask(() => {
+            if (cancelled) return;
+            setState({
+              game: null,
+              loaded: true,
+              notFound: hideV0Mock,
+              isOwner: false,
+              isRealProject: true,
+            });
           });
         }
         return;
       }
 
-      // Detail REST first — index 0 gallery path included (count not awaited).
-      const publicGame = await forgePerfTimed(
-        "supabase.fetchPublicProjectById",
-        () => fetchPublicProjectById(supabase, id),
-      );
-
+      let publicGame: Game | null = null;
       let isOwner = false;
       let ownedGame: Game | null = null;
 
       if (user?.id) {
-        if (publicGame) {
-          isOwner = await forgePerfTimed(
-            "supabase.isOwnedPublicOrPrivateProject",
-            () => isOwnedPublicOrPrivateProject(supabase, id, user.id),
-          );
-        } else {
+        const [publicResult, ownedFlag] = await Promise.all([
+          forgePerfTimed("supabase.fetchPublicProjectById", () =>
+            fetchPublicProjectById(supabase, id),
+          ),
+          forgePerfTimed("supabase.isOwnedPublicOrPrivateProject", () =>
+            isOwnedPublicOrPrivateProject(supabase, id, user.id),
+          ),
+        ]);
+        publicGame = publicResult;
+        isOwner = ownedFlag;
+        if (!publicGame && isOwner) {
           ownedGame = await forgePerfTimed(
             "supabase.fetchOwnedProjectById",
             () => fetchOwnedProjectById(supabase, id, user.id),
           );
-          isOwner = Boolean(ownedGame);
         }
+      } else {
+        publicGame = await forgePerfTimed(
+          "supabase.fetchPublicProjectById",
+          () => fetchPublicProjectById(supabase, id),
+        );
       }
 
       if (cancelled) {
@@ -120,12 +129,15 @@ export function useGameDetailProject(id: string): GameDetailProjectResult {
         userId: user?.id ?? null,
       });
 
-      setState({
-        game,
-        loaded: true,
-        notFound: hideV0Mock && !game,
-        isOwner,
-        isRealProject: Boolean(game),
+      queueMicrotask(() => {
+        if (cancelled) return;
+        setState({
+          game,
+          loaded: true,
+          notFound: hideV0Mock && !game,
+          isOwner,
+          isRealProject: Boolean(game),
+        });
       });
 
       // Count RPC in parallel with first image request (Fix A). Public only.
@@ -151,20 +163,26 @@ export function useGameDetailProject(id: string): GameDetailProjectResult {
         const merged = mergeGameWithExtras(enriched);
         upsertGameDetailProject(merged, isOwner ? "owned" : "public");
         if (!cancelled) {
-          setState((prev) => ({
-            ...prev,
-            game: merged,
-          }));
+          queueMicrotask(() => {
+            if (cancelled) return;
+            setState((prev) => ({
+              ...prev,
+              game: merged,
+            }));
+          });
         }
       })();
     }
 
-    setState({
-      game: null,
-      loaded: false,
-      notFound: false,
-      isOwner: false,
-      isRealProject: true,
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setState({
+        game: null,
+        loaded: false,
+        notFound: false,
+        isOwner: false,
+        isRealProject: true,
+      });
     });
     void load();
 
