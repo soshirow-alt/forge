@@ -18,7 +18,7 @@ export function LandingFeaturedGamesSection({
   return (
     <section className="mx-auto max-w-[1320px] px-6 py-12 sm:px-8 sm:py-14">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white">注目の開発中ゲーム</h2>
+        <h2 className="text-xl font-bold text-white">注目の開発中作品</h2>
         <Link
           href="/search"
           className="flex items-center gap-1.5 text-sm font-medium text-violet-300 transition-colors hover:text-violet-200"

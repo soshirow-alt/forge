@@ -21,7 +21,7 @@ const valueProps = [
     icon: MessageSquare,
     iconClass: "bg-violet-500/20 text-violet-300",
     title: "プレイして、フィードバックする",
-    body: "あなたのフィードバックがゲームを進化させます。",
+    body: "あなたのフィードバックが作品を進化させます。",
   },
   {
     icon: TrendingUp,
@@ -33,7 +33,7 @@ const valueProps = [
     icon: Heart,
     iconClass: "bg-amber-500/20 text-amber-300",
     title: "一緒に、最高の体験をつくる",
-    body: "開発者とプレイヤーがつながり、\nまだ見ぬ名作が生まれていきます。",
+    body: "クリエイターとプレイヤーがつながり、\nまだ見ぬ名作が生まれていきます。",
   },
 ] as const;
 
@@ -210,8 +210,8 @@ export function LandingPage({
                   label="プレイヤーのあなたへ"
                   icon={Gamepad2}
                   title="プレイヤーとして参加"
-                  body={"ゲームを探してプレイし、\n開発者にフィードバックを届けましょう。"}
-                  primaryLabel="ゲームを探す"
+                  body={"作品を探して試し、\nクリエイターにフィードバックを届けましょう。"}
+                  primaryLabel="作品を探す"
                   primaryHref={buildLoginUrlWithReturn("/home")}
                   primaryClass="bg-white text-zinc-950 shadow-white/20"
                 />
@@ -220,7 +220,7 @@ export function LandingPage({
                   label="開発者のあなたへ"
                   icon={Wrench}
                   title="開発者としてはじめる"
-                  body={"あなたのゲームを公開し、\nプレイヤーと一緒に育てていきましょう。"}
+                  body={"あなたの作品を公開し、\nプレイヤーと一緒に育てていきましょう。"}
                   primaryLabel="Studioに入る"
                   primaryHref={buildLoginUrlWithReturn("/studio")}
                   primaryClass="bg-emerald-500 text-zinc-950 shadow-emerald-500/30"

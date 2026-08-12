@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-08-13 — Landing Page 5カテゴリ legacy copy（Preview・最小）
+
+- **明確な旧copyのみ** — CTA「ゲームを探す」→「作品を探す」／注目見出し「開発中ゲーム」→「開発中作品」／value・カード本文のゲーム専用前提を作品・クリエイター表現へ
+- **非実施（Owner判断）** — hero「ゲームを、育てる場所。」／metadata title・description の全面書き換え／5カテゴリ列挙の section 追加／visual redesign
+
 ## 2026-08-13 — Player/Studio mode color semantics（Preview）
 
 - **Mode switch CTA** — 遷移先mode色: Playerの「Studioへ」= cyan、Studioの「Playerへ戻る」= purple（`--forge-mode-switch`）
