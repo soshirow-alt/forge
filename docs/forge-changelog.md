@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-08-12 — Home hero geometry を 9a1ff25 へ復元（Preview）
+
+- **正本** — 全体Home「フィードバックが集まっている作品」の見た目を 9a1ff25 の geometry に戻す（新規デザインではない）
+- **左** — 大hero（`min-h-[22rem]` + thumb `flex-[1.35]` / object-cover）。**右** — small 3件を同一 height / 同一 thumb box（`w-28 sm:w-32` + `aspect-[4/3]`）
+- **デッドスペース** — `lg:grid-cols-2 lg:items-stretch` + hero 高さに右columnを合わせる。右cardごとの auto height / 16:10 / 42% thumb は廃止
+- **1/2/3/4件** — shell 不変。足りない右slotは placeholder（outer geometry 同一・低コントラスト・hrefなし）
+- **Game / dev-tool Home** — 同じ CategoryHomeHero presentation。selection は別
+- **維持** — FB 30d→90d→FB≥1 の4件補充、Overview IA、Production / main / 05 未変更
+
 ## 2026-08-12 — Home hero を 1+3 共通シェルに（Preview）
 
 - **全体Home FB** — 4枠が正本。30d → 90d のあと、公開作品のうち FB≥1 を決定順で補充。プレースホルダや「FB募集中」は足さない

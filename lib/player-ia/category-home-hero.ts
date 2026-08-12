@@ -1,7 +1,8 @@
 import type { ProjectCategoryId } from "@/lib/project-categories";
+import { HOME_HERO_RAIL_SLOTS } from "@/lib/player-ia/home-hero-geometry";
 
 export const CATEGORY_HOME_HERO_REAL_LIMIT = 4;
-export const CATEGORY_HOME_HERO_RAIL_SLOTS = 3;
+export const CATEGORY_HOME_HERO_RAIL_SLOTS = HOME_HERO_RAIL_SLOTS;
 
 export const CATEGORY_HOME_HERO_PLACEHOLDER_COPY =
   "このカテゴリの次の作品を待っています";

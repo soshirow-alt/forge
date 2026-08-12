@@ -66,7 +66,9 @@ function read(rel: string): string {
   assert.match(section, /resolveFeedbackGatheringLayout/);
   assert.match(section, /CategoryHomeHero/);
   const hero = read("components/player-ia/category-home-hero.tsx");
-  assert.match(hero, /lg:grid-cols-2/);
+  assert.match(hero, /HOME_HERO_GRID_CLASS/);
+  const geometry = read("lib/player-ia/home-hero-geometry.ts");
+  assert.match(geometry, /lg:grid-cols-2 lg:items-stretch/);
 
   const assemble = read("lib/supabase/player-ia-home-db.ts");
   assert.match(assemble, /softSuppressByCategory\(input\.feedbackCandidates, 4\)/);

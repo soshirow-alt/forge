@@ -370,6 +370,13 @@ function fb(
   assert.match(hero, /plan\.canRotate/);
   assert.match(hero, /plan\.showDots/);
   assert.match(hero, /kind === "placeholder"/);
+  assert.match(hero, /HOME_HERO_GRID_CLASS/);
+  assert.match(hero, /resolveHomeHeroQueueRowHeight/);
+  assert.match(hero, /ResizeObserver/);
+  assert.doesNotMatch(workCards, /aspect-\[16\/10\]|w-\[42%\]/);
+  assert.doesNotMatch(fbSection, /aspect-\[16\/10\]|w-\[42%\]/);
+  assert.match(workCards, /HOME_HERO_QUEUE_THUMB_BOX_CLASS/);
+  assert.match(placeholder, /HOME_HERO_PLACEHOLDER_THUMB_BOX_CLASS/);
   assert.doesNotMatch(placeholder, /href=|gameDetailHref/);
   assert.match(placeholder, /role="presentation"/);
   assert.match(placeholder, /CATEGORY_HOME_HERO_PLACEHOLDER_COPY/);

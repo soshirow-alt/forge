@@ -1,5 +1,9 @@
 import type { LucideIcon } from "lucide-react";
 import { CATEGORY_HOME_HERO_PLACEHOLDER_COPY } from "@/lib/player-ia/category-home-hero";
+import {
+  HOME_HERO_PLACEHOLDER_CHROME_CLASS,
+  HOME_HERO_PLACEHOLDER_THUMB_BOX_CLASS,
+} from "@/lib/player-ia/home-hero-geometry";
 
 export function CategoryHomePlaceholder({
   icon: Icon,
@@ -9,14 +13,14 @@ export function CategoryHomePlaceholder({
   copy?: string;
 }) {
   return (
-    <div
-      role="presentation"
-      className="flex h-full min-h-[148px] w-full items-center gap-3 rounded-xl border border-zinc-800/60 bg-zinc-950/50 px-4 py-3 text-zinc-600"
-    >
-      {Icon ? (
-        <Icon className="size-5 shrink-0 opacity-40" aria-hidden="true" />
-      ) : null}
-      <p className="text-xs leading-relaxed">{copy}</p>
+    <div role="presentation" className={HOME_HERO_PLACEHOLDER_CHROME_CLASS}>
+      <span className={HOME_HERO_PLACEHOLDER_THUMB_BOX_CLASS} aria-hidden="true" />
+      <span className="flex min-w-0 flex-1 flex-col justify-center">
+        {Icon ? (
+          <Icon className="mb-1 size-4 shrink-0 opacity-40 text-zinc-600" aria-hidden="true" />
+        ) : null}
+        <p className="line-clamp-2 text-xs leading-relaxed text-zinc-600">{copy}</p>
+      </span>
     </div>
   );
 }

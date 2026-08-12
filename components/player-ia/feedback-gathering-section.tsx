@@ -2,19 +2,31 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronRight, MessageSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { ProjectThumbnail } from "@/components/project-thumbnail";
 import { CategoryHomeHero } from "@/components/player-ia/category-home-hero";
 import { CategoryHomePlaceholder } from "@/components/player-ia/category-home-placeholder";
 import { buildGameDetailTabHref } from "@/lib/game-detail-tabs";
+import { gameDetailHref } from "@/lib/game-detail-v0-mock-data";
 import { resolveFeedbackGatheringLayout } from "@/lib/player-ia/feedback-gathering-layout";
 import { WHOLE_HOME_HERO_PLACEHOLDER_COPY } from "@/lib/player-ia/category-home-hero";
+import {
+  HOME_HERO_CARD_CHROME_CLASS,
+  HOME_HERO_QUEUE_CARD_CLASS,
+  HOME_HERO_QUEUE_THUMB_BOX_CLASS,
+  HOME_HERO_QUEUE_THUMB_IMG_CLASS,
+  HOME_HERO_THUMB_FLEX_CLASS,
+  HOME_HERO_THUMB_IMG_CLASS,
+} from "@/lib/player-ia/home-hero-geometry";
 import {
   formatPlayerIaRelativeTime,
   formatPlayerIaWindowLabel,
   truncatePlayerIaText,
 } from "@/lib/player-ia/format";
-import { PROJECT_CATEGORY_LABELS } from "@/lib/project-categories";
+import {
+  PROJECT_CATEGORY_LABELS,
+  type ProjectCategoryId,
+} from "@/lib/project-categories";
 import { createRequestNowMs } from "@/lib/player-ia/request-now";
 import type { HomeFeedbackGatheringProject } from "@/lib/supabase/player-ia-home-db";
 
@@ -22,9 +34,14 @@ function createClientFallbackNowMs(): number {
   return createRequestNowMs();
 }
 
-function windowLabel(days: number): string | null {
-  if (days === 30 || days === 90) return formatPlayerIaWindowLabel(days);
-  return null;
+function CategoryBadge({ category }: { category: ProjectCategoryId }) {
+  const label = PROJECT_CATEGORY_LABELS[category]?.trim();
+  if (!label) return null;
+  return (
+    <span className="inline-flex w-fit max-w-full shrink-0 items-center rounded-md bg-zinc-950/70 px-2 py-0.5 text-[11px] font-medium leading-none text-zinc-200 ring-1 ring-inset ring-zinc-700/80">
+      {label}
+    </span>
+  );
 }
 
 function FeedbackHeroCard({
@@ -34,97 +51,87 @@ function FeedbackHeroCard({
   item: HomeFeedbackGatheringProject;
   nowMs: number;
 }) {
-  const href = buildGameDetailTabHref(item.projectId, "voices");
-  const categoryLabel = PROJECT_CATEGORY_LABELS[item.category];
-  const window = windowLabel(item.windowDays);
   return (
-    <Link
-      href={href}
-      className="group flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/60 transition-colors hover:border-violet-500/40"
-    >
-      <div className="relative aspect-[16/10] shrink-0 overflow-hidden">
+    <article className={HOME_HERO_CARD_CHROME_CLASS}>
+      <Link href={gameDetailHref(item.projectId)} className={HOME_HERO_THUMB_FLEX_CLASS}>
         <ProjectThumbnail
           projectId={item.projectId}
           title={item.title}
-          variant="card"
-          className="!max-w-none rounded-none"
-          sizes="(min-width: 1024px) 36vw, 100vw"
+          variant="hero"
+          className={HOME_HERO_THUMB_IMG_CLASS}
+          sizes="(min-width: 1024px) 40vw, 100vw"
         />
-      </div>
-      <div className="flex min-h-0 flex-1 flex-col p-4">
-        <div className="mb-2 flex flex-wrap items-center gap-2">
-          <span className="rounded-md bg-zinc-800 px-1.5 py-0.5 text-[11px] font-medium text-zinc-400">
-            {categoryLabel}
-          </span>
-          {window ? (
-            <span className="text-[11px] text-zinc-500">{window}</span>
-          ) : null}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/25 to-transparent" />
+        <div className="absolute bottom-3 left-3">
+          <CategoryBadge category={item.category} />
         </div>
-        <h3 className="line-clamp-2 text-lg font-bold text-white group-hover:text-violet-200">
-          {item.title}
-        </h3>
-        <p className="mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-zinc-400">
-          {truncatePlayerIaText(item.description, 140)}
+      </Link>
+      <div className="flex shrink-0 flex-col p-4">
+        <Link href={gameDetailHref(item.projectId)}>
+          <h3 className="line-clamp-2 text-lg font-bold text-white hover:text-violet-200">
+            {item.title}
+          </h3>
+        </Link>
+        <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-zinc-400">
+          {truncatePlayerIaText(item.description, 120)}
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
-          <span>FB {item.feedbackCount}</span>
-          <span>投稿者 {item.distinctAuthorCount}</span>
-          <span>
-            {formatPlayerIaRelativeTime(item.lastFeedbackAt, { nowMs })}
-          </span>
+          <span>{formatPlayerIaWindowLabel(item.windowDays)}</span>
+          <span>投稿 {item.distinctAuthorCount}人</span>
+          <span>FB {item.feedbackCount}件</span>
+          {item.hasCreatorReply ? <span>制作者返信あり</span> : null}
+          <span>{formatPlayerIaRelativeTime(item.lastFeedbackAt, { nowMs })}</span>
         </div>
-        <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-violet-300">
-          <MessageSquare className="size-3.5" />
+        <Link
+          href={buildGameDetailTabHref(item.projectId, "voices")}
+          className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-violet-400 hover:text-violet-300"
+        >
+          <MessageSquare className="size-3.5" aria-hidden="true" />
           フィードバックを見る
-        </span>
+        </Link>
       </div>
-    </Link>
+    </article>
   );
 }
 
 function FeedbackQueueCard({
   item,
-  nowMs,
   onPromote,
 }: {
   item: HomeFeedbackGatheringProject;
-  nowMs: number;
   onPromote: () => void;
 }) {
   return (
-    <div className="flex h-full min-h-[148px] overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50">
-      <button
-        type="button"
-        onClick={onPromote}
-        className="relative w-[42%] shrink-0 overflow-hidden"
-        aria-label={`${item.title} を大きく見る`}
-      >
+    <button
+      type="button"
+      onClick={onPromote}
+      className={HOME_HERO_QUEUE_CARD_CLASS}
+      aria-label={`${item.title} を注目表示`}
+    >
+      <span className={HOME_HERO_QUEUE_THUMB_BOX_CLASS}>
         <ProjectThumbnail
           projectId={item.projectId}
           title={item.title}
-          variant="card"
-          className="!max-w-none rounded-none"
-          sizes="(min-width: 1024px) 16vw, 40vw"
+          variant="mini"
+          className={HOME_HERO_QUEUE_THUMB_IMG_CLASS}
+          sizes="140px"
         />
-      </button>
-      <Link
-        href={buildGameDetailTabHref(item.projectId, "voices")}
-        className="group flex min-w-0 flex-1 flex-col justify-center p-3"
-      >
-        <h3 className="truncate text-sm font-bold text-white group-hover:text-violet-200">
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col items-start">
+        <CategoryBadge category={item.category} />
+        <span className="mt-1 line-clamp-1 text-sm font-bold text-white group-hover:text-violet-200">
           {item.title}
-        </h3>
-        <p className="mt-1 line-clamp-2 text-xs text-zinc-500">
-          {truncatePlayerIaText(item.description, 72)}
-        </p>
-        <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-zinc-500">
+        </span>
+        <span className="mt-1 line-clamp-2 text-xs leading-relaxed text-zinc-500">
+          {truncatePlayerIaText(item.description, 80)}
+        </span>
+        <span className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 pt-1 text-[11px] text-zinc-500">
+          <span>{item.distinctAuthorCount}人</span>
           <span>FB {item.feedbackCount}</span>
-          <span>
-            {formatPlayerIaRelativeTime(item.lastFeedbackAt, { nowMs })}
-          </span>
-        </div>
-      </Link>
-    </div>
+          {item.hasCreatorReply ? <span>返信あり</span> : null}
+        </span>
+      </span>
+    </button>
   );
 }
 
@@ -144,23 +151,14 @@ export function FeedbackGatheringSection({
   return (
     <CategoryHomeHero
       items={items}
-      headingId="feedback-gathering-heading"
+      headingId="player-ia-feedback-gathering"
       title={
         <h2
-          id="feedback-gathering-heading"
+          id="player-ia-feedback-gathering"
           className="text-lg font-bold tracking-tight text-white text-balance"
         >
           フィードバックが集まっている作品
         </h2>
-      }
-      seeAll={
-        <Link
-          href="/search?sort=feedback"
-          className="group inline-flex shrink-0 items-center gap-0.5 text-xs font-medium text-violet-400 transition-colors hover:text-violet-300"
-        >
-          すべて見る
-          <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-        </Link>
       }
       placeholder={
         <CategoryHomePlaceholder copy={WHOLE_HOME_HERO_PLACEHOLDER_COPY} />
@@ -169,11 +167,7 @@ export function FeedbackGatheringSection({
         <FeedbackHeroCard item={item} nowMs={displayNowMs} />
       )}
       renderRail={(item, onPromote) => (
-        <FeedbackQueueCard
-          item={item}
-          nowMs={displayNowMs}
-          onPromote={onPromote}
-        />
+        <FeedbackQueueCard item={item} onPromote={onPromote} />
       )}
     />
   );

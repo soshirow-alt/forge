@@ -41,6 +41,7 @@
     "verify:category-display-labels": "npx --yes tsx scripts/verify-category-display-labels.ts",
     "verify:overview-distribution-display": "npx --yes tsx scripts/verify-overview-distribution-display.ts",
     "verify:category-home-hero": "npx --yes tsx scripts/verify-category-home-hero.ts",
+    "verify:home-hero-geometry": "npx --yes tsx scripts/verify-home-hero-geometry.ts",
     "verify:preview-real-email-guards": "npx --yes tsx scripts/staging-only/verify-preview-real-email-guards.ts",
     "verify:preview-real-email": "npx --yes tsx scripts/staging-only/verify-preview-real-email.ts",
     "verify:preview-real-email-matrix": "npx --yes tsx scripts/staging-only/verify-preview-real-email-matrix.ts",
