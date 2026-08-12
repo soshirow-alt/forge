@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-08-13 — Project Detail action hierarchy（最小修正・Preview）
+
+- **Game FB CTA** — 「プレイ後にフィードバックする」→「フィードバックする」（プレイ完了ゲートではない）
+- **Creator follow** — Detail上部 retention 行から削除。右sidebar creator card のフォローは維持（person-level）
+- **Asset primary CTA** — 「素材を見る」→「アセットを見る」（category chrome 共有定数）
+- **非実施** — 更新通知 / 5カテゴリcopy一括 / Studio next-action / DB / Production deploy なし
+
 ## 2026-08-12 — Home API / `/home` 読み込み高速化（code-only）
 
 - **対象** — Production Home（`/api/discovery/player-ia-home`・`/home` RSC）。表示仕様は不変（FB 4件・30d→90d→FB≥1 fill・ranking / shelf / announcement 維持）

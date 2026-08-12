@@ -36,9 +36,20 @@ assert.match(chrome, /asset: "eye"/);
 assert.match(chrome, /"dev-tool": "wrench"/);
 assert.match(chrome, /"service-app": "external-link"/);
 assert.match(chrome, /primaryCtaIcon: "play"/);
-assert.doesNotMatch(
-  chrome.replace(/category === "game"[\s\S]*?return \{[\s\S]*?\};/, ""),
-  /プレイ後にフィードバックする/,
+assert.match(chrome, /feedbackCtaLabelLoggedIn: "フィードバックする"/);
+assert.doesNotMatch(chrome, /プレイ後にフィードバックする/);
+assert.match(chrome, /asset: "アセットを見る"/);
+assert.doesNotMatch(chrome, /素材を見る/);
+
+const detailPage = read("components/game-detail-v0-page.tsx");
+assert.match(detailPage, /showDeveloperFollow/);
+assert.match(detailPage, /handleToggleDeveloperFollow/);
+assert.match(detailPage, /categoryChrome\.followCreatorLabel/);
+// Creator follow stays on sidebar creator card only — no Heart in header retention row.
+assert.doesNotMatch(detailPage, /\bHeart\b/);
+assert.match(
+  detailPage,
+  /game\.developer\.bio[\s\S]*?showDeveloperFollow \? \([\s\S]*?followCreatorLabel[\s\S]*?制作・利用について/,
 );
 
 const search = read("components/developer-search-v0-page.tsx");

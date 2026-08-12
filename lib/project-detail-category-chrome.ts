@@ -140,7 +140,7 @@ const NON_GAME_PRIMARY: Record<
   string
 > = {
   audio: "聴く",
-  asset: "素材を見る",
+  asset: "アセットを見る",
   "dev-tool": "ツールを見る",
   "service-app": "サービスを見る",
 };
@@ -185,7 +185,7 @@ export function resolveProjectDetailCategoryChrome(input: {
       category,
       primaryCtaLabel: game ? getPrimaryPlayCtaLabel(game) : "プレイする",
       primaryCtaIcon: "play",
-      feedbackCtaLabelLoggedIn: "プレイ後にフィードバックする",
+      feedbackCtaLabelLoggedIn: "フィードバックする",
       feedbackCtaLabelGuest: "ログインしてフィードバックする",
       saveButtonLabel: "あとで遊ぶ",
       saveButtonLabelOn: "保存済み",
@@ -207,7 +207,7 @@ export function resolveProjectDetailCategoryChrome(input: {
       game?.assetKinds,
     );
     infoCard = buildAssetInfoCard(assetFields);
-    primaryFromStudio = "素材を見る";
+    primaryFromStudio = "アセットを見る";
   } else if (proto) {
     const fields = decodeCategoryAttributesToPrototypeFields(
       game?.categoryAttributes,

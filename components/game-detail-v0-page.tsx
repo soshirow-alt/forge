@@ -116,7 +116,6 @@ import {
   ExternalLink,
   Eye,
   Headphones,
-  Heart,
   Play,
   Users,
   Wrench,
@@ -1070,22 +1069,6 @@ function GameDetailV0PageBody({
                 <Bookmark className="size-3.5 sm:size-4" aria-hidden="true" />
                 {saved ? categoryChrome.saveButtonLabelOn : categoryChrome.saveButtonLabel}
               </button>
-              {showDeveloperFollow ? (
-                <button
-                  type="button"
-                  onClick={handleToggleDeveloperFollow}
-                  className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors sm:gap-2 sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-sm ${
-                    realFollowing
-                      ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
-                      : "border-zinc-800 bg-zinc-950/40 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
-                  }`}
-                >
-                  <Heart className="size-3.5 sm:size-4" aria-hidden="true" />
-                  {realFollowing
-                    ? categoryChrome.followCreatorLabelOn
-                    : categoryChrome.followCreatorLabel}
-                </button>
-              ) : null}
             </div>
             {playUnavailableOnPublic || playUrlMissingVisible ? (
               <p className="text-xs text-zinc-500" role="status">
