@@ -1,14 +1,31 @@
 import Image from "next/image";
 import { playerGuideStudioEntry } from "@/lib/player-guide-v0-content";
 
-export function GuideStudioEntrySection() {
+export function GuideStudioEntrySection({
+  embedded = false,
+}: {
+  embedded?: boolean;
+}) {
+  const HeadingTag = embedded ? "h3" : "h2";
   return (
-    <section className="mt-10">
-      <h2 className="text-lg font-semibold text-white">{playerGuideStudioEntry.title}</h2>
-      <p className="mt-2 text-sm leading-relaxed text-zinc-500">{playerGuideStudioEntry.lead}</p>
-      <p className="mt-2 text-sm leading-relaxed text-zinc-400">{playerGuideStudioEntry.body}</p>
+    <section className={embedded ? "" : "mt-10"}>
+      <HeadingTag
+        className={
+          embedded
+            ? "text-sm font-semibold text-zinc-200"
+            : "text-lg font-semibold text-white"
+        }
+      >
+        {playerGuideStudioEntry.title}
+      </HeadingTag>
+      <p className="mt-2 text-sm leading-relaxed text-zinc-500">
+        {playerGuideStudioEntry.lead}
+      </p>
+      <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+        {playerGuideStudioEntry.body}
+      </p>
 
-      <figure className="mt-5 overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/40">
+      <figure className="mt-4 overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/40">
         <div className="relative aspect-[16/10] max-h-72 w-full bg-zinc-950">
           <Image
             src={playerGuideStudioEntry.imageSrc}

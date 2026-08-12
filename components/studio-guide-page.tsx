@@ -11,7 +11,7 @@ const steps = [
   { label: "フィードバックを見る", description: "届いたフィードバックを読み、材料にする" },
   { label: "改善する", description: "次のverで何を直すか決める" },
   { label: "新ver公開", description: "開発ログで変化を伝える" },
-  { label: "正式ver公開", description: "育てた記録の区切りとして Released に" },
+  { label: "正式版公開", description: "育てた記録の区切りとして Released に" },
 ] as const;
 
 export function StudioGuidePage() {
@@ -20,7 +20,11 @@ export function StudioGuidePage() {
       <div className="mx-auto max-w-3xl">
         <h1 className="text-2xl font-bold text-white">はじめてガイド</h1>
         <p className="mt-2 text-sm leading-relaxed text-zinc-500">
-          Forge の育成サイクル — ゲームを短いサイクルで育て、フィードバックを活かし、正式verへつなげます。
+          Studio の育成サイクル — 作品を短いサイクルで育て、フィードバックを活かし、正式版へつなげます。はじめての人は Player の{" "}
+          <Link href="/guide" className="text-violet-400 hover:text-violet-300">
+            はじめてガイド
+          </Link>
+          もどうぞ。
         </p>
 
         <ol className="mt-8 space-y-0">
