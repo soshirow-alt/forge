@@ -21,6 +21,11 @@ const migration094 = read(
 );
 assert.match(migration093, /feedback_reciprocity/);
 assert.match(migration093, /consider_feedback_reciprocity/);
+assert.match(migration093, /actor_has_public_project/);
+assert.match(migration093, /developer_profiles/);
+assert.match(migration093, /users_are_blocking/);
+assert.match(migration093, /v_owner = p_actor_id/);
+assert.match(migration093, /visibility = 'public'/);
 assert.match(migration093, /project_feedback_reciprocity_notify/);
 assert.match(migration093, /project_voice_responses_reciprocity_notify/);
 assert.match(migration093, /dismiss_stale_feedback_reciprocity/);
@@ -28,6 +33,26 @@ assert.match(migration093, /feedback-reciprocity:/);
 assert.match(migration093, /enqueue_transactional_email/);
 assert.match(migration093, /user_notifications_reciprocity_open_uidx/);
 assert.doesNotMatch(migration093, /GRANT EXECUTE ON FUNCTION public\.consider_feedback_reciprocity\(uuid, uuid\)\s+TO authenticated/);
+
+const migration095 = read(
+  "supabase/migrations/095_feedback_reciprocity_project_id_text_cast.sql",
+);
+assert.match(migration095, /consider_feedback_reciprocity/);
+assert.match(migration095, /trg_consider_feedback_reciprocity_from_feedback/);
+assert.match(migration095, /trg_consider_feedback_reciprocity_from_voice/);
+assert.match(migration095, /v_project_id/);
+
+const voiceNotif = read("supabase/migrations/009_voice_received_notifications.sql");
+assert.match(voiceNotif, /voice_received/);
+assert.match(voiceNotif, /project_voice_responses/);
+
+const reciprocityDoc = read("docs/feedback-reciprocity-current.md");
+assert.match(reciprocityDoc, /developer_profiles/);
+assert.match(reciprocityDoc, /detailed-only/);
+assert.match(reciprocityDoc, /voice_received/);
+assert.match(reciprocityDoc, /強制交換ではない/);
+assert.match(reciprocityDoc, /creator profile/);
+
 assert.match(migration094, /starts_at/);
 assert.match(migration094, /ends_at/);
 assert.match(migration094, /get_public_platform_announcement_archive/);

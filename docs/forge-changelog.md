@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-08-13 — Staging watch-update 102/103 gate + legal Owner prep
+
+- Staging に migration 102（project_watches GRANT）/ 103（watch-update coalesce unique）適用・検証 PASS
+- Production は未適用（Owner handoff SQL のみ）
+- Feedback reciprocity を最終仕様候補として docs 明確化（コード変更なし）
+- 法務ドラフトの事実照合・条項差分・re-consent 分類を更新（Production-facing 本文未差し替え）
+
 ## 2026-08-13 — Watch update notifications harden + legal drafts (Preview)
 
 - Confirmation依頼と「更新を追う」通知の受信者を分離（確認依頼で watcher 更新が消えない）

@@ -1,42 +1,50 @@
-# Feedback reciprocity — Phase 1 fact sheet (2026-08-13)
+# Feedback reciprocity — final specification (approved candidate)
 
-## Eligibility (server)
+Status: **Owner承認候補**（コード変更なし・2026-08-13）
 
-`consider_feedback_reciprocity(actor, target_project)` via triggers on `project_feedback` / `project_voice_responses` (migrations 093/095).
+## Product intent
 
-Requires ALL of:
+登録ユーザーが他作品へ Feedback したとき、そのユーザー自身に public 作品がある場合のみ、相手側へ「この人にも作品があります」系の再発見導線を出す。
 
-- target project exists, `visibility = 'public'`
+これは:
+
+- 強制交換ではない
+- point / credit 制度ではない
+- 「FBしたから返せ」という義務ではない
+
+## Eligibility（実装）
+
+`consider_feedback_reciprocity`（migrations 093/095）。トリガーは `project_feedback` と `project_voice_responses` の双方。
+
+すべて必須:
+
+- 対象作品が存在し `visibility='public'`
 - actor ≠ owner
-- not blocking
-- `actor_has_public_project(actor)` → ≥1 project with `visibility='public'`
-- `developer_profiles` row for actor
+- 相互ブロックなし
+- `actor_has_public_project(actor)`（public 作品 ≥1）
+- actor に `developer_profiles` 行がある
 
-Then inserts/updates `user_notifications.type = 'feedback_reciprocity'` with coalesce `feedback-reciprocity:{owner}:{actor}`, optional email enqueue (`feedback_reciprocity` pref).
+## CASE matrix（作品 B の制作者視点）
 
-## CASE matrix (owner of work B)
+| CASE | Actor A | 通常 Feedback 通知 (`voice_received`) | Reciprocity | UI CTA |
+|---|---|---|---|---|
+| A public≥1 + voice 回答 | 条件満たす | **あり**（voice INSERT時） | **あり** | `/creators/{A}` |
+| A public≥1 + detailed-only（voiceなし） | 条件満たす | **なし**（voice経路のみ） | **あり**（project_feedback トリガー） | `/creators/{A}` |
+| B 作品なし | 不可 | voiceがあれば通常のみ | **なし** | 追加なし |
+| C draft/privateのみ | 不可 | voiceがあれば通常のみ | **なし** | 追加なし |
+| D 複数 public | Aと同様 | voice経路に依存 | **あり** | **creator profile**（特定作品ではない） |
 
-| Case | Actor A | Reciprocity notif/email | Normal FB path |
-|---|---|---|---|
-| A | ≥1 public project | Yes (+ profile CTA `/creators/{A}`) | Yes (`voice_received` on voice insert; detailed-only may differ) |
-| B | no projects | No | Yes only |
-| C | draft/private only (0 public) | No | Yes only |
-| D | multiple public | Yes (same as A; CTA is profile not a specific project) | Yes |
+## No-project UX
 
-## No-project UX (important)
+- reciprocity は出ない
+- 通常通知は voice 経路があるときのみ（作品の有無で格下げしない）
+- FB 一覧・本文の価値扱いは変えない
 
-- Creator gets **normal Feedback notification only** (when voice/feedback path fires)
-- **No** reciprocity notification / email
-- Profile reciprocity CTA is not added
-- FB content itself is **not** demoted in listing/ranking by this feature
-- Forge treats feedback without public works as valuable; reciprocity is optional rediscovery, not status
+## Soft findings（Production blocker ではない）
 
-## Guest
-
-Production APIs: `guest_feedback_disabled`. No reachable guest reciprocity path. Dead guest write routes remain code-level hard-stops.
+1. プロフィール非公開でも public 作品+developer_profiles があれば reciprocity 発火しうる
+2. detailed-only では通常 `voice_received` が無く reciprocity だけ届く組合せがありうる（上表）
 
 ## Judgment
 
-Behavior matches product intent (non-obligatory rediscovery). **No code change** in Phase 1.
-
-Soft issues (Owner optional later): hidden creator profile still eligible if public projects exist; detailed-only FB without voice may yield no owner `voice_received` while reciprocity still may fire from `project_feedback` trigger — verify product preference if needed.
+現行実装を最終仕様候補として採用。point / obligation / badge / ranking連動は導入しない。
