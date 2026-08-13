@@ -37,7 +37,7 @@ function notificationTitle(notification: Notification): string {
     case "confirmation_request":
       return "確認依頼が届きました";
     case "version_published":
-      return "新しいプレイ可能verが公開されました";
+      return "新しいverが公開されました";
     case "devlog":
       return "開発ログが更新されました";
     case "voice_received":

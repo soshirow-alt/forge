@@ -79,6 +79,12 @@ export async function fetchUserNotifications(
   return (data ?? []) as NotificationRow[];
 }
 
+export type WatchFanoutResult = {
+  /** Delivered or already present (unique conflict). */
+  deliveredUserIds: string[];
+  failureCount: number;
+};
+
 export async function insertVersionPublishedNotifications(
   supabase: SupabaseClient,
   input: {
@@ -87,26 +93,21 @@ export async function insertVersionPublishedNotifications(
     devlogId: string;
     publishedVersion: string;
     message: string;
+    coalesceKey?: string;
   },
-): Promise<void> {
-  if (input.recipientUserIds.length === 0) {
-    return;
-  }
-
-  const rows = input.recipientUserIds.map((userId) => ({
-    user_id: userId,
-    type: "version_published" as const,
-    project_id: input.projectId,
-    devlog_id: input.devlogId,
-    published_version: input.publishedVersion,
-    message: input.message,
-  }));
-
-  const { error } = await supabase.from("user_notifications").insert(rows);
-
-  if (error) {
-    throw error;
-  }
+): Promise<WatchFanoutResult> {
+  return insertWatchFanoutRows(
+    supabase,
+    input.recipientUserIds.map((userId) => ({
+      user_id: userId,
+      type: "version_published" as const,
+      project_id: input.projectId,
+      devlog_id: input.devlogId,
+      published_version: input.publishedVersion,
+      message: input.message,
+      coalesce_key: input.coalesceKey ?? null,
+    })),
+  );
 }
 
 export async function insertDevlogNotifications(
@@ -116,25 +117,20 @@ export async function insertDevlogNotifications(
     projectId: string;
     devlogId: string;
     message: string;
+    coalesceKey?: string;
   },
-): Promise<void> {
-  if (input.recipientUserIds.length === 0) {
-    return;
-  }
-
-  const rows = input.recipientUserIds.map((userId) => ({
-    user_id: userId,
-    type: "devlog" as const,
-    project_id: input.projectId,
-    devlog_id: input.devlogId,
-    message: input.message,
-  }));
-
-  const { error } = await supabase.from("user_notifications").insert(rows);
-
-  if (error) {
-    throw error;
-  }
+): Promise<WatchFanoutResult> {
+  return insertWatchFanoutRows(
+    supabase,
+    input.recipientUserIds.map((userId) => ({
+      user_id: userId,
+      type: "devlog" as const,
+      project_id: input.projectId,
+      devlog_id: input.devlogId,
+      message: input.message,
+      coalesce_key: input.coalesceKey ?? null,
+    })),
+  );
 }
 
 export async function insertConfirmationRequestNotifications(
@@ -146,27 +142,74 @@ export async function insertConfirmationRequestNotifications(
     confirmationRequestId: string;
     publishedVersion?: string | null;
     message: string;
+    coalesceKey?: string;
   },
-): Promise<void> {
-  if (input.recipientUserIds.length === 0) {
-    return;
+): Promise<WatchFanoutResult> {
+  return insertWatchFanoutRows(
+    supabase,
+    input.recipientUserIds.map((userId) => ({
+      user_id: userId,
+      type: "confirmation_request" as const,
+      project_id: input.projectId,
+      devlog_id: input.devlogId,
+      confirmation_request_id: input.confirmationRequestId,
+      published_version: input.publishedVersion ?? null,
+      message: input.message,
+      coalesce_key: input.coalesceKey ?? null,
+    })),
+  );
+}
+
+/**
+ * Per-recipient insert so one duplicate does not abort the whole fanout.
+ * Does not throw: callers soft-fail at publish boundary.
+ */
+async function insertWatchFanoutRows(
+  supabase: SupabaseClient,
+  rows: Record<string, unknown>[],
+): Promise<WatchFanoutResult> {
+  if (rows.length === 0) {
+    return { deliveredUserIds: [], failureCount: 0 };
   }
 
-  const rows = input.recipientUserIds.map((userId) => ({
-    user_id: userId,
-    type: "confirmation_request" as const,
-    project_id: input.projectId,
-    devlog_id: input.devlogId,
-    confirmation_request_id: input.confirmationRequestId,
-    published_version: input.publishedVersion ?? null,
-    message: input.message,
-  }));
-
-  const { error } = await supabase.from("user_notifications").insert(rows);
-
-  if (error) {
-    throw error;
+  const deliveredUserIds: string[] = [];
+  let failureCount = 0;
+  for (const row of rows) {
+    const userId = typeof row.user_id === "string" ? row.user_id : null;
+    const { error } = await supabase.from("user_notifications").insert(row);
+    if (!error) {
+      if (userId) deliveredUserIds.push(userId);
+      continue;
+    }
+    if (isUniqueViolationError(error)) {
+      if (userId) deliveredUserIds.push(userId);
+      continue;
+    }
+    failureCount += 1;
+    console.error("[watch-notify] fanout row insert failed", {
+      userId,
+      type: row.type,
+      error,
+    });
   }
+
+  return { deliveredUserIds, failureCount };
+}
+
+function isUniqueViolationError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+  const code = "code" in error ? String(error.code) : "";
+  const message =
+    "message" in error && typeof error.message === "string"
+      ? error.message
+      : String(error);
+  return (
+    code === "23505" ||
+    message.includes("duplicate key") ||
+    message.includes("unique constraint")
+  );
 }
 
 export function isNotificationTypeMissingError(error: unknown): boolean {

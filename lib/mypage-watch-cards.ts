@@ -46,9 +46,9 @@ export type MypageWatchCardModel = {
 };
 
 export const MYPAGE_WATCH_STATUS_LABEL: Record<MypageWatchStatusId, string> = {
-  updated_since_play: "前回プレイ後に更新",
+  updated_since_play: "前回確認後に更新",
   new_version: "新バージョン公開",
-  latest_unplayed: "最新ver未プレイ",
+  latest_unplayed: "最新ver未確認",
   fb_reflected: "あなたのFBを参考に更新",
   none: "更新なし",
 };

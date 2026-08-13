@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ProjectThumbnail } from "@/components/project-thumbnail";
 import type { MypageWatchCardModel } from "@/lib/mypage-watch-cards";
+import { watchUpdatePrimaryCtaLabel } from "@/lib/notifications";
 
 function formatShortDate(iso: string | null): string | null {
   if (!iso) {
@@ -40,7 +41,10 @@ export function MypageWatchCard({
     card.fbReflected && card.adoptionHref
       ? { label: "変化を確かめる", href: card.adoptionHref }
       : card.hasUpdate
-        ? { label: "もう一度プレイする", href: card.playHref }
+        ? {
+            label: watchUpdatePrimaryCtaLabel(card.game.category),
+            href: card.playHref,
+          }
         : null;
   const secondaryCta = card.hasUpdate
     ? { label: "更新内容を見る", href: card.updatesHref }

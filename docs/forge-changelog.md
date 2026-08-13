@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-08-13 — Watch update notifications harden + legal drafts (Preview)
+
+- Confirmation依頼と「更新を追う」通知の受信者を分離（確認依頼で watcher 更新が消えない）
+- 公開成功後の通知失敗を soft-fail；`coalesce_key` で watch-update dedupe
+- カテゴリ別の更新通知コピー／マイページ CTA
+- `project_watches` authenticated GRANT 用 migration 102（Owner適用）
+- 利用規約・Privacy は `docs/legal/` に改定ドラフトのみ（本番本文未差し替え）
+- Feedback reciprocity は現行仕様を確定（コード変更なし）— `docs/feedback-reciprocity-current.md`
+
 ## 2026-08-13 — LP 5カテゴリ accent（gray除去・既存palette）
 
 - **5カテゴリカード** — 音楽・音声 / サービスの gray・white accent をやめ、indigo（cool purple）/ sky（Studio cyan）へ。ゲーム violet・アセット amber・開発ツール emerald は維持しつつ強弱を調整

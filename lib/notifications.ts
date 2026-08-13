@@ -1,3 +1,8 @@
+import {
+  normalizeProjectCategory,
+  type ProjectCategoryId,
+} from "@/lib/project-categories";
+
 export type NotificationType =
   | "support"
   | "tester_apply"
@@ -35,6 +40,34 @@ export type Notification = {
   publishedVersion?: string;
 };
 
+/** Category-aware CTA verb for watch / update surfaces (not game-only). */
+export function watchUpdatePrimaryCtaLabel(
+  category?: string | null,
+): string {
+  switch (normalizeProjectCategory(category)) {
+    case "audio":
+      return "もう一度聴く";
+    case "asset":
+    case "dev-tool":
+    case "service-app":
+      return "更新を見る";
+    case "game":
+    default:
+      return "もう一度プレイする";
+  }
+}
+
+export function versionPublishedTypeLabel(
+  category?: string | null,
+): string {
+  switch (normalizeProjectCategory(category)) {
+    case "game":
+      return "新しいプレイ可能ver";
+    default:
+      return "新しいverが公開";
+  }
+}
+
 export function getNotificationTypeLabel(type: NotificationType): string {
   switch (type) {
     case "support":
@@ -48,7 +81,7 @@ export function getNotificationTypeLabel(type: NotificationType): string {
     case "devlog":
       return "開発日誌";
     case "version_published":
-      return "新しいプレイ可能ver";
+      return "新しいverが公開";
     case "confirmation_request":
       return "確認依頼";
     case "project_watched":
@@ -90,7 +123,7 @@ export function createNotificationMessage(
     case "devlog":
       return `「${projectTitle}」が更新されました — 開発ログを公開`;
     case "version_published":
-      return `「${projectTitle}」の新しいプレイ可能verが公開されました — 再プレイして回答できます`;
+      return `「${projectTitle}」の新しいverが公開されました — 更新を確認できます`;
     case "confirmation_request":
       return `「${projectTitle}」から確認依頼が届きました`;
     case "project_watched":
@@ -130,7 +163,7 @@ export function getNotificationActionHint(type: NotificationType): string {
     case "devlog":
       return "開発の歩みを見る →";
     case "version_published":
-      return "新verを確認して再プレイ →";
+      return "新verを確認する →";
     case "confirmation_request":
       return "変化を確認する →";
     case "project_watched":
@@ -155,8 +188,32 @@ export function getNotificationActionHint(type: NotificationType): string {
 export function createVersionPublishedMessage(
   projectTitle: string,
   publishedVersion: string,
+  category?: ProjectCategoryId | string | null,
 ): string {
-  return `「${projectTitle}」のプレイ可能ver ${publishedVersion} が公開されました。もう一度プレイして、新しいver向けに回答できます。`;
+  const cat = normalizeProjectCategory(category);
+  const ver = publishedVersion.trim() || "最新";
+  switch (cat) {
+    case "audio":
+      return `「${projectTitle}」の更新ver ${ver} が公開されました。もう一度聴くか、更新内容を確認できます。`;
+    case "asset":
+      return `「${projectTitle}」の更新ver ${ver} が公開されました。更新を見ることができます。`;
+    case "dev-tool":
+      return `「${projectTitle}」の更新ver ${ver} が公開されました。最新版を確認できます。`;
+    case "service-app":
+      return `「${projectTitle}」の更新ver ${ver} が公開されました。更新を見るか、利用できます。`;
+    case "game":
+    default:
+      return `「${projectTitle}」のプレイ可能ver ${ver} が公開されました。もう一度プレイして、新しいver向けに回答できます。`;
+  }
+}
+
+/** Stable coalesce key for watch-update fanout (unique per user_id + key). */
+export function watchUpdateCoalesceKey(input: {
+  updateType: "version_published" | "devlog" | "confirmation_request";
+  projectId: string;
+  updateEntityId: string;
+}): string {
+  return `watch-update:${input.updateType}:${input.projectId}:${input.updateEntityId}`;
 }
 
 export function sortNotificationsNewestFirst(

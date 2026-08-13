@@ -163,14 +163,36 @@ export async function addProjectWatch(
   userId: string,
   projectId: string,
 ): Promise<void> {
-  const { error } = await supabase.from("project_watches").upsert({
+  // Prefer INSERT over upsert: upsert needs UPDATE privilege which authenticated
+  // may not have. Duplicate primary key = already watching (success).
+  const { error } = await supabase.from("project_watches").insert({
     user_id: userId,
     project_id: projectId,
   });
 
   if (error) {
+    if (isUniqueViolationError(error)) {
+      return;
+    }
     throw error;
   }
+}
+
+function isUniqueViolationError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+  const code = "code" in error ? String(error.code) : "";
+  const message =
+    "message" in error && typeof error.message === "string"
+      ? error.message
+      : String(error);
+  return (
+    code === "23505" ||
+    message.includes("duplicate key") ||
+    message.includes("unique constraint") ||
+    message.toLowerCase().includes("duplicate")
+  );
 }
 
 export async function recordProjectPlay(

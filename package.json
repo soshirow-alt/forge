@@ -67,6 +67,7 @@
     "verify:email-outbox-worker": "npx --yes tsx scripts/verify-email-outbox-worker.ts",
     "verify:email-outbox-immediate-kick": "npx --yes tsx scripts/verify-email-outbox-immediate-kick.ts",
     "verify:feedback-reciprocity-contract": "npx --yes tsx scripts/verify-feedback-reciprocity-contract.ts",
+    "verify:watch-update-notifications": "npx --yes tsx scripts/verify-watch-update-notifications.ts",
     "verify:usage-relation-flow-contract": "npx --yes tsx scripts/verify-usage-relation-flow-contract.ts",
     "verify:notification-seen-ack-contract": "npx --yes tsx scripts/verify-notification-seen-ack-contract.ts",
     "verify:community-open-posting-contract": "npx --yes tsx scripts/verify-community-open-posting-contract.ts",

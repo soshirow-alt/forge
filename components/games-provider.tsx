@@ -31,10 +31,12 @@ import {
 import {
   createNotificationMessage,
   createVersionPublishedMessage,
+  watchUpdateCoalesceKey,
   sortNotificationsNewestFirst,
   type Notification,
   type NotificationType,
 } from "@/lib/notifications";
+import { selectWatchUpdateRecipientIds } from "@/lib/watch-update-notify";
 import { invokeAdoptionMatcherAfterPublish } from "@/lib/voice-adoption/invoke-client";
 import {
   findDeveloperProfileByUserId,
@@ -2386,74 +2388,155 @@ export function GamesProvider({ children }: { children: ReactNode }) {
         confirmationDraft?.notifyEnabled !== false &&
         hasConfirmationPayload;
 
-      if (useConfirmationNotifications && confirmationRecord && confirmationDraft) {
-        const recipientIds = (
-          await fetchConfirmationNotifyRecipientIds(supabase, {
-            projectId,
-            notifyAudience: confirmationDraft.notifyAudience,
-            versionKey: publishVersion ?? game?.playableVersion ?? null,
-            linkedPriorityIds: linkedPriorityIds(confirmationDraft),
-          })
-        ).filter((recipientId) => recipientId !== user.id);
+      // Publish / devlog already succeeded. Notification fanout is best-effort:
+      // failures must not roll back or surface as publish failure.
+      // Confirmation and watcher fanouts are isolated so one path cannot abort the other.
+      const confirmationRecipientIds = new Set<string>();
 
+      try {
+        if (useConfirmationNotifications && confirmationRecord && confirmationDraft) {
+          const recipientIds = (
+            await fetchConfirmationNotifyRecipientIds(supabase, {
+              projectId,
+              notifyAudience: confirmationDraft.notifyAudience,
+              versionKey: publishVersion ?? game?.playableVersion ?? null,
+              linkedPriorityIds: linkedPriorityIds(confirmationDraft),
+            })
+          ).filter((recipientId) => recipientId !== user.id);
+
+          const enabledConfirmationRecipients =
+            await filterUsersByPlayerNotificationPref(
+              supabase,
+              recipientIds,
+              "watch-updates",
+            );
+
+          if (enabledConfirmationRecipients.length > 0) {
+            const message = createConfirmationRequestNotificationMessage(
+              projectTitle,
+              confirmationDraft,
+            );
+            const confirmationFanout =
+              await insertConfirmationRequestNotifications(supabase, {
+                recipientUserIds: enabledConfirmationRecipients,
+                projectId,
+                devlogId: entry.id,
+                confirmationRequestId: confirmationRecord.id,
+                publishedVersion: publishVersion ?? null,
+                message,
+                coalesceKey: watchUpdateCoalesceKey({
+                  updateType: "confirmation_request",
+                  projectId,
+                  updateEntityId: confirmationRecord.id,
+                }),
+              });
+            // Only exclude watchers who actually received confirmation (or dedupe hit).
+            for (const id of confirmationFanout.deliveredUserIds) {
+              confirmationRecipientIds.add(id);
+            }
+            if (confirmationFanout.failureCount > 0) {
+              console.error(
+                "[watch-notify] confirmation fanout partial failures",
+                {
+                  projectId,
+                  devlogId: entry.id,
+                  failureCount: confirmationFanout.failureCount,
+                },
+              );
+            }
+          }
+        }
+      } catch (confirmNotifyError) {
+        console.error(
+          "[watch-notify] confirmation fanout failed after successful publish/devlog",
+          {
+            projectId,
+            devlogId: entry.id,
+            error: confirmNotifyError,
+          },
+        );
+      }
+
+      try {
+        // Confirmation audience ≠ all watchers. Still notify remaining watchers
+        // about the update. notifyEnabled===false only skips confirmation, not updates.
+        const watcherIds = await fetchWatcherUserIds(supabase, projectId);
+        const recipientIds = selectWatchUpdateRecipientIds({
+          watcherIds,
+          actorUserId: user.id,
+          confirmationRecipientIds: [...confirmationRecipientIds],
+        });
         const enabledRecipients = await filterUsersByPlayerNotificationPref(
           supabase,
           recipientIds,
           "watch-updates",
         );
 
-        if (enabledRecipients.length > 0) {
-          const message = createConfirmationRequestNotificationMessage(
-            projectTitle,
-            confirmationDraft,
-          );
-          await insertConfirmationRequestNotifications(supabase, {
-            recipientUserIds: enabledRecipients,
-            projectId,
-            devlogId: entry.id,
-            confirmationRequestId: confirmationRecord.id,
-            publishedVersion: publishVersion ?? null,
-            message,
-          });
+        if (enabledRecipients.length === 0) {
+          return;
         }
-        return;
-      }
 
-      if (confirmationDraft?.notifyEnabled === false) {
-        return;
-      }
+        if (publishVersion) {
+          const message = createVersionPublishedMessage(
+            projectTitle,
+            publishVersion,
+            game?.category,
+          );
+          const versionFanout = await insertVersionPublishedNotifications(
+            supabase,
+            {
+              recipientUserIds: enabledRecipients,
+              projectId,
+              devlogId: entry.id,
+              publishedVersion: publishVersion,
+              message,
+              coalesceKey: watchUpdateCoalesceKey({
+                updateType: "version_published",
+                projectId,
+                updateEntityId: entry.id,
+              }),
+            },
+          );
+          if (versionFanout.failureCount > 0) {
+            console.error("[watch-notify] version fanout partial failures", {
+              projectId,
+              devlogId: entry.id,
+              failureCount: versionFanout.failureCount,
+            });
+          }
+          return;
+        }
 
-      const watcherIds = await fetchWatcherUserIds(supabase, projectId);
-      const recipientIds = watcherIds.filter((watcherId) => watcherId !== user.id);
-      const enabledRecipients = await filterUsersByPlayerNotificationPref(
-        supabase,
-        recipientIds,
-        "watch-updates",
-      );
-
-      if (enabledRecipients.length === 0) {
-        return;
-      }
-
-      if (publishVersion) {
-        const message = createVersionPublishedMessage(projectTitle, publishVersion);
-        await insertVersionPublishedNotifications(supabase, {
+        const message = createNotificationMessage("devlog", projectTitle);
+        const devlogFanout = await insertDevlogNotifications(supabase, {
           recipientUserIds: enabledRecipients,
           projectId,
           devlogId: entry.id,
-          publishedVersion: publishVersion,
           message,
+          coalesceKey: watchUpdateCoalesceKey({
+            updateType: "devlog",
+            projectId,
+            updateEntityId: entry.id,
+          }),
         });
-        return;
+        if (devlogFanout.failureCount > 0) {
+          console.error("[watch-notify] devlog fanout partial failures", {
+            projectId,
+            devlogId: entry.id,
+            failureCount: devlogFanout.failureCount,
+          });
+        }
+      } catch (watcherNotifyError) {
+        console.error(
+          "[watch-notify] watcher fanout failed after successful publish/devlog",
+          {
+            projectId,
+            devlogId: entry.id,
+            publishVersion: publishVersion ?? null,
+            error: watcherNotifyError,
+          },
+        );
       }
-
-      const message = createNotificationMessage("devlog", projectTitle);
-      await insertDevlogNotifications(supabase, {
-        recipientUserIds: enabledRecipients,
-        projectId,
-        devlogId: entry.id,
-        message,
-      });
     },
     [user, getSubmittedGameById, isSubmittedGame],
   );
