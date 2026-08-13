@@ -19,7 +19,7 @@ export function LandingGuestEntryButton({
       }}
       className={className}
     >
-      ゲストで作品を見る
+      ゲストで参加
     </button>
   );
 }

@@ -3,19 +3,27 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import {
   ArrowRight,
+  Box,
+  Code2,
   Flame,
   Gamepad2,
+  Headphones,
   Heart,
+  LayoutGrid,
   MessageSquare,
   TrendingUp,
   Wrench,
+  type LucideIcon,
 } from "lucide-react";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal-routes";
 import { LandingFeaturedGamesSection } from "@/components/landing-featured-games-section";
 import { LandingGuestEntryButton } from "@/components/landing-guest-entry-button";
 import { buildLoginUrlWithReturn } from "@/lib/login-return-url";
 import type { LandingFeaturedGame } from "@/lib/landing-featured-games";
-import { PROJECT_CATEGORY_LABELS } from "@/lib/project-categories";
+import {
+  PROJECT_CATEGORY_LABELS,
+  type ProjectCategoryId,
+} from "@/lib/project-categories";
 
 const valueProps = [
   {
@@ -38,29 +46,17 @@ const valueProps = [
   },
 ] as const;
 
-/** LP-only category blurb — labels from PROJECT_CATEGORY_LABELS. */
-const landingCategories = [
-  {
-    id: "game" as const,
-    blurb: "遊んで、感じたことを届ける",
-  },
-  {
-    id: "audio" as const,
-    blurb: "聴いて、作品や制作につなげる",
-  },
-  {
-    id: "asset" as const,
-    blurb: "見つけて、制作に活かす",
-  },
-  {
-    id: "dev-tool" as const,
-    blurb: "試して、制作をもっと良くする",
-  },
-  {
-    id: "service-app" as const,
-    blurb: "使って、反応を届ける",
-  },
-] as const;
+/** LP category cards — icon + label; reuse CtaCard glow / border language. */
+const landingCategories: {
+  id: ProjectCategoryId;
+  icon: LucideIcon;
+}[] = [
+  { id: "game", icon: Gamepad2 },
+  { id: "audio", icon: Headphones },
+  { id: "asset", icon: Box },
+  { id: "dev-tool", icon: Code2 },
+  { id: "service-app", icon: LayoutGrid },
+];
 
 function ForgeLogo({ href = "/" }: { href?: string }) {
   return (
@@ -258,19 +254,23 @@ export function LandingPage({
       <section className="mx-auto max-w-[1320px] px-6 py-12 sm:px-8 sm:py-14">
         <h2 className="text-xl font-bold text-white">いろんな作品が、Forgeに。</h2>
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-5">
-          {landingCategories.map((item) => (
-            <div
-              key={item.id}
-              className="rounded-2xl border border-zinc-800 bg-zinc-900/70 px-5 py-5"
-            >
-              <p className="font-semibold text-white">
-                {PROJECT_CATEGORY_LABELS[item.id]}
-              </p>
-              <p className="mt-2 text-sm leading-relaxed text-zinc-500">
-                {item.blurb}
-              </p>
-            </div>
-          ))}
+          {landingCategories.map((item) => {
+            const Icon = item.icon;
+            return (
+              <div
+                key={item.id}
+                className="relative flex flex-col items-center overflow-hidden rounded-2xl border border-violet-500/25 bg-zinc-900/60 px-5 py-7 text-center backdrop-blur-md"
+              >
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-violet-500/20 to-transparent" />
+                <span className="relative flex size-12 items-center justify-center rounded-full bg-violet-500/20 text-violet-200 ring-4 ring-violet-500/25">
+                  <Icon className="size-5" aria-hidden="true" />
+                </span>
+                <p className="relative mt-4 text-sm font-semibold tracking-tight text-white sm:text-base">
+                  {PROJECT_CATEGORY_LABELS[item.id]}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </section>
 

@@ -51,20 +51,27 @@ assert.doesNotMatch(landing, /開発者のあなたへ/);
 assert.doesNotMatch(landing, /開発者としてはじめる/);
 assert.doesNotMatch(landing, /プレイヤーとして参加/);
 
-// 5-category section between hero and featured
+// 5-category section — icon + label cards (CtaCard glow language), no weak blurbs
 assert.match(landing, /いろんな作品が、Forgeに。/);
 assert.match(landing, /PROJECT_CATEGORY_LABELS/);
-assert.match(landing, /遊んで、感じたことを届ける/);
-assert.match(landing, /聴いて、作品や制作につなげる/);
-assert.match(landing, /見つけて、制作に活かす/);
-assert.match(landing, /試して、制作をもっと良くする/);
-assert.match(landing, /使って、反応を届ける/);
+assert.match(landing, /Gamepad2/);
+assert.match(landing, /Headphones/);
+assert.match(landing, /Box/);
+assert.match(landing, /Code2/);
+assert.match(landing, /LayoutGrid/);
+assert.match(landing, /from-violet-500\/20/);
+assert.match(landing, /ring-violet-500\/25/);
+assert.doesNotMatch(landing, /遊んで、感じたことを届ける/);
+assert.doesNotMatch(landing, /聴いて、作品や制作につなげる/);
 assert.match(landing, /lg:grid-cols-5/);
 assert.match(landing, /sm:grid-cols-2/);
 assert.doesNotMatch(landing, /サービス・アプリ/);
-// Category label 「ゲーム」 must remain (via PROJECT_CATEGORY_LABELS.game)
 assert.match(landing, /id: "game"/);
 assert.match(landing, /id: "service-app"/);
+
+const guestCta = read("components/landing-guest-entry-button.tsx");
+assert.match(guestCta, /ゲストで参加/);
+assert.doesNotMatch(guestCta, /ゲストで作品を見る/);
 
 // Featured heading already neutral
 assert.match(featured, /注目の開発中作品/);
