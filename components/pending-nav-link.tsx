@@ -34,17 +34,25 @@ function hrefPathname(href: ComponentProps<typeof Link>["href"]): string | null 
  * Minimal Forge-native click feedback for full-route Links (opacity + aria-busy).
  * Consumer onClick runs first; respects preventDefault; skips same-route clicks;
  * blocks double-activation while pending.
+ *
+ * Inner remounts on pathname change so persistent shells clear pending after
+ * navigation (A→B→A stays clickable). Active style ≠ permanent disable.
  */
-export function PendingNavLink({
+export function PendingNavLink(props: PendingNavLinkProps) {
+  const pathname = usePathname();
+  return <PendingNavLinkInner key={pathname} pathname={pathname} {...props} />;
+}
+
+function PendingNavLinkInner({
   children,
   className = "",
   onClick,
   pendingLabel = false,
   idleLabel,
   href,
+  pathname,
   ...rest
-}: PendingNavLinkProps) {
-  const pathname = usePathname();
+}: PendingNavLinkProps & { pathname: string }) {
   const [pending, setPending] = useState(false);
   const targetPath = hrefPathname(href);
   const sameDestination = Boolean(targetPath) && pathname === targetPath;

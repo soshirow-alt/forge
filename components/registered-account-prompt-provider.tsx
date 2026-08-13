@@ -92,13 +92,18 @@ export function useRegisteredAccountPrompt() {
 type RegisteredOnlyLinkProps = ComponentProps<typeof Link>;
 
 /** Registered users navigate normally; guests go to /login?return=... */
-export function RegisteredOnlyLink({
+export function RegisteredOnlyLink(props: RegisteredOnlyLinkProps) {
+  const pathname = usePathname();
+  return <RegisteredOnlyLinkInner key={pathname} pathname={pathname} {...props} />;
+}
+
+function RegisteredOnlyLinkInner({
   href,
   onClick,
   className = "",
+  pathname,
   ...props
-}: RegisteredOnlyLinkProps) {
-  const pathname = usePathname();
+}: RegisteredOnlyLinkProps & { pathname: string }) {
   const { isRegisteredUser, authResolved } = useAuth();
   const { promptRegisteredAccountAccess } = useRegisteredAccountPrompt();
   const returnPath = typeof href === "string" ? href : href.pathname ?? undefined;
