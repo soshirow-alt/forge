@@ -991,10 +991,11 @@ function GameDetailV0PageBody({
 
           <div className="flex flex-col gap-2.5">
             {/*
-              Centered action cluster. Groups wrap when the hero content column
-              is narrow (mobile, tablet, or xl+ with related-aside). Strength via color.
+              Left-aligned action row: [primary][FB] | [watch][save].
+              Divider sits between groups with symmetric gap (not near retention).
+              Heights unified (min-h-10); strength via color. Mobile stacks groups.
             */}
-            <div className="flex w-full flex-col items-stretch gap-3 md:flex-row md:flex-wrap md:items-center md:justify-center md:gap-x-5 md:gap-y-3">
+            <div className="flex w-full flex-col items-stretch gap-3 md:flex-row md:flex-wrap md:items-center md:justify-start">
               <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                 {hydrated &&
                 isLoggedIn &&
@@ -1051,12 +1052,11 @@ function GameDetailV0PageBody({
                 className="h-px w-full shrink-0 bg-zinc-500/70 md:hidden"
                 aria-hidden="true"
               />
-              <div className="flex min-w-0 items-center gap-3">
-                <div
-                  className="hidden h-8 w-px shrink-0 bg-zinc-500/70 md:block"
-                  aria-hidden="true"
-                />
-                <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+              <div
+                className="hidden h-8 w-px shrink-0 bg-zinc-500/70 md:mx-4 md:block"
+                aria-hidden="true"
+              />
+              <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                   <button
                     type="button"
                     onClick={handleWatchToggle}
@@ -1094,7 +1094,6 @@ function GameDetailV0PageBody({
                       ? categoryChrome.saveButtonLabelOn
                       : categoryChrome.saveButtonLabel}
                   </button>
-                </div>
               </div>
             </div>
             {playUnavailableOnPublic || playUrlMissingVisible ? (
