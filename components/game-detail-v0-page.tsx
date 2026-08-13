@@ -991,11 +991,11 @@ function GameDetailV0PageBody({
 
           <div className="flex flex-col gap-2.5">
             {/*
-              Always one row: left = primary+FB, right = watch+save.
-              Narrow widths scroll horizontally (no wrap / no second action row).
+              Centered action cluster. Groups wrap when the hero content column
+              is narrow (mobile, tablet, or xl+ with related-aside). Strength via color.
             */}
-            <div className="-mx-1 flex min-w-0 flex-nowrap items-center gap-x-2.5 overflow-x-auto px-1">
-              <div className="flex shrink-0 flex-nowrap items-center gap-1.5">
+            <div className="flex w-full flex-col items-stretch gap-3 md:flex-row md:flex-wrap md:items-center md:justify-center md:gap-x-5 md:gap-y-3">
+              <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                 {hydrated &&
                 isLoggedIn &&
                 primaryPlayUrl &&
@@ -1006,13 +1006,15 @@ function GameDetailV0PageBody({
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={handlePrimaryPlayAnchorClick}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-violet-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
+                    className="inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-xl bg-violet-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
                   >
                     <PrimaryCtaIcon
                       name={categoryChrome.primaryCtaIcon}
-                      className="size-4"
+                      className="size-4 shrink-0"
                     />
-                    {primaryPlayCtaLabel}
+                    <span className="min-w-0 whitespace-normal text-left leading-snug">
+                      {primaryPlayCtaLabel}
+                    </span>
                   </a>
                 ) : (
                   <button
@@ -1024,35 +1026,41 @@ function GameDetailV0PageBody({
                         ? PLAY_URL_MISSING_MESSAGE
                         : undefined
                     }
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-violet-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-xl bg-violet-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <PrimaryCtaIcon
                       name={categoryChrome.primaryCtaIcon}
-                      className="size-4"
+                      className="size-4 shrink-0"
                     />
-                    {hydrated && (isLoggedIn || isGuestEntry)
-                      ? primaryPlayCtaLabel
-                      : `ログインして${primaryPlayCtaLabel}`}
+                    <span className="min-w-0 whitespace-normal text-left leading-snug">
+                      {hydrated && (isLoggedIn || isGuestEntry)
+                        ? primaryPlayCtaLabel
+                        : `ログインして${primaryPlayCtaLabel}`}
+                    </span>
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={handleFeedback}
-                  className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-zinc-700/80 bg-transparent px-2.5 py-2 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200"
+                  className="inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-xl border border-zinc-700/80 bg-transparent px-3.5 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-600 hover:text-zinc-100"
                 >
                   {feedbackCtaLabel}
                 </button>
               </div>
-              <div className="flex shrink-0 items-center gap-1.5">
+              <div
+                className="h-px w-full shrink-0 bg-zinc-500/70 md:hidden"
+                aria-hidden="true"
+              />
+              <div className="flex min-w-0 items-center gap-3">
                 <div
-                  className="h-5 w-px shrink-0 bg-zinc-800"
+                  className="hidden h-8 w-px shrink-0 bg-zinc-500/70 md:block"
                   aria-hidden="true"
                 />
-                <div className="flex items-center gap-1">
+                <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                   <button
                     type="button"
                     onClick={handleWatchToggle}
-                    className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-3 py-2.5 text-xs font-medium transition-colors ${
+                    className={`inline-flex min-h-10 items-center gap-1.5 rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-colors ${
                       watching
                         ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400/90 hover:bg-emerald-500/10"
                         : "border-zinc-800/70 bg-transparent text-zinc-500 hover:border-zinc-700 hover:bg-zinc-900/40 hover:text-zinc-300"
@@ -1072,7 +1080,7 @@ function GameDetailV0PageBody({
                         setMockSaved((value) => !value);
                       })
                     }
-                    className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-3 py-2.5 text-xs font-medium transition-colors ${
+                    className={`inline-flex min-h-10 items-center gap-1.5 rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-colors ${
                       saved
                         ? "border-violet-500/30 bg-violet-500/5 text-violet-300/90 hover:bg-violet-500/10"
                         : "border-zinc-800/70 bg-transparent text-zinc-500 hover:border-zinc-700 hover:bg-zinc-900/40 hover:text-zinc-300"
