@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-08-13 — LP 5カテゴリ accent（gray除去・既存palette）
+
+- **5カテゴリカード** — 音楽・音声 / サービスの gray・white accent をやめ、indigo（cool purple）/ sky（Studio cyan）へ。ゲーム violet・アセット amber・開発ツール emerald は維持しつつ強弱を調整
+- **非実施** — 見出し・説明文・Hero / CTA / geometry、Detail、Navigation、DB、main / Production
+
 ## 2026-08-13 — Preview regression 3件（Detail divider / nav pending / LP categories）
 
 - **Detail action row** — CTA群は左寄せへ戻す。縦dividerは左右group間で対称gap（retentionに寄せない）。button高さ統一は維持

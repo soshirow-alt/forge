@@ -46,7 +46,7 @@ const valueProps = [
   },
 ] as const;
 
-/** LP category cards — icon + label; accents from existing LP palette only. */
+/** LP category cards — icon + label; accents from existing Forge palette (no gray accents). */
 const landingCategories: {
   id: ProjectCategoryId;
   icon: LucideIcon;
@@ -57,16 +57,16 @@ const landingCategories: {
   {
     id: "game",
     icon: Gamepad2,
-    border: "border-violet-500/25",
-    glow: "from-violet-500/20",
-    iconWrap: "bg-violet-500/20 text-violet-200 ring-4 ring-violet-500/25",
+    border: "border-violet-500/30",
+    glow: "from-violet-500/25",
+    iconWrap: "bg-violet-500/25 text-violet-200 ring-4 ring-violet-500/35",
   },
   {
     id: "audio",
     icon: Headphones,
-    border: "border-zinc-500/35",
-    glow: "from-white/10",
-    iconWrap: "bg-zinc-100/10 text-zinc-200 ring-4 ring-zinc-500/25",
+    border: "border-indigo-400/30",
+    glow: "from-indigo-400/18",
+    iconWrap: "bg-indigo-500/18 text-indigo-200 ring-4 ring-indigo-400/30",
   },
   {
     id: "asset",
@@ -85,9 +85,9 @@ const landingCategories: {
   {
     id: "service-app",
     icon: LayoutGrid,
-    border: "border-white/20",
-    glow: "from-white/12",
-    iconWrap: "bg-white/10 text-zinc-100 ring-4 ring-white/20",
+    border: "border-sky-500/30",
+    glow: "from-sky-500/18",
+    iconWrap: "bg-sky-500/18 text-sky-200 ring-4 ring-sky-500/30",
   },
 ];
 

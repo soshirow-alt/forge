@@ -51,7 +51,7 @@ assert.doesNotMatch(landing, /開発者のあなたへ/);
 assert.doesNotMatch(landing, /開発者としてはじめる/);
 assert.doesNotMatch(landing, /プレイヤーとして参加/);
 
-// 5-category section — icon + label, existing LP palette accents, no weak blurbs
+// 5-category section — icon + label; peer accents from Forge palette (no gray/white accents)
 assert.match(landing, /いろんなカテゴリが、Forgeに。/);
 assert.doesNotMatch(landing, /いろんな作品が、Forgeに。/);
 assert.match(landing, /PROJECT_CATEGORY_LABELS/);
@@ -60,15 +60,24 @@ assert.match(landing, /Headphones/);
 assert.match(landing, /Box/);
 assert.match(landing, /Code2/);
 assert.match(landing, /LayoutGrid/);
-assert.match(landing, /from-violet-500\/20/);
-assert.match(landing, /from-amber-500\/20/);
-assert.match(landing, /from-emerald-500\/20/);
-assert.match(landing, /from-white\/1[02]/);
-assert.match(landing, /border-zinc-500\/35/);
+// Per-category accents (existing violet / indigo / amber / emerald / sky)
+assert.match(landing, /id: "game"[\s\S]*?from-violet-500/);
+assert.match(landing, /id: "audio"[\s\S]*?from-indigo-400/);
+assert.match(landing, /id: "asset"[\s\S]*?from-amber-500/);
+assert.match(landing, /id: "dev-tool"[\s\S]*?from-emerald-500/);
+assert.match(landing, /id: "service-app"[\s\S]*?from-sky-500/);
+assert.match(landing, /border-indigo-400\/30/);
+assert.match(landing, /border-sky-500\/30/);
 assert.match(landing, /border-amber-500\/25/);
 assert.match(landing, /border-emerald-500\/25/);
+assert.match(landing, /border-violet-500\/30/);
+// No neutral gray/white as category accent; no loud new families
+const categoryBlock = landing.slice(
+  landing.indexOf("landingCategories"),
+  landing.indexOf("function ForgeLogo"),
+);
+assert.doesNotMatch(categoryBlock, /border-zinc-|from-white\/|bg-white\/|bg-zinc-|text-zinc-/);
 assert.doesNotMatch(landing, /bg-red-|bg-pink-|bg-rose-|bg-fuchsia-|bg-orange-/);
-assert.doesNotMatch(landing, /bg-sky-|bg-cyan-|bg-blue-/);
 assert.doesNotMatch(landing, /遊んで、感じたことを届ける/);
 assert.doesNotMatch(landing, /聴いて、作品や制作につなげる/);
 assert.match(landing, /lg:grid-cols-5/);
