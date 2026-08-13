@@ -51,8 +51,9 @@ assert.doesNotMatch(landing, /開発者のあなたへ/);
 assert.doesNotMatch(landing, /開発者としてはじめる/);
 assert.doesNotMatch(landing, /プレイヤーとして参加/);
 
-// 5-category section — icon + label cards (CtaCard glow language), no weak blurbs
-assert.match(landing, /いろんな作品が、Forgeに。/);
+// 5-category section — icon + label, existing LP palette accents, no weak blurbs
+assert.match(landing, /いろんなカテゴリが、Forgeに。/);
+assert.doesNotMatch(landing, /いろんな作品が、Forgeに。/);
 assert.match(landing, /PROJECT_CATEGORY_LABELS/);
 assert.match(landing, /Gamepad2/);
 assert.match(landing, /Headphones/);
@@ -60,7 +61,14 @@ assert.match(landing, /Box/);
 assert.match(landing, /Code2/);
 assert.match(landing, /LayoutGrid/);
 assert.match(landing, /from-violet-500\/20/);
-assert.match(landing, /ring-violet-500\/25/);
+assert.match(landing, /from-amber-500\/20/);
+assert.match(landing, /from-emerald-500\/20/);
+assert.match(landing, /from-white\/1[02]/);
+assert.match(landing, /border-zinc-500\/35/);
+assert.match(landing, /border-amber-500\/25/);
+assert.match(landing, /border-emerald-500\/25/);
+assert.doesNotMatch(landing, /bg-red-|bg-pink-|bg-rose-|bg-fuchsia-|bg-orange-/);
+assert.doesNotMatch(landing, /bg-sky-|bg-cyan-|bg-blue-/);
 assert.doesNotMatch(landing, /遊んで、感じたことを届ける/);
 assert.doesNotMatch(landing, /聴いて、作品や制作につなげる/);
 assert.match(landing, /lg:grid-cols-5/);

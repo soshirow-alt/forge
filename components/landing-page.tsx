@@ -46,16 +46,49 @@ const valueProps = [
   },
 ] as const;
 
-/** LP category cards — icon + label; reuse CtaCard glow / border language. */
+/** LP category cards — icon + label; accents from existing LP palette only. */
 const landingCategories: {
   id: ProjectCategoryId;
   icon: LucideIcon;
+  border: string;
+  glow: string;
+  iconWrap: string;
 }[] = [
-  { id: "game", icon: Gamepad2 },
-  { id: "audio", icon: Headphones },
-  { id: "asset", icon: Box },
-  { id: "dev-tool", icon: Code2 },
-  { id: "service-app", icon: LayoutGrid },
+  {
+    id: "game",
+    icon: Gamepad2,
+    border: "border-violet-500/25",
+    glow: "from-violet-500/20",
+    iconWrap: "bg-violet-500/20 text-violet-200 ring-4 ring-violet-500/25",
+  },
+  {
+    id: "audio",
+    icon: Headphones,
+    border: "border-zinc-500/35",
+    glow: "from-white/10",
+    iconWrap: "bg-zinc-100/10 text-zinc-200 ring-4 ring-zinc-500/25",
+  },
+  {
+    id: "asset",
+    icon: Box,
+    border: "border-amber-500/25",
+    glow: "from-amber-500/20",
+    iconWrap: "bg-amber-500/20 text-amber-200 ring-4 ring-amber-500/25",
+  },
+  {
+    id: "dev-tool",
+    icon: Code2,
+    border: "border-emerald-500/25",
+    glow: "from-emerald-500/20",
+    iconWrap: "bg-emerald-500/20 text-emerald-200 ring-4 ring-emerald-500/25",
+  },
+  {
+    id: "service-app",
+    icon: LayoutGrid,
+    border: "border-white/20",
+    glow: "from-white/12",
+    iconWrap: "bg-white/10 text-zinc-100 ring-4 ring-white/20",
+  },
 ];
 
 function ForgeLogo({ href = "/" }: { href?: string }) {
@@ -252,17 +285,21 @@ export function LandingPage({
       </section>
 
       <section className="mx-auto max-w-[1320px] px-6 py-12 sm:px-8 sm:py-14">
-        <h2 className="text-xl font-bold text-white">いろんな作品が、Forgeに。</h2>
+        <h2 className="text-xl font-bold text-white">いろんなカテゴリが、Forgeに。</h2>
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-5">
           {landingCategories.map((item) => {
             const Icon = item.icon;
             return (
               <div
                 key={item.id}
-                className="relative flex flex-col items-center overflow-hidden rounded-2xl border border-violet-500/25 bg-zinc-900/60 px-5 py-7 text-center backdrop-blur-md"
+                className={`relative flex flex-col items-center overflow-hidden rounded-2xl border ${item.border} bg-zinc-900/60 px-5 py-7 text-center backdrop-blur-md`}
               >
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-violet-500/20 to-transparent" />
-                <span className="relative flex size-12 items-center justify-center rounded-full bg-violet-500/20 text-violet-200 ring-4 ring-violet-500/25">
+                <div
+                  className={`pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b ${item.glow} to-transparent`}
+                />
+                <span
+                  className={`relative flex size-12 items-center justify-center rounded-full ${item.iconWrap}`}
+                >
                   <Icon className="size-5" aria-hidden="true" />
                 </span>
                 <p className="relative mt-4 text-sm font-semibold tracking-tight text-white sm:text-base">

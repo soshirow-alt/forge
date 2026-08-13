@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-08-13 — Preview regression 3件（Detail divider / nav pending / LP categories）
+
+- **Detail action row** — CTA群は左寄せへ戻す。縦dividerは左右group間で対称gap（retentionに寄せない）。button高さ統一は維持
+- **Navigation** — persistent shell後に PendingNavLink / RegisteredOnlyLink の pending が残って押せなくなるregressionを修正（pathname変化でpending解除）
+- **LP 5カテゴリ** — 見出し「いろんなカテゴリが、Forgeに。」。既存LP palette（violet / emerald / amber / zinc / white）で弱い色差。説明文は戻さない
+- **非実施** — ランキング / 実績、shell persistence撤回、DB、main / Production
+
 ## 2026-08-13 — Preview 4テーマ仕上げ（LP / Detail / shell / Studio Guide）
 
 - **LP** — ゲストCTA「ゲストで参加」。5カテゴリカードを CtaCard 系の glow / ring / icon + カテゴリ名へ（弱い説明文は削除）
