@@ -31,6 +31,7 @@ export function StudioGuidePage() {
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-zinc-400">
           {studioGuideIntro.lead} はじめての人は Player の{" "}
+          {/* Player destination link keeps Player purple intentionally */}
           <Link href="/guide" className="text-violet-400 hover:text-violet-300">
             {studioGuideIntro.playerGuideLabel}
           </Link>
@@ -41,7 +42,7 @@ export function StudioGuidePage() {
           <span className="rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1 text-xs text-zinc-400">
             {studioGuideIntro.rolePlayer}
           </span>
-          <span className="rounded-full border border-violet-500/30 bg-violet-600/10 px-3 py-1 text-xs text-violet-200">
+          <span className="rounded-full border border-sky-500/30 bg-sky-500/10 px-3 py-1 text-xs text-sky-200">
             {studioGuideIntro.roleStudio}
           </span>
         </div>
@@ -51,7 +52,7 @@ export function StudioGuidePage() {
             <li key={step.id} id={step.id}>
               <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 sm:p-6">
                 <div className="flex items-start gap-3">
-                  <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-violet-600/20 text-sm font-bold text-violet-200 ring-1 ring-violet-500/30">
+                  <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-sky-500/20 text-sm font-bold text-sky-200 ring-1 ring-sky-500/30">
                     {index + 1}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -73,7 +74,7 @@ export function StudioGuidePage() {
                         {step.chips.map((chip) => (
                           <li
                             key={chip}
-                            className="rounded-full border border-violet-500/30 bg-violet-600/15 px-2.5 py-1 text-xs font-medium text-violet-200"
+                            className="rounded-full border border-sky-500/30 bg-sky-500/15 px-2.5 py-1 text-xs font-medium text-sky-200"
                           >
                             {chip}
                           </li>
@@ -87,7 +88,7 @@ export function StudioGuidePage() {
                             key={item}
                             className="text-sm leading-relaxed text-zinc-300"
                           >
-                            <span className="mr-2 text-violet-400/80">·</span>
+                            <span className="mr-2 text-sky-400/80">·</span>
                             {item}
                           </li>
                         ))}

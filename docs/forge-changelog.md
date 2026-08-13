@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-08-13 — Preview 4テーマ仕上げ（LP / Detail / shell / Studio Guide）
+
+- **LP** — ゲストCTA「ゲストで参加」。5カテゴリカードを CtaCard 系の glow / ring / icon + カテゴリ名へ（弱い説明文は削除）
+- **Detail action row** — 4ボタン高さ揃え（`min-h-10`）。左 primary+FB と右 retention の区切り強化。desktop は content 内で中央寄りクラスタ
+- **同一 mode 内 nav** — Player: games / creators / guide / rankings path 等を `(player)` 配下へ（ランキングUI自体は未変更）。Studio: layout で StudioShell を維持し `loading.tsx` は main のみ置換。mypage `?q=` は header search に同期
+- **Studio はじめてガイド** — mode identity の紫（step / chip / Studio role）を sky/cyan へ。Player ガイドへのリンク色は Player 紫のまま
+- **非実施** — ランキング / 実績、Hero redesign、DB、main / Production
+
 ## 2026-08-13 — Full-nav Performance Deep-Dive（Preview）
 
 - **体感** — shell / settings / messages / search→detail に PendingNavLink（同一URLでは pending しない）。messages/settings に loading.tsx

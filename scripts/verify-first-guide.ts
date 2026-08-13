@@ -149,6 +149,13 @@ assert.match(studioEntry, /playerGuideStudioEntry/);
 assert.doesNotMatch(studioEntry, /開発者/);
 assert.match(studioGuide, /href=["']\/guide["']/);
 assert.match(studioGuide, /studioGuideSteps/);
+assert.match(studioGuide, /text-violet-400 hover:text-violet-300/);
+assert.match(studioGuide, /border-sky-500\/30 bg-sky-500\/10/);
+assert.match(studioGuide, /bg-sky-500\/20/);
+assert.match(studioGuide, /border-sky-500\/30 bg-sky-500\/15/);
+assert.match(studioGuide, /text-sky-400\/80/);
+assert.doesNotMatch(studioGuide, /bg-violet-600\/20/);
+assert.doesNotMatch(studioGuide, /border-violet-500\/30 bg-violet-600/);
 assert.doesNotMatch(studioGuide, /正式ver/);
 assert.doesNotMatch(studioGuide, /ゲームを短いサイクル/);
 assert.doesNotMatch(studioGuide, /マイコミュニティ/);
@@ -249,7 +256,7 @@ assert.doesNotMatch(studioGuide, /href=\{?["']\/home["']\s*\|\|/);
 assert.doesNotMatch(studioGuide, /fallback.*\/home|\/home.*fallback/);
 console.log("OK  Studio routes + no dead-link fallback");
 
-assert.match(read("app/guide/page.tsx"), /PlayerGuidePage/);
+assert.match(read("app/(player)/guide/page.tsx"), /PlayerGuidePage/);
 assert.match(read("app/api/projects/[projectId]/guest-feedback/route.ts"), /VERCEL_ENV === "production"/);
 assert.match(
   read("app/api/projects/[projectId]/guest-feedback/route.ts"),
