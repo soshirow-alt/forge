@@ -10,7 +10,14 @@ import {
   Flame,
   Gamepad2,
 } from "lucide-react";
-import { Suspense, type ReactNode, useEffect, useState } from "react";
+import {
+  Suspense,
+  createContext,
+  useContext,
+  type ReactNode,
+  useEffect,
+  useState,
+} from "react";
 import { useAuth } from "@/components/auth-provider";
 import {
   ForgeShellMobileDrawer,
@@ -447,6 +454,8 @@ export function EmptyTabState({ title, description }: { title: string; descripti
   );
 }
 
+const PlayerShellNestContext = createContext(false);
+
 export function PlayerShell(props: {
   children: ReactNode;
   activeNav?: PlayerShellNavId;
@@ -454,5 +463,13 @@ export function PlayerShell(props: {
   headerSearch?: ReactNode;
   notificationBadge?: number;
 }) {
-  return <PlayerShellFrame {...props} />;
+  const nested = useContext(PlayerShellNestContext);
+  if (nested) {
+    return <>{props.children}</>;
+  }
+  return (
+    <PlayerShellNestContext.Provider value={true}>
+      <PlayerShellFrame {...props} />
+    </PlayerShellNestContext.Provider>
+  );
 }

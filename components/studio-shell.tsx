@@ -1,14 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Bell,
   ChevronDown,
   Flame,
   Search,
 } from "lucide-react";
-import { type FormEvent, type ReactNode, useEffect, useState } from "react";
+import {
+  Suspense,
+  createContext,
+  useContext,
+  useEffect,
+  type FormEvent,
+  type ReactNode,
+  useState,
+} from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useGames } from "@/components/games-provider";
 import {
@@ -23,6 +31,7 @@ import {
   FORGE_SHELL_HEADER_SEARCH_INPUT_CLASS,
 } from "@/lib/forge-shell-header";
 import { FORGE_SHELL_BRAND_LABEL } from "@/lib/forge-mode";
+import { shouldHideV0MockContent } from "@/lib/production-mode";
 import { studioProjectTabs } from "@/lib/studio-project-detail-v0-mock-data";
 
 const primaryLinks = [
@@ -43,9 +52,47 @@ function SidebarDivider() {
   return <div className="my-3 border-t border-zinc-800/80" role="separator" />;
 }
 
-function HeaderSearchForm({ defaultValue }: { defaultValue?: string }) {
+function HeaderSearchForm() {
+  return (
+    <Suspense
+      fallback={
+        <div className={FORGE_SHELL_HEADER_SEARCH_FORM_CLASS} aria-hidden="true">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500"
+            aria-hidden="true"
+          />
+          <input
+            type="search"
+            disabled
+            placeholder="自分の作品を検索"
+            className={FORGE_SHELL_HEADER_SEARCH_INPUT_CLASS}
+          />
+        </div>
+      }
+    >
+      <HeaderSearchFormFromUrl />
+    </Suspense>
+  );
+}
+
+/** Remount on mypage ?q= so deep-links sync without setState-in-effect. */
+function HeaderSearchFormFromUrl() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const urlQuery = pathname.startsWith("/studio/mypage")
+    ? (searchParams.get("q") ?? "")
+    : "";
+  return (
+    <HeaderSearchFormInner
+      key={`studio-mypage-q:${pathname}:${urlQuery}`}
+      initialQuery={urlQuery}
+    />
+  );
+}
+
+function HeaderSearchFormInner({ initialQuery }: { initialQuery: string }) {
   const router = useRouter();
-  const [query, setQuery] = useState(defaultValue ?? "");
+  const [query, setQuery] = useState(initialQuery);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -216,6 +263,8 @@ function StudioSidebarNavBody({ showFeedback = true }: { showFeedback?: boolean 
   );
 }
 
+const StudioShellNestContext = createContext(false);
+
 export function StudioShell({
   children,
   activeNav = "home",
@@ -228,14 +277,49 @@ export function StudioShell({
   /** Override header badge; default uses unread DB notifications when logged in. */
   notificationBadge?: number;
 }) {
+  const nested = useContext(StudioShellNestContext);
+  if (nested) {
+    // Page-level wraps stay for API compatibility; layout owns chrome.
+    // headerSearchDefault is synced from /studio/mypage?q= in HeaderSearchForm.
+    void headerSearchDefault;
+    return <>{children}</>;
+  }
+
+  return (
+    <StudioShellNestContext.Provider value={true}>
+      <StudioShellFrame
+        activeNav={activeNav}
+        headerSearchDefault={headerSearchDefault}
+        notificationBadge={notificationBadge}
+      >
+        {children}
+      </StudioShellFrame>
+    </StudioShellNestContext.Provider>
+  );
+}
+
+function StudioShellFrame({
+  children,
+  activeNav = "home",
+  headerSearchDefault,
+  notificationBadge,
+}: {
+  children: ReactNode;
+  activeNav?: StudioShellNavId;
+  headerSearchDefault?: string;
+  notificationBadge?: number;
+}) {
   void activeNav;
+  void headerSearchDefault;
   const router = useRouter();
   const pathname = usePathname();
   const { user, hydrated, logout } = useAuth();
   const { getUnreadNotificationCount, reloadNotifications } = useGames();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const resolvedNotificationBadge =
-    notificationBadge ?? (user ? getUnreadNotificationCount() : 0);
+    pathname.startsWith("/studio/rankings") && shouldHideV0MockContent()
+      ? 0
+      : (notificationBadge ?? (user ? getUnreadNotificationCount() : 0));
 
   useEffect(() => {
     let cancelled = false;
@@ -315,7 +399,7 @@ export function StudioShell({
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-zinc-800/80 bg-[#0a0a0a]/95 px-4 py-3 backdrop-blur-md sm:gap-3 sm:px-6">
           <ForgeShellMobileMenuButton onClick={() => setMobileNavOpen(true)} />
-          <HeaderSearchForm defaultValue={headerSearchDefault} />
+          <HeaderSearchForm />
           <Link
             href="/studio/notifications"
             onClick={() => {

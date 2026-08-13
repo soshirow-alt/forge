@@ -42,6 +42,8 @@
     "verify:category-neutrality-surface": "npx --yes tsx scripts/verify-category-neutrality-surface.ts",
     "verify:category-display-labels": "npx --yes tsx scripts/verify-category-display-labels.ts",
     "verify:landing-five-category-copy": "npx --yes tsx scripts/verify-landing-five-category-copy.ts",
+    "verify:detail-action-row-hierarchy": "npx --yes tsx scripts/verify-detail-action-row-hierarchy.ts",
+    "verify:shell-persistence": "npx --yes tsx scripts/verify-shell-persistence.ts",
     "verify:first-guide": "npx --yes tsx scripts/verify-first-guide.ts",
     "verify:overview-distribution-display": "npx --yes tsx scripts/verify-overview-distribution-display.ts",
     "verify:category-home-hero": "npx --yes tsx scripts/verify-category-home-hero.ts",

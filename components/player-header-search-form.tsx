@@ -1,20 +1,12 @@
 "use client";
 
 import { Search } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-import { type FormEvent, useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, type FormEvent, useState } from "react";
 import {
   FORGE_SHELL_HEADER_SEARCH_FORM_CLASS,
   FORGE_SHELL_HEADER_SEARCH_INPUT_CLASS,
 } from "@/lib/forge-shell-header";
-
-function readSearchQueryFromWindow(pathname: string): string {
-  if (typeof window === "undefined") return "";
-  if (pathname === "/search" || pathname.startsWith("/search/")) {
-    return new URLSearchParams(window.location.search).get("q")?.trim() ?? "";
-  }
-  return "";
-}
 
 export function HeaderSearchFormFallback() {
   return (
@@ -36,19 +28,34 @@ export function HeaderSearchFormFallback() {
   );
 }
 
-/** Header search — syncs from window query on /search; no useSearchParams. */
+/** Header search — remounts on /search?q= so query-only nav stays in sync. */
 export function HeaderSearchForm({ legacyDefault }: { legacyDefault?: string }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [query, setQuery] = useState(legacyDefault ?? "");
+  return (
+    <Suspense fallback={<HeaderSearchFormFallback />}>
+      <HeaderSearchFormFromUrl legacyDefault={legacyDefault} />
+    </Suspense>
+  );
+}
 
-  useEffect(() => {
-    if (legacyDefault !== undefined) {
-      setQuery(legacyDefault);
-      return;
-    }
-    setQuery(readSearchQueryFromWindow(pathname));
-  }, [pathname, legacyDefault]);
+function HeaderSearchFormFromUrl({ legacyDefault }: { legacyDefault?: string }) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const urlQuery =
+    pathname === "/search" || pathname.startsWith("/search/")
+      ? (searchParams.get("q")?.trim() ?? "")
+      : "";
+  const initialQuery = legacyDefault ?? urlQuery;
+  return (
+    <HeaderSearchFormInner
+      key={`player-search-q:${pathname}:${urlQuery}:${legacyDefault ?? ""}`}
+      initialQuery={initialQuery}
+    />
+  );
+}
+
+function HeaderSearchFormInner({ initialQuery }: { initialQuery: string }) {
+  const router = useRouter();
+  const [query, setQuery] = useState(initialQuery);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
