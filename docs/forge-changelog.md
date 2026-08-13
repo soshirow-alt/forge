@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-08-13 — detailed-only Feedback 本体通知 + 法務ドラフト現行機能化
+
+- detailed-only Feedback でも Owner に「フィードバックが届いた」本体通知（migration 104/105・Staging適用）。voice と同一 ver は未読1件に合流。reciprocity は従来どおり追加条件
+- Staging matrix 6/6 PASS。CONCURRENCY_RUNTIME_TEST は tooling 制約で NOT_VERIFIED（advisory lock / unique recovery で受容）
+- 利用規約・Privacy ドラフトを現行機能・一般向け表現へ整理（Production-facing 本文未差し替え）
+- Production-facing 法務本文・Production DB は未反映
+
 ## 2026-08-13 — Staging watch-update 102/103 gate + legal Owner prep
 
 - Staging に migration 102（project_watches GRANT）/ 103（watch-update coalesce unique）適用・検証 PASS

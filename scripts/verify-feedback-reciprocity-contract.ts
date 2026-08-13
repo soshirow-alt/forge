@@ -52,6 +52,8 @@ assert.match(reciprocityDoc, /detailed-only/);
 assert.match(reciprocityDoc, /voice_received/);
 assert.match(reciprocityDoc, /強制交換ではない/);
 assert.match(reciprocityDoc, /creator profile/);
+assert.match(reciprocityDoc, /104/);
+assert.match(reciprocityDoc, /本体 Feedback 通知/);
 
 assert.match(migration094, /starts_at/);
 assert.match(migration094, /ends_at/);
